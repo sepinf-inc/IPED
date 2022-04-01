@@ -14,7 +14,7 @@ public class BookmarksTreeModel implements TreeModel {
 
     public static String ROOT = Messages.getString("BookmarksTreeModel.RootName"); //$NON-NLS-1$
     public static String NO_BOOKMARKS = Messages.getString("BookmarksTreeModel.NoBookmarks"); //$NON-NLS-1$
-    public Set<String> labels;
+    public Set<String> bookmarks;
 
     static class Bookmark implements Comparator<Bookmark> {
 
@@ -51,16 +51,16 @@ public class BookmarksTreeModel implements TreeModel {
             return null;
         }
 
-        if (labels == null) {
-            labels = new TreeSet<>();
-            labels.addAll(App.get().appCase.getMultiBookmarks().getBookmarkSet());
+        if (bookmarks == null) {
+            bookmarks = new TreeSet<>();
+            bookmarks.addAll(App.get().appCase.getMultiBookmarks().getBookmarkSet());
         }
 
         if (index == 0) {
             return NO_BOOKMARKS;
         }
 
-        String[] array = labels.toArray(new String[0]);
+        String[] array = bookmarks.toArray(new String[0]);
         Arrays.sort(array, Collator.getInstance());
 
         return array[index - 1];

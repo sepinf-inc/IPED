@@ -53,14 +53,14 @@ public class Bookmarks implements Serializable, IBookmarks {
     public static String EXT = "." + Version.APP_EXT.toLowerCase(); //$NON-NLS-1$
     public static String STATEFILENAME = "marcadores" + EXT; //$NON-NLS-1$
 
-    static int labelBits = Byte.SIZE;
+    static int bookmarkBits = Byte.SIZE;
 
     private boolean[] selected;
-    private ArrayList<byte[]> labels;
-    private TreeMap<Integer, String> labelNames = new TreeMap<Integer, String>();
-    private TreeMap<Integer, String> labelComments = new TreeMap<Integer, String>();
-    private TreeMap<Integer, KeyStroke> labelKeyStrokes = new TreeMap<Integer, KeyStroke>();
-    private Set<Integer> reportLabels = new TreeSet<Integer>();
+    private ArrayList<byte[]> bookmarks;
+    private TreeMap<Integer, String> bookmarkNames = new TreeMap<Integer, String>();
+    private TreeMap<Integer, String> bookmarkComments = new TreeMap<Integer, String>();
+    private TreeMap<Integer, KeyStroke> bookmarkKeyStrokes = new TreeMap<Integer, KeyStroke>();
+    private Set<Integer> reportBookmarks = new TreeSet<Integer>();
 
     private int selectedItens = 0, totalItems, lastId;
 
@@ -82,7 +82,7 @@ public class Bookmarks implements Serializable, IBookmarks {
         this.totalItems = totalItens;
         this.lastId = lastId;
         selected = new boolean[lastId + 1];
-        labels = new ArrayList<byte[]>();
+        bookmarks = new ArrayList<byte[]>();
         indexDir = new File(modulePath, "index"); //$NON-NLS-1$
         stateFile = new File(modulePath, STATEFILENAME);
         updateCookie();
@@ -113,7 +113,7 @@ public class Bookmarks implements Serializable, IBookmarks {
     }
 
     public Map<Integer, String> getBookmarkMap() {
-        return labelNames;
+        return bookmarkNames;
     }
 
     public LinkedHashSet<String> getTypedWords() {
@@ -144,10 +144,10 @@ public class Bookmarks implements Serializable, IBookmarks {
     }
 
     public List<String> getBookmarkList(int itemId) {
-        ArrayList<Integer> labelIds = getBookmarkIds(itemId);
+        ArrayList<Integer> bookmarkIds = getBookmarkIds(itemId);
         TreeSet<String> result = new TreeSet<>();
-        for (Integer labelId : labelIds) {
-            result.add(labelNames.get(labelId));
+        for (Integer bookmarkId : bookmarkIds) {
+            result.add(bookmarkNames.get(bookmarkId));
         }
         ArrayList<String> list = new ArrayList<>(result.size());
         list.addAll(result);
@@ -155,38 +155,38 @@ public class Bookmarks implements Serializable, IBookmarks {
     }
 
     public ArrayList<Integer> getBookmarkIds(int id) {
-        ArrayList<Integer> labelIds = new ArrayList<Integer>();
-        if (labelNames.size() > 0)
-            for (int i : labelNames.keySet()) {
+        ArrayList<Integer> bookmarkIds = new ArrayList<Integer>();
+        if (bookmarkNames.size() > 0)
+            for (int i : bookmarkNames.keySet()) {
                 if (hasBookmark(id, i))
-                    labelIds.add(i);
+                    bookmarkIds.add(i);
             }
 
-        return labelIds;
+        return bookmarkIds;
     }
 
-    public synchronized void addBookmark(List<Integer> ids, int label) {
-        int labelOrder = label / labelBits;
-        int labelMod = label % labelBits;
-        int labelMask = 1 << labelMod;
-        byte[] labelBytes = labels.get(labelOrder);
+    public synchronized void addBookmark(List<Integer> ids, int bookmark) {
+        int bookmarkOrder = bookmark / bookmarkBits;
+        int bookmarkMod = bookmark % bookmarkBits;
+        int bookmarkMask = 1 << bookmarkMod;
+        byte[] bookmarkBytes = bookmarks.get(bookmarkOrder);
         for (int i = 0; i < ids.size(); i++) {
             int id = ids.get(i);
-            labelBytes[id] |= labelMask;
+            bookmarkBytes[id] |= bookmarkMask;
         }
 
     }
 
-    public int getBookmarkCount(int label) {
-        if (labels.isEmpty()) {
+    public int getBookmarkCount(int bookmark) {
+        if (bookmarks.isEmpty()) {
             return 0;
         }
-        int labelOrder = label / labelBits;
-        int labelMask = 1 << (label % labelBits);
-        byte[] labelBytes = labels.get(labelOrder); 
+        int bookmarkOrder = bookmark / bookmarkBits;
+        int bookmarkMask = 1 << (bookmark % bookmarkBits);
+        byte[] bookmarkBytes = bookmarks.get(bookmarkOrder);
         int ret = 0;
-        for (byte b : labelBytes) {
-            if ((b & labelMask) != 0) {
+        for (byte b : bookmarkBytes) {
+            if ((b & bookmarkMask) != 0) {
                 ret++;
             }
         }
@@ -194,148 +194,148 @@ public class Bookmarks implements Serializable, IBookmarks {
     }
     
     public final boolean hasBookmark(int id) {
-        boolean hasLabel = false;
-        for (byte[] b : labels) {
-            hasLabel = b[id] != 0;
-            if (hasLabel)
+        boolean hasBookmark = false;
+        for (byte[] b : bookmarks) {
+            hasBookmark = b[id] != 0;
+            if (hasBookmark)
                 return true;
         }
-        return hasLabel;
+        return hasBookmark;
     }
 
-    public final byte[] getBookmarkBits(int[] labelids) {
-        byte[] bits = new byte[labels.size()];
-        for (int label : labelids)
-            bits[label / labelBits] |= 1 << (label % labelBits);
+    public final byte[] getBookmarkBits(int[] bookmarkids) {
+        byte[] bits = new byte[bookmarks.size()];
+        for (int bookmark : bookmarkids)
+            bits[bookmark / bookmarkBits] |= 1 << (bookmark % bookmarkBits);
 
         return bits;
     }
 
-    public final boolean hasBookmark(int id, byte[] labelbits) {
-        boolean hasLabel = false;
-        for (int i = 0; i < labelbits.length; i++) {
-            hasLabel = (labels.get(i)[id] & labelbits[i]) != 0;
-            if (hasLabel)
+    public final boolean hasBookmark(int id, byte[] bookmarkbits) {
+        boolean hasBookmark = false;
+        for (int i = 0; i < bookmarkbits.length; i++) {
+            hasBookmark = (bookmarks.get(i)[id] & bookmarkbits[i]) != 0;
+            if (hasBookmark)
                 return true;
         }
-        return hasLabel;
+        return hasBookmark;
     }
 
-    public final boolean hasBookmark(int id, int label) {
-        int p = 1 << (label % labelBits);
-        int bit = labels.get(label / labelBits)[id] & p;
+    public final boolean hasBookmark(int id, int bookmark) {
+        int p = 1 << (bookmark % bookmarkBits);
+        int bit = bookmarks.get(bookmark / bookmarkBits)[id] & p;
         return bit != 0;
 
     }
 
-    public synchronized void removeBookmark(List<Integer> ids, int label) {
-        int labelOrder = label / labelBits;
-        int labelMod = label % labelBits;
-        int labelMask = ~(1 << labelMod);
-        byte[] labelBytes = labels.get(labelOrder);
+    public synchronized void removeBookmark(List<Integer> ids, int bookmark) {
+        int bookmarkOrder = bookmark / bookmarkBits;
+        int bookmarkMod = bookmark % bookmarkBits;
+        int bookmarkMask = ~(1 << bookmarkMod);
+        byte[] bookmarkBytes = bookmarks.get(bookmarkOrder);
         for (int i = 0; i < ids.size(); i++) {
-            labelBytes[ids.get(i)] &= labelMask;
+            bookmarkBytes[ids.get(i)] &= bookmarkMask;
         }
 
     }
 
-    public synchronized int newBookmark(String labelName) {
+    public synchronized int newBookmark(String bookmarkName) {
 
-        int labelId = getBookmarkId(labelName);
-        if (labelId != -1)
-            return labelId;
+        int bookmarkId = getBookmarkId(bookmarkName);
+        if (bookmarkId != -1)
+            return bookmarkId;
 
-        if (labelNames.size() > 0)
-            for (int i = 0; i <= labelNames.lastKey(); i++)
-                if (labelNames.get(i) == null) {
-                    labelId = i;
+        if (bookmarkNames.size() > 0)
+            for (int i = 0; i <= bookmarkNames.lastKey(); i++)
+                if (bookmarkNames.get(i) == null) {
+                    bookmarkId = i;
                     break;
                 }
 
-        if (labelId == -1 && labelNames.size() % labelBits == 0) {
-            byte[] newLabels = new byte[selected.length];
-            labels.add(newLabels);
+        if (bookmarkId == -1 && bookmarkNames.size() % bookmarkBits == 0) {
+            byte[] newBookmarks = new byte[selected.length];
+            bookmarks.add(newBookmarks);
         }
-        if (labelId == -1)
-            labelId = labelNames.size();
+        if (bookmarkId == -1)
+            bookmarkId = bookmarkNames.size();
 
-        labelNames.put(labelId, labelName);
-        labelComments.put(labelId, null);
-        labelKeyStrokes.put(labelId, null);
+        bookmarkNames.put(bookmarkId, bookmarkName);
+        bookmarkComments.put(bookmarkId, null);
+        bookmarkKeyStrokes.put(bookmarkId, null);
 
-        return labelId;
+        return bookmarkId;
     }
 
-    public synchronized void delBookmark(int label) {
-        if (label == -1)
+    public synchronized void delBookmark(int bookmark) {
+        if (bookmark == -1)
             return;
-        labelNames.remove(label);
-        labelComments.remove(label);
-        labelKeyStrokes.remove(label);
-        reportLabels.remove(label);
+        bookmarkNames.remove(bookmark);
+        bookmarkComments.remove(bookmark);
+        bookmarkKeyStrokes.remove(bookmark);
+        reportBookmarks.remove(bookmark);
 
-        int labelOrder = label / labelBits;
-        int labelMod = label % labelBits;
-        int labelMask = ~(1 << labelMod);
-        byte[] labelBytes = labels.get(labelOrder);
-        for (int i = 0; i < labelBytes.length; i++) {
-            labelBytes[i] &= labelMask;
+        int bookmarkOrder = bookmark / bookmarkBits;
+        int bookmarkMod = bookmark % bookmarkBits;
+        int bookmarkMask = ~(1 << bookmarkMod);
+        byte[] bookmarkBytes = bookmarks.get(bookmarkOrder);
+        for (int i = 0; i < bookmarkBytes.length; i++) {
+            bookmarkBytes[i] &= bookmarkMask;
         }
     }
 
-    public synchronized void renameBookmark(int labelId, String newLabel) {
-        if (labelId != -1)
-            labelNames.put(labelId, newLabel);
+    public synchronized void renameBookmark(int bookmarkId, String newBookmark) {
+        if (bookmarkId != -1)
+            bookmarkNames.put(bookmarkId, newBookmark);
     }
 
-    public int getBookmarkId(String labelName) {
-        for (int i : labelNames.keySet()) {
-            if (labelNames.get(i).equals(labelName))
+    public int getBookmarkId(String bookmarkName) {
+        for (int i : bookmarkNames.keySet()) {
+            if (bookmarkNames.get(i).equals(bookmarkName))
                 return i;
         }
         return -1;
     }
 
-    public String getBookmarkName(int labelId) {
-        return labelNames.get(labelId);
+    public String getBookmarkName(int bookmarkId) {
+        return bookmarkNames.get(bookmarkId);
     }
 
-    public synchronized void setBookmarkComment(int labelId, String comment) {
-        labelComments.put(labelId, comment);
+    public synchronized void setBookmarkComment(int bookmarkId, String comment) {
+        bookmarkComments.put(bookmarkId, comment);
     }
 
-    public String getBookmarkComment(int labelId) {
-        return labelComments.get(labelId);
+    public String getBookmarkComment(int bookmarkId) {
+        return bookmarkComments.get(bookmarkId);
     }
 
-    public synchronized void setBookmarkKeyStroke(int labelId, KeyStroke key) {
-        labelKeyStrokes.put(labelId, key);
+    public synchronized void setBookmarkKeyStroke(int bookmarkId, KeyStroke key) {
+        bookmarkKeyStrokes.put(bookmarkId, key);
     }
 
-    public KeyStroke getBookmarkKeyStroke(int labelId) {
-        return labelKeyStrokes.get(labelId);
+    public KeyStroke getBookmarkKeyStroke(int bookmarkId) {
+        return bookmarkKeyStrokes.get(bookmarkId);
     }
 
-    public synchronized void setInReport(int labelId, boolean inReport) {
+    public synchronized void setInReport(int bookmarkId, boolean inReport) {
         if (inReport)
-            reportLabels.add(labelId);
+            reportBookmarks.add(bookmarkId);
         else
-            reportLabels.remove(labelId);
+            reportBookmarks.remove(bookmarkId);
     }
 
-    public boolean isInReport(int labelId) {
-        return reportLabels.contains(labelId);
+    public boolean isInReport(int bookmarkId) {
+        return reportBookmarks.contains(bookmarkId);
     }
 
-    public SearchResult filterBookmarks(SearchResult result, Set<String> labelNames) {
-        int[] labelIds = new int[labelNames.size()];
+    public SearchResult filterBookmarks(SearchResult result, Set<String> bookmarkNames) {
+        int[] bookmarkIds = new int[bookmarkNames.size()];
         int i = 0;
-        for (String labelName : labelNames)
-            labelIds[i++] = getBookmarkId(labelName);
-        byte[] labelBits = getBookmarkBits(labelIds);
+        for (String bookmarkName : bookmarkNames)
+            bookmarkIds[i++] = getBookmarkId(bookmarkName);
+        byte[] bookmarkBits = getBookmarkBits(bookmarkIds);
 
         for (i = 0; i < result.getLength(); i++) {
-            if (!hasBookmark(result.getId(i), labelBits)) {
+            if (!hasBookmark(result.getId(i), bookmarkBits)) {
                 result.getIds().set(i, -1);
             }
         }
@@ -343,15 +343,15 @@ public class Bookmarks implements Serializable, IBookmarks {
         return result;
     }
 
-    public SearchResult filterBookmarksOrNoBookmarks(SearchResult result, Set<String> labelNames) {
-        int[] labelIds = new int[labelNames.size()];
+    public SearchResult filterBookmarksOrNoBookmarks(SearchResult result, Set<String> bookmarkNames) {
+        int[] bookmarkIds = new int[bookmarkNames.size()];
         int i = 0;
-        for (String labelName : labelNames)
-            labelIds[i++] = getBookmarkId(labelName);
-        byte[] labelBits = getBookmarkBits(labelIds);
+        for (String bookmarkName : bookmarkNames)
+            bookmarkIds[i++] = getBookmarkId(bookmarkName);
+        byte[] bookmarkBits = getBookmarkBits(bookmarkIds);
 
         for (i = 0; i < result.getLength(); i++) {
-            if (hasBookmark(result.getId(i)) && !hasBookmark(result.getId(i), labelBits)) {
+            if (hasBookmark(result.getId(i)) && !hasBookmark(result.getId(i), bookmarkBits)) {
                 result.getIds().set(i, -1);
             }
         }
@@ -383,10 +383,10 @@ public class Bookmarks implements Serializable, IBookmarks {
         result = result.clone();
         for (int i = 0; i < result.getLength(); i++) {
             int itemId = result.getId(i);
-            List<Integer> labels = getBookmarkIds(itemId);
+            List<Integer> bookmarks = getBookmarkIds(itemId);
             boolean inReport = false;
-            for (int label : labels)
-                if (isInReport(label)) {
+            for (int bookmark : bookmarks)
+                if (isInReport(bookmark)) {
                     inReport = true;
                     break;
                 }
@@ -462,20 +462,20 @@ public class Bookmarks implements Serializable, IBookmarks {
             System.arraycopy(state.selected, 0, this.selected, 0, len);
         }
 
-        this.labels.clear();
-        for (byte[] array : state.labels) {
+        this.bookmarks.clear();
+        for (byte[] array : state.bookmarks) {
             byte[] newArray = new byte[lastId + 1];
             int len = Math.min(newArray.length, array.length);
             System.arraycopy(array, 0, newArray, 0, len);
-            this.labels.add(newArray);
+            this.bookmarks.add(newArray);
         }
 
         this.typedWords = state.typedWords;
         this.selectedItens = state.selectedItens;
-        this.labelNames = state.labelNames;
-        this.labelComments = state.labelComments;
-        this.labelKeyStrokes = state.labelKeyStrokes;
-        this.reportLabels = state.reportLabels;
+        this.bookmarkNames = state.bookmarkNames;
+        this.bookmarkComments = state.bookmarkComments;
+        this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
+        this.reportBookmarks = state.reportBookmarks;
     }
 
     public static Bookmarks load(File file) throws ClassNotFoundException, IOException {

@@ -91,42 +91,42 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return map.get(item.getSourceId()).hasBookmark(item.getId());
     }
 
-    private static final int[] getLabelIds(IBookmarks m, Set<String> labelNames) {
-        int[] labelIds = new int[labelNames.size()];
+    private static final int[] getBookmarkIds(IBookmarks m, Set<String> bookmarkNames) {
+        int[] bookmarkIds = new int[bookmarkNames.size()];
         int i = 0;
-        boolean hasLabel = false;
-        for (String labelName : labelNames) {
-            labelIds[i] = m.getBookmarkId(labelName);
-            if (labelIds[i++] != -1)
-                hasLabel = true;
+        boolean hasBookmark = false;
+        for (String bookmarkName : bookmarkNames) {
+            bookmarkIds[i] = m.getBookmarkId(bookmarkName);
+            if (bookmarkIds[i++] != -1)
+                hasBookmark = true;
         }
-        if (!hasLabel)
+        if (!hasBookmark)
             return null;
-        return labelIds;
+        return bookmarkIds;
     }
 
-    public boolean hasBookmark(IItemId item, Set<String> labelNames) {
+    public boolean hasBookmark(IItemId item, Set<String> bookmarkNames) {
         IBookmarks m = map.get(item.getSourceId());
-        int[] labelIds = getLabelIds(m, labelNames);
-        return m.hasBookmark(item.getId(), m.getBookmarkBits(labelIds));
+        int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
+        return m.hasBookmark(item.getId(), m.getBookmarkBits(bookmarkIds));
     }
 
-    public final boolean hasLabel(ItemId item, String labelName) {
+    public final boolean hasBookmark(ItemId item, String bookmarkName) {
         IBookmarks m = map.get(item.getSourceId());
-        int labelId = m.getBookmarkId(labelName);
-        if (labelId == -1)
+        int bookmarkId = m.getBookmarkId(bookmarkName);
+        if (bookmarkId == -1)
             return false;
-        return m.hasBookmark(item.getId(), labelId);
+        return m.hasBookmark(item.getId(), bookmarkId);
     }
 
-    public void addBookmark(List<IItemId> ids, String labelName) {
+    public void addBookmark(List<IItemId> ids, String bookmarkName) {
         HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
         for (Integer sourceId : itemsPerSource.keySet()) {
             IBookmarks m = map.get(sourceId);
-            int labelId = m.getBookmarkId(labelName);
-            if (labelId == -1)
-                labelId = m.newBookmark(labelName);
-            m.addBookmark(itemsPerSource.get(sourceId), labelId);
+            int bookmarkId = m.getBookmarkId(bookmarkName);
+            if (bookmarkId == -1)
+                bookmarkId = m.newBookmark(bookmarkName);
+            m.addBookmark(itemsPerSource.get(sourceId), bookmarkId);
         }
     }
 
@@ -143,68 +143,68 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return itemsPerSource;
     }
 
-    public void removeBookmark(List<IItemId> ids, String labelName) {
+    public void removeBookmark(List<IItemId> ids, String bookmarkName) {
         HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
         for (Integer sourceId : itemsPerSource.keySet()) {
             IBookmarks m = map.get(sourceId);
-            int labelId = m.getBookmarkId(labelName);
-            if (labelId != -1)
-                m.removeBookmark(itemsPerSource.get(sourceId), labelId);
+            int bookmarkId = m.getBookmarkId(bookmarkName);
+            if (bookmarkId != -1)
+                m.removeBookmark(itemsPerSource.get(sourceId), bookmarkId);
         }
 
     }
 
-    public void newBookmark(String labelName) {
+    public void newBookmark(String bookmarkName) {
         for (IBookmarks m : map.values())
-            m.newBookmark(labelName);
+            m.newBookmark(bookmarkName);
     }
 
-    public void delBookmark(String labelName) {
+    public void delBookmark(String bookmarkName) {
         for (IBookmarks m : map.values()) {
-            int labelId = m.getBookmarkId(labelName);
-            m.delBookmark(labelId);
+            int bookmarkId = m.getBookmarkId(bookmarkName);
+            m.delBookmark(bookmarkId);
         }
     }
 
-    public void renameBookmark(String oldLabel, String newLabel) {
+    public void renameBookmark(String oldBookmark, String newBookmark) {
         for (IBookmarks m : map.values())
-            m.renameBookmark(m.getBookmarkId(oldLabel), newLabel);
+            m.renameBookmark(m.getBookmarkId(oldBookmark), newBookmark);
     }
 
-    public void setBookmarkComment(String labelName, String comment) {
+    public void setBookmarkComment(String bookmarkName, String comment) {
         for (IBookmarks m : map.values())
-            m.setBookmarkComment(m.getBookmarkId(labelName), comment);
+            m.setBookmarkComment(m.getBookmarkId(bookmarkName), comment);
     }
 
-    public String getBookmarkComment(String labelName) {
+    public String getBookmarkComment(String bookmarkName) {
         for (IBookmarks m : map.values()) {
-            String comm = m.getBookmarkComment(m.getBookmarkId(labelName));
+            String comm = m.getBookmarkComment(m.getBookmarkId(bookmarkName));
             if (comm != null)
                 return comm;
         }
         return null;
     }
 
-    public void setBookmarkKeyStroke(String labelName, KeyStroke key) {
+    public void setBookmarkKeyStroke(String bookmarkName, KeyStroke key) {
         for (IBookmarks m : map.values())
-            m.setBookmarkKeyStroke(m.getBookmarkId(labelName), key);
+            m.setBookmarkKeyStroke(m.getBookmarkId(bookmarkName), key);
     }
 
-    public KeyStroke getBookmarkKeyStroke(String labelName) {
+    public KeyStroke getBookmarkKeyStroke(String bookmarkName) {
         for (IBookmarks m : map.values()) {
-            KeyStroke key = m.getBookmarkKeyStroke(m.getBookmarkId(labelName));
+            KeyStroke key = m.getBookmarkKeyStroke(m.getBookmarkId(bookmarkName));
             if (key != null)
                 return key;
         }
         return null;
     }
     
-    public int getBookmarkCount(String labelName) {
+    public int getBookmarkCount(String bookmarkName) {
         int ret = 0;
         for (IBookmarks m : map.values()) {
-            Integer labelId = m.getBookmarkId(labelName);
-            if (labelId != null) {
-                Integer cnt = m.getBookmarkCount(labelId);
+            Integer bookmarkId = m.getBookmarkId(bookmarkName);
+            if (bookmarkId != null) {
+                Integer cnt = m.getBookmarkCount(bookmarkId);
                 if (cnt != null) {
                     ret += cnt;
                 }
@@ -213,46 +213,46 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return ret;
     }
     
-    public void setInReport(String labelName, boolean inReport) {
+    public void setInReport(String bookmarkName, boolean inReport) {
         for (IBookmarks m : map.values()) {
-            int labelId = m.getBookmarkId(labelName);
-            m.setInReport(labelId, inReport);
+            int bookmarkId = m.getBookmarkId(bookmarkName);
+            m.setInReport(bookmarkId, inReport);
         }
     }
 
-    public boolean isInReport(String labelName) {
+    public boolean isInReport(String bookmarkName) {
         for (IBookmarks m : map.values()) {
-            int labelId = m.getBookmarkId(labelName);
-            if (m.isInReport(labelId))
+            int bookmarkId = m.getBookmarkId(bookmarkName);
+            if (m.isInReport(bookmarkId))
                 return true;
         }
         return false;
     }
 
     public TreeSet<String> getBookmarkSet() {
-        TreeSet<String> labels = new TreeSet<String>();
+        TreeSet<String> bookmarks = new TreeSet<String>();
         for (IBookmarks m : map.values())
-            labels.addAll(m.getBookmarkMap().values());
-        return labels;
+            bookmarks.addAll(m.getBookmarkMap().values());
+        return bookmarks;
     }
 
-    public IMultiSearchResult filterBookmarks(IMultiSearchResult result, Set<String> labelNames) {
+    public IMultiSearchResult filterBookmarks(IMultiSearchResult result, Set<String> bookmarkNames) {
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
-        HashMap<Integer, byte[]> labelBitsPerSource = new HashMap<Integer, byte[]>();
+        HashMap<Integer, byte[]> bookmarkBitsPerSource = new HashMap<Integer, byte[]>();
         for (IItemId item : result.getIterator()) {
             IBookmarks m = map.get(item.getSourceId());
-            byte[] labelbits = labelBitsPerSource.get(item.getSourceId());
-            if (labelbits == null) {
-                int[] labelIds = getLabelIds(m, labelNames);
-                if (labelIds != null)
-                    labelbits = m.getBookmarkBits(labelIds);
+            byte[] bookmarkbits = bookmarkBitsPerSource.get(item.getSourceId());
+            if (bookmarkbits == null) {
+                int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
+                if (bookmarkIds != null)
+                    bookmarkbits = m.getBookmarkBits(bookmarkIds);
                 else
-                    labelbits = new byte[0];
-                labelBitsPerSource.put(item.getSourceId(), labelbits);
+                    bookmarkbits = new byte[0];
+                bookmarkBitsPerSource.put(item.getSourceId(), bookmarkbits);
             }
-            if (labelbits.length != 0 && m.hasBookmark(item.getId(), labelbits)) {
+            if (bookmarkbits.length != 0 && m.hasBookmark(item.getId(), bookmarkbits)) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }
@@ -264,23 +264,24 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return r;
     }
 
-    public IMultiSearchResult filterBookmarksOrNoBookmarks(IMultiSearchResult result, Set<String> labelNames) {
+    public IMultiSearchResult filterBookmarksOrNoBookmarks(IMultiSearchResult result, Set<String> bookmarkNames) {
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
-        HashMap<Integer, byte[]> labelBitsPerSource = new HashMap<Integer, byte[]>();
+        HashMap<Integer, byte[]> bookmarkBitsPerSource = new HashMap<Integer, byte[]>();
         for (IItemId item : result.getIterator()) {
             IBookmarks m = map.get(item.getSourceId());
-            byte[] labelbits = labelBitsPerSource.get(item.getSourceId());
-            if (labelbits == null) {
-                int[] labelIds = getLabelIds(m, labelNames);
-                if (labelIds != null)
-                    labelbits = m.getBookmarkBits(labelIds);
+            byte[] bookmarkbits = bookmarkBitsPerSource.get(item.getSourceId());
+            if (bookmarkbits == null) {
+                int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
+                if (bookmarkIds != null)
+                    bookmarkbits = m.getBookmarkBits(bookmarkIds);
                 else
-                    labelbits = new byte[0];
-                labelBitsPerSource.put(item.getSourceId(), labelbits);
+                    bookmarkbits = new byte[0];
+                bookmarkBitsPerSource.put(item.getSourceId(), bookmarkbits);
             }
-            if (!m.hasBookmark(item.getId()) || (labelbits.length != 0 && m.hasBookmark(item.getId(), labelbits))) {
+            if (!m.hasBookmark(item.getId())
+                    || (bookmarkbits.length != 0 && m.hasBookmark(item.getId(), bookmarkbits))) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }
@@ -386,10 +387,10 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
     }
 
     @Override
-    public boolean hasBookmark(IItemId item, String labelName) {
-        HashSet<String> labelNames = new HashSet<String>();
-        labelNames.add(labelName);
-        return hasBookmark(item, labelNames);
+    public boolean hasBookmark(IItemId item, String bookmarkName) {
+        HashSet<String> bookmarkNames = new HashSet<String>();
+        bookmarkNames.add(bookmarkName);
+        return hasBookmark(item, bookmarkNames);
     }
 
     @Override
