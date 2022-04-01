@@ -265,7 +265,7 @@ public class HexSearcherImpl implements HexSearcher {
 
         }
 
-        private String formatTime(long tempo) {
+        private String formatTime(long time) {
 
             time /= 1000;
             long t1 = time / 3600;
