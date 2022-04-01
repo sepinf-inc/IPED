@@ -15,9 +15,10 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.mt.gpinf.registro.model.HiveCell;
-import dpf.mt.gpinf.registro.model.KeyNode;
-import dpf.mt.gpinf.registro.model.RegistryFile;
+import dpf.mt.gpinf.registry.RegistryParser;
+import dpf.mt.gpinf.registry.model.HiveCell;
+import dpf.mt.gpinf.registry.model.KeyNode;
+import dpf.mt.gpinf.registry.model.RegistryFile;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import junit.framework.TestCase;
 

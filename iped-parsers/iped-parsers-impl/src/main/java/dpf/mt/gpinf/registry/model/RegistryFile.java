@@ -1,4 +1,4 @@
-package dpf.mt.gpinf.registro.model;
+package dpf.mt.gpinf.registry.model;
 
 import java.io.File;
 import java.io.FileInputStream;

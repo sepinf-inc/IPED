@@ -1,4 +1,4 @@
-package dpf.mt.gpinf.registro;
+package dpf.mt.gpinf.registry;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,10 +18,10 @@ import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.mt.gpinf.registro.keyparsers.RegistryKeyParser;
-import dpf.mt.gpinf.registro.keyparsers.RegistryKeyParserManager;
-import dpf.mt.gpinf.registro.model.KeyNode;
-import dpf.mt.gpinf.registro.model.RegistryFile;
+import dpf.mt.gpinf.registry.keyparsers.RegistryKeyParser;
+import dpf.mt.gpinf.registry.keyparsers.RegistryKeyParserManager;
+import dpf.mt.gpinf.registry.model.KeyNode;
+import dpf.mt.gpinf.registry.model.RegistryFile;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;

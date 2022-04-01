@@ -1,4 +1,4 @@
-package dpf.mt.gpinf.registro.keyparsers;
+package dpf.mt.gpinf.registry.keyparsers;
 
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
@@ -16,8 +16,8 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 
-import dpf.mt.gpinf.registro.model.KeyNode;
-import dpf.mt.gpinf.registro.model.KeyValue;
+import dpf.mt.gpinf.registry.model.KeyNode;
+import dpf.mt.gpinf.registry.model.KeyValue;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import iped3.util.ExtraProperties;

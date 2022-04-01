@@ -1,11 +1,11 @@
-package dpf.mt.gpinf.registro.keyparsers;
+package dpf.mt.gpinf.registry.keyparsers;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 
-import dpf.mt.gpinf.registro.model.KeyNode;
+import dpf.mt.gpinf.registry.model.KeyNode;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 
 public interface RegistryKeyParser {

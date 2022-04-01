@@ -1,4 +1,4 @@
-package dpf.mt.gpinf.registro.keyparsers;
+package dpf.mt.gpinf.registry.keyparsers;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,7 +36,7 @@ public class RegistryKeyParserManager {
         try {
             String configPath = System.getProperty(IConfigurationDirectory.IPED_CONF_PATH);
 
-            File dir = new File(configPath + "/conf/ParsersCustomConfigs/dpf.mt.gpinf.registro.RegistryParser");
+            File dir = new File(configPath + "/conf/ParsersCustomConfigs/dpf.mt.gpinf.registry.RegistryParser");
             File[] files = dir.listFiles(new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String name) {

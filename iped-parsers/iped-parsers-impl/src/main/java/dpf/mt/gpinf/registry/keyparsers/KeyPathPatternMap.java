@@ -1,4 +1,4 @@
-package dpf.mt.gpinf.registro.keyparsers;
+package dpf.mt.gpinf.registry.keyparsers;
 
 import java.util.HashMap;
 import java.util.Iterator;
