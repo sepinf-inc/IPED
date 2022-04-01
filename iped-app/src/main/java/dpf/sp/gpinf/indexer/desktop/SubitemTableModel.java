@@ -153,7 +153,7 @@ public class SubitemTableModel extends AbstractTableModel
         App.get().parentItemModel.fireTableDataChanged();
     }
 
-    public void listSubItens(Document doc) {
+    public void listSubItems(Document doc) {
 
         String parentId = doc.get(IndexItem.ID);
 

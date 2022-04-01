@@ -131,7 +131,7 @@ public class MenuListener implements ActionListener {
             }
             BookmarksController.get().setMultiSetting(false);
             App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().atualizarGUISelection();
+            BookmarksController.get().updateUISelection();
 
         } else if (e.getSource() == menu.uncheckHighlighted) {
             BookmarksController.get().setMultiSetting(true);
@@ -141,7 +141,7 @@ public class MenuListener implements ActionListener {
             }
             BookmarksController.get().setMultiSetting(false);
             App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().atualizarGUISelection();
+            BookmarksController.get().updateUISelection();
 
         }
 
@@ -165,7 +165,7 @@ public class MenuListener implements ActionListener {
             }
             BookmarksController.get().setMultiSetting(false);
             App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().atualizarGUISelection();
+            BookmarksController.get().updateUISelection();
 
         } else if (e.getSource() == menu.unreadHighlighted) {
             BookmarksController.get().setMultiSetting(true);
@@ -175,7 +175,7 @@ public class MenuListener implements ActionListener {
             }
             BookmarksController.get().setMultiSetting(false);
             App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().atualizarGUISelection();
+            BookmarksController.get().updateUISelection();
 
         } else if (e.getSource() == menu.exportHighlighted) {
             setupFileChooser();
@@ -439,7 +439,7 @@ public class MenuListener implements ActionListener {
             Node treeNode = (Node) paths[0].getLastPathComponent();
             baseDocId = treeNode.docId;
         }
-        ExportFileTree.salvarArquivo(baseDocId, onlyChecked, toZip);
+        ExportFileTree.saveFile(baseDocId, onlyChecked, toZip);
     }
 
     private static class SpinnerListener implements ChangeListener {

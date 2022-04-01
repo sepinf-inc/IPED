@@ -184,7 +184,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         // app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
         if (!BookmarksController.get().isMultiSetting()) {
             app.appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().atualizarGUISelection();
+            BookmarksController.get().updateUISelection();
         }
     }
 

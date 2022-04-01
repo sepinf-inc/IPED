@@ -88,7 +88,7 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
         }
     }
 
-    public LuceneSearchResult pesquisar() throws Exception {
+    public LuceneSearchResult search() throws Exception {
         return searcher.luceneSearch();
     }
 

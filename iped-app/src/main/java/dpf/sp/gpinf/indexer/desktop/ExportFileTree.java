@@ -375,7 +375,7 @@ public class ExportFileTree extends CancelableWorker {
         file.renameTo(newFile);
     }
 
-    public static void salvarArquivo(int baseDocId, boolean onlyChecked, boolean toZip) {
+    public static void saveFile(int baseDocId, boolean onlyChecked, boolean toZip) {
         try {
             // JFileChooser fileChooser = new JFileChooser();
             // [Triage] Patch para o caso de o arquivo selecionado já existir. Na versão

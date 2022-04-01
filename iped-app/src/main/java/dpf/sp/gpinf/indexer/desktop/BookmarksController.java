@@ -70,7 +70,7 @@ public class BookmarksController {
         updateUI();
     }
 
-    public void atualizarGUISelection() {
+    public void updateUISelection() {
         // MapaModelUpdateListener.updatingSelection = true;
         updateUI();
     }
