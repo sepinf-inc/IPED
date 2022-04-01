@@ -24,7 +24,8 @@ import iped3.io.SeekableInputStream;
  */
 public class AD1Extractor implements Closeable {
 
-    static long assinatura_tam = 512; // 0x200
+    private static final long SIGNATURE_SIZE = 512; // 0x200
+    private static final String charset = "UTF-8";
 
     private static Object lock = new Object();
 
@@ -32,31 +33,30 @@ public class AD1Extractor implements Closeable {
     private Map<Integer, List<ByteBuffer>> fcMap = new HashMap<>();
     private List<FileChannel> channels = new ArrayList<>();
 
-    long tamanho_bloco_arquivo = 0L;
-    long numero_arquivo = 0L;
-    long total_arquivos = 0L;
-    static String charset = "UTF-8";
+    long file_block_size = 0L;
+    long file_number = 0L;
+    long file_count = 0L;
 
     private FileHeader rootHeader = null;
 
-    byte vetor_15[] = new byte[15];
-    byte vetor_17[] = new byte[17];
-    byte vetor_20[] = new byte[20];
-    byte vetor_512[] = new byte[512];
-    byte vetor_48[] = new byte[48];
-    byte vetor_variavel[];
+    byte vector_15[] = new byte[15];
+    byte vector_17[] = new byte[17];
+    byte vector_20[] = new byte[20];
+    byte vector_512[] = new byte[512];
+    byte vector_48[] = new byte[48];
+    byte vector_dynamic[];
 
     long PC = 0L;
     long aux = 0L;
-    long PC_primeiro_arquivo = 0L;
+    long PC_first_file = 0L;
     long PC_root = 0L;
 
-    String assinatura = "";
-    String nome_ad1 = "";
-    long local_ad1_tam = 48L; // 0x30
-    long nome_ad1_tam = 0L;
-    long root_info_tam = 20L; // 0x14
-    long root_nome_tam = 0L;
+    String signature = "";
+    String ad1_name = "";
+    long local_ad1_len = 48L; // 0x30
+    long name_ad1_len = 0L;
+    long root_info_len = 20L; // 0x14
+    long root_name_len = 0L;
 
     public AD1Extractor(File arquivo) throws IOException {
         if (!arquivo.exists()) {
@@ -77,80 +77,80 @@ public class AD1Extractor implements Closeable {
 
     public void headerInit() throws IOException {
 
-        // Procura assinatura AD1
-        lerBytesArquivoAbsoluto(vetor_15, PC, 15);
-        assinatura = new String(vetor_15, charset);
+        // Procura signature AD1
+        readBytesFromAbsoluteFilePos(vector_15, PC, 15);
+        signature = new String(vector_15, charset);
 
-        if (!assinatura.equals("ADSEGMENTEDFILE")) {
-            throw new AD1ExtractorException("Expected header not found in AD1: " + assinatura);
+        if (!signature.equals("ADSEGMENTEDFILE")) {
+            throw new AD1ExtractorException("Expected header not found in AD1: " + signature);
         }
 
-        lerBytesArquivoAbsoluto(vetor_48, PC, 48);
+        readBytesFromAbsoluteFilePos(vector_48, PC, 48);
 
-        aux = lerTamanhoInteiroDeHexReverso(vetor_48, 35, 1);
+        aux = readLongFromBufLE(vector_48, 35, 1);
         aux = aux >> 4;
 
-        tamanho_bloco_arquivo = lerTamanhoInteiroDeHexReverso(vetor_48, 39, 4);
-        tamanho_bloco_arquivo = (tamanho_bloco_arquivo << 4) + aux;
+        file_block_size = readLongFromBufLE(vector_48, 39, 4);
+        file_block_size = (file_block_size << 4) + aux;
 
-        numero_arquivo = lerTamanhoInteiroDeHexReverso(vetor_48, 28, 4);
-        total_arquivos = lerTamanhoInteiroDeHexReverso(vetor_48, 32, 4);
+        file_number = readLongFromBufLE(vector_48, 28, 4);
+        file_count = readLongFromBufLE(vector_48, 32, 4);
 
         // Procurar Logical AD1
-        lerBytesArquivoRelativo(vetor_17, PC, 17);
-        nome_ad1 = new String(vetor_17, 0, 14, charset);
-        if (!nome_ad1.equals("ADLOGICALIMAGE")) {
-            throw new AD1ExtractorException("Expected signature not found in AD1: " + nome_ad1);
+        readBytesFromRelativeFilePos(vector_17, PC, 17);
+        ad1_name = new String(vector_17, 0, 14, charset);
+        if (!ad1_name.equals("ADLOGICALIMAGE")) {
+            throw new AD1ExtractorException("Expected signature not found in AD1: " + ad1_name);
         }
-        if (vetor_17[16] != 0x03) {
+        if (vector_17[16] != 0x03) {
             ;// throw new AD1ExtractorException("AD1 version not supported: " +
-             // vetor_17[16]);
+             // vector_17[16]);
         }
 
-        lerBytesArquivoRelativo(vetor_48, PC, local_ad1_tam);
-        PC_primeiro_arquivo = lerTamanhoInteiroDeHexReverso(vetor_48, 44, 8);
-        PC_root = lerTamanhoInteiroDeHexReverso(vetor_48, 36, 8);
+        readBytesFromRelativeFilePos(vector_48, PC, local_ad1_len);
+        PC_first_file = readLongFromBufLE(vector_48, 44, 8);
+        PC_root = readLongFromBufLE(vector_48, 36, 8);
 
         /*
          * //Essa parte tem q mudar para versao mais nova do ftk imager PC +=
-         * local_ad1_tam; //Ler nome da imagem ad1 nome_ad1_tam =
-         * lerTamanhoInteiroDeHexReverso(vetor_48,48,4); vetor_variavel = new byte
-         * [(int)(nome_ad1_tam)]; lerBytesArquivoRelativo(arquivo, vetor_variavel, PC,
-         * nome_ad1_tam); nome_ad1 = String.valueOf(vetor_variavel);
+         * local_ad1_len; //Ler nome da imagem ad1 name_ad1_len =
+         * lerTamanhoInteiroDeHexReverso(vector_48,48,4); vector_dynamic = new byte
+         * [(int)(name_ad1_len)]; lerBytesArquivoRelativo(arquivo, vector_dynamic, PC,
+         * name_ad1_len); ad1_name = String.valueOf(vector_dynamic);
          * 
-         * vetor_variavel = null;
+         * vector_dynamic = null;
          * 
-         * PC += nome_ad1_tam;
+         * PC += name_ad1_len;
          */
 
         // Ler Root
-        root_info_tam = 20L; // 0x14
+        root_info_len = 20L; // 0x14
 
         PC = PC_root;
 
-        lerBytesArquivoRelativo(vetor_20, PC, root_info_tam);
+        readBytesFromRelativeFilePos(vector_20, PC, root_info_len);
 
-        root_nome_tam = lerTamanhoInteiroDeHexReverso(vetor_20, 20, 4);
-        vetor_variavel = new byte[(int) root_nome_tam];
+        root_name_len = readLongFromBufLE(vector_20, 20, 4);
+        vector_dynamic = new byte[(int) root_name_len];
 
-        PC += root_info_tam;
-        lerBytesArquivoRelativo(vetor_variavel, PC, root_nome_tam);
-        String root_name = new String(vetor_variavel, charset);
+        PC += root_info_len;
+        readBytesFromRelativeFilePos(vector_dynamic, PC, root_name_len);
+        String root_name = new String(vector_dynamic, charset);
 
-        PC = PC_primeiro_arquivo;
+        PC = PC_first_file;
 
         if (PC != 0L) {
-            rootHeader = lerObjeto(PC, null);
+            rootHeader = readObject(PC, null);
         }
 
     }
 
-    public FileHeader lerObjeto(long PC, FileHeader parent) throws IOException {
+    public FileHeader readObject(long PC, FileHeader parent) throws IOException {
 
-        byte vetor_48[] = new byte[48];
+        byte vector_48[] = new byte[48];
 
-        byte vetor_16[] = new byte[16];
-        byte vetor_variavel[];
+        byte vector_16[] = new byte[16];
+        byte vector_variavel[];
 
         long info_objetos_tam = 48L; // 0x30
 
@@ -161,76 +161,76 @@ public class AD1Extractor implements Closeable {
         FileHeader header = new FileHeader(this, parent);
         header.object_address = PC;
 
-        lerBytesArquivoRelativo(vetor_48, PC, info_objetos_tam);
+        readBytesFromRelativeFilePos(vector_48, PC, info_objetos_tam);
         PC += info_objetos_tam;
 
         // Os 8 primeiros bytes apontam para o proximo
-        header.endereco_prox_objeto = lerTamanhoInteiroDeHexReverso(vetor_48, 8, 8);
+        header.nextObjAddress = readLongFromBufLE(vector_48, 8, 8);
 
         // Os proximos 8 bytes apontos para o filho
-        header.endereco_filho_objeto = lerTamanhoInteiroDeHexReverso(vetor_48, 16, 8);
+        header.childAddress = readLongFromBufLE(vector_48, 16, 8);
 
         // Os proximos 8 bytes tamanho do arquivo
-        header.objeto_PC_fim_parcial = lerTamanhoInteiroDeHexReverso(vetor_48, 24, 8);
+        header.object_PC_partial_end = readLongFromBufLE(vector_48, 24, 8);
 
         // Tipo 0/2 arquivo, tipo 5/7 diretorio
-        header.objeto_tipo = (int) lerTamanhoInteiroDeHexReverso(vetor_48, 44, 4);
+        header.objectType = (int) readLongFromBufLE(vector_48, 44, 4);
 
         // Ler nome do arquivo
-        header.nome_objeto_tam = lerTamanhoInteiroDeHexReverso(vetor_48, 48, 4);
+        header.objectNameSize = readLongFromBufLE(vector_48, 48, 4);
 
         // Ler nome do objeto
-        vetor_variavel = new byte[(int) header.nome_objeto_tam];
+        vector_variavel = new byte[(int) header.objectNameSize];
 
-        lerBytesArquivoRelativo(vetor_variavel, PC, header.nome_objeto_tam);
-        PC += header.nome_objeto_tam;
+        readBytesFromRelativeFilePos(vector_variavel, PC, header.objectNameSize);
+        PC += header.objectNameSize;
 
-        header.objeto_nome = new String(vetor_variavel, charset);
+        header.objectName = new String(vector_variavel, charset);
 
-        vetor_variavel = null;
+        vector_variavel = null;
 
         // Ler tamanho do objeto em bytes
-        header.setObjetoTamanhoBytes(lerTamanhoInteiroDeHexReverso(vetor_48, 40, 8));
+        header.setObjectSizeBytes(readLongFromBufLE(vector_48, 40, 8));
 
         // Aqui ficam os mapeamentos para os bytes stream do arquivo
         if (header.getFileSize() != 0) {
 
-            lerBytesArquivoRelativo(vetor_16, PC, 16);
+            readBytesFromRelativeFilePos(vector_16, PC, 16);
             PC += 16;
 
-            header.objeto_pedacos_tam = lerTamanhoInteiroDeHexReverso(vetor_16, 16, 8);
+            header.objectChunkSize = readLongFromBufLE(vector_16, 16, 8);
 
             pedacos_tam_adicionais = 8 + 7; // mais 15
-            vetor_variavel = new byte[(int) ((header.objeto_pedacos_tam * 8) + pedacos_tam_adicionais)];
+            vector_variavel = new byte[(int) ((header.objectChunkSize * 8) + pedacos_tam_adicionais)];
 
-            lerBytesArquivoRelativo(vetor_variavel, PC, (header.objeto_pedacos_tam * 8) + pedacos_tam_adicionais);
-            PC += (header.objeto_pedacos_tam * 8) + pedacos_tam_adicionais;
+            readBytesFromRelativeFilePos(vector_variavel, PC, (header.objectChunkSize * 8) + pedacos_tam_adicionais);
+            PC += (header.objectChunkSize * 8) + pedacos_tam_adicionais;
 
-            header.objeto_PC_ini_parcial = lerTamanhoInteiroDeHexReverso(vetor_variavel, 8, 8);
+            header.object_PC_partial_start = readLongFromBufLE(vector_variavel, 8, 8);
         } else {
 
-            header.objeto_PC_ini_parcial = 0;
-            header.objeto_pedacos_tam = 0;
+            header.object_PC_partial_start = 0;
+            header.objectChunkSize = 0;
 
         }
 
-        if (header.objeto_pedacos_tam == 1) {
+        if (header.objectChunkSize == 1) {
 
-            header.adicionaPedaco(header.objeto_PC_ini_parcial, header.objeto_PC_fim_parcial);
+            header.addChunk(header.object_PC_partial_start, header.object_PC_partial_end);
 
-        } else if (header.objeto_pedacos_tam > 1) {
+        } else if (header.objectChunkSize > 1) {
 
-            for (int i = 0; i < header.objeto_pedacos_tam; i++) {
+            for (int i = 0; i < header.objectChunkSize; i++) {
 
-                if (i != header.objeto_pedacos_tam - 1) {
+                if (i != header.objectChunkSize - 1) {
 
-                    header.adicionaPedaco(lerTamanhoInteiroDeHexReverso(vetor_variavel, ((i + 1) * 8), 8),
-                            lerTamanhoInteiroDeHexReverso(vetor_variavel, ((i + 2) * 8), 8));
+                    header.addChunk(readLongFromBufLE(vector_variavel, ((i + 1) * 8), 8),
+                            readLongFromBufLE(vector_variavel, ((i + 2) * 8), 8));
 
                 } else {
 
-                    header.adicionaPedaco(lerTamanhoInteiroDeHexReverso(vetor_variavel, ((i + 1) * 8), 8),
-                            header.objeto_PC_fim_parcial);
+                    header.addChunk(readLongFromBufLE(vector_variavel, ((i + 1) * 8), 8),
+                            header.object_PC_partial_end);
 
                 }
 
@@ -238,69 +238,69 @@ public class AD1Extractor implements Closeable {
 
         }
 
-        vetor_variavel = null;
+        vector_variavel = null;
 
         if (parent != null) {
-            header.caminho = parent.caminho;
+            header.path = parent.path;
         }
-        header.caminho += "/" + header.objeto_nome;
+        header.path += "/" + header.objectName;
 
-        PC = header.objeto_PC_fim_parcial;
+        PC = header.object_PC_partial_end;
 
-        lerPropriedade(PC, header);
+        readProperty(PC, header);
 
-        vetor_48 = null;
+        vector_48 = null;
 
-        vetor_16 = null;
+        vector_16 = null;
 
         return header;
 
     }
 
-    public void lerPropriedade(long endereco, FileHeader header) throws IOException {
+    public void readProperty(long endereco, FileHeader header) throws IOException {
 
         long endereco_prox_propriedade = 0L;
         long tamanho_propriedade = 20; // 0x14
         long propriedade_tam = 0;
-        byte vetor_variavel[] = null;
-        byte vetor_propriedade[] = null;
+        byte vector_variavel[] = null;
+        byte vector_propriedade[] = null;
         String propriedade_extenso = "";
         long PC = 0;
 
         PC = endereco;
 
-        vetor_propriedade = new byte[(int) tamanho_propriedade];
+        vector_propriedade = new byte[(int) tamanho_propriedade];
 
-        lerBytesArquivoRelativo(vetor_propriedade, PC, tamanho_propriedade);
+        readBytesFromRelativeFilePos(vector_propriedade, PC, tamanho_propriedade);
         PC += tamanho_propriedade;
 
-        endereco_prox_propriedade = lerTamanhoInteiroDeHexReverso(vetor_propriedade, 8, 8);
+        endereco_prox_propriedade = readLongFromBufLE(vector_propriedade, 8, 8);
 
-        int propCode = (int) lerTamanhoInteiroDeHexReverso(vetor_propriedade, 16, 4);
+        int propCode = (int) readLongFromBufLE(vector_propriedade, 16, 4);
 
-        propriedade_tam = lerTamanhoInteiroDeHexReverso(vetor_propriedade, 20, 4);
+        propriedade_tam = readLongFromBufLE(vector_propriedade, 20, 4);
 
-        vetor_variavel = new byte[(int) propriedade_tam];
+        vector_variavel = new byte[(int) propriedade_tam];
 
-        lerBytesArquivoRelativo(vetor_variavel, PC, propriedade_tam);
+        readBytesFromRelativeFilePos(vector_variavel, PC, propriedade_tam);
         PC += propriedade_tam;
 
-        propriedade_extenso = new String(vetor_variavel, charset);
+        propriedade_extenso = new String(vector_variavel, charset);
 
-        header.propriedadesMap.put(propCode, new Propriedade(propriedade_extenso));
+        header.propertiesMap.put(propCode, new Property(propriedade_extenso));
 
         if (endereco_prox_propriedade != 0) {
-            lerPropriedade(endereco_prox_propriedade, header);
+            readProperty(endereco_prox_propriedade, header);
         }
 
-        vetor_variavel = null;
-        vetor_propriedade = null;
+        vector_variavel = null;
+        vector_propriedade = null;
         propriedade_extenso = null;
 
         return;
     }
 
-    private static long lerTamanhoInteiroDeHexReverso(byte[] cbuf, int pos, int tam) {
+    private static long readLongFromBufLE(byte[] cbuf, int pos, int tam) {
 
         long r = 0L;
 
@@ -312,7 +312,7 @@ public class AD1Extractor implements Closeable {
 
     }
 
-    private void lerBytesArquivoAbsoluto(byte[] cbuf, long off, int len) throws IOException {
+    private void readBytesFromAbsoluteFilePos(byte[] cbuf, long off, int len) throws IOException {
         // reads from first ad1 only
         ByteBuffer src = fcMap.get(1).get((int) (off / Integer.MAX_VALUE));
         src.duplicate().get(cbuf, (int) (off % Integer.MAX_VALUE), len);
@@ -353,20 +353,20 @@ public class AD1Extractor implements Closeable {
         }
     }
 
-    private int lerBytesArquivoRelativo(byte[] cbuf, long off, long len) throws IOException {
+    private int readBytesFromRelativeFilePos(byte[] cbuf, long off, long len) throws IOException {
 
-        long endereco_final = assinatura_tam + off;
+        long endereco_final = SIGNATURE_SIZE + off;
         // String arquivo_final = arquivo;
         long len_aux = len;
         long off_aux = off;
-        long bloco_aux = ((tamanho_bloco_arquivo * 1024 * 1024) - assinatura_tam);
+        long bloco_aux = ((file_block_size * 1024 * 1024) - SIGNATURE_SIZE);
         int bytes_lidos = 0;
         int bytes_lidos_total = 0;
         int posicao_buffer = 0;
 
         while (len_aux > 0) {
 
-            endereco_final = assinatura_tam + (off_aux % bloco_aux);
+            endereco_final = SIGNATURE_SIZE + (off_aux % bloco_aux);
 
             int ad1File = (int) (off_aux / bloco_aux) + 1;
 
@@ -479,12 +479,12 @@ public class AD1Extractor implements Closeable {
 
             if (chunk != lastInflatedChunk) {
 
-                Pedaco p = header.pedacosList.get(chunk);
+                Chunk p = header.chunkList.get(chunk);
 
-                compressed_size = (int) (p.objeto_PC_fim - p.objeto_PC_ini);
+                compressed_size = (int) (p.object_PC_end - p.object_PC_ini);
 
                 compressed_buffer = new byte[compressed_size];
-                lerBytesArquivoRelativo(compressed_buffer, p.objeto_PC_ini, compressed_size);
+                readBytesFromRelativeFilePos(compressed_buffer, p.object_PC_ini, compressed_size);
 
                 inflater.reset();
                 inflater.setInput(compressed_buffer, 0, compressed_size);
@@ -515,28 +515,28 @@ public class AD1Extractor implements Closeable {
 
 }
 
-class Propriedade {
+class Property {
 
-    private String valor = "";
+    private String value = "";
 
-    Propriedade(String v) {
-        this.valor = v;
+    Property(String v) {
+        this.value = v;
     }
 
-    public String getValor() {
-        return this.valor;
+    public String getValue() {
+        return this.value;
     }
 
 }
 
-class Pedaco {
+class Chunk {
 
-    public long objeto_PC_ini = 0L;
-    public long objeto_PC_fim = 0L;
+    public long object_PC_ini = 0L;
+    public long object_PC_end = 0L;
 
-    public Pedaco(long ini, long fim) {
-        this.objeto_PC_ini = ini;
-        this.objeto_PC_fim = fim;
+    public Chunk(long ini, long fim) {
+        this.object_PC_ini = ini;
+        this.object_PC_end = fim;
     }
 
 }

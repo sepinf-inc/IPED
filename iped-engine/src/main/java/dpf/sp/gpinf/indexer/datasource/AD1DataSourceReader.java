@@ -140,7 +140,7 @@ public class AD1DataSourceReader extends DataSourceReader {
             if (ad1 == null)
                 init();
 
-            FileHeader fh = ad1.lerObjeto(Long.parseLong(identifier), null);
+            FileHeader fh = ad1.readObject(Long.parseLong(identifier), null);
             return ad1.getSeekableInputStream(fh);
         }
 
