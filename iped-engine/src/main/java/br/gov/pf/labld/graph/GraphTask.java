@@ -213,11 +213,6 @@ public class GraphTask extends AbstractTask {
 
     private void processEvidence(IItem evidence) throws IOException {
 
-        // old item->node model and gui dependent code was moved to class below
-        // ItemNodeGenerator itemNodeGenerator = new ItemNodeGenerator(caseData,
-        // configuration, graphFileWriter);
-        // itemNodeGenerator.generateNodeForItem(evidence);
-
         if (includeEvidence(evidence)) {
             processCommunicationMetadata(evidence);
             processContacts(evidence);
