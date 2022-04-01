@@ -54,7 +54,7 @@ public class Main {
     private static Logger LOGGER = null;
 
     String rootPath, configPath;
-    File palavrasChave;
+    File keywords;
     List<File> dataSource;
     File output;
 
@@ -95,7 +95,7 @@ public class Main {
         lastInstance = this;
         this.dataSource = reports;
         this.output = output;
-        this.palavrasChave = keywordList;
+        this.keywords = keywordList;
         this.configPath = configPath;
         this.logFile = logFile;
 
@@ -149,7 +149,7 @@ public class Main {
 
     protected void startManager() {
         try {
-            manager = new Manager(dataSource, output, palavrasChave);
+            manager = new Manager(dataSource, output, keywords);
             cmdLineParams.saveIntoCaseData(manager.getCaseData());
             manager.process();
 

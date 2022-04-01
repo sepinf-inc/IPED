@@ -56,7 +56,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Parameter(names = { "-l", "-keywordlist" }, description = "line file with keywords to be imported into case. "
             + "Keywords with no hits are filtered out.", validateWith = FileExistsValidator.class)
-    private File palavrasChave;
+    private File keywords;
 
     @Parameter(names = "-ocr", description = "only run OCR on a specific category or bookmark (can be used multiple times)")
     private List<String> ocr;
@@ -146,8 +146,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     }
 
     @Override
-    public File getPalavrasChave() {
-        return palavrasChave;
+    public File getKeywords() {
+        return keywords;
     }
 
     @Override
@@ -410,8 +410,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
                 list += (o + OCRParser.SUBSET_SEPARATOR);
             System.setProperty(OCRParser.SUBSET_TO_OCR, list);
         }
-        if (this.palavrasChave != null) {
-            Main.getInstance().palavrasChave = this.palavrasChave;
+        if (this.keywords != null) {
+            Main.getInstance().keywords = this.keywords;
         }
         if (this.logFile != null) {
             Main.getInstance().logFile = this.logFile;
