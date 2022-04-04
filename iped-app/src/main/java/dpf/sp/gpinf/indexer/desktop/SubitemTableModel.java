@@ -32,9 +32,9 @@ import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
-import iped3.search.LuceneSearchResult;
 
 public class SubitemTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {
@@ -164,7 +164,7 @@ public class SubitemTableModel extends AbstractTableModel
 
         try {
             IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-            results = task.luceneSearch();
+            results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
 
             final int sumSubitens = results.getLength();
 

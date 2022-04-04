@@ -41,6 +41,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ImageSimilarityLowScoreFilter;
 import dpf.sp.gpinf.indexer.search.ImageSimilarityScorer;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
@@ -51,7 +52,6 @@ import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
-import iped3.search.LuceneSearchResult;
 
 public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Object> {
 
@@ -86,10 +86,6 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
                     Messages.getString("UISearcher.Error.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             // e.printStackTrace();
         }
-    }
-
-    public LuceneSearchResult search() throws Exception {
-        return searcher.luceneSearch();
     }
 
     private Query getQueryWithUIFilter() throws ParseException, QueryNodeException {

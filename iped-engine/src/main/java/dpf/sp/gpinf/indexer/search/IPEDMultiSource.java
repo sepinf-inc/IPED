@@ -23,7 +23,6 @@ import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.exception.IPEDException;
-import iped3.search.LuceneSearchResult;
 
 public class IPEDMultiSource extends IPEDSource {
 

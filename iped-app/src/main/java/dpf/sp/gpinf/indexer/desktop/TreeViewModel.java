@@ -35,7 +35,8 @@ import org.apache.lucene.document.StoredField;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import iped3.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 
 public class TreeViewModel implements TreeModel {
 
@@ -128,7 +129,7 @@ public class TreeViewModel implements TreeModel {
             try {
                 IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
                 task.setTreeQuery(true);
-                children = task.luceneSearch();
+                children = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
                 Integer[] array = ArrayUtils.toObject(children.getLuceneIds());
                 Arrays.sort(array, getComparator());
                 children = LuceneSearchResult.buildSearchResult(ArrayUtils.toPrimitive(array), null);
@@ -148,7 +149,7 @@ public class TreeViewModel implements TreeModel {
         try {
             IPEDSearcher task = new IPEDSearcher(App.get().appCase, IndexItem.ISROOT + ":true"); //$NON-NLS-1$
             task.setTreeQuery(true);
-            root.children = task.luceneSearch();
+            root.children = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
             Integer[] array = ArrayUtils.toObject(root.children.getLuceneIds());
             Arrays.sort(array, getComparator());
             root.children = LuceneSearchResult.buildSearchResult(ArrayUtils.toPrimitive(array), null);

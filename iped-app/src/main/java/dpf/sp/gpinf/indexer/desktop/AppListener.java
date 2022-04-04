@@ -18,8 +18,8 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import iped3.search.LuceneSearchResult;
 
 import java.awt.Component;
 import java.awt.Rectangle;

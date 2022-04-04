@@ -63,6 +63,7 @@ import dpf.sp.gpinf.indexer.process.task.QRCodeTask;
 import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIOInputInputStreamFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.Bookmarks;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.HashValue;
@@ -77,7 +78,6 @@ import iped3.datasource.IDataSource;
 import iped3.search.IIPEDSearcher;
 import iped3.search.IBookmarks;
 import iped3.search.IMultiBookmarks;
-import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -168,7 +168,7 @@ public class IPEDReader extends DataSourceReader {
             query.add(parents.build(), Occur.MUST);
             query.add(subitems.build(), Occur.MUST);
             IIPEDSearcher searcher = new IPEDSearcher(ipedCase, query.build());
-            LuceneSearchResult result = searcher.luceneSearch();
+            LuceneSearchResult result = LuceneSearchResult.get(ipedCase, searcher.search());
             insertIntoProcessQueue(result, false);
         }
     }
@@ -205,7 +205,7 @@ public class IPEDReader extends DataSourceReader {
             extractCheckedItems = true;
         }
 
-        LuceneSearchResult result = SearchResult.get(searchResult, ipedCase);
+        LuceneSearchResult result = LuceneSearchResult.get(ipedCase, searchResult);
 
         insertIntoProcessQueue(result, false);
 
@@ -274,7 +274,7 @@ public class IPEDReader extends DataSourceReader {
             if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
                 IIPEDSearcher searchParents = new IPEDSearcher(ipedCase, query.build());
                 searchParents.setTreeQuery(true);
-                LuceneSearchResult parents = searchParents.luceneSearch();
+                LuceneSearchResult parents = LuceneSearchResult.get(ipedCase, searchParents.search());
                 insertIntoProcessQueue(parents, true);
                 query = new BooleanQuery.Builder();
                 num = 0;
@@ -332,7 +332,7 @@ public class IPEDReader extends DataSourceReader {
                 }
                 if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
                     IIPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query.build());
-                    LuceneSearchResult attachs = searchAttachs.luceneSearch();
+                    LuceneSearchResult attachs = LuceneSearchResult.get(ipedCase, searchAttachs.search());
                     insertIntoProcessQueue(attachs, false);
                     query = new BooleanQuery.Builder();
                     num = 0;
@@ -390,7 +390,7 @@ public class IPEDReader extends DataSourceReader {
         queryBuilder.append(")"); //$NON-NLS-1$
         IIPEDSearcher searcher = new IPEDSearcher(ipedCase, queryBuilder.toString());
 
-        LuceneSearchResult linkedItems = searcher.luceneSearch();
+        LuceneSearchResult linkedItems = LuceneSearchResult.get(ipedCase, searcher.search());
         if (linkedItems.getLength() > 0) {
             insertIntoProcessQueue(linkedItems, false);
             insertParentTreeNodes(linkedItems);

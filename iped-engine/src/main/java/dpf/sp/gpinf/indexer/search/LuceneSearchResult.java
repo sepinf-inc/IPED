@@ -16,11 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package iped3.search;
+package dpf.sp.gpinf.indexer.search;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import org.apache.lucene.search.ScoreDoc;
+
+import iped3.IIPEDSource;
+import iped3.search.SearchResult;
 
 /**
  * Classe que armazena os resultados de uma pesquisa. Decompõe ScoreDoc[] para
@@ -60,6 +63,28 @@ public class LuceneSearchResult {
         s.scores = scores;
         s.length = docs.length;
         return s;
+    }
+
+    public static LuceneSearchResult get(IIPEDSource iSource, SearchResult ipedResult) {
+        LuceneSearchResult lResult = new LuceneSearchResult(ipedResult.getLength());
+        int i = 0;
+        for (int id : ipedResult.getIds()) {
+            lResult.docs[i] = iSource.getLuceneId(id);
+            lResult.scores[i] = ipedResult.getScore(i);
+            i++;
+        }
+        return lResult;
+    }
+
+    public SearchResult getSearchResult(IIPEDSource iSource) {
+        float[] scores = this.scores;
+        int[] ids = new int[this.getLength()];
+
+        int i = 0;
+        for (int luceneId : this.docs) {
+            ids[i++] = iSource.getId(luceneId);
+        }
+        return new SearchResult(ids, scores);
     }
 
     public LuceneSearchResult addResults(ScoreDoc[] scoreDocs) {

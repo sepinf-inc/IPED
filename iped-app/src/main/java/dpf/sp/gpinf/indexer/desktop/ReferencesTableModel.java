@@ -37,9 +37,9 @@ import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped3.IItem;
-import iped3.search.LuceneSearchResult;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -202,7 +202,7 @@ public class ReferencesTableModel extends AbstractTableModel
     
             try {
                 IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-                results = task.luceneSearch();
+                results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
     
                 final int length = results.getLength();
     

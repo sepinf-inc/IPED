@@ -32,10 +32,10 @@ import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped3.search.IIPEDSearcher;
 import iped3.search.IMultiSearchResult;
-import iped3.search.LuceneSearchResult;
 
 public class DuplicatesTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {
@@ -170,7 +170,7 @@ public class DuplicatesTableModel extends AbstractTableModel
 
         try {
             IIPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-            results = task.luceneSearch();
+            results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
 
             final int duplicates = results.getLength();
 

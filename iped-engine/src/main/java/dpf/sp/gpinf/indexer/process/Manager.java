@@ -70,6 +70,7 @@ import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.Bookmarks;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.CustomIndexDeletionPolicy;
@@ -84,7 +85,6 @@ import iped3.ICaseData;
 import iped3.IItem;
 import iped3.exception.IPEDException;
 import iped3.search.IItemSearcher;
-import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
 import iped3.util.BasicProps;
 
@@ -755,7 +755,7 @@ public class Manager {
 
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())) {
             IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
-            LuceneSearchResult result = searchAll.luceneSearch();
+            LuceneSearchResult result = LuceneSearchResult.get(ipedCase, searchAll.search());
 
             boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
             for (int docID : result.getLuceneIds()) {

@@ -45,6 +45,7 @@ import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
@@ -52,7 +53,7 @@ import iped3.IItem;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 import iped3.search.IIPEDSearcher;
-import iped3.search.LuceneSearchResult;
+import iped3.search.IMultiSearchResult;
 
 public class ExportFileTree extends CancelableWorker {
 
@@ -107,13 +108,11 @@ public class ExportFileTree extends CancelableWorker {
                 textQuery = "(" + textQuery + ") AND NOT (" + activeStr + ")";
 
             IIPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-            LuceneSearchResult result = task.luceneSearch();
-
+            IMultiSearchResult msr = task.multiSearch();
             if (onlyChecked) {
-                MultiSearchResult ir = MultiSearchResult.get(App.get().appCase, result);
-                ir = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterChecked(ir);
-                result = MultiSearchResult.get(ir, App.get().appCase);
+                msr = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterChecked(msr);
             }
+            LuceneSearchResult result = MultiSearchResult.get(msr, App.get().appCase);
 
             return result.getLuceneIds();
 

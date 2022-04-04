@@ -19,8 +19,6 @@ public interface IIPEDSearcher {
 
     Query getQuery();
 
-    LuceneSearchResult luceneSearch() throws Exception;
-
     IMultiSearchResult multiSearch() throws Exception;
 
     SearchResult search() throws Exception;

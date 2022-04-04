@@ -8,8 +8,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 
-import iped3.search.LuceneSearchResult;
-
 /**
  * Fast collector that do not compute scores, for cases with dozens of millions
  * of items

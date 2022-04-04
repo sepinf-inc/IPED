@@ -41,7 +41,6 @@ import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.IIPEDSearcher;
-import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
 
 public class IPEDSearcher implements IIPEDSearcher {
@@ -106,7 +105,7 @@ public class IPEDSearcher implements IIPEDSearcher {
         if (ipedCase instanceof IPEDMultiSource)
             throw new UnsupportedOperationException("Use multiSearch() method for IPEDMultiSource!"); //$NON-NLS-1$
 
-        return SearchResult.get(ipedCase, luceneSearch());
+        return luceneSearch().getSearchResult(ipedCase);
     }
 
     public MultiSearchResult multiSearch() throws IOException {
@@ -116,7 +115,7 @@ public class IPEDSearcher implements IIPEDSearcher {
         return MultiSearchResult.get((IPEDMultiSource) ipedCase, luceneSearch());
     }
 
-    public LuceneSearchResult luceneSearch() throws IOException {
+    LuceneSearchResult luceneSearch() throws IOException {
         return filterFragmentedResults(searchAll());
     }
 
