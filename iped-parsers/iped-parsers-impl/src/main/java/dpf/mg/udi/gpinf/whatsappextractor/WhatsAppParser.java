@@ -76,7 +76,7 @@ import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.IItem;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;

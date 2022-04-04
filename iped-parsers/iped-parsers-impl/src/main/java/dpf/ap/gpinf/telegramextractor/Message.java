@@ -27,7 +27,7 @@ import java.util.Set;
 import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 
 public class Message implements MessageInterface {
     private long id;

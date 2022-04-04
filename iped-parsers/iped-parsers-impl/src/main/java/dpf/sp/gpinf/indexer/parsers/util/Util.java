@@ -28,7 +28,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil.ContainerVolatile;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 
 public class Util {

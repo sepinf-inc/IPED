@@ -40,7 +40,7 @@ import org.sqlite.SQLiteException;
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 

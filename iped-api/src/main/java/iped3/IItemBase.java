@@ -1,4 +1,4 @@
-package iped3.io;
+package iped3;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -11,6 +11,8 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
 import iped3.datasource.IDataSource;
+import iped3.io.ISeekableInputStreamFactory;
+import iped3.io.IStreamSource;
 
 public interface IItemBase extends IStreamSource {
     /**

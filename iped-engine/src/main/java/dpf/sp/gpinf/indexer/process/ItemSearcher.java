@@ -11,7 +11,7 @@ import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.search.SearchResult;
 

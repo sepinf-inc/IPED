@@ -15,7 +15,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
 import iped3.datasource.IDataSource;
-import iped3.io.IItemBase;
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 

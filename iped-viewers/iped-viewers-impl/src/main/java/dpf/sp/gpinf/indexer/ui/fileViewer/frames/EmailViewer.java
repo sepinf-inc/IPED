@@ -61,7 +61,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.io.IStreamSource;
 
 public class EmailViewer extends HtmlViewer {

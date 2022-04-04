@@ -26,7 +26,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import dpf.sp.gpinf.indexer.util.UiUtil;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
