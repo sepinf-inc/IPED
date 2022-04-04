@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.tika;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.tika;
 
 import java.util.Calendar;
 import java.util.Date;
