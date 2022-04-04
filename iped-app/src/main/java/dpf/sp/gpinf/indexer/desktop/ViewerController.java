@@ -46,6 +46,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TiffViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TikaHtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
+import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import iped3.io.IStreamSource;
 
@@ -73,12 +74,12 @@ public class ViewerController {
     private boolean isFixed;
     private final Object lock = new Object();
 
-    public ViewerController(AppSearchParams params) {
+    public ViewerController(HitsTable hitsTable, final String codePath) {
         Window owner = App.get();
         
         // These viewers will have their own docking frame
         viewers.add(new HexViewerPlus(owner, new HexSearcherImpl()));
-        viewers.add(textViewer = new TextViewer(params));
+        viewers.add(textViewer = new TextViewer(hitsTable));
         viewers.add(new MetadataViewer() {
             @Override
             public boolean isFixed() {
@@ -113,13 +114,13 @@ public class ViewerController {
                     }
 
                     // LibreOffice viewer initialization
-                    LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(params.codePath).getParentFile());
+                    LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(codePath).getParentFile());
                     final String pathLO = loFinder.getLOPath();
                     if (pathLO != null) {
                         SwingUtilities.invokeAndWait(new Runnable() {
                             @Override
                             public void run() {
-                                officeViewer = new LibreOfficeViewer(params.codePath + "/../lib/nativeview", pathLO); //$NON-NLS-1$
+                                officeViewer = new LibreOfficeViewer(codePath + "/../lib/nativeview", pathLO); //$NON-NLS-1$
                                 viewersRepository.addViewer(officeViewer);
                             }
                         });

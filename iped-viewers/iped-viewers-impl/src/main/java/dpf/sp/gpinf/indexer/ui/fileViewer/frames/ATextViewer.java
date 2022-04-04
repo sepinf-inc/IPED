@@ -27,13 +27,29 @@ import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 import iped3.io.IStreamSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
+import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ITextParser;
 
 public abstract class ATextViewer extends AbstractViewer implements KeyListener {
 
     public static Font font = new Font(Font.MONOSPACED, Font.PLAIN, 11);
+    
+    /**
+     * Maximum number of text break lines to track/keep on memory.
+     */
+    public static final int MAX_LINES = 100000;
+
+    /**
+     * Maximum size of text line
+     */
+    public static final int MAX_LINE_SIZE = 100;
+
+    public static final String HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">";
+
+    public static final String HIGHLIGHT_END_TAG = "</font>";
 
     public static final String TEXT_ENCODING = "UTF-32BE"; //$NON-NLS-1$
+
     public static final int CHAR_BYTE_COUNT = 4;
 
     public JTable textTable;
@@ -41,12 +57,12 @@ public abstract class ATextViewer extends AbstractViewer implements KeyListener 
     private JScrollPane viewerScroll;
     public ITextParser textParser;
     protected TemporaryResources tmp;
-    protected AppSearchParams appSearchParams;
+    protected HitsTable hitsTable;
     private AbstractTableModel hitsModel;
 
-    public ATextViewer(AppSearchParams params) {
+    public ATextViewer(HitsTable hitsTable) {
         super(new GridLayout());
-        appSearchParams = params;
+        this.hitsTable = hitsTable;
         textViewerModel = new TextViewerModel();
         textTable = new JTable(textViewerModel) {
             private static final long serialVersionUID = -5129153322350459095L;
@@ -144,10 +160,10 @@ public abstract class ATextViewer extends AbstractViewer implements KeyListener 
             if (textParser != null) {
                 try {
                     int lines = textParser.getViewRows().size() - 1;
-                    if (lines == appSearchParams.MAX_LINES) {
-                        lines = appSearchParams.MAX_LINES + (int) ((textParser.getParsedFile().size()
-                                - textParser.getViewRows().get(appSearchParams.MAX_LINES))
-                                / (CHAR_BYTE_COUNT * appSearchParams.MAX_LINE_SIZE)) + 1;
+                    if (lines == MAX_LINES) {
+                        lines = MAX_LINES + (int) ((textParser.getParsedFile().size()
+                                - textParser.getViewRows().get(MAX_LINES))
+                                / (CHAR_BYTE_COUNT * MAX_LINE_SIZE)) + 1;
                     }
                     return lines;
 
@@ -171,13 +187,13 @@ public abstract class ATextViewer extends AbstractViewer implements KeyListener 
         public Object getValueAt(int row, int col) {
             try {
                 long off = 0, len;
-                if (row < appSearchParams.MAX_LINES) {
+                if (row < MAX_LINES) {
                     off = textParser.getViewRows().get(row);
                     len = textParser.getViewRows().get(row + 1) - off;
                 } else {
-                    len = appSearchParams.MAX_LINE_SIZE * CHAR_BYTE_COUNT;
-                    off = textParser.getViewRows().get(appSearchParams.MAX_LINES)
-                            + (long) (row - appSearchParams.MAX_LINES) * len;
+                    len = MAX_LINE_SIZE * CHAR_BYTE_COUNT;
+                    off = textParser.getViewRows().get(MAX_LINES)
+                            + (long) (row - MAX_LINES) * len;
 
                     // Tratamento para não dividir hits destacados
                     // Desloca início da linha para final de fragmento com hit
@@ -246,8 +262,8 @@ public abstract class ATextViewer extends AbstractViewer implements KeyListener 
             for (Integer row : textTable.getSelectedRows()) {
                 String value = textViewerModel.getValueAt(row, 0).toString();
                 value = value.replaceAll("<html><pre>", "").replaceAll("</pre></html>", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                value = value.replaceAll(appSearchParams.HIGHLIGHT_START_TAG, "") //$NON-NLS-1$
-                        .replaceAll(appSearchParams.HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
+                value = value.replaceAll(HIGHLIGHT_START_TAG, "") //$NON-NLS-1$
+                        .replaceAll(HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
                 value = LuceneSimpleHTMLEncoder.htmlDecode(value);
                 copy.append(value + "\r\n"); //$NON-NLS-1$
             }
@@ -265,21 +281,21 @@ public abstract class ATextViewer extends AbstractViewer implements KeyListener 
     @Override
     public void scrollToNextHit(boolean forward) {
 
-        currentHit = appSearchParams.hitsTable.getSelectedRow();
+        currentHit = hitsTable.getSelectedRow();
         totalHits = textParser.getHits().size();
         if (forward) {
             if (currentHit < totalHits - 1) {
-                appSearchParams.hitsTable.setRowSelectionInterval(currentHit + 1, currentHit + 1);
+                hitsTable.setRowSelectionInterval(currentHit + 1, currentHit + 1);
             }
 
         } else {
             if (currentHit > 0) {
-                appSearchParams.hitsTable.setRowSelectionInterval(currentHit - 1, currentHit - 1);
+                hitsTable.setRowSelectionInterval(currentHit - 1, currentHit - 1);
             }
 
         }
-        appSearchParams.hitsTable.scrollRectToVisible(appSearchParams.hitsTable
-                .getCellRect(appSearchParams.hitsTable.getSelectionModel().getLeadSelectionIndex(), 0, false));
+        hitsTable.scrollRectToVisible(
+                hitsTable.getCellRect(hitsTable.getSelectionModel().getLeadSelectionIndex(), 0, false));
 
     }
 }

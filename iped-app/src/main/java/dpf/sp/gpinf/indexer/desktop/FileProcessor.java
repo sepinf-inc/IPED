@@ -132,7 +132,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
         // TODO usar nova API e contornar exibição da Ajuda
         IPEDSource iCase = (IPEDSource) App.get().appCase.getAtomicSource(docId);
-        App.get().getSearchParams().lastSelectedSource = iCase;
+        App.get().setLastSelectedSource(iCase);
         IItem item = IndexItem.getItem(doc, iCase, false);
 
         long textSize = iCase.getTextSize(item.getId());

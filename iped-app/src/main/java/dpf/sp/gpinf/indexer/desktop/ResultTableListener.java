@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.util.BasicProps;
@@ -372,8 +373,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         if (App.get().getParams().FONT_START_TAG != null)
             cell = cell.replace(App.get().getParams().FONT_START_TAG, ""); //$NON-NLS-1$
         return cell.replace("<html><nobr>", "").replace("</html>", "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                .replace(App.get().getParams().HIGHLIGHT_START_TAG, "") //$NON-NLS-1$
-                .replace(App.get().getParams().HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
+                .replace(ATextViewer.HIGHLIGHT_START_TAG, "").replace(ATextViewer.HIGHLIGHT_END_TAG, "");
     }
 
 }

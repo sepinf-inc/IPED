@@ -44,6 +44,7 @@ import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -333,7 +334,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                         s.append(App.get().getParams().FONT_START_TAG);
                     s.append(fragments[0].toString());
                     if (App.get().getParams().FONT_START_TAG != null)
-                        s.append(App.get().getParams().HIGHLIGHT_END_TAG);
+                        s.append(ATextViewer.HIGHLIGHT_END_TAG);
                     s.append("</html>"); //$NON-NLS-1$
                     value = s.toString();
                 }

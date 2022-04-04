@@ -1,15 +1,15 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
-import dpf.sp.gpinf.indexer.desktop.TextParser;
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
-import iped3.io.IStreamSource;
-
 import java.util.Set;
+
+import dpf.sp.gpinf.indexer.desktop.TextParser;
+import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
+import iped3.io.IStreamSource;
 
 public class TextViewer extends ATextViewer {
 
-    public TextViewer(AppSearchParams params) {
-        super(params);
+    public TextViewer(HitsTable hitsTable) {
+        super(hitsTable);
     }
 
     @Override
@@ -18,7 +18,7 @@ public class TextViewer extends ATextViewer {
         if (content == null) {
             loadFile(content, null);
         } else {
-            textParser = new TextParser(appSearchParams, content, contentType, tmp);
+            textParser = new TextParser(content, contentType, tmp);
             textParser.execute();
         }
     }

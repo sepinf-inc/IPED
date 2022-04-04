@@ -200,8 +200,8 @@ public class AppMain {
                 CustomLoader.run(customArgs, jars);
 
             } else {
-                App.get().getSearchParams().codePath = libDir.getAbsolutePath();
-                App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
+                App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager,
+                        libDir.getAbsolutePath());
 
                 UICaseDataLoader init = new UICaseDataLoader(processingManager);
                 init.execute();

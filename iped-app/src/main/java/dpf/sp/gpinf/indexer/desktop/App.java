@@ -122,6 +122,7 @@ import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.PanelsLayout;
@@ -241,11 +242,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     final static String FILTRO_SELECTED = Messages.getString("App.Checked"); //$NON-NLS-1$
     public final static String SEARCH_TOOL_TIP = Messages.getString("App.SearchBoxTip"); //$NON-NLS-1$
 
-    public static int MAX_LINE_SIZE = 100; // tamanho de quebra do texto para highlight
-
     static int MAX_HITS = 10000;
-
-    public static int MAX_LINES = 100000;
 
     final static int FRAG_SIZE = 100, TEXT_BREAK_SIZE = 1000000;
 
@@ -257,16 +254,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public boolean useVideoThumbsInGallery = false;
 
+    private IPEDSource lastSelectedSource;
+
+    private String codePath;
+
     private App() {
         this.appSearchParams = new AppSearchParams();
-        this.appSearchParams.mainFrame = (JFrame) this;
-        this.appSearchParams.HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">"; //$NON-NLS-1$
-        this.appSearchParams.HIGHLIGHT_END_TAG = "</font>"; //$NON-NLS-1$
-        this.appSearchParams.TEXT_BREAK_SIZE = TEXT_BREAK_SIZE;
-        this.appSearchParams.FRAG_SIZE = FRAG_SIZE;
-        this.appSearchParams.MAX_LINES = MAX_LINES;
-        this.appSearchParams.MAX_HITS = MAX_HITS;
-        this.appSearchParams.MAX_LINE_SIZE = MAX_LINE_SIZE;
         this.appSearchParams.highlightTerms = new HashSet<String>();
     }
 
@@ -298,14 +291,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile,
-            Manager processingManager) {
+            Manager processingManager, String codePath) {
 
         this.logConfiguration = logConfiguration;
         this.isMultiCase = isMultiCase;
         this.casesPathFile = casesPathFile;
         this.processingManager = processingManager;
-        if (processingManager != null)
+        if (processingManager != null) {
             processingManager.setSearchAppOpen(true);
+        }
+        this.codePath = codePath;
 
         LOGGER = LoggerFactory.getLogger(App.class);
         LOGGER.info("Starting..."); //$NON-NLS-1$
@@ -535,9 +530,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         appGraphAnalytics = new AppGraphAnalytics();
 
-        viewerController = new ViewerController(appSearchParams);
         hitsTable = new HitsTable(new HitsTableModel(getTextViewer()));
-        appSearchParams.hitsTable = hitsTable;
         hitsScroll = new JScrollPane(hitsTable);
         hitsTable.setFillsViewportHeight(true);
         hitsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -547,9 +540,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         hitsTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         hitsTable.setShowGrid(false);
 
+        viewerController = new ViewerController(hitsTable, codePath);
+
         subItemTable = new HitsTable(subItemModel);
         subItemScroll = new JScrollPane(subItemTable);
-        this.appSearchParams.subItemScroll = subItemScroll;
         subItemTable.setFillsViewportHeight(true);
         subItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         subItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
@@ -574,7 +568,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         parentItemTable = new HitsTable(parentItemModel);
         parentItemScroll = new JScrollPane(parentItemTable);
-        this.appSearchParams.parentItemScroll = parentItemScroll;
         parentItemTable.setFillsViewportHeight(true);
         parentItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
@@ -716,14 +709,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dialogBar.setBounds(0, 0, 150, 30);
         dialogBar.setUndecorated(true);
         dialogBar.getContentPane().add(progressBar);
-        appSearchParams.dialogBar = dialogBar;
 
-        
         adjustLayout(false);
         PanelsLayout.load(dockingControl);
 
         status = new JLabel(" "); //$NON-NLS-1$
-        this.appSearchParams.status = status;
 
         this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
         // this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
@@ -1437,5 +1427,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     @Override
     public IColumnsManager getColumnsManager() {
         return ColumnsManager.getInstance();
+    }
+
+    public void setLastSelectedSource(IPEDSource lastSelectedSource) {
+        this.lastSelectedSource = lastSelectedSource;
+    }
+
+    public IPEDSource getLastSelectedSource() {
+        return this.lastSelectedSource;
     }
 }
