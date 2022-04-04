@@ -1,8 +1,7 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintStream;
 
 public class FilterOutputStream extends OutputStream {
 

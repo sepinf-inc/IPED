@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.io;
 
 import java.io.FilterReader;
 import java.io.IOException;

@@ -1,9 +1,10 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.io;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 
+import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.TextCache.KnownSizeReader;
 
 public class FragmentingReader extends Reader {

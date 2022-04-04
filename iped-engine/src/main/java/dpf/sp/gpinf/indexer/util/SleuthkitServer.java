@@ -18,6 +18,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
+import dpf.sp.gpinf.indexer.io.SleuthkitInputStream;
 
 public class SleuthkitServer {
 

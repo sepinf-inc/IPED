@@ -12,7 +12,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
-import dpf.sp.gpinf.indexer.util.SleuthkitInputStreamFactory;
+import dpf.sp.gpinf.indexer.io.SleuthkitInputStreamFactory;
 import iped3.IItem;
 import iped3.configuration.Configurable;
 

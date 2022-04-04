@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.io;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -14,6 +14,9 @@ import org.sqlite.SQLiteException;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import iped3.io.SeekableInputStream;
 
 public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {

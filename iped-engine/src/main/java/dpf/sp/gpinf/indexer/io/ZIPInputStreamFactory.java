@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.io;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -15,6 +15,9 @@ import java.util.Map;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.IOUtils;
 
+import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
+import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.ZipFile4j;
 import iped3.io.SeekableInputStream;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
