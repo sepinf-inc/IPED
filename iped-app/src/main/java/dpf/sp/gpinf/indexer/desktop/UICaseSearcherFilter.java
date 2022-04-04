@@ -46,6 +46,7 @@ import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.search.SimilarImagesSearch;
+import dpf.sp.gpinf.indexer.search.TimelineResults;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
@@ -251,7 +252,7 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
 
                 if (App.get().timelineListener.isTimelineViewEnabled()) {
                     long t = System.currentTimeMillis();
-                    result = new TimelineResults().expandTimestamps(result);
+                    result = new TimelineResults(App.get().appCase).expandTimestamps(result);
                     numFilters++;
                     LOGGER.info("Toggle table timeline took {}ms", (System.currentTimeMillis() - t));
                 }

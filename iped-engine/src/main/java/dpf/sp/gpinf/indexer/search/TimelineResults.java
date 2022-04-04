@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.desktop;
+package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -8,8 +8,6 @@ import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.DocValuesUtil;
 import iped3.IItemId;
 import iped3.util.BasicProps;
@@ -17,17 +15,20 @@ import iped3.util.ExtraProperties;
 
 public class TimelineResults {
 
-    private static SortedSetDocValues timeStampValues = null;
-    private static SortedSetDocValues timeEventGroupValues = null;
-    private static BinaryDocValues eventsInDocOrdsValues = null;
+    private SortedSetDocValues timeStampValues = null;
+    private SortedSetDocValues timeEventGroupValues = null;
+    private BinaryDocValues eventsInDocOrdsValues = null;
 
-    private static synchronized void loadDocValues() throws IOException {
-        timeStampValues = App.get().appCase.getAtomicReader().getSortedSetDocValues(BasicProps.TIMESTAMP);
-        timeEventGroupValues = App.get().appCase.getAtomicReader().getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-        eventsInDocOrdsValues = App.get().appCase.getAtomicReader().getBinaryDocValues(ExtraProperties.TIME_EVENT_ORDS);
+    private IPEDMultiSource ipedCase;
+
+    private void loadDocValues() throws IOException {
+        timeStampValues = ipedCase.getAtomicReader().getSortedSetDocValues(BasicProps.TIMESTAMP);
+        timeEventGroupValues = ipedCase.getAtomicReader().getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
+        eventsInDocOrdsValues = ipedCase.getAtomicReader().getBinaryDocValues(ExtraProperties.TIME_EVENT_ORDS);
     }
 
-    public TimelineResults() {
+    public TimelineResults(IPEDMultiSource ipedCase) {
+        this.ipedCase = ipedCase;
     }
 
     public MultiSearchResult expandTimestamps(MultiSearchResult items) throws IOException {
@@ -40,7 +41,7 @@ public class TimelineResults {
         int[][] eventsInDocOrds = new int[Short.MAX_VALUE][1 << 9];
         int idx = 0;
         for (IItemId id : items.getIterator()) {
-            int luceneId = App.get().appCase.getLuceneId(id);
+            int luceneId = ipedCase.getLuceneId(id);
             String eventsInDocStr = DocValuesUtil.getVal(eventsInDocOrdsValues, luceneId);
             if (eventsInDocStr.isEmpty()) {
                 continue;
@@ -64,7 +65,7 @@ public class TimelineResults {
                 if (ord > Integer.MAX_VALUE) {
                     throw new RuntimeException("Integer overflow when converting timestamp ord to int");
                 }
-                ids.add(new TimeItemId(id.getSourceId(), id.getId(), (int) ord, eventOrd[pos++]));
+                ids.add(new TimeItemId(this, id.getSourceId(), id.getId(), (int) ord, eventOrd[pos++]));
                 scores.add(items.getScore(idx));
             }
             idx++;
@@ -112,10 +113,12 @@ public class TimelineResults {
 
     public static class TimeItemId extends ItemId {
 
+        private TimelineResults timelineResults;
         private int timeStampOrd, timeEventOrd = -1;
 
-        public TimeItemId(int sourceId, int id, int timeStampOrd, int timeEventOrd) {
+        public TimeItemId(TimelineResults timelineResults, int sourceId, int id, int timeStampOrd, int timeEventOrd) {
             super(sourceId, id);
+            this.timelineResults = timelineResults;
             this.timeStampOrd = timeStampOrd;
             this.timeEventOrd = timeEventOrd;
         }
@@ -131,7 +134,7 @@ public class TimelineResults {
          * @throws IOException
          */
         public String getTimeStampValue() throws IOException {
-            return timeStampValues.lookupOrd(timeStampOrd).utf8ToString();
+            return timelineResults.timeStampValues.lookupOrd(timeStampOrd).utf8ToString();
         }
 
         public int getTimeEventOrd() {
@@ -145,7 +148,7 @@ public class TimelineResults {
          * @throws IOException
          */
         public String getTimeEventValue() throws IOException {
-            return timeEventGroupValues.lookupOrd(timeEventOrd).utf8ToString();
+            return timelineResults.timeEventGroupValues.lookupOrd(timeEventOrd).utf8ToString();
         }
 
         public String getTimeEventValue(SortedSetDocValues ssdv) throws IOException {
