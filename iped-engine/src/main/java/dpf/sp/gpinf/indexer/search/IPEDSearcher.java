@@ -117,7 +117,7 @@ public class IPEDSearcher implements IIPEDSearcher {
     }
 
     public LuceneSearchResult luceneSearch() throws IOException {
-        return filtrarFragmentos(searchAll());
+        return filterFragmentedResults(searchAll());
     }
 
     public LuceneSearchResult searchAll() throws IOException {
@@ -195,12 +195,12 @@ public class IPEDSearcher implements IIPEDSearcher {
         return result.build();
     }
 
-    public LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) {
+    public LuceneSearchResult filterFragmentedResults(LuceneSearchResult prevResult) {
 
         // System.out.println("fragments");
 
         if (ipedCase instanceof IPEDMultiSource)
-            return filtrarFragmentosMulti((IPEDMultiSource) ipedCase, prevResult);
+            return filterFragmentedResultsMulti((IPEDMultiSource) ipedCase, prevResult);
 
         HashSet<Integer> duplicates = new HashSet<Integer>();
         int[] docs = prevResult.getLuceneIds();
@@ -220,7 +220,7 @@ public class IPEDSearcher implements IIPEDSearcher {
 
     }
 
-    private LuceneSearchResult filtrarFragmentosMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) {
+    private LuceneSearchResult filterFragmentedResultsMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) {
         HashMap<Integer, HashSet<Integer>> duplicates = new HashMap<Integer, HashSet<Integer>>();
         int[] docs = prevResult.getLuceneIds();
         if (prevResult.getLength() <= MAX_SIZE_TO_SCORE) {

@@ -17,7 +17,7 @@ public interface IIPEDSearcher {
 
     void cancel();
 
-    LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) throws Exception;
+    LuceneSearchResult filterFragmentedResults(LuceneSearchResult prevResult) throws Exception;
 
     Query getQuery();
 
