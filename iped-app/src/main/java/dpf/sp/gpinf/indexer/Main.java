@@ -29,7 +29,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;

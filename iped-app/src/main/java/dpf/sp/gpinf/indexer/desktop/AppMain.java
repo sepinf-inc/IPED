@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ag.ion.bion.officelayer.application.IOfficeApplication;
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;

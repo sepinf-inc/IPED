@@ -46,7 +46,7 @@ import org.apache.tika.parser.mp4.ISO6709Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;

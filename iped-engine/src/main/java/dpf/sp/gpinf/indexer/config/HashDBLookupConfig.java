@@ -8,7 +8,6 @@ import java.nio.file.DirectoryStream.Filter;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class HashDBLookupConfig extends AbstractTaskConfig<Pair<Boolean, String>> {

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
 import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;

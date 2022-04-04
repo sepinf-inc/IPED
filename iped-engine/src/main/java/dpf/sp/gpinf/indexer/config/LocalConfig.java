@@ -9,7 +9,6 @@ import java.util.Random;
 
 import org.slf4j.Logger;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class LocalConfig extends AbstractPropertiesConfigurable {

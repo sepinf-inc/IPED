@@ -111,7 +111,7 @@ import bibliothek.gui.dock.themes.basic.action.BasicButtonHandler;
 import bibliothek.gui.dock.themes.basic.action.BasicSelectableHandler;
 import bibliothek.gui.dock.themes.basic.action.BasicTitleViewItem;
 import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;

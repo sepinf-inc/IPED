@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer;
+package dpf.sp.gpinf.indexer.config;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,15 +28,6 @@ import org.apache.commons.logging.impl.NoOpLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.config.AnalysisConfig;
-import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.FileSystemConfig;
-import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.config.LocaleConfig;
-import dpf.sp.gpinf.indexer.config.OCRConfig;
-import dpf.sp.gpinf.indexer.config.PluginConfig;
-import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
