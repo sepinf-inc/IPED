@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.lucene;
 
 import java.io.IOException;
 import java.util.List;

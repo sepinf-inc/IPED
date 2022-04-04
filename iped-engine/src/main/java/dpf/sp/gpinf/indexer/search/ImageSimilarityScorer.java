@@ -14,8 +14,8 @@ import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.util.BytesRef;
 
+import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
-import dpf.sp.gpinf.indexer.util.DocValuesUtil;
 import gpinf.similarity.ImageSimilarity;
 import iped3.IItem;
 import iped3.IItemId;

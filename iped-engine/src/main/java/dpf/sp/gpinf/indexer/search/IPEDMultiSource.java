@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
+import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
 import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;

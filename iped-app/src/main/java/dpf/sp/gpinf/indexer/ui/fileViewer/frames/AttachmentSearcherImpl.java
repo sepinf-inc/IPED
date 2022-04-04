@@ -13,7 +13,7 @@ import dpf.sp.gpinf.indexer.desktop.BookmarksController;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
-import dpf.sp.gpinf.indexer.util.DocValuesUtil;
+import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.util.BasicProps;
