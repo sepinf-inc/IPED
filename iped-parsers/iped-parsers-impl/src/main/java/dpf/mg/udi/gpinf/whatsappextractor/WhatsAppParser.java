@@ -668,7 +668,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
         if (account.getAvatar() != null) {
-            meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(account.getAvatar()));
+            meta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(account.getAvatar()));
         }
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
@@ -1013,7 +1013,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                     getAvatar(searcher, c);
                     if (c.getAvatar() != null) {
-                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                        cMetadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
 
                     if (extractor.shouldParseEmbedded(cMetadata)) {

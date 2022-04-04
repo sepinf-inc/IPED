@@ -194,6 +194,8 @@ public class IPEDReader extends DataSourceReader {
          */
         srcList.add(ipedCase);
 
+        // clearing added items is needed when creating multicase reports
+        addedItems = new BitSet();
         oldToNewIdMap = new int[ipedCase.getLastId() + 1];
         for (int i = 0; i < oldToNewIdMap.length; i++)
             oldToNewIdMap[i] = -1;
@@ -417,19 +419,12 @@ public class IPEDReader extends DataSourceReader {
 
             Item evidence = new Item();
 
-            // TODO obter source corretamente
-            IDataSource dataSource = new DataSource(null);
-            dataSource.setUUID(doc.get(IndexItem.EVIDENCE_UUID));
-            evidence.setDataSource(dataSource);
-
             int prevId = Integer.valueOf(doc.get(IndexItem.ID));
-            int id = getId(doc.get(IndexItem.ID));
-            evidence.setId(id);
 
-            if (addedItems.get(id)) {
+            if (addedItems.get(prevId)) {
                 continue;
             }
-            addedItems.set(id);
+            addedItems.set(prevId);
 
             String value = doc.get(IndexItem.LENGTH);
             Long len = null;
@@ -450,6 +445,11 @@ public class IPEDReader extends DataSourceReader {
                 continue;
             }
 
+            // TODO obter source corretamente
+            IDataSource dataSource = new DataSource(null);
+            dataSource.setUUID(doc.get(IndexItem.EVIDENCE_UUID));
+            evidence.setDataSource(dataSource);
+
             evidence.setName(doc.get(IndexItem.NAME));
 
             if (!treeNode && caseData.isIpedReport()) {
@@ -464,6 +464,9 @@ public class IPEDReader extends DataSourceReader {
                         }
                     }
             }
+
+            int id = getId(doc.get(IndexItem.ID));
+            evidence.setId(id);
 
             value = doc.get(IndexItem.PARENTID);
             if (value != null) {

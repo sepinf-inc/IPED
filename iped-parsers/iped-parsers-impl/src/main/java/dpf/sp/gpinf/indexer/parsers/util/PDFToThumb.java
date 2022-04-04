@@ -1,4 +1,4 @@
-package gpinf.util;
+package dpf.sp.gpinf.indexer.parsers.util;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -7,7 +7,9 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 
 import javax.imageio.ImageIO;
@@ -18,12 +20,16 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
-public class PDFToThumb {
-    public static BufferedImage getPdfThumb(File file, int targetSize) throws Exception {
+public class PDFToThumb implements Closeable {
+
+    // using volatile to allow closing from other threads
+    private volatile PDDocument document;
+
+    public BufferedImage getPdfThumb(File file, int targetSize) throws Exception {
         BufferedImage img = null;
-        PDDocument document = null;
         try {
             document = PDDocument.load(file, MemoryUsageSetting.setupMixed(1 << 24, 1 << 28));
+            // document.setResourceCache(new NoResourceCache());
             PDPage page = document.getPage(0);
             PDFRenderer pdfRenderer = new PDFRenderer(document);
             pdfRenderer.setSubsamplingAllowed(true);
@@ -45,10 +51,11 @@ public class PDFToThumb {
             g.setColor(Color.black);
             g.drawRect(0, 0, w - 1, h - 1);
             g.dispose();
-        } catch (Exception e) {} finally {
+        } finally {
             try {
                 if (document != null) {
                     document.close();
+                    document = null;
                 }
             } catch (Exception e) {}
         }
@@ -56,19 +63,35 @@ public class PDFToThumb {
     }
 
     public static void main(String[] args) {
-        try {
+        String itemInfo = args[2];
+        boolean debug = Boolean.valueOf(args[3]);
+        try (PDFToThumb pdfThumb = new PDFToThumb()) {
             PrintStream systemOut = System.out;
             System.setOut(System.err);
             File file = new File(args[0]);
             int targetSize = Integer.parseInt(args[1]);
-            BufferedImage img = getPdfThumb(file, targetSize);
+            BufferedImage img = pdfThumb.getPdfThumb(file, targetSize);
             if (img != null) {
                 BufferedOutputStream out = new BufferedOutputStream(systemOut);
                 ImageIO.write(img, "jpg", out);
                 out.close();
                 System.exit(0);
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            System.err.print("Error creating external thumb for " + itemInfo + " " + e.toString());
+            if (debug) e.printStackTrace();
+        }
         System.exit(-1);
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            if (document != null) {
+                document.close();
+                document = null;
+            }
+        } catch (Exception e) {
+        }
     }
 }

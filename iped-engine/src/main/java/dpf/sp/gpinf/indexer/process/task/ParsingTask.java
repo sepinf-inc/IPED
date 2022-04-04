@@ -83,6 +83,7 @@ import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
+import dpf.sp.gpinf.indexer.parsers.util.ComputeThumb;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
@@ -129,7 +130,7 @@ import iped3.util.MediaTypes;
  * GRANDES NÃO TEM SEU TEXTO EXTRAÍDO ARMAZENADO EM MEMÓRIA, O QUE PODERIA
  * CAUSAR OOM.
  */
-public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtractor {
+public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ParsingTask.class);
 
@@ -351,6 +352,15 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         }
 
         context = getTikaContext();
+        try {
+            File thumbFile = getThumbFile(evidence);
+            if (!hasThumb(evidence, thumbFile)) {
+                context.set(ComputeThumb.class, new ComputeThumb());
+            }
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+
         Metadata metadata = evidence.getMetadata();
 
         if (typesToCheckZipBomb.contains(evidence.getMediaType())) {
@@ -393,7 +403,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     }
 
-    private static final void handleMetadata(IItem evidence) {
+    private final void handleMetadata(IItem evidence) {
         // Ajusta metadados:
         Metadata metadata = evidence.getMetadata();
         if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
@@ -411,11 +421,18 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             }
         }
 
-        String base64Thumb = metadata.get(ExtraProperties.USER_THUMB);
+        String base64Thumb = metadata.get(ExtraProperties.THUMBNAIL_BASE64);
         if (base64Thumb != null) {
+            metadata.remove(ExtraProperties.THUMBNAIL_BASE64);
             evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
-            metadata.remove(ExtraProperties.USER_THUMB);
-            evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
+            try {
+                File thumbFile = getThumbFile(evidence);
+                saveThumb(evidence, thumbFile);
+            } catch (Throwable t) {
+                LOGGER.warn("Error saving thumb of " + evidence.toString(), t);
+            } finally {
+                updateHasThumb(evidence);
+            }
         }
 
         String prevMediaType = evidence.getMediaType().toString();

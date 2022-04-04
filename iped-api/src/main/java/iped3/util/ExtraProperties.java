@@ -112,7 +112,7 @@ public class ExtraProperties {
 
     public static final Property USER_BIRTH = Property.internalDate("userBirthday"); //$NON-NLS-1$
 
-    public static final String USER_THUMB = "userPhoto"; //$NON-NLS-1$
+    public static final String THUMBNAIL_BASE64 = "thumbnailBase64"; //$NON-NLS-1$
 
     public static final String PARENT_VIEW_POSITION = "parentViewPosition"; //$NON-NLS-1$
 

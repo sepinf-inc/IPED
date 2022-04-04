@@ -138,7 +138,7 @@ public class SkypeParser extends AbstractParser {
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getAbout());
                     cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                     if (c.getAvatar() != null) {
-                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                        cMetadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
 
                     if (extractor.shouldParseEmbedded(cMetadata)) {
@@ -318,7 +318,7 @@ public class SkypeParser extends AbstractParser {
                 if (account.getCountry() != null)
                     meta.add(ExtraProperties.USER_ADDRESS, account.getCountry());
                 if (account.getAvatar() != null) {
-                    meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(account.getAvatar()));
+                    meta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(account.getAvatar()));
                 }
 
                 if (extractor.shouldParseEmbedded(meta)) {
