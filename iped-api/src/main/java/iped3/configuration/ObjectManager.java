@@ -1,4 +1,4 @@
-package iped3;
+package iped3.configuration;
 
 import java.util.Set;
 
