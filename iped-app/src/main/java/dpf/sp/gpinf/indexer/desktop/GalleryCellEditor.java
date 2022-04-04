@@ -36,7 +36,6 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellEditor;
 
-import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 
 public class GalleryCellEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.ui.controls;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
