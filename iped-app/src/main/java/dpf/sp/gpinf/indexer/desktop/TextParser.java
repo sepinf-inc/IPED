@@ -38,13 +38,10 @@ import org.apache.tika.parser.Parser;
 import dpf.sp.gpinf.indexer.ITextParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
@@ -193,7 +190,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
     }
 
     private ParseContext getTikaContext(IItem item) throws Exception {
-        ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
+        ParsingTask expander = new ParsingTask(item, App.get().getAutoParser());
         expander.init(ConfigurationManager.get());
         ParseContext context = expander.getTikaContext(App.get().getLastSelectedSource());
         expander.setExtractEmbedded(false);
@@ -229,7 +226,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
             CountInputStream cis = null;
             if (item.getLength() != null
-                    && !((IndexerDefaultParser) App.get().getAutoParser()).hasSpecificParser(metadata)) {
+                    && !App.get().getAutoParser().hasSpecificParser(metadata)) {
                 progressMonitor.setMaximum(item.getLength());
                 cis = new CountInputStream(is);
                 is = cis;

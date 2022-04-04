@@ -26,7 +26,6 @@ import org.apache.tika.io.TemporaryResources;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 import iped3.io.IStreamSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ITextParser;
 

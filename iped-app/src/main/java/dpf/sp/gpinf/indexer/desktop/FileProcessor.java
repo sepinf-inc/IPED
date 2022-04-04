@@ -61,7 +61,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         this.listRelated = listRelated;
         this.docId = docId;
 
-        App.get().getSearchParams().lastSelectedDoc = docId;
+        App.get().setLastSelectedDoc(docId);
 
         if (parsingTask != null) {
             parsingTask.cancel(true);
@@ -154,7 +154,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         waitSleuthkitInit(item);
 
         Set<String> highlights = new HashSet<>();
-        highlights.addAll(App.get().getParams().highlightTerms);
+        highlights.addAll(App.get().getHighlightTerms());
 
         if (App.get().similarFacesRefItem != null) {
             List<String> locations = SimilarFacesSearch.getMatchLocations(App.get().similarFacesRefItem, item);

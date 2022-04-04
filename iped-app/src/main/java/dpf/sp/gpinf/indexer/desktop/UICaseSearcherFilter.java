@@ -283,9 +283,7 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
     private void saveHighlightTerms() throws ParseException, QueryNodeException {
         Set<String> highlightTerms = new QueryBuilder(App.get().appCase).getQueryStrings(queryText);
         highlightTerms.addAll(App.get().metadataPanel.getHighlightTerms());
-        // for(String str : highlightTerms)
-        // System.out.println("highlightTerm: " + str);
-        App.get().getSearchParams().highlightTerms = highlightTerms;
+        App.get().setHighlightTerms(highlightTerms);
 
         Query highlightQuery = App.get().metadataPanel.getHighlightQuery();
         if (highlightQuery != null) {

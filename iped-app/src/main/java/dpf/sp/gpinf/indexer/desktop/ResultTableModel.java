@@ -330,10 +330,10 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 if (fragments[0].getScore() > 0) {
                     StringBuilder s = new StringBuilder();
                     s.append("<html><nobr>"); //$NON-NLS-1$
-                    if (App.get().getParams().FONT_START_TAG != null)
-                        s.append(App.get().getParams().FONT_START_TAG);
+                    if (App.get().getFontStartTag() != null)
+                        s.append(App.get().getFontStartTag());
                     s.append(fragments[0].toString());
-                    if (App.get().getParams().FONT_START_TAG != null)
+                    if (App.get().getFontStartTag() != null)
                         s.append(ATextViewer.HIGHLIGHT_END_TAG);
                     s.append("</html>"); //$NON-NLS-1$
                     value = s.toString();

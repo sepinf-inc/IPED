@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -117,6 +118,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -131,7 +133,6 @@ import dpf.sp.gpinf.indexer.ui.controls.CustomButton;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AbstractViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
 import dpf.sp.gpinf.indexer.util.IconUtil;
@@ -159,8 +160,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private static Logger LOGGER;
 
     private LogConfiguration logConfiguration;
-
-    private AppSearchParams appSearchParams = null;
 
     private Manager processingManager;
 
@@ -256,11 +255,19 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private IPEDSource lastSelectedSource;
 
+    public int lastSelectedDoc = -1;
+
     private String codePath;
 
+    private IndexerDefaultParser autoDetectParser;
+
+    private String fontStartTag = null;
+
+    private Query query = null;
+
+    private Set<String> highlightTerms = new HashSet<>();
+
     private App() {
-        this.appSearchParams = new AppSearchParams();
-        this.appSearchParams.highlightTerms = new HashSet<String>();
     }
 
     public static final App get() {
@@ -270,12 +277,24 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return app;
     }
 
-    public AppListener getAppListener() {
-        return appletListener;
+    public void setLastSelectedDoc(int lastSelectedDoc) {
+        this.lastSelectedDoc = lastSelectedDoc;
     }
 
-    public AppSearchParams getSearchParams() {
-        return this.appSearchParams;
+    public int getLastSelectedDoc() {
+        return this.lastSelectedDoc;
+    }
+
+    public void setHighlightTerms(Set<String> terms) {
+        this.highlightTerms = terms;
+    }
+
+    public Set<String> getHighlightTerms() {
+        return this.highlightTerms;
+    }
+
+    public AppListener getAppListener() {
+        return appletListener;
     }
 
     public Manager getProcessingManager() {
@@ -288,6 +307,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public LogConfiguration getLogConfiguration() {
         return this.logConfiguration;
+    }
+
+    public String getFontStartTag() {
+        return this.fontStartTag;
     }
 
     public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile,
@@ -336,24 +359,20 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     }
 
-    public AppSearchParams getParams() {
-        return this.appSearchParams;
-    }
-
     public Query getQuery() {
-        return this.appSearchParams.query;
+        return this.query;
     }
 
     public void setQuery(Query query) {
-        this.appSearchParams.query = query;
+        this.query = query;
     }
 
-    public Object getAutoParser() {
-        return this.appSearchParams.autoParser;
+    public IndexerDefaultParser getAutoParser() {
+        return this.autoDetectParser;
     }
 
-    public void setAutoParser(Object autoParser) {
-        this.appSearchParams.autoParser = autoParser;
+    public void setAutoParser(IndexerDefaultParser autoParser) {
+        this.autoDetectParser = autoParser;
     }
 
     public ATextViewer getTextViewer() {
@@ -767,9 +786,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
         if (foreground == null)
-            getParams().FONT_START_TAG = null;
+            fontStartTag = null;
         else
-            getParams().FONT_START_TAG = "<font color=" + UiUtil.getHexRGB(foreground) + ">"; //$NON-NLS-1$ //$NON-NLS-2$
+            fontStartTag = "<font color=" + UiUtil.getHexRGB(foreground) + ">"; //$NON-NLS-1$ //$NON-NLS-2$
         
         if (refresh) {
             if (gallery != null) {

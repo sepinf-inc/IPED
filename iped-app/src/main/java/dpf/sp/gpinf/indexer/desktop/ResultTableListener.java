@@ -110,7 +110,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             int modelIdx = App.get().resultsTable.convertRowIndexToModel(viewIndex);
             IItemId item = App.get().ipedResult.getItem(modelIdx);
             int docId = App.get().appCase.getLuceneId(item);
-            if (docId != App.get().getParams().lastSelectedDoc) {
+            if (docId != App.get().getLastSelectedDoc()) {
 
                 App.get().hitsTable.scrollRectToVisible(new Rectangle());
                 App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
@@ -370,8 +370,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     private String getCell(JTable table, int row, int col) {
         String cell = table.getValueAt(row, col).toString();
-        if (App.get().getParams().FONT_START_TAG != null)
-            cell = cell.replace(App.get().getParams().FONT_START_TAG, ""); //$NON-NLS-1$
+        if (App.get().getFontStartTag() != null)
+            cell = cell.replace(App.get().getFontStartTag(), ""); //$NON-NLS-1$
         return cell.replace("<html><nobr>", "").replace("</html>", "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                 .replace(ATextViewer.HIGHLIGHT_START_TAG, "").replace(ATextViewer.HIGHLIGHT_END_TAG, "");
     }
