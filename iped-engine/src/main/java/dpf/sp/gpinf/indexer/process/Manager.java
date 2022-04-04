@@ -73,6 +73,7 @@ import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
+import dpf.sp.gpinf.indexer.search.ItemSearcher;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitClient;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;

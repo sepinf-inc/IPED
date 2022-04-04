@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.search;
+package dpf.sp.gpinf.indexer.lucene;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -7,6 +7,8 @@ import java.util.BitSet;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
+
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
 /**
  * Fast collector that do not compute scores, for cases with dozens of millions
