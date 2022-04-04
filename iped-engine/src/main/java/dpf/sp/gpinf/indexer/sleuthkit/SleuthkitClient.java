@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.sleuthkit;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +28,7 @@ import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitServer.FLAGS;
 import iped3.io.SeekableInputStream;
 
 public class SleuthkitClient implements Comparable<SleuthkitClient> {

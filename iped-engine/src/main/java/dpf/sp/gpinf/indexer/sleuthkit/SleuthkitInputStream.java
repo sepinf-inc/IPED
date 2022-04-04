@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.io;
+package dpf.sp.gpinf.indexer.sleuthkit;
 
 import java.io.IOException;
 

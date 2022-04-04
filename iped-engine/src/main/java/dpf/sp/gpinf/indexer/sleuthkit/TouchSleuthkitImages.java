@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.sleuthkit;
 
 import java.io.BufferedInputStream;
 import java.io.File;

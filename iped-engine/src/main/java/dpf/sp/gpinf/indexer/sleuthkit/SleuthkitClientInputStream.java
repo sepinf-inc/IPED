@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.sleuthkit;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitServer.FLAGS;
 import iped3.io.SeekableInputStream;
 
 public class SleuthkitClientInputStream extends SeekableInputStream {

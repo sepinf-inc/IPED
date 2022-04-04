@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.sleuthkit;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -18,7 +18,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.io.SleuthkitInputStream;
+import dpf.sp.gpinf.indexer.util.DirectMemory;
 
 public class SleuthkitServer {
 

@@ -40,7 +40,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
 import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
-import dpf.sp.gpinf.indexer.io.SleuthkitInputStreamFactory;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
 
