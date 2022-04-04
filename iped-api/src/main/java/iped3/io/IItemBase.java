@@ -129,7 +129,7 @@ public interface IItemBase extends IStreamSource {
 
     public byte[] getThumb();
 
-    public BufferedInputStream getBufferedStream() throws IOException;
+    public BufferedInputStream getBufferedInputStream() throws IOException;
 
     /**
      * @return data da última modificação do arquivo

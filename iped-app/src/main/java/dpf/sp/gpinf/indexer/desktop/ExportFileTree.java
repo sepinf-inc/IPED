@@ -206,7 +206,7 @@ public class ExportFileTree extends CancelableWorker {
             } else {
                 LOGGER.info("Exporting file " + item.getPath()); //$NON-NLS-1$
 
-                try (InputStream in = item.getBufferedStream()) {
+                try (InputStream in = item.getBufferedInputStream()) {
                     dst = getNonExistingFile(dst);
                     Files.copy(in, dst.toPath());
                 }
@@ -266,7 +266,7 @@ public class ExportFileTree extends CancelableWorker {
 
             if (!item.isDir() && !isParent) {
                 LOGGER.info("Exporting file " + item.getPath()); //$NON-NLS-1$
-                try (InputStream in = item.getBufferedStream()) {
+                try (InputStream in = item.getBufferedInputStream()) {
                     int len = 0;
                     while ((len = in.read(buf)) != -1 && !this.isCancelled())
                         try {

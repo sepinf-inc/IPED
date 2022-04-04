@@ -88,7 +88,7 @@ public class SkypeSqlite implements SkypeStorage {
     }
 
     private File getTempFile(IItemBase item) {
-        try (InputStream is = item.getBufferedStream()) {
+        try (InputStream is = item.getBufferedInputStream()) {
             Path temp = Files.createTempFile("sqlite-parser", null); //$NON-NLS-1$
             Files.copy(is, temp, StandardCopyOption.REPLACE_EXISTING);
             return temp.toFile();

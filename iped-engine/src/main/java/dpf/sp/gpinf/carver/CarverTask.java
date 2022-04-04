@@ -94,7 +94,7 @@ public class CarverTask extends BaseCarveTask {
         try {
             MediaType type = evidence.getMediaType();
 
-            tis = evidence.getBufferedStream();
+            tis = evidence.getBufferedInputStream();
 
             // faz um loop na hierarquia de tipos mime
             while (!MediaType.OCTET_STREAM.equals(type)) {

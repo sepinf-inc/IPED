@@ -615,7 +615,7 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
-            public BufferedInputStream getBufferedStream() throws IOException {
+            public BufferedInputStream getBufferedInputStream() throws IOException {
                 return new BufferedInputStream(Files.newInputStream(file.toPath()));
             }
 

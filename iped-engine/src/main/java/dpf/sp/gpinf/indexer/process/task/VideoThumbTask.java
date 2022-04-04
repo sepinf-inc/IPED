@@ -528,7 +528,7 @@ public class VideoThumbTask extends ThumbTask {
 
         } else if (mediaType.equals("image/gif")) {
             ImageReader reader = null;
-            try (BufferedInputStream is = evidence.getBufferedStream(); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
+            try (BufferedInputStream is = evidence.getBufferedInputStream(); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
                 reader = ImageIO.getImageReaders(iis).next();
                 reader.setInput(iis, false, true);
                 numImages = reader.getNumImages(true);
@@ -540,7 +540,7 @@ public class VideoThumbTask extends ThumbTask {
         
         } else if (mediaType.equals("image/png")) {
             byte[] b = new byte[128];
-            try (BufferedInputStream is = evidence.getBufferedStream()) {
+            try (BufferedInputStream is = evidence.getBufferedInputStream()) {
                 int read = IOUtils.read(is, b);
                 for (int i = 0; i <= read - 8; i++) {
                     if (b[i] == 'a' && b[i + 1] == 'c' && b[i + 2] == 'T' && b[i + 3] == 'L') {

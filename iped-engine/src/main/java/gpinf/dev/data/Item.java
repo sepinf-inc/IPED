@@ -272,7 +272,7 @@ public class Item implements IItem {
      * @return um BufferedInputStream com o conteúdo do item
      * @throws IOException
      */
-    public BufferedInputStream getBufferedStream() throws IOException {
+    public BufferedInputStream getBufferedInputStream() throws IOException {
 
         int len = 8192;
         if (length != null && length > len) {
@@ -609,7 +609,7 @@ public class Item implements IItem {
                     }
                 });
 
-                try (InputStream in = getBufferedStream()) {
+                try (InputStream in = getBufferedInputStream()) {
                     Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
                 }
                 tmpFile = path.toFile();
@@ -649,7 +649,7 @@ public class Item implements IItem {
                 }
             }
             if (tmpFile == null) {
-                tis = TikaInputStream.get(getBufferedStream());
+                tis = TikaInputStream.get(getBufferedInputStream());
             }
         }
         tmpResources.addResource(tis);

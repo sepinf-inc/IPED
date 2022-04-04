@@ -88,7 +88,7 @@ public class PhotoDNATask extends AbstractTask {
 
         byte[] hash;
         try (InputStream is = pdnaConfig.isUseThumbnail() ? new ByteArrayInputStream(thumb)
-                : evidence.getBufferedStream()) {
+                : evidence.getBufferedInputStream()) {
 
             photodna.reset();
             hash = photodna.computePhotoDNA(is);

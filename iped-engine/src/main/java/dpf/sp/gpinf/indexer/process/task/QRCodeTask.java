@@ -126,7 +126,7 @@ public class QRCodeTask extends AbstractTask {
         }
         BufferedImage img = null;
         long t = System.currentTimeMillis();
-        try (BufferedInputStream in = evidence.getBufferedStream()) {
+        try (BufferedInputStream in = evidence.getBufferedInputStream()) {
             img = ImageIO.read(in);
         } catch (Exception e) {
             logger.warn("Cannot read image file {} ({} bytes): {}", evidence.getPath(), evidence.getLength(),

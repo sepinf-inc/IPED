@@ -342,7 +342,7 @@ public class ExportFileTask extends AbstractTask {
     public void extract(IItem evidence) {
         InputStream is = null;
         try {
-            is = evidence.getBufferedStream();
+            is = evidence.getBufferedInputStream();
             extractFile(is, evidence, null);
 
         } catch (IOException e) {

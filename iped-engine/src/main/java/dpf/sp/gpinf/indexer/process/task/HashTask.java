@@ -121,7 +121,7 @@ public class HashTask extends AbstractTask {
 
         InputStream in = null;
         try {
-            in = evidence.getBufferedStream();
+            in = evidence.getBufferedInputStream();
             byte[] buf = new byte[1024 * 1024];
             int len;
             while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()) {

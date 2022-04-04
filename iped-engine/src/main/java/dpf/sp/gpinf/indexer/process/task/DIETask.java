@@ -344,7 +344,7 @@ public class DIETask extends AbstractTask {
         BufferedImage img = null;
         try {
             if (extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = ImageMetadataUtil.getThumb(stream);
                 } finally {
@@ -352,7 +352,7 @@ public class DIETask extends AbstractTask {
                 }
             }
             if (img == null) {
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = ImageUtil.getSubSampledImage(stream, die.getExpectedImageSize(), die.getExpectedImageSize());
                 } finally {
@@ -360,7 +360,7 @@ public class DIETask extends AbstractTask {
                 }
             }
             if (img == null) {
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = externalImageConverter.getImage(stream, die.getExpectedImageSize(), false, evidence.getLength());
                 } finally {

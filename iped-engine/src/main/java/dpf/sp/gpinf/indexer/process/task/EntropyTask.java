@@ -51,7 +51,7 @@ public class EntropyTask extends AbstractTask {
                 || Boolean.TRUE.equals(evidence.getExtraAttribute(ThumbTask.HAS_THUMB)))
             return;
 
-        try (RandomFilterInputStream rfis = new RandomFilterInputStream(evidence.getBufferedStream())) {
+        try (RandomFilterInputStream rfis = new RandomFilterInputStream(evidence.getBufferedInputStream())) {
 
             while (rfis.read(buf) != -1)
                 ;
@@ -66,8 +66,8 @@ public class EntropyTask extends AbstractTask {
         /*
          * Deflater compressor = new Deflater(Deflater.BEST_SPEED); byte[] buf = new
          * byte[64 * 1024]; byte[] out = new byte[64 * 1024]; compressor.reset();
-         * try(InputStream is = evidence.getBufferedStream()){ int len = 0; while((len =
-         * is.read(buf))!= -1){ compressor.setInput(buf, 0, len); do{
+         * try(InputStream is = evidence.getBufferedInputStream()){ int len = 0;
+         * while((len = is.read(buf))!= -1){ compressor.setInput(buf, 0, len); do{
          * compressor.deflate(out); }while(!compressor.needsInput()); }
          * compressor.finish(); compressor.deflate(out);
          * 

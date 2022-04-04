@@ -143,7 +143,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
         BufferedInputStream is = null;
         long offset = 0;
         try {
-            is = evidence.getBufferedStream();
+            is = evidence.getBufferedInputStream();
             while (is.read(bb) > 0) {
                 byte read = bb[0];
                 if (read == 14 || read == 15) {
@@ -164,7 +164,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                                     int len = 512 * numFiles;
                                     BufferedInputStream inParse = null;
                                     try {
-                                        inParse = evidence.getBufferedStream();
+                                        inParse = evidence.getBufferedInputStream();
                                         inParse.skip(offset);
                                         List<KnownMetEntry> l = KnownMetParser.parseToList(inParse, len);
                                         if (!l.isEmpty()) {

@@ -75,7 +75,7 @@ public interface IItem extends IItemBase {
      * @throws IOException
      */
     @Override
-    BufferedInputStream getBufferedStream() throws IOException;
+    BufferedInputStream getBufferedInputStream() throws IOException;
 
     /**
      *

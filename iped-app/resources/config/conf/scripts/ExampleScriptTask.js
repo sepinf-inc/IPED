@@ -71,7 +71,7 @@ function finish(){
  *  Object:  getExtraAttribute(String key) (returns an extra attribute)
  *  String:  getParsedTextCache() (returns item extracted text, if this task is placed after ParsingTask)
  *  File:    getTempFile() (returns a temp file with item content)
- *  BufferedInputStream: getBufferedStream() (returns an InputStream with item content)
+ *  BufferedInputStream: getBufferedInputStream() (returns an InputStream with item content)
  *
  *  Some Setters: 
  *           setToIgnore(boolean) (ignores the item and excludes it from processing and case)

@@ -162,7 +162,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             }
             if (!alreadyExported) {
                 logger.info("Exporting item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
-                try (InputStream is = item.getBufferedStream()) {
+                try (InputStream is = item.getBufferedInputStream()) {
                     Files.copy(is, imageFile.toPath());
                 }
             }

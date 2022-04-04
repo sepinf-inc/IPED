@@ -368,7 +368,7 @@ public class TelegramParser extends SQLite3DBParser {
         List<IItemBase> result = searcher.search(query);
         IItemBase item = getBestItem(result, dbPath);
         if (item != null) {
-            try (InputStream is = item.getBufferedStream()) {
+            try (InputStream is = item.getBufferedInputStream()) {
                 Contact account = decodeAndroidAccount(is);
                 if (account != null)
                     return account;
