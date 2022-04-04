@@ -29,12 +29,4 @@ public interface ILuceneResult {
 
     LuceneSearchResult intersect(LuceneSearchResult items);
 
-    /**
-     * Interseção mais eficiente
-     *
-     * @param items
-     * @return
-     */
-    LuceneSearchResult intersect2(LuceneSearchResult items);
-
 }

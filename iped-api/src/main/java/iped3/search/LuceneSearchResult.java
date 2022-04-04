@@ -123,7 +123,7 @@ public class LuceneSearchResult {
      * @param items
      * @return
      */
-    public LuceneSearchResult intersect2(LuceneSearchResult items) {
+    private LuceneSearchResult intersect2(LuceneSearchResult items) {
 
         LuceneSearchResult result = this.clone();
 
