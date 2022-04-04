@@ -120,7 +120,7 @@ public class IPEDSearcher implements IIPEDSearcher {
         return filterFragmentedResults(searchAll());
     }
 
-    public LuceneSearchResult searchAll() throws IOException {
+    private LuceneSearchResult searchAll() throws IOException {
 
         // System.out.println("searching");
 
@@ -195,7 +195,7 @@ public class IPEDSearcher implements IIPEDSearcher {
         return result.build();
     }
 
-    public LuceneSearchResult filterFragmentedResults(LuceneSearchResult prevResult) {
+    private LuceneSearchResult filterFragmentedResults(LuceneSearchResult prevResult) {
 
         // System.out.println("fragments");
 

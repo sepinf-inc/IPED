@@ -17,8 +17,6 @@ public interface IIPEDSearcher {
 
     void cancel();
 
-    LuceneSearchResult filterFragmentedResults(LuceneSearchResult prevResult) throws Exception;
-
     Query getQuery();
 
     LuceneSearchResult luceneSearch() throws Exception;
@@ -26,8 +24,6 @@ public interface IIPEDSearcher {
     IMultiSearchResult multiSearch() throws Exception;
 
     SearchResult search() throws Exception;
-
-    LuceneSearchResult searchAll() throws Exception;
 
     void setQuery(Query query);
 

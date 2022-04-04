@@ -720,7 +720,7 @@ public class Manager {
 
                     try {
                         IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
-                        if (pesquisa.searchAll().getLength() > 0) {
+                        if (pesquisa.search().getLength() > 0) {
                             palavrasFinais.add(palavra);
                         }
                     } catch (Exception e) {
@@ -755,7 +755,7 @@ public class Manager {
 
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())) {
             IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
-            LuceneSearchResult result = searchAll.searchAll();
+            LuceneSearchResult result = searchAll.luceneSearch();
 
             boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
             for (int docID : result.getLuceneIds()) {
