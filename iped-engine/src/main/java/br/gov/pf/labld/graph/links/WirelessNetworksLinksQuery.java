@@ -1,6 +1,6 @@
 package br.gov.pf.labld.graph.links;
 
-import dpf.sp.gpinf.indexer.desktop.Messages;
+import dpf.sp.gpinf.indexer.localization.Messages;
 
 public class WirelessNetworksLinksQuery extends AbstractSearchLinksQuery {
 
@@ -13,7 +13,7 @@ public class WirelessNetworksLinksQuery extends AbstractSearchLinksQuery {
 
     @Override
     public String getLabel() {
-        return Messages.get("GraphAnalysis.LinksWireless");
+        return Messages.getString("GraphAnalysis.LinksWireless");
     }
 
 }

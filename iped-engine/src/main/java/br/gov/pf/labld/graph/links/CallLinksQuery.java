@@ -1,6 +1,6 @@
 package br.gov.pf.labld.graph.links;
 
-import dpf.sp.gpinf.indexer.desktop.Messages;
+import dpf.sp.gpinf.indexer.localization.Messages;
 
 public class CallLinksQuery extends AbstractSearchLinksQuery {
 
@@ -13,7 +13,7 @@ public class CallLinksQuery extends AbstractSearchLinksQuery {
 
     @Override
     public String getLabel() {
-        return Messages.get("GraphAnalysis.LinksCalls");
+        return Messages.getString("GraphAnalysis.LinksCalls");
     }
 
 }
