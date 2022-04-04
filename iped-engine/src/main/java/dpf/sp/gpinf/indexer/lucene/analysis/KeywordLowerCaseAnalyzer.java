@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.analysis;
+package dpf.sp.gpinf.indexer.lucene.analysis;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordTokenizer;

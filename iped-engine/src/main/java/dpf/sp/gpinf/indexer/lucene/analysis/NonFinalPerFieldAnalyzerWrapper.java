@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.analysis;
+package dpf.sp.gpinf.indexer.lucene.analysis;
 
 import java.util.Collections;
 import java.util.Map;
