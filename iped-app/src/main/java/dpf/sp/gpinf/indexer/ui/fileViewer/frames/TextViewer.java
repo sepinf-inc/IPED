@@ -8,8 +8,8 @@ import iped3.io.IStreamSource;
 
 public class TextViewer extends ATextViewer {
 
-    public TextViewer(HitsTable hitsTable) {
-        super(hitsTable);
+    public TextViewer() {
+        super();
     }
 
     @Override

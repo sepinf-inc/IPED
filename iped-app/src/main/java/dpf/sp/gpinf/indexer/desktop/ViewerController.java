@@ -73,12 +73,12 @@ public class ViewerController {
     private boolean isFixed;
     private final Object lock = new Object();
 
-    public ViewerController(HitsTable hitsTable, final String codePath) {
+    public ViewerController(final String codePath) {
         Window owner = App.get();
         
         // These viewers will have their own docking frame
         viewers.add(new HexViewerPlus(owner, new HexSearcherImpl()));
-        viewers.add(textViewer = new TextViewer(hitsTable));
+        viewers.add(textViewer = new TextViewer());
         viewers.add(new MetadataViewer() {
             @Override
             public boolean isFixed() {
@@ -153,6 +153,10 @@ public class ViewerController {
 
     public List<AbstractViewer> getViewers() {
         return Collections.unmodifiableList(viewers);
+    }
+
+    public void setHitsTableInTextViewer(HitsTable hitsTable) {
+        textViewer.setHitsTable(hitsTable);
     }
 
     public ATextViewer getTextViewer() {

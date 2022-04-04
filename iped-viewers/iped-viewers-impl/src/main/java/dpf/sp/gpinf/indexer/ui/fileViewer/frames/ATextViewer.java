@@ -59,9 +59,8 @@ public abstract class ATextViewer extends AbstractViewer implements KeyListener 
     protected HitsTable hitsTable;
     private AbstractTableModel hitsModel;
 
-    public ATextViewer(HitsTable hitsTable) {
+    public ATextViewer() {
         super(new GridLayout());
-        this.hitsTable = hitsTable;
         textViewerModel = new TextViewerModel();
         textTable = new JTable(textViewerModel) {
             private static final long serialVersionUID = -5129153322350459095L;
@@ -90,6 +89,10 @@ public abstract class ATextViewer extends AbstractViewer implements KeyListener 
         textTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         textTable.addKeyListener(this);
         this.getPanel().add(viewerScroll);
+    }
+
+    public void setHitsTable(HitsTable hitsTable) {
+        this.hitsTable = hitsTable;
     }
 
     public void setHitsModel(AbstractTableModel hitsModel) {
@@ -279,7 +282,9 @@ public abstract class ATextViewer extends AbstractViewer implements KeyListener 
 
     @Override
     public void scrollToNextHit(boolean forward) {
-
+        if (hitsTable == null) {
+            return;
+        }
         currentHit = hitsTable.getSelectedRow();
         totalHits = textParser.getHits().size();
         if (forward) {

@@ -549,7 +549,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         appGraphAnalytics = new AppGraphAnalytics();
 
-        hitsTable = new HitsTable(new HitsTableModel(getTextViewer()));
+        viewerController = new ViewerController(codePath);
+
+        hitsTable = new HitsTable(new HitsTableModel(viewerController.getTextViewer()));
         hitsScroll = new JScrollPane(hitsTable);
         hitsTable.setFillsViewportHeight(true);
         hitsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -559,7 +561,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         hitsTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         hitsTable.setShowGrid(false);
 
-        viewerController = new ViewerController(hitsTable, codePath);
+        viewerController.setHitsTableInTextViewer(hitsTable);
 
         subItemTable = new HitsTable(subItemModel);
         subItemScroll = new JScrollPane(subItemTable);
