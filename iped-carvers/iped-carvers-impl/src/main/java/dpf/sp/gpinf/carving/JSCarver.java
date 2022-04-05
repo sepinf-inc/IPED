@@ -31,7 +31,7 @@ public class JSCarver extends DefaultCarver {
     @Override
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         try {
-            Double l = (Double) inv.invokeFunction("getLengthFromHeader", parentEvidence, header);
+            Number l = (Number) inv.invokeFunction("getLengthFromHeader", parentEvidence, header);
             return l.longValue();
         } catch (ScriptException e) {
             throw new IOException(e);

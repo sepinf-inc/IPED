@@ -139,6 +139,7 @@
             <mime>application/vnd.rn-realmedia</mime>
             <mime>application/java-archive</mime>
         </parser>
+        <parser class="dpf.mt.gpinf.tor.tc.TorTcParser"></parser>
         
         <parser class="org.gagravarr.tika.FlacParser"></parser>
         <parser class="org.gagravarr.tika.OggParser"></parser>

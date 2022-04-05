@@ -25,6 +25,17 @@
 			<minLength>10000</minLength>
             <maxLength>100000000</maxLength>
         </carverType>
+        <carverType>
+            <name>TOR_CIRCUIT_STATUS</name>
+			<minLength>10</minLength>
+            <mediaType>application/x-tor-tc-fragment</mediaType>
+			<maxLength>1000</maxLength>
+			<signatures>
+    	        <headerSignature>BUILT</headerSignature>
+    	        <headerSignature>EXTENDED</headerSignature>
+    	        <footerSignature>\0d\0a</footerSignature>
+    	        </signatures>
+        </carverType>
   		<carverType>
             <name>OLE</name>
             <carverClass>dpf.sp.gpinf.carving.carvers.OLECarver</carverClass>
