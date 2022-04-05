@@ -352,13 +352,15 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         }
 
         context = getTikaContext();
-        try {
-            File thumbFile = getThumbFile(evidence);
-            if (!hasThumb(evidence, thumbFile)) {
-                context.set(ComputeThumb.class, new ComputeThumb());
+        if (evidence.getHashValue() != null) {
+            try {
+                File thumbFile = getThumbFile(evidence);
+                if (!hasThumb(evidence, thumbFile)) {
+                    context.set(ComputeThumb.class, new ComputeThumb());
+                }
+            } catch (Exception e1) {
+                LOGGER.warn("Error checking item thumbnail: " + evidence.toString(), e1);
             }
-        } catch (Exception e1) {
-            e1.printStackTrace();
         }
 
         Metadata metadata = evidence.getMetadata();
