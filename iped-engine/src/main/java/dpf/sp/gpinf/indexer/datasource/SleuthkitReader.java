@@ -56,6 +56,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
@@ -1027,6 +1028,10 @@ public class SleuthkitReader extends DataSourceReader {
 
         if (embeddedDisk && content instanceof Image) {
             return parent;
+        }
+        // Causes exception because parent is null. TODO add to the case properly (#1054)
+        if (content instanceof OsAccount) {
+            return null;
         }
         if (listOnly || fastmode || embeddedDisk) {
             itemCount++;
