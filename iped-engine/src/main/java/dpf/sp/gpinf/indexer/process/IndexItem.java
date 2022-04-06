@@ -878,6 +878,11 @@ public class IndexItem extends BasicProps {
                 evidence.setFileOffset(Long.parseLong(value));
             }
 
+            value = doc.get(IndexItem.ISROOT);
+            if (value != null) {
+                evidence.setRoot(Boolean.parseBoolean(value));
+            }
+
             Set<String> multiValuedFields = new HashSet<>();
             for (IndexableField f : doc.getFields()) {
                 if (BasicProps.SET.contains(f.name()))
