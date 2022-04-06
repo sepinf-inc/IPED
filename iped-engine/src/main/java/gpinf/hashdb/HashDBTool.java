@@ -61,7 +61,12 @@ public class HashDBTool {
     private static final String setPropertyName = "set";
     private static final String statusPropertyName = "status";
 
-    private static final String vicDataModel = "http://github.com/ICMEC/ProjectVic/DataModels/1.3.xml#Media";
+    private static final String vicDataModelKey13 = "odata.metadata";
+    private static final String vicDataModelValue13 = "http://github.com/ICMEC/ProjectVic/DataModels/1.3.xml#Media";
+    
+    private static final String vicDataModelKey20 = "@odata.context";
+    private static final String vicDataModelValue20 = "http://github.com/VICSDATAMODEL/ProjectVic/DataModels/2.0.xml/Default/$metadata#Media";
+    
     private static final String vicSetPropertyValue = "ProjectVIC";
     private static final String[] vicStatusPropertyValues = new String[] {"known","pedo","pedo"};
     private static final String vicPrefix = "vic";
@@ -716,8 +721,7 @@ public class HashDBTool {
             int cnt = 0;
             long len = file.length();
             while (jp.nextToken() != JsonToken.END_OBJECT) {
-                String fieldName = jp.getCurrentName();
-                if (!fieldName.equals("odata.metadata") || !jp.nextTextValue().equals(vicDataModel)) {
+                if (!checkVicDataModel(jp.getCurrentName(), jp.nextTextValue())) {
                     jp.close();
                     raf.close();
                     throw new RuntimeException("Error: Unknown ProjectVic JSON data model!");
@@ -749,16 +753,32 @@ public class HashDBTool {
                                     hashes[idx] = hashStrToBytes(value, hashBytesLen[idx]);
                                     hasHash = true;
                                 }
-                            } else if ("VictimIdentified".equalsIgnoreCase(name) || "OffenderIdentified".equalsIgnoreCase(name) || "IsDistributed".equalsIgnoreCase(name) || "Series".equalsIgnoreCase(name) || "IsPrecategorized".equalsIgnoreCase(name) || "Tags".equalsIgnoreCase(name)) {
+                            } else if ("PhotoDNA".equalsIgnoreCase(name)) {
                                 String value = jp.nextTextValue();
                                 if (value != null) {
-                                    value = value.replace('|', ' ').trim();
-                                    if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
-                                        value = value.toLowerCase();
+                                    value = value.trim();
+                                    if (value.length() == photoDnaBase64Len) {
+                                        merge(properties, photoDnaPropertyId, value);
                                     }
-                                    if (!value.isEmpty()) {
-                                        merge(properties, getPropertyId(vicPrefix + name), value);
+                                }
+                            } else if ("VictimIdentified".equalsIgnoreCase(name) || "OffenderIdentified".equalsIgnoreCase(name) || "IsDistributed".equalsIgnoreCase(name) || "Series".equalsIgnoreCase(name) || "IsPrecategorized".equalsIgnoreCase(name) || "Tags".equalsIgnoreCase(name)) {
+                                token = jp.nextToken();
+                                String value = null;
+                                if (token == JsonToken.VALUE_STRING) {
+                                    value = jp.getText();
+                                    if (value != null) {
+                                        value = value.replace('|', ' ').trim();
+                                        if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
+                                            value = value.toLowerCase();
+                                        }
                                     }
+                                } else if (token == JsonToken.VALUE_TRUE) {
+                                    value = "true";
+                                } else if (token == JsonToken.VALUE_FALSE) {
+                                    value = "false";
+                                }
+                                if (value != null && !value.isEmpty()) {
+                                    merge(properties, getPropertyId(vicPrefix + name), value);
                                 }
                             } else if (token == JsonToken.END_OBJECT) {
                                 if (hasHash && !properties.isEmpty()) {
@@ -815,6 +835,11 @@ public class HashDBTool {
             } catch (Exception e) {}
         }
         return true;
+    }
+    
+    private boolean checkVicDataModel(String key, String value) {
+        return (vicDataModelKey13.equalsIgnoreCase(key) && vicDataModelValue13.equalsIgnoreCase(value))
+                || (vicDataModelKey20.equalsIgnoreCase(key) && vicDataModelValue20.equalsIgnoreCase(value));
     }
 
     private boolean readNSRLProd(File file) {
@@ -971,8 +996,7 @@ public class HashDBTool {
             jp = jfactory.createParser(reader);
             if (jp.nextToken() != JsonToken.START_OBJECT) return false;
             if (jp.nextToken() != JsonToken.END_OBJECT) {
-                String fieldName = jp.getCurrentName();
-                if (fieldName != null && fieldName.equals("odata.metadata") && vicDataModel.equals(jp.nextTextValue())) {
+                if (checkVicDataModel(jp.getCurrentName(), jp.nextTextValue())) {
                     return true;
                 }
             }

@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * (INTERFACE DO IPED) Responsável por instanciar e executar o contador e o
  * produtor de itens do caso que adiciona os itens a fila de processamento.
- * Podem obter os itens de diversas fontes de dados: pastas, relatórios do FTK,
+ * Podem obter os itens de diversas fontes de dados: pastas, relatórios do UFED,
  * imagens forenses ou casos do IPED.
  *
  */

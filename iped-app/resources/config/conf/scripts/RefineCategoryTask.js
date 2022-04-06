@@ -27,12 +27,20 @@ function process(e){
 	var nome = e.getName().toLowerCase();
 	var mime = e.getMediaType().toString();
 	var path = e.getPath().toLowerCase().replace(/\\/g, "/");
-	
+
 	if(mime.equals("application/x-chrome-cache-index") && path.contains("/appdata/roaming/discord")){
 		e.setMediaTypeStr("application/x-discord-index");
 	}
+	
+	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk/i.test(e.getName())){
+	    e.setMediaTypeStr("application/x-vmdk-data");
+	}
+	
+	if("application/x-disk-image".equals(mime) && (ext.equals("dd") || ext.equals("000") || ext.equals("001"))){
+	    e.setMediaTypeStr("application/x-raw-image");
+	}
 
-	if(e.getExt().toLowerCase().equals("mts")){
+	if(ext.toLowerCase().equals("mts")){
 		e.setMediaTypeStr("video/mp2t");
 		e.setCategory("Videos");
 	}
@@ -85,7 +93,6 @@ function process(e){
 	}
     
     else if(categorias.indexOf("Other files") > -1){
-		var ext = e.getExt().toLowerCase();
 		
 		if (ext.equals("url"))
 			e.setCategory("URL links");
@@ -134,10 +141,27 @@ function process(e){
 		(path.indexOf("/appdata/roaming/apple computer/mobilesync/backup") > -1)||
 		(path.indexOf("/appdata/roaming/apple computer/mobilesyncbackup") > -1)||
 		(path.indexOf("/biblioteca/suporte a aplicativos/mobilesync/backup") > -1)||
-		(path.indexOf("/library/application support/mobilesync/backup") > -1)
+		(path.indexOf("/library/application support/mobilesync/backup") > -1) ||
+		(path.indexOf("/apple/mobilesync/backup") > -1)
 		)
 		e.addCategory("iPhone Backup");
 		
+	if (mime.equals("application/x-ios-backup-manifest-db"))
+		e.addCategory("iPhone Backup");
+	
+	if (mime.equals("application/x-ios-sms-db") ||
+		mime.equals("application/x-ios-addressbook-db") ||
+		mime.equals("application/x-ios-calllog-db") ||
+		mime.equals("application/x-ios8-calllog-db") ||
+		mime.equals("application/x-ios-voicemail-db") ||
+		mime.equals("application/x-ios-oldnotes-db") ||
+		mime.equals("application/x-ios-notes-db") ||
+		mime.equals("application/x-ios-photos-db") ||
+		mime.equals("application/x-ios-calendar-db") ||
+		mime.equals("application/x-ios-locations-db")
+		){
+		e.addCategory("Databases");
+	}
 	
 	
 	//Torchat Install files

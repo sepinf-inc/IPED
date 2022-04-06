@@ -72,6 +72,7 @@ import com.pff.PSTRecipient;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.util.ExtraProperties;
@@ -99,7 +100,6 @@ public class OutlookPSTParser extends AbstractParser {
 
     private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("OutlookPSTParser.DateFormat")); //$NON-NLS-1$
     private LibpffPSTParser libpffParser = new LibpffPSTParser();
-
     private boolean recoverDeleted = true;
     private boolean useLibpffParser = true;
 
@@ -148,6 +148,7 @@ public class OutlookPSTParser extends AbstractParser {
         TikaInputStream tis = null;
         File tmpFile = null;
         PSTFile pstFile = null;
+        boolean libpffCalled = false;
         try {
             tis = TikaInputStream.get(stream, tmp);
             tmpFile = tis.getFile();
@@ -168,6 +169,7 @@ public class OutlookPSTParser extends AbstractParser {
 
             if (recoverDeleted) {
                 libpffParser.setExtractOnlyDeleted(true);
+                libpffCalled = true;
                 libpffParser.parse(tis, handler, metadata, context);
             }
 
@@ -182,17 +184,28 @@ public class OutlookPSTParser extends AbstractParser {
             } else if (e instanceof TikaException && e.getCause() instanceof InterruptedException)
                 throw (TikaException) e;
             else {
-                if (useLibpffParser) {
+                boolean throwException = false;
+                if (useLibpffParser && !libpffCalled) {
                     LOGGER.warn("java-libpst failed, using libpff on " + fileName, e); //$NON-NLS-1$
                     libpffParser.setExtractOnlyDeleted(false);
                     if (!recoverDeleted)
                         libpffParser.setExtractOnlyActive(true);
                     libpffParser.parse(tis, handler, metadata, context);
-                } else
-                    LOGGER.error("java-libpst failed on " + fileName, e); //$NON-NLS-1$
+                } else {
+                    LOGGER.error("PST/OST parsing failed on {}", fileName); //$NON-NLS-1$
+                    throwException = true;
+                }
 
                 if (e.toString().contains("Only unencrypted and compressable PST files are supported at this time")) //$NON-NLS-1$
                     throw new EncryptedDocumentException(e);
+
+                if (throwException) {
+                    if (e instanceof TikaException) {
+                        throw (TikaException) e;
+                    } else {
+                        throw new TikaException("PST/OST parsing failed", e);
+                    }
+                }
             }
 
         } finally {
@@ -344,6 +357,7 @@ public class OutlookPSTParser extends AbstractParser {
 
             metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(obj.getDescriptorNodeId()));
             metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(parent));
+            metadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
             StringBuilder preview = new StringBuilder();
             preview.append("<html>"); //$NON-NLS-1$
@@ -434,12 +448,9 @@ public class OutlookPSTParser extends AbstractParser {
                 subject = Messages.getString("OutlookPSTParser.NoSubject"); //$NON-NLS-1$
             metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
             metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OUTLOOK_MSG_MIME);
-
+            metadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
             metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
             metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);
-
-            if (email.hasAttachments())
-                metadata.set(ExtraProperties.PST_EMAIL_HAS_ATTACHS, "true"); //$NON-NLS-1$
 
             Charset charset = Charset.forName("UTF-8"); //$NON-NLS-1$
             StringBuilder preview = new StringBuilder();
@@ -475,6 +486,7 @@ public class OutlookPSTParser extends AbstractParser {
                         if (!recipName.isEmpty()) {
                             recipients.add(recipName); // $NON-NLS-1$
                         }
+                        MetadataUtil.fillRecipientAddress(metadata, recip.getEmailAddress());
                     }
                 }
                 if (recipients.size() > 0) {
@@ -501,6 +513,7 @@ public class OutlookPSTParser extends AbstractParser {
                     preview.append(SimpleHTMLEncoder.htmlEncode(attach) + "<br>"); //$NON-NLS-1$
                 }
             }
+            metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, email.getNumberOfAttachments());
 
             preview.append("<hr>"); //$NON-NLS-1$
             preview.append("</div>\n"); //$NON-NLS-1$
@@ -549,6 +562,27 @@ public class OutlookPSTParser extends AbstractParser {
                 extractor.parseEmbedded(stream, xhtml, metadata, true);
 
             stream.close();
+            
+            /* Issue #65 - Store all email headers as metadata */
+            String importanceMeta = Message.MESSAGE_PREFIX + "Importance"; //$NON-NLS-1$
+            switch (email.getImportance()) {
+                case PSTMessage.IMPORTANCE_NORMAL:
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceNormal"));
+                    break;
+                case PSTMessage.IMPORTANCE_HIGH:
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceHigh"));
+                    break;
+                case PSTMessage.IMPORTANCE_LOW:
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceLow"));
+                    break;
+                default:
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceNormal"));
+                    break;
+            }
+            
+            populateMetadataWithEmailHeaders(email, metadata);
+            
+            /* Issue #65 - End */
 
         } catch (Exception e) {
             LOGGER.warn("Exception extracting email: {}>>{}\t{}", path, email.getSubject(), e.toString()); //$NON-NLS-1$
@@ -570,6 +604,29 @@ public class OutlookPSTParser extends AbstractParser {
                     preview.append(SimpleHTMLEncoder.htmlEncode(line.trim()) + "<br>"); //$NON-NLS-1$
             }
             preview.append("</div>"); //$NON-NLS-1$
+        }
+    }
+    
+    /* Issue #65 */
+    private void populateMetadataWithEmailHeaders (PSTMessage email, Metadata metadata) {
+        String headers = email.getTransportMessageHeaders();
+        if (!headers.isEmpty()) {
+            // unfold multiple line fields according to RFC822
+            headers = headers.replaceAll("\r\n[ \t]", " ");
+            String[] fields = headers.split("\r\n");
+            for (String field : fields) {
+                String[] h = field.split(":", 2);
+                if (h.length > 1) {
+                    String name = h[0];
+                    String value = h[1].trim();
+                    // ignore basic and non registered raw headers
+                    if (!value.isEmpty() && MetadataUtil.isToAddRawMailHeader(name)) {
+                        metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + name, value);
+                    }
+                } else {
+                    LOGGER.warn("Unexpected header syntax: {}", field);
+                }
+            }
         }
     }
 
@@ -620,7 +677,7 @@ public class OutlookPSTParser extends AbstractParser {
                     // attach.getLastModificationTime());
                     // metadata.set(ExtraProperties.EMBEDDED_PATH, path);
                     metadata.set(Metadata.CONTENT_TYPE, attach.getMimeTag());
-                    metadata.set(ExtraProperties.PST_ATTACH, "true"); //$NON-NLS-1$
+                    metadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
 
                     metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, parent + "_attach" + x);
                     metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);

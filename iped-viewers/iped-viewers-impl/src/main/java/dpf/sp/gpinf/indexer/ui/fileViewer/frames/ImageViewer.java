@@ -18,7 +18,7 @@ import java.io.InputStream;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -106,7 +106,7 @@ public class ImageViewer extends Viewer implements ActionListener {
         if (content != null) {
             InputStream in = null;
             try {
-                in = new BufferedInputStream(content.getStream());
+                in = new BufferedInputStream(content.getSeekableInputStream());
                 // needed for embedded jbig2
                 String mimeType = content instanceof IItemBase
                         ? MediaTypes.getMimeTypeIfJBIG2((IItemBase) content)
@@ -115,24 +115,24 @@ public class ImageViewer extends Viewer implements ActionListener {
 
                 if (image == null) {
                     IOUtil.closeQuietly(in);
-                    SeekableInputStream sis = content.getStream();
+                    SeekableInputStream sis = content.getSeekableInputStream();
                     in = new BufferedInputStream(sis);
                     image = externalImageConverter.getImage(in, maxDim, true, sis.size());
                 }
                 if (image == null) {
                     IOUtil.closeQuietly(in);
-                    in = new BufferedInputStream(content.getStream());
+                    in = new BufferedInputStream(content.getSeekableInputStream());
                     image = ImageMetadataUtil.getThumb(in);
                 }
                 if (image != null) {
                     IOUtil.closeQuietly(in);
-                    in = new BufferedInputStream(content.getStream());
+                    in = new BufferedInputStream(content.getSeekableInputStream());
                     int orientation = ImageMetadataUtil.getOrientation(in);
                     boolean isVideo = false;
                     if (orientation > 0) {
                         image = ImageUtil.rotate(image, orientation);
                     } else {
-                        String videoComment = ImageUtil.readJpegMetaDataComment(content.getStream());
+                        String videoComment = ImageUtil.readJpegMetaDataComment(content.getSeekableInputStream());
                         if (videoComment != null && videoComment.startsWith("Frames=")) {
                             isVideo = true;
                             if (!highlightTerms.isEmpty()) {
@@ -160,11 +160,11 @@ public class ImageViewer extends Viewer implements ActionListener {
 
     private double getZoom(IStreamSource content, BufferedImage img) throws IOException {
         Dimension d = null;
-        try (InputStream is = content.getStream()) {
+        try (InputStream is = content.getSeekableInputStream()) {
             d = ImageUtil.getImageFileDimension(is);
         }
         if (d == null) {
-            try (InputStream is = content.getStream()) {
+            try (InputStream is = content.getSeekableInputStream()) {
                 d = externalImageConverter.getDimension(is);
             }
         }
@@ -261,7 +261,7 @@ public class ImageViewer extends Viewer implements ActionListener {
     private void createToolBar() {
         toolBar = new JToolBar();
         toolBar.setFloatable(false);
-        ImageIcon iconSeparator = IconUtil.getIcon("separator", resPath, 24);
+        Icon iconSeparator = IconUtil.getIcon("separator", resPath, 24);
 
         toolBar.add(new JLabel(iconSeparator));
         createToolBarButton(actionRotLeft);
@@ -285,13 +285,13 @@ public class ImageViewer extends Viewer implements ActionListener {
                 }
             }
         });
-        ImageIcon icon = IconUtil.getIcon("bright", resPath, 12);
+        Icon icon = IconUtil.getIcon("bright", resPath, 12);
         JPanel panelAux = new JPanel() {
             private static final long serialVersionUID = 8147197693022129080L;
 
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.drawImage(icon.getImage(), (getWidth() - icon.getIconWidth()) / 2, 0, null);
+                icon.paintIcon(this, g, (getWidth() - icon.getIconWidth()) / 2, 0);
             }
         };
         panelAux.setOpaque(false);

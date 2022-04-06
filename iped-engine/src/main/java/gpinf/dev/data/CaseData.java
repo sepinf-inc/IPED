@@ -6,14 +6,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -59,7 +58,7 @@ public class CaseData implements ICaseData {
     /**
      * Filas de processamento dos itens do caso
      */
-    private TreeMap<Integer, LinkedBlockingDeque<IItem>> queues;
+    private TreeMap<Integer, LinkedList<IItem>> queues;
 
     private volatile Integer currentQueuePriority = 0;
 
@@ -67,11 +66,11 @@ public class CaseData implements ICaseData {
      * Mapa genérico de objetos extras do caso. Pode ser utilizado como área de
      * compartilhamento de objetos entre as instâncias das tarefas.
      */
-    private HashMap<String, Object> objectMap = new HashMap<String, Object>();
+    private Map<String, Object> objectMap = Collections.synchronizedMap(new HashMap<>());
+
+    private int totalItemsBeingProcessed = 0;
 
     private int discoveredEvidences = 0;
-
-    private int alternativeFiles = 0;
 
     /**
      * @return retorna o volume de dados descobertos até o momento
@@ -110,14 +109,6 @@ public class CaseData implements ICaseData {
         this.ipedReport = ipedReport;
     }
 
-    synchronized public void incAlternativeFiles(int inc) {
-        alternativeFiles += inc;
-    }
-
-    synchronized public int getAlternativeFiles() {
-        return alternativeFiles;
-    }
-
     synchronized public void incDiscoveredEvidences(int inc) {
         discoveredEvidences += inc;
     }
@@ -140,10 +131,10 @@ public class CaseData implements ICaseData {
     }
 
     private void initQueues() {
-        queues = new TreeMap<Integer, LinkedBlockingDeque<IItem>>();
-        queues.put(0, new LinkedBlockingDeque<IItem>());
+        queues = new TreeMap<Integer, LinkedList<IItem>>();
+        queues.put(0, new LinkedList<IItem>());
         for (Integer priority : MimeTypesProcessingOrder.getProcessingPriorities())
-            queues.put(priority, new LinkedBlockingDeque<IItem>());
+            queues.put(priority, new LinkedList<IItem>());
     }
 
     /**
@@ -210,37 +201,124 @@ public class CaseData implements ICaseData {
      *            arquivo a ser adicionado
      * @throws InterruptedException
      */
+    @Override
     public void addItem(IItem item) throws InterruptedException {
-        computeGlobalId(item);
-        addItemToQueue(item, 0);
+        addItemToQueue(item, currentQueuePriority, false, true);
     }
 
+    @Override
+    public void addItemFirst(IItem item) throws InterruptedException {
+        addItemToQueue(item, currentQueuePriority, true, true);
+    }
+
+    @Override
+    public void addItemNonBlocking(IItem item) {
+        try {
+            addItemToQueue(item, currentQueuePriority, false, false);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void addItemFirstNonBlocking(IItem item) {
+        try {
+            addItemToQueue(item, currentQueuePriority, true, false);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void addItemToQueue(IItem item, int queuePriority) throws InterruptedException {
-        LinkedBlockingDeque<IItem> queue = queues.get(queuePriority);
-        while (queuePriority == 0 && queue.size() >= maxQueueSize) {
-            Thread.sleep(1000);
+        addItemToQueue(item, queuePriority, false, false);
+    }
+
+    private void addItemToQueue(IItem item, int queuePriority, boolean addFirst, boolean blockIfFull)
+            throws InterruptedException {
+
+        calctrackIDAndUpdateID(item);
+
+        LinkedList<IItem> queue = queues.get(queuePriority);
+        boolean sleep = false;
+        while (true) {
+            if (sleep) {
+                sleep = false;
+                Thread.sleep(1000);
+            }
+            synchronized (this) {
+                if (blockIfFull && queuePriority == 0 && queue.size() >= maxQueueSize) {
+                    sleep = true;
+                    continue;
+                } else {
+                    if (addFirst) {
+                        queue.addFirst(item);
+                    } else {
+                        queue.addLast(item);
+                    }
+                    break;
+                }
+            }
         }
 
-        queue.put(item);
     }
 
-    private void computeGlobalId(IItem item) {
-        HashValue persistentId = new HashValue(Util.getPersistentId(item));
+    public synchronized IItem pollFirstFromCurrentQueue() throws InterruptedException {
+        return getItemQueue().pollFirst();
+    }
+
+    public synchronized void addLastToCurrentQueue(IItem item) throws InterruptedException {
+        getItemQueue().addLast(item);
+    }
+
+    public synchronized IItem peekItemFromCurrentQueue() {
+        return getItemQueue().peek();
+    }
+
+    public synchronized int getCurrentQueueSize() {
+        return getItemQueue().size();
+    }
+
+    public synchronized int getItemsBeingProcessed() {
+        return totalItemsBeingProcessed;
+    }
+
+    public synchronized void incItemsBeingProcessed() {
+        totalItemsBeingProcessed++;
+    }
+
+    public synchronized void decItemsBeingProcessed() {
+        totalItemsBeingProcessed--;
+    }
+
+    public synchronized boolean isNoItemInQueueOrBeingProcessed() {
+        return totalItemsBeingProcessed == 0 && getItemQueue().size() == 0;
+    }
+
+    /**
+     * Computes trackID and reassign the item ID if it was mapped to a different ID
+     * in a previous processing, being resumed or restarted.
+     * 
+     * @param item
+     */
+    public void calctrackIDAndUpdateID(IItem item) {
+        HashValue trackID = new HashValue(Util.getTrackID(item));
         Map<HashValue, Integer> globalToIdMap = (Map<HashValue, Integer>) objectMap
-                .get(SkipCommitedTask.GLOBALID_ID_MAP);
+                .get(SkipCommitedTask.trackID_ID_MAP);
         // changes id to previous processing id if using --continue
         if (globalToIdMap != null) {
-            Integer previousId = globalToIdMap.get(persistentId);
+            Integer previousId = globalToIdMap.get(trackID);
             if (previousId != null) {
                 item.setId(previousId.intValue());
             } else {
-                String splittedTextId = Util.generatePersistentIdForTextFrag(Util.getPersistentId(item), 1);
+                String splittedTextId = Util.generatetrackIDForTextFrag(Util.getTrackID(item), 1);
                 previousId = globalToIdMap.get(new HashValue(splittedTextId));
                 if (previousId != null) {
                     item.setId(previousId.intValue());
                 }
             }
         }
+        ((Item) item).setAllowGetId(true);
     }
 
     public Integer changeToNextQueue() {
@@ -257,7 +335,7 @@ public class CaseData implements ICaseData {
      *
      * @return fila de arquivos.
      */
-    public LinkedBlockingDeque<IItem> getItemQueue() {
+    private LinkedList<IItem> getItemQueue() {
         return queues.get(currentQueuePriority);
     }
 

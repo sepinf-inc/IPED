@@ -64,6 +64,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped3.util.ExtraProperties;
 
@@ -135,6 +136,8 @@ public class RFC822Parser extends AbstractParser {
             } else {
                 throw new TikaException("Failed to parse an email message", e); //$NON-NLS-1$
             }
+        } finally {
+            metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, mch.attachmentCount);
         }
     }
 
@@ -154,6 +157,7 @@ public class RFC822Parser extends AbstractParser {
         private boolean inPart = false, textBody, htmlBody, isAttach;
         private ParsingEmbeddedDocumentExtractor embeddedParser;
         private MimeStreamParser parser;
+        private int attachmentCount = 0;
 
         MailContentHandler(MimeStreamParser parser, XHTMLContentHandler xhtml, Metadata metadata, ParseContext context,
                 boolean strictParsing) {
@@ -208,8 +212,11 @@ public class RFC822Parser extends AbstractParser {
 
             try {
                 if (isAttach) {
-                    if (extractor.shouldParseEmbedded(submd))
+                    if (extractor.shouldParseEmbedded(submd)) {
+                        attachmentCount++;
+                        submd.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
                         extractor.parseEmbedded(is, handler, submd, true);
+                    }
                 } else {
                     if (metadata.get(ExtraProperties.MESSAGE_BODY) == null) {
                         BufferedInputStream bis = new BufferedInputStream(is, 1024 * 1024);
@@ -272,7 +279,7 @@ public class RFC822Parser extends AbstractParser {
                     }
                 } else if (fieldname.equalsIgnoreCase("Subject")) { //$NON-NLS-1$
                     String subject = decodeIfUtf8(((UnstructuredField) parsedField).getValue());
-                    // metadata.set(TikaCoreProperties.TITLE, subject);
+                    metadata.set(TikaCoreProperties.TITLE, subject);
                     metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
 
                 } else if (fieldname.equalsIgnoreCase("To")) { //$NON-NLS-1$
@@ -285,9 +292,8 @@ public class RFC822Parser extends AbstractParser {
                     DateTimeField dateField = (DateTimeField) parsedField;
                     if (metadata.get(ExtraProperties.MESSAGE_DATE) == null)
                         metadata.set(ExtraProperties.MESSAGE_DATE, dateField.getDate());
-                }
 
-                if (fieldname.equalsIgnoreCase("Content-Type")) { //$NON-NLS-1$
+                } else if (fieldname.equalsIgnoreCase("Content-Type")) { //$NON-NLS-1$
                     ContentTypeField ctField = (ContentTypeField) parsedField;
                     attachName = ctField.getParameter("name"); //$NON-NLS-1$
 
@@ -313,8 +319,16 @@ public class RFC822Parser extends AbstractParser {
                             this.attachName = attachName;
 
                     }
+                } else if (!inPart && MetadataUtil.isToAddRawMailHeader(parsedField.getName())) {
+                    /* Issue #65 - Store all email headers as metadata */
+                    String value;
+                    if (parsedField instanceof UnstructuredField) {
+                        value = ((UnstructuredField) parsedField).getValue();
+                    } else {
+                        value = DecoderUtil.decodeEncodedWords(field.getBody(), DecodeMonitor.SILENT);
+                    }
+                    metadata.add(Metadata.MESSAGE_RAW_HEADER_PREFIX + parsedField.getName(), value);
                 }
-
             } catch (RuntimeException me) {
                 if (strictParsing) {
                     throw me;
@@ -404,12 +418,16 @@ public class RFC822Parser extends AbstractParser {
             if (toField.isValidField()) {
                 AddressList addressList = toField.getAddressList();
                 for (int i = 0; i < addressList.size(); ++i) {
-                    metadata.add(metadataField, decodeIfUtf8(getDisplayString(addressList.get(i))));
+                    String recipient = decodeIfUtf8(getDisplayString(addressList.get(i)));
+                    metadata.add(metadataField, recipient);
+                    MetadataUtil.fillRecipientAddress(metadata, recipient);
                 }
             } else {
                 String to = stripOutFieldPrefix(field, addressListType);
                 for (String eachTo : to.split(",")) { //$NON-NLS-1$
-                    metadata.add(metadataField, decodeIfUtf8(eachTo.trim()));
+                    String recipient = decodeIfUtf8(eachTo.trim());
+                    metadata.add(metadataField, recipient);
+                    MetadataUtil.fillRecipientAddress(metadata, recipient);
                 }
             }
         }
@@ -440,11 +458,12 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void startBodyPart() throws MimeException {
+            inPart = true;
         }
 
         @Override
         public void endBodyPart() throws MimeException {
-
+            inPart = false;
         }
 
         @Override
@@ -474,7 +493,6 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void endMultipart() throws MimeException {
-            inPart = false;
         }
 
         @Override
@@ -490,7 +508,6 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void startMultipart(BodyDescriptor descr) throws MimeException {
-            inPart = true;
         }
 
         private String stripOutFieldPrefix(Field field, String fieldname) {

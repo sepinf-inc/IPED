@@ -68,7 +68,7 @@ public class SleuthkitServer {
             out = fc.map(MapMode.READ_WRITE, 0, size);
             out.load();
 
-            Configuration.getInstance().loadConfigurables(new File(dbPath).getParent() + "/indexador"); //$NON-NLS-1$
+            Configuration.getInstance().loadConfigurables(new File(dbPath).getParent() + "/iped"); //$NON-NLS-1$
             ConfigurationManager cm = ConfigurationManager.get();
             LocalConfig localConfig = new LocalConfig();
             cm.addObject(localConfig);

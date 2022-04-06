@@ -31,6 +31,7 @@ import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 public class UFEDChatParser extends AbstractParser {
 
@@ -83,20 +84,22 @@ public class UFEDChatParser extends AbstractParser {
             List<UfedMessage> messages = new ArrayList<>();
 
             for (IItemBase msg : searcher.searchIterable(query)) {
-                query = null;
+                List<IItemBase> subItems = null;
                 String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                 if (attachRefs.length > 0) {
-                    query = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
+                    String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
+                    subItems = searcher.search(attachQuery);
                 } else if (msg.hasChildren()) {
-                    query = BasicProps.PARENTID + ":" + msg.getId(); //$NON-NLS-1$
+                    String contactQuery = BasicProps.PARENTID + ":" + msg.getId() + " && " + BasicProps.CONTENTTYPE
+                            + ":\"" + MediaTypes.UFED_CONTACT_MIME.toString() + "\"";
+                    subItems = searcher.search(contactQuery);
                 }
-                if (query == null) {
+                if (subItems == null || subItems.isEmpty()) {
                     UfedMessage m = createMessage(msg);
                     messages.add(m);
                 } else {
-                    List<IItemBase> attachs = searcher.search(query);
-                    for (IItemBase attach : attachs) {
-                        UfedMessage m = createMessage(msg, attach);
+                    for (IItemBase subitem : subItems) {
+                        UfedMessage m = createMessage(msg, subitem);
                         messages.add(m);
                     }
                 }
@@ -131,6 +134,7 @@ public class UFEDChatParser extends AbstractParser {
                         chatName += "_" + frag++; //$NON-NLS-1$
                     chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                     chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, UFED_CHAT_PREVIEW_MIME.toString());
+                    chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(chatStream, handler, chatMetadata, false);

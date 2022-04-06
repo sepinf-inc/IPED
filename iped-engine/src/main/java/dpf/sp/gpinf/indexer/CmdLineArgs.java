@@ -12,8 +12,6 @@ public interface CmdLineArgs {
 
     File getOutputDir();
 
-    File getReportDir();
-
     File getPalavrasChave();
 
     List<String> getOcr();
@@ -28,7 +26,7 @@ public interface CmdLineArgs {
 
     int getBlocksize();
 
-    String getPassword();
+    List<String> getPasswords();
 
     String getProfile();
 
@@ -56,6 +54,10 @@ public interface CmdLineArgs {
 
     String getDataSourceName(File datasource);
 
+    String getDataSourcePassword(File datasource);
+
     public String getEvidenceToRemove();
+
+    boolean isDownloadInternetData();
 
 }

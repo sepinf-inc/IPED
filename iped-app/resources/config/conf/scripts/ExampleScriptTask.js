@@ -65,7 +65,7 @@ function finish(){
  *	Some Getters:
  *	String:  getName(), getExt(), getTypeExt(), getPath(), getHash(), getMediaType().toString(), getCategories() (categories separated by | )
  *	Date:    getModDate(), getCreationDate(), getAccessDate() (podem ser nulos)
- *  Boolean: isDeleted(), isDuplicate(), isDir(), isRoot(), isCarved(), isSubItem(), isTimedOut(), hasChildren()
+ *  Boolean: isDeleted(), isDir(), isRoot(), isCarved(), isSubItem(), isTimedOut(), hasChildren()
  *	Long:    getLength()
  *  Metadata getMetadata()
  *  Object:  getExtraAttribute(String key) (returns an extra attribute)

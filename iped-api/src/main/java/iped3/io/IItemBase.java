@@ -21,8 +21,7 @@ public interface IItemBase extends IStreamSource {
 
     /**
      *
-     * @return o id do item pai. Tem o nome do caso prefixado no caso de reports do
-     *         FTK3+
+     * @return o id do item pai.
      */
     public Integer getParentId();
 
@@ -97,11 +96,6 @@ public interface IItemBase extends IStreamSource {
     public boolean isRoot();
 
     /**
-     * @return true se o item é uma duplicata de outro, baseado no hash
-     */
-    public boolean isDuplicate();
-
-    /**
      * @return true se o parsing do item ocasionou timeout
      */
     public boolean isTimedOut();
@@ -113,25 +107,15 @@ public interface IItemBase extends IStreamSource {
     public boolean hasChildren();
 
     /**
-     *
-     * @return o arquivo com o conteúdo do item. Retorna não nulo apenas em
-     *         processamentos de pastas, reports e no caso de subitens de
-     *         containers. Consulte {@link #getTempFile()}} e {@link #getStream()}
+     * Returns a temp file with item content. This can spool data to the temp
+     * directory, so avoid using this if you can work directly with item data
+     * streams.
      */
     public File getTempFile() throws IOException;
 
-    /**
-     * @return the local File referenced by this Item, null if it does not exist (eg
-     *         item into a DD image).
-     * 
-     * @see iped3.io.IStreamSource#getFile()
-     */
-    public File getFile();
+    public String getIdInDataSource();
 
-    /**
-     * @return true if this Item refers to a local File, false otherwise.
-     */
-    public boolean hasFile();
+    public ISeekableInputStreamFactory getInputStreamFactory();
 
     /**
      * Obtém o arquivo de visualização. Retorna nulo caso inexistente.

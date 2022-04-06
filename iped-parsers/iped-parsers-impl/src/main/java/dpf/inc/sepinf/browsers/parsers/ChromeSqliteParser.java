@@ -22,7 +22,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.ToXMLContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -114,6 +113,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     downloadsMetadata.add(Metadata.RESOURCE_NAME_KEY, "Chrome Downloads"); //$NON-NLS-1$
                     downloadsMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
                     downloadsMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                    downloadsMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     parseChromeDownloads(downloadsHandler, downloadsMetadata, context, downloads);
 
@@ -144,6 +144,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                         metadataDownload.add(ExtraProperties.DOWNLOAD_RECEIVED_BYTES, d.getReceivedBytes().toString());
                     metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
                     metadataDownload.set(BasicProps.LENGTH, "");
+                    metadataDownload.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataDownload, true);
                 }
@@ -156,6 +157,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     historyMetadata.add(Metadata.RESOURCE_NAME_KEY, "Chrome History"); //$NON-NLS-1$
                     historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                     historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                    historyMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     parseChromeResumedHistory(historyHandler, historyMetadata, context, resumedHistory);
 
@@ -182,6 +184,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     metadataHistory.add(ExtraProperties.URL, h.getUrl());
                     metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
                     metadataHistory.set(BasicProps.LENGTH, "");
+                    metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                 }
@@ -194,6 +197,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     searchesMetadata.add(Metadata.RESOURCE_NAME_KEY, "Chrome Searches"); //$NON-NLS-1$
                     searchesMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
                     searchesMetadata.set(BasicProps.HASCHILD, "false"); //$NON-NLS-1$
+                    searchesMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     parseChromeSearches(searchesHandler, searchesMetadata, context, searches);
 
@@ -598,24 +602,24 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
         return searches;
     }
 
-    public static void main(String[] args) {
-
-        try {
-            String filepath = "/home/herrmann/Documents/BrowsersArtifacts/History"; //$NON-NLS-1$
-            InputStream input = new FileInputStream(filepath);
-            ChromeSqliteParser parser = new ChromeSqliteParser();
-            ParseContext context = new ParseContext();
-            ToXMLContentHandler handler = new ToXMLContentHandler(new FileOutputStream("/tmp/saida.html"), "UTF-8"); //$NON-NLS-1$
-            Metadata metadata = new Metadata();
-            metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
-                    MediaType.application("x-chrome-sqlite").toString()); //$NON-NLS-1$
-            context.set(Parser.class, parser);
-
-            parser.parse(input, handler, metadata, context);
-
-        } catch (Exception e1) {
-            e1.printStackTrace();
-        }
-
-    }
+//    public static void main(String[] args) {
+//
+//        try {
+//            String filepath = "/home/herrmann/Documents/BrowsersArtifacts/History"; //$NON-NLS-1$
+//            InputStream input = new FileInputStream(filepath);
+//            ChromeSqliteParser parser = new ChromeSqliteParser();
+//            ParseContext context = new ParseContext();
+//            ToXMLContentHandler handler = new ToXMLContentHandler(new FileOutputStream("/tmp/saida.html"), "UTF-8"); //$NON-NLS-1$
+//            Metadata metadata = new Metadata();
+//            metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+//                    MediaType.application("x-chrome-sqlite").toString()); //$NON-NLS-1$
+//            context.set(Parser.class, parser);
+//
+//            parser.parse(input, handler, metadata, context);
+//
+//        } catch (Exception e1) {
+//            e1.printStackTrace();
+//        }
+//
+//    }
 }

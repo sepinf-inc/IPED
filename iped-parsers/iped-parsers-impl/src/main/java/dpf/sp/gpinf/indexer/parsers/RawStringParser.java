@@ -249,46 +249,46 @@ public class RawStringParser extends AbstractParser {
         handler.endDocument();
 
     }
-
-    /*
-     * Método para Teste
-     */
-    public static void main(String[] args) {
-
-        // RawStringParser.MIN_SIZE = Integer.parseInt(args[0]);
-        String filepath = "f:/Teste/strings/unalloc-random"; //$NON-NLS-1$
-        String outpath = "E:/strings3.txt"; //$NON-NLS-1$
-
-        try {
-
-            InputStream input = new BufferedInputStream(new FileInputStream(filepath));
-            Writer output = new StringWriter();// new BufferedWriter(new FileWriter(outpath));
-
-            RawStringParser parser = new RawStringParser();
-
-            Date start = new Date();
-
-            ParseContext context = new ParseContext();
-            ContentHandler handler = new ToTextContentHandler(output);
-            Metadata metadata = new Metadata();
-            context.set(Parser.class, parser);
-            parser.parse(input, handler, metadata, context);
-
-            /*
-             * ParsingReader reader = new ParsingReader(parser, new File(filepath)); char[]
-             * buf = new char[1000000]; int i; while ((i = reader.read(buf, 0, buf.length))
-             * != -1){ for(long j = 0; j < 10000000L; j++); System.out.println(i);
-             * output.write(buf, 0, i); }
-             */
-
-            output.close();
-            // System.out.println(output.toString());
-            System.out.println(((new Date()).getTime() - start.getTime()) + " milisegundos"); //$NON-NLS-1$
-
-        } catch (Exception e1) {
-            e1.printStackTrace();
-        }
-
-    }
+// Comentando esse teste visto que os testes agora são feitos utilizando o JunitTest
+//    /*
+//     * Método para Teste
+//     */
+//    public static void main(String[] args) {
+//
+//        // RawStringParser.MIN_SIZE = Integer.parseInt(args[0]);
+//        String filepath = "f:/Teste/strings/unalloc-random"; //$NON-NLS-1$
+//        String outpath = "E:/strings3.txt"; //$NON-NLS-1$
+//
+//        try {
+//
+//            InputStream input = new BufferedInputStream(new FileInputStream(filepath));
+//            Writer output = new StringWriter();// new BufferedWriter(new FileWriter(outpath));
+//
+//            RawStringParser parser = new RawStringParser();
+//
+//            Date start = new Date();
+//
+//            ParseContext context = new ParseContext();
+//            ContentHandler handler = new ToTextContentHandler(output);
+//            Metadata metadata = new Metadata();
+//            context.set(Parser.class, parser);
+//            parser.parse(input, handler, metadata, context);
+//
+//            /*
+//             * ParsingReader reader = new ParsingReader(parser, new File(filepath)); char[]
+//             * buf = new char[1000000]; int i; while ((i = reader.read(buf, 0, buf.length))
+//             * != -1){ for(long j = 0; j < 10000000L; j++); System.out.println(i);
+//             * output.write(buf, 0, i); }
+//             */
+//
+//            output.close();
+//            // System.out.println(output.toString());
+//            System.out.println(((new Date()).getTime() - start.getTime()) + " milisegundos"); //$NON-NLS-1$
+//
+//        } catch (Exception e1) {
+//            e1.printStackTrace();
+//        }
+//
+//    }
 
 }

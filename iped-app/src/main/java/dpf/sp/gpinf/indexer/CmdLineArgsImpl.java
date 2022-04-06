@@ -18,6 +18,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
+import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
@@ -50,12 +51,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = { "-o", "-output" }, description = "output folder", order = 2)
     private File outputDir;
 
-    @Parameter(names = { "-remove" }, description = "removes the evidence with specified UUID")
+    @Parameter(names = { "-remove" }, description = "removes the evidence with specified name")
     private String evidenceToRemove;
-
-    @Parameter(names = { "-r",
-            "-report" }, description = "FTK3+ report folder", validateWith = FTKReportValidator.class)
-    private File reportDir;
 
     @Parameter(names = { "-l", "-keywordlist" }, description = "line file with keywords to be imported into case. "
             + "Keywords with no hits are filtered out.", validateWith = FileExistsValidator.class)
@@ -81,7 +78,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     private int blocksize;
 
     @Parameter(names = { "-p", "-password" }, description = "password for encrypted images/volumes")
-    private String password;
+    private List<String> passwords;
 
     @Parameter(names = "-profile", description = "use a processing profile: forensic, pedo, "
             + "fastmode, blind, triage. More details in manual.")
@@ -115,6 +112,9 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = "--portable", description = "use relative references to forensic images, so case can be moved to other machines if the images are on the same volume")
     private boolean portable;
 
+    @Parameter(names = "--downloadInternetData", description = "download Internet data to enrich evidence data processing. E.g. media files still available in WhatsApp servers and not found in the evidence")
+    private boolean downloadInternetData;
+
     @Parameter(names = { "--help", "-h", "/?" }, help = true, description = "display this help")
     private boolean help;
 
@@ -124,6 +124,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     private List<String> allArgs;
 
     private HashSet<String> evidenceNames = new HashSet<>();
+
+    @Override
+    public boolean isDownloadInternetData() {
+        return downloadInternetData;
+    }
 
     @Override
     public List<File> getDatasources() {
@@ -138,11 +143,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Override
     public File getOutputDir() {
         return outputDir;
-    }
-
-    @Override
-    public File getReportDir() {
-        return reportDir;
     }
 
     @Override
@@ -181,8 +181,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     }
 
     @Override
-    public String getPassword() {
-        return password;
+    public List<String> getPasswords() {
+        return passwords;
     }
 
     @Override
@@ -251,14 +251,36 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Override
     public String getDataSourceName(File datasource) {
+        boolean isEvidenceParam = false;
         for (int i = 0; i < allArgs.size(); i++) {
-            if ((allArgs.get(i).equals("-d") || allArgs.get(i).equals("-data")) //$NON-NLS-1$ //$NON-NLS-2$
-                    && datasource.equals(new File(allArgs.get(i + 1))) && i + 2 < allArgs.size()
-                    && allArgs.get(i + 2).equals("-dname")) { //$NON-NLS-1$
-                return allArgs.get(i + 3);
+            if (datasource.equals(new File(allArgs.get(i)))) {
+                isEvidenceParam = true;
+            }
+            if (allArgs.get(i).equals("-d") || allArgs.get(i).equals("-data")) {
+                isEvidenceParam = false;
+            }
+            if (isEvidenceParam && allArgs.get(i).equals("-dname")) {
+                return allArgs.get(i + 1);
             }
         }
         return datasource.getName();
+    }
+
+    @Override
+    public String getDataSourcePassword(File datasource) {
+        boolean isEvidenceParam = false;
+        for (int i = 0; i < allArgs.size(); i++) {
+            if (datasource.equals(new File(allArgs.get(i)))) {
+                isEvidenceParam = true;
+            }
+            if (allArgs.get(i).equals("-d") || allArgs.get(i).equals("-data")) {
+                isEvidenceParam = false;
+            }
+            if (isEvidenceParam && (allArgs.get(i).equals("-p") || allArgs.get(i).equals("-password"))) {
+                return allArgs.get(i + 1);
+            }
+        }
+        return null;
     }
 
     public static class FileExistsValidator implements IParameterValidator {
@@ -277,18 +299,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             File f = new File(value);
             if (!f.exists() && !Util.isPhysicalDrive(f)) {
                 throw new ParameterException("File not found: " + value); //$NON-NLS-1$
-            }
-        }
-    }
-
-    public static class FTKReportValidator implements IParameterValidator {
-        @Override
-        public void validate(String name, String value) throws ParameterException {
-            File reportDir = new File(value);
-            if (!(new File(reportDir, "files")).exists() && //$NON-NLS-1$
-                    !(new File(reportDir, "Report_files/files")).exists() && //$NON-NLS-1$
-                    !(new File(reportDir, "Export")).exists()) { //$NON-NLS-1$
-                throw new ParameterException("Invalid FTK report folder!"); //$NON-NLS-1$
             }
         }
     }
@@ -327,7 +337,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     private void checkIfAppendingToCompatibleCase() {
         if (this.isAppendIndex()) {
-            String classpath = outputDir.getAbsolutePath() + "/indexador/lib/iped-search-app.jar"; //$NON-NLS-1$
+            String classpath = outputDir.getAbsolutePath() + "/iped/lib/iped-search-app.jar"; //$NON-NLS-1$
             List<String> cmd = new ArrayList<>();
             cmd.addAll(Arrays.asList("java", "-cp", classpath, IndexFiles.class.getCanonicalName(), "-h"));
 
@@ -375,18 +385,23 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
         IndexFiles.getInstance().dataSource = new ArrayList<File>();
 
-        if (reportDir == null && (datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
+        if ((datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
             throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
         }
 
-        if (this.reportDir != null) {
-            IndexFiles.getInstance().dataSource.add(this.reportDir);
+        if (evidenceToRemove != null) {
+            this.nogui = true;
         }
+
         if (this.datasources != null) {
             for (File dataSource : this.datasources) {
                 IndexFiles.getInstance().dataSource.add(dataSource);
             }
             checkDuplicateDataSources();
+        }
+
+        if (downloadInternetData) {
+            System.setProperty(WhatsAppParser.DOWNLOAD_MEDIA_FILES_PROP, "true");
         }
 
         if (this.ocr != null) {
@@ -402,22 +417,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             IndexFiles.getInstance().logFile = this.logFile;
         }
 
-        if (outputDir != null && reportDir != null) {
-            throw new ParameterException("Option -o can not be used with FTK reports!"); //$NON-NLS-1$
-        }
-
-        if (new File(reportDir, "Report_files/files").exists()) { //$NON-NLS-1$
-            IndexFiles.getInstance().dataSource.remove(reportDir);
-            IndexFiles.getInstance().dataSource.add(new File(reportDir, "Report_files")); //$NON-NLS-1$
-            IndexFiles.getInstance().output = new File(reportDir, "indexador"); //$NON-NLS-1$
-        }
-
         if (outputDir != null) {
-            IndexFiles.getInstance().output = new File(outputDir, "indexador"); //$NON-NLS-1$
-        } else if (reportDir != null) {
-            IndexFiles.getInstance().output = new File(reportDir, "indexador"); //$NON-NLS-1$
+            IndexFiles.getInstance().output = new File(outputDir, "iped"); //$NON-NLS-1$
         } else {
-            IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "indexador"); //$NON-NLS-1$
+            IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "iped"); //$NON-NLS-1$
         }
 
         File file = outputDir;
@@ -430,7 +433,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             file = file.getParentFile();
         }
 
-        if ((appendIndex || isContinue || restart) && !(new File(outputDir, "indexador").exists())) {
+        if ((appendIndex || isContinue || restart) && !(new File(outputDir, "iped").exists())) {
             throw new IPEDException(
                     "You cannot use --append, --continue or --restart with an inexistent or invalid case folder.");
         }

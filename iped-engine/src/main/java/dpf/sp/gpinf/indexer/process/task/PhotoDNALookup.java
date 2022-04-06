@@ -37,7 +37,7 @@ public class PhotoDNALookup extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(PhotoDNALookup.class);
 
-    private static final String cachePath = System.getProperty("user.home") + "/.indexador/photodnalookup.cache";
+    private static final String cachePath = System.getProperty("user.home") + "/.iped/photodnalookup.cache";
 
     public static final String PHOTO_DNA_HIT_PREFIX = "photoDnaDb:";
 

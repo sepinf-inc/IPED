@@ -15,7 +15,7 @@ import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.STATE;
-import iped3.ICaseData;
+import gpinf.dev.data.CaseData;
 import iped3.IItem;
 import macee.core.Configurable;
 
@@ -56,7 +56,7 @@ public abstract class AbstractTask {
      * Representa o caso atual. As diferentes instâncias das tarefas podem armazenar
      * objetos compartilhados no mapa objectMap do caso.
      */
-    protected ICaseData caseData;
+    protected CaseData caseData;
 
     /**
      * Próxima tarefa que será executada no pipeline.
@@ -170,10 +170,6 @@ public abstract class AbstractTask {
             Thread.sleep(1000);
         }
 
-        if (this == worker.firstTask && !evidence.isQueueEnd()) {
-            worker.itensBeingProcessed++;
-        }
-
         AbstractTask prevTask = worker.runningTask;
         IItem prevEvidence = worker.evidence;
         worker.runningTask = this;
@@ -209,9 +205,6 @@ public abstract class AbstractTask {
                 stats.addVolume(len);
             }
         }
-        
-        if (nextTask == null && !evidence.isQueueEnd())
-            worker.itensBeingProcessed--;
     }
 
     /**
@@ -225,14 +218,12 @@ public abstract class AbstractTask {
     protected void sendToNextTask(IItem evidence) throws Exception {
         if (nextTask != null) {
             int priority = MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType());
-            if (priority <= caseData.getCurrentQueuePriority())
+            if (evidence.isRoot() || priority <= caseData.getCurrentQueuePriority())
                 nextTask.processAndSendToNextTask(evidence);
             else {
                 evidence.dispose();
+                SkipCommitedTask.checkAgainLaterProcessedParents(evidence);
                 caseData.addItemToQueue(evidence, priority);
-                if (!evidence.isQueueEnd()) {
-                    worker.itensBeingProcessed--;
-                }
             }
         }
     }

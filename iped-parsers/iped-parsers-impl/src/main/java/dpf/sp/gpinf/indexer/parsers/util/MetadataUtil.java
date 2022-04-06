@@ -1,11 +1,21 @@
 package dpf.sp.gpinf.indexer.parsers.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
@@ -28,6 +38,8 @@ public class MetadataUtil {
 
     private static Set<String> generalKeys = getGeneralKeys();
 
+    private static Set<String> commonKeys = getCommonKeys();
+
     private static Map<String, Property> compositeProps = getCompositeProps();
 
     private static Set<String> keysToIgnore = getIgnoreKeys();
@@ -36,12 +48,59 @@ public class MetadataUtil {
 
     private static final Map<String, String> renameMap = getRenameMap();
 
+    private static final Map<String, String> renameOrRemoveMap = getRenameOrRemoveMap();
+    
     private static final Set<String> singleValueKeys = getSingleValKeys();
 
     private static Map<String, String> metaCaseMap = getMetaCaseMap();
 
+    private static final Set<String> BASIC_MAIL_HEADERS = getBasicHeaders();
+
+    private static final Set<String> RAW_MAIL_HEADERS = getRawMailHeaders();
+
+    private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]+\\@[0-9a-zA-Z\\-\\.]+");
+
+    private static final Set<String> getBasicHeaders() {
+        Collator collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        Set<String> set = new TreeSet<>(collator);
+        set.addAll(Arrays.asList("From", "Subject", "To", "Bcc", "Cc", "Date"));
+        return Collections.unmodifiableSet(set);
+    }
+
+    private static Set<String> getRawMailHeaders() {
+        Collator collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        Set<String> headers = new TreeSet<>(collator);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                MetadataUtil.class.getResourceAsStream("/AllowedRawMailHeaders.txt"), StandardCharsets.UTF_8))) {
+            headers.addAll(reader.lines().collect(Collectors.toList()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return Collections.unmodifiableSet(headers);
+    }
+
+    public static boolean isToAddRawMailHeader(String header) {
+        return !BASIC_MAIL_HEADERS.contains(header) && (RAW_MAIL_HEADERS.contains(header)
+                || (header.length() > 3 && header.toUpperCase().startsWith("X-")));
+    }
+
+    public static void fillRecipientAddress(Metadata metadata, String recipient) {
+        if (recipient != null) {
+            Matcher matcher = emailPattern.matcher(recipient);
+            while (matcher.find()) {
+                metadata.add(Message.MESSAGE_RECIPIENT_ADDRESS, matcher.group());
+            }
+        }
+    }
+
     private static Map<String, String> getMetaCaseMap() {
         Map<String, String> metaCaseMap = new HashMap<String, String>();
+        for(String key : renameOrRemoveMap.values()) {
+            key = removePrefix(key);
+            metaCaseMap.put(key.toLowerCase(), key);
+        }
         for(String key : renameMap.values()) {
             key = removePrefix(key);
             metaCaseMap.put(key.toLowerCase(), key);
@@ -50,6 +109,7 @@ public class MetadataUtil {
     }
     
     private static String removePrefix(String key) {
+        // UFED prefix doesn't need to be removed because it is not added by this class
         if (key.startsWith(ExtraProperties.IMAGE_META_PREFIX))
             return key.substring(ExtraProperties.IMAGE_META_PREFIX.length());
         if (key.startsWith(ExtraProperties.VIDEO_META_PREFIX))
@@ -64,6 +124,8 @@ public class MetadataUtil {
             return key.substring(ExtraProperties.OFFICE_META_PREFIX.length());
         if (key.startsWith(ExtraProperties.GENERIC_META_PREFIX))
             return key.substring(ExtraProperties.GENERIC_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.COMMON_META_PREFIX))
+            return key.substring(ExtraProperties.COMMON_META_PREFIX.length());
         return key;
     }
     
@@ -87,9 +149,18 @@ public class MetadataUtil {
         rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.IMAGE_META_PREFIX + "Height");
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Width");
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Height");
+        rename.put(ExtraProperties.UFED_META_PREFIX + "Altitude", ExtraProperties.COMMON_META_PREFIX + TikaCoreProperties.ALTITUDE.getName());
         return rename;
     }
 
+    private static Map<String, String> getRenameOrRemoveMap() {
+        // Properties here are renamed if is no value already associated with the new name, otherwise they are simply removed. 
+        Map<String, String> renameOrRemove = new HashMap<String, String>();
+        renameOrRemove.put(ExtraProperties.IMAGE_META_PREFIX + "Image Width", ExtraProperties.IMAGE_META_PREFIX + "Width");
+        renameOrRemove.put(ExtraProperties.IMAGE_META_PREFIX + "Image Height", ExtraProperties.IMAGE_META_PREFIX + "Height");
+        return renameOrRemove;
+    }
+    
     private static Set<String> getIgnorePreviewMetas() {
         ignorePreviewMetas = new HashSet<>();
         ignorePreviewMetas.add(Metadata.RESOURCE_NAME_KEY);
@@ -108,9 +179,9 @@ public class MetadataUtil {
         generalKeys.add(Metadata.RESOURCE_NAME_KEY);
         generalKeys.add(Metadata.CONTENT_LENGTH);
         generalKeys.add(Metadata.EMBEDDED_RELATIONSHIP_ID);
-        generalKeys.add(TikaCoreProperties.TIKA_META_PREFIX);
         generalKeys.add(TikaCoreProperties.ORIGINAL_RESOURCE_NAME.getName());
         generalKeys.add(TikaCoreProperties.TIKA_META_EXCEPTION_WARNING.getName());
+        generalKeys.add(TikaCoreProperties.TIKA_META_EXCEPTION_EMBEDDED_STREAM.getName());
         generalKeys.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         generalKeys.add(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
         generalKeys.add(IndexerDefaultParser.PARSER_EXCEPTION);
@@ -122,10 +193,10 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.SHARED_HASHES);
         generalKeys.add(ExtraProperties.SHARED_ITEMS);
         generalKeys.add(ExtraProperties.LINKED_ITEMS);
-        generalKeys.add(ExtraProperties.MESSAGE_SUBJECT);
         generalKeys.add(ExtraProperties.CSAM_HASH_HITS);
-        generalKeys.add(ExtraProperties.PST_ATTACH);
-        generalKeys.add(ExtraProperties.PST_EMAIL_HAS_ATTACHS);
+        generalKeys.add(ExtraProperties.MESSAGE_SUBJECT);
+        generalKeys.add(ExtraProperties.MESSAGE_IS_ATTACHMENT);
+        generalKeys.add(ExtraProperties.MESSAGE_ATTACHMENT_COUNT.getName());
         generalKeys.add(ExtraProperties.ITEM_VIRTUAL_ID);
         generalKeys.add(ExtraProperties.PARENT_VIRTUAL_ID);
         generalKeys.add(ExtraProperties.LOCATIONS);
@@ -148,7 +219,8 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.USER_ORGANIZATION);
         generalKeys.add(ExtraProperties.USER_URLS);
         generalKeys.add(ExtraProperties.USER_NOTES);
-        generalKeys.add(ExtraProperties.USER_THUMB);
+        generalKeys.add(ExtraProperties.THUMBNAIL_BASE64);
+        generalKeys.add(ExtraProperties.DOWNLOADED_DATA);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
 
@@ -177,7 +249,10 @@ public class MetadataUtil {
         props.add(TikaCoreProperties.TITLE);
         props.add(TikaCoreProperties.DESCRIPTION);
         props.add(TikaCoreProperties.PRINT_DATE);
-        props.add(TikaCoreProperties.EMBEDDED_RESOURCE_TYPE);
+        props.add(TikaCoreProperties.TRANSITION_KEYWORDS_TO_DC_SUBJECT);
+        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_DESCRIPTION);
+        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_TITLE);
+        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_OO_SUBJECT);
         props.add(IPTC.COPYRIGHT_OWNER_ID);
         props.add(IPTC.IMAGE_CREATOR_ID);
         props.add(IPTC.IMAGE_SUPPLIER_ID);
@@ -187,6 +262,59 @@ public class MetadataUtil {
         for (Property prop : props)
             map.put(prop.getName(), prop);
         return map;
+    }
+
+    private static Set<String> getCommonKeys() {
+        Set<String> props = new HashSet<String>();
+        /*
+         * Commented properties below are set only by 1 parser or rarely set by other
+         * parsers using Tika-1.27/iped-4.0.0, this can change in future releases.
+         */
+        props.add(TikaCoreProperties.CREATOR.getName());
+        props.add(TikaCoreProperties.CREATED.getName());
+        props.add(TikaCoreProperties.MODIFIED.getName());
+        props.add(TikaCoreProperties.COMMENTS.getName());
+        props.add(TikaCoreProperties.KEYWORDS.getName());
+
+        // set by PDF and rarely set by OpenOffice/DcXML parsers today
+        // props.add(TikaCoreProperties.FORMAT.getName());
+
+        props.add(TikaCoreProperties.MODIFIER.getName());
+        props.add(TikaCoreProperties.LANGUAGE.getName());
+
+        // set by Office and rarely set by DcXML/Iptc parsers today
+        // props.add(TikaCoreProperties.PUBLISHER.getName());
+
+        // below properties are rarely set by parsers
+        // props.add(TikaCoreProperties.IDENTIFIER.getName());
+        // props.add(TikaCoreProperties.CONTRIBUTOR.getName());
+        // props.add(TikaCoreProperties.COVERAGE.getName());
+        // props.add(TikaCoreProperties.RELATION.getName());
+        // props.add(TikaCoreProperties.RIGHTS.getName());
+        // props.add(TikaCoreProperties.SOURCE.getName());
+        // props.add(TikaCoreProperties.TYPE.getName());
+
+        props.add(TikaCoreProperties.TITLE.getName());
+        props.add(TikaCoreProperties.DESCRIPTION.getName());
+
+        // set only by Office parsers today
+        // props.add(TikaCoreProperties.PRINT_DATE.getName());
+
+        props.add(TikaCoreProperties.CREATOR_TOOL.getName());
+
+        // set only by PDFParser today
+        // props.add(TikaCoreProperties.METADATA_DATE.getName());
+
+        props.add(ExtraProperties.LOCATIONS);
+        props.add(TikaCoreProperties.ALTITUDE.getName());
+
+        // set only by PDFParser today
+        // props.add(TikaCoreProperties.RATING.getName());
+
+        // set by PDFParser and rarely set by OpenOffice parser today
+        // props.add(TikaCoreProperties.HAS_SIGNATURE.getName());
+
+        return props;
     }
 
     private static Set<String> getIgnoreKeys() {
@@ -201,18 +329,43 @@ public class MetadataUtil {
     }
 
     private static final void removeIgnorable(Metadata metadata) {
-        for (String key : keysToIgnore)
+        // removes ignorable keys
+        for (String key : keysToIgnore) {
             metadata.remove(key);
+        }
+        for (String key : metadata.names()) {
+            String[] values = metadata.getValues(key);
+            // paranoid cleaning
+            if (values == null || values.length == 0) {
+                metadata.remove(key);
+                continue;
+            }
+            // removes null or empty values
+            ArrayList<String> nonEmpty = new ArrayList<>(values.length);
+            for (String val : values) {
+                if (val != null && !(val = val.strip()).isEmpty()) {
+                    nonEmpty.add(val);
+                }
+            }
+            if (nonEmpty.size() < values.length) {
+                metadata.remove(key);
+                for (String val : nonEmpty) {
+                    metadata.add(key, val);
+                }
+            }
+        }
     }
 
     public static final void normalizeMetadata(Metadata metadata) {
         // remove possible null key (#329)
         metadata.remove(null);
+        String thumb = metadata.get(ExtraProperties.THUMBNAIL_BASE64);
+        removeIgnorable(metadata);
         normalizeMSGMetadata(metadata);
         removeDuplicateKeys(metadata);
-        removeIgnorable(metadata);
-        removeInvalidGPSMeta(metadata);
+        normalizeGPSMeta(metadata);
         normalizeCase(metadata);
+        prefixCommonMetadata(metadata);
         prefixAudioMetadata(metadata);
         prefixImageMetadata(metadata);
         prefixVideoMetadata(metadata);
@@ -222,14 +375,32 @@ public class MetadataUtil {
         removeDuplicateValues(metadata);
         renameKeys(metadata);
         removeExtraValsFromSingleValueKeys(metadata);
+        // add again removed empty/corrupted thumbnails
+        if (thumb != null && thumb.isEmpty()) {
+            metadata.set(ExtraProperties.THUMBNAIL_BASE64, "");
+        }
     }
 
     private static void removeDuplicateKeys(Metadata metadata) {
         for (String key : metadata.names()) {
             Property prop = compositeProps.get(key);
+            String[] values = metadata.getValues(key);
             if (prop != null && prop.getSecondaryExtractProperties() != null) {
-                for (Property p : prop.getSecondaryExtractProperties())
-                    metadata.remove(p.getName());
+                for (Property p : prop.getSecondaryExtractProperties()) {
+                    String[] secValues = metadata.getValues(p.getName());
+                    if (values.length == secValues.length) {
+                        boolean equal = true;
+                        for (int i = 0; i < values.length; i++) {
+                            if (!values[i].equals(secValues[i])) {
+                                equal = false;
+                                break;
+                            }
+                        }
+                        if (equal) {
+                            metadata.remove(p.getName());
+                        }
+                    }
+                }
             }
         }
         if (metadata.get(TiffPageParser.propNumPages) != null) {
@@ -237,22 +408,36 @@ public class MetadataUtil {
         }
     }
 
-    private static void removeInvalidGPSMeta(Metadata metadata) {
+    private static void normalizeGPSMeta(Metadata metadata) {
         String lat = metadata.get(Metadata.LATITUDE);
+        if (lat == null)
+            lat = metadata.get(ExtraProperties.UFED_META_PREFIX + "Latitude");
         String lon = metadata.get(Metadata.LONGITUDE);
-        boolean remove = false;
-        try {
-            if (lat != null && Float.valueOf(lat) == 0.0 && lon != null && Float.valueOf(lon) == 0.0) {
-                remove = true;
+        if (lon == null)
+            lon = metadata.get(ExtraProperties.UFED_META_PREFIX + "Longitude");
+        boolean invalid = lat == null || lon == null;
+        if (!invalid) {
+            try {
+                Float lati = Float.valueOf(lat);
+                Float longit = Float.valueOf(lon);
+                if ((lati < -90 || lati > 90 || longit < -180 || longit > 180 || Float.isNaN(lati)
+                        || Float.isNaN(longit)) || (lati == 0.0 && longit == 0.0)) {
+                    invalid = true;
+                }
+            } catch (NumberFormatException e) {
+                invalid = true;
             }
-        } catch (NumberFormatException e) {
-            remove = true;
         }
-        if (remove) {
-            metadata.remove(Metadata.LATITUDE.getName());
-            metadata.remove(Metadata.LONGITUDE.getName());
+        if (!invalid) {
+            metadata.add(ExtraProperties.LOCATIONS, lat + ";" + lon);
+        } else {
             metadata.remove(Metadata.ALTITUDE.getName());
         }
+        // always remove these, if valid, they were stored above
+        metadata.remove(Metadata.LATITUDE.getName());
+        metadata.remove(Metadata.LONGITUDE.getName());
+        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Latitude");
+        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Longitude");
     }
 
     private static void removeDuplicateValues(Metadata metadata) {
@@ -330,7 +515,7 @@ public class MetadataUtil {
     }
 
     private static void normalizeMSGMetadata(Metadata metadata) {
-        if (!metadata.get(Metadata.CONTENT_TYPE).equals("application/vnd.ms-outlook")) //$NON-NLS-1$
+        if (!metadata.get(Metadata.CONTENT_TYPE).equals(MediaTypes.OUTLOOK_MSG.toString()))
             return;
 
         String subject = metadata.get(TikaCoreProperties.TITLE);
@@ -351,6 +536,13 @@ public class MetadataUtil {
                 && !value.toLowerCase().contains(metadata.get(Message.MESSAGE_FROM_EMAIL).toLowerCase()))
             value += " \"" + metadata.get(Message.MESSAGE_FROM_EMAIL) + "\""; //$NON-NLS-1$ //$NON-NLS-2$
         metadata.set(Message.MESSAGE_FROM, value);
+
+        // deduplicate basic headers
+        metadata.remove("subject"); //$NON-NLS-1$
+        for (String meta : BASIC_MAIL_HEADERS) {
+            metadata.remove(Message.MESSAGE_RAW_HEADER_PREFIX + meta);
+        }
+
         // TODO remove metadata until that is consistent across email parsers
         metadata.remove(Message.MESSAGE_FROM_NAME.getName());
         metadata.remove(Message.MESSAGE_FROM_EMAIL.getName());
@@ -386,6 +578,7 @@ public class MetadataUtil {
         }
     }
 
+    // used to prefix metadata keys with names already used by basic item properties
     private static void prefixBasicMetadata(Metadata metadata) {
         for (String key : metadata.names()) {
             if (BasicProps.SET.contains(key)) {
@@ -402,12 +595,26 @@ public class MetadataUtil {
         String[] keys = metadata.names();
         for (String key : keys) {
             if (generalKeys.contains(key) || key.toLowerCase().startsWith(prefix.toLowerCase())
-                    || key.startsWith(ExtraProperties.UFED_META_PREFIX))
+                    || key.startsWith(ExtraProperties.UFED_META_PREFIX)
+                    || key.startsWith(ExtraProperties.COMMON_META_PREFIX)
+                    || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX))
                 continue;
             String[] values = metadata.getValues(key);
             metadata.remove(key);
             for (String val : values)
                 metadata.add(prefix + key, val);
+        }
+    }
+
+    private static void prefixCommonMetadata(Metadata metadata) {
+        for (String key : metadata.names()) {
+            if (commonKeys.contains(key) && !key.startsWith(ExtraProperties.COMMON_META_PREFIX)) {
+                String[] values = metadata.getValues(key);
+                metadata.remove(key);
+                for (String val : values) {
+                    metadata.add(ExtraProperties.COMMON_META_PREFIX + key, val);
+                }
+            }
         }
     }
 
@@ -442,7 +649,7 @@ public class MetadataUtil {
         MediaType mediaType = MediaType.parse(contentType);
 
         if (contentType.startsWith("message") || //$NON-NLS-1$
-                contentType.equals("application/vnd.ms-outlook")) //$NON-NLS-1$
+                MediaTypes.OUTLOOK_MSG.toString().equals(contentType))
             return;
 
         while (mediaType != null) {
@@ -512,11 +719,25 @@ public class MetadataUtil {
     private static void renameKeys(Metadata metadata) {
         for (String oldName : renameMap.keySet()) {
             String[] values = metadata.getValues(oldName);
-            if (values != null) {
+            if (values != null && values.length > 0) {
                 metadata.remove(oldName);
                 String newName = renameMap.get(oldName);
                 for (String val : values) {
                     metadata.add(newName, val);
+                }
+            }
+        }
+        for (String oldName : renameOrRemoveMap.keySet()) {
+            String[] oldValues = metadata.getValues(oldName);
+            if (oldValues != null && oldValues.length > 0) {
+                metadata.remove(oldName);
+                String newName = renameOrRemoveMap.get(oldName);
+                String[] newValues = metadata.getValues(newName);
+                if (newValues == null || newValues.length == 0) {
+                    // Add old values only if there is no values associated with the new name 
+                    for (String val : oldValues) {
+                        metadata.add(newName, val);
+                    }
                 }
             }
         }

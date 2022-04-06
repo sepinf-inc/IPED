@@ -6,7 +6,7 @@
 enableHash = true
 
 # Enables photoDNA hash calculation. If you have rights to use it (law enforcement that fight against child exploitation)
-# and have received the library, you must put it into plugin/optional_jars folder
+# and have received the library, you must put it into plugins folder
 enablePhotoDNA = false
 
 # Enables hash lookup on IPED database.
@@ -19,6 +19,9 @@ enablePhotoDNALookup = false
 # and "nudityClass" (1 to 5) for ranking and/or filtering.
 enableLedDie = false
 
+# Enables QRcode detection and decoding
+enableQRCode = false
+
 # Enables nudity detection using Yahoo OpenNSFW deeplearning algorithm.
 # You MUST install python and some dependencies to enable it, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 # This is about 7.5 times slower than LedDie algorithm on the CPU, using a good GPU is recommended.
@@ -26,8 +29,9 @@ enableLedDie = false
 # An attribute nsfw_nudity_score from 0 to 100 will be created.
 enableYahooNSFWDetection = false
 
-# Ignores/discards duplicated files from the rest of processing (and from the case)
-# It can strongly speed up processing of cases with backups. Hash calculation is need to be enabled.
+# Ignore and exclude duplicated files with same hash from the processing and from the case. 
+# WARNING: This feature is inherently DANGEROUS, as it could exclude from the case duplicated files with
+# different metadata (name, path, dates) like email attachments or files in relevant folders. See #574 and #931.
 ignoreDuplicates = false
 
 # Exports the properties of all files in the case to file "Lista de Arquivos.csv"
@@ -44,6 +48,10 @@ enableFileParsing = true
 # File types to be expanded can be modified in file "conf/CategoriesToExpand.txt"
 expandContainers = true
 
+# Process supported disk images (like dd, e01, vhd, vmdk) contained in the main evidence recursively.
+# Splitted images and snapshots are not supported for now.
+processEmbeddedDisks = true
+
 # Searches texts extracted from items by regular expressions 
 # like social numbers, emails, URLs, credit cards, money values, etc. 
 # New expressions can be configured in file "conf/RegexConfig.txt"
@@ -58,7 +66,7 @@ enableAutomaticExportFiles = false
 enableLanguageDetect = true
 
 # Feature to recognize named entities: people, organizations or places.
-# StanfordCoreNLP 3.8 language models must be downloaded from https://stanfordnlp.github.io/CoreNLP/history.html and put in optional_jars folder.
+# StanfordCoreNLP 3.8 language models must be downloaded from https://stanfordnlp.github.io/CoreNLP/history.html and put in plugins folder.
 # This feature is CPU heavy, it can increase processing time by 4x.
 # Advanced settings can be modified in "conf/NamedEntityRecognitionConfig.txt" file.
 enableNamedEntityRecogniton = false
@@ -82,8 +90,11 @@ enableSplitLargeBinary = true
 # Indexes files contents. If disabled, indexes only the properties of files.
 indexFileContents = true
 
-# Enable audio transcription. Default implementation uses Microsoft Azure Service. You can change to Google.
-# Configure it in conf/AudioTranscriptConfig.txt and use cmd line option -XazureSubscriptionKey=KEY
+# Enable audio transcription.
+# Default implementation uses VOSK transcription [EXPERIMENTAL] on local CPU (slow and medium quality).
+# We include Vosk portable models for 'en' and 'pt-BR', the lang model is taken from 'locale' in LocalConfig.txt
+# You can change it from Vosk to Microsoft Azure or Google Cloud services (faster and better quality).
+# Configure it in conf/AudioTranscriptConfig.txt
 enableAudioTranscription = false
 
 # Enables carving. "addUnallocated" must be enabled to unallocated area be searched.

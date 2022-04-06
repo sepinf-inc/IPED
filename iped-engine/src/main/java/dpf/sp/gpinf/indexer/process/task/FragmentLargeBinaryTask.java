@@ -10,7 +10,6 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
 import macee.core.Configurable;
 
 /**
@@ -51,9 +50,10 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
     protected void process(IItem evidence) throws Exception {
 
         if (evidence.getLength() != null && evidence.getLength() >= splitConfig.getMinItemSizeToFragment()
-                && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
-                && (((evidence instanceof ISleuthKitItem) && ((ISleuthKitItem) evidence).getSleuthFile() != null)
-                        || evidence.getFile() != null || evidence.getInputStreamFactory() != null)) {
+                && ((!ParsingTask.hasSpecificParser(autoParser, evidence)
+                        && !EmbeddedDiskProcessTask.isSupported(evidence)) || evidence.isTimedOut())
+                && evidence.getInputStreamFactory() != null
+                && !evidence.getInputStreamFactory().returnsEmptyInputStream()) {
 
             int fragNum = 0;
             int fragSize = splitConfig.getItemFragmentSize();

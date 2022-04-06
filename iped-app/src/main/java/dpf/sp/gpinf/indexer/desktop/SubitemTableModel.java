@@ -33,6 +33,7 @@ import org.apache.lucene.document.Document;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.search.LuceneSearchResult;
 
 public class SubitemTableModel extends AbstractTableModel
@@ -154,10 +155,7 @@ public class SubitemTableModel extends AbstractTableModel
 
     public void listSubItens(Document doc) {
 
-        String parentId = doc.get(IndexItem.FTKID);
-        if (parentId == null) {
-            parentId = doc.get(IndexItem.ID);
-        }
+        String parentId = doc.get(IndexItem.ID);
 
         String textQuery = IndexItem.PARENTID + ":" + parentId; //$NON-NLS-1$
 
@@ -174,8 +172,8 @@ public class SubitemTableModel extends AbstractTableModel
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        App.get().subitemDock
-                                .setTitleText(sumSubitens + Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
+                        App.get().subitemDock.setTitleText(
+                                LocalizedFormat.format(sumSubitens) + Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
                     }
                 });
             }

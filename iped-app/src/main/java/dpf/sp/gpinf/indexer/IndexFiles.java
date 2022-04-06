@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer;
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
+import java.security.Policy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +39,9 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
+import dpf.sp.gpinf.indexer.ui.UiScale;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
+import dpf.sp.gpinf.indexer.util.DefaultPolicy;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
@@ -132,7 +135,7 @@ public class IndexFiles {
         } else {
             rootPath = new File(url.toURI()).getParent();
             // test for report generation from case folder
-            if (rootPath.endsWith("indexador" + File.separator + "lib")) { //$NON-NLS-1$ //$NON-NLS-2$
+            if (rootPath.endsWith("iped" + File.separator + "lib")) { //$NON-NLS-1$ //$NON-NLS-2$
                 rootPath = new File(url.toURI()).getParentFile().getParent();
             }
         }
@@ -180,6 +183,9 @@ public class IndexFiles {
      * Instancia listener de progresso, executa o processamento e aguarda.
      */
     public boolean execute() {
+
+        // Set the UiScale (must be before any UI-related code).
+        UiScale.loadUserSetting();
 
         WorkerProvider provider = WorkerProvider.getInstance();
         provider.setExecutorThread(Thread.currentThread());
@@ -235,22 +241,27 @@ public class IndexFiles {
             args = CustomLoader.clearCustomLoaderArgs(args);
         }
 
-        IndexFiles indexador = new IndexFiles(args);
+        IndexFiles iped = new IndexFiles(args);
         PrintStream SystemOut = System.out;
         boolean success = false;
 
         try {
-            indexador.setConfigPath();
-            indexador.logConfiguration = new LogConfiguration(indexador, logPath);
-            indexador.logConfiguration.configureLogParameters(indexador.cmdLineParams.isNologfile(), fromCustomLoader);
+            iped.setConfigPath();
+            iped.logConfiguration = new LogConfiguration(iped, logPath);
+            iped.logConfiguration.configureLogParameters(iped.cmdLineParams.isNologfile(), fromCustomLoader);
 
             LOGGER = LoggerFactory.getLogger(IndexFiles.class);
             if (!fromCustomLoader)
                 LOGGER.info(Versao.APP_NAME);
 
-            Configuration.getInstance().loadConfigurables(indexador.configPath);
+            Configuration.getInstance().loadConfigurables(iped.configPath);
 
             if (!fromCustomLoader) {
+
+                // blocks internet access from viewers
+                Policy.setPolicy(new DefaultPolicy());
+                System.setSecurityManager(new SecurityManager());
+
                 List<File> jars = new ArrayList<File>();
                 PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
                 jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
@@ -258,21 +269,21 @@ public class IndexFiles {
 
                 // currently with --nogui, user can not open analysis app, so no need to load
                 // libreoffice jars
-                if (!indexador.cmdLineParams.isNogui()) {
+                if (!iped.cmdLineParams.isNogui()) {
                     System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH,
-                            new File(indexador.rootPath, "lib/nativeview").getAbsolutePath());
-                    LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(indexador.rootPath));
+                            new File(iped.rootPath, "lib/nativeview").getAbsolutePath());
+                    LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(iped.rootPath));
                     if (loFinder.getLOPath() != null)
                         UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
                 }
 
                 String[] customArgs = CustomLoader.getCustomLoaderArgs(IndexFiles.class.getName(), args,
-                        indexador.logFile);
+                        iped.logFile);
                 CustomLoader.run(customArgs, jars);
                 return;
 
             } else {
-                success = indexador.execute();
+                success = iped.execute();
             }
 
         } catch (Exception e) {
@@ -285,19 +296,19 @@ public class IndexFiles {
             SystemOut.println("\n" + Versao.APP_EXT + " finished."); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
-        if (indexador.logFile != null) {
-            SystemOut.println("Check the log at " + indexador.logFile.getAbsolutePath()); //$NON-NLS-1$
+        if (iped.logFile != null) {
+            SystemOut.println("Check the log at " + iped.logFile.getAbsolutePath()); //$NON-NLS-1$
         }
 
         if (getInstance().manager == null || !getInstance().manager.isSearchAppOpen())
             System.exit((success) ? 0 : 1);
 
         // PARA ASAP:
-        // IndexFiles indexador = new IndexFiles(List<File> reports, File
+        // IndexFiles iped = new IndexFiles(List<File> reports, File
         // output, String configPath, File logFile, File keywordList);
         // keywordList e logFile podem ser null. Nesse caso, o último é criado
         // na pasta log dentro de configPath
-        // boolean success = indexador.executar();
+        // boolean success = iped.executar();
     }
 
 }

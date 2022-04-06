@@ -1,5 +1,8 @@
 package iped3.util;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Property;
 
@@ -10,6 +13,8 @@ import org.apache.tika.metadata.Property;
  *
  */
 public class ExtraProperties {
+
+    public static final String GLOBAL_ID = "globalId"; //$NON-NLS-1$
 
     public static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
 
@@ -37,13 +42,15 @@ public class ExtraProperties {
 
     public static final String PARTICIPANTS = "Participants";
 
+    public static final String GROUP_ID = "GroupID";
+
     public static final String CHAT_RECOVERED = "ChatRecovered";
 
     public static final String MESSAGE_BODY = MESSAGE_PREFIX + "Body"; //$NON-NLS-1$
 
-    public static final String PST_ATTACH = "pst_attachment"; //$NON-NLS-1$
+    public static final String MESSAGE_IS_ATTACHMENT = Message.MESSAGE_PREFIX + "IsEmailAttachment"; //$NON-NLS-1$
 
-    public static final String PST_EMAIL_HAS_ATTACHS = "pst_email_has_attachs"; //$NON-NLS-1$
+    public static final Property MESSAGE_ATTACHMENT_COUNT = Property.internalInteger(Message.MESSAGE_PREFIX + "AttachmentCount"); //$NON-NLS-1$
 
     public static final String CSAM_HASH_HITS = "childPornHashHits"; //$NON-NLS-1$
 
@@ -56,6 +63,8 @@ public class ExtraProperties {
     public static final String LINKED_ITEMS = "linkedItems"; //$NON-NLS-1$
 
     public static final String GENERIC_META_PREFIX = "meta:"; //$NON-NLS-1$
+
+    public static final String COMMON_META_PREFIX = "common:"; //$NON-NLS-1$
 
     public static final String AUDIO_META_PREFIX = "audio:"; //$NON-NLS-1$
 
@@ -75,7 +84,7 @@ public class ExtraProperties {
 
     public static final String PARENT_VIRTUAL_ID = "parentVirtualIdentifier"; //$NON-NLS-1$
 
-    public static final String LOCATIONS = "locations"; //$NON-NLS-1$
+    public static final String LOCATIONS = COMMON_META_PREFIX + "geo:locations"; //$NON-NLS-1$
 
     public static final String URL = "url"; //$NON-NLS-1$
 
@@ -103,7 +112,7 @@ public class ExtraProperties {
 
     public static final Property USER_BIRTH = Property.internalDate("userBirthday"); //$NON-NLS-1$
 
-    public static final String USER_THUMB = "userPhoto"; //$NON-NLS-1$
+    public static final String THUMBNAIL_BASE64 = "thumbnailBase64"; //$NON-NLS-1$
 
     public static final String PARENT_VIEW_POSITION = "parentViewPosition"; //$NON-NLS-1$
 
@@ -119,7 +128,11 @@ public class ExtraProperties {
 
     public static final String TIME_EVENT_GROUPS = "timeEventGroups";
 
-    public static final String[] EMAIL_PROPS = { MESSAGE_SUBJECT, MESSAGE_DATE.getName(), MESSAGE_BODY,
-            Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC, PST_ATTACH,
-            PST_EMAIL_HAS_ATTACHS };
+    public static final String DECODED_DATA = "isDecodedData";
+
+    public static final String DOWNLOADED_DATA = "downloadedData";
+
+    public static final List<String> EMAIL_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_DATE.getName(),
+            MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,
+            Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT, MESSAGE_ATTACHMENT_COUNT.getName());
 }

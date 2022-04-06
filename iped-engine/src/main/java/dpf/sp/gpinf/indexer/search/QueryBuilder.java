@@ -60,8 +60,14 @@ public class QueryBuilder implements IQueryBuilder {
 
     private IIPEDSource ipedCase;
 
+    private boolean allowLeadingWildCard = true;
+
     public QueryBuilder(IIPEDSource ipedCase) {
         this.ipedCase = ipedCase;
+    }
+
+    public void setAllowLeadingWildcard(boolean allow) {
+        this.allowLeadingWildCard = allow;
     }
 
     private Set<String> getQueryStrings(Query query) {
@@ -69,8 +75,9 @@ public class QueryBuilder implements IQueryBuilder {
         if (query != null)
             if (query instanceof BooleanQuery) {
                 for (BooleanClause clause : ((BooleanQuery) query).clauses()) {
-                    // System.out.println(clause.getQuery().toString());
-                    result.addAll(getQueryStrings(clause.getQuery()));
+                    if (!clause.isProhibited()) {
+                        result.addAll(getQueryStrings(clause.getQuery()));
+                    }
                 }
             } else if (query instanceof BoostQuery) {
                 result.addAll(getQueryStrings(((BoostQuery) query).getQuery()));
@@ -255,21 +262,21 @@ public class QueryBuilder implements IQueryBuilder {
 
             StandardQueryParser parser = new StandardQueryParser(analyzer);
             parser.setMultiFields(fields);
-            parser.setAllowLeadingWildcard(true);
+            parser.setAllowLeadingWildcard(allowLeadingWildCard);
             parser.setFuzzyPrefixLength(2);
             parser.setFuzzyMinSim(0.7f);
             parser.setDateResolution(DateTools.Resolution.SECOND);
             parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_REWRITE);
             parser.setPointsConfigMap(getPointsConfigMap());
 
+            HashMap<String, Float> fieldBoost = new HashMap<>();
+            fieldBoost.put(IndexItem.NAME, 1000.0f);
+            parser.setFieldsBoost(fieldBoost);
+
             IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
             // removes diacritics, StandardQueryParser doesn't remove them from WildcardQueries
             if (analyzer != spaceAnalyzer && indexConfig.isConvertCharsToAscii()) {
                 texto = IndexItem.normalize(texto, false);
-            }
-            // see #678
-            if (!indexConfig.isConvertCharsToLowerCase()) {
-                parser.setLowercaseExpandedTerms(false);
             }
 
             try {

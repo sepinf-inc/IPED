@@ -44,11 +44,9 @@ public interface IDataSourceReader {
      *
      * @param datasource
      *            Fonte de dados que será processada/lida.
-     * @return Número de itens com versões alternativas de visualização. Só deve ser
-     *         diferente de zero no caso de relatórios do FTK.
      * @throws Exception
      *             Caso algum erro inesperado ocorra durante a leitura dos dados
      */
-    int read(File datasource) throws Exception;
+    void read(File datasource) throws Exception;
 
 }

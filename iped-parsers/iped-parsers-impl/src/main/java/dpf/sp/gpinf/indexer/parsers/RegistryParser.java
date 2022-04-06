@@ -1,18 +1,12 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.Collections;
@@ -36,6 +30,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import iped3.util.ExtraProperties;
 
 public class RegistryParser extends AbstractParser {
 
@@ -72,9 +67,9 @@ public class RegistryParser extends AbstractParser {
                         cmd = new String[] { "perl", "-I", ".", TOOL_NAME + ".pl" }; //$NON-NLS-1$ //$NON-NLS-2$
 
                     ProcessBuilder pb = new ProcessBuilder(cmd);
-                    File dir = new File(TOOL_PATH);
-                    if (dir.exists())
-                        pb.directory(dir);
+                    if (!TOOL_PATH.isEmpty()) {
+                        pb.directory(new File(TOOL_PATH));
+                    }
                     Process p = pb.start();
                     p.waitFor();
                     if (p.exitValue() != 0)
@@ -138,7 +133,9 @@ public class RegistryParser extends AbstractParser {
 
             if (finalCmd != null) {
                 ProcessBuilder pb = new ProcessBuilder(finalCmd);
-                pb.directory(new File(TOOL_PATH));
+                if (!TOOL_PATH.isEmpty()) {
+                    pb.directory(new File(TOOL_PATH));
+                }
                 Process p = pb.start();
 
                 readStream(p.getErrorStream(), null, null);
@@ -163,6 +160,7 @@ public class RegistryParser extends AbstractParser {
                 Metadata reportMetadata = new Metadata();
                 reportMetadata.set(Metadata.RESOURCE_NAME_KEY, filename + "-Report"); //$NON-NLS-1$
                 reportMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
+                reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                 File htmlFile = getHtml(outFile, tmp);
 
@@ -172,9 +170,6 @@ public class RegistryParser extends AbstractParser {
                     }
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            LOGGER.warn("Error parsing " + metadata.get(Metadata.RESOURCE_NAME_KEY), e); //$NON-NLS-1$
         } finally {
             tmp.close();
         }

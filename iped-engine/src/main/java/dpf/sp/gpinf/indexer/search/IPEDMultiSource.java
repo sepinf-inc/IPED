@@ -137,10 +137,7 @@ public class IPEDMultiSource extends IPEDSource {
         for (IIPEDSource iCase : cases)
             baseDocCache.add(getBaseLuceneId(iCase));
 
-        for (IPEDSource iCase : cases)
-            for (String category : iCase.categories)
-                if (!categories.contains(category))
-                    categories.add(category);
+        loadCategories();
 
         for (IPEDSource iCase : cases)
             for (String keyword : iCase.keywords)
@@ -152,11 +149,18 @@ public class IPEDMultiSource extends IPEDSource {
 
         analyzer = AppAnalyzer.get();
 
-        for (IPEDSource iCase : cases)
-            if (iCase.isFTKReport)
-                isFTKReport = true;
-
         LOGGER.info("Loaded " + cases.size() + " cases."); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    private void loadCategories() {
+        for (IPEDSource iCase : cases) {
+            for (String category : iCase.leafCategories) {
+                if (!leafCategories.contains(category)) {
+                    leafCategories.add(category);
+                }
+            }
+        }
+        loadCategoryTree();
     }
 
     private void openIndex() throws IOException {

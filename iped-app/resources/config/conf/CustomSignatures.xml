@@ -78,18 +78,32 @@
     	<magic priority="60">
       		<match value="ftypheic" type="string" offset="4"/>
       		<match value="ftypheix" type="string" offset="4"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+    	<glob pattern="*.heic"/>
+  	</mime-type>
+  	
+	<mime-type type="image/heic-sequence">
+    	<magic priority="60">
       		<match value="ftyphevc" type="string" offset="4"/>
       		<match value="ftyphevx" type="string" offset="4"/>
     	</magic>
-    	<glob pattern="*.heic"/>
+    	<sub-class-of type="application/octet-stream"/>
   	</mime-type>
   	
   	<mime-type type="image/heif">
     	<magic priority="60">
       		<match value="ftypmif1" type="string" offset="4"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+    	<glob pattern="*.heif"/>
+  	</mime-type>
+
+  	<mime-type type="image/heif-sequence">
+    	<magic priority="60">
       		<match value="ftypmsf1" type="string" offset="4"/>
     	</magic>
-    	<glob pattern="*.heif"/>
+    	<sub-class-of type="application/octet-stream"/>
   	</mime-type>
 
 	<mime-type type="application/x-dbf">
@@ -571,6 +585,7 @@
     </mime-type>
     
     <mime-type type="application/x-vdi">
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.vdi"/>
     </mime-type>
     
@@ -578,6 +593,7 @@
         <magic priority="50">
             <match value="vhdxfile" type="string" offset="0"/>
         </magic>
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.vhdx"/>
     </mime-type>
     
@@ -623,19 +639,59 @@
         </magic>
     </mime-type>
   	
-    <mime-type type="application/x-disk-image">
-        <acronym>ISO</acronym>
+    <mime-type type="application/x-ewf-image">
         <_comment>E01 disk images</_comment>
         <magic priority="50">
             <match value="0x5646090D0AFF00" type="string" offset="1"/>
         </magic>
-        <_comment>RAW disk images</_comment>
+        <sub-class-of type="application/x-disk-image"/>
+    </mime-type>
+    
+    <mime-type type="application/x-e01-image">
+        <sub-class-of type="application/x-ewf-image"/>
+        <glob pattern="*.e01"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ewf2-image">
+        <_comment>EX01 disk images</_comment>
+        <magic priority="50">
+            <match value="0x455646320D0A8100" type="string" offset="0"/>
+        </magic>
+        <sub-class-of type="application/x-disk-image"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ex01-image">
+        <sub-class-of type="application/x-ewf2-image"/>
+        <glob pattern="*.ex01"/>
+    </mime-type>
+    
+    <mime-type type="application/x-disk-image">
+        <_comment>Generic disk images</_comment>
         <magic priority="30">
             <match value="0x55AA" type="string" offset="510">
                 <match value="0x0000" type="string" offset="444"/>
                 <match value="0x5A5A" type="string" offset="444"/>
             </match>
         </magic>
+    </mime-type>
+        
+    <mime-type type="application/x-raw-image">
+        <_comment>RAW disk images</_comment>
+        <sub-class-of type="application/x-disk-image"/>
+        <!--dd/001 extensions are omitted to avoid classification based on generic exts-->
+    </mime-type>
+    
+    <mime-type type="application/x-vmdk">
+        <_comment>This priority must be equal to x-raw-image</_comment>
+        <sub-class-of type="application/x-disk-image"/>
+        <glob pattern="*.vmdk"/>
+    </mime-type>
+    
+    <mime-type type="application/x-vmdk-descriptor">
+        <magic priority="50">
+            <match value="# Disk DescriptorFile" type="string" offset="0"/>
+        </magic>
+        <sub-class-of type="text/plain"/>
     </mime-type>
     
     <mime-type type="application/x-wim-image">
@@ -644,6 +700,7 @@
                 <match value="0x0000" type="string" offset="5"/>
             </match>
         </magic>
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.wim"/>
     </mime-type>
     
@@ -672,6 +729,12 @@
     <mime-type type="application/x-emule">
         <sub-class-of type="application/x-p2p"/>
         <glob pattern="known*.met"/>
+    </mime-type>
+
+    <mime-type type="application/x-emule-part-met">
+        <sub-class-of type="application/x-p2p"/>
+        <glob pattern=".*\.part( \([1-9]\))?\.met" isregex="true"/>
+        <glob pattern=".*\.part\.met( \([1-9]\))?\.bak" isregex="true"/>
     </mime-type>
     
     <mime-type type="application/x-emule-searches">
@@ -1157,6 +1220,50 @@
     
     <mime-type type="message/x-jabber-message">
         <sub-class-of type="message/x-chat-message"/>
+    </mime-type>    
+    
+    <mime-type type="application/x-ios-backup-manifest-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-sms-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-addressbook-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-calllog-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios8-calllog-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-voicemail-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-oldnotes-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-notes-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-photos-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-calendar-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-locations-db">
+        <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
     
     <mime-type type="application/x-chrome-cache-index">

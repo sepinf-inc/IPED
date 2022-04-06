@@ -39,6 +39,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import iped3.util.ExtraProperties;
 
 public class KeystoreParser extends AbstractParser {
     private static final MediaType PKCS12_MIME = MediaType.application("x-pkcs12");

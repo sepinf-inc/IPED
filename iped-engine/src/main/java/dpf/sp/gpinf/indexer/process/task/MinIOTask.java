@@ -21,7 +21,6 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.MinIOConfig;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import dpf.sp.gpinf.network.util.ProxySever;
 import gpinf.dev.data.Item;
 import io.minio.BucketExistsArgs;
 import io.minio.ErrorCode;
@@ -148,8 +147,7 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-    private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
-            throws Exception {
+    private boolean checkIfExists(String hash) throws Exception {
         boolean exists = false;
         try {
             ObjectStat stat = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
@@ -162,6 +160,11 @@ public class MinIOTask extends AbstractTask {
             }
         }
 
+        return exists;
+    }
+
+    private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
+            throws Exception {
         String bucketPath = buildPath(hash);
         // if preview saves in a preview folder
         if (preview) {
@@ -169,7 +172,7 @@ public class MinIOTask extends AbstractTask {
         }
         String fullPath = bucket + "/" + bucketPath;
 
-        if (exists) {
+        if (length <= 0 || checkIfExists(bucketPath)) {
             return fullPath;
         }
 
@@ -203,6 +206,8 @@ public class MinIOTask extends AbstractTask {
         return tika.detect(name);
     }
 
+
+
     @Override
     protected void process(IItem item) throws Exception {
 
@@ -210,13 +215,10 @@ public class MinIOTask extends AbstractTask {
             return;
 
         String hash = item.getHash();
-        if (hash == null || hash.isEmpty() || item.getLength() == null)
+        if (hash == null || hash.isEmpty() || item.getLength() == null || item.getLength() <= 0)
             return;
 
-        // disable blocking proxy possibly enabled by HtmlViewer
-        ProxySever.get().disable();
-
-        try (SeekableInputStream is = item.getStream()) {
+        try (SeekableInputStream is = item.getSeekableInputStream()) {
             String fullPath = insertItem(hash, new BufferedInputStream(is), is.size(), item.getMediaType().toString(), false);
             if (fullPath != null) {
                 updateDataSource(item, fullPath);
@@ -225,7 +227,7 @@ public class MinIOTask extends AbstractTask {
             // TODO: handle exception
             logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
         }
-        if (item.getViewFile() != null) {
+        if (item.getViewFile() != null && item.getViewFile().length() > 0) {
             try (InputStream is = new FileInputStream(item.getViewFile())) {
                 String fullPath = insertItem(hash, is, item.getViewFile().length(),
                         getMimeType(item.getViewFile().getName()), true);
@@ -258,16 +260,8 @@ public class MinIOTask extends AbstractTask {
     }
 
     private void updateDataSource(IItem item, String id) {
-        if (item.isSubItem()) {
-            // deletes local sqlite content after sent to minio
-            item.setDeleteFile(true);
-            ((Item) item).dispose(false);
-        }
-
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(id);
-        item.setFile(null);
-        item.setExportedFile(null);
         item.setFileOffset(-1);
     }
 
@@ -313,8 +307,6 @@ public class MinIOTask extends AbstractTask {
             this.minioClient = minioClient;
             this.bucket = bucket;
             this.id = id;
-            // disable blocking proxy possibly enabled by HtmlViewer
-            ProxySever.get().disable();
         }
 
         @Override

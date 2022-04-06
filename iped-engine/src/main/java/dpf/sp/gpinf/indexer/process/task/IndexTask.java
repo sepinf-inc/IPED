@@ -13,10 +13,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.SortedSetDocValuesField;
-import org.apache.lucene.document.TextField;
-import org.apache.lucene.util.BytesRef;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -39,7 +35,6 @@ import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
 import macee.core.Configurable;
 
 /**
@@ -56,6 +51,7 @@ public class IndexTask extends AbstractTask {
     private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
     private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES"; //$NON-NLS-1$
     public static final String TEXT_SPLITTED = "textSplitted";
+    public static final String FRAG_NUM = "fragNum";
     public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
 
     private IndexerDefaultParser autoParser;
@@ -83,11 +79,6 @@ public class IndexTask extends AbstractTask {
         if (item.isSubItem()) {
             item.dispose();
         }
-        if (item instanceof ISleuthKitItem) {
-            ((ISleuthKitItem) item).setSleuthId(null);
-        }
-        item.setFile(null);
-        item.setExportedFile(null);
         item.setIdInDataSource(null);
         item.setInputStreamFactory(null);
         item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
@@ -148,28 +139,32 @@ public class IndexTask extends AbstractTask {
         if (fragments == -1) {
             fragments = 1;
         }
-        String origPersistentId = Util.getPersistentId(evidence);
+        String origtrackID = Util.getTrackID(evidence);
+        boolean splitted = false;
         try {
             /**
              * breaks very large texts in separate documents to be indexed
              */
             do {
                 // use fragName = 1 for all frags, except last, to check if last frag was
-                // indexed
-                // and to reuse same frag id when continuing an aborted processing
+                // indexed and to reuse same frag ID when continuing an aborted processing
                 int fragName = (--fragments) == 0 ? 0 : 1;
 
-                String fragPersistId = Util.generatePersistentIdForTextFrag(origPersistentId, fragName);
-                evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, fragPersistId);
+                String fragPersistId = Util.generatetrackIDForTextFrag(origtrackID, fragName);
+                evidence.setExtraAttribute(IndexItem.TRACK_ID, fragPersistId);
 
                 if (fragments != 0) {
+                    splitted = true;
                     stats.incSplits();
                     evidence.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
                     LOGGER.info("{} Splitting text of {}", Thread.currentThread().getName(), evidence.getPath()); //$NON-NLS-1$
                 }
+                if (splitted) {
+                    evidence.setExtraAttribute(FRAG_NUM, fragments);
+                }
 
                 Document doc = IndexItem.Document(evidence, noCloseReader, output);
-                addDocumentSafe(doc, evidence);
+                worker.writer.addDocument(doc);
 
                 while (worker.state != STATE.RUNNING) {
                     try {
@@ -189,40 +184,12 @@ public class IndexTask extends AbstractTask {
             else
                 throw e;
         } finally {
-            evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, origPersistentId);
+            evidence.setExtraAttribute(IndexItem.TRACK_ID, origtrackID);
             noCloseReader.reallyClose();
         }
 
         textSizes.add(new IdLenPair(evidence.getId(), fragReader.getTotalTextSize()));
 
-    }
-
-    private void addDocumentSafe(Document doc, IItem evidence) throws IOException {
-        // loop to handle possible corrupted metadata, see #571
-        while (true) {
-            try {
-                worker.writer.addDocument(doc);
-                break;
-            } catch (IllegalArgumentException e) {
-                String msg = e.toString();
-                if (msg.contains("cannot change DocValues type from")) {
-                    String badField = msg.substring(msg.indexOf('\"') + 1, msg.length() - 1);
-                    String badValue = doc.get(badField);
-                    LOGGER.warn("Possible corrupted metadata value '{}' in field '{}' in item '{}' ({} bytes)",
-                            badValue, badField, evidence.getPath(), evidence.getLength());
-                    // removes default field
-                    doc.removeField(badField);
-                    // removes docValues field
-                    doc.removeField(badField);
-                    // add the value in other similar field as a generic string
-                    badField += ":string";
-                    doc.add(new TextField(badField, badValue, Field.Store.YES));
-                    doc.add(new SortedSetDocValuesField(badField, new BytesRef(IndexItem.normalize(badValue, true))));
-                } else {
-                    throw e;
-                }
-            }
-        }
     }
 
     private Metadata getMetadata(IItem evidence) {

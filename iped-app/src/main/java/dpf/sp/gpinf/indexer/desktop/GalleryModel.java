@@ -66,7 +66,9 @@ public class GalleryModel extends AbstractTableModel {
      */
     private static final int MAX_TSK_POOL_SIZE = 20;
 
-    public int colCount = 10;
+    public static final int defaultColCount = 10;
+    
+    private int colCount = defaultColCount;
     private int thumbSize = 160;
     private int galleryThreads = 1;
     private boolean logRendering = false;
@@ -85,6 +87,10 @@ public class GalleryModel extends AbstractTableModel {
         return colCount;
     }
 
+    public void setColumnCount(int cnt) {
+        colCount = cnt;
+    }
+
     @Override
     public int getRowCount() {
         return (int) Math.ceil((double) App.get().ipedResult.getLength() / (double) colCount);
@@ -96,6 +102,11 @@ public class GalleryModel extends AbstractTableModel {
 
     private boolean isSupportedImage(String mediaType) {
         return ImageThumbTask.isImageType(MediaType.parse(mediaType));
+    }
+
+    private boolean isAnimationImage(Document doc, String mediaType) {
+        return VideoThumbTask.isImageSequence(mediaType) || 
+                doc.get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
     }
 
     private boolean isSupportedVideo(String mediaType) {
@@ -177,7 +188,7 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     BytesRef bytesRef = doc.getBinaryValue(IndexItem.THUMB);
-                    if (bytesRef != null && (!isSupportedVideo(mediaType) || App.get().useVideoThumbsInGallery)) {
+                    if (bytesRef != null && ((!isSupportedVideo(mediaType) && !isAnimationImage(doc, mediaType)) || App.get().useVideoThumbsInGallery)) {
                         byte[] thumb = bytesRef.bytes;
                         if (thumb.length > 0) {
                             image = ImageIO.read(new ByteArrayInputStream(thumb));
@@ -188,7 +199,7 @@ public class GalleryModel extends AbstractTableModel {
 
                     String hash = doc.get(IndexItem.HASH);
                     if (image == null && hash != null && !hash.isEmpty()) {
-                        image = getViewImage(docId, hash, !isSupportedImage(mediaType));
+                        image = getViewImage(docId, hash, isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
                         int resizeTolerance = 4;
                         if (image != null) {
                             if (image.getWidth() < thumbSize - resizeTolerance
@@ -198,13 +209,6 @@ public class GalleryModel extends AbstractTableModel {
                                 getDimension = false;
                             }
                         }
-                    }
-
-                    String export = doc.get(IndexItem.EXPORT);
-                    if (image == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
-                        image = getThumbFromFTKReport(
-                                App.get().appCase.getAtomicSource(docId).getCaseDir().getAbsolutePath(), export);
-                        getDimension = false;
                     }
 
                     if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
@@ -301,7 +305,7 @@ public class GalleryModel extends AbstractTableModel {
                 try {
                     Document doc = App.get().appCase.getSearcher().doc(docId);
                     String mediaType = doc.get(IndexItem.CONTENTTYPE);
-                    if (isSupportedVideo(mediaType)) {
+                    if (isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType)) {
                         it.remove();
                     }
                 } catch (Exception e) {
@@ -332,40 +336,9 @@ public class GalleryModel extends AbstractTableModel {
         }
     }
 
-    private BufferedImage getThumbFromFTKReport(String basePath, String export) {
-
-        BufferedImage image = null;
-        try {
-            int i0 = export.lastIndexOf("/"); //$NON-NLS-1$
-            String nome = export.substring(i0 + 1);
-            int extIdx = nome.indexOf("."); //$NON-NLS-1$
-            if (extIdx > -1) {
-                nome = nome.substring(0, extIdx);
-            }
-            nome += ".jpg"; //$NON-NLS-1$
-
-            // Report FTK3+
-            int i1 = export.indexOf("files/"); //$NON-NLS-1$
-            File file = null;
-            if (i1 > -1) {
-                String thumbPath = export.substring(0, i1) + "thumbnails/" + nome; //$NON-NLS-1$
-                file = Util.getResolvedFile(basePath, thumbPath);
-            }
-            if (file != null && file.exists()) {
-                image = ImageIO.read(file);
-                image = ImageUtil.trim(image);
-            }
-        } catch (Exception e) {
-            // e.printStackTrace();
-        }
-
-        return image;
-    }
-
     @Override
     public void setValueAt(Object value, int row, int col) {
         super.setValueAt(value, row, col);
         fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
     }
-
 }

@@ -55,6 +55,8 @@ public class AutoCompletarColunas {
                                     for (int i = 0; i < cols.length; i++) {
                                         for (int j = 0; j < cols[i].length; j++) {
                                             String orgCol = cols[i][j];
+                                            if (orgCol.equals(ResultTableModel.BOOKMARK_COL) || orgCol.equals(ResultTableModel.SCORE_COL))
+                                                continue;
                                             NEXT: for (int m = 0; m <= 1; m++) {
                                                 String col = orgCol;
                                                 if (m == 0) {

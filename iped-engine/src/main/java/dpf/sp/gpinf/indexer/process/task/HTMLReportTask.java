@@ -165,7 +165,8 @@ public class HTMLReportTask extends AbstractTask {
      */
     private static final Set<String> currentFiles = new HashSet<String>();
 
-    private static final ExternalImageConverter externalImageConverter = new ExternalImageConverter();
+    // do not instantiate here, makes external command adjustment fail, see #740
+    private static ExternalImageConverter externalImageConverter;
 
     /**
      * Armazena modelo de formatação no nome/mat/classe do(s) perito(s).
@@ -248,6 +249,8 @@ public class HTMLReportTask extends AbstractTask {
                     }
                 }
             }
+            externalImageConverter = new ExternalImageConverter();
+
             init.set(true);
         }
 
@@ -346,7 +349,7 @@ public class HTMLReportTask extends AbstractTask {
 
         ReportEntry reg = new ReportEntry();
         reg.name = evidence.getName();
-        reg.export = evidence.getExportedFile();
+        reg.export = evidence.getIdInDataSource();
         reg.isImage = ImageThumbTask.isImageType(evidence.getMediaType());
         reg.isVideo = VideoThumbTask.isVideoType(evidence.getMediaType());
         reg.length = evidence.getLength();

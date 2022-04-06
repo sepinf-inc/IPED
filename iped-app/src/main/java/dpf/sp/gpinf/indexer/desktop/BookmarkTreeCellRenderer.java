@@ -5,6 +5,8 @@ import java.awt.Component;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
+
 public class BookmarkTreeCellRenderer extends DefaultTreeCellRenderer {
     /**
      * 
@@ -27,7 +29,7 @@ public class BookmarkTreeCellRenderer extends DefaultTreeCellRenderer {
             if (name != null && !name.equals(BookmarksTreeModel.ROOT) && !name.equals(BookmarksTreeModel.NO_BOOKMARKS)) {
                 int count = App.get().appCase.getMultiMarcadores().getLabelCount(name);
                 if (count > 0) {
-                    value = (String) value + " (" + count + ")";
+                    value = (String) value + " (" + LocalizedFormat.format(count) + ")";
                 }
             }
         }

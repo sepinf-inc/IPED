@@ -114,14 +114,6 @@ public class ThemeManager {
         });
 
         saveThemeOption();
-        File file = getSelectedThemeFile();
-        if (!file.getParentFile().exists())
-            file.getParentFile().mkdirs();
-        try (BufferedWriter out = new BufferedWriter(new FileWriter(file))) {
-            out.write(currentTheme.getClass().getName());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private void updateUI(Window window) {
@@ -132,7 +124,7 @@ public class ThemeManager {
     }
 
     private static File getSelectedThemeFile() {
-        return new File(System.getProperty("user.home") + "/.indexador/theme.dat");
+        return new File(System.getProperty("user.home") + "/.iped/theme.dat");
     }
 
     private Theme loadThemeOption() {

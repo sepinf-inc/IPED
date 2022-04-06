@@ -18,9 +18,12 @@
  */
 package dpf.sp.gpinf.indexer.parsers;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
@@ -29,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -48,6 +52,10 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.CharCountContentHandler;
+import dpf.sp.gpinf.indexer.parsers.util.ComputeThumb;
+import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.parsers.util.PDFToThumb;
+import iped3.util.ExtraProperties;
 
 /**
  * Parser para arquivos PDF. Chama o parser OCR caso habilitado se o PDF tiver
@@ -66,6 +74,8 @@ public class PDFOCRTextParser extends PDFParser {
     public static final String MAX_CHARS_TO_OCR = "pdfparser.maxCharsToOcr"; //$NON-NLS-1$
     public static final String SORT_PDF_CHARS = "pdfparser.sortPdfChars"; //$NON-NLS-1$
     public static final String PROCESS_INLINE_IMAGES = "pdfparser.processInlineImages"; //$NON-NLS-1$
+    public static final String CREATE_THUMB = "pdfparser.createThumb"; //$NON-NLS-1$
+    public static final String THUMB_SIZE = "pdfparser.thumbSize"; //$NON-NLS-1$
 
     private int maxCharsToOcr = Integer.valueOf(System.getProperty(MAX_CHARS_TO_OCR, "100")); //$NON-NLS-1$
     private boolean sortPDFChars = Boolean.valueOf(System.getProperty(SORT_PDF_CHARS, "false")); //$NON-NLS-1$
@@ -100,20 +110,28 @@ public class PDFOCRTextParser extends PDFParser {
             if (reader == null)
                 LOGGER.warn("Plugin JPEG2000 not found, JPX images will not be decoded from PDFs." //$NON-NLS-1$
                         + " You can download it from https://mvnrepository.com/artifact/com.github.jai-imageio/jai-imageio-jpeg2000/1.3.0" //$NON-NLS-1$
-                        + " and put it in optional_jars folder. Warn: that plugin is worse to decode JPX outside of PDFs!"); //$NON-NLS-1$
+                        + " and put it in plugins folder. Warn: that plugin is worse to decode JPX outside of PDFs!"); //$NON-NLS-1$
         }
+    }
+
+    @Field
+    public void setUseIcePDF(boolean value) {
+        this.useIcePDFParsing = value;
     }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         return SUPPORTED_TYPES;
     }
+    
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
         metadata.set(HttpHeaders.CONTENT_TYPE, "application/pdf"); //$NON-NLS-1$
+        
+        ItemInfo itemInfo = context.get(ItemInfo.class);
 
         handler.startDocument();
         CharCountContentHandler countHandler = new CharCountContentHandler(handler);
@@ -123,7 +141,9 @@ public class PDFOCRTextParser extends PDFParser {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
             File file = null;
-            if (ocrParser.isEnabled())
+            Exception exception = null;
+            boolean createThumb = Boolean.valueOf(System.getProperty(CREATE_THUMB)) && context.get(ComputeThumb.class) != null;
+            if (ocrParser.isEnabled() || createThumb)
                 file = tis.getFile();
 
             int numPages = 0;
@@ -137,6 +157,8 @@ public class PDFOCRTextParser extends PDFParser {
                     try {
                         SortedPDFParser.parse(tis, countHandler, new Metadata(), context);
 
+                    } catch (Exception e) {
+                        exception = e;
                     } finally {
                         tis = TikaInputStream.get(file);
                     }
@@ -155,6 +177,9 @@ public class PDFOCRTextParser extends PDFParser {
                 try {
                     PDFParser.parse(tis, countHandler, metadata, context);
 
+                } catch (Exception e) {
+                    if (exception == null)
+                        exception = e;
                 } finally {
                     if (sortPDFChars)
                         tis.close();
@@ -179,11 +204,40 @@ public class PDFOCRTextParser extends PDFParser {
                     ocrParser.parse(tis, countHandler, metadata, context);
 
                 } catch (Exception e) {
-                    LOGGER.warn("OCRParser error on '{}' ({} bytes)\t{}", file.getPath(), file.length(), e.toString()); //$NON-NLS-1$
-
+                    LOGGER.warn("OCRParser error on '{}' ({} bytes)\t{}", itemInfo.getPath(), file.length(), e.toString()); //$NON-NLS-1$
+                    LOGGER.debug("", e);
                 } finally {
                     tis.close();
                 }
+            }
+            
+            if (createThumb) {
+                byte[] thumb = null;
+                try (PDFToThumb pdfToThumb = new PDFToThumb()) {
+                    int thumbSize = Integer.valueOf(System.getProperty(THUMB_SIZE));
+                    BufferedImage img = pdfToThumb.getPdfThumb(file, thumbSize);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    if (img != null) {
+                        ImageIO.write(img, "jpg", baos);
+                    }
+                    thumb = baos.toByteArray();
+                } catch (Throwable t) {
+                    thumb = new byte[0];
+                    LOGGER.warn("PDF thumb error on '{}' ({} bytes)\t{}", itemInfo.getPath(), file.length(), t.toString()); //$NON-NLS-1$
+                    LOGGER.debug("", t);
+                } finally {
+                    metadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(thumb));
+                }
+            }
+
+            if (exception instanceof IOException) {
+                throw (IOException) exception;
+            } else if (exception instanceof TikaException) {
+                throw (TikaException) exception;
+            } else if (exception instanceof SAXException) {
+                throw (SAXException) exception;
+            } else if (exception instanceof RuntimeException) {
+                throw (RuntimeException) exception;
             }
 
         } finally {

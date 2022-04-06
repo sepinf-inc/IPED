@@ -41,6 +41,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
@@ -187,9 +188,6 @@ public class LibpffPSTParser extends AbstractParser {
 
             throw new TikaException(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
 
-        } catch (Exception e) {
-            LOGGER.error("Error parsing " + fileName, e); //$NON-NLS-1$
-
         } finally {
             if (p != null)
                 p.destroyForcibly();
@@ -289,6 +287,7 @@ public class LibpffPSTParser extends AbstractParser {
         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OutlookPSTParser.OUTLOOK_MSG_MIME);
         metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(++virtualId));
         metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(parent));
+        metadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         if (deleted)
             metadata.set(ExtraProperties.DELETED, "true"); //$NON-NLS-1$
 
@@ -315,15 +314,15 @@ public class LibpffPSTParser extends AbstractParser {
             for (String attach : attachNames) {
                 preview.append(SimpleHTMLEncoder.htmlEncode(attach) + "<br>"); //$NON-NLS-1$
             }
-            metadata.set(ExtraProperties.PST_EMAIL_HAS_ATTACHS, "true"); //$NON-NLS-1$
         }
+        metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, attachNames.size());
 
         preview.append("<hr>"); //$NON-NLS-1$
         preview.append("</div>\n"); //$NON-NLS-1$
 
         writeBody(file, metadata, preview);
-
-        writeInternetHeaders(file, preview);
+        /* Issue #65 - add internet headers as metadata */
+        writeInternetHeaders(file, preview, metadata);
 
         preview.append("</body>"); //$NON-NLS-1$
         preview.append("</html>"); //$NON-NLS-1$
@@ -463,8 +462,10 @@ public class LibpffPSTParser extends AbstractParser {
                 if (l.length > 1 && !l[1].trim().isEmpty()) {
                     if (l[0].trim().equals("Display name")) //$NON-NLS-1$
                         name = l[1].trim();
-                    if (l[0].trim().equals("Email address")) //$NON-NLS-1$
+                    if (l[0].trim().equals("Email address")) { //$NON-NLS-1$
                         addr = l[1].trim();
+                        MetadataUtil.fillRecipientAddress(metadata, addr);
+                    }
                     if (l[0].trim().equals("Recipient type")) { //$NON-NLS-1$
                         String type = l[1].trim();
                         name = OutlookPSTParser.formatNameAndAddress(name, addr);
@@ -501,7 +502,7 @@ public class LibpffPSTParser extends AbstractParser {
     private void writeHeader(File file, Metadata metadata, StringBuilder preview) {
         File outlookHeader = new File(file, "OutlookHeaders.txt"); //$NON-NLS-1$
         if (outlookHeader.exists()) {
-            List<String> lines = readAllLines(outlookHeader);
+            List<String> lines = readAllHeaderLines(outlookHeader);
             String from = "", fromAddr = "", subject = Messages.getString("LibpffPSTParser.NoSubject"); //$NON-NLS-1$ //$NON-NLS-2$
             for (String line : lines) {
                 String[] l = line.split(":", 2); //$NON-NLS-1$
@@ -529,8 +530,12 @@ public class LibpffPSTParser extends AbstractParser {
                         } else if (l[0].trim().equals("Sent representing email address")) { //$NON-NLS-1$
                             if (fromAddr.isEmpty())
                                 fromAddr = value;
-                        } else
+                        } else {
                             preview.append("<b>" + l[0] + ":</b> " + SimpleHTMLEncoder.htmlEncode(value) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            if (MetadataUtil.isToAddRawMailHeader(l[0])) {
+                                metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + l[0], value);
+                            }
+                        }
                     }
                 }
             }
@@ -543,17 +548,26 @@ public class LibpffPSTParser extends AbstractParser {
         }
     }
 
-    private void writeInternetHeaders(File file, StringBuilder preview) {
+    private void writeInternetHeaders(File file, StringBuilder preview, Metadata metadata) {
         File internetHeaders = new File(file, "InternetHeaders.txt"); //$NON-NLS-1$
         if (internetHeaders.exists()) {
             preview.append(
                     "<div class=\"ipedtheme\" style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:12px;margin:0px;\">"); //$NON-NLS-1$
             preview.append("<hr>"); //$NON-NLS-1$
             preview.append("Internet Headers:<br>"); //$NON-NLS-1$
-            List<String> lines = readAllLines(internetHeaders);
+            List<String> lines = readAllHeaderLines(internetHeaders);
             for (String line : lines) {
-                if (!line.trim().isEmpty())
+                if (!line.trim().isEmpty()) {
                     preview.append(SimpleHTMLEncoder.htmlEncode(line.trim()) + "<br>"); //$NON-NLS-1$
+                    String[] l = line.split(":", 2); //$NON-NLS-1$
+                    if (l.length > 1) {
+                        String value = l[1].trim();
+                        if (MetadataUtil.isToAddRawMailHeader(l[0]) && !value.isEmpty()) {
+                            /* Issue #65 - add internet headers as metadata */
+                            metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + l[0], value);
+                        }
+                    }
+                }
             }
             preview.append("</div>"); //$NON-NLS-1$
         }
@@ -572,7 +586,7 @@ public class LibpffPSTParser extends AbstractParser {
             metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(++virtualId));
             metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(parent));
             metadata.set(Metadata.RESOURCE_NAME_KEY, name);
-            metadata.set(ExtraProperties.PST_ATTACH, "true"); //$NON-NLS-1$
+            metadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
             if (deleted)
                 metadata.set(ExtraProperties.DELETED, "true"); //$NON-NLS-1$
 
@@ -626,6 +640,19 @@ public class LibpffPSTParser extends AbstractParser {
                 if (lines.length > 1)
                     return Arrays.asList(lines);
             }
+        } catch (IOException e) {
+        }
+        return Collections.EMPTY_LIST;
+    }
+
+    private List<String> readAllHeaderLines(File file) {
+        try {
+            String content = Util.decodeUnknownCharsetSimpleThenTika(Files.readAllBytes(file.toPath()));
+            // unfold multiple line fields according to RFC822
+            content = content.replaceAll("\r\n[ \t]", " ");
+            String[] lines = content.split("\r\n|\n|\r");
+            return Arrays.asList(lines);
+
         } catch (IOException e) {
         }
         return Collections.EMPTY_LIST;

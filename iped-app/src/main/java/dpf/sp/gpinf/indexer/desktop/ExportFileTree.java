@@ -92,9 +92,7 @@ public class ExportFileTree extends CancelableWorker {
             if (baseDocId != root.docId) {
                 Document doc = App.get().appCase.getReader().document(baseDocId);
 
-                String id = doc.get(IndexItem.FTKID);
-                if (id == null)
-                    id = doc.get(IndexItem.ID);
+                String id = doc.get(IndexItem.ID);
 
                 textQuery = IndexItem.PARENTIDs + ":" + id + " " + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);

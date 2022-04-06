@@ -105,7 +105,7 @@ public class CacheAddr {
             case 4:
                 for (IItemBase dataFile : dataFiles) {
                     if (dataFile.getName().equals(("data_" + fileSelector))) {
-                        SeekableInputStream targetStream = dataFile.getStream();
+                        SeekableInputStream targetStream = dataFile.getSeekableInputStream();
                         targetStream.seek(DataBlockFileHeader.BLOCK_HEADER_SIZE + startBlock * getBlockSize());
                         return new LimitedInputStream(targetStream, numBlocks * getBlockSize());
                     }

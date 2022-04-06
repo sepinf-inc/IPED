@@ -27,7 +27,9 @@ import iped3.IItemId;
 
 public class SimilarImagesFilterActions {
     private static final int sampleFactor = 3;
-    private static final ExternalImageConverter externalImageConverter = new ExternalImageConverter();
+
+    // do not instantiate here, makes external command adjustment fail, see #740
+    private static ExternalImageConverter externalImageConverter;
 
     public static void clear() {
         clear(true);
@@ -76,24 +78,30 @@ public class SimilarImagesFilterActions {
                     img = ImageUtil.getSubSampledImage(is, ImageSimilarity.maxDim * sampleFactor,
                             ImageSimilarity.maxDim * sampleFactor);
                 } catch (Exception e) {
+                    e.printStackTrace();
                 } finally {
                     IOUtil.closeQuietly(is);
                 }
                 if (img == null) {
                     try {
                         is = new BufferedInputStream(new FileInputStream(file));
+                        if (externalImageConverter == null) {
+                            externalImageConverter = new ExternalImageConverter();
+                        }
                         img = externalImageConverter.getImage(is, ImageSimilarity.maxDim, false, file.length());
                     } catch (Exception e) {
+                        e.printStackTrace();
                     } finally {
                         IOUtil.closeQuietly(is);
                     }
                 }
                 if (img != null) {
-                    img = ImageUtil.resizeImage(img, ImageSimilarity.maxDim, ImageSimilarity.maxDim);
+                    img = ImageUtil.resizeImage(img, ImageSimilarity.maxDim, ImageSimilarity.maxDim, BufferedImage.TYPE_INT_RGB);
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     try {
                         ImageIO.write(img, "jpg", baos);
                     } catch (Exception e) {
+                        e.printStackTrace();
                     }
                     app.similarImagesQueryRefItem = new Item();
                     app.similarImagesQueryRefItem.setName(file.getName());

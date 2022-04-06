@@ -19,7 +19,7 @@ public interface GraphService {
 
     GraphDatabaseService getGraphDb();
 
-    File getDbFile();
+    File getDbHome();
 
     void getEdges(String[] ids, EdgeQueryListener listener);
 
@@ -55,5 +55,7 @@ public interface GraphService {
     void getRelationships(Collection<Long> ids, EdgeQueryListener listener);
 
     List<Long> getMoreConnectedNodes(int maxNodes);
+
+    int deleteRelationshipsFromDatasource(String evidenceUUID);
 
 }

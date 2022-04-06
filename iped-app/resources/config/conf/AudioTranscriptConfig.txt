@@ -1,25 +1,34 @@
 # Audio transcript task config file.
 
-# Default implementation uses Microsoft Azure service.
+# Default implementation uses Vosk transcription on local CPU (slow and medium quality).
+# We include small portable models for 'en' and 'pt-BR', if you want to use a different language model
+# you should download it from https://alphacephei.com/vosk/models and put in 'models/vosk/[lang]' folder.
+implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.VoskTranscriptTask
+
+# If you want to use the Microsoft Azure service implementation, comment above and uncomment below.
 # You must pass your subscription key using command line parameter -XazureSubscriptionKey=XXXXXXXX
-implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.MicrosoftTranscriptTask
+# implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.MicrosoftTranscriptTask
 
 # If you want to use the Google Service implementation, comment above and uncomment below.
-# You must include google-cloud-speech-1.22.5.jar AND ITS DEPENDENCIES in plugin/optional_jar folder.
+# You must include google-cloud-speech-1.22.5.jar AND ITS DEPENDENCIES in plugins folder.
 # You can download an all-in-one jar from https://gitlab.com/iped-project/iped-maven/-/blob/master/com/google/cloud/google-cloud-speech/1.22.5-shaded/google-cloud-speech-1.22.5-shaded.jar
 # Finally you must set environment variable GOOGLE_APPLICATION_CREDENTIALS pointing to your credential file
 #implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.GoogleTranscriptTask
 
-# Specific of Microsoft service. Replace with your own subscription region identifier from here: https://aka.ms/speech/sdkregion
+# Minimum word score to include the word in transcription result. Applies just to Vosk implementation.
+minWordScore = 0.7
+
+# Specific for Microsoft service. Replace with your own subscription region identifier from here: https://aka.ms/speech/sdkregion
 serviceRegion = brazilsouth
 
 # Language model(s) to use when processing audios. 'auto' uses the 'locale' set on LocalConfig.txt
-# You can specify one or two languages separated by ;
+# You can specify one or two languages separated by ; if Microsoft or Google are used.
+# Vosk implementation accepts just one language for now.
 # Setting more than 1 lang model can result in wrong language detection.
 language = auto
 
 # Depending on your subscription, Microsoft limits the number of max concurrent requests
-maxConcurrentRequests = 20
+maxConcurrentRequests = 100
 
 # Depending on your subscription, Google limits your request rate (per minute or per second).
 requestIntervalMillis = 67

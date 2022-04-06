@@ -45,15 +45,19 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
         }
         List<IPEDSource> cases = App.get().appCase.getAtomicSources();
         if (cases.size() == 1) {
-            loaded = initGraphService(new File(cases.get(0).getModuleDir(), GraphTask.DB_PATH));
+            loaded = initGraphService(new File(cases.get(0).getModuleDir(), GraphTask.DB_HOME_DIR));
         } else {
             String caseNames = cases.stream().map(c -> c.getCaseDir().getName()).sorted()
                     .collect(Collectors.joining("-"));
             String hash = DigestUtils.md5Hex(caseNames);
-            String suffix = "iped-graph/multicase-" + hash + "/database";
+            String suffix = "iped-multicases/multicase-" + hash + "/graph";
             File multiCaseGraphPath = new File(App.get().casesPathFile.getParentFile(), suffix);
-            if (!multiCaseGraphPath.exists() && !multiCaseGraphPath.mkdirs()) {
+            if (!multiCaseGraphPath.getParentFile().exists() && !multiCaseGraphPath.getParentFile().mkdirs()) {
                 multiCaseGraphPath = new File(System.getProperty("java.io.basetmpdir"), suffix);
+            }
+            File graphDataDir = new File(multiCaseGraphPath, GraphTask.DB_DATA_DIR);
+            if (graphDataDir.exists() && !new File(multiCaseGraphPath, GraphTask.CSVS_DIR).exists()) {
+                IOUtil.deleteDirectory(graphDataDir, false);
             }
             createMultiCaseGraph(cases, multiCaseGraphPath);
             if (multiCaseGraphPath.exists()) {
@@ -64,19 +68,22 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
         return null;
     }
 
-    private void createMultiCaseGraph(List<IPEDSource> cases, File graphDir) {
-        if (!graphDir.exists()) {
+    private void createMultiCaseGraph(List<IPEDSource> cases, File multiCaseGraphPath) {
+        File graphDataDir = new File(multiCaseGraphPath, GraphTask.DB_DATA_DIR);
+        if (!graphDataDir.exists()) {
             int option = JOptionPane.showConfirmDialog(App.get(), Messages.getString("GraphAnalysis.CreateMultiGraph"));
             if (option != JOptionPane.YES_OPTION)
                 return;
             try {
-                if (graphDir.getParentFile().exists())
-                    IOUtil.deleteDirectory(graphDir.getParentFile(), false);
-                File tempDir = new File(graphDir.getAbsolutePath() + "_temp");
-                ImportWorker importer = new ImportWorker(cases, tempDir);
+                if (multiCaseGraphPath.exists())
+                    IOUtil.deleteDirectory(multiCaseGraphPath, false);
+                File graphHomeTemp = new File(multiCaseGraphPath.getAbsolutePath() + "_temp");
+                if (graphHomeTemp.exists())
+                    IOUtil.deleteDirectory(graphHomeTemp, false);
+                ImportWorker importer = new ImportWorker(cases, graphHomeTemp);
                 importer.execute();
                 if (importer.get()) {
-                    Files.move(tempDir.toPath(), graphDir.toPath());
+                    Files.move(graphHomeTemp.toPath(), multiCaseGraphPath.toPath());
                     JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.MultiGraphOk"));
                     return;
                 }
@@ -91,12 +98,12 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
     private class ImportWorker extends CancelableWorker<Boolean, Void> implements ImportListener {
 
         List<IPEDSource> cases;
-        File graphOut;
+        File graphHome;
         ProgressDialog progress;
 
-        private ImportWorker(List<IPEDSource> cases, File graphOut) {
+        private ImportWorker(List<IPEDSource> cases, File graphHome) {
             this.cases = cases;
-            this.graphOut = graphOut;
+            this.graphHome = graphHome;
             this.progress = new ProgressDialog(App.get(), this);
             progress.setIndeterminate(true);
             progress.setExtraWidth(100);
@@ -113,19 +120,19 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
         @Override
         protected Boolean doInBackground() throws IOException {
             try {
-                List<File> csvParents = cases.stream().map(c -> new File(c.getModuleDir(), GraphTask.GENERATED_PATH))
+                List<File> csvParents = cases.stream().map(c -> new File(c.getModuleDir(), GraphTask.CSVS_PATH))
                         .collect(Collectors.toList());
-                File preparedCSVs = new File(graphOut.getParentFile(), "generated");
+                File preparedCSVs = new File(graphHome, GraphTask.CSVS_DIR);
                 GraphFileWriter.prepareMultiCaseCSVs(preparedCSVs, csvParents);
                 GraphGenerator graphGenerator = new GraphGenerator();
-                return graphGenerator.generate(this, graphOut, preparedCSVs.listFiles());
+                return graphGenerator.generate(this, graphHome, preparedCSVs.listFiles());
             } finally {
                 progress.close();
             }
         }
     }
 
-    private boolean initGraphService(File dbFile) {
+    private boolean initGraphService(File neo4jHome) {
         app.setStatus(Messages.getString("GraphAnalysis.Preparing"));
         app.setProgress(50);
 
@@ -133,14 +140,15 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
         Thread.currentThread().setContextClassLoader(classLoader);
         GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
         try {
-            if (!dbFile.exists()) {
-                AppGraphAnalytics.LOGGER.error("Graph database not found: " + dbFile.getAbsolutePath());
+            File dbDataDir = new File(neo4jHome, GraphTask.DB_DATA_DIR);
+            if (!dbDataDir.exists()) {
+                AppGraphAnalytics.LOGGER.error("Graph database not found: " + dbDataDir.getAbsolutePath());
                 return false;
             }
-            if (!dbFile.canWrite() || !IOUtil.canCreateFile(dbFile)) {
-                dbFile = copyToTempFolder(dbFile);
+            if (!IOUtil.canWrite(dbDataDir) || !IOUtil.canCreateFile(dbDataDir)) {
+                neo4jHome = copyToTempFolder(dbDataDir);
             }
-            graphService.start(dbFile);
+            graphService.start(neo4jHome);
             return true;
         } catch (Throwable e) {
             AppGraphAnalytics.LOGGER.error(e.getMessage(), e);
@@ -148,9 +156,9 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
         }
     }
 
-    private File copyToTempFolder(File db) throws IOException {
-        File tmpDb = new File(System.getProperty("java.io.tmpdir"), "iped-graph" + db.lastModified());
-        IOUtil.copiaDiretorio(db, tmpDb, true);
+    private File copyToTempFolder(File dataDir) throws IOException {
+        File tmpDb = new File(System.getProperty("java.io.tmpdir"), "iped-graph" + dataDir.lastModified());
+        IOUtil.copiaDiretorio(dataDir, new File(tmpDb, GraphTask.DB_DATA_DIR), true);
         return tmpDb;
     }
 

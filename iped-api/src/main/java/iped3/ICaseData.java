@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * (INTERFACE DO IPED) Classe que define todos os dados do caso.
@@ -31,6 +30,12 @@ public interface ICaseData extends Serializable {
      */
     void addItem(IItem item) throws InterruptedException;
 
+    void addItemFirst(IItem item) throws InterruptedException;
+
+    void addItemNonBlocking(IItem item);
+
+    void addItemFirstNonBlocking(IItem item);
+
     void addItemToQueue(IItem item, int queuePriority) throws InterruptedException;
 
     /**
@@ -47,8 +52,6 @@ public interface ICaseData extends Serializable {
      * @return true se o caso contém um report
      */
     boolean containsReport();
-
-    int getAlternativeFiles();
 
     /**
      * Obtém lista de bookmarks.
@@ -83,13 +86,6 @@ public interface ICaseData extends Serializable {
     long getDiscoveredVolume();
 
     /**
-     * Obtém fila de arquivos de evidência do caso.
-     *
-     * @return fila de arquivos.
-     */
-    LinkedBlockingDeque<IItem> getItemQueue();
-
-    /**
      * Obtém o objeto raiz da árvore de arquivos do caso.
      *
      * @return objeto raiz, a partir do qual é possível navegar em todo estrutura de
@@ -103,8 +99,6 @@ public interface ICaseData extends Serializable {
      * @return lista não modificável de grupo de arquivos por data.
      */
     List<IFileGroup> getTimeGroups();
-
-    void incAlternativeFiles(int inc);
 
     void incDiscoveredEvidences(int inc);
 
