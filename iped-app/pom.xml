@@ -603,7 +603,7 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>dpf.sp.gpinf.indexer.IndexFiles</mainClass>
+                                    <mainClass>dpf.sp.gpinf.indexer.Main</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>

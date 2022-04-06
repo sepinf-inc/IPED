@@ -18,9 +18,9 @@ import org.slf4j.LoggerFactory;
 import org.vosk.Model;
 import org.vosk.Recognizer;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.util.IPEDException;
+import iped3.exception.IPEDException;
 
 public class VoskTranscriptTask extends AbstractTranscriptTask {
 

@@ -5,6 +5,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,6 +25,7 @@ import bibliothek.gui.dock.common.location.CMaximalExternalizedLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.station.screen.ScreenDockProperty;
 import dpf.sp.gpinf.indexer.desktop.App;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MultiViewer;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class PanelsLayout {
@@ -32,8 +36,9 @@ public class PanelsLayout {
     public static boolean load(CControl control) {
         BufferedReader in = null;
         try {
-            if (file.exists())
+            if (file.exists() && replaceOldClassName()) {
                 control.read(file);
+            }
 
             if (fileExt.exists()) {
                 in = new BufferedReader(new FileReader(fileExt));
@@ -92,6 +97,19 @@ public class PanelsLayout {
             e.printStackTrace();
         } finally {
             IOUtil.closeQuietly(in);
+        }
+        return false;
+    }
+
+    private static boolean replaceOldClassName() {
+        try {
+            byte[] bytes = Files.readAllBytes(file.toPath());
+            String string = new String(bytes, StandardCharsets.ISO_8859_1);
+            string = string.replace("ViewersRepository", MultiViewer.class.getSimpleName());
+            Files.write(file.toPath(), string.getBytes(StandardCharsets.ISO_8859_1));
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return false;
     }

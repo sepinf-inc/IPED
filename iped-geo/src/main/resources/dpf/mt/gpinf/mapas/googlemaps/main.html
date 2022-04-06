@@ -60,11 +60,11 @@
 		
 	    map.addListener('dragend_rect', function(rect, proj) {
 	    	var ms = gxml.selecionaRetangulo(rect, proj);
-	    	window.app.selecionaMarcadorBF(ms);
+	    	window.app.selectMarkerBF(ms);
     	  });
 	    map.addListener('dragend_circle', function(pInicio, pFim, proj) {
 	    	var ms = gxml.selecionaCirculo(pInicio, pFim, proj);
-	    	window.app.selecionaMarcadorBF(ms);
+	    	window.app.selectMarkerBF(ms);
     	  });
     }
 

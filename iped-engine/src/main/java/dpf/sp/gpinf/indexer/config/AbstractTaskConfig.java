@@ -4,9 +4,8 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
-import dpf.sp.gpinf.indexer.Configuration;
-import macee.core.Configurable;
-import macee.core.EnabledInterface;
+import iped3.configuration.Configurable;
+import iped3.configuration.EnabledInterface;
 
 public abstract class AbstractTaskConfig<T> implements Configurable<T>, EnabledInterface {
     

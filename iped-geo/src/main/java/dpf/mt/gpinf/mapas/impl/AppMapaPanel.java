@@ -88,7 +88,7 @@ public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                redesenhaMapa();
+                updateMap();
             }
         });
 
@@ -128,7 +128,7 @@ public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
                             tilesSourceURL = url.toString();
                             config(tilesSourceURL);
                             mapaDesatualizado = true;
-                            redesenhaMapa();
+                            updateMap();
                         }
                     }
                 });
@@ -153,7 +153,7 @@ public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
         }
     }
 
-    public void redesenhaMapa() {
+    public void updateMap() {
         if (tilesSourceURL == null) {
             if (savedTilesSourceURL != null) {
                 tilesSourceURL = savedTilesSourceURL;
@@ -181,7 +181,7 @@ public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
             kmlWorker.execute();
 
         } else {
-            browserCanvas.redesenha();
+            browserCanvas.update();
         }
     }
 
@@ -197,30 +197,30 @@ public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
         mapaDesatualizado = false;
     }
 
-    public void redesenha() {
-        browserCanvas.redesenha();
+    public void update() {
+        browserCanvas.update();
         mapaDesatualizado = false;
     }
 
-    public boolean isMapaDesatualizado() {
+    public boolean isMapOutDated() {
         return mapaDesatualizado;
     }
 
-    public void setMapaDesatualizado(boolean mapaDesatualizado) {
-        this.mapaDesatualizado = mapaDesatualizado;
+    public void setMapOutDated(boolean mapOutDated) {
+        this.mapaDesatualizado = mapOutDated;
     }
 
-    public void selecionaMarcador(IItemId item, boolean b) {
+    public void selectCheckbox(IItemId item, boolean b) {
 
         if (kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
             List<Integer> subitems = kmlResult.getGPSItems().get(item);
             if (subitems == null) {
                 String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-                browserCanvas.selecionaMarcador(gid, b);
+                browserCanvas.selectCheckbox(gid, b);
             } else {
                 for (Integer subitem : subitems) {
                     String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$
-                    browserCanvas.selecionaMarcador(gid, b);
+                    browserCanvas.selectCheckbox(gid, b);
                 }
             }
 

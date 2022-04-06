@@ -17,7 +17,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import gpinf.similarity.ImageSimilarity;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Image Similarity task.
@@ -27,6 +27,9 @@ import macee.core.Configurable;
 public class ImageSimilarityTask extends AbstractTask {
 
     public static final String enableParam = "enableImageSimilarity"; //$NON-NLS-1$
+
+    public static final String SIMILARITY_FEATURES = "similarityFeatures"; //$NON-NLS-1$
+
     private static boolean taskEnabled = false;
     private static final AtomicBoolean init = new AtomicBoolean(false);
     private static final AtomicBoolean finished = new AtomicBoolean(false);
@@ -101,7 +104,7 @@ public class ImageSimilarityTask extends AbstractTask {
             BufferedImage img = ImageIO.read(new ByteArrayInputStream(thumb));
             byte[] features = imageSimilarity.extractFeatures(img);
             if (features != null) {
-                evidence.setImageSimilarityFeatures(features);
+                evidence.setExtraAttribute(SIMILARITY_FEATURES, features);
                 totalProcessed.incrementAndGet();
             } else {
                 totalFailed.incrementAndGet();

@@ -23,7 +23,7 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
@@ -31,7 +31,7 @@ import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 import iped3.util.MediaTypes;
 
 public class ImageThumbTask extends ThumbTask {
@@ -282,7 +282,7 @@ public class ImageThumbTask extends ThumbTask {
             BufferedImage img = null;
             if (imgThumbConfig.isExtractThumb() && isJpeg(evidence)) { // $NON-NLS-1$
                 long t = System.currentTimeMillis();
-                try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
                     img = ImageMetadataUtil.getThumb(stream);
                 }
                 performanceStats[img == null ? 2 : 0]++;
@@ -290,7 +290,7 @@ public class ImageThumbTask extends ThumbTask {
             }
             if (img == null) {
                 long t = System.currentTimeMillis();
-                try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
                     BooleanWrapper renderException = new BooleanWrapper();
                     img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio,
                             renderException, MediaTypes.getMimeTypeIfJBIG2(evidence));
@@ -302,7 +302,7 @@ public class ImageThumbTask extends ThumbTask {
             }
             if (img == null) {
                 long t = System.currentTimeMillis();
-                try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
                     img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength(), true);
                     if (img != null)
                         evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -329,7 +329,7 @@ public class ImageThumbTask extends ThumbTask {
 
                 if (isJpeg(evidence)) {
                     // Ajusta rotacao da miniatura a partir do metadado orientacao
-                    try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                    try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
                         int orientation = ImageMetadataUtil.getOrientation(stream);
                         if (orientation > 0) {
                             t = System.currentTimeMillis();

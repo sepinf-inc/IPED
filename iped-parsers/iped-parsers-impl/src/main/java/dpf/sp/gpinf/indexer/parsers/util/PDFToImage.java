@@ -175,7 +175,7 @@ public class PDFToImage implements Closeable {
                 pb.redirectErrorStream(true);
                 Process process = pb.start();
 
-                Util.ignoreStream(process.getInputStream());
+                IOUtil.ignoreInputStream(process.getInputStream());
 
                 try {
                     process.waitFor();

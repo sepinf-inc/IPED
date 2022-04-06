@@ -38,8 +38,8 @@ import io.minio.errors.ServerException;
 import io.minio.errors.XmlParserException;
 import iped3.ICaseData;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.io.SeekableInputStream;
-import macee.core.Configurable;
 
 /**
  * Task to export files to MinIO object storage service.

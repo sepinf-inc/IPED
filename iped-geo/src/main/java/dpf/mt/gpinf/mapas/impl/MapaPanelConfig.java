@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class MapaPanelConfig implements Configurable<UTF8Properties> {
     /**

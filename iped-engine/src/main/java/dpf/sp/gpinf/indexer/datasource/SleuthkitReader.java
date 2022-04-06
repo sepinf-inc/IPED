@@ -82,17 +82,16 @@ import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitClient;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.SleuthkitClient;
-import dpf.sp.gpinf.indexer.util.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
-import gpinf.dev.filetypes.GenericFileType;
 import iped3.ICaseData;
 import iped3.IItem;
+import iped3.exception.IPEDException;
 import iped3.util.BasicProps;
 import iped3.util.MediaTypes;
 
@@ -968,7 +967,7 @@ public class SleuthkitReader extends DataSourceReader {
 
         if (absFile instanceof SlackFile && !isVolumeShadowCopy(absFile)) {
             evidence.setMediaType(MediaType.application("x-fileslack")); //$NON-NLS-1$
-            evidence.setType(new GenericFileType("slack")); //$NON-NLS-1$
+            evidence.setType("slack"); //$NON-NLS-1$
             evidence.setDeleted(true);
         }
 

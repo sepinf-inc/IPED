@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -110,26 +111,28 @@ import bibliothek.gui.dock.themes.basic.action.BasicButtonHandler;
 import bibliothek.gui.dock.themes.basic.action.BasicSelectableHandler;
 import bibliothek.gui.dock.themes.basic.action.BasicTitleViewItem;
 import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.PanelsLayout;
 import dpf.sp.gpinf.indexer.ui.controls.CSelButton;
 import dpf.sp.gpinf.indexer.ui.controls.CustomButton;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AbstractViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
 import dpf.sp.gpinf.indexer.util.IconUtil;
@@ -138,10 +141,8 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
-import iped3.desktop.CancelableWorker;
 import iped3.desktop.GUIProvider;
 import iped3.desktop.IColumnsManager;
-import iped3.desktop.ProgressDialog;
 import iped3.desktop.ResultSetViewer;
 import iped3.desktop.ResultSetViewerConfiguration;
 import iped3.search.IIPEDSearcher;
@@ -160,8 +161,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private LogConfiguration logConfiguration;
 
-    private AppSearchParams appSearchParams = null;
-
     private Manager processingManager;
 
     IMultiSearchResult ipedResult = new MultiSearchResult(new ItemId[0], new float[0]);
@@ -171,8 +170,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     FilterManager filterManager;
     public JDialog dialogBar;
     JProgressBar progressBar;
-    JComboBox<String> termo, filtro;
-    JButton pesquisar, opcoes, atualizar, ajuda, exportToZip;
+    JComboBox<String> queryComboBox, filterComboBox;
+    JButton searchButton, optionsButton, updateCaseData, helpButton, exportToZip;
     JCheckBox checkBox, recursiveTreeList, filterDuplicates;
     JTable resultsTable;
     GalleryTable gallery;
@@ -208,7 +207,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     JScrollPane viewerScroll, resultsScroll, galleryScroll;
     JPanel topPanel;
     ClearFilterButton clearAllFilters;
-    boolean disposicaoVertical = false;
+    boolean verticalLayout = false;
 
     public ResultTableModel resultsModel;
     List resultSortKeys;
@@ -242,11 +241,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     final static String FILTRO_SELECTED = Messages.getString("App.Checked"); //$NON-NLS-1$
     public final static String SEARCH_TOOL_TIP = Messages.getString("App.SearchBoxTip"); //$NON-NLS-1$
 
-    public static int MAX_LINE_SIZE = 100; // tamanho de quebra do texto para highlight
-
     static int MAX_HITS = 10000;
-
-    public static int MAX_LINES = 100000;
 
     final static int FRAG_SIZE = 100, TEXT_BREAK_SIZE = 1000000;
 
@@ -258,17 +253,21 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public boolean useVideoThumbsInGallery = false;
 
+    private IPEDSource lastSelectedSource;
+
+    public int lastSelectedDoc = -1;
+
+    private String codePath;
+
+    private IndexerDefaultParser autoDetectParser;
+
+    private String fontStartTag = null;
+
+    private Query query = null;
+
+    private Set<String> highlightTerms = new HashSet<>();
+
     private App() {
-        this.appSearchParams = new AppSearchParams();
-        this.appSearchParams.mainFrame = (JFrame) this;
-        this.appSearchParams.HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">"; //$NON-NLS-1$
-        this.appSearchParams.HIGHLIGHT_END_TAG = "</font>"; //$NON-NLS-1$
-        this.appSearchParams.TEXT_BREAK_SIZE = TEXT_BREAK_SIZE;
-        this.appSearchParams.FRAG_SIZE = FRAG_SIZE;
-        this.appSearchParams.MAX_LINES = MAX_LINES;
-        this.appSearchParams.MAX_HITS = MAX_HITS;
-        this.appSearchParams.MAX_LINE_SIZE = MAX_LINE_SIZE;
-        this.appSearchParams.highlightTerms = new HashSet<String>();
     }
 
     public static final App get() {
@@ -278,12 +277,24 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return app;
     }
 
-    public AppListener getAppListener() {
-        return appletListener;
+    public void setLastSelectedDoc(int lastSelectedDoc) {
+        this.lastSelectedDoc = lastSelectedDoc;
     }
 
-    public AppSearchParams getSearchParams() {
-        return this.appSearchParams;
+    public int getLastSelectedDoc() {
+        return this.lastSelectedDoc;
+    }
+
+    public void setHighlightTerms(Set<String> terms) {
+        this.highlightTerms = terms;
+    }
+
+    public Set<String> getHighlightTerms() {
+        return this.highlightTerms;
+    }
+
+    public AppListener getAppListener() {
+        return appletListener;
     }
 
     public Manager getProcessingManager() {
@@ -298,15 +309,21 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return this.logConfiguration;
     }
 
+    public String getFontStartTag() {
+        return this.fontStartTag;
+    }
+
     public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile,
-            Manager processingManager) {
+            Manager processingManager, String codePath) {
 
         this.logConfiguration = logConfiguration;
         this.isMultiCase = isMultiCase;
         this.casesPathFile = casesPathFile;
         this.processingManager = processingManager;
-        if (processingManager != null)
+        if (processingManager != null) {
             processingManager.setSearchAppOpen(true);
+        }
+        this.codePath = codePath;
 
         LOGGER = LoggerFactory.getLogger(App.class);
         LOGGER.info("Starting..."); //$NON-NLS-1$
@@ -342,24 +359,20 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     }
 
-    public AppSearchParams getParams() {
-        return this.appSearchParams;
-    }
-
     public Query getQuery() {
-        return this.appSearchParams.query;
+        return this.query;
     }
 
     public void setQuery(Query query) {
-        this.appSearchParams.query = query;
+        this.query = query;
     }
 
-    public Object getAutoParser() {
-        return this.appSearchParams.autoParser;
+    public IndexerDefaultParser getAutoParser() {
+        return this.autoDetectParser;
     }
 
-    public void setAutoParser(Object autoParser) {
-        this.appSearchParams.autoParser = autoParser;
+    public void setAutoParser(IndexerDefaultParser autoParser) {
+        this.autoDetectParser = autoParser;
     }
 
     public ATextViewer getTextViewer() {
@@ -409,7 +422,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
 
         String tab = "     "; //$NON-NLS-1$
-        this.setTitle(Versao.APP_NAME + tab + "[" + Messages.getString("App.Case") + ": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        this.setTitle(Version.APP_NAME + tab + "[" + Messages.getString("App.Case") + ": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         this.setSize(new Dimension(800, 600));
         this.setExtendedState(Frame.MAXIMIZED_BOTH);
         this.addWindowListener(this);
@@ -431,26 +444,26 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             e.printStackTrace();
         }
 
-        termo = new JComboBox<String>();
-        termo.setMinimumSize(new Dimension());
-        termo.setToolTipText(SEARCH_TOOL_TIP);
-        termo.setEditable(true);
-        termo.setSelectedItem(SEARCH_TOOL_TIP);
-        termo.setMaximumRowCount(30);
+        queryComboBox = new JComboBox<String>();
+        queryComboBox.setMinimumSize(new Dimension());
+        queryComboBox.setToolTipText(SEARCH_TOOL_TIP);
+        queryComboBox.setEditable(true);
+        queryComboBox.setSelectedItem(SEARCH_TOOL_TIP);
+        queryComboBox.setMaximumRowCount(30);
 
-        pesquisar = new JButton(Messages.getString("App.Search")); //$NON-NLS-1$
-        opcoes = new JButton(Messages.getString("App.Options")); //$NON-NLS-1$
-        atualizar = new JButton(Messages.getString("App.Update")); //$NON-NLS-1$
-        ajuda = new JButton(Messages.getString("App.Help")); //$NON-NLS-1$
+        searchButton = new JButton(Messages.getString("App.Search")); //$NON-NLS-1$
+        optionsButton = new JButton(Messages.getString("App.Options")); //$NON-NLS-1$
+        updateCaseData = new JButton(Messages.getString("App.Update")); //$NON-NLS-1$
+        helpButton = new JButton(Messages.getString("App.Help")); //$NON-NLS-1$
         exportToZip = new JButton(Messages.getString("App.ExportZip")); //$NON-NLS-1$
         checkBox = new JCheckBox("0"); //$NON-NLS-1$
 
-        filtro = new JComboBox<String>();
-        filtro.setMaximumSize(new Dimension(100, 50));
-        filtro.setMaximumRowCount(30);
-        filtro.addItem(App.FILTRO_TODOS);
-        filtro.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
-        filterManager = new FilterManager(filtro);
+        filterComboBox = new JComboBox<String>();
+        filterComboBox.setMaximumSize(new Dimension(100, 50));
+        filterComboBox.setMaximumRowCount(30);
+        filterComboBox.addItem(App.FILTRO_TODOS);
+        filterComboBox.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
+        filterManager = new FilterManager(filterComboBox);
 
         filterDuplicates = new JCheckBox(Messages.getString("App.FilterDuplicates"));
         filterDuplicates.setToolTipText(Messages.getString("App.FilterDuplicatesTip"));
@@ -468,17 +481,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         similarFacesFilterPanel = new SimilarFacesFilterPanel();
         similarFacesFilterPanel.setVisible(false);
 
-        topPanel.add(filtro);
+        topPanel.add(filterComboBox);
         topPanel.add(filterDuplicates);
         topPanel.add(clearAllFilters);
         topPanel.add(similarImageFilterPanel);
         topPanel.add(similarFacesFilterPanel);
         topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
-        topPanel.add(termo);
-        topPanel.add(opcoes);
+        topPanel.add(queryComboBox);
+        topPanel.add(optionsButton);
         if (processingManager != null)
-            topPanel.add(atualizar);
-        topPanel.add(ajuda);
+            topPanel.add(updateCaseData);
+        topPanel.add(helpButton);
         topPanel.add(exportToZip);
         exportToZip.setVisible(false);
         topPanel.add(checkBox);
@@ -536,9 +549,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         appGraphAnalytics = new AppGraphAnalytics();
 
-        viewerController = new ViewerController(appSearchParams);
-        hitsTable = new HitsTable(new HitsTableModel(getTextViewer()));
-        appSearchParams.hitsTable = hitsTable;
+        viewerController = new ViewerController(codePath);
+
+        hitsTable = new HitsTable(new HitsTableModel(viewerController.getTextViewer()));
         hitsScroll = new JScrollPane(hitsTable);
         hitsTable.setFillsViewportHeight(true);
         hitsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -548,9 +561,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         hitsTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         hitsTable.setShowGrid(false);
 
+        viewerController.setHitsTableInTextViewer(hitsTable);
+
         subItemTable = new HitsTable(subItemModel);
         subItemScroll = new JScrollPane(subItemTable);
-        this.appSearchParams.subItemScroll = subItemScroll;
         subItemTable.setFillsViewportHeight(true);
         subItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         subItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
@@ -575,7 +589,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         parentItemTable = new HitsTable(parentItemModel);
         parentItemScroll = new JScrollPane(parentItemTable);
-        this.appSearchParams.parentItemScroll = parentItemScroll;
         parentItemTable.setFillsViewportHeight(true);
         parentItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
@@ -702,7 +715,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         timelineButton.addActionListener(timelineListener);
 
         if (triageGui) {
-            disposicaoVertical = true;
+            verticalLayout = true;
             exportToZip.setVisible(true);
         }
 
@@ -717,14 +730,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dialogBar.setBounds(0, 0, 150, 30);
         dialogBar.setUndecorated(true);
         dialogBar.getContentPane().add(progressBar);
-        appSearchParams.dialogBar = dialogBar;
 
-        
         adjustLayout(false);
         PanelsLayout.load(dockingControl);
 
         status = new JLabel(" "); //$NON-NLS-1$
-        this.appSearchParams.status = status;
 
         this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
         // this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
@@ -732,14 +742,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         appletListener = new AppListener();
         recursiveTreeList.addActionListener(treeListener);
-        termo.addActionListener(appletListener);
-        filtro.addActionListener(appletListener);
+        queryComboBox.addActionListener(appletListener);
+        filterComboBox.addActionListener(appletListener);
         filterDuplicates.addActionListener(appletListener);
-        pesquisar.addActionListener(appletListener);
-        opcoes.addActionListener(appletListener);
+        searchButton.addActionListener(appletListener);
+        optionsButton.addActionListener(appletListener);
         exportToZip.addActionListener(appletListener);
-        atualizar.addActionListener(appletListener);
-        ajuda.addActionListener(appletListener);
+        updateCaseData.addActionListener(appletListener);
+        helpButton.addActionListener(appletListener);
         checkBox.addActionListener(appletListener);
         resultsTable.getSelectionModel().addListSelectionListener(new ResultTableListener());
         resultsTable.addMouseListener(new ResultTableListener());
@@ -766,21 +776,21 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencesTable.getSelectionModel().addListSelectionListener(referencesModel);
 
         hitsTable.addMouseListener(appletListener);
-        // filtro.addMouseListener(appletListener);
-        // filtro.getComponent(0).addMouseListener(appletListener);
+        // filterComboBox.addMouseListener(appletListener);
+        // filterComboBox.getComponent(0).addMouseListener(appletListener);
         updateUI(false);
     }
     
     public void updateUI(boolean refresh) {
-        termo.getEditor().getEditorComponent().addMouseListener(appletListener);
-        termo.getComponent(0).addMouseListener(appletListener);
-        new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());
+        queryComboBox.getEditor().getEditorComponent().addMouseListener(appletListener);
+        queryComboBox.getComponent(0).addMouseListener(appletListener);
+        new AutoCompleteColumns((JTextComponent) queryComboBox.getEditor().getEditorComponent());
         
         Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
         if (foreground == null)
-            getParams().FONT_START_TAG = null;
+            fontStartTag = null;
         else
-            getParams().FONT_START_TAG = "<font color=" + UiUtil.getHexRGB(foreground) + ">"; //$NON-NLS-1$ //$NON-NLS-2$
+            fontStartTag = "<font color=" + UiUtil.getHexRGB(foreground) + ">"; //$NON-NLS-1$ //$NON-NLS-2$
         
         if (refresh) {
             if (gallery != null) {
@@ -853,7 +863,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                                 if (itemId != null) {
                                     IItem item = appCase.getItemByItemId(itemId);
                                     if (item != null) {
-                                        boolean enabled = item.getImageSimilarityFeatures() != null;
+                                        boolean enabled = item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) != null;
                                         butSimSearch.setEnabled(enabled);
                                     }
                                 }
@@ -936,9 +946,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dockingControl.addDockable(parentDock);
         dockingControl.addDockable(referencesDock);
 
-        List<Viewer> viewers = viewerController.getViewers();
+        List<AbstractViewer> viewers = viewerController.getViewers();
         viewerDocks = new ArrayList<DefaultSingleCDockable>();
-        for (Viewer viewer : viewers) {
+        for (AbstractViewer viewer : viewers) {
             DefaultSingleCDockable viewerDock = createDockable(viewer.getClass().getName(), viewer.getName(),
                     viewer.getPanel());
             viewerDocks.add(viewerDock);
@@ -956,9 +966,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 viewerController.setFixed(isSelected());
             }
         };
-        List<Viewer> viewers = viewerController.getViewers();
+        List<AbstractViewer> viewers = viewerController.getViewers();
         for (int i = 0; i < viewers.size(); i++) {
-            Viewer viewer = viewers.get(i);
+            AbstractViewer viewer = viewers.get(i);
             DefaultSingleCDockable viewerDock = viewerDocks.get(i);
             viewerDock.addCDockableLocationListener(new CDockableLocationListener() {
                 public void changed(CDockableLocationEvent event) {
@@ -1197,7 +1207,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
     
     public void adjustLayout(boolean isReset) {
-        if (!disposicaoVertical) {
+        if (!verticalLayout) {
             if (isReset)
                 removeAllDockables();
             createAllDockables();
@@ -1358,8 +1368,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             setGalleryColCount(GalleryModel.defaultColCount);
     }
 
-    public void alterarDisposicao() {
-        disposicaoVertical = !disposicaoVertical;
+    public void toggleHorizontalVerticalLayout() {
+        verticalLayout = !verticalLayout;
         adjustLayout(true);
     }
 
@@ -1438,5 +1448,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     @Override
     public IColumnsManager getColumnsManager() {
         return ColumnsManager.getInstance();
+    }
+
+    public void setLastSelectedSource(IPEDSource lastSelectedSource) {
+        this.lastSelectedSource = lastSelectedSource;
+    }
+
+    public IPEDSource getLastSelectedSource() {
+        return this.lastSelectedSource;
     }
 }

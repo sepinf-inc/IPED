@@ -26,7 +26,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import dpf.sp.gpinf.indexer.util.UiUtil;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -42,7 +42,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 
 @SuppressWarnings("restriction")
-public abstract class MetadataViewer extends Viewer {
+public abstract class MetadataViewer extends AbstractViewer {
 
     private DecimalFormat df = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
 
@@ -269,7 +269,7 @@ public abstract class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.NAME, item.getName());
         fillProp(sb, BasicProps.LENGTH, item.getLength());
         fillProp(sb, BasicProps.EXT, item.getExt());
-        fillProp(sb, BasicProps.TYPE, item.getTypeExt());
+        fillProp(sb, BasicProps.TYPE, item.getType());
         fillProp(sb, BasicProps.DELETED, item.isDeleted());
         fillProp(sb, BasicProps.CATEGORY, item.getCategorySet());
         fillProp(sb, BasicProps.CREATED, item.getCreationDate());

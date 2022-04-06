@@ -21,15 +21,15 @@ import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.AudioTranscriptConfig;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.util.ExtraProperties;
-import macee.core.Configurable;
 
 public abstract class AbstractTranscriptTask extends AbstractTask {
 

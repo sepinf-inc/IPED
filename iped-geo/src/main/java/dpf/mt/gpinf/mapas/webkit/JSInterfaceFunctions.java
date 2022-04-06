@@ -4,7 +4,7 @@ import netscape.javascript.JSObject;
 
 public interface JSInterfaceFunctions {
 
-    void selecionaMarcadorBF(JSObject markers);
+    void selectMarkerBF(JSObject markers);
 
     void alert(String alert);
 
@@ -20,8 +20,8 @@ public interface JSInterfaceFunctions {
 
     void markerMouseExitedBF(String markerId);
 
-    void marcaMarcadorBF(String markerId, boolean checked);
+    void checkMarkerBF(String markerId, boolean checked);
 
-    void exportarKmlBF();
+    void exportKmlBF();
 
 }

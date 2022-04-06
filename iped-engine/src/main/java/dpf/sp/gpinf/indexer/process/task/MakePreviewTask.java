@@ -30,15 +30,15 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
+import dpf.sp.gpinf.indexer.tika.EmptyEmbeddedDocumentExtractor;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
-import dpf.sp.gpinf.indexer.util.EmptyEmbeddedDocumentExtractor;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
+import iped3.configuration.Configurable;
 import iped3.search.IItemSearcher;
-import macee.core.Configurable;
 
 public class MakePreviewTask extends AbstractTask {
 

@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import iped3.io.IStreamSource;
 
-public class IcePDFViewer extends Viewer {
+public class IcePDFViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IcePDFViewer.class);
     /**

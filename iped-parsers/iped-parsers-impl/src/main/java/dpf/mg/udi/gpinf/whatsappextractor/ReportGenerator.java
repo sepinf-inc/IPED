@@ -17,7 +17,7 @@ import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.util.ExtraProperties;
 
 /**

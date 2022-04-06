@@ -27,7 +27,7 @@ import org.xml.sax.SAXException;
 import dpf.mg.udi.gpinf.whatsappextractor.Message;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.DateUtil;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -181,7 +181,7 @@ public class UFEDChatParser extends AbstractParser {
                 m.setMediaHash(attach.getHash(), false);
             }
             m.setMediaName(attach.getName());
-            m.setMediaTrueExt(attach.getTypeExt());
+            m.setMediaTrueExt(attach.getType());
             m.setMediaUrl(attach.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "URL")); //$NON-NLS-1$
             m.setMediaCaption(attach.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Title")); //$NON-NLS-1$
             m.setThumbData(attach.getThumb());

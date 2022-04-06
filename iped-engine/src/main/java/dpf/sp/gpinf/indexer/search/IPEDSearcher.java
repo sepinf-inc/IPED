@@ -36,12 +36,12 @@ import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.lucene.NoScoringCollector;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.IIPEDSearcher;
-import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
 
 public class IPEDSearcher implements IIPEDSearcher {
@@ -106,7 +106,7 @@ public class IPEDSearcher implements IIPEDSearcher {
         if (ipedCase instanceof IPEDMultiSource)
             throw new UnsupportedOperationException("Use multiSearch() method for IPEDMultiSource!"); //$NON-NLS-1$
 
-        return SearchResult.get(ipedCase, luceneSearch());
+        return luceneSearch().getSearchResult(ipedCase);
     }
 
     public MultiSearchResult multiSearch() throws IOException {
@@ -116,11 +116,11 @@ public class IPEDSearcher implements IIPEDSearcher {
         return MultiSearchResult.get((IPEDMultiSource) ipedCase, luceneSearch());
     }
 
-    public LuceneSearchResult luceneSearch() throws IOException {
-        return filtrarFragmentos(searchAll());
+    LuceneSearchResult luceneSearch() throws IOException {
+        return filterFragmentedResults(searchAll());
     }
 
-    public LuceneSearchResult searchAll() throws IOException {
+    private LuceneSearchResult searchAll() throws IOException {
 
         // System.out.println("searching");
 
@@ -195,12 +195,12 @@ public class IPEDSearcher implements IIPEDSearcher {
         return result.build();
     }
 
-    public LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) {
+    private LuceneSearchResult filterFragmentedResults(LuceneSearchResult prevResult) {
 
         // System.out.println("fragments");
 
         if (ipedCase instanceof IPEDMultiSource)
-            return filtrarFragmentosMulti((IPEDMultiSource) ipedCase, prevResult);
+            return filterFragmentedResultsMulti((IPEDMultiSource) ipedCase, prevResult);
 
         HashSet<Integer> duplicates = new HashSet<Integer>();
         int[] docs = prevResult.getLuceneIds();
@@ -220,7 +220,7 @@ public class IPEDSearcher implements IIPEDSearcher {
 
     }
 
-    private LuceneSearchResult filtrarFragmentosMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) {
+    private LuceneSearchResult filterFragmentedResultsMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) {
         HashMap<Integer, HashSet<Integer>> duplicates = new HashMap<Integer, HashSet<Integer>>();
         int[] docs = prevResult.getLuceneIds();
         if (prevResult.getLength() <= MAX_SIZE_TO_SCORE) {

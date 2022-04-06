@@ -7,7 +7,7 @@ import dpf.sp.gpinf.indexer.config.AudioTranscriptConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class AudioTranscriptTask extends AbstractTask {
 

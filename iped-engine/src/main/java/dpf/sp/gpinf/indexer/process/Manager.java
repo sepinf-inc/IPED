@@ -51,18 +51,21 @@ import br.gov.pf.labld.graph.GraphService;
 import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import br.gov.pf.labld.graph.GraphTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.WorkerProvider;
-import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.config.AnalysisConfig;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
+import dpf.sp.gpinf.indexer.io.ExeFileFilter;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.localization.Messages;
+import dpf.sp.gpinf.indexer.lucene.ConfiguredFSDirectory;
+import dpf.sp.gpinf.indexer.lucene.CustomIndexDeletionPolicy;
+import dpf.sp.gpinf.indexer.lucene.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.process.task.ElasticSearchIndexTask;
 import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
@@ -70,21 +73,19 @@ import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
-import dpf.sp.gpinf.indexer.search.Marcadores;
-import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
-import dpf.sp.gpinf.indexer.util.CustomIndexDeletionPolicy;
-import dpf.sp.gpinf.indexer.util.ExeFileFilter;
+import dpf.sp.gpinf.indexer.search.ItemSearcher;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitClient;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
+import dpf.sp.gpinf.indexer.search.Bookmarks;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.SleuthkitClient;
-import dpf.sp.gpinf.indexer.util.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
 import iped3.IItem;
+import iped3.exception.IPEDException;
 import iped3.search.IItemSearcher;
-import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
 import iped3.util.BasicProps;
 
@@ -170,7 +171,7 @@ public class Manager {
         this.caseData = new CaseData(QUEUE_SIZE);
 
         for (File source : sources) {
-            if (source.getName().toLowerCase().endsWith(Marcadores.EXT)) {
+            if (source.getName().toLowerCase().endsWith(Bookmarks.EXT)) {
                 this.caseData.setIpedReport(true);
                 break;
             }
@@ -258,20 +259,20 @@ public class Manager {
             producer = new ItemProducer(this, caseData, false, sources, output);
             producer.start();
 
-            monitorarIndexacao();
+            monitorProcessing();
 
-            finalizarIndexacao();
+            finishProcessing();
 
         } catch (Exception e) {
             e.printStackTrace();
-            interromperIndexacao();
+            interruptProcessing();
             throw e;
 
         } finally {
             closeItemProducers();
         }
 
-        filtrarPalavrasChave();
+        filterKeywords();
 
         removeEmptyTreeNodes();
 
@@ -285,7 +286,7 @@ public class Manager {
 
         deleteTempDir();
 
-        stats.logarEstatisticas(this);
+        stats.logStatistics(this);
 
         Files.createFile(getFinishedFileFlag(output).toPath());
 
@@ -316,7 +317,7 @@ public class Manager {
         }
     }
 
-    private void interromperIndexacao() throws Exception {
+    private void interruptProcessing() throws Exception {
         if (workers != null) {
             for (int k = 0; k < workers.length; k++) {
                 if (workers[k] != null) {
@@ -518,7 +519,7 @@ public class Manager {
         WorkerProvider.getInstance().firePropertyChange("workers", 0, workers); //$NON-NLS-1$
     }
 
-    private void monitorarIndexacao() throws Exception {
+    private void monitorProcessing() throws Exception {
 
         boolean someWorkerAlive = true;
         long start = System.currentTimeMillis();
@@ -638,7 +639,7 @@ public class Manager {
         return t;
     }
 
-    private void finalizarIndexacao() throws Exception {
+    private void finishProcessing() throws Exception {
 
         if (commitThread != null && commitThread.isAlive()) {
             commitThread.join();
@@ -677,7 +678,7 @@ public class Manager {
 
             } catch (IOException e) {
                 LOGGER.info("Move failed. Copying Index..."); //$NON-NLS-1$
-                IOUtil.copiaDiretorio(indexDir, finalIndexDir);
+                IOUtil.copyDirectory(indexDir, finalIndexDir);
             }
         }
 
@@ -697,10 +698,10 @@ public class Manager {
 
     public void deleteTempDir() {
         LOGGER.info("Deleting temp folder {}", localConfig.getIndexerTemp()); //$NON-NLS-1$
-        IOUtil.deletarDiretorio(localConfig.getIndexerTemp());
+        IOUtil.deleteDirectory(localConfig.getIndexerTemp());
     }
 
-    private void filtrarPalavrasChave() {
+    private void filterKeywords() {
 
         try {
             LOGGER.info("Filtering keywords..."); //$NON-NLS-1$
@@ -720,7 +721,7 @@ public class Manager {
 
                     try {
                         IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
-                        if (pesquisa.searchAll().getLength() > 0) {
+                        if (pesquisa.search().getLength() > 0) {
                             palavrasFinais.add(palavra);
                         }
                     } catch (Exception e) {
@@ -755,7 +756,7 @@ public class Manager {
 
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())) {
             IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
-            LuceneSearchResult result = searchAll.searchAll();
+            LuceneSearchResult result = LuceneSearchResult.get(ipedCase, searchAll.search());
 
             boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
             for (int docID : result.getLuceneIds()) {
@@ -814,44 +815,44 @@ public class Manager {
         }
 
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, iped3.util.Messages.BUNDLES_FOLDER),
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, iped3.util.Messages.BUNDLES_FOLDER),
                     new File(output, iped3.util.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
 
             if (!analysisConfig.isEmbedLibreOffice()) {
                 new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
             }
 
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "help"), new File(output, "help")); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "help"), new File(output, "help")); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
                     new File(output, "htmlreport")); //$NON-NLS-1$
 
             // copy default configs
             File defaultProfile = new File(Configuration.getInstance().appRoot);
-            IOUtil.copiaDiretorio(new File(defaultProfile, "conf"), new File(output, "conf"));
-            IOUtil.copiaArquivo(new File(defaultProfile, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
-            IOUtil.copiaArquivo(new File(defaultProfile, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
+            IOUtil.copyDirectory(new File(defaultProfile, "conf"), new File(output, "conf"));
+            IOUtil.copyFile(new File(defaultProfile, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
+            IOUtil.copyFile(new File(defaultProfile, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
 
             // copy non default profile
             File currentProfile = new File(Configuration.getInstance().configPath);
             if (!currentProfile.equals(defaultProfile)) {
-                IOUtil.copiaDiretorio(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
+                IOUtil.copyDirectory(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
             }
 
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
             if (binDir.exists())
-                IOUtil.copiaDiretorio(binDir, output.getParentFile()); // $NON-NLS-1$
+                IOUtil.copyDirectory(binDir, output.getParentFile()); // $NON-NLS-1$
             else {
                 for (File f : new File(Configuration.getInstance().appRoot).getParentFile()
                         .listFiles(new ExeFileFilter()))
-                    IOUtil.copiaArquivo(f, new File(output.getParentFile(), f.getName()));
+                    IOUtil.copyFile(f, new File(output.getParentFile(), f.getName()));
             }
         }
 
         if (palavrasChave != null) {
-            IOUtil.copiaArquivo(palavrasChave, new File(output, "palavras-chave.txt")); //$NON-NLS-1$
+            IOUtil.copyFile(palavrasChave, new File(output, "palavras-chave.txt")); //$NON-NLS-1$
         }
 
         File dataDir = new File(output, "data"); //$NON-NLS-1$

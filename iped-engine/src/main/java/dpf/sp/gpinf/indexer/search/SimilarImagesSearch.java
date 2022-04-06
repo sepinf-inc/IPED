@@ -5,8 +5,8 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import iped3.IItem;
-import iped3.util.BasicProps;
 
 public class SimilarImagesSearch {
     /**
@@ -20,7 +20,7 @@ public class SimilarImagesSearch {
     private static final int range = 64;
 
     public Query getQueryForSimilarImages(IItem item) {
-        byte[] similarityFeatures = item.getImageSimilarityFeatures();
+        byte[] similarityFeatures = (byte[]) item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
         if (similarityFeatures == null) {
             return null;
         }
@@ -33,7 +33,8 @@ public class SimilarImagesSearch {
             upper[i] = refVal + range;
         }
         BooleanQuery.Builder similarImagesQuery = new BooleanQuery.Builder();
-        similarImagesQuery.add(IntPoint.newRangeQuery(BasicProps.SIMILARITY_FEATURES, lower, upper), Occur.MUST);
+        similarImagesQuery.add(IntPoint.newRangeQuery(ImageSimilarityTask.SIMILARITY_FEATURES, lower, upper),
+                Occur.MUST);
 
         return similarImagesQuery.build();
     }

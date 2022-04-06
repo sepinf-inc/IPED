@@ -40,7 +40,7 @@ public class LOExtractor extends CancelableWorker {
                 if (IOUtil.countSubFiles(output) >= numSubitens) {
                     return true;
                 } else {
-                    IOUtil.deletarDiretorio(output);
+                    IOUtil.deleteDirectory(output);
                 }
             }
 
@@ -85,7 +85,7 @@ public class LOExtractor extends CancelableWorker {
                 if (completed) {
                     return true;
                 } else {
-                    IOUtil.deletarDiretorio(output);
+                    IOUtil.deleteDirectory(output);
                 }
             }
         } catch (Exception e) {

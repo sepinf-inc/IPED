@@ -36,15 +36,15 @@ import dk.brics.automaton.BasicOperations;
 import dk.brics.automaton.DatatypesAutomatonProvider;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
-import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
 import dpf.sp.gpinf.indexer.config.RegexTaskConfig;
 import dpf.sp.gpinf.indexer.config.RegexTaskConfig.RegexEntry;
+import dpf.sp.gpinf.indexer.lucene.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class RegexTask extends AbstractTask {
 

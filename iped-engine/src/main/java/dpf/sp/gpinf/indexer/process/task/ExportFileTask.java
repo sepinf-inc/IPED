@@ -90,9 +90,9 @@ import gpinf.dev.data.Category;
 import iped3.ICaseData;
 import iped3.IHashValue;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.exception.ZipBombException;
 import iped3.io.SeekableInputStream;
-import macee.core.Configurable;
 
 /**
  * Responsável por extrair subitens de containers. Também exporta itens ativos
@@ -342,7 +342,7 @@ public class ExportFileTask extends AbstractTask {
     public void extract(IItem evidence) {
         InputStream is = null;
         try {
-            is = evidence.getBufferedStream();
+            is = evidence.getBufferedInputStream();
             extractFile(is, evidence, null);
 
         } catch (IOException e) {
@@ -367,7 +367,7 @@ public class ExportFileTask extends AbstractTask {
             }
             destFile.getParentFile().mkdirs();
             try {
-                IOUtil.copiaArquivo(viewFile, destFile);
+                IOUtil.copyFile(viewFile, destFile);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -387,7 +387,7 @@ public class ExportFileTask extends AbstractTask {
         String hash = evidence.getHash();
         if (hash != null && !hash.isEmpty() && IOUtil.hasFile(evidence)) {
             File file = IOUtil.getFile(evidence);
-            String ext = evidence.getType().getLongDescr();
+            String ext = evidence.getType();
             if (evidence.getLength() == null || evidence.getLength() == 0) {
                 ext = "";
             }
@@ -481,7 +481,7 @@ public class ExportFileTask extends AbstractTask {
 
         String ext = ""; //$NON-NLS-1$
         if (evidence.getType() != null) {
-            ext = evidence.getType().getLongDescr();
+            ext = evidence.getType();
         }
         if (!ext.isEmpty()) {
             if (!inputStream.markSupported()) {

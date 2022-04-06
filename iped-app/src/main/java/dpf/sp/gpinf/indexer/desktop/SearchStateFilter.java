@@ -23,7 +23,7 @@ import java.io.Serializable;
 
 import javax.swing.filechooser.FileFilter;
 
-import dpf.sp.gpinf.indexer.search.Marcadores;
+import dpf.sp.gpinf.indexer.search.Bookmarks;
 
 public class SearchStateFilter extends FileFilter implements Serializable {
 
@@ -37,7 +37,7 @@ public class SearchStateFilter extends FileFilter implements Serializable {
         if (f.isDirectory()) {
             return true;
         }
-        if (f.getName().endsWith(Marcadores.EXT)) {
+        if (f.getName().endsWith(Bookmarks.EXT)) {
             return true;
         }
 
