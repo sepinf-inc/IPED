@@ -100,7 +100,9 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
         long start = System.currentTimeMillis() / 1000;
         while (true) {
             try {
-                return getSleuthkitCase().getContentById(id);
+                synchronized (this) {
+                    return getSleuthkitCase().getContentById(id);
+                }
 
             } catch (TskCoreException e) {
                 handleTskCoreException(e, start);
