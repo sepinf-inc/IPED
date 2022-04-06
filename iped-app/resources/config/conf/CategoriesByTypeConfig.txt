@@ -138,3 +138,5 @@ Mobile Cards = application/x-ufed-mobilecard
 Application Usage = application/x-ufed-applicationusage
 
 Device Information = application/x-ufed-deviceinfo
+
+Tor Communication Fragment = application/x-tor-tc-fragment
