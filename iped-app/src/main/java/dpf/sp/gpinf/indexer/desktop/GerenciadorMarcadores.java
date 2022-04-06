@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.IOException;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -63,6 +64,7 @@ import org.apache.lucene.util.BytesRef;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.util.DocValuesUtil;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItemId;
 import iped3.desktop.ProgressDialog;
@@ -180,12 +182,15 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
         JPanel left1 = new JPanel();
         left1.setLayout(new BoxLayout(left1, BoxLayout.PAGE_AXIS));
-        left1.add(novo);
-        left1.add(updateComment);
-        left1.add(Box.createRigidArea(new Dimension(0, 65)));
-        left1.add(add);
-        left1.add(remove);
-        left1.add(Box.createRigidArea(new Dimension(0, 35)));
+        JPanel left0 = new JPanel(new GridLayout(0, 1, 0, 0));
+        left0.add(novo);
+        left0.add(updateComment);
+        left1.add(left0);
+        left1.add(Box.createVerticalStrut(65));
+        JPanel left3 = new JPanel(new GridLayout(0, 1, 0, 0));
+        left3.add(add);
+        left3.add(remove);
+        left1.add(left3);
 
         JPanel left2 = new JPanel(new GridLayout(0, 1, 0, 0));
         left2.add(rename);
@@ -284,7 +289,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         }
     }
 
-    private int getEmptyDataHashOrd(SortedDocValues sdv) {
+    private int getEmptyDataHashOrd(SortedDocValues sdv) throws IOException {
         byte[] emptyData = new byte[0];
         String emptyMD5 = DigestUtils.md5Hex(emptyData).toUpperCase();
         int ord = sdv.lookupTerm(new BytesRef(emptyMD5));
@@ -321,7 +326,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             BitSet luceneIds = new BitSet(reader.maxDoc());
             for (IItemId item : uniqueSelectedIds) {
                 int luceneId = ipedCase.getLuceneId(item);
-                int ord = sdv.getOrd(luceneId);
+                int ord = DocValuesUtil.getOrd(sdv, luceneId);
                 if (ord > emptyValueOrd && ord != emptyDataHashOrd) {
                     hashOrd.set(ord);
                 }
@@ -331,8 +336,10 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
                     return;
             }
             int duplicates = 0;
+            // must reset docValues to call getOrd again
+            sdv = reader.getSortedDocValues(BasicProps.HASH);
             for (int doc = 0; doc < reader.maxDoc(); doc++) {
-                int ord = sdv.getOrd(doc);
+                int ord = DocValuesUtil.getOrd(sdv, doc);
                 if (ord != -1 && hashOrd.get(ord) && !luceneIds.get(doc)) {
                     IItemId itemId = ipedCase.getItemId(doc);
                     uniqueSelectedIds.add(itemId);
@@ -496,6 +503,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     @Override
     public void keyPressed(KeyEvent e) {
+        if (e.isConsumed())
+            return;
+        
         if (e.getKeyCode() == KeyEvent.VK_SHIFT || e.getKeyCode() == KeyEvent.VK_CONTROL
                 || e.getKeyCode() == KeyEvent.VK_ALT) {
             return;
@@ -505,6 +515,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         //and CTRL+C (copy selected table cell content).
         if (e.isControlDown() && (e.getKeyCode() == 'B' || e.getKeyCode() == 'C')) {
             showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
+            e.consume();
             return;
         }
         
@@ -523,6 +534,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         if (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == 'R') {
             if (e.getSource() == list) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
+                e.consume();
             }
             return;
         }
@@ -532,14 +544,17 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         if (e.getSource() == list) {
             if (list.getSelectedIndices().length != 1) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert1"));
+                e.consume();
                 return;
             }
             if ((e.getModifiers() & KeyEvent.ALT_MASK) != 0) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert2"));
+                e.consume();
                 return;
             }
             if (keystrokeToBookmark.containsKey(stroke)) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert3"));
+                e.consume();
                 return;
             }
             int index = list.getSelectedIndex();
@@ -560,7 +575,8 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
             App.get().appCase.getMultiMarcadores().setLabelKeyStroke(label, stroke);
             App.get().appCase.getMultiMarcadores().saveState();
-
+            e.consume();
+            
         } else {
             String label = keystrokeToBookmark.get(stroke);
             if (label == null) {
@@ -568,6 +584,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             }
             ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
             bookmark(uniqueSelectedIds, Collections.singletonList(label), (e.getModifiers() & KeyEvent.ALT_MASK) == 0);
+            e.consume();
         }
 
     }

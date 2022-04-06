@@ -25,22 +25,20 @@ public class LNKShortcutParserTest extends TestCase {
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_lnk.lnk")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        String hts = handler.toString();
-	
-	        String actualLocalPath = "C:\\Users\\guilh\\AppData\\Roaming\\Telegram Desktop\\Telegram.exe";
-	        assertTrue(hts.contains(actualLocalPath));
-	
-	        String actualPrimaryName = "Telegram.exe";
-	        assertTrue(hts.contains(actualPrimaryName));
-	
-	        String actualSecundaryName = "Telegram Desktop";
-	        assertTrue(hts.contains(actualSecundaryName));
-        	
-        }catch(Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_lnk.lnk")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String hts = handler.toString();
+
+            String actualLocalPath = "C:\\Users\\guilh\\AppData\\Roaming\\Telegram Desktop\\Telegram.exe";
+            assertTrue(hts.contains(actualLocalPath));
+
+            String actualPrimaryName = "Telegram.exe";
+            assertTrue(hts.contains(actualPrimaryName));
+
+            String actualSecundaryName = "Telegram Desktop";
+            assertTrue(hts.contains(actualSecundaryName));
+
         }
 
     }
@@ -53,22 +51,20 @@ public class LNKShortcutParserTest extends TestCase {
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_lnkLinkTracker.lnk")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        String hts = handler.toString();
-	
-	        String actualLocalPath = "C:\\Program Files (x86)\\PokerStars\\PokerStarsUpdate.exe";
-	        assertTrue(hts.contains(actualLocalPath));
-	
-	        String actualPrimaryName = "PokerStarsUpdate.exe";
-	        assertTrue(hts.contains(actualPrimaryName));
-	
-	        String actualSecundaryName = "PokerStars";
-	        assertTrue(hts.contains(actualSecundaryName));
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_lnkLinkTracker.lnk")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String hts = handler.toString();
+
+            String actualLocalPath = "C:\\Program Files (x86)\\PokerStars\\PokerStarsUpdate.exe";
+            assertTrue(hts.contains(actualLocalPath));
+
+            String actualPrimaryName = "PokerStarsUpdate.exe";
+            assertTrue(hts.contains(actualPrimaryName));
+
+            String actualSecundaryName = "PokerStars";
+            assertTrue(hts.contains(actualSecundaryName));
+
         }
 
     }

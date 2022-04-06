@@ -42,9 +42,7 @@ public class IndexDatParserTest {
             assertTrue(hts.contains("Cookie:guileb@google.com.br/complete/search"));
             assertTrue(hts.contains("Cookie:guileb@www.incredibarvuz1.com/"));
             assertTrue(hts.contains("Export completed."));
-            
-        }catch (Exception e) {
-        	System.out.println(e);
+
         }
 
     }

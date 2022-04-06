@@ -28,19 +28,17 @@ public class GDriveSnapshotParserTest extends TestCase {
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.setExtractEntries(true);
-        try(InputStream stream = getStream("test-files/test_snapshot.db")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        String hts = handler.toString();
-	
-	        assertTrue(hts.contains("Segurança Computacional CIC"));
-	        assertTrue(hts.contains("Cheat Engine.lnk"));
-	        assertTrue(hts.contains("testRFC822_quoted"));
-	        assertTrue(hts.contains("mockrar5.rar"));
-	        assertTrue(hts.contains("a4tosticker9.png"));
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_snapshot.db")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String hts = handler.toString();
+
+            assertTrue(hts.contains("Segurança Computacional CIC"));
+            assertTrue(hts.contains("Cheat Engine.lnk"));
+            assertTrue(hts.contains("testRFC822_quoted"));
+            assertTrue(hts.contains("mockrar5.rar"));
+            assertTrue(hts.contains("a4tosticker9.png"));
+
         }
 
     }

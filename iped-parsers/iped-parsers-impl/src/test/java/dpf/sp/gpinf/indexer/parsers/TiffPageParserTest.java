@@ -26,18 +26,16 @@ public class TiffPageParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new ToXMLContentHandler();
         ParseContext context = new ParseContext();
-        try(InputStream stream = getStream("test-files/test_lenaTiff.tiff")){
-	        metadata.set(Metadata.CONTENT_TYPE, "image/tiff");
-	        parser.parse(stream, handler, metadata, context);
-	
-	        assertEquals("tiff:NumPages=1", "tiff:NumPages=" + metadata.get(TiffPageParser.propNumPages));
-	
-	        String hts = handler.toString();
-	        assertTrue(hts.contains("xmlns=\"http://www.w3.org/1999/xhtml\""));
-	        assertTrue(hts.contains("<meta name=\"tiff:NumPages\" content=\"1\" />"));
-	        assertTrue(hts.contains("<meta name=\"Content-Type\" content=\"image/tiff\" />"));
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_lenaTiff.tiff")) {
+            metadata.set(Metadata.CONTENT_TYPE, "image/tiff");
+            parser.parse(stream, handler, metadata, context);
+
+            assertEquals("tiff:NumPages=1", "tiff:NumPages=" + metadata.get(TiffPageParser.propNumPages));
+
+            String hts = handler.toString();
+            assertTrue(hts.contains("xmlns=\"http://www.w3.org/1999/xhtml\""));
+            assertTrue(hts.contains("<meta name=\"tiff:NumPages\" content=\"1\" />"));
+            assertTrue(hts.contains("<meta name=\"Content-Type\" content=\"image/tiff\" />"));
         }
     }
 }

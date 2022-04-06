@@ -71,7 +71,23 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<?>>> 
                 .replace("\\r", "\r") //$NON-NLS-1$ //$NON-NLS-2$
                 .replace("\\n", "\n") //$NON-NLS-1$ //$NON-NLS-2$
                 .replace("\\f", "\f") //$NON-NLS-1$ //$NON-NLS-2$
-                .replace("\\s", "[ \t\r\n\f]"); //$NON-NLS-1$ //$NON-NLS-2$
+                .replace("\\s", "[ \t\r\n\f]") //$NON-NLS-1$ //$NON-NLS-2$
+                .replace("\\S", "[^ \t\r\n\f") //$NON-NLS-1$ //$NON-NLS-2$
+                .replace("\\d", "[0-9]") //$NON-NLS-1$ //$NON-NLS-2$
+                .replace("\\D", "[^0-9]")
+                .replace("\\w", "[0-9a-zA-Z_]") //$NON-NLS-1$ //$NON-NLS-2$
+                .replace("\\W", "[^0-9a-zA-Z_]"); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    private void replaceWordBoundaries(RegexEntry entry) {
+        if (entry.regex.startsWith("\\b")) {
+            entry.regex = "[^0-9a-zA-Z_]" + entry.regex.substring(2);
+            entry.prefix++;
+        }
+        if (entry.regex.endsWith("\\b")) {
+            entry.regex = entry.regex.substring(0, entry.regex.length() - 2) + "[^0-9a-zA-Z_]";
+            entry.suffix++;
+        }
     }
 
     @Override
@@ -116,10 +132,11 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<?>>> 
                 String[] params = name.split(","); //$NON-NLS-1$
                 RegexEntry entry = new RegexEntry();
                 entry.regexName = params[0].trim();
-                entry.prefix = params.length > 1 ? Integer.valueOf(params[1].trim()) : 0;
-                entry.suffix = params.length > 2 ? Integer.valueOf(params[2].trim()) : 0;
-                entry.ignoreCase = params.length > 3 ? Boolean.valueOf(params[3].trim()) : true;
+                entry.ignoreCase = params.length > 1 ? Boolean.valueOf(params[1].trim()) : true;
+                entry.prefix = params.length > 2 ? Integer.valueOf(params[2].trim()) : 0;
+                entry.suffix = params.length > 3 ? Integer.valueOf(params[3].trim()) : 0;
                 entry.regex = replace(values[1].trim());
+                replaceWordBoundaries(entry);
                 regexList.add(entry);
             }
         }

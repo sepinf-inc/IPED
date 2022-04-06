@@ -29,11 +29,9 @@ public class MSAccessParserTest extends TestCase {
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_mdb.mdb")){
-        	parser.parse(stream, handler, metadata, context);
-        	
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_mdb.mdb")) {
+            parser.parse(stream, handler, metadata, context);
+
         }
 
     }
@@ -49,16 +47,14 @@ public class MSAccessParserTest extends TestCase {
         ParseContext context = new ParseContext();
         metadata.add(TikaMetadataKeys.RESOURCE_NAME_KEY, filepath);
         context.set(Parser.class, parser);
-        try(InputStream stream = getStream(filepath)){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        assertEquals("Arial Software", metadata.get(metadata.COMPANY));
-	        assertEquals("Arial Software", metadata.get(metadata.AUTHOR));
-	        assertEquals("application/x-msaccess", metadata.get(metadata.CONTENT_TYPE));
-	        assertEquals("Campaign_Template", metadata.get(StringUtils.capitalize(metadata.TITLE)));
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream(filepath)) {
+            parser.parse(stream, handler, metadata, context);
+
+            assertEquals("Arial Software", metadata.get(metadata.COMPANY));
+            assertEquals("Arial Software", metadata.get(metadata.AUTHOR));
+            assertEquals("application/x-msaccess", metadata.get(metadata.CONTENT_TYPE));
+            assertEquals("Campaign_Template", metadata.get(StringUtils.capitalize(metadata.TITLE)));
+
         }
     }
 
@@ -71,48 +67,46 @@ public class MSAccessParserTest extends TestCase {
         BodyContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         context.set(Parser.class, parser);
-        try(InputStream stream = getStream(filepath)){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        String hts = handler.toString();
-	
-	        assertTrue(hts.contains("Email_Address"));
-	        assertTrue(hts.contains("test@test.pf.com"));
-	        assertTrue(hts.contains("gege@baba.pf.com"));
-	        assertTrue(hts.contains("sergiomorales@moral.com"));
-	
-	        assertTrue(hts.contains("First_Name"));
-	        assertTrue(hts.contains("pftest"));
-	        assertTrue(hts.contains("geraldo"));
-	        assertTrue(hts.contains("sérgio"));
-	
-	        assertTrue(hts.contains("Last_Name"));
-	        assertTrue(hts.contains("supertest"));
-	        assertTrue(hts.contains("barba"));
-	        assertTrue(hts.contains("mörales"));
-	
-	        assertTrue(hts.contains("Address"));
-	        assertTrue(hts.contains("asasul"));
-	        assertTrue(hts.contains("praia do cabo"));
-	        assertTrue(hts.contains("sèrgiocitý"));
-	
-	        assertTrue(hts.contains("City"));
-	        assertTrue(hts.contains("brasilia"));
-	        assertTrue(hts.contains("rio de fevereiro"));
-	        assertTrue(hts.contains("curitiba"));
-	
-	        assertTrue(hts.contains("State"));
-	        assertTrue(hts.contains("df"));
-	        assertTrue(hts.contains("rf"));
-	        assertTrue(hts.contains("pr"));
-	
-	        assertTrue(hts.contains("Country"));
-	        assertTrue(hts.contains("brazil"));
-	        assertTrue(hts.contains("uniao dos estados do brazil"));
-	        assertTrue(hts.contains("federação brasileira"));
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream(filepath)) {
+            parser.parse(stream, handler, metadata, context);
+
+            String hts = handler.toString();
+
+            assertTrue(hts.contains("Email_Address"));
+            assertTrue(hts.contains("test@test.pf.com"));
+            assertTrue(hts.contains("gege@baba.pf.com"));
+            assertTrue(hts.contains("sergiomorales@moral.com"));
+
+            assertTrue(hts.contains("First_Name"));
+            assertTrue(hts.contains("pftest"));
+            assertTrue(hts.contains("geraldo"));
+            assertTrue(hts.contains("sérgio"));
+
+            assertTrue(hts.contains("Last_Name"));
+            assertTrue(hts.contains("supertest"));
+            assertTrue(hts.contains("barba"));
+            assertTrue(hts.contains("mörales"));
+
+            assertTrue(hts.contains("Address"));
+            assertTrue(hts.contains("asasul"));
+            assertTrue(hts.contains("praia do cabo"));
+            assertTrue(hts.contains("sèrgiocitý"));
+
+            assertTrue(hts.contains("City"));
+            assertTrue(hts.contains("brasilia"));
+            assertTrue(hts.contains("rio de fevereiro"));
+            assertTrue(hts.contains("curitiba"));
+
+            assertTrue(hts.contains("State"));
+            assertTrue(hts.contains("df"));
+            assertTrue(hts.contains("rf"));
+            assertTrue(hts.contains("pr"));
+
+            assertTrue(hts.contains("Country"));
+            assertTrue(hts.contains("brazil"));
+            assertTrue(hts.contains("uniao dos estados do brazil"));
+            assertTrue(hts.contains("federação brasileira"));
+
         }
 
     }

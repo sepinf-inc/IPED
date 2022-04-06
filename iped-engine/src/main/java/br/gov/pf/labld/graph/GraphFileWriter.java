@@ -198,11 +198,11 @@ public class GraphFileWriter implements Closeable, Flushable {
         File dataFile = out.getOutput();
         writer.write("--");
         writer.write(type);
-        writer.write(" \"");
-        writer.write(headerFile.getAbsolutePath());
+        writer.write("=");
+        writer.write(headerFile.getName());
         writer.write(",");
-        writer.write(dataFile.getAbsolutePath());
-        writer.write("\"\r\n");
+        writer.write(dataFile.getName());
+        writer.write("\r\n");
     }
 
     private File writeHeaderFile(CSVWriter out) throws IOException {
@@ -309,7 +309,11 @@ public class GraphFileWriter implements Closeable, Flushable {
     }
 
     public void compressGeneratedCSVFiles() throws IOException {
-        Arrays.asList(root.listFiles()).parallelStream().forEach(f -> {
+        compressGeneratedCSVFiles(this.root);
+    }
+
+    private static void compressGeneratedCSVFiles(File root) throws IOException {
+        Arrays.asList(root.listFiles()).stream().forEach(f -> {
             File gzip = new File(f.getAbsolutePath() + ".gzip");
             try (GZIPOutputStream gzos = new GZIPOutputStream(
                     Files.newOutputStream(gzip.toPath(), StandardOpenOption.CREATE))) {
@@ -322,7 +326,11 @@ public class GraphFileWriter implements Closeable, Flushable {
     }
 
     public void uncompressPreviousCSVFiles() {
-        Arrays.asList(root.listFiles()).parallelStream().forEach(f -> {
+        uncompressPreviousCSVFiles(this.root);
+    }
+
+    private static void uncompressPreviousCSVFiles(File root) {
+        Arrays.asList(root.listFiles()).stream().forEach(f -> {
             int idx = f.getAbsolutePath().lastIndexOf(".gzip");
             if (idx != -1) {
                 File csv = new File(f.getAbsolutePath().substring(0, idx));
@@ -336,11 +344,39 @@ public class GraphFileWriter implements Closeable, Flushable {
         });
     }
 
+    public static int removeDeletedRelationships(String evidenceUUID, File csvRoot) throws IOException {
+        if (!csvRoot.exists()) {
+            return 0;
+        }
+        int deleted = 0;
+        uncompressPreviousCSVFiles(csvRoot);
+        for (File f : csvRoot.listFiles()) {
+            if (f.getName().startsWith(REL_CSV_PREFIX) && f.getName().endsWith(".csv")) {
+                File dest = new File(f.getAbsolutePath() + ".tmp");
+                try (BufferedReader reader = Files.newBufferedReader(f.toPath());
+                        Writer writer = Files.newBufferedWriter(dest.toPath())) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (!line.contains(evidenceUUID)) {
+                            writer.write(line);
+                            writer.write("\r\n");
+                        } else {
+                            deleted++;
+                        }
+                    }
+                }
+                Files.move(dest.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+        compressGeneratedCSVFiles(csvRoot);
+        return deleted;
+    }
+
     // TODO improve to merge duplicate nodes instead of just skip
     public static void prepareMultiCaseCSVs(File output, List<File> csvParents) throws IOException {
         AtomicInteger subDir = new AtomicInteger(-1);
         Set<String> ids = Collections.synchronizedSet(new HashSet<>());
-        csvParents.parallelStream().forEach(parent -> {
+        csvParents.stream().forEach(parent -> {
             int num = subDir.incrementAndGet();
             try {
                 File[] subFiles = parent.listFiles();
@@ -372,7 +408,7 @@ public class GraphFileWriter implements Closeable, Flushable {
                 }
                 File importArgs = new File(output, num + "/" + ARG_FILE_NAME);
                 String args = new String(Files.readAllBytes(importArgs.toPath()), StandardCharsets.UTF_8);
-                args = args.replace(getPathPrefix(args, parent), importArgs.getParentFile().getAbsolutePath());
+                args = args.replace("=", "=" + num + "/").replace(",", "," + num + "/");
                 Files.write(importArgs.toPath(), args.getBytes(StandardCharsets.UTF_8),
                         StandardOpenOption.TRUNCATE_EXISTING);
 
@@ -380,17 +416,6 @@ public class GraphFileWriter implements Closeable, Flushable {
                 throw new RuntimeException(e);
             }
         });
-    }
-
-    private static String getPathPrefix(String args, File parent) {
-        String[] lines = args.split("\n");
-        for (String line : lines) {
-            int start = line.indexOf("\"") + 1;
-            int end = line.indexOf(".csv,", start) + 4;
-            Path path = Paths.get(line.substring(start, end));
-            return path.getParent().toString();
-        }
-        return parent.getAbsolutePath();
     }
 
     public void writeCreateRelationship(Label label1, String idProperty1, Object propertyValue1, Label label2,
@@ -602,8 +627,8 @@ public class GraphFileWriter implements Closeable, Flushable {
                 }
             }
             line.append("\r\n");
-            if (!isNodeWriter || prevNodeRecords.add(line.toString())) {
-                synchronized (this) {
+            synchronized (this) {
+                if (!isNodeWriter || prevNodeRecords.add(line.toString())) {
                     sb.append(line);
                 }
             }

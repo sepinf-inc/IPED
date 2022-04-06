@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
@@ -38,8 +37,8 @@ import org.kharon.StageMode;
 import org.kharon.layout.HistoryEnabledLayout;
 import org.kharon.layout.graphviz.GraphVizAlgorithm;
 import org.kharon.renderers.Renderers;
+import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -460,7 +459,7 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         @Override
         protected void done() {
             if (!ids.isEmpty()) {
-                JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.InitialGraphMsg"));
+                AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.InitialGraphMsg"));
             }
         }
 
@@ -750,7 +749,7 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
 
             org.neo4j.graphdb.Node startNode = path.startNode();
             org.neo4j.graphdb.Node currentStart = startNode;
-            for (PropertyContainer propertyContainer : path) {
+            for (Entity propertyContainer : path) {
                 AppGraphAnalytics.this.graphStatusBar.increaseProgress(10);
                 if (propertyContainer instanceof org.neo4j.graphdb.Relationship) {
 

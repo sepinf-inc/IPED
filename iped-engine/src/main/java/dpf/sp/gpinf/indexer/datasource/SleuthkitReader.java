@@ -32,7 +32,10 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -43,6 +46,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import org.apache.tika.io.IOUtils;
@@ -54,8 +58,8 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
+import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -81,6 +85,7 @@ import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
+import dpf.sp.gpinf.indexer.util.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
@@ -88,7 +93,6 @@ import gpinf.dev.data.Item;
 import gpinf.dev.filetypes.GenericFileType;
 import iped3.ICaseData;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 import iped3.util.MediaTypes;
 
@@ -108,11 +112,12 @@ public class SleuthkitReader extends DataSourceReader {
 
     private static boolean tskChecked = false;
     private static boolean isTskPatched = false;
-
+    
     private static ExecutorService executor = Executors.newFixedThreadPool(1);
+
     private static ConcurrentHashMap<File, Long[]> idRangeMap = new ConcurrentHashMap<>();
-    private static volatile Future<Void> addImageFuture;
-    private static volatile Exception exception = null;
+    private static ConcurrentHashMap<File, Future<Void>> addImageFuture = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<File, Exception> exception = new ConcurrentHashMap<>();
 
     // this guarantees just one producer populates the DB at a time (e.g. when
     // decoding embedded disks recursively)
@@ -140,11 +145,18 @@ public class SleuthkitReader extends DataSourceReader {
     private boolean fastmode = false;
     private boolean embeddedDisk = false;
     private int itemCount = 0;
+    private volatile boolean decodingError = false;
+
+    private HashMap<Integer, String> idTotrackIDMap = new HashMap<>();
 
     // Referência estática para a JVM não finalizar o objeto que será usado
     // futuramente
     // via referência interna ao JNI para acessar os itens do caso
     public static volatile SleuthkitCase sleuthCase;
+
+    public static File getSleuthkitDB(File output) {
+        return new File(output.getParent(), DB_NAME);
+    }
 
     public SleuthkitReader(boolean embeddedDisk, ICaseData caseData, File output) {
         this(caseData, output, false);
@@ -159,6 +171,10 @@ public class SleuthkitReader extends DataSourceReader {
         return itemCount;
     }
 
+    public boolean hasDecodingError() {
+        return this.decodingError;
+    }
+
     public boolean isSupported(File file) {
         isISO9660 = false;
         if (file.isDirectory())
@@ -167,8 +183,10 @@ public class SleuthkitReader extends DataSourceReader {
         return name.endsWith(".000") //$NON-NLS-1$
                 || name.endsWith(".001") //$NON-NLS-1$
                 || name.endsWith(".e01") //$NON-NLS-1$
+                || name.endsWith(".ex01") //$NON-NLS-1$
                 || name.endsWith(".aff") //$NON-NLS-1$
                 || name.endsWith(".l01") //$NON-NLS-1$
+                || name.endsWith(".lx01") //$NON-NLS-1$
                 || name.endsWith(".dd") //$NON-NLS-1$
                 || name.endsWith(".vmdk") //$NON-NLS-1$
                 || name.endsWith(".vhd") //$NON-NLS-1$
@@ -187,6 +205,8 @@ public class SleuthkitReader extends DataSourceReader {
             switch (ext) {
                 case "e01":
                     return MediaTypes.E01_IMAGE;
+                case "ex01":
+                    return MediaTypes.EX01_IMAGE;
                 case "vmdk":
                     return MediaTypes.VMDK;
                 case "vhd":
@@ -275,12 +295,12 @@ public class SleuthkitReader extends DataSourceReader {
 
         if (majorVerExpected != majorVerFound || minorVerFound < minorVerExpected)
             throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER); //$NON-NLS-1$ //$NON-NLS-2$
-        else if (minorVerFound > minorVerExpected) // $NON-NLS-1$
+        else if (minorVerFound > minorVerExpected)
             LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
 
         tskChecked = true;
     }
-
+    
     public static synchronized boolean isTSKPatched() throws Exception {
         if (!tskChecked) {
             checkTSKVersion();
@@ -335,10 +355,11 @@ public class SleuthkitReader extends DataSourceReader {
             if (embeddedDisk) {
                 deviceName = parent.getName();
                 inheritedPath = Util.getParentPath(parent);
+                idTotrackIDMap.put(parent.getId(), (String) parent.getExtraAttribute(IndexItem.TRACK_ID));
             }
         }
 
-        String dbPath = output.getParent() + File.separator + DB_NAME;
+        String dbPath = getSleuthkitDB(output).getAbsolutePath();
 
         if (listOnly || embeddedDisk) {
 
@@ -359,11 +380,9 @@ public class SleuthkitReader extends DataSourceReader {
                 }
             }
 
-            FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
-            if (fsConfig.isRobustImageReading()) {
-                Manager.getInstance().initSleuthkitServers(sleuthCase.getDbDirPath());
-            }
-            Long[] range = getDecodedRangeId(image);
+            Manager.getInstance().initSleuthkitServers();
+
+            Long[] range = getDecodedRangeId(image, output);
             if (range != null && args.isContinue()) {
                 synchronized (idRangeMap) {
                     idRangeMap.put(image, range);
@@ -383,8 +402,11 @@ public class SleuthkitReader extends DataSourceReader {
                 // get permit before any DB changes and getting last obj ID
                 decodeImageSemaphore.acquire();
 
-                if (args.isContinue()) {
-                    deleteDatasource(image);
+                if (args.isContinue() && !embeddedDisk) {
+                    Long tskID = deleteDatasource(image);
+                    if (tskID != null) {
+                        removeDecodedRangeAfterId(tskID, output);
+                    }
                 }
 
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
@@ -413,16 +435,13 @@ public class SleuthkitReader extends DataSourceReader {
                 readItensAdded(image);
 
             } catch (Exception e) {
-                if (addImageFuture != null) {
-                    addImageFuture.cancel(true);
-                }
+                if (addImageFuture.get(image) != null)
+                    addImageFuture.get(image).cancel(true);
                 throw e;
-
             }
 
-        } else if (addImageFuture != null) {
-            addImageFuture.get();
-        }
+        } else if (addImageFuture.get(image) != null)
+            addImageFuture.get(image).get();
 
         if (embeddedDisk) {
             embeddedDisksBeingDecoded.decrementAndGet();
@@ -430,7 +449,12 @@ public class SleuthkitReader extends DataSourceReader {
 
     }
     
-    private void deleteDatasource(File image) throws TskCoreException, SQLException {
+    /**
+     * Deleting previous incomplete TSK entries is needed when resuming processing,
+     * so items will get the same tskID, this is one of the requirements to
+     * recognize the same item between processings.
+     */
+    private Long deleteDatasource(File image) throws TskCoreException, SQLException {
         Long sourceId = null;
         for(Image img : sleuthCase.getImages()) {
             if(img.getName().equals(image.getName())) {
@@ -461,13 +485,23 @@ public class SleuthkitReader extends DataSourceReader {
                 }
             }
         }
+        return sourceId;
     }
 
-    public int read(File image) throws Exception {
-        read(image, null);
-        return 0;
+    /**
+     * Deletes basic info about an added image from TSK DB. Not all references are
+     * deleted for now.
+     */
+    public static void deleteImageInfo(Integer tskID, File moduleDir) throws SQLException {
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + getSleuthkitDB(moduleDir));
+                Statement st = conn.createStatement()) {
+            st.executeUpdate("DELETE FROM tsk_files WHERE data_source_obj_id == '" + tskID + "';");
+            st.executeUpdate("DELETE FROM data_source_info WHERE obj_id == '" + tskID + "';");
+            st.executeUpdate("DELETE FROM tsk_image_info WHERE obj_id == '" + tskID + "';");
+            st.executeUpdate("DELETE FROM tsk_image_names WHERE obj_id == '" + tskID + "';");
+        }
     }
-
+    
     public static synchronized void loadImagePasswords(File output) {
         File file = new File(output, PASSWORD_PER_IMAGE);
         if (file.exists()) {
@@ -506,7 +540,32 @@ public class SleuthkitReader extends DataSourceReader {
         SleuthkitClient.addEnvVar(envVar, value);
     }
 
-    private synchronized void saveDecodedRangeId(File image, Long start, Long last) {
+    public void read(File image) throws Exception {
+        read(image, null);
+    }
+
+    private static synchronized void removeDecodedRangeAfterId(Long id, File output) {
+        File file = new File(output, RANGE_ID_FILE);
+        if (file.exists()) {
+            UTF8Properties props = new UTF8Properties();
+            try {
+                props.load(file);
+                Iterator<Entry<Object, Object>> iterator = props.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Entry<Object, Object> entry = iterator.next();
+                    if (Long.valueOf(entry.getValue().toString()) >= id) {
+                        iterator.remove();
+                    }
+                }
+                props.store(file);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static synchronized void saveDecodedRangeId(File image, Long start, Long last, File output) {
         File file = new File(output, RANGE_ID_FILE);
         UTF8Properties props = new UTF8Properties();
         try {
@@ -522,7 +581,7 @@ public class SleuthkitReader extends DataSourceReader {
         }
     }
 
-    private synchronized Long[] getDecodedRangeId(File image) {
+    private static synchronized Long[] getDecodedRangeId(File image, File output) {
         File file = new File(output, RANGE_ID_FILE);
         if (file.exists()) {
             UTF8Properties props = new UTF8Properties();
@@ -542,9 +601,8 @@ public class SleuthkitReader extends DataSourceReader {
 
     private void addImageBlocking(AddImageProcess addImage, File image, int sectorSize)
             throws TskCoreException, TskDataException {
-
         try {
-            addImage.run(UUID.randomUUID().toString(), new String[] { image.getAbsolutePath() }, sectorSize);
+           addImage.run(UUID.randomUUID().toString(), new String[] { image.getAbsolutePath() }, sectorSize);
 
         } catch (TskDataException e) {
             int idx = e.toString().toLowerCase().indexOf("encryption detected"); //$NON-NLS-1$
@@ -561,14 +619,14 @@ public class SleuthkitReader extends DataSourceReader {
         try {
             lastId = sleuthCase.getLastObjectId();
         } catch (TskCoreException e) {
-            exception = e;
+            exception.put(image, e);
         }
 
         // release permit after DB changes and getting last obj ID
         decodeImageSemaphore.release();
 
         if (lastId != null) {
-            saveDecodedRangeId(image, firstId, lastId);
+            saveDecodedRangeId(image, firstId, lastId, output);
         }
 
         synchronized (idRangeMap) {
@@ -579,13 +637,13 @@ public class SleuthkitReader extends DataSourceReader {
     }
 
     private void addImageInBackground(AddImageProcess addImage, File image, int sectorSize) {
-        addImageFuture = executor.submit(new Callable<Void>() {
+        addImageFuture.put(image, executor.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
                 addImageBlocking(addImage, image, sectorSize);
                 return null;
             }
-        });
+        }));
     }
 
     /**
@@ -607,8 +665,8 @@ public class SleuthkitReader extends DataSourceReader {
 
             if (lastId == null) {
                 lastId = idRangeMap.get(file)[1];
-                if (exception != null) {
-                    throw exception;
+                if (exception.get(file) != null) {
+                    throw exception.get(file);
                 }
             }
             if (lastId != null) {
@@ -823,7 +881,7 @@ public class SleuthkitReader extends DataSourceReader {
 
     private void setPath(IItem evidence, String path) {
         if (deviceName != null) {
-            path = path.replaceFirst("img_.+?\\/", deviceName + "/"); //$NON-NLS-1$ //$NON-NLS-2$
+            path = path.replaceFirst("img_.+?\\/", Matcher.quoteReplacement(deviceName) + "/"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         path = inheritedPath + path;
         evidence.setPath(path);
@@ -863,7 +921,8 @@ public class SleuthkitReader extends DataSourceReader {
         if (listOnly || fastmode || embeddedDisk) {
             itemCount++;
             caseData.incDiscoveredEvidences(1);
-            caseData.incDiscoveredVolume(evidence.getLength());
+            if (!embeddedDisk)
+                caseData.incDiscoveredVolume(evidence.getLength());
             if (listOnly)
                 return null;
         }
@@ -885,10 +944,8 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         evidence.setHasChildren(absFile.hasChildren());
-        if (evidence instanceof ISleuthKitItem) {
-            ((ISleuthKitItem) evidence).setSleuthFile(absFile);
-            ((ISleuthKitItem) evidence).setSleuthId((int) absFile.getId());
-        }
+        evidence.setIdInDataSource(Long.toString(absFile.getId()));
+        evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(sleuthCase, absFile));
 
         boolean first = true;
         Integer tskId = (int) absFile.getId();
@@ -896,7 +953,6 @@ public class SleuthkitReader extends DataSourceReader {
             Integer parentId = sleuthIdToId.get(tskId - firstId.intValue());
             if (first) {
                 evidence.setParentId(parentId);
-                evidence.setParentIdInDataSource(String.valueOf(tskId));
                 first = false;
             }
             evidence.addParentId(parentId);
@@ -1035,7 +1091,9 @@ public class SleuthkitReader extends DataSourceReader {
 
         // evidence.setSleuthFile(content);
         evidence.setHash(""); //$NON-NLS-1$
-        evidence.setSleuthId((int) content.getId());
+        evidence.setIdInDataSource(Long.toString(content.getId()));
+        // below is used to don't process images, partitions or file systems raw data
+        evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(sleuthCase, null));
 
         boolean first = true;
         Integer tskId = (int) content.getId();
@@ -1043,7 +1101,6 @@ public class SleuthkitReader extends DataSourceReader {
             Integer parentId = sleuthIdToId.get(tskId - firstId.intValue());
             if (first) {
                 evidence.setParentId(parentId);
-                evidence.setParentIdInDataSource(String.valueOf(tskId));
                 first = false;
             }
             evidence.addParentId(parentId);
@@ -1062,11 +1119,20 @@ public class SleuthkitReader extends DataSourceReader {
     private void setSubitemProperties(Item item) {
         item.setSubItem(true);
         item.setSubitemId(itemCount);
-        Util.generatePersistentId((String) parent.getExtraAttribute(IndexItem.PERSISTENT_ID), item);
-        item.setExtraAttribute(IndexItem.CONTAINER_PERSISTENT_ID, Util.getPersistentId(parent));
+        item.setExtraAttribute(IndexItem.CONTAINER_TRACK_ID, Util.getTrackID(parent));
     }
 
     private void addToProcessingQueue(ICaseData caseData, Item item) throws InterruptedException {
+        // retrieve and store parenttrackID explicitly before adding to queue
+        if (!item.isRoot()) {
+            String parenttrackID = idTotrackIDMap.get(item.getParentId());
+            if (parenttrackID != null) {
+                item.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parenttrackID);
+            } else {
+                throw new RuntimeException(IndexItem.PARENT_TRACK_ID + " cannot be null: " + item.getPath());
+            }
+        }
+
         if (embeddedDisk) {
             // always add to queue to avoid deadlock if expanding many virtual disks simultaneously
             caseData.addItemFirstNonBlocking(item);
@@ -1080,6 +1146,12 @@ public class SleuthkitReader extends DataSourceReader {
                 caseData.addItemNonBlocking(item);
             }
 
+        }
+        // store parents trackID after adding to queue (where it is computed and ID
+        // could be reassigned)
+        if (item.hasChildren() || item.isDir() || item.isRoot()) {
+            String trackID = (String) item.getExtraAttribute(IndexItem.TRACK_ID);
+            idTotrackIDMap.put(item.getId(), trackID);
         }
     }
 
@@ -1121,6 +1193,7 @@ public class SleuthkitReader extends DataSourceReader {
                             if (line.toLowerCase().contains("error") //$NON-NLS-1$
                                     && !line.toLowerCase().contains("microsoft reserved partition")) { //$NON-NLS-1$
                                 LOGGER.error("Sleuthkit error processing {}: {}", image, line.trim()); //$NON-NLS-1$
+                                decodingError = true;
                             } else {
                                 LOGGER.info("Sleuthkit: " + line.trim()); //$NON-NLS-1$
                             }

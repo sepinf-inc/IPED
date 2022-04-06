@@ -41,9 +41,4 @@ public class CategoryTokenizer extends CharTokenizer {
         }
     }
 
-    @Override
-    protected int normalize(int c) {
-        return Character.toLowerCase(c);
-    }
-
 }

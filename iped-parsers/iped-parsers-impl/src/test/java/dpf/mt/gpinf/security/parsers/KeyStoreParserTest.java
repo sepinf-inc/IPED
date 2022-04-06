@@ -31,14 +31,12 @@ public class KeyStoreParserTest extends TestCase {
         ContentHandler handler = new ToTextContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_serverMyRelease.keystore")){
-	        parser.parse(stream, handler, metadata, context);
-	        assertEquals("application/x-java-keystore", metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE));
-	        assertEquals("changeit", metadata.get(KeystoreParser.PASSWORD));
-	        
-	        }catch (Exception e) {
-	        	System.out.println(e);
-	        }
+        try (InputStream stream = getStream("test-files/test_serverMyRelease.keystore")) {
+            parser.parse(stream, handler, metadata, context);
+            assertEquals("application/x-java-keystore", metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE));
+            assertEquals("changeit", metadata.get(KeystoreParser.PASSWORD));
+
+        }
 
     }
 
@@ -52,13 +50,11 @@ public class KeyStoreParserTest extends TestCase {
         ParseContext context = new ParseContext();
         String alias = "server certificate";
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_server.pfx")){
-	        parser.parseCertificate(alias, stream, handler, metadata, context);
-	        assertEquals("server certificate", metadata.get(TikaCoreProperties.TITLE));
-	        assertEquals("application/pkix-cert", metadata.get(Metadata.CONTENT_TYPE));
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_server.pfx")) {
+            parser.parseCertificate(alias, stream, handler, metadata, context);
+            assertEquals("server certificate", metadata.get(TikaCoreProperties.TITLE));
+            assertEquals("application/pkix-cert", metadata.get(Metadata.CONTENT_TYPE));
+
         }
     }
 

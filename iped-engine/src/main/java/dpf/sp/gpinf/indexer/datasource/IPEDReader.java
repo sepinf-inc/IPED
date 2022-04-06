@@ -25,6 +25,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,8 @@ import dpf.sp.gpinf.indexer.process.task.HashDBLookupTask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.LedCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.process.task.QRCodeTask;
+import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIOInputInputStreamFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.Marcadores;
@@ -86,8 +89,6 @@ import iped3.util.MediaTypes;
  */
 public class IPEDReader extends DataSourceReader {
 
-    // TODO remove line below and always use REPORTING_CASES
-    public static final String ORIG_CASE_MODULE_DIR = "originalCaseModuleDir";
     public static final String REPORTING_CASES = "reporting_cases";
 
     private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IPEDReader.class);
@@ -104,6 +105,8 @@ public class IPEDReader extends DataSourceReader {
     private List<IIPEDSource> srcList = new ArrayList<IIPEDSource>();
     private String deviceName;
 
+    private BitSet addedItems = new BitSet();
+
     public IPEDReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
     }
@@ -113,7 +116,7 @@ public class IPEDReader extends DataSourceReader {
         return name.endsWith(Marcadores.EXT);
     }
 
-    public int read(File file) throws Exception {
+    public void read(File file) throws Exception {
 
         Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE); //$NON-NLS-1$
 
@@ -128,6 +131,7 @@ public class IPEDReader extends DataSourceReader {
         LedCarveTask.setEnabled(false);
         HashDBLookupTask.setEnabled(false);
         DIETask.setEnabled(false);
+        QRCodeTask.setEnabled(false);
 
         deviceName = getEvidenceName(file);
         if (deviceName.endsWith(Marcadores.EXT)) {
@@ -139,11 +143,9 @@ public class IPEDReader extends DataSourceReader {
             IMultiMarcadores mm = (IMultiMarcadores) obj;
             for (IMarcadores m : mm.getSingleBookmarks())
                 processBookmark(m);
-        } else
+        } else {
             processBookmark((IMarcadores) obj);
-
-        return 0;
-
+        }
     }
 
     public void read(Set<HashValue> parentsWithLostSubitems, Manager manager) throws Exception {
@@ -154,8 +156,8 @@ public class IPEDReader extends DataSourceReader {
             indexDir = ipedCase.getIndex();
 
             BooleanQuery.Builder parents = new BooleanQuery.Builder();
-            for (HashValue persistentId : parentsWithLostSubitems) {
-                TermQuery tq = new TermQuery(new Term(IndexItem.PERSISTENT_ID, persistentId.toString().toLowerCase()));
+            for (HashValue trackID : parentsWithLostSubitems.toArray(new HashValue[0])) {
+                TermQuery tq = new TermQuery(new Term(IndexItem.TRACK_ID, trackID.toString().toLowerCase()));
                 parents.add(tq, Occur.SHOULD);
             }
             BooleanQuery.Builder subitems = new BooleanQuery.Builder();
@@ -177,7 +179,6 @@ public class IPEDReader extends DataSourceReader {
         selectedLabels = new HashSet<Integer>();
         indexDir = state.getIndexDir().getCanonicalFile();
         basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
-        caseData.putCaseObject(ORIG_CASE_MODULE_DIR, indexDir.getParentFile());
         if(!listOnly) {
             List<File> reportingCases = (List<File>) caseData.getCaseObject(REPORTING_CASES);
             if (reportingCases == null) {
@@ -194,6 +195,8 @@ public class IPEDReader extends DataSourceReader {
          */
         srcList.add(ipedCase);
 
+        // clearing added items is needed when creating multicase reports
+        addedItems = new BitSet();
         oldToNewIdMap = new int[ipedCase.getLastId() + 1];
         for (int i = 0; i < oldToNewIdMap.length; i++)
             oldToNewIdMap[i] = -1;
@@ -272,8 +275,8 @@ public class IPEDReader extends DataSourceReader {
             if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
                 IIPEDSearcher searchParents = new IPEDSearcher(ipedCase, query.build());
                 searchParents.setTreeQuery(true);
-                result = searchParents.luceneSearch();
-                insertIntoProcessQueue(result, true);
+                LuceneSearchResult parents = searchParents.luceneSearch();
+                insertIntoProcessQueue(parents, true);
                 query = new BooleanQuery.Builder();
                 num = 0;
             }
@@ -373,11 +376,12 @@ public class IPEDReader extends DataSourceReader {
                 insertLinkedItemsBatch(query);
             }
 
-        } catch (Exception e1) {
-            e1.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            t = System.currentTimeMillis() - t;
+            LOGGER.info("Search for linked items took {} ms", t);
         }
-        t = System.currentTimeMillis() - t;
-        LOGGER.info("Search for linked items took {} ms", t);
     }
 
     private void insertLinkedItemsBatch(StringBuilder query) throws Exception {
@@ -390,6 +394,7 @@ public class IPEDReader extends DataSourceReader {
         LuceneSearchResult linkedItems = searcher.luceneSearch();
         if (linkedItems.getLength() > 0) {
             insertIntoProcessQueue(linkedItems, false);
+            insertParentTreeNodes(linkedItems);
         }
     }
 
@@ -411,10 +416,24 @@ public class IPEDReader extends DataSourceReader {
         for (int docID : result.getLuceneIds()) {
             Document doc = ipedCase.getReader().document(docID);
 
+            Item evidence = new Item();
+
+            int prevId = Integer.valueOf(doc.get(IndexItem.ID));
+
+            if (addedItems.get(prevId)) {
+                continue;
+            }
+            addedItems.set(prevId);
+
             String value = doc.get(IndexItem.LENGTH);
             Long len = null;
             if (value != null && !value.isEmpty()) {
                 len = Long.valueOf(value);
+            }
+
+            evidence.setLength(len);
+            if (treeNode) {
+                evidence.setSumVolume(false);
             }
 
             if (listOnly) {
@@ -425,22 +444,12 @@ public class IPEDReader extends DataSourceReader {
                 continue;
             }
 
-            Item evidence = new Item();
-            evidence.setName(doc.get(IndexItem.NAME));
-
-            evidence.setLength(len);
-            if (treeNode) {
-                evidence.setSumVolume(false);
-            }
-
             // TODO obter source corretamente
             IDataSource dataSource = new DataSource(null);
             dataSource.setUUID(doc.get(IndexItem.EVIDENCE_UUID));
             evidence.setDataSource(dataSource);
 
-            int prevId = Integer.valueOf(doc.get(IndexItem.ID));
-            int id = getId(doc.get(IndexItem.ID));
-            evidence.setId(id);
+            evidence.setName(doc.get(IndexItem.NAME));
 
             if (!treeNode && caseData.isIpedReport()) {
                 if (extractCheckedItems) {
@@ -454,6 +463,9 @@ public class IPEDReader extends DataSourceReader {
                         }
                     }
             }
+
+            int id = getId(doc.get(IndexItem.ID));
+            evidence.setId(id);
 
             value = doc.get(IndexItem.PARENTID);
             if (value != null) {
@@ -525,47 +537,39 @@ public class IPEDReader extends DataSourceReader {
             }
 
             if (!treeNode) {
-                value = doc.get(IndexItem.EXPORT);
-                if (value != null && !value.isEmpty()) {
-                    evidence.setFile(Util.getResolvedFile(basePath, value));
+                if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
+                    evidence.setIdInDataSource(value);
+                }
+                if (doc.get(IndexItem.SOURCE_PATH) != null && doc.get(IndexItem.SOURCE_DECODER) != null) {
+                    String sourcePath = doc.get(IndexItem.SOURCE_PATH);
+                    String className = doc.get(IndexItem.SOURCE_DECODER);
+                    if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
+                        sourcePath = Util.getResolvedFile(basePath, sourcePath).toString();
+                    }
+                    SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
+                    if (sisf == null) {
+                        Class<?> clazz = Class.forName(className);
+                        try {
+                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                            sisf = c.newInstance(Path.of(sourcePath));
+
+                        } catch (NoSuchMethodException e) {
+                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                            sisf = c.newInstance(URI.create(sourcePath));
+                        }
+                        if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
+                            IndexItem.checkIfExistsAndAsk(sisf, ipedCase.getModuleDir());
+                        }
+                        inputStreamFactories.put(sourcePath, sisf);
+                    }
+                    evidence.setInputStreamFactory(sisf);
+
+                } else if (evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX)) {
+                    evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
+
                 } else {
-                    value = doc.get(IndexItem.SLEUTHID);
-                    if (value != null && !value.isEmpty()) {
-                        evidence.setSleuthId(Integer.valueOf(value));
-                        if (ipedCase.getSleuthCase() != null) {
-                            evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
-                        }
-                    }
-                    if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
-                        evidence.setIdInDataSource(value.trim());
-                    }
-                    if (doc.get(IndexItem.SOURCE_PATH) != null) {
-                        String sourcePath = doc.get(IndexItem.SOURCE_PATH);
-                        SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
-                        if (sisf == null) {
-                            String className = doc.get(IndexItem.SOURCE_DECODER);
-                            Class<?> clazz = Class.forName(className);
-                            try {
-                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                                Path absPath = Util.getResolvedFile(basePath, sourcePath).toPath();
-                                sisf = c.newInstance(absPath);
-
-                            } catch (NoSuchMethodException e) {
-                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                                sisf = c.newInstance(URI.create(sourcePath));
-                            }
-                            inputStreamFactories.put(sourcePath, sisf);
-                        }
-                        evidence.setInputStreamFactory(sisf);
-
-                    } else if (evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX)) {
-                        evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
-
-                    } else {
-                        if (MediaTypes.isMetadataEntryType(evidence.getMediaType())) {
-                            evidence.setInputStreamFactory(
-                                    new MetadataInputStreamFactory(evidence.getMetadata(), true));
-                        }
+                    if (MediaTypes.isMetadataEntryType(evidence.getMediaType())) {
+                        evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata(), true));
                     }
                 }
             } else {

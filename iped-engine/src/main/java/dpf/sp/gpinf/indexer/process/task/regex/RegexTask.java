@@ -2,7 +2,10 @@ package dpf.sp.gpinf.indexer.process.task.regex;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -12,6 +15,7 @@ import java.io.ObjectOutputStream;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.nustaq.serialization.FSTConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,11 +56,13 @@ public class RegexTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(RegexTask.class);
 
-    private static final File cacheFile = new File(System.getProperty("user.home"), ".indexador/regexAutomata.cache");
+    private static final File cacheFile = new File(System.getProperty("user.home"), ".iped/regexAutomata.cache");
 
     private static List<Regex> regexList;
 
     private static Regex regexFull;
+
+    private static FSTConfiguration fastSerializer = FSTConfiguration.createDefaultConfiguration();
 
     private char[] cbuf = new char[1 << 20];
 
@@ -190,11 +197,15 @@ public class RegexTask extends AbstractTask {
     private void writeCache(RegexTaskConfig regexConfig, ExportByKeywordsConfig exportConfig) throws IOException {
         cacheFile.getParentFile().mkdirs();
         try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(cacheFile));
-                ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+                DataOutputStream dos = new DataOutputStream(bos)) {
             byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
-            oos.write(md5);
-            oos.writeObject(regexList);
-            oos.writeObject(regexFull);
+            byte[] list = fastSerializer.asByteArray(regexList);
+            byte[] full = fastSerializer.asByteArray(regexFull);
+            dos.write(md5);
+            dos.writeInt(list.length);
+            dos.write(list);
+            dos.writeInt(full.length);
+            dos.write(full);
         }
     }
 
@@ -203,16 +214,22 @@ public class RegexTask extends AbstractTask {
         if (!cacheFile.exists()) {
             return false;
         }
-        try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(cacheFile));
-                ObjectInputStream ois = new ObjectInputStream(bis)) {
+        try (DataInputStream dis = new DataInputStream(
+                new BufferedInputStream(Files.newInputStream(cacheFile.toPath())))) {
             byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
             byte[] cacheMd5 = new byte[16];
-            ois.readFully(cacheMd5);
+            dis.readFully(cacheMd5);
             if (!new String(md5).equals(new String(cacheMd5))) {
                 return false;
             }
-            regexList = (List<Regex>) ois.readObject();
-            regexFull = (Regex) ois.readObject();
+            int listLen = dis.readInt();
+            byte[] list = new byte[listLen];
+            dis.readFully(list);
+            regexList = (List<Regex>) fastSerializer.asObject(list);
+            int fullLen = dis.readInt();
+            byte[] full = new byte[fullLen];
+            dis.readFully(full);
+            regexFull = (Regex) fastSerializer.asObject(full);
             return true;
         }
     }
@@ -250,7 +267,21 @@ public class RegexTask extends AbstractTask {
         try (Reader reader = evidence.getTextReader()) {
             processRegex(evidence, reader);
         }
+
         processRegex(evidence, new StringReader(evidence.getName()));
+        
+        processRegex(evidence, getExtraAttributeReader(evidence));
+    }
+
+    private Reader getExtraAttributeReader(IItem item) {
+        StringBuilder sb = new StringBuilder();
+        for (String key : item.getExtraAttributeMap().keySet().toArray(new String[0])) {
+            if (!key.startsWith(REGEX_PREFIX)) {
+                Object val = item.getExtraAttribute(key);
+                sb.append(key).append(": ").append(val.toString());
+            }
+        }
+        return new StringReader(sb.toString());
     }
 
     @SuppressWarnings("unchecked")

@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
-import java.util.Date;
+import java.util.Random;
 
 import org.slf4j.Logger;
 
@@ -34,7 +34,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
     private boolean indexTempOnSSD = false;
     private boolean outputOnSSD = false;
-    private File indexerTemp, indexTemp;
+    private File ipedTemp, indexTemp;
     private int numThreads;
     private File hashDbFile;
     private String regripperFolder;
@@ -62,7 +62,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         if (value != null) {
             value = value.trim();
         }
-        if (indexerTemp == null) {
+        if (ipedTemp == null) {
             if (value != null && !value.equalsIgnoreCase("default")) { //$NON-NLS-1$
                 newTmp = new File(value);
                 if (!newTmp.exists() && !newTmp.mkdirs()) {
@@ -72,21 +72,22 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
                     tmp = newTmp;
                 }
             }
-            indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime()); //$NON-NLS-1$
-            if (!indexerTemp.mkdirs()) {
+            Random rand = new Random();
+            ipedTemp = new File(tmp, "iped-temp" + rand.nextLong()); //$NON-NLS-1$
+            if (!ipedTemp.mkdirs()) {
                 tmp = new File(System.getProperty("java.io.basetmpdir")); //$NON-NLS-1$
-                indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime()); //$NON-NLS-1$
-                indexerTemp.mkdirs();
+                ipedTemp = new File(tmp, "iped-temp" + rand.nextLong()); //$NON-NLS-1$
+                ipedTemp.mkdirs();
             }
-            if (indexerTemp.exists()) {
-                System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath()); //$NON-NLS-1$
+            if (ipedTemp.exists()) {
+                System.setProperty("java.io.tmpdir", ipedTemp.getAbsolutePath()); //$NON-NLS-1$
             }
             if (tmp == newTmp) {
-                indexTemp = new File(indexerTemp, "index"); //$NON-NLS-1$
+                indexTemp = new File(ipedTemp, "index"); //$NON-NLS-1$
             }
         }
-        if (indexerTemp != null) {
-            indexerTemp.mkdirs();
+        if (ipedTemp != null) {
+            ipedTemp.mkdirs();
         }
 
         value = properties.getProperty("numThreads"); //$NON-NLS-1$
@@ -144,12 +145,12 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
     }
 
     public void setIndexerTemp(File temp) {
-        indexerTemp = temp;
-        indexTemp = new File(indexerTemp, "index"); //$NON-NLS-1$
+        ipedTemp = temp;
+        indexTemp = new File(ipedTemp, "index"); //$NON-NLS-1$
     }
 
     public File getIndexerTemp() {
-        return indexerTemp;
+        return ipedTemp;
     }
 
     public boolean isIndexTempOnSSD() {

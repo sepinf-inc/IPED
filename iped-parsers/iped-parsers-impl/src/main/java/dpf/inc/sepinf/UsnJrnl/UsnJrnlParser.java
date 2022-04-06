@@ -226,7 +226,7 @@ public class UsnJrnlParser extends AbstractParser {
         int n = 1;
         IItemSearcher searcher = context.get(IItemSearcher.class);
         IItemBase item = context.get(IItemBase.class);
-        try (SeekableInputStream sis = item.getStream()) {
+        try (SeekableInputStream sis = item.getSeekableInputStream()) {
             jumpZeros(sis, 0, sis.size());
             while (findNextEntry(sis)) {
                 UsnJrnlEntry u = readEntry(sis);

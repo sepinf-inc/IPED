@@ -26,26 +26,24 @@ public class XBaseParserTest {
         Metadata metadata = new Metadata();
         context.set(Parser.class, parser);
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_dbf.dbf")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        String hts = handler.toString();
-	        assertTrue(hts.contains("Kauai Dive"));
-	        assertTrue(hts.contains("4-976"));
-	        assertTrue(hts.contains("Sugarloaf"));
-	        assertTrue(hts.contains("Hwy"));
-	        assertTrue(hts.contains("Kapaa"));
-	        assertTrue(hts.contains("HI"));
-	        assertTrue(hts.contains("94766"));
-	        assertTrue(hts.contains("U.S.A."));
-	        assertTrue(hts.contains("808-555-0269"));
-	        assertTrue(hts.contains("6215.0"));
-	        assertTrue(hts.contains("Underwater"));
-	        assertTrue(hts.contains("SCUBA Company"));
-	        assertTrue(hts.contains("PO"));
-	        assertTrue(hts.contains("B"));
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_dbf.dbf")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String hts = handler.toString();
+            assertTrue(hts.contains("Kauai Dive"));
+            assertTrue(hts.contains("4-976"));
+            assertTrue(hts.contains("Sugarloaf"));
+            assertTrue(hts.contains("Hwy"));
+            assertTrue(hts.contains("Kapaa"));
+            assertTrue(hts.contains("HI"));
+            assertTrue(hts.contains("94766"));
+            assertTrue(hts.contains("U.S.A."));
+            assertTrue(hts.contains("808-555-0269"));
+            assertTrue(hts.contains("6215.0"));
+            assertTrue(hts.contains("Underwater"));
+            assertTrue(hts.contains("SCUBA Company"));
+            assertTrue(hts.contains("PO"));
+            assertTrue(hts.contains("B"));
         }
     }
 
@@ -57,13 +55,11 @@ public class XBaseParserTest {
         BodyContentHandler handler = new BodyContentHandler();
         Metadata metadata = new Metadata();
         context.set(Parser.class, parser);
-        try(InputStream stream = getStream("test-files/test_dbf.dbf")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        String hts = handler.toString();
-	        assertTrue(hts.contains("Archimède et Lius à Châteauneu"));
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_dbf.dbf")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String hts = handler.toString();
+            assertTrue(hts.contains("Archimède et Lius à Châteauneu"));
         }
 
     }

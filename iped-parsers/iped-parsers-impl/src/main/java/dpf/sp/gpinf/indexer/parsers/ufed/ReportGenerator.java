@@ -10,6 +10,7 @@ import java.util.List;
 import dpf.mg.udi.gpinf.whatsappextractor.Message;
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
@@ -34,6 +35,10 @@ public class ReportGenerator {
 
     public int getNextMsgNum() {
         return currentMsg;
+    }
+
+    private static final String format(String text) {
+        return SimpleHTMLEncoder.htmlEncode(text);
     }
 
     public byte[] generateNextChatHtml(IItemBase c, List<UfedMessage> msgs) throws UnsupportedEncodingException {
@@ -100,20 +105,21 @@ public class ReportGenerator {
             out.println("🚫 "); //$NON-NLS-1$
 
         if (name != null)
-            out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" + name + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println(
+                    "<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" + format(name) + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (message.getData() != null && !message.getData().trim().isEmpty()) {
             if (message.getData().startsWith("BEGIN:VCARD")) { //$NON-NLS-1$
                 String[] lines = message.getData().split("\n"); //$NON-NLS-1$
                 for (String line : lines) {
                     if (line.startsWith("PHOTO;BASE64:")) { //$NON-NLS-1$
-                        out.print("PHOTO:<img src=\"data:image;BASE64," + line.substring(13) + "\"/><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                        out.print("PHOTO:<img src=\"data:image;BASE64," + format(line.substring(13)) + "\"/><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                     } else {
-                        out.print(line + "<br/>"); //$NON-NLS-1$
+                        out.print(format(line) + "<br/>"); //$NON-NLS-1$
                     }
                 }
             } else {
-                out.print(message.getData()); // $NON-NLS-1$
+                out.print(format(message.getData())); // $NON-NLS-1$
                 if (!message.isSystemMessage())
                     out.print("<br/>");
             }
@@ -128,7 +134,7 @@ public class ReportGenerator {
                 String ext = message.getMediaTrueExt();
                 String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(), ext); // $NON-NLS-1$
                 if (!exportPath.isEmpty())
-                    out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                    out.println("href=\"" + format(exportPath) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                 out.println(">"); //$NON-NLS-1$
             }
             byte[] thumb = message.getThumbData();
@@ -137,7 +143,7 @@ public class ReportGenerator {
                     out.println(Messages.getString("WhatsAppReport.Video") + ":<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                 out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                out.println(" title=\"" + getTitle(message) + "\"/><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                out.println(" title=\"" + format(getTitle(message)) + "\"/><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
             } else if (message.getMediaMime() != null) {
                 if (message.getMediaMime().startsWith("audio")) { //$NON-NLS-1$
@@ -154,7 +160,7 @@ public class ReportGenerator {
             out.println("</a>"); //$NON-NLS-1$
         }
         if (message.getMediaCaption() != null)
-            out.println("<br>" + message.getMediaCaption()); //$NON-NLS-1$
+            out.println("<br>" + format(message.getMediaCaption())); //$NON-NLS-1$
 
         String transcription = message.getTranscription();
         if (transcription != null) {
@@ -166,13 +172,13 @@ public class ReportGenerator {
                 out.print(" [" + (int) score + "%]"); //$NON-NLS-1$ //$NON-NLS-2$
             }
             out.println(": <i>"); //$NON-NLS-1$
-            out.println(transcription);
+            out.println(format(transcription));
             out.println("</i><br/>"); //$NON-NLS-1$
         }
 
         if (!message.getChildPornSets().isEmpty()) {
             out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
-                    + message.getChildPornSets().toString() + "</i></p>");
+                    + format(message.getChildPornSets().toString()) + "</i></p>");
         }
 
         if (message.getTimeStamp() != null) {
@@ -194,7 +200,7 @@ public class ReportGenerator {
         out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
                 + "<html>\n" //$NON-NLS-1$
                 + "<head>\n" //$NON-NLS-1$
-                + "	<title>" + title + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
+                + "	<title>" + format(title) + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
                 + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
                 + "	<meta name=\"viewport\" content=\"width=device-width\" />\n" //$NON-NLS-1$
                 + "     <meta charset=\"UTF-8\" />\n" //$NON-NLS-1$
@@ -209,7 +215,7 @@ public class ReportGenerator {
         if (avatar != null)
             out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(avatar) //$NON-NLS-1$
                     + "\" width=\"40\" height=\"40\"/>"); //$NON-NLS-1$
-        out.println(chatName + "</span>\n" //$NON-NLS-1$
+        out.println(format(chatName) + "</span>\n" //$NON-NLS-1$
                 + "</div>\n" //$NON-NLS-1$
                 + "<div id=\"conversation\">\n" //$NON-NLS-1$
                 + "<br/><br/><br/>"); //$NON-NLS-1$

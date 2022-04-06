@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
  * 
- * This file is part of Indexador e Processador de EvidÃƒÂªncias Digitais (IPED).
+ * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@ import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -56,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.config.AnalysisConfig;
+import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.localization.Messages;
@@ -68,6 +70,7 @@ import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
 import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.util.TouchSleuthkitImages;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.Category;
 import gpinf.dev.data.Item;
 import iped3.IIPEDSource;
 import iped3.IItem;
@@ -81,7 +84,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     private static Logger LOGGER = LoggerFactory.getLogger(IPEDSource.class);
 
     public static final String INDEX_DIR = "index"; //$NON-NLS-1$
-    public static final String MODULE_DIR = "indexador"; //$NON-NLS-1$
+    public static final String MODULE_DIR = "iped"; //$NON-NLS-1$
     public static final String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
     public static final String PREV_TEMP_INFO_PATH = "data/prevTempDir.txt"; //$NON-NLS-1$
 
@@ -104,7 +107,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     private ExecutorService searchExecutorService;
 
-    protected ArrayList<String> categories = new ArrayList<String>();
+    protected ArrayList<String> leafCategories = new ArrayList<String>();
+    protected Category categoryTree;
 
     private IMarcadores marcadores;
     IMultiMarcadores globalMarcadores;
@@ -126,7 +130,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     Set<String> evidenceUUIDs = new HashSet<String>();
 
-    boolean isFTKReport = false, isReport = false;
+    boolean isReport = false;
 
     public static File getTempDirInfoFile(File moduleDir) {
         return new File(moduleDir, IPEDSource.PREV_TEMP_INFO_PATH);
@@ -170,7 +174,6 @@ public class IPEDSource implements Closeable, IIPEDSource {
         try {
             Configuration.getInstance().loadConfigurables(moduleDir.getAbsolutePath(), true);
 
-            isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists(); //$NON-NLS-1$
             isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
 
             File sleuthFile = new File(casePath, SLEUTH_DB);
@@ -225,7 +228,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
             } else
                 textSizes = new long[lastId + 1];
 
-            loadCategories();
+            loadLeafCategories();
+            loadCategoryTree();
 
             loadKeywords();
 
@@ -252,9 +256,14 @@ public class IPEDSource implements Closeable, IIPEDSource {
         ids = new int[reader.maxDoc()];
 
         NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.ID);
+        if (ndv == null) {
+            // no items in index
+            return;
+        }
 
-        for (int i = 0; i < reader.maxDoc(); i++) {
-            ids[i] = (int) ndv.get(i);
+        int i;
+        while ((i = ndv.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
+            ids[i] = (int) ndv.longValue();
             if (ids[i] > lastId)
                 lastId = ids[i];
         }
@@ -312,18 +321,94 @@ public class IPEDSource implements Closeable, IIPEDSource {
         }
     }
 
-    private void loadCategories() throws IOException {
-        Fields fields = atomicReader.fields();
-        if (fields == null)
-            return;
-        Terms terms = fields.terms(IndexItem.CATEGORY);
+    private void loadLeafCategories() throws IOException {
+        Terms terms = atomicReader.terms(IndexItem.CATEGORY);
         if (terms == null)
             return;
         TermsEnum termsEnum = terms.iterator();
         while (termsEnum.next() != null) {
             String cat = termsEnum.term().utf8ToString();
-            categories.add(cat);
+            leafCategories.add(cat);
         }
+    }
+
+    protected void loadCategoryTree() {
+        CategoryConfig config = ConfigurationManager.get().findObject(CategoryConfig.class);
+        Category root = config.getConfiguration().clone();
+        // root.setName(rootName);
+        ArrayList<Category> leafs = getLeafCategories(root);
+        leafs.stream().forEach(l -> checkAndAddMissingCategory(root, l));
+        filterEmptyCategories(root, leafs);
+        countNumItems(root);
+        categoryTree = root;
+    }
+
+    private boolean checkAndAddMissingCategory(Category root, Category leaf) {
+        boolean found = false;
+        if (leaf.getName().equalsIgnoreCase(root.getName())) {
+            found = true;
+        } else {
+            for (Category child : root.getChildren()) {
+                if (checkAndAddMissingCategory(child, leaf)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found && root.getParent() == null) {
+            leaf.setParent(root);
+            root.getChildren().add(leaf);
+        }
+        return found;
+    }
+
+    private ArrayList<Category> getLeafCategories(Category root) {
+        ArrayList<Category> categoryList = new ArrayList<Category>();
+        for (String category : leafCategories) {
+            categoryList.add(new Category(category, root));
+        }
+        return categoryList;
+    }
+
+    private boolean filterEmptyCategories(Category category, ArrayList<Category> leafCategories) {
+        boolean hasItems = false;
+        if (leafCategories.contains(category)) {
+            hasItems = true;
+        }
+        for (Category child : category.getChildren().toArray(new Category[0])) {
+            if (filterEmptyCategories(child, leafCategories)) {
+                hasItems = true;
+            }
+        }
+        if (!hasItems && category.getParent() != null) {
+            category.getParent().getChildren().remove(category);
+        }
+        return hasItems;
+    }
+
+    private int countNumItems(Category category) {
+        if (category.getNumItems() != -1)
+            return category.getNumItems();
+
+        if (!category.getChildren().isEmpty()) {
+            int num = 0;
+            for (Category child : category.getChildren()) {
+                num += countNumItems(child);
+            }
+            category.setNumItems(num);
+
+        } else {
+            String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
+            IPEDSearcher searcher = new IPEDSearcher(this, query);
+            searcher.setNoScoring(true);
+            try {
+                category.setNumItems(searcher.luceneSearch().getLength());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return category.getNumItems();
     }
 
     private void loadKeywords() {
@@ -600,8 +685,12 @@ public class IPEDSource implements Closeable, IIPEDSource {
         return splitedIds.get(id);
     }
 
-    public List<String> getCategories() {
-        return categories;
+    public List<String> getLeafCategories() {
+        return leafCategories;
+    }
+
+    public Category getCategoryTree() {
+        return categoryTree;
     }
 
     public Set<String> getKeywords() {
@@ -650,10 +739,6 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     public int getLastId() {
         return lastId;
-    }
-
-    public boolean isFTKReport() {
-        return isFTKReport;
     }
 
     public boolean isReport() {

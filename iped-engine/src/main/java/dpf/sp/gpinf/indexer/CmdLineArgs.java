@@ -12,8 +12,6 @@ public interface CmdLineArgs {
 
     File getOutputDir();
 
-    File getReportDir();
-
     File getPalavrasChave();
 
     List<String> getOcr();
@@ -59,5 +57,7 @@ public interface CmdLineArgs {
     String getDataSourcePassword(File datasource);
 
     public String getEvidenceToRemove();
+
+    boolean isDownloadInternetData();
 
 }

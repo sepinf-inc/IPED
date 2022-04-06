@@ -17,8 +17,10 @@ import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
+import dpf.sp.gpinf.indexer.parsers.PartMetParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
+import iped3.util.MediaTypes;
 
 /**
  * Classe de definição de prioridade de processamento de itens com base no
@@ -55,6 +57,7 @@ public class MimeTypesProcessingOrder {
         mediaTypes.put(TelegramParser.TELEGRAM_DB_IOS, 2);
 
         mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 1);
+        mediaTypes.put(MediaType.parse(PartMetParser.EMULE_PART_MET_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 1);
        
@@ -65,6 +68,12 @@ public class MimeTypesProcessingOrder {
         mediaTypes.put(WhatsAppParser.CHAT_STORAGE, 2);
 
         mediaTypes.put(UFEDChatParser.UFED_CHAT_MIME, 1);
+        
+        // support for embedded splited image formats
+        mediaTypes.put(MediaTypes.E01_IMAGE, 1);
+        mediaTypes.put(MediaTypes.EX01_IMAGE, 1);
+        mediaTypes.put(MediaTypes.RAW_IMAGE, 1);
+        mediaTypes.put(MediaTypes.VMDK_DESCRIPTOR, 1);
 
         // avoid NPE when the parser gets the item from parseContext when external
         // parsing is on

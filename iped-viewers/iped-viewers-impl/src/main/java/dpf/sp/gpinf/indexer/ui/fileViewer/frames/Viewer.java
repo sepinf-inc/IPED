@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.Image;
 import java.awt.LayoutManager;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
@@ -36,6 +37,8 @@ public abstract class Viewer {
     protected static final String resPath = "/dpf/sp/gpinf/indexer/search/viewer/res/";
 
     private JPanel panel;
+    
+    private Window owner;
 
     protected int currentHit, totalHits;
 
@@ -49,11 +52,25 @@ public abstract class Viewer {
         panel = new JPanel(layout);
     }
 
+    public Viewer(Window owner) {
+        this.owner = owner; 
+        panel = new JPanel();
+    }
+
+    public Viewer(Window owner, LayoutManager layout) {
+        this.owner = owner; 
+        panel = new JPanel(layout);
+    }
+
     public JPanel getPanel() {
         return panel;
     }
 
     abstract public String getName();
+    
+    public Window getOwner() {
+        return owner;
+    }
 
     /*
      * Retorna se o visualizador suporta o tipo de arquivo informado
@@ -79,9 +96,9 @@ public abstract class Viewer {
         return MediaTypes.getParentType(mediaType);
     }
 
-    /*
-     * Método de inicialização do visualizador, possivelmente lenta, para ser
-     * chamado fora da thread de eventos.
+    /**
+     * Viewer lazy initialization method. Can be used to start heavy objects or
+     * components. Must be called outside EDT to not block the UI.
      */
     abstract public void init();
 

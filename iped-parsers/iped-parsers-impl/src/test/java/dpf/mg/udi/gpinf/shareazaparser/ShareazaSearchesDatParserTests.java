@@ -25,20 +25,18 @@ public class ShareazaSearchesDatParserTests extends TestCase {
         ContentHandler handler = new ToTextContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_shareazaSearches.dat")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        String hts = handler.toString();
-	
-	        assertTrue(hts.contains("http://www.limewire.com/schemas/audio.xsd"));
-	        assertTrue(hts.contains("Musique Classique Bethoven - Sonate Au Clair De Lune.mp3"));
-	        assertTrue(hts.contains("90401ec0241f9000edaf53da4ef1b542"));
-	        assertTrue(hts.contains("Symphony No. 5 In C Minor Opus 67. Bethoven - Paul Mauriat.mp3"));
-	        assertTrue(hts.contains("ed2kftp://7191240@91.208.184.143:4232/4d29a8f82cfca1f5f987de6f16714a61/4753906/"));
-	        assertEquals("application/x-shareaza-searches-dat", metadata.get(Metadata.CONTENT_TYPE));
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_shareazaSearches.dat")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String hts = handler.toString();
+
+            assertTrue(hts.contains("http://www.limewire.com/schemas/audio.xsd"));
+            assertTrue(hts.contains("Musique Classique Bethoven - Sonate Au Clair De Lune.mp3"));
+            assertTrue(hts.contains("90401ec0241f9000edaf53da4ef1b542"));
+            assertTrue(hts.contains("Symphony No. 5 In C Minor Opus 67. Bethoven - Paul Mauriat.mp3"));
+            assertTrue(hts.contains("ed2kftp://7191240@91.208.184.143:4232/4d29a8f82cfca1f5f987de6f16714a61/4753906/"));
+            assertEquals("application/x-shareaza-searches-dat", metadata.get(Metadata.CONTENT_TYPE));
+
         }
 
     }

@@ -70,7 +70,7 @@ public class SignatureTask extends AbstractTask {
                     }
                 }
 
-                if (MediaTypes.RAW_IMAGE.equals(type)) {
+                if (MediaTypes.DISK_IMAGE.equals(type)) {
                     if(hasVHDFooter(evidence)) {
                         type = MediaTypes.VHD;
                     }
@@ -112,7 +112,7 @@ public class SignatureTask extends AbstractTask {
         if (item.getLength() == null) {
             return false;
         }
-        try (SeekableInputStream is = item.getStream()) {
+        try (SeekableInputStream is = item.getSeekableInputStream()) {
             is.seek(item.getLength() - 512);
             byte[] cookie = IOUtils.readFully(is, 9);
             if ("conectix".equals(new String(cookie, 0, 8, StandardCharsets.ISO_8859_1))

@@ -21,7 +21,6 @@ public class BasicProps {
     public static final String CATEGORY = "category"; //$NON-NLS-1$
     public static final String DELETED = "deleted"; //$NON-NLS-1$
     public static final String CONTENT = "content"; //$NON-NLS-1$
-    public static final String EXPORT = "export"; //$NON-NLS-1$
     public static final String HASH = "hash"; //$NON-NLS-1$
     public static final String ISDIR = "isDir"; //$NON-NLS-1$
     public static final String ISROOT = "isRoot"; //$NON-NLS-1$
@@ -30,7 +29,6 @@ public class BasicProps {
     public static final String SUBITEM = "subitem"; //$NON-NLS-1$
     public static final String SUBITEMID = "subitemId"; //$NON-NLS-1$
     public static final String OFFSET = "offset"; //$NON-NLS-1$
-    public static final String DUPLICATE = "duplicate"; //$NON-NLS-1$
     public static final String TIMEOUT = "timeout"; //$NON-NLS-1$
     public static final String CONTENTTYPE = "contentType"; //$NON-NLS-1$
     public static final String TREENODE = "treeNode"; //$NON-NLS-1$
@@ -62,7 +60,6 @@ public class BasicProps {
         basicProps.add(CATEGORY);
         basicProps.add(DELETED);
         basicProps.add(CONTENT);
-        basicProps.add(EXPORT);
         basicProps.add(HASH);
         basicProps.add(ISDIR);
         basicProps.add(ISROOT);
@@ -71,7 +68,6 @@ public class BasicProps {
         basicProps.add(SUBITEM);
         basicProps.add(SUBITEMID);
         basicProps.add(OFFSET);
-        basicProps.add(DUPLICATE);
         basicProps.add(TIMEOUT);
         basicProps.add(CONTENTTYPE);
         basicProps.add(TREENODE);

@@ -158,7 +158,7 @@ public class TelegramParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getUsername());
                     cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                     if (c.getAvatar() != null) {
-                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                        cMetadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
                     ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(contactStream, handler, cMetadata, false);
@@ -257,7 +257,7 @@ public class TelegramParser extends SQLite3DBParser {
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
             meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
             if (m.getLatitude() != null && m.getLongitude() != null) {
-                meta.add(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
+                meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
             }
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getFrom().toString());
             if (m.getChat().isGroup()) {
@@ -342,7 +342,7 @@ public class TelegramParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getUsername());
                     cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                     if (c.getAvatar() != null) {
-                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                        cMetadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
                     ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(contactStream, handler, cMetadata, false);
@@ -448,7 +448,7 @@ public class TelegramParser extends SQLite3DBParser {
         ex.setSearcher(searcher);
         ex.searchAvatarFileName(user, user.getPhotos());
         if (user.getAvatar() != null) {
-            meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(user.getAvatar()));
+            meta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(user.getAvatar()));
         }
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,

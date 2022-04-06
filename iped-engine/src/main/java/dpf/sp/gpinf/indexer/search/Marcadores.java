@@ -68,6 +68,9 @@ public class Marcadores implements Serializable, IMarcadores {
     private File indexDir;
     private File stateFile, cookie;
 
+    // for future use when implementing extended bookmark types
+    private Map<String, Serializable> extendedBookmarks;
+
     private transient IIPEDSource ipedCase;
 
     public Marcadores(IIPEDSource ipedCase, File modulePath) {
@@ -89,7 +92,7 @@ public class Marcadores implements Serializable, IMarcadores {
         }
     }
 
-    public void updateCookie() {
+    public synchronized void updateCookie() {
         long date = indexDir.lastModified();
         String tempdir = System.getProperty("java.io.basetmpdir"); //$NON-NLS-1$
         if (tempdir == null)
@@ -125,14 +128,14 @@ public class Marcadores implements Serializable, IMarcadores {
         return selected[id];
     }
 
-    public void clearSelected() {
+    public synchronized void clearSelected() {
         selectedItens = 0;
         for (int i = 0; i < selected.length; i++) {
             selected[i] = false;
         }
     }
 
-    public void selectAll() {
+    public synchronized void selectAll() {
         selectedItens = totalItems;
         int maxLuceneId = ipedCase.getReader().maxDoc() - 1;
         for (int i = 0; i <= maxLuceneId; i++) {
@@ -162,7 +165,7 @@ public class Marcadores implements Serializable, IMarcadores {
         return labelIds;
     }
 
-    public void addLabel(List<Integer> ids, int label) {
+    public synchronized void addLabel(List<Integer> ids, int label) {
         int labelOrder = label / labelBits;
         int labelMod = label % labelBits;
         int labelMask = 1 << labelMod;
@@ -225,7 +228,7 @@ public class Marcadores implements Serializable, IMarcadores {
 
     }
 
-    public void removeLabel(List<Integer> ids, int label) {
+    public synchronized void removeLabel(List<Integer> ids, int label) {
         int labelOrder = label / labelBits;
         int labelMod = label % labelBits;
         int labelMask = ~(1 << labelMod);
@@ -236,7 +239,7 @@ public class Marcadores implements Serializable, IMarcadores {
 
     }
 
-    public int newLabel(String labelName) {
+    public synchronized int newLabel(String labelName) {
 
         int labelId = getLabelId(labelName);
         if (labelId != -1)
@@ -263,7 +266,7 @@ public class Marcadores implements Serializable, IMarcadores {
         return labelId;
     }
 
-    public void delLabel(int label) {
+    public synchronized void delLabel(int label) {
         if (label == -1)
             return;
         labelNames.remove(label);
@@ -280,7 +283,7 @@ public class Marcadores implements Serializable, IMarcadores {
         }
     }
 
-    public void changeLabel(int labelId, String newLabel) {
+    public synchronized void changeLabel(int labelId, String newLabel) {
         if (labelId != -1)
             labelNames.put(labelId, newLabel);
     }
@@ -297,7 +300,7 @@ public class Marcadores implements Serializable, IMarcadores {
         return labelNames.get(labelId);
     }
 
-    public void setLabelComment(int labelId, String comment) {
+    public synchronized void setLabelComment(int labelId, String comment) {
         labelComments.put(labelId, comment);
     }
 
@@ -305,7 +308,7 @@ public class Marcadores implements Serializable, IMarcadores {
         return labelComments.get(labelId);
     }
 
-    public void setLabelKeyStroke(int labelId, KeyStroke key) {
+    public synchronized void setLabelKeyStroke(int labelId, KeyStroke key) {
         labelKeyStrokes.put(labelId, key);
     }
 
@@ -313,7 +316,7 @@ public class Marcadores implements Serializable, IMarcadores {
         return labelKeyStrokes.get(labelId);
     }
 
-    public void setInReport(int labelId, boolean inReport) {
+    public synchronized void setInReport(int labelId, boolean inReport) {
         if (inReport)
             reportLabels.add(labelId);
         else
@@ -403,25 +406,42 @@ public class Marcadores implements Serializable, IMarcadores {
         return result;
     }
 
+    @Override
     public void saveState() {
+        saveState(false);
+    }
+
+    @Override
+    public void saveState(boolean synchronous) {
         try {
-            if (stateFile.canWrite() || (!stateFile.exists() && IOUtil.canCreateFile(stateFile.getParentFile())))
-                saveState(stateFile);
+            if (IOUtil.canWrite(stateFile) || (!stateFile.exists() && IOUtil.canCreateFile(stateFile.getParentFile())))
+                saveState(stateFile, synchronous);
             else
-                saveState(cookie);
+                saveState(cookie, synchronous);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    @Override
     public void saveState(File file) throws IOException {
-        LOGGER.info("Saving state to file " + file.getAbsolutePath()); //$NON-NLS-1$
-        // Util.writeObject(this, file.getAbsolutePath());
-        SaveStateThread.getInstance().saveState(this, file);
+        saveState(file, false);
     }
 
-    public void addToTypedWords(String texto) {
+    @Override
+    public void saveState(File file, boolean synchronous) throws IOException {
+        LOGGER.info("Saving state sync={} to file {}", synchronous, file.getAbsolutePath()); //$NON-NLS-1$
+        if (synchronous) {
+            synchronized (this) {
+                Util.writeObject(this, file.getAbsolutePath());
+            }
+        } else {
+            SaveStateThread.getInstance().saveState(this, file);
+        }
+    }
+
+    public synchronized void addToTypedWords(String texto) {
 
         if (!texto.trim().isEmpty() && !typedWords.contains(texto)) {
             typedWords.add(texto);
@@ -442,7 +462,7 @@ public class Marcadores implements Serializable, IMarcadores {
         }
     }
 
-    public void loadState(File file) throws IOException, ClassNotFoundException {
+    public synchronized void loadState(File file) throws IOException, ClassNotFoundException {
         Marcadores state = load(file);
 
         if (state.selected != null /* && state.read != null */) {
@@ -471,7 +491,7 @@ public class Marcadores implements Serializable, IMarcadores {
         return (Marcadores) Util.readObject(file.getAbsolutePath());
     }
 
-    public void setSelected(boolean value, int id) {
+    public synchronized void setSelected(boolean value, int id) {
         if (value != selected[id]) {
             if (value)
                 selectedItens++;

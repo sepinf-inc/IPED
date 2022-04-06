@@ -60,7 +60,7 @@ public class Sources {
             sourcePathToStringID.put(file.toString(), id);
 
             if (!confInited) {
-                Configuration.getInstance().loadConfigurables(file + File.separator + "indexador", true); //$NON-NLS-1$
+                Configuration.getInstance().loadConfigurables(file + File.separator + "iped", true); //$NON-NLS-1$
                 confInited = true;
             }
 

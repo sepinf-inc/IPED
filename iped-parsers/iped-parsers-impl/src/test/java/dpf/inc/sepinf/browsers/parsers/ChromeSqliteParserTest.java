@@ -29,38 +29,36 @@ public class ChromeSqliteParserTest extends AbstractPkgTest {
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_historyChrome")){
-	        parser.parse(stream, handler, metadata, chromeContext);
-	
-	        assertEquals(73, chrometracker.bookmarktitle.size());
-	        assertEquals(77, chrometracker.bookmarkurl.size());
-	        assertEquals(4, chrometracker.bookmarkcreated.size());
-	        assertEquals(0, chrometracker.bookmarkmodified.size());
-	
-	        assertEquals("Entrar na conta da Microsoft", chrometracker.bookmarktitle.get(0));
-	        assertEquals("Entrar na conta da Microsoft", chrometracker.bookmarktitle.get(1));
-	        assertEquals("", chrometracker.bookmarktitle.get(2));
-	        assertEquals("WIP Parsers tests by streeg · Pull Request #481 · sepinf-inc/IPED",
-	                chrometracker.bookmarktitle.get(3));
-	        assertEquals("Sign in to GitHub · GitHub", chrometracker.bookmarktitle.get(4));
-	
-	        assertEquals("https://github.com/streeg/processo-pf/archive/refs/heads/master.zip",
-	                chrometracker.bookmarkurl.get(0));
-	        assertEquals("https://codeload.github.com/streeg/processo-pf/zip/refs/heads/master",
-	                chrometracker.bookmarkurl.get(1));
-	        assertEquals("https://github.com/streeg/streeg/archive/refs/heads/master.zip",
-	                chrometracker.bookmarkurl.get(2));
-	        assertEquals("https://codeload.github.com/streeg/streeg/zip/refs/heads/master",
-	                chrometracker.bookmarkurl.get(3));
-	
-	        assertEquals("2021-05-12T17:41:52Z", chrometracker.bookmarkcreated.get(0));
-	        assertEquals("2021-05-12T17:41:52Z", chrometracker.bookmarkcreated.get(1));
-	        assertEquals("2021-05-12T17:42:03Z", chrometracker.bookmarkcreated.get(2));
-	        assertEquals("2021-05-12T17:42:03Z", chrometracker.bookmarkcreated.get(3));
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
-		}
+        try (InputStream stream = getStream("test-files/test_historyChrome")) {
+            parser.parse(stream, handler, metadata, chromeContext);
+
+            assertEquals(73, chrometracker.bookmarktitle.size());
+            assertEquals(77, chrometracker.bookmarkurl.size());
+            assertEquals(4, chrometracker.bookmarkcreated.size());
+            assertEquals(0, chrometracker.bookmarkmodified.size());
+
+            assertEquals("Entrar na conta da Microsoft", chrometracker.bookmarktitle.get(0));
+            assertEquals("Entrar na conta da Microsoft", chrometracker.bookmarktitle.get(1));
+            assertEquals("", chrometracker.bookmarktitle.get(2));
+            assertEquals("WIP Parsers tests by streeg · Pull Request #481 · sepinf-inc/IPED",
+                    chrometracker.bookmarktitle.get(3));
+            assertEquals("Sign in to GitHub · GitHub", chrometracker.bookmarktitle.get(4));
+
+            assertEquals("https://github.com/streeg/processo-pf/archive/refs/heads/master.zip",
+                    chrometracker.bookmarkurl.get(0));
+            assertEquals("https://codeload.github.com/streeg/processo-pf/zip/refs/heads/master",
+                    chrometracker.bookmarkurl.get(1));
+            assertEquals("https://github.com/streeg/streeg/archive/refs/heads/master.zip",
+                    chrometracker.bookmarkurl.get(2));
+            assertEquals("https://codeload.github.com/streeg/streeg/zip/refs/heads/master",
+                    chrometracker.bookmarkurl.get(3));
+
+            assertEquals("2021-05-12T17:41:52Z", chrometracker.bookmarkcreated.get(0));
+            assertEquals("2021-05-12T17:41:52Z", chrometracker.bookmarkcreated.get(1));
+            assertEquals("2021-05-12T17:42:03Z", chrometracker.bookmarkcreated.get(2));
+            assertEquals("2021-05-12T17:42:03Z", chrometracker.bookmarkcreated.get(3));
+
+        }
 
     }
 }
