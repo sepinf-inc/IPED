@@ -31,9 +31,9 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import gpinf.dev.data.CaseData;
 import iped3.IItem;
+import iped3.exception.IPEDException;
 
 /**
  * Responsável por retirar um item da fila e enviá-lo para cada tarefa de

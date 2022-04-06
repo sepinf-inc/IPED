@@ -39,7 +39,7 @@ public class Content {
                 .entity(new StreamingOutput() {
                     @Override
                     public void write(OutputStream arg0) throws IOException, WebApplicationException {
-                        try (InputStream is = item.getBufferedStream()) {
+                        try (InputStream is = item.getBufferedInputStream()) {
                             IOUtils.copy(is, arg0);
                         }
                     }

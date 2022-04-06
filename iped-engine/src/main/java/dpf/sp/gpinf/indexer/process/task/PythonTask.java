@@ -18,10 +18,10 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.dev.data.CaseData;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import jep.Jep;
 import jep.JepException;
 import jep.NDArray;
-import macee.core.Configurable;
 
 public class PythonTask extends AbstractTask {
 

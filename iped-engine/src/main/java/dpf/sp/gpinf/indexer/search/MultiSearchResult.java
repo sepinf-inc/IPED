@@ -4,7 +4,6 @@ import java.util.Iterator;
 
 import iped3.IIPEDSource;
 import iped3.IItemId;
-import iped3.search.LuceneSearchResult;
 import iped3.search.IMultiSearchResult;
 
 public class MultiSearchResult implements IMultiSearchResult {
@@ -107,14 +106,14 @@ public class MultiSearchResult implements IMultiSearchResult {
         return result;
     }
 
-    public static LuceneSearchResult get(MultiSearchResult ipedResult, IPEDMultiSource iSource) {
+    public static LuceneSearchResult get(IMultiSearchResult ipedResult, IPEDMultiSource iSource) {
         LuceneSearchResult lResult = new LuceneSearchResult(ipedResult.getLength());
         float[] scores = lResult.getScores();
         int[] docs = lResult.getLuceneIds();
 
         int i = 0;
         if (ipedResult.getLength() <= IPEDSearcher.MAX_SIZE_TO_SCORE) {
-            for (IItemId item : ipedResult.ids) {
+            for (IItemId item : ipedResult.getIterator()) {
                 scores[i] = ipedResult.getScore(i);
                 docs[i] = iSource.getLuceneId(item);
                 i++;
@@ -126,7 +125,7 @@ public class MultiSearchResult implements IMultiSearchResult {
             IIPEDSource atomicSource = null;
             int baseDoc = 0;
             int sourceId = 0;
-            for (IItemId item : ipedResult.ids) {
+            for (IItemId item : ipedResult.getIterator()) {
                 if (atomicSource == null || item.getSourceId() != sourceId) {
                     sourceId = item.getSourceId();
                     atomicSource = iSource.getAtomicSourceBySourceId(sourceId);

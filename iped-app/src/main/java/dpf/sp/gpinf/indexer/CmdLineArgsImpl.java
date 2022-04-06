@@ -22,7 +22,7 @@ import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
-import dpf.sp.gpinf.indexer.util.IPEDException;
+import iped3.exception.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 
@@ -56,7 +56,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Parameter(names = { "-l", "-keywordlist" }, description = "line file with keywords to be imported into case. "
             + "Keywords with no hits are filtered out.", validateWith = FileExistsValidator.class)
-    private File palavrasChave;
+    private File keywords;
 
     @Parameter(names = "-ocr", description = "only run OCR on a specific category or bookmark (can be used multiple times)")
     private List<String> ocr;
@@ -146,8 +146,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     }
 
     @Override
-    public File getPalavrasChave() {
-        return palavrasChave;
+    public File getKeywords() {
+        return keywords;
     }
 
     @Override
@@ -339,7 +339,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         if (this.isAppendIndex()) {
             String classpath = outputDir.getAbsolutePath() + "/iped/lib/iped-search-app.jar"; //$NON-NLS-1$
             List<String> cmd = new ArrayList<>();
-            cmd.addAll(Arrays.asList("java", "-cp", classpath, IndexFiles.class.getCanonicalName(), "-h"));
+            cmd.addAll(Arrays.asList("java", "-cp", classpath, Main.class.getCanonicalName(), "-h"));
 
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.redirectErrorStream(true);
@@ -350,8 +350,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            String thisVersion = Versao.APP_VERSION.substring(0, Versao.APP_VERSION.lastIndexOf('.'));
-            String fullVersion = line.replace(Versao.APP_NAME_PREFIX, "").trim();
+            String thisVersion = Version.APP_VERSION.substring(0, Version.APP_VERSION.lastIndexOf('.'));
+            String fullVersion = line.replace(Version.APP_NAME_PREFIX, "").trim();
             String version = fullVersion.substring(0, fullVersion.lastIndexOf('.'));
             if (!version.equals(thisVersion)) {
                 throw new IPEDException("Appending to case with old version " + fullVersion + " not supported.");
@@ -369,7 +369,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     }
 
     private void printUsageAndExit(JCommander jc) {
-        System.out.println(Versao.APP_NAME);
+        System.out.println(Version.APP_NAME);
         jc.usage();
         System.exit(0);
     }
@@ -383,7 +383,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
      */
     private void handleSpecificArgs() {
 
-        IndexFiles.getInstance().dataSource = new ArrayList<File>();
+        Main.getInstance().dataSource = new ArrayList<File>();
 
         if ((datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
             throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
@@ -395,7 +395,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
         if (this.datasources != null) {
             for (File dataSource : this.datasources) {
-                IndexFiles.getInstance().dataSource.add(dataSource);
+                Main.getInstance().dataSource.add(dataSource);
             }
             checkDuplicateDataSources();
         }
@@ -410,22 +410,22 @@ public class CmdLineArgsImpl implements CmdLineArgs {
                 list += (o + OCRParser.SUBSET_SEPARATOR);
             System.setProperty(OCRParser.SUBSET_TO_OCR, list);
         }
-        if (this.palavrasChave != null) {
-            IndexFiles.getInstance().palavrasChave = this.palavrasChave;
+        if (this.keywords != null) {
+            Main.getInstance().keywords = this.keywords;
         }
         if (this.logFile != null) {
-            IndexFiles.getInstance().logFile = this.logFile;
+            Main.getInstance().logFile = this.logFile;
         }
 
         if (outputDir != null) {
-            IndexFiles.getInstance().output = new File(outputDir, "iped"); //$NON-NLS-1$
+            Main.getInstance().output = new File(outputDir, "iped"); //$NON-NLS-1$
         } else {
-            IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "iped"); //$NON-NLS-1$
+            Main.getInstance().output = new File(datasources.get(0).getParentFile(), "iped"); //$NON-NLS-1$
         }
 
         File file = outputDir;
         while (file != null) {
-            for (File source : IndexFiles.getInstance().dataSource) {
+            for (File source : Main.getInstance().dataSource) {
                 if (file.getAbsoluteFile().equals(source.getAbsoluteFile())) {
                     throw new ParameterException("Output folder can not be equal or subdir of input!"); //$NON-NLS-1$
                 }

@@ -107,7 +107,7 @@ public class SimilarFacesFilterActions {
 
                 // populates tif orientation if rotated
                 try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(file.toPath()))) {
-                    ((Parser) App.get().getAutoParser()).parse(bis, new IgnoreContentHandler(),
+                    App.get().getAutoParser().parse(bis, new IgnoreContentHandler(),
                             app.similarFacesRefItem.getMetadata(), new ParseContext());
                 } catch (IOException | SAXException | TikaException e2) {
                     e2.printStackTrace();

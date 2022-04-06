@@ -9,7 +9,7 @@ import java.util.List;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class DatabaseTask extends AbstractTask {
 
@@ -95,7 +95,7 @@ public class DatabaseTask extends AbstractTask {
                     + e.getId() + "," //$NON-NLS-1$
                     + e.getParentId() + "," //$NON-NLS-1$
                     + e.getName() + "\',\'" //$NON-NLS-1$
-                    + e.getType().getLongDescr() + "\',\'" //$NON-NLS-1$
+                    + e.getType() + "\',\'" //$NON-NLS-1$
                     + e.getCategories() + "\',\'" //$NON-NLS-1$
                     + e.getPath() + "\',\'" //$NON-NLS-1$
                     + e.getHash() + "\',\'" //$NON-NLS-1$

@@ -45,15 +45,15 @@ import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
+import dpf.sp.gpinf.indexer.io.FragmentingReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
+import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
-import macee.core.Configurable;
 import repackaged.org.apache.http.HttpHost;
 import repackaged.org.apache.http.auth.AuthScope;
 import repackaged.org.apache.http.auth.UsernamePasswordCredentials;
@@ -486,7 +486,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                         inputStreamSrcPath != null ? item.getInputStreamFactory().getClass().getName() : null)
                 // TODO boost name?
                 .field(BasicProps.NAME, item.getName()).field(BasicProps.LENGTH, item.getLength())
-                .field(BasicProps.TYPE, item.getType().getLongDescr()).field(BasicProps.PATH, item.getPath())
+                .field(BasicProps.TYPE, item.getType()).field(BasicProps.PATH, item.getPath())
                 .timeField(BasicProps.CREATED, item.getCreationDate()).timeField(BasicProps.MODIFIED, item.getModDate())
                 .timeField(BasicProps.ACCESSED, item.getAccessDate())
                 .timeField(BasicProps.CHANGED, item.getChangeDate())

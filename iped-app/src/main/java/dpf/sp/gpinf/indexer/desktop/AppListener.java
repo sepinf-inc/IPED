@@ -18,8 +18,8 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import iped3.search.LuceneSearchResult;
 
 import java.awt.Component;
 import java.awt.Rectangle;
@@ -35,7 +35,7 @@ import org.apache.lucene.search.Query;
 
 public class AppListener implements ActionListener, MouseListener, ClearFilterListener {
 
-    private String texto = ""; //$NON-NLS-1$
+    private String searchText = ""; //$NON-NLS-1$
     private boolean clearAllFilters = false;
     private boolean clearSearchBox = false;
 
@@ -53,7 +53,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().gallery.scrollRectToVisible(new Rectangle());
 
         App.get().ipedResult = new MultiSearchResult();
-        App.get().getParams().lastSelectedDoc = -1;
+        App.get().setLastSelectedDoc(-1);
         App.get().resultsModel.fireTableDataChanged();
         if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null
                 && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
@@ -78,11 +78,11 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().referencesModel.clear();
 
         try {
-            PesquisarIndice task;
+            UICaseSearcherFilter task;
             if (query == null)
-                task = new PesquisarIndice(texto);
+                task = new UICaseSearcherFilter(searchText);
             else
-                task = new PesquisarIndice(query);
+                task = new UICaseSearcherFilter(query);
 
             task.applyUIQueryFilters();
             task.execute();
@@ -97,35 +97,35 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
 
         boolean updateFileList = false;
 
-        if (evt.getSource() == App.get().filtro && !App.get().filterManager.isUpdatingFilter()) {
+        if (evt.getSource() == App.get().filterComboBox && !App.get().filterManager.isUpdatingFilter()) {
 
-            int filterIndex = App.get().filtro.getSelectedIndex();
+            int filterIndex = App.get().filterComboBox.getSelectedIndex();
             if (filterIndex == 0 || filterIndex == -1) {
-                App.get().filtro.setBackground(App.get().filterManager.defaultColor);
+                App.get().filterComboBox.setBackground(App.get().filterManager.defaultColor);
             } else {
-                App.get().filtro.setBackground(App.get().alertColor);
+                App.get().filterComboBox.setBackground(App.get().alertColor);
             }
 
             updateFileList = true;
         }
 
-        if (evt.getSource() == App.get().termo && !clearSearchBox && evt.getActionCommand().equals("comboBoxChanged")
-                && !MarcadoresController.get().isUpdatingHistory()) {
-            if (App.get().termo.getSelectedItem() != null) {
-                texto = App.get().termo.getSelectedItem().toString();
-                if (texto.equals(MarcadoresController.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
-                    texto = ""; //$NON-NLS-1$
+        if (evt.getSource() == App.get().queryComboBox && !clearSearchBox && evt.getActionCommand().equals("comboBoxChanged")
+                && !BookmarksController.get().isUpdatingHistory()) {
+            if (App.get().queryComboBox.getSelectedItem() != null) {
+                searchText = App.get().queryComboBox.getSelectedItem().toString();
+                if (searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP)) {
+                    searchText = ""; //$NON-NLS-1$
                     clearSearchBox = true;
-                    App.get().termo.setSelectedItem(""); //$NON-NLS-1$
+                    App.get().queryComboBox.setSelectedItem(""); //$NON-NLS-1$
                 }
-                texto = texto.trim();
-                MarcadoresController.get().addToRecentSearches(texto);
+                searchText = searchText.trim();
+                BookmarksController.get().addToRecentSearches(searchText);
             }
 
-            if (!texto.isEmpty())
-                App.get().termo.setBorder(BorderFactory.createLineBorder(App.get().alertColor, 2, true));
+            if (!searchText.isEmpty())
+                App.get().queryComboBox.setBorder(BorderFactory.createLineBorder(App.get().alertColor, 2, true));
             else
-                App.get().termo.setBorder(null);
+                App.get().queryComboBox.setBorder(null);
 
             updateFileList = true;
         }
@@ -143,33 +143,33 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
             updateFileListing();
         }
 
-        if (evt.getSource() == App.get().ajuda) {
+        if (evt.getSource() == App.get().helpButton) {
             FileProcessor exibirAjuda = new FileProcessor(-1, false);
             exibirAjuda.execute();
         }
 
-        if (evt.getSource() == App.get().opcoes) {
-            App.get().getContextMenu().show(App.get(), App.get().opcoes.getX(), App.get().opcoes.getHeight());
+        if (evt.getSource() == App.get().optionsButton) {
+            App.get().getContextMenu().show(App.get(), App.get().optionsButton.getX(), App.get().optionsButton.getHeight());
         }
 
         if (evt.getSource() == App.get().checkBox) {
-            if (App.get().appCase.getMultiMarcadores().getTotalSelected() > 0) {
+            if (App.get().appCase.getMultiBookmarks().getTotalChecked() > 0) {
                 int result = JOptionPane.showConfirmDialog(App.get(), Messages.getString("AppListener.UncheckAll"), //$NON-NLS-1$
                         Messages.getString("AppListener.UncheckAll.Title"), JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
                 if (result == JOptionPane.YES_OPTION) {
-                    App.get().appCase.getMultiMarcadores().clearSelected();
+                    App.get().appCase.getMultiBookmarks().clearChecked();
                 }
             } else {
-                App.get().appCase.getMultiMarcadores().selectAll();
+                App.get().appCase.getMultiBookmarks().checkAll();
             }
 
             App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
-            App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUI();
+            App.get().appCase.getMultiBookmarks().saveState();
+            BookmarksController.get().updateUI();
         }
 
-        if (evt.getSource() == App.get().atualizar) {
-            InicializarBusca init = new InicializarBusca(App.get().getProcessingManager(), true);
+        if (evt.getSource() == App.get().updateCaseData) {
+            UICaseDataLoader init = new UICaseDataLoader(App.get().getProcessingManager(), true);
             init.execute();
         }
 
@@ -200,11 +200,11 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
     @Override
     public void mousePressed(MouseEvent evt) {
 
-        Object termo = App.get().termo.getSelectedItem();
+        Object termo = App.get().queryComboBox.getSelectedItem();
         if (termo != null && termo.equals(App.SEARCH_TOOL_TIP)
-                && App.get().termo.isAncestorOf((Component) evt.getSource())) {
+                && App.get().queryComboBox.isAncestorOf((Component) evt.getSource())) {
             clearSearchBox = true;
-            App.get().termo.setSelectedItem(""); //$NON-NLS-1$
+            App.get().queryComboBox.setSelectedItem(""); //$NON-NLS-1$
         }
 
     }
@@ -218,8 +218,8 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
     @Override
     public void clearFilter() {
         clearAllFilters = true;
-        App.get().filtro.setSelectedIndex(0);
-        App.get().termo.setSelectedItem(""); //$NON-NLS-1$
+        App.get().filterComboBox.setSelectedIndex(0);
+        App.get().queryComboBox.setSelectedItem(""); //$NON-NLS-1$
         if (App.get().filterDuplicates.isSelected())
             App.get().filterDuplicates.doClick();
         clearAllFilters = false;

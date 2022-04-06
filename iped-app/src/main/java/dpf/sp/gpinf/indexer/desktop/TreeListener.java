@@ -42,10 +42,10 @@ import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
-import iped3.search.LuceneSearchResult;
 
 public class TreeListener extends MouseAdapter
         implements TreeSelectionListener, ActionListener, TreeExpansionListener, ClearFilterListener {

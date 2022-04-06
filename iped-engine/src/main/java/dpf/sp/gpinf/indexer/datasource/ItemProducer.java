@@ -71,7 +71,7 @@ public class ItemProducer extends Thread implements Closeable {
     private void installDataSourceReaders() throws Exception {
 
         Class<? extends DataSourceReader>[] readerList = new Class[] { SleuthkitReader.class,
-                IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class, IpedCaseReader.class,
+                IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class,
                 FolderTreeReader.class // deve ser o último
         };
 

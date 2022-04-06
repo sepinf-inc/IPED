@@ -20,7 +20,7 @@ abstract public class AbstractMapaCanvas extends Canvas {
 
     ActionListener onChangeTileServer = null;
 
-    protected HashMap<String, Boolean> selecoesAfazer;
+    protected HashMap<String, Boolean> selectionMapToApply;
     protected Runnable saveRunnable;
 
     /* abstract methods */
@@ -32,7 +32,7 @@ abstract public class AbstractMapaCanvas extends Canvas {
 
     abstract public void setKML(String kml);
 
-    abstract public void redesenha();
+    abstract public void update();
 
     abstract public void addSaveKmlFunction(Runnable save);
 
@@ -40,7 +40,7 @@ abstract public class AbstractMapaCanvas extends Canvas {
 
     abstract public Component getContainer();
 
-    abstract public void selecionaMarcador(String mid, boolean b);
+    abstract public void selectCheckbox(String mid, boolean b);
 
     public MapSelectionListener getMapSelectionListener() {
         return mapSelectionListener;
@@ -70,15 +70,15 @@ abstract public class AbstractMapaCanvas extends Canvas {
         return saveRunnable;
     }
 
-    public void enviaSelecoes(final HashMap<String, Boolean> selecoes) {
-        if (this.selecoesAfazer == null) {
-            this.selecoesAfazer = new HashMap<String, Boolean>();
+    public void sendSelection(final HashMap<String, Boolean> selectionMap) {
+        if (this.selectionMapToApply == null) {
+            this.selectionMapToApply = new HashMap<String, Boolean>();
         }
 
-        String[] marks = new String[selecoes.keySet().size()];
-        marks = selecoes.keySet().toArray(marks);
+        String[] marks = new String[selectionMap.keySet().size()];
+        marks = selectionMap.keySet().toArray(marks);
         for (int i = 0; i < marks.length; i++) {
-            this.selecoesAfazer.put(marks[i], selecoes.get(marks[i]));
+            this.selectionMapToApply.put(marks[i], selectionMap.get(marks[i]));
         }
     }
 

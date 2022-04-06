@@ -76,7 +76,7 @@ import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.IItem;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -702,7 +702,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             List<IItemBase> result = searcher.search(query);
             IItemBase item = getBestItem(result, dbPath);
             if (item != null) {
-                try (InputStream is = item.getBufferedStream()) {
+                try (InputStream is = item.getBufferedInputStream()) {
                     WAAccount account = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
                     if (account != null)
                         return account;
@@ -917,7 +917,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 byte[] buf = new byte[8192];
 
-                try (InputStream is = result.get(0).getBufferedStream()) {
+                try (InputStream is = result.get(0).getBufferedInputStream()) {
                     int len = 0;
                     while ((len = is.read(buf)) != -1)
                         bos.write(buf, 0, len);
@@ -1073,7 +1073,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         context.set(IItemBase.class, item);
         ExtractorFactory extFactory = (ExtractorFactory) extFactoryClass.newInstance();
 
-        try (InputStream is = item.getBufferedStream()) {
+        try (InputStream is = item.getBufferedInputStream()) {
             extFactory.setConnectionParams(is, null, context, this);
             WAContactsExtractor waExtractor = extFactory.createContactsExtractor(item.getTempFile());
             waExtractor.extractContactList();

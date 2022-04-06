@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 import br.gov.pf.iped.webapi.json.DataListJSON;
 import br.gov.pf.iped.webapi.json.SourceJSON;
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import io.swagger.annotations.Api;

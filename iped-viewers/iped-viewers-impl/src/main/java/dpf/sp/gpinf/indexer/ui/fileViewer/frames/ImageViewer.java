@@ -39,12 +39,12 @@ import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.led.ImageViewPanel;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.io.SeekableInputStream;
 import iped3.util.MediaTypes;
 
-public class ImageViewer extends Viewer implements ActionListener {
+public class ImageViewer extends AbstractViewer implements ActionListener {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ImageViewer.class);
 

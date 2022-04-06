@@ -25,15 +25,15 @@ import org.apache.lucene.util.BytesRef;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
+import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
+import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.util.DocValuesUtil;
 import dpf.sp.gpinf.indexer.util.HashValue;
-import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
+import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
 import iped3.util.BasicProps;
-import macee.core.Configurable;
 
 /**
  * Task to ignore already commited files into index. Commited containers without

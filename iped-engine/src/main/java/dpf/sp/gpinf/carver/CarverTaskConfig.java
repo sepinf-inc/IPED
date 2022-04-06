@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.AbstractTaskConfig;
+import dpf.sp.gpinf.indexer.config.Configuration;
 
 public class CarverTaskConfig extends AbstractTaskConfig<XMLCarverConfiguration> {
 

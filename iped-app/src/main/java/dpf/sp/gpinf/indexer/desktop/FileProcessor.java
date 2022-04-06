@@ -40,7 +40,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
 import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.SleuthkitInputStreamFactory;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
 
@@ -61,7 +61,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         this.listRelated = listRelated;
         this.docId = docId;
 
-        App.get().getSearchParams().lastSelectedDoc = docId;
+        App.get().setLastSelectedDoc(docId);
 
         if (parsingTask != null) {
             parsingTask.cancel(true);
@@ -132,7 +132,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
         // TODO usar nova API e contornar exibição da Ajuda
         IPEDSource iCase = (IPEDSource) App.get().appCase.getAtomicSource(docId);
-        App.get().getSearchParams().lastSelectedSource = iCase;
+        App.get().setLastSelectedSource(iCase);
         IItem item = IndexItem.getItem(doc, iCase, false);
 
         long textSize = iCase.getTextSize(item.getId());
@@ -154,7 +154,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         waitSleuthkitInit(item);
 
         Set<String> highlights = new HashSet<>();
-        highlights.addAll(App.get().getParams().highlightTerms);
+        highlights.addAll(App.get().getHighlightTerms());
 
         if (App.get().similarFacesRefItem != null) {
             List<String> locations = SimilarFacesSearch.getMatchLocations(App.get().similarFacesRefItem, item);
@@ -166,7 +166,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         App.get().getViewerController().loadFile(item, viewItem, contentType, highlights);
 
         if (listRelated) {
-            App.get().subItemModel.listSubItens(doc);
+            App.get().subItemModel.listSubItems(doc);
             if (Thread.currentThread().isInterrupted()) {
                 return;
             }

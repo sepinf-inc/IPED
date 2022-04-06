@@ -42,7 +42,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 
 import dpf.sp.gpinf.indexer.localization.Messages;
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.AppMain;
@@ -83,7 +83,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     }
 
     public ProgressFrame(WorkerProvider task) {
-        super(Versao.APP_NAME);
+        super(Version.APP_NAME);
 
         this.setBounds(0, 0, 800, 400);
         this.setLocationRelativeTo(null);

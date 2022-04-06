@@ -55,9 +55,9 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
     public void updateModelAndSelection() {
 
         updatingSelection = true;
-        Set<String> labelSet = ((BookmarksTreeModel) App.get().bookmarksTree.getModel()).labels;
+        Set<String> bookmarkSet = ((BookmarksTreeModel) App.get().bookmarksTree.getModel()).bookmarks;
 
-        if (labelSet != null && !selection.isEmpty()) {
+        if (bookmarkSet != null && !selection.isEmpty()) {
 
             HashSet<String> tempSel = (HashSet<String>) selection.clone();
             selection.clear();
@@ -66,7 +66,7 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
             }
 
             for (String path : tempSel) {
-                if (App.get().appCase.getMultiMarcadores().getLabelMap().contains(path)) {
+                if (App.get().appCase.getMultiBookmarks().getBookmarkSet().contains(path)) {
                     selection.add(path);
                 }
             }

@@ -19,9 +19,9 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.SignatureConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.io.SeekableInputStream;
 import iped3.util.MediaTypes;
-import macee.core.Configurable;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.

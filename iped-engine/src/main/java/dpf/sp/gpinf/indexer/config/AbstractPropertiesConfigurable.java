@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public abstract class AbstractPropertiesConfigurable implements Configurable<UTF8Properties> {
 

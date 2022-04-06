@@ -204,13 +204,13 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas {
     }
 
     @Override
-    public void redesenha() {
+    public void update() {
 
-        if (this.selecoesAfazer != null) {
+        if (this.selectionMapToApply != null) {
             // repinta selecoes alteradas
-            final String[] marks = new String[this.selecoesAfazer.keySet().size()];
-            this.selecoesAfazer.keySet().toArray(marks);
-            final HashMap<String, Boolean> selecoesAfazerCopy = selecoesAfazer;
+            final String[] marks = new String[this.selectionMapToApply.keySet().size()];
+            this.selectionMapToApply.keySet().toArray(marks);
+            final HashMap<String, Boolean> selecoesAfazerCopy = selectionMapToApply;
 
             Platform.runLater(new Runnable() {
                 public void run() {
@@ -235,12 +235,12 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas {
                     }
                 }
             });
-            this.selecoesAfazer = null;
+            this.selectionMapToApply = null;
         }
     }
 
     @Override
-    public void selecionaMarcador(final String mid, final boolean b) {
+    public void selectCheckbox(final String mid, final boolean b) {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {

@@ -4,9 +4,7 @@ import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.Vector;
 
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
@@ -16,7 +14,7 @@ public class BookmarksTreeModel implements TreeModel {
 
     public static String ROOT = Messages.getString("BookmarksTreeModel.RootName"); //$NON-NLS-1$
     public static String NO_BOOKMARKS = Messages.getString("BookmarksTreeModel.NoBookmarks"); //$NON-NLS-1$
-    public Set<String> labels;
+    public Set<String> bookmarks;
 
     static class Bookmark implements Comparator<Bookmark> {
 
@@ -53,15 +51,16 @@ public class BookmarksTreeModel implements TreeModel {
             return null;
         }
 
-        if (labels == null) {
-            labels = (TreeSet<String>) App.get().appCase.getMultiMarcadores().getLabelMap().clone();
+        if (bookmarks == null) {
+            bookmarks = new TreeSet<>();
+            bookmarks.addAll(App.get().appCase.getMultiBookmarks().getBookmarkSet());
         }
 
         if (index == 0) {
             return NO_BOOKMARKS;
         }
 
-        String[] array = labels.toArray(new String[0]);
+        String[] array = bookmarks.toArray(new String[0]);
         Arrays.sort(array, Collator.getInstance());
 
         return array[index - 1];
@@ -76,7 +75,7 @@ public class BookmarksTreeModel implements TreeModel {
             if (App.get().appCase == null) {
                 return 0;
             } else {
-                return App.get().appCase.getMultiMarcadores().getLabelMap().size() + 1;
+                return App.get().appCase.getMultiBookmarks().getBookmarkSet().size() + 1;
             }
         }
     }

@@ -40,7 +40,7 @@ import org.sqlite.SQLiteException;
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 
@@ -385,7 +385,7 @@ public class Extractor {
                 logger.debug("Document mediaType: {}", message.getMediaMime());
                 message.setMediaHash(item.getHash());
                 message.setThumb(item.getThumb());
-                message.setMediaExtension(item.getTypeExt());
+                message.setMediaExtension(item.getType());
                 message.setMediaItem(item);
                 message.setMediaComment(query);
                 break;
@@ -403,7 +403,7 @@ public class Extractor {
                 message.setLinkImage(r.getThumb());
                 message.setMediaHash(r.getHash());
                 message.setMediaName(r.getName());
-                message.setMediaExtension(r.getTypeExt());
+                message.setMediaExtension(r.getType());
                 message.setMediaItem(r);
                 message.setMediaComment(query);
             }
@@ -419,7 +419,7 @@ public class Extractor {
                 message.setThumb(r.getThumb());
                 message.setMediaHash(r.getHash());
                 message.setMediaName(r.getName());
-                message.setMediaExtension(r.getTypeExt());
+                message.setMediaExtension(r.getType());
                 message.setMediaItem(r);
                 message.setMediaComment(query);
             }

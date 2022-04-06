@@ -37,9 +37,9 @@ import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped3.IItem;
-import iped3.search.LuceneSearchResult;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -98,9 +98,9 @@ public class ReferencesTableModel extends AbstractTableModel
 
     @Override
     public void setValueAt(Object value, int row, int col) {
-        App.get().appCase.getMultiMarcadores().setSelected((Boolean) value,
+        App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
                 App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        MarcadoresController.get().atualizarGUI();
+        BookmarksController.get().updateUI();
     }
 
     @Override
@@ -109,8 +109,8 @@ public class ReferencesTableModel extends AbstractTableModel
             return row + 1;
 
         } else if (col == 1) {
-            return App.get().appCase.getMultiMarcadores()
-                    .isSelected(App.get().appCase.getItemId(results.getLuceneIds()[row]));
+            return App.get().appCase.getMultiBookmarks()
+                    .isChecked(App.get().appCase.getItemId(results.getLuceneIds()[row]));
 
         } else {
             try {
@@ -202,7 +202,7 @@ public class ReferencesTableModel extends AbstractTableModel
     
             try {
                 IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-                results = task.luceneSearch();
+                results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
     
                 final int length = results.getLength();
     

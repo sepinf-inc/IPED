@@ -18,7 +18,7 @@ import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 
@@ -88,7 +88,7 @@ public class SkypeSqlite implements SkypeStorage {
     }
 
     private File getTempFile(IItemBase item) {
-        try (InputStream is = item.getBufferedStream()) {
+        try (InputStream is = item.getBufferedInputStream()) {
             Path temp = Files.createTempFile("sqlite-parser", null); //$NON-NLS-1$
             Files.copy(is, temp, StandardCopyOption.REPLACE_EXISTING);
             return temp.toFile();

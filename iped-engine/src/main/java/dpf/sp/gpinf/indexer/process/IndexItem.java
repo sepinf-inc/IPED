@@ -72,14 +72,15 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.DateUtils;
 
-import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
+import dpf.sp.gpinf.indexer.lucene.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIOInputInputStreamFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
@@ -91,8 +92,6 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
-import gpinf.dev.filetypes.GenericFileType;
-import iped3.IEvidenceFileType;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.util.BasicProps;
@@ -322,10 +321,8 @@ public class IndexItem extends BasicProps {
         doc.add(new Field(EXT, value, storedTokenizedNoNormsField));
         doc.add(new SortedDocValuesField(EXT, new BytesRef(normalize(value))));
 
-        IEvidenceFileType fileType = evidence.getType();
-        if (fileType != null) {
-            value = fileType.getLongDescr();
-        } else {
+        value = evidence.getType();
+        if (value == null) {
             value = ""; //$NON-NLS-1$
         }
         doc.add(new Field(TYPE, value, storedTokenizedNoNormsField));
@@ -443,11 +440,13 @@ public class IndexItem extends BasicProps {
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
 
-        byte[] similarityFeatures = evidence.getImageSimilarityFeatures();
+        byte[] similarityFeatures = (byte[]) evidence.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
+        // clear extra property to don't add it again later when iterating over extra props
+        evidence.getExtraAttributeMap().remove(ImageSimilarityTask.SIMILARITY_FEATURES);
         if (similarityFeatures != null) {
-            doc.add(new BinaryDocValuesField(SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
-            doc.add(new StoredField(SIMILARITY_FEATURES, similarityFeatures));
-            doc.add(new IntPoint(SIMILARITY_FEATURES, similarityFeatures[0], similarityFeatures[1],
+            doc.add(new BinaryDocValuesField(ImageSimilarityTask.SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
+            doc.add(new StoredField(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures));
+            doc.add(new IntPoint(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures[0], similarityFeatures[1],
                     similarityFeatures[2], similarityFeatures[3]));
         }
 
@@ -870,7 +869,7 @@ public class IndexItem extends BasicProps {
 
             value = doc.get(IndexItem.TYPE);
             if (value != null) {
-                evidence.setType(new GenericFileType(value));
+                evidence.setType(value);
             }
 
             for (String category : doc.getValues(IndexItem.CATEGORY)) {
@@ -966,9 +965,9 @@ public class IndexItem extends BasicProps {
                     }
                 }
 
-                BytesRef bytesRef = doc.getBinaryValue(SIMILARITY_FEATURES);
+                BytesRef bytesRef = doc.getBinaryValue(ImageSimilarityTask.SIMILARITY_FEATURES);
                 if (bytesRef != null) {
-                    evidence.setImageSimilarityFeatures(bytesRef.bytes);
+                    evidence.setExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES, bytesRef.bytes);
                 }
 
                 File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
@@ -1017,6 +1016,11 @@ public class IndexItem extends BasicProps {
             value = doc.get(IndexItem.OFFSET);
             if (value != null) {
                 evidence.setFileOffset(Long.parseLong(value));
+            }
+
+            value = doc.get(IndexItem.ISROOT);
+            if (value != null) {
+                evidence.setRoot(Boolean.parseBoolean(value));
             }
 
             Set<String> multiValuedFields = new HashSet<>();

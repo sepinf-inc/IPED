@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.HashDBLookupConfig;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
@@ -26,7 +26,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupProvider;
 import gpinf.hashdb.HashDB;
 import gpinf.hashdb.HashDBDataSource;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class HashDBLookupTask extends AbstractTask {
 
