@@ -37,11 +37,10 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import iped3.IEvidenceFileType;
 import iped3.IHashValue;
 import iped3.IItem;
+import iped3.IItemBase;
 import iped3.datasource.IDataSource;
-import iped3.io.IItemBase;
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
@@ -115,7 +114,7 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
-            public String getTypeExt() {
+            public String getType() {
                 return this.getExt();
             }
 
@@ -169,12 +168,6 @@ public abstract class BaseItemSearchContext extends TestCase {
             public Long getLength() {
                 // TODO Auto-generated method stub
                 return file.length();
-            }
-
-            @Override
-            public byte[] getImageSimilarityFeatures() {
-                // TODO Auto-generated method stub
-                return null;
             }
 
             @Override
@@ -238,9 +231,8 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
-            public void setType(IEvidenceFileType type) {
+            public void setType(String type) {
                 // TODO Auto-generated method stub
-
             }
 
             @Override
@@ -382,12 +374,6 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
-            public void setImageSimilarityFeatures(byte[] imageSimilarityFeatures) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
             public void setIdInDataSource(String string) {
                 // TODO Auto-generated method stub
 
@@ -520,12 +506,6 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
-            public IEvidenceFileType getType() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
             public TikaInputStream getTikaStream() throws IOException {
                 return TikaInputStream.get(file.toPath());
             }
@@ -635,7 +615,7 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
-            public BufferedInputStream getBufferedStream() throws IOException {
+            public BufferedInputStream getBufferedInputStream() throws IOException {
                 return new BufferedInputStream(Files.newInputStream(file.toPath()));
             }
 

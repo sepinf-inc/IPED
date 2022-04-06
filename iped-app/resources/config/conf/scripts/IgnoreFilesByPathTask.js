@@ -20,7 +20,7 @@ function finish(){}
  * It can access any method of EvidenceFile class:
  *
  *	Some Getters:
- *	String:  getName(), getExt(), getTypeExt(), getPath(), getHash(), getMediaType().toString(), getCategories() (categories separated by | )
+ *	String:  getName(), getExt(), getType(), getPath(), getHash(), getMediaType().toString(), getCategories() (categories separated by | )
  *	Date:    getModDate(), getCreationDate(), getAccessDate() (podem ser nulos)
  *  Boolean: isDeleted(), isDir(), isRoot(), isCarved(), isSubItem(), isTimedOut(), hasChildren()
  *	Long:    getLength()
@@ -28,7 +28,7 @@ function finish(){}
  *  Object:  getExtraAttribute(String key) (returns an extra attribute)
  *  String:  getParsedTextCache() (returns item extracted text, if this task is placed after ParsingTask)
  *  File:    getTempFile() (returns a temp file with item content)
- *  BufferedInputStream: getBufferedStream() (returns an InputStream with item content)
+ *  BufferedInputStream: getBufferedInputStream() (returns an InputStream with item content)
  *
  *  Some Setters: 
  *           setToIgnore(boolean) (ignores the item and excludes it from processing and case)

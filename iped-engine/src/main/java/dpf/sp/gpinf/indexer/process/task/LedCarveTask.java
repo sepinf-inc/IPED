@@ -21,7 +21,7 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
@@ -30,8 +30,8 @@ import gpinf.hashdb.HashDBDataSource;
 import gpinf.hashdb.LedHashDB;
 import gpinf.hashdb.LedItem;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.util.MediaTypes;
-import macee.core.Configurable;
 
 public class LedCarveTask extends BaseCarveTask {
 
@@ -184,7 +184,7 @@ public class LedCarveTask extends BaseCarveTask {
         try {
             long offset = 0;
             int read512 = 0;
-            is = evidence.getBufferedStream();
+            is = evidence.getBufferedInputStream();
             while ((read512 = is.read(buf512)) > 0) {
                 if (read512 != buf512.length) break;
                 cnt512total++;

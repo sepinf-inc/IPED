@@ -41,23 +41,23 @@ class PythonScriptTask:
         ids = searcher.search().getIds()
         
         #create new bookmark and get its id
-        labelId = ipedCase.getMarcadores().newLabel("DOC files")
+        bookmarkId = ipedCase.getBookmarks().newBookmark("DOC files")
         
         #set bookmark comment
-        ipedCase.getMarcadores().setLabelComment(labelId, "Documents of DOC file format")
+        ipedCase.getBookmarks().setBookmarkComment(bookmarkId, "Documents of DOC file format")
         
         #add item ids to created bookmark
-        ipedCase.getMarcadores().addLabel(ids, labelId)
+        ipedCase.getBookmarks().addBookmark(ids, bookmarkId)
         
         #save changes
-        ipedCase.getMarcadores().saveState()
+        ipedCase.getBookmarks().saveState()
     
     
     # Process an Item object. This method is executed on all case items.
     # It can access any method of Item class and store results as a new extra attribute.
     #
     #  Some Getters:
-    #  String:  getName(), getExt(), getTypeExt(), getPath(), getHash(), getMediaType().toString(), getCategories() (categories separated by | )
+    #  String:  getName(), getExt(), getType(), getPath(), getHash(), getMediaType().toString(), getCategories() (categories separated by | )
     #  Date:    getModDate(), getCreationDate(), getAccessDate() (podem ser nulos)
     #  Boolean: isDeleted(), isDir(), isRoot(), isCarved(), isSubItem(), isTimedOut(), hasChildren()
     #  Long:    getLength()
@@ -65,7 +65,7 @@ class PythonScriptTask:
     #  Object:  getExtraAttribute(String key) (returns an extra attribute)
     #  String:  getParsedTextCache() (returns item extracted text, if this task is placed after ParsingTask)
     #  File:    getTempFile() (returns a temp file with item content)
-    #  BufferedInputStream: getBufferedStream() (returns an InputStream with item content)
+    #  BufferedInputStream: getBufferedInputStream() (returns an InputStream with item content)
     #
     #  Some Setters: 
     #           setToIgnore(boolean) (ignores the item and excludes it from processing and case)

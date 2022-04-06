@@ -46,7 +46,7 @@ import org.apache.tika.parser.mp4.ISO6709Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
@@ -57,8 +57,8 @@ import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.util.ExtraProperties;
-import macee.core.Configurable;
 
 /**
  * Tarefa de geração de imagem com miniaturas (thumbs) de cenas extraídas de
@@ -528,7 +528,7 @@ public class VideoThumbTask extends ThumbTask {
 
         } else if (mediaType.equals("image/gif")) {
             ImageReader reader = null;
-            try (BufferedInputStream is = evidence.getBufferedStream(); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
+            try (BufferedInputStream is = evidence.getBufferedInputStream(); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
                 reader = ImageIO.getImageReaders(iis).next();
                 reader.setInput(iis, false, true);
                 numImages = reader.getNumImages(true);
@@ -540,7 +540,7 @@ public class VideoThumbTask extends ThumbTask {
         
         } else if (mediaType.equals("image/png")) {
             byte[] b = new byte[128];
-            try (BufferedInputStream is = evidence.getBufferedStream()) {
+            try (BufferedInputStream is = evidence.getBufferedInputStream()) {
                 int read = IOUtils.read(is, b);
                 for (int i = 0; i <= read - 8; i++) {
                     if (b[i] == 'a' && b[i + 1] == 'c' && b[i + 2] == 'T' && b[i + 3] == 'L') {

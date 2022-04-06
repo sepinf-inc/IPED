@@ -6,11 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -30,9 +27,8 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
-import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 
 public class Util {
@@ -235,7 +231,7 @@ public class Util {
         t.setDaemon(true);
         t.start();
     }
-
+    
     public static void logInputStream(final InputStream stream, final Logger logger) {
         Thread t = new Thread() {
             @Override
@@ -265,7 +261,7 @@ public class Util {
 
     public static String getExportPath(IItemBase item) {
         String hash = item.getHash();
-        String ext = item.getTypeExt(); // $NON-NLS-1$
+        String ext = item.getType(); // $NON-NLS-1$
         return getExportPath(hash, ext);
     }
 
@@ -337,7 +333,7 @@ public class Util {
         try {
             String mime = item.getMediaType().toString();
             if (mime.startsWith("image")) //$NON-NLS-1$
-                thumb = IOUtil.loadInputStream(is = item.getBufferedStream());
+                thumb = IOUtil.loadInputStream(is = item.getBufferedInputStream());
             else if (mime.startsWith("video") && item.getViewFile() != null) //$NON-NLS-1$
                 thumb = Files.readAllBytes(item.getViewFile().toPath());
 

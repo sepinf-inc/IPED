@@ -42,8 +42,9 @@ import org.apache.lucene.util.BytesRef;
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.TimelineResults.TimeItemId;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -176,15 +177,15 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     @Override
     public void setValueAt(Object value, int row, int col) {
 
-        app.appCase.getMultiMarcadores().setSelected((Boolean) value, App.get().ipedResult.getItem(row));
+        app.appCase.getMultiBookmarks().setChecked((Boolean) value, App.get().ipedResult.getItem(row));
         App.get().galleryModel.setValueAt(value, row, col);
         App.get().resultsModel.fireTableCellUpdated(row, col);
 
         // app.appCase.getMarcadores().setSelected((Boolean)value,
         // app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
-        if (!MarcadoresController.get().isMultiSetting()) {
-            app.appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUISelection();
+        if (!BookmarksController.get().isMultiSetting()) {
+            app.appCase.getMultiBookmarks().saveState();
+            BookmarksController.get().updateUISelection();
         }
     }
 
@@ -214,7 +215,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             return LocalizedFormat.format(App.get().resultsTable.convertRowIndexToView(row) + 1);
 
         if (col == 1)
-            return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getItem(row));
+            return app.appCase.getMultiBookmarks().isChecked(app.ipedResult.getItem(row));
 
         String value = ""; //$NON-NLS-1$
 
@@ -240,7 +241,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             }
 
             if (field.equals(BOOKMARK_COL)) {
-                return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(app.ipedResult.getItem(row)));
+                return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(app.ipedResult.getItem(row)));
             }
 
             if (item instanceof TimeItemId) {
@@ -329,11 +330,11 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 if (fragments[0].getScore() > 0) {
                     StringBuilder s = new StringBuilder();
                     s.append("<html><nobr>"); //$NON-NLS-1$
-                    if (App.get().getParams().FONT_START_TAG != null)
-                        s.append(App.get().getParams().FONT_START_TAG);
+                    if (App.get().getFontStartTag() != null)
+                        s.append(App.get().getFontStartTag());
                     s.append(fragments[0].toString());
-                    if (App.get().getParams().FONT_START_TAG != null)
-                        s.append(App.get().getParams().HIGHLIGHT_END_TAG);
+                    if (App.get().getFontStartTag() != null)
+                        s.append(ATextViewer.HIGHLIGHT_END_TAG);
                     s.append("</html>"); //$NON-NLS-1$
                     value = s.toString();
                 }

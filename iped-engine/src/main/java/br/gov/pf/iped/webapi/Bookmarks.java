@@ -25,7 +25,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import iped3.IItemId;
-import iped3.search.IMultiMarcadores;
+import iped3.search.IMultiBookmarks;
 import iped3.search.IMultiSearchResult;
 
 @Api(value = "Bookmarks")
@@ -36,7 +36,7 @@ public class Bookmarks {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public DataListJSON<String> getAll() {
-        Set<String> bookmarks = Sources.multiSource.getMultiMarcadores().getLabelMap();
+        Set<String> bookmarks = Sources.multiSource.getMultiBookmarks().getBookmarkSet();
         String[] IDs = bookmarks.toArray(new String[0]);
         return new DataListJSON<String>(IDs);
     }
@@ -49,7 +49,7 @@ public class Bookmarks {
 
         IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
         IMultiSearchResult result = searcher.multiSearch();
-        result = Sources.multiSource.getMultiMarcadores().filtrarMarcadores(result, Collections.singleton(bookmark));
+        result = Sources.multiSource.getMultiBookmarks().filterBookmarks(result, Collections.singleton(bookmark));
 
         List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
         for (IItemId id : result.getIterator()) {
@@ -64,12 +64,12 @@ public class Bookmarks {
     @Path("{bookmark}/add")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response insertLabel(@PathParam("bookmark") String bookmark, @ApiParam(required = true) DocIDJSON[] docs) {
-        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
         List<IItemId> itemIds = new ArrayList<>();
         for (DocIDJSON d : docs) {
             itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
-        mm.addLabel(itemIds, bookmark);
+        mm.addBookmark(itemIds, bookmark);
         mm.saveState();
         return Response.ok().build();
     }
@@ -79,12 +79,12 @@ public class Bookmarks {
     @Path("{bookmark}/remove")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response removeLabel(@PathParam("bookmark") String bookmark, @ApiParam(required = true) DocIDJSON[] docs) {
-        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
         List<IItemId> itemIds = new ArrayList<>();
         for (DocIDJSON d : docs) {
             itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
-        mm.removeLabel(itemIds, bookmark);
+        mm.removeBookmark(itemIds, bookmark);
         mm.saveState();
         return Response.ok().build();
     }
@@ -93,8 +93,8 @@ public class Bookmarks {
     @POST
     @Path("{bookmark}")
     public Response addLabel(@PathParam("bookmark") String bookmark) {
-        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        mm.newLabel(bookmark);
+        IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
+        mm.newBookmark(bookmark);
         mm.saveState();
         return Response.ok().build();
     }
@@ -103,8 +103,8 @@ public class Bookmarks {
     @DELETE
     @Path("{bookmark}")
     public Response delLabel(@PathParam("bookmark") String bookmark) {
-        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        mm.delLabel(bookmark);
+        IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
+        mm.delBookmark(bookmark);
         mm.saveState();
         return Response.ok().build();
     }
@@ -113,8 +113,8 @@ public class Bookmarks {
     @PUT
     @Path("{old}/rename/{new}")
     public Response changeLabel(@PathParam("old") String oldLabel, @PathParam("new") String newLabel) {
-        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        mm.changeLabel(oldLabel, newLabel);
+        IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
+        mm.renameBookmark(oldLabel, newLabel);
         mm.saveState();
         return Response.ok().build();
     }

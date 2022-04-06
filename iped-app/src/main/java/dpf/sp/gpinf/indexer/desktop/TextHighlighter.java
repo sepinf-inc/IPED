@@ -30,6 +30,7 @@ import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.search.highlight.TokenSources;
 
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 
 public class TextHighlighter {
@@ -45,8 +46,8 @@ public class TextHighlighter {
         TokenStream stream = TokenSources.getTokenStream(fieldName, text, App.get().appCase.getAnalyzer());
         QueryScorer scorer = new QueryScorer(query, fieldName);
         Fragmenter fragmenter;
-        SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(App.get().getParams().HIGHLIGHT_START_TAG,
-                App.get().getParams().HIGHLIGHT_END_TAG);
+        SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(ATextViewer.HIGHLIGHT_START_TAG,
+                ATextViewer.HIGHLIGHT_END_TAG);
         int maxFragments = 1;
         if (minFragmentSize != 0) {
             fragmenter = new TextFragmenter(minFragmentSize);

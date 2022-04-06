@@ -23,7 +23,7 @@ public class JSGoogleInterfaceFunctions implements JSInterfaceFunctions {
     }
 
     @Override
-    public void selecionaMarcadorBF(JSObject markers) {
+    public void selectMarkerBF(JSObject markers) {
         String arguments = markers.toString();
         StringTokenizer st = new StringTokenizer(arguments, ","); //$NON-NLS-1$
         String o[] = new String[st.countTokens()];
@@ -133,7 +133,7 @@ public class JSGoogleInterfaceFunctions implements JSInterfaceFunctions {
     }
 
     @Override
-    public void marcaMarcadorBF(String markerId, boolean checked) {
+    public void checkMarkerBF(String markerId, boolean checked) {
         MarkerCheckBoxListener l = map.getMarkerCheckBoxListener();
         if (l != null) {
             int id = 0;
@@ -143,7 +143,7 @@ public class JSGoogleInterfaceFunctions implements JSInterfaceFunctions {
     }
 
     @Override
-    public void exportarKmlBF() {
+    public void exportKmlBF() {
         Runnable save = map.getSaveRunnable();
         (new Thread(save)).start();
     }

@@ -19,17 +19,17 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.process.ItemSearcher;
+import dpf.sp.gpinf.indexer.search.ItemSearcher;
 import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
+import iped3.configuration.Configurable;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.MediaTypes;
-import macee.core.Configurable;
 
 public class EmbeddedDiskProcessTask extends AbstractTask {
 
@@ -162,7 +162,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             }
             if (!alreadyExported) {
                 logger.info("Exporting item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
-                try (InputStream is = item.getBufferedStream()) {
+                try (InputStream is = item.getBufferedInputStream()) {
                     Files.copy(is, imageFile.toPath());
                 }
             }

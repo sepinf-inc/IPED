@@ -11,7 +11,7 @@ import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import dpf.sp.gpinf.indexer.util.FilterOutputStream;
+import dpf.sp.gpinf.indexer.io.FilterOutputStream;
 
 public class LogConfiguration {
 
@@ -25,7 +25,7 @@ public class LogConfiguration {
         logFile = log;
     }
 
-    public LogConfiguration(IndexFiles iped, String logPath) {
+    public LogConfiguration(Main iped, String logPath) {
         rootPath = iped.rootPath;
         if (logPath != null) {
             logFile = new File(logPath);

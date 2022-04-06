@@ -219,7 +219,7 @@ public class LibpffPSTParser extends AbstractParser {
                             if (i != 1) {
                                 handleObject(file, parent);
                                 try {
-                                    IOUtil.deletarDiretorio(file);
+                                    IOUtil.deleteDirectory(file);
                                 } catch (Exception e) {
                                 }
 
@@ -246,7 +246,7 @@ public class LibpffPSTParser extends AbstractParser {
         }
 
         try {
-            IOUtil.deletarDiretorio(dir);
+            IOUtil.deleteDirectory(dir);
         } catch (Exception e) {
         }
 

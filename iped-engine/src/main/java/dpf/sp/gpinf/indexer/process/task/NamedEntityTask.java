@@ -26,10 +26,10 @@ import dpf.sp.gpinf.indexer.config.NamedEntityTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
 
 public class NamedEntityTask extends AbstractTask {
 

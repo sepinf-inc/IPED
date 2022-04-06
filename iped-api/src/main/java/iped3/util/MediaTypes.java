@@ -4,7 +4,7 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 
 public class MediaTypes {
 

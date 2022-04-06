@@ -57,7 +57,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -368,7 +368,7 @@ public class TelegramParser extends SQLite3DBParser {
         List<IItemBase> result = searcher.search(query);
         IItemBase item = getBestItem(result, dbPath);
         if (item != null) {
-            try (InputStream is = item.getBufferedStream()) {
+            try (InputStream is = item.getBufferedInputStream()) {
                 Contact account = decodeAndroidAccount(is);
                 if (account != null)
                     return account;

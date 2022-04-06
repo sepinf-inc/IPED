@@ -11,7 +11,7 @@ br.gov.pf.iped.regex.cripto.BitcoinAddressValidatorService
 br.gov.pf.iped.regex.cripto.BCHAddressValidatorService
 br.gov.pf.iped.regex.cripto.EthereumAddressValidatorService
 br.gov.pf.iped.regex.cripto.RippleAddressValidatorService
-br.gov.pf.iped.regex.TelefoneRegexValidatorService
+br.gov.pf.iped.regex.PhoneRegexValidatorService
 br.gov.pf.iped.regex.PlacaRegexValidatorService
 br.gov.pf.iped.regex.IPLRegexValidatorService
 br.gov.pf.iped.regex.FacebookContactValidatorService
