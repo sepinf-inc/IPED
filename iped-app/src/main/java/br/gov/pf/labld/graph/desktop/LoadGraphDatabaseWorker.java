@@ -158,7 +158,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
 
     private File copyToTempFolder(File dataDir) throws IOException {
         File tmpDb = new File(System.getProperty("java.io.tmpdir"), "iped-graph" + dataDir.lastModified());
-        IOUtil.copiaDiretorio(dataDir, new File(tmpDb, GraphTask.DB_DATA_DIR), true);
+        IOUtil.copyDirectory(dataDir, new File(tmpDb, GraphTask.DB_DATA_DIR), true);
         return tmpDb;
     }
 

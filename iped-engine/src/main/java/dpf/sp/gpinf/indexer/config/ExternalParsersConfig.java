@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.DirectoryStream.Filter;
 
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class ExternalParsersConfig implements Configurable<String> {
 

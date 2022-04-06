@@ -7,7 +7,7 @@ import javax.swing.JLabel;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import iped3.io.IStreamSource;
 
-public class NoJavaFXViewer extends Viewer {
+public class NoJavaFXViewer extends AbstractViewer {
 
     final static String NO_JAVAFX_MSG = "<html>" + Messages.getString("NoJavaFXViewer.Warn") + "</html>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 

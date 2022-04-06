@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.codec.binary.Hex;
 
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 
 /**
  *

@@ -15,7 +15,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
 import iped3.datasource.IDataSource;
-import iped3.io.IItemBase;
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 
@@ -75,7 +74,7 @@ public interface IItem extends IItemBase {
      * @throws IOException
      */
     @Override
-    BufferedInputStream getBufferedStream() throws IOException;
+    BufferedInputStream getBufferedInputStream() throws IOException;
 
     /**
      *
@@ -183,11 +182,6 @@ public interface IItem extends IItemBase {
      * @throws IOException
      */
     TikaInputStream getTikaStream() throws IOException;
-
-    /**
-     * @return o tipo de arquivo baseado na análise de assinatura
-     */
-    IEvidenceFileType getType();
 
     boolean hasTmpFile();
 
@@ -445,9 +439,9 @@ public interface IItem extends IItemBase {
 
     /**
      * @param type
-     *            tipo de arquivo
+     *            the detected file type extension
      */
-    void setType(IEvidenceFileType type);
+    void setType(String type);
 
     /**
      * @param viewFile
@@ -460,8 +454,6 @@ public interface IItem extends IItemBase {
     void setIdInDataSource(String string);
 
     void setThumb(byte[] thumb);
-
-    void setImageSimilarityFeatures(byte[] imageSimilarityFeatures);
 
     /**
      * @return returns the created evidenceFile.

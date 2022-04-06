@@ -39,7 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgsImpl;
-import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.Main;
 
 public class ReportDialog implements ActionListener, TableModelListener {
 
@@ -131,13 +131,13 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
     public void updateList() {
 
-        String[] labels = App.get().appCase.getMultiMarcadores().getLabelMap().toArray(new String[0]);
+        String[] labels = App.get().appCase.getMultiBookmarks().getBookmarkSet().toArray(new String[0]);
         Arrays.sort(labels, Collator.getInstance());
 
         Object[][] data = new Object[labels.length][];
         int i = 0;
         for (String label : labels) {
-            Object[] row = { App.get().appCase.getMultiMarcadores().isInReport(label), label, false };
+            Object[] row = { App.get().appCase.getMultiBookmarks().isInReport(label), label, false };
             data[i++] = row;
         }
         TableModel tableModel = new TableModel(data, header);
@@ -262,7 +262,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
                         + File.separator + "lib" + File.separator + "iped-search-app.jar"; //$NON-NLS-1$ //$NON-NLS-2$
 
             File input = File.createTempFile("report", ".iped"); //$NON-NLS-1$ //$NON-NLS-2$
-            App.get().appCase.getMultiMarcadores().saveState(input);
+            App.get().appCase.getMultiBookmarks().saveState(input);
 
             String javaBin = "java";
             if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
@@ -270,7 +270,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
                         .getAbsolutePath();
             }
             List<String> cmd = new ArrayList<>();
-            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, IndexFiles.class.getCanonicalName(), //$NON-NLS-1$ //$NON-NLS-2$
+            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, Main.class.getCanonicalName(), //$NON-NLS-1$ //$NON-NLS-2$
                     "-d", input.getAbsolutePath(), //$NON-NLS-1$
                     "-o", output)); //$NON-NLS-1$
 
@@ -351,8 +351,8 @@ public class ReportDialog implements ActionListener, TableModelListener {
         if (e.getColumn() == 0) {
             Boolean checked = (Boolean) table.getValueAt(e.getFirstRow(), 0);
             String label = (String) table.getValueAt(e.getFirstRow(), 1);
-            App.get().appCase.getMultiMarcadores().setInReport(label, checked);
-            App.get().appCase.getMultiMarcadores().saveState();
+            App.get().appCase.getMultiBookmarks().setInReport(label, checked);
+            App.get().appCase.getMultiBookmarks().saveState();
         }
         if (e.getColumn() == 2) {
             Boolean checked = (Boolean) table.getValueAt(e.getFirstRow(), 2);

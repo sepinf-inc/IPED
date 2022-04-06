@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import iped3.configuration.Configurable;
 import iped3.configuration.IConfigurationDirectory;
-import macee.core.Configurable;
-import macee.core.ObjectManager;
+import iped3.configuration.ObjectManager;
 
 public class ConfigurationManager implements ObjectManager<Configurable<?>> {
 

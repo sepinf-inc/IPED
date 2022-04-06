@@ -27,7 +27,7 @@ import com.google.zxing.multi.qrcode.QRCodeMultiReader;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class QRCodeTask extends AbstractTask {
 
@@ -126,7 +126,7 @@ public class QRCodeTask extends AbstractTask {
         }
         BufferedImage img = null;
         long t = System.currentTimeMillis();
-        try (BufferedInputStream in = evidence.getBufferedStream()) {
+        try (BufferedInputStream in = evidence.getBufferedInputStream()) {
             img = ImageIO.read(in);
         } catch (Exception e) {
             logger.warn("Cannot read image file {} ({} bytes): {}", evidence.getPath(), evidence.getLength(),

@@ -23,19 +23,19 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
+import dpf.sp.gpinf.indexer.io.CloseFilterReader;
+import dpf.sp.gpinf.indexer.io.FragmentingReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker.STATE;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.CloseFilterReader;
-import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a

@@ -12,7 +12,7 @@ public interface CmdLineArgs {
 
     File getOutputDir();
 
-    File getPalavrasChave();
+    File getKeywords();
 
     List<String> getOcr();
 

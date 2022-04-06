@@ -557,7 +557,7 @@ public class OCRParser extends AbstractParser {
                     parse(xhtml, imageFile, imageText);
                     if (imageText.exists()) {
                         if (outputBase != null)
-                            IOUtil.copiaArquivo(imageText, output, true);
+                            IOUtil.copyFile(imageText, output, true);
                         imageText.delete();
                     }
                 } catch (IOException e) {
@@ -623,7 +623,7 @@ public class OCRParser extends AbstractParser {
                     parse(xhtml, imageFile, imageText);
                     if (imageText.exists()) {
                         if (outputBase != null)
-                            IOUtil.copiaArquivo(imageText, output, true);
+                            IOUtil.copyFile(imageText, output, true);
                         imageText.delete();
                     }
                 } finally {

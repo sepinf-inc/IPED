@@ -51,7 +51,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 
 import iped3.io.IStreamSource;
 
-public class PDFBoxViewer extends Viewer {
+public class PDFBoxViewer extends AbstractViewer {
 
     private static final long serialVersionUID = -7364831780786494299L;
 

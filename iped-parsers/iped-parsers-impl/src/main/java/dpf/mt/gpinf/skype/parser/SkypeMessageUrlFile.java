@@ -1,6 +1,6 @@
 package dpf.mt.gpinf.skype.parser;
 
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 
 /**
  * Classe que representa um arquivo enviado via URL registrado no arquivo

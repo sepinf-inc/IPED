@@ -22,10 +22,7 @@ import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
-import iped3.ICaseInfo;
 import iped3.IItem;
-import iped3.IFileGroup;
-import iped3.IPathNode;
 
 /**
  * Classe que define todos os dados do caso.
@@ -39,21 +36,6 @@ public class CaseData implements ICaseData {
      * Identificador utilizado para serialização da classe.
      */
     private static final long serialVersionUID = 197209091220L;
-
-    /**
-     * Informações do caso.
-     */
-    private final ICaseInfo caseInformation = new CaseInfo();
-
-    /**
-     * Grupos de arquivos por categoria.
-     */
-    public List<IFileGroup> bookmarks = new ArrayList<IFileGroup>();
-
-    /**
-     * Grupos de arquivos por data.
-     */
-    private final List<IFileGroup> timeGroups = new ArrayList<IFileGroup>();
 
     /**
      * Filas de processamento dos itens do caso
@@ -90,11 +72,6 @@ public class CaseData implements ICaseData {
     }
 
     private long discoveredVolume = 0;
-
-    /**
-     * Árvore de arquivos de evidência.
-     */
-    private final IPathNode root = new PathNode(Messages.getString("CaseData.Case")); //$NON-NLS-1$
 
     /**
      * indica que o caso se trata de um relatório
@@ -135,63 +112,6 @@ public class CaseData implements ICaseData {
         queues.put(0, new LinkedList<IItem>());
         for (Integer priority : MimeTypesProcessingOrder.getProcessingPriorities())
             queues.put(priority, new LinkedList<IItem>());
-    }
-
-    /**
-     * Retorna o objeto com as informações do caso.
-     *
-     * @return objeto da classe CaseInformation com informações do caso
-     */
-    public ICaseInfo getCaseInformation() {
-        return caseInformation;
-    }
-
-    /**
-     * Adiciona um bookmark.
-     *
-     * @param bookmark
-     *            bookmark a ser adicionado
-     */
-    public void addBookmark(IFileGroup bookmark) {
-        bookmarks.add(bookmark);
-    }
-
-    /**
-     * Obtém lista de bookmarks.
-     *
-     * @return lista não modificável de bookmarks.
-     */
-    public List<IFileGroup> getBookmarks() {
-        return bookmarks;
-    }
-
-    /**
-     * Adiciona um grupo de arquivos classificados por data.
-     *
-     * @param timeGroup
-     *            grupo de arquivos classificados por data
-     */
-    public void addTimeGroup(IFileGroup timeGroup) {
-        timeGroups.add(timeGroup);
-    }
-
-    /**
-     * Obtém lista de grupo de arquivos por data.
-     *
-     * @return lista não modificável de grupo de arquivos por data.
-     */
-    public List<IFileGroup> getTimeGroups() {
-        return Collections.unmodifiableList(timeGroups);
-    }
-
-    /**
-     * Obtém o objeto raiz da árvore de arquivos do caso.
-     *
-     * @return objeto raiz, a partir do qual é possível navegar em todo estrutura de
-     *         diretórios do caso.
-     */
-    public IPathNode getRootNode() {
-        return root;
     }
 
     /**

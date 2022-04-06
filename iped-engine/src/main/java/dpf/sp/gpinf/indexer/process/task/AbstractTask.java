@@ -17,7 +17,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.STATE;
 import gpinf.dev.data.CaseData;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Classe que representa uma tarefa de procesamento (assinatura, hash, carving,

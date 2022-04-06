@@ -3,12 +3,10 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import iped3.configuration.EnabledInterface;
 
 import java.nio.file.Path;
-
-import macee.core.EnabledInterface;
 
 public class EnableTaskProperty extends AbstractPropertiesConfigurable implements EnabledInterface {
 

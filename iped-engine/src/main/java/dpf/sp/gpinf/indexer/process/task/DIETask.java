@@ -19,20 +19,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
 
 /**
  * Explicit Image Detection (DIE) Task .
@@ -344,7 +344,7 @@ public class DIETask extends AbstractTask {
         BufferedImage img = null;
         try {
             if (extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = ImageMetadataUtil.getThumb(stream);
                 } finally {
@@ -352,7 +352,7 @@ public class DIETask extends AbstractTask {
                 }
             }
             if (img == null) {
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = ImageUtil.getSubSampledImage(stream, die.getExpectedImageSize(), die.getExpectedImageSize());
                 } finally {
@@ -360,7 +360,7 @@ public class DIETask extends AbstractTask {
                 }
             }
             if (img == null) {
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = externalImageConverter.getImage(stream, die.getExpectedImageSize(), false, evidence.getLength());
                 } finally {

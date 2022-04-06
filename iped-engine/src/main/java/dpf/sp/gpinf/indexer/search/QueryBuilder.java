@@ -45,10 +45,9 @@ import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IIPEDSource;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
-import iped3.search.IQueryBuilder;
 import iped3.util.BasicProps;
 
-public class QueryBuilder implements IQueryBuilder {
+public class QueryBuilder {
 
     private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer();
 

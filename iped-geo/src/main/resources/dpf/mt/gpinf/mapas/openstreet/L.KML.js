@@ -282,7 +282,7 @@ L.KML = L.MarkerClusterGroup.extend({
 				
 			}
     	}
-		window.app.selecionaMarcadorBF(mids);
+		window.app.selectMarkerBF(mids);
 	},
 	selecionaMarcadorCircle: function (p,distance){
 		mids=[];
@@ -300,7 +300,7 @@ L.KML = L.MarkerClusterGroup.extend({
 				m.atualizaIcone();				
 			}
     	}
-		window.app.selecionaMarcadorBF(mids);
+		window.app.selectMarkerBF(mids);
 	},
 	selecionaMarcador: function (id, b){
 		for(i=0;i<id.length;i++){
@@ -820,7 +820,7 @@ L.checkMarker = function(id){
 			marker.checked='true';
 		}
 		marker.atualizaIcone();
-		window.app.marcaMarcadorBF(marker.id, marker.checked=='true');
+		window.app.checkMarkerBF(marker.id, marker.checked=='true');
 };
 
 L.KMLMarker = L.Marker.extend({
@@ -889,7 +889,7 @@ L.KMLMarker = L.Marker.extend({
 			window.app.markerMouseClickedBF(this.id, button, 'shift');
 		}else{
 			if(e.originalEvent.ctrlKey){
-				window.app.marcaMarcadorBF(this.id, this.checked=='true');
+				window.app.checkMarkerBF(this.id, this.checked=='true');
 			}else{
 				var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
 				window.app.markerMouseClickedBF(this.id, button, '');

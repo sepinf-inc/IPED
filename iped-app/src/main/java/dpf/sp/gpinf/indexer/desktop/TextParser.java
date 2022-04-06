@@ -38,13 +38,10 @@ import org.apache.tika.parser.Parser;
 import dpf.sp.gpinf.indexer.ITextParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
@@ -65,7 +62,6 @@ public class TextParser extends CancelableWorker implements ITextParser {
     private TemporaryResources tmp;
     private static FileChannel parsedFile;
     private boolean firstHitAutoSelected = false;
-    AppSearchParams appSearchParams = null;
 
     // contém offset, tamanho, viewRow inicial e viewRow final dos fragemtos com
     // sortedHits
@@ -77,9 +73,8 @@ public class TextParser extends CancelableWorker implements ITextParser {
     // contém offset das quebras de linha do preview
     private ArrayList<Long> viewRows = new ArrayList<Long>();
 
-    public TextParser(AppSearchParams params, IStreamSource content, String contentType, TemporaryResources tmp) {
+    public TextParser(IStreamSource content, String contentType, TemporaryResources tmp) {
         try {
-            this.appSearchParams = params;
             this.content = content;
             this.tmp = tmp;
             if (content instanceof IItem) {
@@ -195,9 +190,9 @@ public class TextParser extends CancelableWorker implements ITextParser {
     }
 
     private ParseContext getTikaContext(IItem item) throws Exception {
-        ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
+        ParsingTask expander = new ParsingTask(item, App.get().getAutoParser());
         expander.init(ConfigurationManager.get());
-        ParseContext context = expander.getTikaContext((IPEDSource) appSearchParams.lastSelectedSource);
+        ParseContext context = expander.getTikaContext(App.get().getLastSelectedSource());
         expander.setExtractEmbedded(false);
         return context;
     }
@@ -231,7 +226,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
             CountInputStream cis = null;
             if (item.getLength() != null
-                    && !((IndexerDefaultParser) App.get().getAutoParser()).hasSpecificParser(metadata)) {
+                    && !App.get().getAutoParser().hasSpecificParser(metadata)) {
                 progressMonitor.setMaximum(item.getLength());
                 cis = new CountInputStream(is);
                 is = cis;
@@ -309,12 +304,12 @@ public class TextParser extends CancelableWorker implements ITextParser {
                     // do fragmento
                     lineBreak = false;
                     int startRow = viewRows.size() - 1;
-                    if (viewRows.size() - 1 < App.MAX_LINES) {
+                    if (viewRows.size() - 1 < ATextViewer.MAX_LINES) {
                         for (int i = 0; i < data.length - 1; i++) {
                             if (data[i] == 0x0A) {
                                 viewRows.add(startPos + i + 1);
                                 lineBreak = true;
-                                if (viewRows.size() - 1 == App.MAX_LINES) {
+                                if (viewRows.size() - 1 == ATextViewer.MAX_LINES) {
                                     break;
                                 }
                                 // lastNewLinePos = startPos + i;
@@ -339,14 +334,15 @@ public class TextParser extends CancelableWorker implements ITextParser {
                         sortedHits.put(startPos, hit);
 
                         // atualiza viewer permitindo rolar para o hit
-                        if (viewRows.size() - 1 < App.MAX_LINES) {
+                        if (viewRows.size() - 1 < ATextViewer.MAX_LINES) {
                             App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1,
                                     viewRows.size() - 2);
                             lastRowInserted = viewRows.size() - 2;
                         } else {
-                            int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
-                            int line = App.MAX_LINES
-                                    + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / line_disk_size);
+                            int line_disk_size = ATextViewer.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
+                            int line = ATextViewer.MAX_LINES
+                                    + (int) ((parsedFile.size() - viewRows.get(ATextViewer.MAX_LINES))
+                                            / line_disk_size);
                             App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
                             lastRowInserted = line;
                         }
@@ -357,25 +353,25 @@ public class TextParser extends CancelableWorker implements ITextParser {
                     }
 
                     // adiciona linha no viewer para o fragmento
-                    if (!lineBreak && viewRows.size() - 1 < App.MAX_LINES) {
+                    if (!lineBreak && viewRows.size() - 1 < ATextViewer.MAX_LINES) {
                         viewRows.add(parsedFile.position());
                     }
 
                 }
                 // atualiza viewer
-                if (viewRows.size() - 1 < App.MAX_LINES) {
+                if (viewRows.size() - 1 < ATextViewer.MAX_LINES) {
                     App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1,
                             viewRows.size() - 2);
                     lastRowInserted = viewRows.size() - 2;
                 } else {
-                    int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
-                    int line = App.MAX_LINES
-                            + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / line_disk_size);
+                    int line_disk_size = ATextViewer.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
+                    int line = ATextViewer.MAX_LINES
+                            + (int) ((parsedFile.size() - viewRows.get(ATextViewer.MAX_LINES)) / line_disk_size);
                     App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
                     lastRowInserted = line;
                 }
             }
-            if (lineBreak && viewRows.size() - 1 < App.MAX_LINES) {
+            if (lineBreak && viewRows.size() - 1 < ATextViewer.MAX_LINES) {
                 viewRows.add(parsedFile.size());
                 lastRowInserted++;
                 App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted, lastRowInserted);

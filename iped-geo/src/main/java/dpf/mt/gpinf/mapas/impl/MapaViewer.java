@@ -61,7 +61,7 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
 
     @Override
     public void redraw() {
-        mapaPanel.redesenhaMapa();
+        mapaPanel.updateMap();
     }
 
     @Override
@@ -75,19 +75,19 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
 
             Boolean b = (Boolean) resultsTable.getModel().getValueAt(e.getFirstRow(), e.getColumn());
 
-            mapaPanel.selecionaMarcador(item, b.booleanValue());
+            mapaPanel.selectCheckbox(item, b.booleanValue());
         }
 
         /* Se a alteração foi feita no próprio mapa, ela não precisa ser refeita. */
         if (!desabilitaTemp) {
-            mapaPanel.setMapaDesatualizado(true);
+            mapaPanel.setMapOutDated(true);
 
             /* somente chamado se o tab de mapas estiver sendo exibido */
             if (dockable != null && dockable.isShowing()) {
                 if (!updatingCheckbox)
-                    mapaPanel.redesenhaMapa();
+                    mapaPanel.updateMap();
                 else {
-                    mapaPanel.redesenha();
+                    mapaPanel.update();
                 }
 
                 updatingCheckbox = false;
@@ -125,10 +125,10 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
                     }
                 }
             }
-            mapaPanel.browserCanvas.enviaSelecoes(selecoes);
+            mapaPanel.browserCanvas.sendSelection(selecoes);
 
             if (dockable.isShowing()) {
-                mapaPanel.browserCanvas.redesenha();
+                mapaPanel.browserCanvas.update();
             }
         }
     }

@@ -12,12 +12,12 @@ import org.apache.lucene.index.SortedDocValues;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
+import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.HashValue;
-import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import iped3.IHashValue;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Tarefa de verificação de arquivos duplicados. Ignora o arquivo caso

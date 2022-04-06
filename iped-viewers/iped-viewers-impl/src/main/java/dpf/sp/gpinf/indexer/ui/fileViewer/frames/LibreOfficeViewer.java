@@ -83,7 +83,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ProcessUtil;
 import iped3.io.IStreamSource;
 
-public class LibreOfficeViewer extends Viewer {
+public class LibreOfficeViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(LibreOfficeViewer.class);
     /**
@@ -513,7 +513,7 @@ public class LibreOfficeViewer extends Viewer {
                 }
                 tempFile = File.createTempFile("iped-", ext); //$NON-NLS-1$
                 tempFile.deleteOnExit();
-                IOUtil.copiaArquivo(lastFile, tempFile);
+                IOUtil.copyFile(lastFile, tempFile);
                 lastFile = tempFile;
 
             } catch (IOException e) {

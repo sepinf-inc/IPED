@@ -57,17 +57,17 @@ public class HitsTableListener implements ListSelectionListener {
                 int[] hit = App.get().getTextViewer().textParser.getSortedHits().get(hitOff);
                 int hitLen = hit[0];
 
-                int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
+                int line_disk_size = ATextViewer.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
 
                 int startViewRow = hit[1];
                 long viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(startViewRow);
-                if (startViewRow == App.MAX_LINES) {
+                if (startViewRow == ATextViewer.MAX_LINES) {
                     startViewRow += (int) (hitOff - viewRowOff) / line_disk_size;
                 }
 
                 int endViewRow = hit[2];
                 viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(endViewRow);
-                if (endViewRow == App.MAX_LINES) {
+                if (endViewRow == ATextViewer.MAX_LINES) {
                     endViewRow += (int) (hitOff + hitLen - viewRowOff) / line_disk_size;
                 }
 
@@ -75,11 +75,11 @@ public class HitsTableListener implements ListSelectionListener {
                 do {
                     String line = App.get().getTextViewer().textViewerModel.getValueAt(viewRow, 0).toString();
                     int index1, index2, x = 0, width = 0;
-                    if ((index1 = line.indexOf(App.get().getParams().HIGHLIGHT_START_TAG)) != -1) {
+                    if ((index1 = line.indexOf(ATextViewer.HIGHLIGHT_START_TAG)) != -1) {
                         String text = line.substring(0, index1);
                         x = getWidth(text) - 100;
-                        index2 = line.indexOf(App.get().getParams().HIGHLIGHT_END_TAG);
-                        text = line.substring(index1, index2 - App.get().getParams().HIGHLIGHT_START_TAG.length());
+                        index2 = line.indexOf(ATextViewer.HIGHLIGHT_END_TAG);
+                        text = line.substring(index1, index2 - ATextViewer.HIGHLIGHT_START_TAG.length());
                         width = App.get().getFontMetrics(App.get().getTextViewer().textTable.getFont())
                                 .stringWidth(text) + 150;
                         Rectangle rect = App.get().getTextViewer().textTable.getCellRect(viewRow, 0, true);

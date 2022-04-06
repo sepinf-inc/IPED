@@ -11,7 +11,7 @@ import org.apache.lucene.index.SortedDocValues;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.util.DocValuesUtil;
+import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
 

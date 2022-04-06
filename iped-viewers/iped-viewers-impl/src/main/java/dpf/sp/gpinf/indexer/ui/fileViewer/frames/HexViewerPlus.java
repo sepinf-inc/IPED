@@ -119,7 +119,7 @@ import iped3.io.SeekableInputStream;
  * @author guilherme.dutra
  */
 
-public class HexViewerPlus extends Viewer implements KeyListener, MouseListener {
+public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseListener {
 
     private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".iped"
             + File.separator + "iped.hvp";
@@ -3732,8 +3732,8 @@ class CursorComponent extends JComponent {
  * static {
  * 
  * map.put( "HexViewerPlus.TabName", "Hex" ); map.put( "HexViewerPlus.appName",
- * "Hex Viewer Plus" ); map.put( "HexViewerPlus.HvpFileSettings",
- * "Arquivo de Configuração do Hex Viewer Plus" ); map.put(
+ * "Hex AbstractViewer Plus" ); map.put( "HexViewerPlus.HvpFileSettings",
+ * "Arquivo de Configuração do Hex AbstractViewer Plus" ); map.put(
  * "HexViewerPlus.position", "Posição" ); map.put( "HexViewerPlus.relative",
  * "Relativo" ); map.put( "HexViewerPlus.charset", "Charset" ); map.put(
  * "HexViewerPlus.selection", "Seleção" ); map.put( "HexViewerPlus.to", "a" );
@@ -3814,8 +3814,8 @@ class CursorComponent extends JComponent {
  * //English
  * 
  * map.put( "HexViewerPlus.TabName", "Hex" ); map.put( "HexViewerPlus.appName",
- * "Hex Viewer Plus" ); map.put( "HexViewerPlus.HvpFileSettings",
- * "Hex Viewer Plus File Settings" ); map.put( "HexViewerPlus.position",
+ * "Hex AbstractViewer Plus" ); map.put( "HexViewerPlus.HvpFileSettings",
+ * "Hex AbstractViewer Plus File Settings" ); map.put( "HexViewerPlus.position",
  * "Position" ); map.put( "HexViewerPlus.relative", "Relative" ); map.put(
  * "HexViewerPlus.charset", "Charset" ); map.put( "HexViewerPlus.selection",
  * "Selection" ); map.put( "HexViewerPlus.to", "to" ); map.put(

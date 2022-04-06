@@ -35,7 +35,7 @@ import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
 @SuppressWarnings("restriction")
-public class HtmlViewer extends Viewer {
+public class HtmlViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HtmlViewer.class);
 
@@ -106,7 +106,7 @@ public class HtmlViewer extends Viewer {
         });
 
         this.getPanel().add(jfxPanel);
-        // System.out.println("Viewer " + getName() + " ok");
+        // System.out.println("AbstractViewer " + getName() + " ok");
     }
 
     @Override
