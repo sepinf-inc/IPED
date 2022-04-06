@@ -1,0 +1,8 @@
+﻿########################################################################
+# Processing Settings
+########################################################################
+
+enableHashDBLookup = true
+enableQRCode = true
+enableCarving = true
+enableImageSimilarity = true

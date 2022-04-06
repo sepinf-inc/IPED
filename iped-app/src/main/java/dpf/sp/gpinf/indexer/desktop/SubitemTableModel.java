@@ -32,8 +32,9 @@ import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import iped3.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 
 public class SubitemTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {
@@ -84,9 +85,9 @@ public class SubitemTableModel extends AbstractTableModel
 
     @Override
     public void setValueAt(Object value, int row, int col) {
-        App.get().appCase.getMultiMarcadores().setSelected((Boolean) value,
+        App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
                 App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        MarcadoresController.get().atualizarGUI();
+        BookmarksController.get().updateUI();
     }
 
     @Override
@@ -95,8 +96,8 @@ public class SubitemTableModel extends AbstractTableModel
             return row + 1;
 
         } else if (col == 1) {
-            return App.get().appCase.getMultiMarcadores()
-                    .isSelected(App.get().appCase.getItemId(results.getLuceneIds()[row]));
+            return App.get().appCase.getMultiBookmarks()
+                    .isChecked(App.get().appCase.getItemId(results.getLuceneIds()[row]));
 
         } else {
             try {
@@ -152,12 +153,9 @@ public class SubitemTableModel extends AbstractTableModel
         App.get().parentItemModel.fireTableDataChanged();
     }
 
-    public void listSubItens(Document doc) {
+    public void listSubItems(Document doc) {
 
-        String parentId = doc.get(IndexItem.FTKID);
-        if (parentId == null) {
-            parentId = doc.get(IndexItem.ID);
-        }
+        String parentId = doc.get(IndexItem.ID);
 
         String textQuery = IndexItem.PARENTID + ":" + parentId; //$NON-NLS-1$
 
@@ -166,7 +164,7 @@ public class SubitemTableModel extends AbstractTableModel
 
         try {
             IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-            results = task.luceneSearch();
+            results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
 
             final int sumSubitens = results.getLength();
 
@@ -174,8 +172,8 @@ public class SubitemTableModel extends AbstractTableModel
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        App.get().subitemDock
-                                .setTitleText(sumSubitens + Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
+                        App.get().subitemDock.setTitleText(
+                                LocalizedFormat.format(sumSubitens) + Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
                     }
                 });
             }

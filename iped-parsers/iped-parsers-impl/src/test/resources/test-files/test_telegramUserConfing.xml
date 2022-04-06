@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <boolean name="sortFilesByName" value="false" />
+    <boolean name="notificationsSignUpSettingsLoaded" value="true" />
+    <int name="badPasscodeTries" value="0" />
+    <boolean name="appLocked" value="false" />
+    <string name="lastUpdateVersion2">7.7.0</string>
+    <string name="user">wViEk38cAAIoiF8IT/LWMUgYl8MJR3VpbGhlcm1lAAAJQW5kcmXDumNlAAAGZ3VpbGViAA01NTYx&#10;OTg2MTQzMDM1AAB3YGXMAAAAALmpMRsoiF8IzcZ/vIa0bgYAAAAA7BwEAM3Gf7yGtG4GAAAAAO4c&#10;BAABAAAASTm57QcRwWA=&#10;    </string>
+    <int name="2dialogsLoadOffsetId1" value="2147483647" />
+    <int name="2dialogsLoadOffsetChatId" value="0" />
+    <boolean name="suggestContacts" value="true" />
+    <long name="2dialogsLoadOffsetAccess" value="0" />
+    <int name="textSelectionHintShows" value="0" />
+    <boolean name="sortContactsByName" value="false" />
+    <int name="lastHintsSyncTime" value="1623265029" />
+    <int name="passcodeType" value="0" />
+    <int name="lastBroadcastId" value="-1" />
+    <string name="pushAuthKey">pZ5jhIcVoxUQMv0Qty7PPQtRUMY+QFct2C98DhynAmx/swwjjR/AonVHny7hz7+LNA3AIM8V47Mc&#10;67YpvQu5gbD6o6hcDv+iBCcXMjvblAWXDpSe+JSz4821bf/JkYos5ee96K2WjsfepJHBZ0R+WQWI&#10;ZTNicg0yXHIgAM6s0XlhrCXV7d8xFSYh4gIFE6Y9deAPBjokfUKaCtc7uFgpux0FtRwV0ucYIRZg&#10;1LX3s086eMa5luNGpZUr9ymZZzku/8SWpjcZ+FmpSMVrORZFOKi/Ce9TpAfFdF1IMoOQ8AHbc5YO&#10;WuICQ736F3EsOZbR/eBHU5bfc4b3p1GWkPi0Uw==&#10;    </string>
+    <int name="sharingMyLocationUntil" value="0" />
+    <int name="2dialogsLoadOffsetChatId1" value="0" />
+    <long name="passcodeRetryInMs" value="0" />
+    <long name="2dialogsLoadOffsetAccess1" value="0" />
+    <int name="2dialogsLoadOffsetId" value="2147483647" />
+    <int name="contactsSavedCount" value="374" />
+    <boolean name="registeredForPush" value="true" />
+    <int name="lastSendMessageId" value="-210001" />
+    <int name="passportConfigHash" value="0" />
+    <boolean name="unreadDialogsLoaded" value="true" />
+    <string name="passcodeSalt"></string>
+    <boolean name="saveIncomingPhotos" value="false" />
+    <boolean name="syncContacts" value="true" />
+    <long name="autoDownloadConfigLoadTime" value="0" />
+    <boolean name="notificationsSettingsLoaded3" value="true" />
+    <int name="autoLockIn" value="3600" />
+    <int name="2dialogsLoadOffsetChannelId1" value="0" />
+    <long name="lastUptimeMillis" value="0" />
+    <boolean name="hasSecureData" value="false" />
+    <int name="lastContactsSyncTime" value="1623265029" />
+    <string name="storageCacheDir"></string>
+    <boolean name="useFingerprint" value="true" />
+    <int name="scheduledOrNoSoundHintShows" value="0" />
+    <int name="lastPauseTime" value="0" />
+    <int name="2dialogsLoadOffsetChannelId" value="0" />
+    <boolean name="disableVoiceAudioEffects" value="false" />
+    <string name="passcodeHash1"></string>
+    <int name="lastLocalId" value="-210000" />
+    <boolean name="hasValidDialogLoadIds" value="true" />
+    <boolean name="draftsLoaded" value="true" />
+    <string name="pushString2">cLlc57VpQ1mBWY2z14lM_X:APA91bHrcZwaACRim5eQq_fSn5_Fi3j9zno5x2qcZBAgPpKIbisxhGgL1LdNjlmM2OIP5boftt9lDX1YiPMnrR4035Rh5R4ygmWgrYk_NfIn3qtqz5FfosvnYigVl_gWoz1QlGKbnDL5</string>
+    <int name="2dialogsLoadOffsetUserId" value="0" />
+    <int name="botRatingLoadTime" value="1623265029" />
+    <int name="2totalDialogsLoadCount1" value="65" />
+    <int name="2dialogsLoadOffsetDate1" value="0" />
+    <int name="ratingLoadTime" value="1623265029" />
+    <int name="lockRecordAudioVideoHint" value="0" />
+    <string name="passportConfigJson"></string>
+    <int name="lastMyLocationShareTime" value="0" />
+    <int name="loginTime" value="1623265028" />
+    <boolean name="2pinnedDialogsLoaded0" value="true" />
+    <boolean name="filtersLoaded" value="true" />
+    <boolean name="contactsReimported" value="true" />
+    <int name="2dialogsLoadOffsetUserId1" value="0" />
+    <int name="6migrateOffsetId" value="-1" />
+    <int name="selectedAccount" value="0" />
+    <boolean name="allowScreenCapture" value="false" />
+    <int name="2totalDialogsLoadCount" value="100" />
+    <int name="2dialogsLoadOffsetDate" value="0" />
+</map>

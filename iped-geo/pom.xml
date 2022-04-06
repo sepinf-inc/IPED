@@ -7,7 +7,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.19-snapshot</version>
+        <version>4.0.0-snapshot</version>
     </parent>
 
     <artifactId>iped-geo</artifactId>
@@ -38,6 +38,11 @@
         </dependency>
         <dependency>
             <groupId>iped</groupId>
+            <artifactId>iped-engine</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
             <artifactId>iped-viewers-api</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -56,11 +61,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-        	<groupId>org.apache.commons</groupId>
-    		<artifactId>commons-lang3</artifactId>
-    		<version>3.4</version>        	
         </dependency>
         <!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
 		<dependency>

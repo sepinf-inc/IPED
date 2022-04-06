@@ -1,16 +1,17 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.filetypes.GenericFileType;
-import iped3.IItem;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
-import java.io.File;
-import java.util.Properties;
-
-import org.apache.tika.config.TikaConfig;
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MimeTypeException;
 
-import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.parsers.util.Util;
+import iped3.IItem;
+import iped3.configuration.Configurable;
+import iped3.util.ExtraProperties;
 
 /**
  * Seta o tipo (extensão correta) dos itens com base no seu mediaType
@@ -19,11 +20,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
  */
 public class SetTypeTask extends AbstractTask {
 
-    TikaConfig tikaConfig;
-
-    public SetTypeTask() {
-        tikaConfig = TikaConfig.getDefaultConfig();
-    }
+    public static final String EXT_MISMATCH = "extMismatch"; //$NON-NLS-1$
 
     @Override
     public void process(IItem evidence) throws Exception {
@@ -37,49 +34,34 @@ public class SetTypeTask extends AbstractTask {
                 }
                 ext = ext.substring(1);
             }
-            evidence.setType(new GenericFileType(ext));
+            evidence.setType(ext);
+            Boolean isDecodedData = (Boolean) evidence.getExtraAttribute(ExtraProperties.DECODED_DATA);
+            if (isDecodedData == null || !isDecodedData) {
+                evidence.setExtraAttribute(EXT_MISMATCH, !ext.equals(evidence.getExt()));
+            }
         }
 
     }
 
-    public String getExtBySig(IItem evidence) {
+    private String getExtBySig(IItem evidence) throws TikaException, IOException {
 
-        String ext = ""; //$NON-NLS-1$
-        String ext1 = "." + evidence.getExt(); //$NON-NLS-1$
+        String origExt = evidence.getExt();
+        if (!origExt.isEmpty()) {
+            origExt = "." + origExt;
+        }
         MediaType mediaType = evidence.getMediaType();
-        if (!mediaType.equals(MediaType.OCTET_STREAM)) {
-            try {
-                do {
-                    boolean first = true;
-                    for (String ext2 : tikaConfig.getMimeRepository().forName(mediaType.toString()).getExtensions()) {
-                        if (first) {
-                            ext = ext2;
-                            first = false;
-                        }
-                        if (ext2.equals(ext1)) {
-                            ext = ext1;
-                            break;
-                        }
-                    }
-
-                } while (ext.isEmpty() && !MediaType.OCTET_STREAM
-                        .equals((mediaType = tikaConfig.getMediaTypeRegistry().getSupertype(mediaType))));
-            } catch (MimeTypeException e) {
-            }
-        }
-
-        if (ext.isEmpty() || ext.equals(".txt")) { //$NON-NLS-1$
-            ext = ext1;
-        }
-
-        return ext.toLowerCase();
+        String ext = Util.getTrueExtension(origExt, mediaType);
+        return ext;
 
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
-        // TODO Auto-generated method stub
+    public List<Configurable<?>> getConfigurables() {
+        return Collections.emptyList();
+    }
 
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
     }
 
     @Override

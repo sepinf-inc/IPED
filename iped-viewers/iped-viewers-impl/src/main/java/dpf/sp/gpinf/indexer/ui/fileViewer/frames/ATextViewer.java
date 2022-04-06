@@ -9,7 +9,6 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -18,6 +17,7 @@ import java.util.TreeMap;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.tika.exception.TikaException;
@@ -26,14 +26,29 @@ import org.apache.tika.io.TemporaryResources;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 import iped3.io.IStreamSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
+import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ITextParser;
 
-public abstract class ATextViewer extends Viewer implements KeyListener, MouseListener {
+public abstract class ATextViewer extends AbstractViewer implements KeyListener {
 
-    public static Font font = new Font("Courier New", Font.PLAIN, 11); //$NON-NLS-1$
+    public static Font font = new Font(Font.MONOSPACED, Font.PLAIN, 11);
+    
+    /**
+     * Maximum number of text break lines to track/keep on memory.
+     */
+    public static final int MAX_LINES = 100000;
+
+    /**
+     * Maximum size of text line
+     */
+    public static final int MAX_LINE_SIZE = 100;
+
+    public static final String HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">";
+
+    public static final String HIGHLIGHT_END_TAG = "</font>";
 
     public static final String TEXT_ENCODING = "UTF-32BE"; //$NON-NLS-1$
+
     public static final int CHAR_BYTE_COUNT = 4;
 
     public JTable textTable;
@@ -41,27 +56,43 @@ public abstract class ATextViewer extends Viewer implements KeyListener, MouseLi
     private JScrollPane viewerScroll;
     public ITextParser textParser;
     protected TemporaryResources tmp;
-    protected AppSearchParams appSearchParams;
+    protected HitsTable hitsTable;
     private AbstractTableModel hitsModel;
 
-    public ATextViewer(AppSearchParams params) {
+    public ATextViewer() {
         super(new GridLayout());
-        appSearchParams = params;
         textViewerModel = new TextViewerModel();
-        textTable = new JTable(textViewerModel);
+        textTable = new JTable(textViewerModel) {
+            private static final long serialVersionUID = -5129153322350459095L;
+
+            @Override
+            public void updateUI() {
+                Color background = UIManager.getColor("Viewer.background");
+                if (background == null)
+                    background = Color.WHITE;
+                setBackground(background);
+
+                Color foreground = UIManager.getColor("Viewer.foreground");
+                setForeground(foreground);
+
+                super.updateUI();
+            }
+        };
         textTable.setFont(font);
         // textTable.getColumnModel().getColumn(0).setCellRenderer(new
         // ViewerCellRenderer());
         viewerScroll = new JScrollPane(textTable);
         textTable.setFillsViewportHeight(true);
         textTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        textTable.getColumnModel().getColumn(0).setPreferredWidth(2000);
+        textTable.getColumnModel().getColumn(0).setPreferredWidth(4096);
         textTable.setShowGrid(false);
-        textTable.setBackground(Color.WHITE);
         textTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         textTable.addKeyListener(this);
-        textTable.addMouseListener(this);
         this.getPanel().add(viewerScroll);
+    }
+
+    public void setHitsTable(HitsTable hitsTable) {
+        this.hitsTable = hitsTable;
     }
 
     public void setHitsModel(AbstractTableModel hitsModel) {
@@ -131,10 +162,10 @@ public abstract class ATextViewer extends Viewer implements KeyListener, MouseLi
             if (textParser != null) {
                 try {
                     int lines = textParser.getViewRows().size() - 1;
-                    if (lines == appSearchParams.MAX_LINES) {
-                        lines = appSearchParams.MAX_LINES + (int) ((textParser.getParsedFile().size()
-                                - textParser.getViewRows().get(appSearchParams.MAX_LINES))
-                                / (CHAR_BYTE_COUNT * appSearchParams.MAX_LINE_SIZE)) + 1;
+                    if (lines == MAX_LINES) {
+                        lines = MAX_LINES + (int) ((textParser.getParsedFile().size()
+                                - textParser.getViewRows().get(MAX_LINES))
+                                / (CHAR_BYTE_COUNT * MAX_LINE_SIZE)) + 1;
                     }
                     return lines;
 
@@ -158,13 +189,13 @@ public abstract class ATextViewer extends Viewer implements KeyListener, MouseLi
         public Object getValueAt(int row, int col) {
             try {
                 long off = 0, len;
-                if (row < appSearchParams.MAX_LINES) {
+                if (row < MAX_LINES) {
                     off = textParser.getViewRows().get(row);
                     len = textParser.getViewRows().get(row + 1) - off;
                 } else {
-                    len = appSearchParams.MAX_LINE_SIZE * CHAR_BYTE_COUNT;
-                    off = textParser.getViewRows().get(appSearchParams.MAX_LINES)
-                            + (long) (row - appSearchParams.MAX_LINES) * len;
+                    len = MAX_LINE_SIZE * CHAR_BYTE_COUNT;
+                    off = textParser.getViewRows().get(MAX_LINES)
+                            + (long) (row - MAX_LINES) * len;
 
                     // Tratamento para não dividir hits destacados
                     // Desloca início da linha para final de fragmento com hit
@@ -233,8 +264,8 @@ public abstract class ATextViewer extends Viewer implements KeyListener, MouseLi
             for (Integer row : textTable.getSelectedRows()) {
                 String value = textViewerModel.getValueAt(row, 0).toString();
                 value = value.replaceAll("<html><pre>", "").replaceAll("</pre></html>", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                value = value.replaceAll(appSearchParams.HIGHLIGHT_START_TAG, "") //$NON-NLS-1$
-                        .replaceAll(appSearchParams.HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
+                value = value.replaceAll(HIGHLIGHT_START_TAG, "") //$NON-NLS-1$
+                        .replaceAll(HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
                 value = LuceneSimpleHTMLEncoder.htmlDecode(value);
                 copy.append(value + "\r\n"); //$NON-NLS-1$
             }
@@ -251,53 +282,24 @@ public abstract class ATextViewer extends Viewer implements KeyListener, MouseLi
 
     @Override
     public void scrollToNextHit(boolean forward) {
-
-        currentHit = appSearchParams.hitsTable.getSelectedRow();
+        if (hitsTable == null) {
+            return;
+        }
+        currentHit = hitsTable.getSelectedRow();
         totalHits = textParser.getHits().size();
         if (forward) {
             if (currentHit < totalHits - 1) {
-                appSearchParams.hitsTable.setRowSelectionInterval(currentHit + 1, currentHit + 1);
+                hitsTable.setRowSelectionInterval(currentHit + 1, currentHit + 1);
             }
 
         } else {
             if (currentHit > 0) {
-                appSearchParams.hitsTable.setRowSelectionInterval(currentHit - 1, currentHit - 1);
+                hitsTable.setRowSelectionInterval(currentHit - 1, currentHit - 1);
             }
 
         }
-        appSearchParams.hitsTable.scrollRectToVisible(appSearchParams.hitsTable
-                .getCellRect(appSearchParams.hitsTable.getSelectionModel().getLeadSelectionIndex(), 0, false));
+        hitsTable.scrollRectToVisible(
+                hitsTable.getCellRect(hitsTable.getSelectionModel().getLeadSelectionIndex(), 0, false));
 
     }
-
-    @Override
-    public void mouseClicked(MouseEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent arg0) {
-        // This kind of dependency should be avoided!
-        // WLAD appSearchParams.viewerControl.releaseLibreOfficeFocus();
-    }
-
-    @Override
-    public void mouseExited(MouseEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void mousePressed(MouseEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
 }

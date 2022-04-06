@@ -18,7 +18,9 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +29,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
 import dpf.sp.gpinf.indexer.util.HashValue;
@@ -39,11 +40,11 @@ import iped3.ICaseData;
 /**
  * Responsável por instanciar e executar o contador e o produtor de itens do
  * caso que adiciona os itens a fila de processamento. Podem obter os itens de
- * diversas fontes de dados: pastas, relatórios do FTK, imagens forenses ou
+ * diversas fontes de dados: pastas, relatórios do UFED, imagens forenses ou
  * casos do IPED.
  *
  */
-public class ItemProducer extends Thread {
+public class ItemProducer extends Thread implements Closeable {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ItemProducer.class);
 
@@ -53,7 +54,8 @@ public class ItemProducer extends Thread {
     private File output;
     private Manager manager;
     private DataSourceReader currentReader;
-    private ArrayList<DataSourceReader> sourceReaders = new ArrayList<DataSourceReader>();
+    private ArrayList<DataSourceReader> supportedReaders = new ArrayList<DataSourceReader>();
+    private ArrayList<DataSourceReader> instantiatedReaders = new ArrayList<DataSourceReader>();
 
     public ItemProducer(Manager manager, ICaseData caseData, boolean listOnly, List<File> datasources, File output)
             throws Exception {
@@ -68,15 +70,15 @@ public class ItemProducer extends Thread {
 
     private void installDataSourceReaders() throws Exception {
 
-        Class<? extends DataSourceReader>[] readerList = new Class[] { FTK3ReportReader.class, SleuthkitReader.class,
-                IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class, IpedCaseReader.class,
+        Class<? extends DataSourceReader>[] readerList = new Class[] { SleuthkitReader.class,
+                IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class,
                 FolderTreeReader.class // deve ser o último
         };
 
         for (Class<? extends DataSourceReader> srcReader : readerList) {
             Constructor<? extends DataSourceReader> constr = srcReader.getConstructor(ICaseData.class, File.class,
                     boolean.class);
-            sourceReaders.add(constr.newInstance(caseData, output, listOnly));
+            supportedReaders.add(constr.newInstance(caseData, output, listOnly));
         }
     }
 
@@ -85,6 +87,13 @@ public class ItemProducer extends Thread {
             return currentReader.currentDirectory();
         } else {
             return null;
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        for (DataSourceReader reader : instantiatedReaders) {
+            reader.close();
         }
     }
 
@@ -104,16 +113,18 @@ public class ItemProducer extends Thread {
                     LOGGER.info("Adding '{}'", source.getAbsolutePath()); //$NON-NLS-1$
                 }
 
-                int alternativeFiles = 0;
-                for (DataSourceReader srcReader : sourceReaders) {
+                for (DataSourceReader srcReader : supportedReaders) {
                     if (srcReader.isSupported(source)) {
+                        Constructor<? extends DataSourceReader> constr = srcReader.getClass()
+                                .getConstructor(ICaseData.class, File.class, boolean.class);
+                        srcReader = constr.newInstance(caseData, output, listOnly);
+                        instantiatedReaders.add(srcReader);
                         currentReader = srcReader;
-                        alternativeFiles += srcReader.read(source);
+                        srcReader.read(source);
                         break;
                     }
 
                 }
-                caseData.incAlternativeFiles(alternativeFiles);
 
                 // executed only when restarting interrupted processing
                 Set<HashValue> parentsWithLostSubitems = (Set<HashValue>) caseData

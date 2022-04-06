@@ -11,7 +11,7 @@ import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import dpf.sp.gpinf.indexer.util.FilterOutputStream;
+import dpf.sp.gpinf.indexer.io.FilterOutputStream;
 
 public class LogConfiguration {
 
@@ -25,16 +25,16 @@ public class LogConfiguration {
         logFile = log;
     }
 
-    public LogConfiguration(IndexFiles indexador, String logPath) {
-        rootPath = indexador.rootPath;
+    public LogConfiguration(Main iped, String logPath) {
+        rootPath = iped.rootPath;
         if (logPath != null) {
             logFile = new File(logPath);
         } else {
-            logFile = indexador.logFile;
+            logFile = iped.logFile;
             if (logFile == null)
                 logFile = new File(rootPath, "log/IPED-" + df.format(new Date()) + ".log"); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        indexador.logFile = logFile;
+        iped.logFile = logFile;
     }
 
     public File getLogFile() {

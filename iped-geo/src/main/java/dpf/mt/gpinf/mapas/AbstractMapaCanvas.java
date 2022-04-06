@@ -2,16 +2,25 @@ package dpf.mt.gpinf.mapas;
 
 import java.awt.Canvas;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
-import javafx.application.Platform;
+import org.apache.commons.io.IOUtils;
+
+import dpf.mt.gpinf.mapas.util.Messages;
 
 abstract public class AbstractMapaCanvas extends Canvas {
     MapSelectionListener mapSelectionListener = null;
     MarkerEventListener markerEventListener = null;
     MarkerCheckBoxListener markerCheckBoxListener = null;
 
-    protected HashMap<String, Boolean> selecoesAfazer;
+    ActionListener onChangeTileServer = null;
+
+    protected HashMap<String, Boolean> selectionMapToApply;
     protected Runnable saveRunnable;
 
     /* abstract methods */
@@ -23,7 +32,7 @@ abstract public class AbstractMapaCanvas extends Canvas {
 
     abstract public void setKML(String kml);
 
-    abstract public void redesenha();
+    abstract public void update();
 
     abstract public void addSaveKmlFunction(Runnable save);
 
@@ -31,7 +40,7 @@ abstract public class AbstractMapaCanvas extends Canvas {
 
     abstract public Component getContainer();
 
-    abstract public void selecionaMarcador(String mid, boolean b);
+    abstract public void selectCheckbox(String mid, boolean b);
 
     public MapSelectionListener getMapSelectionListener() {
         return mapSelectionListener;
@@ -61,15 +70,46 @@ abstract public class AbstractMapaCanvas extends Canvas {
         return saveRunnable;
     }
 
-    public void enviaSelecoes(final HashMap<String, Boolean> selecoes) {
-        if (this.selecoesAfazer == null) {
-            this.selecoesAfazer = new HashMap<String, Boolean>();
+    public void sendSelection(final HashMap<String, Boolean> selectionMap) {
+        if (this.selectionMapToApply == null) {
+            this.selectionMapToApply = new HashMap<String, Boolean>();
         }
 
-        String[] marks = new String[selecoes.keySet().size()];
-        marks = selecoes.keySet().toArray(marks);
+        String[] marks = new String[selectionMap.keySet().size()];
+        marks = selectionMap.keySet().toArray(marks);
         for (int i = 0; i < marks.length; i++) {
-            this.selecoesAfazer.put(marks[i], selecoes.get(marks[i]));
+            this.selectionMapToApply.put(marks[i], selectionMap.get(marks[i]));
         }
     }
+
+    public void setOnChangeTileServer(ActionListener actionListener) {
+        this.onChangeTileServer = actionListener;
+    }
+
+    public void fireChangeTileServer() {
+        if (this.onChangeTileServer != null) {
+            this.onChangeTileServer.actionPerformed(new ActionEvent(this, 1, "changeTileServer"));
+        }
+    }
+
+    public String replaceLocalizedMarks(String src, String prefix) throws IOException {
+        StringBuffer html = new StringBuffer(src);
+
+        Set<String> keys = Messages.getKeys();
+        for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
+            String key = (String) iterator.next();
+            if (key.startsWith(prefix)) {
+                int i = html.indexOf("{{" + key + "}}");
+                html.replace(i, i + key.length() + 4, Messages.getString(key));
+            }
+        }
+
+        return html.toString();
+    }
+
+    public String getToolBarHtml() throws IOException {
+        return replaceLocalizedMarks(
+                IOUtils.toString(AbstractMapaCanvas.class.getResourceAsStream("toolbar.html"), "UTF-8"), "toolbar");
+    }
+
 }

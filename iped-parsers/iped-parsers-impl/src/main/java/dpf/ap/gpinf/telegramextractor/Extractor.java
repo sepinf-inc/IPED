@@ -35,10 +35,12 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sqlite.SQLiteException;
 
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
-import iped3.io.IItemBase;
+import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 
@@ -58,6 +60,8 @@ public class Extractor {
     private HashMap<Long, Contact> contacts = new HashMap<>();
     private HashMap<String, byte[]> mediakey = new HashMap<>();
 
+    private DecoderTelegramInterface android_decoder = null;
+
     private Contact userAccount = null;
 
     public Extractor() {
@@ -65,6 +69,11 @@ public class Extractor {
 
     public Extractor(Connection conn) {
         this.conn = conn;
+    }
+
+    public Extractor(Connection conn, DecoderTelegramInterface d) {
+        this.conn = conn;
+        this.android_decoder = d;
     }
 
     public Extractor(File databaseFile) throws SQLException {
@@ -120,7 +129,6 @@ public class Extractor {
         ArrayList<Chat> l = new ArrayList<>();
         logger.debug("Extracting chat list Android");
         try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL)) {
-            DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(DECODER_CLASS).newInstance();
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 long chatId = rs.getLong("chatId");
@@ -131,10 +139,10 @@ public class Extractor {
                     dados = rs.getBytes("chatData");
                     Contact cont = getContact(chatId);
                     if (cont.getName() == null) {
-                        d.setDecoderData(dados, DecoderTelegramInterface.USER);
-                        d.getUserData(cont);
-                        if (cont.getAvatar() == null && !d.getPhotoData().isEmpty()) {
-                            searchAvatarFileName(cont, d.getPhotoData());
+                        android_decoder.setDecoderData(dados, DecoderTelegramInterface.USER);
+                        android_decoder.getUserData(cont);
+                        if (cont.getAvatar() == null && !android_decoder.getPhotoData().isEmpty()) {
+                            searchAvatarFileName(cont, android_decoder.getPhotoData());
                         }
                     }
                     cg = new Chat(chatId, cont, cont.getFullname());
@@ -142,11 +150,11 @@ public class Extractor {
                 } else if ((chatName = rs.getString("groupName")) != null) {
                     dados = rs.getBytes("groupData");
 
-                    d.setDecoderData(dados, DecoderTelegramInterface.CHAT);
+                    android_decoder.setDecoderData(dados, DecoderTelegramInterface.CHAT);
                     Contact cont = getContact(chatId);
-                    d.getChatData(cont);
+                    android_decoder.getChatData(cont);
 
-                    searchAvatarFileName(cont, d.getPhotoData());
+                    searchAvatarFileName(cont, android_decoder.getPhotoData());
 
                     ChatGroup group = new ChatGroup(chatId, cont, chatName);
                     cg = group;
@@ -216,8 +224,9 @@ public class Extractor {
 
     protected ArrayList<Message> extractMessages(Chat chat) throws Exception {
         ArrayList<Message> msgs = new ArrayList<Message>();
-        DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(DECODER_CLASS).newInstance();
-        try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL)) {
+        String SQL = SQLite3DBParser.containsTable("messages_v2", conn)
+                && SQLite3DBParser.containsTable("media_v3", conn) ? EXTRACT_MESSAGES_SQL_2 : EXTRACT_MESSAGES_SQL_1;
+        try (PreparedStatement stmt = conn.prepareStatement(SQL)) {
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
             ChatGroup cg = null;
@@ -229,9 +238,9 @@ public class Extractor {
                     byte[] data = rs.getBytes("data");
                     long mid = rs.getLong("mid");
                     Message message = new Message(mid, chat);
-                    d.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
-                    d.getMessageData(message);
-                    long fromid = d.getRemetenteId();
+                    android_decoder.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
+                    android_decoder.getMessageData(message);
+                    long fromid = android_decoder.getRemetenteId();
                     if (fromid != 0) {
                         message.setFrom(getContact(fromid));
                     }
@@ -243,12 +252,13 @@ public class Extractor {
 
                     if (message.getMediaMime() != null) {
                         if (message.getMediaMime().startsWith("image")) {
-                            List<PhotoData> list = d.getPhotoData();
+                            List<PhotoData> list = android_decoder.getPhotoData();
                             loadImage(message, list);
                         } else if (message.getMediaMime().startsWith("link")) {
-                            loadLink(message, d.getPhotoData());
+                            loadLink(message, android_decoder.getPhotoData());
                         } else if (message.getMediaMime().length() > 0) {
-                            loadDocument(message, d.getDocumentNames(), d.getDocumentSize());
+                            loadDocument(message, android_decoder.getDocumentNames(),
+                                    android_decoder.getDocumentSize());
                         }
 
                     }
@@ -364,7 +374,7 @@ public class Extractor {
         return msgs;
     }
 
-    private void loadDocument(Message message, List<String> names, int size) {
+    private void loadDocument(Message message, List<String> names, long size) {
         for (String name : names) {
             String query = getQuery(name, size);
             IItemBase item = getFileFromQuery(query);
@@ -375,10 +385,8 @@ public class Extractor {
                 logger.debug("Document mediaType: {}", message.getMediaMime());
                 message.setMediaHash(item.getHash());
                 message.setThumb(item.getThumb());
-                message.setMediaExtension(item.getTypeExt());
-                if (item.hasFile()) {
-                    message.setMediaFile(item.getFile().getAbsolutePath());
-                }
+                message.setMediaExtension(item.getType());
+                message.setMediaItem(item);
                 message.setMediaComment(query);
                 break;
             }
@@ -395,10 +403,8 @@ public class Extractor {
                 message.setLinkImage(r.getThumb());
                 message.setMediaHash(r.getHash());
                 message.setMediaName(r.getName());
-                message.setMediaExtension(r.getTypeExt());
-                if (r.hasFile()) {
-                    message.setMediaFile(r.getFile().getAbsolutePath());
-                }
+                message.setMediaExtension(r.getType());
+                message.setMediaItem(r);
                 message.setMediaComment(query);
             }
         }
@@ -413,16 +419,14 @@ public class Extractor {
                 message.setThumb(r.getThumb());
                 message.setMediaHash(r.getHash());
                 message.setMediaName(r.getName());
-                message.setMediaExtension(r.getTypeExt());
-                if (r.hasFile()) {
-                    message.setMediaFile(r.getFile().getAbsolutePath());
-                }
+                message.setMediaExtension(r.getType());
+                message.setMediaItem(r);
                 message.setMediaComment(query);
             }
         }
     }
 
-    private String getQuery(String name, int size) {
+    private String getQuery(String name, long size) {
         String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"";
         query += size > 0 ? " && " + BasicProps.LENGTH + ":" + size : "";
         return query;
@@ -445,7 +449,7 @@ public class Extractor {
                     return;
                 int nphones = 0;
                 while (rs.next()) {
-                    Contact c = Contact.getContactFromBytes(rs.getBytes("data"));
+                    Contact c = Contact.getContactFromBytes(rs.getBytes("data"), android_decoder);
                     /*
                      * d.setDecoderData(rs.getBytes("data"), DecoderTelegramInterface.USER); Contact
                      * c = new Contact(0); d.getUserData(c);
@@ -559,9 +563,17 @@ public class Extractor {
 
     private static final Comparator<Message> MSG_TIME_COMPARATOR = new Comparator<Message>() {
         public int compare(Message o1, Message o2) {
-            if (o1 == null || o2 == null)
+            boolean o1Empty = o1 == null || o1.getTimeStamp() == null;
+            boolean o2Empty = o2 == null || o2.getTimeStamp() == null;
+            if (o1Empty && o2Empty) {
                 return 0;
-            return o1.getTimeStamp().compareTo(o2.getTimeStamp());
+            } else if (o1Empty && !o2Empty) {
+                return -1;
+            } else if (!o1Empty && o2Empty) {
+                return 1;
+            } else {
+                return o1.getTimeStamp().compareTo(o2.getTimeStamp());
+            }
         }
     };
 
@@ -584,8 +596,9 @@ public class Extractor {
     private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key,t7.value FROM t7 where substr(t7.key,1,8)=? and "
             + "substr(t7.value,1,1)=x'00'";
 
-    private static final String EXTRACT_MESSAGES_SQL = "SELECT m.*,md.data as mediaData FROM messages m  "
-            + "left join media_v2 md on md.mid=m.mid where m.uid=? order by date";
+    private static final String EXTRACT_MESSAGES_SQL_1 = "SELECT m.*,md.data as mediaData FROM messages m  left join media_v2 md on md.mid=m.mid where m.uid=? order by date";
+
+    private static final String EXTRACT_MESSAGES_SQL_2 = "SELECT m.*,md.data as mediaData FROM messages_v2 m left join media_v3 md on md.mid=m.mid where m.uid=? order by date";
 
     private static final String EXTRACT_CONTACTS_SQL = "SELECT * FROM users";
     private static final String EXTRACT_CONTACTS_SQL_IOS = "SELECT * FROM t2";

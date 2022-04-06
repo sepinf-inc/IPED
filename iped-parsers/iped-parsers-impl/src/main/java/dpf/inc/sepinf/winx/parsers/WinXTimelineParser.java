@@ -19,6 +19,8 @@ import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
+import org.apache.tika.io.TemporaryResources;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -27,11 +29,13 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.detector.SQLiteContainerDetector;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 /**
  * Parser for the Windows 10 Timeline feature (v1803/1809/1903+)
@@ -90,46 +94,63 @@ public class WinXTimelineParser extends SQLite3DBParser {
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
+        
+        try (TemporaryResources tmp = new TemporaryResources()){
 
-        // Set Connection
-        Connection connection = getConnection(stream, metadata, context);
+            if (!(stream instanceof TikaInputStream)) {
+                stream = TikaInputStream.get(stream, tmp);
+            }
 
-        // Run Query and Obtain the Timeline entry iterable
-        try (TimelineEntryIterable entries = runQuery(connection)) {
+            // Checks if the db schema contains the tables Activity, Activity_PackageId and
+            // ActivityOperation (Windows 10 update v1803 and up)
+            // Otherwise sends older versions of ActivitiesCache.db to the the default
+            // SQLite parser
+            if (new SQLiteContainerDetector().detect(stream, metadata) != WinXTimelineParser.WIN10_TIMELINE) {
+                sqliteParser.parse(stream, handler, metadata, context);
+                return;
+            }
 
-            XHTMLContentHandler xHtmlOuput = startWriteTimelineEntries(handler, metadata);
+            // Set Connection
+            Connection connection = getConnection(stream, metadata, context);
 
-            int i = 0;
-            for (TimelineEntry entry : entries) {
+            // Run Query and Obtain the Timeline entry iterable
+            try (TimelineEntryIterable entries = runQuery(connection)) {
 
-                emitTimelineEntry(xHtmlOuput, entry);
+                XHTMLContentHandler xHtmlOuput = startWriteTimelineEntries(handler, metadata);
 
-                /**
-                 * Optionally extract entries as subitems
-                 */
-                if (extractEntries) {
-                    Metadata metadataTimelineItem = getEntryMetadata(entry, i++);
-                    extractor.parseEmbedded(new EmptyInputStream(), handler, metadataTimelineItem, true);
+                int i = 0;
+                for (TimelineEntry entry : entries) {
+
+                    emitTimelineEntry(xHtmlOuput, entry);
+
+                    /**
+                     * Optionally extract entries as subitems
+                     */
+                    if (extractEntries) {
+                        Metadata metadataTimelineItem = getEntryMetadata(entry, i++);
+                        extractor.parseEmbedded(new EmptyInputStream(), handler, metadataTimelineItem, true);
+                    }
+
+                }
+
+                endTimelineEntries(xHtmlOuput);
+
+            } catch (Exception e) {
+
+                sqliteParser.parse(stream, handler, metadata, context);
+                throw new TikaException("SQLite Win10Timeline parsing exception", e);
+
+            } finally {
+                try {
+                    if (connection != null)
+                        connection.close();
+                } catch (Exception e) {
+                    // swallow
                 }
 
             }
-
-            endTimelineEntries(xHtmlOuput);
-
-        } catch (Exception e) {
-
-            sqliteParser.parse(stream, handler, metadata, context);
-            throw new TikaException("SQLite Win10Timeline parsing exception", e);
-
-        } finally {
-            try {
-                if (connection != null)
-                    connection.close();
-            } catch (Exception e) {
-                // swallow
-            }
-
         }
+        
     }
 
     private Metadata getEntryMetadata(TimelineEntry entry, int i) throws ParseException {
@@ -138,13 +159,14 @@ public class WinXTimelineParser extends SQLite3DBParser {
 
         metadataTimelineItem.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WIN10_TIMELINE_REG.toString());
         metadataTimelineItem.add(Metadata.RESOURCE_NAME_KEY, "WinXTimeline Entry " + i);
+        metadataTimelineItem.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
         // These properties need to get a "Date" type as parameters, so it can correctly
         // show times in UTC
         metadataTimelineItem.set(TikaCoreProperties.CREATED, convertStringToDate(entry.getStartTime()));
         metadataTimelineItem.set(TikaCoreProperties.MODIFIED, convertStringToDate(entry.getLastModified()));
 
-        metadataTimelineItem.add((BasicProps.HASH), "");
+        metadataTimelineItem.add((BasicProps.LENGTH), "");
 
         // Timeline data
         metadataTimelineItem.add("etag", entry.getEtag());
@@ -575,7 +597,7 @@ public class WinXTimelineParser extends SQLite3DBParser {
      * https://github.com/kacos2000/WindowsTimeline/blob/master/WindowsTimeline.sql
      * Works with Windows 10 v1803/1809/1903+
      */
-
+    
     private String WINX_TIMELINE_QUERY = " SELECT " + " ActivityOperation.ETag as 'Etag', "
             + " ActivityOperation.OperationOrder as 'Order', " + " case "
             + " when ActivityOperation.ActivityType in (2,3,11,12,15)  "

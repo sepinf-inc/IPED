@@ -102,7 +102,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
 
                 LOGGER.info("Exporting file " + e.getPath()); //$NON-NLS-1$
 
-                try (InputStream in = e.getBufferedStream()) {
+                try (InputStream in = e.getBufferedInputStream()) {
                     int len = 0;
                     while ((len = in.read(buf)) != -1 && !this.isCancelled())
                         try {
@@ -138,35 +138,41 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
 
     public static void fillZipDates(ZipArchiveEntry entry, IItem item) {
 
-        X5455_ExtendedTimestamp extendedDates = new X5455_ExtendedTimestamp();
-        X000A_NTFS ntfsDates = new X000A_NTFS();
+        try {
+            X5455_ExtendedTimestamp extendedDates = new X5455_ExtendedTimestamp();
+            X000A_NTFS ntfsDates = new X000A_NTFS();
 
-        if (item.getAccessDate() != null) {
-            entry.setLastAccessTime(FileTime.fromMillis(item.getAccessDate().getTime()));
-            // above do not work until compress-1.17, so set manually:
-            extendedDates.setAccessJavaTime(item.getAccessDate());
-            extendedDates.setFlags(X5455_ExtendedTimestamp.ACCESS_TIME_BIT);
-            ntfsDates.setAccessJavaTime(item.getAccessDate());
+            if (item.getAccessDate() != null) {
+                entry.setLastAccessTime(FileTime.fromMillis(item.getAccessDate().getTime()));
+                // above do not work until compress-1.17, so set manually:
+                extendedDates.setAccessJavaTime(item.getAccessDate());
+                extendedDates.setFlags(X5455_ExtendedTimestamp.ACCESS_TIME_BIT);
+                ntfsDates.setAccessJavaTime(item.getAccessDate());
+            }
+
+            if (item.getCreationDate() != null) {
+                entry.setCreationTime(FileTime.fromMillis(item.getCreationDate().getTime()));
+                // above do not work until compress-1.17, so set manually:
+                extendedDates.setCreateJavaTime(item.getCreationDate());
+                extendedDates.setFlags(X5455_ExtendedTimestamp.CREATE_TIME_BIT);
+                ntfsDates.setCreateJavaTime(item.getCreationDate());
+            }
+
+            if (item.getModDate() != null) {
+                entry.setTime(item.getModDate().getTime());
+                entry.setLastModifiedTime(FileTime.fromMillis(item.getModDate().getTime()));
+                extendedDates.setModifyJavaTime(item.getModDate());
+                extendedDates.setFlags(X5455_ExtendedTimestamp.MODIFY_TIME_BIT);
+                ntfsDates.setModifyJavaTime(item.getModDate());
+            }
+
+            entry.addExtraField(extendedDates);
+            entry.addExtraField(ntfsDates);
+
+        } catch (Exception e) {
+            LOGGER.error("Error exporting Dates of item {} to ZIP package: {}", item.getPath(), e.toString());
         }
 
-        if (item.getCreationDate() != null) {
-            entry.setCreationTime(FileTime.fromMillis(item.getCreationDate().getTime()));
-            // above do not work until compress-1.17, so set manually:
-            extendedDates.setCreateJavaTime(item.getCreationDate());
-            extendedDates.setFlags(X5455_ExtendedTimestamp.CREATE_TIME_BIT);
-            ntfsDates.setCreateJavaTime(item.getCreationDate());
-        }
-
-        if (item.getModDate() != null) {
-            entry.setTime(item.getModDate().getTime());
-            entry.setLastModifiedTime(FileTime.fromMillis(item.getModDate().getTime()));
-            extendedDates.setModifyJavaTime(item.getModDate());
-            extendedDates.setFlags(X5455_ExtendedTimestamp.MODIFY_TIME_BIT);
-            ntfsDates.setModifyJavaTime(item.getModDate());
-        }
-
-        entry.addExtraField(extendedDates);
-        entry.addExtraField(ntfsDates);
     }
 
     @Override

@@ -1,9 +1,12 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
@@ -15,7 +18,7 @@ import java.io.InputStream;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -30,15 +33,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IconUtil;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.led.ImageViewPanel;
+import iped3.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.io.SeekableInputStream;
+import iped3.util.MediaTypes;
 
-public class ImageViewer extends Viewer implements ActionListener {
+public class ImageViewer extends AbstractViewer implements ActionListener {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ImageViewer.class);
 
@@ -46,7 +52,9 @@ public class ImageViewer extends Viewer implements ActionListener {
     protected JToolBar toolBar;
     private JSlider sliderBrightness;
 
-    private GraphicsMagicConverter graphicsMagicConverter;
+    private ExternalImageConverter externalImageConverter;
+
+    public static final String HIGHLIGHT_LOCATION = ImageViewer.class.getName() + "HighlightLocation:";
 
     private static final String actionRotLeft = "rotate-left";
     private static final String actionRotRight = "rotate-right";
@@ -56,6 +64,8 @@ public class ImageViewer extends Viewer implements ActionListener {
     private static final String actionFitWindow = "fit-window";
     private static final String actionCopyImage = "copy-image";
 
+    private static final int maxDim = 2400;
+    
     volatile protected BufferedImage image;
     volatile protected int rotation;
 
@@ -74,7 +84,7 @@ public class ImageViewer extends Viewer implements ActionListener {
 
     @Override
     public String getName() {
-        return "Imagem"; //$NON-NLS-1$
+        return "Image"; //$NON-NLS-1$
     }
 
     @Override
@@ -89,42 +99,54 @@ public class ImageViewer extends Viewer implements ActionListener {
             rotation = 0;
         }
     }
-
+    
     @Override
     public void loadFile(IStreamSource content, Set<String> highlightTerms) {
         cleanState(true);
         if (content != null) {
             InputStream in = null;
             try {
-                in = new BufferedInputStream(content.getStream());
-                image = ImageUtil.getSubSampledImage(in, 2000, 2000);
+                in = new BufferedInputStream(content.getSeekableInputStream());
+                // needed for embedded jbig2
+                String mimeType = content instanceof IItemBase
+                        ? MediaTypes.getMimeTypeIfJBIG2((IItemBase) content)
+                        : null;
+                image = ImageUtil.getSubSampledImage(in, maxDim, maxDim, mimeType);
 
                 if (image == null) {
                     IOUtil.closeQuietly(in);
-                    in = new BufferedInputStream(content.getStream());
-                    image = ImageUtil.getThumb(in);
-                }
-                if (image == null) {
-                    IOUtil.closeQuietly(in);
-                    SeekableInputStream sis = content.getStream();
+                    SeekableInputStream sis = content.getSeekableInputStream();
                     in = new BufferedInputStream(sis);
-                    image = graphicsMagicConverter.getImage(in, 1000, sis.size());
+                    image = externalImageConverter.getImage(in, maxDim, true, sis.size());
                 }
-
+                if (image == null) {
+                    IOUtil.closeQuietly(in);
+                    in = new BufferedInputStream(content.getSeekableInputStream());
+                    image = ImageMetadataUtil.getThumb(in);
+                }
                 if (image != null) {
                     IOUtil.closeQuietly(in);
-                    in = new BufferedInputStream(content.getStream());
-                    int orientation = ImageUtil.getOrientation(in);
+                    in = new BufferedInputStream(content.getSeekableInputStream());
+                    int orientation = ImageMetadataUtil.getOrientation(in);
+                    boolean isVideo = false;
                     if (orientation > 0) {
                         image = ImageUtil.rotate(image, orientation);
                     } else {
-                        String videoComment = ImageUtil.readJpegMetaDataComment(content.getStream());
+                        String videoComment = ImageUtil.readJpegMetaDataComment(content.getSeekableInputStream());
                         if (videoComment != null && videoComment.startsWith("Frames=")) {
+                            isVideo = true;
+                            if (!highlightTerms.isEmpty()) {
+                                drawRectangles(image, getZoom(content, image), highlightTerms);
+                            }
                             image = ImageUtil.getBestFramesFit(image, videoComment, imagePanel.getWidth(),
                                     imagePanel.getHeight());
                         }
                     }
+                    if (!isVideo && !highlightTerms.isEmpty()) {
+                      drawRectangles(image, getZoom(content, image), highlightTerms);
+                    }
                 }
+
             } catch (IOException e) {
                 e.printStackTrace();
 
@@ -134,6 +156,45 @@ public class ImageViewer extends Viewer implements ActionListener {
         }
         toolBar.setVisible(image != null && isToolbarVisible());
         updatePanel(image);
+    }
+
+    private double getZoom(IStreamSource content, BufferedImage img) throws IOException {
+        Dimension d = null;
+        try (InputStream is = content.getSeekableInputStream()) {
+            d = ImageUtil.getImageFileDimension(is);
+        }
+        if (d == null) {
+            try (InputStream is = content.getSeekableInputStream()) {
+                d = externalImageConverter.getDimension(is);
+            }
+        }
+        if (d == null)
+            return 0;
+        int originalDimension = Math.max(d.width, d.height);
+        int displayedDimension = Math.max(img.getWidth(), img.getHeight());
+        if (originalDimension == 0 || displayedDimension == 0)
+            return 0;
+        return displayedDimension / (double) originalDimension;
+    }
+
+    private void drawRectangles(BufferedImage img, double zoom, Set<String> highlights) {
+        if (zoom <= 0) 
+            return;
+        Graphics2D graph = img.createGraphics();
+        graph.setColor(Color.RED);
+        graph.setStroke(new BasicStroke(4));
+        for (String str : highlights) {
+            if (str.startsWith(HIGHLIGHT_LOCATION + "[") && str.endsWith("]")) {
+                String[] vals = str.substring(HIGHLIGHT_LOCATION.length() + 1, str.length() - 1).split(", ");
+                int top = (int) Math.round(Integer.parseInt(vals[0]) * zoom);
+                int right = (int) Math.round(Integer.parseInt(vals[1]) * zoom);
+                int bottom = (int) Math.round(Integer.parseInt(vals[2]) * zoom);
+                int left = (int) Math.round(Integer.parseInt(vals[3]) * zoom);
+                graph.drawRect(left, top, right - left, bottom - top);
+            }
+        }
+        graph.dispose();
+
     }
 
     protected void updatePanel(final BufferedImage img) {
@@ -156,8 +217,8 @@ public class ImageViewer extends Viewer implements ActionListener {
 
     @Override
     public void init() {
-        graphicsMagicConverter = new GraphicsMagicConverter();
-        graphicsMagicConverter.setNumThreads(Math.max(Runtime.getRuntime().availableProcessors() / 2, 1));
+        externalImageConverter = new ExternalImageConverter();
+        externalImageConverter.setNumThreads(Math.max(Runtime.getRuntime().availableProcessors() / 2, 1));
     }
 
     @Override
@@ -171,9 +232,9 @@ public class ImageViewer extends Viewer implements ActionListener {
     @Override
     public void dispose() {
         try {
-            graphicsMagicConverter.close();
+            externalImageConverter.close();
         } catch (IOException e) {
-            LOGGER.warn("Error closing " + graphicsMagicConverter, e);
+            LOGGER.warn("Error closing " + externalImageConverter, e);
         }
     }
 
@@ -200,7 +261,7 @@ public class ImageViewer extends Viewer implements ActionListener {
     private void createToolBar() {
         toolBar = new JToolBar();
         toolBar.setFloatable(false);
-        ImageIcon iconSeparator = IconUtil.getIcon("separator", resPath, 24);
+        Icon iconSeparator = IconUtil.getIcon("separator", resPath, 24);
 
         toolBar.add(new JLabel(iconSeparator));
         createToolBarButton(actionRotLeft);
@@ -224,13 +285,13 @@ public class ImageViewer extends Viewer implements ActionListener {
                 }
             }
         });
-        ImageIcon icon = IconUtil.getIcon("bright", resPath, 12);
+        Icon icon = IconUtil.getIcon("bright", resPath, 12);
         JPanel panelAux = new JPanel() {
             private static final long serialVersionUID = 8147197693022129080L;
 
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.drawImage(icon.getImage(), (getWidth() - icon.getIconWidth()) / 2, 0, null);
+                icon.paintIcon(this, g, (getWidth() - icon.getIconWidth()) / 2, 0);
             }
         };
         panelAux.setOpaque(false);

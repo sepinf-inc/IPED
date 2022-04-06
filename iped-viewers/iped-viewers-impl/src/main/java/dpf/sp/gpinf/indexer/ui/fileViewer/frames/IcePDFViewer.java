@@ -9,7 +9,6 @@ import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 import org.icepdf.core.pobjects.Catalog;
 import org.icepdf.core.pobjects.Document;
@@ -29,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import iped3.io.IStreamSource;
 
-public class IcePDFViewer extends Viewer {
+public class IcePDFViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IcePDFViewer.class);
     /**
@@ -58,6 +57,8 @@ public class IcePDFViewer extends Viewer {
 
     public IcePDFViewer() {
         super(new BorderLayout());
+        long t = System.currentTimeMillis();
+
         isToolbarVisible = true;
 
         // System.setProperty("org.icepdf.core.imageReference", "scaled"); //$NON-NLS-1$
@@ -68,10 +69,9 @@ public class IcePDFViewer extends Viewer {
         // pode provocar crash da jvm
         // System.setProperty("org.icepdf.core.awtFontLoading", "true");
 
-    }
-
-    @Override
-    public void init() {
+        this.labelMsg = new JLabel(Messages.getString("PDFViewer.OpenError"), JLabel.CENTER);
+        this.labelMsg.setVisible(false);
+        this.labelMsg.setPreferredSize(new Dimension(0, 50));
 
         new File(System.getProperties().getProperty("user.home"), ".icesoft/icepdf-viewer").mkdirs(); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -109,8 +109,11 @@ public class IcePDFViewer extends Viewer {
                 }
             }
         };
+
         pdfController.setIsEmbeddedComponent(true);
         pdfController.getDocumentViewController().getViewContainer().setFocusable(false);
+        pdfController.getDocumentViewController().setAnnotationCallback(
+                new org.icepdf.ri.common.MyAnnotationCallback(pdfController.getDocumentViewController()));
 
         PropertiesManager propManager = PropertiesManager.getInstance();
         propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ANNOTATION, "false"); //$NON-NLS-1$
@@ -119,33 +122,22 @@ public class IcePDFViewer extends Viewer {
         propManager.set(PropertiesManager.PROPERTY_SHOW_STATUSBAR, "false"); //$NON-NLS-1$
         propManager.set(PropertiesManager.PROPERTY_HIDE_UTILITYPANE, "true"); //$NON-NLS-1$
         propManager.set(PropertiesManager.PROPERTY_DEFAULT_PAGEFIT, Integer.toString(fitMode));
-        // propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_UTILITY, "false");
-        // propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_PAGENAV, "true");
-        // propManager.set("application.showLocalStorageDialogs", "NO");
 
-        // final SwingViewBuilder factory = new SwingViewBuilder(pdfController,
-        // propManager, null, false, SwingViewBuilder.TOOL_BAR_STYLE_FIXED, null,
-        // viewMode, fitMode);
-        final SwingViewBuilder factory = new SwingViewBuilder(pdfController, viewMode, fitMode);
+        SwingViewBuilder factory = new SwingViewBuilder(pdfController, viewMode, fitMode);
+        viewerPanel = factory.buildViewerPanel();
 
-        pdfController.getDocumentViewController().setAnnotationCallback(
-                new org.icepdf.ri.common.MyAnnotationCallback(pdfController.getDocumentViewController()));
+        JPanel panel = this.getPanel();
+        panel.add(labelMsg, BorderLayout.NORTH);
+        panel.add(viewerPanel, BorderLayout.CENTER);
+        panel.setMinimumSize(new Dimension());
 
-        final JPanel panel = this.getPanel();
-        labelMsg = new JLabel(Messages.getString("PDFViewer.OpenError"), JLabel.CENTER);
-        labelMsg.setVisible(false);
-        labelMsg.setPreferredSize(new Dimension(0, 50));
+        LOGGER.info("{} took {}ms to be initialized.", this.getClass().getSimpleName(), System.currentTimeMillis() - t);
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                viewerPanel = factory.buildViewerPanel();
-                panel.add(labelMsg, BorderLayout.NORTH);
-                panel.add(viewerPanel, BorderLayout.CENTER);
-                panel.setMinimumSize(new Dimension());
-            }
-        });
+    }
 
+    @Override
+    public void init() {
+        // no op
     }
 
     @Override
@@ -190,7 +182,7 @@ public class IcePDFViewer extends Viewer {
                     viewerPanel.setVisible(false);
 
                     try {
-                        pdfController.openDocument(content.getFile().getAbsolutePath());
+                        pdfController.openDocument(content.getTempFile().getAbsolutePath());
                         if (!content.equals(lastContent))
                             return;
 

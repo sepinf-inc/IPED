@@ -140,12 +140,13 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
 
         metadataCloudGraphItem.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, GDRIVE_CLOUD_GRAPH_REG.toString());
         metadataCloudGraphItem.add(Metadata.RESOURCE_NAME_KEY, "GDrive CloudGraph Entry " + i);
+        metadataCloudGraphItem.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
         // These properties need to get a "Date" type as parameters, so it can correctly
         // show times in UTC
         metadataCloudGraphItem.set(TikaCoreProperties.MODIFIED, convertStringToDate(entry.getModified()));
         
-        metadataCloudGraphItem.add((BasicProps.HASH), "");
+        metadataCloudGraphItem.add((BasicProps.LENGTH), "");
 
         // CloudGraph data
         metadataCloudGraphItem.add("parent", entry.getParent());
@@ -162,9 +163,9 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         metadataCloudGraphItem.add("doc_id", entry.getDoc_id());
         metadataCloudGraphItem.add("parent_doc_id", entry.getParent_doc_id());
         if (!hashSets.isEmpty()) {
-            metadataCloudGraphItem.set("kffstatus", "pedo");
+            metadataCloudGraphItem.set("hashDb:status", "pedo");
             for (String set : hashSets) {
-                metadataCloudGraphItem.add("kffgroup", set);
+                metadataCloudGraphItem.add("hashDb:set", set);
             }
         }
         if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {
@@ -266,7 +267,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         xHandler.newline();
         
         xHandler.startElement("p");
-        xHandler.characters(Messages.getString("P2P.PedoHashHit"));
+        xHandler.characters(Messages.getString("P2P.FoundInPedoHashDB"));
         xHandler.endElement("p");
         xHandler.newline();
 

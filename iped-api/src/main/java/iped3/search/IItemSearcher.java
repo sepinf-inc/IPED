@@ -5,10 +5,10 @@
  */
 package iped3.search;
 
-import iped3.io.IItemBase;
-
 import java.io.Closeable;
 import java.util.List;
+
+import iped3.IItemBase;
 
 /**
  *

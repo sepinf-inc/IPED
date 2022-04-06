@@ -51,30 +51,31 @@ public class ForkParser2 extends AbstractParser {
     /** Serial version UID */
     private static final long serialVersionUID = -4962742892274663950L;
 
-    public static Boolean enabled;
+    private static boolean enabled;
 
-    public static String SERVER_MAX_HEAP = "512M";
+    private static String serverMaxHeapMB = "512M";
 
-    public static int SERVER_POOL_SIZE = 4;
+    private static int poolSize = 5;
 
-    public static String plugin_dir = null;
+    private static String plugin_dir = null;
+
+    private static ForkParser2 instance;
 
     // these are used by the legacy usage
     private final ClassLoader loader;
+
     private final Parser parser;
 
     // these are used when the server builds a parser via a directory
     // of jars, not via legacy bootstrap etc.
     private final Path tikaBin;
+
     private Path pluginDir;
+
     private final ParserFactoryFactory parserFactoryFactory;
 
     /** Java command line */
     private List<String> java = Arrays.asList("java", "-Xmx32m", "-Djava.awt.headless=true");
-
-    /** Process pool size */
-    @Field
-    private int poolSize = 5;
 
     private int currentlyInUse = 0;
 
@@ -92,32 +93,45 @@ public class ForkParser2 extends AbstractParser {
     @Field
     private int maxFilesProcessedPerClient = -1;
 
-    private static ForkParser2 forkParser;
-
     public static boolean isEnabled() {
         return enabled;
+    }
+
+    public static void setEnabled(boolean enable) {
+        enabled = enable;
+    }
+
+    public static void setPluginDir(String pluginDir) {
+        plugin_dir = pluginDir;
+    }
+
+    public static void setPoolSize(int size) {
+        poolSize = size;
+    }
+
+    public static void setServerMaxHeap(String maxHeapMB) {
+        serverMaxHeapMB = maxHeapMB;
     }
 
     public static ForkParser2 getForkParser() {
         if (!enabled) {
             return null;
         }
-        if (forkParser == null) {
+        if (instance == null) {
             synchronized (ForkParser2.class) {
-                if (forkParser == null) {
+                if (instance == null) {
 
-                    forkParser = new ForkParser2(getMainJarsPath(), new File(plugin_dir).toPath(),
+                    instance = new ForkParser2(getMainJarsPath(), new File(plugin_dir).toPath(),
                             new ParserFactoryFactory(ExternalParsingParserFactory.class.getName(),
                                     Collections.EMPTY_MAP));
-                    forkParser.setJavaCommand(getCommand(SERVER_MAX_HEAP));
-                    forkParser.setPoolSize(SERVER_POOL_SIZE);
-                    forkParser.setServerParseTimeoutMillis(3600 * 1000);
-                    forkParser.setServerWaitTimeoutMillis(10 * 60 * 1000);
-                    forkParser.setMaxFilesProcessedPerServer(10000);
+                    instance.setJavaCommand(getCommand(serverMaxHeapMB));
+                    instance.setServerParseTimeoutMillis(3600 * 1000);
+                    instance.setServerWaitTimeoutMillis(10 * 60 * 1000);
+                    instance.setMaxFilesProcessedPerServer(10000);
                 }
             }
         }
-        return forkParser;
+        return instance;
     }
 
     private static Path getMainJarsPath() {
@@ -211,16 +225,6 @@ public class ForkParser2 extends AbstractParser {
      */
     public synchronized int getPoolSize() {
         return poolSize;
-    }
-
-    /**
-     * Sets the size of the process pool.
-     *
-     * @param poolSize
-     *            process pool size
-     */
-    public synchronized void setPoolSize(int poolSize) {
-        this.poolSize = poolSize;
     }
 
     /**

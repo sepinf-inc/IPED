@@ -22,13 +22,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 
 /**
@@ -39,7 +41,7 @@ class LibraryFile extends ShareazaEntity {
     private final XMLElement metadata = new XMLElement();
     private final List<SharedSource> sharedSources = new ArrayList<>();
     private String name;
-    private long index;
+    private int index;
     private long size;
     private String time;
     private String shared;
@@ -81,7 +83,7 @@ class LibraryFile extends ShareazaEntity {
     @Override
     public void read(MFCParser ar, int version) throws IOException {
         name = ar.readString();
-        index = ar.readUInt();
+        index = (int) ar.readUInt();
 
         if (version >= 17) {
             size = ar.readLong();
@@ -204,18 +206,25 @@ class LibraryFile extends ShareazaEntity {
         return "True".equals(getInheritedShared()); //$NON-NLS-1$
     }
 
-    public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher) throws SAXException {
+    public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher,
+            Map<Integer, List<String>> albunsForFiles) throws SAXException {
 
         hashSetHits.addAll(ChildPornHashLookup.lookupHash(md5));
         hashSetHits.addAll(ChildPornHashLookup.lookupHash(sha1));
-        if (!hashSetHits.isEmpty()) {
-            html.startElement("tr", "class", "r"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        } else
-            html.startElement("tr"); //$NON-NLS-1$
 
-        printTd(html, searcher, path, name, index, size, time, getInheritedShared(), virtualSize, virtualBase, sha1,
-                tiger, md5, ed2k, bth, verify, uri, metadataAuto, metadataTime, metadataModified, rating, comments,
-                shareTags, hitsTotal, uploadsTotal, cachedPreview, bogus);
+        AttributesImpl attributes = new AttributesImpl();
+        if (md5 != null && !md5.isEmpty()) {
+            attributes.addAttribute("", "name", "name", "CDATA", md5.toUpperCase());
+        }
+        if (!hashSetHits.isEmpty()) {
+            attributes.addAttribute("", "class", "class", "CDATA", "r");
+        }
+        html.startElement("tr", attributes); 
+
+        printTd(html, searcher, path, name, albunsForFiles.get(index), index, size, time,
+                getInheritedShared(), virtualSize, virtualBase, sha1, tiger, md5, ed2k, bth, verify, uri,
+                metadataAuto, metadataTime, metadataModified, rating, comments, shareTags, hitsTotal,
+                uploadsTotal, cachedPreview, bogus);
 
         html.endElement("tr"); //$NON-NLS-1$
     }
@@ -226,9 +235,7 @@ class LibraryFile extends ShareazaEntity {
         for (Object o : tdtext) {
             html.startElement("td"); //$NON-NLS-1$
             if (o != null) {
-                if (col != 1) {
-                    html.characters(o.toString());
-                } else {
+                if (col == 1) {
                     IItemBase item = KnownMetParser.searchItemInCase(searcher, "md5", md5);
                     if (item != null) {
                         KnownMetParser.printNameWithLink(html, item, name);
@@ -236,6 +243,20 @@ class LibraryFile extends ShareazaEntity {
                     } else {
                         html.characters(name);
                     }
+                } else if (col == 2) {
+                    @SuppressWarnings("unchecked")
+                    List<String> albums = (List<String>) o;
+                    boolean first = true;
+                    for (String album : albums) {
+                        if (!first) {
+                            html.characters(" | ");
+                        }
+                        html.characters(album);
+                        first = false;
+                        
+                    }
+                } else {
+                    html.characters(o.toString());
                 }
             }
             html.endElement("td"); //$NON-NLS-1$
@@ -251,7 +272,7 @@ class LibraryFile extends ShareazaEntity {
         html.endElement("td"); //$NON-NLS-1$
     }
 
-    public boolean isKffHit() {
+    public boolean isHashDBHit() {
         return !hashSetHits.isEmpty();
     }
 
@@ -265,6 +286,10 @@ class LibraryFile extends ShareazaEntity {
 
     public String getSha1() {
         return sha1;
+    }
+    
+    public int getIndex() {
+        return index;
     }
 
 }

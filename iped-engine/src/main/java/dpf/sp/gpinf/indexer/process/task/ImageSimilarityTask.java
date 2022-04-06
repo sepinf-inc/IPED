@@ -2,8 +2,8 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.util.Properties;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -13,8 +13,11 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import gpinf.similarity.ImageSimilarity;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 
 /**
  * Image Similarity task.
@@ -24,6 +27,9 @@ import iped3.IItem;
 public class ImageSimilarityTask extends AbstractTask {
 
     public static final String enableParam = "enableImageSimilarity"; //$NON-NLS-1$
+
+    public static final String SIMILARITY_FEATURES = "similarityFeatures"; //$NON-NLS-1$
+
     private static boolean taskEnabled = false;
     private static final AtomicBoolean init = new AtomicBoolean(false);
     private static final AtomicBoolean finished = new AtomicBoolean(false);
@@ -44,12 +50,15 @@ public class ImageSimilarityTask extends AbstractTask {
         taskEnabled = enabled;
     }
 
-    public void init(Properties confParams, File confDir) throws Exception {
+    @Override
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(enableParam));
+    }
+
+    public void init(ConfigurationManager configurationManager) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                String enabled = confParams.getProperty(enableParam);
-                if (enabled != null)
-                    taskEnabled = Boolean.valueOf(enabled.trim());
+                taskEnabled = configurationManager.getEnableTaskProperty(enableParam);
 
                 if (!taskEnabled) {
                     logger.info("Task disabled."); //$NON-NLS-1$
@@ -95,7 +104,7 @@ public class ImageSimilarityTask extends AbstractTask {
             BufferedImage img = ImageIO.read(new ByteArrayInputStream(thumb));
             byte[] features = imageSimilarity.extractFeatures(img);
             if (features != null) {
-                evidence.setImageSimilarityFeatures(features);
+                evidence.setExtraAttribute(SIMILARITY_FEATURES, features);
                 totalProcessed.incrementAndGet();
             } else {
                 totalFailed.incrementAndGet();

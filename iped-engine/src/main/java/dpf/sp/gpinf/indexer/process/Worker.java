@@ -26,15 +26,14 @@ import org.apache.lucene.index.IndexWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.WorkerProvider;
-import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
-import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.Util;
-import iped3.ICaseData;
+import gpinf.dev.data.CaseData;
 import iped3.IItem;
+import iped3.exception.IPEDException;
 
 /**
  * Responsável por retirar um item da fila e enviá-lo para cada tarefa de
@@ -53,13 +52,16 @@ public class Worker extends Thread {
 
     private static String workerNamePrefix = "Worker-"; //$NON-NLS-1$
 
+    private static final int MIN_WAIT_TIME_TO_SEND_QUEUE_END = 1000;
+    private static volatile long lastItemProcessingTime = 0;
+
     public IndexWriter writer;
     String baseFilePath;
 
     public volatile AbstractTask runningTask;
     public List<AbstractTask> tasks = new ArrayList<AbstractTask>();
-    public AbstractTask firstTask;
-    public volatile int itensBeingProcessed = 0;
+    private AbstractTask firstTask;
+    private int itemsBeingProcessed = 0;
 
     public enum STATE {
         RUNNING, PAUSING, PAUSED
@@ -70,12 +72,14 @@ public class Worker extends Thread {
     public Manager manager;
     public Statistics stats;
     public File output;
-    public ICaseData caseData;
+    public CaseData caseData;
     public volatile Exception exception;
     public volatile IItem evidence;
     public final int id;
 
-    public Worker(int k, ICaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
+    private boolean waiting = false;
+
+    public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
         super(new ThreadGroup(workerNamePrefix + k), workerNamePrefix + k); // $NON-NLS-1$
         id = k;
         this.caseData = caseData;
@@ -110,7 +114,7 @@ public class Worker extends Thread {
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                         Messages.getString("Worker.Starting") + task.getName()); //$NON-NLS-1$
             }
-            task.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
+            task.init(ConfigurationManager.get());
         }
 
     }
@@ -122,8 +126,8 @@ public class Worker extends Thread {
     }
 
     public void finish() throws Exception {
-        this.interrupt();
         synchronized (this) {
+            this.interrupt();
             this.wait();
         }
         if (exception != null) {
@@ -131,23 +135,13 @@ public class Worker extends Thread {
         }
     }
 
+    public synchronized boolean isWaiting() {
+        return this.waiting;
+    }
+
     public void processNextQueue() {
         synchronized(this) {
             this.notifyAll();
-        }
-    }
-
-    /**
-     * Alguns itens ainda não tem um File setado, como report do FTK1.
-     *
-     * @param evidence
-     */
-    private void checkFile(IItem evidence) {
-        String filePath = evidence.getFileToIndex();
-        if (evidence.getFile() == null && !filePath.isEmpty()) {
-            File file = Util.getResolvedFile(baseFilePath, filePath);
-            evidence.setFile(file);
-            evidence.setLength(file.length());
         }
     }
 
@@ -158,24 +152,18 @@ public class Worker extends Thread {
      * @param evidence
      *            Item a ser processado
      */
-    public void process(IItem evidence) {
+    private void process(IItem evidence) {
 
         IItem prevEvidence = this.evidence;
         if (!evidence.isQueueEnd()) {
             this.evidence = evidence;
+            this.itemsBeingProcessed++;
         }
 
         try {
 
             LOGGER.debug("{} Processing {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength()); //$NON-NLS-1$
 
-            checkFile(evidence);
-
-            // Loop principal que executa cada tarefa de processamento
-            /*
-             * for(AbstractTask task : tasks) if(!evidence.isToIgnore()){
-             * processTask(evidence, task); }
-             */
             firstTask.processAndSendToNextTask(evidence);
 
         } catch (Throwable t) {
@@ -190,6 +178,10 @@ public class Worker extends Thread {
                 }
             }
 
+        }
+
+        if (!evidence.isQueueEnd()) {
+            this.itemsBeingProcessed--;
         }
 
         this.evidence = prevEvidence;
@@ -214,13 +206,22 @@ public class Worker extends Thread {
         caseData.incDiscoveredEvidences(1);
         // Se a fila está pequena, enfileira
         if (time == ProcessTime.LATER
-                || (time == ProcessTime.AUTO && caseData.getItemQueue().size() < 10 * manager.getWorkers().length)) {
-            caseData.getItemQueue().addFirst(evidence);
+                || (time == ProcessTime.AUTO && caseData.getCurrentQueueSize() < 10 * manager.getWorkers().length)) {
+            caseData.addItemFirstNonBlocking(evidence);
         } // caso contrário processa o item no worker atual
         else {
+            if (!evidence.isQueueEnd()) {
+                caseData.incItemsBeingProcessed();
+            }
             long t = System.nanoTime() / 1000;
+
             process(evidence);
+
             runningTask.addSubitemProcessingTime(System.nanoTime() / 1000 - t);
+
+            if (!evidence.isQueueEnd()) {
+                caseData.decItemsBeingProcessed();
+            }
         }
 
     }
@@ -234,33 +235,58 @@ public class Worker extends Thread {
 
             try {
                 evidence = null;
-                evidence = caseData.getItemQueue().takeFirst();
+                boolean sleep = false;
+                while (evidence == null) {
+                    if (sleep) {
+                        // this should be very rare
+                        sleep = false;
+                        Thread.sleep(100);
+                    }
+                    synchronized (caseData) {
+                        evidence = caseData.pollFirstFromCurrentQueue();
+                        if (evidence == null) {
+                            sleep = true;
+                            continue;
+                        }
+                        if (!evidence.isQueueEnd()) {
+                            caseData.incItemsBeingProcessed();
+                        }
+                    }
+                }
+
 
                 if (!evidence.isQueueEnd()) {
+                    lastItemProcessingTime = System.currentTimeMillis();
+
                     process(evidence);
+                    
+                    if (!evidence.isQueueEnd()) {
+                        caseData.decItemsBeingProcessed();
+                    }
 
                 } else {
                     IItem queueEnd = evidence;
-                    if (manager.numItensBeingProcessed() == 0 && caseData.getItemQueue().size() == 0) {
-                        caseData.getItemQueue().addLast(queueEnd);
-                        process(queueEnd);
+                    if (caseData.isNoItemInQueueOrBeingProcessed()) {
+                        caseData.addLastToCurrentQueue(queueEnd);
                         evidence = null;
+
+                        LOGGER.debug(this.getName() + " going to wait queue change.");
                         synchronized(this) {
-                            LOGGER.debug(this.getName() + " going to wait notify!");
-                            this.wait();
+                            try {
+                                waiting = true;
+                                this.wait();
+                            } finally {
+                                waiting = false;
+                            }
                         }
                     } else {
-                        LOGGER.debug(this.getName() + " Queue size = " + caseData.getItemQueue().size()
-                                + " itemsInThisWorker = " + itensBeingProcessed + " itemsInAllWorkers = "
-                                + manager.numItensBeingProcessed());
-
-                        caseData.getItemQueue().addLast(queueEnd);
-                        if (itensBeingProcessed > 0) {
+                        caseData.addLastToCurrentQueue(queueEnd);
+                        long timeSinceLastItemProcessed = System.currentTimeMillis() - lastItemProcessingTime;
+                        if (itemsBeingProcessed > 0 && timeSinceLastItemProcessed >= MIN_WAIT_TIME_TO_SEND_QUEUE_END) {
+                            LOGGER.debug(this.getName() + " Queue size = " + caseData.getCurrentQueueSize()
+                                    + " itemsInThisWorker = " + itemsBeingProcessed + " itemsInAllWorkers = "
+                                    + caseData.getItemsBeingProcessed());
                             process(queueEnd);
-                        } else {
-                            // no items accumulated in this worker, wait some time to increase
-                            // the chance of other worker taking the queue-end
-                            // Thread.sleep(1000);
                         }
                     }
                 }
@@ -286,6 +312,9 @@ public class Worker extends Thread {
         if (evidence == null) {
             LOGGER.info("{} finished.", getName()); //$NON-NLS-1$
         } else {
+            AbstractTask task = runningTask;
+            if (task != null)
+                task.interrupted();
             LOGGER.info("{} interrupted on {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength()); //$NON-NLS-1$
         }
     }

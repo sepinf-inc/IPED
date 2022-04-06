@@ -5,10 +5,10 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -19,15 +19,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.config.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
+import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
 import iped3.IItem;
+import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
 
 /**
  * Explicit Image Detection (DIE) Task .
@@ -52,12 +57,17 @@ public class DIETask extends AbstractTask {
     /**
      * Field name used to store the detection result (a score from 1 to 1000, inclusive).
      */
-    public static String DIE_SCORE = "scoreNudez"; //$NON-NLS-1$
+    public static String DIE_SCORE = "nudityScore"; //$NON-NLS-1$
 
     /**
      * Field name used to store a detection "class" (a value from 1 to 5, derived from the score).
      */
-    public static String DIE_CLASS = "classeNudez"; //$NON-NLS-1$
+    public static String DIE_CLASS = "nudityClass"; //$NON-NLS-1$
+
+    /**
+     * Path to model file relative to application folder.
+     */
+    private static final String DIE_MODEL_PATH = "models/rfdie.dat"; //$NON-NLS-1$
 
     /**
      * Indica se a tarefa está habilitada ou não.
@@ -89,7 +99,10 @@ public class DIETask extends AbstractTask {
 
     private static final String ENABLE_PARAM = "enableLedDie"; //$NON-NLS-1$
 
-    private static GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
+    // do not instantiate here, makes external command adjustment fail, see #740
+    private static ExternalImageConverter externalImageConverter;
+
+    private boolean extractThumb;
 
     @Override
     public boolean isEnabled() {
@@ -100,34 +113,27 @@ public class DIETask extends AbstractTask {
         taskEnabled = enabled;
     }
 
+    @Override
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+    }
+
     /**
      * Initialize the task.
      */
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
+
         synchronized (init) {
             if (!init.get()) {
-                String enableParam = confParams.getProperty(ENABLE_PARAM);
-                if (enableParam != null)
-                    taskEnabled = Boolean.valueOf(enableParam.trim());
-
-                String diePath = confParams.getProperty("ledDie"); //$NON-NLS-1$
-                if (taskEnabled && diePath == null)
-                    throw new IPEDException("Configure DIE path on " + Configuration.LOCAL_CONFIG); //$NON-NLS-1$
-
-                // backwards compatibility
-                if (enableParam == null && diePath != null)
-                    taskEnabled = true;
-
+                taskEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
                 if (!taskEnabled) {
                     logger.info("Task disabled."); //$NON-NLS-1$
                     init.set(true);
                     return;
                 }
 
-                File dieDat = new File(diePath.trim());
-                if (!dieDat.exists())
-                    dieDat = new File(new File(Configuration.getInstance().appRoot), diePath.trim());
+                File dieDat = new File(Configuration.getInstance().appRoot, DIE_MODEL_PATH);
                 if (!dieDat.exists() || !dieDat.canRead()) {
                     String msg = "Invalid DIE database file: " + dieDat.getAbsolutePath(); //$NON-NLS-1$
                     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -154,9 +160,15 @@ public class DIETask extends AbstractTask {
                 logger.info("Task enabled."); //$NON-NLS-1$
                 logger.info("Model version: " + predictor.getVersion()); //$NON-NLS-1$
                 logger.info("Trees loaded: " + predictor.size()); //$NON-NLS-1$
+
+                externalImageConverter = new ExternalImageConverter();
+
                 init.set(true);
             }
         }
+
+        ImageThumbTaskConfig imgThumbConfig = configurationManager.findObject(ImageThumbTaskConfig.class);
+        extractThumb = imgThumbConfig.isExtractThumb();
     }
 
     /**
@@ -164,7 +176,6 @@ public class DIETask extends AbstractTask {
      */
     public void finish() throws Exception {
         synchronized (finished) {
-            graphicsMagicConverter.close();
             if (taskEnabled && !finished.get()) {
                 die = null;
                 predictor = null;
@@ -180,6 +191,7 @@ public class DIETask extends AbstractTask {
                     logger.info("Total videos not processed: " + totalVideosFailed); //$NON-NLS-1$
                     logger.info("Average video processing time (ms/video): " + (totalVideosTime.longValue() / totalVideos)); //$NON-NLS-1$
                 }
+                externalImageConverter.close();
                 finished.set(true);
             }
         }
@@ -197,7 +209,8 @@ public class DIETask extends AbstractTask {
 
         try {
             long t = System.currentTimeMillis();
-            if (isImageType(evidence.getMediaType())) {
+            boolean isAnimationImage = isAnimationImage(evidence);
+            if (isImageType(evidence.getMediaType()) && !isAnimationImage) {
                 if (evidence.getExtraAttribute(ImageThumbTask.THUMB_TIMEOUT) != null) return;
 
                 //For images call the detection method passing the thumb image
@@ -220,7 +233,7 @@ public class DIETask extends AbstractTask {
                 t = System.currentTimeMillis() - t;
                 totalImagesTime.addAndGet(t);
 
-            } else if (isVideoType(evidence.getMediaType())) {
+            } else if (isVideoType(evidence.getMediaType()) || isAnimationImage) {
                 Short prevResult = null;
                 synchronized (videoResults) {
                     prevResult = videoResults.get(evidence.getHash());
@@ -267,7 +280,7 @@ public class DIETask extends AbstractTask {
      * Combine the score of each video frame into a single score. 
      * It uses a weighted average, with higher weights for higher scores.
      */
-    private double videoScore(List<Double> p) {
+    public static double videoScore(List<Double> p) {
         Collections.sort(p);
         Collections.reverse(p);
         double weight = 1;
@@ -307,11 +320,20 @@ public class DIETask extends AbstractTask {
     }
     
     /**
+     * Check if the item is a multiple frame image. Just works after VideoTahumbTask
+     * is executed.
+     */
+
+    private static boolean isAnimationImage(IItem item) {
+        return VideoThumbTask.isImageSequence(item.getMediaType().toString()) ||
+                item.getMetadata().get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
+    }
+
+    /**
      * Check if the evidence is a video.
      */
     public static boolean isVideoType(MediaType mediaType) {
-        return mediaType.getType().equals("video") //$NON-NLS-1$
-                || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
+        return MetadataUtil.isVideoType(mediaType);
     }
     
 
@@ -321,16 +343,16 @@ public class DIETask extends AbstractTask {
     private BufferedImage getBufferedImage(IItem evidence) {
         BufferedImage img = null;
         try {
-            if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
-                BufferedInputStream stream = evidence.getBufferedStream();
+            if (extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
-                    img = ImageUtil.getThumb(stream);
+                    img = ImageMetadataUtil.getThumb(stream);
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }
             }
             if (img == null) {
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = ImageUtil.getSubSampledImage(stream, die.getExpectedImageSize(), die.getExpectedImageSize());
                 } finally {
@@ -338,9 +360,9 @@ public class DIETask extends AbstractTask {
                 }
             }
             if (img == null) {
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
-                    img = graphicsMagicConverter.getImage(stream, die.getExpectedImageSize(), evidence.getLength());
+                    img = externalImageConverter.getImage(stream, die.getExpectedImageSize(), false, evidence.getLength());
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }

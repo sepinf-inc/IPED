@@ -19,9 +19,12 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.Dialog.ModalityType;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.swing.SwingUtilities;
 
@@ -34,9 +37,12 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
-import iped3.sleuthkit.ISleuthKitItem;
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
     private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
@@ -55,7 +61,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         this.listRelated = listRelated;
         this.docId = docId;
 
-        App.get().getSearchParams().lastSelectedDoc = docId;
+        App.get().setLastSelectedDoc(docId);
 
         if (parsingTask != null) {
             parsingTask.cancel(true);
@@ -66,9 +72,15 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             try {
                 doc = App.get().appCase.getSearcher().doc(docId);
 
-                String status = doc.get(IndexItem.PATH);
-                if (status.length() > STATUS_LENGTH) {
-                    status = "..." + status.substring(status.length() - STATUS_LENGTH); //$NON-NLS-1$
+                String path = doc.get(IndexItem.PATH);
+                if (path.length() > STATUS_LENGTH) {
+                    path = "..." + path.substring(path.length() - STATUS_LENGTH); //$NON-NLS-1$
+                }
+                String status = path;
+                if (App.get().appCase.getAtomicSources().size() > 1) {
+                    String casePath = App.get().appCase.getAtomicSource(docId).getCaseDir().getCanonicalPath();
+                    String separator = !path.startsWith("/") && !path.startsWith("\\") ? "/" : "";
+                    status = (casePath + separator + path).replace("\\", "/");
                 }
                 App.get().status.setText(status);
 
@@ -76,13 +88,21 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
                 e.printStackTrace();
             }
         } else {
-            String moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir().getAbsolutePath();
+            File caseDir = App.get().appCase.getAtomicSourceBySourceId(0).getCaseDir();
             doc = new Document();
             doc.add(new StoredField(IndexItem.ID, 0));
-            doc.add(new StoredField(IndexItem.NAME, "Ajuda.htm")); //$NON-NLS-1$
-            doc.add(new StoredField(IndexItem.EXPORT, moduleDir + Messages.getString("FileProcessor.HelpPath"))); //$NON-NLS-1$
+            doc.add(new StoredField(IndexItem.NAME, "Help")); //$NON-NLS-1$
             doc.add(new StoredField(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString()));
-            doc.add(new StoredField(IndexItem.PATH, moduleDir + Messages.getString("FileProcessor.HelpPath"))); //$NON-NLS-1$
+
+            String locale = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP);
+            String helpPath = IPEDSource.MODULE_DIR + "/help/Help_" + locale + ".htm"; // $NON-NLS-1$ // $NON-NLS-2$
+            if (!new File(caseDir, helpPath).exists()) {
+                helpPath = IPEDSource.MODULE_DIR + "/help/Help.htm"; // $NON-NLS-1$
+            }
+            doc.add(new StoredField(IndexItem.ID_IN_SOURCE, helpPath));
+            doc.add(new StoredField(IndexItem.SOURCE_DECODER, FileInputStreamFactory.class.getName()));
+            doc.add(new StoredField(IndexItem.SOURCE_PATH, caseDir.getAbsolutePath()));
+            doc.add(new StoredField(IndexItem.PATH, helpPath));
         }
     }
 
@@ -112,8 +132,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
         // TODO usar nova API e contornar exibição da Ajuda
         IPEDSource iCase = (IPEDSource) App.get().appCase.getAtomicSource(docId);
-        App.get().getSearchParams().lastSelectedSource = iCase;
-        IItem item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
+        App.get().setLastSelectedSource(iCase);
+        IItem item = IndexItem.getItem(doc, iCase, false);
 
         long textSize = iCase.getTextSize(item.getId());
         item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
@@ -128,35 +148,44 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         IItem viewItem = item;
 
         if (item.getViewFile() != null) {
-            viewItem = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), true);
+            viewItem = IndexItem.getItem(doc, iCase, true);
         }
 
         waitSleuthkitInit(item);
 
-        App.get().getViewerController().loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
+        Set<String> highlights = new HashSet<>();
+        highlights.addAll(App.get().getHighlightTerms());
+
+        if (App.get().similarFacesRefItem != null) {
+            List<String> locations = SimilarFacesSearch.getMatchLocations(App.get().similarFacesRefItem, item);
+            for (String location : locations) {
+                highlights.add(ImageViewer.HIGHLIGHT_LOCATION + location);
+            }
+        }
+
+        App.get().getViewerController().loadFile(item, viewItem, contentType, highlights);
 
         if (listRelated) {
-            // listRelatedItens();
-            App.get().subItemModel.listSubItens(doc);
+            App.get().subItemModel.listSubItems(doc);
             if (Thread.currentThread().isInterrupted()) {
                 return;
             }
             App.get().parentItemModel.listParents(doc);
 
             App.get().duplicatesModel.listDuplicates(doc);
+
+            App.get().referencesModel.listReferencingItems(doc);
         }
     }
 
     private void waitSleuthkitInit(final IItem item) {
-        if (item instanceof ISleuthKitItem) {
-            ISleuthKitItem sitem = (ISleuthKitItem) item;
-            if (sitem.getSleuthFile() == null)
-                return;
+        if (!(item.getInputStreamFactory() instanceof SleuthkitInputStreamFactory)) {
+            return;
         }
         if (!tskDataSourceInited.contains(item.getDataSource().getUUID())) {
             tskDataSourceInited.add(item.getDataSource().getUUID());
             setWaitVisible(true);
-            try (InputStream is = item.getStream()) {
+            try (InputStream is = item.getSeekableInputStream()) {
                 is.read();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -196,33 +225,6 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
                 }
             }.start();
         }
-    }
-
-    private Thread listTask;
-
-    private void listRelatedItens() {
-        if (listTask != null) {
-            listTask.interrupt();
-        }
-
-        listTask = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (lock2) {
-                    App.get().subItemModel.listSubItens(doc);
-                    if (Thread.currentThread().isInterrupted()) {
-                        return;
-                    }
-                    App.get().parentItemModel.listParents(doc);
-                    App.get().duplicatesModel.listDuplicates(doc);
-                }
-
-            }
-        });
-        synchronized (lock2) {
-            listTask.start();
-        }
-
     }
 
 }

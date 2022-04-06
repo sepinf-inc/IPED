@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.util.BasicProps;
@@ -60,7 +61,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     @Override
     public void valueChanged(ListSelectionEvent evt) {
 
-        GerenciadorMarcadores.updateCounters();
+        BookmarksManager.updateCounters();
 
         if (App.get().resultsTable.getSelectedRowCount() == 0 || evt.getValueIsAdjusting()) {
             return;
@@ -75,8 +76,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         if (!syncingSelectedItems) {
             syncingSelectedItems = true;
             App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
-            int galleryRow = resultTableLeadSelIdx / App.get().galleryModel.colCount;
-            int galleyCol = resultTableLeadSelIdx % App.get().galleryModel.colCount;
+            int galleryRow = resultTableLeadSelIdx / App.get().getGalleryColCount();
+            int galleyCol = resultTableLeadSelIdx % App.get().getGalleryColCount();
             App.get().gallery.scrollRectToVisible(App.get().gallery.getCellRect(galleryRow, galleyCol, false));
 
             App.get().gallery.clearSelection();
@@ -109,7 +110,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             int modelIdx = App.get().resultsTable.convertRowIndexToModel(viewIndex);
             IItemId item = App.get().ipedResult.getItem(modelIdx);
             int docId = App.get().appCase.getLuceneId(item);
-            if (docId != App.get().getParams().lastSelectedDoc) {
+            if (docId != App.get().getLastSelectedDoc()) {
 
                 App.get().hitsTable.scrollRectToVisible(new Rectangle());
                 App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
@@ -117,6 +118,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 App.get().subitemDock.setTitleText(Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
                 App.get().duplicateDock.setTitleText(Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
                 App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
+                App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title")); //$NON-NLS-1$
 
                 FileProcessor parsingTask = new FileProcessor(docId, true);
                 parsingTask.execute();
@@ -180,44 +182,42 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     }
 
     @Override
-    public void keyPressed(KeyEvent evt) {
+    public void keyReleased(KeyEvent evt) {
     }
 
     @Override
-    public void keyReleased(KeyEvent evt) {
-        if (App.get().resultsTable.getSelectedRow() == -1) {
+    public void keyPressed(KeyEvent evt) {
+        if (evt.isConsumed())
             return;
-        }
+        if (App.get().resultsTable.getSelectedRow() == -1)
+            return;
 
         if (evt.getKeyCode() == KeyEvent.VK_C && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
-
             int selCol = App.get().resultsTable.getSelectedColumn();
-            if (selCol < 0) {
+            if (selCol < 0)
                 return;
-            }
             String value = getCell(App.get().resultsTable, App.get().resultsTable.getSelectedRow(), selCol);
             StringSelection selection = new StringSelection(value);
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            clipboard.setContents(selection, selection);
-
-        } else if (evt.getKeyCode() == KeyEvent.VK_SPACE)
+            clipboard.setContents(selection, null);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
             itemSelection();
-        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) // Shortcut to
-                                                                                                        // Deep-Selection
-                                                                                                        // (Item plus
-                                                                                                        // sub-items)
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+            // Shortcut to Deep-Selection (Item plus sub-items)
             recursiveItemSelection(true);
-        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.ALT_MASK) != 0)) // Shortcut to
-                                                                                                       // Deep-Selection
-                                                                                                       // (Item plus
-                                                                                                       // sub-items)
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.ALT_MASK) != 0)) {
+            // Shortcut to Deep-Selection Remove (Item plus sub-items)
             recursiveItemSelection(false);
-        else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) // Shortcut to
-                                                                                                        // BookmarkManager
-                                                                                                        // Window
-            GerenciadorMarcadores.setVisible();
-        else
-            GerenciadorMarcadores.get().keyReleased(evt);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+            // Shortcut to BookmarkManager Window
+            BookmarksManager.setVisible();
+            evt.consume();
+        } else 
+            BookmarksManager.get().keyPressed(evt);
 
     }
 
@@ -229,12 +229,12 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             value = false;
         }
 
-        MarcadoresController.get().setMultiSetting(true);
+        BookmarksController.get().setMultiSetting(true);
         App.get().resultsTable.setUpdateSelectionOnSort(false);
         int[] selectedRows = App.get().resultsTable.getSelectedRows();
         for (int i = 0; i < selectedRows.length; i++) {
             if (i == selectedRows.length - 1) {
-                MarcadoresController.get().setMultiSetting(false);
+                BookmarksController.get().setMultiSetting(false);
                 App.get().resultsTable.setUpdateSelectionOnSort(true);
             }
             App.get().resultsTable.setValueAt(value, selectedRows[i], col);
@@ -243,12 +243,12 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     public void recursiveItemSelection(boolean value) {
         int col = App.get().resultsTable.convertColumnIndexToView(1);
-        MarcadoresController.get().setMultiSetting(true);
+        BookmarksController.get().setMultiSetting(true);
         App.get().resultsTable.setUpdateSelectionOnSort(false);
         int[] selectedRows = App.get().resultsTable.getSelectedRows();
         for (int i = 0; i < selectedRows.length; i++) {
             if (i == selectedRows.length - 1) {
-                MarcadoresController.get().setMultiSetting(false);
+                BookmarksController.get().setMultiSetting(false);
                 App.get().resultsTable.setUpdateSelectionOnSort(true);
             }
             App.get().resultsTable.setValueAt(value, selectedRows[i], col);
@@ -256,7 +256,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
             selectAllSubitems(value, App.get().ipedResult.getItem(modelIndex));
         }
-        MarcadoresController.get().atualizarGUI();
+        BookmarksController.get().updateUI();
         App.get().subItemTable.repaint();
     }
 
@@ -282,7 +282,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                     logger.debug("Found {} subitems of sourceId {} id {}", result.getLength(), rootID.getSourceId(),
                             rootID.getId());
                     for (IItemId subItem : result.getIterator()) {
-                        App.get().appCase.getMultiMarcadores().setSelected((Boolean) state, subItem);
+                        App.get().appCase.getMultiBookmarks().setChecked((Boolean) state, subItem);
                     }
                 }
             }
@@ -293,85 +293,87 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         }
     }
 
+    /**
+     * Add a simple "type-to-find" feature to the table.
+     * It works on the currently sorted column, if it uses a String comparator,
+     * so it will not work on numeric and date columns.
+     */
     @Override
     public void keyTyped(KeyEvent evt) {
         char c = evt.getKeyChar();
-        if (c == ' ' || (evt.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) != 0) {
+        if (c == ' ' || (evt.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK | InputEvent.SHIFT_MASK)) != 0 ||
+               c == KeyEvent.VK_TAB || c == KeyEvent.VK_ESCAPE || c == KeyEvent.VK_BACK_SPACE || c == KeyEvent.VK_DELETE)
             return;
-        }
 
         JTable table = App.get().resultsTable;
         List<? extends SortKey> sortKeys = table.getRowSorter().getSortKeys();
-        if (sortKeys.isEmpty()) {
+        if (sortKeys.isEmpty())
             return;
-        }
+
         int sortCol = sortKeys.get(0).getColumn();
         int viewCol = table.convertColumnIndexToView(sortCol);
 
-        // Provisoriamente as colunas estão fixas
-        // (colunas onde a comparação de String não funcionaria, porque ordenação é
-        // numérica ou de Data)
+        // Only works on String columns 
         if (!((RowComparator) ((ResultTableRowSorter) table.getRowSorter()).getComparator(sortCol))
-                .isStringComparator()) {
+                .isStringComparator())
             return;
-        }
 
+        if (BookmarksManager.get().hasSingleKeyShortcut())
+            return;
+        
         long t = System.currentTimeMillis();
-        if (t - lastKeyTime > 500) {
+        if (t - lastKeyTime > 500)
             lastKeyString = ""; //$NON-NLS-1$
-        }
+
         lastKeyTime = t;
-        if (lastKeyString.length() != 1 || lastKeyString.charAt(0) != c) {
+        if (lastKeyString.length() != 1 || lastKeyString.charAt(0) != c)
             lastKeyString += c;
-        }
+
         int initialRow = table.getSelectedRow();
-        if (initialRow < 0) {
+        if (initialRow < 0)
             initialRow = table.getRowCount() - 1;
-        }
 
         int currRow = initialRow;
         int foundRow = findRow(table, currRow + 1, table.getRowCount() - 1, viewCol, lastKeyString);
-        if (foundRow < 0) {
+        if (foundRow < 0)
             foundRow = findRow(table, 0, currRow - 1, viewCol, lastKeyString);
-        }
         if (foundRow >= 0) {
             table.setRowSelectionInterval(foundRow, foundRow);
             table.scrollRectToVisible(table.getCellRect(foundRow, viewCol, true));
         }
+        evt.consume();
     }
 
     private int findRow(JTable table, int from, int to, int col, String search) {
         while (from < to) {
             int mid = (from + to) >> 1;
             int cmp = compare(getCell(table, mid, col), search);
-            if (cmp > 0) {
+            if (cmp > 0)
                 to = mid - 1;
-            } else if (cmp < 0) {
+            else if (cmp < 0)
                 from = mid + 1;
-            } else {
+            else
                 to = mid;
-            }
         }
-        if (from == to) {
-            if (compare(getCell(table, from, col), search) == 0) {
-                return from;
-            }
-        }
+        if (from == to && compare(getCell(table, from, col), search) == 0)
+            return from;
         return -1;
     }
 
     private int compare(String a, String b) {
-        if (a.length() > b.length()) {
+        if (a.isEmpty() && !b.isEmpty())
+            return -1;
+        if (a.length() > b.length())
             a = a.substring(0, b.length());
-        }
         return collator.compare(a, b);
     }
 
     private String getCell(JTable table, int row, int col) {
         String cell = table.getValueAt(row, col).toString();
-        return cell.replace("<html><nobr>", "").replace("</html>", "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                .replace(App.get().getParams().HIGHLIGHT_START_TAG, "")
-                .replace(App.get().getParams().HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
+        if (App.get().getFontStartTag() != null)
+            cell = cell.replace(App.get().getFontStartTag(), ""); //$NON-NLS-1$
+        return cell.replace("<html><nobr>", "").replace("</html>", "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                .replace(ATextViewer.HIGHLIGHT_START_TAG, "").replace(ATextViewer.HIGHLIGHT_END_TAG, "");
     }
 
 }

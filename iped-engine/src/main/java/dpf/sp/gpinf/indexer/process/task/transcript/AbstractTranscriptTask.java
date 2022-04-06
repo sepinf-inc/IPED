@@ -9,9 +9,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.SystemUtils;
@@ -20,29 +21,19 @@ import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AudioTranscriptConfig;
+import dpf.sp.gpinf.indexer.config.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.util.ExtraProperties;
 
 public abstract class AbstractTranscriptTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(AbstractTranscriptTask.class);
-
-    protected static final String ENABLE_KEY = "enableAudioTranscription";
-
-    static final String CONF_FILE = "AudioTranscriptConfig.txt";
-
-    private static final String TIMEOUT_KEY = "timeout";
-
-    private static final String LANG_KEY = "language";
-
-    private static final String MIMES_KEY = "mimesToProcess";
-
-    private static final String CONVERT_CMD_KEY = "convertCommand";
 
     private static final String TEST_FFMPEG = "ffmpeg -version";
 
@@ -64,25 +55,24 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     private static boolean ffmpegDetected = false;
 
-    protected UTF8Properties props = new UTF8Properties();
-
-    protected List<String> languages = new ArrayList<>();
-
-    protected int timeoutPerSec;
-
-    private List<String> mimesToProcess = new ArrayList<>();
-
-    private String convertCmd;
+    protected AudioTranscriptConfig transcriptConfig;
+    
+    // Variables to store some statistics
+    private static final AtomicLong wavTime = new AtomicLong();
+    private static final AtomicLong transcriptionTime = new AtomicLong();
+    private static final AtomicInteger wavSuccess = new AtomicInteger();
+    private static final AtomicInteger wavFail = new AtomicInteger();
+    private static final AtomicInteger transcriptionSuccess = new AtomicInteger();
+    private static final AtomicInteger transcriptionFail = new AtomicInteger();
+    private static final AtomicLong transcriptionChars = new AtomicLong();
 
     private Connection conn;
-
-    protected boolean isEnabled = false;
 
     protected IItem evidence;
 
     @Override
     public boolean isEnabled() {
-        return this.isEnabled;
+        return transcriptConfig.isEnabled();
     }
 
     protected boolean isToProcess(IItem evidence) {
@@ -92,7 +82,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return false;
         }
         boolean supported = false;
-        for (String mime : mimesToProcess) {
+        for (String mime : transcriptConfig.getMimesToProcess()) {
             if (evidence.getMediaType().toString().startsWith(mime)) {
                 supported = true;
                 break;
@@ -148,7 +138,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
     }
 
-    protected class TextAndScore {
+    protected static class TextAndScore {
         String text;
         double score;
     }
@@ -186,33 +176,16 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new AudioTranscriptConfig());
+    }
 
-        String enabled = confParams.getProperty(ENABLE_KEY);
-        if (enabled != null) {
-            isEnabled = Boolean.valueOf(enabled.trim());
-        }
-        if (!isEnabled) {
-            return;
-        }
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        props.load(new File(confDir, CONF_FILE));
+        transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
 
-        String langs = props.getProperty(LANG_KEY);
-        for (String lang : langs.split(";")) {
-            languages.add(lang.trim());
-        }
-
-        convertCmd = props.getProperty(CONVERT_CMD_KEY).trim();
-
-        String mimes = props.getProperty(MIMES_KEY).trim();
-        for (String mime : mimes.split(";")) {
-            mimesToProcess.add(mime.trim());
-        }
-
-        timeoutPerSec = Integer.valueOf(props.getProperty(TIMEOUT_KEY).trim());
-
-        if (conn == null) {
+        if (conn == null && transcriptConfig.isEnabled()) {
             createConnection();
         }
 
@@ -225,18 +198,20 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         File tmpFile = File.createTempFile("iped", ".wav");
         Files.delete(tmpFile.toPath());
         ProcessBuilder pb = new ProcessBuilder();
-        String[] cmd = convertCmd.split(" ");
+        String[] cmd = transcriptConfig.getConvertCmd().split(" ");
         if (SystemUtils.IS_OS_WINDOWS) {
-            cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + VideoThumbTask.mplayerWin);
+            LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
+            String mplayerWin = localConfig.getMplayerWinPath();
+            cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + mplayerWin);
         }
         for (int i = 0; i < cmd.length; i++) {
-            if (SystemUtils.IS_OS_WINDOWS) {
-                cmd[i] = cmd[i].replace("$OUTPUT", "\\\"$OUTPUT\\\"");
-            }
             cmd[i] = cmd[i].replace("$INPUT", input.getAbsolutePath());
-            cmd[i] = cmd[i].replace("$OUTPUT", tmpFile.getAbsolutePath());
+            cmd[i] = cmd[i].replace("$OUTPUT", tmpFile.getName());
         }
         pb.command(cmd);
+        if (tmpFile.getParentFile() != null) {
+            pb.directory(tmpFile.getParentFile());
+        }
         pb.redirectErrorStream(true);
         Process p = pb.start();
         byte[] out = IOUtil.loadInputStream(p.getInputStream());
@@ -247,6 +222,15 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return null;
         } else {
             LOGGER.debug(new String(out, StandardCharsets.UTF_8));
+            if (!tmpFile.exists()) {
+                LOGGER.warn("Conversion to wav failed, no wav generated: {} ", evidence.getPath());
+                return null;
+            }
+            if (tmpFile.length() == 0) {
+                tmpFile.delete();
+                LOGGER.warn("Conversion to wav failed, empty wav generated: {} ", evidence.getPath());
+                return null;
+            }
         }
         return tmpFile;
     }
@@ -256,6 +240,28 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         if (conn != null) {
             conn.close();
             conn = null;
+        }
+        
+        long totWavConversions = wavSuccess.longValue() + wavFail.longValue();
+        if (totWavConversions != 0) {
+            LOGGER.info("Total conversions to WAV: " + totWavConversions);
+            LOGGER.info("Successful conversions to WAV: " + wavSuccess.intValue());
+            LOGGER.info("Failed conversions to WAV: " + wavFail.intValue());
+            LOGGER.info("Average conversion to WAV time (ms/audio): " + (wavTime.longValue() / totWavConversions));
+            wavSuccess.set(0);
+            wavFail.set(0);
+        }
+
+        long totTranscriptions = transcriptionSuccess.longValue() + transcriptionFail.longValue();
+        if (totTranscriptions != 0) {
+            LOGGER.info("Total transcriptions: " + totTranscriptions);
+            LOGGER.info("Successful transcriptions: " + transcriptionSuccess.intValue());
+            LOGGER.info("Failed transcriptions: " + transcriptionFail.intValue());
+            LOGGER.info("Total transcription output characters: " + transcriptionChars.longValue());
+            LOGGER.info(
+                    "Average transcription time (ms/audio): " + (transcriptionTime.longValue() / totTranscriptions));
+            transcriptionSuccess.set(0);
+            transcriptionFail.set(0);
         }
     }
 
@@ -277,18 +283,30 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return;
         }
 
+        long t = System.currentTimeMillis();
         File tempWav = getWavFile(evidence);
+        wavTime.addAndGet(System.currentTimeMillis() - t);
         if (tempWav == null) {
+            wavFail.incrementAndGet();
             return;
         }
+        wavSuccess.incrementAndGet();
 
         try {
             this.evidence = evidence;
+            t = System.currentTimeMillis();
             TextAndScore result = transcribeWav(tempWav);
+            transcriptionTime.addAndGet(System.currentTimeMillis() - t);
             if (result != null) {
                 evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(result.score));
                 evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, result.text);
                 storeTextInDb(evidence.getHash(), result.text, result.score);
+                transcriptionSuccess.incrementAndGet();
+                if (result.text != null) {
+                    transcriptionChars.addAndGet(result.text.length());
+                }
+            } else {
+                transcriptionFail.incrementAndGet();
             }
 
         } finally {

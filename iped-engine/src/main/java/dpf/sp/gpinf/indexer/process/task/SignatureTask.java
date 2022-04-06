@@ -1,19 +1,27 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Properties;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeTypesFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.SignatureConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
+import iped3.configuration.Configurable;
+import iped3.io.SeekableInputStream;
+import iped3.util.MediaTypes;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.
@@ -24,15 +32,8 @@ public class SignatureTask extends AbstractTask {
 
     private static final String[] HFS_ATTR_SUFFIX = { ":DATA", ":DECOMP", ":RSRC" };
 
-    public static boolean processFileSignatures = true;
-
-    private TikaConfig config;
+    private boolean processFileSignatures = true;
     private Detector detector;
-
-    public SignatureTask() {
-        config = TikaConfig.getDefaultConfig();
-        detector = config.getDetector();
-    }
 
     @Override
     public boolean isEnabled() {
@@ -69,6 +70,12 @@ public class SignatureTask extends AbstractTask {
                     }
                 }
 
+                if (MediaTypes.DISK_IMAGE.equals(type)) {
+                    if(hasVHDFooter(evidence)) {
+                        type = MediaTypes.VHD;
+                    }
+                }
+
                 // Caso seja item office07 cifrado e tenha extensão específica, refina o tipo
                 if (type != null && type.toString().equals("application/x-tika-ooxml-protected") //$NON-NLS-1$
                         && "docx xlsx pptx".contains(evidence.getExt().toLowerCase())) { //$NON-NLS-1$
@@ -90,25 +97,53 @@ public class SignatureTask extends AbstractTask {
                     }
 
                 }
-
-            } catch (Exception | OutOfMemoryError e) {
+            // catch OOME and StackOverflow from Tika, see #768
+            } catch (Throwable e) {
                 type = MediaType.OCTET_STREAM;
 
                 LOGGER.warn("{} Error detecting signature: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), //$NON-NLS-1$
                         evidence.getPath(), evidence.getLength(), e.toString());
             }
         }
-        evidence.setMediaType(config.getMediaTypeRegistry().normalize(type));
+        evidence.setMediaType(MediaTypes.getMediaTypeRegistry().normalize(type));
+    }
+
+    private boolean hasVHDFooter(IItem item) {
+        if (item.getLength() == null) {
+            return false;
+        }
+        try (SeekableInputStream is = item.getSeekableInputStream()) {
+            is.seek(item.getLength() - 512);
+            byte[] cookie = IOUtils.readFully(is, 9);
+            if ("conectix".equals(new String(cookie, 0, 8, StandardCharsets.ISO_8859_1))
+                    || "conectix".equals(new String(cookie, 1, 8, StandardCharsets.ISO_8859_1))) {
+                return true;
+            }
+        } catch (IOException e) {
+            // ignore
+        }
+        return false;
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
-        String value = confProps.getProperty("processFileSignatures"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            processFileSignatures = Boolean.valueOf(value);
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new SignatureConfig());
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        installCustomSignatures();
+        SignatureConfig config = configurationManager.findObject(SignatureConfig.class);
+        processFileSignatures = config.isEnabled();
+        detector = TikaConfig.getDefaultConfig().getDetector();
+    }
+
+    public static void installCustomSignatures() {
+        SignatureConfig config = ConfigurationManager.get().findObject(SignatureConfig.class);
+        System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, config.getTmpConfigFile().getAbsolutePath());
+        // check if setting property above works
+        if (MediaTypes.getParentType(MediaType.parse("message/x-chat-message")).equals(MediaType.OCTET_STREAM)) {
+            throw new RuntimeException("Custom signature file not loaded!");
         }
     }
 

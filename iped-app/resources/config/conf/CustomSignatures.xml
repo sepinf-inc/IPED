@@ -19,6 +19,11 @@
 -->
 <mime-info>
 
+    <mimes-name-detection>		
+        <mime-name-detection type="message/rfc822"></mime-name-detection>
+        <mime-name-detection type="multipart/related"></mime-name-detection>
+    </mimes-name-detection>
+
 	<mime-type type="application/x-vnd.corel.zcf.draw.document+zip">
         <glob pattern="*.CDR"/>
         <sub-class-of type="application/zip"/>
@@ -78,18 +83,32 @@
     	<magic priority="60">
       		<match value="ftypheic" type="string" offset="4"/>
       		<match value="ftypheix" type="string" offset="4"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+    	<glob pattern="*.heic"/>
+  	</mime-type>
+  	
+	<mime-type type="image/heic-sequence">
+    	<magic priority="60">
       		<match value="ftyphevc" type="string" offset="4"/>
       		<match value="ftyphevx" type="string" offset="4"/>
     	</magic>
-    	<glob pattern="*.heic"/>
+    	<sub-class-of type="application/octet-stream"/>
   	</mime-type>
   	
   	<mime-type type="image/heif">
     	<magic priority="60">
       		<match value="ftypmif1" type="string" offset="4"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+    	<glob pattern="*.heif"/>
+  	</mime-type>
+
+  	<mime-type type="image/heif-sequence">
+    	<magic priority="60">
       		<match value="ftypmsf1" type="string" offset="4"/>
     	</magic>
-    	<glob pattern="*.heif"/>
+    	<sub-class-of type="application/octet-stream"/>
   	</mime-type>
 
 	<mime-type type="application/x-dbf">
@@ -116,14 +135,6 @@
         </magic>
         <sub-class-of type="text/html"/>
     </mime-type>
-    
-    <mime-type type="application/x-plist">
-        <_comment>Apple Binary Property List File </_comment>
-        <magic priority="60">
-            <match value="0x62706C697374" type="string" offset="0"/>
-        </magic>
-        <glob pattern="*.plist"/>
-    </mime-type>
    
     <mime-type type="application/x-windows-registry-report">
         <sub-class-of type="text/html"/>
@@ -139,6 +150,19 @@
     
     <mime-type type="application/x-firefox-downloads-registry">
         <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-firefox-mozlz40">
+    	<magic priority="50">
+    		<match value="\x6D\x6F\x7A\x4C\x7A\x34\x30" type="string" offset="0"/>
+    	</magic>
+    </mime-type>
+
+    <mime-type type="application/x-firefox-savedsession">
+        <glob pattern="recovery*.jsonlz4*"/>
+        <glob pattern="previous*.jsonlz4*"/>
+        <glob pattern="upgrade*.jsonlz4*"/>	
+        <sub-class-of type="application/x-firefox-mozlz40"/>	
     </mime-type>
     
     <mime-type type="application/x-safari-history-registry">
@@ -202,7 +226,7 @@
     </mime-type>
     
     <mime-type type="application/x-safari-plist">     
-        <sub-class-of type="application/x-plist"/>
+        <sub-class-of type="application/x-bplist"/>
         <glob pattern="History.plist"/>
         <glob pattern="Downloads.plist"/>
         <glob pattern="Bookmarks.plist"/>
@@ -430,6 +454,21 @@
         <sub-class-of type="text/plain"/>
         <glob pattern="*.mbox"/>
     </mime-type>
+    
+    <mime-type type="application/vnd.lotus-notes">
+        <magic priority="60">
+            <match value="0x1A00" type="string" offset="0">
+                <match value="0x10000000" type="string" offset="6"/>
+                <match value="0x11000000" type="string" offset="6"/>
+                <match value="0x14000000" type="string" offset="6"/>
+                <match value="0x29000000" type="string" offset="6"/>
+                <match value="0x2B000000" type="string" offset="6"/>
+                <match value="0x30000000" type="string" offset="6"/>
+                <match value="0x33000000" type="string" offset="6"/>
+            </match>    
+        </magic>  
+        <glob pattern="*.nsf"/>      	
+    </mime-type>
 
 	<mime-type type="application/x-mssql">
         <magic priority="50">
@@ -453,6 +492,7 @@
         </magic> 
         <glob pattern="*.sqlite"/>
     </mime-type>
+	
     
     <mime-type type="application/windows-adress-book">
         <magic priority="50">
@@ -498,6 +538,34 @@
         <glob pattern="*.imm"/>
     </mime-type>
     
+    <mime-type type="message/x-rfc822-mac">
+      <magic priority="50">
+        <match value="0xD00D0000010101000200000003000000" type="string" offset="0"/>
+        <match minShouldMatch="3">
+          <match value="\rDate:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rDelivered-To:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rFrom:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rMIME-Version:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rReceived:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rRelay-Version:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rReturn-Path:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rSent:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rStatus:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rSubject:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rTo:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rUser-Agent:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rMessage-ID:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-Mailer:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-Originating-IP:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-Original-To:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-DKIM:" type="stringignorecase" offset="0:4096"/>
+        </match>
+      </magic>
+      <sub-class-of type="message/rfc822"/>
+      <glob pattern="*.olk15MsgSource"/>
+      <glob pattern="*.olk15MsgAttachment"/>
+    </mime-type>
+    
     <mime-type type="application/x-unallocated">
     </mime-type>
     
@@ -522,6 +590,7 @@
     </mime-type>
     
     <mime-type type="application/x-vdi">
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.vdi"/>
     </mime-type>
     
@@ -529,6 +598,7 @@
         <magic priority="50">
             <match value="vhdxfile" type="string" offset="0"/>
         </magic>
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.vhdx"/>
     </mime-type>
     
@@ -574,19 +644,59 @@
         </magic>
     </mime-type>
   	
-    <mime-type type="application/x-disk-image">
-        <acronym>ISO</acronym>
+    <mime-type type="application/x-ewf-image">
         <_comment>E01 disk images</_comment>
         <magic priority="50">
             <match value="0x5646090D0AFF00" type="string" offset="1"/>
         </magic>
-        <_comment>RAW disk images</_comment>
+        <sub-class-of type="application/x-disk-image"/>
+    </mime-type>
+    
+    <mime-type type="application/x-e01-image">
+        <sub-class-of type="application/x-ewf-image"/>
+        <glob pattern="*.e01"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ewf2-image">
+        <_comment>EX01 disk images</_comment>
+        <magic priority="50">
+            <match value="0x455646320D0A8100" type="string" offset="0"/>
+        </magic>
+        <sub-class-of type="application/x-disk-image"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ex01-image">
+        <sub-class-of type="application/x-ewf2-image"/>
+        <glob pattern="*.ex01"/>
+    </mime-type>
+    
+    <mime-type type="application/x-disk-image">
+        <_comment>Generic disk images</_comment>
         <magic priority="30">
             <match value="0x55AA" type="string" offset="510">
                 <match value="0x0000" type="string" offset="444"/>
                 <match value="0x5A5A" type="string" offset="444"/>
             </match>
         </magic>
+    </mime-type>
+        
+    <mime-type type="application/x-raw-image">
+        <_comment>RAW disk images</_comment>
+        <sub-class-of type="application/x-disk-image"/>
+        <!--dd/001 extensions are omitted to avoid classification based on generic exts-->
+    </mime-type>
+    
+    <mime-type type="application/x-vmdk">
+        <_comment>This priority must be equal to x-raw-image</_comment>
+        <sub-class-of type="application/x-disk-image"/>
+        <glob pattern="*.vmdk"/>
+    </mime-type>
+    
+    <mime-type type="application/x-vmdk-descriptor">
+        <magic priority="50">
+            <match value="# Disk DescriptorFile" type="string" offset="0"/>
+        </magic>
+        <sub-class-of type="text/plain"/>
     </mime-type>
     
     <mime-type type="application/x-wim-image">
@@ -595,6 +705,7 @@
                 <match value="0x0000" type="string" offset="5"/>
             </match>
         </magic>
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.wim"/>
     </mime-type>
     
@@ -623,6 +734,21 @@
     <mime-type type="application/x-emule">
         <sub-class-of type="application/x-p2p"/>
         <glob pattern="known*.met"/>
+    </mime-type>
+
+    <mime-type type="application/x-emule-part-met">
+        <sub-class-of type="application/x-p2p"/>
+        <glob pattern=".*\.part( \([1-9]\))?\.met" isregex="true"/>
+        <glob pattern=".*\.part\.met( \([1-9]\))?\.bak" isregex="true"/>
+    </mime-type>
+    
+    <mime-type type="application/x-emule-searches">
+        <sub-class-of type="text/plain"/>
+        <glob pattern="AC_SearchStrings.dat"/>
+    </mime-type>  
+	
+     <mime-type type="application/x-emule-preferences-ini">
+        <sub-class-of type="text/plain"/>
     </mime-type>
     
     <mime-type type="application/x-preview-with-links">
@@ -684,6 +810,23 @@
         </magic>
         <glob pattern="*.MTS"/>
 		<glob pattern="*.m2ts"/>
+    </mime-type>
+    
+    <mime-type type="video/ts">
+    	<magic priority="50">
+            <match value="G" type="string" offset="0">
+	            <match value="G" type="string" offset="188">
+		            <match value="G" type="string" offset="376">
+			            <match value="G" type="string" offset="564">
+				            <match value="G" type="string" offset="752">
+					            <match value="G" type="string" offset="940"/>
+				            </match>
+			            </match>
+		            </match>
+	            </match>
+            </match>
+        </magic>
+        <glob pattern="*.ts"/>
     </mime-type>
     
     <mime-type type="application/x-lnk">
@@ -1053,7 +1196,7 @@
     </mime-type>
     
     <mime-type type="application/x-whatsapp-user-plist">
-        <sub-class-of type="application/x-plist"/>
+        <sub-class-of type="application/x-bplist"/>
         <glob pattern="group.net.whatsapp.WhatsApp.shared.plist"/>
     </mime-type>
     
@@ -1065,10 +1208,67 @@
         <sub-class-of type="message/x-chat-message"/>
     </mime-type>
 	
-	<mimes-name-detection>		
-		<mime-name-detection type="message/rfc822"></mime-name-detection>
-		<mime-name-detection type="multipart/related"></mime-name-detection>
-	</mimes-name-detection>
-   
+    <mime-type type="application/x-ufed-deviceinfo">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+    	
+	<mime-type type="application/x-database-table">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-jabber-chat">
+       <magic priority="50">
+            <match value=".{0,114}Conversation with.{1,50}at.{21}on" type="regex" offset="86"/>
+       </magic>
+       <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="message/x-jabber-message">
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type>    
+    
+    <mime-type type="application/x-ios-backup-manifest-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-sms-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-addressbook-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-calllog-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios8-calllog-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-voicemail-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-oldnotes-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-notes-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-photos-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-calendar-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-locations-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+ 
 </mime-info>
-

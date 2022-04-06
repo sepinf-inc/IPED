@@ -11,14 +11,14 @@ public class CreditCardRegexValidatorServiceTest {
 
     @Test
     public void testValidCreditCard() {
-        String tituloEleitor = "4369811367191811";
-        assertTrue(service.validate(tituloEleitor));
+        String creditCard = "4369811367191811";
+        assertTrue(service.validate(creditCard));
     }
 
     @Test
     public void testInvalidCreditCard() {
-        String tituloEleitor = "4369811367191812";
-        assertFalse(service.validate(tituloEleitor));
+        String creditCard = "4369811367191812";
+        assertFalse(service.validate(creditCard));
     }
 
 }

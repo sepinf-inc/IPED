@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -19,7 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
-import org.neo4j.tooling.ImportTool;
+import org.neo4j.cli.AdminTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,24 +72,23 @@ public class GraphImportRunner {
 
     }
 
-    public void run(File databaseDir, String dbName, boolean highIO) throws IOException {
+    public void run(File neo4jHome, String dbName, boolean highIO) throws IOException {
 
         List<String> args = new ArrayList<>();
 
         args.add(getJreExecutable().getAbsolutePath());
         args.add("-cp");
         try {
-            URL url = ImportTool.class.getProtectionDomain().getCodeSource().getLocation();
-            args.add(new File(url.toURI()).getAbsolutePath());
+            URL url = AdminTool.class.getProtectionDomain().getCodeSource().getLocation();
+            args.add(new File(url.toURI()).getParentFile().getAbsolutePath() + "/*");
         } catch (URISyntaxException e1) {
             throw new IOException(e1);
         }
 
-        args.add(ImportTool.class.getName());
+        args.add(AdminTool.class.getName());
+        args.add("import");
 
-        File argsFile = writeArgsFile(databaseDir, dbName, highIO);
-        args.add("--f");
-        args.add(argsFile.getAbsolutePath());
+        writeArgs(args, dbName, highIO);
 
         ExecutorService executorService = null;
 
@@ -96,6 +96,14 @@ public class GraphImportRunner {
 
         ProcessBuilder processBuilder = new ProcessBuilder(args);
         processBuilder.redirectErrorStream(true);
+        neo4jHome.mkdirs();
+
+        File emptyConf = new File(System.getProperty("java.io.tmpdir"), "neo4j.conf");
+        emptyConf.deleteOnExit();
+
+        processBuilder.environment().put("NEO4J_HOME", neo4jHome.getAbsolutePath());
+        processBuilder.environment().put("NEO4J_CONF", emptyConf.getParent());
+        processBuilder.directory(new File(neo4jHome, GraphTask.CSVS_DIR));
         Process process = processBuilder.start();
         try {
             executorService = Executors.newFixedThreadPool(1);
@@ -114,33 +122,32 @@ public class GraphImportRunner {
         }
     }
 
-    public File writeArgsFile(File databaseDir, String dbName, boolean highIO) throws IOException {
-        File file = File.createTempFile(ARGS_FILE_NAME, ".txt");
-        // neo4j-3.4.10 uses platform default encoding
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+    public void writeArgs(List<String> args, String dbName, boolean highIO) throws IOException {
 
-            writer.write("--into ");
-            writer.write("\"" + databaseDir.getAbsolutePath() + "\"");
-            writer.write("\r\n");
-            writer.write("--input-encoding utf-8\r\n");
-            writer.write("--bad-tolerance 0\r\n");
-            writer.write("--database ");
-            writer.write(dbName);
-            writer.write("\r\n");
-            writer.write("--high-io ");
-            writer.write(Boolean.toString(highIO));
-            writer.write("\r\n");
-            writer.write("--ignore-empty-strings true\r\n");
-            writer.write("--skip-duplicate-nodes true\r\n");
+        args.add("--input-encoding");
+        args.add("utf-8");
+        args.add("--bad-tolerance");
+        args.add("0");
+        args.add("--database");
+        args.add(dbName);
+        if (highIO) {
+            args.add("--high-io");
+            args.add("true");
+        }
+        
+        args.add("--ignore-empty-strings");
+        args.add("true");
+        args.add("--skip-duplicate-nodes");
+        args.add("true");
 
-            for (File input : inputs) {
-                File[] argsFiles = input.listFiles(new ArgsFileFilter());
-                for (File argFile : argsFiles) {
-                    writer.write(IOUtils.toString(argFile.toURI(), Charset.forName("utf-8")));
+        for (File input : inputs) {
+            File[] argsFiles = input.listFiles(new ArgsFileFilter());
+            for (File argFile : argsFiles) {
+                for (String line : Files.readAllLines(argFile.toPath())) {
+                    args.add(line);
                 }
             }
         }
-        return file;
     }
 
     private static class ArgsFileFilter implements FileFilter {

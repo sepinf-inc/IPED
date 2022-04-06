@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.search.IMarcadores;
+import iped3.search.IBookmarks;
 
 public class SaveStateThread extends Thread {
 
@@ -17,7 +17,7 @@ public class SaveStateThread extends Thread {
     public static int MAX_BACKUPS = 10;
     public static long BKP_INTERVAL = 60; // seconds
 
-    private static Map<IMarcadores, File> stateMap = new ConcurrentHashMap<>();
+    private static Map<IBookmarks, File> stateMap = new ConcurrentHashMap<>();
 
     private SaveStateThread() {
     }
@@ -31,21 +31,22 @@ public class SaveStateThread extends Thread {
         return instance;
     }
 
-    public synchronized void saveState(IMarcadores state, File file) {
+    public synchronized void saveState(IBookmarks state, File file) {
         stateMap.put(state, file);
     }
 
     public void run() {
         while (!Thread.interrupted()) {
-            for (IMarcadores state : stateMap.keySet()) {
-                File file = stateMap.remove(state);
-                if (file == null)
-                    continue;
-                try {
+            try {
+                for (IBookmarks state : stateMap.keySet().toArray(new IBookmarks[0])) {
+                    File file = stateMap.remove(state);
+                    if (file == null)
+                        continue;
+
                     File tmp = new File(file.getAbsolutePath() + ".tmp"); //$NON-NLS-1$
                     if (tmp.exists())
                         tmp.delete();
-                    Util.writeObject(state, tmp.getAbsolutePath());
+                    state.saveState(tmp, true);
                     if (!file.exists()) {
                         tmp.renameTo(file);
                     } else {
@@ -53,15 +54,13 @@ public class SaveStateThread extends Thread {
                         if (!tmp.renameTo(file))
                             bkp.renameTo(file);
                     }
-
-                } catch (IOException e1) {
-                    e1.printStackTrace();
                 }
-            }
-            try {
                 Thread.sleep(200);
+
             } catch (InterruptedException e) {
                 break;
+            } catch (Exception e1) {
+                e1.printStackTrace();
             }
         }
     }

@@ -1,14 +1,19 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Properties;
+import java.util.Collections;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.IOUtil;
+import gpinf.dev.data.Item;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 
 /**
  * Tarefa para geração de arquivos temporários para os itens antes do
@@ -33,14 +38,14 @@ public class TempFileTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        String value = confParams.getProperty("indexTempOnSSD"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            indexTempOnSSD = Boolean.valueOf(value);
-        }
+    public List<Configurable<?>> getConfigurables() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        LocalConfig config = configurationManager.findObject(LocalConfig.class);
+        indexTempOnSSD = config.isIndexTempOnSSD();
 
     }
 
@@ -56,7 +61,9 @@ public class TempFileTask extends AbstractTask {
         if (indexTempOnSSD && len != null
                 && len <= MAX_TEMPFILE_LEN /* && evidence.getPath().toLowerCase().contains(".e01/vol_vol") */) {
             try {
-                if (evidence.getFile() == null && !evidence.isSubItem()) {
+                if (!IOUtil.hasFile(evidence) && !evidence.isSubItem()
+                // skip carved items pointing to parent temp file
+                        && (!(evidence instanceof Item) || !((Item) evidence).hasParentTmpFile())) {
                     evidence.getTempFile();
                 }
             } catch (IOException e) {

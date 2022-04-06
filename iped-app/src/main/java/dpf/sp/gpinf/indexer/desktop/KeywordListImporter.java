@@ -42,7 +42,7 @@ public class KeywordListImporter extends CancelableWorker {
 
             try {
                 IPEDSearcher task = new IPEDSearcher(App.get().appCase, keyword);
-                if (task.searchAll().getLength() > 0) {
+                if (task.multiSearch().getLength() > 0) {
                     result.add(keyword);
                 }
 
@@ -69,11 +69,11 @@ public class KeywordListImporter extends CancelableWorker {
         progress.close();
 
         for (String word : result)
-            App.get().appCase.getMultiMarcadores().addToTypedWords(word);
+            App.get().appCase.getMultiBookmarks().addToTypedWords(word);
 
-        App.get().appCase.getMultiMarcadores().saveState();
+        App.get().appCase.getMultiBookmarks().saveState();
 
-        MarcadoresController.get().atualizarGUIHistory();
+        BookmarksController.get().updateUIHistory();
 
         if (errors.size() > 0) {
             StringBuilder errorTerms = new StringBuilder();

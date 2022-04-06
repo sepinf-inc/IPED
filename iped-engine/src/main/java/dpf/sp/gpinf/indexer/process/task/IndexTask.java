@@ -7,9 +7,9 @@ import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
@@ -21,20 +21,21 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
+import dpf.sp.gpinf.indexer.io.CloseFilterReader;
+import dpf.sp.gpinf.indexer.io.FragmentingReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker.STATE;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.CloseFilterReader;
-import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
-import iped3.ICaseData;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
+import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a
@@ -50,18 +51,13 @@ public class IndexTask extends AbstractTask {
     private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
     private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES"; //$NON-NLS-1$
     public static final String TEXT_SPLITTED = "textSplitted";
-
-    public static boolean indexFileContents = true;
-    public static boolean indexUnallocated = false;
-
+    public static final String FRAG_NUM = "fragNum";
     public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
 
     private IndexerDefaultParser autoParser;
     private List<IdLenPair> textSizes;
 
-    public IndexTask() {
-        this.autoParser = new IndexerDefaultParser();
-    }
+    private IndexTaskConfig indexConfig;
 
     public static class IdLenPair {
 
@@ -83,11 +79,6 @@ public class IndexTask extends AbstractTask {
         if (item.isSubItem()) {
             item.dispose();
         }
-        if (item instanceof ISleuthKitItem) {
-            ((ISleuthKitItem) item).setSleuthId(null);
-        }
-        item.setFile(null);
-        item.setExportedFile(null);
         item.setIdInDataSource(null);
         item.setInputStreamFactory(null);
         item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
@@ -117,8 +108,8 @@ public class IndexTask extends AbstractTask {
         stats.updateLastId(evidence.getId());
 
         if (textReader == null) {
-            if (indexFileContents
-                    && (indexUnallocated || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
+            if (indexConfig.isIndexFileContents() && (indexConfig.isIndexUnallocated()
+                    || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
                 textReader = evidence.getTextReader();
                 if (textReader == null) {
                     LOGGER.warn("Null Text reader, creating a new one for {}", evidence.getPath()); //$NON-NLS-1$
@@ -140,31 +131,36 @@ public class IndexTask extends AbstractTask {
         if (textReader == null)
             textReader = new StringReader(""); //$NON-NLS-1$
 
-        FragmentingReader fragReader = new FragmentingReader(textReader);
+        FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
+                indexConfig.getTextOverlapSize());
         CloseFilterReader noCloseReader = new CloseFilterReader(fragReader);
 
         int fragments = fragReader.estimateNumberOfFrags();
         if (fragments == -1) {
             fragments = 1;
         }
-        String origPersistentId = Util.getPersistentId(evidence);
+        String origtrackID = Util.getTrackID(evidence);
+        boolean splitted = false;
         try {
             /**
              * breaks very large texts in separate documents to be indexed
              */
             do {
                 // use fragName = 1 for all frags, except last, to check if last frag was
-                // indexed
-                // and to reuse same frag id when continuing an aborted processing
+                // indexed and to reuse same frag ID when continuing an aborted processing
                 int fragName = (--fragments) == 0 ? 0 : 1;
 
-                String fragPersistId = Util.generatePersistentIdForTextFrag(origPersistentId, fragName);
-                evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, fragPersistId);
+                String fragPersistId = Util.generatetrackIDForTextFrag(origtrackID, fragName);
+                evidence.setExtraAttribute(IndexItem.TRACK_ID, fragPersistId);
 
                 if (fragments != 0) {
+                    splitted = true;
                     stats.incSplits();
                     evidence.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
                     LOGGER.info("{} Splitting text of {}", Thread.currentThread().getName(), evidence.getPath()); //$NON-NLS-1$
+                }
+                if (splitted) {
+                    evidence.setExtraAttribute(FRAG_NUM, fragments);
                 }
 
                 Document doc = IndexItem.Document(evidence, noCloseReader, output);
@@ -188,7 +184,7 @@ public class IndexTask extends AbstractTask {
             else
                 throw e;
         } finally {
-            evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, origPersistentId);
+            evidence.setExtraAttribute(IndexItem.TRACK_ID, origtrackID);
             noCloseReader.reallyClose();
         }
 
@@ -206,6 +202,7 @@ public class IndexTask extends AbstractTask {
     private ParseContext getTikaContext(IItem evidence) {
         ParsingTask pt = new ParsingTask(evidence, this.autoParser);
         pt.setWorker(worker);
+        pt.init(ConfigurationManager.get());
         ParseContext context = pt.getTikaContext();
         // this is to not create new items while indexing
         pt.setExtractEmbedded(false);
@@ -213,23 +210,14 @@ public class IndexTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties properties, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new IndexTaskConfig());
+    }
 
-        String value = properties.getProperty("indexFileContents"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            indexFileContents = Boolean.valueOf(value);
-        }
-
-        value = properties.getProperty("indexUnallocated"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            indexUnallocated = Boolean.valueOf(value);
-        }
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        
+        indexConfig = configurationManager.findObject(IndexTaskConfig.class);
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
@@ -271,6 +259,8 @@ public class IndexTask extends AbstractTask {
 
         IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
         loadExtraAttributes();
+
+        this.autoParser = new IndexerDefaultParser();
 
     }
 

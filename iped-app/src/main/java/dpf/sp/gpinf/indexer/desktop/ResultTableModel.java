@@ -21,7 +21,7 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.text.Collator;
-import java.text.NumberFormat;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,25 +37,36 @@ import javax.swing.table.TableColumn;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
+import org.apache.lucene.util.BytesRef;
 
+import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.TimelineResults.TimeItemId;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
+import iped3.util.BasicProps;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel {
 
     private static final long serialVersionUID = 1L;
 
     private static final List<String> basicDateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED,
-            IndexItem.CREATED, IndexItem.RECORDDATE);
+            IndexItem.CREATED, IndexItem.CHANGED);
 
-    private static final NumberFormat numberFormat = NumberFormat.getNumberInstance();
-
+    private static final String lengthField = LocalizedProperties.getLocalizedField(IndexItem.LENGTH);
     public static String BOOKMARK_COL = Messages.getString("ResultTableModel.bookmark"); //$NON-NLS-1$
     public static String SCORE_COL = Messages.getString("ResultTableModel.score"); //$NON-NLS-1$
+
+    private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("ResultTableModel.DateFormat")); //$NON-NLS-1$
+    private SimpleDateFormat fatAccessedDf = new SimpleDateFormat(Messages.getString("ResultTableModel.FATDateFormat")); //$NON-NLS-1$
+    private DecimalFormat numberFormat = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
+    private Collator collator = Collator.getInstance();
 
     public static String[] fields;
 
@@ -102,15 +113,12 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
         fields = ColumnsManager.getInstance().getLoadedCols();
         for (String col : fields) {
+            col = LocalizedProperties.getLocalizedField(col);
             cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
         }
 
         columnNames = cols.toArray(new String[0]);
     }
-
-    private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("ResultTableModel.DateFormat")); //$NON-NLS-1$
-    private SimpleDateFormat fatAccessedDf = new SimpleDateFormat(Messages.getString("ResultTableModel.FATDateFormat")); //$NON-NLS-1$
-    private Collator collator = Collator.getInstance();
 
     public ResultTableModel() {
         super();
@@ -132,7 +140,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     @Override
     public String getColumnName(int col) {
         if (col == 0) {
-            return String.valueOf(App.get().ipedResult.getLength());
+            return LocalizedFormat.format(App.get().ipedResult.getLength());
         } else {
             return columnNames[col];
         }
@@ -140,7 +148,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
     public void updateLengthHeader(long mb) {
         for (int i = 0; i < columnNames.length; i++) {
-            if (IndexItem.LENGTH.equalsIgnoreCase(columnNames[i])) {
+            if (lengthField.equalsIgnoreCase(columnNames[i])) {
                 int col = App.get().resultsTable.convertColumnIndexToView(i);
                 if (col == -1)
                     return;
@@ -148,7 +156,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(columnNames[i] + " (...)"); //$NON-NLS-1$
                 } else {
                     App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
-                            columnNames[i] + " (" + NumberFormat.getNumberInstance().format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
+                            columnNames[i] + " (" + LocalizedFormat.format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
         }
@@ -169,15 +177,15 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     @Override
     public void setValueAt(Object value, int row, int col) {
 
-        app.appCase.getMultiMarcadores().setSelected((Boolean) value, App.get().ipedResult.getItem(row));
+        app.appCase.getMultiBookmarks().setChecked((Boolean) value, App.get().ipedResult.getItem(row));
         App.get().galleryModel.setValueAt(value, row, col);
         App.get().resultsModel.fireTableCellUpdated(row, col);
 
         // app.appCase.getMarcadores().setSelected((Boolean)value,
         // app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
-        if (!MarcadoresController.get().isMultiSetting()) {
-            app.appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUISelection();
+        if (!BookmarksController.get().isMultiSetting()) {
+            app.appCase.getMultiBookmarks().saveState();
+            BookmarksController.get().updateUISelection();
         }
     }
 
@@ -185,7 +193,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public Class<?> getColumnClass(int c) {
         if (c == 1) {
             return Boolean.class;
-        } else if (columnNames[c].equalsIgnoreCase(IndexItem.LENGTH)) {
+        } else if (columnNames[c].equalsIgnoreCase(lengthField)) {
             return Integer.class;
         } else {
             return String.class;
@@ -204,10 +212,10 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public Object getValueAt(int row, int col) {
 
         if (col == 0)
-            return String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
+            return LocalizedFormat.format(App.get().resultsTable.convertRowIndexToView(row) + 1);
 
         if (col == 1)
-            return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getItem(row));
+            return app.appCase.getMultiBookmarks().isChecked(app.ipedResult.getItem(row));
 
         String value = ""; //$NON-NLS-1$
 
@@ -233,19 +241,25 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             }
 
             if (field.equals(BOOKMARK_COL)) {
-                return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(app.ipedResult.getItem(row)));
+                return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(app.ipedResult.getItem(row)));
             }
 
-            SortedNumericDocValues sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues(field);
-            if (sndv == null)
-                sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
+            if (item instanceof TimeItemId) {
+                TimeItemId timeItem = (TimeItemId) item;
+                if (field.equals(BasicProps.TIMESTAMP)) {
+                    return timeItem.getTimeStampValue();
+                }
+                if (field.equals(BasicProps.TIME_EVENT)) {
+                    return timeItem.getTimeEventValue();
+                }
+            }
 
-            boolean mayBeNumeric = MetadataPanel.mayBeNumeric(field);
+            boolean isNumeric = IndexItem.isNumeric(field);
 
             String[] values = doc.getValues(field);
             if (values.length > 1) {
                 boolean sorted = false;
-                if (mayBeNumeric && sndv != null) {
+                if (isNumeric) {
                     try {
                         Arrays.sort(values, new Comparator<String>() {
                             @Override
@@ -257,21 +271,32 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     } catch (NumberFormatException e) {
                     }
                 }
-                if (!sorted)
+                if (!sorted) {
                     Arrays.sort(values, collator);
+                }
+            }
+            
+            if (values.length == 0) {
+                BytesRef[] bytes = doc.getBinaryValues(field);
+                if (bytes.length > 0) {
+                    values = new String[bytes.length];
+                    for (int i = 0; i < bytes.length; i++) {
+                        values[i] = bytes[i].toString();
+                    }
+                }
+            }
+
+            if (LocalizedProperties.getLocalizedField(BasicProps.CATEGORY).equalsIgnoreCase(getColumnName(col))) {
+                for (int i = 0; i < values.length; i++) {
+                    values[i] = CategoryLocalization.getInstance().getLocalizedCategory(values[i]);
+                }
             }
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < values.length; i++) {
-                try {
-                    // do not use scientific notation for longs
-                    Double d = Double.valueOf(values[i]);
-                    if (d.doubleValue() == d.longValue()) {
-                        values[i] = Long.toString(d.longValue());
-                    }
-                } catch (NumberFormatException e) {
+                if (isNumeric) {
+                    values[i] = numberFormat.format(Double.valueOf(values[i]));
                 }
-
                 sb.append(values[i]);
                 if (i != values.length - 1) {
                     if (i == 9) {
@@ -300,19 +325,18 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     // e.printStackTrace();
                 }
 
-            if (Date.class.equals(IndexItem.getMetadataTypes().get(field))) {
-                // it was stored lowercase because query parser converts range queries to
-                // lowercase
-                value = value.toUpperCase();
-            }
-
-            if (field.equals(IndexItem.LENGTH)) {
-                value = numberFormat.format(Long.valueOf(value));
-
-            } else if (field.equals(IndexItem.NAME)) {
+            if (field.equals(IndexItem.NAME)) {
                 TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
                 if (fragments[0].getScore() > 0) {
-                    value = "<html><nobr>" + fragments[0].toString() + "</html>"; //$NON-NLS-1$ //$NON-NLS-2$
+                    StringBuilder s = new StringBuilder();
+                    s.append("<html><nobr>"); //$NON-NLS-1$
+                    if (App.get().getFontStartTag() != null)
+                        s.append(App.get().getFontStartTag());
+                    s.append(fragments[0].toString());
+                    if (App.get().getFontStartTag() != null)
+                        s.append(ATextViewer.HIGHLIGHT_END_TAG);
+                    s.append("</html>"); //$NON-NLS-1$
+                    value = s.toString();
                 }
             }
 

@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class RandomForestPredictor {
-
+    private static final double borderSize = 0.15;
     private final int[] roots;
     private final int[] nodeLeft;
     private final short[] splitFeature;
@@ -42,7 +42,7 @@ public class RandomForestPredictor {
         }
         Collections.sort(l);
         int cnt = 0;
-        int border = (int) (l.size() * 0.07);
+        int border = (int) (l.size() * borderSize);
         for (int i = border; i < l.size() - border; i++) {
             ret += l.get(i);
             cnt++;

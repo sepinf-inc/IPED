@@ -1,26 +1,26 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.MinIOConfig;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
-import dpf.sp.gpinf.network.util.ProxySever;
 import gpinf.dev.data.Item;
 import io.minio.BucketExistsArgs;
 import io.minio.ErrorCode;
@@ -38,6 +38,7 @@ import io.minio.errors.ServerException;
 import io.minio.errors.XmlParserException;
 import iped3.ICaseData;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.io.SeekableInputStream;
 
 /**
@@ -54,45 +55,36 @@ public class MinIOTask extends AbstractTask {
     private static Logger logger = LoggerFactory.getLogger(MinIOTask.class);
 
     private static final int FOLDER_LEVELS = 4;
-    private static final String CONF_FILE = "MinIOConfig.txt";
-    private static final String ENABLE_KEY = "enable";
-    private static final String HOST_KEY = "host";
-    private static final String PORT_KEY = "port";
     private static final String CMD_LINE_KEY = "MinioCredentials";
     private static final String ACCESS_KEY = "accesskey";
     private static final String SECRET_KEY = "secretkey";
     private static final String BUCKET_KEY = "bucket";
 
-    private static boolean enabled = false;
-    private static String server = "http://127.0.0.1:9000";
     private static String accessKey;
     private static String secretKey;
-    private static String bucket;
+    private static String bucket = null;
 
+    private static Tika tika;
+
+    private MinIOConfig minIOConfig;
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        File config = new File(confDir, CONF_FILE);
-        UTF8Properties props = new UTF8Properties();
-        props.load(config);
+        minIOConfig = configurationManager.findObject(MinIOConfig.class);
 
-        enabled = Boolean.valueOf(props.getProperty(ENABLE_KEY));
-
-        if (!enabled) {
+        if (!minIOConfig.isEnabled()) {
             return;
         }
 
-        String host = props.getProperty(HOST_KEY);
-        String port = props.getProperty(PORT_KEY);
-
-        server = host + ":" + port;
+        String server = minIOConfig.getHost() + ":" + minIOConfig.getPort();
 
         // case name is default bucket name
-        bucket = output.getParentFile().getName().toLowerCase();
-
+        if (bucket == null) {
+            bucket = output.getParentFile().getName().toLowerCase();
+        }
         loadCredentials(caseData);
 
         minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
@@ -138,31 +130,24 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return minIOConfig.isEnabled();
+    }
+
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new MinIOConfig());
     }
 
     public static boolean isTaskEnabled() {
-        return enabled;
+        MinIOConfig minIOConfig = ConfigurationManager.get().findObject(MinIOConfig.class);
+        return minIOConfig.isEnabled();
     }
 
     @Override
     public void finish() throws Exception {
-        
+
     }
 
-    @Override
-    protected void process(IItem item) throws Exception {
-
-        if (caseData.isIpedReport() || !item.isToAddToCase())
-            return;
-
-        String hash = item.getHash();
-        if (hash == null || hash.isEmpty() || item.getLength() == null)
-            return;
-
-        // disable blocking proxy possibly enabled by HtmlViewer
-        ProxySever.get().disable();
-
+    private boolean checkIfExists(String hash) throws Exception {
         boolean exists = false;
         try {
             ObjectStat stat = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
@@ -175,12 +160,20 @@ public class MinIOTask extends AbstractTask {
             }
         }
 
+        return exists;
+    }
+
+    private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
+            throws Exception {
         String bucketPath = buildPath(hash);
+        // if preview saves in a preview folder
+        if (preview) {
+            bucketPath = "preview/" + hash;
+        }
         String fullPath = bucket + "/" + bucketPath;
 
-        if (exists) {
-            updateDataSource(item, fullPath);
-            return;
+        if (length <= 0 || checkIfExists(bucketPath)) {
+            return fullPath;
         }
 
         // create directory structure
@@ -191,16 +184,64 @@ public class MinIOTask extends AbstractTask {
         }
 
         try {
-            // Upload the file to the bucket with putObject
-            try (InputStream is = item.getBufferedStream()) {
-                minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath)
-                        .stream(is, item.getLength(), -1).contentType(item.getMediaType().toString()).build());
+            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, length, -1)
+                    .contentType(mediatype).build());
 
-            }
-            updateDataSource(item, fullPath);
+            return fullPath;
 
         } catch (Exception e) {
-            logger.error("Error when uploading object " + item.getPath() + " (" + item.getLength() + " bytes)", e);
+            throw new Exception("Error when uploading object ", e);
+        }
+
+    }
+
+    private static String getMimeType(String name) {
+        if (tika == null) {
+            synchronized (MinIOTask.class) {
+                if (tika == null) {
+                    tika = new Tika();
+                }
+            }
+        }
+        return tika.detect(name);
+    }
+
+
+
+    @Override
+    protected void process(IItem item) throws Exception {
+
+        if (caseData.isIpedReport() || !item.isToAddToCase())
+            return;
+
+        String hash = item.getHash();
+        if (hash == null || hash.isEmpty() || item.getLength() == null || item.getLength() <= 0)
+            return;
+
+        try (SeekableInputStream is = item.getSeekableInputStream()) {
+            String fullPath = insertItem(hash, new BufferedInputStream(is), is.size(), item.getMediaType().toString(), false);
+            if (fullPath != null) {
+                updateDataSource(item, fullPath);
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+            logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
+        }
+        if (item.getViewFile() != null && item.getViewFile().length() > 0) {
+            try (InputStream is = new FileInputStream(item.getViewFile())) {
+                String fullPath = insertItem(hash, is, item.getViewFile().length(),
+                        getMimeType(item.getViewFile().getName()), true);
+                if (fullPath != null) {
+                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
+                            "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
+                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE, "type"
+                            + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + getMimeType(item.getViewFile().getName()));
+                }
+            } catch (Exception e) {
+                // TODO: handle exception
+                logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
+                        + item.getViewFile().length() + " bytes)", e);
+            }
         }
 
     }
@@ -219,16 +260,8 @@ public class MinIOTask extends AbstractTask {
     }
 
     private void updateDataSource(IItem item, String id) {
-        if (item.isSubItem()) {
-            // deletes local sqlite content after sent to minio
-            item.setDeleteFile(true);
-            ((Item) item).dispose(false);
-        }
-
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(id);
-        item.setFile(null);
-        item.setExportedFile(null);
         item.setFileOffset(-1);
     }
 
@@ -267,15 +300,13 @@ public class MinIOTask extends AbstractTask {
         private MinioClient minioClient;
         private String bucket, id;
         private Long size;
-        private long pos = 0, markPos;
+        private long pos = 0;
         private InputStream is;
 
         public MinIOSeekableInputStream(MinioClient minioClient, String bucket, String id) {
             this.minioClient = minioClient;
             this.bucket = bucket;
             this.id = id;
-            // disable blocking proxy possibly enabled by HtmlViewer
-            ProxySever.get().disable();
         }
 
         @Override
@@ -298,9 +329,8 @@ public class MinIOTask extends AbstractTask {
                 try {
                     size = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(id).build()).length();
                 } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException | InternalException
-                        | InvalidBucketNameException
-                        | InvalidResponseException | NoSuchAlgorithmException | ServerException
-                        | XmlParserException e) {
+                        | InvalidBucketNameException | InvalidResponseException | NoSuchAlgorithmException
+                        | ServerException | XmlParserException e) {
                     throw new IOException(e);
                 }
             }
@@ -345,9 +375,9 @@ public class MinIOTask extends AbstractTask {
             try {
                 return minioClient.getObject(bucket, id, pos);
 
-            } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException
-                    | InternalException | InvalidBucketNameException | InvalidResponseException
-                    | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException | InternalException
+                    | InvalidBucketNameException | InvalidResponseException | NoSuchAlgorithmException | ServerException
+                    | XmlParserException e) {
                 throw new IOException(e);
             }
         }
@@ -370,25 +400,6 @@ public class MinIOTask extends AbstractTask {
 
             return pos - oldPos;
 
-        }
-
-        @Override
-        public boolean markSupported() {
-            return true;
-        }
-
-        @Override
-        public void mark(int mark) {
-            markPos = pos;
-        }
-
-        @Override
-        public void reset() throws IOException {
-            pos = markPos;
-            if (is != null) {
-                is.close();
-                is = getInputStream(pos);
-            }
         }
 
         @Override

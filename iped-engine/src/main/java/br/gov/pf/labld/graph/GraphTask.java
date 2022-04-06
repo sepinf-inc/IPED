@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -42,16 +41,19 @@ import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.IPEDReader;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UfedMessage;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexHits;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
+import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
@@ -61,13 +63,11 @@ public class GraphTask extends AbstractTask {
     private static final Logger logger = LoggerFactory.getLogger(GraphTask.class);
 
     public static final String DB_NAME = "graph.db";
-    public static final String DB_PATH = "neo4j/databases";
-    public static final String GENERATED_PATH = "neo4j/generated";
-
-    public static final String ENABLE_PARAM = "enableGraphGeneration";
-
-    public static final String CONFIG_PATH = "GraphConfig.json";
-
+    public static final String DB_HOME_DIR = "neo4j";
+    public static final String DB_DATA_DIR = "data";
+    public static final String DB_DATA_PATH = DB_HOME_DIR + "/" + DB_DATA_DIR;
+    public static final String CSVS_DIR = "csv";
+    public static final String CSVS_PATH = DB_HOME_DIR + "/" + CSVS_DIR;
     public static final String RELATIONSHIP_ID = "relId";
     public static final String RELATIONSHIP_SOURCE = "dataSource";
 
@@ -107,13 +107,19 @@ public class GraphTask extends AbstractTask {
     private static Map<String, NodeValues> datasourceOwnerMap = new HashMap<>();
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        enabled = isGraphGenerationEnabled(confParams);
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new GraphTaskConfig());
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        GraphTaskConfig config = configurationManager.findObject(GraphTaskConfig.class);
+        enabled = config.isEnabled();
         if (enabled) {
-            configuration = loadConfiguration(confDir);
+            configuration = config.getConfiguration();
 
             if (graphFileWriter == null) {
-                graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH),
+                graphFileWriter = new GraphFileWriter(new File(output, CSVS_PATH),
                         configuration.getDefaultEntity());
 
                 if (configuration.getProcessProximityRelationships() && caseData.isIpedReport()) {
@@ -124,32 +130,18 @@ public class GraphTask extends AbstractTask {
 
             CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
             if (args.isAppendIndex() || args.isRestart() || args.isContinue()) {
-                File graphDbOutput = new File(output, GraphTask.DB_PATH);
-                if (graphDbOutput.exists()) {
+                File graphDataDir = new File(output, DB_DATA_PATH);
+                if (graphDataDir.exists()) {
                     // TODO test if LOAD CSV Cypher command is faster than rebuilding all database
                     // from scratch with bulk import tool
                     try {
-                        IOUtil.deleteDirectory(graphDbOutput, false);
+                        IOUtil.deleteDirectory(graphDataDir, false);
                     } catch (IOException e) {
                         throw new IPEDException("Error appending to graph database, currently it can't be in use!");
                     }
                 }
             }
         }
-    }
-
-    private static boolean isGraphGenerationEnabled(Properties confParams) {
-        boolean enabled = false;
-        String value = confParams.getProperty(ENABLE_PARAM);
-        if (value != null && !value.trim().isEmpty()) {
-            enabled = Boolean.valueOf(value.trim());
-        }
-        return enabled;
-    }
-
-    public static GraphConfiguration loadConfiguration(File confDir) throws IOException {
-        File file = new File(confDir, CONFIG_PATH);
-        return GraphConfiguration.loadFrom(file);
     }
 
     public static void commit() throws IOException {
@@ -163,10 +155,10 @@ public class GraphTask extends AbstractTask {
     private void finishGraphGeneration() throws IOException {
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Generating graph database...");
         logger.info("Generating graph database...");
-        File graphDbOutput = new File(output, GraphTask.DB_PATH);
-        File graphDbGenerated = new File(output, GraphTask.GENERATED_PATH);
+        File graphDbHome = new File(output, DB_HOME_DIR);
+        File graphCSVs = new File(output, CSVS_PATH);
         GraphGenerator graphGenerator = new GraphGenerator();
-        graphGenerator.generate(graphDbOutput, graphDbGenerated);
+        graphGenerator.generate(graphDbHome, graphCSVs);
         logger.info("Generating graph database finished.");
     }
 
@@ -175,24 +167,26 @@ public class GraphTask extends AbstractTask {
         if (graphFileWriter != null) {
             WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Finishing graph CSVs...");
             logger.info("Finishing graph CSVs...");
-            graphFileWriter.close(caseData.isIpedReport());
-            logger.info("Finishing graph CSVs finished.");
-            if (caseData.isIpedReport()) {
-                File prevCaseModuleDir = (File) caseData.getCaseObject(IPEDReader.ORIG_CASE_MODULE_DIR);
-                File prevCSVRoot = new File(prevCaseModuleDir, GraphTask.GENERATED_PATH);
+            List<File> srcCases = (List<File>) caseData.getCaseObject(IPEDReader.REPORTING_CASES);
+            // TODO merge multicase nodes, copying nodes from single case reports for now
+            if (caseData.isIpedReport() && srcCases != null && srcCases.size() == 1) {
+                graphFileWriter.close(true);
+                File prevCSVRoot = new File(srcCases.get(0), IPEDSource.MODULE_DIR + "/" + CSVS_PATH);
                 if (prevCSVRoot.exists() && prevCSVRoot.isDirectory()) {
                     for (File file : prevCSVRoot.listFiles()) {
-                        File target = new File(output, GraphTask.GENERATED_PATH + "/" + file.getName());
+                        File target = new File(output, CSVS_PATH + "/" + file.getName());
                         if (file.getName().startsWith(GraphFileWriter.NODE_CSV_PREFIX)
                                 || file.getName().startsWith(GraphFileWriter.REPLACE_NAME)) {
-                            IOUtil.copiaArquivo(file, target);
+                            IOUtil.copyFile(file, target);
                         }
                     }
                 }
-                graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH),
-                        configuration.getDefaultEntity());
+                graphFileWriter = new GraphFileWriter(new File(output, CSVS_PATH), configuration.getDefaultEntity());
+                graphFileWriter.close();
+            } else {
                 graphFileWriter.close();
             }
+            logger.info("Finishing graph CSVs finished.");
             finishGraphGeneration();
             WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Compressing graph CSVs...");
             logger.info("Compressing graph CSVs...");
@@ -218,11 +212,6 @@ public class GraphTask extends AbstractTask {
     }
 
     private void processEvidence(IItem evidence) throws IOException {
-
-        // old item->node model and gui dependent code was moved to class below
-        // ItemNodeGenerator itemNodeGenerator = new ItemNodeGenerator(caseData,
-        // configuration, graphFileWriter);
-        // itemNodeGenerator.generateNodeForItem(evidence);
 
         if (includeEvidence(evidence)) {
             processCommunicationMetadata(evidence);
@@ -263,7 +252,7 @@ public class GraphTask extends AbstractTask {
                 || MediaTypes.UFED_MESSAGE_MIME.equals(mediaType)) {
             return "message";
         }
-        if (mediaType.startsWith("message") || mediaType.equals("application/vnd.ms-outlook")) {
+        if (mediaType.startsWith("message") || MediaTypes.OUTLOOK_MSG.toString().equals(mediaType)) {
             return "email";
         }
         for (String contactMime : contactMimes) {

@@ -51,7 +51,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 
 import iped3.io.IStreamSource;
 
-public class PDFBoxViewer extends Viewer {
+public class PDFBoxViewer extends AbstractViewer {
 
     private static final long serialVersionUID = -7364831780786494299L;
 
@@ -220,7 +220,7 @@ public class PDFBoxViewer extends Viewer {
                 if (content != currentContent)
                     return;
                 try {
-                    is = content.getStream();
+                    is = content.getSeekableInputStream();
                     document = PDDocument.load(is, MemoryUsageSetting.setupMixed(100000000));
                     // document.setResourceCache(new NoResourceCache());
                     pdfRenderer = new PDFRenderer(document);

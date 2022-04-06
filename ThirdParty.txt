@@ -44,6 +44,10 @@ Apache Log4j2
 - Site: https://logging.apache.org/log4j/2.x/
 - License: Apache License, Version 2.0
 
+Apache TwelveMonkeys 
+- Site: https://github.com/haraldk/TwelveMonkeys
+- License: BSD 3 Clause
+
 ----------------------------------------------------
 
 Simple Logging Facade for Java

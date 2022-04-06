@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
  * 
- * This file is part of Indexador e Processador de EvidÃƒÂªncias Digitais (IPED).
+ * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,6 @@ import java.util.concurrent.Executors;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.LeafReader;
@@ -46,6 +45,7 @@ import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -53,27 +53,29 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.AnalysisConfig;
+import dpf.sp.gpinf.indexer.config.CategoryConfig;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
+import dpf.sp.gpinf.indexer.localization.Messages;
+import dpf.sp.gpinf.indexer.lucene.ConfiguredFSDirectory;
+import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
+import dpf.sp.gpinf.indexer.lucene.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
-import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
+import dpf.sp.gpinf.indexer.sleuthkit.TouchSleuthkitImages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
-import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
-import dpf.sp.gpinf.indexer.util.TouchSleuthkitImages;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.Category;
 import gpinf.dev.data.Item;
 import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
-import iped3.search.IMarcadores;
-import iped3.search.IMultiMarcadores;
+import iped3.exception.IPEDException;
+import iped3.search.IBookmarks;
+import iped3.search.IMultiBookmarks;
 import iped3.util.BasicProps;
 
 public class IPEDSource implements Closeable, IIPEDSource {
@@ -81,7 +83,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     private static Logger LOGGER = LoggerFactory.getLogger(IPEDSource.class);
 
     public static final String INDEX_DIR = "index"; //$NON-NLS-1$
-    public static final String MODULE_DIR = "indexador"; //$NON-NLS-1$
+    public static final String MODULE_DIR = "iped"; //$NON-NLS-1$
     public static final String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
     public static final String PREV_TEMP_INFO_PATH = "data/prevTempDir.txt"; //$NON-NLS-1$
 
@@ -104,10 +106,11 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     private ExecutorService searchExecutorService;
 
-    protected ArrayList<String> categories = new ArrayList<String>();
+    protected ArrayList<String> leafCategories = new ArrayList<String>();
+    protected Category categoryTree;
 
-    private IMarcadores marcadores;
-    IMultiMarcadores globalMarcadores;
+    private IBookmarks bookmarks;
+    IMultiBookmarks multiBookmarks;
 
     private int[] ids, docs;
     private long[] textSizes;
@@ -126,7 +129,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     Set<String> evidenceUUIDs = new HashSet<String>();
 
-    boolean isFTKReport = false, isReport = false;
+    boolean isReport = false;
 
     public static File getTempDirInfoFile(File moduleDir) {
         return new File(moduleDir, IPEDSource.PREV_TEMP_INFO_PATH);
@@ -150,7 +153,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
         this.iw = iw;
 
         // return if multicase
-        if (casePath == null)
+        if (this instanceof IPEDMultiSource)
             return;
 
         if (!index.exists() && iw == null) {
@@ -170,7 +173,6 @@ public class IPEDSource implements Closeable, IIPEDSource {
         try {
             Configuration.getInstance().loadConfigurables(moduleDir.getAbsolutePath(), true);
 
-            isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists(); //$NON-NLS-1$
             isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
 
             File sleuthFile = new File(casePath, SLEUTH_DB);
@@ -187,11 +189,10 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 tskCaseList.add(sleuthCase);
             }
 
-            AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                    .findObjects(AdvancedIPEDConfig.class).iterator().next();
-            if (advancedConfig.isPreOpenImagesOnSleuth() && iw == null) {
-                TouchSleuthkitImages.preOpenImagesOnSleuth(sleuthCase, advancedConfig.isOpenImagesCacheWarmUpEnabled(),
-                        advancedConfig.getOpenImagesCacheWarmUpThreads());
+            AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
+            if (analysisConfig.isPreOpenImagesOnSleuth() && iw == null) {
+                TouchSleuthkitImages.preOpenImagesOnSleuth(sleuthCase, analysisConfig.isOpenImagesCacheWarmUpEnabled(),
+                        analysisConfig.getOpenImagesCacheWarmUpThreads());
             }
 
             openIndex(index, iw);
@@ -219,7 +220,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
             } else
                 textSizes = new long[lastId + 1];
 
-            loadCategories();
+            loadLeafCategories();
+            loadCategoryTree();
 
             loadKeywords();
 
@@ -231,9 +233,9 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 Item.getAllExtraAttributes().addAll(extraAttributes);
             }
 
-            marcadores = new Marcadores(this, moduleDir);
-            marcadores.loadState();
-            globalMarcadores = new MultiMarcadores(Collections.singletonList(this));
+            bookmarks = new Bookmarks(this, moduleDir);
+            bookmarks.loadState();
+            multiBookmarks = new MultiBookmarks(Collections.singletonList(this));
 
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -246,9 +248,14 @@ public class IPEDSource implements Closeable, IIPEDSource {
         ids = new int[reader.maxDoc()];
 
         NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.ID);
+        if (ndv == null) {
+            // no items in index
+            return;
+        }
 
-        for (int i = 0; i < reader.maxDoc(); i++) {
-            ids[i] = (int) ndv.get(i);
+        int i;
+        while ((i = ndv.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
+            ids[i] = (int) ndv.longValue();
             if (ids[i] > lastId)
                 lastId = ids[i];
         }
@@ -306,18 +313,94 @@ public class IPEDSource implements Closeable, IIPEDSource {
         }
     }
 
-    private void loadCategories() throws IOException {
-        Fields fields = atomicReader.fields();
-        if (fields == null)
-            return;
-        Terms terms = fields.terms(IndexItem.CATEGORY);
+    private void loadLeafCategories() throws IOException {
+        Terms terms = atomicReader.terms(IndexItem.CATEGORY);
         if (terms == null)
             return;
         TermsEnum termsEnum = terms.iterator();
         while (termsEnum.next() != null) {
             String cat = termsEnum.term().utf8ToString();
-            categories.add(cat);
+            leafCategories.add(cat);
         }
+    }
+
+    protected void loadCategoryTree() {
+        CategoryConfig config = ConfigurationManager.get().findObject(CategoryConfig.class);
+        Category root = config.getConfiguration().clone();
+        // root.setName(rootName);
+        ArrayList<Category> leafs = getLeafCategories(root);
+        leafs.stream().forEach(l -> checkAndAddMissingCategory(root, l));
+        filterEmptyCategories(root, leafs);
+        countNumItems(root);
+        categoryTree = root;
+    }
+
+    private boolean checkAndAddMissingCategory(Category root, Category leaf) {
+        boolean found = false;
+        if (leaf.getName().equalsIgnoreCase(root.getName())) {
+            found = true;
+        } else {
+            for (Category child : root.getChildren()) {
+                if (checkAndAddMissingCategory(child, leaf)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found && root.getParent() == null) {
+            leaf.setParent(root);
+            root.getChildren().add(leaf);
+        }
+        return found;
+    }
+
+    private ArrayList<Category> getLeafCategories(Category root) {
+        ArrayList<Category> categoryList = new ArrayList<Category>();
+        for (String category : leafCategories) {
+            categoryList.add(new Category(category, root));
+        }
+        return categoryList;
+    }
+
+    private boolean filterEmptyCategories(Category category, ArrayList<Category> leafCategories) {
+        boolean hasItems = false;
+        if (leafCategories.contains(category)) {
+            hasItems = true;
+        }
+        for (Category child : category.getChildren().toArray(new Category[0])) {
+            if (filterEmptyCategories(child, leafCategories)) {
+                hasItems = true;
+            }
+        }
+        if (!hasItems && category.getParent() != null) {
+            category.getParent().getChildren().remove(category);
+        }
+        return hasItems;
+    }
+
+    private int countNumItems(Category category) {
+        if (category.getNumItems() != -1)
+            return category.getNumItems();
+
+        if (!category.getChildren().isEmpty()) {
+            int num = 0;
+            for (Category child : category.getChildren()) {
+                num += countNumItems(child);
+            }
+            category.setNumItems(num);
+
+        } else {
+            String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
+            IPEDSearcher searcher = new IPEDSearcher(this, query);
+            searcher.setNoScoring(true);
+            try {
+                category.setNumItems(searcher.luceneSearch().getLength());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return category.getNumItems();
     }
 
     private void loadKeywords() {
@@ -350,10 +433,9 @@ public class IPEDSource implements Closeable, IIPEDSource {
     }
 
     protected void openSearcher() {
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
-        if (advancedConfig.getSearchThreads() > 1) {
-            searchExecutorService = Executors.newFixedThreadPool(advancedConfig.getSearchThreads());
+        AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
+        if (analysisConfig.getSearchThreads() > 1) {
+            searchExecutorService = Executors.newFixedThreadPool(analysisConfig.getSearchThreads());
             searcher = new IndexSearcher(reader, searchExecutorService);
         } else
             searcher = new IndexSearcher(reader);
@@ -380,7 +462,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     public IItem getItemByLuceneID(int docID) {
         try {
             Document doc = searcher.doc(docID);
-            IItem item = IndexItem.getItem(doc, moduleDir, sleuthCase, false);
+            IItem item = IndexItem.getItem(doc, this, false);
             return item;
 
         } catch (IOException e) {
@@ -499,12 +581,12 @@ public class IPEDSource implements Closeable, IIPEDSource {
     File tmpCaseFile = null;
 
     private void testCanWriteToCase(File sleuthFile) throws TskCoreException, IOException {
-        if (tmpCaseFile == null && (!sleuthFile.canWrite() || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
+        if (tmpCaseFile == null && (!IOUtil.canWrite(sleuthFile) || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
             tmpCaseFile = File.createTempFile("sleuthkit-", ".db"); //$NON-NLS-1$ //$NON-NLS-2$
             tmpCaseFile.deleteOnExit();
             // causes "case is closed" error in some cases
             // sleuthCase.close();
-            IOUtil.copiaArquivo(sleuthFile, tmpCaseFile);
+            IOUtil.copyFile(sleuthFile, tmpCaseFile);
             sleuthCase = SleuthkitCase.openCase(tmpCaseFile.getAbsolutePath());
             tskCaseList.add(sleuthCase);
         }
@@ -583,8 +665,12 @@ public class IPEDSource implements Closeable, IIPEDSource {
         return splitedIds.get(id);
     }
 
-    public List<String> getCategories() {
-        return categories;
+    public List<String> getLeafCategories() {
+        return leafCategories;
+    }
+
+    public Category getCategoryTree() {
+        return categoryTree;
     }
 
     public Set<String> getKeywords() {
@@ -619,12 +705,12 @@ public class IPEDSource implements Closeable, IIPEDSource {
         return searcher;
     }
 
-    public IMarcadores getMarcadores() {
-        return marcadores;
+    public IBookmarks getBookmarks() {
+        return bookmarks;
     }
 
-    public IMultiMarcadores getMultiMarcadores() {
-        return this.globalMarcadores;
+    public IMultiBookmarks getMultiBookmarks() {
+        return this.multiBookmarks;
     }
 
     public int getTotalItens() {
@@ -635,8 +721,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
         return lastId;
     }
 
-    public boolean isFTKReport() {
-        return isFTKReport;
+    public boolean isReport() {
+        return isReport;
     }
 
 }

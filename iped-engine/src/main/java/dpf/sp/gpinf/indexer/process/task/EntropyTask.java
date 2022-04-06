@@ -1,38 +1,44 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Properties;
+import java.util.Arrays;
+import java.util.List;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.util.RandomFilterInputStream;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 
 public class EntropyTask extends AbstractTask {
 
-    private static final String COMPRESS_RATIO = RawStringParser.COMPRESS_RATIO;
+    public static final String COMPRESS_RATIO = RawStringParser.COMPRESS_RATIO;
 
-    byte[] buf = new byte[64 * 1024];
+    public static final String ENABLE_PARAM = "entropyTest"; //$NON-NLS-1$
+
+    private byte[] buf = new byte[64 * 1024];
+
+    private boolean enableOption;
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        // TODO Auto-generated method stub
-
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        enableOption = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
     }
 
     @Override
     public void finish() throws Exception {
         // TODO Auto-generated method stub
+    }
 
+    @Override
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
     }
 
     @Override
     public boolean isEnabled() {
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
-        return advancedConfig.isEntropyTest();
+        return enableOption;
     }
 
     @Override
@@ -41,18 +47,11 @@ public class EntropyTask extends AbstractTask {
         if (!isEnabled() || !evidence.isToAddToCase())
             return;
 
-        String ratio = evidence.getMetadata().get(COMPRESS_RATIO);
-        if (ratio != null) {
-            evidence.getMetadata().remove(COMPRESS_RATIO);
-            evidence.setExtraAttribute(COMPRESS_RATIO, Double.valueOf(ratio));
-            return;
-        }
-
         if (evidence.getMediaType().equals(BaseCarveTask.UNALLOCATED_MIMETYPE)
                 || Boolean.TRUE.equals(evidence.getExtraAttribute(ThumbTask.HAS_THUMB)))
             return;
 
-        try (RandomFilterInputStream rfis = new RandomFilterInputStream(evidence.getBufferedStream())) {
+        try (RandomFilterInputStream rfis = new RandomFilterInputStream(evidence.getBufferedInputStream())) {
 
             while (rfis.read(buf) != -1)
                 ;
@@ -67,8 +66,8 @@ public class EntropyTask extends AbstractTask {
         /*
          * Deflater compressor = new Deflater(Deflater.BEST_SPEED); byte[] buf = new
          * byte[64 * 1024]; byte[] out = new byte[64 * 1024]; compressor.reset();
-         * try(InputStream is = evidence.getBufferedStream()){ int len = 0; while((len =
-         * is.read(buf))!= -1){ compressor.setInput(buf, 0, len); do{
+         * try(InputStream is = evidence.getBufferedInputStream()){ int len = 0;
+         * while((len = is.read(buf))!= -1){ compressor.setInput(buf, 0, len); do{
          * compressor.deflate(out); }while(!compressor.needsInput()); }
          * compressor.finish(); compressor.deflate(out);
          * 

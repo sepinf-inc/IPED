@@ -1,7 +1,8 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -18,7 +19,7 @@ public class Chat {
 
     private String recoveredFrom = null;
 
-    private List<WAContact> groupmembers = new ArrayList<>();
+    private Set<WAContact> groupmembers = new HashSet<>();
 
     public Chat(WAContact remote) {
         this.remote = remote;
@@ -111,11 +112,11 @@ public class Chat {
         this.recoveredFrom = recoveredFrom;
     }
 
-    public List<WAContact> getGroupmembers() {
+    public Set<WAContact> getGroupmembers() {
         return groupmembers;
     }
 
-    public void setGroupmembers(List<WAContact> groupmembers) {
+    public void setGroupmembers(Set<WAContact> groupmembers) {
         this.groupmembers = groupmembers;
     }
 }

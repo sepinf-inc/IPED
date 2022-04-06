@@ -24,7 +24,7 @@ import iped3.io.IStreamSource;
  */
 public class TikaHtmlViewer extends HtmlViewer {
 
-    private Parser parser = new AutoDetectParser();
+    private Parser parser;
 
     @Override
     public String getName() {
@@ -37,6 +37,7 @@ public class TikaHtmlViewer extends HtmlViewer {
                 || contentType.equals("application/x-sqlite3") //$NON-NLS-1$
                 || contentType.equals("application/sqlite-skype") //$NON-NLS-1$
                 || contentType.equals("application/x-emule") //$NON-NLS-1$
+                || contentType.equals("application/x-emule-part-met") //$NON-NLS-1$
                 || contentType.equals("application/x-ares-galaxy") //$NON-NLS-1$
                 || contentType.equals("application/x-shareaza-library-dat"); //$NON-NLS-1$
     }
@@ -46,7 +47,7 @@ public class TikaHtmlViewer extends HtmlViewer {
 
         if (content != null) {
             try {
-                content = new FileContentSource(getHtmlVersion(content.getStream(), contentType));
+                content = new FileContentSource(getHtmlVersion(content.getSeekableInputStream(), contentType));
             } catch (IOException e) {
                 e.printStackTrace();
                 content = null;
@@ -93,6 +94,9 @@ public class TikaHtmlViewer extends HtmlViewer {
             // context.set(Parser.class, parser);
             outStream = new BufferedOutputStream(new FileOutputStream(outFile));
             ToXMLContentHandler handler = new ToXMLContentHandler(outStream, "UTF-8"); //$NON-NLS-1$
+            if (parser == null) {
+                parser = new AutoDetectParser();
+            }
             parser.parse(tis, handler, metadata, context);
 
         } catch (Exception e) {

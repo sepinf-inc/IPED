@@ -32,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
@@ -42,15 +43,15 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
-import dpf.sp.gpinf.indexer.util.ErrorIcon;
-import dpf.sp.gpinf.indexer.util.GalleryValue;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.ui.controls.ErrorIcon;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 
@@ -64,23 +65,29 @@ public class GalleryModel extends AbstractTableModel {
      */
     private static final int MAX_TSK_POOL_SIZE = 20;
 
-    public int colCount = 10;
+    public static final int defaultColCount = 10;
+    
+    private int colCount = defaultColCount;
     private int thumbSize = 160;
     private int galleryThreads = 1;
     private boolean logRendering = false;
-    ImageThumbTask imgThumbTask;
+    private ImageThumbTask imgThumbTask;
 
     public Map<IItemId, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<IItemId, GalleryValue>());
     private int maxCacheSize = 1000;
     private ErrorIcon errorIcon = new ErrorIcon();
-    private BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
-    private UnsupportedIcon unsupportedIcon = new UnsupportedIcon();
+    private static final BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
+    public static final ImageIcon unsupportedIcon = new ImageIcon();
     private ExecutorService executor;
-    private GraphicsMagicConverter magickConverter;
+    private ExternalImageConverter externalImageConverter;
 
     @Override
     public int getColumnCount() {
         return colCount;
+    }
+
+    public void setColumnCount(int cnt) {
+        colCount = cnt;
     }
 
     @Override
@@ -94,6 +101,11 @@ public class GalleryModel extends AbstractTableModel {
 
     private boolean isSupportedImage(String mediaType) {
         return ImageThumbTask.isImageType(MediaType.parse(mediaType));
+    }
+
+    private boolean isAnimationImage(Document doc, String mediaType) {
+        return VideoThumbTask.isImageSequence(mediaType) || 
+                doc.get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
     }
 
     private boolean isSupportedVideo(String mediaType) {
@@ -111,11 +123,10 @@ public class GalleryModel extends AbstractTableModel {
         if (imgThumbTask == null) {
             try {
                 imgThumbTask = new ImageThumbTask();
-                imgThumbTask.init(Configuration.getInstance().properties,
-                        new File(Configuration.getInstance().configPath + "/conf")); //$NON-NLS-1$
-                thumbSize = imgThumbTask.thumbSize;
-                galleryThreads = Math.min(imgThumbTask.galleryThreads, MAX_TSK_POOL_SIZE);
-                logRendering = imgThumbTask.logGalleryRendering;
+                imgThumbTask.init(ConfigurationManager.get());
+                thumbSize = imgThumbTask.getImageThumbConfig().getThumbSize();
+                galleryThreads = Math.min(imgThumbTask.getImageThumbConfig().getGalleryThreads(), MAX_TSK_POOL_SIZE);
+                logRendering = imgThumbTask.getImageThumbConfig().isLogGalleryRendering();
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -150,7 +161,7 @@ public class GalleryModel extends AbstractTableModel {
         if (executor == null) {
             executor = Executors.newFixedThreadPool(galleryThreads);
             // do not use executor above in constructor below, it causes deadlock see #313
-            magickConverter = new GraphicsMagicConverter();
+            externalImageConverter = new ExternalImageConverter();
         }
 
         executor.execute(new Runnable() {
@@ -176,7 +187,7 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     BytesRef bytesRef = doc.getBinaryValue(IndexItem.THUMB);
-                    if (bytesRef != null && (!isSupportedVideo(mediaType) || App.get().useVideoThumbsInGallery)) {
+                    if (bytesRef != null && ((!isSupportedVideo(mediaType) && !isAnimationImage(doc, mediaType)) || App.get().useVideoThumbsInGallery)) {
                         byte[] thumb = bytesRef.bytes;
                         if (thumb.length > 0) {
                             image = ImageIO.read(new ByteArrayInputStream(thumb));
@@ -187,7 +198,7 @@ public class GalleryModel extends AbstractTableModel {
 
                     String hash = doc.get(IndexItem.HASH);
                     if (image == null && hash != null && !hash.isEmpty()) {
-                        image = getViewImage(docId, hash, !isSupportedImage(mediaType));
+                        image = getViewImage(docId, hash, isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
                         int resizeTolerance = 4;
                         if (image != null) {
                             if (image.getWidth() < thumbSize - resizeTolerance
@@ -199,20 +210,13 @@ public class GalleryModel extends AbstractTableModel {
                         }
                     }
 
-                    String export = doc.get(IndexItem.EXPORT);
-                    if (image == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
-                        image = getThumbFromFTKReport(
-                                App.get().appCase.getAtomicSource(docId).getCaseDir().getAbsolutePath(), export);
-                        getDimension = false;
-                    }
-
                     if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
                         image = errorImg;
                         value.icon = unsupportedIcon;
                     }
 
                     if (image == null && stream == null && isSupportedImage(mediaType)) {
-                        stream = App.get().appCase.getItemByLuceneID(docId).getBufferedStream();
+                        stream = App.get().appCase.getItemByLuceneID(docId).getBufferedInputStream();
                     }
 
                     if (stream != null) {
@@ -228,9 +232,9 @@ public class GalleryModel extends AbstractTableModel {
                         stream.reset();
                     }
 
-                    if (image == null && stream != null && ImageThumbTask.extractThumb
+                    if (image == null && stream != null && imgThumbTask.getImageThumbConfig().isExtractThumb()
                             && mediaType.equals("image/jpeg")) { //$NON-NLS-1$
-                        image = ImageUtil.getThumb(new CloseShieldInputStream(stream));
+                        image = ImageMetadataUtil.getThumb(new CloseShieldInputStream(stream));
                         stream.reset();
                     }
 
@@ -242,7 +246,7 @@ public class GalleryModel extends AbstractTableModel {
                     if (image == null && stream != null) {
                         String sizeStr = doc.get(IndexItem.LENGTH);
                         Long size = sizeStr == null ? null : Long.parseLong(sizeStr);
-                        image = magickConverter.getImage(stream, thumbSize, size);
+                        image = externalImageConverter.getImage(stream, thumbSize, false, size);
                     }
 
                     if (image == null || image == errorImg) {
@@ -300,7 +304,7 @@ public class GalleryModel extends AbstractTableModel {
                 try {
                     Document doc = App.get().appCase.getSearcher().doc(docId);
                     String mediaType = doc.get(IndexItem.CONTENTTYPE);
-                    if (isSupportedVideo(mediaType)) {
+                    if (isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType)) {
                         it.remove();
                     }
                 } catch (Exception e) {
@@ -331,40 +335,9 @@ public class GalleryModel extends AbstractTableModel {
         }
     }
 
-    private BufferedImage getThumbFromFTKReport(String basePath, String export) {
-
-        BufferedImage image = null;
-        try {
-            int i0 = export.lastIndexOf("/"); //$NON-NLS-1$
-            String nome = export.substring(i0 + 1);
-            int extIdx = nome.indexOf("."); //$NON-NLS-1$
-            if (extIdx > -1) {
-                nome = nome.substring(0, extIdx);
-            }
-            nome += ".jpg"; //$NON-NLS-1$
-
-            // Report FTK3+
-            int i1 = export.indexOf("files/"); //$NON-NLS-1$
-            File file = null;
-            if (i1 > -1) {
-                String thumbPath = export.substring(0, i1) + "thumbnails/" + nome; //$NON-NLS-1$
-                file = Util.getResolvedFile(basePath, thumbPath);
-            }
-            if (file != null && file.exists()) {
-                image = ImageIO.read(file);
-                image = ImageUtil.trim(image);
-            }
-        } catch (Exception e) {
-            // e.printStackTrace();
-        }
-
-        return image;
-    }
-
     @Override
     public void setValueAt(Object value, int row, int col) {
         super.setValueAt(value, row, col);
         fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
     }
-
 }

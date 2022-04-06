@@ -23,7 +23,6 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
@@ -41,16 +40,13 @@ import dpf.mt.gpinf.mapas.parsers.kmlstore.Folder;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 public class GeofileParser extends AbstractParser {
 
     public static final MediaType GPX_MIME = MediaType.application("gpx");
     public static final MediaType KML_MIME = MediaType.application("vnd.google-earth.kml+xml");
     public static final MediaType JSON_GOOGLE_MIME = MediaType.application("json-location");
-
-    public static final Property LATITUDE = Property.internalReal("GeoRef:lat");
-    public static final Property LONGITUDE = Property.internalReal("GeoRef:long");
-    public static final Property ALTITUDE = Property.internalReal("GeoRef:alt");
 
     private static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(GPX_MIME, KML_MIME);
 
@@ -165,6 +161,7 @@ public class GeofileParser extends AbstractParser {
                 ByteArrayInputStream featureStream = new ByteArrayInputStream(generateFeatureHtml(feature));
 
                 Metadata kmeta = new Metadata();
+                kmeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                 kmeta.set(TikaCoreProperties.CREATED, metadata.get(TikaCoreProperties.CREATED));
                 String timestamp = (String) feature.getAttribute("timestamp");
                 if (timestamp != null) {
@@ -191,10 +188,12 @@ public class GeofileParser extends AbstractParser {
                 lat = coords[0].y;
                 alt = coords[0].z;
 
-                kmeta.set(LATITUDE, lat);
-                kmeta.set(LONGITUDE, lon);
+                if (lat != null && lat != 0.0 && lon != null && lon != 0.0) {
+                    kmeta.set(ExtraProperties.LOCATIONS, lat + ";" + lon);
+                }
+
                 if (alt != null) {
-                    kmeta.set(ALTITUDE, alt);
+                    kmeta.set(Metadata.ALTITUDE, alt);
                 }
 
                 extractor.parseEmbedded(featureStream, handler, kmeta, false);

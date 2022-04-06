@@ -39,6 +39,7 @@ import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParserDecorator;
+import org.apache.tika.parser.csv.TextAndCSVParser;
 import org.apache.tika.parser.txt.TXTParser;
 import org.apache.tika.sax.ContentHandlerDecorator;
 import org.apache.tika.sax.SecureContentHandler;
@@ -54,14 +55,14 @@ import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IStreamSource;
+import iped3.util.MediaTypes;
 
 /**
- * Parser padrão do Indexador. Como o AutoDetectParser, detecta o tipo do
- * arquivo e delega o parsing para o parser apropriado. Porém aproveita o
- * CONTENT_TYPE caso informado via metadados, evitando nova detecção. Além disso
- * utiliza o RawStringParser como fallback ou no caso de alguma Exceção durante
- * o parsing padrão. Finalmente, escreve os metadados ao final (inclusive de
- * subitens).
+ * Parser padrão do IPED. Como o AutoDetectParser, detecta o tipo do arquivo e
+ * delega o parsing para o parser apropriado. Porém aproveita o CONTENT_TYPE
+ * caso informado via metadados, evitando nova detecção. Além disso utiliza o
+ * RawStringParser como fallback ou no caso de alguma Exceção durante o parsing
+ * padrão. Finalmente, escreve os metadados ao final (inclusive de subitens).
  */
 public class IndexerDefaultParser extends CompositeParser {
 
@@ -69,7 +70,7 @@ public class IndexerDefaultParser extends CompositeParser {
 
     private static final long serialVersionUID = 1L;
 
-    private static TikaConfig tikaConfig = TikaConfig.getDefaultConfig();
+    private static TikaConfig tikaConfig;
 
     public static int parsingErrors = 0;
 
@@ -94,10 +95,21 @@ public class IndexerDefaultParser extends CompositeParser {
     private boolean printMetadata = true;
     private boolean ignoreStyle = true;
     private boolean canUseForkParser = false;
+    
+    private static TikaConfig getTikaConfig() {
+        if(tikaConfig == null) {
+            synchronized(IndexerDefaultParser.class) {
+                if(tikaConfig == null) {
+                    tikaConfig = TikaConfig.getDefaultConfig();
+                }
+            }
+        }
+        return tikaConfig;
+    }
 
     public IndexerDefaultParser() {
-        super(tikaConfig.getMediaTypeRegistry(), ((CompositeParser) tikaConfig.getParser()).getAllComponentParsers());
-        detector = tikaConfig.getDetector();
+        super(getTikaConfig().getMediaTypeRegistry(), ((CompositeParser) getTikaConfig().getParser()).getAllComponentParsers());
+        detector = getTikaConfig().getDetector();
         if (fallbackParserEnabled) {
             this.setFallback(new RawStringParser(entropyTestEnabled));
         }
@@ -148,7 +160,8 @@ public class IndexerDefaultParser extends CompositeParser {
     }
 
     public static boolean isSpecificParser(Parser parser) {
-        if (parser instanceof RawStringParser || parser instanceof TXTParser || parser instanceof EmptyParser)
+        if (parser instanceof RawStringParser || parser instanceof TXTParser || parser instanceof EmptyParser
+                || parser instanceof TextAndCSVParser)
             return false;
         else
             return true;
@@ -294,7 +307,7 @@ public class IndexerDefaultParser extends CompositeParser {
                     if (errorParser != null)
                         try {
                             if (evidence != null) {
-                                is = evidence.getStream();
+                                is = evidence.getSeekableInputStream();
                             } else {
                                 is = TikaInputStream.get(file);
                             }

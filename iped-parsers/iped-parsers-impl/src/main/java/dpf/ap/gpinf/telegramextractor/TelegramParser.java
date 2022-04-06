@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -36,6 +37,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -50,11 +52,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
-import iped3.io.IItemBase;
+import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -87,6 +90,7 @@ public class TelegramParser extends SQLite3DBParser {
     private static final String ATTACHMENT_MESSAGE = ATTACHMENT_PREFIX + "Attachment: ";
 
     private static boolean enabledForUfdr = false;
+    private static boolean enabledForIOSUfdr = false;
 
     private boolean extractMessages = true;
 
@@ -94,17 +98,22 @@ public class TelegramParser extends SQLite3DBParser {
         return SUPPORTED_TYPES;
     }
 
-    public static void setSupportedTypes(Set<MediaType> supportedTypes) {
-        SUPPORTED_TYPES = supportedTypes;
-    }
-
     public static boolean isEnabledForUfdr() {
         return enabledForUfdr;
+    }
+
+    public static boolean isEnabledForIOSUfdr() {
+        return enabledForIOSUfdr;
     }
 
     @Field
     public void setEnabledForUfdr(boolean enable) {
         enabledForUfdr = enable;
+    }
+
+    @Field
+    public void setEnabledForIOSUfdr(boolean enable) {
+        enabledForIOSUfdr = enable;
     }
 
     @Field
@@ -127,7 +136,9 @@ public class TelegramParser extends SQLite3DBParser {
             ParseContext context) throws IOException, SAXException, TikaException {
         try (Connection conn = getConnection(stream, metadata, context)) {
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            Extractor e = new Extractor(conn);
+            DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(Extractor.DECODER_CLASS)
+                    .newInstance();
+            Extractor e = new Extractor(conn, d);
             e.setSearcher(searcher);
             e.extractContacts();
             ReportGenerator r = new ReportGenerator(searcher);
@@ -145,8 +156,9 @@ public class TelegramParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
                     cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, TELEGRAM);
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getUsername());
+                    cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                     if (c.getAvatar() != null) {
-                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                        cMetadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
                     ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(contactStream, handler, cMetadata, false);
@@ -191,6 +203,7 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
             chatMetadata.set(ExtraProperties.CHAT_RECOVERED, Boolean.toString(c.isDeleted()));
+            chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
             if (c.isGroup()) {
                 ChatGroup cg = (ChatGroup) c;
@@ -242,8 +255,9 @@ public class TelegramParser extends SQLite3DBParser {
             meta.set(ExtraProperties.USER_ACCOUNT_TYPE, TELEGRAM);
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
+            meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
             if (m.getLatitude() != null && m.getLongitude() != null) {
-                meta.add(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
+                meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
             }
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getFrom().toString());
             if (m.getChat().isGroup()) {
@@ -277,9 +291,9 @@ public class TelegramParser extends SQLite3DBParser {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
                 if (!m.getChildPornSets().isEmpty()) {
-                    meta.set("kffstatus", "pedo");
+                    meta.set("hash:status", "pedo");
                     for (String set : m.getChildPornSets()) {
-                        meta.add("kffgroup", set);
+                        meta.add("hash:set", set);
                     }
                 }
                 // TODO store thumb in metadata?
@@ -292,7 +306,7 @@ public class TelegramParser extends SQLite3DBParser {
                 meta.add(ExtraProperties.MESSAGE_BODY, m.getType().toUpperCase());
             }
 
-            meta.set(BasicProps.HASH, "");
+            meta.set(BasicProps.LENGTH, "");
             extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
         }
     }
@@ -326,8 +340,9 @@ public class TelegramParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
                     cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, TELEGRAM);
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getUsername());
+                    cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                     if (c.getAvatar() != null) {
-                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                        cMetadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
                     ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(contactStream, handler, cMetadata, false);
@@ -353,7 +368,7 @@ public class TelegramParser extends SQLite3DBParser {
         List<IItemBase> result = searcher.search(query);
         IItemBase item = getBestItem(result, dbPath);
         if (item != null) {
-            try (InputStream is = item.getBufferedStream()) {
+            try (InputStream is = item.getBufferedInputStream()) {
                 Contact account = decodeAndroidAccount(is);
                 if (account != null)
                     return account;
@@ -392,10 +407,12 @@ public class TelegramParser extends SQLite3DBParser {
         XPath xpath = xPathfactory.newXPath();
         XPathExpression expr = xpath.compile("//string[@name=\"user\"]");
         NodeList nl = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+        DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(Extractor.DECODER_CLASS).newInstance();
+
         if (nl.getLength() > 0) {
             Element e = (Element) nl.item(0);
             byte[] b = DatatypeConverter.parseBase64Binary(e.getTextContent());
-            Contact user = Contact.getContactFromBytes(b);
+            Contact user = Contact.getContactFromBytes(b, d);
             return user;
         }
         return null;
@@ -425,12 +442,13 @@ public class TelegramParser extends SQLite3DBParser {
         meta.set(ExtraProperties.USER_PHONE, user.getPhone());
         meta.set(ExtraProperties.USER_ACCOUNT, user.getUsername());
         meta.set(ExtraProperties.USER_ACCOUNT_TYPE, TELEGRAM);
+        meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         Extractor ex = new Extractor();
         IItemSearcher searcher = context.get(IItemSearcher.class);
         ex.setSearcher(searcher);
         ex.searchAvatarFileName(user, user.getPhotos());
         if (user.getAvatar() != null) {
-            meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(user.getAvatar()));
+            meta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(user.getAvatar()));
         }
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
@@ -444,11 +462,20 @@ public class TelegramParser extends SQLite3DBParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
+        IItemBase item = context.get(IItemBase.class);
+        if ((!enabledForUfdr || PhoneParsingConfig.isExternalPhoneParsersOnly())
+                && PhoneParsingConfig.isFromUfdrDatasourceReader(item)) {
+            return;
+        }
+
         String mimetype = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         if (mimetype.equals(TELEGRAM_DB.toString())) {
             parseTelegramDBAndroid(stream, handler, metadata, context);
         }
         if (mimetype.equals(TELEGRAM_DB_IOS.toString())) {
+            if (!enabledForIOSUfdr && PhoneParsingConfig.isFromUfdrDatasourceReader(item)) {
+                return;
+            }
             try {
                 parseTelegramDBIOS(stream, handler, metadata, context);
             } catch (Exception e) {

@@ -42,10 +42,10 @@ import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
-import iped3.search.LuceneSearchResult;
 
 public class TreeListener extends MouseAdapter
         implements TreeSelectionListener, ActionListener, TreeExpansionListener, ClearFilterListener {
@@ -98,9 +98,7 @@ public class TreeListener extends MouseAdapter
             for (TreePath path : selection) {
                 Document doc = ((Node) path.getLastPathComponent()).getDoc();
 
-                String parentId = doc.get(IndexItem.FTKID);
-                if (parentId == null)
-                    parentId = doc.get(IndexItem.ID);
+                String parentId = doc.get(IndexItem.ID);
 
                 String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
                 treeQueryStr += "(" + IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
@@ -134,28 +132,9 @@ public class TreeListener extends MouseAdapter
 
                 parentId = doc.get(IndexItem.PARENTID);
                 if (parentId != null) {
-                    String ftkId = doc.get(IndexItem.FTKID);
-                    if (ftkId == null) {
-                        IPEDSource src = (IPEDSource) App.get().appCase.getAtomicSource(docId);
-                        docId = App.get().appCase.getBaseLuceneId(src) + src.getLuceneId(Integer.parseInt(parentId));
-                        path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
-                    } else {
-                        String textQuery = IndexItem.FTKID + ":" + parentId; //$NON-NLS-1$
-                        if (textQuery != null) {
-                            String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-                            textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID; //$NON-NLS-1$ //$NON-NLS-2$
-
-                            IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-                            task.setTreeQuery(true);
-                            result = task.luceneSearch();
-
-                            if (result.getLength() == 1) {
-                                docId = result.getLuceneIds()[0];
-                                path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
-                            } else
-                                parentId = null;
-                        }
-                    }
+                    IPEDSource src = (IPEDSource) App.get().appCase.getAtomicSource(docId);
+                    docId = App.get().appCase.getBaseLuceneId(src) + src.getLuceneId(Integer.parseInt(parentId));
+                    path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
                 }
 
             } catch (Exception e) {

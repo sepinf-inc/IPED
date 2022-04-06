@@ -27,11 +27,12 @@ import java.util.Set;
 import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
+import iped3.IItemBase;
 
 public class Message implements MessageInterface {
     private long id;
     private String mediaHash = null;
-    private String mediaFile = null;
+    private IItemBase mediaItem = null;
     private String mediaName = null;
     private String mediaExt = null;
     private String mediaComment = null;
@@ -47,7 +48,7 @@ public class Message implements MessageInterface {
     private byte[] thumb = null;
     private String hashThumb = null;
     private List<PhotoData> names = null;
-    private int mediasize = 0;
+    private long mediasize = 0;
     private long toId = 0;
     private Double latitude = null;
     private Double longitude = null;
@@ -71,11 +72,19 @@ public class Message implements MessageInterface {
     }
 
     public String getMediaFile() {
-        return mediaFile;
+        throw new UnsupportedOperationException("Use getMediaItem() instead");
     }
 
     public void setMediaFile(String mediaFile) {
-        this.mediaFile = mediaFile;
+        throw new UnsupportedOperationException("Use setMediaItem() instead");
+    }
+
+    public IItemBase getMediaItem() {
+        return this.mediaItem;
+    }
+
+    public void setMediaItem(IItemBase mediaItem) {
+        this.mediaItem = mediaItem;
     }
 
     public boolean isFromMe() {
@@ -195,11 +204,11 @@ public class Message implements MessageInterface {
         this.names = names;
     }
 
-    public int getMediasize() {
+    public long getMediasize() {
         return mediasize;
     }
 
-    public void setMediasize(int mediasize) {
+    public void setMediasize(long mediasize) {
         this.mediasize = mediasize;
     }
 

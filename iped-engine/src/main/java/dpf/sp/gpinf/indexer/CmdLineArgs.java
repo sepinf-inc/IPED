@@ -12,9 +12,7 @@ public interface CmdLineArgs {
 
     File getOutputDir();
 
-    File getReportDir();
-
-    File getPalavrasChave();
+    File getKeywords();
 
     List<String> getOcr();
 
@@ -24,13 +22,11 @@ public interface CmdLineArgs {
 
     List<String> getNocontent();
 
-    File getImportkff();
-
     String getTimezone();
 
     int getBlocksize();
 
-    String getPassword();
+    List<String> getPasswords();
 
     String getProfile();
 
@@ -58,6 +54,10 @@ public interface CmdLineArgs {
 
     String getDataSourceName(File datasource);
 
+    String getDataSourcePassword(File datasource);
+
     public String getEvidenceToRemove();
+
+    boolean isDownloadInternetData();
 
 }

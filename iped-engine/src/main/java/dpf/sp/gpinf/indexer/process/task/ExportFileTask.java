@@ -18,16 +18,14 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,12 +34,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -51,6 +55,12 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.util.BytesRef;
+import org.apache.tika.io.TemporaryResources;
+import org.apache.tika.io.TikaInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
@@ -58,21 +68,31 @@ import org.sqlite.SQLiteConfig.Pragma;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
+import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
+import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
+import dpf.sp.gpinf.indexer.config.HashTaskConfig;
+import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
-import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
+import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.Category;
+import iped3.ICaseData;
 import iped3.IHashValue;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.exception.ZipBombException;
 import iped3.io.SeekableInputStream;
-import iped3.sleuthkit.ISleuthKitItem;
 
 /**
  * Responsável por extrair subitens de containers. Também exporta itens ativos
@@ -81,8 +101,9 @@ import iped3.sleuthkit.ISleuthKitItem;
  */
 public class ExportFileTask extends AbstractTask {
 
+    private static final String ENABLE_PARAM = ExportByCategoriesConfig.ENABLE_PARAM;
+
     private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
-    public static final String EXTRACT_CONFIG = "CategoriesToExport.txt"; //$NON-NLS-1$
     public static final String EXTRACT_DIR = Messages.getString("ExportFileTask.ExportFolder"); //$NON-NLS-1$
     private static final String SUBITEM_DIR = "subitens"; //$NON-NLS-1$
 
@@ -99,18 +120,31 @@ public class ExportFileTask extends AbstractTask {
     private static final String INSERT_DATA = "INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=? WHERE data IS NULL;";
 
     private static final String CHECK_HASH = "SELECT id FROM t1 WHERE id=? AND data IS NOT NULL;";
+    
+    private static final String SELECT_IDS_WITH_DATA = "SELECT id FROM t1 WHERE data IS NOT NULL;";
 
-    private static HashSet<String> categoriesToExtract = new HashSet<String>();
+    private static final String CLEAR_DATA = "DELETE FROM t1 WHERE id=?;";
+
+    // maps below are used to track different storages/connections in multicases
+    private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
+    private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
+
+    private static AtomicInteger counter = new AtomicInteger();
+    
+    private static ArrayList<IHashValue> noContentHashes = new ArrayList<>();
+
     public static int subDirCounter = 0, itensExtracted = 0;
     private static File subDir;
 
     private static boolean computeHash = false;
-    private File extractDir;
+    private static File extractDir;
+
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
-
-    private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
-    private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
+    private ExportByCategoriesConfig exportByCategories;
+    private ExportByKeywordsConfig exportByKeywords;
+    private CategoryConfig categoryConfig;
+    private boolean automaticExportEnabled = false;
 
     public ExportFileTask() {
         ExportFolder.setExportPath(EXTRACT_DIR);
@@ -124,17 +158,17 @@ public class ExportFileTask extends AbstractTask {
         return itensExtracted;
     }
 
-    private void setExtractLocation() {
-        if (output != null) {
-            if (caseData.containsReport()) {
-                this.extractDir = new File(output.getParentFile(), EXTRACT_DIR);
+    private static void setExtractLocation(ICaseData caseData, File output) {
+        if (output != null && extractDir == null) {
+            if (caseData.containsReport() || new File(output.getParentFile(), EXTRACT_DIR).exists()) {
+                extractDir = new File(output.getParentFile(), EXTRACT_DIR);
             } else {
-                this.extractDir = new File(output, SUBITEM_DIR);
+                extractDir = new File(output, SUBITEM_DIR);
             }
         }
-        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
-                .next();
-        if (!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
+        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get()
+                .findObject(HtmlReportTaskConfig.class);
+        if (!caseData.containsReport() || new File(output, STORAGE_PREFIX).exists() || !htmlReportConfig.isEnabled()) {
             if (storageCon.get(output) == null) {
                 configureSQLiteStorage(output);
             }
@@ -203,17 +237,6 @@ public class ExportFileTask extends AbstractTask {
         return conn;
     }
 
-    public static void load(File file) throws FileNotFoundException, IOException {
-
-        String content = Util.readUTF8Content(file);
-        for (String line : content.split("\n")) { //$NON-NLS-1$
-            if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
-                continue;
-            }
-            categoriesToExtract.add(line.trim());
-        }
-    }
-
     private static synchronized File getSubDir(File extractDir) {
         if (subDirCounter % 1000 == 0) {
             subDir = new File(extractDir, Integer.toString(subDirCounter / 1000));
@@ -222,21 +245,22 @@ public class ExportFileTask extends AbstractTask {
         return subDir;
     }
 
-    public static boolean hasCategoryToExtract() {
-        return categoriesToExtract.size() > 0;
+    public boolean isAutomaticExportEnabled() {
+        return automaticExportEnabled && (exportByCategories.hasCategoryToExport() || exportByKeywords.isEnabled());
     }
 
-    public static boolean isToBeExtracted(IItem evidence) {
+    private boolean isToBeExtracted(IItem evidence) {
 
-        boolean result = false;
-        for (String category : evidence.getCategorySet()) {
-            if (categoriesToExtract.contains(category)) {
-                result = true;
-                break;
+        for (String catName : evidence.getCategorySet()) {
+            Category category = categoryConfig.getCategoryFromName(catName);
+            while (category != null && category.getName() != null) {
+                if (exportByCategories.isToExportCategory(category.getName())) {
+                    return true;
+                }
+                category = category.getParent();
             }
         }
-
-        return result;
+        return false;
     }
 
     public void process(IItem evidence) {
@@ -248,10 +272,7 @@ public class ExportFileTask extends AbstractTask {
 
             evidence.setToExtract(true);
             if (doNotExport(evidence)) {
-                if (evidence instanceof ISleuthKitItem) {
-                    ((ISleuthKitItem) evidence).setSleuthId(null);
-                }
-                evidence.setExportedFile(null);
+                evidence.setTempAttribute(IndexItem.IGNORE_CONTENT_REF, "true");
 
             } else if (!MinIOTask.isTaskEnabled() || caseData.isIpedReport()) {
                 extract(evidence);
@@ -261,24 +282,32 @@ public class ExportFileTask extends AbstractTask {
             copyViewFile(evidence);
         }
 
-        boolean isAutomaticFileExtractionOn = hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn();
-
         // Renomeia subitem caso deva ser exportado
         if (!caseData.isIpedReport() && evidence.isSubItem()
-                && (evidence.isToExtract() || isToBeExtracted(evidence) || !isAutomaticFileExtractionOn)) {
+                && (evidence.isToExtract() || isToBeExtracted(evidence) || !isAutomaticExportEnabled())) {
 
             evidence.setToExtract(true);
-            if (!doNotExport(evidence) && !MinIOTask.isTaskEnabled()) {
+            if (!doNotExport(evidence)) {
                 renameToHash(evidence);
             } else {
-                // just clear path to be indexed, continues to point to file for processing
-                evidence.setExportedFile(null);
-                evidence.setDeleteFile(true);
+                // clear path to be not indexed, continuing to point to File for processing,
+                // this also makes subitems without 'export' property to be deleted later
+                evidence.setTempAttribute(IndexItem.IGNORE_CONTENT_REF, "true");
+
+                // store references to -nocontent items to be deleted from sqlite storages
+                IHashValue hashValue = evidence.getHashValue();
+                if (hashValue != null) {
+                    synchronized (hashMap) {
+                        // this uses less memory reusing a previous stored reference
+                        hashValue = hashMap.get(hashValue);
+                        noContentHashes.add(hashValue);
+                    }
+                }
             }
             incItensExtracted();
         }
 
-        if (isAutomaticFileExtractionOn && !evidence.isToExtract()) {
+        if (isAutomaticExportEnabled() && !evidence.isToExtract()) {
             evidence.setAddToCase(false);
         }
 
@@ -299,7 +328,7 @@ public class ExportFileTask extends AbstractTask {
         for (String label : evidenceLabels) {
             boolean isNoContent = false;
             for (String noContentLabel : noContentLabels) {
-                if (label.equalsIgnoreCase(noContentLabel)) {
+                if (noContentLabel.equalsIgnoreCase("all") || label.equalsIgnoreCase(noContentLabel)) {
                     isNoContent = true;
                     break;
                 }
@@ -313,7 +342,7 @@ public class ExportFileTask extends AbstractTask {
     public void extract(IItem evidence) {
         InputStream is = null;
         try {
-            is = evidence.getBufferedStream();
+            is = evidence.getBufferedInputStream();
             extractFile(is, evidence, null);
 
         } catch (IOException e) {
@@ -333,9 +362,12 @@ public class ExportFileTask extends AbstractTask {
         if (viewFile != null) {
             String viewName = viewFile.getName();
             File destFile = new File(output, "view/" + viewName.charAt(0) + "/" + viewName.charAt(1) + "/" + viewName); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            if (destFile.equals(viewFile)) {
+                return;
+            }
             destFile.getParentFile().mkdirs();
             try {
-                IOUtil.copiaArquivo(viewFile, destFile);
+                IOUtil.copyFile(viewFile, destFile);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -345,7 +377,7 @@ public class ExportFileTask extends AbstractTask {
     private File getHashFile(String hash, String ext) {
         String path = hash.charAt(0) + "/" + hash.charAt(1) + "/" + Util.getValidFilename(hash + ext); //$NON-NLS-1$ //$NON-NLS-2$
         if (extractDir == null) {
-            setExtractLocation();
+            setExtractLocation(caseData, output);
         }
         return new File(extractDir, path);
     }
@@ -353,13 +385,16 @@ public class ExportFileTask extends AbstractTask {
     public void renameToHash(IItem evidence) {
 
         String hash = evidence.getHash();
-        if (hash != null && !hash.isEmpty() && evidence.getFile() != null) {
-            File file = evidence.getFile();
-            String ext = evidence.getType().getLongDescr();
-            if (!ext.isEmpty()) {
-                ext = "." + ext; //$NON-NLS-1$
+        if (hash != null && !hash.isEmpty() && IOUtil.hasFile(evidence)) {
+            File file = IOUtil.getFile(evidence);
+            String ext = evidence.getType();
+            if (evidence.getLength() == null || evidence.getLength() == 0) {
+                ext = "";
             }
-            ext = Util.removeNonLatin1Chars(ext);
+            if (!ext.isEmpty()) {
+                ext = convertCharsToASCII(ext);
+                ext = "." + Util.removeNonLatin1Chars(ext);
+            }
 
             File hashFile = getHashFile(hash, ext);
             if (!hashFile.getParentFile().exists()) {
@@ -388,39 +423,54 @@ public class ExportFileTask extends AbstractTask {
                             }
                         } else {
                             LOGGER.warn("{} Error renaming to hash: {}", Thread.currentThread().getName(), //$NON-NLS-1$
-                                    evidence.getFileToIndex());
+                                    file.getAbsolutePath());
                             e.printStackTrace();
                         }
                     }
 
                 } else {
                     changeTargetFile(evidence, hashFile);
-                    if (!file.delete()) {
+                    if (!file.equals(hashFile) && !file.delete()) {
                         LOGGER.warn("{} Error Deleting {}", Thread.currentThread().getName(), file.getAbsolutePath()); //$NON-NLS-1$
                     }
                 }
             }
 
         }
-        if (hash != null && !hash.isEmpty() && !hash.equalsIgnoreCase(evidence.getIdInDataSource())
-                && evidence.getInputStreamFactory() instanceof SQLiteInputStreamFactory) {
-            SQLiteInputStreamFactory sisf = (SQLiteInputStreamFactory) evidence.getInputStreamFactory();
-            try {
-                sisf.renameToHash(evidence.getIdInDataSource(), hash);
-                evidence.setIdInDataSource(hash);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
 
     }
 
     private void changeTargetFile(IItem evidence, File file) {
         String relativePath = Util.getRelativePath(output, file);
-        evidence.setExportedFile(relativePath);
-        evidence.setFile(file);
+        evidence.setIdInDataSource(relativePath);
+        evidence.setInputStreamFactory(new FileInputStreamFactory(output.getParentFile().toPath()));
         evidence.setFileOffset(-1);
         file.setReadOnly();
+    }
+
+    private boolean isMarkSupportedInputStreamEmpty(InputStream inputStream) {
+        inputStream.mark(1);
+        try {
+            if (inputStream.read() == -1) {
+                return true;
+            }
+        } catch (Exception e) {
+            // ignore even runtime exceptions
+        } finally {
+            try {
+                inputStream.reset();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    private static final String convertCharsToASCII(String str) {
+        char[] input = str.toCharArray();
+        char[] output = new char[input.length * 4];
+        int length = ASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+        return new String(output, 0, length);
     }
 
     public void extractFile(InputStream inputStream, IItem evidence, Long parentSize) throws IOException {
@@ -431,21 +481,27 @@ public class ExportFileTask extends AbstractTask {
 
         String ext = ""; //$NON-NLS-1$
         if (evidence.getType() != null) {
-            ext = evidence.getType().getLongDescr();
+            ext = evidence.getType();
         }
         if (!ext.isEmpty()) {
-            ext = "." + ext; //$NON-NLS-1$
+            if (!inputStream.markSupported()) {
+                inputStream = new BufferedInputStream(inputStream);
+            }
+            if (isMarkSupportedInputStreamEmpty(inputStream)) {
+                ext = "";
+            }
+        }
+        if (!ext.isEmpty()) {
+            ext = convertCharsToASCII(ext);
+            ext = "." + Util.removeNonLatin1Chars(ext);
         }
 
-        ext = Util.removeNonLatin1Chars(ext);
-
         if (extractDir == null) {
-            setExtractLocation();
+            setExtractLocation(caseData, output);
         }
 
         if (!computeHash) {
-            outputFile = new File(getSubDir(extractDir),
-                    Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
+            outputFile = new File(getSubDir(extractDir), Util.getValidFilename(counter.getAndIncrement() + ext));
         } else if ((hash = evidence.getHash()) != null && !hash.isEmpty()) {
             outputFile = getHashFile(hash, ext);
             IHashValue hashVal = new HashValue(hash);
@@ -454,7 +510,7 @@ public class ExportFileTask extends AbstractTask {
             }
 
         } else {
-            outputFile = new File(extractDir, Util.getValidFilename("0" + Integer.toString(evidence.getId()) + ext)); //$NON-NLS-1$
+            outputFile = new File(extractDir, Util.getValidFilename("0" + counter.getAndIncrement() + ext)); //$NON-NLS-1$
         }
 
         boolean fileExists = false;
@@ -462,7 +518,12 @@ public class ExportFileTask extends AbstractTask {
         synchronized (hashLock) {
             if (hash == null || !(fileExists = outputFile.exists())) {
                 BufferedOutputStream bos = null;
-                try {
+                try (TemporaryResources tmp = new TemporaryResources()) {
+
+                    TikaInputStream tis = TikaInputStream.get(inputStream, tmp);
+                    InputStream poiInputStream = Util.getPOIFSInputStream(tis);
+                    inputStream = poiInputStream != null ? poiInputStream : tis;
+
                     long total = 0;
                     int i = 0;
                     while (i != -1 && !Thread.currentThread().isInterrupted()) {
@@ -490,8 +551,13 @@ public class ExportFileTask extends AbstractTask {
                                 if (!outputFile.getParentFile().exists()) {
                                     outputFile.getParentFile().mkdirs();
                                 }
-                                fileExists = outputFile.createNewFile();
-                                bos = new BufferedOutputStream(new FileOutputStream(outputFile));
+                                // a read-only file using id as name may exist, could be a subitem left behind
+                                // by a previous interrupted processing, see #721
+                                if (outputFile.exists()) {
+                                    outputFile.setWritable(true);
+                                }
+                                bos = new BufferedOutputStream(Files.newOutputStream(outputFile.toPath()));
+                                fileExists = true;
                             }
                             bos.write(baos.toByteArray());
                             total += baos.size();
@@ -543,21 +609,13 @@ public class ExportFileTask extends AbstractTask {
             hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
         }
         int k = getStorageSuffix(hash);
-        String id;
         boolean alreadyInDB = false;
-        // uses id instead of hash if subitems could be ignored and deleted, to not
-        // delete content referenced by other items with same hash
-        if (evidence.isSubItem() && !caseData.isIpedReport() && (MinIOTask.isTaskEnabled() || caseData.containsReport()
-                || DuplicateTask.isIgnoreDuplicatesEnabled())) {
-            id = Integer.toString(evidence.getId());
-        } else {
-            id = hashString != null ? hashString : new HashValue(hash).toString();
-            try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)) {
-                ps.setString(1, id);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    alreadyInDB = true;
-                }
+        String id = hashString != null ? hashString : new HashValue(hash).toString();
+        try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)) {
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                alreadyInDB = true;
             }
         }
         if (!alreadyInDB) {
@@ -578,7 +636,6 @@ public class ExportFileTask extends AbstractTask {
         evidence.setIdInDataSource(id);
         evidence.setInputStreamFactory(
                 new SQLiteInputStreamFactory(storage.get(output).get(k).toPath(), storageCon.get(output).get(k)));
-        evidence.setFile(null);
         evidence.setFileOffset(-1);
         evidence.setLength((long) len);
     }
@@ -592,10 +649,6 @@ public class ExportFileTask extends AbstractTask {
     public static class SQLiteInputStreamFactory extends SeekableInputStreamFactory {
 
         private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id=?;";
-
-        private static final String CLEAR_DATA = "DELETE FROM t1 WHERE id=?;";
-
-        private static final String RENAME_ID = "UPDATE t1 SET id=? WHERE id=?;";
 
         private Connection conn;
 
@@ -614,29 +667,6 @@ public class ExportFileTask extends AbstractTask {
             // and files which content was not exported to report will not trigger a dialog
             // asking for datasource path
             return false;
-        }
-
-        public void renameToHash(String identifier, String hash) throws IOException {
-            try (PreparedStatement ps = conn.prepareStatement(RENAME_ID)) {
-                ps.setString(1, hash);
-                ps.setString(2, identifier);
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                if (e.toString().contains("UNIQUE")) {
-                    deleteItemInDataSource(identifier);
-                } else
-                    throw new IOException(e);
-            }
-        }
-
-        @Override
-        public void deleteItemInDataSource(String identifier) throws IOException {
-            try (PreparedStatement ps = conn.prepareStatement(CLEAR_DATA)) {
-                ps.setString(1, identifier);
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                throw new IOException(e);
-            }
         }
 
         @Override
@@ -669,18 +699,25 @@ public class ExportFileTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
-        load(new File(confDir, EXTRACT_CONFIG));
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM), new ExportByCategoriesConfig(),
+                new ExportByKeywordsConfig());
+    }
 
-        if (hasCategoryToExtract()) {
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+
+        automaticExportEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
+        exportByCategories = configurationManager.findObject(ExportByCategoriesConfig.class);
+        exportByKeywords = configurationManager.findObject(ExportByKeywordsConfig.class);
+        categoryConfig = configurationManager.findObject(CategoryConfig.class);
+
+        if (isAutomaticExportEnabled()) {
             caseData.setContainsReport(true);
         }
 
-        String value = confProps.getProperty("hash"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
+        HashTaskConfig hashConfig = configurationManager.findObject(HashTaskConfig.class);
+        if (hashConfig.isEnabled()) {
             computeHash = true;
         }
 
@@ -695,14 +732,13 @@ public class ExportFileTask extends AbstractTask {
     public void finish() throws Exception {
         hashMap.clear();
         if (storageCon.get(output) != null) {
-            int i = 0;
-            for (Connection con : storageCon.get(output).values()) {
+            for (Entry<Integer, Connection> entry : storageCon.get(output).entrySet()) {
+                Connection con = entry.getValue();
                 if (con != null && !con.isClosed() && !con.getAutoCommit()) {
                     con.commit();
                     con.close();
-                    LOGGER.info("Closed connection to storage " + i);
+                    LOGGER.info("Closed connection to storage " + entry.getKey());
                 }
-                i++;
             }
             storageCon.remove(output);
         }
@@ -716,6 +752,105 @@ public class ExportFileTask extends AbstractTask {
                 }
             }
         }
+    }
+
+    public static void deleteIgnoredItemData(ICaseData caseData, File output) throws Exception {
+        deleteIgnoredItemData(caseData, output, false, null);
+    }
+
+    public static void deleteIgnoredItemData(ICaseData caseData, File output, boolean removingEvidence,
+            IndexWriter writer) throws Exception {
+        if (!removingEvidence && (caseData.isIpedReport() || !caseData.containsReport())) {
+            return;
+        }
+        if (removingEvidence) {
+            setExtractLocation(caseData, output);
+        }
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
+            if (extractDir != null && extractDir.exists()) {
+                SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(IndexItem.ID_IN_SOURCE);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletingData1"));
+                Integer deleted = deleteIgnoredSubitemsFromFS(sdv, output.getParentFile().toPath(), extractDir);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletedData1").replace("{}", deleted.toString()));
+            }
+            if (storage.get(output) != null && !storage.get(output).isEmpty()) {
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletingData2"));
+                Integer deleted = deleteIgnoredSubitemsFromStorage(ipedCase, output);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletedData2").replace("{}", deleted.toString()));
+            }
+        }
+    }
+
+    private static int deleteIgnoredSubitemsFromFS(SortedDocValues sdv, Path root, File file) throws IOException {
+        int deleted = 0;
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            for (File f : files) {
+                deleted += deleteIgnoredSubitemsFromFS(sdv, root, f);
+            }
+        } else {
+            String exportPath = root.relativize(file.toPath()).toString();
+            if (sdv == null || sdv.lookupTerm(new BytesRef(exportPath)) < 0) {
+                if (file.delete()) {
+                    deleted++;
+                }
+            }
+        }
+        return deleted;
+    }
+    
+    private static int deleteIgnoredSubitemsFromStorage(IPEDSource ipedCase, File output) throws SQLException {
+        final AtomicInteger deleted = new AtomicInteger();
+        ArrayList<Future<?>> futures = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+        // connections were closed in finish(), open them again
+        configureSQLiteStorage(output);
+        Collections.sort(noContentHashes);
+        for (Entry<Integer, Connection> entry : storageCon.get(output).entrySet()) {
+            Integer storage = entry.getKey();
+            Connection con = entry.getValue();
+            futures.add(executor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try (PreparedStatement ps = con.prepareStatement(SELECT_IDS_WITH_DATA);
+                            PreparedStatement ps2 = con.prepareStatement(CLEAR_DATA);
+                            Statement ps3 = con.createStatement()) {
+                        LOGGER.info("Deleting data from storage {}", storage);
+                        SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(IndexItem.ID_IN_SOURCE);
+                        ResultSet rs = ps.executeQuery();
+                        while (rs.next()) {
+                            String id = rs.getString(1);
+                            if (sdv == null || sdv.lookupTerm(new BytesRef(id)) < 0
+                                    || Collections.binarySearch(noContentHashes, new HashValue(id)) >= 0) {
+                                ps2.setString(1, id);
+                                ps2.executeUpdate();
+                                deleted.incrementAndGet();
+                            }
+                        }
+                        con.commit();
+                        con.setAutoCommit(true);
+                        LOGGER.info("Running VACUUM on storage {}", storage);
+                        ps3.executeUpdate("VACUUM");
+                        LOGGER.info("Closing storage {}", storage);
+                        con.close();
+                    } catch (SQLException | IOException e1) {
+                        throw new RuntimeException(e1);
+                    }
+                }
+            }));
+        }
+        for (Future<?> future : futures) {
+            try {
+                future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                LOGGER.error("Error deleting data from storage.", e);
+            }
+        }
+        return deleted.intValue();
     }
 
 }

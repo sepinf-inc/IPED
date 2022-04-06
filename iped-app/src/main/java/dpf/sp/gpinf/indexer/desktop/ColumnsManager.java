@@ -6,20 +6,20 @@ import java.awt.Dialog.ModalityType;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -30,28 +30,32 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.util.Bits;
+import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.HashDBLookupTask;
 import dpf.sp.gpinf.indexer.process.task.LanguageDetectTask;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
+import dpf.sp.gpinf.indexer.process.task.PhotoDNALookup;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
+import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
+import dpf.sp.gpinf.indexer.util.StringUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItemId;
@@ -68,44 +72,42 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private static final File globalCols = getGlobalColsFile();
 
-    private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155,
-            250, 2000);
+    private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 50, 100, 60, 150, 155, 155, 155, 155,
+            155, 155, 250, 2000);
 
-    public static final String[] groupNames = { Messages.getString("ColumnsManager.Basic"), //$NON-NLS-1$
-            Messages.getString("ColumnsManager.Advanced"), Messages.getString("ColumnsManager.Message"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("ColumnsManager.Audio"), Messages.getString("ColumnsManager.Image"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("ColumnsManager.Video"), //$NON-NLS-1$
+    public static final String[] groupNames = { Messages.getString("ColumnsManager.Basic"),
+            Messages.getString("ColumnsManager.HashDB"), Messages.getString("ColumnsManager.Advanced"), //$NON-NLS-2$ //$NON-NLS-2$
+            Messages.getString("ColumnsManager.Common"), // $NON-NLS-2$
+            Messages.getString("ColumnsManager.Message"), Messages.getString("ColumnsManager.Audio"), //$NON-NLS-2$
+            Messages.getString("ColumnsManager.Image"), Messages.getString("ColumnsManager.Video"), //$NON-NLS-1$
             Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.UFED"), Messages.getString("ColumnsManager.Other"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.All") }; //$NON-NLS-1$
 
-    private static final String emptyFilter = Messages.getString("ColumnsManager.Filter");
-
     private static final File getGlobalColsFile() {
         String name = "visibleCols"; //$NON-NLS-1$
-        String locale = System.getProperty("iped-locale"); //$NON-NLS-1$
+        String locale = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".dat"; //$NON-NLS-1$
-        return new File(System.getProperty("user.home") + "/.indexador/" + name); //$NON-NLS-1$ //$NON-NLS-2$
+        return new File(System.getProperty("user.home") + "/.iped/" + name); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     private static final String[] defaultFields = { ResultTableModel.SCORE_COL, ResultTableModel.BOOKMARK_COL,
-            IndexItem.NAME, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.DELETED, IndexItem.CATEGORY, IndexItem.CREATED,
-            IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.RECORDDATE, IndexItem.HASH, IndexItem.PATH };
+            IndexItem.NAME, IndexItem.EXT, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.DELETED, IndexItem.CATEGORY, IndexItem.CREATED,
+            IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.CHANGED, IndexItem.TIMESTAMP, IndexItem.TIME_EVENT,
+            IndexItem.HASH, IndexItem.PATH };
 
-    private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE, IndexItem.DUPLICATE,
-            IndexItem.EXPORT, IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
-            IndexItem.PARENTIDs, IndexItem.SUBITEMID, IndexItem.SLEUTHID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
+    private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE,
+            IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
+            IndexItem.PARENTIDs, IndexItem.SUBITEMID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
             IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
             IndexerDefaultParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT, ExtraProperties.CSAM_HASH_HITS,
             ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS,
             ExtraProperties.LINKED_ITEMS, ExtraProperties.TIKA_PARSER_USED, IndexItem.META_ADDRESS,
             IndexItem.MFT_SEQUENCE, IndexItem.FILESYSTEM_ID };
-
-    public static final String[] email = ExtraProperties.EMAIL_PROPS;
 
     private static ColumnsManager instance;
 
@@ -121,11 +123,11 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private ArrayList<String> loadedFields = new ArrayList<String>();
 
-    private JDialog dialog = new JDialog();
-    private JPanel listPanel = new JPanel();
+    private JDialog dialog = new JDialog(App.get());
+    private final JPanel listPanel;
     private JComboBox<Object> combo;
     private JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
-    private JTextField textFieldNameFilter;
+    private HintTextField textFieldNameFilter;
     private int firstColsToPin = 7;
 
     private boolean autoManageCols;
@@ -144,16 +146,10 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     public void setVisible() {
-        clearNameFilter();
         updateDinamicFields();
         updateList();
         dialog.setVisible(true);
         combo.requestFocus();
-    }
-
-    private void clearNameFilter() {
-        textFieldNameFilter.setText(emptyFilter);
-        textFieldNameFilter.setForeground(Color.gray);
     }
 
     public void setPinnedColumns(int firstColsToPin) {
@@ -199,20 +195,28 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     private ColumnsManager() {
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
-        autoManageCols = advancedConfig.isAutoManageCols();
+        AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
+        autoManageCols = analysisConfig.isAutoManageCols();
 
         dialog.setBounds(new Rectangle(400, 400));
         dialog.setTitle(Messages.getString("ColumnsManager.Title")); //$NON-NLS-1$
-        dialog.setAlwaysOnTop(true);
 
         JLabel label = new JLabel(Messages.getString("ColumnsManager.ShowCols")); //$NON-NLS-1$
         label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
         label.setAlignmentX(0);
 
+        listPanel = new JPanel() {
+            private static final long serialVersionUID = -4882872614411133375L;
+            
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                Color c = UIManager.getColor("List.background");
+                if (c != null)
+                    setBackground(new Color(c.getRGB()));
+            }
+        };
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
-        listPanel.setBackground(Color.WHITE);
 
         combo = new JComboBox<Object>(groupNames);
         combo.setAlignmentX(0);
@@ -222,25 +226,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         autoManage.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         autoManage.addActionListener(this);
 
-        textFieldNameFilter = new JTextField();
+        textFieldNameFilter = new HintTextField(Messages.getString("ColumnsManager.Filter"));
         textFieldNameFilter.setAlignmentX(0);
-        clearNameFilter();
-        textFieldNameFilter.addFocusListener(new FocusListener() {
-            public void focusLost(FocusEvent e) {
-                String text = textFieldNameFilter.getText().trim();
-                if (text.isEmpty() || text.equals(emptyFilter)) {
-                    clearNameFilter();
-                }
-            }
-
-            public void focusGained(FocusEvent e) {
-                String text = textFieldNameFilter.getText().trim();
-                if (text.equals(emptyFilter)) {
-                    textFieldNameFilter.setText("");
-                }
-                textFieldNameFilter.setForeground(Color.black);
-            }
-        });
         textFieldNameFilter.getDocument().addDocumentListener(new DocumentListener() {
             public void removeUpdate(DocumentEvent e) {
                 changedUpdate(e);
@@ -355,68 +342,6 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         }.start();
     }
 
-    private Set<String> getUsedCols2(ProgressDialog progress) {
-
-        progress.setMaximum(indexFields.length);
-
-        Collator collator = Collator.getInstance();
-        collator.setStrength(Collator.PRIMARY);
-        TreeSet<String> dinamicFields = new TreeSet<>(collator);
-
-        int[] docs = new int[App.get().ipedResult.getLength()];
-        int i = 0;
-        for (IItemId item : App.get().ipedResult.getIterator())
-            docs[i++] = App.get().appCase.getLuceneId(item);
-        Arrays.sort(docs);
-
-        int[] docBases = new int[App.get().appCase.getReader().leaves().size() + 1];
-        for (i = 0; i < docBases.length - 1; i++)
-            docBases[i] = App.get().appCase.getReader().leaves().get(i).docBase;
-        docBases[docBases.length - 1] = Integer.MAX_VALUE;
-
-        int p = 0;
-        for (String field : indexFields) {
-            if (progress.isCanceled())
-                return null;
-            try {
-                int baseOrd = 0;
-                int MAX_ITEMS_TO_CHECK = 50;
-                int interval = docs.length / MAX_ITEMS_TO_CHECK;
-                if (interval == 0)
-                    interval = 1;
-                LeafReader reader = null;
-                Bits bits0 = null, bits1 = null, bits2 = null;
-                for (i = 0; i < docs.length; i += interval) {
-                    while (docs[i] >= docBases[baseOrd + 1]) {
-                        baseOrd++;
-                        reader = null;
-                    }
-                    if (reader == null) {
-                        reader = App.get().appCase.getReader().leaves().get(baseOrd).reader();
-                        bits0 = reader.getDocsWithField(field);
-                        bits1 = reader.getDocsWithField("_num_" + field); //$NON-NLS-1$
-                        bits2 = reader.getDocsWithField("_" + field); //$NON-NLS-1$
-                    }
-                    int doc = docs[i] - docBases[baseOrd];
-                    if ((bits2 != null && bits2.get(doc)) || (bits1 != null && bits1.get(doc))
-                            || (bits0 != null && bits0.get(doc))) {
-                        dinamicFields.add(field);
-                        break;
-                    }
-                }
-                // t1 += System.currentTimeMillis() - tb;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            progress.setProgress(++p);
-        }
-        // System.out.println("t0 = " + t0);
-        // System.out.println("t1 = " + t1);
-
-        return dinamicFields;
-    }
-
     private Set<String> getUsedCols(ProgressDialog progress) {
 
         Collator collator = Collator.getInstance();
@@ -505,6 +430,28 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         }
     }
 
+    public void moveTimelineColumns(int newPos) {
+        String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
+        for (int i = 0; i < App.get().resultsTable.getColumnCount(); i++) {
+            TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
+            String colName = col.getHeaderValue().toString();
+            for (int k = 0; k < timeFields.length; k++) {
+                if (colName.equalsIgnoreCase(timeFields[k])) {
+                    if (!colState.visibleFields.contains(timeFields[k])) {
+                        updateGUICol(colName, true);
+                    }
+                    App.get().resultsTable.moveColumn(i, newPos);
+                    if (newPos > i) {
+                        i--;
+                    } else {
+                        newPos++;
+                    }
+                    timeFields[k] = null;
+                }
+            }
+        }
+    }
+
     public void resetToLastLayout() {
         File cols = this.getColStateFile();
         try {
@@ -518,6 +465,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     public void resetToDefaultLayout() {
+        // resetColumns(Arrays.asList(defaultFields).stream().map(f ->
+        // BasicProps.getLocalizedField(f))
+        // .collect(Collectors.toList()), defaultWidths);
         resetColumns(Arrays.asList(defaultFields), defaultWidths);
     }
 
@@ -534,6 +484,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         int newPos = 2;
         for (String col : newCols) {
+            col = LocalizedProperties.getLocalizedField(col);
             for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
                 TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
                 if (tc.getHeaderValue() instanceof String && ((String) tc.getHeaderValue())
@@ -575,12 +526,18 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> htmlFields = new ArrayList<String>();
         ArrayList<String> nerFields = new ArrayList<String>();
         ArrayList<String> ufedFields = new ArrayList<String>();
+        ArrayList<String> hashDbFields = new ArrayList<String>();
+        ArrayList<String> emailFields = new ArrayList<String>();
+        ArrayList<String> commonFields = new ArrayList<String>();
 
         for (String f : allExtraAttrs) {
             if (f.startsWith(RegexTask.REGEX_PREFIX))
                 regexFields.add(f);
             else if (f.startsWith(LanguageDetectTask.LANGUAGE_PREFIX))
                 languageFields.add(f);
+            else if (f.startsWith(HashDBLookupTask.ATTRIBUTES_PREFIX)
+                    || f.startsWith(PhotoDNALookup.PHOTO_DNA_HIT_PREFIX))
+                hashDbFields.add(f);
             else
                 extraAttrs.add(f);
         }
@@ -602,9 +559,15 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 nerFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
+            else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.EMAIL_BASIC_PROPS.contains(f))
+                emailFields.add(f);
+            else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
+                commonFields.add(f);
         }
 
-        String[][] customGroups = new String[][] { defaultFields.clone(), extraAttrs.toArray(new String[0]), email,
+        String[][] customGroups = new String[][] { defaultFields.clone(), hashDbFields.toArray(new String[0]),
+                extraAttrs.toArray(new String[0]), commonFields.toArray(new String[0]),
+                emailFields.toArray(new String[0]),
                 audioFields.toArray(new String[0]), imageFields.toArray(new String[0]),
                 videoFields.toArray(new String[0]), pdfFields.toArray(new String[0]),
                 officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),
@@ -614,13 +577,12 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> otherFields = new ArrayList<String>();
         for (String f : indexFields) {
             boolean insertField = true;
-            for (int i = 0; i < customGroups.length; i++)
+            for (int i = 0; i < customGroups.length; i++) {
                 if (Arrays.asList(customGroups[i]).contains(f)) {
                     insertField = false;
                     break;
                 }
-            if (f.startsWith(BasicProps.SIMILARITY_FEATURES))
-                continue;
+            }
             if (insertField)
                 otherFields.add(f);
         }
@@ -638,18 +600,15 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private void updateList() {
         listPanel.removeAll();
-        String[] fields = fieldGroups[combo.getSelectedIndex()];
-        String filter = textFieldNameFilter.getText();
-        if (filter.equals(emptyFilter)) {
-            filter = "";
-        } else {
-            filter = filter.trim().toLowerCase();
-        }
+        List<String> fields = Arrays.asList(fieldGroups[combo.getSelectedIndex()]);
+        fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
+        Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
+        String filter = textFieldNameFilter.getText().trim().toLowerCase();
         for (String f : fields) {
             if (filter.isEmpty() || f.toLowerCase().indexOf(filter) >= 0) {
                 JCheckBox check = new JCheckBox();
                 check.setText(f);
-                if (colState.visibleFields.contains(f))
+                if (colState.visibleFields.contains(LocalizedProperties.getNonLocalizedField(f)))
                     check.setSelected(true);
                 check.addActionListener(this);
                 listPanel.add(check);
@@ -677,6 +636,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private void updateGUICol(String colName, boolean insert) {
 
+        colName = LocalizedProperties.getNonLocalizedField(colName);
         int modelIdx = loadedFields.indexOf(colName);
         if (insert) {
             colState.visibleFields.add(colName);

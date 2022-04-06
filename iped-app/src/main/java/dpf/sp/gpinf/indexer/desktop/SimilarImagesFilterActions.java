@@ -17,9 +17,8 @@ import javax.swing.SortOrder;
 import javax.swing.filechooser.FileFilter;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.dev.data.Item;
@@ -28,7 +27,9 @@ import iped3.IItemId;
 
 public class SimilarImagesFilterActions {
     private static final int sampleFactor = 3;
-    private static final GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
+
+    // do not instantiate here, makes external command adjustment fail, see #740
+    private static ExternalImageConverter externalImageConverter;
 
     public static void clear() {
         clear(true);
@@ -77,30 +78,36 @@ public class SimilarImagesFilterActions {
                     img = ImageUtil.getSubSampledImage(is, ImageSimilarity.maxDim * sampleFactor,
                             ImageSimilarity.maxDim * sampleFactor);
                 } catch (Exception e) {
+                    e.printStackTrace();
                 } finally {
                     IOUtil.closeQuietly(is);
                 }
                 if (img == null) {
                     try {
                         is = new BufferedInputStream(new FileInputStream(file));
-                        img = graphicsMagicConverter.getImage(is, ImageSimilarity.maxDim * sampleFactor, file.length());
+                        if (externalImageConverter == null) {
+                            externalImageConverter = new ExternalImageConverter();
+                        }
+                        img = externalImageConverter.getImage(is, ImageSimilarity.maxDim, false, file.length());
                     } catch (Exception e) {
+                        e.printStackTrace();
                     } finally {
                         IOUtil.closeQuietly(is);
                     }
                 }
                 if (img != null) {
-                    img = ImageUtil.resizeImage(img, ImageSimilarity.maxDim, ImageSimilarity.maxDim);
+                    img = ImageUtil.resizeImage(img, ImageSimilarity.maxDim, ImageSimilarity.maxDim, BufferedImage.TYPE_INT_RGB);
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     try {
                         ImageIO.write(img, "jpg", baos);
                     } catch (Exception e) {
+                        e.printStackTrace();
                     }
                     app.similarImagesQueryRefItem = new Item();
                     app.similarImagesQueryRefItem.setName(file.getName());
                     app.similarImagesQueryRefItem.setThumb(baos.toByteArray());
-                    app.similarImagesQueryRefItem
-                            .setImageSimilarityFeatures(new ImageSimilarity().extractFeatures(img));
+                    app.similarImagesQueryRefItem.setExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES,
+                            new ImageSimilarity().extractFeatures(img));
                 } else {
                     JOptionPane.showMessageDialog(App.get(), Messages.getString("ImageSimilarity.ExternalError"),
                             Messages.getString("ImageSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);
@@ -114,7 +121,8 @@ public class SimilarImagesFilterActions {
                 IItemId itemId = app.ipedResult.getItem(app.resultsTable.convertRowIndexToModel(selIdx));
                 if (itemId != null) {
                     app.similarImagesQueryRefItem = app.appCase.getItemByItemId(itemId);
-                    if (app.similarImagesQueryRefItem.getImageSimilarityFeatures() == null) {
+                    if (app.similarImagesQueryRefItem
+                            .getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) == null) {
                         app.similarImagesQueryRefItem = null;
                     }
                 }
@@ -136,12 +144,6 @@ public class SimilarImagesFilterActions {
     }
 
     public static boolean isFeatureEnabled() {
-        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
-                .next();
-        String enabled = ipedConfig.getApplicationConfiguration().getProperty(ImageSimilarityTask.enableParam);
-        if (enabled != null && enabled.trim().equalsIgnoreCase(Boolean.TRUE.toString())) {
-            return true;
-        }
-        return false;
+        return ConfigurationManager.get().getEnableTaskProperty(ImageSimilarityTask.enableParam);
     }
 }

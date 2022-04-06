@@ -183,7 +183,7 @@ public class HexSearcherImpl implements HexSearcher {
                             ? (long) (((double) dataSize - (double) posicao)
                                     / (((double) bytesInOneSecond / 1000) / ((double) seconds / 1000)))
                             : 359999000;
-                    timeLeftString = Messages.getString("HexSearcherImpl.timeLeft") + ": " + formatarTempo(timeLeft);
+                    timeLeftString = Messages.getString("HexSearcherImpl.timeLeft") + ": " + formatTime(timeLeft);
                     bytesInOneSecond = 0;
                     start = System.currentTimeMillis();
                 }
@@ -265,12 +265,12 @@ public class HexSearcherImpl implements HexSearcher {
 
         }
 
-        public String formatarTempo(long tempo) {
+        private String formatTime(long time) {
 
-            tempo /= 1000;
-            long t1 = tempo / 3600;
-            long t2 = ((tempo % 3600) / 60);
-            long t3 = tempo % 60;
+            time /= 1000;
+            long t1 = time / 3600;
+            long t2 = ((time % 3600) / 60);
+            long t3 = time % 60;
             String s1 = (t1 < 10) ? ("0" + t1) : t1 + "";
             String s2 = (t2 < 10) ? ("0" + t2) : t2 + "";
             String s3 = (t3 < 10) ? ("0" + t3) : t3 + "";

@@ -19,37 +19,40 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.highlight.Encoder;
 import org.apache.lucene.search.highlight.Fragmenter;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.NullFragmenter;
 import org.apache.lucene.search.highlight.QueryScorer;
-import org.apache.lucene.search.highlight.SimpleFragmenter;
 import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.search.highlight.TokenSources;
 
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 
 public class TextHighlighter {
 
     // Highlight dos fragmentos
     public static TextFragment[] getHighlightedFrags(boolean breakOnNewLine, String text, String fieldName,
-            int fragmentSize) throws Exception {
+            int minFragmentSize) throws Exception {
 
-        if (text == null) {
+        Query query = App.get().getQuery();
+        if (text == null || query == null) {
             return new TextFragment[0];
         }
-        // App.get().analyzer = new StandardASCIIAnalyzer(Versao.current);
         TokenStream stream = TokenSources.getTokenStream(fieldName, text, App.get().appCase.getAnalyzer());
-        QueryScorer scorer = new QueryScorer(App.get().getQuery(), fieldName);
+        QueryScorer scorer = new QueryScorer(query, fieldName);
         Fragmenter fragmenter;
-        SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(App.get().getParams().HIGHLIGHT_START_TAG,
-                App.get().getParams().HIGHLIGHT_END_TAG);
-        int fragmentNumber = 1;
-        if (fragmentSize != 0) {
-            fragmenter = new SimpleFragmenter(fragmentSize);
-            fragmentNumber += text.length() / fragmentSize;
+        SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(ATextViewer.HIGHLIGHT_START_TAG,
+                ATextViewer.HIGHLIGHT_END_TAG);
+        int maxFragments = 1;
+        if (minFragmentSize != 0) {
+            fragmenter = new TextFragmenter(minFragmentSize);
+            // fragmenter = new SimpleSpanFragmenter(scorer, fragmentSize);
+            maxFragments += text.length() / minFragmentSize;
         } else {
             fragmenter = new NullFragmenter();
         }
@@ -58,7 +61,36 @@ public class TextHighlighter {
         Highlighter highlighter = new Highlighter(formatter, encoder, scorer);
         highlighter.setTextFragmenter(fragmenter);
         highlighter.setMaxDocCharsToAnalyze(Integer.MAX_VALUE);
-        return highlighter.getBestTextFragments(stream, text, false, fragmentNumber);
+        return highlighter.getBestTextFragments(stream, text, false, maxFragments);
+    }
+
+    private static class TextFragmenter implements Fragmenter {
+
+        private int minFragmentSize;
+        private OffsetAttribute offsetAtt;
+        private int lastFragEnd = 0;
+        private int prevTokenEnd = 0;
+
+        public TextFragmenter(int minFragmentSize) {
+            this.minFragmentSize = minFragmentSize;
+        }
+
+        @Override
+        public void start(String originalText, TokenStream stream) {
+            offsetAtt = stream.addAttribute(OffsetAttribute.class);
+        }
+
+        @Override
+        public boolean isNewFragment() {
+            int currTokenEnd = offsetAtt.endOffset();
+            boolean isNewFrag = prevTokenEnd - lastFragEnd >= minFragmentSize;
+            if (isNewFrag) {
+                lastFragEnd = prevTokenEnd;
+            }
+            prevTokenEnd = currTokenEnd;
+            return isNewFrag;
+        }
+
     }
 
 }

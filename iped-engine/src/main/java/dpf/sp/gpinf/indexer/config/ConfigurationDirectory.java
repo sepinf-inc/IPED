@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import iped3.configuration.Configurable;
 import iped3.configuration.IConfigurationDirectory;
-import macee.core.Configurable;
 
 public class ConfigurationDirectory implements IConfigurationDirectory {
 
@@ -43,7 +43,7 @@ public class ConfigurationDirectory implements IConfigurationDirectory {
                 result.add(t);
             }
         };
-        for (Iterator iterator = configDirs.iterator(); iterator.hasNext();) {
+        for (Iterator<Path> iterator = configDirs.iterator(); iterator.hasNext();) {
             Path path = (Path) iterator.next();
             Files.walk(path).filter(predicate).forEach(consumer);
         }
@@ -81,7 +81,7 @@ public class ConfigurationDirectory implements IConfigurationDirectory {
     }
 
     @Override
-    public List<Path> lookUpResource(Configurable configurable) throws IOException {
+    public List<Path> lookUpResource(Configurable<?> configurable) throws IOException {
         final DirectoryStream.Filter<Path> filter = configurable.getResourceLookupFilter();
 
         return lookUpResource(new Predicate<Path>() {

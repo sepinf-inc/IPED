@@ -17,17 +17,11 @@ public interface IIPEDSearcher {
 
     void cancel();
 
-    LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) throws Exception;
-
     Query getQuery();
-
-    LuceneSearchResult luceneSearch() throws Exception;
 
     IMultiSearchResult multiSearch() throws Exception;
 
     SearchResult search() throws Exception;
-
-    LuceneSearchResult searchAll() throws Exception;
 
     void setQuery(Query query);
 

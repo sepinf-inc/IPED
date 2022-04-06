@@ -1,0 +1,2 @@
+# Added unallocated space will be indexed. "addUnallocated" and "indexUnknownFiles" must be enabled.
+indexUnallocated = true

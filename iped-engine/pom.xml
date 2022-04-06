@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.19-snapshot</version>
+        <version>4.0.0-snapshot</version>
     </parent>
     
     <artifactId>iped-engine</artifactId>
@@ -20,13 +20,33 @@
 	      <name>Microsoft Cognitive Services Speech Maven Repository</name>
 	      <url>https://csspeechstorage.blob.core.windows.net/maven/</url>
 	    </repository>
+	    <repository>
+	      <id>maven-vosk</id>
+	      <name>Alphaceph Vosk Java Maven Repo</name>
+	      <url>https://alphacephei.com/maven/</url>
+	    </repository>
     </repositories>
     
     <dependencies>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.4.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.4.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alphacephei</groupId>
+            <artifactId>vosk</artifactId>
+            <version>0.3.32</version>
+        </dependency>
    	    <dependency>
             <groupId>com.microsoft.cognitiveservices.speech</groupId>
             <artifactId>client-sdk</artifactId>
-            <version>1.11.0</version>
+            <version>1.19.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.cloud</groupId>
@@ -44,11 +64,6 @@
     		<artifactId>jvptree</artifactId>
     		<version>0.2</version>
 		</dependency>
-    	<dependency>
-    		<groupId>black.ninia</groupId>
-  			<artifactId>jep</artifactId>
-  			<version>3.9.1</version>
-  		</dependency>
     	<dependency>
             <groupId>iped</groupId>
             <artifactId>iped-ahocorasick</artifactId>
@@ -119,7 +134,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
+            <artifactId>lucene-analysis-common</artifactId>
             <version>${lucene.version}</version>
             <type>jar</type>
         </dependency>
@@ -150,12 +165,12 @@
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>7.6.1-shaded3</version>
+            <version>7.6.1-shaded4</version>
         </dependency>
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>7.1.4-shaded</version>
+            <version>7.1.4-shaded3</version>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>
@@ -189,20 +204,10 @@
             <artifactId>c3p0</artifactId>
             <version>0.9.5.4</version>
         </dependency>
-        <dependency>
-  			<groupId>org.apache.pdfbox</groupId>
-  			<artifactId>pdfbox</artifactId>
-  			<version>2.0.17</version>
-		</dependency>
-		<dependency>
-  			<groupId>org.apache.pdfbox</groupId>
-  			<artifactId>pdfbox-tools</artifactId>
-  			<version>2.0.17</version>
-		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>jbig2-imageio</artifactId>
-  			<version>3.0.2</version>
+  			<version>3.0.4</version>
 		</dependency>
         <dependency>
 	    	<groupId>com.optimaize.languagedetector</groupId>
@@ -243,13 +248,30 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j</artifactId>
-            <version>3.4.10-shaded</version>
+            <version>4.4.4</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-nop</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcpkix-jdk15on</artifactId>
 			<version>1.64</version>
 		</dependency>
+		<dependency>
+            <groupId>de.ruedigermoeller</groupId>
+            <artifactId>fst</artifactId>
+            <version>2.57</version>
+            <exclusions>
+        		<exclusion>
+          			<groupId>com.fasterxml.jackson.core</groupId>
+    				<artifactId>jackson-core</artifactId>
+        		</exclusion>
+        	</exclusions>
+        </dependency>
     </dependencies>
     
 </project>

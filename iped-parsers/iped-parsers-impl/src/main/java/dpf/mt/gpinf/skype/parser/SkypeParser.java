@@ -34,7 +34,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -109,7 +109,6 @@ public class SkypeParser extends AbstractParser {
 
                 if (searcher != null)
                     sqlite.searchMediaCache(searcher);
-
                 ReportGenerator r = new ReportGenerator(handler, metadata, sqlite.getSkypeName());
 
                 Collection<SkypeContact> contatos = sqlite.extraiContatos();
@@ -137,8 +136,9 @@ public class SkypeParser extends AbstractParser {
                     cMetadata.set(ExtraProperties.USER_BIRTH, c.getBirthday());
                     cMetadata.set(ExtraProperties.USER_ADDRESS, c.getCity());
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getAbout());
+                    cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                     if (c.getAvatar() != null) {
-                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                        cMetadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
 
                     if (extractor.shouldParseEmbedded(cMetadata)) {
@@ -183,6 +183,7 @@ public class SkypeParser extends AbstractParser {
                     chatMetadata.set(TikaCoreProperties.MODIFIED, conv.getLastActivity());
                     chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, conv.getId());
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
+                    chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     storeSharedHashes(conv, chatMetadata);
 
@@ -200,6 +201,7 @@ public class SkypeParser extends AbstractParser {
                             meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MESSAGE_MIME_TYPE);
                             meta.set(TikaCoreProperties.TITLE, conv.getTitle() + "_msg_" + msgNum++);
                             meta.set(TikaCoreProperties.CREATED, sm.getData());
+                            meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, conv.getId());
                             meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(sm.getId()));
                             meta.set(ExtraProperties.USER_ACCOUNT_TYPE, SKYPE);
@@ -209,7 +211,8 @@ public class SkypeParser extends AbstractParser {
                             meta.set(ExtraProperties.MESSAGE_BODY, sm.getConteudo());
                             meta.set("messageStatus", String.valueOf(sm.getChatMessageStatus()));
                             meta.set("sendingStatus", String.valueOf(sm.getSendingStatus()));
-                            meta.set(BasicProps.HASH, "");
+                            meta.set(BasicProps.LENGTH, "");
+
                             if (sm.getDataEdicao() != null) {
                                 meta.set(TikaCoreProperties.MODIFIED, sm.getDataEdicao());
                             }
@@ -220,9 +223,9 @@ public class SkypeParser extends AbstractParser {
                                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, ATTACHMENT_MIME_TYPE);
                                 List<String> hashSets = ChildPornHashLookup.lookupHash(item.getHash());
                                 if (!hashSets.isEmpty()) {
-                                    meta.set("kffstatus", "pedo");
+                                    meta.set("hash:status", "pedo");
                                     for (String set : hashSets) {
-                                        meta.add("kffgroup", set);
+                                        meta.add("hash:set", set);
                                     }
                                 }
                             }
@@ -240,6 +243,7 @@ public class SkypeParser extends AbstractParser {
                     String name = Messages.getString("SkypeParser.SkypeTransfer") + t.getFilename(); //$NON-NLS-1$
                     tMetadata.set(TikaCoreProperties.TITLE, name);
                     tMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, t.getConversation().getId());
+                    tMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                     // TODO embed transfer in parent chat html
                     // tMetadata.set(ExtraProperties.PARENT_VIEW_POSITION,
                     // String.valueOf(t.getId()));
@@ -274,9 +278,9 @@ public class SkypeParser extends AbstractParser {
                         }
                         List<String> hashSets = ChildPornHashLookup.lookupHash(t.getItem().getHash());
                         if (!hashSets.isEmpty()) {
-                            tMetadata.set("kffstatus", "pedo");
+                            tMetadata.set("hash:status", "pedo");
                             for (String set : hashSets) {
-                                tMetadata.add("kffgroup", set);
+                                tMetadata.add("hash:set", set);
                             }
                         }
                     }
@@ -290,6 +294,7 @@ public class SkypeParser extends AbstractParser {
 
                 // cria o item que representa a conta do usuário (Account)
                 Metadata meta = new Metadata();
+                meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, ACCOUNT_MIME_TYPE);
                 meta.set(HttpHeaders.CONTENT_TYPE, ACCOUNT_MIME_TYPE);
                 String name = account.getBestName();
@@ -313,7 +318,7 @@ public class SkypeParser extends AbstractParser {
                 if (account.getCountry() != null)
                     meta.add(ExtraProperties.USER_ADDRESS, account.getCountry());
                 if (account.getAvatar() != null) {
-                    meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(account.getAvatar()));
+                    meta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(account.getAvatar()));
                 }
 
                 if (extractor.shouldParseEmbedded(meta)) {

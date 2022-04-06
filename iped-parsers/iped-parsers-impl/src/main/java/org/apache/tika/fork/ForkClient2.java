@@ -52,6 +52,7 @@ import org.apache.tika.sax.RecursiveParserWrapperHandler;
 import org.apache.tika.sax.TeeContentHandler;
 import org.xml.sax.ContentHandler;
 
+import dpf.sp.gpinf.indexer.parsers.util.ComputeThumb;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 
@@ -330,6 +331,7 @@ class ForkClient2 {
             ParseContextProxy contextProxy = new ParseContextProxy();
             contextProxy.set(OCROutputFolder.class, ((ParseContext) object).get(OCROutputFolder.class));
             contextProxy.set(ItemInfo.class, ((ParseContext) object).get(ItemInfo.class));
+            contextProxy.set(ComputeThumb.class, ((ParseContext) object).get(ComputeThumb.class));
             contextProxy.set(ParsingTimeout.class, ((ParseContext) object).get(ParsingTimeout.class));
             EmbeddedDocumentExtractor extractor = ((ParseContext) object).get(EmbeddedDocumentExtractor.class);
             if (extractor != null && !(extractor instanceof Serializable)) {

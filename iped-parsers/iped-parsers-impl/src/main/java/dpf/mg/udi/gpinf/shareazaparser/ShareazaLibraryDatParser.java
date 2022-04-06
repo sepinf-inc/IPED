@@ -21,6 +21,8 @@ package dpf.mg.udi.gpinf.shareazaparser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -65,8 +67,10 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         Library library = new Library();
         library.read(parser);
         // ShareazaOutputGenerator out = new ShareazaOutputGenerator();
-        for (LibraryFolder folder : library.getLibraryFolders())
+        LibraryFolders folders = library.getLibraryFolders();
+        for (LibraryFolder folder : folders.getLibraryFolders())
             storeSharedHashes(folder, metadata);
+        storeSharedHashes(folders.getAlbumRoot(), folders.getIndexToFile(), metadata);
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
@@ -93,12 +97,12 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         xhtml.newline();
 
         xhtml.startElement("div");
-        xhtml.characters(Messages.getString("P2P.PedoHashHit"));
+        xhtml.characters(Messages.getString("P2P.FoundInPedoHashDB"));
         xhtml.endElement("div");
 
         xhtml.startElement("table"); //$NON-NLS-1$
         xhtml.startElement("tr"); //$NON-NLS-1$
-        printTh(xhtml, "Path", "Name", "Index", "Size", "Time", "Shared", "VirtualSize", "VirtualBase", "SHA1", "Tiger", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
+        printTh(xhtml, "Path", "Name", "Albums", "Index", "Size", "Time", "Shared", "VirtualSize", "VirtualBase", "SHA1", "Tiger", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ //$NON-NLS-11$
                 "MD5", "ED2K", "BTH", "Verify", "URI", "MetadataAuto", "MetadataTime", "MetadataModified", "Rating", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
                 "Comments", "ShareTags", "HitsTotal", "UploadsTotal", "CachedPreview", "Bogus", "Found in Hash Alert Database", "Found in the Case"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
         xhtml.endElement("tr"); //$NON-NLS-1$
@@ -116,16 +120,15 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         xhtml.endDocument();
 
         int numRegistros = 0;
-        for (LibraryFolder folder : library.getLibraryFolders())
+        for (LibraryFolder folder : library.getLibraryFolders().getLibraryFolders())
             numRegistros += countLibraryFiles(folder);
+        numRegistros += countLibraryFiles(library.getLibraryFolders().getAlbumRoot(), library.getLibraryFolders().getIndexToFile());
         metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(numRegistros));
 
-        int kffHits = 0;
-        for (LibraryFolder folder : library.getLibraryFolders())
-            kffHits += countKffHits(folder);
+        int hashDBHits = countHashDBHits(library.getLibraryFolders());
 
-        if (kffHits > 0)
-            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(kffHits));
+        if (hashDBHits > 0)
+            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(hashDBHits));
 
     }
 
@@ -133,23 +136,71 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         for (LibraryFolder f : folder.getLibraryFolders())
             storeSharedHashes(f, metadata);
 
-        for (LibraryFile file : folder.getLibraryFiles())
-            if (file.isShared() && file.getMd5() != null && file.getMd5().length() == 32)
-                metadata.add(ExtraProperties.SHARED_HASHES, file.getMd5());
-
-            else if (file.isShared() && file.getSha1() != null && file.getSha1().length() == 40)
-                metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
+        for (LibraryFile file : folder.getLibraryFiles()) {
+            storeSharedHashes(file, metadata);
+        }
     }
 
-    private int countKffHits(LibraryFolder folder) {
+    private void storeSharedHashes(LibraryFile file, Metadata metadata) {
+        if (file.isShared() && file.getMd5() != null && file.getMd5().length() == 32) {
+            metadata.add(ExtraProperties.SHARED_HASHES, file.getMd5());
+        } else if (file.isShared() && file.getSha1() != null && file.getSha1().length() == 40) {
+            metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
+        }
+    }
+
+    private void storeSharedHashes(AlbumFolder folder, Map<Integer, LibraryFile> indexToFile, Metadata metadata) {
+        for (AlbumFolder f : folder.getAlbumFolders()) {
+            storeSharedHashes(f, indexToFile, metadata);
+        }
+
+        for (int idx : folder.getAlbumFileIndexes()) {
+            LibraryFile file = indexToFile.get(idx);
+            if (file != null) {
+                storeSharedHashes(file, metadata);
+            }
+        }
+    }
+
+    private int countHashDBHits(LibraryFolders folders) {
+        Map<Integer, LibraryFile> indexToFile = folders.getIndexToFile();
+        int result = 0;
+        Set<Integer> indexesCounted = new HashSet<>();
+        for (LibraryFolder f : folders.getLibraryFolders())
+            result += countHashDBHits(f, indexesCounted);
+        result += countHashDBHits(folders.getAlbumRoot(), indexToFile, indexesCounted);
+
+        return result;
+    }
+    
+    private int countHashDBHits(LibraryFolder folder, Set<Integer> indexesCounted) {
         int result = 0;
         for (LibraryFolder f : folder.getLibraryFolders())
-            result += countKffHits(f);
+            result += countHashDBHits(f, indexesCounted);
 
         for (LibraryFile file : folder.getLibraryFiles())
-            if (file.isKffHit())
+            if (file.isHashDBHit() && !indexesCounted.contains(file.getIndex())) {
                 result++;
+                indexesCounted.add(file.getIndex());
+            }
 
+        return result;
+    }
+
+    private int countHashDBHits(AlbumFolder folder, Map<Integer, LibraryFile> indexToFile, Set<Integer> indexesCounted) {
+        int result = 0;
+        for (AlbumFolder f : folder.getAlbumFolders())
+            result += countHashDBHits(f, indexToFile, indexesCounted);
+
+        for (int idx : folder.getAlbumFileIndexes()) {
+            LibraryFile file = indexToFile.get(idx);
+            if (file != null) {
+                if (file.isHashDBHit() && !indexesCounted.contains(idx)) {
+                    result++;
+                    indexesCounted.add(idx);
+                }
+            }
+        }
         return result;
     }
 
@@ -157,6 +208,18 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         int result = folder.getLibraryFiles().size();
         for (LibraryFolder f : folder.getLibraryFolders())
             result += countLibraryFiles(f);
+        return result;
+    }
+
+    private int countLibraryFiles(AlbumFolder folder, Map<Integer, LibraryFile> indexToFile) {
+        int result = 0;
+        for (AlbumFolder f : folder.getAlbumFolders())
+            result += countLibraryFiles(f, indexToFile);
+
+        for (int idx : folder.getAlbumFileIndexes()) {
+            if (indexToFile.containsKey(idx))
+                result++;
+        }
         return result;
     }
 

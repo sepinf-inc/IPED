@@ -25,34 +25,27 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
-import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
+import dpf.sp.gpinf.indexer.lucene.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Statistics;
+import dpf.sp.gpinf.indexer.tika.SyncMetadata;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SleuthkitClient;
-import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IEvidenceFileType;
 import iped3.IHashValue;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
-import iped3.sleuthkit.ISleuthKitItem;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso,
@@ -65,7 +58,7 @@ import iped3.sleuthkit.ISleuthKitItem;
  * @author Wladimir Leite (GPINF/SP)
  * @author Nassif (GPINF/SP)
  */
-public class Item implements ISleuthKitItem {
+public class Item implements IItem {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Item.class);
 
@@ -117,17 +110,15 @@ public class Item implements ISleuthKitItem {
     private String path;
 
     /**
-     * Tipo do arquivo.
+     * The detected file type ext.
      */
-    private IEvidenceFileType type;
+    private String type;
 
     private MediaType mediaType;
 
     private boolean deleted = false;
 
     private int id = -1;
-
-    private Integer ftkID;
 
     private Integer parentId;
 
@@ -160,17 +151,12 @@ public class Item implements ISleuthKitItem {
     /**
      * Data de última alteração do registro no sistema de arquivos.
      */
-    private Date recordDate;
+    private Date changeDate;
 
     /**
      * Tamanho do arquivo em bytes.
      */
     private Long length;
-
-    /**
-     * Nome e caminho relativo que o arquivo foi exportado.
-     */
-    private String exportedFile;
 
     /**
      * Nome e caminho relativo que o arquivo para visualização.
@@ -185,25 +171,11 @@ public class Item implements ISleuthKitItem {
 
     private boolean timeOut = false;
 
-    private boolean duplicate = false;
-
     private boolean isSubItem = false, hasChildren = false;
 
     private boolean isDir = false, isRoot = false, sumVolume = true;
 
-    private boolean toIgnore = false, addToCase = true, isToExtract = false, deleteFile = false;
-
-    /**
-     * Configura deleção posterior do arquivo. Por ex, subitem que deva ser
-     * processado e incluído no relatório, porém sem ter seu conteúdo exportado (ex:
-     * gera thumb do vídeo e dps deleta o vídeo)
-     *
-     * @param deleteFile
-     *            se deve ser deletado ao não
-     */
-    public void setDeleteFile(boolean deleteFile) {
-        this.deleteFile = deleteFile;
-    }
+    private boolean toIgnore = false, addToCase = true, isToExtract = false, allowGetId = false;
 
     private boolean carved = false;
 
@@ -215,25 +187,17 @@ public class Item implements ISleuthKitItem {
 
     private IHashValue hashValue;
 
-    private File file, tmpFile;
+    private File tmpFile, parentTmpFile;
 
     private TemporaryResources tmpResources = new TemporaryResources();
 
-    private Content sleuthFile;
-
-    private long startOffset = -1, tempStartOffset = -1;
-
-    private Integer sleuthId;
+    private long startOffset = -1, parentOffset = -1;
 
     private String idInDataSource;
-
-    private String parentIdInDataSource;
 
     private TikaInputStream tis;
 
     private byte[] thumb;
-
-    private byte[] imageSimilarityFeatures;
 
     private ISeekableInputStreamFactory inputStreamFactory;
 
@@ -295,19 +259,6 @@ public class Item implements ISleuthKitItem {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
-            try {
-                if (file != null && file.exists() && !file.delete()) {
-                    // in some scenarios file.delete() works but Files.delete() throws ioexception
-                    throw new IOException("Fail to delete file " + file.getAbsolutePath());
-                }
-                if (inputStreamFactory != null && idInDataSource != null) {
-                    inputStreamFactory.deleteItemInDataSource(idInDataSource);
-                }
-            } catch (IOException e) {
-                LOGGER.warn("Error deleting ignored content of " + getPath(), e); //$NON-NLS-1$
-            }
-        }
     }
 
     /**
@@ -321,7 +272,7 @@ public class Item implements ISleuthKitItem {
      * @return um BufferedInputStream com o conteúdo do item
      * @throws IOException
      */
-    public BufferedInputStream getBufferedStream() throws IOException {
+    public BufferedInputStream getBufferedInputStream() throws IOException {
 
         int len = 8192;
         if (length != null && length > len) {
@@ -332,7 +283,7 @@ public class Item implements ISleuthKitItem {
             }
         }
 
-        return new BufferedInputStream(getStream(), len);
+        return new BufferedInputStream(getSeekableInputStream(), len);
     }
 
     /**
@@ -364,14 +315,6 @@ public class Item implements ISleuthKitItem {
      */
     public Date getCreationDate() {
         return creationDate;
-    }
-
-    /**
-     * @return nome e caminho relativo ao caso com que o arquivo de evidência em si
-     *         foi exportado
-     */
-    public String getExportedFile() {
-        return exportedFile;
     }
 
     /**
@@ -410,42 +353,11 @@ public class Item implements ISleuthKitItem {
 
     /**
      *
-     * @return o arquivo com o conteúdo do item. Retorna não nulo apenas em
-     *         processamentos de pastas, reports e no caso de subitens de
-     *         containers. Consulte {@link #getTempFile()}} e {@link #getStream()}
-     */
-    public File getFile() {
-        return file;
-    }
-
-    /**
-     *
      * @return o offset no item pai da onde o item foi recuperado (carving). Retorna
      *         -1 se o item não é proveniente de carving.
      */
     public long getFileOffset() {
         return startOffset;
-    }
-
-    /**
-     *
-     * @return o caminho para o arquivo do item. Diferente de vazio apenas em
-     *         reports e processamentos de pastas.
-     */
-    public String getFileToIndex() {
-        if (exportedFile != null) {
-            return exportedFile.trim();
-        } else {
-            return ""; //$NON-NLS-1$
-        }
-    }
-
-    /**
-     *
-     * @return o id do item no FTK3+ no caso de reports
-     */
-    public Integer getFtkID() {
-        return ftkID;
     }
 
     /**
@@ -472,6 +384,15 @@ public class Item implements ISleuthKitItem {
      */
     public int getId() {
         if (id == -1) {
+            if (!allowGetId) {
+                /**
+                 * id may change when resuming processing. Currently this could happen when
+                 * adding items to processing queue. So id can just be read after its value is
+                 * set to the previous processing id or if a previous id is not found.
+                 */
+                Exception e = new Exception("Cannot use ID before adding item to queue");
+                LOGGER.error("", e);
+            }
             synchronized (Counter.class) {
                 if (id == -1) {
                     id = getNextId();
@@ -479,6 +400,15 @@ public class Item implements ISleuthKitItem {
             }
         }
         return id;
+    }
+
+    /**
+     * Set to true if ID could be retrieved after being set to its final value.
+     * 
+     * @param allowGetId
+     */
+    public void setAllowGetId(boolean allowGetId) {
+        this.allowGetId = allowGetId;
     }
 
     /**
@@ -520,8 +450,7 @@ public class Item implements ISleuthKitItem {
 
     /**
      *
-     * @return o id do item pai. Tem o nome do caso prefixado no caso de reports do
-     *         FTK3+
+     * @return o id do item pai.
      */
     public Integer getParentId() {
         return parentId;
@@ -598,28 +527,10 @@ public class Item implements ISleuthKitItem {
     }
 
     /**
-     *
-     * @return o objeto do Sleuthkit que representa o item
-     */
-    public Content getSleuthFile() {
-        return sleuthFile;
-    }
-
-    /**
-     *
-     * @return o id do item no Sleuthkit
-     */
-    public Integer getSleuthId() {
-        return sleuthId;
-    }
-
-    /**
      * @return InputStream com o conteúdo do arquivo.
      */
-    public SeekableInputStream getStream() throws IOException {
-        if (startOffset == -1 && file != null && file.isFile()) {
-            return new SeekableFileInputStream(file);
-        }
+    @Override
+    public SeekableInputStream getSeekableInputStream() throws IOException {
 
         // block 1 (referenciado abaixo)
         if (tmpFile == null && tis != null && tis.hasFile()) {
@@ -631,43 +542,29 @@ public class Item implements ISleuthKitItem {
                 return new SeekableFileInputStream(tmpFile);
 
                 // workaround para itens com erro de parsing cujo tmpFile foi setado por block1
-                // acima ao
-                // chamar getStream() antes de rodar strings e dps apagado ao fechar stream dps
-                // do parsing
+                // acima ao chamar getStream() antes de rodar strings e dps apagado ao fechar
+                // stream dps do parsing
             } catch (IOException fnfe) {
                 tmpFile = null;
             }
         }
 
-        SeekableInputStream stream = null;
-        if (file != null && file.isFile()) {
+        // optimization for carved files
+        if (parentTmpFile != null && parentOffset != -1) {
             try {
-                stream = new SeekableFileInputStream(file);
-
-                if (tempStartOffset != -1) {
-                    return new LimitedSeekableInputStream(stream, tempStartOffset, length);
-                }
+                return new LimitedSeekableInputStream(new SeekableFileInputStream(parentTmpFile), parentOffset, length);
 
                 // workaround para itens carveados apontando para tmpFile do pai que foi apagado
                 // Sometimes NPE is thrown, needs investigation...
             } catch (IOException | NullPointerException e) {
-                file = null;
+                parentTmpFile = null;
             }
         }
 
-        if (stream == null && inputStreamFactory != null)
-            stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
+        SeekableInputStream stream = null;
 
-        if (stream == null && sleuthFile != null) {
-            SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
-            SleuthKitConfig tskConfig = (SleuthKitConfig) ConfigurationManager.getInstance()
-                    .findObjects(SleuthKitConfig.class).iterator().next();
-            if (sleuthcase == null || !tskConfig.isRobustImageReading()) {
-                stream = new SleuthkitInputStream(sleuthFile);
-            } else {
-                SleuthkitClient sleuthProcess = SleuthkitClient.get();
-                stream = sleuthProcess.getInputStream((int) sleuthFile.getId(), path);
-            }
+        if (inputStreamFactory != null && idInDataSource != null) {
+            stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
         }
 
         if (stream != null && startOffset != -1) {
@@ -682,7 +579,7 @@ public class Item implements ISleuthKitItem {
 
     @Override
     public SeekableByteChannel getSeekableByteChannel() throws IOException {
-        return new SeekableByteChannelImpl(this.getStream());
+        return new SeekableByteChannelImpl(this.getSeekableInputStream());
     }
 
     /**
@@ -692,9 +589,10 @@ public class Item implements ISleuthKitItem {
      * @return um arquivo temporário com o conteúdo do item.
      * @throws IOException
      */
+    @Override
     public File getTempFile() throws IOException {
-        if (startOffset == -1 && file != null) {
-            return file;
+        if (IOUtil.hasFile(this)) {
+            return IOUtil.getFile(this);
         }
         if (tmpFile == null) {
             if (tis != null && tis.hasFile()) {
@@ -711,7 +609,7 @@ public class Item implements ISleuthKitItem {
                     }
                 });
 
-                try (InputStream in = getBufferedStream()) {
+                try (InputStream in = getBufferedInputStream()) {
                     Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
                 }
                 tmpFile = path.toFile();
@@ -729,10 +627,6 @@ public class Item implements ISleuthKitItem {
         return tmpFile != null;
     }
 
-    public boolean hasFile() {
-        return startOffset == -1 && file != null;
-    }
-
     /**
      *
      * @return um TikaInputStream com o conteúdo do arquivo
@@ -740,7 +634,8 @@ public class Item implements ISleuthKitItem {
      */
     public TikaInputStream getTikaStream() throws IOException {
 
-        if (startOffset == -1 && file != null && file.isFile()) {
+        File file = null;
+        if (IOUtil.hasFile(this) && (file = IOUtil.getFile(this)).isFile()) {
             tis = TikaInputStream.get(file);
         } else {
             if (tmpFile == null && tis != null && tis.hasFile()) {
@@ -754,26 +649,16 @@ public class Item implements ISleuthKitItem {
                 }
             }
             if (tmpFile == null) {
-                tis = TikaInputStream.get(getBufferedStream());
+                tis = TikaInputStream.get(getBufferedInputStream());
             }
         }
-
         tmpResources.addResource(tis);
         return tis;
     }
 
-    /**
-     * @return o tipo de arquivo baseado na análise de assinatura
-     */
-    public IEvidenceFileType getType() {
+    @Override
+    public String getType() {
         return type;
-    }
-
-    public String getTypeExt() {
-        if (type == null)
-            return null;
-        else
-            return type.getLongDescr();
     }
 
     /**
@@ -815,13 +700,6 @@ public class Item implements ISleuthKitItem {
      */
     public boolean isDir() {
         return isDir;
-    }
-
-    /**
-     * @return true se o item é uma duplicata de outro, baseado no hash
-     */
-    public boolean isDuplicate() {
-        return duplicate;
     }
 
     /**
@@ -910,12 +788,12 @@ public class Item implements ISleuthKitItem {
         this.accessDate = accessDate;
     }
 
-    public Date getRecordDate() {
-        return recordDate;
+    public Date getChangeDate() {
+        return changeDate;
     }
 
-    public void setRecordDate(Date recordDate) {
-        this.recordDate = recordDate;
+    public void setChangeDate(Date changeDate) {
+        this.changeDate = changeDate;
     }
 
     /**
@@ -959,27 +837,6 @@ public class Item implements ISleuthKitItem {
     }
 
     /**
-     * Define se o item é duplicado
-     *
-     * @param duplicate
-     *            se é duplicado
-     */
-    public void setDuplicate(boolean duplicate) {
-        this.duplicate = duplicate;
-    }
-
-    /**
-     * Define o caminho para o arquivo do item, no caso de processamento de pastas e
-     * para subitens extraídos.
-     *
-     * @param exportedFile
-     *            caminho para o arquivo do item
-     */
-    public void setExportedFile(String exportedFile) {
-        this.exportedFile = exportedFile;
-    }
-
-    /**
      * Define a extensão do item.
      *
      * @param ext
@@ -1003,16 +860,6 @@ public class Item implements ISleuthKitItem {
     }
 
     /**
-     * Define o arquivo referente ao item, caso existente
-     *
-     * @param file
-     *            arquivo referente ao item
-     */
-    public void setFile(File file) {
-        this.file = file;
-    }
-
-    /**
      * Define o offset onde itens de carving são encontrados no item pai
      *
      * @param fileOffset
@@ -1020,16 +867,6 @@ public class Item implements ISleuthKitItem {
      */
     public void setFileOffset(long fileOffset) {
         this.startOffset = fileOffset;
-    }
-
-    /**
-     * Define o id do FTK3+, em casos de report
-     *
-     * @param ftkID
-     *            id do FTK
-     */
-    public void setFtkID(Integer ftkID) {
-        this.ftkID = ftkID;
     }
 
     /**
@@ -1109,7 +946,7 @@ public class Item implements ISleuthKitItem {
     public void setName(String name) {
         this.name = name;
         int p = name.lastIndexOf("."); //$NON-NLS-1$
-        extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase(); //$NON-NLS-1$
+        extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase().trim(); //$NON-NLS-1$
     }
 
     public void setSubitemId(Integer subitemId) {
@@ -1130,7 +967,12 @@ public class Item implements ISleuthKitItem {
         this.addParentIds(parent.getParentIds());
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
-        this.setParentIdInDataSource(parent.getIdInDataSource());
+        String parenttrackID = (String) parent.getExtraAttribute(IndexItem.TRACK_ID);
+        if (parenttrackID == null) {
+            throw new RuntimeException(IndexItem.TRACK_ID
+                    + " cannot be null. It is populated after enqueuing the item: " + parent.getPath());
+        }
+        this.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parenttrackID);
     }
 
     public void setParent(ParentInfo parent) {
@@ -1139,7 +981,7 @@ public class Item implements ISleuthKitItem {
         this.addParentIds(parent.getParentIds());
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
-        this.setExtraAttribute(IndexItem.PARENT_PERSISTENT_ID, parent.getPersistentId());
+        this.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parent.getTrackId());
     }
 
     /**
@@ -1156,15 +998,23 @@ public class Item implements ISleuthKitItem {
      */
     @Deprecated
     public void setParsedTextCache(String parsedText) {
-        this.textCache = new TextCache();
+        TextCache textCache = new TextCache();
         try {
-            this.textCache.write(parsedText);
+            textCache.write(parsedText);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        this.setParsedTextCache(textCache);
     }
 
     public void setParsedTextCache(TextCache textCache) {
+        if (this.textCache != null) {
+            try {
+                this.textCache.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         this.textCache = textCache;
     }
 
@@ -1190,22 +1040,6 @@ public class Item implements ISleuthKitItem {
      */
     public void setRoot(boolean isRoot) {
         this.isRoot = isRoot;
-    }
-
-    /**
-     * @param sleuthFile
-     *            objeto que representa o item no sleuthkit
-     */
-    public void setSleuthFile(Content sleuthFile) {
-        this.sleuthFile = sleuthFile;
-    }
-
-    /**
-     * @param sleuthId
-     *            id do item no sleuthkit
-     */
-    public void setSleuthId(Integer sleuthId) {
-        this.sleuthId = sleuthId;
     }
 
     /**
@@ -1260,11 +1094,8 @@ public class Item implements ISleuthKitItem {
         this.addToCase = addToCase;
     }
 
-    /**
-     * @param type
-     *            tipo de arquivo
-     */
-    public void setType(IEvidenceFileType type) {
+    @Override
+    public void setType(String type) {
         this.type = type;
     }
 
@@ -1286,7 +1117,7 @@ public class Item implements ISleuthKitItem {
         StringBuilder sb = new StringBuilder();
         sb.append("Item: ").append(getPath()); //$NON-NLS-1$
         if (type != null) {
-            sb.append(" type: ").append(type.getLongDescr()); //$NON-NLS-1$
+            sb.append(" type: ").append(type); //$NON-NLS-1$
         }
         if (length != null) {
             sb.append(" size: ").append(length); //$NON-NLS-1$
@@ -1302,19 +1133,30 @@ public class Item implements ISleuthKitItem {
         this.sumVolume = sumVolume;
     }
 
-    public void setTempStartOffset(long tempStartOffset) {
-        this.tempStartOffset = tempStartOffset;
+    public boolean hasParentTmpFile() {
+        return parentTmpFile != null && parentOffset != -1;
+    }
+
+    public void setParentTmpFile(File parentTmpFile) {
+        this.parentTmpFile = parentTmpFile;
+    }
+
+    public void setParentOffset(long parentOffset) {
+        this.parentOffset = parentOffset;
     }
 
     public Metadata getMetadata() {
         if (metadata == null) {
-            metadata = new Metadata();
+            metadata = new SyncMetadata();
         }
         return metadata;
     }
 
     public void setMetadata(Metadata metadata) {
-        this.metadata = metadata;
+        if (metadata instanceof SyncMetadata)
+            this.metadata = metadata;
+        else
+            throw new IllegalArgumentException("Just SyncMetadata instances should be set in Item metadata.");
     }
 
     public IDataSource getDataSource() {
@@ -1334,15 +1176,6 @@ public class Item implements ISleuthKitItem {
         this.thumb = thumb;
     }
 
-    @Override
-    public byte[] getImageSimilarityFeatures() {
-        return imageSimilarityFeatures;
-    }
-
-    public void setImageSimilarityFeatures(byte[] imageSimilarityFeatures) {
-        this.imageSimilarityFeatures = imageSimilarityFeatures;
-    }
-
     public ISeekableInputStreamFactory getInputStreamFactory() {
         return inputStreamFactory;
     }
@@ -1359,14 +1192,6 @@ public class Item implements ISleuthKitItem {
         this.idInDataSource = idInDataSource;
     }
 
-    public void setParentIdInDataSource(String string) {
-        this.parentIdInDataSource = string;
-    }
-
-    public String getParentIdInDataSource() {
-        return this.parentIdInDataSource;
-    }
-
     @Override
     public IItem createChildItem() {
         IItem child = new Item();
@@ -1377,14 +1202,10 @@ public class Item implements ISleuthKitItem {
     }
 
     public Object getTempAttribute(String key) {
-        synchronized (tempAttributes) {
-            return tempAttributes.get(key);
-        }
+        return tempAttributes.get(key);
     }
 
     public void setTempAttribute(String key, Object value) {
-        synchronized (tempAttributes) {
-            tempAttributes.put(key, value);
-        }
+        tempAttributes.put(key, value);
     }
 }

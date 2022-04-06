@@ -58,7 +58,6 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
         this.attachSearcher = attachSearcher;
         this.fileHandler = new AttachmentHandler();
         this.enableJavascript = true;
-        this.enableProxy = false;
 
         Platform.runLater(new Runnable() {
             @Override
@@ -69,6 +68,8 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
                             Worker.State newState) {
                         if (newState == Worker.State.SUCCEEDED) {
                             updateSelection();
+                            // imprecise, not needed for current chat reports after #633
+                            // scrollToPosition();
                         }
                         if (newState == Worker.State.RUNNING) {
                             mediaHashesInView.clear();
@@ -93,6 +94,10 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
                             Number newValue) {
                         addJavascriptListener(webEngine);
                         updateSelection();
+                        if (newValue.floatValue() > 0) {
+                            // imprecise, not needed for current chat reports after #633
+                            // scrollToPosition();
+                        }
                     }
                 });
             }
@@ -131,7 +136,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
         public void open(final String luceneQuery) {
 
             IItem item = attachSearcher.getItem(luceneQuery);
-            if (!IOUtil.isToOpenExternally(item.getName(), item.getTypeExt())) {
+            if (!IOUtil.isToOpenExternally(item.getName(), item.getType())) {
                 return;
             }
             File file = null;

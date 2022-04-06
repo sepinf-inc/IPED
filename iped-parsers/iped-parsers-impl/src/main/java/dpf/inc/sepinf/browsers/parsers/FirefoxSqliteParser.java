@@ -116,6 +116,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     bookmarksMetadata.add(Metadata.RESOURCE_NAME_KEY, "Firefox Bookmarks"); //$NON-NLS-1$
                     bookmarksMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
                     bookmarksMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                    bookmarksMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     parseFirefoxBookmarks(bookmarksHandler, bookmarksMetadata, context, bookmarks);
 
@@ -140,7 +141,8 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     metadataBookmark.set(TikaCoreProperties.MODIFIED, b.getLastModified());
                     metadataBookmark.add(ExtraProperties.URL, b.getUrl());
                     metadataBookmark.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
-                    metadataBookmark.add((BasicProps.HASH), "");
+                    metadataBookmark.add((BasicProps.LENGTH), "");
+                    metadataBookmark.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataBookmark, true);
                 }
@@ -154,6 +156,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     historyMetadata.add(Metadata.RESOURCE_NAME_KEY, "Firefox History"); //$NON-NLS-1$
                     historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                     historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                    historyMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     parseFirefoxResumedHistory(historyHandler, historyMetadata, context, resumedHistory);
 
@@ -178,7 +181,8 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     metadataHistory.set(ExtraProperties.VISIT_DATE, h.getVisitDate());
                     metadataHistory.add(ExtraProperties.URL, h.getUrl());
                     metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
-                    metadataHistory.add((BasicProps.HASH), "");
+                    metadataHistory.add((BasicProps.LENGTH), "");
+                    metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                 }
@@ -192,6 +196,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     downloadsMetadata.add(Metadata.RESOURCE_NAME_KEY, "Firefox Downloads"); //$NON-NLS-1$
                     downloadsMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(2));
                     downloadsMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                    downloadsMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     parseFirefoxDownloads(downloadsHandler, downloadsMetadata, context, downloads);
 
@@ -220,7 +225,8 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     if (d.getReceivedBytes() != null)
                         metadataDownload.add(ExtraProperties.DOWNLOAD_RECEIVED_BYTES, d.getReceivedBytes().toString());
                     metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(2));
-                    metadataDownload.add((BasicProps.HASH), "");
+                    metadataDownload.add((BasicProps.LENGTH), "");
+                    metadataDownload.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataDownload, true);
                 }
@@ -614,25 +620,25 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
         return downloads;
     }
 
-    public static void main(String[] args) {
-
-        try {
-            String filepath = "/tmp/places.sqlite"; //$NON-NLS-1$
-            InputStream input = new FileInputStream(filepath);
-            FirefoxSqliteParser parser = new FirefoxSqliteParser();
-            ParseContext context = new ParseContext();
-            ToXMLContentHandler handler = new ToXMLContentHandler(new FileOutputStream("/tmp/saida.html"), "UTF-8"); //$NON-NLS-1$
-            Metadata metadata = new Metadata();
-            metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
-                    MediaType.application("x-firefox-places").toString()); //$NON-NLS-1$
-            context.set(Parser.class, parser);
-
-            parser.parse(input, handler, metadata, context);
-
-        } catch (Exception e1) {
-            e1.printStackTrace();
-        }
-
-    }
+//    public static void main(String[] args) {
+//
+//        try {
+//            String filepath = "/tmp/places.sqlite"; //$NON-NLS-1$
+//            InputStream input = new FileInputStream(filepath);
+//            FirefoxSqliteParser parser = new FirefoxSqliteParser();
+//            ParseContext context = new ParseContext();
+//            ToXMLContentHandler handler = new ToXMLContentHandler(new FileOutputStream("/tmp/saida.html"), "UTF-8"); //$NON-NLS-1$
+//            Metadata metadata = new Metadata();
+//            metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+//                    MediaType.application("x-firefox-places").toString()); //$NON-NLS-1$
+//            context.set(Parser.class, parser);
+//
+//            parser.parse(input, handler, metadata, context);
+//
+//        } catch (Exception e1) {
+//            e1.printStackTrace();
+//        }
+//
+//    }
 
 }

@@ -14,9 +14,10 @@ import dpf.inc.sepinf.gdrive.parsers.GDriveSnapshotParser;
 import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
-import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
+import dpf.sp.gpinf.indexer.parsers.PartMetParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -55,6 +56,7 @@ public class P2PBookmarker {
         HashMap<String, P2PProgram> p2pPrograms = new HashMap<String, P2PProgram>();
 
         p2pPrograms.put(KnownMetParser.EMULE_MIME_TYPE, new P2PProgram(HashTask.HASH.EDONKEY.toString(), "Emule")); //$NON-NLS-1$
+        p2pPrograms.put(PartMetParser.EMULE_PART_MET_MIME_TYPE, new P2PProgram(HashTask.HASH.EDONKEY.toString(), "Emule")); //$NON-NLS-1$
         p2pPrograms.put(AresParser.ARES_MIME_TYPE, new P2PProgram(HashTask.HASH.SHA1.toString(), "Ares")); //$NON-NLS-1$
         p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE,
                 new P2PProgram(HashTask.HASH.MD5.toString(), "Shareaza")); //$NON-NLS-1$
@@ -78,6 +80,9 @@ public class P2PBookmarker {
                 Document doc = ipedSrc.getReader().document(luceneId);
                 String mediaType = doc.get(IndexItem.CONTENTTYPE);
                 P2PProgram program = p2pPrograms.get(mediaType);
+                if (program == null) {
+                    continue;
+                }
                 String[] sharedItems = doc.getValues(ExtraProperties.SHARED_HASHES);
                 boolean isHash = true;
                 if (sharedItems.length == 0) {
@@ -117,14 +122,14 @@ public class P2PBookmarker {
                         bookmarkSufix += " by " + phoneOwner; //$NON-NLS-1$
                 }
 
-                int labelId = ipedSrc.getMarcadores()
-                        .newLabel(Messages.getString("P2PBookmarker.P2PBookmarkPrefix") + bookmarkSufix); //$NON-NLS-1$
+                int labelId = ipedSrc.getBookmarks()
+                        .newBookmark(Messages.getString("P2PBookmarker.P2PBookmarkPrefix") + bookmarkSufix); //$NON-NLS-1$
                 ArrayList<Integer> ids = new ArrayList<Integer>();
                 for (int j = 0; j < result.getLength(); j++)
                     ids.add(result.getId(j));
 
-                ipedSrc.getMarcadores().addLabel(ids, labelId);
-                ipedSrc.getMarcadores().saveState();
+                ipedSrc.getBookmarks().addBookmark(ids, labelId);
+                ipedSrc.getBookmarks().saveState(true);
             }
         } catch (Exception e1) {
             e1.printStackTrace();
