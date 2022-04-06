@@ -1,8 +1,5 @@
 package iped3.search;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class SearchResult {
 
     int[] ids;
@@ -28,11 +25,8 @@ public class SearchResult {
         return ids.length;
     }
 
-    public List<Integer> getIds() {
-        List<Integer> ids = new ArrayList<>();
-        for (int i : this.ids)
-            ids.add(i);
-        return ids;
+    public int[] getIds() {
+        return this.ids;
     }
 
     public void compactResults() {

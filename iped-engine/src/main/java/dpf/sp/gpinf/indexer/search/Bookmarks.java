@@ -336,7 +336,7 @@ public class Bookmarks implements Serializable, IBookmarks {
 
         for (i = 0; i < result.getLength(); i++) {
             if (!hasBookmark(result.getId(i), bookmarkBits)) {
-                result.getIds().set(i, -1);
+                result.getIds()[i] = -1;
             }
         }
         result.compactResults();
@@ -352,7 +352,7 @@ public class Bookmarks implements Serializable, IBookmarks {
 
         for (i = 0; i < result.getLength(); i++) {
             if (hasBookmark(result.getId(i)) && !hasBookmark(result.getId(i), bookmarkBits)) {
-                result.getIds().set(i, -1);
+                result.getIds()[i] = -1;
             }
         }
         result.compactResults();
@@ -362,7 +362,7 @@ public class Bookmarks implements Serializable, IBookmarks {
     public SearchResult filterNoBookmarks(SearchResult result) {
         for (int i = 0; i < result.getLength(); i++) {
             if (hasBookmark(result.getId(i))) {
-                result.getIds().set(i, -1);
+                result.getIds()[i] = -1;
             }
         }
         result.compactResults();
@@ -372,7 +372,7 @@ public class Bookmarks implements Serializable, IBookmarks {
     public SearchResult filterChecked(SearchResult result) {
         for (int i = 0; i < result.getLength(); i++) {
             if (!selected[result.getId(i)]) {
-                result.getIds().set(i, -1);
+                result.getIds()[i] = -1;
             }
         }
         result.compactResults();
@@ -391,7 +391,7 @@ public class Bookmarks implements Serializable, IBookmarks {
                     break;
                 }
             if (!inReport) {
-                result.getIds().set(i, -1);
+                result.getIds()[i] = -1;
             }
         }
         result.compactResults();
