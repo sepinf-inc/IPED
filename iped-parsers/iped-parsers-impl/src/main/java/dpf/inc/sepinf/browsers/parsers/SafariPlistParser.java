@@ -112,6 +112,7 @@ public class SafariPlistParser extends AbstractParser {
                         historyMetadata.add(Metadata.RESOURCE_NAME_KEY, "Safari Plist History"); //$NON-NLS-1$
                         historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
                         historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                        historyMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                         parseSafariResumedHistory(stream, historyHandler, historyMetadata, context, resumedHistory);
 
@@ -138,6 +139,7 @@ public class SafariPlistParser extends AbstractParser {
                         metadataHistory.add(ExtraProperties.URL, v.getUrl());
                         metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
                         metadataHistory.add((BasicProps.LENGTH), "");
+                        metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                     }
@@ -156,6 +158,7 @@ public class SafariPlistParser extends AbstractParser {
                         downloadMetadata.add(Metadata.RESOURCE_NAME_KEY, "Safari Plist Downloads"); //$NON-NLS-1$
                         downloadMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                         downloadMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                        downloadMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                         parseSafariDownloads(stream, downloadHandler, downloadMetadata, context, downloads);
 
@@ -188,6 +191,7 @@ public class SafariPlistParser extends AbstractParser {
                                     d.getReceivedBytes().toString());
                         metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
                         metadataDownload.add((BasicProps.LENGTH), "");
+                        metadataDownload.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataDownload, true);
                     }
@@ -206,6 +210,7 @@ public class SafariPlistParser extends AbstractParser {
                         bookmarkMetadata.add(Metadata.RESOURCE_NAME_KEY, "Safari Plist Bookmarks"); //$NON-NLS-1$
                         bookmarkMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(2));
                         bookmarkMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                        bookmarkMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                         parseSafariBookmarks(stream, bookmarkHandler, bookmarkMetadata, context, bookmarks);
 
@@ -231,6 +236,7 @@ public class SafariPlistParser extends AbstractParser {
                         metadataBookmark.add(ExtraProperties.URL, b.getUrl());
                         metadataBookmark.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(2));
                         metadataBookmark.add((BasicProps.LENGTH), "");
+                        metadataBookmark.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataBookmark, true);
                     }

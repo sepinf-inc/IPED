@@ -18,7 +18,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 
@@ -82,7 +82,7 @@ public class ReportGenerator {
 
         out.println("<TR><TH>" + Messages.getString("SkypeReport.Attribute") + "</TH><TH>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Messages.getString("SkypeReport.Value") + "</TH></TR>"); //$NON-NLS-1$ //$NON-NLS-2$
-        out.println(NEW_ROW + "ID" + NEW_COL + c.getId() + CLOSE_ROW); //$NON-NLS-1$
+        out.println(NEW_ROW + "ID" + NEW_COL + FormatUtil.format(c.getId()) + CLOSE_ROW); //$NON-NLS-1$
         out.println(NEW_ROW + "Nome do chat" + NEW_COL + FormatUtil.format(c.getDisplayName()) + CLOSE_ROW); //$NON-NLS-1$
         out.println(NEW_ROW + "Criado em:" + NEW_COL + FormatUtil.format(c.getCreationDate()) + CLOSE_ROW); //$NON-NLS-1$
         out.println(
@@ -117,7 +117,7 @@ public class ReportGenerator {
             boolean destaque = sm.isFromMe();// skypeName.equals(sm.getAutor());
 
             out.println("<TR id=\"" + sm.getId() + "\" class='" + (destaque ? "rb" : "rr") + "'>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                    + "<TD>" + sm.getId() + "</TD>" //$NON-NLS-1$ //$NON-NLS-2$
+                    + "<TD>" + FormatUtil.format(sm.getId()) + "</TD>" //$NON-NLS-1$ //$NON-NLS-2$
                     + "<TD>" + FormatUtil.format(sm.getData()) + "</TD>" //$NON-NLS-1$ //$NON-NLS-2$
                     + "<TD>" + FormatUtil.format(sm.getAutor()) + "</TD>"); //$NON-NLS-1$ //$NON-NLS-2$
             out.print("<TD>" + FormatUtil.format(sm.getDestino()) + "</TD>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -131,7 +131,7 @@ public class ReportGenerator {
                     out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"" + query
                             + "\",this.checked) name=\"" + item.getHash() + "\" />");
                     out.println("<a onclick=app.open(\"" + query + "\") "); //$NON-NLS-1$
-                    out.println(" href=\"" + exportPath + "\">");
+                    out.println(" href=\"" + FormatUtil.format(exportPath) + "\">");
                     if (thumb != null) {
                         out.print("<img height=\"100\" width=\"100\" src=\"data:image/jpg;charset=utf-8;base64," //$NON-NLS-1$
                                 + Base64.getEncoder().encodeToString(thumb) + "\"/>"); //$NON-NLS-1$
@@ -153,7 +153,7 @@ public class ReportGenerator {
             }
             if (sm instanceof SkypeMessageV12) {
                 out.println("<td>"); //$NON-NLS-1$
-                out.println(((SkypeMessageV12) sm).getJSONdata());
+                out.println(FormatUtil.format(((SkypeMessageV12) sm).getJSONdata()));
                 out.println("</td>"); //$NON-NLS-1$
             }
 
@@ -175,7 +175,7 @@ public class ReportGenerator {
         if (c instanceof SkypeConversationV14) {
             out.println("<p>JSON:</p>"); //$NON-NLS-1$
             out.println("<p>"); //$NON-NLS-1$
-            out.println(((SkypeConversationV14) c).getJSONdata());
+            out.println(FormatUtil.format(((SkypeConversationV14) c).getJSONdata()));
             out.println("</p>"); //$NON-NLS-1$
         }
 
@@ -206,7 +206,8 @@ public class ReportGenerator {
         out.println("<TABLE>"); //$NON-NLS-1$
         out.println("<TR><TH>" + Messages.getString("SkypeReport.Attribute") + "</TH><TH>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Messages.getString("SkypeReport.Value") + "</TH></TR>"); //$NON-NLS-1$ //$NON-NLS-2$
-        out.println(NEW_ROW + Messages.getString("SkypeReport.ID") + NEW_COL + c.getId() + CLOSE_ROW); //$NON-NLS-1$
+        out.println(
+                NEW_ROW + Messages.getString("SkypeReport.ID") + NEW_COL + FormatUtil.format(c.getId()) + CLOSE_ROW); //$NON-NLS-1$
         out.println(NEW_ROW + Messages.getString("SkypeReport.SkypeID") + NEW_COL + FormatUtil.format(c.getSkypeName()) //$NON-NLS-1$
                 + CLOSE_ROW);
         out.println(NEW_ROW + Messages.getString("SkypeReport.ProfileDate") + NEW_COL //$NON-NLS-1$
@@ -239,7 +240,7 @@ public class ReportGenerator {
         if (c instanceof SkypeContactV8) {
             out.println("<p>JSON:</p>"); //$NON-NLS-1$
             out.println("<p>"); //$NON-NLS-1$
-            out.println(((SkypeContactV8) c).getJSONdata());
+            out.println(FormatUtil.format(((SkypeContactV8) c).getJSONdata()));
             out.println("</p>"); //$NON-NLS-1$
         }
 
@@ -258,7 +259,8 @@ public class ReportGenerator {
         out.println("<TABLE>"); //$NON-NLS-1$
         out.println("<TR><TH>" + Messages.getString("SkypeReport.Attribute") + "</TH><TH>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Messages.getString("SkypeReport.Value") + "</TH></TR>"); //$NON-NLS-1$ //$NON-NLS-2$
-        out.println(NEW_ROW + Messages.getString("SkypeReport.ID") + NEW_COL + sm.getId() + CLOSE_ROW); //$NON-NLS-1$
+        out.println(
+                NEW_ROW + Messages.getString("SkypeReport.ID") + NEW_COL + FormatUtil.format(sm.getId()) + CLOSE_ROW); //$NON-NLS-1$
         out.println(NEW_ROW + Messages.getString("SkypeReport.Date") + NEW_COL + FormatUtil.format(sm.getData()) //$NON-NLS-1$
                 + CLOSE_ROW);
         out.println(NEW_ROW + Messages.getString("SkypeReport.Author") + NEW_COL + FormatUtil.format(sm.getAutor()) //$NON-NLS-1$
@@ -309,7 +311,8 @@ public class ReportGenerator {
         out.println("<TABLE>"); //$NON-NLS-1$
         out.println("<TR><TH>" + Messages.getString("SkypeReport.Attribute") + "</TH><TH>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Messages.getString("SkypeReport.Value") + "</TH></TR>"); //$NON-NLS-1$ //$NON-NLS-2$
-        out.println(NEW_ROW + Messages.getString("SkypeReport.TypeDescr") + NEW_COL + c.getTypeDescr() + CLOSE_ROW); //$NON-NLS-1$
+        out.println(NEW_ROW + Messages.getString("SkypeReport.TypeDescr") + NEW_COL //$NON-NLS-1$
+                + FormatUtil.format(c.getTypeDescr()) + CLOSE_ROW);
         out.println(NEW_ROW + Messages.getString("SkypeReport.ID") + NEW_COL + c.getId() + CLOSE_ROW); //$NON-NLS-1$
         out.println(NEW_ROW + Messages.getString("SkypeReport.FileName") + NEW_COL + FormatUtil.format(c.getFilename()) //$NON-NLS-1$
                 + CLOSE_ROW);
@@ -319,14 +322,16 @@ public class ReportGenerator {
                 + CLOSE_ROW);
         if (c.getType() == 3) {
             out.println(NEW_ROW + Messages.getString("SkypeReport.Recipient") + NEW_COL //$NON-NLS-1$
-                    + Messages.getString("SkypeReport.Chat") + ": " + c.getConversation().getId() + " -- " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    + c.getConversation().getDisplayName() + "<BR/>"); //$NON-NLS-1$
+                    + Messages.getString("SkypeReport.Chat") + ": " //$NON-NLS-1$ //$NON-NLS-2$
+                    + FormatUtil.format(c.getConversation().getId() + " -- " //$NON-NLS-1$
+                            + c.getConversation().getDisplayName())
+                    + "<BR/>"); //$NON-NLS-1$
 
             out.println(Messages.getString("SkypeReport.Participants") + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
             if (c.getConversation().getParticipantes() != null) {
                 for (Iterator iterator = c.getConversation().getParticipantes().iterator(); iterator.hasNext();) {
                     String part = (String) iterator.next();
-                    out.println(part + "<br/>"); //$NON-NLS-1$
+                    out.println(FormatUtil.format(part) + "<br/>"); //$NON-NLS-1$
                 }
             }
 
@@ -346,8 +351,9 @@ public class ReportGenerator {
         out.println(
                 NEW_ROW + Messages.getString("SkypeReport.SentBytes") + NEW_COL + c.getBytesTransferred() + CLOSE_ROW); //$NON-NLS-1$
         if (c.getConversation() != null) {
-            out.println(NEW_ROW + Messages.getString("SkypeReport.ChatID") + NEW_COL + c.getConversation().getId() //$NON-NLS-1$
-                    + " -- " + c.getConversation().getDisplayName() + CLOSE_ROW); //$NON-NLS-1$
+            out.println(NEW_ROW + Messages.getString("SkypeReport.ChatID") + NEW_COL //$NON-NLS-1$
+                    + FormatUtil.format(c.getConversation().getId() + " -- " + c.getConversation().getDisplayName()) //$NON-NLS-1$
+                    + CLOSE_ROW);
         } else {
             out.println(NEW_ROW + Messages.getString("SkypeReport.ChatID") + NEW_COL //$NON-NLS-1$
                     + Messages.getString("SkypeReport.Empty") + CLOSE_ROW); //$NON-NLS-1$
@@ -380,7 +386,7 @@ public class ReportGenerator {
             if (result != null && !result.isEmpty()) {
                 String exportPath = Util.getExportPath(result.get(0));
                 if (!exportPath.isEmpty())
-                    out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                    out.println("href=\"" + FormatUtil.format(exportPath) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
             out.println(">" + SimpleHTMLEncoder.htmlEncode(query)); //$NON-NLS-1$
             byte[] thumb = Util.getPreview(item);
@@ -420,8 +426,10 @@ public class ReportGenerator {
         out.println("<TABLE>"); //$NON-NLS-1$
         out.println("<TR><TH>" + Messages.getString("SkypeReport.Attribute") + "</TH><TH>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Messages.getString("SkypeReport.Value") + "</TH></TR>"); //$NON-NLS-1$ //$NON-NLS-2$
-        out.println(NEW_ROW + Messages.getString("SkypeReport.ID") + NEW_COL + a.getId() + CLOSE_ROW); //$NON-NLS-1$
-        out.println(NEW_ROW + Messages.getString("SkypeReport.Mood") + NEW_COL + a.getMood() + CLOSE_ROW); //$NON-NLS-1$
+        out.println(
+                NEW_ROW + Messages.getString("SkypeReport.ID") + NEW_COL + FormatUtil.format(a.getId()) + CLOSE_ROW); //$NON-NLS-1$
+        out.println(NEW_ROW + Messages.getString("SkypeReport.Mood") + NEW_COL + FormatUtil.format(a.getMood()) //$NON-NLS-1$
+                + CLOSE_ROW);
         out.println(NEW_ROW + Messages.getString("SkypeReport.MoodDate") + NEW_COL //$NON-NLS-1$
                 + FormatUtil.format(a.getMoodTimestamp()) + CLOSE_ROW);
         out.println(NEW_ROW + Messages.getString("SkypeReport.AvatarDate") + NEW_COL //$NON-NLS-1$

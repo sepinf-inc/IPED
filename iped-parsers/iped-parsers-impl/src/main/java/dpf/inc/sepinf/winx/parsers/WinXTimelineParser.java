@@ -35,6 +35,7 @@ import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 /**
  * Parser for the Windows 10 Timeline feature (v1803/1809/1903+)
@@ -158,6 +159,7 @@ public class WinXTimelineParser extends SQLite3DBParser {
 
         metadataTimelineItem.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WIN10_TIMELINE_REG.toString());
         metadataTimelineItem.add(Metadata.RESOURCE_NAME_KEY, "WinXTimeline Entry " + i);
+        metadataTimelineItem.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
         // These properties need to get a "Date" type as parameters, so it can correctly
         // show times in UTC
@@ -595,7 +597,7 @@ public class WinXTimelineParser extends SQLite3DBParser {
      * https://github.com/kacos2000/WindowsTimeline/blob/master/WindowsTimeline.sql
      * Works with Windows 10 v1803/1809/1903+
      */
-
+    
     private String WINX_TIMELINE_QUERY = " SELECT " + " ActivityOperation.ETag as 'Etag', "
             + " ActivityOperation.OperationOrder as 'Order', " + " case "
             + " when ActivityOperation.ActivityType in (2,3,11,12,15)  "

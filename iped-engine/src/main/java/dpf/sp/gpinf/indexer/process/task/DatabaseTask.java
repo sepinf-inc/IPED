@@ -9,8 +9,7 @@ import java.util.List;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class DatabaseTask extends AbstractTask {
 
@@ -58,7 +57,6 @@ public class DatabaseTask extends AbstractTask {
                 + "ISROOT        BOOLEAN," //$NON-NLS-1$
                 + "ISDIR         BOOLEAN," //$NON-NLS-1$
                 + "ISDELETED     BOOLEAN," //$NON-NLS-1$
-                + "ISDUPLICATE   BOOLEAN," //$NON-NLS-1$
                 + "TIMEOUT       BOOLEAN," //$NON-NLS-1$
                 + "MODIFIED      TEXT, " //$NON-NLS-1$
                 + "CREATED       TEXT, " //$NON-NLS-1$
@@ -96,12 +94,10 @@ public class DatabaseTask extends AbstractTask {
             sql.append("(" //$NON-NLS-1$
                     + e.getId() + "," //$NON-NLS-1$
                     + e.getParentId() + "," //$NON-NLS-1$
-                    + ((e instanceof ISleuthKitItem) ? ((ISleuthKitItem) e).getSleuthId() : null) + ",\'" //$NON-NLS-1$
                     + e.getName() + "\',\'" //$NON-NLS-1$
-                    + e.getType().getLongDescr() + "\',\'" //$NON-NLS-1$
+                    + e.getType() + "\',\'" //$NON-NLS-1$
                     + e.getCategories() + "\',\'" //$NON-NLS-1$
                     + e.getPath() + "\',\'" //$NON-NLS-1$
-                    + e.getExportedFile() + "\',\'" //$NON-NLS-1$
                     + e.getHash() + "\',\'" //$NON-NLS-1$
                     + e.getMediaType().getBaseType() + "\'," //$NON-NLS-1$
                     + e.getLength() + "," //$NON-NLS-1$
@@ -112,7 +108,6 @@ public class DatabaseTask extends AbstractTask {
                     + (e.isRoot() ? 1 : 0) + "," //$NON-NLS-1$
                     + (e.isDir() ? 1 : 0) + "," //$NON-NLS-1$
                     + (e.isDeleted() ? 1 : 0) + "," //$NON-NLS-1$
-                    + (e.isDuplicate() ? 1 : 0) + "," //$NON-NLS-1$
                     + (e.isTimedOut() ? 1 : 0) + ",\'" //$NON-NLS-1$
                     + e.getModDate() + "\',\'" //$NON-NLS-1$
                     + e.getCreationDate() + "\',\'" //$NON-NLS-1$

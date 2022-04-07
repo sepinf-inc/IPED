@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -47,6 +48,7 @@ import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 
+
 public class SevenZipParser extends AbstractParser {
 
     /**
@@ -60,48 +62,60 @@ public class SevenZipParser extends AbstractParser {
     private static final String UDF = "x-udf-image"; //$NON-NLS-1$
     public static final MediaType RAR = MediaType.application("x-rar-compressed"); //$NON-NLS-1$
 
-    private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
+    private static boolean inited = false;
+
+    private static Set<MediaType> supportedTypes = getTypes();
 
     private static synchronized Set<MediaType> getTypes() {
 
         HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
 
+        supportedTypes.add(MediaType.application(ISO9660));
+        supportedTypes.add(MediaType.application(UDF));
+        supportedTypes.add(RAR);
+
+        /*
+         * 7zipJBinding-4.65 does not work with 7z files created by 7z-16.04 or higher.
+         * 7zipJBinding-9.20 does not work correctly with some rare ISO files.
+         */
+        // supportedTypes.add(MediaType.application("x-7z-compressed"));
+        // supportedTypes.add(MediaType.application("vnd.ms-htmlhelp"));
+        // supportedTypes.add(MediaType.application("vnd.ms-cab-compressed"));
+        // supportedTypes.add(MediaType.application("x-wim-image"));
+
+        return supportedTypes;
+    }
+
+    private static synchronized void init7zNativeLibs() {
+        if (inited) {
+            return;
+        }
         try {
             File javaTmp = new File(System.getProperty("java.io.tmpdir"));
             File tmpDir = new File(javaTmp, "7zip-" + new Random().nextLong());
             Files.createDirectories(tmpDir.toPath());
             // use a different tmp dir for each process, see #301
             SevenZip.initSevenZipFromPlatformJAR(tmpDir);
-            supportedTypes.add(MediaType.application(ISO9660));
-            supportedTypes.add(MediaType.application(UDF));
-            supportedTypes.add(RAR);
 
-            /*
-             * 7zipJBinding-4.65 does not work with 7z files created by 7z-16.04 or higher.
-             * 7zipJBinding-9.20 does not work correctly with some rare ISO files.
-             */
-            // supportedTypes.add(MediaType.application("x-7z-compressed"));
-            // supportedTypes.add(MediaType.application("vnd.ms-htmlhelp"));
-            // supportedTypes.add(MediaType.application("vnd.ms-cab-compressed"));
-            // supportedTypes.add(MediaType.application("x-rar-compressed"));
-            // supportedTypes.add(MediaType.application("x-vhd"));
-            // supportedTypes.add(MediaType.application("x-wim-image"));
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (Throwable t) {
+            supportedTypes = Collections.emptySet();
+            throw new RuntimeException(t);
+        } finally {
+            inited = true;
         }
 
-        return supportedTypes;
     }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
-        return SUPPORTED_TYPES;
+        return supportedTypes;
     }
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
+
+        init7zNativeLibs();
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
@@ -271,13 +285,15 @@ public class SevenZipParser extends AbstractParser {
                 entrydata.set(TikaCoreProperties.CREATED, item.getCreationTime());
                 entrydata.set(TikaCoreProperties.MODIFIED, item.getLastWriteTime());
                 entrydata.set(ExtraProperties.ACCESSED, item.getLastAccessTime());
-
                 if (item.isFolder())
                     entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
 
                 if (extractor.shouldParseEmbedded(entrydata))
                     extractor.parseEmbedded(is, handler, entrydata, true);
 
+
+                
+                
             } catch (SevenZipException e) {
                 LOGGER.warn("Error extracting subitem {} {}", subitemPath, e.getMessage()); //$NON-NLS-1$
             }

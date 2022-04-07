@@ -5,8 +5,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
 
-import macee.core.Configurable;
-
 public interface IConfigurationDirectory {
 
     public static final String IPED_CONF_PATH = "iped.configPath";

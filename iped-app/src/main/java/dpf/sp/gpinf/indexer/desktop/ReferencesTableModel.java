@@ -18,7 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Arrays;
@@ -38,9 +37,9 @@ import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped3.IItem;
-import iped3.search.LuceneSearchResult;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -99,9 +98,9 @@ public class ReferencesTableModel extends AbstractTableModel
 
     @Override
     public void setValueAt(Object value, int row, int col) {
-        App.get().appCase.getMultiMarcadores().setSelected((Boolean) value,
+        App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
                 App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        MarcadoresController.get().atualizarGUI();
+        BookmarksController.get().updateUI();
     }
 
     @Override
@@ -110,8 +109,8 @@ public class ReferencesTableModel extends AbstractTableModel
             return row + 1;
 
         } else if (col == 1) {
-            return App.get().appCase.getMultiMarcadores()
-                    .isSelected(App.get().appCase.getItemId(results.getLuceneIds()[row]));
+            return App.get().appCase.getMultiBookmarks()
+                    .isChecked(App.get().appCase.getItemId(results.getLuceneIds()[row]));
 
         } else {
             try {
@@ -193,31 +192,37 @@ public class ReferencesTableModel extends AbstractTableModel
         String edonkey = doc.get(HashTask.HASH.EDONKEY.toString());
         String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(a -> a != null)
                 .collect(Collectors.joining(" "));
-        String textQuery = ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") ";
-        textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
-
-        try {
-            IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-            results = task.luceneSearch();
-
-            final int length = results.getLength();
-
-            if (length > 0) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        App.get().referencesDock.setTitleText(length + Messages.getString("ReferencesTab.Title"));
-                    }
-                });
-                refDoc = doc;
-            } else {
-                refDoc = null;
-            }
-
-        } catch (Exception e) {
+        
+        if (hashes.isEmpty()) {
             results = new LuceneSearchResult(0);
             refDoc = null;
-            e.printStackTrace();
+        } else {
+            String textQuery = ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") ";
+            textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
+    
+            try {
+                IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+                results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
+    
+                final int length = results.getLength();
+    
+                if (length > 0) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            App.get().referencesDock.setTitleText(length + Messages.getString("ReferencesTab.Title"));
+                        }
+                    });
+                    refDoc = doc;
+                } else {
+                    refDoc = null;
+                }
+    
+            } catch (Exception e) {
+                results = new LuceneSearchResult(0);
+                refDoc = null;
+                e.printStackTrace();
+            }
         }
 
         fireTableDataChanged();

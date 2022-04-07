@@ -1,5 +1,10 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -7,17 +12,22 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.codec.binary.Hex;
 
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 
 /**
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
 public class Message {
+
+    private static File thumbsfile;
+    private static FileChannel fileChannel;
+    private static AtomicLong fileOffset = new AtomicLong();
 
     private long id;
     private String remoteId;
@@ -33,7 +43,8 @@ public class Message {
     private long mediaSize;
     private String mediaName;
     private String mediaHash;
-    private byte[] thumbData;
+    private long thumbOffset = -1;
+    private int thumbSize = -1;
     private String mediaFile;
     private String mediaCaption;
     private String mediaThumbFile;
@@ -49,6 +60,24 @@ public class Message {
     private Set<String> childPornSets = new HashSet<>();
     private IItemBase mediaItem = null;
     private String mediaQuery = null;
+
+    static {
+        try {
+            thumbsfile = File.createTempFile("whatsapp", ".thumbs");
+            thumbsfile.deleteOnExit();
+            fileChannel = FileChannel.open(thumbsfile.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void closeStaticResources() throws IOException {
+        if (fileChannel.isOpen()) {
+            fileChannel.truncate(0);
+            fileChannel.close();
+        }
+        thumbsfile.delete();
+    }
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
@@ -155,11 +184,31 @@ public class Message {
     }
 
     public byte[] getThumbData() {
-        return thumbData;
+        if (thumbSize == -1) {
+            return null;
+        }
+        try {
+            ByteBuffer bb = ByteBuffer.allocate(thumbSize);
+            fileChannel.read(bb, thumbOffset);
+            return bb.array();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void setThumbData(byte[] rawData) {
-        this.thumbData = rawData;
+        if (rawData == null) {
+            thumbSize = -1;
+            return;
+        }
+        try {
+            thumbSize = rawData.length;
+            thumbOffset = fileOffset.getAndAdd(thumbSize);
+            fileChannel.write(ByteBuffer.wrap(rawData), thumbOffset);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String getMediaName() {

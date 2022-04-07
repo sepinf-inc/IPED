@@ -5,12 +5,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
 import iped3.IItem;
+import iped3.exception.IPEDException;
 import iped3.io.SeekableInputStream;
 import sef.mg.laud.ad1extractor.AD1Extractor;
 import sef.mg.laud.ad1extractor.FileHeader;
@@ -30,7 +30,7 @@ public class AD1DataSourceReader extends DataSourceReader {
     }
 
     @Override
-    public int read(File datasource) throws Exception {
+    public void read(File datasource) throws Exception {
 
         rootItem = addRootItem(datasource);
 
@@ -49,7 +49,6 @@ public class AD1DataSourceReader extends DataSourceReader {
 
         }
 
-        return 0;
     }
 
     private IItem addRootItem(File root) throws InterruptedException {
@@ -72,6 +71,7 @@ public class AD1DataSourceReader extends DataSourceReader {
         rootItem.setLength(root.length());
         rootItem.setSumVolume(false);
         rootItem.setHash(""); //$NON-NLS-1$
+        rootItem.setIdInDataSource("");
 
         caseData.addItem(rootItem);
 
@@ -140,7 +140,7 @@ public class AD1DataSourceReader extends DataSourceReader {
             if (ad1 == null)
                 init();
 
-            FileHeader fh = ad1.lerObjeto(Long.parseLong(identifier), null);
+            FileHeader fh = ad1.readObject(Long.parseLong(identifier), null);
             return ad1.getSeekableInputStream(fh);
         }
 

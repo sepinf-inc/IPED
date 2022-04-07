@@ -17,13 +17,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
+import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
+import dpf.sp.gpinf.indexer.lucene.analysis.AppAnalyzer;
 import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
-import iped3.search.LuceneSearchResult;
+import iped3.exception.IPEDException;
 
 public class IPEDMultiSource extends IPEDSource {
 
@@ -137,26 +136,30 @@ public class IPEDMultiSource extends IPEDSource {
         for (IIPEDSource iCase : cases)
             baseDocCache.add(getBaseLuceneId(iCase));
 
-        for (IPEDSource iCase : cases)
-            for (String category : iCase.categories)
-                if (!categories.contains(category))
-                    categories.add(category);
+        loadCategories();
 
         for (IPEDSource iCase : cases)
             for (String keyword : iCase.keywords)
                 if (!keywords.contains(keyword))
                     keywords.add(keyword);
 
-        // marcadores = new Marcadores(this, this.getCaseDir());
-        this.globalMarcadores = new MultiMarcadores(cases);
+        // marcadores = new Bookmarks(this, this.getCaseDir());
+        this.multiBookmarks = new MultiBookmarks(cases);
 
         analyzer = AppAnalyzer.get();
 
-        for (IPEDSource iCase : cases)
-            if (iCase.isFTKReport)
-                isFTKReport = true;
-
         LOGGER.info("Loaded " + cases.size() + " cases."); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    private void loadCategories() {
+        for (IPEDSource iCase : cases) {
+            for (String category : iCase.leafCategories) {
+                if (!leafCategories.contains(category)) {
+                    leafCategories.add(category);
+                }
+            }
+        }
+        loadCategoryTree();
     }
 
     private void openIndex() throws IOException {

@@ -22,7 +22,7 @@ import com.eatthepath.jvptree.DistanceFunction;
 import com.eatthepath.jvptree.VPTree;
 
 import br.dpf.sepinf.photodna.api.PhotoDNATransforms;
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.PhotoDNALookupConfig;
@@ -31,13 +31,13 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.hashdb.HashDBDataSource;
 import gpinf.hashdb.PhotoDnaItem;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class PhotoDNALookup extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(PhotoDNALookup.class);
 
-    private static final String cachePath = System.getProperty("user.home") + "/.indexador/photodnalookup.cache";
+    private static final String cachePath = System.getProperty("user.home") + "/.iped/photodnalookup.cache";
 
     public static final String PHOTO_DNA_HIT_PREFIX = "photoDnaDb:";
 

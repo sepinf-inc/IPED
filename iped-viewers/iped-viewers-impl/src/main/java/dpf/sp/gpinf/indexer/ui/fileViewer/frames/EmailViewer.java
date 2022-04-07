@@ -56,11 +56,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.RFC822Parser;
+import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.io.IStreamSource;
 
 public class EmailViewer extends HtmlViewer {
@@ -112,7 +113,7 @@ public class EmailViewer extends HtmlViewer {
 
         TikaInputStream tagged = null;
         try {
-            InputStream stream = content.getStream();
+            InputStream stream = content.getSeekableInputStream();
             if (content instanceof IItemBase
                     && RFC822Parser.RFC822_MAC_MIME.equals(((IItemBase) content).getMediaType())) {
                 mch.isOutlookMacMail = true;
@@ -131,11 +132,23 @@ public class EmailViewer extends HtmlViewer {
 
     }
 
+    public static File getFileRenamedToExt(File file, String ext) {
+        if (!ext.isEmpty() && !file.getName().endsWith("." + ext)) {
+            File renamedFile = new File(file.getAbsolutePath() + "." + ext);
+            if (renamedFile.exists() || file.renameTo(renamedFile)) {
+                return renamedFile;
+            }
+        }
+        return file;
+    }
+
     public class AttachmentOpen extends FileHandler {
 
         public void open(int attNum) {
             AttachInfo info = mch.attachments.values().toArray(new AttachInfo[0])[attNum];
-            if (IOUtil.isToOpenExternally(info.name, IOUtil.getExtension(info.tmpFile))) {
+            String ext = Util.getTrueExtension(info.tmpFile);
+            info.tmpFile = getFileRenamedToExt(info.tmpFile, ext);
+            if (IOUtil.isToOpenExternally(info.name, ext)) {
                 this.openFile(info.tmpFile);
             }
         }
@@ -320,6 +333,7 @@ public class EmailViewer extends HtmlViewer {
             String fileExt = ""; //$NON-NLS-1$
             if (attachName != null && attachName.lastIndexOf(".") > -1) { //$NON-NLS-1$
                 fileExt = attachName.substring(attachName.lastIndexOf(".")); //$NON-NLS-1$
+                fileExt = IOUtil.getValidFilename(fileExt);
             }
 
             attach = File.createTempFile("attach", fileExt); //$NON-NLS-1$
@@ -338,7 +352,7 @@ public class EmailViewer extends HtmlViewer {
                     outStream.write(text.getBytes(charset));
                 }
             } else {
-                IOUtil.copiaArquivo(is, outStream);
+                IOUtil.copyInputToOutputStream(is, outStream);
             }
 
             outStream.close();
@@ -407,8 +421,9 @@ public class EmailViewer extends HtmlViewer {
                     bodyFile.delete();
                 }
 
-                inlined.stream().forEach(a -> attachments.remove(a));
-                for (AttachInfo attach : attachments.values()) {
+                Map<String, AttachInfo> notInlined = new LinkedHashMap<>(attachments);
+                inlined.stream().forEach(a -> notInlined.remove(a));
+                for (AttachInfo attach : notInlined.values()) {
                     if (attach.mime.startsWith("image")) { //$NON-NLS-1$
                         writer.write("<hr>"); //$NON-NLS-1$
                         if (attach.name != null) {

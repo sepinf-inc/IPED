@@ -73,7 +73,7 @@ public class XMLParser extends DcXMLParser {
                     rawParser.parse(is, handler, metadata, context);
                 }
             } else {
-                try (InputStream is = streamSource.getStream()) {
+                try (InputStream is = streamSource.getSeekableInputStream()) {
                     rawParser.parse(is, handler, metadata, context);
                 }
             }

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.Policy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,13 +17,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ag.ion.bion.officelayer.application.IOfficeApplication;
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.ui.UiScale;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
+import dpf.sp.gpinf.indexer.util.DefaultPolicy;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
@@ -43,6 +46,9 @@ public class AppMain {
     File libDir;
 
     public static void main(String[] args) {
+        // Set the UiScale (must be before any UI-related code).
+        UiScale.loadUserSetting();
+
         checkJavaVersion();
         AppMain appMain = new AppMain();
         try {
@@ -85,14 +91,14 @@ public class AppMain {
     private void detectCasePath() throws URISyntaxException {
         if (testPath != null) {
             casePath = testPath;
-            libDir = new File(casePath + "/indexador/lib");
+            libDir = new File(casePath + "/iped/lib");
             return;
         }
 
         libDir = detectLibDir();
         casePath = libDir.getParentFile().getParentFile();
 
-        if (!new File(casePath, "indexador").exists()) //$NON-NLS-1$
+        if (!new File(casePath, "iped").exists()) //$NON-NLS-1$
             casePath = null;
     }
 
@@ -153,7 +159,7 @@ public class AppMain {
                 logParent = casesPathFile.getParentFile();
 
             File logFile = new File(logParent, appLogFileName).getCanonicalFile();
-            if ((logFile.exists() && !logFile.canWrite()) || !IOUtil.canCreateFile(logFile.getParentFile())) {
+            if ((logFile.exists() && !IOUtil.canWrite(logFile)) || !IOUtil.canCreateFile(logFile.getParentFile())) {
                 logFile = new File(System.getProperty("java.io.tmpdir"), appLogFileName);
             }
             LogConfiguration logConfiguration = null;
@@ -167,12 +173,17 @@ public class AppMain {
 
                 Logger LOGGER = LoggerFactory.getLogger(AppMain.class);
                 if (!fromCustomLoader)
-                    LOGGER.info(Versao.APP_NAME);
+                    LOGGER.info(Version.APP_NAME);
             }
 
             Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath());
 
             if (!finalLoader && processingManager == null) {
+
+                // blocks internet access from viewers
+                Policy.setPolicy(new DefaultPolicy());
+                System.setSecurityManager(new SecurityManager());
+
                 List<File> jars = new ArrayList<File>();
                 PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
                 jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
@@ -189,10 +200,10 @@ public class AppMain {
                 CustomLoader.run(customArgs, jars);
 
             } else {
-                App.get().getSearchParams().codePath = libDir.getAbsolutePath();
-                App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
+                App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager,
+                        libDir.getAbsolutePath());
 
-                InicializarBusca init = new InicializarBusca(processingManager);
+                UICaseDataLoader init = new UICaseDataLoader(processingManager);
                 init.execute();
             }
 

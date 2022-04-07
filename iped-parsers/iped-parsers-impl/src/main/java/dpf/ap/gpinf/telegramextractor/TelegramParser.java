@@ -57,7 +57,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -156,8 +156,9 @@ public class TelegramParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
                     cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, TELEGRAM);
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getUsername());
+                    cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                     if (c.getAvatar() != null) {
-                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                        cMetadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
                     ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(contactStream, handler, cMetadata, false);
@@ -202,6 +203,7 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
             chatMetadata.set(ExtraProperties.CHAT_RECOVERED, Boolean.toString(c.isDeleted()));
+            chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
             if (c.isGroup()) {
                 ChatGroup cg = (ChatGroup) c;
@@ -253,8 +255,9 @@ public class TelegramParser extends SQLite3DBParser {
             meta.set(ExtraProperties.USER_ACCOUNT_TYPE, TELEGRAM);
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
+            meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
             if (m.getLatitude() != null && m.getLongitude() != null) {
-                meta.add(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
+                meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
             }
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getFrom().toString());
             if (m.getChat().isGroup()) {
@@ -337,8 +340,9 @@ public class TelegramParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
                     cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, TELEGRAM);
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getUsername());
+                    cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                     if (c.getAvatar() != null) {
-                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                        cMetadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
                     ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(contactStream, handler, cMetadata, false);
@@ -364,7 +368,7 @@ public class TelegramParser extends SQLite3DBParser {
         List<IItemBase> result = searcher.search(query);
         IItemBase item = getBestItem(result, dbPath);
         if (item != null) {
-            try (InputStream is = item.getBufferedStream()) {
+            try (InputStream is = item.getBufferedInputStream()) {
                 Contact account = decodeAndroidAccount(is);
                 if (account != null)
                     return account;
@@ -438,12 +442,13 @@ public class TelegramParser extends SQLite3DBParser {
         meta.set(ExtraProperties.USER_PHONE, user.getPhone());
         meta.set(ExtraProperties.USER_ACCOUNT, user.getUsername());
         meta.set(ExtraProperties.USER_ACCOUNT_TYPE, TELEGRAM);
+        meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         Extractor ex = new Extractor();
         IItemSearcher searcher = context.get(IItemSearcher.class);
         ex.setSearcher(searcher);
         ex.searchAvatarFileName(user, user.getPhotos());
         if (user.getAvatar() != null) {
-            meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(user.getAvatar()));
+            meta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(user.getAvatar()));
         }
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,

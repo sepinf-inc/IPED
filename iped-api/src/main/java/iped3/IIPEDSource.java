@@ -19,8 +19,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 import iped3.exception.IPEDException;
-import iped3.search.IMarcadores;
-import iped3.search.IMultiMarcadores;
+import iped3.search.IBookmarks;
+import iped3.search.IMultiBookmarks;
 
 /**
  *
@@ -29,7 +29,7 @@ import iped3.search.IMultiMarcadores;
 public interface IIPEDSource extends Closeable {
 
     String INDEX_DIR = "index"; //$NON-NLS-1$
-    String MODULE_DIR = "indexador"; //$NON-NLS-1$
+    String MODULE_DIR = "iped"; //$NON-NLS-1$
     String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
 
     void checkImagePaths() throws IPEDException, TskCoreException;
@@ -45,7 +45,7 @@ public interface IIPEDSource extends Closeable {
 
     File getCaseDir();
 
-    List<String> getCategories();
+    List<String> getLeafCategories();
 
     Set<String> getExtraAttributes();
 
@@ -67,11 +67,11 @@ public interface IIPEDSource extends Closeable {
 
     int getLuceneId(int id);
 
-    IMarcadores getMarcadores();
+    IBookmarks getBookmarks();
 
     File getModuleDir();
 
-    IMultiMarcadores getMultiMarcadores();
+    IMultiBookmarks getMultiBookmarks();
 
     IndexReader getReader();
 
@@ -86,8 +86,6 @@ public interface IIPEDSource extends Closeable {
     int getTotalItens();
 
     Set<String> getEvidenceUUIDs();
-
-    boolean isFTKReport();
 
     void populateLuceneIdToIdMap() throws IOException;
 

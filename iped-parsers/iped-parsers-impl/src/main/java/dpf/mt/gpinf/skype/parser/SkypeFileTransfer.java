@@ -3,7 +3,7 @@ package dpf.mt.gpinf.skype.parser;
 import java.util.Date;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 
 /**
  * Representa uma troca de arquivos pelo Skype registrada no main.db

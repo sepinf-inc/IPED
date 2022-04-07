@@ -27,57 +27,57 @@ public class FileHeader {
     public FileHeader parent;
 
     public long object_address = 0L;
-    public long endereco_prox_objeto = 0L;
-    public long endereco_filho_objeto = 0L;
-    public long objeto_PC_fim_parcial = 0L;
-    public long objeto_PC_ini_parcial = 0L;
-    private long objetoTamanhoBytes = 0L;
-    public int objeto_tipo = 0;
-    public long nome_objeto_tam = 0L;
-    public String objeto_nome = "";
-    public long objeto_pedacos_tam = 0L;
-    public String caminho = "";
-    public List<Pedaco> pedacosList = null;
-    public Map<Integer, Propriedade> propriedadesMap = new HashMap<>();
+    public long nextObjAddress = 0L;
+    public long childAddress = 0L;
+    public long object_PC_partial_end = 0L;
+    public long object_PC_partial_start = 0L;
+    private long objectSizeBytes = 0L;
+    public int objectType = 0;
+    public long objectNameSize = 0L;
+    public String objectName = "";
+    public long objectChunkSize = 0L;
+    public String path = "";
+    public List<Chunk> chunkList = null;
+    public Map<Integer, Property> propertiesMap = new HashMap<>();
 
     private SimpleDateFormat simpleDateFormat = null;
 
-    public void setObjetoTamanhoBytes(long tam) {
-        this.objetoTamanhoBytes = tam;
+    public void setObjectSizeBytes(long bytes) {
+        this.objectSizeBytes = bytes;
     }
 
     public long getFileSize() {
-        return objetoTamanhoBytes;
+        return objectSizeBytes;
     }
 
     public FileHeader(AD1Extractor extractor, FileHeader parent) {
         this.extractor = extractor;
         this.parent = parent;
-        pedacosList = new ArrayList<>();
+        chunkList = new ArrayList<>();
         simpleDateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     public FileHeader getNextHeader() throws IOException {
-        if (endereco_prox_objeto == 0)
+        if (nextObjAddress == 0)
             return null;
 
-        return extractor.lerObjeto(endereco_prox_objeto, parent);
+        return extractor.readObject(nextObjAddress, parent);
     }
 
     public FileHeader getChildHeader() throws IOException {
-        if (endereco_filho_objeto == 0)
+        if (childAddress == 0)
             return null;
 
-        return extractor.lerObjeto(endereco_filho_objeto, this);
+        return extractor.readObject(childAddress, this);
     }
 
     public Date getATime() {
 
-        Propriedade prop = propriedadesMap.get(ACCESSED_DATE_CODE);
+        Property prop = propertiesMap.get(ACCESSED_DATE_CODE);
         if (prop != null) {
             try {
-                return simpleDateFormat.parse(prop.getValor());
+                return simpleDateFormat.parse(prop.getValue());
 
             } catch (ParseException e) {
                 System.out.println("Error reading ATime from " + getFilePath() + " " + e.toString());
@@ -89,10 +89,10 @@ public class FileHeader {
 
     public Date getCTime() {
 
-        Propriedade prop = propriedadesMap.get(CREATED_DATE_CODE);
+        Property prop = propertiesMap.get(CREATED_DATE_CODE);
         if (prop != null) {
             try {
-                return simpleDateFormat.parse(prop.getValor());
+                return simpleDateFormat.parse(prop.getValue());
 
             } catch (ParseException e) {
                 System.out.println("Error reading CTime from " + getFilePath() + " " + e.toString());
@@ -104,10 +104,10 @@ public class FileHeader {
 
     public Date getMTime() {
 
-        Propriedade prop = propriedadesMap.get(MODIFIED_DATE_CODE);
+        Property prop = propertiesMap.get(MODIFIED_DATE_CODE);
         if (prop != null) {
             try {
-                return simpleDateFormat.parse(prop.getValor());
+                return simpleDateFormat.parse(prop.getValue());
 
             } catch (ParseException e) {
                 System.out.println("Error reading MTime from " + getFilePath() + " " + e.toString());
@@ -119,10 +119,10 @@ public class FileHeader {
 
     public Date getRTime() {
 
-        Propriedade prop = propriedadesMap.get(RECORD_DATE_CODE);
+        Property prop = propertiesMap.get(RECORD_DATE_CODE);
         if (prop != null) {
             try {
-                return simpleDateFormat.parse(prop.getValor());
+                return simpleDateFormat.parse(prop.getValue());
 
             } catch (ParseException e) {
                 System.out.println("Error reading RTime from " + getFilePath() + " " + e.toString());
@@ -133,23 +133,23 @@ public class FileHeader {
     }
 
     public boolean hasChildren() {
-        return endereco_filho_objeto != 0;
+        return childAddress != 0;
     }
 
     public boolean isDirectory() {
-        return (objeto_tipo & 0x04) == 4;
+        return (objectType & 0x04) == 4;
     }
 
     public boolean isDeleted() {
-        return (objeto_tipo & 0x02) == 2;
+        return (objectType & 0x02) == 2;
     }
 
     public String getFilePath() {
-        return caminho;
+        return path;
     }
 
     public String getFileName() {
-        return objeto_nome;
+        return objectName;
     }
 
     public boolean isEncrypted() {
@@ -158,9 +158,9 @@ public class FileHeader {
 
     }
 
-    public void adicionaPedaco(long ini, long fim) {
+    public void addChunk(long ini, long fim) {
 
-        pedacosList.add(new Pedaco(ini, fim));
+        chunkList.add(new Chunk(ini, fim));
 
     }
 

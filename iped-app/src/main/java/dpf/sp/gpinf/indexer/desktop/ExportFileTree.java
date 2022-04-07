@@ -45,6 +45,7 @@ import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
@@ -52,7 +53,7 @@ import iped3.IItem;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 import iped3.search.IIPEDSearcher;
-import iped3.search.LuceneSearchResult;
+import iped3.search.IMultiSearchResult;
 
 public class ExportFileTree extends CancelableWorker {
 
@@ -92,9 +93,7 @@ public class ExportFileTree extends CancelableWorker {
             if (baseDocId != root.docId) {
                 Document doc = App.get().appCase.getReader().document(baseDocId);
 
-                String id = doc.get(IndexItem.FTKID);
-                if (id == null)
-                    id = doc.get(IndexItem.ID);
+                String id = doc.get(IndexItem.ID);
 
                 textQuery = IndexItem.PARENTIDs + ":" + id + " " + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
@@ -109,13 +108,11 @@ public class ExportFileTree extends CancelableWorker {
                 textQuery = "(" + textQuery + ") AND NOT (" + activeStr + ")";
 
             IIPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-            LuceneSearchResult result = task.luceneSearch();
-
+            IMultiSearchResult msr = task.multiSearch();
             if (onlyChecked) {
-                MultiSearchResult ir = MultiSearchResult.get(App.get().appCase, result);
-                ir = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filtrarSelecionados(ir);
-                result = MultiSearchResult.get(ir, App.get().appCase);
+                msr = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterChecked(msr);
             }
+            LuceneSearchResult result = MultiSearchResult.get(msr, App.get().appCase);
 
             return result.getLuceneIds();
 
@@ -208,7 +205,7 @@ public class ExportFileTree extends CancelableWorker {
             } else {
                 LOGGER.info("Exporting file " + item.getPath()); //$NON-NLS-1$
 
-                try (InputStream in = item.getBufferedStream()) {
+                try (InputStream in = item.getBufferedInputStream()) {
                     dst = getNonExistingFile(dst);
                     Files.copy(in, dst.toPath());
                 }
@@ -268,7 +265,7 @@ public class ExportFileTree extends CancelableWorker {
 
             if (!item.isDir() && !isParent) {
                 LOGGER.info("Exporting file " + item.getPath()); //$NON-NLS-1$
-                try (InputStream in = item.getBufferedStream()) {
+                try (InputStream in = item.getBufferedInputStream()) {
                     int len = 0;
                     while ((len = in.read(buf)) != -1 && !this.isCancelled())
                         try {
@@ -377,7 +374,7 @@ public class ExportFileTree extends CancelableWorker {
         file.renameTo(newFile);
     }
 
-    public static void salvarArquivo(int baseDocId, boolean onlyChecked, boolean toZip) {
+    public static void saveFile(int baseDocId, boolean onlyChecked, boolean toZip) {
         try {
             // JFileChooser fileChooser = new JFileChooser();
             // [Triage] Patch para o caso de o arquivo selecionado já existir. Na versão

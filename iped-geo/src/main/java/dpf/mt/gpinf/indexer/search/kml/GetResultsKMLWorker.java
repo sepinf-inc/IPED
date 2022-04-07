@@ -5,7 +5,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
+import java.util.function.Consumer;
+
+import javax.swing.JProgressBar;
 
 import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Metadata;
@@ -21,29 +25,37 @@ import iped3.search.IMultiSearchResultProvider;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
-public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, Integer> {
+public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResult, Integer> {
     IMultiSearchResultProvider app;
     String[] colunas;
-    ProgressDialog progress;
+    JProgressBar progress;
     int contSemCoordenadas = 0, itemsWithGPS = 0;
-    KMLResult kmlResult;
+    Consumer<KMLResult> consumer;
 
-    GetResultsKMLWorker(IMultiSearchResultProvider app, KMLResult kmlResult, String[] colunas,
-            ProgressDialog progress) {
+    public GetResultsKMLWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress,
+            Consumer<KMLResult> consumer) {
         this.app = app;
         this.colunas = colunas;
         this.progress = progress;
-        this.kmlResult = kmlResult;
+        this.consumer = consumer;
     }
 
     @Override
     public void done() {
-        if (progress != null)
-            progress.close();
+        if (consumer != null) {
+            KMLResult kmlResult;
+            try {
+                kmlResult = this.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+                kmlResult = new KMLResult();
+            }
+            consumer.accept(kmlResult);
+        }
     }
 
     @Override
-    protected String doInBackground() throws Exception {
+    protected KMLResult doInBackground() throws Exception {
 
         StringBuilder tourPlayList = new StringBuilder(""); //$NON-NLS-1$
         StringBuilder kml = new StringBuilder(""); //$NON-NLS-1$
@@ -79,67 +91,54 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
         df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
 
         if (progress != null) {
-            progress.setNote(Messages.getString("KMLResult.LoadingGPSData") + "..."); //$NON-NLS-1$ //$NON-NLS-2$
             progress.setMaximum(results.getLength());
         }
 
-        String imagePrefix = ExtraProperties.IMAGE_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
-        String videoPrefix = ExtraProperties.VIDEO_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
-        String ufedPrefix = ExtraProperties.UFED_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
-        String latKey = Metadata.LATITUDE.getName().replace(":", "\\:");
-        String longKey = Metadata.LONGITUDE.getName().replace(":", "\\:");
-        String range1 = ":[-90 TO 90]";
-        String range2 = ":[-180 TO 180]";
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("(" + latKey + range1 + " && " + longKey + range2 + ") ");
-        sb.append("(" + imagePrefix + latKey + range1 + " && " + imagePrefix + longKey + range2 + ") ");
-        sb.append("(" + videoPrefix + latKey + range1 + " && " + videoPrefix + longKey + range2 + ") ");
-        sb.append("(" + ufedPrefix + "Latitude" + range1 + " && " + ufedPrefix + "Longitude" + range2 + ") ");
-        sb.append("(" + ExtraProperties.LOCATIONS + ":*)");
+        String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
 
         /* nova query com apenas os itens que possuem georreferenciamento */
-        IIPEDSearcher searcher = app.createNewSearch(sb.toString());
+        IIPEDSearcher searcher = app.createNewSearch(query);
         IMultiSearchResult multiResult = searcher.multiSearch();
 
-        kmlResult.gpsItems = new HashMap<>();
+        Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
         for (IItemId item : multiResult.getIterator())
-            kmlResult.gpsItems.put(item, null);
+            gpsItems.put(item, null);
 
         for (int row = 0; row < results.getLength(); row++) {
 
             if (progress != null) {
-                progress.setProgress(row + 1);
-                if (progress.isCanceled())
-                    break;
+                progress.setValue(row + 1);
             }
 
             IItemId item = results.getItem(app.getResultsTable().convertRowIndexToModel(row));
 
-            if (!kmlResult.gpsItems.containsKey(item))
+            if (!gpsItems.containsKey(item))
                 continue;
 
             int luceneId = app.getIPEDSource().getLuceneId(item);
             doc = app.getIPEDSource().getSearcher().doc(luceneId);
 
-            String lat = resolveLatitude(doc);
-            String longit = resolveLongitude(doc);
+            String lat;
+            String longit;
             String alt = resolveAltitude(doc);
 
             String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
 
-            if (lat != null && longit != null) {
+            if (locations != null && locations.length == 1) {
+                String[] locs = locations[0].split(";"); //$NON-NLS-1$
+                lat = locs[0].trim();
+                longit = locs[1].trim();
                 generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, -1);
-                kmlResult.gpsItems.put(item, null);
+                gpsItems.put(item, null);
 
-            } else if (locations != null) {
+            } else if (locations != null && locations.length > 1) {
                 int subitem = -1;
                 List<Integer> subitems = new ArrayList<>();
-                kmlResult.gpsItems.put(item, subitems);
+                gpsItems.put(item, subitems);
                 for (String location : locations) {
                     String[] locs = location.split(";"); //$NON-NLS-1$
-                    lat = locs[0];
-                    longit = locs[1];
+                    lat = locs[0].trim();
+                    longit = locs[1].trim();
                     generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, ++subitem);
                     subitems.add(subitem);
                 }
@@ -164,7 +163,9 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
         kml.append("</Document>"); //$NON-NLS-1$
         kml.append("</kml>"); //$NON-NLS-1$
 
-        return kml.toString();
+        KMLResult kmlResult = new KMLResult();
+        kmlResult.setResultKML(kml.toString(), itemsWithGPS, gpsItems);
+        return kmlResult;
 
     }
 
@@ -180,7 +181,7 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
             org.apache.lucene.document.Document doc, SimpleDateFormat df, int row, IItemId item, String lat,
             String longit, String alt, int subitem) {
         if (progress != null)
-            progress.setNote(Messages.getString("KMLResult.LoadingGPSData") + ": " + (++itemsWithGPS)); //$NON-NLS-1$ //$NON-NLS-2$
+            progress.setString(Messages.getString("KMLResult.LoadingGPSData") + ": " + (++itemsWithGPS)); //$NON-NLS-1$ //$NON-NLS-2$
 
         // necessário para múltiplos casos carregados, pois ids se repetem
         String gid;
@@ -234,7 +235,7 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
                 kml.append("<Data name=\"" + BasicProps.ID + "\"><value>" + gid + "</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
 
-        boolean checked = app.getIPEDSource().getMultiMarcadores().isSelected(item);
+        boolean checked = app.getIPEDSource().getMultiBookmarks().isChecked(item);
         kml.append("<Data name=\"checked\"><value>" + checked + "</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         boolean selected = app.getResultsTable().isRowSelected(row);
@@ -260,37 +261,8 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
         return SimpleHTMLEncoder.htmlEncode(html);
     }
 
-    static public String resolveLatitude(Document doc) {
-        String lat = doc.get(Metadata.LATITUDE.getName());
-        if (lat == null)
-            lat = doc.get(ExtraProperties.IMAGE_META_PREFIX + Metadata.LATITUDE.getName());
-        if (lat == null)
-            lat = doc.get(ExtraProperties.VIDEO_META_PREFIX + Metadata.LATITUDE.getName());
-        if (lat == null)
-            lat = doc.get(ExtraProperties.UFED_META_PREFIX + "Latitude"); //$NON-NLS-1$
-        return lat;
-
-    }
-
-    static public String resolveLongitude(Document doc) {
-        String longit = doc.get(Metadata.LONGITUDE.getName());
-        if (longit == null)
-            longit = doc.get(ExtraProperties.IMAGE_META_PREFIX + Metadata.LONGITUDE.getName());
-        if (longit == null)
-            longit = doc.get(ExtraProperties.VIDEO_META_PREFIX + Metadata.LONGITUDE.getName());
-        if (longit == null)
-            longit = doc.get(ExtraProperties.UFED_META_PREFIX + "Longitude"); //$NON-NLS-1$
-        return longit;
-    }
-
     static public String resolveAltitude(Document doc) {
-        String alt = doc.get(Metadata.ALTITUDE.getName());
-        if (alt == null)
-            alt = doc.get(ExtraProperties.IMAGE_META_PREFIX + Metadata.ALTITUDE.getName());
-        if (alt == null)
-            alt = doc.get(ExtraProperties.VIDEO_META_PREFIX + Metadata.ALTITUDE.getName());
-        if (alt == null)
-            alt = doc.get(ExtraProperties.UFED_META_PREFIX + "Altitude"); //$NON-NLS-1$
+        String alt = doc.get(ExtraProperties.COMMON_META_PREFIX + Metadata.ALTITUDE.getName());
         return alt;
     }
 

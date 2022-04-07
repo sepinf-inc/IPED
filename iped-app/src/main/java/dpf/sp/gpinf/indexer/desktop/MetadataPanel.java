@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -45,8 +44,10 @@ import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.queryparser.complexPhrase.ComplexPhraseQueryParser;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
@@ -54,12 +55,15 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
-import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
+import dpf.sp.gpinf.indexer.search.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.ui.controls.HoverButton;
 import dpf.sp.gpinf.indexer.util.IconUtil;
@@ -179,26 +183,19 @@ public class MetadataPanel extends JPanel
         list.setFixedCellWidth(2000);
         list.addListSelectionListener(this);
 
-        JPanel l1 = new JPanel(new BorderLayout());
-        JLabel label = new JLabel(Messages.getString("MetadataPanel.Group")); //$NON-NLS-1$
-        label.setPreferredSize(new Dimension(80, 20));
-        l1.add(label, BorderLayout.WEST);
-        l1.add(groups, BorderLayout.CENTER);
+        JPanel left = new JPanel(new GridLayout(3, 1, 1, 1));
+        left.add(new JLabel(Messages.getString("MetadataPanel.Group"))); //$NON-NLS-1$
+        left.add(new JLabel(Messages.getString("MetadataPanel.Property"))); //$NON-NLS-1$
+        left.add(new JLabel(Messages.getString("MetadataPanel.Filter"))); //$NON-NLS-1$
 
-        JPanel l2 = new JPanel(new BorderLayout());
-        label = new JLabel(Messages.getString("MetadataPanel.Property")); //$NON-NLS-1$
-        label.setPreferredSize(new Dimension(80, 20));
-        l2.add(label, BorderLayout.WEST);
-        l2.add(props, BorderLayout.CENTER);
-
-        JPanel l3 = new JPanel(new BorderLayout());
-        label = new JLabel(Messages.getString("MetadataPanel.Filter"));
-        label.setPreferredSize(new Dimension(80, 20));
-        l3.add(label, BorderLayout.WEST);
-        JPanel l3c = new JPanel(new GridLayout(1,2,0,4));
+        JPanel l3c = new JPanel(new GridLayout(1, 2, 0, 4));
         l3c.add(propsFilter);
         l3c.add(listFilter);
-        l3.add(l3c, BorderLayout.CENTER);
+
+        JPanel center = new JPanel(new GridLayout(3, 1, 1, 1));
+        center.add(groups);
+        center.add(props);
+        center.add(l3c);
         
         propsFilter.getDocument().addDocumentListener(new DocumentListener() {
             public void removeUpdate(DocumentEvent e) {
@@ -229,12 +226,10 @@ public class MetadataPanel extends JPanel
 
         listFilter.addActionListener(this);
 
-        JPanel top = new JPanel();
-        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
-        top.add(l1);
-        top.add(l2);
-        top.add(l3);
-        top.add(l4);
+        JPanel top = new JPanel(new BorderLayout(1, 1));
+        top.add(center, BorderLayout.CENTER);
+        top.add(left, BorderLayout.WEST);
+        top.add(l4, BorderLayout.SOUTH);
 
         this.add(top, BorderLayout.NORTH);
         this.add(scrollList, BorderLayout.CENTER);
@@ -243,7 +238,7 @@ public class MetadataPanel extends JPanel
     abstract class LookupOrd {
         boolean isCategory = false;
 
-        abstract String lookupOrd(int ord);
+        abstract String lookupOrd(int ord) throws IOException;
     }
 
     class LookupOrdSDV extends LookupOrd {
@@ -255,7 +250,7 @@ public class MetadataPanel extends JPanel
         }
 
         @Override
-        public String lookupOrd(int ord) {
+        public String lookupOrd(int ord) throws IOException {
             BytesRef ref;
             synchronized (sdv) {
                 ref = sdv.lookupOrd(ord);
@@ -273,7 +268,7 @@ public class MetadataPanel extends JPanel
         }
 
         @Override
-        public String lookupOrd(int ord) {
+        public String lookupOrd(int ord) throws IOException {
             BytesRef ref;
             synchronized (ssdv) {
                 ref = ssdv.lookupOrd(ord);
@@ -327,6 +322,17 @@ public class MetadataPanel extends JPanel
         public String toString() {
             NumberFormat nf = LocalizedFormat.getNumberInstance();
             StringBuilder sb = new StringBuilder();
+            sb.append(getVal());
+            sb.append(" ("); //$NON-NLS-1$
+            sb.append(nf.format(count));
+            sb.append(')');            
+            return sb.toString();
+        }
+        
+        @Override
+        public String getVal() {
+            StringBuilder sb = new StringBuilder();
+            NumberFormat nf = LocalizedFormat.getNumberInstance();
             sb.append(nf.format(start));
             if (start != end && (!Double.isNaN(start) || !Double.isNaN(end))) {
                 sb.append(' ');
@@ -334,9 +340,6 @@ public class MetadataPanel extends JPanel
                 sb.append(' ');
                 sb.append(nf.format(end));
             }
-            sb.append(" ("); //$NON-NLS-1$
-            sb.append(nf.format(count));
-            sb.append(')');            
             return sb.toString();
         }
     }
@@ -360,6 +363,12 @@ public class MetadataPanel extends JPanel
             return sb.toString();
         }
 
+        @Override
+        public String getVal() {
+            NumberFormat nf = LocalizedFormat.getNumberInstance();
+            return nf.format(value);
+        }
+        
         public int compareTo(SingleValueCount o) {
             return Double.compare(value, o.value);
         }
@@ -404,7 +413,9 @@ public class MetadataPanel extends JPanel
             fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
             Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
             for (String f : fields) {
-                if (f.equals(ResultTableModel.BOOKMARK_COL) || f.equals(ResultTableModel.SCORE_COL))
+                if (f.equals(ResultTableModel.BOOKMARK_COL) || f.equals(ResultTableModel.SCORE_COL)
+                        || f.startsWith(ImageSimilarityTask.SIMILARITY_FEATURES)
+                        || f.startsWith(SimilarFacesSearch.FACE_FEATURES))
                     continue;
                 if (filterStr.isEmpty() || f.toLowerCase().contains(filterStr))
                     props.addItem(f);
@@ -493,17 +504,10 @@ public class MetadataPanel extends JPanel
     private void loadDocValues(String field) throws IOException {
         // System.out.println("getDocValues");
         numValues = reader.getNumericDocValues(field);
-        if (numValues == null)
-            numValues = reader.getNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
         numValuesSet = reader.getSortedNumericDocValues(field);
-        if (numValuesSet == null)
-            numValuesSet = reader.getSortedNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
         docValues = reader.getSortedDocValues(field);
-        if (docValues == null)
-            docValues = reader.getSortedDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field); // $NON-NLS-1$
-        docValuesSet = reader.getSortedSetDocValues(field);
-        if (docValuesSet == null)
-            docValuesSet = reader.getSortedSetDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field); // $NON-NLS-1$
+        String prefix = ExtraProperties.LOCATIONS.equals(field) ? IndexItem.GEO_SSDV_PREFIX : "";
+        docValuesSet = reader.getSortedSetDocValues(prefix + field);
         if (BasicProps.TIME_EVENT.equals(field)) {
             eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
         }
@@ -511,7 +515,7 @@ public class MetadataPanel extends JPanel
         eventSetToOrdsCache.clear();
     }
 
-    private long[] getEventOrdsFromEventSet(SortedSetDocValues eventDocValues, String eventSet) {
+    private long[] getEventOrdsFromEventSet(SortedSetDocValues eventDocValues, String eventSet) throws IOException {
         long[] ords = eventSetToOrdsCache.get(eventSet);
         if (ords != null) {
             return ords;
@@ -526,27 +530,26 @@ public class MetadataPanel extends JPanel
         return ords;
     }
 
-    private MultiSearchResult getIdsWithOrd(MultiSearchResult result, String field, Set<Integer> ordsToGet) {
+    private MultiSearchResult getIdsWithOrd(MultiSearchResult result, String field, Set<Integer> ordsToGet)
+            throws IOException {
 
         boolean isNumeric = IndexItem.isNumeric(field);
         boolean isFloat = IndexItem.isFloat(field);
         boolean isDouble = IndexItem.isDouble(field);
         boolean isTimeEvent = BasicProps.TIME_EVENT.equals(field);
 
+        // must reset docValues to call advance again
+        loadDocValues(field);
+
         ArrayList<IItemId> items = new ArrayList<>();
         ArrayList<Float> scores = new ArrayList<>();
         int k = 0;
         if (isNumeric && numValues != null && !noRanges) {
-            Bits docsWithField = null;
-            try {
-                docsWithField = reader.getDocsWithField(field);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
-                if (docsWithField != null && docsWithField.get(doc)) {
-                    double val = numValues.get(doc);
+                boolean adv = numValues.advanceExact(doc);
+                if (adv) {
+                    double val = numValues.longValue();
                     if (isFloat)
                         val = NumericUtils.sortableIntToFloat((int) val);
                     else if (isDouble)
@@ -586,9 +589,9 @@ public class MetadataPanel extends JPanel
         } else if (isNumeric && numValuesSet != null && !noRanges) {
             for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
-                numValuesSet.setDocument(doc);
-                for (int i = 0; i < numValuesSet.count(); i++) {
-                    double val = numValuesSet.valueAt(i);
+                boolean adv = numValuesSet.advanceExact(doc);
+                for (int i = 0; adv && i < numValuesSet.docValueCount(); i++) {
+                    double val = numValuesSet.nextValue();
                     if (isFloat)
                         val = NumericUtils.sortableIntToFloat((int) val);
                     else if (isDouble)
@@ -636,9 +639,9 @@ public class MetadataPanel extends JPanel
             Set<Double> set = new HashSet<Double>();
             for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
-                numValuesSet.setDocument(doc);
-                for (int i = 0; i < numValuesSet.count(); i++) {
-                    double val = numValuesSet.valueAt(i);
+                boolean adv = numValuesSet.advanceExact(doc);
+                for (int i = 0; adv && i < numValuesSet.docValueCount(); i++) {
+                    double val = numValuesSet.nextValue();
                     if (isFloat)
                         val = NumericUtils.sortableIntToFloat((int) val);
                     else if (isDouble)
@@ -654,11 +657,13 @@ public class MetadataPanel extends JPanel
                     set.add(l.get(ord));
             }
             if (!set.isEmpty()) {
+                // must reset docValues to call advance again
+                loadDocValues(field);
                 for (IItemId item : result.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
-                    numValuesSet.setDocument(doc);
-                    for (int i = 0; i < numValuesSet.count(); i++) {
-                        double val = numValuesSet.valueAt(i);
+                    boolean adv = numValuesSet.advanceExact(doc);
+                    for (int i = 0; adv && i < numValuesSet.docValueCount(); i++) {
+                        double val = numValuesSet.nextValue();
                         if (isFloat)
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
@@ -673,17 +678,12 @@ public class MetadataPanel extends JPanel
                 }
             }
         } else if (isNumeric && numValues != null && noRanges) {
-            Bits docsWithField = null;
-            try {
-                docsWithField = reader.getDocsWithField(field);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             Set<Double> set = new HashSet<Double>();
-            for (IItemId item : ipedResult.getIterator()) {
+            for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
-                if (docsWithField.get(doc)) {
-                    double val = numValues.get(doc);
+                boolean adv = numValues.advanceExact(doc);
+                if (adv) {
+                    double val = numValues.longValue();
                     if (isFloat)
                         val = NumericUtils.sortableIntToFloat((int) val);
                     else if (isDouble)
@@ -699,10 +699,13 @@ public class MetadataPanel extends JPanel
                     set.add(l.get(ord));
             }
             if (!set.isEmpty()) {
-                for (IItemId item : ipedResult.getIterator()) {
+                // must reset docValues to call advance again
+                loadDocValues(field);
+                for (IItemId item : result.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
-                    if (docsWithField.get(doc)) {
-                        double val = numValues.get(doc);
+                    boolean adv = numValues.advanceExact(doc);
+                    if (adv) {
+                        double val = numValues.longValue();
                         if (isFloat)
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
@@ -718,7 +721,8 @@ public class MetadataPanel extends JPanel
         } else if (docValues != null) {
             for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
-                if (ordsToGet.contains(docValues.getOrd(doc))) {
+                boolean adv = docValues.advanceExact(doc);
+                if (adv && ordsToGet.contains(docValues.ordValue())) {
                     items.add(item);
                     scores.add(result.getScore(k));
                 }
@@ -739,9 +743,9 @@ public class MetadataPanel extends JPanel
                     }
                 } else {
                     int doc = App.get().appCase.getLuceneId(item);
-                    docValuesSet.setDocument(doc);
+                    boolean adv = docValuesSet.advanceExact(doc);
                     long ord;
-                    while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                    while (adv && (ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
                         if (ordsToGet.contains((int) ord)) {
                             items.add(item);
                             scores.add(result.getScore(k));
@@ -814,13 +818,13 @@ public class MetadataPanel extends JPanel
         boolean hasNaN = false;
         
         if (isNumeric && numValues != null && !noRanges) {
-            Bits docsWithField = reader.getDocsWithField(field);
             if (logScale) {
                 valueCount = new int[logScaleBins];
                 for (IItemId item : ipedResult.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
-                    if (docsWithField.get(doc)) {
-                        double val = numValues.get(doc);
+                    boolean adv = numValues.advanceExact(doc);
+                    if (adv) {
+                        double val = numValues.longValue();
                         if (isFloat)
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
@@ -850,8 +854,9 @@ public class MetadataPanel extends JPanel
             } else {
                 for (IItemId item : ipedResult.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
-                    if (docsWithField.get(doc)) {
-                        double val = numValues.get(doc);
+                    boolean adv = numValues.advanceExact(doc);
+                    if (adv) {
+                        double val = numValues.longValue();
                         if (isFloat)
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
@@ -879,11 +884,14 @@ public class MetadataPanel extends JPanel
                     actualMax = new long[valueCount.length];
                     Arrays.fill(actualMin, Long.MAX_VALUE);
                     Arrays.fill(actualMax, Long.MIN_VALUE);
-                }                
+                }
+                // must reset docValues to call advance again
+                loadDocValues(field);
                 for (IItemId item : ipedResult.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
-                    if (docsWithField.get(doc)) {
-                        double val = numValues.get(doc);
+                    boolean adv = numValues.advanceExact(doc);
+                    if (adv) {
+                        double val = numValues.longValue();
                         if (isFloat)
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
@@ -926,10 +934,10 @@ public class MetadataPanel extends JPanel
                 valueCount = new int[logScaleBins];
                 for (IItemId item : ipedResult.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
-                    numValuesSet.setDocument(doc);
+                    boolean adv = numValuesSet.advanceExact(doc);
                     int prevOrd = -1;
-                    for (int i = 0; i < numValuesSet.count(); i++) {
-                        double val = numValuesSet.valueAt(i);
+                    for (int i = 0; adv && i < numValuesSet.docValueCount(); i++) {
+                        double val = numValuesSet.nextValue();
                         if (isFloat)
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
@@ -961,9 +969,9 @@ public class MetadataPanel extends JPanel
             } else {
                 for (IItemId item : ipedResult.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
-                    numValuesSet.setDocument(doc);
-                    for (int i = 0; i < numValuesSet.count(); i++) {
-                        double val = numValuesSet.valueAt(i);
+                    boolean adv = numValuesSet.advanceExact(doc);
+                    for (int i = 0; adv && i < numValuesSet.docValueCount(); i++) {
+                        double val = numValuesSet.nextValue();
                         if (isFloat)
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
@@ -991,13 +999,15 @@ public class MetadataPanel extends JPanel
                     actualMax = new long[valueCount.length];
                     Arrays.fill(actualMin, Long.MAX_VALUE);
                     Arrays.fill(actualMax, Long.MIN_VALUE);
-                }                
+                }
+                // must reset docValues to call advance again
+                loadDocValues(field);
                 for (IItemId item : ipedResult.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
-                    numValuesSet.setDocument(doc);
+                    boolean adv = numValuesSet.advanceExact(doc);
                     int prevOrd = -1;
-                    for (int i = 0; i < numValuesSet.count(); i++) {
-                        double val = numValuesSet.valueAt(i);
+                    for (int i = 0; adv && i < numValuesSet.docValueCount(); i++) {
+                        double val = numValuesSet.nextValue();
                         if (isFloat)
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
@@ -1041,9 +1051,9 @@ public class MetadataPanel extends JPanel
             HashMap<Double,SingleValueCount> map = new HashMap<Double,SingleValueCount>();
             for (IItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
-                numValuesSet.setDocument(doc);
-                for (int i = 0; i < numValuesSet.count(); i++) {
-                    double val = numValuesSet.valueAt(i);
+                boolean adv = numValuesSet.advanceExact(doc);
+                for (int i = 0; adv && i < numValuesSet.docValueCount(); i++) {
+                    double val = numValuesSet.nextValue();
                     if (isFloat)
                         val = NumericUtils.sortableIntToFloat((int) val);
                     else if (isDouble)
@@ -1061,12 +1071,12 @@ public class MetadataPanel extends JPanel
             }
             list.addAll(l);
         } else if (isNumeric && numValues != null && noRanges) {
-            Bits docsWithField = reader.getDocsWithField(field);
             HashMap<Double,SingleValueCount> map = new HashMap<Double,SingleValueCount>();
             for (IItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
-                if (docsWithField.get(doc)) {
-                    double val = numValues.get(doc);
+                boolean adv = numValues.advanceExact(doc);
+                if (adv) {
+                    double val = numValues.longValue();
                     if (isFloat)
                         val = NumericUtils.sortableIntToFloat((int) val);
                     else if (isDouble)
@@ -1087,9 +1097,11 @@ public class MetadataPanel extends JPanel
             valueCount = new int[docValues.getValueCount()];
             for (IItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
-                int ord = docValues.getOrd(doc);
-                if (ord != -1)
+                boolean adv = docValues.advanceExact(doc);
+                if(adv) {
+                    int ord = docValues.ordValue();
                     valueCount[ord]++;
+                }
             }
         } else if (docValuesSet != null) {
             valueCount = new int[(int) docValuesSet.getValueCount()];
@@ -1103,9 +1115,9 @@ public class MetadataPanel extends JPanel
                     }
                 } else {
                     int doc = App.get().appCase.getLuceneId(item);
-                    docValuesSet.setDocument(doc);
+                    boolean adv = docValuesSet.advanceExact(doc);
                     long ord, prevOrd = -1;
-                    while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                    while (adv && (ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
                         if (prevOrd != ord)
                             valueCount[(int) ord]++;
                         prevOrd = ord;
@@ -1199,13 +1211,18 @@ public class MetadataPanel extends JPanel
             Arrays.sort(array);
 
         } else if (isCategory) {
-            int[] categoryOrd = RowComparator.getLocalizedCategoryOrd(docValuesSet);
-            Arrays.sort(array, new Comparator<ValueCount>() {
-                @Override
-                public int compare(ValueCount o1, ValueCount o2) {
-                    return categoryOrd[o1.ord] - categoryOrd[o2.ord];
-                }
-            });
+            try {
+                int[] categoryOrd = RowComparator.getLocalizedCategoryOrd(docValuesSet);
+                Arrays.sort(array, new Comparator<ValueCount>() {
+                    @Override
+                    public int compare(ValueCount o1, ValueCount o2) {
+                        return categoryOrd[o1.ord] - categoryOrd[o2.ord];
+                    }
+                });
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
 
         LOGGER.info("Metadata value sorting took {}ms", (System.currentTimeMillis() - time));
@@ -1292,7 +1309,7 @@ public class MetadataPanel extends JPanel
         }
     }
 
-    public MultiSearchResult getFilteredItemIds(MultiSearchResult result) throws ParseException, QueryNodeException {
+    public MultiSearchResult getFilteredItemIds(MultiSearchResult result) throws ParseException, QueryNodeException, IOException {
 
         if (!isFiltering()) {
             return result;
@@ -1335,25 +1352,30 @@ public class MetadataPanel extends JPanel
             return null;
         }
 
-        StringBuilder str = new StringBuilder();
-        str.append(IndexItem.CONTENT + ":("); //$NON-NLS-1$
-        for (String term : terms) {
-            str.append("\"*" + removeIllegalChars(term).trim() + "*\" ");
-        }
-        str.append(")"); //$NON-NLS-1$
-
-        ComplexPhraseQueryParser cpqp = new ComplexPhraseQueryParser(IndexItem.CONTENT,
+        QueryBuilder stdParser = new QueryBuilder(App.get().appCase);
+        ComplexPhraseQueryParser complexPhraseParser = new ComplexPhraseQueryParser(IndexItem.CONTENT,
                 App.get().appCase.getAnalyzer());
-        cpqp.setAllowLeadingWildcard(true);
+        stdParser.setAllowLeadingWildcard(true);
+        complexPhraseParser.setAllowLeadingWildcard(true);
 
-        try {
-            return cpqp.parse(str.toString());
+        Builder builder = new BooleanQuery.Builder();
+        for (String term : terms) {
+            try {
+                String queryStr = "*" + removeIllegalChars(term).trim() + "*";
+                Query query;
+                if (queryStr.contains(" ")) {
+                    query = complexPhraseParser.parse("\"" + queryStr + "\"");
+                } else {
+                    query = stdParser.getQuery(queryStr);
+                }
+                builder.add(query, Occur.SHOULD);
 
-        } catch (org.apache.lucene.queryparser.classic.ParseException e) {
-            e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
-        return null;
+        return builder.build();
     }
 
     private String removeIllegalChars(String s) {

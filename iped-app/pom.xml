@@ -72,9 +72,9 @@
                                 <artifactItem>
                                     <groupId>java</groupId>
                                     <artifactId>jre</artifactId>
-                                    <version>1.8.0_152</version>
+                                    <version>11.0.13</version>
                                     <type>zip</type>
-                                    <overWrite>true</overWrite>
+                                    <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -262,7 +262,7 @@
                                 <artifactItem>
                                     <groupId>org.imagemagick</groupId>
                                     <artifactId>imagemagick-zip</artifactId>
-                                    <version>7.0.8-14.1</version>
+                                    <version>7.1.0-q8-x64</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -319,7 +319,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>tsk-loaddb</artifactId>
-                                    <version>4.6.5-p04</version>
+                                    <version>4.6.5-p05</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -342,25 +342,6 @@
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}/graphviz</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-tsk-patch</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.sleuthkit</groupId>
-                                    <artifactId>tsk-iped-patch-zip</artifactId>
-                                    <version>${sleuthkit.version}</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}/sources</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -435,7 +416,7 @@
                                 <artifactItem>
                                     <groupId>net.sf</groupId>
     								<artifactId>java-dbx</artifactId>
-    								<version>1.1-p5</version>
+    								<version>${java.dbx.version}</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${plugin.dir}</outputDirectory>
@@ -454,7 +435,7 @@
                                 <artifactItem>
                                     <groupId>dpf.ap</groupId>
     								<artifactId>telegram-decoder-impl</artifactId>
-    								<version>1.0.5-SNAPSHOT</version>
+    								<version>1.0.6-SNAPSHOT</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${plugin.dir}</outputDirectory>
@@ -501,6 +482,44 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-vosk-model-en</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>vosk</groupId>
+                                    <artifactId>vosk-model-small-en-us</artifactId>
+                                    <version>0.15</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${release.dir}/models/vosk</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-vosk-model-pt</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>vosk</groupId>
+                                    <artifactId>vosk-model-small-pt</artifactId>
+                                    <version>0.3</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${release.dir}/models/vosk</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-nativeview</id>
                         <phase>package</phase>
                         <goals>
@@ -511,7 +530,7 @@
                                 <artifactItem>
                                     <groupId>libre-office</groupId>
                                     <artifactId>nativeview-dll</artifactId>
-                                    <version>1.0.0</version>
+                                    <version>1.0.1</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${lib.dir}</outputDirectory>
@@ -584,7 +603,7 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>dpf.sp.gpinf.indexer.IndexFiles</mainClass>
+                                    <mainClass>dpf.sp.gpinf.indexer.Main</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>
@@ -768,22 +787,6 @@
                                     <directory>${plugin.rsc}</directory>
                                 </resource>
                             </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.4</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${release.dir}/sources</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

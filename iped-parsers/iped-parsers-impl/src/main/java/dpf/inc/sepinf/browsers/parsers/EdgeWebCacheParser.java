@@ -159,6 +159,7 @@ public class EdgeWebCacheParser extends AbstractParser {
                         historyMetadata.add(Metadata.RESOURCE_NAME_KEY, "Edge History " + ec.getTableName()); // $NON-NLS-1$
                         historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(virtualId));
                         historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                        historyMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                         parseEdgeHistory(historyHandler, historyMetadata, context, ec);
 
@@ -184,6 +185,7 @@ public class EdgeWebCacheParser extends AbstractParser {
                         metadataHistory.add(ExtraProperties.URL, ev.getUrl());
                         metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(virtualId));
                         metadataHistory.add((BasicProps.LENGTH), "");
+                        metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                     }

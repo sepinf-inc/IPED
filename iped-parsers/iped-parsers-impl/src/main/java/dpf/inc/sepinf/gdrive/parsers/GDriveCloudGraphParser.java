@@ -140,6 +140,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
 
         metadataCloudGraphItem.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, GDRIVE_CLOUD_GRAPH_REG.toString());
         metadataCloudGraphItem.add(Metadata.RESOURCE_NAME_KEY, "GDrive CloudGraph Entry " + i);
+        metadataCloudGraphItem.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
         // These properties need to get a "Date" type as parameters, so it can correctly
         // show times in UTC

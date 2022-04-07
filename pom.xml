@@ -19,8 +19,8 @@
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <resources.dir>${basedir}/resources</resources.dir>
         <release.dir>${project.build.directory}/release/iped-${project.version}</release.dir>  
         <lib.dir>${release.dir}/lib</lib.dir>
@@ -31,15 +31,16 @@
         
         <!--dependencies-->
         <tika.version>1.26</tika.version>
-        <lucene.version>6.6.6</lucene.version>
+        <lucene.version>9.0.0</lucene.version>
         <sleuthkit.version>4.6.5-p05</sleuthkit.version>
-        <libreoffice.version>5.1.4</libreoffice.version>
+        <libreoffice.version>7.2.2</libreoffice.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <log4j.version>2.13.3</log4j.version>
+        <log4j.version>2.17.1</log4j.version>
         <junit.version>4.13.1</junit.version>
         <icepdf.version>6.3.2</icepdf.version>
+        <java.dbx.version>1.1-p5</java.dbx.version>
         <xerial.sqlite.version>3.34.0</xerial.sqlite.version>
-        <dockingframes.version>1.1.1</dockingframes.version>
+        <dockingframes.version>1.1.2</dockingframes.version>
     </properties>
 
     <repositories>
@@ -107,28 +108,6 @@
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>3.0.0</version>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.10</version>
-                <executions>
-                	<execution>
-                        <id>copy-modules-sources</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>sources</classifier>
-                            <outputDirectory>${release.dir}/sources</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                            <includeGroupIds>iped</includeGroupIds>
-                        </configuration>
-                    </execution>
-    			</executions>
-    		</plugin>
         </plugins>
     </build>
     		

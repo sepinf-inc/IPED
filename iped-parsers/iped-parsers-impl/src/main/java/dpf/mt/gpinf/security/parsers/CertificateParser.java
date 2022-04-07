@@ -53,7 +53,8 @@ public class CertificateParser extends AbstractParser {
     public static final String ISSUER = "certificate:issuer"; //$NON-NLS-1$
     public static final String SUBJECT = "certificate:subject"; //$NON-NLS-1$
     public static final Property ISSUBJECTAUTHORITY = Property.internalBoolean("certificate:subjectIsCertAuthority"); //$NON-NLS-1$
-
+    public static final String NOALTNAMES = "This certificate has no alternative names.";
+    
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         if (SUPPORTED_TYPES == null) {
@@ -227,6 +228,7 @@ public class CertificateParser extends AbstractParser {
         List<String> altNamesStrs = new ArrayList<String>();
         try {
             Collection<List<?>> altNames = cert.getSubjectAlternativeNames();
+            if(altNames != null) {
             for (List<?> sanItem : altNames) {
                 final Integer itemType = (Integer) sanItem.get(0);
                 if (itemType == 0) {
@@ -251,7 +253,9 @@ public class CertificateParser extends AbstractParser {
                         altNamesStrs.add(altNameStr);
                     }
                 }
+              }
             }
+            altNamesStrs.add(NOALTNAMES);
         } catch (IOException | CertificateParsingException e) {
             // ignore error.
         }

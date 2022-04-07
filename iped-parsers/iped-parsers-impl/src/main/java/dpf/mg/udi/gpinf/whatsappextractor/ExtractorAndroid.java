@@ -53,6 +53,7 @@ public class ExtractorAndroid extends Extractor {
 
     private boolean hasThumbTable = false;
     private boolean hasEditVersionCol = false;
+    private boolean hasChatView = false;
 
     public ExtractorAndroid(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
         super(databaseFile, contacts, account);
@@ -64,9 +65,11 @@ public class ExtractorAndroid extends Extractor {
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             boolean hasSortTimestamp = databaseHasSortTimestamp(conn);
+            hasChatView = databaseHasChatView(conn);
             hasThumbTable = databaseHashThumbnailsTable(conn);
             hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version");
-            String selectChatQuery = hasSortTimestamp ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_SORTTIMESTAMP;
+            String selectChatQuery = hasChatView ? SELECT_CHAT_VIEW
+                    : hasSortTimestamp ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_SORTTIMESTAMP;
             try (ResultSet rs = stmt.executeQuery(selectChatQuery)) {
 
                 while (rs.next()) {
@@ -84,7 +87,7 @@ public class ExtractorAndroid extends Extractor {
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c.getRemote(), c.isGroupChat()));
                     if (c.isGroupChat()) {
-                        setGroupMembers(c, conn);
+                        setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                     }
                 }
 
@@ -96,31 +99,21 @@ public class ExtractorAndroid extends Extractor {
         return list;
     }
 
-    private void setGroupMembers(Chat c, Connection conn) throws WAExtractorException {
-
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_GROUP_MEMBERS)) {
-            stmt.setString(1, c.getRemote().getFullId());
-            try (ResultSet rs = stmt.executeQuery()) {
-
-                while (rs.next()) {
-                    String memberId = rs.getString("member");
-                    if (!memberId.trim().isEmpty()) {
-                        c.getGroupmembers().add(contacts.getContact(memberId));
-                    }
-                }
-
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            throw new WAExtractorException(ex);
-        }
-
-    }
-
     private boolean databaseHasSortTimestamp(Connection conn) throws SQLException {
         boolean result = false;
         DatabaseMetaData md = conn.getMetaData();
         try (ResultSet rs = md.getColumns(null, null, "chat_list", "sort_timestamp")) { //$NON-NLS-1$ //$NON-NLS-2$
+            if (rs.next()) {
+                result = true;
+            }
+        }
+        return result;
+    }
+    
+    private boolean databaseHasChatView(Connection conn) throws SQLException {
+        boolean result = false;
+        DatabaseMetaData md = conn.getMetaData();
+        try (ResultSet rs = md.getColumns(null, null, "chat_view", "raw_string_jid")) { //$NON-NLS-1$ //$NON-NLS-2$
             if (rs.next()) {
                 result = true;
             }
@@ -332,6 +325,9 @@ public class ExtractorAndroid extends Extractor {
 
     private static final String SELECT_CHAT_LIST_NO_SORTTIMESTAMP = "SELECT _id as id,key_remote_jid AS contact," //$NON-NLS-1$
             + " subject, creation FROM chat_list ORDER BY creation DESC"; //$NON-NLS-1$
+    
+    private static final String SELECT_CHAT_VIEW = "SELECT _id as id, raw_string_jid AS contact," //$NON-NLS-1$
+            + " subject, created_timestamp as creation, sort_timestamp FROM chat_view ORDER BY sort_timestamp DESC"; //$NON-NLS-1$
 
     /*
      * Filtragem por status de mensagem (status): -1 - mensagens de sistema 0 -
@@ -368,7 +364,7 @@ public class ExtractorAndroid extends Extractor {
     private static final String VERIFY_THUMBS_TABLE_EXISTS = "SELECT name FROM sqlite_master " //$NON-NLS-1$
             + "WHERE type='table' AND name='message_thumbnails'"; //$NON-NLS-1$
 
-    private static final String SELECT_GROUP_MEMBERS = "select gjid as `group`,jid as member from chat_list cl "
-            + " inner join group_participants gp on cl.key_remote_jid=gp.gjid where `group`=?";
+    // to address a field must use ` instead of '
+    private static final String SELECT_GROUP_MEMBERS = "select gjid as 'group', jid as member FROM group_participants where `group`=?"; //$NON-NLS-1$
 
 }

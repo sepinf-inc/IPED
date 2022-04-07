@@ -194,6 +194,9 @@ public class OCRParser extends AbstractParser {
         types.add(MediaType.image("aces")); //$NON-NLS-1$
         types.add(MediaType.image("emf")); //$NON-NLS-1$
         types.add(MediaType.image("heic")); //$NON-NLS-1$
+        types.add(MediaType.image("heif")); //$NON-NLS-1$
+        types.add(MediaType.image("heic-sequence")); //$NON-NLS-1$
+        types.add(MediaType.image("heif-sequence")); //$NON-NLS-1$
         types.add(MediaType.image("svg+xml")); //$NON-NLS-1$
         types.add(MediaType.image("vnd.adobe.photoshop")); //$NON-NLS-1$
         types.add(MediaType.image("vnd.wap.wbmp")); //$NON-NLS-1$
@@ -554,7 +557,7 @@ public class OCRParser extends AbstractParser {
                     parse(xhtml, imageFile, imageText);
                     if (imageText.exists()) {
                         if (outputBase != null)
-                            IOUtil.copiaArquivo(imageText, output, true);
+                            IOUtil.copyFile(imageText, output, true);
                         imageText.delete();
                     }
                 } catch (IOException e) {
@@ -620,7 +623,7 @@ public class OCRParser extends AbstractParser {
                     parse(xhtml, imageFile, imageText);
                     if (imageText.exists()) {
                         if (outputBase != null)
-                            IOUtil.copiaArquivo(imageText, output, true);
+                            IOUtil.copyFile(imageText, output, true);
                         imageText.delete();
                     }
                 } finally {

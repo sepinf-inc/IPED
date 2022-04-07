@@ -19,9 +19,9 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.SignatureConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.io.SeekableInputStream;
 import iped3.util.MediaTypes;
-import macee.core.Configurable;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.
@@ -70,9 +70,9 @@ public class SignatureTask extends AbstractTask {
                     }
                 }
 
-                if (MediaType.application("x-disk-image").equals(type)) {
+                if (MediaTypes.DISK_IMAGE.equals(type)) {
                     if(hasVHDFooter(evidence)) {
-                        type = MediaType.application("x-vhd");
+                        type = MediaTypes.VHD;
                     }
                 }
 
@@ -112,7 +112,7 @@ public class SignatureTask extends AbstractTask {
         if (item.getLength() == null) {
             return false;
         }
-        try (SeekableInputStream is = item.getStream()) {
+        try (SeekableInputStream is = item.getSeekableInputStream()) {
             is.seek(item.getLength() - 512);
             byte[] cookie = IOUtils.readFully(is, 9);
             if ("conectix".equals(new String(cookie, 0, 8, StandardCharsets.ISO_8859_1))

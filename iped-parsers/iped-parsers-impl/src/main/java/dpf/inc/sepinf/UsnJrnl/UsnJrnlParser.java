@@ -25,10 +25,11 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 public class UsnJrnlParser extends AbstractParser {
     public enum ReportType {
@@ -151,6 +152,7 @@ public class UsnJrnlParser extends AbstractParser {
                 name += " " + n;
             }
 
+            cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
             cMetadata.set(TikaCoreProperties.TITLE, name);
             extractor.parseEmbedded(is, handler, cMetadata, false);
 
@@ -168,6 +170,7 @@ public class UsnJrnlParser extends AbstractParser {
                 metadataItem.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REGISTRY.toString());
                 metadataItem.set(TikaCoreProperties.TITLE, "USN journal Entry " + entry.getUSN());
                 metadataItem.set(BasicProps.LENGTH, "");
+                metadataItem.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                 String[] props = ReportGenerator.cols;
 
@@ -223,7 +226,7 @@ public class UsnJrnlParser extends AbstractParser {
         int n = 1;
         IItemSearcher searcher = context.get(IItemSearcher.class);
         IItemBase item = context.get(IItemBase.class);
-        try (SeekableInputStream sis = item.getStream()) {
+        try (SeekableInputStream sis = item.getSeekableInputStream()) {
             jumpZeros(sis, 0, sis.size());
             while (findNextEntry(sis)) {
                 UsnJrnlEntry u = readEntry(sis);

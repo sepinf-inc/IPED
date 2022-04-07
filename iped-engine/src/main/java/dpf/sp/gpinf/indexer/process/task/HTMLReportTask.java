@@ -61,15 +61,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.WorkerProvider;
-import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.localization.Messages;
+import dpf.sp.gpinf.indexer.lucene.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -79,7 +79,7 @@ import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Tarefa de geração de relatório no formato HTML do itens selecionados, gerado
@@ -298,9 +298,9 @@ public class HTMLReportTask extends AbstractTask {
             long t = System.currentTimeMillis();
 
             try (IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)) {
-                for (int labelId : ipedCase.getMarcadores().getLabelMap().keySet()) {
-                    String labelName = ipedCase.getMarcadores().getLabelName(labelId);
-                    String comments = ipedCase.getMarcadores().getLabelComment(labelId);
+                for (int labelId : ipedCase.getBookmarks().getBookmarkMap().keySet()) {
+                    String labelName = ipedCase.getBookmarks().getBookmarkName(labelId);
+                    String comments = ipedCase.getBookmarks().getBookmarkComment(labelId);
                     labelcomments.put(labelName, comments);
                 }
             }
@@ -349,7 +349,7 @@ public class HTMLReportTask extends AbstractTask {
 
         ReportEntry reg = new ReportEntry();
         reg.name = evidence.getName();
-        reg.export = evidence.getExportedFile();
+        reg.export = evidence.getIdInDataSource();
         reg.isImage = ImageThumbTask.isImageType(evidence.getMediaType());
         reg.isVideo = VideoThumbTask.isVideoType(evidence.getMediaType());
         reg.length = evidence.getLength();
@@ -820,7 +820,7 @@ public class HTMLReportTask extends AbstractTask {
             }
             BufferedImage img = null;
             if (extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = ImageMetadataUtil.getThumb(stream);
                 } finally {
@@ -830,14 +830,14 @@ public class HTMLReportTask extends AbstractTask {
             int thumbSize = htmlReportConfig.getThumbSize();
             if (img == null) {
                 final int sampleFactor = 3;
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = ImageUtil.getSubSampledImage(stream, thumbSize * sampleFactor, thumbSize * sampleFactor);
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }
                 if (img == null) {
-                    stream = evidence.getBufferedStream();
+                    stream = evidence.getBufferedInputStream();
                     try {
                         img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength());
                     } finally {

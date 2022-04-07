@@ -24,8 +24,7 @@ import java.util.List;
 import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItem;
-import iped3.util.BasicProps;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Classe que carrega o mapeamento de mimeTypes para Categoria da aplicação.
@@ -63,15 +62,6 @@ public class SetCategoryTask extends AbstractTask {
             String category = categoryConfig.getCategory(e.getMediaType());
             e.setCategory(category);
         }
-
-        String category;
-        if (e.isDir()) {
-            category = FOLDER_CATEGORY;
-        } else {
-            category = categoryConfig.getCategory(e.getMediaType());
-        }
-        e.setCategory(category);
-        e.setTempAttribute(BasicProps.CATEGORY, category);
 
     }
 

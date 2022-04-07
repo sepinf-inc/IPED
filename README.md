@@ -20,11 +20,11 @@ If you are new to the tool, please refer to the [Beginner's Start Guide](https:/
 
 ## Building
 
-To build from source, you need git, maven and java 8 (Oracle or OpenJDK+JFX) installed. Run:
+To build from source, you need git, maven and Java JDK 11 + JavaFX (e.g. Liberica OpenJDK 11 Full JDK) installed. Set JAVA_HOME environment var to your java 11 installation folder, then run:
 ```
 git clone https://github.com/sepinf-inc/IPED.git
 cd IPED
-mvn install
+mvn clean install
 ```
 It will generate a snapshot version of IPED in target/release folder.
 

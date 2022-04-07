@@ -12,29 +12,34 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.TextContentHandler;
 import org.apache.tika.sax.ToTextContentHandler;
+import org.slf4j.Logger;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 
 public class Util {
 
-    private static final String imageThumbsDir = "../../../../indexador/thumbs/"; //$NON-NLS-1$
-    private static final String videoThumbsDir = "../../../../indexador/view/"; //$NON-NLS-1$
+    private static final String imageThumbsDir = "../../../../iped/thumbs/"; //$NON-NLS-1$
+    private static final String videoThumbsDir = "../../../../iped/view/"; //$NON-NLS-1$
     private static final int MAX_PREVIEW_SIZE = 128;
     public static final String KNOWN_CONTENT_ENCODING = "KNOWN-CONTENT-ENCODING"; //$NON-NLS-1$
 
     private static IndexerDefaultParser autoParser;
+    private static TikaConfig tikaConfig;
 
     private static IndexerDefaultParser getAutoParser() {
         if (autoParser == null) {
@@ -226,6 +231,26 @@ public class Util {
         t.setDaemon(true);
         t.start();
     }
+    
+    public static void logInputStream(final InputStream stream, final Logger logger) {
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                byte[] out = new byte[1024];
+                int read = 0;
+                while (read != -1)
+                    try {
+                        read = stream.read(out);
+                        if (read > 0) {
+                            logger.warn(new String(out, 0, read));
+                        }
+                    } catch (Exception e) {
+                    }
+            }
+        };
+        t.setDaemon(true);
+        t.start();
+    }
 
     public static List<IItemBase> getItems(String query, IItemSearcher searcher) {
         if (searcher == null)
@@ -236,7 +261,7 @@ public class Util {
 
     public static String getExportPath(IItemBase item) {
         String hash = item.getHash();
-        String ext = item.getTypeExt(); // $NON-NLS-1$
+        String ext = item.getType(); // $NON-NLS-1$
         return getExportPath(hash, ext);
     }
 
@@ -274,8 +299,8 @@ public class Util {
     }
 
     public static Optional<String> getSourceFileIfExists(IItemBase item) {
-        if (item.hasFile()) {
-            String path = normalizePath(item.getFile());
+        if (IOUtil.hasFile(item)) {
+            String path = normalizePath(IOUtil.getFile(item));
             if (path != null) {
                 path = ajustPath(path);
                 return Optional.of(path);
@@ -308,7 +333,7 @@ public class Util {
         try {
             String mime = item.getMediaType().toString();
             if (mime.startsWith("image")) //$NON-NLS-1$
-                thumb = IOUtil.loadInputStream(is = item.getBufferedStream());
+                thumb = IOUtil.loadInputStream(is = item.getBufferedInputStream());
             else if (mime.startsWith("video") && item.getViewFile() != null) //$NON-NLS-1$
                 thumb = Files.readAllBytes(item.getViewFile().toPath());
 
@@ -345,6 +370,69 @@ public class Util {
             return getParentPath(path.substring(0, path.length() - 1));
         else
             return path.substring(0, i);
+    }
+
+    private static TikaConfig getTikaConfig() throws TikaException, IOException {
+        if (tikaConfig == null) {
+            synchronized (Util.class) {
+                if (tikaConfig == null) {
+                    tikaConfig = new TikaConfig();
+                }
+            }
+        }
+        return tikaConfig;
+    }
+
+    public static String getTrueExtension(File file) {
+        String trueExt = "";
+        String origExt = "";
+        try {
+            int idx = file.getName().lastIndexOf('.');
+            if (idx != -1) {
+                origExt = file.getName().substring(idx);
+            }
+            Metadata meta = new Metadata();
+            MediaType mediaType = MediaType.OCTET_STREAM;
+            try (TikaInputStream in = TikaInputStream.get(file.toPath(), meta)) {
+                mediaType = getTikaConfig().getDetector().detect(in, meta);
+            }
+
+            trueExt = getTrueExtension(origExt, mediaType);
+
+            if (trueExt.startsWith(".")) {
+                trueExt = trueExt.substring(1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return trueExt;
+    }
+
+    public static String getTrueExtension(String origExt, MediaType mediaType) throws TikaException, IOException {
+        String trueExt = "";
+        if (!mediaType.equals(MediaType.OCTET_STREAM)) {
+            do {
+                boolean first = true;
+                for (String ext : getTikaConfig().getMimeRepository().forName(mediaType.toString()).getExtensions()) {
+                    if (first) {
+                        trueExt = ext;
+                        first = false;
+                    }
+                    if (ext.equals(origExt)) {
+                        trueExt = origExt;
+                        break;
+                    }
+                }
+
+            } while (trueExt.isEmpty() && !MediaType.OCTET_STREAM
+                    .equals((mediaType = getTikaConfig().getMediaTypeRegistry().getSupertype(mediaType))));
+        }
+
+        if (!origExt.isEmpty() && (trueExt.isEmpty() || trueExt.equals(".txt"))) { //$NON-NLS-1$
+            trueExt = origExt;
+        }
+        return trueExt.toLowerCase();
     }
 
 }

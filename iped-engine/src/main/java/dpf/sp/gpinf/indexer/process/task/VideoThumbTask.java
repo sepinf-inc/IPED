@@ -46,7 +46,7 @@ import org.apache.tika.parser.mp4.ISO6709Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
@@ -57,8 +57,8 @@ import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.util.ExtraProperties;
-import macee.core.Configurable;
 
 /**
  * Tarefa de geração de imagem com miniaturas (thumbs) de cenas extraídas de
@@ -367,24 +367,30 @@ public class VideoThumbTask extends ThumbTask {
                 mainTmpFile = new File(mainOutFile.getParentFile(), evidence.getHash() + tempSuffix);
                 mainConfig.setOutFile(mainTmpFile);
 
-                //Set the number of frames for animated images
+                //Check if it is an animated image
                 int numFrames = 0;
-                String strFrames = evidence.getMetadata().get(ANIMATION_FRAMES_PROP);
-                if (strFrames != null) 
-                    numFrames = Integer.parseInt(strFrames);
+                boolean isAnimated = isImageSequence(evidence.getMediaType().toString());
+                if (!isAnimated) {
+                    String strFrames = evidence.getMetadata().get(ANIMATION_FRAMES_PROP);
+                    if (strFrames != null) {
+                        numFrames = Integer.parseInt(strFrames);
+                        if (numFrames > 0)
+                            isAnimated = true;
+                    }
+                }
 
                 long t = System.currentTimeMillis();
                 r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs, numFrames);
                 t = System.currentTimeMillis() - t;
-                if (r != null && numFrames > 0) {
+                if (r != null && isAnimated) {
                     //Clear video duration for animated images
                     r.setVideoDuration(-1);
                 }
                 if (r.isSuccess() && (mainOutFile.exists() || mainTmpFile.renameTo(mainOutFile))) {
-                    (numFrames > 0 ? totalAnimatedImagesProcessed : totalVideosProcessed).incrementAndGet();
+                    (isAnimated ? totalAnimatedImagesProcessed : totalVideosProcessed).incrementAndGet();
                 } else {
                     r.setSuccess(false);
-                    (numFrames > 0 ? totalAnimatedImagesFailed : totalVideosFailed).incrementAndGet();
+                    (isAnimated ? totalAnimatedImagesFailed : totalVideosFailed).incrementAndGet();
                     if (r.isTimeout()) {
                         stats.incTimeouts();
                         evidence.setExtraAttribute(ImageThumbTask.THUMB_TIMEOUT, "true"); //$NON-NLS-1$
@@ -392,7 +398,7 @@ public class VideoThumbTask extends ThumbTask {
                                 + evidence.getLength() + " bytes)"); //$NON-NLS-1$
                     }
                 }
-                (numFrames > 0 ? totalAnimatedImagesTime : totalVideosTime).addAndGet(t);
+                (isAnimated ? totalAnimatedImagesTime : totalVideosTime).addAndGet(t);
             }
         } catch (Exception e) {
             logger.warn(evidence.toString(), e);
@@ -500,6 +506,14 @@ public class VideoThumbTask extends ThumbTask {
     public static boolean isVideoType(MediaType mediaType) {
         return MetadataUtil.isVideoType(mediaType);
     }
+    
+
+    /**
+     * Check if the evidence's mediaType is an image sequence.
+     */
+    public static boolean isImageSequence(String mediaType) {
+        return mediaType.equals("image/heic-sequence") || mediaType.equals("image/heif-sequence");
+    }
 
     /** 
      * Checks if the evidence is an animated image, and update
@@ -508,10 +522,13 @@ public class VideoThumbTask extends ThumbTask {
     private static boolean checkAnimatedImage(IItem evidence) {
         int numImages = -1;
         String mediaType = evidence.getMediaType().toString();
-        
-        if (mediaType.equals("image/gif")) {
+
+        if (isImageSequence(mediaType)) {
+            return true;
+
+        } else if (mediaType.equals("image/gif")) {
             ImageReader reader = null;
-            try (BufferedInputStream is = evidence.getBufferedStream(); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
+            try (BufferedInputStream is = evidence.getBufferedInputStream(); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
                 reader = ImageIO.getImageReaders(iis).next();
                 reader.setInput(iis, false, true);
                 numImages = reader.getNumImages(true);
@@ -523,7 +540,7 @@ public class VideoThumbTask extends ThumbTask {
         
         } else if (mediaType.equals("image/png")) {
             byte[] b = new byte[128];
-            try (BufferedInputStream is = evidence.getBufferedStream()) {
+            try (BufferedInputStream is = evidence.getBufferedInputStream()) {
                 int read = IOUtils.read(is, b);
                 for (int i = 0; i <= read - 8; i++) {
                     if (b[i] == 'a' && b[i + 1] == 'c' && b[i + 2] == 'T' && b[i + 3] == 'L') {

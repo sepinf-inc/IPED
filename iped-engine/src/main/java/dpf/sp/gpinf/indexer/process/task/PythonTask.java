@@ -10,19 +10,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.imageio.plugins.common.ImageUtil;
-
 import dpf.inc.sepinf.python.PythonParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import iped3.ICaseData;
+import dpf.sp.gpinf.indexer.util.ImageUtil;
+import gpinf.dev.data.CaseData;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import jep.Jep;
 import jep.JepException;
 import jep.NDArray;
-import macee.core.Configurable;
 
 public class PythonTask extends AbstractTask {
 
@@ -47,7 +46,7 @@ public class PythonTask extends AbstractTask {
         this.scriptFile = scriptFile;
     }
 
-    public void setCaseData(ICaseData caseData) {
+    public void setCaseData(CaseData caseData) {
         super.caseData = caseData;
     }
 

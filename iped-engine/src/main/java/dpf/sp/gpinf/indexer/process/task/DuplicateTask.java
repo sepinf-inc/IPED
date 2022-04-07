@@ -12,12 +12,12 @@ import org.apache.lucene.index.SortedDocValues;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
+import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.HashValue;
-import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import iped3.IHashValue;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Tarefa de verificação de arquivos duplicados. Ignora o arquivo caso
@@ -46,19 +46,20 @@ public class DuplicateTask extends AbstractTask {
     public void process(IItem evidence) {
 
         // Verificação de duplicados
+        boolean isDuplicate = false;
         IHashValue hashValue = evidence.getHashValue();
         if (hashValue != null) {
             synchronized (hashMap) {
                 if (!hashMap.containsKey(hashValue)) {
                     hashMap.put(hashValue, hashValue);
                 } else {
-                    evidence.setDuplicate(true);
+                    isDuplicate = true;
                 }
 
             }
         }
 
-        if (ignoreDuplicates && evidence.isDuplicate() && !evidence.isDir() && !evidence.isRoot()
+        if (ignoreDuplicates && isDuplicate && !evidence.isDir() && !evidence.isRoot()
                 && !caseData.isIpedReport()) {
             evidence.setToIgnore(true);
         }

@@ -37,12 +37,14 @@ import javax.swing.table.TableColumn;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
+import org.apache.lucene.util.BytesRef;
 
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.TimelineResults.TimeItemId;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -138,7 +140,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     @Override
     public String getColumnName(int col) {
         if (col == 0) {
-            return String.valueOf(App.get().ipedResult.getLength());
+            return LocalizedFormat.format(App.get().ipedResult.getLength());
         } else {
             return columnNames[col];
         }
@@ -175,15 +177,15 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     @Override
     public void setValueAt(Object value, int row, int col) {
 
-        app.appCase.getMultiMarcadores().setSelected((Boolean) value, App.get().ipedResult.getItem(row));
+        app.appCase.getMultiBookmarks().setChecked((Boolean) value, App.get().ipedResult.getItem(row));
         App.get().galleryModel.setValueAt(value, row, col);
         App.get().resultsModel.fireTableCellUpdated(row, col);
 
         // app.appCase.getMarcadores().setSelected((Boolean)value,
         // app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
-        if (!MarcadoresController.get().isMultiSetting()) {
-            app.appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUISelection();
+        if (!BookmarksController.get().isMultiSetting()) {
+            app.appCase.getMultiBookmarks().saveState();
+            BookmarksController.get().updateUISelection();
         }
     }
 
@@ -210,10 +212,10 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public Object getValueAt(int row, int col) {
 
         if (col == 0)
-            return String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
+            return LocalizedFormat.format(App.get().resultsTable.convertRowIndexToView(row) + 1);
 
         if (col == 1)
-            return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getItem(row));
+            return app.appCase.getMultiBookmarks().isChecked(app.ipedResult.getItem(row));
 
         String value = ""; //$NON-NLS-1$
 
@@ -239,7 +241,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             }
 
             if (field.equals(BOOKMARK_COL)) {
-                return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(app.ipedResult.getItem(row)));
+                return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(app.ipedResult.getItem(row)));
             }
 
             if (item instanceof TimeItemId) {
@@ -252,17 +254,12 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 }
             }
 
-            SortedNumericDocValues sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues(field);
-            if (sndv == null) {
-                sndv = App.get().appCase.getLeafReader()
-                        .getSortedNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field);
-            }
             boolean isNumeric = IndexItem.isNumeric(field);
 
             String[] values = doc.getValues(field);
             if (values.length > 1) {
                 boolean sorted = false;
-                if (isNumeric && sndv != null) {
+                if (isNumeric) {
                     try {
                         Arrays.sort(values, new Comparator<String>() {
                             @Override
@@ -279,6 +276,16 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 }
             }
             
+            if (values.length == 0) {
+                BytesRef[] bytes = doc.getBinaryValues(field);
+                if (bytes.length > 0) {
+                    values = new String[bytes.length];
+                    for (int i = 0; i < bytes.length; i++) {
+                        values[i] = bytes[i].toString();
+                    }
+                }
+            }
+
             if (LocalizedProperties.getLocalizedField(BasicProps.CATEGORY).equalsIgnoreCase(getColumnName(col))) {
                 for (int i = 0; i < values.length; i++) {
                     values[i] = CategoryLocalization.getInstance().getLocalizedCategory(values[i]);
@@ -287,15 +294,9 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < values.length; i++) {
-                try {
-                    // do not use scientific notation for longs
-                    Double d = Double.valueOf(values[i]);
-                    if (d.doubleValue() == d.longValue()) {
-                        values[i] = Long.toString(d.longValue());
-                    }
-                } catch (NumberFormatException e) {
+                if (isNumeric) {
+                    values[i] = numberFormat.format(Double.valueOf(values[i]));
                 }
-
                 sb.append(values[i]);
                 if (i != values.length - 1) {
                     if (i == 9) {
@@ -324,13 +325,18 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     // e.printStackTrace();
                 }
 
-            if (IndexItem.isNumeric(field)) {
-                value = numberFormat.format(Double.valueOf(value));
-
-            } else if (field.equals(IndexItem.NAME)) {
+            if (field.equals(IndexItem.NAME)) {
                 TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
                 if (fragments[0].getScore() > 0) {
-                    value = "<html><nobr>" + fragments[0].toString() + "</html>"; //$NON-NLS-1$ //$NON-NLS-2$
+                    StringBuilder s = new StringBuilder();
+                    s.append("<html><nobr>"); //$NON-NLS-1$
+                    if (App.get().getFontStartTag() != null)
+                        s.append(App.get().getFontStartTag());
+                    s.append(fragments[0].toString());
+                    if (App.get().getFontStartTag() != null)
+                        s.append(ATextViewer.HIGHLIGHT_END_TAG);
+                    s.append("</html>"); //$NON-NLS-1$
+                    value = s.toString();
                 }
             }
 

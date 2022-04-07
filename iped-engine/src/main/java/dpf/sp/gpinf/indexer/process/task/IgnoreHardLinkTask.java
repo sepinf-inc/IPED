@@ -12,16 +12,16 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class IgnoreHardLinkTask extends AbstractTask {
 
     public static final String IGNORE_HARDLINK_ATTR = "ignoredHardLink"; //$NON-NLS-1$
 
-    private static Map<Long, Map<HardLink, Object>> fileSystemOrigMap = new HashMap<Long, Map<HardLink, Object>>();
-    private static Map<Long, Map<HardLink, Object>> fileSystemSlackMap = new HashMap<Long, Map<HardLink, Object>>();
+    private static Map<Long, Map<HardLink, String>> fileSystemOrigMap = new HashMap<Long, Map<HardLink, String>>();
+    private static Map<Long, Map<HardLink, String>> fileSystemSlackMap = new HashMap<Long, Map<HardLink, String>>();
 
     private static Object lock = new Object();
     private boolean taskEnabled = false;
@@ -58,12 +58,12 @@ public class IgnoreHardLinkTask extends AbstractTask {
             return;
         }
 
-        if (!(evidence instanceof ISleuthKitItem)) {
+        if (!(evidence.getInputStreamFactory() instanceof SleuthkitInputStreamFactory)) {
             return;
         }
 
-        ISleuthKitItem sevidence = ((ISleuthKitItem) evidence);
-        Content content = sevidence.getSleuthFile();
+        SleuthkitInputStreamFactory factory = (SleuthkitInputStreamFactory) evidence.getInputStreamFactory();
+        Content content = factory.getContentById(Long.valueOf(evidence.getIdInDataSource()));
         if (content != null && content instanceof FsContent) {
             FsContent fsContent = (FsContent) content;
             TSK_FS_TYPE_ENUM fsType = fsContent.getFileSystem().getFsType();
@@ -80,31 +80,31 @@ public class IgnoreHardLinkTask extends AbstractTask {
                 hardLink = new DetailedHardLink(metaAddr, evidence.getLength(), evidence.getName());
             }
 
-            Map<Long, Map<HardLink, Object>> fileSystemMap = fileSystemOrigMap;
+            Map<Long, Map<HardLink, String>> fileSystemMap = fileSystemOrigMap;
             if (fsContent instanceof SlackFile)
                 fileSystemMap = fileSystemSlackMap;
 
             boolean ignore = false;
 
             synchronized (lock) {
-                Map<HardLink, Object> hardLinkMap = fileSystemMap.get(fsId);
+                Map<HardLink, String> hardLinkMap = fileSystemMap.get(fsId);
                 if (hardLinkMap == null) {
-                    hardLinkMap = new HashMap<HardLink, Object>();
+                    hardLinkMap = new HashMap<HardLink, String>();
                     fileSystemMap.put(fsId, hardLinkMap);
                 }
 
-                Object id = hardLinkMap.get(hardLink);
+                String id = hardLinkMap.get(hardLink);
                 // test if it is not the same item from other processing queue
                 if (id != null) {
-                    if (!id.equals(sevidence.getSleuthId()))
+                    if (!id.equals(evidence.getIdInDataSource()))
                         ignore = true;
                 } else {
-                    hardLinkMap.put(hardLink, sevidence.getSleuthId());
+                    hardLinkMap.put(hardLink, evidence.getIdInDataSource());
                 }
             }
 
             if (ignore) {
-                sevidence.setSleuthFile(null);
+                evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(factory.getSleuthkitCase(), null));
                 evidence.setExtraAttribute(IGNORE_HARDLINK_ATTR, "true"); //$NON-NLS-1$
             }
 

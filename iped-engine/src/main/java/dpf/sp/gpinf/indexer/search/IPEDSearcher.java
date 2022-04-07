@@ -20,6 +20,8 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -28,16 +30,18 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.lucene.NoScoringCollector;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.IIPEDSearcher;
-import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
 
 public class IPEDSearcher implements IIPEDSearcher {
@@ -102,7 +106,7 @@ public class IPEDSearcher implements IIPEDSearcher {
         if (ipedCase instanceof IPEDMultiSource)
             throw new UnsupportedOperationException("Use multiSearch() method for IPEDMultiSource!"); //$NON-NLS-1$
 
-        return SearchResult.get(ipedCase, luceneSearch());
+        return luceneSearch().getSearchResult(ipedCase);
     }
 
     public MultiSearchResult multiSearch() throws IOException {
@@ -112,11 +116,11 @@ public class IPEDSearcher implements IIPEDSearcher {
         return MultiSearchResult.get((IPEDMultiSource) ipedCase, luceneSearch());
     }
 
-    public LuceneSearchResult luceneSearch() throws IOException {
-        return filtrarFragmentos(searchAll());
+    LuceneSearchResult luceneSearch() throws IOException {
+        return filterFragmentedResults(searchAll());
     }
 
-    public LuceneSearchResult searchAll() throws IOException {
+    private LuceneSearchResult searchAll() throws IOException {
 
         // System.out.println("searching");
 
@@ -130,26 +134,58 @@ public class IPEDSearcher implements IIPEDSearcher {
         } catch (InterruptedIOException e) {
             // e.printStackTrace();
         }
-        // não calcula scores (lento) quando resultado é mto grande
+        // do not compute scores (slow) when result set is large
         if (noScore || collector.getTotalHits() > MAX_SIZE_TO_SCORE || canceled)
             return collector.getSearchResults();
 
-        // obtém resultados calculando score
-        LuceneSearchResult searchResult = new LuceneSearchResult(0);
+        // otherwise get results computing score
+
+        // sort by index doc order: needed by features using docValues that iterate over results
+        Sort sort = new Sort(SortField.FIELD_DOC);
         int maxResults = MAX_SIZE_TO_SCORE;
         ScoreDoc[] scoreDocs = null;
+        ScoreDoc[] totalScoreDocs = null;
         do {
             ScoreDoc lastScoreDoc = null;
             if (scoreDocs != null)
                 lastScoreDoc = scoreDocs[scoreDocs.length - 1];
 
-            scoreDocs = ipedCase.getSearcher().searchAfter(lastScoreDoc, query, maxResults).scoreDocs;
+            scoreDocs = ipedCase.getSearcher().searchAfter(lastScoreDoc, query, maxResults, sort, true).scoreDocs;
 
-            searchResult = searchResult.addResults(scoreDocs);
+            if (totalScoreDocs == null) {
+                totalScoreDocs = scoreDocs;
+            } else {
+                int prevLen = totalScoreDocs.length;
+                totalScoreDocs = Arrays.copyOf(totalScoreDocs, prevLen + scoreDocs.length);
+                System.arraycopy(scoreDocs, 0, totalScoreDocs, prevLen, scoreDocs.length);
+            }
 
         } while (scoreDocs.length > 0 && !canceled);
 
+        // see #925 why this sorting is needed, this can be optimized
+        sortResultsByFinalLuceneIds(totalScoreDocs);
+
+        LuceneSearchResult searchResult = new LuceneSearchResult(0);
+        searchResult = searchResult.addResults(totalScoreDocs);
         return searchResult;
+    }
+
+    private void sortResultsByFinalLuceneIds(ScoreDoc[] totalScoreDocs) {
+        if (ipedCase instanceof IPEDMultiSource) {
+            Arrays.parallelSort(totalScoreDocs, new Comparator<ScoreDoc>() {
+                public int compare(ScoreDoc doc1, ScoreDoc doc2) {
+                    return ipedCase.getLuceneId(((IPEDMultiSource) ipedCase).getItemId(doc1.doc))
+                            - ipedCase.getLuceneId(((IPEDMultiSource) ipedCase).getItemId(doc2.doc));
+                }
+            });
+        } else {
+            Arrays.parallelSort(totalScoreDocs, new Comparator<ScoreDoc>() {
+                public int compare(ScoreDoc doc1, ScoreDoc doc2) {
+                    return ipedCase.getLuceneId(ipedCase.getId(doc1.doc))
+                            - ipedCase.getLuceneId(ipedCase.getId(doc2.doc));
+                }
+            });
+        }
     }
 
     private Query getNonTreeQuery() {
@@ -159,12 +195,12 @@ public class IPEDSearcher implements IIPEDSearcher {
         return result.build();
     }
 
-    public LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) {
+    private LuceneSearchResult filterFragmentedResults(LuceneSearchResult prevResult) {
 
         // System.out.println("fragments");
 
         if (ipedCase instanceof IPEDMultiSource)
-            return filtrarFragmentosMulti((IPEDMultiSource) ipedCase, prevResult);
+            return filterFragmentedResultsMulti((IPEDMultiSource) ipedCase, prevResult);
 
         HashSet<Integer> duplicates = new HashSet<Integer>();
         int[] docs = prevResult.getLuceneIds();
@@ -184,7 +220,7 @@ public class IPEDSearcher implements IIPEDSearcher {
 
     }
 
-    private LuceneSearchResult filtrarFragmentosMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) {
+    private LuceneSearchResult filterFragmentedResultsMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) {
         HashMap<Integer, HashSet<Integer>> duplicates = new HashMap<Integer, HashSet<Integer>>();
         int[] docs = prevResult.getLuceneIds();
         if (prevResult.getLength() <= MAX_SIZE_TO_SCORE) {

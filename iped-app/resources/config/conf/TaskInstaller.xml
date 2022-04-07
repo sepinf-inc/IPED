@@ -9,6 +9,7 @@
     <task class="dpf.sp.gpinf.indexer.process.task.SkipCommitedTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.IgnoreHardLinkTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.TempFileTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.HashTask"></task>
     
     <task class="dpf.sp.gpinf.indexer.process.task.SignatureTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.SetTypeTask"></task>
@@ -16,7 +17,6 @@
     <task script="RefineCategoryTask.js"></task>
     
     <!--tasks that ignore items should be after SetCategoryTask, so category of ignored items will be included in CSV properties file-->
-    <task class="dpf.sp.gpinf.indexer.process.task.HashTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.HashDBLookupTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.DuplicateTask"></task>
     
@@ -24,10 +24,12 @@
     <task class="dpf.sp.gpinf.indexer.process.task.VideoThumbTask"></task> <!--see issue #100-->
     <task class="dpf.sp.gpinf.indexer.process.task.ParsingTask"></task>
     
+    <task class="dpf.sp.gpinf.indexer.process.task.QRCodeTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.regex.RegexTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.LanguageDetectTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.NamedEntityTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.ExportFileTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.EmbeddedDiskProcessTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.MakePreviewTask"></task>
     
     <task class="dpf.sp.gpinf.indexer.process.task.DocThumbTask"></task>

@@ -30,7 +30,7 @@ import gpinf.dev.data.Item;
 
 /**
  * Classe abstrata base para leitura dos itens de uma fonte de dados (pasta,
- * imagem forense, relatório do FTK, caso do iped). Pode ser estendida para
+ * imagem forense, relatório do UFED, caso do iped). Pode ser estendida para
  * implementar suporte a uma nova fonte de dados (ex: ad1, l01, etc).
  *
  * @author Nassif
@@ -92,12 +92,10 @@ public abstract class DataSourceReader implements Closeable {
      *
      * @param datasource
      *            Fonte de dados que será processada/lida.
-     * @return Número de itens com versões alternativas de visualização. Só deve ser
-     *         diferente de zero no caso de relatórios do FTK.
      * @throws Exception
      *             Caso algum erro inesperado ocorra durante a leitura dos dados
      */
-    public abstract int read(File datasource) throws Exception;
+    public abstract void read(File datasource) throws Exception;
 
     /**
      * Lê a fonte de dados informada considerando a evidencia passada como parent.
@@ -135,6 +133,14 @@ public abstract class DataSourceReader implements Closeable {
             return datasource.getName();
         }
         return cmdArgs.getDataSourceName(datasource);
+    }
+
+    public String getEvidencePassword(File datasource) {
+        CmdLineArgs cmdArgs = ((CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName()));
+        if (cmdArgs.getPasswords() == null || cmdArgs.getPasswords().size() == 0) {
+            return null;
+        }
+        return cmdArgs.getDataSourcePassword(datasource);
     }
 
     @Override

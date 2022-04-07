@@ -17,6 +17,10 @@ public class LocalizedFormat {
         }
     };
 
+    public static String format(int value) {
+        return threadLocalNF.get().format(value);
+    }
+    
     public static String format(Long value) {
         return threadLocalNF.get().format(value);
     }

@@ -16,6 +16,7 @@ import java.util.Set;
 
 import javax.swing.UIManager;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
@@ -25,7 +26,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import dpf.sp.gpinf.indexer.util.UiUtil;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -41,7 +42,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 
 @SuppressWarnings("restriction")
-public abstract class MetadataViewer extends Viewer {
+public abstract class MetadataViewer extends AbstractViewer {
 
     private DecimalFormat df = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
 
@@ -267,7 +268,8 @@ public abstract class MetadataViewer extends Viewer {
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.BasicProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         fillProp(sb, BasicProps.NAME, item.getName());
         fillProp(sb, BasicProps.LENGTH, item.getLength());
-        fillProp(sb, BasicProps.TYPE, item.getTypeExt());
+        fillProp(sb, BasicProps.EXT, item.getExt());
+        fillProp(sb, BasicProps.TYPE, item.getType());
         fillProp(sb, BasicProps.DELETED, item.isDeleted());
         fillProp(sb, BasicProps.CATEGORY, item.getCategorySet());
         fillProp(sb, BasicProps.CREATED, item.getCreationDate());
@@ -292,7 +294,6 @@ public abstract class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.ISDIR, item.isDir());
         fillProp(sb, BasicProps.HASCHILD, item.hasChildren());
         fillProp(sb, BasicProps.ISROOT, item.isRoot());
-        fillProp(sb, BasicProps.DUPLICATE, item.isDuplicate());
         fillProp(sb, BasicProps.TIMEOUT, item.isTimedOut());
         String[] keys = item.getExtraAttributeMap().keySet().toArray(new String[0]);
         Arrays.sort(keys, comparator);
@@ -306,22 +307,26 @@ public abstract class MetadataViewer extends Viewer {
     private void fillProp(StringBuilder sb, String key, Object value) {
         if (value != null && !value.toString().isEmpty()) {
             sb.append("<tr><td class=\"s1\">" + LocalizedProperties.getLocalizedField(key) + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
-            if (isNumeric(key)) {
-                if (value instanceof Number) {
-                    value = df.format(Double.valueOf(((Number) value).doubleValue()));
-                } else if (value instanceof Collection) {
-                    ArrayList<Object> formattedVals = new ArrayList<>();
-                    for (Object v : (Collection) value) {
-                        if (v instanceof Number) {
-                            v = df.format(Double.valueOf(((Number) v).doubleValue()));
-                        }
-                        formattedVals.add(v);
-                    }
-                    value = formattedVals;
+            if (value instanceof Collection) {
+                ArrayList<Object> formattedVals = new ArrayList<>();
+                for (Object v : (Collection) value) {
+                    formattedVals.add(format(v));
                 }
+                value = formattedVals;
+            } else {
+                value = format(value);
             }
             sb.append("<td class=\"s2\">" + SimpleHTMLEncoder.htmlEncode(value.toString()) + "</td></tr>"); //$NON-NLS-1$ //$NON-NLS-2$
         }
+    }
+
+    private String format(Object value) {
+        if (value instanceof Number) {
+            return df.format(Double.valueOf(((Number) value).doubleValue()));
+        } else if (value instanceof byte[]) {
+            return new String(Hex.encodeHex((byte[]) value));
+        }
+        return value.toString();
     }
 
     @Override

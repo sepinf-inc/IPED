@@ -8,6 +8,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
 
@@ -36,8 +37,9 @@ public class ResultTotalSizeCounter {
                     NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.LENGTH);
                     for (IItemId item : result.getIterator()) {
                         int doc = App.get().appCase.getLuceneId(item);
-                        long len = ndv.get(doc);
-                        volume += len;
+                        if (ndv.advanceExact(doc)) {
+                            volume += ndv.longValue();
+                        }
                         if (Thread.currentThread().isInterrupted())
                             return;
                     }

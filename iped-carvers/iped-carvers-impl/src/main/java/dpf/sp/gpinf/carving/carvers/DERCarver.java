@@ -35,7 +35,7 @@ public class DERCarver extends AbstractCarver {
 
     @Override
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
-        try (SeekableInputStream is = parentEvidence.getStream()) {
+        try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             is.seek(header.getOffset() + 1);
             byte lenlenb[] = new byte[1];
             is.read(lenlenb);
@@ -60,7 +60,7 @@ public class DERCarver extends AbstractCarver {
             throws InvalidCarvedObjectException {
         Certificate cert = null;
 
-        try (SeekableInputStream is = parentEvidence.getStream()) {
+        try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             byte[] buf = new byte[(int) length];
             is.seek(header.getOffset());
             is.read(buf);

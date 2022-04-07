@@ -30,7 +30,7 @@ import com.google.protobuf.ByteString;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
+import iped3.exception.IPEDException;
 
 public class GoogleTranscriptTask extends AbstractTranscriptTask {
 
@@ -96,10 +96,10 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
 
     @Override
     public void finish() throws Exception {
+        super.finish();
         if (!transcriptConfig.isEnabled()) {
             return;
         }
-        super.finish();
         speechClient.close();
     }
 

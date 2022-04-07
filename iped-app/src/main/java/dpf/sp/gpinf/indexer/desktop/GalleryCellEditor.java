@@ -36,7 +36,6 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellEditor;
 
-import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 
 public class GalleryCellEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {
@@ -104,7 +103,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
             return panel;
         }
 
-        check.setSelected(App.get().appCase.getMultiMarcadores().isSelected(cellValue.id));
+        check.setSelected(App.get().appCase.getMultiBookmarks().isChecked(cellValue.id));
         cLabel.setText(cellValue.name);
 
         if (cellValue.icon == null && cellValue.image == null) {
@@ -144,7 +143,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
     public void actionPerformed(ActionEvent evt) {
 
         if (evt.getSource() == check) {
-            int idx = row * App.get().galleryModel.colCount + col;
+            int idx = row * App.get().getGalleryColCount() + col;
             App.get().resultsTable.setValueAt(check.isSelected(), idx, 1);
         }
 

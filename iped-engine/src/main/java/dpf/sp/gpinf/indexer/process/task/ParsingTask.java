@@ -59,8 +59,8 @@ import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.inc.sepinf.python.PythonParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ExternalParsersConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
@@ -69,6 +69,7 @@ import dpf.sp.gpinf.indexer.config.ParsersConfig;
 import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.config.SplitLargeBinaryConfig;
+import dpf.sp.gpinf.indexer.io.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
@@ -83,6 +84,7 @@ import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
+import dpf.sp.gpinf.indexer.parsers.util.ComputeThumb;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
@@ -91,27 +93,27 @@ import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemSearcher;
+import dpf.sp.gpinf.indexer.tika.SyncMetadata;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
-import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
+import iped3.IItemBase;
+import iped3.configuration.Configurable;
 import iped3.exception.ZipBombException;
-import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
-import macee.core.Configurable;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO,
@@ -128,7 +130,7 @@ import macee.core.Configurable;
  * GRANDES NÃO TEM SEU TEXTO EXTRAÍDO ARMAZENADO EM MEMÓRIA, O QUE PODERIA
  * CAUSAR OOM.
  */
-public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtractor {
+public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ParsingTask.class);
 
@@ -350,6 +352,17 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         }
 
         context = getTikaContext();
+        if (evidence.getHashValue() != null) {
+            try {
+                File thumbFile = getThumbFile(evidence);
+                if (!hasThumb(evidence, thumbFile)) {
+                    context.set(ComputeThumb.class, new ComputeThumb());
+                }
+            } catch (Exception e1) {
+                LOGGER.warn("Error checking item thumbnail: " + evidence.toString(), e1);
+            }
+        }
+
         Metadata metadata = evidence.getMetadata();
 
         if (typesToCheckZipBomb.contains(evidence.getMediaType())) {
@@ -392,7 +405,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     }
 
-    private static final void handleMetadata(IItem evidence) {
+    private final void handleMetadata(IItem evidence) {
         // Ajusta metadados:
         Metadata metadata = evidence.getMetadata();
         if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
@@ -410,11 +423,18 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             }
         }
 
-        String base64Thumb = metadata.get(ExtraProperties.USER_THUMB);
+        String base64Thumb = metadata.get(ExtraProperties.THUMBNAIL_BASE64);
         if (base64Thumb != null) {
+            metadata.remove(ExtraProperties.THUMBNAIL_BASE64);
             evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
-            metadata.remove(ExtraProperties.USER_THUMB);
-            evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
+            try {
+                File thumbFile = getThumbFile(evidence);
+                saveThumb(evidence, thumbFile);
+            } catch (Throwable t) {
+                LOGGER.warn("Error saving thumb of " + evidence.toString(), t);
+            } finally {
+                updateHasThumb(evidence);
+            }
         }
 
         String prevMediaType = evidence.getMediaType().toString();
@@ -426,6 +446,16 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if (Boolean.valueOf(metadata.get(BasicProps.HASCHILD))) {
             metadata.remove(BasicProps.HASCHILD);
             evidence.setHasChildren(true);
+        }
+
+        String compressRatio = evidence.getMetadata().get(EntropyTask.COMPRESS_RATIO);
+        if (compressRatio != null) {
+            evidence.getMetadata().remove(EntropyTask.COMPRESS_RATIO);
+            evidence.setExtraAttribute(EntropyTask.COMPRESS_RATIO, Double.valueOf(compressRatio));
+        }
+        
+        if (MediaTypes.isInstanceOf(evidence.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
+            evidence.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(evidence.getId()));
         }
 
     }
@@ -498,8 +528,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             subItem.setSubitemId(itemInfo.getChild());
             context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
 
-            Util.generatePersistentId(parentInfo.getPersistentId(), subItem);
-            subItem.setExtraAttribute(IndexItem.CONTAINER_PERSISTENT_ID, Util.getPersistentId(evidence));
+            subItem.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parentInfo.getTrackId());
+            subItem.setExtraAttribute(IndexItem.CONTAINER_TRACK_ID, Util.getTrackID(evidence));
 
             String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
             char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
@@ -521,6 +551,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             // root has children
             evidence.setHasChildren(true);
 
+            // protection for future concurrent access, see #794
+            metadata = new SyncMetadata(metadata);
             subItem.setMetadata(metadata);
 
             boolean updateInputStream = false;
@@ -584,13 +616,18 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 subItem.setDeleted(true);
             }
 
+            if (Boolean.valueOf(metadata.get(ExtraProperties.DECODED_DATA))) {
+                subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+                metadata.remove(ExtraProperties.DECODED_DATA);
+            }
+
             // causa problema de subitens corrompidos de zips carveados serem apagados,
             // mesmo sendo referenciados por outros subitens
             // subItem.setCarved(parent.isCarved());
             subItem.setSubItem(true);
             subItem.setSumVolume(false);
 
-            InputStream is = !updateInputStream ? inputStream : subItem.getStream();
+            InputStream is = !updateInputStream ? inputStream : subItem.getSeekableInputStream();
             try {
                 ExportFileTask extractor = new ExportFileTask();
                 extractor.setWorker(worker);
@@ -610,8 +647,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             // subitem is populated, store its info now
             String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
             metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
-            if (embeddedId != null)
-                idToItemMap.put(embeddedId, new ParentInfo(subItem));
 
             // pausa contagem de timeout do pai antes de extrair e processar subitem
             if (reader.setTimeoutPaused(true)) {
@@ -641,6 +676,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 } finally {
                     // despausa contador de timeout do pai somente após processar subitem
                     reader.setTimeoutPaused(false);
+
+                    // must do this after adding subitem to queue
+                    if (embeddedId != null) {
+                        idToItemMap.put(embeddedId, new ParentInfo(subItem));
+                    }
                 }
             }
 
@@ -688,10 +728,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         }
         if (zipBombException != null) {
             // dispose now because this item will not be added to processing queue
-            if (subItem.hasFile()) {
-                subItem.setDeleteFile(true);
-                subItem.dispose();
-            }
+            subItem.dispose();
             throw zipBombException;
         }
     }
@@ -790,6 +827,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public void finish() throws Exception {
         if (totalText != null) {
             LOGGER.info("Total extracted text size: " + totalText.get()); //$NON-NLS-1$
+            WhatsAppParser.clearStaticResources();
         }
         totalText = null;
     }

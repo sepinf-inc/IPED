@@ -19,11 +19,11 @@ import javax.swing.JPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IStreamSource;
 
-public class CADViewer extends Viewer {
+public class CADViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(CADViewer.class);
 
@@ -89,7 +89,7 @@ public class CADViewer extends Viewer {
                 pb.redirectErrorStream(true);
                 try {
                     Process process = pb.start();
-                    Util.ignoreStream(process.getInputStream());
+                    IOUtil.ignoreInputStream(process.getInputStream());
 
                 } catch (IOException e1) {
                     e1.printStackTrace();
@@ -108,7 +108,7 @@ public class CADViewer extends Viewer {
 
         // create temp file here to not block EDT
         if (content != null) {
-            try (InputStream in = content.getStream()) {
+            try (InputStream in = content.getSeekableInputStream()) {
                 // put file in temp
                 temp = File.createTempFile("IPED", ".dwg", null);
                 temp.deleteOnExit();

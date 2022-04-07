@@ -46,19 +46,26 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 
+import br.gov.pf.labld.graph.GraphFileWriter;
+import br.gov.pf.labld.graph.GraphService;
+import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import br.gov.pf.labld.graph.GraphTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.WorkerProvider;
-import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.config.AnalysisConfig;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
+import dpf.sp.gpinf.indexer.io.ExeFileFilter;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.localization.Messages;
+import dpf.sp.gpinf.indexer.lucene.ConfiguredFSDirectory;
+import dpf.sp.gpinf.indexer.lucene.CustomIndexDeletionPolicy;
+import dpf.sp.gpinf.indexer.lucene.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.process.task.ElasticSearchIndexTask;
 import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
@@ -66,20 +73,20 @@ import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
-import dpf.sp.gpinf.indexer.search.Marcadores;
-import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
-import dpf.sp.gpinf.indexer.util.CustomIndexDeletionPolicy;
-import dpf.sp.gpinf.indexer.util.ExeFileFilter;
+import dpf.sp.gpinf.indexer.search.ItemSearcher;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitClient;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
+import dpf.sp.gpinf.indexer.search.Bookmarks;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
 import iped3.IItem;
+import iped3.exception.IPEDException;
 import iped3.search.IItemSearcher;
-import iped3.search.LuceneSearchResult;
+import iped3.search.SearchResult;
 import iped3.util.BasicProps;
 
 /**
@@ -91,7 +98,7 @@ import iped3.util.BasicProps;
  * permitindo que seja estimado o progresso e término do processamento.
  *
  * O produtor obtém os itens a partir de uma fonte de dados específica
- * (relatório do FTK, diretório, imagem), inserindo-os numa fila de
+ * (relatório do UFED, diretório, imagem), inserindo-os numa fila de
  * processamento com tamanho limitado (para limitar o uso de memória).
  *
  * Os consumidores (workers) retiram os itens da fila e são responsáveis pelo
@@ -117,7 +124,7 @@ public class Manager {
     private static String FINISHED_FLAG = "data/processing_finished";
     private static Manager instance;
 
-    private ICaseData caseData;
+    private CaseData caseData;
 
     private List<File> sources;
     private File output, finalIndexDir, indexDir, palavrasChave;
@@ -164,7 +171,7 @@ public class Manager {
         this.caseData = new CaseData(QUEUE_SIZE);
 
         for (File source : sources) {
-            if (source.getName().toLowerCase().endsWith(Marcadores.EXT)) {
+            if (source.getName().toLowerCase().endsWith(Bookmarks.EXT)) {
                 this.caseData.setIpedReport(true);
                 break;
             }
@@ -191,6 +198,10 @@ public class Manager {
 
     Worker[] getWorkers() {
         return workers;
+    }
+
+    public int getNumWorkers() {
+        return workers.length;
     }
 
     public IndexWriter getIndexWriter() {
@@ -229,8 +240,16 @@ public class Manager {
         }
 
         try {
-            if (!iniciarIndexacao())
+            openIndex();
+
+            if (args.getEvidenceToRemove() != null) {
+                removeEvidence(args.getEvidenceToRemove());
                 return;
+            }
+
+            initWorkers();
+
+            initSleuthkitServers();
 
             // apenas conta o número de arquivos a indexar
             counter = new ItemProducer(this, caseData, true, sources, output);
@@ -240,22 +259,24 @@ public class Manager {
             producer = new ItemProducer(this, caseData, false, sources, output);
             producer.start();
 
-            monitorarIndexacao();
+            monitorProcessing();
 
-            finalizarIndexacao();
+            finishProcessing();
 
         } catch (Exception e) {
             e.printStackTrace();
-            interromperIndexacao();
+            interruptProcessing();
             throw e;
 
         } finally {
             closeItemProducers();
         }
 
-        filtrarPalavrasChave();
+        filterKeywords();
 
         removeEmptyTreeNodes();
+
+        ExportFileTask.deleteIgnoredItemData(caseData, output);
 
         new P2PBookmarker(caseData).createBookmarksForSharedFiles(output.getParentFile());
 
@@ -265,7 +286,7 @@ public class Manager {
 
         deleteTempDir();
 
-        stats.logarEstatisticas(this);
+        stats.logStatistics(this);
 
         Files.createFile(getFinishedFileFlag(output).toPath());
 
@@ -296,7 +317,7 @@ public class Manager {
         }
     }
 
-    private void interromperIndexacao() throws Exception {
+    private void interruptProcessing() throws Exception {
         if (workers != null) {
             for (int k = 0; k < workers.length; k++) {
                 if (workers[k] != null) {
@@ -320,9 +341,13 @@ public class Manager {
         }
     }
 
-    public void initSleuthkitServers(final String dbPath) throws InterruptedException {
-        if (!initSleuthkitServers.getAndSet(true)) {
-            SleuthkitClient.initSleuthkitServers(dbPath);
+    public synchronized void initSleuthkitServers() throws InterruptedException {
+        File tskDB = SleuthkitReader.getSleuthkitDB(output);
+        FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+        if (tskDB.exists() && fsConfig.isRobustImageReading()) {
+            if (!initSleuthkitServers.getAndSet(true)) {
+                SleuthkitClient.initSleuthkitServers(tskDB.getParent());
+            }
         }
     }
 
@@ -387,25 +412,77 @@ public class Manager {
         return conf;
     }
 
-    private void removeEvidence(String uuid) throws IOException {
+    private void removeEvidence(String evidenceName) throws Exception {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
-        LOGGER.log(CONSOLE,
-                "WARN: removing evidence does NOT update duplicate flag, graph and internal storage for now!");
-        LOGGER.log(CONSOLE, "Removing evidence with UUID {} from index...", uuid);
-        TermQuery query = new TermQuery(new Term(BasicProps.EVIDENCE_UUID, uuid));
-        int prevDocs = writer.numDocs();
+        LOGGER.log(CONSOLE, "Removing evidence '{}' from case...", evidenceName);
+
+        // query evidenceUUID and tskID
+        String evidenceUUID;
+        Integer tskID = null;
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
+            String query = BasicProps.NAME + ":\"" + evidenceName + "\" AND " + BasicProps.ISROOT + ":true";
+            IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
+            SearchResult result = searcher.search();
+            if (result.getLength() == 0) {
+                Files.createFile(getFinishedFileFlag(output).toPath());
+                throw new IPEDException("Evidence name '" + evidenceName + "' not found!");
+            }
+            Item item = (Item) ipedCase.getItemByID(result.getId(0));
+            evidenceUUID = item.getDataSource().getUUID();
+            if (item.getInputStreamFactory() instanceof SleuthkitInputStreamFactory) {
+                tskID = Integer.valueOf(item.getIdInDataSource());
+            }
+        }
+
+        // remove from items from index
+        LOGGER.log(CONSOLE, "Deleting items from index...");
+        TermQuery query = new TermQuery(new Term(BasicProps.EVIDENCE_UUID, evidenceUUID));
+        int prevDocs = writer.getDocStats().numDocs;
         writer.deleteDocuments(query);
         writer.commit();
-        int deletes = prevDocs - writer.numDocs();
-        LOGGER.log(CONSOLE, "Deleted about {} raw documents from index.", deletes);
+        int deletes = prevDocs - writer.getDocStats().numDocs;
+        LOGGER.log(CONSOLE, "Deleted {} raw documents from index.", deletes);
+
+        // remove evidence from TSK DB
+        if (tskID != null) {
+            LOGGER.log(CONSOLE, "Deleting image reference from TSK DB...");
+            SleuthkitReader.deleteImageInfo(tskID, output);
+        }
+
+        // remove item data from storage or file system
+        ExportFileTask.deleteIgnoredItemData(caseData, output, true, writer);
+
         writer.close();
+
+        // removes graph connections from evidence
+        LOGGER.log(CONSOLE, "Deleting connections from graph...");
+        GraphService graphService = null;
+        try {
+            graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
+            graphService.start(new File(output, GraphTask.DB_HOME_DIR));
+            int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
+            LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
+
+        } finally {
+            if (graphService != null) {
+                graphService.stop();
+            }
+        }
+
+        // Delete relations from graph source CSV
+        LOGGER.log(CONSOLE, "Deleting connections from graph CSVs...");
+        int deletions = GraphFileWriter.removeDeletedRelationships(evidenceUUID,
+                new File(output, GraphTask.CSVS_PATH));
+        LOGGER.log(CONSOLE, "Deleted {} CSV connections.", deletions);
+
+        Files.createFile(getFinishedFileFlag(output).toPath());
     }
 
-    private boolean iniciarIndexacao() throws Exception {
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        LOGGER.info("Creating index..."); //$NON-NLS-1$
+    private void openIndex() throws IOException {
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.OpeningIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         boolean newIndex = !indexDir.exists();
+        LOGGER.info((newIndex ? "Creating" : "Opening") + " index: {}", indexDir.getAbsoluteFile());
         Directory directory = ConfiguredFSDirectory.open(indexDir);
         IndexWriterConfig config = getIndexWriterConfig();
         
@@ -424,10 +501,9 @@ public class Manager {
             loadExistingData();
         }
 
-        if (args.getEvidenceToRemove() != null) {
-            removeEvidence(args.getEvidenceToRemove());
-            return false;
-        }
+    }
+
+    private void initWorkers() throws Exception {
 
         workers = new Worker[localConfig.getNumThreads()];
         for (int k = 0; k < workers.length; k++) {
@@ -441,11 +517,9 @@ public class Manager {
         }
 
         WorkerProvider.getInstance().firePropertyChange("workers", 0, workers); //$NON-NLS-1$
-
-        return true;
     }
 
-    private void monitorarIndexacao() throws Exception {
+    private void monitorProcessing() throws Exception {
 
         boolean someWorkerAlive = true;
         long start = System.currentTimeMillis();
@@ -470,41 +544,38 @@ public class Manager {
             WorkerProvider.getInstance().firePropertyChange("processed", -1, stats.getProcessed()); //$NON-NLS-1$
             WorkerProvider.getInstance().firePropertyChange("progresso", 0, (int) (stats.getVolume() / 1000000)); //$NON-NLS-1$
 
-            someWorkerAlive = false;
+            boolean changeToNextQueue = !producer.isAlive();
             for (int k = 0; k < workers.length; k++) {
                 if (workers[k].exception != null && exception == null) {
                     exception = workers[k].exception;
                 }
-                /**
-                 * TODO sincronizar teste, pois pode ocorrer condição de corrida e o teste não
-                 * detectar um último item sendo processado não é demasiado grave pois será
-                 * detectado o problema no log de estatísticas e o usuario sera informado do
-                 * erro.
-                 */
-                if (workers[k].evidence != null || workers[k].itensBeingProcessed > 0)
-                    someWorkerAlive = true;
+                if (!workers[k].isWaiting()) {
+                    changeToNextQueue = false;
+                }
             }
-            
-            IItem queueEnd = caseData.getItemQueue().peek();
-            boolean justQueueEndLeft = queueEnd != null && queueEnd.isQueueEnd() && caseData.getItemQueue().size() == 1;
+            if (exception != null) {
+                throw exception;
+            }
 
-            if (!justQueueEndLeft || producer.isAlive())
-                someWorkerAlive = true;
-
-            if (!someWorkerAlive) {
+            if (changeToNextQueue) {
                 IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
-                if (searcher != null)
+                if (searcher != null) {
                     searcher.close();
-
+                }
+                IItem queueEnd = caseData.peekItemFromCurrentQueue();
+                if (!queueEnd.isQueueEnd()) {
+                    throw new IPEDException("Tried to get queue end from queue, but failed! Please warn the dev team.");
+                }
                 if (caseData.changeToNextQueue() != null) {
                     LOGGER.info("Changed to processing queue with priority " + caseData.getCurrentQueuePriority()); //$NON-NLS-1$
-
                     caseData.putCaseObject(IItemSearcher.class.getName(),
                             new ItemSearcher(output.getParentFile(), writer));
-                    caseData.getItemQueue().addLast(queueEnd);
-                    someWorkerAlive = true;
-                    for (int k = 0; k < workers.length; k++)
+                    caseData.addLastToCurrentQueue(queueEnd);
+                    for (int k = 0; k < workers.length; k++) {
                         workers[k].processNextQueue();
+                    }
+                } else {
+                    someWorkerAlive = false;
                 }
             }
 
@@ -515,11 +586,6 @@ public class Manager {
                 }
                 start = t;
             }
-
-            if (exception != null) {
-                throw exception;
-            }
-
         }
 
     }
@@ -531,6 +597,7 @@ public class Manager {
             public void run() {
                 try {
                     long start = System.currentTimeMillis() / 1000;
+                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitStarted"));
                     LOGGER.info("Prepare commit started...");
                     writer.prepareCommit();
 
@@ -551,6 +618,7 @@ public class Manager {
                     writer.commit();
 
                     long end = System.currentTimeMillis() / 1000;
+                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitFinished"));
                     LOGGER.info("Commit finished in " + (end - start) + "s");
                     partialCommitsTime.addAndGet(end - start);
 
@@ -571,15 +639,7 @@ public class Manager {
         return t;
     }
 
-    public synchronized int numItensBeingProcessed() {
-        int num = 0;
-        for (int k = 0; k < workers.length; k++) {
-            num += workers[k].itensBeingProcessed;
-        }
-        return num;
-    }
-
-    private void finalizarIndexacao() throws Exception {
+    private void finishProcessing() throws Exception {
 
         if (commitThread != null && commitThread.isAlive()) {
             commitThread.join();
@@ -618,16 +678,12 @@ public class Manager {
 
             } catch (IOException e) {
                 LOGGER.info("Move failed. Copying Index..."); //$NON-NLS-1$
-                IOUtil.copiaDiretorio(indexDir, finalIndexDir);
+                IOUtil.copyDirectory(indexDir, finalIndexDir);
             }
         }
 
         if (caseData.containsReport()) {
             new File(output, "data/containsReport.flag").createNewFile(); //$NON-NLS-1$
-        }
-
-        if (FTK3ReportReader.wasExecuted) {
-            new File(output, "data/containsFTKReport.flag").createNewFile(); //$NON-NLS-1$
         }
 
     }
@@ -642,10 +698,10 @@ public class Manager {
 
     public void deleteTempDir() {
         LOGGER.info("Deleting temp folder {}", localConfig.getIndexerTemp()); //$NON-NLS-1$
-        IOUtil.deletarDiretorio(localConfig.getIndexerTemp());
+        IOUtil.deleteDirectory(localConfig.getIndexerTemp());
     }
 
-    private void filtrarPalavrasChave() {
+    private void filterKeywords() {
 
         try {
             LOGGER.info("Filtering keywords..."); //$NON-NLS-1$
@@ -665,7 +721,7 @@ public class Manager {
 
                     try {
                         IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
-                        if (pesquisa.searchAll().getLength() > 0) {
+                        if (pesquisa.search().getLength() > 0) {
                             palavrasFinais.add(palavra);
                         }
                     } catch (Exception e) {
@@ -700,7 +756,7 @@ public class Manager {
 
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())) {
             IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
-            LuceneSearchResult result = searchAll.searchAll();
+            LuceneSearchResult result = LuceneSearchResult.get(ipedCase, searchAll.search());
 
             boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
             for (int docID : result.getLuceneIds()) {
@@ -759,44 +815,44 @@ public class Manager {
         }
 
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, iped3.util.Messages.BUNDLES_FOLDER),
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, iped3.util.Messages.BUNDLES_FOLDER),
                     new File(output, iped3.util.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
 
             if (!analysisConfig.isEmbedLibreOffice()) {
                 new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
             }
 
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "help"), new File(output, "help")); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
                     new File(output, "htmlreport")); //$NON-NLS-1$
 
             // copy default configs
             File defaultProfile = new File(Configuration.getInstance().appRoot);
-            IOUtil.copiaDiretorio(new File(defaultProfile, "conf"), new File(output, "conf"));
-            IOUtil.copiaArquivo(new File(defaultProfile, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
-            IOUtil.copiaArquivo(new File(defaultProfile, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
+            IOUtil.copyDirectory(new File(defaultProfile, "conf"), new File(output, "conf"));
+            IOUtil.copyFile(new File(defaultProfile, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
+            IOUtil.copyFile(new File(defaultProfile, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
 
             // copy non default profile
             File currentProfile = new File(Configuration.getInstance().configPath);
             if (!currentProfile.equals(defaultProfile)) {
-                IOUtil.copiaDiretorio(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
+                IOUtil.copyDirectory(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
             }
 
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
             if (binDir.exists())
-                IOUtil.copiaDiretorio(binDir, output.getParentFile()); // $NON-NLS-1$
+                IOUtil.copyDirectory(binDir, output.getParentFile()); // $NON-NLS-1$
             else {
                 for (File f : new File(Configuration.getInstance().appRoot).getParentFile()
                         .listFiles(new ExeFileFilter()))
-                    IOUtil.copiaArquivo(f, new File(output.getParentFile(), f.getName()));
+                    IOUtil.copyFile(f, new File(output.getParentFile(), f.getName()));
             }
         }
 
         if (palavrasChave != null) {
-            IOUtil.copiaArquivo(palavrasChave, new File(output, "palavras-chave.txt")); //$NON-NLS-1$
+            IOUtil.copyFile(palavrasChave, new File(output, "palavras-chave.txt")); //$NON-NLS-1$
         }
 
         File dataDir = new File(output, "data"); //$NON-NLS-1$

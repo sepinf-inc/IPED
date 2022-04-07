@@ -13,6 +13,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.neo4j.dbms.api.DatabaseManagementService;
+import org.neo4j.dbms.api.DatabaseManagementServiceBuilder;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -21,8 +23,6 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,19 +30,18 @@ public class GraphServiceImpl implements GraphService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(GraphServiceImpl.class);
 
+    private DatabaseManagementService managementService;
     private GraphDatabaseService graphDB;
     private boolean started = false;
-    private File dbFile;
+    private File dbHome;
 
-    public void start(File path) {
+    public void start(File dbHome) {
         if (!started) {
-            dbFile = path;
-            GraphDatabaseFactory graphDatabaseFactory = new GraphDatabaseFactory();
-            LOGGER.info("Starting neo4j service at " + path.getAbsolutePath());
+            this.dbHome = dbHome;
+            LOGGER.info("Starting neo4j service at " + dbHome.getAbsolutePath());
 
-            GraphDatabaseBuilder builder = graphDatabaseFactory.newEmbeddedDatabaseBuilder(dbFile);
-
-            graphDB = builder.newGraphDatabase();
+            managementService = new DatabaseManagementServiceBuilder(dbHome.toPath()).build();
+            graphDB = managementService.database(GraphTask.DB_NAME);
 
             started = true;
 
@@ -54,7 +53,7 @@ public class GraphServiceImpl implements GraphService {
     public synchronized void stop() {
         if (started) {
             LOGGER.info("Shutting down neo4j service.");
-            graphDB.shutdown();
+            managementService.shutdown();
             started = false;
         } else {
             LOGGER.info("Service already stopped.");
@@ -66,8 +65,8 @@ public class GraphServiceImpl implements GraphService {
     }
 
     @Override
-    public synchronized File getDbFile() {
-        return dbFile;
+    public synchronized File getDbHome() {
+        return dbHome;
     }
 
     @Override
@@ -77,13 +76,17 @@ public class GraphServiceImpl implements GraphService {
         try {
             tx = graphDB.beginTx();
 
-            Result result = graphDB.execute(
+            Result result = tx.execute(
                     "MATCH (n) RETURN id(n) as id, size((n)--()) as degree ORDER BY degree DESC LIMIT " + maxNodes);
             while (result.hasNext()) {
-                Long id = (Long) result.next().get("id");
-                ids.add(id);
+                Map<String, Object> map = result.next();
+                Long id = (Long) map.get("id");
+                Long degree = (Long) map.get("degree");
+                if (degree > 0) {
+                    ids.add(id);
+                }
             }
-            tx.success();
+            tx.commit();
 
         } finally {
             tx.close();
@@ -99,7 +102,7 @@ public class GraphServiceImpl implements GraphService {
 
             HashMap<String, Object> parameters = new HashMap<>(1);
             parameters.put("param", ids);
-            Result result = graphDB.execute("MATCH ()-[r]-() WHERE r.relId IN $param RETURN DISTINCT r as edge",
+            Result result = tx.execute("MATCH ()-[r]-() WHERE r.relId IN $param RETURN DISTINCT r as edge",
                     parameters);
 
             boolean proceed = true;
@@ -108,7 +111,7 @@ public class GraphServiceImpl implements GraphService {
                 proceed = listener.edgeFound(edge);
             }
 
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -122,7 +125,7 @@ public class GraphServiceImpl implements GraphService {
 
             HashMap<String, Object> parameters = new HashMap<>(1);
             parameters.put("param", ids);
-            Result result = graphDB.execute("MATCH (n) WHERE ID(n) IN $param RETURN n", parameters);
+            Result result = tx.execute("MATCH (n) WHERE ID(n) IN $param RETURN n", parameters);
 
             ResourceIterator<Node> resourceIterator = result.columnAs("n");
             boolean proceed = true;
@@ -131,7 +134,7 @@ public class GraphServiceImpl implements GraphService {
                 proceed = listener.nodeFound(node);
             }
 
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -147,7 +150,7 @@ public class GraphServiceImpl implements GraphService {
             HashMap<String, Object> parameters = new HashMap<>(1);
             parameters.put("labels", labels);
             parameters.put("nodeId", nodeId);
-            Result result = graphDB.execute(
+            Result result = tx.execute(
                     "MATCH (n)-[r]-(m) WHERE ID(n) = $nodeId AND ANY(l IN LABELS(m) WHERE l IN $labels) RETURN m as node, r as edge",
                     parameters);
             if (maxNodes == -1) {
@@ -156,7 +159,7 @@ public class GraphServiceImpl implements GraphService {
                 emitTopNeighbours(result, listener, maxNodes);
             }
 
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -170,7 +173,7 @@ public class GraphServiceImpl implements GraphService {
 
             HashMap<String, Object> parameters = new HashMap<>(1);
             parameters.put("param", id);
-            Result result = graphDB.execute("MATCH (n)-[r]-(m) WHERE ID(n) = $param RETURN m as node, r as edge",
+            Result result = tx.execute("MATCH (n)-[r]-(m) WHERE ID(n) = $param RETURN m as node, r as edge",
                     parameters);
             if (maxNodes == -1) {
                 emitAllNeighbours(result, listener);
@@ -178,7 +181,7 @@ public class GraphServiceImpl implements GraphService {
                 emitTopNeighbours(result, listener, maxNodes);
             }
 
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -196,13 +199,13 @@ public class GraphServiceImpl implements GraphService {
             String query = "MATCH (n)-[r:$types]-(m) WHERE ID(n) = $nodeId RETURN m as node, r as edge";
             query = relationships.isEmpty() ? query.replace(":$types", "")
                     : query.replace("$types", relationships.stream().collect(Collectors.joining("|:")));
-            Result result = graphDB.execute(query, parameters);
+            Result result = tx.execute(query, parameters);
             if (maxNodes == -1) {
                 emitAllNeighbours(result, listener);
             } else {
                 emitTopNeighbours(result, listener, maxNodes);
             }
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -269,7 +272,7 @@ public class GraphServiceImpl implements GraphService {
             HashMap<String, Object> parameters = new HashMap<>(1);
             parameters.put("param", ids);
 
-            Result result = graphDB.execute(
+            Result result = tx.execute(
                     "MATCH (n)-[r]-(m) WHERE ID(n) IN $param AND ID(m) IN $param RETURN r as edge", parameters);
             ResourceIterator<Relationship> iterator = result.columnAs("edge");
             boolean proceed = true;
@@ -277,7 +280,7 @@ public class GraphServiceImpl implements GraphService {
                 Relationship edge = iterator.next();
                 proceed = listener.edgeFound(edge);
             }
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -299,14 +302,14 @@ public class GraphServiceImpl implements GraphService {
             queryBuilder.append(" AND ID(n2) = $target");
             queryBuilder.append(" RETURN p");
 
-            Result result = graphDB.execute(queryBuilder.toString(), parameters);
+            Result result = tx.execute(queryBuilder.toString(), parameters);
             ResourceIterator<Path> iterator = result.columnAs("p");
             boolean proceed = true;
             while (iterator.hasNext() && proceed) {
                 Path path = iterator.next();
                 proceed = listener.pathFound(path);
             }
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -324,7 +327,7 @@ public class GraphServiceImpl implements GraphService {
 
             String query = "MATCH (n) WHERE ANY(prop IN keys(n) WHERE toUpper(toString(n[prop])) CONTAINS $param) RETURN n";
 
-            Result result = graphDB.execute(query, parameters);
+            Result result = tx.execute(query, parameters);
             ResourceIterator<Node> resourceIterator = result.columnAs("n");
             boolean proceed = true;
             while (resourceIterator.hasNext() && proceed) {
@@ -332,7 +335,7 @@ public class GraphServiceImpl implements GraphService {
                 proceed = listener.nodeFound(node);
             }
 
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -350,7 +353,7 @@ public class GraphServiceImpl implements GraphService {
 
             String query = "MATCH (n)--(m) WHERE ID(n) = $param RETURN DISTINCT m as neighbour, LABELS(m) AS labels";
 
-            Result result = graphDB.execute(query, parameters);
+            Result result = tx.execute(query, parameters);
             ResourceIterator<Collection<String>> resourceIterator = result.columnAs("labels");
 
             Map<String, Integer> accum = new HashMap<>();
@@ -368,7 +371,7 @@ public class GraphServiceImpl implements GraphService {
             for (Entry<String, Integer> entry : accum.entrySet()) {
                 listener.connectionsFound(entry.getKey(), entry.getValue());
             }
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -384,7 +387,7 @@ public class GraphServiceImpl implements GraphService {
             HashMap<String, Object> parameters = new HashMap<>(1);
             parameters.put("param", id);
             String query = "MATCH (n)-[r]-() WHERE ID(n) = $param RETURN r as edge";
-            Result result = graphDB.execute(query, parameters);
+            Result result = tx.execute(query, parameters);
 
             Map<String, Integer> accum = new HashMap<>();
             while (result.hasNext()) {
@@ -397,7 +400,7 @@ public class GraphServiceImpl implements GraphService {
             for (Entry<String, Integer> entry : accum.entrySet()) {
                 listener.connectionsFound(entry.getKey(), entry.getValue());
             }
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -444,7 +447,7 @@ public class GraphServiceImpl implements GraphService {
                 queryBuilder.append(Arrays.stream(ordering).map(o -> "n." + o).collect(Collectors.joining(", ")));
             }
 
-            Result result = graphDB.execute(queryBuilder.toString(), params);
+            Result result = tx.execute(queryBuilder.toString(), params);
             ResourceIterator<Node> resourceIterator = result.columnAs("n");
             boolean proceed = true;
             while (resourceIterator.hasNext() && proceed) {
@@ -452,7 +455,7 @@ public class GraphServiceImpl implements GraphService {
                 proceed = listener.nodeFound(node);
             }
 
-            tx.success();
+            tx.commit();
         } finally
 
         {
@@ -474,14 +477,14 @@ public class GraphServiceImpl implements GraphService {
             query.append(" RETURN DISTINCT label ");
             query.append(" ORDER BY label ");
 
-            Result result = graphDB.execute(query.toString());
+            Result result = tx.execute(query.toString());
             ResourceIterator<String> resourceIterator = result.columnAs("label");
             while (resourceIterator.hasNext()) {
                 String label = resourceIterator.next();
                 listener.labelFound(label);
             }
 
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -527,7 +530,7 @@ public class GraphServiceImpl implements GraphService {
 
             queryBuilder.append(whereBuilder).append(returnBuilder);
 
-            Result result = graphDB.execute(queryBuilder.toString());
+            Result result = tx.execute(queryBuilder.toString());
 
             while (result.hasNext()) {
                 Map<String, Object> next = result.next();
@@ -543,7 +546,7 @@ public class GraphServiceImpl implements GraphService {
 
             }
 
-            tx.success();
+            tx.commit();
         } catch (Exception e) {
             LOGGER.error("Error executing query.", e);
         } finally {
@@ -557,13 +560,13 @@ public class GraphServiceImpl implements GraphService {
         try {
             tx = graphDB.beginTx();
 
-            Result result = graphDB.execute(query);
+            Result result = tx.execute(query);
             listener.columnsFound(result.columns());
             while (result.hasNext()) {
                 listener.resultFound(result.next());
             }
 
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -578,7 +581,7 @@ public class GraphServiceImpl implements GraphService {
 
             HashMap<String, Object> parameters = new HashMap<>(1);
             parameters.put("param", ids);
-            Result result = graphDB.execute("MATCH (n)-[r]-(m) WHERE ID(r) IN $param RETURN r", parameters);
+            Result result = tx.execute("MATCH (n)-[r]-(m) WHERE ID(r) IN $param RETURN r", parameters);
 
             ResourceIterator<Relationship> resourceIterator = result.columnAs("r");
             boolean proceed = true;
@@ -587,10 +590,34 @@ public class GraphServiceImpl implements GraphService {
                 proceed = listener.edgeFound(relationship);
             }
 
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
+    }
+
+    @Override
+    public int deleteRelationshipsFromDatasource(String evidenceUUID) {
+        Transaction tx = null;
+        long deletions = 0;
+        try {
+            tx = graphDB.beginTx();
+
+            HashMap<String, Object> parameters = new HashMap<>(1);
+            parameters.put("param", evidenceUUID);
+            Result result = tx.execute("MATCH ()-[r]-() WHERE r." + GraphTask.RELATIONSHIP_SOURCE
+                    + " = $param WITH DISTINCT r as dr DELETE dr RETURN count(dr) as size",
+                    parameters);
+
+            if (result.hasNext()) {
+                deletions += (Long) result.next().get("size");
+            }
+
+            tx.commit();
+        } finally {
+            tx.close();
+        }
+        return (int) deletions;
     }
 
 }

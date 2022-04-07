@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.util.BasicProps;
@@ -60,7 +61,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     @Override
     public void valueChanged(ListSelectionEvent evt) {
 
-        GerenciadorMarcadores.updateCounters();
+        BookmarksManager.updateCounters();
 
         if (App.get().resultsTable.getSelectedRowCount() == 0 || evt.getValueIsAdjusting()) {
             return;
@@ -75,8 +76,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         if (!syncingSelectedItems) {
             syncingSelectedItems = true;
             App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
-            int galleryRow = resultTableLeadSelIdx / App.get().galleryModel.colCount;
-            int galleyCol = resultTableLeadSelIdx % App.get().galleryModel.colCount;
+            int galleryRow = resultTableLeadSelIdx / App.get().getGalleryColCount();
+            int galleyCol = resultTableLeadSelIdx % App.get().getGalleryColCount();
             App.get().gallery.scrollRectToVisible(App.get().gallery.getCellRect(galleryRow, galleyCol, false));
 
             App.get().gallery.clearSelection();
@@ -109,7 +110,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             int modelIdx = App.get().resultsTable.convertRowIndexToModel(viewIndex);
             IItemId item = App.get().ipedResult.getItem(modelIdx);
             int docId = App.get().appCase.getLuceneId(item);
-            if (docId != App.get().getParams().lastSelectedDoc) {
+            if (docId != App.get().getLastSelectedDoc()) {
 
                 App.get().hitsTable.scrollRectToVisible(new Rectangle());
                 App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
@@ -186,39 +187,37 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     @Override
     public void keyPressed(KeyEvent evt) {
-        if (App.get().resultsTable.getSelectedRow() == -1) {
+        if (evt.isConsumed())
             return;
-        }
+        if (App.get().resultsTable.getSelectedRow() == -1)
+            return;
 
         if (evt.getKeyCode() == KeyEvent.VK_C && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
-
             int selCol = App.get().resultsTable.getSelectedColumn();
-            if (selCol < 0) {
+            if (selCol < 0)
                 return;
-            }
             String value = getCell(App.get().resultsTable, App.get().resultsTable.getSelectedRow(), selCol);
             StringSelection selection = new StringSelection(value);
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            clipboard.setContents(selection, selection);
-
-        } else if (evt.getKeyCode() == KeyEvent.VK_SPACE)
+            clipboard.setContents(selection, null);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
             itemSelection();
-        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) // Shortcut to
-                                                                                                        // Deep-Selection
-                                                                                                        // (Item plus
-                                                                                                        // sub-items)
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+            // Shortcut to Deep-Selection (Item plus sub-items)
             recursiveItemSelection(true);
-        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.ALT_MASK) != 0)) // Shortcut to
-                                                                                                       // Deep-Selection
-                                                                                                       // (Item plus
-                                                                                                       // sub-items)
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.ALT_MASK) != 0)) {
+            // Shortcut to Deep-Selection Remove (Item plus sub-items)
             recursiveItemSelection(false);
-        else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) // Shortcut to
-                                                                                                        // BookmarkManager
-                                                                                                        // Window
-            GerenciadorMarcadores.setVisible();
-        else
-            GerenciadorMarcadores.get().keyPressed(evt);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+            // Shortcut to BookmarkManager Window
+            BookmarksManager.setVisible();
+            evt.consume();
+        } else 
+            BookmarksManager.get().keyPressed(evt);
 
     }
 
@@ -230,12 +229,12 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             value = false;
         }
 
-        MarcadoresController.get().setMultiSetting(true);
+        BookmarksController.get().setMultiSetting(true);
         App.get().resultsTable.setUpdateSelectionOnSort(false);
         int[] selectedRows = App.get().resultsTable.getSelectedRows();
         for (int i = 0; i < selectedRows.length; i++) {
             if (i == selectedRows.length - 1) {
-                MarcadoresController.get().setMultiSetting(false);
+                BookmarksController.get().setMultiSetting(false);
                 App.get().resultsTable.setUpdateSelectionOnSort(true);
             }
             App.get().resultsTable.setValueAt(value, selectedRows[i], col);
@@ -244,12 +243,12 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     public void recursiveItemSelection(boolean value) {
         int col = App.get().resultsTable.convertColumnIndexToView(1);
-        MarcadoresController.get().setMultiSetting(true);
+        BookmarksController.get().setMultiSetting(true);
         App.get().resultsTable.setUpdateSelectionOnSort(false);
         int[] selectedRows = App.get().resultsTable.getSelectedRows();
         for (int i = 0; i < selectedRows.length; i++) {
             if (i == selectedRows.length - 1) {
-                MarcadoresController.get().setMultiSetting(false);
+                BookmarksController.get().setMultiSetting(false);
                 App.get().resultsTable.setUpdateSelectionOnSort(true);
             }
             App.get().resultsTable.setValueAt(value, selectedRows[i], col);
@@ -257,7 +256,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
             selectAllSubitems(value, App.get().ipedResult.getItem(modelIndex));
         }
-        MarcadoresController.get().atualizarGUI();
+        BookmarksController.get().updateUI();
         App.get().subItemTable.repaint();
     }
 
@@ -283,7 +282,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                     logger.debug("Found {} subitems of sourceId {} id {}", result.getLength(), rootID.getSourceId(),
                             rootID.getId());
                     for (IItemId subItem : result.getIterator()) {
-                        App.get().appCase.getMultiMarcadores().setSelected((Boolean) state, subItem);
+                        App.get().appCase.getMultiBookmarks().setChecked((Boolean) state, subItem);
                     }
                 }
             }
@@ -319,7 +318,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 .isStringComparator())
             return;
 
-        if (GerenciadorMarcadores.get().hasSingleKeyShortcut())
+        if (BookmarksManager.get().hasSingleKeyShortcut())
             return;
         
         long t = System.currentTimeMillis();
@@ -371,9 +370,10 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     private String getCell(JTable table, int row, int col) {
         String cell = table.getValueAt(row, col).toString();
-        return cell.replace("<html><nobr>", "").replace("</html>", "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                .replace(App.get().getParams().HIGHLIGHT_START_TAG, "")
-                .replace(App.get().getParams().HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
+        if (App.get().getFontStartTag() != null)
+            cell = cell.replace(App.get().getFontStartTag(), ""); //$NON-NLS-1$
+        return cell.replace("<html><nobr>", "").replace("</html>", "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                .replace(ATextViewer.HIGHLIGHT_START_TAG, "").replace(ATextViewer.HIGHLIGHT_END_TAG, "");
     }
 
 }

@@ -21,7 +21,6 @@ package dpf.sp.gpinf.indexer.parsers;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Set;
 
@@ -38,8 +37,8 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.parsers.RegistryParser.ContainerVolatile;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
  * Parser para históricos index.dat do Internet Explorer 9 e anteriores. Utiliza
@@ -74,8 +73,8 @@ public class IndexDatParser extends AbstractParser {
                 try {
                     String[] cmd = { TOOL_PATH + TOOL_NAME, "-V" }; //$NON-NLS-1$
                     Process p = Runtime.getRuntime().exec(cmd);
-                    Util.ignoreStream(p.getErrorStream());
-                    Util.ignoreStream(p.getInputStream());
+                    IOUtil.ignoreInputStream(p.getErrorStream());
+                    IOUtil.ignoreInputStream(p.getInputStream());
                     if (p.waitFor() != 0)
                         throw new Exception();
 
@@ -107,7 +106,7 @@ public class IndexDatParser extends AbstractParser {
             String[] cmd = { TOOL_PATH + TOOL_NAME, "-m", "all", file.getAbsolutePath() }; //$NON-NLS-1$ //$NON-NLS-2$
             ProcessBuilder pb = new ProcessBuilder(cmd);
             p = pb.start();
-            Util.ignoreStream(p.getErrorStream());
+            IOUtil.ignoreInputStream(p.getErrorStream());
 
             InputStream is = p.getInputStream();
             byte[] data = new byte[64 * 1024];

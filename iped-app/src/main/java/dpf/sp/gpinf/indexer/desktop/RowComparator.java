@@ -21,7 +21,6 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.io.IOException;
 import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -32,16 +31,16 @@ import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
-import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
-import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 public class RowComparator implements Comparator<Integer> {
 
@@ -64,11 +63,12 @@ public class RowComparator implements Comparator<Integer> {
     private boolean isTimeEvent = false;
     private boolean isCategory = false;
 
-    protected SortedDocValues sdv;
-    protected SortedSetDocValues ssdv;
-    private NumericDocValues ndv;
-    private SortedNumericDocValues sndv;
     private int[] localizedCategoryOrds;
+
+    private int[] sdvOrds;
+    private long[] ndvOrds;
+    private int[][] ssdvOrds;
+    private long[][] sndvOrds;
 
     public static void setLoadDocValues(boolean load) {
         loadDocValues = load;
@@ -116,39 +116,95 @@ public class RowComparator implements Comparator<Integer> {
         try {
             atomicReader = App.get().appCase.getLeafReader();
 
+            SortedDocValues sdv = null;
+            SortedSetDocValues ssdv = null;
+            NumericDocValues ndv = null;
+            SortedNumericDocValues sndv = null;
+
             if (IndexItem.getMetadataTypes().get(indexedField) == null
                     || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
                 ndv = atomicReader.getNumericDocValues(indexedField);
                 if (ndv == null) {
-                    ndv = atomicReader.getNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
-                }
-                if (ndv == null) {
                     sndv = atomicReader.getSortedNumericDocValues(indexedField);
-                    if (sndv == null)
-                        sndv = atomicReader
-                                .getSortedNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
                 }
             }
             if (ndv == null && sndv == null) {
-                ssdv = atomicReader.getSortedSetDocValues(indexedField);
-                if (ssdv == null)
-                    ssdv = atomicReader.getSortedSetDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
+                String prefix = ExtraProperties.LOCATIONS.equals(field) ? IndexItem.GEO_SSDV_PREFIX : "";
+                ssdv = atomicReader.getSortedSetDocValues(prefix + indexedField);
                 if (isCategory) {
                     localizedCategoryOrds = getLocalizedCategoryOrd(ssdv);
                 }
             }
             if (ndv == null && sndv == null && ssdv == null) {
                 sdv = atomicReader.getSortedDocValues(indexedField);
-                if (sdv == null)
-                    sdv = atomicReader.getSortedDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
             }
+
+            loadOrds(sdv, ssdv, ndv, sndv);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static int[] getLocalizedCategoryOrd(SortedSetDocValues ssdv) {
+    private void loadOrds(SortedDocValues sdv, SortedSetDocValues ssdv, NumericDocValues ndv,
+            SortedNumericDocValues sndv) throws IOException {
+        int maxDoc = App.get().appCase.getLeafReader().maxDoc();
+        if (sdv != null) {
+            sdvOrds = new int[maxDoc];
+            for (int i = 0; i < maxDoc; i++) {
+                if (sdv.advanceExact(i)) {
+                    sdvOrds[i] = sdv.ordValue();
+                } else {
+                    sdvOrds[i] = -1;
+                }
+            }
+        }
+        if (ndv != null) {
+            ndvOrds = new long[maxDoc];
+            for (int i = 0; i < maxDoc; i++) {
+                if (ndv.advanceExact(i)) {
+                    ndvOrds[i] = ndv.longValue();
+                } else {
+                    ndvOrds[i] = Long.MIN_VALUE;
+                }
+            }
+        }
+        if (ssdv != null) {
+            int[] empty = new int[0];
+            ssdvOrds = new int[maxDoc][];
+            for (int i = 0; i < maxDoc; i++) {
+                if (ssdv.advanceExact(i)) {
+                    ArrayList<Integer> ords = new ArrayList<>();
+                    int ord;
+                    while ((ord = (int) ssdv.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                        ords.add(ord);
+                    }
+                    ssdvOrds[i] = new int[ords.size()];
+                    for (int j = 0; j < ords.size(); j++) {
+                        ssdvOrds[i][j] = ords.get(j);
+                    }
+                } else {
+                    ssdvOrds[i] = empty;
+                }
+            }
+        }
+        if (sndv != null) {
+            long[] empty = new long[0];
+            sndvOrds = new long[maxDoc][];
+            for (int i = 0; i < maxDoc; i++) {
+                if (sndv.advanceExact(i)) {
+                    sndvOrds[i] = new long[sndv.docValueCount()];
+                    for (int j = 0; j < sndv.docValueCount(); j++) {
+                        sndvOrds[i][j] = sndv.nextValue();
+                    }
+                } else {
+                    sndvOrds[i] = empty;
+                }
+            }
+        }
+    }
+
+    public static int[] getLocalizedCategoryOrd(SortedSetDocValues ssdv) throws IOException {
         int[] localizedOrds = new int[(int) ssdv.getValueCount()];
         ArrayList<String> localizedVals = new ArrayList<>();
         for (int i = 0; i < localizedOrds.length; i++) {
@@ -166,92 +222,12 @@ public class RowComparator implements Comparator<Integer> {
         return localizedOrds;
     }
 
-    private ThreadLocal<Bits> localDocsWithField = new ThreadLocal<Bits>() {
-        @Override
-        protected Bits initialValue() {
-            try {
-                Bits bits = atomicReader.getDocsWithField(field);
-                if (bits == null)
-                    bits = atomicReader.getDocsWithField(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
-                return bits;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-    };
-
-    private ThreadLocal<NumericDocValues> localNDV = new ThreadLocal<NumericDocValues>() {
-        @Override
-        protected NumericDocValues initialValue() {
-            try {
-                NumericDocValues ndv = atomicReader.getNumericDocValues(field);
-                if (ndv == null)
-                    ndv = atomicReader.getNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
-                return ndv;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-    };
-
-    private ThreadLocal<SortedDocValues> localSDV = new ThreadLocal<SortedDocValues>() {
-        @Override
-        protected SortedDocValues initialValue() {
-            try {
-                SortedDocValues sdv = atomicReader.getSortedDocValues(field);
-                if (sdv == null)
-                    sdv = atomicReader.getSortedDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field);
-                return sdv;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-    };
-
-    private ThreadLocal<SortedSetDocValues> localSSDV = new ThreadLocal<SortedSetDocValues>() {
-        @Override
-        protected SortedSetDocValues initialValue() {
-            try {
-                SortedSetDocValues ssdv = atomicReader.getSortedSetDocValues(field);
-                if (ssdv == null)
-                    ssdv = atomicReader.getSortedSetDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field);
-                return ssdv;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-    };
-
-    private ThreadLocal<SortedNumericDocValues> localSNDV = new ThreadLocal<SortedNumericDocValues>() {
-        @Override
-        protected SortedNumericDocValues initialValue() {
-            try {
-                SortedNumericDocValues sndv = atomicReader.getSortedNumericDocValues(field);
-                if (sndv == null)
-                    sndv = atomicReader.getSortedNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
-                return sndv;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-    };
-
     public static boolean isNewIndexReader() {
         return atomicReader != App.get().appCase.getLeafReader();
     }
 
     public boolean isStringComparator() {
-        return sdv != null || ssdv != null || bookmarkCol;
+        return sdvOrds != null || ssdvOrds != null || bookmarkCol;
     }
 
     @Override
@@ -270,17 +246,17 @@ public class RowComparator implements Comparator<Integer> {
         b = app.appCase.getLuceneId(itemB);
 
         if (col == 1) {
-            if (app.appCase.getMultiMarcadores().isSelected(itemA) == app.appCase.getMultiMarcadores()
-                    .isSelected(itemB))
+            if (app.appCase.getMultiBookmarks().isChecked(itemA) == app.appCase.getMultiBookmarks()
+                    .isChecked(itemB))
                 return 0;
-            else if (app.appCase.getMultiMarcadores().isSelected(itemA) == true)
+            else if (app.appCase.getMultiBookmarks().isChecked(itemA) == true)
                 return -1;
             else
                 return 1;
 
         } else if (bookmarkCol) {
-            return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(itemA))
-                    .compareTo(Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(itemB)));
+            return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(itemA))
+                    .compareTo(Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(itemB)));
 
         } else if (isTimeStamp && itemA instanceof TimeItemId) {
             int ordA = ((TimeItemId) itemA).getTimeStampOrd();
@@ -292,22 +268,15 @@ public class RowComparator implements Comparator<Integer> {
             int ordB = ((TimeItemId) itemB).getTimeEventOrd();
             return Integer.compare(ordA, ordB);
 
-        } else if (sdv != null) {
-            SortedDocValues sdv = localSDV.get();
-            return sdv.getOrd(a) - sdv.getOrd(b);
+        } else if (sdvOrds != null) {
+            return sdvOrds[a] - sdvOrds[b];
 
-        } else if (ssdv != null) {
-            SortedSetDocValues lssdv = localSSDV.get();
+        } else if (ssdvOrds != null) {
             int result, k = 0, ordA = -1, ordB = -1;
             do {
-                int i = 0;
-                lssdv.setDocument(a);
-                while (i++ <= k)
-                    ordA = (int) lssdv.nextOrd();
-                i = 0;
-                lssdv.setDocument(b);
-                while (i++ <= k)
-                    ordB = (int) lssdv.nextOrd();
+                ordA = k < ssdvOrds[a].length ? ssdvOrds[a][k] : -1;
+                ordB = k < ssdvOrds[b].length ? ssdvOrds[b][k] : -1;
+
                 if (isCategory) {
                     if (ordA > -1) {
                         ordA = localizedCategoryOrds[ordA];
@@ -319,29 +288,15 @@ public class RowComparator implements Comparator<Integer> {
                 result = ordA - ordB;
                 k++;
 
-            } while (result == 0 && ordA != SortedSetDocValues.NO_MORE_ORDS && ordB != SortedSetDocValues.NO_MORE_ORDS);
+            } while (result == 0 && ordA != -1 && ordB != -1);
 
             return result;
 
-        } else if (sndv != null) {
-            SortedNumericDocValues lsndv = localSNDV.get();
-            int result, k = 0, countA = 0, countB = 0;
+        } else if (sndvOrds != null) {
+            int result, k = 0, countA = sndvOrds[a].length, countB = sndvOrds[b].length;
             do {
-                long ordA, ordB;
-                lsndv.setDocument(a);
-                if (k == 0)
-                    countA = lsndv.count();
-                if (k < countA)
-                    ordA = lsndv.valueAt(k);
-                else
-                    ordA = Long.MIN_VALUE;
-                lsndv.setDocument(b);
-                if (k == 0)
-                    countB = lsndv.count();
-                if (k < countB)
-                    ordB = lsndv.valueAt(k);
-                else
-                    ordB = Long.MIN_VALUE;
+                long ordA = k < countA ? sndvOrds[a][k] : Long.MIN_VALUE;
+                long ordB = k < countB ? sndvOrds[b][k] : Long.MIN_VALUE;
                 result = Long.compare(ordA, ordB);
                 k++;
 
@@ -349,19 +304,8 @@ public class RowComparator implements Comparator<Integer> {
 
             return result;
 
-        } else if (ndv != null) {
-            Bits docsWithField = localDocsWithField.get();
-            if (docsWithField.get(a)) {
-                if (docsWithField.get(b)) {
-                    NumericDocValues ndv = localNDV.get();
-                    return Long.compare(ndv.get(a), ndv.get(b));
-                } else
-                    return 1;
-            } else if (docsWithField.get(b))
-                return -1;
-            else
-                return 0;
-
+        } else if (ndvOrds != null) {
+            return Long.compare(ndvOrds[a], ndvOrds[b]);
         }
 
         // On demand sorting if DocValues does not exist for this field (much slower)

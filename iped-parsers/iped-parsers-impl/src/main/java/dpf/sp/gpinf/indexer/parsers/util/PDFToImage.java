@@ -91,7 +91,7 @@ public class PDFToImage implements Closeable {
         System.setProperty("org.apache.pdfbox.rendering.UsePureJavaCMYKConversion", "true"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    private class NoResourceCache extends DefaultResourceCache {
+    public static class NoResourceCache extends DefaultResourceCache {
         @Override
         public void put(COSObject indirect, PDXObject xobject) throws IOException {
             // do not cache images to prevent OutOfMemory
@@ -175,7 +175,7 @@ public class PDFToImage implements Closeable {
                 pb.redirectErrorStream(true);
                 Process process = pb.start();
 
-                Util.ignoreStream(process.getInputStream());
+                IOUtil.ignoreInputStream(process.getInputStream());
 
                 try {
                     process.waitFor();

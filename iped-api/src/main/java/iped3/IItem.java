@@ -15,7 +15,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
 import iped3.datasource.IDataSource;
-import iped3.io.IItemBase;
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 
@@ -75,7 +74,7 @@ public interface IItem extends IItemBase {
      * @throws IOException
      */
     @Override
-    BufferedInputStream getBufferedStream() throws IOException;
+    BufferedInputStream getBufferedInputStream() throws IOException;
 
     /**
      *
@@ -98,14 +97,6 @@ public interface IItem extends IItemBase {
     String getIdInDataSource();
 
     ISeekableInputStreamFactory getInputStreamFactory();
-
-    String getParentIdInDataSource();
-
-    /**
-     * @return nome e caminho relativo ao caso com que o arquivo de evidência em si
-     *         foi exportado
-     */
-    String getExportedFile();
 
     /**
      * Módulos de processamento podem setar atributos extras no item para armazenar
@@ -133,19 +124,6 @@ public interface IItem extends IItemBase {
      *         -1 se o item não é proveniente de carving.
      */
     long getFileOffset();
-
-    /**
-     *
-     * @return o caminho para o arquivo do item. Diferente de vazio apenas em
-     *         reports e processamentos de pastas.
-     */
-    String getFileToIndex();
-
-    /**
-     *
-     * @return o id do item no FTK3+ no caso de reports
-     */
-    Integer getFtkID();
 
     IHashValue getHashValue();
 
@@ -186,7 +164,7 @@ public interface IItem extends IItemBase {
      * @return InputStream com o conteúdo do arquivo.
      */
     @Override
-    SeekableInputStream getStream() throws IOException;
+    SeekableInputStream getSeekableInputStream() throws IOException;
 
     /**
      * Usado em módulos que só possam processar um File e não um InputStream. Pode
@@ -204,11 +182,6 @@ public interface IItem extends IItemBase {
      * @throws IOException
      */
     TikaInputStream getTikaStream() throws IOException;
-
-    /**
-     * @return o tipo de arquivo baseado na análise de assinatura
-     */
-    IEvidenceFileType getType();
 
     boolean hasTmpFile();
 
@@ -288,39 +261,12 @@ public interface IItem extends IItemBase {
     void setDataSource(IDataSource evidence);
 
     /**
-     * Configura deleção posterior do arquivo. Por ex, subitem que deva ser
-     * processado e incluído no relatório, porém sem ter seu conteúdo exportado (ex:
-     * gera thumb do vídeo e dps deleta o vídeo)
-     *
-     * @param deleteFile
-     *            se deve ser deletado ao não
-     */
-    void setDeleteFile(boolean deleteFile);
-
-    /**
      * Define se o item é apagado
      *
      * @param deleted
      *            se é apagado
      */
     void setDeleted(boolean deleted);
-
-    /**
-     * Define se o item é duplicado
-     *
-     * @param duplicate
-     *            se é duplicado
-     */
-    void setDuplicate(boolean duplicate);
-
-    /**
-     * Define o caminho para o arquivo do item, no caso de processamento de pastas e
-     * para subitens extraídos.
-     *
-     * @param exportedFile
-     *            caminho para o arquivo do item
-     */
-    void setExportedFile(String exportedFile);
 
     /**
      * Define a extensão do item.
@@ -343,28 +289,12 @@ public interface IItem extends IItemBase {
     void setTempAttribute(String key, Object value);
 
     /**
-     * Define o arquivo referente ao item, caso existente
-     *
-     * @param file
-     *            arquivo referente ao item
-     */
-    void setFile(File file);
-
-    /**
      * Define o offset onde itens de carving são encontrados no item pai
      *
      * @param fileOffset
      *            offset do item
      */
     void setFileOffset(long fileOffset);
-
-    /**
-     * Define o id do FTK3+, em casos de report
-     *
-     * @param ftkID
-     *            id do FTK
-     */
-    void setFtkID(Integer ftkID);
 
     /**
      * Define se o item tem filhos, como subitens ou itens de carving
@@ -481,10 +411,6 @@ public interface IItem extends IItemBase {
 
     void setSumVolume(boolean sumVolume);
 
-    void setTempFile(File tempFile);
-
-    void setTempStartOffset(long tempStartOffset);
-
     /**
      * @param timeOut
      *            se o parsing do item ocasionou timeout
@@ -513,9 +439,9 @@ public interface IItem extends IItemBase {
 
     /**
      * @param type
-     *            tipo de arquivo
+     *            the detected file type extension
      */
-    void setType(IEvidenceFileType type);
+    void setType(String type);
 
     /**
      * @param viewFile
@@ -527,11 +453,7 @@ public interface IItem extends IItemBase {
 
     void setIdInDataSource(String string);
 
-    void setParentIdInDataSource(String string);
-
     void setThumb(byte[] thumb);
-
-    void setImageSimilarityFeatures(byte[] imageSimilarityFeatures);
 
     /**
      * @return returns the created evidenceFile.
