@@ -92,10 +92,7 @@
     	<glob pattern="*.heif"/>
   	</mime-type>
 
-	<mime-type type="application/x-tor-tc-fragment">
-	</mime-type>
-
-  	<mime-type type="application/x-dbf">
+	<mime-type type="application/x-dbf">
     	<magic priority="100">
       		<match value="(?s)^[\\x02\\x03\\x30\\x31\\x32\\x43\\x63\\x83\\x8B\\xCB\\xF5\\xE5\\xFB].[\\x01-\\x0C][\\x01-\\x1F].{4}(?:.[^\\x00]|[\\x41-\\xFF].)(?:[^\\x00\\x01].|.[^\\x00]).{31}(?&lt;=[\\x00][^\\x00]{0,10})[A-Z@+]" type="regex" offset="0"/>
     	</magic>
@@ -1161,5 +1158,8 @@
     <mime-type type="message/x-jabber-message">
         <sub-class-of type="message/x-chat-message"/>
     </mime-type>
- 
+ 	
+ 	<mime-type type="application/x-tor-tc-fragment">
+	</mime-type>
+    
 </mime-info>
