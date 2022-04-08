@@ -228,7 +228,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             context.set(IItemSearcher.class, (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName()));
         }
 
-        extractEmbedded = isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(evidence);
+        extractEmbedded = isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(caseData, evidence);
         if (extractEmbedded) {
             context.set(EmbeddedDocumentExtractor.class, this);
         } else
@@ -272,11 +272,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         reader.close();
     }
 
-    private static boolean isToAlwaysExpand(IItem item) {
+    private static boolean isToAlwaysExpand(CaseData caseData, IItem item) {
+        if (caseData.isIpedReport()) {
+            return false;
+        }
         return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType())
                 || WhatsAppParser.WA_USER_XML.equals(item.getMediaType()) 
-                || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType())
-                || TelegramParser.TELEGRAM_DB_IOS.equals(item.getMediaType());
+                || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType());
     }
 
     private static boolean isToBeExpanded(Collection<String> categories) {
