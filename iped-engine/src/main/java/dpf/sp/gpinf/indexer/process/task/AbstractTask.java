@@ -210,6 +210,9 @@ public abstract class AbstractTask {
                 evidence.dispose();
                 SkipCommitedTask.checkAgainLaterProcessedParents(evidence);
                 caseData.addItemToQueue(evidence, priority);
+                if (!evidence.isQueueEnd()) {
+                    worker.decItemsBeingProcessed();
+                }
             }
         } else if (!evidence.isQueueEnd()) {
             // dec items being processed counter if this is last task
