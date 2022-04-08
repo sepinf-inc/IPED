@@ -52,7 +52,7 @@ public class Worker extends Thread {
 
     private static String workerNamePrefix = "Worker-"; //$NON-NLS-1$
 
-    private static final int MIN_WAIT_TIME_TO_SEND_QUEUE_END = 1000;
+    private static final long MIN_WAIT_TIME_TO_SEND_QUEUE_END = 1000;
     private static volatile long lastItemProcessingTime = 0;
 
     public IndexWriter writer;
@@ -60,7 +60,7 @@ public class Worker extends Thread {
 
     public volatile AbstractTask runningTask;
     public List<AbstractTask> tasks = new ArrayList<AbstractTask>();
-    private AbstractTask firstTask;
+    public AbstractTask firstTask;
     private int itemsBeingProcessed = 0;
 
     public enum STATE {
@@ -78,6 +78,16 @@ public class Worker extends Thread {
     public final int id;
 
     private boolean waiting = false;
+
+    public void incItemsBeingProcessed() {
+        itemsBeingProcessed++;
+        caseData.incItemsBeingProcessed();
+    }
+
+    public void decItemsBeingProcessed() {
+        itemsBeingProcessed--;
+        caseData.decItemsBeingProcessed();
+    }
 
     public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
         super(new ThreadGroup(workerNamePrefix + k), workerNamePrefix + k); // $NON-NLS-1$
@@ -157,7 +167,7 @@ public class Worker extends Thread {
         IItem prevEvidence = this.evidence;
         if (!evidence.isQueueEnd()) {
             this.evidence = evidence;
-            this.itemsBeingProcessed++;
+
         }
 
         try {
@@ -180,9 +190,6 @@ public class Worker extends Thread {
 
         }
 
-        if (!evidence.isQueueEnd()) {
-            this.itemsBeingProcessed--;
-        }
 
         this.evidence = prevEvidence;
 
@@ -210,18 +217,17 @@ public class Worker extends Thread {
             caseData.addItemFirstNonBlocking(evidence);
         } // caso contrário processa o item no worker atual
         else {
-            if (!evidence.isQueueEnd()) {
-                caseData.incItemsBeingProcessed();
-            }
+            /*
+             * if (!evidence.isQueueEnd()) { caseData.incItemsBeingProcessed(); }
+             */
             long t = System.nanoTime() / 1000;
 
             process(evidence);
 
             runningTask.addSubitemProcessingTime(System.nanoTime() / 1000 - t);
-
-            if (!evidence.isQueueEnd()) {
-                caseData.decItemsBeingProcessed();
-            }
+            /*
+             * if (!evidence.isQueueEnd()) { caseData.decItemsBeingProcessed(); }
+             */
         }
 
     }
@@ -248,9 +254,9 @@ public class Worker extends Thread {
                             sleep = true;
                             continue;
                         }
-                        if (!evidence.isQueueEnd()) {
-                            caseData.incItemsBeingProcessed();
-                        }
+                        /*
+                         * if (!evidence.isQueueEnd()) { caseData.incItemsBeingProcessed(); }
+                         */
                     }
                 }
 
@@ -260,9 +266,7 @@ public class Worker extends Thread {
 
                     process(evidence);
                     
-                    if (!evidence.isQueueEnd()) {
-                        caseData.decItemsBeingProcessed();
-                    }
+
 
                 } else {
                     IItem queueEnd = evidence;
@@ -287,6 +291,7 @@ public class Worker extends Thread {
                                     + " itemsInThisWorker = " + itemsBeingProcessed + " itemsInAllWorkers = "
                                     + caseData.getItemsBeingProcessed());
                             process(queueEnd);
+
                         }
                     }
                 }

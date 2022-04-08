@@ -162,6 +162,9 @@ public abstract class AbstractTask {
      */
     public final void processAndSendToNextTask(IItem evidence) throws Exception {
 
+        if (!evidence.isQueueEnd()) {
+            worker.incItemsBeingProcessed();
+        }
         while (worker.state != STATE.RUNNING) {
             synchronized (worker) {
                 if (worker.state == STATE.PAUSING)
@@ -169,6 +172,7 @@ public abstract class AbstractTask {
             }
             Thread.sleep(1000);
         }
+
 
         AbstractTask prevTask = worker.runningTask;
         IItem prevEvidence = worker.evidence;
@@ -190,21 +194,8 @@ public abstract class AbstractTask {
         worker.evidence = prevEvidence;
         worker.runningTask = prevTask;
 
-        // ESTATISTICAS
-        if (nextTask == null && !evidence.isQueueEnd()) {
-            evidence.dispose();
-            stats.incProcessed();
-            if (!evidence.isSubItem() && !evidence.isCarved() && !evidence.isDeleted() && evidence.isToSumVolume()) {
-                stats.incActiveProcessed();
-            }
-            if (evidence.isToSumVolume()) {
-                Long len = evidence.getLength();
-                if (len == null) {
-                    len = 0L;
-                }
-                stats.addVolume(len);
-            }
-        }
+
+
     }
 
     /**
@@ -224,6 +215,24 @@ public abstract class AbstractTask {
                 evidence.dispose();
                 SkipCommitedTask.checkAgainLaterProcessedParents(evidence);
                 caseData.addItemToQueue(evidence, priority);
+            }
+        }
+        if (!evidence.isQueueEnd()) {
+            worker.decItemsBeingProcessed();
+        }
+        // ESTATISTICAS
+        if (nextTask == null && !evidence.isQueueEnd()) {
+            evidence.dispose();
+            stats.incProcessed();
+            if (!evidence.isSubItem() && !evidence.isCarved() && !evidence.isDeleted() && evidence.isToSumVolume()) {
+                stats.incActiveProcessed();
+            }
+            if (evidence.isToSumVolume()) {
+                Long len = evidence.getLength();
+                if (len == null) {
+                    len = 0L;
+                }
+                stats.addVolume(len);
             }
         }
     }
