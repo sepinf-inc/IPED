@@ -162,9 +162,6 @@ public abstract class AbstractTask {
      */
     public final void processAndSendToNextTask(IItem evidence) throws Exception {
 
-        if (!evidence.isQueueEnd()) {
-            worker.incItemsBeingProcessed();
-        }
         while (worker.state != STATE.RUNNING) {
             synchronized (worker) {
                 if (worker.state == STATE.PAUSING)
@@ -194,8 +191,6 @@ public abstract class AbstractTask {
         worker.evidence = prevEvidence;
         worker.runningTask = prevTask;
 
-
-
     }
 
     /**
@@ -216,13 +211,14 @@ public abstract class AbstractTask {
                 SkipCommitedTask.checkAgainLaterProcessedParents(evidence);
                 caseData.addItemToQueue(evidence, priority);
             }
-        }
-        if (!evidence.isQueueEnd()) {
+        } else if (!evidence.isQueueEnd()) {
+            // dec items being processed counter if this is last task
             worker.decItemsBeingProcessed();
-        }
-        // ESTATISTICAS
-        if (nextTask == null && !evidence.isQueueEnd()) {
+
+            // clear resources
             evidence.dispose();
+
+            // update statistics
             stats.incProcessed();
             if (!evidence.isSubItem() && !evidence.isCarved() && !evidence.isDeleted() && evidence.isToSumVolume()) {
                 stats.incActiveProcessed();
