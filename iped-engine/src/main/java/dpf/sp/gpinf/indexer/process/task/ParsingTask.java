@@ -273,7 +273,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     private static boolean isToAlwaysExpand(CaseData caseData, IItem item) {
-        if (caseData.isIpedReport()) {
+        if (caseData != null && caseData.isIpedReport()) {
             return false;
         }
         return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType())
