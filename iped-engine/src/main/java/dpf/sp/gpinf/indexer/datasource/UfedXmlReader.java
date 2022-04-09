@@ -339,7 +339,11 @@ public class UfedXmlReader extends DataSourceReader {
         DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"); //$NON-NLS-1$
         DateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"); //$NON-NLS-1$
         DateFormat df3 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"); //$NON-NLS-1$
-        DateFormat[] dfs = { df1, df2, df3 };
+        DateFormat df4 = new SimpleDateFormat("dd-MMM-yy hh:mm:ss XXX"); //$NON-NLS-1$
+        DateFormat df5 = new SimpleDateFormat("dd-MMM-yy hh:mm:ss  XXX"); //$NON-NLS-1$
+        DateFormat df6 = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss XXX"); //$NON-NLS-1$
+
+        DateFormat[] dfs = { df1, df2, df3, df4, df5, df6 };
 
         DateFormat out = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
@@ -678,11 +682,8 @@ public class UfedXmlReader extends DataSourceReader {
                     for (String attrVal : currentNode.atts.values()) {
                         if (attrVal.toLowerCase().startsWith(LAST_USE_PREFIX)) {
                             attrVal = attrVal.substring(LAST_USE_PREFIX.length()).trim();
-                            SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yy hh:mm:ss XXX");
-                            if (attrVal.contains("  "))
-                                df = new SimpleDateFormat("dd-MMM-yy hh:mm:ss  XXX");
                             try {
-                                Date date = df.parse(attrVal);
+                                Date date = parseDate(attrVal);
                                 this.lastUseToMsisdn.put(date, msisdn);
                             } catch (ParseException e) {
                                 e.printStackTrace();

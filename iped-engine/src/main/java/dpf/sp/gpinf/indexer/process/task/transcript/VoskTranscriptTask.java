@@ -131,6 +131,9 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
     }
 
     private TextScoreWords decodeFromJson(String json) throws ParseException {
+        // workaround for https://github.com/sepinf-inc/IPED/issues/1058
+        json = fixJsonNumberFormatting(json);
+
         String str = new String(json.getBytes(), StandardCharsets.UTF_8);
         JSONParser parser = new JSONParser();
         JSONObject root = (JSONObject) parser.parse(str);
@@ -158,6 +161,36 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
         result.score = totScore;
         result.words = words;
         return result;
+    }
+
+    private static String fixJsonNumberFormatting(String json) {
+        if (System.getProperty("os.name").equalsIgnoreCase("windows")) {
+            return json;
+        }
+        int lastWordIdx = 0;
+        while (true) {
+            int confIdx = json.indexOf("\"conf\"", lastWordIdx);
+            if (confIdx == -1)
+                break;
+            int endIdx = json.indexOf("\"end\"", confIdx);
+            int startIdx = json.indexOf("\"start\"", endIdx);
+            int wordIdx = json.indexOf("\"word\"", startIdx);
+            int[] idx = { confIdx, endIdx, startIdx, wordIdx };
+            int i = -1;
+            while (++i < 3) {
+                int comma1Idx = json.indexOf(',', idx[i]);
+                if (comma1Idx != -1 && comma1Idx < idx[i + 1]) {
+                    int comma2Idx = json.indexOf(',', comma1Idx + 1);
+                    if (comma2Idx != -1 && comma2Idx < idx[i + 1]) {
+                        json = json.substring(0, comma1Idx) + '.' + json.substring(comma1Idx + 1);
+                    } else if (comma2Idx > idx[i + 1]) {
+                        return json;
+                    }
+                }
+            }
+            lastWordIdx = wordIdx;
+        }
+        return json;
     }
 
     private static class TextScoreWords extends TextAndScore {

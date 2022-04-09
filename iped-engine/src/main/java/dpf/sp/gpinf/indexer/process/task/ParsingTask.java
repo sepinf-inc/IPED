@@ -104,6 +104,7 @@ import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.IItemBase;
@@ -235,7 +236,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             context.set(IItemSearcher.class, (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName()));
         }
 
-        extractEmbedded = expandConfig.isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(evidence);
+        extractEmbedded = expandConfig.isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(caseData, evidence);
         if (extractEmbedded) {
             context.set(EmbeddedDocumentExtractor.class, this);
         } else
@@ -266,11 +267,13 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         }
     }
 
-    private static boolean isToAlwaysExpand(IItem item) {
+    private static boolean isToAlwaysExpand(CaseData caseData, IItem item) {
+        if (caseData != null && caseData.isIpedReport()) {
+            return false;
+        }
         return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType())
                 || WhatsAppParser.WA_USER_XML.equals(item.getMediaType()) 
-                || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType())
-                || TelegramParser.TELEGRAM_DB_IOS.equals(item.getMediaType());
+                || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType());
     }
 
     public static int getSubitensDiscovered() {

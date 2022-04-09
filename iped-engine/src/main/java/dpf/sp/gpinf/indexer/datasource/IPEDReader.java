@@ -228,15 +228,15 @@ public class IPEDReader extends DataSourceReader {
     private void copyBookmarksToReport() throws ClassNotFoundException, IOException {
         if (listOnly)
             return;
-        int lastId = ipedCase.getLastId();
-        int totalItens = ipedCase.getTotalItens();
-        File stateFile = new File(output, Bookmarks.STATEFILENAME);
-        if (stateFile.exists()) {
-            IBookmarks reportState = Bookmarks.load(stateFile);
-            lastId += reportState.getLastId() + 1;
-            totalItens += reportState.getTotalItens();
+
+        int lastId = -1;
+        for (int i = 0; i < oldToNewIdMap.length; i++) {
+            if (oldToNewIdMap[i] > lastId) {
+                lastId = oldToNewIdMap[i];
+            }
         }
-        IBookmarks reportState = new Bookmarks(totalItens, lastId, output);
+
+        IBookmarks reportState = new Bookmarks(lastId - 1, lastId, output);
         reportState.loadState();
 
         for (int oldLabelId : selectedLabels) {
