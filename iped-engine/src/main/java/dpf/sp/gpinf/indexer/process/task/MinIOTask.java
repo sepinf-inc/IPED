@@ -194,7 +194,7 @@ public class MinIOTask extends AbstractTask {
         return DigestUtils.md5Hex(zipfile.getName()).toUpperCase() + ".zip";
     }
 
-    private String insertInZipFile(String hash, long length, SeekableInputStream is, IItem i, boolean preview)
+    private String insertInZipFile(String hash, SeekableInputStream is, IItem i, boolean preview)
             throws Exception {
         if (out == null) {
             zipLength = 0;
@@ -211,7 +211,7 @@ public class MinIOTask extends AbstractTask {
         }
 
         zipFiles++;
-        zipLength += length;
+        zipLength += is.size();
         ZipArchiveEntry entry = new ZipArchiveEntry(hash);
         entry.setSize(is.size());
         out.putArchiveEntry(entry);
@@ -222,7 +222,7 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-    private String insertWithZip(IItem i, String hash, SeekableInputStream is, long length, String mediatype,
+    private String insertWithZip(IItem i, String hash, SeekableInputStream is, String mediatype,
             boolean preview) throws Exception {
 
         String bucketPath = buildPath(hash);
@@ -233,7 +233,7 @@ public class MinIOTask extends AbstractTask {
         String fullPath = bucket + "/" + bucketPath;
 
         // if empty or already exists do not continue
-        if (length <= 0) {
+        if (is.size() <= 0) {
             return null;
         }
 
@@ -242,13 +242,13 @@ public class MinIOTask extends AbstractTask {
             return fullPath;
         }
 
-        if (length > zipFilesMaxSize) {
-            insertItem(hash, is, length, mediatype, bucketPath);
+        if (is.size() > zipFilesMaxSize) {
+            insertItem(hash, is, mediatype, bucketPath);
             if (!preview) {
                 updateDataSource(i, fullPath);
             }
         } else {
-            fullPath = insertInZipFile(hash, length, is, i, preview);
+            fullPath = insertInZipFile(hash, is, i, preview);
         }
 
         return fullPath;
@@ -305,7 +305,7 @@ public class MinIOTask extends AbstractTask {
         return exists;
     }
 
-    private void insertItem(String hash, InputStream is, long length, String mediatype, String bucketPath)
+    private void insertItem(String hash, InputStream is, String mediatype, String bucketPath)
             throws Exception {
 
         // create directory structure
@@ -316,7 +316,7 @@ public class MinIOTask extends AbstractTask {
         }
 
         try {
-            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, length, -1)
+            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, -1, 10 << 20)
                     .contentType(mediatype).build());
 
         } catch (Exception e) {
@@ -379,7 +379,7 @@ public class MinIOTask extends AbstractTask {
             return;
 
         try (SeekableInputStream is = item.getSeekableInputStream()) {
-            insertWithZip(item, hash, is, is.size(), item.getMediaType().toString(), false);
+            insertWithZip(item, hash, is, item.getMediaType().toString(), false);
 
         } catch (Exception e) {
             // TODO: handle exception
@@ -388,7 +388,7 @@ public class MinIOTask extends AbstractTask {
         if (item.getViewFile() != null && item.getViewFile().length() > 0) {
             try (SeekableFileInputStream is = new SeekableFileInputStream(item.getViewFile())) {
                 String mime = getMimeType(item.getViewFile().getName());
-                String fullPath = insertWithZip(item, hash, is, is.size(), mime, true);
+                String fullPath = insertWithZip(item, hash, is, mime, true);
                 if (fullPath != null) {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
                             "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
