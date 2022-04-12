@@ -1,15 +1,15 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package dpf.mg.udi.gpinf.whatsappextractor;
 
 /**
  *
- * @author Pfeifer
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class WAExtractorException extends Exception {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 8304329195364275698L;
+
     public WAExtractorException() {
 
     }
