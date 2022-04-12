@@ -528,6 +528,12 @@ public class ReportGenerator {
             }
         }
         out.println("</span>"); //$NON-NLS-1$
+        if (message.isDeleted()) {
+            out.println("<br/><span class=\"deleted\">"); //$NON-NLS-1$
+            out.println("<i>" + Messages.getString("WhatsAppReport.MessageDeleted") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            out.println("<div class=\"deletedIcon\"></div>"); //$NON-NLS-1$
+            out.println("</span>"); //$NON-NLS-1$
+        }
 
         if (message.getRecoveredFrom() != null) {
             out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$

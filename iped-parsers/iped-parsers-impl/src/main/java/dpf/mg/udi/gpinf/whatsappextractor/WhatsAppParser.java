@@ -337,8 +337,12 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                 String dbPath = ((ItemInfo) context.get(ItemInfo.class)).getPath();
                 WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
+                
+                File tempDbFile = tis.getFile();
+                exportWalLog(tempDbFile, context, tmp);
+                exportRollbackJournal(tempDbFile, context, tmp);
 
-                Extractor waExtractor = extFactory.createMessageExtractor(tis.getFile(), contacts, account);
+                Extractor waExtractor = extFactory.createMessageExtractor(tempDbFile, contacts, account);
                 List<Chat> chatList = waExtractor.getChatList();
                 createReport(chatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
 
@@ -452,6 +456,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         try (TemporaryResources tmp = new TemporaryResources()) {
             TikaInputStream tis = TikaInputStream.get(wcontext.getItem().getSeekableInputStream(), tmp);
             File tempFile = tis.getFile();
+            exportWalLog(tempFile, context, tmp);
+            exportRollbackJournal(tempFile, context, tmp);
             extFactory.setConnectionParams(tis, metadata, context, this);
             Extractor waExtractor = extFactory.createMessageExtractor(tempFile, contacts, account);
             return waExtractor.getChatList();
@@ -1070,7 +1076,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         ParseContext context = new ParseContext();
         context.set(IItemSearcher.class, searcher);
         context.set(IItemBase.class, item);
-        ExtractorFactory extFactory = (ExtractorFactory) extFactoryClass.newInstance();
+        ExtractorFactory extFactory = (ExtractorFactory) extFactoryClass.getDeclaredConstructor().newInstance();
 
         try (InputStream is = item.getBufferedInputStream()) {
             extFactory.setConnectionParams(is, null, context, this);
