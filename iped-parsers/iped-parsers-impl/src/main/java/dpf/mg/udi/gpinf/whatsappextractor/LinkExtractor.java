@@ -238,7 +238,7 @@ public class LinkExtractor implements Closeable {
     public static final String sql_android_old = "SELECT m.media_url as url,m.media_hash as hash ,m.media_mime_type as tipo,m.thumb_image as data, m._id, null as mediaKey FROM messages m "
             + "where m.media_url like '%whatsapp%.enc' and m.media_hash is not null and m.media_hash in (?) group by url";
 
-    public static final String sql_android = "SELECT m.media_url as url,m.media_hash as hash ,m.media_mime_type as tipo,m.thumb_image as data, m._id, mm.media_key as mediaKey FROM messages m LEFT JOIN message_media mm on m._id=mm.message_row_id "
-            + "where m.media_url like '%whatsapp%.enc' and m.media_hash is not null and m.media_hash in (?) group by url";
+    public static final String sql_android = "SELECT message_url as url,file_hash as hash ,mime_type as tipo,null as data, message_row_id as _id, media_key as mediaKey FROM  message_media  "
+            + "where message_url like '%whatsapp%.enc' and file_hash is not null and file_hash in (?) group by url";
 
 }
