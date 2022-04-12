@@ -86,10 +86,21 @@ public class ExtractorIOS extends Extractor {
         undelete.addTableToRecover("ZWAGROUPMEMBER"); //$NON-NLS-1$
         undelete.addRecordValidator("ZWAGROUPMEMBER", new WAIOSGroupMemberValidator()); //$NON-NLS-1$
         undelete.setRecoverOnlyDeletedRecords(false);
-        Map<String, SQLiteUndeleteTable> undeleteTables = undelete.undeleteData();
-        SQLiteUndeleteTable messagesUndeletedTable = undeleteTables.get("ZWAMESSAGE"); //$NON-NLS-1$
-        SQLiteUndeleteTable mediaItemUndeletedTable = undeleteTables.get("ZWAMEDIAITEM"); //$NON-NLS-1$
-        SQLiteUndeleteTable groupMembersUndeletedTable = undeleteTables.get("ZWAGROUPMEMBER"); //$NON-NLS-1$
+        
+        Map<String, SQLiteUndeleteTable> undeleteTables = null;
+        SQLiteUndeleteTable messagesUndeletedTable = null;
+        SQLiteUndeleteTable mediaItemUndeletedTable = null;
+        SQLiteUndeleteTable groupMembersUndeletedTable = null;
+        
+        try {
+            undeleteTables = undelete.undeleteData();
+            messagesUndeletedTable = undeleteTables.get("ZWAMESSAGE"); //$NON-NLS-1$
+            mediaItemUndeletedTable = undeleteTables.get("ZWAMEDIAITEM"); //$NON-NLS-1$
+            groupMembersUndeletedTable = undeleteTables.get("ZWAGROUPMEMBER"); //$NON-NLS-1$
+        } catch (Exception e) {
+            logger.warn("Error recovering deleted records from iOS WhatsApp Database", e);
+        }
+        
 
         Map<Long, List<SqliteRow>> undeletedMessages = messagesUndeletedTable == null ? Collections.emptyMap()
                 : messagesUndeletedTable.getTableRowsGroupedByLongCol("ZCHATSESSION");
@@ -146,19 +157,21 @@ public class ExtractorIOS extends Extractor {
             }
         }
 
-        // get deleted messages
-        List<SqliteRow> undeletedRows = undeletedMessages.getOrDefault(chat.getId(), Collections.emptyList());
-        for (SqliteRow row : undeletedRows) {
-            try {
-                Message m = createMessageFromUndeletedRecord(row, chat, mediaItems, groupMembers);
-                messages.add(m);
-            } catch (SQLException e) {
-            } catch (RuntimeException e) {
-                logger.warn(e.toString());
+        if (undeleteTable != null && !undeletedMessages.isEmpty() ) {
+            // get deleted messages
+            List<SqliteRow> undeletedRows = undeletedMessages.getOrDefault(chat.getId(), Collections.emptyList());
+            for (SqliteRow row : undeletedRows) {
+                try {
+                    Message m = createMessageFromUndeletedRecord(row, chat, mediaItems, groupMembers);
+                    messages.add(m);
+                } catch (SQLException e) {
+                } catch (RuntimeException e) {
+                    logger.warn(e.toString());
+                }
             }
+    
+            Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
         }
-
-        Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
 
         return messages;
     }

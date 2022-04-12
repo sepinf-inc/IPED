@@ -76,19 +76,25 @@ public class ExtractorAndroid extends Extractor {
     protected List<Chat> extractChatList() throws WAExtractorException {
         List<Chat> list = new ArrayList<>();
 
-        SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
-        undelete.addTableToRecover("messages");
-        undelete.addRecordValidator("messages", new WAAndroidMessageValidator());
-        SQLiteUndeleteTable undeletedMessagesTable = undelete.undeleteData().get("messages");
+        SQLiteUndeleteTable undeletedMessagesTable = null;
+        
+        try {
+            SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
+            undelete.addTableToRecover("messages");
+            undelete.addRecordValidator("messages", new WAAndroidMessageValidator());
+            undeletedMessagesTable = undelete.undeleteData().get("messages");
+        } catch (Exception e) {
+            logger.warn("Error recovering deleted records from Android WhatsApp Database", e);
+        }
 
         Map<String, List<SqliteRow>> undeletedMessages = undeletedMessagesTable == null ? Collections.emptyMap()
-                : undeletedMessagesTable.getTableRowsGroupedByTextCol("key_remote_jid");
+                : undeletedMessagesTable.getTableRowsGroupedByTextCol("key_remote_jid"); //$NON-NLS-1$
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             boolean hasSortTimestamp = databaseHasSortTimestamp(conn);
             hasChatView = databaseHasChatView(conn);
             hasThumbTable = databaseHasThumbnailsTable(conn);
-            hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version");
+            hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version"); //$NON-NLS-1$ //$NON-NLS-2$
             String selectChatQuery = hasChatView ? SELECT_CHAT_VIEW
                     : hasSortTimestamp ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_SORTTIMESTAMP;
             try (ResultSet rs = stmt.executeQuery(selectChatQuery)) {
@@ -173,21 +179,23 @@ public class ExtractorAndroid extends Extractor {
             }
         }
 
-        // get deleted messages
-        SQLiteUndeleteTableResultSetAdapter rs = new SQLiteUndeleteTableResultSetAdapter(
-                undeletedMessages.getOrDefault(id, Collections.emptyList()), undeleteTable.getColumnNames(),
-                MESSAGES_TABLE_COL_MAP);
-        while (rs.next()) {
-            try {
-                Message m = createMessageFromDBRow(rs, remote, isGroupChat, true, hasThumbTable, hasEditVersionCol);
-                messages.add(m);
-            } catch (SQLException e) {
-            } catch (RuntimeException e) {
-                logger.warn(e.toString());
+        if (undeleteTable != null && !undeletedMessages.isEmpty()) {
+            // get deleted messages
+            SQLiteUndeleteTableResultSetAdapter rs = new SQLiteUndeleteTableResultSetAdapter(
+                    undeletedMessages.getOrDefault(id, Collections.emptyList()), undeleteTable.getColumnNames(),
+                    MESSAGES_TABLE_COL_MAP);
+            while (rs.next()) {
+                try {
+                    Message m = createMessageFromDBRow(rs, remote, isGroupChat, true, hasThumbTable, hasEditVersionCol);
+                    messages.add(m);
+                } catch (SQLException e) {
+                } catch (RuntimeException e) {
+                    logger.warn(e.toString());
+                }
             }
+    
+            Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
         }
-
-        Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
         return messages;
     }
 
