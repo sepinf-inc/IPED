@@ -340,6 +340,7 @@ public class Message {
             case YOU_ADMIN:
             case UNKNOWN_MESSAGE:
                 return true;
+            default:
         }
         return false;
     }
