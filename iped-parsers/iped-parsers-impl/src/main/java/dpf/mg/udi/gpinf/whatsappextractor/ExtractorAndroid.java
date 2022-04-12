@@ -54,6 +54,7 @@ public class ExtractorAndroid extends Extractor {
     private boolean hasThumbTable = false;
     private boolean hasEditVersionCol = false;
     private boolean hasChatView = false;
+    private boolean hasMessages = false;
 
     public ExtractorAndroid(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
         super(databaseFile, contacts, account);
@@ -65,6 +66,7 @@ public class ExtractorAndroid extends Extractor {
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             boolean hasSortTimestamp = databaseHasSortTimestamp(conn);
+            hasMessages = databaseHasMessage(conn);
             hasChatView = databaseHasChatView(conn);
             hasThumbTable = databaseHashThumbnailsTable(conn);
             hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version");
@@ -110,6 +112,16 @@ public class ExtractorAndroid extends Extractor {
         return result;
     }
     
+    private boolean databaseHasMessage(Connection conn) throws SQLException {
+        DatabaseMetaData md = conn.getMetaData();
+        try (ResultSet rs = md.getColumns(null, null, "messages", "_id")) { //$NON-NLS-1$ //$NON-NLS-2$
+            if (rs.next()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean databaseHasChatView(Connection conn) throws SQLException {
         boolean result = false;
         DatabaseMetaData md = conn.getMetaData();
@@ -136,7 +148,8 @@ public class ExtractorAndroid extends Extractor {
     private List<Message> extractMessages(Connection conn, WAContact remote, boolean isGroupChat) throws SQLException {
         List<Message> messages = new ArrayList<>();
         try (PreparedStatement stmt = conn
-                .prepareStatement(hasThumbTable ? SELECT_MESSAGES_THUMBS_TABLE
+                .prepareStatement(!hasMessages ? SELECT_MESSAGES_NO_MESSAGES
+                        : hasThumbTable ? SELECT_MESSAGES_THUMBS_TABLE
                         : hasEditVersionCol ? SELECT_MESSAGES_NO_THUMBS_TABLE : SELECT_MESSAGES_NO_EDIT_VERSION)) {
             stmt.setFetchSize(1000);
             String id = remote.getId();
@@ -360,6 +373,16 @@ public class ExtractorAndroid extends Extractor {
             + "AND messages.key_remote_jid = message_thumbnails.key_remote_jid " //$NON-NLS-1$
             + "AND messages.key_from_me = message_thumbnails.key_from_me) " //$NON-NLS-1$
             + "WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
+
+    private static final String SELECT_MESSAGES_NO_MESSAGES = "select  m._id AS id, cv.raw_string_jid "
+            + " as remoteId,m.sender_jid_row_id, jid.raw_string as remoteResource, status, text_data as data,"
+            + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
+            + " mm.mime_type as mediaMime, mm.file_size as mediaSize, media_name as mediaName, "
+            + " m.message_type as messageType, null as rawData,  latitude,  longitude, mm.media_duration,"
+            + " null as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData"
+            + " from message m  inner join chat_view cv on m.chat_row_id=cv._id left join message_media mm on mm.message_row_id=m._id"
+            + " left join jid on jid._id=m.sender_jid_row_id left join message_location ml on m._id=ml.message_row_id "
+            + " left join message_thumbnail mt on m._id=mt.message_row_id where remoteId=? and status!=-1 ;";
 
     private static final String VERIFY_THUMBS_TABLE_EXISTS = "SELECT name FROM sqlite_master " //$NON-NLS-1$
             + "WHERE type='table' AND name='message_thumbnails'"; //$NON-NLS-1$
