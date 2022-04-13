@@ -65,6 +65,7 @@ import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.lucene.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.sleuthkit.TouchSleuthkitImages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
@@ -184,7 +185,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 else {
                     // Unpatched TSK doesn't work with a read-only DB, must be writeable
                     if (!SleuthkitReader.isTSKPatched()) {
-                        sleuthFile = getWriteableDBFile(sleuthFile);
+                        sleuthFile = SleuthkitInputStreamFactory.getWriteableDBFile(sleuthFile);
                     }
                     sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
                 }
@@ -590,7 +591,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     private void testCanWriteToCase(File sleuthFile) throws TskCoreException, IOException {
         if (tmpCaseFile != null) return;
-        File writeableDBFile = getWriteableDBFile(sleuthFile);
+        File writeableDBFile = SleuthkitInputStreamFactory.getWriteableDBFile(sleuthFile);
         if (writeableDBFile != sleuthFile){
             tmpCaseFile = writeableDBFile;
             // causes "case is closed" error in some cases
@@ -598,18 +599,6 @@ public class IPEDSource implements Closeable, IIPEDSource {
             sleuthCase = SleuthkitCase.openCase(tmpCaseFile.getAbsolutePath());
             tskCaseList.add(sleuthCase);
         }
-    }
-
-    private File getWriteableDBFile(File sleuthFile) throws IOException {
-        if (!sleuthFile.canWrite() || !IOUtil.canCreateFile(sleuthFile.getParentFile())) {
-            tmpCaseFile = new File(System.getProperty("java.io.basetmpdir"), //$NON-NLS-1$
-                    "sleuthkit-" + sleuthFile.lastModified() + ".db"); //$NON-NLS-1$
-            if (!tmpCaseFile.exists() || tmpCaseFile.length() != sleuthFile.length()) {
-                IOUtil.copyFile(sleuthFile, tmpCaseFile);
-            }
-            return tmpCaseFile;
-        }
-        return sleuthFile;
     }
 
     private void askNewImagePath(long imgId, List<String> paths, File sleuthFile) throws TskCoreException, IOException {
