@@ -302,7 +302,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
         }
         fc = null;
         out = null;
-        int tries = 100;
+        int tries = 10;
         do {
             System.gc();
             logger.info("Trying to delete " + pipe.getAbsolutePath());
