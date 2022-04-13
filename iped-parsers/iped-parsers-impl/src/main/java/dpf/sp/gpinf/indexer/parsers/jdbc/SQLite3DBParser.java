@@ -95,6 +95,7 @@ public class SQLite3DBParser extends AbstractDBParser {
                         String absPath = dbFile.getAbsolutePath();
                         Files.deleteIfExists(Paths.get(absPath + "-wal"));
                         Files.deleteIfExists(Paths.get(absPath + "-shm"));
+                        Files.deleteIfExists(Paths.get(absPath + "-journal"));
                     } catch (IOException e) {
                         throw new SQLException(e);
                     }
