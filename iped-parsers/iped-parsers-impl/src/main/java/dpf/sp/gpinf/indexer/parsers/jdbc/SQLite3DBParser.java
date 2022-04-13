@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -38,7 +39,6 @@ import org.apache.tika.parser.ParseContext;
 import org.sqlite.SQLiteConfig;
 
 import dpf.sp.gpinf.indexer.parsers.util.DelegatingConnection;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -76,11 +76,9 @@ public class SQLite3DBParser extends AbstractDBParser {
         TemporaryResources tmp = new TemporaryResources();
         try {
             File dbFile = TikaInputStream.get(stream, tmp).getFile();
-            boolean isTempDb = IOUtil.isTemporaryFile(dbFile);
-            if (isTempDb) {
-                exportWalLog(dbFile, context, tmp);
-                exportRollbackJournal(dbFile, context, tmp);
-            }
+
+            exportWalLog(dbFile, context, tmp);
+            exportRollbackJournal(dbFile, context, tmp);
 
             SQLiteConfig config = new SQLiteConfig();
             config.setReadOnly(true);
@@ -94,11 +92,9 @@ public class SQLite3DBParser extends AbstractDBParser {
                     super.close();
                     try {
                         tmp.close();
-                        if (isTempDb) {
-                            // these files may be created by sqlite, even if wal was not exported
-                            new File(dbFile.getAbsolutePath() + "-wal").delete();
-                            new File(dbFile.getAbsolutePath() + "-shm").delete();
-                        }
+                        String absPath = dbFile.getAbsolutePath();
+                        Files.deleteIfExists(Paths.get(absPath + "-wal"));
+                        Files.deleteIfExists(Paths.get(absPath + "-shm"));
                     } catch (IOException e) {
                         throw new SQLException(e);
                     }
