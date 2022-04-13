@@ -17,7 +17,8 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<?>>> 
     /**
      * 
      */
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 34038992637807289L;
+
     private static final String CONFIG_FILE = "RegexConfig.txt"; //$NON-NLS-1$
     private static final String ENABLE_PARAM = "enableRegexSearch"; //$NON-NLS-1$
     private static final String FORMAT_MATCHES = "formatRegexMatches"; //$NON-NLS-1$
@@ -38,7 +39,7 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<?>>> 
         /**
          * 
          */
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -3493962168817933193L;
 
         private String regexName;
         private int prefix, suffix;
