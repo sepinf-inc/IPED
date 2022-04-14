@@ -29,7 +29,29 @@ public class DiscordAttachment {
     @JsonProperty("height")
     private int height;
 
-    public String getId() {
+    @JsonProperty("ephemeral")
+    private boolean ephemeral;
+    
+    @JsonProperty("content_type")
+    private String content_type;
+    
+    public String getContent_type() {
+		return content_type;
+	}
+
+	public void setContent_type(String content_type) {
+		this.content_type = content_type;
+	}
+
+	public boolean isEphemeral() {
+		return ephemeral;
+	}
+
+	public void setEphemeral(boolean ephemeral) {
+		this.ephemeral = ephemeral;
+	}
+
+	public String getId() {
         return id;
     }
 

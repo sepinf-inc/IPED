@@ -11,212 +11,256 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class DiscordRoot {
 
-    @JsonProperty("id")
-    public String id;
+	@JsonProperty("id")
+	public String id;
 
-    @JsonProperty("type")
-    public int type;
+	@JsonProperty("type")
+	public int type;
 
-    @JsonProperty("content")
-    public String messageContent;
+	@JsonProperty("content")
+	public String messageContent;
 
-    @JsonProperty("channel_id")
-    public String channel_id;
+	@JsonProperty("channel_id")
+	public String channel_id;
 
-    @JsonProperty("author")
-    public DiscordAuthor author;
+	@JsonProperty("author")
+	public DiscordAuthor author;
 
-    @JsonProperty("attachments")
-    public List<DiscordAttachment> attachments;
+	@JsonProperty("referenced_message")
+	public DiscordReferencedMessage referencedMessage;
 
-    @JsonProperty("embeds")
-    public List<DiscordEmbed> embeds;
+	public DiscordReferencedMessage getReferencedMessage() {
+		return referencedMessage;
+	}
 
-    @JsonProperty("mentions")
-    public List<DiscordMention> mentions;
+	public void setReferencedMessage(DiscordReferencedMessage referencedMessage) {
+		this.referencedMessage = referencedMessage;
+	}
 
-    @JsonProperty("mention_roles")
-    public List<Object> mention_roles;
+	@JsonProperty("message_reference")
+	public DiscordMessageReference messageReference;
 
-    @JsonProperty("mention_everyone")
-    public boolean mention_everyone;
+	public DiscordMessageReference getMessageReference() {
+		return messageReference;
+	}
 
-    @JsonProperty("pinned")
-    public boolean pinned;
+	public void setMessageReference(DiscordMessageReference messageReference) {
+		this.messageReference = messageReference;
+	}
 
-    @JsonProperty("tts")
-    public boolean tts;
+	@JsonProperty("activity")
+	public DiscordActivity activity;
 
-    @JsonProperty("timestamp")
-    public Date timestamp;
+	public DiscordActivity getActivity() {
+		return activity;
+	}
 
-    @JsonProperty("edited_timestamp")
-    public Date editedTimestamp;
+	public void setActivity(DiscordActivity activity) {
+		this.activity = activity;
+	}
 
-    @JsonProperty("flags")
-    public int flags;
+	@JsonProperty("attachments")
+	public List<DiscordAttachment> attachments;
 
-    @JsonProperty("reactions")
-    public List<DiscordReaction> reactions;
+	@JsonProperty("embeds")
+	public List<DiscordEmbed> embeds;
 
-    @JsonProperty("call")
-    public DiscordCall call;
+	@JsonProperty("mentions")
+	public List<DiscordMention> mentions;
 
-    @JsonProperty("webhook_id")
-    public String webhookId;
+	@JsonProperty("mention_roles")
+	public List<Object> mention_roles;
 
-    public String getWebhookId() {
-        return webhookId;
-    }
+	@JsonProperty("mention_everyone")
+	public boolean mention_everyone;
 
-    public void setWebhookId(String webhookId) {
-        this.webhookId = webhookId;
-    }
+	@JsonProperty("pinned")
+	public boolean pinned;
 
-    public DiscordCall getCall() {
-        return call;
-    }
+	@JsonProperty("tts")
+	public boolean tts;
 
-    public void setCall(DiscordCall call) {
-        this.call = call;
-    }
+	@JsonProperty("timestamp")
+	public Date timestamp;
 
-    public List<DiscordReaction> getReactions() {
-        return reactions;
-    }
+	@JsonProperty("edited_timestamp")
+	public Date editedTimestamp;
 
-    public void setReactions(List<DiscordReaction> reactions) {
-        this.reactions = reactions;
-    }
+	@JsonProperty("flags")
+	public int flags;
 
-    public String getId() {
-        return id;
-    }
+	@JsonProperty("reactions")
+	public List<DiscordReaction> reactions;
 
-    public void setId(String id) {
-        this.id = id;
-    }
+	@JsonProperty("call")
+	public DiscordCall call;
 
-    public int getType() {
-        return type;
-    }
+	@JsonProperty("webhook_id")
+	public String webhookId;
 
-    public void setType(int type) {
-        this.type = type;
-    }
+	@JsonProperty("components")
+	public List<Object> components;
 
-    public String getMessageContent() {
-        return messageContent;
-    }
+	public List<Object> getComponents() {
+		return components;
+	}
 
-    public void setMessageContent(String messageContent) {
-        this.messageContent = messageContent;
-    }
+	public void setComponents(List<Object> components) {
+		this.components = components;
+	}
 
-    public String getChannel_id() {
-        return channel_id;
-    }
+	public String getWebhookId() {
+		return webhookId;
+	}
 
-    public void setChannel_id(String channel_id) {
-        this.channel_id = channel_id;
-    }
+	public void setWebhookId(String webhookId) {
+		this.webhookId = webhookId;
+	}
 
-    public DiscordAuthor getAuthor() {
-        return author;
-    }
+	public DiscordCall getCall() {
+		return call;
+	}
 
-    public void setAuthor(DiscordAuthor author) {
-        this.author = author;
-    }
+	public void setCall(DiscordCall call) {
+		this.call = call;
+	}
 
-    public List<DiscordAttachment> getAttachments() {
-        return attachments;
-    }
+	public List<DiscordReaction> getReactions() {
+		return reactions;
+	}
 
-    public void setAttachments(List<DiscordAttachment> attachments) {
-        this.attachments = attachments;
-    }
+	public void setReactions(List<DiscordReaction> reactions) {
+		this.reactions = reactions;
+	}
 
-    public List<DiscordEmbed> getEmbeds() {
-        return embeds;
-    }
+	public String getId() {
+		return id;
+	}
 
-    public void setEmbeds(List<DiscordEmbed> embeds) {
-        this.embeds = embeds;
-    }
+	public void setId(String id) {
+		this.id = id;
+	}
 
-    public List<DiscordMention> getMentions() {
-        return mentions;
-    }
+	public int getType() {
+		return type;
+	}
 
-    public void setMentions(List<DiscordMention> mentions) {
-        this.mentions = mentions;
-    }
+	public void setType(int type) {
+		this.type = type;
+	}
 
-    public List<Object> getMention_roles() {
-        return mention_roles;
-    }
+	public String getMessageContent() {
+		return messageContent;
+	}
 
-    public void setMention_roles(List<Object> mention_roles) {
-        this.mention_roles = mention_roles;
-    }
+	public void setMessageContent(String messageContent) {
+		this.messageContent = messageContent;
+	}
 
-    public boolean isMention_everyone() {
-        return mention_everyone;
-    }
+	public String getChannel_id() {
+		return channel_id;
+	}
 
-    public void setMention_everyone(boolean mention_everyone) {
-        this.mention_everyone = mention_everyone;
-    }
+	public void setChannel_id(String channel_id) {
+		this.channel_id = channel_id;
+	}
 
-    public boolean isPinned() {
-        return pinned;
-    }
+	public DiscordAuthor getAuthor() {
+		return author;
+	}
 
-    public void setPinned(boolean pinned) {
-        this.pinned = pinned;
-    }
+	public void setAuthor(DiscordAuthor author) {
+		this.author = author;
+	}
 
-    public boolean isTts() {
-        return tts;
-    }
+	public List<DiscordAttachment> getAttachments() {
+		return attachments;
+	}
 
-    public void setTts(boolean tts) {
-        this.tts = tts;
-    }
+	public void setAttachments(List<DiscordAttachment> attachments) {
+		this.attachments = attachments;
+	}
 
-    public Date getTimestamp() {
-        return timestamp;
-    }
+	public List<DiscordEmbed> getEmbeds() {
+		return embeds;
+	}
 
-    public void setTimestamp(Date timestamp) {
-        this.timestamp = timestamp;
-    }
+	public void setEmbeds(List<DiscordEmbed> embeds) {
+		this.embeds = embeds;
+	}
 
-    public Date getEditedTimestamp() {
-        return editedTimestamp;
-    }
+	public List<DiscordMention> getMentions() {
+		return mentions;
+	}
 
-    public void setEditedTimestamp(Date editedTimestamp) {
-        this.editedTimestamp = editedTimestamp;
-    }
+	public void setMentions(List<DiscordMention> mentions) {
+		this.mentions = mentions;
+	}
 
-    public int getFlags() {
-        return flags;
-    }
+	public List<Object> getMention_roles() {
+		return mention_roles;
+	}
 
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
+	public void setMention_roles(List<Object> mention_roles) {
+		this.mention_roles = mention_roles;
+	}
 
-    @Override
-    public String toString() {
-        return "DiscordRoot [" + "id=" + id + ", type=" + type + ", messageContent=" + messageContent + ", channel_id="
-                + channel_id + ", author=" + author.toString() + ", attachments=" + attachments.toString() + ", embeds="
-                + embeds.toString() + ", mentions=" + mentions.toString() + ", mention_roles="
-                + mention_roles.toString() + ", pinned=" + pinned + ", mention_everyone=" + mention_everyone + ", tts="
-                + tts + ", timestamp=" + timestamp + ", editedTimestamp=" + editedTimestamp + ", flags=" + flags
-                + ", reactions=" + reactions.toString() + ", call=" + call.toString() + "]";
-    }
+	public boolean isMention_everyone() {
+		return mention_everyone;
+	}
+
+	public void setMention_everyone(boolean mention_everyone) {
+		this.mention_everyone = mention_everyone;
+	}
+
+	public boolean isPinned() {
+		return pinned;
+	}
+
+	public void setPinned(boolean pinned) {
+		this.pinned = pinned;
+	}
+
+	public boolean isTts() {
+		return tts;
+	}
+
+	public void setTts(boolean tts) {
+		this.tts = tts;
+	}
+
+	public Date getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(Date timestamp) {
+		this.timestamp = timestamp;
+	}
+
+	public Date getEditedTimestamp() {
+		return editedTimestamp;
+	}
+
+	public void setEditedTimestamp(Date editedTimestamp) {
+		this.editedTimestamp = editedTimestamp;
+	}
+
+	public int getFlags() {
+		return flags;
+	}
+
+	public void setFlags(int flags) {
+		this.flags = flags;
+	}
+
+	@Override
+	public String toString() {
+		return "DiscordRoot [" + "id=" + id + ", type=" + type + ", messageContent=" + messageContent + ", channel_id="
+				+ channel_id + ", author=" + author.toString() + ", attachments=" + attachments.toString() + ", embeds="
+				+ embeds.toString() + ", mentions=" + mentions.toString() + ", mention_roles="
+				+ mention_roles.toString() + ", pinned=" + pinned + ", mention_everyone=" + mention_everyone + ", tts="
+				+ tts + ", timestamp=" + timestamp + ", editedTimestamp=" + editedTimestamp + ", flags=" + flags
+				+ ", reactions=" + reactions.toString() + ", call=" + call.toString() + "]";
+	}
 
 }

@@ -16,6 +16,9 @@ public class DiscordAuthor {
 
     @JsonProperty("avatar")
     public String avatar;
+    
+    @JsonProperty("avatar")
+    public String avatarURL;
 
     @JsonProperty("discriminator")
     public String discriminator;
