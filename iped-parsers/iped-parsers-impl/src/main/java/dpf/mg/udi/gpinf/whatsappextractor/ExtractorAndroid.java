@@ -189,8 +189,9 @@ public class ExtractorAndroid extends Extractor {
                     Message m = createMessageFromDBRow(rs, remote, isGroupChat, true, hasThumbTable, hasEditVersionCol);
                     messages.add(m);
                 } catch (SQLException e) {
+                    logger.warn("Error creating undeleted message", e);
                 } catch (RuntimeException e) {
-                    logger.warn(e.toString());
+                    logger.warn("Error creating undeleted message", e);
                 }
             }
     
@@ -207,7 +208,12 @@ public class ExtractorAndroid extends Extractor {
         int type = rs.getInt("messageType"); //$NON-NLS-1$
         int status = rs.getInt("status"); //$NON-NLS-1$
         String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
-        String str = SQLite3DBParser.getStringIfExists(rs, "edit_version"); //$NON-NLS-1$
+        String str = null;
+        try {
+            str = SQLite3DBParser.getStringIfExists(rs, "edit_version"); //$NON-NLS-1$
+        } catch (IndexOutOfBoundsException ignore) {
+            // ignore possible error in retrieving this field from undeleted records
+        }
         Integer edit_version = str != null ? Integer.parseInt(str) : null;
         long media_size = rs.getLong("mediaSize"); //$NON-NLS-1$
         m.setId(rs.getLong("id")); //$NON-NLS-1$
@@ -224,7 +230,11 @@ public class ExtractorAndroid extends Extractor {
         m.setMediaMime(rs.getString("mediaMime")); //$NON-NLS-1$
         m.setMediaName(rs.getString("mediaName")); //$NON-NLS-1$
         m.setMediaCaption(caption); // $NON-NLS-1$
-        m.setMediaHash(rs.getString("mediaHash"), true); //$NON-NLS-1$
+        try {
+            m.setMediaHash(rs.getString("mediaHash"), true); //$NON-NLS-1$
+        } catch (IllegalArgumentException ignore) {
+            // ignore possible failure in base64 decoding due to garbage from undeleted records
+        }
         m.setMediaSize(media_size);
         m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
         m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$

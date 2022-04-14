@@ -165,8 +165,9 @@ public class ExtractorIOS extends Extractor {
                     Message m = createMessageFromUndeletedRecord(row, chat, mediaItems, groupMembers);
                     messages.add(m);
                 } catch (SQLException e) {
+                    logger.warn("Error creating undelete message for whatsapp ios", e);
                 } catch (RuntimeException e) {
-                    logger.warn(e.toString());
+                    logger.warn("Error creating undelete message for whatsapp ios", e);
                 }
             }
     
