@@ -124,7 +124,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals(384, whatsapptracker.username.size());
             assertEquals(365, whatsapptracker.userphone.size());
             assertEquals(384, whatsapptracker.useraccount.size());
-            assertEquals(165, whatsapptracker.usernotes.size());
+            assertEquals(166, whatsapptracker.usernotes.size());
             assertEquals(0, whatsapptracker.participants.size());
             assertEquals(0, whatsapptracker.messagefrom.size());
             assertEquals(0, whatsapptracker.messagebody.size());
@@ -169,8 +169,8 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("Olá! Eu estou usando WhatsApp.", whatsapptracker.usernotes.get(3));
             assertEquals("\"Nobility is about being superior than your former self\"",
                     whatsapptracker.usernotes.get(4));
-            assertEquals("Leve seus sonhos a sério", whatsapptracker.usernotes.get(163));
-            assertEquals("Disponível", whatsapptracker.usernotes.get(164));
+            assertEquals("Leve seus sonhos a sério", whatsapptracker.usernotes.get(164));
+            assertEquals("Disponível", whatsapptracker.usernotes.get(165));
 
         }
 
