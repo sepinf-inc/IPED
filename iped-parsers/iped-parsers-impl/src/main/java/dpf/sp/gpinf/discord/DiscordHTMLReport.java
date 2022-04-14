@@ -83,8 +83,13 @@ public class DiscordHTMLReport {
                 out.println("		<TABLE class='title'>");
                 out.println("			<TR>");
                 out.println("				<TD>");
-                out.println("					<img src='https://cdn.discordapp.com/avatars/" + dr.getAuthor().id + "/"
+                if (dr.getAuthor().avatarURL == null) {
+                	out.println("					<img src='https://cdn.discordapp.com/avatars/" + dr.getAuthor().id + "/"
                         + dr.getAuthor().avatar + ".png' alt='' width='50' height='50'>");
+                } else {
+                	out.println("					<img src='data:image/png;base64, " + dr.getAuthor().avatarURL + "' alt='' width='50' height='50'>");
+                }
+                
                 out.println("				</TD>");
                 out.println("				<TD>");
                 out.println("					<span title='Channel ID=" + dr.getChannel_id() + ", UserID="
@@ -171,8 +176,16 @@ public class DiscordHTMLReport {
                     for (DiscordAttachment attachments : dr.getAttachments()) {
                         out.println("<TR>");
                         out.println("	<TD>");
-                        out.println("		<img src='" + attachments.getUrl() + "' alt='" + attachments.getFilename()
-                                + "' width='400px' height=''>");
+                        if (attachments.getContent_type() != null && (attachments.getContent_type().equals("video/mp4") || attachments.getContent_type().equals("video/webm"))) {
+                        	out.println("	<video controls>");
+                        	out.println("		<source type=\""+ attachments.getContent_type() +"\" src='data:" + attachments.getContent_type() + ";base64," + attachments.getUrl() + "' alt='" + attachments.getFilename()
+                            + "' width='400px' height=''>");
+                        	out.println("	</video controls>");	
+                        } else {
+                        	out.println("		<img src='data:" + attachments.getContent_type() + ";base64," + attachments.getUrl() + "' alt='" + attachments.getFilename()
+                            + "' width='400px' height=''>");
+                        }
+                        
                         out.println("		<BR/>");
                         out.println(
                                 "		<a href='" + attachments.getUrl() + "'>" + attachments.getFilename() + "</a>");
