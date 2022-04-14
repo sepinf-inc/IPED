@@ -778,6 +778,9 @@ public class WhatsAppParser extends SQLite3DBParser {
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
             meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+            if (m.isDeleted()) {
+                meta.set(ExtraProperties.DELETED, Boolean.toString(true));
+            }
 
             if (!m.isSystemMessage()) {
                 String local = formatContact(account, cache);
