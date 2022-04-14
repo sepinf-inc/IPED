@@ -46,6 +46,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.lucene.util.IOUtils;
 import org.apache.poi.poifs.filesystem.DirectoryEntry;
 import org.apache.poi.poifs.filesystem.DocumentEntry;
@@ -56,6 +57,8 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.microsoft.POIFSContainerDetector;
 
+import com.sun.jna.Native;
+
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
@@ -65,11 +68,13 @@ import iped3.util.ExtraProperties;
 
 public class Util {
 
-    public static final Integer MIN_JAVA_VER = 8;
-    public static final Integer MAX_JAVA_VER = 11;
+    public static final Integer MIN_JAVA_VER = 11;
+    public static final Integer MAX_JAVA_VER = 14;
 
     // These java versions have a WebView bug that crashes the JVM: JDK-8196011
     private static final String[] buggedVersions = { "1.8.0_161", "1.8.0_162", "1.8.0_171" };
+
+    private static CLibrary C_Library;
 
     public static void fsync(Path path) throws IOException {
         IOUtils.fsync(path, false);
@@ -438,6 +443,20 @@ public class Util {
             if (subFile.isFile()) {
                 System.load(subFile.getAbsolutePath());
             }
+        }
+    }
+
+    public static void setEnvVar(String key, String value) {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            if (C_Library == null) {
+                C_Library = (CLibrary) Native.loadLibrary("ucrtbase", CLibrary.class);
+            }
+            C_Library._putenv(key + "=" + value);
+        } else {
+            if (C_Library == null) {
+                C_Library = (CLibrary) Native.loadLibrary("c", CLibrary.class);
+            }
+            C_Library.putenv(key + "=" + value);
         }
     }
 

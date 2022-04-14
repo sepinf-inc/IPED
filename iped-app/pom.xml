@@ -309,7 +309,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>unpack-tskloaddb</id>
+                        <id>unpack-sleuthkit-dlls</id>
                         <phase>package</phase>
                         <goals>
                             <goal>unpack</goal>
@@ -318,8 +318,8 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
-                                    <artifactId>tsk-loaddb</artifactId>
-                                    <version>4.6.5-p05</version>
+                                    <artifactId>sleuthkit-dlls</artifactId>
+                                    <version>${sleuthkit.version}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>

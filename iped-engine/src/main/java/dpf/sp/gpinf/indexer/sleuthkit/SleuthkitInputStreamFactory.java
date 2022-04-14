@@ -1,5 +1,6 @@
 package dpf.sp.gpinf.indexer.sleuthkit;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +16,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 
@@ -62,14 +64,30 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
             synchronized (this) {
                 if (sleuthkitCase == null) {
                     try {
-                        sleuthkitCase = SleuthkitCase.openCase(Paths.get(dataSource).toString());
-                    } catch (TskCoreException e) {
+                        File tskDB = Paths.get(dataSource).toFile();
+                        if (!SleuthkitReader.isTSKPatched()) {
+                            tskDB = getWriteableDBFile(tskDB);
+                        }
+                        sleuthkitCase = SleuthkitCase.openCase(tskDB.getAbsolutePath());
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 }
             }
         }
         return sleuthkitCase;
+    }
+
+    public static File getWriteableDBFile(File sleuthkitDB) throws IOException {
+        if (!IOUtil.canWrite(sleuthkitDB) || !IOUtil.canCreateFile(sleuthkitDB.getParentFile())) {
+            File tmpCaseFile = new File(System.getProperty("java.io.basetmpdir"), //$NON-NLS-1$
+                    "sleuthkit-" + sleuthkitDB.lastModified() + ".db"); //$NON-NLS-1$
+            if (!tmpCaseFile.exists() || tmpCaseFile.length() != sleuthkitDB.length()) {
+                IOUtil.copyFile(sleuthkitDB, tmpCaseFile);
+            }
+            return tmpCaseFile;
+        }
+        return sleuthkitDB;
     }
 
     @Override
