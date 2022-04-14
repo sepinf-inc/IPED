@@ -47,6 +47,7 @@ public class ScriptTask extends AbstractTask {
     private File scriptFile;
     private ScriptEngine engine;
     private Invocable inv;
+    private String scriptName;
 
     public ScriptTask(File scriptFile) {
         this.scriptFile = scriptFile;
@@ -92,6 +93,8 @@ public class ScriptTask extends AbstractTask {
         engine.put("worker", this.worker); //$NON-NLS-1$
         engine.put("stats", this.stats); //$NON-NLS-1$
 
+        scriptName = (String) inv.invokeFunction("getName"); //$NON-NLS-1$
+
         inv.invokeFunction("init", configurationManager); //$NON-NLS-1$
 
         numInstances++;
@@ -126,12 +129,7 @@ public class ScriptTask extends AbstractTask {
 
     @Override
     public String getName() {
-        try {
-            return (String) inv.invokeFunction("getName"); //$NON-NLS-1$
-
-        } catch (NoSuchMethodException | ScriptException e) {
-            throw new RuntimeException(e);
-        }
+        return scriptName;
     }
 
 }
