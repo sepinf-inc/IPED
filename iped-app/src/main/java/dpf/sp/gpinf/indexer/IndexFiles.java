@@ -231,11 +231,11 @@ public class IndexFiles {
         if (!cmdLineParams.isNogui()) {
             ProgressFrame progressFrame = new ProgressFrame(provider);
             progressFrame.setVisible(true);
-            provider.addPropertyChangeListener(progressFrame);
+            provider.addPropertyChangeListener(progressFrame, true);
             frame = progressFrame;
         } else {
             ProgressConsole console = new ProgressConsole();
-            provider.addPropertyChangeListener(console);
+            provider.addPropertyChangeListener(console, false);
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
