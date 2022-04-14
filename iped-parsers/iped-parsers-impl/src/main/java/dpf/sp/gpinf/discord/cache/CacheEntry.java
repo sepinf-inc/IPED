@@ -142,7 +142,7 @@ public class CacheEntry {
 
         selfHash = readUnsignedInt(is);
         keyData = IOUtils.readFully(is, 256 - 24 * 4);
-
+        
     }
 
     public int getResponseDataSize() {
@@ -157,6 +157,10 @@ public class CacheEntry {
         return state;
     }
 
+    public String getName() {
+    	return dataStreamAdresses[1].getFileNameStr();
+    }
+    
     public String getRequestURL() {
         return getKey();
     }
@@ -185,7 +189,6 @@ public class CacheEntry {
             }
             throw e;
         }
-
     }
 
     public static int read2bytes(InputStream is) throws IOException {
@@ -203,5 +206,4 @@ public class CacheEntry {
     public static long read8bytes(InputStream is) throws IOException {
         return read4bytes(is) | (readUnsignedInt(is) << 32);
     }
-
 }
