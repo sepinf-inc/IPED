@@ -288,7 +288,12 @@ public class Statistics {
         String warn = Util.getJavaVersionWarn();
         if (warn != null)
             LOGGER.error(warn); // $NON-NLS-1$ //$NON-NLS-2$
-        LOGGER.info("Architecture: {}", System.getProperty("os.arch")); //$NON-NLS-1$ //$NON-NLS-2$
+
+        String arch = System.getProperty("os.arch");
+        LOGGER.info("Architecture: {}", arch); //$NON-NLS-1$
+        if (!arch.contains("64")) {
+            throw new IPEDException("Java 32 bits not supported anymore. Please update to a 64 bits version.");
+        }
         LOGGER.info("Current Directory: {}", System.getProperty("user.dir")); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("CPU Cores: {}", Runtime.getRuntime().availableProcessors()); //$NON-NLS-1$
         LOGGER.info("numThreads: {}", localConfig.getNumThreads()); //$NON-NLS-1$
