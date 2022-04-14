@@ -20,8 +20,8 @@ public class WAContactsExtractorAndroid extends WAContactsExtractor {
 
     private static final String SELECT_CONTACT_NAMES = "SELECT * FROM wa_contacts"; //$NON-NLS-1$
 
-    public WAContactsExtractorAndroid(File database, WAContactsDirectory directory) {
-        super(database, directory);
+    public WAContactsExtractorAndroid(File database, WAContactsDirectory directory, boolean recoverDeletedRecords) {
+        super(database, directory, recoverDeletedRecords);
     }
 
     @Override
@@ -29,13 +29,15 @@ public class WAContactsExtractorAndroid extends WAContactsExtractor {
         
         SQLiteUndeleteTable undeletedContactsTable = null;
         
-        try {
-            SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
-            undelete.addTableToRecover("wa_contacts"); //$NON-NLS-1$
-            undelete.addRecordValidator("wa_contacts", new WAAndroidContactValidator()); //$NON-NLS-1$
-            undeletedContactsTable = undelete.undeleteData().get("wa_contacts"); //$NON-NLS-1$
-        } catch (Exception e) {
-            logger.warn("Error recovering deleted records from Android WhatsApp Contacts Database", e);
+        if (recoverDeletedRecords) {
+            try {
+                SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
+                undelete.addTableToRecover("wa_contacts"); //$NON-NLS-1$
+                undelete.addRecordValidator("wa_contacts", new WAAndroidContactValidator()); //$NON-NLS-1$
+                undeletedContactsTable = undelete.undeleteData().get("wa_contacts"); //$NON-NLS-1$
+            } catch (Exception e) {
+                logger.warn("Error recovering deleted records from Android WhatsApp Contacts Database", e);
+            }
         }
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {

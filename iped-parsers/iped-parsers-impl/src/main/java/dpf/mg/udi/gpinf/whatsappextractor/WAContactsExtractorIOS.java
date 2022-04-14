@@ -24,8 +24,8 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
             + "LEFT JOIN ZWACONTACT ON ZWAPHONE.ZCONTACT = ZWACONTACT.Z_PK " //$NON-NLS-1$
             + "LEFT JOIN ZWASTATUS ON ZWAPHONE.Z_PK = ZWASTATUS.ZPHONE"; //$NON-NLS-1$
 
-    public WAContactsExtractorIOS(File database, WAContactsDirectory directory) {
-        super(database, directory);
+    public WAContactsExtractorIOS(File database, WAContactsDirectory directory, boolean recoverDeletedRecords) {
+        super(database, directory, recoverDeletedRecords);
     }
 
     @Override
@@ -33,13 +33,15 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
         
         SQLiteUndeleteTable undeletedContactsTable = null;
         
-        try {
-            SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
-            undelete.addTableToRecover("ZWAADDRESSBOOKCONTACT"); //$NON-NLS-1$
-            undelete.addRecordValidator("ZWAADDRESSBOOKCONTACT", new WAIOSContactValidator()); //$NON-NLS-1$
-            undeletedContactsTable = undelete.undeleteData().get("ZWAADDRESSBOOKCONTACT"); //$NON-NLS-1$
-        } catch (Exception e) {
-            logger.warn("Error recovering deleted records from IOS WhatsApp Contacts Database", e);
+        if (recoverDeletedRecords) {
+            try {
+                SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
+                undelete.addTableToRecover("ZWAADDRESSBOOKCONTACT"); //$NON-NLS-1$
+                undelete.addRecordValidator("ZWAADDRESSBOOKCONTACT", new WAIOSContactValidator()); //$NON-NLS-1$
+                undeletedContactsTable = undelete.undeleteData().get("ZWAADDRESSBOOKCONTACT"); //$NON-NLS-1$
+            } catch (Exception e) {
+                logger.warn("Error recovering deleted records from IOS WhatsApp Contacts Database", e);
+            }
         }
         
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {

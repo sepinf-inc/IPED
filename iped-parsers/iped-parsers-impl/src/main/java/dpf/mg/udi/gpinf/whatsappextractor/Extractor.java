@@ -13,11 +13,13 @@ public abstract class Extractor {
     protected List<Chat> chatList;
     protected final WAContactsDirectory contacts;
     protected WAAccount account;
+    protected boolean recoverDeletedRecords;
 
-    protected Extractor(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
+    protected Extractor(File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         this.databaseFile = databaseFile;
         this.contacts = contacts;
         this.account = account;
+        this.recoverDeletedRecords = recoverDeletedRecords;
     }
 
     /**

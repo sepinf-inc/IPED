@@ -166,6 +166,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     private boolean mergeBackups = false;
     private int downloadConnectionTimeout = 500;
     private int downloadReadTimeout = 500;
+    private boolean recoverDeletedRecords = true;
+    
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -200,6 +202,11 @@ public class WhatsAppParser extends SQLite3DBParser {
     @Field
     public void setDownloadReadTimeout(int downloadReadTimeout) {
         this.downloadReadTimeout = downloadReadTimeout;
+    }
+    
+    @Field
+    public void setRecoverDeletedRecords(boolean recoverDeletedRecords) {
+        this.recoverDeletedRecords = recoverDeletedRecords;
     }
 
     private boolean isDownloadMediaFilesEnabled() {
@@ -342,7 +349,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 exportWalLog(tempDbFile, context, tmp);
                 exportRollbackJournal(tempDbFile, context, tmp);
 
-                Extractor waExtractor = extFactory.createMessageExtractor(tempDbFile, contacts, account);
+                Extractor waExtractor = extFactory.createMessageExtractor(tempDbFile, contacts, account, recoverDeletedRecords);
                 List<Chat> chatList = waExtractor.getChatList();
                 createReport(chatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
 
@@ -459,7 +466,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             exportWalLog(tempFile, context, tmp);
             exportRollbackJournal(tempFile, context, tmp);
             extFactory.setConnectionParams(tis, metadata, context, this);
-            Extractor waExtractor = extFactory.createMessageExtractor(tempFile, contacts, account);
+            Extractor waExtractor = extFactory.createMessageExtractor(tempFile, contacts, account, recoverDeletedRecords);
             return waExtractor.getChatList();
         }
     }
@@ -993,7 +1000,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             exportWalLog(contactDbFile, context, tmp);
             exportRollbackJournal(contactDbFile, context, tmp);
             try {
-                WAContactsExtractor waExtractor = extFactory.createContactsExtractor(contactDbFile);
+                WAContactsExtractor waExtractor = extFactory.createContactsExtractor(contactDbFile, recoverDeletedRecords);
                 waExtractor.extractContactList();
 
                 ItemInfo itemInfo = context.get(ItemInfo.class);
@@ -1086,7 +1093,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         try (InputStream is = item.getBufferedInputStream()) {
             extFactory.setConnectionParams(is, null, context, this);
-            WAContactsExtractor waExtractor = extFactory.createContactsExtractor(item.getTempFile());
+            WAContactsExtractor waExtractor = extFactory.createContactsExtractor(item.getTempFile(), recoverDeletedRecords);
             waExtractor.extractContactList();
             return waExtractor.getContactsDirectory();
         }
@@ -1099,9 +1106,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         ParseContext context;
         WhatsAppParser connFactory;
 
-        abstract Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account);
+        abstract Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account, boolean recoverDeletedRecords);
 
-        abstract WAContactsExtractor createContactsExtractor(File file);
+        abstract WAContactsExtractor createContactsExtractor(File file, boolean recoverDeletedRecords);
 
         void setConnectionParams(InputStream is, Metadata metadata, ParseContext context, WhatsAppParser connFactory) {
             this.is = is;
@@ -1124,8 +1131,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     protected static class ExtractorAndroidFactory extends ExtractorFactory {
 
         @Override
-        public Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account) {
-            return new ExtractorAndroid(file, directory, account) {
+        public Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account, boolean recoverDeletedRecords) {
+            return new ExtractorAndroid(file, directory, account, recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorAndroidFactory.this.getConnection();
@@ -1134,8 +1141,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
 
         @Override
-        public WAContactsExtractor createContactsExtractor(File file) {
-            return new WAContactsExtractorAndroid(file, new WAContactsDirectory()) {
+        public WAContactsExtractor createContactsExtractor(File file, boolean recoverDeletedRecords) {
+            return new WAContactsExtractorAndroid(file, new WAContactsDirectory(), recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorAndroidFactory.this.getConnection();
@@ -1150,8 +1157,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     protected static class ExtractorIOSFactory extends ExtractorFactory {
 
         @Override
-        public Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account) {
-            return new ExtractorIOS(file, directory, account) {
+        public Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account, boolean recoverDeletedRecords) {
+            return new ExtractorIOS(file, directory, account, recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorIOSFactory.this.getConnection();
@@ -1160,8 +1167,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
 
         @Override
-        public WAContactsExtractor createContactsExtractor(File file) {
-            return new WAContactsExtractorIOS(file, new WAContactsDirectory()) {
+        public WAContactsExtractor createContactsExtractor(File file, boolean recoverDeletedRecords) {
+            return new WAContactsExtractorIOS(file, new WAContactsDirectory(), recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorIOSFactory.this.getConnection();

@@ -67,40 +67,41 @@ public class ExtractorIOS extends Extractor {
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //$NON-NLS-1$
 
-    public ExtractorIOS(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
-        super(databaseFile, contacts, account);
+    public ExtractorIOS(File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
+        super(databaseFile, contacts, account, recoverDeletedRecords);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     }
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
         var list = new ArrayList<Chat>();
-
-        // try to recover deleted records
-        var undelete = new SQLiteUndelete(databaseFile.toPath());
-        undelete.addTableToRecover("ZWAMESSAGE"); //$NON-NLS-1$
-        undelete.addTableToRecoverOnlyDeleted("ZWAMESSAGE"); //$NON-NLS-1$
-        undelete.addRecordValidator("ZWAMESSAGE", new WAIOSMessageValidator()); //$NON-NLS-1$
-        undelete.addTableToRecover("ZWAMEDIAITEM"); //$NON-NLS-1$
-        undelete.addRecordValidator("ZWAMEDIAITEM", new WAIOSMediaItemValidator()); //$NON-NLS-1$
-        undelete.addTableToRecover("ZWAGROUPMEMBER"); //$NON-NLS-1$
-        undelete.addRecordValidator("ZWAGROUPMEMBER", new WAIOSGroupMemberValidator()); //$NON-NLS-1$
-        undelete.setRecoverOnlyDeletedRecords(false);
         
         Map<String, SQLiteUndeleteTable> undeleteTables = null;
         SQLiteUndeleteTable messagesUndeletedTable = null;
         SQLiteUndeleteTable mediaItemUndeletedTable = null;
         SQLiteUndeleteTable groupMembersUndeletedTable = null;
-        
-        try {
-            undeleteTables = undelete.undeleteData();
-            messagesUndeletedTable = undeleteTables.get("ZWAMESSAGE"); //$NON-NLS-1$
-            mediaItemUndeletedTable = undeleteTables.get("ZWAMEDIAITEM"); //$NON-NLS-1$
-            groupMembersUndeletedTable = undeleteTables.get("ZWAGROUPMEMBER"); //$NON-NLS-1$
-        } catch (Exception e) {
-            logger.warn("Error recovering deleted records from iOS WhatsApp Database", e);
-        }
-        
+
+        if (recoverDeletedRecords) {
+            // try to recover deleted records
+            var undelete = new SQLiteUndelete(databaseFile.toPath());
+            undelete.addTableToRecover("ZWAMESSAGE"); //$NON-NLS-1$
+            undelete.addTableToRecoverOnlyDeleted("ZWAMESSAGE"); //$NON-NLS-1$
+            undelete.addRecordValidator("ZWAMESSAGE", new WAIOSMessageValidator()); //$NON-NLS-1$
+            undelete.addTableToRecover("ZWAMEDIAITEM"); //$NON-NLS-1$
+            undelete.addRecordValidator("ZWAMEDIAITEM", new WAIOSMediaItemValidator()); //$NON-NLS-1$
+            undelete.addTableToRecover("ZWAGROUPMEMBER"); //$NON-NLS-1$
+            undelete.addRecordValidator("ZWAGROUPMEMBER", new WAIOSGroupMemberValidator()); //$NON-NLS-1$
+            undelete.setRecoverOnlyDeletedRecords(false);
+            
+            try {
+                undeleteTables = undelete.undeleteData();
+                messagesUndeletedTable = undeleteTables.get("ZWAMESSAGE"); //$NON-NLS-1$
+                mediaItemUndeletedTable = undeleteTables.get("ZWAMEDIAITEM"); //$NON-NLS-1$
+                groupMembersUndeletedTable = undeleteTables.get("ZWAGROUPMEMBER"); //$NON-NLS-1$
+            } catch (Exception e) {
+                logger.warn("Error recovering deleted records from iOS WhatsApp Database", e);
+            }
+        }            
 
         Map<Long, List<SqliteRow>> undeletedMessages = messagesUndeletedTable == null ? Collections.emptyMap()
                 : messagesUndeletedTable.getTableRowsGroupedByLongCol("ZCHATSESSION");

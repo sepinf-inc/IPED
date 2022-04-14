@@ -68,8 +68,8 @@ public class ExtractorAndroid extends Extractor {
     private boolean hasEditVersionCol = false;
     private boolean hasChatView = false;
 
-    public ExtractorAndroid(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
-        super(databaseFile, contacts, account);
+    public ExtractorAndroid(File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
+        super(databaseFile, contacts, account, recoverDeletedRecords);
     }
 
     @Override
@@ -78,13 +78,15 @@ public class ExtractorAndroid extends Extractor {
 
         SQLiteUndeleteTable undeletedMessagesTable = null;
         
-        try {
-            SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
-            undelete.addTableToRecover("messages");
-            undelete.addRecordValidator("messages", new WAAndroidMessageValidator());
-            undeletedMessagesTable = undelete.undeleteData().get("messages");
-        } catch (Exception e) {
-            logger.warn("Error recovering deleted records from Android WhatsApp Database", e);
+        if (recoverDeletedRecords) {        
+            try {
+                SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
+                undelete.addTableToRecover("messages");
+                undelete.addRecordValidator("messages", new WAAndroidMessageValidator());
+                undeletedMessagesTable = undelete.undeleteData().get("messages");
+            } catch (Exception e) {
+                logger.warn("Error recovering deleted records from Android WhatsApp Database", e);
+            }
         }
 
         Map<String, List<SqliteRow>> undeletedMessages = undeletedMessagesTable == null ? Collections.emptyMap()
