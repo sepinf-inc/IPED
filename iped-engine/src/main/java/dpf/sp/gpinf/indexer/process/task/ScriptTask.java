@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.List;
 
+import javax.script.Bindings;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
@@ -63,8 +64,9 @@ public class ScriptTask extends AbstractTask {
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")) { //$NON-NLS-1$
 
             ScriptEngineManager manager = new ScriptEngineManager();
-            String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1); // $NON-NLS-1$
-            engine = manager.getEngineByExtension(ext); // $NON-NLS-1$
+            engine = manager.getEngineByName("graal.js");
+            Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+            bindings.put("polyglot.js.nashorn-compat", true);
             engine.eval(reader);
             inv = (Invocable) engine;
         }
