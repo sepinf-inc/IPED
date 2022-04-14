@@ -266,14 +266,6 @@ div.deletedIcon {
 	font-size: small;
 }
 
-#conversation .deleted
-{
-	color: #FF0000;
-	float: right;
-	padding-left: 12px;
-	font-size: medium;
-}
-
 #conversation .incoming
 {
 	color: #000000;

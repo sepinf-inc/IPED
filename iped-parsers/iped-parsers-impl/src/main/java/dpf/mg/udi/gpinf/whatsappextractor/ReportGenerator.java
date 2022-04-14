@@ -65,6 +65,9 @@ public class ReportGenerator {
         out.println("<br>" + Messages.getString("WhatsAppReport.NickName") + format(contact.getNickName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.SortName") + format(contact.getSortName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.Status") + format(contact.getStatus())); //$NON-NLS-1$ //$NON-NLS-2$
+        if (contact.isDeleted()) {
+            out.println("<br><i>" + Messages.getString("WhatsAppReport.ContactDeleted") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        }
 
         out.println("</body>\n</html>"); //$NON-NLS-1$
 
@@ -529,7 +532,7 @@ public class ReportGenerator {
         }
         out.println("</span>"); //$NON-NLS-1$
         if (message.isDeleted()) {
-            out.println("<br/><span class=\"deleted\">"); //$NON-NLS-1$
+            out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
             out.println("<i>" + Messages.getString("WhatsAppReport.MessageDeleted") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             out.println("<div class=\"deletedIcon\"></div>"); //$NON-NLS-1$
             out.println("</span>"); //$NON-NLS-1$

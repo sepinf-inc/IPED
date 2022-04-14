@@ -989,8 +989,11 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         if (extractor.shouldParseEmbedded(metadata)) {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            File contactDbFile = tis.getFile();
+            exportWalLog(contactDbFile, context, tmp);
+            exportRollbackJournal(contactDbFile, context, tmp);
             try {
-                WAContactsExtractor waExtractor = extFactory.createContactsExtractor(tis.getFile());
+                WAContactsExtractor waExtractor = extFactory.createContactsExtractor(contactDbFile);
                 waExtractor.extractContactList();
 
                 ItemInfo itemInfo = context.get(ItemInfo.class);
@@ -1016,6 +1019,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.CONTACT_OF_ACCOUNT, account.getFullId());
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getStatus());
                     cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                    if (c.isDeleted()) {
+                        cMetadata.set(ExtraProperties.DELETED, Boolean.toString(c.isDeleted()));
+                    }
 
                     getAvatar(searcher, c);
                     if (c.getAvatar() != null) {

@@ -39,4 +39,13 @@ public abstract class WAContactsExtractor {
         }
         return null;
     }
+    
+    protected static String nullToEmpty(String s) {
+        if (s == null) {
+            return ""; //$NON-NLS-1$
+        }
+        return s;
+    }
+    
+
 }
