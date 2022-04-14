@@ -174,7 +174,7 @@
         <dependency>
             <groupId>io.github.fmpfeifer</groupId>
             <artifactId>libfqlite</artifactId>
-            <version>1.57.01</version>
+            <version>1.57.02</version>
         </dependency>
     </dependencies>
     
