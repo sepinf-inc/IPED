@@ -8,8 +8,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,21 +31,15 @@ import dpf.sp.gpinf.indexer.config.MinIOConfig;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import io.minio.BucketExistsArgs;
-import io.minio.ErrorCode;
 import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
-import io.minio.ObjectStat;
 import io.minio.ObjectWriteResponse;
 import io.minio.PutObjectArgs;
 import io.minio.StatObjectArgs;
+import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
-import io.minio.errors.InsufficientDataException;
-import io.minio.errors.InternalException;
-import io.minio.errors.InvalidBucketNameException;
-import io.minio.errors.InvalidResponseException;
-import io.minio.errors.ServerException;
-import io.minio.errors.XmlParserException;
 import iped3.ICaseData;
 import iped3.IItem;
 import iped3.configuration.Configurable;
@@ -292,12 +284,13 @@ public class MinIOTask extends AbstractTask {
     private boolean checkIfExists(String hash) throws Exception {
         boolean exists = false;
         try {
-            ObjectStat stat = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
+            StatObjectResponse stat = minioClient
+                    .statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
             exists = true;
 
         } catch (ErrorResponseException e) {
-            ErrorCode code = e.errorResponse().errorCode();
-            if (code != ErrorCode.NO_SUCH_OBJECT && code != ErrorCode.NO_SUCH_KEY) {
+            int code = e.response().code();
+            if (code != 404) {
                 throw e;
             }
         }
@@ -488,32 +481,30 @@ public class MinIOTask extends AbstractTask {
             return pos;
         }
 
-        /*
-         * TODO try to update the minioclient to query the size instead of downloading
-         * the entire file
-         */
         @Override
         public long size() throws IOException {
             if (size == null) {
                 if (id.contains(".zip/")) {
-                    byte[] buf = new byte[8192];
-                    try (InputStream is = getInputStream(0)) {
-                        size = 0L;
-                        int i;
-                        while ((i = is.read(buf)) != -1) {
-                            size += i;
-                        }
-                    }
+                    try (GetObjectResponse res = minioClient.getObject(GetObjectArgs.builder().bucket(bucket).object(id)
+                            .offset(pos).extraHeaders(Collections.singletonMap("x-minio-extract", "true")).build())) {
+                        return Long.valueOf(res.headers().get("Content-Length"));
 
+                    } catch (Exception e) {
+                        if (e instanceof IOException) {
+                            throw (IOException) e;
+                        }
+                        throw new IOException(e);
+                    }
                 } else {
                     try {
                         size = minioClient
                                 .statObject(StatObjectArgs.builder().bucket(bucket).object(id)
                                         .extraHeaders(Collections.singletonMap("x-minio-extract", "true")).build())
-                                .length();
-                    } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException
-                            | InternalException | InvalidBucketNameException | InvalidResponseException
-                            | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+                                .size();
+                    } catch (Exception e) {
+                        if (e instanceof IOException) {
+                            throw (IOException) e;
+                        }
                         throw new IOException(e);
                     }
                 }
@@ -560,9 +551,10 @@ public class MinIOTask extends AbstractTask {
                 return minioClient.getObject(GetObjectArgs.builder().bucket(bucket).object(id).offset(pos)
                         .extraHeaders(Collections.singletonMap("x-minio-extract", "true")).build());
 
-            } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException | InternalException
-                    | InvalidBucketNameException | InvalidResponseException | NoSuchAlgorithmException | ServerException
-                    | XmlParserException e) {
+            } catch (Exception e) {
+                if (e instanceof IOException) {
+                    throw (IOException) e;
+                }
                 throw new IOException(e);
             }
         }
