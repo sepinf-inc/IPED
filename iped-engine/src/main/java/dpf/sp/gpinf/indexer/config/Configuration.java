@@ -20,7 +20,9 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketPermission;
 import java.nio.file.Paths;
+import java.security.Policy;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
@@ -30,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
+import dpf.sp.gpinf.indexer.util.DefaultPolicy;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.configuration.Configurable;
@@ -203,6 +206,20 @@ public class Configuration {
         }
 
         configManager.loadConfigs();
+
+
+        // blocks internet access from html viewers
+        DefaultPolicy policy = new DefaultPolicy();
+        MinIOConfig minIOConfig = configManager.findObject(MinIOConfig.class);
+        if (minIOConfig.isEnabled()) {
+            String host = minIOConfig.getHostAndPort();
+            if (host.startsWith("http://") || host.startsWith("https://")) {
+                host = host.substring(host.indexOf("://") + 3);
+            }
+            policy.addAllowedPermission(new SocketPermission(host, "connect,resolve"));
+        }
+        Policy.setPolicy(policy);
+        System.setSecurityManager(new SecurityManager());
     }
 
     // add plugin jars to the configuration resource look up engine
