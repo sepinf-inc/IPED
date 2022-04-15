@@ -39,6 +39,12 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
         return port;
     }
 
+    public String getHostAndPort() {
+        if (port == null || port.isBlank())
+            return host;
+        else
+            return host + ":" + port;
+    }
 
     @Override
     public void processProperties(UTF8Properties properties) {
