@@ -496,12 +496,12 @@ public class MinIOTask extends AbstractTask {
         public long size() throws IOException {
             if (size == null) {
                 if (id.contains(".zip/")) {
+                    byte[] buf = new byte[8192];
                     try (InputStream is = getInputStream(0)) {
-                        long tot = is.skip(is.available());
                         size = 0L;
-                        while (tot > 0) {
-                            size += tot;
-                            tot = is.skip(is.available());
+                        int i;
+                        while ((i = is.read(buf)) != -1) {
+                            size += i;
                         }
                     }
 
