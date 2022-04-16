@@ -605,10 +605,21 @@ public class SleuthkitReader extends DataSourceReader {
            addImage.run(UUID.randomUUID().toString(), new String[] { image.getAbsolutePath() }, sectorSize);
 
         } catch (TskDataException e) {
-            int idx = e.toString().toLowerCase().indexOf("encryption detected"); //$NON-NLS-1$
+            String error = e.toString().toLowerCase();
+            int idx = error.indexOf("encryption detected"); //$NON-NLS-1$
+            int idx2 = error.indexOf("cannot determine file system type"); //$NON-NLS-1$
+            int idx3 = error.indexOf("microsoft reserved partition"); //$NON-NLS-1$
             if (idx != -1) {
                 LOGGER.error(e.toString().substring(idx).trim() + " decoding {}", image.getAbsolutePath()); //$NON-NLS-1$
-            } else {
+            }
+            if (idx2 != -1) {
+                if (idx3 == -1) {
+                    LOGGER.error(e.toString());
+                } else {
+                    LOGGER.warn(e.toString());
+                }
+            }
+            if (idx == -1 && idx2 == -1 && idx3 == -1) {
                 throw e;
             }
         }
