@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -147,24 +148,34 @@ public class ExtractorIOS extends Extractor {
             SQLiteUndeleteTable undeleteTable, Map<Long, SqliteRow> mediaItems, Map<Long, SqliteRow> groupMembers)
             throws SQLException {
         List<Message> messages = new ArrayList<>();
+        
+        boolean recoverDeleted = undeleteTable != null && !undeletedMessages.isEmpty();
+        
         String sql = chat.isGroupChat() ? SELECT_MESSAGES_GROUP : SELECT_MESSAGES_USER;
+        
+        Set<Message> activeMessages = new HashSet<>();
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setFetchSize(1000);
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                messages.add(createMessageFromDB(rs, chat));
+                Message m = createMessageFromDB(rs, chat);
+                if (recoverDeleted)
+                    activeMessages.add(m);
+                messages.add(m);
             }
         }
 
-        if (undeleteTable != null && !undeletedMessages.isEmpty() ) {
+        if (recoverDeleted) {
             // get deleted messages
             List<SqliteRow> undeletedRows = undeletedMessages.getOrDefault(chat.getId(), Collections.emptyList());
             for (SqliteRow row : undeletedRows) {
                 try {
                     Message m = createMessageFromUndeletedRecord(row, chat, mediaItems, groupMembers);
-                    messages.add(m);
+                    if (!activeMessages.contains(m)) { //do not include deleted message if already there
+                        messages.add(m);
+                    }
                 } catch (SQLException e) {
                     logger.warn("Error creating undelete message for whatsapp ios", e);
                 } catch (RuntimeException e) {

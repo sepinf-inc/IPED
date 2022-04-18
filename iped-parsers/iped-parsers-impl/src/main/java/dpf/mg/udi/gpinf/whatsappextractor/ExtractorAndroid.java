@@ -42,8 +42,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -167,9 +169,13 @@ public class ExtractorAndroid extends Extractor {
             Map<String, List<SqliteRow>> undeletedMessages, SQLiteUndeleteTable undeleteTable, boolean hasThumbTable,
             boolean hasEditVersionCol) throws SQLException {
         List<Message> messages = new ArrayList<>();
+        
+        boolean recoverDeleted = undeleteTable != null && !undeletedMessages.isEmpty();
 
         String id = remote.getId();
         id += isGroupChat ? "@g.us" : "@s.whatsapp.net"; //$NON-NLS-1$ //$NON-NLS-2$
+        
+        Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
 
         try (PreparedStatement stmt = conn.prepareStatement(hasThumbTable ? SELECT_MESSAGES_THUMBS_TABLE
                 : hasEditVersionCol ? SELECT_MESSAGES_NO_THUMBS_TABLE : SELECT_MESSAGES_NO_EDIT_VERSION)) {
@@ -177,11 +183,14 @@ public class ExtractorAndroid extends Extractor {
             stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                messages.add(createMessageFromDBRow(rs, remote, isGroupChat, false, hasThumbTable, hasEditVersionCol));
+                Message m = createMessageFromDBRow(rs, remote, isGroupChat, false, hasThumbTable, hasEditVersionCol);
+                if (recoverDeleted)
+                    activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
+                messages.add(m);
             }
         }
 
-        if (undeleteTable != null && !undeletedMessages.isEmpty()) {
+        if (recoverDeleted) {
             // get deleted messages
             SQLiteUndeleteTableResultSetAdapter rs = new SQLiteUndeleteTableResultSetAdapter(
                     undeletedMessages.getOrDefault(id, Collections.emptyList()), undeleteTable.getColumnNames(),
@@ -189,7 +198,9 @@ public class ExtractorAndroid extends Extractor {
             while (rs.next()) {
                 try {
                     Message m = createMessageFromDBRow(rs, remote, isGroupChat, true, hasThumbTable, hasEditVersionCol);
-                    messages.add(m);
+                    if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) { //do not include deleted message if already there
+                        messages.add(m);
+                    }
                 } catch (SQLException e) {
                     logger.warn("Error creating undeleted message", e);
                 } catch (RuntimeException e) {

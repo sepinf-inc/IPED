@@ -1,5 +1,7 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
+import static dpf.mg.udi.gpinf.whatsappextractor.Util.nullToEmpty;
+
 import java.io.File;
 import java.sql.Connection;
 import java.sql.ResultSet;
