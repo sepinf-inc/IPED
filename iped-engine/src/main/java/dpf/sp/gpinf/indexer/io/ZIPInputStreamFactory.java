@@ -97,6 +97,32 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         }
     }
 
+    public boolean entryExists(String path) {
+        if (zip == null) {
+            try {
+                init();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return zip.getEntry(path) != null;
+    }
+
+    public long getEntrySize(String path) {
+        if (zip == null) {
+            try {
+                init();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        ZipArchiveEntry zae = zip.getEntry(path);
+        if (zae != null) {
+            return zae.getSize();
+        }
+        return -1;
+    }
+
     @Override
     public SeekableInputStream getSeekableInputStream(String path) throws IOException {
         Path tmp = null;
