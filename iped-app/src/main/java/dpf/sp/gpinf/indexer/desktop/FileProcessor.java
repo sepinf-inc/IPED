@@ -179,9 +179,6 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     }
 
     private void waitSleuthkitInit(final IItem item) {
-        if (!(item.getInputStreamFactory() instanceof SleuthkitInputStreamFactory)) {
-            return;
-        }
         if (!tskDataSourceInited.contains(item.getDataSource().getUUID())) {
             tskDataSourceInited.add(item.getDataSource().getUUID());
             setWaitVisible(true);
@@ -201,7 +198,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
                 public void run() {
                     ModalityType previous = App.get().dialogBar.getModalityType();
                     String prevMsg = App.get().progressBar.getString();
-                    App.get().progressBar.setString(Messages.getString("FileProcessor.WaitingTSK")); //$NON-NLS-1$
+                    App.get().progressBar.setString(Messages.getString("FileProcessor.OpeningEvidence")); //$NON-NLS-1$
                     App.get().dialogBar.setModalityType(ModalityType.APPLICATION_MODAL);
                     App.get().dialogBar.setVisible(visible);
                     App.get().dialogBar.setModalityType(previous);
