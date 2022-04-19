@@ -269,6 +269,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
+            <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this -->
             <version>1.21</version>
         </dependency>
     </dependencies>

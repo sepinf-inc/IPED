@@ -5,10 +5,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -31,6 +33,8 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     private static final int MAX_FILES_CACHED = 1 << 9;
 
     private volatile ZipFile zip;
+
+    private SeekableByteChannel sbc;
 
     private int bytesCached = 0;
 
@@ -89,11 +93,11 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                 }
             }
             if (list.isEmpty()) {
-                zip = new ZipFile(file, "UTF-8", true, true);
+                sbc = Files.newByteChannel(file.toPath(), StandardOpenOption.READ);
             } else {
-                zip = new ZipFile(ZipSplitReadOnlySeekableByteChannel.forFiles(file, list), file.getAbsolutePath(),
-                        "UTF-8", true, true);
+                sbc = ZipSplitReadOnlySeekableByteChannel.forFiles(file, list);
             }
+            zip = new ZipFile(sbc, file.getAbsolutePath(), "UTF-8", true, true);
         }
     }
 
@@ -153,9 +157,12 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
         }
         InputStream is;
-        // ZipFile.getInputStream(ze) isn't thread safe in commons compress 1.21 if
-        // ignoreLocalFileHeader constructor flag is enabled
-        synchronized (zip) {
+
+        // ZipFile.getInputStream(ze) isn't thread safe as of COMPRESS 1.21 if ZipFile
+        // 'ignoreLocalFileHeader' constructor flag is enabled. We must synchronize on
+        // SeekableByteChannel used in constructor (COMPRESS 1.21 specific!), otherwise
+        // this won't work with splitted archives with COMPRESS 1.21, see COMPRESS-618
+        synchronized (sbc) {
             is = zip.getInputStream(zae);
         }
         try {
