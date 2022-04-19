@@ -133,9 +133,12 @@ public class UfedXmlReader extends DataSourceReader {
     @Override
     public boolean isSupported(File datasource) {
 
+        if (datasource.getName().toLowerCase().endsWith(".ufdr")) {
+            return true;
+        }
+
         InputStream xmlReport = lookUpXmlReportInputStream(datasource);
         IOUtil.closeQuietly(xmlReport);
-        // IOUtil.closeQuietly(ufdr);
 
         if (xmlReport != null)
             return true;
@@ -189,9 +192,11 @@ public class UfedXmlReader extends DataSourceReader {
         File[] files = root.listFiles();
         if (files != null) {
             for (File file : files) {
-                InputStream is = getXmlInputStream(file);
-                if (is != null)
-                    return is;
+                if (file.getName().toLowerCase().endsWith(".xml")) {
+                    InputStream is = getXmlInputStream(file);
+                    if (is != null)
+                        return is;
+                }
             }
         }
         return null;
