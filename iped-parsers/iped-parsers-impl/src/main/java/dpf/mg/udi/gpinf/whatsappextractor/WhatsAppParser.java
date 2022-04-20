@@ -288,6 +288,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                 chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CHAT.toString());
                 chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
                 chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                if (c.isDeleted()) {
+                    chatMetadata.set(ExtraProperties.DELETED, Boolean.TRUE.toString());
+                }
 
                 if (extractMessages && msgSubset.size() > 0) {
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());

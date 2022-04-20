@@ -16,6 +16,7 @@ public class Chat {
     private List<Message> messages;
     private String title = null;
     private boolean groupChat = false;
+    private boolean deleted = false;
 
     private String recoveredFrom = null;
 
@@ -118,5 +119,13 @@ public class Chat {
 
     public void setGroupmembers(Set<WAContact> groupmembers) {
         this.groupmembers = groupmembers;
+    }
+    
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+    
+    public boolean isDeleted() {
+        return deleted;
     }
 }

@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,20 +80,46 @@ public class ExtractorAndroid extends Extractor {
         List<Chat> list = new ArrayList<>();
 
         SQLiteUndeleteTable undeletedMessagesTable = null;
+        SQLiteUndeleteTable undeleteChatTable = null;
+        SQLiteUndeleteTable undeleteChatListTable = null;
+        SQLiteUndeleteTable undeleteJIDTable = null;
         
         if (recoverDeletedRecords) {        
             try {
                 SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
-                undelete.addTableToRecover("messages");
-                undelete.addRecordValidator("messages", new WAAndroidMessageValidator());
-                undeletedMessagesTable = undelete.undeleteData().get("messages");
+                undelete.addTableToRecover("messages"); //$NON-NLS-1$
+                undelete.addRecordValidator("messages", new WAAndroidMessageValidator()); //$NON-NLS-1$
+                undelete.addTableToRecoverOnlyDeleted("messages"); //$NON-NLS-1$
+                undelete.addTableToRecover("chat"); //$NON-NLS-1$
+                undelete.addRecordValidator("chat", new WAAndroidChatValidator()); //$NON-NLS-1$
+                undelete.addTableToRecoverOnlyDeleted("chat"); //$NON-NLS-1$
+                undelete.addTableToRecover("jid"); //$NON-NLS-1$
+                undelete.addRecordValidator("jid", new WAAndroidJIDValidator()); //$NON-NLS-1$
+                undelete.addTableToRecover("chat_list"); //$NON-NLS-1$
+                undelete.addRecordValidator("chat_list", new WAAndroidChatListValidator()); //$NON-NLS-1$
+                undelete.addTableToRecoverOnlyDeleted("chat_list"); //$NON-NLS-1$
+                undelete.setRecoverOnlyDeletedRecords(false);
+                
+                var undeleteData = undelete.undeleteData();
+                undeletedMessagesTable = undeleteData.get("messages"); //$NON-NLS-1$
+                undeleteChatTable = undeleteData.get("chat"); //$NON-NLS-1$
+                undeleteChatListTable = undeleteData.get("chat_list"); //$NON-NLS-1$
+                undeleteJIDTable = undeleteData.get("jid"); //$NON-NLS-1$
+                
             } catch (Exception e) {
-                logger.warn("Error recovering deleted records from Android WhatsApp Database", e);
+                logger.warn("Error recovering deleted records from Android WhatsApp Database", e); //$NON-NLS-1$
             }
         }
 
-        Map<String, List<SqliteRow>> undeletedMessages = undeletedMessagesTable == null ? Collections.emptyMap()
+        Map<String, List<SqliteRow>> undeletedMessages = undeletedMessagesTable == null ?
+                Collections.emptyMap()
                 : undeletedMessagesTable.getTableRowsGroupedByTextCol("key_remote_jid"); //$NON-NLS-1$
+        
+        List<Chat> undeletedChats = recoverDeletedRecords ? 
+                undeleteChats(undeleteChatListTable, undeleteChatTable, undeleteJIDTable, contacts) 
+                : Collections.emptyList();
+        
+        Set<ChatWrapperForDuplicateRemoval> activeChats = new HashSet<>();
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             boolean hasSortTimestamp = databaseHasSortTimestamp(conn);
@@ -107,12 +134,19 @@ public class ExtractorAndroid extends Extractor {
                     String contactId = rs.getString("contact"); //$NON-NLS-1$
                     WAContact remote = contacts.getContact(contactId);
                     Chat c = new Chat(remote);
-                    c.setId(rs.getLong("id"));
+                    c.setId(rs.getLong("id")); //$NON-NLS-1$
                     c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
                     c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                     if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
+                        if (recoverDeletedRecords)
+                            activeChats.add(new ChatWrapperForDuplicateRemoval(c));
                         list.add(c);
                     }
+                }
+                
+                for (Chat c : undeletedChats) {
+                    if (!activeChats.contains(new ChatWrapperForDuplicateRemoval(c)))
+                        list.add(c);
                 }
 
                 for (Chat c : list) {
@@ -129,6 +163,47 @@ public class ExtractorAndroid extends Extractor {
         }
 
         return list;
+    }
+
+    private List<Chat> undeleteChats(SQLiteUndeleteTable undeleteChatListTable,
+            SQLiteUndeleteTable undeleteChatTable, SQLiteUndeleteTable undeleteJIDTable, WAContactsDirectory contacts) {
+        List<Chat> result = new LinkedList<>();
+        
+        if (undeleteChatListTable != null && undeleteChatListTable.getTableRows() != null && !undeleteChatListTable.getTableRows().isEmpty()) {
+            // this is the case of a database with the table "chat_list"
+            
+            for (SqliteRow row : undeleteChatListTable.getTableRows()) {
+                String contactId = row.getTextValue("key_remote_jid"); //$NON-NLS-1$
+                WAContact contact = contacts.getContact(contactId);
+                Chat c = new Chat(contact);
+                c.setDeleted(true);
+                c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
+                c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                result.add(c);
+            }
+        } else if (undeleteChatTable != null && undeleteChatTable.getTableRows() != null && !undeleteChatTable.getTableRows().isEmpty()) {
+            if (undeleteJIDTable != null && undeleteJIDTable.getTableRows() != null && !undeleteJIDTable.getTableRows().isEmpty()) {
+                // this is the case of a database with the view chat_view, that joins the tables chat and jid
+                // in this case the join has to be done in java, instead of SQL
+                
+                var jid_rows = undeleteJIDTable.getTableRowsGroupedByLongCol("_id"); //$NON-NLS-1$
+                for (SqliteRow row : undeleteChatTable.getTableRows()) {
+                    long jid_row_id = row.getIntValue("jid_row_id"); //$NON-NLS-1$
+                    if (jid_rows.containsKey(jid_row_id)) {
+                        SqliteRow jid_row = jid_rows.get(jid_row_id).get(0);
+                        String contactId = jid_row.getTextValue("raw_string"); //$NON-NLS-1$
+                        WAContact contact = contacts.getContact(contactId);
+                        Chat c = new Chat(contact);
+                        c.setDeleted(true);
+                        c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
+                        c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                        result.add(c);
+                    }
+                }
+            }
+        }
+        
+        return result;
     }
 
     private boolean databaseHasSortTimestamp(Connection conn) throws SQLException {
@@ -498,6 +573,83 @@ public class ExtractorAndroid extends Extractor {
                 if (timestamp < 1230768000000L || timestamp > 2461449600000L) {
                     return false;
                 }
+                return true;
+            } catch (Exception e) {
+            }
+            return false;
+        }
+
+    }
+    
+    private static class WAAndroidChatListValidator implements SQLiteRecordValidator {
+ 
+        @Override
+        public boolean validateRecord(SqliteRow row) {
+            try {
+                String remoteId = row.getTextValue("key_remote_jid");
+                if (remoteId == null || !(remoteId.endsWith("whatsapp.net") || remoteId.endsWith("g.us"))) {
+                    return false;
+                }
+
+                String subject = row.getTextValue("subject");
+                if (subject == null || subject.isBlank()) {
+                    return false;
+                }
+
+                long creation = row.getIntValue("creation");
+                if (creation < 1230768000000L || creation > 2461449600000L) {
+                    return false;
+                }
+                return true;
+            } catch (Exception e) {
+            }
+            return false;
+        }
+
+    }
+    
+    private static class WAAndroidChatValidator implements SQLiteRecordValidator {
+        
+        @Override
+        public boolean validateRecord(SqliteRow row) {
+            try {                
+                long jid_row_id = row.getIntValue("jid_row_id");
+                if (jid_row_id <= 0 ) {
+                    return false;
+                }
+
+                String subject = row.getTextValue("subject");
+                if (subject == null || subject.isBlank()) {
+                    return false;
+                }
+
+                long creation = row.getIntValue("creation_timestamp");
+                if (creation < 1230768000000L || creation > 2461449600000L) {
+                    return false;
+                }
+                return true;
+            } catch (Exception e) {
+            }
+            return false;
+        }
+
+    }
+    
+    private static class WAAndroidJIDValidator implements SQLiteRecordValidator {
+        
+        @Override
+        public boolean validateRecord(SqliteRow row) {
+            try {                
+                long _id = row.getIntValue("_id");
+                if (_id <= 0 ) {
+                    return false;
+                }
+
+                String raw_string = row.getTextValue("raw_string");
+                if (raw_string == null || !(raw_string.endsWith("whatsapp.net") || raw_string.endsWith("g.us"))) {
+                    return false;
+                }
+
                 return true;
             } catch (Exception e) {
             }
