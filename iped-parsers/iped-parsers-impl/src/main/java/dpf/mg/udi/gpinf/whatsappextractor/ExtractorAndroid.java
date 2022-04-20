@@ -308,7 +308,7 @@ public class ExtractorAndroid extends Extractor {
             m.setLocalResource(account.getId());
         int type = rs.getInt("messageType"); //$NON-NLS-1$
         int status = rs.getInt("status"); //$NON-NLS-1$
-        String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
+        String caption = SQLite3DBParser.getStringIfExists(rs, "mediaCaption"); //$NON-NLS-1$
         String str = null;
         try {
             str = SQLite3DBParser.getStringIfExists(rs, "edit_version"); //$NON-NLS-1$
