@@ -149,12 +149,20 @@ public class SQLiteUndeleteTableResultSetAdapter implements ResultSet {
 
     @Override
     public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
-        return new BigDecimal(table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue());
+        try {
+            return new BigDecimal(table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue());
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public BigDecimal getBigDecimal(String columnLabel) throws SQLException {
-        return new BigDecimal(table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel)));
+        try {
+            return new BigDecimal(table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel)));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
@@ -189,32 +197,56 @@ public class SQLiteUndeleteTableResultSetAdapter implements ResultSet {
 
     @Override
     public boolean getBoolean(int columnIndex) throws SQLException {
-        return table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue() != 0;
+        try {
+            return table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue() != 0;
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public boolean getBoolean(String columnLabel) throws SQLException {
-        return table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel)) != 0;
+        try {
+            return table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel)) != 0;
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public byte getByte(int columnIndex) throws SQLException {
-        return (byte) table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue();
+        try {
+            return (byte) table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue();
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public byte getByte(String columnLabel) throws SQLException {
-        return (byte) table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel));
+        try {
+            return (byte) table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public byte[] getBytes(int columnIndex) throws SQLException {
-        return table.getTableRows().get(idx).getRowData().get(columnIndex).getBlobValue();
+        try {
+            return table.getTableRows().get(idx).getRowData().get(columnIndex).getBlobValue();
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public byte[] getBytes(String columnLabel) throws SQLException {
-        return table.getTableRows().get(idx).getBlobValue(getMappedColumnName(columnLabel));
+        try {
+            return table.getTableRows().get(idx).getBlobValue(getMappedColumnName(columnLabel));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
@@ -249,12 +281,20 @@ public class SQLiteUndeleteTableResultSetAdapter implements ResultSet {
 
     @Override
     public Date getDate(int columnIndex) throws SQLException {
-        return new Date(table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue());
+        try {
+            return new Date(table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue());
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public Date getDate(String columnLabel) throws SQLException {
-        return new Date(table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel)));
+        try {
+            return new Date(table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel)));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
@@ -269,12 +309,20 @@ public class SQLiteUndeleteTableResultSetAdapter implements ResultSet {
 
     @Override
     public double getDouble(int columnIndex) throws SQLException {
-        return table.getTableRows().get(idx).getRowData().get(columnIndex).getFloatValue();
+        try {
+            return table.getTableRows().get(idx).getRowData().get(columnIndex).getFloatValue();
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public double getDouble(String columnLabel) throws SQLException {
-        return table.getTableRows().get(idx).getFloatValue(getMappedColumnName(columnLabel));
+        try {
+            return table.getTableRows().get(idx).getFloatValue(getMappedColumnName(columnLabel));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
@@ -289,12 +337,20 @@ public class SQLiteUndeleteTableResultSetAdapter implements ResultSet {
 
     @Override
     public float getFloat(int columnIndex) throws SQLException {
-        return (float) table.getTableRows().get(idx).getRowData().get(columnIndex).getFloatValue();
+        try {
+            return (float) table.getTableRows().get(idx).getRowData().get(columnIndex).getFloatValue();
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public float getFloat(String columnLabel) throws SQLException {
-        return (float) table.getTableRows().get(idx).getFloatValue(getMappedColumnName(columnLabel));
+        try {
+            return (float) table.getTableRows().get(idx).getFloatValue(getMappedColumnName(columnLabel));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
@@ -304,22 +360,38 @@ public class SQLiteUndeleteTableResultSetAdapter implements ResultSet {
 
     @Override
     public int getInt(int columnIndex) throws SQLException {
-        return (int) table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue();
+        try {
+            return (int) table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue();
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public int getInt(String columnLabel) throws SQLException {
-        return (int) table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel));
+        try {
+            return (int) table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public long getLong(int columnIndex) throws SQLException {
-        return table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue();
+        try {
+            return table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue();
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public long getLong(String columnLabel) throws SQLException {
-        return table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel));
+        try {
+            return table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
@@ -344,12 +416,20 @@ public class SQLiteUndeleteTableResultSetAdapter implements ResultSet {
 
     @Override
     public Object getObject(int columnIndex) throws SQLException {
-        return table.getTableRows().get(idx).getRowData().get(columnIndex).getBlobValue();
+        try {
+            return table.getTableRows().get(idx).getRowData().get(columnIndex).getBlobValue();
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public Object getObject(String columnLabel) throws SQLException {
-        return table.getTableRows().get(idx).getBlobValue(getMappedColumnName(columnLabel));
+        try {
+            return table.getTableRows().get(idx).getBlobValue(getMappedColumnName(columnLabel));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
@@ -399,12 +479,20 @@ public class SQLiteUndeleteTableResultSetAdapter implements ResultSet {
 
     @Override
     public short getShort(int columnIndex) throws SQLException {
-        return (short) table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue();
+        try {
+            return (short) table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue();
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public short getShort(String columnLabel) throws SQLException {
-        return (short) table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel));
+        try {
+            return (short) table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
@@ -414,27 +502,47 @@ public class SQLiteUndeleteTableResultSetAdapter implements ResultSet {
 
     @Override
     public String getString(int columnIndex) throws SQLException {
-        return table.getTableRows().get(idx).getRowData().get(columnIndex).getTextValue();
+        try {
+            return table.getTableRows().get(idx).getRowData().get(columnIndex).getTextValue();
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public String getString(String columnLabel) throws SQLException {
-        return table.getTableRows().get(idx).getTextValue(getMappedColumnName(columnLabel));
+        try {
+            return table.getTableRows().get(idx).getTextValue(getMappedColumnName(columnLabel));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public Time getTime(int columnIndex) throws SQLException {
-        return new Time(table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue());
+        try {
+            return new Time(table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue());
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public Time getTime(String columnLabel) throws SQLException {
-        return new Time(table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel)));
+        try {
+            return new Time(table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel)));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public Time getTime(int columnIndex, Calendar cal) throws SQLException {
-        throw new SQLException("Not supported");
+        try {
+            throw new SQLException("Not supported");
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
@@ -444,12 +552,20 @@ public class SQLiteUndeleteTableResultSetAdapter implements ResultSet {
 
     @Override
     public Timestamp getTimestamp(int columnIndex) throws SQLException {
-        return new Timestamp(table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue());
+        try {
+            return new Timestamp(table.getTableRows().get(idx).getRowData().get(columnIndex).getIntValue());
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override
     public Timestamp getTimestamp(String columnLabel) throws SQLException {
-        return new Timestamp(table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel)));
+        try {
+            return new Timestamp(table.getTableRows().get(idx).getIntValue(getMappedColumnName(columnLabel)));
+        } catch (IndexOutOfBoundsException e) {
+            throw new SQLException("no such column", e);
+        }
     }
 
     @Override

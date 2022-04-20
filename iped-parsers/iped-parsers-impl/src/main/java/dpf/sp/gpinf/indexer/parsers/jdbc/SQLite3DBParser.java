@@ -211,16 +211,15 @@ public class SQLite3DBParser extends AbstractDBParser {
 
     public static String getStringIfExists(ResultSet rs, String col) throws SQLException {
         int colIdx;
+        String result = null;
         try {
             colIdx = rs.findColumn(col);
+            result = rs.getString(colIdx);
 
         } catch (SQLException e) {
-            // is there an error constant to check this?
-            if (e.toString().contains("no such column"))
-                return null;
-            else
+            if (!e.toString().contains("no such column"))
                 throw e;
         }
-        return rs.getString(colIdx);
+        return result;
     }
 }
