@@ -70,7 +70,8 @@ public class ExtractorAndroid extends Extractor {
     private boolean hasThumbTable = false;
     private boolean hasEditVersionCol = false;
     private boolean hasChatView = false;
-    private boolean hasMediaCaption = false;
+    private boolean hasMediaCaptionCol = false;
+    private boolean hasSubjectCol = false;
 
     public ExtractorAndroid(File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         super(databaseFile, contacts, account, recoverDeletedRecords);
@@ -127,9 +128,22 @@ public class ExtractorAndroid extends Extractor {
             hasChatView = databaseHasChatView(conn);
             hasThumbTable = SQLite3DBParser.containsTable("message_thumbnails", conn);
             hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version"); //$NON-NLS-1$ //$NON-NLS-2$
-            hasMediaCaption = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_caption"); //$NON-NLS-1$ //$NON-NLS-2$
-            String selectChatQuery = hasChatView ? SELECT_CHAT_VIEW
-                    : hasSortTimestamp ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_SORTTIMESTAMP;
+            hasMediaCaptionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_caption"); //$NON-NLS-1$ //$NON-NLS-2$
+            if (!hasChatView) {
+                hasSubjectCol = SQLite3DBParser.checkIfColumnExists(conn, "chat_list", "subject"); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            
+            String selectChatQuery;
+            if (hasChatView) {
+                selectChatQuery = SELECT_CHAT_VIEW;
+            } else if (hasSortTimestamp) {
+                selectChatQuery = SELECT_CHAT_LIST;
+            } else if (hasSubjectCol) {
+                selectChatQuery = SELECT_CHAT_LIST_NO_SORTTIMESTAMP;
+            } else { 
+                selectChatQuery = SELECT_CHAT_LIST_NO_SUBJECT;
+            }
+            
             try (ResultSet rs = stmt.executeQuery(selectChatQuery)) {
 
                 while (rs.next()) {
@@ -242,7 +256,7 @@ public class ExtractorAndroid extends Extractor {
         
         Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
         String query;
-        if (!hasMediaCaption) {
+        if (!hasMediaCaptionCol) {
             query = SELECT_MESSAGES_NO_MEDIA_CAPTION;
         } else if (hasThumbTable) {
             query = SELECT_MESSAGES_THUMBS_TABLE;
@@ -491,6 +505,9 @@ public class ExtractorAndroid extends Extractor {
 
     private static final String SELECT_CHAT_VIEW = "SELECT _id as id, raw_string_jid AS contact," //$NON-NLS-1$
             + " subject, created_timestamp as creation, sort_timestamp FROM chat_view ORDER BY sort_timestamp DESC"; //$NON-NLS-1$
+    
+    private static final String SELECT_CHAT_LIST_NO_SUBJECT = "SELECT _id as id,key_remote_jid AS contact, " //$NON-NLS-1$
+            + " null as subject, 1230768000000 as creation FROM chat_list"; //$NON-NLS-1$
 
     /*
      * Filtragem por status de mensagem (status): -1 - mensagens de sistema 0 -
