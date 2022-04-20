@@ -67,6 +67,9 @@ public class ExtractorIOS extends Extractor {
     private static Logger logger = LoggerFactory.getLogger(ExtractorIOS.class);
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //$NON-NLS-1$
+    
+    private boolean hasProfilePictureItemTable = false;
+    private boolean hasZTitleColumn = false;
 
     public ExtractorIOS(File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         super(databaseFile, contacts, account, recoverDeletedRecords);
@@ -112,7 +115,9 @@ public class ExtractorIOS extends Extractor {
                 : groupMembersUndeletedTable.getRowsMappedByLongPrimaryKey("Z_PK");
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            boolean hasProfilePictureItemTable = SQLite3DBParser.containsTable("ZWAPROFILEPICTUREITEM", conn);
+            hasProfilePictureItemTable = SQLite3DBParser.containsTable("ZWAPROFILEPICTUREITEM", conn);
+            hasZTitleColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZTITLE");
+            
             String chatListQuery = hasProfilePictureItemTable ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_PPIC;
 
             try (ResultSet rs = stmt.executeQuery(chatListQuery)) {
@@ -151,7 +156,12 @@ public class ExtractorIOS extends Extractor {
         
         boolean recoverDeleted = undeleteTable != null && !undeletedMessages.isEmpty();
         
-        String sql = chat.isGroupChat() ? SELECT_MESSAGES_GROUP : SELECT_MESSAGES_USER;
+        String sql;
+        if (hasZTitleColumn) {
+            sql = chat.isGroupChat() ? SELECT_MESSAGES_GROUP : SELECT_MESSAGES_USER;
+        } else {
+            sql = chat.isGroupChat() ? SELECT_MESSAGES_GROUP_NOZTITLE : SELECT_MESSAGES_USER_NOZTITLE;
+        }
         
         Set<Message> activeMessages = new HashSet<>();
 
@@ -442,7 +452,7 @@ public class ExtractorIOS extends Extractor {
 
     private static final String SELECT_MESSAGES_USER = "SELECT ZWAMESSAGE.Z_PK AS id, ZCHATSESSION " //$NON-NLS-1$
             + "as chatId, ZFROMJID AS remoteResource, ZMESSAGESTATUS AS status, ZTEXT AS data, " //$NON-NLS-1$
-            + "ZISFROMME AS fromMe, datetime(ZMESSAGEDATE + 978307200,'unixepoch') AS timestamp, " //$NON-NLS-1$
+            + "ZISFROMME AS fromMe, datetime(ZMESSAGEDATE + 978307200, 'unixepoch') AS timestamp, " //$NON-NLS-1$
             + "ZVCARDSTRING as vCardString, ZFILESIZE as mediaSize, ZMEDIALOCALPATH " //$NON-NLS-1$
             + "as mediaName, ZVCARDNAME as mediaHash, ZTITLE as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
@@ -452,9 +462,30 @@ public class ExtractorIOS extends Extractor {
 
     private static final String SELECT_MESSAGES_GROUP = "SELECT ZWAMESSAGE.Z_PK AS id, ZWAMESSAGE.ZCHATSESSION " //$NON-NLS-1$
             + "as chatId, ZMEMBERJID AS remoteResource, ZMESSAGESTATUS AS status, ZTEXT AS data, " //$NON-NLS-1$
-            + "ZISFROMME AS fromMe, datetime(ZMESSAGEDATE + 978307200,'unixepoch') AS timestamp, " //$NON-NLS-1$
+            + "ZISFROMME AS fromMe, datetime(ZMESSAGEDATE + 978307200, 'unixepoch') AS timestamp, " //$NON-NLS-1$
             + "ZVCARDSTRING as vCardString, ZFILESIZE as mediaSize, ZMEDIALOCALPATH " //$NON-NLS-1$
             + "as mediaName, ZVCARDNAME as mediaHash, ZTITLE as mediaCaption, " //$NON-NLS-1$
+            + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
+            + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
+            + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
+            + "LEFT JOIN ZWAGROUPMEMBER ON ZWAGROUPMEMBER.ZCHATSESSION = chatId AND ZWAGROUPMEMBER.Z_PK = ZGROUPMEMBER " //$NON-NLS-1$
+            + "WHERE chatId=? ORDER BY ZSORT"; //$NON-NLS-1$
+    
+    private static final String SELECT_MESSAGES_USER_NOZTITLE = "SELECT ZWAMESSAGE.Z_PK AS id, ZCHATSESSION " //$NON-NLS-1$
+            + "as chatId, ZFROMJID AS remoteResource, ZMESSAGESTATUS AS status, ZTEXT AS data, " //$NON-NLS-1$
+            + "ZISFROMME AS fromMe, datetime(ZMESSAGEDATE + 978307200, 'unixepoch') AS timestamp, " //$NON-NLS-1$
+            + "ZVCARDSTRING as vCardString, ZFILESIZE as mediaSize, ZMEDIALOCALPATH " //$NON-NLS-1$
+            + "as mediaName, ZVCARDNAME as mediaHash, NULL as mediaCaption, " //$NON-NLS-1$
+            + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
+            + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
+            + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
+            + "WHERE chatId=? ORDER BY ZSORT"; //$NON-NLS-1$
+
+    private static final String SELECT_MESSAGES_GROUP_NOZTITLE = "SELECT ZWAMESSAGE.Z_PK AS id, ZWAMESSAGE.ZCHATSESSION " //$NON-NLS-1$
+            + "as chatId, ZMEMBERJID AS remoteResource, ZMESSAGESTATUS AS status, ZTEXT AS data, " //$NON-NLS-1$
+            + "ZISFROMME AS fromMe, datetime(ZMESSAGEDATE + 978307200, 'unixepoch') AS timestamp, " //$NON-NLS-1$
+            + "ZVCARDSTRING as vCardString, ZFILESIZE as mediaSize, ZMEDIALOCALPATH " //$NON-NLS-1$
+            + "as mediaName, ZVCARDNAME as mediaHash, NULL' as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
