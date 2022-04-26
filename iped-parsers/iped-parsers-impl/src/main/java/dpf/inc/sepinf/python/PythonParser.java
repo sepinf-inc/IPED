@@ -24,10 +24,13 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import iped3.configuration.IConfigurationDirectory;
 import jep.JEPClassFinder;
 import jep.Jep;
 import jep.JepConfig;
 import jep.JepException;
+import jep.MainInterpreter;
+import jep.PyConfig;
 import jep.SharedInterpreter;
 
 public class PythonParser extends AbstractParser {
@@ -62,6 +65,13 @@ public class PythonParser extends AbstractParser {
             config.redirectStdErr(System.err);
             config.redirectStdout(System.out);
             SharedInterpreter.setConfig(config);
+
+            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+                PyConfig pyConfig = new PyConfig();
+                pyConfig.setPythonHome(System.getProperty(IConfigurationDirectory.IPED_ROOT) + "/python");
+                MainInterpreter.setInitParams(pyConfig);
+            }
+
         } catch (JepException e1) {
             throw new RuntimeException(e1);
         }
