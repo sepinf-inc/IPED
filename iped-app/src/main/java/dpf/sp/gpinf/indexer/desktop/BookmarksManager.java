@@ -312,7 +312,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             LeafReader reader = App.get().appCase.getLeafReader();
             SortedDocValues sdv = reader.getSortedDocValues(BasicProps.HASH);
 
-            progress.setMaximum(uniqueSelectedIds.size() + reader.maxDoc());
+            int max = uniqueSelectedIds.size() + reader.maxDoc();
+            progress.setMaximum(max);
             int i = 0;
 
             int emptyDataHashOrd = getEmptyDataHashOrd(sdv);
@@ -331,7 +332,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                     hashOrd.set(ord);
                 }
                 luceneIds.set(luceneId);
-                progress.setProgress(++i);
+                if ((++i) % (max / 100) == 0) {
+                    progress.setProgress(i);
+                }
                 if (progress.isCanceled())
                     return;
             }
@@ -345,7 +348,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                     uniqueSelectedIds.add(itemId);
                     duplicates++;
                 }
-                progress.setProgress(++i);
+                if ((++i) % (max / 100) == 0) {
+                    progress.setProgress(i);
+                }
                 if (progress.isCanceled())
                     return;
             }
