@@ -59,6 +59,8 @@ public class PythonParser extends AbstractParser {
         try {
             JepConfig config = new JepConfig();
             config.setClassEnquirer(JEPClassFinder.getInstance());
+            config.redirectStdErr(System.err);
+            config.redirectStdout(System.out);
             SharedInterpreter.setConfig(config);
         } catch (JepException e1) {
             throw new RuntimeException(e1);
@@ -163,9 +165,6 @@ public class PythonParser extends AbstractParser {
             }
             return null;
         }
-
-        jep.eval("from jep import redirect_streams");
-        jep.eval("redirect_streams.setup()");
 
         // setGlobalVar(jep, "logger", LOGGER); //$NON-NLS-1$
 
