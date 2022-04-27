@@ -27,7 +27,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -60,7 +59,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Term;
@@ -80,7 +78,6 @@ import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.desktop.ProgressDialog;
-import iped3.search.IIPEDSearcher;
 import iped3.util.BasicProps;
 
 public class BookmarksManager implements ActionListener, ListSelectionListener, KeyListener {
