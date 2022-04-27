@@ -57,7 +57,7 @@ public class Main {
     File keywords;
     List<File> dataSource;
     File output;
-
+    boolean isReportingFromCaseDir = false;
     File logFile;
     LogConfiguration logConfiguration;
 
@@ -133,6 +133,7 @@ public class Main {
             rootPath = new File(url.toURI()).getParent();
             // test for report generation from case folder
             if (rootPath.endsWith("iped" + File.separator + "lib")) { //$NON-NLS-1$ //$NON-NLS-2$
+                isReportingFromCaseDir = true;
                 rootPath = new File(url.toURI()).getParentFile().getParent();
             }
         }
@@ -254,6 +255,12 @@ public class Main {
             Configuration.getInstance().loadConfigurables(iped.configPath);
 
             if (!fromCustomLoader) {
+
+                if (iped.isReportingFromCaseDir) {
+                    Configuration.getInstance().loadIpedRoot();
+                } else {
+                    Configuration.getInstance().saveIpedRoot(iped.rootPath);
+                }
 
                 // blocks internet access from viewers
                 Policy.setPolicy(new DefaultPolicy());
