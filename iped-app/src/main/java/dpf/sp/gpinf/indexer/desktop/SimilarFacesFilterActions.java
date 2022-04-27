@@ -29,6 +29,7 @@ import javax.swing.JProgressBar;
 import javax.swing.RowSorter;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -122,13 +123,17 @@ public class SimilarFacesFilterActions {
                     e1.printStackTrace();
                 }
 
-                WaitDialog wait = new WaitDialog(app, Messages.getString("FaceSimilarity.LoadingFace"));
+                final WaitDialog wait = new WaitDialog(app, Messages.getString("FaceSimilarity.LoadingFace"));
 
                 FaceFeatureExtractor callable = new FaceFeatureExtractor(app.similarFacesRefItem,
                         app.appCase.getModuleDir()) {
                     @Override
                     protected void onFinish() {
-                        wait.setVisible(false);
+                        SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+                                wait.setVisible(false);
+                            }
+                        });
                     }
                 };
                 Future<byte[]> future = executor.submit(callable);
