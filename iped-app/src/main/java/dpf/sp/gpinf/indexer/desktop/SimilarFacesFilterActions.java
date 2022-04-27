@@ -231,9 +231,9 @@ public class SimilarFacesFilterActions {
         public byte[] call() throws Exception {
 
             try {
-                if (task == null) {
+                if (FaceFeatureExtractor.task == null) {
                     File script = new File(moduleDir, SCRIPT_PATH);
-                    task = new PythonTask(script);
+                    PythonTask task = new PythonTask(script);
                     task.setCaseData(new CaseData(0));
                     AbstractTaskPropertiesConfig taskConfig = (AbstractTaskPropertiesConfig) ConfigurationManager.get()
                             .getTaskConfigurable(CONF_FILE);
@@ -242,12 +242,14 @@ public class SimilarFacesFilterActions {
                     if (taskConfig != null) {
                         taskConfig.getConfiguration().setProperty(NUM_PROCESSES, "1");
                     }
+                    task.setThrowExceptionInsteadOfLogging(true);
                     task.init(ConfigurationManager.get());
                     Runtime.getRuntime().addShutdownHook(new Thread() {
                         public void run() {
                             dispose();
                         }
                     });
+                    FaceFeatureExtractor.task = task;
                 }
 
                 // populate info used by task
@@ -255,7 +257,7 @@ public class SimilarFacesFilterActions {
                 item.setExtraAttribute(ImageThumbTask.HAS_THUMB, true);
                 item.setHash(DigestUtils.md5Hex(Files.readAllBytes(item.getTempFile().toPath())));
 
-                task.process(item);
+                FaceFeatureExtractor.task.process(item);
                 // TODO enable when queue end is handled
                 // Item queueEnd = new Item();
                 // queueEnd.setQueueEnd(true);
