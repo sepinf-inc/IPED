@@ -335,9 +335,11 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 progress.setIndeterminate(true);
 
                 HashSet<String> hashes = new HashSet<>();
+                HashSet<IItemId> selectedIdsSet = new HashSet<>();
                 for (IItemId itemId : uniqueSelectedIds) {
                     IItem item = ipedCase.getItemByItemId(itemId);
                     hashes.add(item.getHash().toLowerCase());
+                    selectedIdsSet.add(itemId);
                 }
 
                 BooleanQuery.Builder query = new BooleanQuery.Builder();
@@ -348,7 +350,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 duplicates = result.getLength() - uniqueSelectedIds.size();
 
                 for (IItemId dupItem : result.getIterator()) {
-                    uniqueSelectedIds.add(dupItem);
+                    if (!selectedIdsSet.contains(dupItem)) {
+                        uniqueSelectedIds.add(dupItem);
+                    }
                 }
 
             } else {
