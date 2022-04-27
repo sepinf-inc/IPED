@@ -237,7 +237,11 @@ public class SimilarFacesFilterActions {
                     task.setCaseData(new CaseData(0));
                     AbstractTaskPropertiesConfig taskConfig = (AbstractTaskPropertiesConfig) ConfigurationManager.get()
                             .getTaskConfigurable(CONF_FILE);
-                    taskConfig.getConfiguration().setProperty(NUM_PROCESSES, "1");
+
+                    // if jep is not found, no config is returned for python tasks
+                    if (taskConfig != null) {
+                        taskConfig.getConfiguration().setProperty(NUM_PROCESSES, "1");
+                    }
                     task.init(ConfigurationManager.get());
                     Runtime.getRuntime().addShutdownHook(new Thread() {
                         public void run() {
