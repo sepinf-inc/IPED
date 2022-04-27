@@ -114,6 +114,9 @@ class FaceRecognitionTask:
         imgError = fp.imgError
         ping = fp.ping
         
+        global np
+        import numpy as np
+        
         # check if was called from gui the first time
         global maxProcesses, firstInstance
         # load configuration properties
@@ -273,7 +276,6 @@ class FaceRecognitionTask:
                 for j in range(128):
                     line = proc.stdout.readline()
                     list.append(float(line))
-                import numpy as np
                 np_array = np.array(list)
                 face_encodings.append(np_array)
             
