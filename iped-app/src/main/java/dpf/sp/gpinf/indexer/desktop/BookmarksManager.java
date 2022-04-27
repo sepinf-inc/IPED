@@ -29,6 +29,7 @@ import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
@@ -302,17 +303,22 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         }
     }
 
-    private int getEmptyDataHashOrd(SortedDocValues sdv) throws IOException {
+    private List<String> getEmptyDataHashes() {
         byte[] emptyData = new byte[0];
         String emptyMD5 = DigestUtils.md5Hex(emptyData).toUpperCase();
-        int ord = sdv.lookupTerm(new BytesRef(emptyMD5));
+        String emptySHA1 = DigestUtils.sha1Hex(emptyData).toUpperCase();
+        String emptySHA256 = DigestUtils.sha256Hex(emptyData).toUpperCase();
+        return Arrays.asList(emptyMD5, emptySHA1, emptySHA256);
+    }
+
+    private int getEmptyDataHashOrd(SortedDocValues sdv) throws IOException {
+        List<String> emptyDataHashes = getEmptyDataHashes();
+        int ord = sdv.lookupTerm(new BytesRef(emptyDataHashes.get(0)));
         if (ord < 0) {
-            String emptySHA1 = DigestUtils.sha1Hex(emptyData).toUpperCase();
-            ord = sdv.lookupTerm(new BytesRef(emptySHA1));
+            ord = sdv.lookupTerm(new BytesRef(emptyDataHashes.get(1)));
         }
         if (ord < 0) {
-            String emptySHA256 = DigestUtils.sha256Hex(emptyData).toUpperCase();
-            ord = sdv.lookupTerm(new BytesRef(emptySHA256));
+            ord = sdv.lookupTerm(new BytesRef(emptyDataHashes.get(2)));
         }
         return ord;
     }
@@ -342,10 +348,14 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
                 HashSet<String> hashes = new HashSet<>();
                 HashSet<IItemId> selectedIdsSet = new HashSet<>();
+                List<String> emptyDataHashes = getEmptyDataHashes();
+
                 for (IItemId itemId : uniqueSelectedIds) {
                     IItem item = ipedCase.getItemByItemId(itemId);
-                    hashes.add(item.getHash().toLowerCase());
-                    selectedIdsSet.add(itemId);
+                    if (item.getHash() != null && !item.getHash().isEmpty() && !emptyDataHashes.contains(item.getHash())) {
+                        hashes.add(item.getHash().toLowerCase());
+                        selectedIdsSet.add(itemId);
+                    }
                 }
 
                 BooleanQuery.Builder query = new BooleanQuery.Builder();
@@ -353,11 +363,11 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                     query.add(new TermQuery(new Term(IndexItem.HASH, hash)), Occur.SHOULD);
                 }
                 MultiSearchResult result = new IPEDSearcher(ipedCase, query.build()).multiSearch();
-                duplicates = result.getLength() - uniqueSelectedIds.size();
 
                 for (IItemId dupItem : result.getIterator()) {
                     if (!selectedIdsSet.contains(dupItem)) {
                         uniqueSelectedIds.add(dupItem);
+                        duplicates++;
                     }
                 }
 
