@@ -115,6 +115,7 @@ public class Configuration {
 
     public void saveIpedRoot(String path) throws IOException {
         System.setProperty(IConfigurationDirectory.IPED_ROOT, path);
+        ipedRoot.getParentFile().mkdirs();
         Files.write(ipedRoot.toPath(), path.getBytes(StandardCharsets.UTF_8));
     }
 
