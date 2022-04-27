@@ -67,9 +67,12 @@ public class PythonParser extends AbstractParser {
             SharedInterpreter.setConfig(config);
 
             if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-                PyConfig pyConfig = new PyConfig();
-                pyConfig.setPythonHome(System.getProperty(IConfigurationDirectory.IPED_ROOT) + "/python");
-                MainInterpreter.setInitParams(pyConfig);
+                String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+                if (ipedRoot != null && new File(ipedRoot).exists()) {
+                    PyConfig pyConfig = new PyConfig();
+                    pyConfig.setPythonHome(ipedRoot + "/python");
+                    MainInterpreter.setInitParams(pyConfig);
+                }
             }
 
         } catch (JepException e1) {
