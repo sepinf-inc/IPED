@@ -29,6 +29,7 @@ import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,6 +67,8 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -81,6 +84,8 @@ import iped3.desktop.ProgressDialog;
 import iped3.util.BasicProps;
 
 public class BookmarksManager implements ActionListener, ListSelectionListener, KeyListener {
+
+    private static final Logger logger = LoggerFactory.getLogger(BookmarksManager.class);
 
     private static BookmarksManager instance = new BookmarksManager();
 
@@ -298,17 +303,22 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         }
     }
 
-    private int getEmptyDataHashOrd(SortedDocValues sdv) throws IOException {
+    private List<String> getEmptyDataHashes() {
         byte[] emptyData = new byte[0];
         String emptyMD5 = DigestUtils.md5Hex(emptyData).toUpperCase();
-        int ord = sdv.lookupTerm(new BytesRef(emptyMD5));
+        String emptySHA1 = DigestUtils.sha1Hex(emptyData).toUpperCase();
+        String emptySHA256 = DigestUtils.sha256Hex(emptyData).toUpperCase();
+        return Arrays.asList(emptyMD5, emptySHA1, emptySHA256);
+    }
+
+    private int getEmptyDataHashOrd(SortedDocValues sdv) throws IOException {
+        List<String> emptyDataHashes = getEmptyDataHashes();
+        int ord = sdv.lookupTerm(new BytesRef(emptyDataHashes.get(0)));
         if (ord < 0) {
-            String emptySHA1 = DigestUtils.sha1Hex(emptyData).toUpperCase();
-            ord = sdv.lookupTerm(new BytesRef(emptySHA1));
+            ord = sdv.lookupTerm(new BytesRef(emptyDataHashes.get(1)));
         }
         if (ord < 0) {
-            String emptySHA256 = DigestUtils.sha256Hex(emptyData).toUpperCase();
-            ord = sdv.lookupTerm(new BytesRef(emptySHA256));
+            ord = sdv.lookupTerm(new BytesRef(emptyDataHashes.get(2)));
         }
         return ord;
     }
@@ -329,15 +339,23 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             LeafReader reader = ipedCase.getLeafReader();
 
             int duplicates = 0;
+            boolean searchUsed;
+            long t = System.currentTimeMillis();
 
-            if (includeDuplicatesUsingHash(uniqueSelectedIds.size(), reader.maxDoc())) {
+            if (searchUsed = includeDuplicatesUsingHash(uniqueSelectedIds.size(), reader.maxDoc())) {
 
                 progress.setIndeterminate(true);
 
                 HashSet<String> hashes = new HashSet<>();
+                HashSet<IItemId> selectedIdsSet = new HashSet<>();
+                List<String> emptyDataHashes = getEmptyDataHashes();
+
                 for (IItemId itemId : uniqueSelectedIds) {
                     IItem item = ipedCase.getItemByItemId(itemId);
-                    hashes.add(item.getHash().toLowerCase());
+                    if (item.getHash() != null && !item.getHash().isEmpty() && !emptyDataHashes.contains(item.getHash())) {
+                        hashes.add(item.getHash().toLowerCase());
+                        selectedIdsSet.add(itemId);
+                    }
                 }
 
                 BooleanQuery.Builder query = new BooleanQuery.Builder();
@@ -345,10 +363,12 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                     query.add(new TermQuery(new Term(IndexItem.HASH, hash)), Occur.SHOULD);
                 }
                 MultiSearchResult result = new IPEDSearcher(ipedCase, query.build()).multiSearch();
-                duplicates = result.getLength() - uniqueSelectedIds.size();
 
                 for (IItemId dupItem : result.getIterator()) {
-                    uniqueSelectedIds.add(dupItem);
+                    if (!selectedIdsSet.contains(dupItem)) {
+                        uniqueSelectedIds.add(dupItem);
+                        duplicates++;
+                    }
                 }
 
             } else {
@@ -396,8 +416,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 }
             }
 
-            System.out.println(
-                    Messages.getString("BookmarksManager.DuplicatesAdded") + " " + duplicates + " (luceneIds)"); //$NON-NLS-1$ //$NON-NLS-2$
+            t = System.currentTimeMillis() - t;
+
+            logger.info("{} duplicated {} found in {}ms", duplicates, searchUsed ? "items" : "docs", t);
 
         } catch (Exception e) {
             e.printStackTrace();
