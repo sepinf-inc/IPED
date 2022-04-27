@@ -11,6 +11,8 @@ public interface IConfigurationDirectory {
 
     public static final String IPED_ROOT = "iped.root";
 
+    public static final String IPED_APP_ROOT = "iped.app.root";
+
     public List<Path> getResourceLookupFolders();
 
     public List<Path> lookUpResource(Predicate<Path> predicate) throws IOException;

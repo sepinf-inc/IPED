@@ -45,7 +45,7 @@ public class PluginConfig extends AbstractPropertiesConfigurable {
     }
 
     public File getPluginFolder() {
-        String appRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+        String appRoot = System.getProperty(IConfigurationDirectory.IPED_APP_ROOT);
         try {
             return new File(appRoot, relativePluginFolder).getCanonicalFile();
         } catch (IOException e) {
