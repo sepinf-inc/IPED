@@ -157,11 +157,14 @@ public class PythonParser extends AbstractParser {
         try {
             jep = new SharedInterpreter();
 
-        } catch (UnsatisfiedLinkError e) {
+        } catch (Throwable e) {
             if (!jepNotFoundPrinted.getAndSet(true)) {
                 String msg = JEP_NOT_FOUND + SEE_MANUAL;
                 LOGGER.error(msg);
                 e.printStackTrace();
+            }
+            if (!(e instanceof UnsatisfiedLinkError) && !(e.getCause() instanceof UnsatisfiedLinkError)) {
+                throw e;
             }
             return null;
         }
