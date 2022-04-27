@@ -14,8 +14,6 @@ batchSize = 50
 maxThreads = None
 
 import traceback
-from PIL import Image as PilImage
-import numpy as np
 import io
 import time
 import sys
@@ -36,6 +34,8 @@ def loadModel():
         file = System.getProperty('iped.root') + '/models/nsfw-keras-1.0.0.h5'
         from keras.models import load_model
         model = load_model(file)
+        global np
+        import numpy as np
         x = np.zeros((1, 224, 224, 3))
         #compile predict function to be used by multiple threads
         model.predict(x)
@@ -77,6 +77,7 @@ def convertJavaByteArray(byteArray):
 def loadRawImage(input):
     global loadImgTime 
     t = time.time()
+    from PIL import Image as PilImage
     img = PilImage.open(io.BytesIO(input))
     img = img.convert('RGB')
     img = img.resize(targetSize, PilImage.NEAREST)
