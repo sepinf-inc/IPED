@@ -35,6 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.IFileProcessor;
+import dpf.sp.gpinf.indexer.datasource.AD1DataSourceReader.AD1InputStreamFactory;
+import dpf.sp.gpinf.indexer.io.ZIPInputStreamFactory;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
@@ -44,6 +46,7 @@ import gpinf.dev.data.DataSource;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
+import iped3.io.ISeekableInputStreamFactory;
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
     private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
@@ -51,7 +54,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     private static int STATUS_LENGTH = 200;
     private volatile static FileProcessor parsingTask;
     private static Object lock = new Object(), lock2 = new Object();
-    private static HashSet<String> tskDataSourceInited = new HashSet<String>();
+    private static HashSet<String> dataSourceOpened = new HashSet<String>();
 
     private Document doc;
     private int docId;
@@ -181,15 +184,21 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     }
 
     private void waitSleuthkitInit(final IItem item) {
-        if (!tskDataSourceInited.contains(item.getDataSource().getUUID())) {
-            tskDataSourceInited.add(item.getDataSource().getUUID());
+        ISeekableInputStreamFactory factory = item.getInputStreamFactory();
+        if (!(factory instanceof SleuthkitInputStreamFactory) && !(factory instanceof ZIPInputStreamFactory)
+                && !(factory instanceof AD1InputStreamFactory)) {
+            return;
+        }
+        if (!dataSourceOpened.contains(item.getDataSource().getUUID())) {
             setWaitVisible(true);
             try (InputStream is = item.getSeekableInputStream()) {
                 is.read();
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                setWaitVisible(false);
             }
-            setWaitVisible(false);
+            dataSourceOpened.add(item.getDataSource().getUUID());
         }
     }
 
