@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,6 +21,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.tika.Tika;
 import org.apache.tika.io.TemporaryResources;
 import org.slf4j.Logger;
@@ -79,6 +81,7 @@ public class MinIOTask extends AbstractTask {
     private static final long zipMaxFiles = 10000;
     private TemporaryResources tmp = null;
     private ZipArchiveOutputStream out = null;
+    private CountingOutputStream cos = null;
     private File zipfile = null;
     private long zipLength = 0;
     private long zipFiles = 0;
@@ -204,7 +207,8 @@ public class MinIOTask extends AbstractTask {
             zipLength = 0;
             tmp = new TemporaryResources();
             zipfile = tmp.createTemporaryFile();
-            out = new ZipArchiveOutputStream(new FileOutputStream(zipfile));
+            cos = new CountingOutputStream(new BufferedOutputStream(new FileOutputStream(zipfile)));
+            out = new ZipArchiveOutputStream(cos);
             out.setLevel(Deflater.NO_COMPRESSION);
         }
         String fullpath = bucket + "/zips/" + getZipName() + "/" + hash;
@@ -215,12 +219,12 @@ public class MinIOTask extends AbstractTask {
         }
 
         zipFiles++;
-        zipLength += is.size();
         ZipArchiveEntry entry = new ZipArchiveEntry(hash);
         entry.setSize(is.size());
         out.putArchiveEntry(entry);
         IOUtils.copy(is, out);
         out.closeArchiveEntry();
+        zipLength = cos.getByteCount();
 
         return fullpath;
 
@@ -278,6 +282,7 @@ public class MinIOTask extends AbstractTask {
         zipFiles = 0;
         zipLength = 0;
         out = null;
+        cos = null;
         tmp = null;
         zipfile = null;
     }
