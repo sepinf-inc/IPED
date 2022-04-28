@@ -4,6 +4,7 @@
 
 import face_recognition as fr
 import PIL
+from PIL import Image
 import numpy as np
 import sys
 import traceback
@@ -90,7 +91,7 @@ def main():
                         new_size = (int(size[0] * scale), max_size)
                         
                     img0 = img
-                    img = img.resize(new_size, resample=PIL.Image.BILINEAR)
+                    img = img.resize(new_size, resample=Image.Resampling.BILINEAR)
                     upsample = 0
             
         except Exception:

@@ -180,6 +180,8 @@ public class AppMain {
 
             if (!finalLoader && processingManager == null) {
 
+                Configuration.getInstance().loadIpedRoot();
+
                 // blocks internet access from viewers
                 Policy.setPolicy(new DefaultPolicy());
                 System.setSecurityManager(new SecurityManager());

@@ -9,9 +9,7 @@
 import os
 import time
 import subprocess
-import numpy as np
 import threading, queue
-import FaceRecognitionProcess as fp
 import traceback
 import platform
 
@@ -31,10 +29,10 @@ maxProcesses = None
 numCreatedProcs = 0
 numCreatedProcsLock = threading.Lock()
 
+from java.lang import System
+ipedRoot = System.getProperty('iped.root')
+
 bin = 'python'
-terminate = fp.terminate
-imgError = fp.imgError
-ping = fp.ping
 
 detection_model = 'hog'
 max_size = 1024
@@ -67,8 +65,7 @@ def createExternalProcess():
     proc = None
     for i in range(3):
         if proc is None or proc.poll() is not None:
-            from java.lang import System
-            proc = subprocess.Popen([bin, os.path.join(System.getProperty('iped.root'), 'conf', 'scripts', processScript), str(max_size), detection_model, str(up_sampling)], 
+            proc = subprocess.Popen([bin, os.path.join(ipedRoot, 'conf', 'scripts', processScript), str(max_size), detection_model, str(up_sampling)], 
                                     stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         
         if pingExternalProcess(proc):
@@ -111,6 +108,15 @@ class FaceRecognitionTask:
         if not self.enabled:
             return
         
+        global fp, terminate, imgError, ping
+        import FaceRecognitionProcess as fp
+        terminate = fp.terminate
+        imgError = fp.imgError
+        ping = fp.ping
+        
+        global np
+        import numpy as np
+        
         # check if was called from gui the first time
         global maxProcesses, firstInstance
         # load configuration properties
@@ -118,11 +124,12 @@ class FaceRecognitionTask:
         numProcs = extraProps.getProperty(numFaceRecognitionProcessesProp)
         if firstInstance and numProcs is not None:
             maxProcesses = int(numProcs)
-            # hides the terminal on windows gui
-            if platform.system().lower() == 'windows':
-                global bin
-                bin = 'pythonw'
         firstInstance = False
+        
+        # configure embedded python path on windows
+        if platform.system().lower() == 'windows':
+            global bin
+            bin = os.path.join(ipedRoot, 'python', 'pythonw')
         
         numProcs = extraProps.getProperty(numFaceRecognitionProcessesProp)
         if maxProcesses is None and numProcs is not None:
