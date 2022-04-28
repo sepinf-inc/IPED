@@ -11,9 +11,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.Deflater;
 
@@ -86,6 +86,9 @@ public class MinIOTask extends AbstractTask {
     private long zipLength = 0;
     private long zipFiles = 0;
 
+    private Map<Integer, QueueItem> queue = new TreeMap<>();
+    private boolean sendQueue = false;
+
     private static class QueueItem {
         public IItem item = null;
         public String fullpath = null;
@@ -95,9 +98,6 @@ public class MinIOTask extends AbstractTask {
             this.fullpath = fullpath;
         }
     }
-
-    private HashMap<Integer, QueueItem> queue = new HashMap<>();
-    private boolean sendQueue = false;
 
     // Workaround for class loader issues with minio-8.3.8 and our custom class
     // loader. Without this, reading streams from minio throws:
