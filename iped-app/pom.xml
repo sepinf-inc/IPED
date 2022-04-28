@@ -90,8 +90,8 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>org.python</groupId>
-                                    <artifactId>python-jep</artifactId>
-                                    <version>3.9.12-4.0.3</version>
+                                    <artifactId>python-jep-dlib</artifactId>
+                                    <version>3.9.12-4.0.3-19.23.1</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
