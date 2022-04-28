@@ -81,6 +81,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-python</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.python</groupId>
+                                    <artifactId>python-jep-dlib</artifactId>
+                                    <version>3.9.12-4.0.3-19.23.1</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${release.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-esedbexport</id>
                         <phase>package</phase>
                         <goals>

@@ -21,6 +21,8 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.File;
 import java.io.IOException;
 import java.net.SocketPermission;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.Policy;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,6 +50,8 @@ public class Configuration {
     public static final String CONF_DIR = "conf"; //$NON-NLS-1$
     public static final String PROFILES_DIR = "profiles"; //$NON-NLS-1$
     public static final String CASE_PROFILE_DIR = "profile"; //$NON-NLS-1$
+
+    private static final File ipedRoot = new File(System.getProperty("user.home"), ".iped/ipedRoot.txt");
 
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
@@ -102,13 +106,27 @@ public class Configuration {
 
         configureLogger(configPath);
 
-        System.setProperty(IConfigurationDirectory.IPED_ROOT, appRoot);
+        System.setProperty(IConfigurationDirectory.IPED_APP_ROOT, appRoot);
         System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);
 
         properties.load(new File(appRoot, LOCAL_CONFIG));
         File mainConfig = new File(configPath, CONFIG_FILE);
         if (mainConfig.exists()) {
             properties.load(mainConfig);
+        }
+    }
+
+    public void saveIpedRoot(String path) throws IOException {
+        System.setProperty(IConfigurationDirectory.IPED_ROOT, path);
+        ipedRoot.getParentFile().mkdirs();
+        Files.write(ipedRoot.toPath(), path.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public void loadIpedRoot() throws IOException {
+        if (ipedRoot.exists()) {
+            byte[] bytes = Files.readAllBytes(ipedRoot.toPath());
+            String path = new String(bytes, StandardCharsets.UTF_8);
+            System.setProperty(IConfigurationDirectory.IPED_ROOT, path);
         }
     }
 

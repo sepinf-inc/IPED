@@ -80,7 +80,7 @@ import iped3.search.IBookmarks;
 import iped3.search.IMultiBookmarks;
 import iped3.util.BasicProps;
 
-public class IPEDSource implements Closeable, IIPEDSource {
+public class IPEDSource implements IIPEDSource {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IPEDSource.class);
 

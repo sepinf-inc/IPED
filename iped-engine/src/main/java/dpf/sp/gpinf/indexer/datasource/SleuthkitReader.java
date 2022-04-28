@@ -604,12 +604,21 @@ public class SleuthkitReader extends DataSourceReader {
         try {
            addImage.run(UUID.randomUUID().toString(), new String[] { image.getAbsolutePath() }, sectorSize);
 
-        } catch (TskDataException e) {
-            int idx = e.toString().toLowerCase().indexOf("encryption detected"); //$NON-NLS-1$
-            if (idx != -1) {
-                LOGGER.error(e.toString().substring(idx).trim() + " decoding {}", image.getAbsolutePath()); //$NON-NLS-1$
-            } else {
-                throw e;
+        } catch (Throwable e) {
+            String ignore = "org.sleuthkit.datamodel.TskDataException: Errors occurred while ingesting image";
+            for (String error : e.toString().split("\\n")) {
+                error = error.trim();
+                if (error.isEmpty() || error.contains(ignore))
+                    continue;
+                // int idx0 = error.toLowerCase().indexOf("encryption detected"); //$NON-NLS-1$
+                int idx1 = error.toLowerCase().indexOf("cannot determine file system type"); //$NON-NLS-1$
+                int idx2 = error.toLowerCase().indexOf("microsoft reserved partition"); //$NON-NLS-1$
+                String logMsg = error + " Image: " + image.getAbsolutePath(); //$NON-NLS-1$
+                if (idx1 != -1 && idx2 != -1) {
+                    LOGGER.warn(logMsg);
+                } else {
+                    LOGGER.error(logMsg);
+                }
             }
         }
 

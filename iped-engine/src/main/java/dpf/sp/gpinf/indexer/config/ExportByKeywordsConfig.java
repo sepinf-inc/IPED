@@ -1,18 +1,22 @@
 package dpf.sp.gpinf.indexer.config;
 
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.InvalidClassException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.util.Util;
 
-public class ExportByKeywordsConfig extends AbstractTaskConfig<List<String>> {
+public class ExportByKeywordsConfig extends AbstractTaskConfig<List<String>> implements Externalizable {
 
     /**
      * 
      */
-    private static final long serialVersionUID = 1183715688865710670L;
+    private static final long serialVersionUID = 2L;
 
     private static final String CONFIG_FILE = "KeywordsToExport.txt";
 
@@ -59,6 +63,28 @@ public class ExportByKeywordsConfig extends AbstractTaskConfig<List<String>> {
     @Override
     public String getTaskConfigFileName() {
         return CONFIG_FILE;
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        long l = in.readLong();
+        if (l != serialVersionUID) {
+            throw new InvalidClassException("SerialVersionUID not supported: " + l);
+        }
+        int size = in.readInt();
+        keywords = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            keywords.add(in.readUTF());
+        }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeLong(serialVersionUID);
+        out.writeInt(keywords.size());
+        for (String s : keywords) {
+            out.writeUTF(s);
+        }
     }
 
 }

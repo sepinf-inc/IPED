@@ -1,26 +1,30 @@
 package dpf.sp.gpinf.indexer.io;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.apache.commons.compress.archivers.zip.ZipSplitReadOnlySeekableByteChannel;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.IOUtils;
 
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.ZipFile4j;
 import iped3.io.SeekableInputStream;
-import net.lingala.zip4j.exception.ZipException;
-import net.lingala.zip4j.model.FileHeader;
 
 public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements Closeable {
 
@@ -28,7 +32,9 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
 
     private static final int MAX_FILES_CACHED = 1 << 9;
 
-    private ZipFile4j zip;
+    private volatile ZipFile zip;
+
+    private SeekableByteChannel sbc;
 
     private int bytesCached = 0;
 
@@ -68,10 +74,57 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         super(dataSource.toUri());
     }
 
-    private synchronized void init() throws ZipException {
+    private synchronized void init() throws IOException {
         if (zip == null) {
-            zip = new ZipFile4j(Paths.get(this.dataSource).toFile());
+            File file = Paths.get(this.dataSource).toFile();
+            int idx = file.getName().lastIndexOf('.');
+            if (idx == -1) {
+                throw new IOException("ZIP file must have extension!");
+            }
+            String namePrefix = file.getName().substring(0, idx);
+            ArrayList<File> list = new ArrayList<>();
+            int num = 0;
+            while (true) {
+                File segment = new File(file.getParentFile(), namePrefix + ".z" + String.format("%02d", ++num));
+                if (segment.exists()) {
+                    list.add(segment);
+                } else {
+                    break;
+                }
+            }
+            if (list.isEmpty()) {
+                sbc = Files.newByteChannel(file.toPath(), StandardOpenOption.READ);
+            } else {
+                sbc = ZipSplitReadOnlySeekableByteChannel.forFiles(file, list);
+            }
+            zip = new ZipFile(sbc, file.getAbsolutePath(), "UTF-8", true, true);
         }
+    }
+
+    public boolean entryExists(String path) {
+        if (zip == null) {
+            try {
+                init();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return zip.getEntry(path) != null;
+    }
+
+    public long getEntrySize(String path) {
+        if (zip == null) {
+            try {
+                init();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        ZipArchiveEntry zae = zip.getEntry(path);
+        if (zae != null) {
+            return zae.getSize();
+        }
+        return -1;
     }
 
     @Override
@@ -91,19 +144,29 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             return new SeekableFileInputStream(tmp.toFile());
         }
 
-        FileHeader zae;
+        ZipArchiveEntry zae;
         try {
-            if (zip == null)
+            if (zip == null) {
                 init();
-            zae = zip.getFileHeader(path);
-        } catch (ZipException e1) {
-            throw new IOException(e1);
+            }
+            zae = zip.getEntry(path);
+        } catch (IOException e1) {
+            throw e1;
         }
         if (zae == null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
         }
-        try (InputStream is = zip.getInputStream(zae)) {
-            if (zae.getUncompressedSize() <= MAX_BYTES_CACHED) {
+        InputStream is;
+
+        // ZipFile.getInputStream(ze) isn't thread safe as of COMPRESS 1.21 if ZipFile
+        // 'ignoreLocalFileHeader' constructor flag is enabled. We must synchronize on
+        // SeekableByteChannel used in constructor (COMPRESS 1.21 specific!), otherwise
+        // this won't work with splitted archives with COMPRESS 1.21, see COMPRESS-618
+        synchronized (sbc) {
+            is = zip.getInputStream(zae);
+        }
+        try {
+            if (zae.getSize() <= MAX_BYTES_CACHED) {
                 bytes = IOUtils.toByteArray(is);
                 synchronized (bytesCache) {
                     bytesCache.put(path, bytes);
@@ -118,13 +181,15 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                 }
             }
         } catch (ClosedChannelException e) {
-            // if(zip != null) zip.close();
-            zip = null;
+            if (zip != null) {
+                zip.close();
+                zip = null;
+            }
             if (tmp != null)
                 Files.delete(tmp);
             throw e;
-        } catch (ZipException e1) {
-            throw new IOException(e1);
+        } finally {
+            is.close();
         }
         if (bytes != null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
@@ -135,8 +200,8 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     @Override
     public void close() throws IOException {
         if (zip != null) {
-            // is not closeable...
-            // zip.close();
+            zip.close();
+            zip = null;
         }
         synchronized (bytesCache) {
             bytesCache.clear();

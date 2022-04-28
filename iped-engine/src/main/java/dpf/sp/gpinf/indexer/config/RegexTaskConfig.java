@@ -1,6 +1,10 @@
 package dpf.sp.gpinf.indexer.config;
 
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.InvalidClassException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -12,12 +16,12 @@ import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.exception.IPEDException;
 
-public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<?>>> {
+public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<?>>> implements Externalizable {
 
     /**
      * 
      */
-    private static final long serialVersionUID = 34038992637807289L;
+    private static final long serialVersionUID = 2L;
 
     private static final String CONFIG_FILE = "RegexConfig.txt"; //$NON-NLS-1$
     private static final String ENABLE_PARAM = "enableRegexSearch"; //$NON-NLS-1$
@@ -142,6 +146,40 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<?>>> 
             }
         }
 
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        long l = in.readLong();
+        if (l != serialVersionUID) {
+            throw new InvalidClassException("SerialVersionUID not supported: " + l);
+        }
+        formatRegexMatches = in.readBoolean();
+        int size = in.readInt();
+        regexList = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            RegexEntry e = new RegexEntry();
+            e.regexName = in.readUTF();
+            e.prefix = in.readInt();
+            e.suffix = in.readInt();
+            e.ignoreCase = in.readBoolean();
+            e.regex = in.readUTF();
+            regexList.add(e);
+        }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeLong(serialVersionUID);
+        out.writeBoolean(formatRegexMatches);
+        out.writeInt(regexList.size());
+        for (RegexEntry e : regexList) {
+            out.writeUTF(e.regexName);
+            out.writeInt(e.prefix);
+            out.writeInt(e.suffix);
+            out.writeBoolean(e.ignoreCase);
+            out.writeUTF(e.regex);
+        }
     }
 
 }

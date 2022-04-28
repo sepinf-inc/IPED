@@ -14,8 +14,6 @@ batchSize = 50
 maxThreads = None
 
 import traceback
-from PIL import Image as PilImage
-import numpy as np
 import io
 import time
 import sys
@@ -105,10 +103,13 @@ class NSFWNudityDetectTask:
     def init(self, configuration):
         global enabled
         enabled = configuration.getEnableTaskProperty(enableProp)
-        if enabled:
-            loadModel()
+        if not enabled:
+            return
+        global PilImage, np
+        from PIL import Image as PilImage
+        import numpy as np
+        loadModel()
         createSemaphore()
-        return
     
     def finish(self):
         num_finishes = caseData.getCaseObject('num_finishes')
