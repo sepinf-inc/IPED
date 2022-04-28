@@ -439,7 +439,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static boolean checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
         IItemBase item = wcontext.getItem();
-        if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)) {
+        if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)
+                && wcontext.getChalist() != null) {
             wcontext.setMainDB(true);
             wcontext.setBackup(false);
         }
