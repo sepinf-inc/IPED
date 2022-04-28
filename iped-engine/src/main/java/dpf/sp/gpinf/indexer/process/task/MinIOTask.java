@@ -96,6 +96,18 @@ public class MinIOTask extends AbstractTask {
     private HashMap<Integer, QueueItem> queue = new HashMap<>();
     private boolean sendQueue = false;
 
+    // Workaround for class loader issues with minio-8.3.8 and our custom class
+    // loader. Without this, reading streams from minio throws:
+    // NoClassDefFoundError: Could not initialize class
+    // org.simpleframework.xml.stream.NodeBuilder
+    static {
+        try {
+            new org.simpleframework.xml.stream.NodeBuilder();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
 
