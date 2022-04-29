@@ -158,7 +158,7 @@
         <dependency>
     		<groupId>black.ninia</groupId>
   			<artifactId>jep</artifactId>
-  			<version>3.9.1</version>
+  			<version>4.0.3</version>
   		</dependency>
         <dependency>
             <groupId>net.sf</groupId>

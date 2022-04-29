@@ -23,8 +23,12 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.swing.RowSorter;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.desktop.parallelsorter.ParallelTableRowSorter;
 import iped3.desktop.CancelableWorker;
@@ -33,6 +37,8 @@ import iped3.desktop.ProgressDialog;
 public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSortModel> {
     
     private static final int MAX_COMPARATOR_CACHE = 3;
+    
+    private static Logger logger = LoggerFactory.getLogger(ResultTableRowSorter.class);
 
     private static volatile Map<Integer, RowComparator> comparatorCache = new LinkedHashMap<Integer, RowComparator>(16, 0.75f, true){
         @Override
@@ -93,10 +99,17 @@ public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSort
 
         @Override
         protected Object doInBackground() {
-
+            List<String> sortKeysString = getSortKeysString(sortKeys);
+            logger.info("Sorting by {}...", sortKeysString);
+            long t = System.currentTimeMillis();
             sorter.setSortKeysSuper(sortKeys);
-
+            t = System.currentTimeMillis() - t;
+            logger.info("Sorting by {} took {}ms", sortKeysString, t);
             return null;
+        }
+        
+        private List<String> getSortKeysString(List<? extends SortKey> list) {
+            return list.stream().map(s -> "Col " + s.getColumn() + " order " + s.getSortOrder()).collect(Collectors.toList());
         }
 
         @Override

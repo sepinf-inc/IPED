@@ -24,10 +24,13 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import iped3.configuration.IConfigurationDirectory;
 import jep.JEPClassFinder;
 import jep.Jep;
 import jep.JepConfig;
 import jep.JepException;
+import jep.MainInterpreter;
+import jep.PyConfig;
 import jep.SharedInterpreter;
 
 public class PythonParser extends AbstractParser {
@@ -59,7 +62,19 @@ public class PythonParser extends AbstractParser {
         try {
             JepConfig config = new JepConfig();
             config.setClassEnquirer(JEPClassFinder.getInstance());
+            config.redirectStdErr(System.err);
+            config.redirectStdout(System.out);
             SharedInterpreter.setConfig(config);
+
+            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+                String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+                if (ipedRoot != null && new File(ipedRoot).exists()) {
+                    PyConfig pyConfig = new PyConfig();
+                    pyConfig.setPythonHome(ipedRoot + "/python");
+                    MainInterpreter.setInitParams(pyConfig);
+                }
+            }
+
         } catch (JepException e1) {
             throw new RuntimeException(e1);
         }
@@ -155,17 +170,18 @@ public class PythonParser extends AbstractParser {
         try {
             jep = new SharedInterpreter();
 
-        } catch (UnsatisfiedLinkError e) {
-            if (!jepNotFoundPrinted.getAndSet(true)) {
-                String msg = JEP_NOT_FOUND + SEE_MANUAL;
-                LOGGER.error(msg);
-                e.printStackTrace();
+        } catch (Throwable e) {
+            if (e instanceof UnsatisfiedLinkError || e.getCause() instanceof UnsatisfiedLinkError) {
+                if (!jepNotFoundPrinted.getAndSet(true)) {
+                    String msg = JEP_NOT_FOUND + SEE_MANUAL;
+                    LOGGER.error(msg);
+                    e.printStackTrace();
+                }
+                return null;
+            } else {
+                throw e;
             }
-            return null;
         }
-
-        jep.eval("from jep import redirect_streams");
-        jep.eval("redirect_streams.setup()");
 
         // setGlobalVar(jep, "logger", LOGGER); //$NON-NLS-1$
 
