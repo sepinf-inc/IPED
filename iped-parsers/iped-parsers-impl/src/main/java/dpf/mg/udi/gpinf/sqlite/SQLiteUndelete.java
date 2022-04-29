@@ -58,7 +58,7 @@ public class SQLiteUndelete {
         tablesToRecoverOnlyDeleted.add(tableName);
     }
 
-    public Map<String, SQLiteUndeleteTable> undeleteData() {
+    public Map<String, SQLiteUndeleteTable> undeleteData() throws InterruptedException, ExecutionException, IOException {
         Map<String, SQLiteUndeleteTable> result = null;
 
         Job job = new Job();
@@ -75,34 +75,33 @@ public class SQLiteUndelete {
         Global.LOGLEVEL = Base.NONE;
         Job.LOGLEVEL = Base.NONE;
         Global.CONVERT_DATETIME = false;
+        Global.numberofThreads = 0;
 
         // recover only deleted records
         job.recoverOnlyDeletedRecords = recoverOnlyDeletedRecords;
+        job.collectInternalRows = false;
         result = new HashMap<>();
 
-        try {
-            if (job.processDB() == 0) {
-                for (TableDescriptor td : job.headers.values()) {
-                    if (td.columnnames != null) {
+        
+        if (job.processDB() == 0) {
+            for (TableDescriptor td : job.headers.values()) {
+                if (td.columnnames != null) {
+                    if (tablesToRecover.isEmpty() || tablesToRecover.contains(td.getName())) {
                         SQLiteUndeleteTable table = new SQLiteUndeleteTable(td.columnnames);
                         table.setTableName(td.getName());
-                        if (tablesToRecover.isEmpty() || tablesToRecover.contains(td.getName())) {
-                            SQLiteRecordValidator validator = recordValidators.get(td.getName());
-                            for (SqliteRow row : job.getRowsForTable(td.getName())) {
-                                if (shouldRecoverRow(row, td.getName())) {
-                                    if (validator == null || validator.validateRecord(row)) {
-                                        table.getTableRows().add(row);
-                                    }
+                        SQLiteRecordValidator validator = recordValidators.get(td.getName());
+                        for (SqliteRow row : job.getRowsForTable(td.getName())) {
+                            if (shouldRecoverRow(row, td.getName())) {
+                                if (validator == null || validator.validateRecord(row)) {
+                                    table.getTableRows().add(row);
                                 }
                             }
-                            result.put(td.getName(), table);
                         }
+                        result.put(td.getName(), table);
                     }
                 }
             }
-        } catch (ExecutionException | InterruptedException | IOException e) {
         }
-
         return result;
     }
 

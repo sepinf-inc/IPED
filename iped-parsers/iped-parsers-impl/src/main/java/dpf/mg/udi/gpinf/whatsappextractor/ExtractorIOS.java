@@ -284,10 +284,7 @@ public class ExtractorIOS extends Extractor {
         }
         m.setRemoteResource(remoteResource); // $NON-NLS-1$
         m.setStatus((int) row.getIntValue("ZMESSAGESTATUS")); //$NON-NLS-1$
-        byte[] dataBytes = row.getBlobValue("ZTEXT"); //$NON-NLS-1$
-        if (dataBytes != null) {
-            m.setData(new String(dataBytes, StandardCharsets.UTF_8));
-        }
+        m.setData(row.getTextValue("ZTEXT")); //$NON-NLS-1$
         m.setFromMe(row.getIntValue("ZISFROMME") == 1); //$NON-NLS-1$
         if (m.isFromMe()) {
             switch (m.getStatus()) {
@@ -566,11 +563,13 @@ public class ExtractorIOS extends Extractor {
         public boolean validateRecord(SqliteRow row) {
             try {
                 long pk = row.getIntValue("Z_PK"); //$NON-NLS-1$
-                if (pk < 0) {
+                if (pk <= 0) {
                     return false;
                 }
-                row.getTextValue("ZMEMBERJID"); //$NON-NLS-1$
-                return true;
+                var memberjid = row.getTextValue("ZMEMBERJID"); //$NON-NLS-1$
+                if (memberjid != null) {
+                    return true;
+                }
             } catch (Exception e) {
             }
             return false;

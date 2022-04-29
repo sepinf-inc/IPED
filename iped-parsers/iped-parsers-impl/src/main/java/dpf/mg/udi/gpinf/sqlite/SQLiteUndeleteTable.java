@@ -11,13 +11,8 @@ public class SQLiteUndeleteTable {
     private String tableName;
     private List<SqliteRow> tableRows;
     private List<String> tableColumns;
-    private Map<String, Integer> colIdx = new HashMap<>();
 
     public SQLiteUndeleteTable(List<String> columnNames) {
-        int id = 0;
-        for (String col : columnNames) {
-            colIdx.put(col, id++);
-        }
         tableRows = new ArrayList<>();
         tableColumns = columnNames;
     }
@@ -38,33 +33,10 @@ public class SQLiteUndeleteTable {
         return tableColumns;
     }
 
-    public int getColumnIndex(String columnName) {
-        if (colIdx.containsKey(columnName)) {
-            return colIdx.get(columnName);
-        }
-        return -1;
-    }
-
-    public long getIntValue(SqliteRow row, String col) {
-        return row.getRowData().get(colIdx.get(col)).getIntValue();
-    }
-
-    public String getTextValue(SqliteRow row, String col) {
-        return row.getRowData().get(colIdx.get(col)).getTextValue();
-    }
-
-    public double getFloatValue(SqliteRow row, String col) {
-        return row.getRowData().get(colIdx.get(col)).getFloatValue();
-    }
-
-    public byte[] getBlobValue(SqliteRow row, String col) {
-        return row.getRowData().get(colIdx.get(col)).getBlobValue();
-    }
-
     public Map<Long, List<SqliteRow>> getTableRowsGroupedByLongCol(String longColumnToGroup) {
         var tableDataMap = new HashMap<Long, List<SqliteRow>>();
         getTableRows().stream().forEach(row -> {
-            long key = getIntValue(row, longColumnToGroup);
+            long key = row.getIntValue(longColumnToGroup);
             if (key > 0) {
                 var rows = tableDataMap.get(key);
                 if (rows == null) {
@@ -80,7 +52,7 @@ public class SQLiteUndeleteTable {
     public Map<String, List<SqliteRow>> getTableRowsGroupedByTextCol(String longColumnToGroup) {
         var tableDataMap = new HashMap<String, List<SqliteRow>>();
         getTableRows().stream().forEach(row -> {
-            String key = getTextValue(row, longColumnToGroup);
+            String key = row.getTextValue(longColumnToGroup);
             if (key != null) {
                 var rows = tableDataMap.get(key);
                 if (rows == null) {
@@ -96,7 +68,7 @@ public class SQLiteUndeleteTable {
     public Map<Long, SqliteRow> getRowsMappedByLongPrimaryKey(String longPrimaryKeyColumnName) {
         var tableDataMap = new HashMap<Long, SqliteRow>();
         getTableRows().stream().forEach(row -> {
-            long pk = getIntValue(row, longPrimaryKeyColumnName);
+            long pk = row.getIntValue(longPrimaryKeyColumnName);
             if (pk > 0) {
                 tableDataMap.put(pk, row);
             }
