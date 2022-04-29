@@ -12,5 +12,5 @@ host = http://HPW06
 port = 9000
 
 # max size (bytes) of files to be included in the zip file
-zipFilesMaxSize = 0
+zipFilesMaxSize = 32768
 
