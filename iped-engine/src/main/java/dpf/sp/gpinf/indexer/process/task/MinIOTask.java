@@ -503,8 +503,8 @@ public class MinIOTask extends AbstractTask {
             if (size == null) {
                 if (id.contains(".zip/")) {
                     try (GetObjectResponse res = minioClient.getObject(GetObjectArgs.builder().bucket(bucket).object(id)
-                            .offset(pos).extraHeaders(Collections.singletonMap("x-minio-extract", "true")).build())) {
-                        return Long.valueOf(res.headers().get("Content-Length"));
+                            .offset(0L).extraHeaders(Collections.singletonMap("x-minio-extract", "true")).build())) {
+                        size = Long.valueOf(res.headers().get("Content-Length"));
 
                     } catch (Exception e) {
                         if (e instanceof IOException) {
