@@ -182,10 +182,6 @@ public class AppMain {
 
                 Configuration.getInstance().loadIpedRoot();
 
-                // blocks internet access from viewers
-                Policy.setPolicy(new DefaultPolicy());
-                System.setSecurityManager(new SecurityManager());
-
                 List<File> jars = new ArrayList<File>();
                 PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
                 jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
