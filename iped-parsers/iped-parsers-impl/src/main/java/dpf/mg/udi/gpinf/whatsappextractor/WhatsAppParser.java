@@ -834,8 +834,11 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (m.getVcards() != null && !m.getVcards().isEmpty()) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, VCardParser.VCARD_MIME.toString());
                 for (String vcard : m.getVcards()) {
-                    extractor.parseEmbedded(new ByteArrayInputStream(vcard.getBytes(StandardCharsets.UTF_8)), handler,
-                            meta, false);
+                    if (vcard != null) {
+                        extractor.parseEmbedded(new ByteArrayInputStream(vcard.getBytes(StandardCharsets.UTF_8)),
+                                handler, meta, false);
+                    }
+
                 }
             } else {
                 meta.set(BasicProps.LENGTH, ""); //$NON-NLS-1$

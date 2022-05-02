@@ -341,7 +341,9 @@ public class ReportGenerator {
                     case CONTACT_MESSAGE:
                         out.println("<b>" + Messages.getString("WhatsAppReport.Contact") + "</b><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         for (String c : message.getVcards()) {
-                            VCardParser.printHtmlFromString(out, c);
+                            if (c != null) {
+                                VCardParser.printHtmlFromString(out, c);
+                            }
                         }
                         break;
                     case DELETED_MESSAGE:
