@@ -4,11 +4,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
+import javax.swing.SwingUtilities;
+
 public class WorkerProvider {
 
     private static WorkerProvider instance = new WorkerProvider();
 
     private ArrayList<PropertyChangeListener> listeners = new ArrayList<>();
+    private ArrayList<PropertyChangeListener> uiListeners = new ArrayList<>();
 
     private Thread executorthread;
 
@@ -25,13 +28,30 @@ public class WorkerProvider {
         this.executorthread = executorthread;
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener l) {
-        listeners.add(l);
+    public void addPropertyChangeListener(PropertyChangeListener l, boolean isUIListener) {
+        if (isUIListener) {
+            uiListeners.add(l);
+        } else {
+            listeners.add(l);
+        }
     }
 
     public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+        PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName, oldValue, newValue);
         for (PropertyChangeListener l : listeners) {
-            l.propertyChange(new PropertyChangeEvent(this, propertyName, oldValue, newValue));
+            l.propertyChange(event);
+        }
+        for (PropertyChangeListener l : uiListeners) {
+            if (SwingUtilities.isEventDispatchThread()) {
+                l.propertyChange(event);
+            } else {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        l.propertyChange(event);
+                    }
+                });
+            }
         }
     }
 

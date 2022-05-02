@@ -57,7 +57,7 @@ public class Main {
     File keywords;
     List<File> dataSource;
     File output;
-
+    boolean isReportingFromCaseDir = false;
     File logFile;
     LogConfiguration logConfiguration;
 
@@ -133,6 +133,7 @@ public class Main {
             rootPath = new File(url.toURI()).getParent();
             // test for report generation from case folder
             if (rootPath.endsWith("iped" + File.separator + "lib")) { //$NON-NLS-1$ //$NON-NLS-2$
+                isReportingFromCaseDir = true;
                 rootPath = new File(url.toURI()).getParentFile().getParent();
             }
         }
@@ -192,11 +193,11 @@ public class Main {
         if (!cmdLineParams.isNogui()) {
             ProgressFrame progressFrame = new ProgressFrame(provider);
             progressFrame.setVisible(true);
-            provider.addPropertyChangeListener(progressFrame);
+            provider.addPropertyChangeListener(progressFrame, true);
             frame = progressFrame;
         } else {
             ProgressConsole console = new ProgressConsole();
-            provider.addPropertyChangeListener(console);
+            provider.addPropertyChangeListener(console, false);
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -255,9 +256,11 @@ public class Main {
 
             if (!fromCustomLoader) {
 
-                // blocks internet access from viewers
-                Policy.setPolicy(new DefaultPolicy());
-                System.setSecurityManager(new SecurityManager());
+                if (iped.isReportingFromCaseDir) {
+                    Configuration.getInstance().loadIpedRoot();
+                } else {
+                    Configuration.getInstance().saveIpedRoot(iped.rootPath);
+                }
 
                 List<File> jars = new ArrayList<File>();
                 PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);

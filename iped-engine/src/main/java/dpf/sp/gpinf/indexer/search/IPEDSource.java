@@ -37,6 +37,7 @@ import java.util.concurrent.Executors;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.LeafReader;
@@ -64,6 +65,7 @@ import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.lucene.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.sleuthkit.TouchSleuthkitImages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
@@ -78,7 +80,7 @@ import iped3.search.IBookmarks;
 import iped3.search.IMultiBookmarks;
 import iped3.util.BasicProps;
 
-public class IPEDSource implements Closeable, IIPEDSource {
+public class IPEDSource implements IIPEDSource {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IPEDSource.class);
 
@@ -180,8 +182,13 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 if (SleuthkitReader.sleuthCase != null)
                     // workaroud para demora ao abrir o caso enquanto tsk_loaddb não termina
                     sleuthCase = SleuthkitReader.sleuthCase;
-                else
+                else {
+                    // Unpatched TSK doesn't work with a read-only DB, must be writeable
+                    if (!SleuthkitReader.isTSKPatched()) {
+                        sleuthFile = SleuthkitInputStreamFactory.getWriteableDBFile(sleuthFile);
+                    }
                     sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
+                }
 
                 if (!isReport)
                     updateImagePathsToAbsolute(casePath, sleuthFile);
@@ -205,6 +212,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
             populateEvidenceUUIDs();
             splitedIds = getSplitedIds();
             countTotalItems();
+
+            SleuthkitReader.loadImagePasswords(moduleDir);
 
             File textSizesFile = new File(moduleDir, "data/texts.size"); //$NON-NLS-1$
             if (textSizesFile.exists()) {
@@ -581,12 +590,12 @@ public class IPEDSource implements Closeable, IIPEDSource {
     File tmpCaseFile = null;
 
     private void testCanWriteToCase(File sleuthFile) throws TskCoreException, IOException {
-        if (tmpCaseFile == null && (!IOUtil.canWrite(sleuthFile) || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
-            tmpCaseFile = File.createTempFile("sleuthkit-", ".db"); //$NON-NLS-1$ //$NON-NLS-2$
-            tmpCaseFile.deleteOnExit();
+        if (tmpCaseFile != null) return;
+        File writeableDBFile = SleuthkitInputStreamFactory.getWriteableDBFile(sleuthFile);
+        if (writeableDBFile != sleuthFile){
+            tmpCaseFile = writeableDBFile;
             // causes "case is closed" error in some cases
             // sleuthCase.close();
-            IOUtil.copyFile(sleuthFile, tmpCaseFile);
             sleuthCase = SleuthkitCase.openCase(tmpCaseFile.getAbsolutePath());
             tskCaseList.add(sleuthCase);
         }
