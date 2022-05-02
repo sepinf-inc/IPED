@@ -228,7 +228,7 @@ public class VideoThumbTask extends ThumbTask {
                     mplayer = Configuration.getInstance().appRoot + "/" + mplayerWin; //$NON-NLS-1$
                 }
                 videoThumbsMaker.setMPlayer(mplayer);
-
+                
                 // Testa se o MPlayer está funcionando
                 String vmp = videoThumbsMaker.getVersion();
                 if (vmp == null) {
@@ -250,11 +250,12 @@ public class VideoThumbTask extends ThumbTask {
         }
 
         // Inicializa parâmetros
-        videoThumbsMaker.setMPlayer(mplayer);
+        videoThumbsMaker.setMPlayer(mplayer);        
         videoThumbsMaker.setVerbose(videoConfig.isVerbose());
         videoThumbsMaker.setTimeoutFirstCall(videoConfig.getTimeoutFirst());
         videoThumbsMaker.setTimeoutProcess(videoConfig.getTimeoutProcess());
         videoThumbsMaker.setTimeoutInfo(videoConfig.getTimeoutInfo());
+        videoThumbsMaker.setVideoThumbsOriginalDimension(videoConfig.getVideoThumbsOriginalDimension());
 
         // Cria configurações de extração de cenas
         configs = new ArrayList<VideoThumbsOutputConfig>();

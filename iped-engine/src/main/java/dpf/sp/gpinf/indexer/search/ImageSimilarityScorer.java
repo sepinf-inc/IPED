@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -10,7 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.BinaryDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.util.BytesRef;
 
@@ -28,7 +29,7 @@ public class ImageSimilarityScorer {
      * results and to be shown on the table). Although the score is limited to
      * [0,100] (avoiding negative values that could be produced by the conversion
      * formula), scores < 1 will be later discarded (i.e. not included in the
-     * results): score = 100 - distance * distToScoreMult / numFeatures So higher
+     * results): score = 100 - distance * distTList<oScoreMult / numFeatures So higher
      * values will increase the distance weight, therefore reducing the score (i.e.
      * bringing less images).
      */
@@ -72,7 +73,7 @@ public class ImageSimilarityScorer {
         this.result = result;
         this.len = result.getLength();
         this.refItem = refItem;
-        this.refSimilarityFeatures = (byte[]) refItem.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
+        this.refSimilarityFeatures = (Arrays.asList((byte[]) refItem.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES))).get(0);
     }
 
     public void score() throws IOException {
@@ -88,10 +89,10 @@ public class ImageSimilarityScorer {
             int threadIdx = k;
             (threads[k] = new Thread() {
                 public void run() {
-                    BinaryDocValues similarityFeaturesValues = null;
+                    SortedSetDocValues similarityFeaturesValues = null;
                     try {
                         similarityFeaturesValues = leafReader
-                                .getBinaryDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
+                                .getSortedSetDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
                     } catch (IOException e) {
                         e.printStackTrace();
                         return;
@@ -101,29 +102,40 @@ public class ImageSimilarityScorer {
                     for (int i = i0; i < i1; i++) {
                         IItemId itemId = result.getItem(i);
                         int luceneId = ipedCase.getLuceneId(itemId);
-                        BytesRef bytesRef = DocValuesUtil.getBytesRef(similarityFeaturesValues, luceneId);
-                        if (bytesRef == null || bytesRef.length == 0) {
-                            result.setScore(i, 0);
-                        } else {
-                            byte[] currSimilarityFeatures = bytesRef.bytes;
-                            int distance = ImageSimilarity.distance(refSimilarityFeatures, currSimilarityFeatures,
-                                    evalCut);
-                            float score = Math.max(0, 100 - distance * distToScoreMult / refSimilarityFeatures.length);
-                            if (distance == 0) {
-                                String refHash = refItem.getHash();
-                                if (refHash != null) {
-                                    try {
-                                        Document doc = leafReader.document(luceneId);
-                                        String currHash = doc.get(BasicProps.HASH);
-                                        if (refHash.equals(currHash)) {
-                                            score = identicalScore;
+                        long ordinal;
+                        float score = 0;
+                        try {                            
+                            boolean hasVal = similarityFeaturesValues.advanceExact(luceneId);
+                            while (hasVal && (ordinal = similarityFeaturesValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                                BytesRef bytesRef = similarityFeaturesValues.lookupOrd(ordinal);
+                                if (bytesRef == null || bytesRef.length == 0) {
+                                    result.setScore(i, 0);
+                                } else {
+                                    byte[] currSimilarityFeatures = bytesRef.bytes;
+                                    int distance = ImageSimilarity.distance(refSimilarityFeatures, currSimilarityFeatures,
+                                            evalCut);
+                                    score = Math.max(0, 100 - distance * distToScoreMult / refSimilarityFeatures.length);
+                                    if (distance == 0) {
+                                        String refHash = refItem.getHash();
+                                        if (refHash != null) {
+                                            try {
+                                                Document doc = leafReader.document(luceneId);
+                                                String currHash = doc.get(BasicProps.HASH);
+                                                if (refHash.equals(currHash)) {
+                                                    score = identicalScore;
+                                                }
+                                            } catch (IOException e) {
+                                                e.printStackTrace();
+                                                break;
+                                            }
                                         }
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                        break;
                                     }
                                 }
+
                             }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {                            
                             result.setScore(i, score);
                         }
                     }
@@ -151,22 +163,30 @@ public class ImageSimilarityScorer {
         }
         trim(0);
         
-        BinaryDocValues similarityFeaturesValues = null;
+        SortedSetDocValues similarityFeaturesValues = null;
         try {
             similarityFeaturesValues = ipedCase.getLeafReader()
-                    .getBinaryDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
+                    .getSortedSetDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
-        // put features in a map, BinaryDocValues is not random accessible anymore
+
+
+        // put features in a map, SortedSetDocValues is not random accessible anymore
         HashMap<Integer, byte[]> idToFeaturesMap = new HashMap<>();
         for (Integer idx : topResults.stream().sorted().collect(Collectors.toList())) {
             IItemId itemId = result.getItem(idx);
             int luceneId = ipedCase.getLuceneId(itemId);
-            BytesRef bytesRef = DocValuesUtil.getBytesRef(similarityFeaturesValues, luceneId);
-            byte[] currFeatures = bytesRef.bytes.clone();
-            idToFeaturesMap.put(idx, currFeatures);
+            try{
+                BytesRef bytesRef = similarityFeaturesValues.lookupOrd(0); // TODO: Check if grouping is really needed
+                byte[] currFeatures = bytesRef.bytes.clone();
+                idToFeaturesMap.put(idx, currFeatures);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }           
+            
         }
         
         int start = topResults.size();

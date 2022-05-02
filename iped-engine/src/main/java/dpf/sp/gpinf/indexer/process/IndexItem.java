@@ -440,14 +440,16 @@ public class IndexItem extends BasicProps {
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
 
-        byte[] similarityFeatures = (byte[]) evidence.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
+        List<byte[]> similarityFeaturesList = (List<byte[]>) evidence.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
         // clear extra property to don't add it again later when iterating over extra props
         evidence.getExtraAttributeMap().remove(ImageSimilarityTask.SIMILARITY_FEATURES);
-        if (similarityFeatures != null) {
-            doc.add(new BinaryDocValuesField(ImageSimilarityTask.SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
-            doc.add(new StoredField(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures));
-            doc.add(new IntPoint(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures[0], similarityFeatures[1],
+        if (similarityFeaturesList != null) {
+            for(byte[] similarityFeatures: similarityFeaturesList) {
+                doc.add(new SortedSetDocValuesField(ImageSimilarityTask.SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
+                doc.add(new StoredField(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures));
+                doc.add(new IntPoint(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures[0], similarityFeatures[1],
                     similarityFeatures[2], similarityFeatures[3]));
+            }
         }
 
         long off = evidence.getFileOffset();
