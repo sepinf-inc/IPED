@@ -20,20 +20,20 @@ public class ItemId implements IItemId {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         return compareTo((ItemId) o) == 0;
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return id;
     }
 
-    public int getSourceId() {
+    public final int getSourceId() {
         return this.sourceId;
     }
 
-    public int getId() {
+    public final int getId() {
         return this.id;
     }
 

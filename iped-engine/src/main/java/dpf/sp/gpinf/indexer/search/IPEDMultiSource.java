@@ -24,7 +24,7 @@ import iped3.IItem;
 import iped3.IItemId;
 import iped3.exception.IPEDException;
 
-public class IPEDMultiSource extends IPEDSource {
+public final class IPEDMultiSource extends IPEDSource {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IPEDMultiSource.class);
 
@@ -279,7 +279,7 @@ public class IPEDMultiSource extends IPEDSource {
     }
 
     @Override
-    boolean isSplited(int id) {
+    public final boolean isSplited(int id) {
         throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
     }
 

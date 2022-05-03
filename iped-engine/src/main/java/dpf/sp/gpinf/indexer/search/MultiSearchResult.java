@@ -6,7 +6,7 @@ import iped3.IIPEDSource;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
 
-public class MultiSearchResult implements IMultiSearchResult {
+public final class MultiSearchResult implements IMultiSearchResult {
 
     private IItemId[] ids;
     private float[] scores;
@@ -53,11 +53,8 @@ public class MultiSearchResult implements IMultiSearchResult {
         return new ItemIdIterator();
     }
 
-    public void setIds(IItemId[] itemIds) {
+    public void set(IItemId[] itemIds, float[] scores) {
         this.ids = itemIds;
-    }
-
-    public void setScores(float[] scores) {
         this.scores = scores;
     }
 

@@ -111,7 +111,7 @@ public class TimelineResults {
         return result;
     }
 
-    public static class TimeItemId extends ItemId {
+    public static final class TimeItemId extends ItemId {
 
         private TimelineResults timelineResults;
         private int timeStampOrd, timeEventOrd = -1;
@@ -123,7 +123,7 @@ public class TimelineResults {
             this.timeEventOrd = timeEventOrd;
         }
 
-        public int getTimeStampOrd() {
+        public final int getTimeStampOrd() {
             return this.timeStampOrd;
         }
 
@@ -133,11 +133,11 @@ public class TimelineResults {
          * @return
          * @throws IOException
          */
-        public String getTimeStampValue() throws IOException {
+        public final String getTimeStampValue() throws IOException {
             return timelineResults.timeStampValues.lookupOrd(timeStampOrd).utf8ToString();
         }
 
-        public int getTimeEventOrd() {
+        public final int getTimeEventOrd() {
             return this.timeEventOrd;
         }
 
@@ -147,16 +147,16 @@ public class TimelineResults {
          * @return
          * @throws IOException
          */
-        public String getTimeEventValue() throws IOException {
+        public final String getTimeEventValue() throws IOException {
             return timelineResults.timeEventGroupValues.lookupOrd(timeEventOrd).utf8ToString();
         }
 
-        public String getTimeEventValue(SortedSetDocValues ssdv) throws IOException {
+        public final String getTimeEventValue(SortedSetDocValues ssdv) throws IOException {
             return ssdv.lookupOrd(timeEventOrd).utf8ToString();
         }
 
         @Override
-        public int compareTo(IItemId o) {
+        public final int compareTo(IItemId o) {
             int ret = super.compareTo(o);
             if (ret != 0 || !(o instanceof TimeItemId)) {
                 return ret;

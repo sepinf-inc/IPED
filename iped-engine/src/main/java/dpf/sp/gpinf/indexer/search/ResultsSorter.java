@@ -350,8 +350,7 @@ public class ResultsSorter {
 
         logger.info("lucene list to item list conv took {}ms", t3 - t2);
 
-        itemList.setIds(result.getIds());
-        itemList.setScores(result.getScores());
+        itemList.set(result.getIds(), result.getScores());
     }
 
     private void sortByCheckBoxes(IMultiSearchResult itemList, boolean reverse) {
@@ -382,8 +381,7 @@ public class ResultsSorter {
         checked = null;
         Float[] scores = checkedScore.toArray(new Float[0]);
         checkedScore = null;
-        itemList.setIds(items);
-        itemList.setScores(ArrayUtils.toPrimitive(scores));
+        itemList.set(items, ArrayUtils.toPrimitive(scores));
     }
 
     private void sortByComparator(IMultiSearchResult itemList, final Comparator<Integer> comp, boolean reverse) {
@@ -410,8 +408,7 @@ public class ResultsSorter {
         origItems = null;
         origScores = null;
 
-        itemList.setIds(items);
-        itemList.setScores(scores);
+        itemList.set(items, scores);
     }
 
     // TODO: optimize to get rid of this

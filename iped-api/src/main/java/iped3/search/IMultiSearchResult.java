@@ -20,14 +20,12 @@ public interface IMultiSearchResult {
     int getLength();
 
     float getScore(int i);
-
+    
     IItemId[] getIds();
 
     float[] getScores();
 
-    void setIds(IItemId[] itemIds);
-
-    void setScores(float[] scores);
+    void set(IItemId[] itemIds, float[] scores);
 
     void clear();
 

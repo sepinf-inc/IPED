@@ -1,6 +1,6 @@
 package iped3.search;
 
-public class SearchResult {
+public final class SearchResult {
 
     int[] ids;
     float[] scores;
@@ -13,19 +13,19 @@ public class SearchResult {
         this.scores = scores;
     }
 
-    public int getId(int i) {
+    public final int getId(int i) {
         return ids[i];
     }
 
-    public float getScore(int i) {
+    public final float getScore(int i) {
         return scores[i];
     }
 
-    public int getLength() {
+    public final int getLength() {
         return ids.length;
     }
 
-    public int[] getIds() {
+    public final int[] getIds() {
         return this.ids;
     }
 

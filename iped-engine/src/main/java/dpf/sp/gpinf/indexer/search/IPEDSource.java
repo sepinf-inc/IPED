@@ -620,7 +620,7 @@ public class IPEDSource implements IIPEDSource {
         sleuthCase.setImagePaths(imgId, newPaths);
     }
 
-    public int getSourceId() {
+    public final int getSourceId() {
         return sourceId;
     }
 
