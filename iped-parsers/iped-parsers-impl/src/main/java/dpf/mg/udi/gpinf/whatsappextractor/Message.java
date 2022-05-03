@@ -280,7 +280,11 @@ public class Message {
     }
 
     public void setLatitude(double latitude) {
-        this.latitude = latitude;
+        if (latitude < -90.0 || latitude > 90.0) {
+            this.latitude = 0.0;
+        } else {
+            this.latitude = latitude;
+        }
     }
 
     public double getLongitude() {
@@ -288,7 +292,11 @@ public class Message {
     }
 
     public void setLongitude(double longitude) {
-        this.longitude = longitude;
+        if (longitude < -180.0 || longitude > 180.0) {
+            this.longitude = 0.0;
+        } else {
+            this.longitude = longitude;
+        }
     }
 
     public String getUrl() {
