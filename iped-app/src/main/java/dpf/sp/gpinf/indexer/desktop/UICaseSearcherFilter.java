@@ -305,7 +305,7 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
 
                 App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(LocalizedFormat.format(this.get().getLength()));
                 App.get().resultsTable.getTableHeader().repaint();
-                if (App.get().ipedResult.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null) {
+                if (App.get().ipedResult.getLength() < 1 << 26 && App.get().resultsTable.getRowSorter() != null) {
                     App.get().resultsTable.getRowSorter().allRowsChanged();
                     App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
                     App.get().galleryModel.fireTableDataChanged();
