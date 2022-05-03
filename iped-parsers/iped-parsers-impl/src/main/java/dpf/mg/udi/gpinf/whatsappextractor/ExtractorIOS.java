@@ -151,7 +151,7 @@ public class ExtractorIOS extends Extractor {
                 for (Chat c : undeletedChats) {
                     if (!activeChats.contains(c.getId())) {
                         list.add(c);
-                        logger.info("RECOVERED CHAT!!! - " + itemPath + "  -  " + c.getSubject() + "  -  " + c.getRemote().getFullId());
+                        logger.info("Recovered deleted chat for database " + itemPath + " :" + c.getSubject() + " (" + c.getRemote().getFullId() + ")");
                     }
                 }
 
