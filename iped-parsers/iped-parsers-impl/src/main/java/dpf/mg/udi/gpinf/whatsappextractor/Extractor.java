@@ -44,11 +44,14 @@ public abstract class Extractor {
         return DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
     }
 
-    protected void setGroupMembers(Chat c, Connection conn, String SELECT_GROUP_MEMBERS) throws WAExtractorException {
+    protected void setGroupMembers(Chat c, Connection conn, String SELECT_GROUP_MEMBERS) throws SQLException {
         // adds all contacts that sent at least one message
         for (Message m : c.getMessages()) {
             if (m.getRemoteResource() != null)
                 c.getGroupmembers().add(contacts.getContact(m.getRemoteResource()));
+        }
+        if (SELECT_GROUP_MEMBERS == null) {
+            return;
         }
         // adds all contacts which is a member of the group now
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_GROUP_MEMBERS)) {
@@ -63,11 +66,7 @@ public abstract class Extractor {
                 }
 
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            throw new WAExtractorException(ex);
         }
-
     }
 
 }

@@ -67,11 +67,14 @@ public class ExtractorAndroid extends Extractor {
 
     private static Logger logger = LoggerFactory.getLogger(ExtractorAndroid.class);
 
-    private boolean hasThumbTable = false;
+    private boolean hasSortTimestamp = false;
+    private boolean hasThumbTable = true;
     private boolean hasEditVersionCol = false;
-    private boolean hasChatView = false;
+    private boolean hasChatView = true;
     private boolean hasMediaCaptionCol = false;
     private boolean hasSubjectCol = false;
+    private boolean hasMediaDurationCol = false;
+    private boolean hasGroupParticiantsTable = true;
 
     public ExtractorAndroid(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
@@ -137,13 +140,21 @@ public class ExtractorAndroid extends Extractor {
             Set<ChatWrapperForDuplicateRemoval> activeChats = new HashSet<>();
 
             try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-                boolean hasSortTimestamp = databaseHasSortTimestamp(conn);
-                hasChatView = databaseHasChatView(conn);
-                hasThumbTable = SQLite3DBParser.containsTable("message_thumbnails", conn);
-                hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version"); //$NON-NLS-1$ //$NON-NLS-2$
-                hasMediaCaptionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_caption"); //$NON-NLS-1$ //$NON-NLS-2$
-                if (!hasChatView) {
-                    hasSubjectCol = SQLite3DBParser.checkIfColumnExists(conn, "chat_list", "subject"); //$NON-NLS-1$ //$NON-NLS-2$
+                try {
+                    hasSortTimestamp = databaseHasSortTimestamp(conn);
+                    hasChatView = databaseHasChatView(conn);
+                    hasThumbTable = SQLite3DBParser.containsTable("message_thumbnails", conn); //$NON-NLS-1$
+                    hasGroupParticiantsTable = SQLite3DBParser.containsTable("group_participants", conn); //$NON-NLS-1$
+                    hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version"); //$NON-NLS-1$ //$NON-NLS-2$
+                    hasMediaCaptionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_caption"); //$NON-NLS-1$ //$NON-NLS-2$
+                    hasMediaDurationCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_duration"); //$NON-NLS-1$ //$NON-NLS-2$
+                    if (!hasChatView) {
+                        hasSubjectCol = SQLite3DBParser.checkIfColumnExists(conn, "chat_list", "subject"); //$NON-NLS-1$ //$NON-NLS-2$
+                    }
+                } catch (SQLException e) {
+                    if (firstTry || !(e.getMessage() != null && e.getMessage().contains("SQLITE_CORRUPT"))) { //$NON-NLS-1$
+                        throw e;
+                    }
                 }
                 
                 String selectChatQuery;
@@ -172,17 +183,27 @@ public class ExtractorAndroid extends Extractor {
                             list.add(c);
                         }
                     }
-
-                    for (Chat c : undeletedChats) {
-                        if (!activeChats.contains(new ChatWrapperForDuplicateRemoval(c)))
-                            list.add(c);
+                } catch (SQLException ex) {
+                    if (firstTry || !(ex.getMessage() != null && ex.getMessage().contains("SQLITE_CORRUPT"))) { //$NON-NLS-1$
+                        throw ex;
                     }
+                }
+                
+                for (Chat c : undeletedChats) {
+                    if (!activeChats.contains(new ChatWrapperForDuplicateRemoval(c)))
+                        list.add(c);
+                }
 
-                    for (Chat c : list) {
-                        c.setMessages(extractMessages(conn, c.getRemote(), c.isGroupChat(), undeletedMessages,
-                                undeletedMessagesTable, hasThumbTable, hasEditVersionCol, firstTry));
-                        if (c.isGroupChat()) {
-                            setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
+                for (Chat c : list) {
+                    c.setMessages(extractMessages(conn, c.getRemote(), c.isGroupChat(), undeletedMessages,
+                            undeletedMessagesTable, hasThumbTable, hasEditVersionCol, firstTry));
+                    if (c.isGroupChat()) {
+                        try {
+                            setGroupMembers(c, conn, hasGroupParticiantsTable ? SELECT_GROUP_MEMBERS : null);
+                        } catch (SQLException ex) {
+                            if (firstTry || !(ex.getMessage() != null && ex.getMessage().contains("SQLITE_CORRUPT"))) { //$NON-NLS-1$
+                                throw ex;
+                            }
                         }
                     }
                 }
@@ -289,7 +310,9 @@ public class ExtractorAndroid extends Extractor {
         
         Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
         String query;
-        if (!hasMediaCaptionCol) {
+        if (!hasMediaDurationCol) {
+            query = SELECT_MESSAGES_NO_MEDIA_DURATION;
+        } else if (!hasMediaCaptionCol) {
             query = SELECT_MESSAGES_NO_MEDIA_CAPTION;
         } else if (hasThumbTable) {
             query = SELECT_MESSAGES_THUMBS_TABLE;
@@ -379,7 +402,7 @@ public class ExtractorAndroid extends Extractor {
         m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
         m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
         m.setMessageType(decodeMessageType(type, status, edit_version, caption, (int) media_size));
-        m.setMediaDuration(rs.getInt("media_duration")); //$NON-NLS-1$
+        m.setMediaDuration(SQLite3DBParser.getIntIfExists(rs, "media_duration")); //$NON-NLS-1$
         if (m.getMessageType() == CONTACT_MESSAGE) {
             m.setVcards(Arrays.asList(new String[] { m.getData() }));
         }
@@ -553,6 +576,14 @@ public class ExtractorAndroid extends Extractor {
      * mensagens 1 - ? 4 - mensagens 5 - mensagens 6 - ligacao / audio 7 - mensagens
      * 8 - audio enviado 10 - audio recebido 12 - mensagens 13 - mensagens
      */
+    private static final String SELECT_MESSAGES_NO_MEDIA_DURATION = "SELECT _id AS id, key_remote_jid " //$NON-NLS-1$
+            + "as remoteId, remote_resource AS remoteResource, status, data, " //$NON-NLS-1$
+            + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
+            + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
+            + "media_wa_type as messageType, null as thumbData, latitude, longitude, " //$NON-NLS-1$
+            + "NULL as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
+            + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
+    
     private static final String SELECT_MESSAGES_NO_MEDIA_CAPTION = "SELECT _id AS id, key_remote_jid " //$NON-NLS-1$
             + "as remoteId, remote_resource AS remoteResource, status, data, " //$NON-NLS-1$
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
