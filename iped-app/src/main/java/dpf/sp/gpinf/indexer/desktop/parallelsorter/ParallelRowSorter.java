@@ -189,6 +189,20 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     private int modelRowCount;
 
     /**
+     * TODO: remove this when finished
+     */
+    private boolean sort = true;
+
+    /**
+     * TODO: remove this when finished
+     * 
+     * @param sort
+     */
+    public void setSort(boolean sort) {
+        this.sort = sort;
+    }
+
+    /**
      * Creates an empty <code>DefaultRowSorter</code>.
      */
     public ParallelRowSorter() {
@@ -544,7 +558,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         } else {
             // sort the data
             // patch
-            Arrays.parallelSort(viewToModel);
+            if (sort)
+                Arrays.parallelSort(viewToModel);
 
             // Update the modelToView array
             setModelToViewFromViewToModel(false);
@@ -595,7 +610,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
 
             // sort them
             // patch
-            Arrays.parallelSort(viewToModel);
+            if (sort)
+                Arrays.parallelSort(viewToModel);
 
             // Update the modelToView array
             setModelToViewFromViewToModel(false);
@@ -1045,7 +1061,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
 
         // Insert newly added rows into viewToModel
         if (added.size() > 0) {
-            Collections.sort(added);
+            if (sort)
+                Collections.sort(added);
             System.out.println("collections sort");
             Row[] lastViewToModel = viewToModel;
             viewToModel = new Row[viewToModel.length + added.size()];
@@ -1127,7 +1144,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
 
             // Sort the update rows
             // patch
-            Arrays.parallelSort(updated);
+            if (sort)
+                Arrays.parallelSort(updated);
 
             // Build the intermediary array: the array of
             // viewToModel without the effected rows.
@@ -1175,7 +1193,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
             }
 
             // Sort the updated rows
-            Collections.sort(updated);
+            if (sort)
+                Collections.sort(updated);
             System.out.println("collections sort");
 
             // Build the intermediary array: the array of
