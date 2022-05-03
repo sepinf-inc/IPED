@@ -26,11 +26,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.desktop.parallelsorter.ParallelTableRowSorter;
+import dpf.sp.gpinf.indexer.search.ResultsSorter;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 
@@ -72,7 +74,7 @@ public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSort
 
     @Override
     public void setSortKeys(final List<? extends SortKey> sortKeys) {
-        if (sortKeys == null) {
+        if (sortKeys == null || sortKeys.size() == 0) {
             super.setSortKeys(null);
             App.get().resultsModel.fireTableDataChanged();
         } else {
@@ -82,6 +84,11 @@ public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSort
     }
 
     public void setSortKeysSuper(final List<? extends SortKey> sortKeys) {
+        this.setSortKeysSuper(sortKeys, true);
+    }
+
+    private void setSortKeysSuper(final List<? extends SortKey> sortKeys, boolean tableSort) {
+        super.setSort(tableSort);
         super.setSortKeys(sortKeys);
     }
 
@@ -99,12 +106,28 @@ public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSort
 
         @Override
         protected Object doInBackground() {
-            List<String> sortKeysString = getSortKeysString(sortKeys);
-            logger.info("Sorting by {}...", sortKeysString);
-            long t = System.currentTimeMillis();
-            sorter.setSortKeysSuper(sortKeys);
-            t = System.currentTimeMillis() - t;
-            logger.info("Sorting by {} took {}ms", sortKeysString, t);
+            try {
+                List<String> sortKeysString = getSortKeysString(sortKeys);
+                logger.info("Sorting by {}...", sortKeysString);
+                long t = System.currentTimeMillis();
+
+                int col = sortKeys.get(0).getColumn();
+                String field = col == 1 ? ResultsSorter.CHECKED_SORT_KEY
+                        : col == 2 ? ResultsSorter.SCORE_SORT_KEY
+                                : col == 3 ? ResultsSorter.BOOKMARK_SORT_KEY
+                                        : ResultTableModel.fields[col - ResultTableModel.fixedCols.length];
+
+                ResultsSorter rs = new ResultsSorter(App.get().appCase, field);
+                boolean reverse = SortOrder.DESCENDING.equals(sortKeys.get(0).getSortOrder());
+                rs.sort(App.get().ipedResult, reverse);
+
+                sorter.setSortKeysSuper(sortKeys, false);
+
+                t = System.currentTimeMillis() - t;
+                logger.info("Sorting by {} took {}ms", sortKeysString, t);
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
             return null;
         }
         
