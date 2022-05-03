@@ -14,8 +14,10 @@ public abstract class Extractor {
     protected final WAContactsDirectory contacts;
     protected WAAccount account;
     protected boolean recoverDeletedRecords;
+    protected String itemPath;
 
-    protected Extractor(File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
+    protected Extractor(String itemPath,File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
+        this.itemPath = itemPath;
         this.databaseFile = databaseFile;
         this.contacts = contacts;
         this.account = account;

@@ -73,8 +73,8 @@ public class ExtractorAndroid extends Extractor {
     private boolean hasMediaCaptionCol = false;
     private boolean hasSubjectCol = false;
 
-    public ExtractorAndroid(File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
-        super(databaseFile, contacts, account, recoverDeletedRecords);
+    public ExtractorAndroid(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
+        super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
     }
 
     @Override
@@ -122,7 +122,7 @@ public class ExtractorAndroid extends Extractor {
                     undeleteJIDTable = undeleteData.get("jid"); //$NON-NLS-1$
 
                 } catch (Exception e) {
-                    logger.warn("Error recovering deleted records from Android WhatsApp Database", e); //$NON-NLS-1$
+                    logger.warn("Error recovering deleted records from Android WhatsApp Database " + itemPath, e); //$NON-NLS-1$
                 }
             }
 
@@ -185,7 +185,14 @@ public class ExtractorAndroid extends Extractor {
                             setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                         }
                     }
-
+                }
+                
+                if (!firstTry && list.size() > 0 && undeletedMessages.size() > 0) {
+                    if (list.size() > 0 && undeletedMessages.size() > 0) {
+                        logger.info("Recovered deleted messages from corrupted database " + itemPath); //$NON-NLS-1$
+                    } else {
+                        logger.info("Was not able to recover messages from corrupted database " + itemPath); //$NON-NLS-1$
+                    }
                 }
             } catch (SQLException ex) {
                 if (firstTry && recoverDeletedRecords) {
@@ -194,6 +201,7 @@ public class ExtractorAndroid extends Extractor {
                     if (ex.toString().contains("SQLITE_CORRUPT") || //$NON-NLS-1$
                             (ex.getCause() != null && ex.getCause().toString().contains("SQLITE_CORRUPT"))) { //$NON-NLS-1$
                         tryAgain = true;
+                        logger.warn("Database " + itemPath + " is corrupt. Trying to recover data with fqlite");
                     }
                 }
                 if (!tryAgain) {

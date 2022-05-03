@@ -71,8 +71,8 @@ public class ExtractorIOS extends Extractor {
     private boolean hasProfilePictureItemTable = false;
     private boolean hasZTitleColumn = false;
 
-    public ExtractorIOS(File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
-        super(databaseFile, contacts, account, recoverDeletedRecords);
+    public ExtractorIOS(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
+        super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     }
 
@@ -103,7 +103,7 @@ public class ExtractorIOS extends Extractor {
                 mediaItemUndeletedTable = undeleteTables.get("ZWAMEDIAITEM"); //$NON-NLS-1$
                 groupMembersUndeletedTable = undeleteTables.get("ZWAGROUPMEMBER"); //$NON-NLS-1$
             } catch (Exception e) {
-                logger.warn("Error recovering deleted records from iOS WhatsApp Database", e);
+                logger.warn("Error recovering deleted records from iOS WhatsApp Database " + itemPath, e);
             }
         }            
 
