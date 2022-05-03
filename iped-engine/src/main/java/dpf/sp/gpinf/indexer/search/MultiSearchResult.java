@@ -21,6 +21,14 @@ public class MultiSearchResult implements IMultiSearchResult {
         this.scores = scores;
     }
 
+    public IItemId[] getIds() {
+        return ids;
+    }
+
+    public float[] getScores() {
+        return scores;
+    }
+
     public final int getLength() {
         return ids.length;
     }
@@ -43,6 +51,19 @@ public class MultiSearchResult implements IMultiSearchResult {
 
     public Iterable<IItemId> getIterator() {
         return new ItemIdIterator();
+    }
+
+    public void setIds(IItemId[] itemIds) {
+        this.ids = itemIds;
+    }
+
+    public void setScores(float[] scores) {
+        this.scores = scores;
+    }
+
+    public void clear() {
+        this.ids = new IItemId[0];
+        this.scores = new float[0];
     }
 
     public class ItemIdIterator implements Iterable<IItemId>, Iterator<IItemId> {
@@ -93,11 +114,11 @@ public class MultiSearchResult implements IMultiSearchResult {
             int maxdoc = 0;
             int[] docs = luceneResult.getLuceneIds();
             for (int i = 0; i < docs.length; i++) {
-                if (atomicSource == null || docs[i] >= baseDoc + maxdoc) {
+                if (atomicSource == null || docs[i] >= maxdoc) {
                     atomicSource = iSource.getAtomicSource(docs[i]);
                     sourceId = atomicSource.getSourceId();
                     baseDoc = iSource.getBaseLuceneId(atomicSource);
-                    maxdoc = atomicSource.getReader().maxDoc();
+                    maxdoc = baseDoc + atomicSource.getReader().maxDoc();
                 }
                 result.ids[i] = new ItemId(sourceId, atomicSource.getId(docs[i] - baseDoc));
             }
