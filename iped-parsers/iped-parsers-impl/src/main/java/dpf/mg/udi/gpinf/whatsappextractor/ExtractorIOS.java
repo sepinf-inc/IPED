@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -83,6 +84,7 @@ public class ExtractorIOS extends Extractor {
         SQLiteUndeleteTable messagesUndeletedTable = null;
         SQLiteUndeleteTable mediaItemUndeletedTable = null;
         SQLiteUndeleteTable groupMembersUndeletedTable = null;
+        SQLiteUndeleteTable chatSessionUndeleteTable = null;
 
         if (recoverDeletedRecords) {
             // try to recover deleted records
@@ -94,6 +96,9 @@ public class ExtractorIOS extends Extractor {
             undelete.addRecordValidator("ZWAMEDIAITEM", new WAIOSMediaItemValidator()); //$NON-NLS-1$
             undelete.addTableToRecover("ZWAGROUPMEMBER"); //$NON-NLS-1$
             undelete.addRecordValidator("ZWAGROUPMEMBER", new WAIOSGroupMemberValidator()); //$NON-NLS-1$
+            undelete.addTableToRecover("ZWACHATSESSION"); //$NON-NLS-1$
+            undelete.addRecordValidator("ZWACHATSESSION", new WAIOSChatSessionValidator()); //$NON-NLS-1$
+            undelete.addTableToRecoverOnlyDeleted("ZWACHATSESSION"); //$NON-NLS-1$
             undelete.setRecoverOnlyDeletedRecords(false);
             
             try {
@@ -101,6 +106,7 @@ public class ExtractorIOS extends Extractor {
                 messagesUndeletedTable = undeleteTables.get("ZWAMESSAGE"); //$NON-NLS-1$
                 mediaItemUndeletedTable = undeleteTables.get("ZWAMEDIAITEM"); //$NON-NLS-1$
                 groupMembersUndeletedTable = undeleteTables.get("ZWAGROUPMEMBER"); //$NON-NLS-1$
+                chatSessionUndeleteTable = undeleteTables.get("ZWACHATSESSION"); //$NON-NLS-1$
             } catch (Exception e) {
                 logger.warn("Error recovering deleted records from iOS WhatsApp Database " + itemPath, e);
             }
@@ -112,6 +118,12 @@ public class ExtractorIOS extends Extractor {
                 : mediaItemUndeletedTable.getRowsMappedByLongPrimaryKey("ZMESSAGE");
         Map<Long, SqliteRow> groupMembers = groupMembersUndeletedTable == null ? Collections.emptyMap()
                 : groupMembersUndeletedTable.getRowsMappedByLongPrimaryKey("Z_PK");
+
+        List<Chat> undeletedChats = recoverDeletedRecords ?
+                undeleteChats(chatSessionUndeleteTable, contacts)
+                : Collections.emptyList();
+
+        Set<Long> activeChats = new HashSet<>();
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             hasProfilePictureItemTable = SQLite3DBParser.containsTable("ZWAPROFILEPICTUREITEM", conn);
@@ -129,7 +141,17 @@ public class ExtractorIOS extends Extractor {
                         c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
                         c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                         remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
+                        if (recoverDeletedRecords) {
+                            activeChats.add(c.getId());
+                        }
                         list.add(c);
+                    }
+                }
+
+                for (Chat c : undeletedChats) {
+                    if (!activeChats.contains(c.getId())) {
+                        list.add(c);
+                        logger.info("RECOVERED CHAT!!! - " + itemPath + "  -  " + c.getSubject() + "  -  " + c.getRemote().getFullId());
                     }
                 }
 
@@ -340,6 +362,24 @@ public class ExtractorIOS extends Extractor {
         }
         m.setDeleted(true);
         return m;
+    }
+
+    private List<Chat> undeleteChats(SQLiteUndeleteTable undeleteChatsSessions, WAContactsDirectory contacts) {
+        List<Chat> result = new LinkedList<>();
+
+        if (undeleteChatsSessions != null && !undeleteChatsSessions.getTableRows().isEmpty()) {
+            for (SqliteRow row : undeleteChatsSessions.getTableRows()) {
+                String contactId = row.getTextValue("ZCONTACTJID"); //$NON-NLS-1$
+                WAContact contact = contacts.getContact(contactId);
+                Chat c = new Chat(contact);
+                c.setDeleted(true);
+                c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
+                c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                result.add(c);
+            }
+        }
+
+        return result;
     }
 
     protected Message.MessageType decodeMessageType(int messageType, int gEventType) {
@@ -570,6 +610,30 @@ public class ExtractorIOS extends Extractor {
                 if (memberjid != null) {
                     return true;
                 }
+            } catch (Exception e) {
+            }
+            return false;
+        }
+    }
+
+    private static class WAIOSChatSessionValidator implements SQLiteRecordValidator {
+
+        @Override
+        public boolean validateRecord(SqliteRow row) {
+            try {
+                long pk = row.getIntValue("Z_PK"); //$NON-NLS-1$
+                if (pk <= 0) {
+                    return false;
+                }
+                var contactjid = row.getTextValue("ZCONTACTJID"); //$NON-NLS-1$
+                if (contactjid == null) {
+                    return false;
+                }
+                var partnername = row.getTextValue("ZPARTNERNAME"); //$NON-NLS-1$
+                if (partnername == null) {
+                    return false;
+                }
+                return true;
             } catch (Exception e) {
             }
             return false;

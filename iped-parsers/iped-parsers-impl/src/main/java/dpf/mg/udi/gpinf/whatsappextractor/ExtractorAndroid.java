@@ -132,12 +132,12 @@ public class ExtractorAndroid extends Extractor {
             Map<String, List<SqliteRow>> undeletedMessages = undeletedMessagesTable == null ?
                     Collections.emptyMap()
                     : undeletedMessagesTable.getTableRowsGroupedByTextCol("key_remote_jid"); //$NON-NLS-1$
-            
+
             List<Chat> undeletedChats = recoverDeletedRecords ?
                     undeleteChats(undeleteChatListTable, undeleteChatTable, undeleteJIDTable, contacts)
                     : Collections.emptyList();
 
-            Set<ChatWrapperForDuplicateRemoval> activeChats = new HashSet<>();
+            Set<Long> activeChats = new HashSet<>();
 
             try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
                 try {
@@ -179,7 +179,7 @@ public class ExtractorAndroid extends Extractor {
                         c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                         if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
                             if (recoverDeletedRecords)
-                                activeChats.add(new ChatWrapperForDuplicateRemoval(c));
+                                activeChats.add(c.getId());
                             list.add(c);
                         }
                     }
@@ -190,8 +190,10 @@ public class ExtractorAndroid extends Extractor {
                 }
                 
                 for (Chat c : undeletedChats) {
-                    if (!activeChats.contains(new ChatWrapperForDuplicateRemoval(c)))
+                    if (!activeChats.contains(c.getId())) {
                         list.add(c);
+                        logger.info("RECOVERED CHAT!!! - " + itemPath + "  -  " + c.getSubject() + "  -  " + c.getRemote().getFullId());
+                    }
                 }
 
                 for (Chat c : list) {
