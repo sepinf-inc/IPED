@@ -21,4 +21,14 @@ public interface IMultiSearchResult {
 
     float getScore(int i);
 
+    IItemId[] getIds();
+
+    float[] getScores();
+
+    void setIds(IItemId[] itemIds);
+
+    void setScores(float[] scores);
+
+    void clear();
+
 }
