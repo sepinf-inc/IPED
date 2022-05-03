@@ -22,6 +22,8 @@ import javax.imageio.ImageIO;
 
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 
+
+
 /**
  * Classe principal de geração de imagens com cenas extraídas de vídeos. Utiliza
  * o MPlayer para realização da extração de frames e na sequência monta uma
@@ -34,6 +36,7 @@ public class VideoThumbsMaker {
     private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
 
     private String mplayer = "mplayer.exe"; //$NON-NLS-1$
+    private Boolean videoThumbsOriginalDimension = false;
     private int timeoutProcess = 45000;
     private int timeoutInfo = 15000;
     private int timeoutFirstCall = 300000;
@@ -165,7 +168,14 @@ public class VideoThumbsMaker {
 
         File[] files = null;
 
-        Dimension targetDimension = getTargetDimension(maxSize, result.getDimension());
+        Dimension targetDimension;
+        if (videoThumbsOriginalDimension){
+            targetDimension = result.getDimension();
+        } 
+        else {
+            targetDimension = getTargetDimension(maxSize, result.getDimension());
+        }
+        
 
         String scale = "scale=" + targetDimension.width + ":" + targetDimension.height; //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -407,21 +417,38 @@ public class VideoThumbsMaker {
 
     private void generateGridImage(VideoThumbsOutputConfig config, List<File> images, Dimension dimension)
             throws IOException {
-        int w = config.getThumbWidth();
-        if (images.size() > config.getRows() * config.getColumns()) {
-            images.remove(0);
-        }
-        if (images.size() > config.getRows() * config.getColumns()) {
-            images.remove(images.size() - 1);
-        }
-        double rate = images.size() * 0.999 / (config.getRows() * config.getColumns());
-        int h = dimension.height * w / dimension.width;
-        int border = config.getBorder();
-        if (w > 1024)
-            w = 1024;
-        if (h > 1024)
-            h = 1024;
+        int w, h, border;
+        double rate;
 
+        if (videoThumbsOriginalDimension) {
+            w = dimension.width;
+            if (images.size() > config.getRows() * config.getColumns()) {
+                images.remove(0);
+            }
+            if (images.size() > config.getRows() * config.getColumns()) {
+                images.remove(images.size() - 1);
+            }
+            rate = images.size() * 0.999 / (config.getRows() * config.getColumns());
+            h = dimension.height;
+            border = config.getBorder();
+            
+        } 
+        else {
+            w = config.getThumbWidth();
+            if (images.size() > config.getRows() * config.getColumns()) {
+                images.remove(0);
+            }
+            if (images.size() > config.getRows() * config.getColumns()) {
+                images.remove(images.size() - 1);
+            }
+            rate = images.size() * 0.999 / (config.getRows() * config.getColumns());
+            h = dimension.height * w / dimension.width;
+            border = config.getBorder();
+            if (w > 1024)
+                w = 1024;
+            if (h > 1024)
+                h = 1024;
+        }
         BufferedImage img = new BufferedImage(2 + config.getColumns() * (w + border) + border,
                 2 + config.getRows() * (h + border) + border, BufferedImage.TYPE_INT_BGR);
         Graphics2D g2 = (Graphics2D) img.getGraphics();
@@ -517,6 +544,14 @@ public class VideoThumbsMaker {
 
     public String getMPlayer() {
         return mplayer;
+    }
+
+    public void setVideoThumbsOriginalDimension(Boolean videoThumbsOriginalDimension) {
+        this.videoThumbsOriginalDimension = videoThumbsOriginalDimension;
+    }
+
+    public Boolean getVideoThumbsOriginalDimension() {
+        return videoThumbsOriginalDimension;
     }
 
     public void setTimeoutProcess(int timeoutProcess) {
