@@ -41,7 +41,7 @@ import iped3.IIPEDSource;
 import iped3.search.IBookmarks;
 import iped3.search.SearchResult;
 
-public class Bookmarks implements Serializable, IBookmarks {
+public final class Bookmarks implements Serializable, IBookmarks {
 
     /**
      * 
@@ -124,7 +124,7 @@ public class Bookmarks implements Serializable, IBookmarks {
         return selectedItens;
     }
 
-    public boolean isChecked(int id) {
+    public final boolean isChecked(int id) {
         return selected[id];
     }
 

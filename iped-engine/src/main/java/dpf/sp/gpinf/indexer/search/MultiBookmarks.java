@@ -25,7 +25,7 @@ import iped3.search.IMultiBookmarks;
 import iped3.search.IMultiSearchResult;
 import iped3.search.SelectionListener;
 
-public class MultiBookmarks implements Serializable, IMultiBookmarks {
+public final class MultiBookmarks implements Serializable, IMultiBookmarks {
 
     /**
      * 
@@ -73,7 +73,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
             l.selectAll();
     }
 
-    public boolean isChecked(IItemId item) {
+    public final boolean isChecked(IItemId item) {
         return map.get(item.getSourceId()).isChecked(item.getId());
     }
 
