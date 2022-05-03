@@ -325,12 +325,13 @@ public class ExtractorAndroid extends Extractor {
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setFetchSize(1000);
             stmt.setString(1, id);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                Message m = createMessageFromDBRow(rs, remote, isGroupChat, false, hasThumbTable, hasEditVersionCol);
-                if (recoverDeleted)
-                    activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
-                messages.add(m);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Message m = createMessageFromDBRow(rs, remote, isGroupChat, false, hasThumbTable, hasEditVersionCol);
+                    if (recoverDeleted)
+                        activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
+                    messages.add(m);
+                }
             }
         } catch (SQLException e) {
             if (firstTry || !(e.getMessage() != null && e.getMessage().contains("SQLITE_CORRUPT"))) { //$NON-NLS-1$

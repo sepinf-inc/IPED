@@ -167,12 +167,13 @@ public class ExtractorIOS extends Extractor {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setFetchSize(1000);
             stmt.setLong(1, chat.getId());
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                Message m = createMessageFromDB(rs, chat);
-                if (recoverDeleted)
-                    activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
-                messages.add(m);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Message m = createMessageFromDB(rs, chat);
+                    if (recoverDeleted)
+                        activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
+                    messages.add(m);
+                }
             }
         }
 
