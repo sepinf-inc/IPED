@@ -43,7 +43,7 @@ public class MessageWrapperForDuplicateRemoval {
         builder.append(nullToEmpty(message.getData()))
                .append(message.getTimeStamp())
                .append(nullToEmpty(message.getMediaHash()))
-               .append(message.getStatus());
+               .append(message.getMessageStatus());
         
         return builder.toHashCode();
     }
@@ -61,7 +61,7 @@ public class MessageWrapperForDuplicateRemoval {
         if (!equalsWithNull(message.getMediaHash(), m2.message.getMediaHash()))
             return false;
         
-        if (message.getStatus() != m2.message.getStatus())
+        if (!equalsWithNull(message.getMessageStatus(), m2.message.getMessageStatus()))
             return false;
         
         return true;

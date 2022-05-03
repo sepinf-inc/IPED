@@ -26,7 +26,6 @@ import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VIDEO_MESSA
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.YOU_ADMIN;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -163,7 +162,7 @@ public class ExtractorIOS extends Extractor {
             sql = chat.isGroupChat() ? SELECT_MESSAGES_GROUP_NOZTITLE : SELECT_MESSAGES_USER_NOZTITLE;
         }
         
-        Set<Message> activeMessages = new HashSet<>();
+        Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setFetchSize(1000);
@@ -172,7 +171,7 @@ public class ExtractorIOS extends Extractor {
             while (rs.next()) {
                 Message m = createMessageFromDB(rs, chat);
                 if (recoverDeleted)
-                    activeMessages.add(m);
+                    activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
                 messages.add(m);
             }
         }
@@ -183,7 +182,7 @@ public class ExtractorIOS extends Extractor {
             for (SqliteRow row : undeletedRows) {
                 try {
                     Message m = createMessageFromUndeletedRecord(row, chat, mediaItems, groupMembers);
-                    if (!activeMessages.contains(m)) { //do not include deleted message if already there
+                    if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) { //do not include deleted message if already there
                         messages.add(m);
                     }
                 } catch (SQLException e) {
