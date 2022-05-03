@@ -445,14 +445,21 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
      * https://github.com/kacos2000/Queries/blob/master/GDrive_snapshot.sql
      */
     private String getGDriveSnapshotQuery(Connection connection) {
-        boolean originalSizeExists = checkIfColumnExists(connection, "cloud_entry", "original_size");
-        boolean volumeExists = checkIfColumnExists(connection, "local_entry", "volume");
+        boolean originalSizeExists = false;
+        boolean volumeExists = false;
         String inode = "inode";
         String parent_inode = "parent_inode";
-        if(!checkIfColumnExists(connection, "local_entry", "inode")) {
-            inode += "_number";
-            parent_inode += "_number";
+        try {
+            originalSizeExists = checkIfColumnExists(connection, "cloud_entry", "original_size");
+            volumeExists = checkIfColumnExists(connection, "local_entry", "volume");
+            if(!checkIfColumnExists(connection, "local_entry", "inode")) {
+                inode += "_number";
+                parent_inode += "_number";
+            }
+        } catch (SQLException ignore) {
         }
+        
+        
         return " select  "
     		+ " 	case cloud_entry.acl_role "
     		+ " 		when 2 then 'Can View' "

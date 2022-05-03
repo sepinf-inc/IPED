@@ -185,28 +185,21 @@ public class SQLite3DBParser extends AbstractDBParser {
         return new SQLite3TableReader(connection, tableName, context);
     }
 
-    public static boolean checkIfColumnExists(Connection connection, String table, String column) {
+    public static boolean checkIfColumnExists(Connection connection, String table, String column) throws SQLException  {
         String query = "SELECT name FROM pragma_table_info('" + table + "')";
-        try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(query);) {
+        try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(query)) {
             while (rs.next()) {
                 if (rs.getString(1).equals(column)) {
                     return true;
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
         return false;
     }
 
-    public static boolean containsTable(String table, Connection connection) {
+    public static boolean containsTable(String table, Connection connection) throws SQLException {
         SQLite3DBParser parser = new SQLite3DBParser();
-        try {
-            return parser.getTableNames(connection, null, null).contains(table);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
+        return parser.getTableNames(connection, null, null).contains(table);
     }
 
     public static String getStringIfExists(ResultSet rs, String col) throws SQLException {
@@ -215,6 +208,20 @@ public class SQLite3DBParser extends AbstractDBParser {
         try {
             colIdx = rs.findColumn(col);
             result = rs.getString(colIdx);
+
+        } catch (SQLException e) {
+            if (!e.toString().contains("no such column"))
+                throw e;
+        }
+        return result;
+    }
+    
+    public static int getIntIfExists(ResultSet rs, String col) throws SQLException {
+        int colIdx;
+        int result = 0;
+        try {
+            colIdx = rs.findColumn(col);
+            result = rs.getInt(colIdx);
 
         } catch (SQLException e) {
             if (!e.toString().contains("no such column"))
