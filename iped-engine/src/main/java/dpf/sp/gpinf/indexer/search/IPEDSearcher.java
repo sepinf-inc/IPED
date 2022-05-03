@@ -127,6 +127,8 @@ public class IPEDSearcher implements IIPEDSearcher {
         if (!treeQuery)
             query = getNonTreeQuery();
 
+        long t = System.currentTimeMillis();
+
         collector = new NoScoringCollector(ipedCase.getReader().maxDoc());
         try {
             ipedCase.getSearcher().search(query, collector);
@@ -135,35 +137,30 @@ public class IPEDSearcher implements IIPEDSearcher {
             // e.printStackTrace();
         }
         // do not compute scores (slow) when result set is large
-        if (noScore || collector.getTotalHits() > MAX_SIZE_TO_SCORE || canceled)
+        if (noScore || collector.getTotalHits() > MAX_SIZE_TO_SCORE || canceled) {
+            LOGGER.info("Search took {}ms", System.currentTimeMillis() - t);
             return collector.getSearchResults();
+        }
 
         // otherwise get results computing score
 
         // sort by index doc order: needed by features using docValues that iterate over results
         Sort sort = new Sort(SortField.FIELD_DOC);
-        int maxResults = MAX_SIZE_TO_SCORE;
-        ScoreDoc[] scoreDocs = null;
-        ScoreDoc[] totalScoreDocs = null;
-        do {
-            ScoreDoc lastScoreDoc = null;
-            if (scoreDocs != null)
-                lastScoreDoc = scoreDocs[scoreDocs.length - 1];
 
-            scoreDocs = ipedCase.getSearcher().searchAfter(lastScoreDoc, query, maxResults, sort, true).scoreDocs;
+        t = System.currentTimeMillis();
 
-            if (totalScoreDocs == null) {
-                totalScoreDocs = scoreDocs;
-            } else {
-                int prevLen = totalScoreDocs.length;
-                totalScoreDocs = Arrays.copyOf(totalScoreDocs, prevLen + scoreDocs.length);
-                System.arraycopy(scoreDocs, 0, totalScoreDocs, prevLen, scoreDocs.length);
-            }
+        ScoreDoc[] scoreDocs = ipedCase.getSearcher().search(query, Integer.MAX_VALUE, sort, true).scoreDocs;
 
-        } while (scoreDocs.length > 0 && !canceled);
+        long t2 = System.currentTimeMillis();
+        LOGGER.info("Search took {}ms", t2 - t);
+
+        ScoreDoc[] totalScoreDocs = scoreDocs;
 
         // see #925 why this sorting is needed, this can be optimized
         sortResultsByFinalLuceneIds(totalScoreDocs);
+
+        long t3 = System.currentTimeMillis();
+        LOGGER.info("Sorting by final lucene id took {}ms", t3 - t2);
 
         LuceneSearchResult searchResult = new LuceneSearchResult(0);
         searchResult = searchResult.addResults(totalScoreDocs);
