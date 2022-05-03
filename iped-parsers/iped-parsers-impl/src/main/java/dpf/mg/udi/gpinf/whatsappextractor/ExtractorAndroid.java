@@ -386,7 +386,7 @@ public class ExtractorAndroid extends Extractor {
         }
         m.setRemoteResource(remoteResource); // $NON-NLS-1$
         m.setStatus(status); // $NON-NLS-1$
-        m.setData(Util.getUTF8String(rs, "data")); //$NON-NLS-1$
+        m.setData(rs.getString("data")); //$NON-NLS-1$
         m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
         m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
         m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
