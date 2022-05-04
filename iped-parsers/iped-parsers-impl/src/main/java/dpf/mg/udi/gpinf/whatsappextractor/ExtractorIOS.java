@@ -420,7 +420,7 @@ public class ExtractorIOS extends Extractor {
                 } // ignore
             }
         }
-        m.setDeleted(true);
+        m.setDeleted(row.isDeletedRow());
         return m;
     }
 
@@ -433,7 +433,7 @@ public class ExtractorIOS extends Extractor {
                 WAContact contact = contacts.getContact(contactId);
                 Chat c = new Chat(contact);
                 c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
-                c.setDeleted(true);
+                c.setDeleted(row.isDeletedRow());
                 c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
                 c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                 result.add(c);

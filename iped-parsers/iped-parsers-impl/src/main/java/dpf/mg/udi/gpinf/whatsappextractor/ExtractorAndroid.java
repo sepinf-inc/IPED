@@ -250,7 +250,7 @@ public class ExtractorAndroid extends Extractor {
                 String contactId = row.getTextValue("key_remote_jid"); //$NON-NLS-1$
                 WAContact contact = contacts.getContact(contactId);
                 Chat c = new Chat(contact);
-                c.setDeleted(true);
+                c.setDeleted(row.isDeletedRow());
                 c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
                 c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                 result.add(c);
@@ -352,7 +352,7 @@ public class ExtractorAndroid extends Extractor {
                     MESSAGES_TABLE_COL_MAP);
             while (rs.next()) {
                 try {
-                    Message m = createMessageFromDBRow(rs, remote, isGroupChat, true, hasThumbTable, hasEditVersionCol);
+                    Message m = createMessageFromDBRow(rs, remote, isGroupChat, rs.getCurrentRow().isDeletedRow(), hasThumbTable, hasEditVersionCol);
                     if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) { //do not include deleted message if already there
                         messages.add(m);
                     }
