@@ -93,12 +93,13 @@ public class ExtractorAndroid extends Extractor {
         // if database is corrupted, maybe recovering deleted data can
         // retrieve partial data
         boolean firstTry = true;
-        boolean tryAgain = false;
+        boolean tryAgain;
         
         do {
             list = new ArrayList<>();
             
             tryAgain = false;
+            
             if (recoverDeletedRecords) {
                 try {
                     SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
@@ -152,7 +153,7 @@ public class ExtractorAndroid extends Extractor {
                         hasSubjectCol = SQLite3DBParser.checkIfColumnExists(conn, "chat_list", "subject"); //$NON-NLS-1$ //$NON-NLS-2$
                     }
                 } catch (SQLException e) {
-                    if (firstTry || !(e.getMessage() != null && e.getMessage().contains("SQLITE_CORRUPT"))) { //$NON-NLS-1$
+                    if (firstTry || !isSqliteCorruptException(e)) {
                         throw e;
                     }
                 }
@@ -184,7 +185,7 @@ public class ExtractorAndroid extends Extractor {
                         }
                     }
                 } catch (SQLException ex) {
-                    if (firstTry || !(ex.getMessage() != null && ex.getMessage().contains("SQLITE_CORRUPT"))) { //$NON-NLS-1$
+                    if (firstTry || !isSqliteCorruptException(ex)) {
                         throw ex;
                     }
                 }
@@ -192,7 +193,9 @@ public class ExtractorAndroid extends Extractor {
                 for (Chat c : undeletedChats) {
                     if (!activeChats.contains(c.getId())) {
                         list.add(c);
-                        logger.info("Recovered deleted chat for database " + itemPath + " :" + c.getSubject() + " (" + c.getRemote().getFullId() + ")");
+                        if (firstTry) {
+                            logger.info("Recovered deleted chat for database " + itemPath + " :" + c.getSubject() + " (" + c.getRemote().getFullId() + ")");
+                        }
                     }
                 }
 
@@ -203,7 +206,7 @@ public class ExtractorAndroid extends Extractor {
                         try {
                             setGroupMembers(c, conn, hasGroupParticiantsTable ? SELECT_GROUP_MEMBERS : null);
                         } catch (SQLException ex) {
-                            if (firstTry || !(ex.getMessage() != null && ex.getMessage().contains("SQLITE_CORRUPT"))) { //$NON-NLS-1$
+                            if (firstTry || !isSqliteCorruptException(ex)) {
                                 throw ex;
                             }
                         }
@@ -221,8 +224,7 @@ public class ExtractorAndroid extends Extractor {
                 if (firstTry && recoverDeletedRecords) {
                     // if recovery of deleted records is enabled and failed with SQLITE_CORRUPT on first try,
                     // try again, ignoring error and recovering deleted records
-                    if (ex.toString().contains("SQLITE_CORRUPT") || //$NON-NLS-1$
-                            (ex.getCause() != null && ex.getCause().toString().contains("SQLITE_CORRUPT"))) { //$NON-NLS-1$
+                    if (isSqliteCorruptException(ex)) {
                         tryAgain = true;
                         logger.warn("Database " + itemPath + " is corrupt. Trying to recover data with fqlite");
                     }
@@ -336,7 +338,7 @@ public class ExtractorAndroid extends Extractor {
                 }
             }
         } catch (SQLException e) {
-            if (firstTry || !(e.getMessage() != null && e.getMessage().contains("SQLITE_CORRUPT"))) { //$NON-NLS-1$
+            if (firstTry || !isSqliteCorruptException(e)) {
                 // ignore sqlite corrupt error on second try
                 // to try to recover deleted records instead
                 throw e;

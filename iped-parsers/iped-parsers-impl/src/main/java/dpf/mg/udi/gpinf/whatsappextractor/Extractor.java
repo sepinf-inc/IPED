@@ -68,5 +68,23 @@ public abstract class Extractor {
             }
         }
     }
+    
+    protected static boolean isSqliteCorruptException(SQLException exception) {
+        if (exception.getMessage() != null && (
+           exception.getMessage().contains("SQLITE_CORRUPT") || //$NON-NLS-1$
+           exception.getMessage().contains("SQLITE_ERROR"))) { //$NON-NLS-1$
+            return true;
+        }
+        
+        var cause = exception.getCause();
+        if (cause != null && (
+                exception.getMessage().contains("SQLITE_CORRUPT") || //$NON-NLS-1$
+                exception.getMessage().contains("SQLITE_ERROR"))) { //$NON-NLS-1$
+            return true;
+        }
+        
+        
+        return false;
+    }
 
 }

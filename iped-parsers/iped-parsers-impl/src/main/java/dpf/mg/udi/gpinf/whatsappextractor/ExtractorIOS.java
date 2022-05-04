@@ -78,100 +78,154 @@ public class ExtractorIOS extends Extractor {
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
-        var list = new ArrayList<Chat>();
+        List<Chat> list;
         
         Map<String, SQLiteUndeleteTable> undeleteTables = null;
         SQLiteUndeleteTable messagesUndeletedTable = null;
         SQLiteUndeleteTable mediaItemUndeletedTable = null;
         SQLiteUndeleteTable groupMembersUndeletedTable = null;
         SQLiteUndeleteTable chatSessionUndeleteTable = null;
-
-        if (recoverDeletedRecords) {
-            // try to recover deleted records
-            var undelete = new SQLiteUndelete(databaseFile.toPath());
-            undelete.addTableToRecover("ZWAMESSAGE"); //$NON-NLS-1$
-            undelete.addTableToRecoverOnlyDeleted("ZWAMESSAGE"); //$NON-NLS-1$
-            undelete.addRecordValidator("ZWAMESSAGE", new WAIOSMessageValidator()); //$NON-NLS-1$
-            undelete.addTableToRecover("ZWAMEDIAITEM"); //$NON-NLS-1$
-            undelete.addRecordValidator("ZWAMEDIAITEM", new WAIOSMediaItemValidator()); //$NON-NLS-1$
-            undelete.addTableToRecover("ZWAGROUPMEMBER"); //$NON-NLS-1$
-            undelete.addRecordValidator("ZWAGROUPMEMBER", new WAIOSGroupMemberValidator()); //$NON-NLS-1$
-            undelete.addTableToRecover("ZWACHATSESSION"); //$NON-NLS-1$
-            undelete.addRecordValidator("ZWACHATSESSION", new WAIOSChatSessionValidator()); //$NON-NLS-1$
-            undelete.addTableToRecoverOnlyDeleted("ZWACHATSESSION"); //$NON-NLS-1$
-            undelete.setRecoverOnlyDeletedRecords(false);
+        
+        // control retry parsing database in case of corrupted db
+        // if database is corrupted, maybe recovering deleted data can
+        // retrieve partial data
+        boolean firstTry = true;
+        boolean tryAgain;
+        
+        do {
+            list = new ArrayList<>();
             
-            try {
-                undeleteTables = undelete.undeleteData();
-                messagesUndeletedTable = undeleteTables.get("ZWAMESSAGE"); //$NON-NLS-1$
-                mediaItemUndeletedTable = undeleteTables.get("ZWAMEDIAITEM"); //$NON-NLS-1$
-                groupMembersUndeletedTable = undeleteTables.get("ZWAGROUPMEMBER"); //$NON-NLS-1$
-                chatSessionUndeleteTable = undeleteTables.get("ZWACHATSESSION"); //$NON-NLS-1$
-            } catch (Exception e) {
-                logger.warn("Error recovering deleted records from iOS WhatsApp Database " + itemPath, e);
-            }
-        }            
+            tryAgain = false;
 
-        Map<Long, List<SqliteRow>> undeletedMessages = messagesUndeletedTable == null ? Collections.emptyMap()
-                : messagesUndeletedTable.getTableRowsGroupedByLongCol("ZCHATSESSION");
-        Map<Long, SqliteRow> mediaItems = mediaItemUndeletedTable == null ? Collections.emptyMap()
-                : mediaItemUndeletedTable.getRowsMappedByLongPrimaryKey("ZMESSAGE");
-        Map<Long, SqliteRow> groupMembers = groupMembersUndeletedTable == null ? Collections.emptyMap()
-                : groupMembersUndeletedTable.getRowsMappedByLongPrimaryKey("Z_PK");
-
-        List<Chat> undeletedChats = recoverDeletedRecords ?
-                undeleteChats(chatSessionUndeleteTable, contacts)
-                : Collections.emptyList();
-
-        Set<Long> activeChats = new HashSet<>();
-
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            hasProfilePictureItemTable = SQLite3DBParser.containsTable("ZWAPROFILEPICTUREITEM", conn);
-            hasZTitleColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZTITLE");
-            
-            String chatListQuery = hasProfilePictureItemTable ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_PPIC;
-
-            try (ResultSet rs = stmt.executeQuery(chatListQuery)) {
-                while (rs.next()) {
-                    String contactId = rs.getString("contact"); //$NON-NLS-1$
-                    if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                        WAContact remote = contacts.getContact(contactId);
-                        Chat c = new Chat(remote);
-                        c.setId(rs.getLong("id")); //$NON-NLS-1$
-                        c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
-                        c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                        remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
-                        if (recoverDeletedRecords) {
-                            activeChats.add(c.getId());
+            if (recoverDeletedRecords) {
+                try {
+                    // try to recover deleted records
+                    var undelete = new SQLiteUndelete(databaseFile.toPath());
+                    undelete.addTableToRecover("ZWAMESSAGE"); //$NON-NLS-1$
+                    undelete.addRecordValidator("ZWAMESSAGE", new WAIOSMessageValidator()); //$NON-NLS-1$
+                    undelete.addTableToRecover("ZWAMEDIAITEM"); //$NON-NLS-1$
+                    undelete.addRecordValidator("ZWAMEDIAITEM", new WAIOSMediaItemValidator()); //$NON-NLS-1$
+                    undelete.addTableToRecover("ZWAGROUPMEMBER"); //$NON-NLS-1$
+                    undelete.addRecordValidator("ZWAGROUPMEMBER", new WAIOSGroupMemberValidator()); //$NON-NLS-1$
+                    undelete.addTableToRecover("ZWACHATSESSION"); //$NON-NLS-1$
+                    undelete.addRecordValidator("ZWACHATSESSION", new WAIOSChatSessionValidator()); //$NON-NLS-1$
+                    undelete.setRecoverOnlyDeletedRecords(false);
+                    
+                    if (firstTry) {
+                        undelete.addTableToRecoverOnlyDeleted("ZWAMESSAGE"); //$NON-NLS-1$
+                        undelete.addTableToRecoverOnlyDeleted("ZWACHATSESSION"); //$NON-NLS-1$
+                    }
+                    
+                    undeleteTables = undelete.undeleteData();
+                    messagesUndeletedTable = undeleteTables.get("ZWAMESSAGE"); //$NON-NLS-1$
+                    mediaItemUndeletedTable = undeleteTables.get("ZWAMEDIAITEM"); //$NON-NLS-1$
+                    groupMembersUndeletedTable = undeleteTables.get("ZWAGROUPMEMBER"); //$NON-NLS-1$
+                    chatSessionUndeleteTable = undeleteTables.get("ZWACHATSESSION"); //$NON-NLS-1$
+                } catch (Exception e) {
+                    logger.warn("Error recovering deleted records from iOS WhatsApp Database " + itemPath, e);
+                }
+            }            
+    
+            Map<Long, List<SqliteRow>> undeletedMessages = messagesUndeletedTable == null ? Collections.emptyMap()
+                    : messagesUndeletedTable.getTableRowsGroupedByLongCol("ZCHATSESSION");
+            Map<Long, SqliteRow> mediaItems = mediaItemUndeletedTable == null ? Collections.emptyMap()
+                    : mediaItemUndeletedTable.getRowsMappedByLongPrimaryKey("ZMESSAGE");
+            Map<Long, SqliteRow> groupMembers = groupMembersUndeletedTable == null ? Collections.emptyMap()
+                    : groupMembersUndeletedTable.getRowsMappedByLongPrimaryKey("Z_PK");
+    
+            List<Chat> undeletedChats = recoverDeletedRecords ?
+                    undeleteChats(chatSessionUndeleteTable, contacts)
+                    : Collections.emptyList();
+    
+            Set<Long> activeChats = new HashSet<>();
+    
+            try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
+                try {
+                    hasProfilePictureItemTable = SQLite3DBParser.containsTable("ZWAPROFILEPICTUREITEM", conn);
+                    hasZTitleColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZTITLE");
+                } catch (SQLException e) {
+                    if (firstTry || !isSqliteCorruptException(e)) {
+                        throw e;
+                    }
+                }
+                
+                String chatListQuery = hasProfilePictureItemTable ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_PPIC;
+    
+                try (ResultSet rs = stmt.executeQuery(chatListQuery)) {
+                    while (rs.next()) {
+                        String contactId = rs.getString("contact"); //$NON-NLS-1$
+                        if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
+                            WAContact remote = contacts.getContact(contactId);
+                            Chat c = new Chat(remote);
+                            c.setId(rs.getLong("id")); //$NON-NLS-1$
+                            c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
+                            c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                            remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
+                            if (recoverDeletedRecords) {
+                                activeChats.add(c.getId());
+                            }
+                            list.add(c);
                         }
-                        list.add(c);
+                    }
+                } catch (SQLException ex) {
+                    if (firstTry || !isSqliteCorruptException(ex)) {
+                        throw ex;
                     }
                 }
 
                 for (Chat c : undeletedChats) {
                     if (!activeChats.contains(c.getId())) {
                         list.add(c);
-                        logger.info("Recovered deleted chat for database " + itemPath + " :" + c.getSubject() + " (" + c.getRemote().getFullId() + ")");
+                        if (firstTry) {
+                            logger.info("Recovered deleted chat for database " + itemPath + " :" + c.getSubject() + " (" + c.getRemote().getFullId() + ")");
+                        }
                     }
                 }
 
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c, undeletedMessages, messagesUndeletedTable, mediaItems,
-                            groupMembers));
+                            groupMembers, firstTry));
                     if (c.isGroupChat()) {
-                        setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
+                        try {
+                            setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
+                        } catch (SQLException ex) {
+                            if (firstTry || !isSqliteCorruptException(ex)) {
+                                throw ex;
+                            }
+                        }
                     }
                 }
+                
+                if (!firstTry && list.size() > 0 && undeletedMessages.size() > 0) {
+                    if (list.size() > 0 && undeletedMessages.size() > 0) {
+                        logger.info("Recovered deleted messages from corrupted database " + itemPath); //$NON-NLS-1$
+                    } else {
+                        logger.info("Was not able to recover messages from corrupted database " + itemPath); //$NON-NLS-1$
+                    }
+                }
+                
+            } catch (SQLException ex) {
+                if (firstTry && recoverDeletedRecords) {
+                    // if recovery of deleted records is enabled and failed with SQLITE_CORRUPT on first try,
+                    // try again, ignoring error and recovering deleted records
+                    if (isSqliteCorruptException(ex)) {
+                        tryAgain = true;
+                        logger.warn("Database " + itemPath + " is corrupt. Trying to recover data with fqlite");
+                    }
+                }
+                if (!tryAgain) {
+                    throw new WAExtractorException(ex);
+                }
             }
-        } catch (SQLException ex) {
-            throw new WAExtractorException(ex);
-        }
+            firstTry = false;
+        } while (tryAgain);
 
         return list;
     }
 
     private List<Message> extractMessages(Connection conn, Chat chat, Map<Long, List<SqliteRow>> undeletedMessages,
-            SQLiteUndeleteTable undeleteTable, Map<Long, SqliteRow> mediaItems, Map<Long, SqliteRow> groupMembers)
+            SQLiteUndeleteTable undeleteTable, Map<Long, SqliteRow> mediaItems, Map<Long, SqliteRow> groupMembers,
+            boolean firstTry)
             throws SQLException {
         List<Message> messages = new ArrayList<>();
         
@@ -196,6 +250,12 @@ public class ExtractorIOS extends Extractor {
                         activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
                     messages.add(m);
                 }
+            }
+        } catch (SQLException e) {
+            if (firstTry || !isSqliteCorruptException(e)) {
+                // ignore sqlite corrupt error on second try
+                // to try to recover deleted records instead
+                throw e;
             }
         }
 
@@ -372,6 +432,7 @@ public class ExtractorIOS extends Extractor {
                 String contactId = row.getTextValue("ZCONTACTJID"); //$NON-NLS-1$
                 WAContact contact = contacts.getContact(contactId);
                 Chat c = new Chat(contact);
+                c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
                 c.setDeleted(true);
                 c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
                 c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
