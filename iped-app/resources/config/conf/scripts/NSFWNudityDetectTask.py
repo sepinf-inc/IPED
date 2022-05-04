@@ -63,7 +63,7 @@ def isSupportedVideo(item):
     return item.getMediaType() is not None and item.getMediaType().toString().startswith('video') and item.getViewFile() is not None
     
 def supported(item):
-    return item.getLength() > 0 and (isImage(item) or isSupportedVideo(item))
+    return item.getLength() is not None and item.getLength() > 0 and (isImage(item) or isSupportedVideo(item))
 
 def convertJavaByteArray(byteArray):
     global arrayConvTime
