@@ -86,9 +86,10 @@ Main class
 '''
 class NSFWNudityDetectTask:
     
-    itemList = []
-    imageList = []
-    queued = False
+    def __init__(self):
+        self.itemList = []
+        self.imageList = []
+        self.queued = False
 
     def isEnabled(self):
         return enabled
