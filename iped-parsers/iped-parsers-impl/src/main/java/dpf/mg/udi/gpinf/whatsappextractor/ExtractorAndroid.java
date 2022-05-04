@@ -94,51 +94,44 @@ public class ExtractorAndroid extends Extractor {
         // retrieve partial data
         boolean firstTry = true;
         boolean tryAgain;
-        
+
+        if (recoverDeletedRecords) {
+            try {
+                SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
+                undelete.addTableToRecover("messages"); //$NON-NLS-1$
+                undelete.addRecordValidator("messages", new WAAndroidMessageValidator()); //$NON-NLS-1$
+                undelete.addTableToRecover("chat"); //$NON-NLS-1$
+                undelete.addRecordValidator("chat", new WAAndroidChatValidator()); //$NON-NLS-1$
+                undelete.addTableToRecover("jid"); //$NON-NLS-1$
+                undelete.addRecordValidator("jid", new WAAndroidJIDValidator()); //$NON-NLS-1$
+                undelete.addTableToRecover("chat_list"); //$NON-NLS-1$
+                undelete.addRecordValidator("chat_list", new WAAndroidChatListValidator()); //$NON-NLS-1$
+                undelete.setRecoverOnlyDeletedRecords(false);
+
+                var undeleteData = undelete.undeleteData();
+                undeletedMessagesTable = undeleteData.get("messages"); //$NON-NLS-1$
+                undeleteChatTable = undeleteData.get("chat"); //$NON-NLS-1$
+                undeleteChatListTable = undeleteData.get("chat_list"); //$NON-NLS-1$
+                undeleteJIDTable = undeleteData.get("jid"); //$NON-NLS-1$
+
+            } catch (Exception e) {
+                logger.warn("Error recovering deleted records from Android WhatsApp Database " + itemPath, e); //$NON-NLS-1$
+            }
+        }
+
+        Map<String, List<SqliteRow>> undeletedMessages = undeletedMessagesTable == null ?
+                Collections.emptyMap()
+                : undeletedMessagesTable.getTableRowsGroupedByTextCol("key_remote_jid"); //$NON-NLS-1$
+
+        List<Chat> undeletedChats = recoverDeletedRecords ?
+                undeleteChats(undeleteChatListTable, undeleteChatTable, undeleteJIDTable, contacts)
+                : Collections.emptyList();
+
+        Set<Long> activeChats = new HashSet<>();
+
         do {
             list = new ArrayList<>();
-            
             tryAgain = false;
-            
-            if (recoverDeletedRecords) {
-                try {
-                    SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
-                    undelete.addTableToRecover("messages"); //$NON-NLS-1$
-                    undelete.addRecordValidator("messages", new WAAndroidMessageValidator()); //$NON-NLS-1$
-                    undelete.addTableToRecover("chat"); //$NON-NLS-1$
-                    undelete.addRecordValidator("chat", new WAAndroidChatValidator()); //$NON-NLS-1$
-                    undelete.addTableToRecover("jid"); //$NON-NLS-1$
-                    undelete.addRecordValidator("jid", new WAAndroidJIDValidator()); //$NON-NLS-1$
-                    undelete.addTableToRecover("chat_list"); //$NON-NLS-1$
-                    undelete.addRecordValidator("chat_list", new WAAndroidChatListValidator()); //$NON-NLS-1$
-                    undelete.setRecoverOnlyDeletedRecords(false);
-
-                    if (firstTry) {
-                        undelete.addTableToRecoverOnlyDeleted("messages"); //$NON-NLS-1$
-                        undelete.addTableToRecoverOnlyDeleted("chat"); //$NON-NLS-1$
-                        undelete.addTableToRecoverOnlyDeleted("chat_list"); //$NON-NLS-1$
-                    }
-
-                    var undeleteData = undelete.undeleteData();
-                    undeletedMessagesTable = undeleteData.get("messages"); //$NON-NLS-1$
-                    undeleteChatTable = undeleteData.get("chat"); //$NON-NLS-1$
-                    undeleteChatListTable = undeleteData.get("chat_list"); //$NON-NLS-1$
-                    undeleteJIDTable = undeleteData.get("jid"); //$NON-NLS-1$
-
-                } catch (Exception e) {
-                    logger.warn("Error recovering deleted records from Android WhatsApp Database " + itemPath, e); //$NON-NLS-1$
-                }
-            }
-
-            Map<String, List<SqliteRow>> undeletedMessages = undeletedMessagesTable == null ?
-                    Collections.emptyMap()
-                    : undeletedMessagesTable.getTableRowsGroupedByTextCol("key_remote_jid"); //$NON-NLS-1$
-
-            List<Chat> undeletedChats = recoverDeletedRecords ?
-                    undeleteChats(undeleteChatListTable, undeleteChatTable, undeleteJIDTable, contacts)
-                    : Collections.emptyList();
-
-            Set<Long> activeChats = new HashSet<>();
 
             try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
                 try {
@@ -157,7 +150,7 @@ public class ExtractorAndroid extends Extractor {
                         throw e;
                     }
                 }
-                
+
                 String selectChatQuery;
                 if (hasChatView) {
                     selectChatQuery = SELECT_CHAT_VIEW;
@@ -189,12 +182,14 @@ public class ExtractorAndroid extends Extractor {
                         throw ex;
                     }
                 }
-                
+
                 for (Chat c : undeletedChats) {
                     if (!activeChats.contains(c.getId())) {
                         list.add(c);
-                        if (firstTry) {
-                            logger.info("Recovered deleted chat for database " + itemPath + " :" + c.getSubject() + " (" + c.getRemote().getFullId() + ")");
+                        if (firstTry && c.isDeleted()) {
+                            logger.info("Recovered deleted chat for database " //$NON-NLS-1$
+                                        + itemPath + " :" + c.getSubject() //$NON-NLS-1$
+                                        + " (" + c.getRemote().getFullId() + ")"); //$NON-NLS-1$ //$NON-NLS-2$
                         }
                     }
                 }
@@ -226,7 +221,7 @@ public class ExtractorAndroid extends Extractor {
                     // try again, ignoring error and recovering deleted records
                     if (isSqliteCorruptException(ex)) {
                         tryAgain = true;
-                        logger.warn("Database " + itemPath + " is corrupt. Trying to recover data with fqlite");
+                        logger.warn("Database " + itemPath + " is corrupt. Trying to recover data with fqlite"); //$NON-NLS-1$ //$NON-NLS-2$
                     }
                 }
                 if (!tryAgain) {
@@ -352,10 +347,11 @@ public class ExtractorAndroid extends Extractor {
                     MESSAGES_TABLE_COL_MAP);
             while (rs.next()) {
                 try {
+                    if (!firstTry || rs.getCurrentRow().isDeletedRow()) {
                     Message m = createMessageFromDBRow(rs, remote, isGroupChat, rs.getCurrentRow().isDeletedRow(), hasThumbTable, hasEditVersionCol);
                     if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) { //do not include deleted message if already there
                         messages.add(m);
-                    }
+                    }}
                 } catch (SQLException e) {
                     logger.warn("Error creating undeleted message", e); //$NON-NLS-1$
                 } catch (RuntimeException e) {
