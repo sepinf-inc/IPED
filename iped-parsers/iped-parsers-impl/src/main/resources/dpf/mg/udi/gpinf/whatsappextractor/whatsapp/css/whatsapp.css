@@ -205,7 +205,8 @@ div.deletedIcon {
 
 #conversation .incoming, #conversation .outgoing,
  #conversation .date, #conversation .systemmessage, 
- #conversation .specialmessage {
+ #conversation .specialmessage,
+ #conversation .recoveredChat {
 	cursor: pointer;
 	border-radius: 2px;
 	box-shadow: 0 0 6px #b8b7b7;
@@ -222,6 +223,17 @@ div.deletedIcon {
 	margin: 0 auto;
 	text-align: center;
 	margin-top: 8px;
+	margin-bottom: 8px;
+}
+
+#conversation .recoveredChat
+{
+	background-color: #ec0000;
+	color: #ffffff;
+	width: 320px;
+	margin: 0 auto;
+	text-align: center;
+	margin-top: 12px;
 	margin-bottom: 8px;
 }
 

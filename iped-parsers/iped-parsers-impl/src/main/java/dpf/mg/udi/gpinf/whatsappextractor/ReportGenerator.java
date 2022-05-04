@@ -122,7 +122,8 @@ public class ReportGenerator {
         ByteArrayOutputStream chatBytes = new ByteArrayOutputStream();
         PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(chatBytes, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
-        printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), () -> {
+        printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), c.isDeleted(),
+                () -> {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
             if (c.getRecoveredFrom() != null) {
@@ -559,12 +560,20 @@ public class ReportGenerator {
             return "File"; //$NON-NLS-1$
     }
 
-    private void printMessageFile(PrintWriter out, String title, String id, byte[] avatar, Supplier<String> messages) {
+    private void printMessageFile(PrintWriter out, String title, String id, byte[] avatar, boolean isDeleted, Supplier<String> messages) {
         String strAvatar;
         if (avatar == null || avatar.length == 0) {
             strAvatar = Util.getImageResourceAsEmbedded("img/avatar.png");
         } else {
             strAvatar = "data:image/jpg;base64," + Util.encodeBase64(avatar);
+        }
+        String deletedDiv;
+        if (isDeleted) {
+            deletedDiv = "<div class=\"linha\"><div class=\"recoveredChat\">"
+                    + Messages.getString("WhatsAppReport.RecoveredChat")
+                    + "</div></div>";
+        } else {
+            deletedDiv = "";
         }
         StringSubstitutor interpolator = new StringSubstitutor(new StringLookup() {
 
@@ -583,6 +592,8 @@ public class ReportGenerator {
                         return js;
                     case "css":
                         return css;
+                    case "deleted":
+                        return deletedDiv;
                 }
                 return StringLookupFactory.INSTANCE.interpolatorStringLookup().lookup(key);
             }
