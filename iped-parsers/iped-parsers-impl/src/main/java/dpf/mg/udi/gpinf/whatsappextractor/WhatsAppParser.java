@@ -581,6 +581,18 @@ public class WhatsAppParser extends SQLite3DBParser {
                 } else if (!wcontext.isMainDB() && db.isMainDB()) {
                     mainDb = db;
                     other = wcontext;
+                } else if (wcontext.getItem().getHash().equals(db.getItem().getHash())) {
+
+                    if (wcontext.getItem().getId() > db.getItem().getId()) {
+                        wcontext.setBackup(true);
+                        wcontext.setMainDBItem(db.getItem());
+                        addBackupMessage(wcontext, wcontext.getMainDBItem(),
+                                new XHTMLContentHandler(handler, metadata));
+                        backupsMerged.incrementAndGet();
+                        return;
+                    }
+                    continue;
+
                 } else {
                     // skip if both are mainDB or if both are backups
                     continue;
@@ -612,7 +624,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                     }
                 }
             }
-
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
             if (!extractor.shouldParseEmbedded(metadata)) {
