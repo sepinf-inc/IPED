@@ -245,6 +245,7 @@ public class ExtractorAndroid extends Extractor {
                 String contactId = row.getTextValue("key_remote_jid"); //$NON-NLS-1$
                 WAContact contact = contacts.getContact(contactId);
                 Chat c = new Chat(contact);
+                c.setId(row.getIntValue("_id"));
                 c.setDeleted(row.isDeletedRow());
                 c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
                 c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
@@ -263,6 +264,7 @@ public class ExtractorAndroid extends Extractor {
                         String contactId = jid_row.getTextValue("raw_string"); //$NON-NLS-1$
                         WAContact contact = contacts.getContact(contactId);
                         Chat c = new Chat(contact);
+                        c.setId(row.getIntValue("_id"));
                         c.setDeleted(true);
                         c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
                         c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
@@ -678,6 +680,11 @@ public class ExtractorAndroid extends Extractor {
         @Override
         public boolean validateRecord(SqliteRow row) {
             try {
+                long _id = row.getIntValue("_id");
+                if (_id <= 0 ) {
+                    return false;
+                }
+
                 String remoteId = row.getTextValue("key_remote_jid");
                 if (remoteId == null || !(remoteId.endsWith("whatsapp.net") || remoteId.endsWith("g.us"))) {
                     return false;
@@ -704,7 +711,12 @@ public class ExtractorAndroid extends Extractor {
         
         @Override
         public boolean validateRecord(SqliteRow row) {
-            try {                
+            try {
+                long _id = row.getIntValue("_id");
+                if (_id <= 0 ) {
+                    return false;
+                }
+
                 long jid_row_id = row.getIntValue("jid_row_id");
                 if (jid_row_id <= 0 ) {
                     return false;
@@ -731,7 +743,7 @@ public class ExtractorAndroid extends Extractor {
         
         @Override
         public boolean validateRecord(SqliteRow row) {
-            try {                
+            try {
                 long _id = row.getIntValue("_id");
                 if (_id <= 0 ) {
                     return false;
