@@ -5,6 +5,7 @@ import java.awt.Container;
 import java.awt.KeyboardFocusManager;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -104,13 +105,16 @@ public class ViewerController {
                     }
 
                     // LibreOffice viewer initialization
-                    LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(params.codePath).getParentFile());
+                    URI jarUri = LibreOfficeViewer.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+                    File moduledir = new File(jarUri).getParentFile().getParentFile();
+                    LibreOfficeFinder loFinder = new LibreOfficeFinder(moduledir);
                     final String pathLO = loFinder.getLOPath();
                     if (pathLO != null) {
                         SwingUtilities.invokeAndWait(new Runnable() {
                             @Override
                             public void run() {
-                                officeViewer = new LibreOfficeViewer(params.codePath + "/../lib/nativeview", pathLO); //$NON-NLS-1$
+                                String nativeLibFolder = new File(moduledir, "lib/nativeview").getAbsolutePath();
+                                officeViewer = new LibreOfficeViewer(nativeLibFolder, pathLO); // $NON-NLS-1$
                                 viewersRepository.addViewer(officeViewer);
                             }
                         });
