@@ -549,7 +549,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         appGraphAnalytics = new AppGraphAnalytics();
 
-        viewerController = new ViewerController(codePath);
+        viewerController = new ViewerController();
 
         hitsTable = new HitsTable(new HitsTableModel(viewerController.getTextViewer()));
         hitsScroll = new JScrollPane(hitsTable);
