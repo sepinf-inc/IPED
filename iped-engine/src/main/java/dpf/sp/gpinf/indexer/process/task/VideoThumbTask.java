@@ -256,6 +256,7 @@ public class VideoThumbTask extends ThumbTask {
         videoThumbsMaker.setTimeoutProcess(videoConfig.getTimeoutProcess());
         videoThumbsMaker.setTimeoutInfo(videoConfig.getTimeoutInfo());
         videoThumbsMaker.setVideoThumbsOriginalDimension(videoConfig.getVideoThumbsOriginalDimension());
+        videoThumbsMaker.setMaxDimensionSize(videoConfig.getMaxDimensionSize());
 
         // Cria configurações de extração de cenas
         configs = new ArrayList<VideoThumbsOutputConfig>();

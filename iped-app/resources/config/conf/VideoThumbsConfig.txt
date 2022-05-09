@@ -29,3 +29,7 @@ GalleryThumbs = 320,2,3
 # If enabled, first value of 'Layout' option above will be ignored.
 # This should help face detection on videos and other future features (like video ocr, so on...)
 enableVideoThumbsOriginalDimension = false
+
+# Upper bound width/height dimension size used when extracting video frames.
+# This applies and has precedence over all options above.
+maxDimensionSize = 1024

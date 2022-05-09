@@ -29,6 +29,8 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     private static final String ORIGINAL_DIMENSION = "enableVideoThumbsOriginalDimension";
 
+    private static final String MAX_DIMENSION_SIZE = "maxDimensionSize";
+
     /**
      * Image width of extracted frame.
      */
@@ -68,9 +70,16 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
     private int galleryMinThumbs = -1;
     private int galleryMaxThumbs = -1;
 
+    /**
+     * Extracts video frames using original video resolution.
+     */
     private Boolean videoThumbsOriginalDimension = false;
 
-
+    /**
+     * Max dimension size to use when extracting frames. Currently this has
+     * precedence over other options.
+     */
+    private int maxDimensionSize = 1024;
 
     public int getWidth() {
         return width;
@@ -114,6 +123,10 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     public Boolean getVideoThumbsOriginalDimension() {
         return videoThumbsOriginalDimension;
+    }
+
+    public int getMaxDimensionSize() {
+        return maxDimensionSize;
     }
 
     @Override
@@ -174,6 +187,10 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
             }
         }
 
+        value = properties.getProperty(MAX_DIMENSION_SIZE);
+        if (value != null) {
+            maxDimensionSize = Integer.parseInt(value.trim());
+        }
 
     }
 

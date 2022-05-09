@@ -37,6 +37,7 @@ public class VideoThumbsMaker {
 
     private String mplayer = "mplayer.exe"; //$NON-NLS-1$
     private Boolean videoThumbsOriginalDimension = false;
+    private int maxDimensionSize = 1024;
     private int timeoutProcess = 45000;
     private int timeoutInfo = 15000;
     private int timeoutFirstCall = 300000;
@@ -432,10 +433,12 @@ public class VideoThumbsMaker {
         } else {
             w = config.getThumbWidth();
             h = dimension.height * w / dimension.width;
-            if (w > 1024)
-                w = 1024;
-            if (h > 1024)
-                h = 1024;
+        }
+        if (w > maxDimensionSize) {
+            w = maxDimensionSize;
+        }
+        if (h > maxDimensionSize) {
+            h = maxDimensionSize;
         }
 
         BufferedImage img = new BufferedImage(2 + config.getColumns() * (w + border) + border,
@@ -537,6 +540,10 @@ public class VideoThumbsMaker {
 
     public void setVideoThumbsOriginalDimension(Boolean videoThumbsOriginalDimension) {
         this.videoThumbsOriginalDimension = videoThumbsOriginalDimension;
+    }
+
+    public void setMaxDimensionSize(int maxDimensionSize) {
+        this.maxDimensionSize = maxDimensionSize;
     }
 
     public Boolean getVideoThumbsOriginalDimension() {
