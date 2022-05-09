@@ -171,8 +171,7 @@ public class VideoThumbsMaker {
         Dimension targetDimension;
         if (videoThumbsOriginalDimension){
             targetDimension = result.getDimension();
-        } 
-        else {
+        } else {
             targetDimension = getTargetDimension(maxSize, result.getDimension());
         }
         
@@ -417,38 +416,28 @@ public class VideoThumbsMaker {
 
     private void generateGridImage(VideoThumbsOutputConfig config, List<File> images, Dimension dimension)
             throws IOException {
-        int w, h, border;
-        double rate;
 
+        if (images.size() > config.getRows() * config.getColumns()) {
+            images.remove(0);
+        }
+        if (images.size() > config.getRows() * config.getColumns()) {
+            images.remove(images.size() - 1);
+        }
+        double rate = images.size() * 0.999 / (config.getRows() * config.getColumns());
+        int border = config.getBorder();
+        int w, h;
         if (videoThumbsOriginalDimension) {
             w = dimension.width;
-            if (images.size() > config.getRows() * config.getColumns()) {
-                images.remove(0);
-            }
-            if (images.size() > config.getRows() * config.getColumns()) {
-                images.remove(images.size() - 1);
-            }
-            rate = images.size() * 0.999 / (config.getRows() * config.getColumns());
             h = dimension.height;
-            border = config.getBorder();
-            
-        } 
-        else {
+        } else {
             w = config.getThumbWidth();
-            if (images.size() > config.getRows() * config.getColumns()) {
-                images.remove(0);
-            }
-            if (images.size() > config.getRows() * config.getColumns()) {
-                images.remove(images.size() - 1);
-            }
-            rate = images.size() * 0.999 / (config.getRows() * config.getColumns());
             h = dimension.height * w / dimension.width;
-            border = config.getBorder();
             if (w > 1024)
                 w = 1024;
             if (h > 1024)
                 h = 1024;
         }
+
         BufferedImage img = new BufferedImage(2 + config.getColumns() * (w + border) + border,
                 2 + config.getRows() * (h + border) + border, BufferedImage.TYPE_INT_BGR);
         Graphics2D g2 = (Graphics2D) img.getGraphics();
