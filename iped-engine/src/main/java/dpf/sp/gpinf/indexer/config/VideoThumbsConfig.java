@@ -27,6 +27,8 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     private static final String GALLERY_THUMBS = "GalleryThumbs";
 
+    private static final String ORIGINAL_DIMENSION = "enableVideoThumbsOriginalDimension";
+
     /**
      * Image width of extracted frame.
      */
@@ -65,6 +67,10 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
     private int galleryThumbWidth = -1;
     private int galleryMinThumbs = -1;
     private int galleryMaxThumbs = -1;
+
+    private Boolean videoThumbsOriginalDimension = false;
+
+
 
     public int getWidth() {
         return width;
@@ -106,6 +112,10 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
         return galleryMaxThumbs;
     }
 
+    public Boolean getVideoThumbsOriginalDimension() {
+        return videoThumbsOriginalDimension;
+    }
+
     @Override
     public String getTaskEnableProperty() {
         return ENABLED_PROP;
@@ -134,6 +144,12 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty(VERBOSE); // $NON-NLS-1$
         if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
             verbose = true;
+        }
+
+        // Verbose do MPlayer
+        value = properties.getProperty(ORIGINAL_DIMENSION); // $NON-NLS-1$
+        if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
+            videoThumbsOriginalDimension = true;
         }
 
         // Timeouts
