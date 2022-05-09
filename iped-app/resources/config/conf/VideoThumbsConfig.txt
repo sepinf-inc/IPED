@@ -25,6 +25,7 @@ Verbose = false
 # Format: <gallery image width in pixels, minimum number of frames, maximum of frames frames>.
 GalleryThumbs = 320,2,3
 
-
-# Enables videoThumbs with original video dimension
+# Enables video frames extraction using original video resolution.
+# If enabled, first value of 'Layout' option above will be ignored.
+# This should help face detection on videos and other future features (like video ocr, so on...)
 enableVideoThumbsOriginalDimension = false
