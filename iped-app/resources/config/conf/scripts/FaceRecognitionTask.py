@@ -246,6 +246,13 @@ class FaceRecognitionTask:
             #face_locations = fr.face_locations(img)
             
             line = proc.stdout.readline().strip()
+            
+            if not line:
+            	logger.warn("[FaceRecognitionTask] External process exited abnormally while processing {} ({} bytes)", item.getPath(), item.getLength())
+            	proc.kill()
+            	proc = createExternalProcess()
+            	return
+
             if line == imgError:
                 logger.info("[FaceRecognitionTask] Error loading image {} ({} bytes)", item.getPath(), item.getLength())
                 self.cacheResults(hash, [], [])
