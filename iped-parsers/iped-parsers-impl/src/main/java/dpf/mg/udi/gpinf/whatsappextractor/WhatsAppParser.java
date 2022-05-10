@@ -753,12 +753,14 @@ public class WhatsAppParser extends SQLite3DBParser {
     private String formatContact(WAContact contact, Map<String, String> cache) {
         String result = cache.get(contact.getId());
         if (result == null) {
-            if (contact.getName() == null) {
+            if (contact.getName() == null || contact.getName().isBlank()) {
                 result = contact.getFullId();
-            } else if (contact.getName().trim().equals(contact.getId())) {
+            } else if (contact.getName().strip().equals(contact.getId())) {
                 result = contact.getFullId();
+            } else if (contact.getFullId().isBlank()) {
+                result = contact.getName().strip();
             } else {
-                result = contact.getName().trim() + " (" + contact.getFullId() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                result = contact.getName().strip() + " (" + contact.getFullId().strip() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
             }
             cache.put(contact.getId(), result);
         }

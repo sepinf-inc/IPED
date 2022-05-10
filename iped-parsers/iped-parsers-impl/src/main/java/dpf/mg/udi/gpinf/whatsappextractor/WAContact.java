@@ -114,7 +114,10 @@ public class WAContact {
     }
 
     public String getFullId() {
-        return id + "@" + suffix; //$NON-NLS-1$
+        if (id == null || id.isBlank()) {
+            return "";
+        }
+        return id.strip() + (!suffix.isBlank() ? "@" + suffix.strip() : ""); //$NON-NLS-1$
     }
 
     public String getAvatarPath() {
