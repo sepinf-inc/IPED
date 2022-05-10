@@ -175,8 +175,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
 
         if (App.get().similarImagesQueryRefItem != null) {
-            try{
-                int luceneId = docId;
+            try{                
                 List<String> frameLocationList = ImageSimilarityScorer.getMatchLocations(App.get().similarImagesQueryRefItem, item);
                 for (String frameLocation : frameLocationList) {
                     highlights.add(ImageViewer.HIGHLIGHT_LOCATION + frameLocation);                
