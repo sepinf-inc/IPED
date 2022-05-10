@@ -38,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Collator;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -54,6 +53,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -68,8 +68,8 @@ import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
+import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.localization.Messages;
-import dpf.sp.gpinf.indexer.lucene.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -354,7 +354,6 @@ public class HTMLReportTask extends AbstractTask {
         reg.isVideo = VideoThumbTask.isVideoType(evidence.getMediaType());
         reg.length = evidence.getLength();
         reg.ext = evidence.getExt();
-        reg.category = evidence.getCategories().replace(CategoryTokenizer.SEPARATOR + "", " | "); //$NON-NLS-1$ //$NON-NLS-2$
         reg.hash = evidence.getHash();
         if (reg.hash != null && reg.hash.isEmpty()) {
             reg.hash = null;
@@ -366,10 +365,14 @@ public class HTMLReportTask extends AbstractTask {
         reg.created = evidence.getCreationDate();
         reg.path = evidence.getPath();
 
+        Set<String> categories = evidence.getCategorySet();
+        categories = categories.stream().map(c -> CategoryLocalization.getInstance().getLocalizedCategory(c.trim()))
+                .collect(Collectors.toSet());
+        reg.category = categories.stream().collect(Collectors.joining(" | "));
+
         String[] labels = new String[] { "" }; //$NON-NLS-1$
         if (!evidence.getLabels().isEmpty())
             labels = evidence.getLabels().toArray(new String[0]);
-        String[] categories = reg.category.split("\\|"); //$NON-NLS-1$
         synchronized (init) {
             for (String label : labels) {
                 label = label.trim();
@@ -380,7 +383,6 @@ public class HTMLReportTask extends AbstractTask {
                 regs.add(reg);
             }
             for (String category : categories) {
-                category = category.trim();
                 List<ReportEntry> regs = entriesByCategory.get(category);
                 if (regs == null) {
                     entriesByCategory.put(category, regs = new ArrayList<ReportEntry>());

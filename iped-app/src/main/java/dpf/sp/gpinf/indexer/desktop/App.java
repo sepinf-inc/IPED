@@ -53,6 +53,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -437,7 +438,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
         dockingControl.setLanguage(localeConfig.getLocale());        
         
-        localizeFileChooser();
+        // Set the locale used by JFileChooser's
+        JFileChooser.setDefaultLocale(localeConfig.getLocale());
+
         try {
             ThemeManager.getInstance().setLookAndFeel();
         } catch (Exception e) {
@@ -549,7 +552,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         appGraphAnalytics = new AppGraphAnalytics();
 
-        viewerController = new ViewerController(codePath);
+        viewerController = new ViewerController();
 
         hitsTable = new HitsTable(new HitsTableModel(viewerController.getTextViewer()));
         hitsScroll = new JScrollPane(hitsTable);
@@ -1188,13 +1191,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 }
                 cont = parent;
             }
-        }
-    }
-    
-    private void localizeFileChooser() {
-        // Forward to UIManager any localized value belonging to FileChooser
-        for(String key : Messages.getKeys("FileChooser.")) {
-            UIManager.put(key, Messages.get(key));
         }
     }
 

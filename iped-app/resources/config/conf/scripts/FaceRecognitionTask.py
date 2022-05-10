@@ -95,7 +95,7 @@ class FaceRecognitionTask:
     enabled = False
     
     def isEnabled(self):
-        return self.enabled
+        return FaceRecognitionTask.enabled
     
     def getConfigurables(self):
         from dpf.sp.gpinf.indexer.config import DefaultTaskPropertiesConfig
@@ -104,8 +104,8 @@ class FaceRecognitionTask:
     # This method is executed before starting the processing of items.
     def init(self, configuration):
         taskConfig = configuration.getTaskConfigurable(configFile)
-        self.enabled = taskConfig.isEnabled()
-        if not self.enabled:
+        FaceRecognitionTask.enabled = taskConfig.isEnabled()
+        if not FaceRecognitionTask.enabled:
             return
         
         global fp, terminate, imgError, ping
@@ -246,6 +246,15 @@ class FaceRecognitionTask:
             #face_locations = fr.face_locations(img)
             
             line = proc.stdout.readline().strip()
+
+            if not line:
+                time.sleep(3)
+                status = str(proc.poll())
+                logger.warn("[FaceRecognitionTask] Unexpected error from external process while processing {} ({} bytes) exit status=" + status, item.getPath(), item.getLength())
+                proc.kill()
+                proc = createExternalProcess()
+                return
+
             if line == imgError:
                 logger.info("[FaceRecognitionTask] Error loading image {} ({} bytes)", item.getPath(), item.getLength())
                 self.cacheResults(hash, [], [])
