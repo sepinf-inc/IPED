@@ -1,5 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
+import static org.junit.Assert.assertThrows;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -18,7 +20,7 @@ public class PartMetParserTest extends BaseItemSearchContext {
     @Test
     public void testPartMetParsing() throws IOException, SAXException, TikaException {
 
-        String file = "test-files/test_emule.part.met";
+        String file = "test-files/test_partMet.part.met";
         ParseContext context = getContext(file);
         PartMetParser parser = new PartMetParser();
         Metadata metadata = new Metadata();
@@ -28,12 +30,11 @@ public class PartMetParserTest extends BaseItemSearchContext {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
 
-            assertTrue(hts.contains("arq_0_000_010kb_000"));    // file name
-            assertTrue(hts.contains("71A3550F7C8621475DA1CB5FC333CAC0".toLowerCase())); // file id (hash edonkey)
-
-            //
-
+            assertTrue(hts.contains("10/05/2022"));    // latest date
+            assertTrue(hts.contains("The Strokes - Last Nite.mp3"));    // file name
+            assertTrue(hts.contains("baa73b1bb93704b0225e6fc2e4b8e16d")); // hash
+            assertTrue(hts.contains("001.part"));      // tempfile
         }
-
     }
+
 }
