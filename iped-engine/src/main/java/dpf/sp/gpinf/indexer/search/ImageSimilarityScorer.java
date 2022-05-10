@@ -1,6 +1,8 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -8,18 +10,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.BinaryDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.util.BytesRef;
 
 import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
+import dpf.sp.gpinf.indexer.search.ImageSimilarityLowScoreFilter;
 import gpinf.similarity.ImageSimilarity;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.util.BasicProps;
+import scala.Int;
 
 public class ImageSimilarityScorer {
     /**
@@ -28,7 +35,7 @@ public class ImageSimilarityScorer {
      * results and to be shown on the table). Although the score is limited to
      * [0,100] (avoiding negative values that could be produced by the conversion
      * formula), scores < 1 will be later discarded (i.e. not included in the
-     * results): score = 100 - distance * distToScoreMult / numFeatures So higher
+     * results): score = 100 - distance * distTList<oScoreMult / numFeatures So higher
      * values will increase the distance weight, therefore reducing the score (i.e.
      * bringing less images).
      */
@@ -53,16 +60,17 @@ public class ImageSimilarityScorer {
      * Minimum score to accept an image (below that it won't be included in the
      * results).
      */
-    private static final float minScore = 1;
+    private static float minScore = 50;
+    //private final float cut;
+    private static final Logger logger = LoggerFactory.getLogger(ImageSimilarityScorer.class);
 
-    private float cut = minScore;
 
     private final IPEDSource ipedCase;
     private final MultiSearchResult result;
-    private final byte[] refSimilarityFeatures;
+    //private final byte[] refSimilarityFeatures;
     private final IItem refItem;
     private final int len;
-
+    
     private final List<Integer> topResults = new ArrayList<Integer>();
     private final Map<Integer, byte[]> topFeatures = new HashMap<Integer, byte[]>();
     private final Map<Integer, Integer> refDist = new HashMap<Integer, Integer>();
@@ -72,59 +80,45 @@ public class ImageSimilarityScorer {
         this.result = result;
         this.len = result.getLength();
         this.refItem = refItem;
-        this.refSimilarityFeatures = (byte[]) refItem.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
+        //this.refSimilarityFeatures = (Arrays.asList((byte[]) refItem.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES))).get(0);
+        
+        
     }
 
-    public void score() throws IOException {
-        if (len == 0 || refSimilarityFeatures == null) {
+    public static final int getMinScore() {
+        return (int) minScore;
+    }
+
+    public static final void setMinScore(int score) {        
+        minScore = (float) score;
+    }
+
+    private void score(MultiSearchResult result) throws IOException {
+        if (len == 0) {
             return;
         }
         LeafReader leafReader = ipedCase.getLeafReader();
         int numThreads = Runtime.getRuntime().availableProcessors();
         Thread[] threads = new Thread[numThreads];
-        int evalCut = (int) (100 * refSimilarityFeatures.length / distToScoreMult);
+        
         int itemsPerThread = (len + numThreads - 1) / numThreads;
         for (int k = 0; k < numThreads; k++) {
             int threadIdx = k;
             (threads[k] = new Thread() {
                 public void run() {
-                    BinaryDocValues similarityFeaturesValues = null;
-                    try {
-                        similarityFeaturesValues = leafReader
-                                .getBinaryDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return;
-                    }
                     int i0 = Math.min(len, itemsPerThread * threadIdx);
                     int i1 = Math.min(len, i0 + itemsPerThread);
                     for (int i = i0; i < i1; i++) {
                         IItemId itemId = result.getItem(i);
                         int luceneId = ipedCase.getLuceneId(itemId);
-                        BytesRef bytesRef = DocValuesUtil.getBytesRef(similarityFeaturesValues, luceneId);
-                        if (bytesRef == null || bytesRef.length == 0) {
-                            result.setScore(i, 0);
-                        } else {
-                            byte[] currSimilarityFeatures = bytesRef.bytes;
-                            int distance = ImageSimilarity.distance(refSimilarityFeatures, currSimilarityFeatures,
-                                    evalCut);
-                            float score = Math.max(0, 100 - distance * distToScoreMult / refSimilarityFeatures.length);
-                            if (distance == 0) {
-                                String refHash = refItem.getHash();
-                                if (refHash != null) {
-                                    try {
-                                        Document doc = leafReader.document(luceneId);
-                                        String currHash = doc.get(BasicProps.HASH);
-                                        if (refHash.equals(currHash)) {
-                                            score = identicalScore;
-                                        }
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                        break;
-                                    }
-                                }
-                            }
-                            result.setScore(i, score);
+                        //IItem item = ipedCase.getItemByLuceneID(luceneId);
+                        
+                        try{                            
+                            float score = getBestScore(leafReader, refItem, luceneId);
+                            result.setScore(i, score);                             
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            break;
                         }
                     }
                 }
@@ -139,35 +133,161 @@ public class ImageSimilarityScorer {
             }
         }
 
-        organizeTopResults();
+        //organizeTopResults();
+    }
+    /* 
+    * getBestScoreList returns the best score for an image or videothumb
+    *
+    */
+    private float getBestScore(LeafReader leafReader, IItem refItem, int luceneId) throws IOException {         
+        float bestScore = 0;               
+        byte[] refSimilarityFeatures = (byte[]) refItem.
+                        getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);//images are stored as byte[]
+        int evalCut = (int) (100 * refSimilarityFeatures.length / distToScoreMult);
+
+        List<byte[]> similarityFeaturesList = getSimilarityFeaturesList(leafReader, luceneId);           
+        if (similarityFeaturesList != null && similarityFeaturesList.size() > 0){            
+            for (byte[] currSimilarityFeatures : similarityFeaturesList){
+                if (currSimilarityFeatures != null) { 
+                    int distance = ImageSimilarity.distance(refSimilarityFeatures, currSimilarityFeatures,
+                            evalCut);                             
+                    if (distance == 0) {
+                        String refHash = refItem.getHash();
+                        if (refHash != null) {                            
+                            Document doc = leafReader.document(luceneId);
+                            String currHash = doc.get(BasicProps.HASH);
+                            if (refHash.equals(currHash)) {                                                             
+                                return identicalScore;                                
+                            }                            
+                        }
+                    }
+                    float scoreTmp = Math.max(0, 100 - distance * distToScoreMult / refSimilarityFeatures.length);                    
+                    if (scoreTmp > bestScore){
+                        bestScore = scoreTmp; 
+                    }  
+                }                                      
+            }
+        } else {
+            return 0;
+        }              
+        return bestScore;
     }
 
-    private void organizeTopResults() {
+    private static List<byte[]> getSimilarityFeaturesList(LeafReader leafReader, int luceneId) throws IOException {        
+        List<byte[]> similarityFeaturesList = new ArrayList<byte[]>();
+        SortedSetDocValues similarityFeaturesValues = null;        
+        try {
+            long ordinal = 0;
+            similarityFeaturesValues = leafReader
+                    .getSortedSetDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
+            boolean hasVal = similarityFeaturesValues.advanceExact(luceneId);
+            while (hasVal && (ordinal = similarityFeaturesValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {                 
+                BytesRef bytesRef = similarityFeaturesValues.lookupOrd(ordinal);
+                if (bytesRef != null){
+                    similarityFeaturesList.add(bytesRef.bytes);                    
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return similarityFeaturesList;
+    }
+
+    public static List<String> getMatchLocations(IItem refItem, IItem item) throws IOException {
+        List<String> matchLocations = new ArrayList<String>();
+        List<int[]> scoreList = new ArrayList<int[]>(); 
+        List<String> frameLocationList = (List<String>) item.
+                        getExtraAttribute(ImageSimilarityTask.FRAMES_LOCATIONS);
+        
+        byte[] refSimilarityFeatures = (byte[]) refItem.
+                        getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
+        int evalCut = (int) (100 * refSimilarityFeatures.length / distToScoreMult);
+        Object similarityFeaturesObj = item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
+
+        List<byte[]> similarityFeaturesList = null;
+        if (similarityFeaturesObj instanceof List){
+            similarityFeaturesList = (List<byte[]>) similarityFeaturesObj;
+        } else {
+            similarityFeaturesList = new ArrayList<byte[]>();
+            similarityFeaturesList.add((byte[]) similarityFeaturesObj);
+        }
+        int locationIndex = 0;   
+        for (byte[]currSimilarityFeatures : similarityFeaturesList){
+            if (currSimilarityFeatures != null) {
+                int distance = ImageSimilarity.distance(refSimilarityFeatures, currSimilarityFeatures,
+                            evalCut); 
+        
+                if (distance == 0) {
+                    String refHash = refItem.getHash();
+                    if (refHash != null) {                            
+                        String currHash = item.getHash();
+                        if (refHash.equals(currHash)) { // it only occus on images comparison                                                                                     
+                            int[] scoreArray = { (int) identicalScore, locationIndex };                                
+                            scoreList.add(scoreArray);                                                               
+                        }                            
+                    }
+                }
+                float score = Math.max(0, 100 - distance * distToScoreMult / refSimilarityFeatures.length);
+                if (score >= getMinScore()){
+                    int[] scoreArray = {(int) score, locationIndex};
+                    scoreList.add(scoreArray);                    
+                }
+            }
+            locationIndex++;
+        }
+        if (scoreList != null && frameLocationList != null && frameLocationList.size() > 0 && scoreList.size() > 0) {
+            for (int[] scoreArray: scoreList) {
+                matchLocations.add(frameLocationList.get(scoreArray[1]));                
+            }
+        }         
+        return matchLocations;
+    }
+
+    public MultiSearchResult filter(MultiSearchResult result, int minScore) throws IOException {
+        score(result);
+        return ImageSimilarityLowScoreFilter.filter(result, minScore);
+    }
+
+    /*private final void organizeTopResults() {
+        
+       
+        // cut = SimilarImagesSearch.getMinScore();
         for (int i = 0; i < len; i++) {
             if (result.getScore(i) > cut) {
                 topResults.add(i);
                 trim(maxTop << 1);
+                
             }
         }
+    
         trim(0);
         
-        BinaryDocValues similarityFeaturesValues = null;
+        SortedSetDocValues similarityFeaturesValues = null;
         try {
             similarityFeaturesValues = ipedCase.getLeafReader()
-                    .getBinaryDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
+                    .getSortedSetDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
-        // put features in a map, BinaryDocValues is not random accessible anymore
+
+
+        // put features in a map, SortedSetDocValues is not random accessible anymore
         HashMap<Integer, byte[]> idToFeaturesMap = new HashMap<>();
         for (Integer idx : topResults.stream().sorted().collect(Collectors.toList())) {
             IItemId itemId = result.getItem(idx);
             int luceneId = ipedCase.getLuceneId(itemId);
-            BytesRef bytesRef = DocValuesUtil.getBytesRef(similarityFeaturesValues, luceneId);
-            byte[] currFeatures = bytesRef.bytes.clone();
-            idToFeaturesMap.put(idx, currFeatures);
-        }
+            try{
+                BytesRef bytesRef = similarityFeaturesValues.lookupOrd(0);
+                byte[] currFeatures = bytesRef.bytes.clone();
+                idToFeaturesMap.put(idx, currFeatures);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }           
+            
+        } 
         
         int start = topResults.size();
         for (int i = 1; i < topResults.size(); i++) {
@@ -181,7 +301,8 @@ public class ImageSimilarityScorer {
             return;
         float maxScore = result.getScore(topResults.get(start));
         float minScore = result.getScore(topResults.get(topResults.size() - 1));
-
+        
+        
         for (int i = start - 1; i < topResults.size(); i++) {
             int idx = topResults.get(i);
             byte[] currFeatures = idToFeaturesMap.get(idx);
@@ -229,8 +350,10 @@ public class ImageSimilarityScorer {
             });
             if (topResults.size() > maxTop) {
                 topResults.subList(maxTop, topResults.size()).clear();
-                cut = result.getScore(topResults.get(topResults.size() - 1));
+                //cut = result.getScore(topResults.get(topResults.size() - 1));
             }
         }
-    }
+    }*/
+    
+
 }

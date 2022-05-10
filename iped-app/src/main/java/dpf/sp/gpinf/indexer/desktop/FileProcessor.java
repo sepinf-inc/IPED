@@ -30,6 +30,7 @@ import javax.swing.SwingUtilities;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
+import org.apache.lucene.index.LeafReader;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,9 @@ import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.datasource.AD1DataSourceReader.AD1InputStreamFactory;
 import dpf.sp.gpinf.indexer.io.ZIPInputStreamFactory;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.ImageSimilarityScorer;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
@@ -45,6 +49,7 @@ import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import gpinf.dev.data.DataSource;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import iped3.IItem;
+import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
 import iped3.io.ISeekableInputStreamFactory;
 
@@ -134,7 +139,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     private void process() {
 
         LOGGER.info("Opening " + doc.get(IndexItem.PATH)); //$NON-NLS-1$
-
+        //int luceneId = doc.get()
         // TODO usar nova API e contornar exibição da Ajuda
         IPEDSource iCase = (IPEDSource) App.get().appCase.getAtomicSource(docId);
         App.get().setLastSelectedSource(iCase);
@@ -164,8 +169,21 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         if (App.get().similarFacesRefItem != null) {
             List<String> locations = SimilarFacesSearch.getMatchLocations(App.get().similarFacesRefItem, item);
             for (String location : locations) {
-                highlights.add(ImageViewer.HIGHLIGHT_LOCATION + location);
+                highlights.add(ImageViewer.HIGHLIGHT_LOCATION + location);                
             }
+        }
+
+
+        if (App.get().similarImagesQueryRefItem != null) {
+            try{
+                int luceneId = docId;
+                List<String> frameLocationList = ImageSimilarityScorer.getMatchLocations(App.get().similarImagesQueryRefItem, item);
+                for (String frameLocation : frameLocationList) {
+                    highlights.add(ImageViewer.HIGHLIGHT_LOCATION + frameLocation);                
+                }
+            } catch (IOException e) {
+                e.printStackTrace();                
+            }       
         }
 
         App.get().getViewerController().loadFile(item, viewItem, contentType, highlights);

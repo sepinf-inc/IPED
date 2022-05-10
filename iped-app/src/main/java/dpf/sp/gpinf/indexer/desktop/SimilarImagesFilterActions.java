@@ -18,6 +18,7 @@ import javax.swing.filechooser.FileFilter;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
+import dpf.sp.gpinf.indexer.search.ImageSimilarityScorer;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -125,6 +126,24 @@ public class SimilarImagesFilterActions {
                             .getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) == null) {
                         app.similarImagesQueryRefItem = null;
                     }
+                }
+            }
+        }
+
+        if (app.similarImagesQueryRefItem != null) {
+            int minScore = 0;
+            while (minScore == 0) {
+                try {
+                    String input = JOptionPane.showInputDialog(app, Messages.getString("ImageSimilarity.MinScore"),
+                                                    ImageSimilarityScorer.getMinScore());
+                    minScore = Integer.parseInt(input.trim());
+                    if (minScore < 1 || minScore > 100) {
+                        minScore = 0;
+                        continue;
+                    }
+                    ImageSimilarityScorer.setMinScore(minScore);
+
+                } catch (NumberFormatException e) {
                 }
             }
         }

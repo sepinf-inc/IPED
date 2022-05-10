@@ -33,11 +33,13 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+
 /* 
  * @author Wladimir Leite (GPINF/SP)
  */
 public class ImageUtil {
     private static final int[] orientations = new int[] { 1, 5, 3, 7 };
+
 
     public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
         return resizeImage(img, maxW, maxH, BufferedImage.TYPE_INT_ARGB);
@@ -520,7 +522,52 @@ public class ImageUtil {
         }
         return frames;
     }
-    
+
+    public static List<int[]> getFramesLocations(File videoFramesFile) throws IOException {
+        Object[] read = ImageUtil.readJpegWithMetaData(videoFramesFile);
+        if (read != null && read.length == 2) {
+            String videoComment = (String) read[1];
+            if (videoComment != null && videoComment.startsWith("Frames=")) {
+                return ImageUtil.getFramesLocations((BufferedImage) read[0], videoComment);
+            }
+        }
+        return null;
+    }
+
+    public static List<int[]> getFramesLocations(BufferedImage img, String comment) {
+        int nRows = 0;
+        int nCols = 0;
+        if (comment != null && comment.startsWith("Frames")) {
+            int p1 = comment.indexOf('=');
+            int p2 = comment.indexOf('x');
+            if (p1 > 0 && p2 > 0) {
+                nRows = Integer.parseInt(comment.substring(p1 + 1, p2));
+                nCols = Integer.parseInt(comment.substring(p2 + 1));
+            }
+        }
+        if (nRows <= 0 || nCols <= 0) return null;
+
+        int imgWidth = img.getWidth();
+        int imgHeight = img.getHeight();
+
+        final int border = 2;
+        int frameWidth = (imgWidth - 2 * border - border * nCols) / nCols;
+        int frameHeight = (imgHeight - 2 * border - border * nRows) / nRows;
+        if (frameWidth <= 2 || frameHeight <= 2) return null;
+
+        List<int[]> framesLocations = new ArrayList<int[]>();
+        for (int row = 0; row < nRows; row++) {
+            int y = row * (frameHeight + border) + border;
+            for (int col = 0; col < nCols; col++) {
+                int x = col * (frameWidth + border) + border;
+                int[] location = {x + 1, y + 1, x + frameWidth - 1, y + frameHeight - 1};
+                framesLocations.add(location);
+            }
+        }
+        return framesLocations;
+    }
+
+
     /**
      * Método auxiliar que percorre uma árvore buscando o valor de um nó com
      * determinado nome.

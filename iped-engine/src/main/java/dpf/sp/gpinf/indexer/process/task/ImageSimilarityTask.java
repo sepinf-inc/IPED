@@ -1,8 +1,13 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -13,11 +18,21 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import gpinf.similarity.ImageSimilarity;
+import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
-import gpinf.similarity.ImageSimilarity;
+import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
+import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
+import dpf.sp.gpinf.indexer.util.ImageUtil;
 import iped3.IItem;
 import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
+
 
 /**
  * Image Similarity task.
@@ -29,7 +44,7 @@ public class ImageSimilarityTask extends AbstractTask {
     public static final String enableParam = "enableImageSimilarity"; //$NON-NLS-1$
 
     public static final String SIMILARITY_FEATURES = "similarityFeatures"; //$NON-NLS-1$
-
+    public static final String FRAMES_LOCATIONS = "framesLocations"; //$NON-NLS-1$
     private static boolean taskEnabled = false;
     private static final AtomicBoolean init = new AtomicBoolean(false);
     private static final AtomicBoolean finished = new AtomicBoolean(false);
@@ -79,8 +94,8 @@ public class ImageSimilarityTask extends AbstractTask {
         synchronized (finished) {
             if (taskEnabled && !finished.get()) {
                 finished.set(true);
-                logger.info("Total images processed: " + totalProcessed); //$NON-NLS-1$
-                logger.info("Total images not processed: " + totalFailed); //$NON-NLS-1$
+                logger.info("Total images and videos processed: " + totalProcessed); //$NON-NLS-1$
+                logger.info("Total images and videos not processed: " + totalFailed); //$NON-NLS-1$
                 long total = totalProcessed.longValue() + totalFailed.longValue();
                 if (total != 0) {
                     logger.info("Average processing time (milliseconds/image): " + (totalTime.longValue() / total)); //$NON-NLS-1$
@@ -90,33 +105,94 @@ public class ImageSimilarityTask extends AbstractTask {
     }
 
     protected void process(IItem evidence) throws Exception {
-        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
-                || evidence.getHash() == null) {
+        if (!taskEnabled || !evidence.isToAddToCase() || evidence.getHash() == null) {
             return;
         }
 
         try {
-            byte[] thumb = evidence.getThumb();
-            if (thumb == null) {
+            boolean isAnimationImage = isAnimationImage(evidence);
+            byte[] features;
+            List<byte[]> featuresList = new ArrayList<byte[]>();
+            long t = System.currentTimeMillis();
+
+            if (isImageType(evidence.getMediaType()) && !isAnimationImage){
+                byte[] thumb = evidence.getThumb();
+                if (thumb == null) {
+                    return;
+                }
+                
+                BufferedImage img = ImageIO.read(new ByteArrayInputStream(thumb));
+                features = imageSimilarity.extractFeatures(img);
+                if (features != null) {
+                    featuresList.add(features);
+                    evidence.setExtraAttribute(SIMILARITY_FEATURES, featuresList);
+                    totalProcessed.incrementAndGet();
+                } else {
+                    totalFailed.incrementAndGet();
+                }
+                
+            } else if (isVideoType(evidence.getMediaType()) ||  isAnimationImage){ // Since only passes image and video, no aditional checks of type are made
+                //For videos call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
+                File viewFile = evidence.getViewFile();
+                if (viewFile != null && viewFile.exists()) {
+                    List<BufferedImage> frames = ImageUtil.getFrames(viewFile);            
+                    if (frames != null) {   
+                        List<int[]> framesLocations = ImageUtil.getFramesLocations(viewFile);                                            
+                        for (BufferedImage frame : frames) {
+                            features = imageSimilarity.extractFeatures(frame);                        
+                            if (features != null){
+                                featuresList.add(features);                                
+                            } 
+                        }
+                        if (featuresList.size() != 0) {
+                            evidence.setExtraAttribute(SIMILARITY_FEATURES, featuresList);
+                            evidence.setExtraAttribute(FRAMES_LOCATIONS, convertLocationsToHighlightList(framesLocations));
+                            totalProcessed.incrementAndGet();
+                        } else {
+                            totalFailed.incrementAndGet();
+                        }
+                    } else {
+                        totalFailed.incrementAndGet();
+                    }   
+                }                
+            } else {
                 return;
             }
-            long t = System.currentTimeMillis();
-            BufferedImage img = ImageIO.read(new ByteArrayInputStream(thumb));
-            byte[] features = imageSimilarity.extractFeatures(img);
-            if (features != null) {
-                evidence.setExtraAttribute(SIMILARITY_FEATURES, features);
-                totalProcessed.incrementAndGet();
-            } else {
-                totalFailed.incrementAndGet();
-            }
+
             t = System.currentTimeMillis() - t;
             totalTime.addAndGet(t);
+
         } catch (Exception e) {
             logger.warn(evidence.toString(), e);
         }
     }
 
+    
+    private List<String> convertLocationsToHighlightList(List<int[]> locations){
+        List<String> LocationsStrList = new ArrayList<String>();
+        for (int[] location: locations){ //top, right, bottom, left
+            String line = "["+Integer.toString(location[1])+", "+Integer.toString(location[2])+", "+
+                              Integer.toString(location[3])+", "+Integer.toString(location[0])+"]";
+            LocationsStrList.add(line);
+        }
+        return LocationsStrList;
+    }
+
     private static boolean isImageType(MediaType mediaType) {
         return mediaType.getType().equals("image"); //$NON-NLS-1$
     }
+
+    private static boolean isAnimationImage(IItem item) {
+        return VideoThumbTask.isImageSequence(item.getMediaType().toString()) ||
+                item.getMetadata().get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
+    }
+     /**
+     * Check if the evidence is a video.
+     */
+    public static boolean isVideoType(MediaType mediaType) {
+        return MetadataUtil.isVideoType(mediaType);
+    }
+
+
+    
 }

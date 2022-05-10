@@ -234,10 +234,11 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
                 if (App.get().similarImagesQueryRefItem != null) {
                     LOGGER.info("Starting similar image search...");
                     long t = System.currentTimeMillis();
-                    new ImageSimilarityScorer(App.get().appCase, result, App.get().similarImagesQueryRefItem).score();
-                    result = ImageSimilarityLowScoreFilter.filter(result);
+                    ImageSimilarityScorer iss = new ImageSimilarityScorer(App.get().appCase, result, App.get().similarImagesQueryRefItem);
+                    result = iss.filter(result, ImageSimilarityScorer.getMinScore());
                     t = System.currentTimeMillis() - t;
-                    LOGGER.info("Similar image search took {}ms to find {} images", t, result.getLength());
+                    LOGGER.info("Similar image search took {}ms to find {} images, with minimal score of {}.", 
+                                                    t, result.getLength(), ImageSimilarityScorer.getMinScore());
                 }
 
                 if (App.get().similarFacesRefItem != null) {
