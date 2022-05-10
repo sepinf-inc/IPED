@@ -37,4 +37,19 @@ public class PartMetParserTest extends BaseItemSearchContext {
         }
     }
 
+    @Test
+    public void testInvalidPartMetVersion() throws IOException {
+        String file = "test-files/test_partMetInvalid.part.met";
+        ParseContext context = getContext(file);
+        PartMetParser parser = new PartMetParser();
+        ContentHandler handler = new BodyContentHandler();
+        parser.getSupportedTypes(context);
+        try (InputStream stream = getStream(file)) {
+            Exception exception = assertThrows(TikaException.class, () -> {
+                parser.parse(stream, handler, new Metadata(), context);
+            });
+            String expectedExceptionMessage = "Detected part.met file format version not supported";
+            assertTrue(exception.getMessage().contains(expectedExceptionMessage));
+        }
+    }
 }
