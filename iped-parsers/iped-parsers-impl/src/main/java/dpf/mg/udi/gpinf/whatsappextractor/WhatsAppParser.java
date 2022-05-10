@@ -383,6 +383,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             wcontext.setChalist(extractChatList(wcontext, extFactory, metadata, context, contacts, account));
 
         } catch (Exception e) {
+            wcontext.setParsingError(true);
             if (e instanceof TikaException)
                 throw (TikaException) e;
             else
@@ -517,8 +518,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         findOtherDBS(searcher);
 
         WhatsAppContext wcontext = dbsFound.get(DB.getId());
-        if (wcontext != null && wcontext.getChalist() == null) {
+        if (wcontext != null && wcontext.getChalist() == null && !wcontext.getParsingError()) {
             // if not parsed yet, parse the DB here
+            // If a parsing occurred do not try to parse again
             synchronized (wcontext) {
                 if (wcontext.getChalist() == null) {
                     parseDB(wcontext, metadata, context, extFactory);
@@ -531,8 +533,9 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (other == wcontext)
                 continue;
             synchronized (other) {
-                if (other.getChalist() == null) {
-                    // if not parsed yet, parse the DB here
+                if (other.getChalist() == null && !other.getParsingError()) {
+                    // if not parsed yet, parse the DB here.
+                    // If a parsing occurred do not try to parse again
                     try {
                         parseDB(other, metadata, context, extFactory);
                     } catch (Exception e) {
