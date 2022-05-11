@@ -35,7 +35,6 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sqlite.SQLiteException;
 
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
@@ -224,8 +223,7 @@ public class Extractor {
 
     protected ArrayList<Message> extractMessages(Chat chat) throws Exception {
         ArrayList<Message> msgs = new ArrayList<Message>();
-        String SQL = SQLite3DBParser.containsTable("messages_v2", conn)
-                && SQLite3DBParser.containsTable("media_v3", conn) ? EXTRACT_MESSAGES_SQL_2 : EXTRACT_MESSAGES_SQL_1;
+        String SQL = getAndroidExtractMessagesSQL();
         try (PreparedStatement stmt = conn.prepareStatement(SQL)) {
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
@@ -583,6 +581,29 @@ public class Extractor {
         }
     };
 
+    class NoSuchTable extends Exception {
+        public NoSuchTable(String table) {
+            super("There is no table with name " + table);
+        }
+    }
+
+    private String findTableVersion(String table, int maxVersion) throws NoSuchTable {
+        for(int version=0;version<maxVersion;version++) {
+            String table_version=table + (version > 0 ? "_v" + version : "");
+            if(SQLite3DBParser.containsTable(table_version, conn)) {
+                return table_version;
+            }
+        }
+
+        throw new NoSuchTable(table);
+
+    }
+
+    private String getAndroidExtractMessagesSQL() throws NoSuchTable {
+        return "SELECT m.*,md.data as mediaData FROM " + findTableVersion("messages", 5)
+                + " m left join " + findTableVersion("media", 5) + " md on md.mid=m.mid where m.uid=? order by date";
+    }
+
     private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";
 
     private static final String CHATS_SQL = "SELECT d.did as chatId,u.name as chatName,u.data as chatData,"
@@ -601,10 +622,6 @@ public class Extractor {
 
     private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key,t7.value FROM t7 where substr(t7.key,1,8)=? and "
             + "substr(t7.value,1,1)=x'00'";
-
-    private static final String EXTRACT_MESSAGES_SQL_1 = "SELECT m.*,md.data as mediaData FROM messages m  left join media_v2 md on md.mid=m.mid where m.uid=? order by date";
-
-    private static final String EXTRACT_MESSAGES_SQL_2 = "SELECT m.*,md.data as mediaData FROM messages_v2 m left join media_v3 md on md.mid=m.mid where m.uid=? order by date";
 
     private static final String EXTRACT_CONTACTS_SQL = "SELECT * FROM users";
     private static final String EXTRACT_CONTACTS_SQL_IOS = "SELECT * FROM t2";
