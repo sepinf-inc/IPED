@@ -371,7 +371,10 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private void parseDB(WhatsAppContext wcontext, Metadata metadata, ParseContext context, ExtractorFactory extFactory)
             throws IOException, SAXException, TikaException {
-
+        if (wcontext.getItem().getLength() == 0) {
+            wcontext.setParsingError(true);
+            throw new TikaException("Empty database");
+        }
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             WAContactsDirectory contacts = getWAContactsDirectoryForPath(wcontext.getItem().getPath(), searcher,
@@ -429,8 +432,14 @@ public class WhatsAppParser extends SQLite3DBParser {
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
         WhatsAppContext wcontext = new WhatsAppContext(false, context.get(IItemBase.class));
-
-        parseDB(wcontext, metadata, context, extFactory);
+        try {
+            parseDB(wcontext, metadata, context, extFactory);
+        } catch (Exception e) {
+            // TODO: handle exception
+            checkIfIsMainDBAndStore(wcontext);
+            wcontext.setParsingError(true);
+            throw e;
+        }
         if (isDownloadMediaFilesEnabled()) {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
@@ -487,8 +496,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (dbsSearchedFor) {
             return;
         }
-        String query = BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\" OR " + BasicProps.CONTENTTYPE + ":\"" //$NON-NLS-1$ //$NON-NLS-2$
-                + MSG_STORE_2 + "\"";
+        String query = "(" + BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\" OR " + BasicProps.CONTENTTYPE + ":\"" //$NON-NLS-1$ //$NON-NLS-2$
+                + MSG_STORE_2 + "\") AND NOT " + BasicProps.LENGTH + ":0";
         List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
         for (IItemBase it : result) {
             WhatsAppContext wcontext = new WhatsAppContext(false, it);
@@ -523,14 +532,20 @@ public class WhatsAppParser extends SQLite3DBParser {
             // If a parsing occurred do not try to parse again
             synchronized (wcontext) {
                 if (wcontext.getChalist() == null) {
-                    parseDB(wcontext, metadata, context, extFactory);
+                    try {
+                        parseDB(wcontext, metadata, context, extFactory);
+                    } catch (Exception e) {
+                        // TODO: handle exception
+                        wcontext.setParsingError(true);
+                        throw e;
+                    }
                 }
             }
         }
 
         // parse DBs found above
         for (WhatsAppContext other : dbsFound.values().toArray(new WhatsAppContext[0])) {
-            if (other == wcontext)
+            if (other == wcontext || other.getParsingError())
                 continue;
             synchronized (other) {
                 if (other.getChalist() == null && !other.getParsingError()) {
@@ -539,6 +554,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     try {
                         parseDB(other, metadata, context, extFactory);
                     } catch (Exception e) {
+                        other.setParsingError(true);
                         other.setMainDB(false);
                         other.setBackup(false);
                         logger.warn("Could not parse DB {} ({} bytes): {}", other.getItem().getPath(),
@@ -546,6 +562,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                         logger.debug("", e);
                     }
                 }
+
             }
         }
 
