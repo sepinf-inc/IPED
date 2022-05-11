@@ -63,7 +63,7 @@ def isSupportedVideo(item):
     return item.getMediaType() is not None and item.getMediaType().toString().startswith('video') and item.getViewFile() is not None
     
 def supported(item):
-    return item.getLength() > 0 and (isImage(item) or isSupportedVideo(item))
+    return item.getLength() is not None and item.getLength() > 0 and (isImage(item) or isSupportedVideo(item))
 
 def convertJavaByteArray(byteArray):
     global arrayConvTime
@@ -86,9 +86,10 @@ Main class
 '''
 class NSFWNudityDetectTask:
     
-    itemList = []
-    imageList = []
-    queued = False
+    def __init__(self):
+        self.itemList = []
+        self.imageList = []
+        self.queued = False
 
     def isEnabled(self):
         return enabled
@@ -138,19 +139,19 @@ class NSFWNudityDetectTask:
     def sendToNextTask(self, item):
         
         if not item.isQueueEnd() and not self.queued:
-            javaTask.sendToNextTaskSuper(item)
+            javaTask.get().sendToNextTaskSuper(item)
             return
         
         if self.isToProcessBatch(item):
+        
             for i in self.itemList:
-                javaTask.sendToNextTaskSuper(i)
+                javaTask.get().sendToNextTaskSuper(i)
             
             self.itemList.clear()
             self.imageList.clear()
             
         if item.isQueueEnd():
-            javaTask.sendToNextTaskSuper(item)
-    
+            javaTask.get().sendToNextTaskSuper(item)
     
     def isToProcessBatch(self, item):
         size = len(self.itemList)
