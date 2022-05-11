@@ -70,6 +70,7 @@ public class ExtractorIOS extends Extractor {
     
     private boolean hasProfilePictureItemTable = false;
     private boolean hasZTitleColumn = false;
+    private SQLException parsingException = null;
 
     public ExtractorIOS(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
@@ -89,7 +90,7 @@ public class ExtractorIOS extends Extractor {
         // control retry parsing database in case of corrupted db
         // if database is corrupted, maybe recovering deleted data can
         // retrieve partial data
-        boolean firstTry = true;
+        boolean firstTry;
         boolean tryAgain;
 
         if (recoverDeletedRecords) {
@@ -129,6 +130,9 @@ public class ExtractorIOS extends Extractor {
 
         Set<Long> activeChats = new HashSet<>();
 
+        parsingException = null;
+        firstTry = recoverDeletedRecords; // if recovery of deleted messages is disable, go straight to the second try
+
         do {
             list = new ArrayList<>();
             tryAgain = false;
@@ -140,6 +144,8 @@ public class ExtractorIOS extends Extractor {
                 } catch (SQLException e) {
                     if (firstTry || !isSqliteCorruptException(e)) {
                         throw e;
+                    } else if (parsingException == null) {
+                        parsingException = e;
                     }
                 }
 
@@ -164,6 +170,8 @@ public class ExtractorIOS extends Extractor {
                 } catch (SQLException ex) {
                     if (firstTry || !isSqliteCorruptException(ex)) {
                         throw ex;
+                    } else if (parsingException == null) {
+                        parsingException = ex;
                     }
                 }
 
@@ -187,17 +195,25 @@ public class ExtractorIOS extends Extractor {
                         } catch (SQLException ex) {
                             if (firstTry || !isSqliteCorruptException(ex)) {
                                 throw ex;
+                            } else if (parsingException == null) {
+                                parsingException = ex;
                             }
                         }
                     }
                 }
 
-                if (!firstTry && list.size() > 0 && undeletedMessages.size() > 0) {
+                if (recoverDeletedRecords && !firstTry) {
                     if (list.size() > 0 && undeletedMessages.size() > 0) {
                         logger.info("Recovered deleted messages from corrupted database " + itemPath); //$NON-NLS-1$
                     } else {
                         logger.info("Was not able to recover messages from corrupted database " + itemPath); //$NON-NLS-1$
+                        if (parsingException != null) {
+                            throw parsingException;
+                        }
                     }
+                }
+                if (!firstTry && !recoverDeletedRecords && parsingException != null) {
+                    throw parsingException;
                 }
 
             } catch (SQLException ex) {
@@ -252,6 +268,8 @@ public class ExtractorIOS extends Extractor {
                 // ignore sqlite corrupt error on second try
                 // to try to recover deleted records instead
                 throw e;
+            } else if (parsingException == null) {
+                parsingException = e;
             }
         }
 
