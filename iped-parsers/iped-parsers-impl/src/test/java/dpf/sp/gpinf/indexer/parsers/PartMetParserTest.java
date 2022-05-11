@@ -4,6 +4,10 @@ import static org.junit.Assert.assertThrows;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -14,6 +18,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.BaseItemSearchContext;
+import dpf.sp.gpinf.indexer.parsers.util.Messages;
 
 public class PartMetParserTest extends BaseItemSearchContext {
     
@@ -30,10 +35,18 @@ public class PartMetParserTest extends BaseItemSearchContext {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
 
-            assertTrue(hts.contains("10/05/2022"));    // latest date
-            assertTrue(hts.contains("The Strokes - Last Nite.mp3"));    // file name
-            assertTrue(hts.contains("baa73b1bb93704b0225e6fc2e4b8e16d")); // hash
-            assertTrue(hts.contains("001.part"));      // tempfile
+            final DateFormat df = new SimpleDateFormat(Messages.getString("KnownMetParser.DataFormat"));
+            df.setTimeZone(TimeZone.getTimeZone("GMT+0"));
+            long lastModDateMs = 0x627a1c3f * 1000L;
+            Date date = new Date(lastModDateMs);
+            assertTrue(hts.contains(df.format(date)));
+
+            String fileName = "The Strokes - Last Nite.mp3";
+            String hash = "baa73b1bb93704b0225e6fc2e4b8e16d";
+            String tempFileName = "001.part";
+            assertTrue(hts.contains(fileName));
+            assertTrue(hts.contains(hash));
+            assertTrue(hts.contains(tempFileName));
         }
     }
 
