@@ -443,6 +443,26 @@ public class ExtractorIOS extends Extractor {
                 } // ignore
             }
         }
+        if (messageType == 0 && m.getData() == null) {
+            if (m.getMediaMime() != null) {
+                var mediaMime = m.getMediaMime();
+                if (mediaMime != null) {
+                    if (mediaMime.startsWith("image")) {
+                        m.setMessageType(IMAGE_MESSAGE);
+                    } else if (mediaMime.startsWith("video")) {
+                        m.setMessageType(VIDEO_MESSAGE);
+                    } else if (mediaMime.startsWith("application")) {
+                        m.setMessageType(APP_MESSAGE);
+                    } else if (mediaMime.startsWith("audio")) {
+                        m.setMessageType(AUDIO_MESSAGE);
+                    } else if (m.getMediaCaption() != null ){
+                        m.setData(m.getMediaCaption());
+                    }
+                }
+            } else {
+                m.setData(m.getMediaMime());
+            }
+        }
         m.setDeleted(row.isDeletedRow());
         return m;
     }
