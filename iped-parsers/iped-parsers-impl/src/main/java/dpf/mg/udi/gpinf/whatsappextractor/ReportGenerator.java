@@ -319,6 +319,11 @@ public class ReportGenerator {
                             out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
                         }
                         break;
+                    case UNKNOWN_MEDIA_MESSAGE:
+                        if (message.getMediaCaption() != null) {
+                            out.print(format(message.getMediaCaption()) + "<br/>"); //$NON-NLS-1$
+                        }
+                        break;
                     case URL_MESSAGE:
                         out.println("<a href=\"" + format(message.getUrl()) + "\">" + format(message.getUrl()) //$NON-NLS-1$ //$NON-NLS-2$
                                 + "</a><br/>"); //$NON-NLS-1$

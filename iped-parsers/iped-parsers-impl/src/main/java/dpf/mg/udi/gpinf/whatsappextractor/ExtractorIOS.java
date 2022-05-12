@@ -16,6 +16,7 @@ import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VIDE
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VOICE_CALL;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.STICKER_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.TEXT_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.UNKNOWN_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.URL_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USERS_JOINED_GROUP;
@@ -456,11 +457,11 @@ public class ExtractorIOS extends Extractor {
                     } else if (mediaMime.startsWith("audio")) {
                         m.setMessageType(AUDIO_MESSAGE);
                     } else if (m.getMediaCaption() != null ){
-                        m.setData(m.getMediaCaption());
+                        m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
                     }
                 }
-            } else {
-                m.setData(m.getMediaMime());
+            } else if (m.getMediaCaption() != null) {
+                m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
             }
         }
         m.setDeleted(row.isDeletedRow());
