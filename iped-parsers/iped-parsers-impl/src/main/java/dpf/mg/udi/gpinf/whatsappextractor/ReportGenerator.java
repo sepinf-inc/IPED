@@ -321,6 +321,7 @@ public class ReportGenerator {
                         break;
                     case UNKNOWN_MEDIA_MESSAGE:
                         if (message.getMediaCaption() != null) {
+                            out.println("<i>" + Messages.getString("WhatsAppReport.UnknownMediaMessage") + "</i><br/>");
                             out.print(format(message.getMediaCaption()) + "<br/>"); //$NON-NLS-1$
                         }
                         break;
