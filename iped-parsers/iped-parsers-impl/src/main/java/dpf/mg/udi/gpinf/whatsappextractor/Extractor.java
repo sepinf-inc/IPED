@@ -15,7 +15,7 @@ public abstract class Extractor {
     protected WAAccount account;
     protected boolean recoverDeletedRecords;
     protected String itemPath;
-    private static final int MESSAGE_LENGTH_TO_COMPARE_ALMOST_EQUAL = 8;
+    private static final int MESSAGE_LENGTH_TO_COMPARE_ALMOST_EQUAL = 16;
 
     protected Extractor(String itemPath,File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         this.itemPath = itemPath;
