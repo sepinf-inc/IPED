@@ -468,11 +468,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             TikaInputStream tis = TikaInputStream.get(wcontext.getItem().getSeekableInputStream(), tmp);
             File tempFile = tis.getFile();
             
-            ItemInfo itemInfo = context.get(ItemInfo.class);
             String filePath = null;
-            if (itemInfo != null) {
-                filePath = itemInfo.getPath();
-            }
+            filePath = wcontext.getItem().getPath();
             
             exportWalLog(tempFile, context, tmp);
             exportRollbackJournal(tempFile, context, tmp);
