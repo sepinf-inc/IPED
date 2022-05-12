@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.codec.binary.Hex;
@@ -28,8 +29,10 @@ public class Message {
     private static File thumbsfile;
     private static FileChannel fileChannel;
     private static AtomicLong fileOffset = new AtomicLong();
+    private static AtomicInteger deletedCounter = new AtomicInteger();
 
     private long id;
+    private int deletedId = -1;
     private String remoteId;
     private String remoteResource;
     private String localResource;
@@ -90,6 +93,19 @@ public class Message {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    /**
+     * Deleted recovered messages may have the same id as an allocated message. This
+     * returns a global unique id for a decoded database.
+     * 
+     * @return a unique string id
+     */
+    public String getUniqueId() {
+        if (deletedId == -1) {
+            deletedId = deletedCounter.getAndIncrement();
+        }
+        return !deleted ? Long.toString(id) : id + "_" + deletedId;
     }
 
     public String getRemoteId() {

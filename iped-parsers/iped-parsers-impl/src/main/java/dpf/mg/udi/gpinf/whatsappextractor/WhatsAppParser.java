@@ -783,7 +783,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             meta.set(TikaCoreProperties.TITLE, chatName + "_message_" + msgCount++); //$NON-NLS-1$
             meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_MESSAGE.toString());
             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentVirtualId));
-            meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(m.getId()));
+            meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(m.getUniqueId()));
             meta.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());

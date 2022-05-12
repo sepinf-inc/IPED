@@ -164,7 +164,7 @@ public class ReportGenerator {
             WAContactsDirectory contactsDirectory,
             WAAccount account) {
 
-        out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
+        out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {
             case UNKNOWN_MESSAGE:
