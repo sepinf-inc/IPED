@@ -61,7 +61,7 @@ public class MessageWrapperForDuplicateRemoval {
         if (!equalsWithNull(message.getMediaHash(), m2.message.getMediaHash()))
             return false;
         
-        if (!equalsWithNull(message.getMessageStatus(), m2.message.getMessageStatus()))
+        if (!equalsWithNull(message.getMessageType(), m2.message.getMessageType()))
             return false;
         
         return true;
