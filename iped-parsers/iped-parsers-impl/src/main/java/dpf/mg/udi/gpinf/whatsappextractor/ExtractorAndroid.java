@@ -128,7 +128,7 @@ public class ExtractorAndroid extends Extractor {
                 undeleteChats(undeleteChatListTable, undeleteChatTable, undeleteJIDTable, contacts)
                 : Collections.emptyList();
 
-        Set<Long> activeChats = new HashSet<>();
+        Set<String> activeChats = new HashSet<>();
 
         parsingException = null;
         firstTry = recoverDeletedRecords; // if recovery of deleted messages is disable, go straight to the second try
@@ -178,8 +178,9 @@ public class ExtractorAndroid extends Extractor {
                         c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
                         c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                         if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                            if (recoverDeletedRecords)
-                                activeChats.add(c.getId());
+                            if (recoverDeletedRecords) {
+                                activeChats.add(contactId);
+                            }
                             list.add(c);
                         }
                     }
@@ -192,7 +193,9 @@ public class ExtractorAndroid extends Extractor {
                 }
 
                 for (Chat c : undeletedChats) {
-                    if (!activeChats.contains(c.getId())) {
+                    String remoteId = c.getRemote().getId();
+                    remoteId += c.isGroupChat() ? "@g.us" : "@s.whatsapp.net"; //$NON-NLS-1$ //$NON-NLS-2$
+                    if (!activeChats.contains(remoteId)) {
                         list.add(c);
                         if (firstTry && c.isDeleted()) {
                             logger.info("Recovered deleted chat for database " //$NON-NLS-1$
