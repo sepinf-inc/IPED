@@ -327,6 +327,8 @@ public class ExtractorAndroid extends Extractor {
         id += isGroupChat ? "@g.us" : "@s.whatsapp.net"; //$NON-NLS-1$ //$NON-NLS-2$
         
         Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
+        Map<Long, Message> activeMessageIds = new HashMap<>();
+
         String query;
         if (!hasMediaDurationCol) {
             query = SELECT_MESSAGES_NO_MEDIA_DURATION;
@@ -346,8 +348,10 @@ public class ExtractorAndroid extends Extractor {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Message m = createMessageFromDBRow(rs, remote, isGroupChat, false, hasThumbTable, hasEditVersionCol);
-                    if (recoverDeleted)
+                    if (recoverDeleted) {
                         activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
+                        activeMessageIds.put(m.getId(), m);
+                    }
                     messages.add(m);
                 }
             }
@@ -370,8 +374,12 @@ public class ExtractorAndroid extends Extractor {
                 try {
                     if (!firstTry || rs.getCurrentRow().isDeletedRow()) {
                     Message m = createMessageFromDBRow(rs, remote, isGroupChat, rs.getCurrentRow().isDeletedRow(), hasThumbTable, hasEditVersionCol);
+
                     if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) { //do not include deleted message if already there
-                        messages.add(m);
+                        if (!activeMessageIds.containsKey(m.getId()) ||
+                            !compareMessagesAlmostTheSame(activeMessageIds.get(m.getId()), m)) { //also remove messages with same id that have the same start text (possibly corrupted recovered record)
+                            messages.add(m);
+                        }
                     }}
                 } catch (SQLException e) {
                     logger.warn("Error creating undeleted message", e); //$NON-NLS-1$

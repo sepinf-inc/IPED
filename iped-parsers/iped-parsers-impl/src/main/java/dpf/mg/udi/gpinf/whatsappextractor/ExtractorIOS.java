@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -251,6 +252,7 @@ public class ExtractorIOS extends Extractor {
         }
         
         Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
+        Map<Long, Message> activeMessageIds = new HashMap<>();
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setFetchSize(1000);
@@ -258,8 +260,10 @@ public class ExtractorIOS extends Extractor {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Message m = createMessageFromDB(rs, chat);
-                    if (recoverDeleted)
+                    if (recoverDeleted) {
                         activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
+                        activeMessageIds.put(m.getId(), m);
+                    }
                     messages.add(m);
                 }
             }
@@ -281,7 +285,10 @@ public class ExtractorIOS extends Extractor {
                     if (!firstTry || row.isDeletedRow()) {
                     Message m = createMessageFromUndeletedRecord(row, chat, mediaItems, groupMembers);
                     if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) { //do not include deleted message if already there
-                        messages.add(m);
+                        if (!activeMessageIds.containsKey(m.getId()) ||
+                            !compareMessagesAlmostTheSame(activeMessageIds.get(m.getId()), m)) { //also remove messages with same id that have the same start text (possibly corrupted recovered record)
+                            messages.add(m);
+                        }
                     }
                     }
                 } catch (SQLException e) {

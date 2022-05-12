@@ -15,6 +15,7 @@ public abstract class Extractor {
     protected WAAccount account;
     protected boolean recoverDeletedRecords;
     protected String itemPath;
+    private static final int MESSAGE_LENGTH_TO_COMPARE_ALMOST_EQUAL = 8;
 
     protected Extractor(String itemPath,File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         this.itemPath = itemPath;
@@ -84,6 +85,21 @@ public abstract class Extractor {
         }
         
         
+        return false;
+    }
+
+    protected boolean compareMessagesAlmostTheSame(Message m1, Message m2) {
+        if (m1.getId() == m2.getId()) {
+            String tx1 = m1.getData();
+            String tx2 = m2.getData();
+            if (tx1 != null &&
+                tx2 != null &&
+                tx1.length() >= MESSAGE_LENGTH_TO_COMPARE_ALMOST_EQUAL &&
+                tx2.length() >= MESSAGE_LENGTH_TO_COMPARE_ALMOST_EQUAL ) {
+                return tx1.substring(0, MESSAGE_LENGTH_TO_COMPARE_ALMOST_EQUAL)
+                        .equals(tx2.substring(0, MESSAGE_LENGTH_TO_COMPARE_ALMOST_EQUAL));
+            }
+        }
         return false;
     }
 
