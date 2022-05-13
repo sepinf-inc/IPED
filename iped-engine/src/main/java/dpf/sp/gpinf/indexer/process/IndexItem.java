@@ -129,7 +129,7 @@ public class IndexItem extends BasicProps {
 
     private static volatile boolean collectMetaTypes = false;
 
-    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new HashMap<>();
     private static Map<File, File> localEvidenceMap = new ConcurrentHashMap<>();
 
     private static Map<String, Class<?>> typesMap = Collections
@@ -915,23 +915,25 @@ public class IndexItem extends BasicProps {
                 if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
                     sourcePath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toString();
                 }
-                SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
-                if (sisf == null) {
-                    Class<?> clazz = Class.forName(className);
-                    try {
-                        Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                        sisf = c.newInstance(Path.of(sourcePath));
+                synchronized (inputStreamFactories) {
+                    SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
+                    if (sisf == null) {
+                        Class<?> clazz = Class.forName(className);
+                        try {
+                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                            sisf = c.newInstance(Path.of(sourcePath));
 
-                    } catch (NoSuchMethodException e) {
-                        Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                        sisf = c.newInstance(URI.create(sourcePath));
+                        } catch (NoSuchMethodException e) {
+                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                            sisf = c.newInstance(URI.create(sourcePath));
+                        }
+                        if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
+                            checkIfExistsAndAsk(sisf, iCase.getModuleDir());
+                        }
+                        inputStreamFactories.put(sourcePath, sisf);
                     }
-                    if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                        checkIfExistsAndAsk(sisf, iCase.getModuleDir());
-                    }
-                    inputStreamFactories.put(sourcePath, sisf);
+                    evidence.setInputStreamFactory(sisf);
                 }
-                evidence.setInputStreamFactory(sisf);
             }
 
             value = doc.get(IndexItem.TIMEOUT);
