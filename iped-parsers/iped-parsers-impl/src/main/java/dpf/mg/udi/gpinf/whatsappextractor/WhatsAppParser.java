@@ -421,7 +421,6 @@ public class WhatsAppParser extends SQLite3DBParser {
         try {
             parseDB(wcontext, metadata, context, extFactory);
         } catch (Exception e) {
-            // TODO: handle exception
             checkIfIsMainDBAndStore(wcontext);
             wcontext.setParsingError(true);
             throw e;
@@ -512,7 +511,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                     try {
                         parseDB(wcontext, metadata, context, extFactory);
                     } catch (Exception e) {
-                        // TODO: handle exception
                         wcontext.setParsingError(true);
                         throw e;
                     }
