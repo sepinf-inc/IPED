@@ -147,12 +147,12 @@
         <dependency>
             <groupId>dpf.ap</groupId>
             <artifactId>telegram-decoder-api</artifactId>
-            <version>1.0.3-SNAPSHOT</version>
+            <version>1.0.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>dpf.ap</groupId>
             <artifactId>telegram-decoder-impl</artifactId>
-            <version>1.0.6-SNAPSHOT</version>
+            <version>${telegram.impl.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
