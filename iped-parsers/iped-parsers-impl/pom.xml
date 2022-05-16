@@ -139,6 +139,12 @@
             <artifactId>telegram-decoder-api</artifactId>
             <version>1.0.4-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>dpf.ap</groupId>
+            <artifactId>telegram-decoder-impl</artifactId>
+            <version>${telegram.impl.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     
     <build>
