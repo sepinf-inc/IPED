@@ -51,7 +51,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         a.setBounds(a.x, 0, a.width, a.height);
         App.get().resultsTable.scrollRectToVisible(a);
         App.get().gallery.scrollRectToVisible(new Rectangle());
-
+        App.get().setEnableGallerySimSearchButton(false);
         App.get().ipedResult = new MultiSearchResult();
         App.get().setLastSelectedDoc(-1);
         App.get().resultsModel.fireTableDataChanged();
