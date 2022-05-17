@@ -36,9 +36,9 @@ import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
+import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.util.BytesRef;
-import org.apache.tika.io.CloseShieldInputStream;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
