@@ -46,9 +46,9 @@
 		{"name":"WhatsApp", "mimes":["application/x-whatsapp-db", "application/x-whatsapp-chatstorage", "application/x-whatsapp-chat","application/x-ufed-chat-whatsapp"]},
 		{"name":"Messenger","mimes":["application/messenger-plus", "application/messenger-chat"]},
 		{"name":"Skype","mimes":["application/sqlite-skype", "application/skype",  "application/x-skype-conversation"]},
-		{"name":"Telegram","mimes":["application/x-telegram-chat"]},
-		{"name":"","mimes":["application/x-jabber-chat"]},
-		{"name":"Others","mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
+		{"name":"Telegram","mimes":["application/x-telegram-chat","application/x-ufed-chat-telegram"]},
+		{"name":"Jabber","mimes":["application/x-jabber-chat"]},
+		{"name":"Others Chats","mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
 	]},
     {"name": "Windows Registry", "mimes": ["application/x-windows-registry", "application/x-windows-registry-report"]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
