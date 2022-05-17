@@ -5,6 +5,7 @@ import java.io.InputStream;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
@@ -23,7 +24,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         WhatsAppParser parser = new WhatsAppParser();
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-db");
-        metadata.add(Metadata.RESOURCE_NAME_KEY, "msgstore-d4");
+        metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "msgstore-d4");
         ContentHandler handler = new BodyContentHandler(1 << 20);
         parser.setExtractMessages(true);
         parser.setMergeBackups(false);
@@ -95,7 +96,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         WhatsAppParser parser = new WhatsAppParser();
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-db");
-        metadata.add(Metadata.RESOURCE_NAME_KEY, "msgstore-d4");
+        metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "msgstore-d4");
         parser.setExtractMessages(true);
         parser.setMergeBackups(true);
         parser.getSupportedTypes(whatsappContext);
