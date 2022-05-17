@@ -11,8 +11,8 @@ import iped3.io.SeekableInputStream;
 
 public class SeekableFileInputStream extends SeekableInputStream {
 
-    SeekableByteChannel sbc;
-    long markPos, markLimit;
+    private SeekableByteChannel sbc;
+    private boolean closed = false;
 
     public SeekableFileInputStream(File file) throws IOException {
         this.sbc = FileChannel.open(file.toPath(), StandardOpenOption.READ);
@@ -29,6 +29,7 @@ public class SeekableFileInputStream extends SeekableInputStream {
 
     @Override
     public int read(byte b[], int off, int len) throws IOException {
+        checkIfClosed();
         ByteBuffer bb = ByteBuffer.wrap(b, off, len);
         return sbc.read(bb);
     }
@@ -49,14 +50,14 @@ public class SeekableFileInputStream extends SeekableInputStream {
 
     @Override
     public int available() throws IOException {
+        checkIfClosed();
         long avail = sbc.size() - sbc.position();
         return (int) Math.min(avail, Integer.MAX_VALUE);
-
     }
 
     @Override
     public long skip(long n) throws IOException {
-
+        checkIfClosed();
         long pos = sbc.position();
         long newPos = pos + n;
         long len = sbc.size();
@@ -69,10 +70,10 @@ public class SeekableFileInputStream extends SeekableInputStream {
         sbc.position(newPos);
 
         return newPos - pos;
-
     }
 
     public void seek(long pos) throws IOException {
+        checkIfClosed();
         sbc.position(pos);
     }
 
@@ -83,6 +84,7 @@ public class SeekableFileInputStream extends SeekableInputStream {
 
     @Override
     public void mark(int mark) {
+        checkIfClosed();
         try {
             markPos = sbc.position();
             markLimit = mark;
@@ -94,6 +96,7 @@ public class SeekableFileInputStream extends SeekableInputStream {
 
     @Override
     public void reset() throws IOException {
+        checkIfClosed();
         if (sbc.position() - markPos <= markLimit)
             sbc.position(markPos);
         else
@@ -102,6 +105,10 @@ public class SeekableFileInputStream extends SeekableInputStream {
 
     @Override
     public void close() throws IOException {
+        if (closed) {
+            return;
+        }
+        closed = true;
         sbc.close();
         // clear reference, possibly heavy one with bytes kept in memory
         this.sbc = null;
@@ -109,11 +116,13 @@ public class SeekableFileInputStream extends SeekableInputStream {
 
     @Override
     public long position() throws IOException {
+        checkIfClosed();
         return sbc.position();
     }
 
     @Override
     public long size() throws IOException {
+        checkIfClosed();
         return sbc.size();
     }
 
