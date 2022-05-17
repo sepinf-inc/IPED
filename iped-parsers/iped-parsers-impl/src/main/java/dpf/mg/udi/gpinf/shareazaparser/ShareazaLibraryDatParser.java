@@ -28,7 +28,7 @@ import java.util.Set;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaMetadataKeys;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -61,7 +61,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             throws IOException, SAXException, TikaException {
 
         metadata.set(HttpHeaders.CONTENT_TYPE, LIBRARY_DAT_MIME_TYPE);
-        metadata.remove(TikaMetadataKeys.RESOURCE_NAME_KEY);
+        metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
         MFCParser parser = new MFCParser(stream);
         Library library = new Library();

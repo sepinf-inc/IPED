@@ -38,12 +38,10 @@ import org.apache.tika.detect.Detector;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.FilenameUtils;
-import org.apache.tika.io.IOExceptionWithCause;
-import org.apache.tika.io.IOUtils;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Database;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaMetadataKeys;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MimeTypes;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
@@ -53,6 +51,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
+
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
  * General base class to iterate through rows of a JDBC table
@@ -94,7 +94,7 @@ class JDBCTableReader {
                 return false;
             }
         } catch (SQLException e) {
-            throw new IOExceptionWithCause(e);
+            throw new IOException(e);
         }
         try {
             ResultSetMetaData meta = results.getMetaData();
@@ -171,7 +171,7 @@ class JDBCTableReader {
                     headers.add(meta.getColumnName(i));
                 }
             } catch (SQLException e) {
-                throw new IOExceptionWithCause(e);
+                throw new IOException(e);
             }
         return headers;
     }
@@ -202,7 +202,7 @@ class JDBCTableReader {
         m.set(Metadata.CONTENT_LENGTH, Integer.toString(readSize));
         // just in case something screwy is going on with the column name
         String name = FilenameUtils.normalize(FilenameUtils.getName(columnName + "_" + rowNum + ".txt")); //$NON-NLS-1$ //$NON-NLS-2$
-        m.set(TikaMetadataKeys.RESOURCE_NAME_KEY, name);
+        m.set(TikaCoreProperties.RESOURCE_NAME_KEY, name);
         // is there a more efficient way to go from a Reader to an InputStream?
         String s = clob.getSubString(0, readSize);
         // EmbeddedDocumentExtractor ex =
@@ -245,7 +245,7 @@ class JDBCTableReader {
                 if (is.getLength() > MIN_SIZE) {
                     if (context.get(Parser.class) != null || !(ex instanceof ParsingEmbeddedDocumentExtractor)) {
                         String name = tableName + "_" + columnName + "_" + rowNum + ".data"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        m.set(TikaMetadataKeys.RESOURCE_NAME_KEY, name);
+                        m.set(TikaCoreProperties.RESOURCE_NAME_KEY, name);
                         ex.parseEmbedded(is, handler, m, false);
                     }
                     return "[BLOB]";
@@ -264,7 +264,7 @@ class JDBCTableReader {
                         // swallow
                     }
                 }
-                IOUtils.closeQuietly(is);
+                IOUtil.closeQuietly(is);
             }
         return null;
     }
@@ -301,7 +301,7 @@ class JDBCTableReader {
 
         } catch (SQLException e) {
             results = null;
-            // throw new IOExceptionWithCause(e);
+            // throw new IOException(e);
         }
         rows = 0;
         return results;
