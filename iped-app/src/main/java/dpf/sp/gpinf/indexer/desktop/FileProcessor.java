@@ -38,6 +38,7 @@ import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.datasource.AD1DataSourceReader.AD1InputStreamFactory;
 import dpf.sp.gpinf.indexer.io.ZIPInputStreamFactory;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
@@ -149,6 +150,9 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         if (item.getMediaType() != null) {
             contentType = item.getMediaType().toString();
         }
+        
+        boolean enabled = item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) != null;
+        App.get().setEnableGallerySimSearchButton(enabled);
 
         IItem viewItem = item;
 
