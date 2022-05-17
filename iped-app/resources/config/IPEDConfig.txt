@@ -19,15 +19,15 @@ enablePhotoDNALookup = false
 # and "nudityClass" (1 to 5) for ranking and/or filtering.
 enableLedDie = false
 
-# Enables QRcode detection and decoding
-enableQRCode = false
-
-# Enables nudity detection using Yahoo OpenNSFW deeplearning algorithm.
-# You MUST install python and some dependencies to enable it, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
-# This is about 7.5 times slower than LedDie algorithm on the CPU, using a good GPU is recommended.
-# It has better accuracy for some images and videos, worse for others.
+# [Experimental] Enables nudity detection using Yahoo OpenNSFW deeplearning algorithm.
+# You may install python and some dependencies to enable it, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
+# This is more than 1 order of magnitude slower than LedDie algorithm on the CPU, using a good GPU is highly recommended.
+# It gives higher scores than LedDie algorithm for images/videos with genitals or explicit sex, mainly because of training dataset differences.
 # An attribute nsfw_nudity_score from 0 to 100 will be created.
 enableYahooNSFWDetection = false
+
+# Enables QRcode detection and decoding
+enableQRCode = false
 
 # Ignore and exclude duplicated files with same hash from the processing and from the case. 
 # WARNING: This feature is inherently DANGEROUS, as it could exclude from the case duplicated files with
@@ -118,7 +118,7 @@ enableImageThumbs = true
 enableImageSimilarity = false
 
 # [Experimental] Enables face recognition feature.
-# You MUST install python and some dependencies, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
+# You may install python and some dependencies, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
 # Advanced configuration options can be found in conf/FaceRecognitionConfig.txt.
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 enableFaceRecognition = false

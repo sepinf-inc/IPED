@@ -247,8 +247,10 @@ public class LibreOfficeViewer extends AbstractViewer {
                 @Override
                 public void run() {
                     LOGGER.info("Constructing LibreOffice frame..."); //$NON-NLS-1$
-                    File msvcr100 = new File(nativelib, "64bit/msvcr100.dll");
-                    System.load(msvcr100.getAbsolutePath());
+                    if (System.getProperty("os.name").startsWith("Windows")) {
+                        File msvcr100 = new File(nativelib, "64bit/msvcr100.dll");
+                        System.load(msvcr100.getAbsolutePath());
+                    }
                     nat = new NativeView(nativelib);
                     noaPanel.removeAll();
                     noaPanel.add(nat);

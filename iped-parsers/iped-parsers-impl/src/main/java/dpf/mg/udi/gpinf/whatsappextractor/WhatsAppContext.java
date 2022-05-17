@@ -14,6 +14,8 @@ public class WhatsAppContext {
 
     private IItemBase mainDBItem;
 
+    private boolean parsingError = false;
+
 
     public WhatsAppContext(boolean isMainDB, IItemBase item) {
         this.setMainDB(isMainDB);
@@ -61,5 +63,13 @@ public class WhatsAppContext {
 
     public void setMainDBItem(IItemBase mainDBItem) {
         this.mainDBItem = mainDBItem;
+    }
+
+    public boolean getParsingError() {
+        return parsingError;
+    }
+
+    public void setParsingError(boolean parsingError) {
+        this.parsingError = parsingError;
     }
 }
