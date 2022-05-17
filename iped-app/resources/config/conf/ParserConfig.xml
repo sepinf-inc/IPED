@@ -63,7 +63,7 @@
         <!--<parser class="org.apache.tika.parser.image.HeifParser"></parser>-->
         <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser>
         <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
-        <!--<parser class="org.apache.tika.parser.jpeg.JpegParser"></parser>-->
+        <!--<parser class="org.apache.tika.parser.image.JpegParser"></parser>-->
         <!--We have our own impls
         <parser class="org.apache.tika.parser.mail.RFC822Parser"></parser>
         <parser class="org.apache.tika.parser.mbox.MboxParser"></parser>
@@ -167,7 +167,7 @@
             <mime>image/jpeg</mime>
             <params>
                 <param name="parserName" type="string">JPEGParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.jpeg.JpegParser</param>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.JpegParser</param>
             </params>
         </parser>
         
