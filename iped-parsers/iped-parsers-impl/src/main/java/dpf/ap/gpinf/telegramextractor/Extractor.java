@@ -582,9 +582,9 @@ public class Extractor {
     }
 
     private String findTableVersion(String table, int maxVersion) throws NoSuchTable {
-        for(int version=0;version<maxVersion;version++) {
-            String table_version=table + (version > 0 ? "_v" + version : "");
-            if(SQLite3DBParser.containsTable(table_version, conn)) {
+        for (int version = 0; version < maxVersion; version++) {
+            String table_version = table + (version > 0 ? "_v" + version : "");
+            if (SQLite3DBParser.containsTable(table_version, conn)) {
                 return table_version;
             }
         }
@@ -594,8 +594,8 @@ public class Extractor {
     }
 
     private String getAndroidExtractMessagesSQL() throws NoSuchTable {
-        return "SELECT m.*,md.data as mediaData FROM " + findTableVersion("messages", 5)
-                + " m left join " + findTableVersion("media", 5) + " md on md.mid=m.mid where m.uid=? order by date";
+        return "SELECT m.*,md.data as mediaData FROM " + findTableVersion("messages", 5) + " m left join "
+                + findTableVersion("media", 5) + " md on md.mid=m.mid where m.uid=? order by date";
     }
 
     private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";
