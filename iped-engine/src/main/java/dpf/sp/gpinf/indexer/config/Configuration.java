@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.DefaultPolicy;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -85,12 +84,7 @@ public class Configuration {
     private void configureLogger(String configPath) {
         // DataSource.testConnection(configPathStr);
         LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName()); //$NON-NLS-1$
-
-        logger = null;
-        if (Configuration.class.getClassLoader().getClass().getName().equals(CustomURLClassLoader.class.getName())) {
-            logger = LoggerFactory.getLogger(Configuration.class);
-            logger.info("Loading configuration from " + configPath); //$NON-NLS-1$
-        }
+        logger = LoggerFactory.getLogger(Configuration.class);
     }
 
     /**
@@ -176,6 +170,10 @@ public class Configuration {
 
         getConfiguration(configPathStr);
 
+        if (loadAll) {
+            logger.info("Loading configuration from " + configPath); //$NON-NLS-1$
+        }
+
         configDirectory = new ConfigurationDirectory(Paths.get(appRoot, LOCAL_CONFIG));
 
         File defaultProfile = new File(appRoot);
@@ -198,10 +196,7 @@ public class Configuration {
 
         loadNativeLibs();
 
-        if (!loadAll && !Configuration.class.getClassLoader().getClass().getName()
-                .equals(CustomURLClassLoader.class.getName())) {
-            // we still are in the application first classLoader, no need to load other
-            // configurables
+        if (!loadAll) {
             configManager.loadConfigs();
             return;
         }
