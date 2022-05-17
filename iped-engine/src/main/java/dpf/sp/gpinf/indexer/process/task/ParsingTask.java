@@ -257,7 +257,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         Long len = evidence.getLength();
         if (len != null)
             metadata.set(Metadata.CONTENT_LENGTH, len.toString());
-        metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, evidence.getName());
         if (evidence.getMediaType() != null) {
             metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
             metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());

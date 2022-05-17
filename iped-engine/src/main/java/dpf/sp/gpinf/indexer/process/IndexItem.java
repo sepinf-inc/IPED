@@ -154,7 +154,7 @@ public class IndexItem extends BasicProps {
 
         ignoredMetadata.add(Metadata.CONTENT_TYPE);
         ignoredMetadata.add(Metadata.CONTENT_LENGTH);
-        ignoredMetadata.add(Metadata.RESOURCE_NAME_KEY);
+        ignoredMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY);
         ignoredMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         ignoredMetadata.add(IndexerDefaultParser.INDEXER_TIMEOUT);
         ignoredMetadata.add(TikaCoreProperties.CONTENT_TYPE_HINT.getName());
