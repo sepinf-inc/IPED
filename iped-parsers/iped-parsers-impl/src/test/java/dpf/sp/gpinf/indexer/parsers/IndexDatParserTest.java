@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,32 +22,39 @@ import dpf.sp.gpinf.indexer.parsers.util.RepoToolDownloader;
 
 public class IndexDatParserTest {
     private static String testRoot = System.getProperty("user.dir") + "/src/test";
+    private static String osName = System.getProperty("os.name").toLowerCase(); 
 
     @BeforeClass
     public static void setUpTool() throws IOException {
-        String urlPath = "libyal/libmsiecf/20160421.1/libmsiecf-20160421.1.zip";
-        RepoToolDownloader.unzipFromUrl(urlPath, testRoot + "/tmp_tools/");
-        System.setProperty(IndexDatParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/msiecfexport/");
+        if (osName.startsWith("windows")) {
+            String urlPath = "libyal/libmsiecf/20160421.1/libmsiecf-20160421.1.zip";
+            RepoToolDownloader.unzipFromUrl(urlPath, testRoot + "/tmp_tools/");
+            System.setProperty(IndexDatParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/msiecfexport/");
+        }
     }
-
+    
     @AfterClass
     public static void removeTempToolsFolder() throws IOException {
-        File tool_path = new File(System.clearProperty(IndexDatParser.TOOL_PATH_PROP));
-        FileUtils.deleteDirectory(tool_path.getParentFile());
+        if (osName.startsWith("windows")) {
+            File tool_path = new File(System.clearProperty(IndexDatParser.TOOL_PATH_PROP));
+            FileUtils.deleteDirectory(tool_path.getParentFile());
+        }
     }
-
+    
     @Test
     public void testIndexDatParser() throws IOException, SAXException, TikaException {
-
+        
         IndexDatParser parser = new IndexDatParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new ToTextContentHandler();
         ParseContext context = new ParseContext();
 
+        assumeFalse(parser.getSupportedTypes(context).isEmpty());
+        
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_index.dat")) {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
-
+            
             assertTrue(hts.contains("Record type"));
             assertTrue(hts.contains("URL"));
             assertTrue(hts.contains("Offset range"));
@@ -61,8 +69,8 @@ public class IndexDatParserTest {
             assertTrue(hts.contains("Cookie:guileb@google.com.br/complete/search"));
             assertTrue(hts.contains("Cookie:guileb@www.incredibarvuz1.com/"));
             assertTrue(hts.contains("Export completed."));
-
+            
         }
-
+        
     }
 }

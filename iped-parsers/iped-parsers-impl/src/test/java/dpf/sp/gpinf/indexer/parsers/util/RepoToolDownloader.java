@@ -14,8 +14,6 @@ import java.nio.file.Paths;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.commons.io.FileUtils;
-
 public class RepoToolDownloader {
 
     private static final String MVN_REPO_URL = "https://gitlab.com/iped-project/iped-maven/raw/master/";
