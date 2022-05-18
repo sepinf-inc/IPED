@@ -135,12 +135,7 @@ public class Configuration {
 
             File nativelibs = new File(loaddbPathWin).getParentFile().getParentFile();
             nativelibs = new File(nativelibs, arch);
-
-            if (System.getProperty("ipedNativeLibsLoaded") == null) { //$NON-NLS-1$
-                Util.loadNatLibs(nativelibs);
-                System.setProperty("ipedNativeLibsLoaded", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-            }
-
+            Util.loadNatLibs(nativelibs);
         }
     }
 
@@ -194,12 +189,12 @@ public class Configuration {
         configManager.loadConfig(pluginConfig);
         addPluginJarsToConfigurationLookup(configDirectory, pluginConfig);
 
-        loadNativeLibs();
-
         if (!loadAll) {
             configManager.loadConfigs();
             return;
         }
+
+        loadNativeLibs();
 
         configManager.addObject(new LocalConfig());
         configManager.addObject(new OCRConfig());
