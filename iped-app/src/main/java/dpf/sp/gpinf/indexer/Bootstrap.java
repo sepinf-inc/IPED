@@ -33,8 +33,24 @@ public class Bootstrap {
     private static String separator = SystemUtils.IS_OS_WINDOWS ? ";" : ":";
 
     public static void main(String args[]) {
+        new Bootstrap().run(args);
+    }
 
-        Main iped = new Main(args);
+    protected boolean isToDecodeArgs() {
+        return true;
+    }
+
+    protected String getDefaultClassPath(Main iped) {
+        return iped.rootPath + "/iped.jar";
+    }
+
+    protected String getMainClassName() {
+        return Main.class.getCanonicalName();
+    }
+
+    protected void run(String args[]) {
+
+        Main iped = new Main(args, isToDecodeArgs());
         int exit = -1;
         try {
             iped.setConfigPath();
@@ -43,7 +59,7 @@ public class Bootstrap {
 
             Configuration.getInstance().loadConfigurables(iped.configPath, false);
             
-            String classpath = iped.rootPath + "/iped.jar"; //$NON-NLS-1$
+            String classpath = getDefaultClassPath(iped);
             
             PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
             
@@ -62,7 +78,8 @@ public class Bootstrap {
             String javaBin = SystemUtils.IS_OS_WINDOWS ? iped.rootPath + "/jre/bin/java.exe" : "java";
 
             List<String> cmd = new ArrayList<>();
-            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, "-Xmx" + XMX, Main.class.getCanonicalName()));
+            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, "-Xmx" + XMX));
+            cmd.add(getMainClassName());
             cmd.addAll(Arrays.asList(args));
             
             ProcessBuilder pb = new ProcessBuilder();

@@ -98,10 +98,12 @@ public class Main {
     /**
      * Contrutor utilizado pela execução via linha de comando
      */
-    public Main(String[] args) {
+    public Main(String[] args, boolean decodeArgs) {
         lastInstance = this;
         cmdLineParams = new CmdLineArgsImpl();
-        cmdLineParams.takeArgs(args);
+        if (decodeArgs) {
+            cmdLineParams.takeArgs(args);
+        }
     }
 
     /**
@@ -242,7 +244,7 @@ public class Main {
      */
     public static void main(String[] args) {
 
-        Main iped = new Main(args);
+        Main iped = new Main(args, true);
         PrintStream SystemOut = System.out;
         boolean success = false;
 
