@@ -153,7 +153,7 @@ public class AppMain {
 
             if (processingManager == null) {
                 logConfiguration = new LogConfiguration(libDir.getParentFile().getAbsolutePath(), logFile);
-                logConfiguration.configureLogParameters(nolog, true);
+                logConfiguration.configureLogParameters(nolog);
 
                 Logger LOGGER = LoggerFactory.getLogger(AppMain.class);
                 LOGGER.info(Version.APP_NAME);

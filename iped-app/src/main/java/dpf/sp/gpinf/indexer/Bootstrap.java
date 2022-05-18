@@ -56,7 +56,7 @@ public class Bootstrap {
         try {
             iped.setConfigPath();
             iped.logConfiguration = new LogConfiguration(iped, null);
-            iped.logConfiguration.configureLogParameters(true, true);
+            iped.logConfiguration.configureLogParameters(true);
 
             Configuration.getInstance().loadConfigurables(iped.configPath, false);
             

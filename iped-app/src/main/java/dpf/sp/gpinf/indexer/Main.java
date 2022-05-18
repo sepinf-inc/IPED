@@ -251,7 +251,7 @@ public class Main {
         try {
             iped.setConfigPath();
             iped.logConfiguration = new LogConfiguration(iped, null);
-            iped.logConfiguration.configureLogParameters(iped.cmdLineParams.isNologfile(), true);
+            iped.logConfiguration.configureLogParameters(iped.cmdLineParams.isNologfile());
 
             LOGGER = LoggerFactory.getLogger(Main.class);
             LOGGER.info(Version.APP_NAME);
