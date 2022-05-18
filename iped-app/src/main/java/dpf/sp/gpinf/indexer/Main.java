@@ -19,11 +19,9 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.URL;
-import java.security.Policy;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -31,20 +29,12 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.localization.Messages;
-import dpf.sp.gpinf.indexer.Version;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.PluginConfig;
-import ag.ion.bion.officelayer.application.IOfficeApplication;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.ui.UiScale;
-import dpf.sp.gpinf.indexer.util.CustomLoader;
-import dpf.sp.gpinf.indexer.util.DefaultPolicy;
 import iped3.exception.IPEDException;
-import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
-import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 
 /**
  * Processing program entry point.
@@ -61,7 +51,7 @@ public class Main {
     File logFile;
     LogConfiguration logConfiguration;
 
-    private CmdLineArgsImpl cmdLineParams;
+    CmdLineArgsImpl cmdLineParams;
 
     private Manager manager;
 
@@ -108,10 +98,12 @@ public class Main {
     /**
      * Contrutor utilizado pela execução via linha de comando
      */
-    public Main(String[] args) {
+    public Main(String[] args, boolean decodeArgs) {
         lastInstance = this;
         cmdLineParams = new CmdLineArgsImpl();
-        cmdLineParams.takeArgs(args);
+        if (decodeArgs) {
+            cmdLineParams.takeArgs(args);
+        }
     }
 
     /**
@@ -124,7 +116,7 @@ public class Main {
     /**
      * Define o caminho onde será encontrado o arquivo de configuração principal.
      */
-    private void setConfigPath() throws Exception {
+    void setConfigPath() throws Exception {
         URL url = Main.class.getProtectionDomain().getCodeSource().getLocation();
 
         if ("true".equals(System.getProperty("Debugging"))) {
@@ -207,6 +199,8 @@ public class Main {
             }
         });
 
+        interruptIfBootstrapDied(System.in, provider);
+
         try {
             startManager();
 
@@ -217,6 +211,23 @@ public class Main {
         }
 
         return success;
+    }
+
+    private static void interruptIfBootstrapDied(InputStream is, WorkerProvider provider) {
+        Thread t = new Thread() {
+            public void run() {
+                byte[] buf = new byte[4096];
+                try {
+                    while (is.read(buf) == -1) {
+                        provider.cancel(true);
+                    }
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
+        };
+        t.setDaemon(true);
+        t.start();
     }
 
     private void closeFrameinEDT(Object frame) {
@@ -232,59 +243,28 @@ public class Main {
      * Entrada principal da aplicação para processamento de evidências
      */
     public static void main(String[] args) {
-        boolean fromCustomLoader = CustomLoader.isFromCustomLoader(args);
-        String logPath = null;
-        if (fromCustomLoader) {
-            logPath = CustomLoader.getLogPathFromCustomArgs(args);
-            args = CustomLoader.clearCustomLoaderArgs(args);
-        }
 
-        Main iped = new Main(args);
+        Main iped = new Main(args, true);
         PrintStream SystemOut = System.out;
         boolean success = false;
 
         try {
             iped.setConfigPath();
-            iped.logConfiguration = new LogConfiguration(iped, logPath);
-            iped.logConfiguration.configureLogParameters(iped.cmdLineParams.isNologfile(), fromCustomLoader);
+            iped.logConfiguration = new LogConfiguration(iped, null);
+            iped.logConfiguration.configureLogParameters(iped.cmdLineParams.isNologfile());
 
             LOGGER = LoggerFactory.getLogger(Main.class);
-            if (!fromCustomLoader)
-                LOGGER.info(Version.APP_NAME);
+            LOGGER.info(Version.APP_NAME);
 
-            Configuration.getInstance().loadConfigurables(iped.configPath);
-
-            if (!fromCustomLoader) {
-
-                if (iped.isReportingFromCaseDir) {
-                    Configuration.getInstance().loadIpedRoot();
-                } else {
-                    Configuration.getInstance().saveIpedRoot(iped.rootPath);
-                }
-
-                List<File> jars = new ArrayList<File>();
-                PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
-                jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
-                jars.add(pluginConfig.getTskJarFile());
-
-                // currently with --nogui, user can not open analysis app, so no need to load
-                // libreoffice jars
-                if (!iped.cmdLineParams.isNogui()) {
-                    System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH,
-                            new File(iped.rootPath, "lib/nativeview").getAbsolutePath());
-                    LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(iped.rootPath));
-                    if (loFinder.getLOPath() != null)
-                        UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
-                }
-
-                String[] customArgs = CustomLoader.getCustomLoaderArgs(Main.class.getName(), args,
-                        iped.logFile);
-                CustomLoader.run(customArgs, jars);
-                return;
-
+            if (iped.isReportingFromCaseDir) {
+                Configuration.getInstance().loadIpedRoot();
             } else {
-                success = iped.execute();
+                Configuration.getInstance().saveIpedRoot(iped.rootPath);
             }
+
+            Configuration.getInstance().loadConfigurables(iped.configPath, true);
+
+            success = iped.execute();
 
         } catch (Exception e) {
             e.printStackTrace();
