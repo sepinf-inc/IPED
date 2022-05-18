@@ -27,8 +27,8 @@ public class IndexDatParserTest {
     @BeforeClass
     public static void setUpTool() throws IOException {
         if (osName.startsWith("windows")) {
-            String urlPath = "libyal/libmsiecf/20160421.1/libmsiecf-20160421.1.zip";
-            RepoToolDownloader.unzipFromUrl(urlPath, testRoot + "/tmp_tools/");
+            String repoPath = "libyal/libmsiecf/20160421.1/libmsiecf-20160421.1.zip";
+            RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
             System.setProperty(IndexDatParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/msiecfexport/");
         }
     }

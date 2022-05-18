@@ -22,13 +22,13 @@ public class RepoToolDownloader {
     /**
      * Extracts a .zip file tool from the maven repository specified path into the output directory
      *
-     * @param urlPath relative path from the repo to the .zip file
+     * @param repoPath relative path from the repository url to the .zip file
      * @param outputDir output directory for the unzipped files
      * @throws IOException
      */
-    public static void unzipFromUrl(String urlPath, String outputDir) throws IOException {
+    public static void unzipFromUrl(String repoPath, String outputDir) throws IOException {
 
-        URL url = new URL(MVN_REPO_URL + urlPath);
+        URL url = new URL(MVN_REPO_URL + repoPath.replaceAll("^/+", ""));
         downloadZipFromUrl(url, outputDir);
 
         try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(outputDir + ZIP_FILE_NAME))) {
