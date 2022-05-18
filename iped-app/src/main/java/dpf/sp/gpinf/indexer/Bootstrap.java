@@ -80,6 +80,7 @@ public class Bootstrap {
 
             List<String> cmd = new ArrayList<>();
             cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, "-Xmx" + XMX));
+            cmd.addAll(getCustomJVMArgs());
             cmd.addAll(getSystemProperties());
             cmd.add(getMainClassName());
             cmd.addAll(Arrays.asList(args));
@@ -110,6 +111,20 @@ public class Bootstrap {
         }
 
         System.exit(exit);
+    }
+    
+    private static List<String> getCustomJVMArgs(){
+        return Arrays.asList("-XX:+IgnoreUnrecognizedVMOptions",
+                "-XX:+HeapDumpOnOutOfMemoryError",
+                "--add-opens=java.base/java.util=ALL-UNNAMED",
+                "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+                "--add-opens=java.base/java.lang=ALL-UNNAMED",
+                "--add-opens=java.base/java.math=ALL-UNNAMED",
+                "--add-opens=java.base/java.net=ALL-UNNAMED",
+                "--add-opens=java.base/java.io=ALL-UNNAMED",
+                "--add-opens=java.base/java.nio=ALL-UNNAMED",
+                "--add-opens=java.base/java.text=ALL-UNNAMED",
+                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED");
     }
 
     private static List<String> getSystemProperties() {
