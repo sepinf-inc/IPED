@@ -158,7 +158,7 @@ public class Bootstrap {
         for (Entry<Object, Object> e : System.getProperties().entrySet()) {
             String key = e.getKey().toString();
             if (!key.equals("java.class.path") && !key.equals("sun.boot.library.path")) {
-                props.add("-D" + e.getKey().toString() + "=" + e.getValue().toString());
+                props.add("-D" + key + "=" + e.getValue().toString().replace("\"", "\\\""));
             }
         }
         return props;
