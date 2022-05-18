@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.apache.tika.utils.SystemUtils;
 
@@ -79,6 +80,7 @@ public class Bootstrap {
 
             List<String> cmd = new ArrayList<>();
             cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, "-Xmx" + XMX));
+            cmd.addAll(getSystemProperties());
             cmd.add(getMainClassName());
             cmd.addAll(Arrays.asList(args));
             
@@ -108,6 +110,17 @@ public class Bootstrap {
         }
 
         System.exit(exit);
+    }
+
+    private static List<String> getSystemProperties() {
+        List<String> props = new ArrayList<>();
+        for (Entry<Object, Object> e : System.getProperties().entrySet()) {
+            String key = e.getKey().toString();
+            if (!key.equals("java.class.path") && !key.equals("sun.boot.library.path")) {
+                props.add("-D" + e.getKey().toString() + "=" + e.getValue().toString());
+            }
+        }
+        return props;
     }
 
     private static String fillClassPathWithLibreOfficeJars(Main iped, String classpath)
