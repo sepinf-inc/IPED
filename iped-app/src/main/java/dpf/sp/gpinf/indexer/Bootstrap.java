@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,15 +23,12 @@ import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 
 /**
  * Bootstrap class to start the main application process with a custom classpath
- * with plugin jars. TODO: copy System properties and JVM params to forked
- * process.
+ * with plugin jars.
  * 
  * @author Luís Nassif
  *
  */
 public class Bootstrap {
-
-    private static String XMX = "24G"; // TODO read from cmd line
 
     private static String separator = SystemUtils.IS_OS_WINDOWS ? ";" : ":";
 
@@ -51,7 +50,17 @@ public class Bootstrap {
 
     protected void run(String args[]) {
 
-        Main iped = new Main(args, isToDecodeArgs());
+        List<String> heapArgs = new ArrayList<>();
+        List<String> finalArgs = new ArrayList<>();
+        for (String arg : args) {
+            if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
+                heapArgs.add(arg);
+            } else {
+                finalArgs.add(arg);
+            }
+        }
+
+        Main iped = new Main(finalArgs.toArray(new String[0]), isToDecodeArgs());
         int exit = -1;
         try {
             iped.setConfigPath();
@@ -79,11 +88,13 @@ public class Bootstrap {
             String javaBin = SystemUtils.IS_OS_WINDOWS ? iped.rootPath + "/jre/bin/java.exe" : "java";
 
             List<String> cmd = new ArrayList<>();
-            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, "-Xmx" + XMX));
+            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath));
+            cmd.addAll(heapArgs);
+            cmd.addAll(getCurrentJVMArgs());
             cmd.addAll(getCustomJVMArgs());
             cmd.addAll(getSystemProperties());
             cmd.add(getMainClassName());
-            cmd.addAll(Arrays.asList(args));
+            cmd.addAll(finalArgs);
             
             ProcessBuilder pb = new ProcessBuilder();
             // pb.directory(directory)
@@ -106,6 +117,9 @@ public class Bootstrap {
 
             exit = process.waitFor();
 
+        } catch (IllegalArgumentException e) {
+            System.err.println(e.toString());
+
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -125,6 +139,18 @@ public class Bootstrap {
                 "--add-opens=java.base/java.nio=ALL-UNNAMED",
                 "--add-opens=java.base/java.text=ALL-UNNAMED",
                 "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED");
+    }
+
+    private static List<String> getCurrentJVMArgs() {
+        RuntimeMXBean bean = ManagementFactory.getRuntimeMXBean();
+        List<String> args = bean.getInputArguments();
+        for (String arg : args) {
+            if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
+                throw new IllegalArgumentException(
+                        "Please use -Xms/-Xmx arguments after iped.jar not after java command, since processing will occur in a forked process using those params.");
+            }
+        }
+        return args;
     }
 
     private static List<String> getSystemProperties() {
