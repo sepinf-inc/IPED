@@ -6,7 +6,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
+
+import gpinf.dev.data.Category;
 
 public class CategoryToExpandConfig extends AbstractTaskConfig<Set<String>> {
 
@@ -18,6 +21,7 @@ public class CategoryToExpandConfig extends AbstractTaskConfig<Set<String>> {
     private static final String ENABLED = "expandContainers";
 
     private Set<String> categoriesToExpand = new HashSet<String>();
+    CategoryConfig categoryConfig = null;
 
     public boolean isToBeExpanded(Collection<String> categories) {
 
@@ -47,11 +51,23 @@ public class CategoryToExpandConfig extends AbstractTaskConfig<Set<String>> {
     public void processTaskConfig(Path resource) throws IOException {
         try (BufferedReader reader = Files.newBufferedReader(resource)) {
             String line = reader.readLine();
+            if (categoryConfig == null) {
+                categoryConfig = ConfigurationManager.get().findObject(CategoryConfig.class);
+            }
             while ((line = reader.readLine()) != null) {
                 if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
                     continue;
                 }
-                categoriesToExpand.add(line.trim());
+
+                LinkedList <Category> cats = new LinkedList<>();
+                cats.push(categoryConfig.getCategoryFromName(line.trim()));
+                while (cats.size() > 0) {
+                    Category cat = cats.pop();
+                    categoriesToExpand.add(cat.getName());
+                    cats.addAll(cat.getChildren());
+                }
+                
+
             }
         }
     }

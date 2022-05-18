@@ -1126,6 +1126,26 @@
     	<sub-class-of type="application/x-preview-with-links"/>
     </mime-type>
     
+    <mime-type type="application/x-ufed-chat-preview-whatsapp">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-chat-preview-telegram">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-chat-preview-skype">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-chat-preview-facebook">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-chat-preview-instagram">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+    
     <mime-type type="application/x-ufed-chat-whatsapp">
     	<sub-class-of type="application/x-ufed-chat"/>
     </mime-type>
