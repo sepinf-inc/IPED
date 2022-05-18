@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.tika.utils.SystemUtils;
 
@@ -143,12 +145,22 @@ public class Bootstrap {
 
     private static List<String> getCurrentJVMArgs() {
         RuntimeMXBean bean = ManagementFactory.getRuntimeMXBean();
-        List<String> args = bean.getInputArguments();
-        for (String arg : args) {
+        List<String> args = new ArrayList<>();
+        for (String arg : bean.getInputArguments()) {
             if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
                 throw new IllegalArgumentException(
                         "Please use -Xms/-Xmx arguments after iped.jar not after java command, since processing will occur in a forked process using those params.");
             }
+            if (arg.startsWith("-Xrunjdwp")) {
+                // workaround as discussed in PR #1119
+                Matcher matcher = Pattern.compile("address=(\\d+)").matcher(arg);
+                if (matcher.find()) {
+                    String match = matcher.group(0);
+                    Integer port = Integer.valueOf(matcher.group(1));
+                    arg = arg.replace(match, "address=" + (++port));
+                }
+            }
+            args.add(arg);
         }
         return args;
     }
