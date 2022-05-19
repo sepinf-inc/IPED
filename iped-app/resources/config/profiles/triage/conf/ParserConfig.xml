@@ -53,7 +53,7 @@
         <!--We have our own impls
         <parser class="org.apache.tika.parser.mail.RFC822Parser"></parser>
         <parser class="org.apache.tika.parser.mbox.MboxParser"></parser>
-        <parser class="org.apache.tika.parser.mbox.OutlookPSTParser"></parser>-->
+        <parser class="org.apache.tika.parser.microsoft.pst.OutlookPSTParser"></parser>-->
         <!--Returns empty content for some EMFs. Used below in MultipleParser
         <parser class="org.apache.tika.parser.microsoft.EMFParser"></parser-->
         <!--parser class="org.apache.tika.parser.microsoft.WMFParser"></parser-->
@@ -93,7 +93,7 @@
         <!-- we have our own impls
         <parser class="org.apache.tika.parser.pkg.PackageParser"></parser>
         <parser class="org.apache.tika.parser.pkg.RarParser"></parser>-->
-        <parser class="org.apache.tika.parser.rtf.RTFParser"></parser>
+        <parser class="org.apache.tika.parser.microsoft.rtf.RTFParser"></parser>
         <parser class="org.apache.tika.parser.sas.SAS7BDATParser"></parser>
         <!--used by FLVParserWrapper internally
         <parser class="org.apache.tika.parser.video.FLVParser"></parser> -->
@@ -103,7 +103,7 @@
         <parser class="org.apache.tika.parser.xml.DcXMLParser"></parser>-->
         <!--parser class="org.apache.tika.parser.dif.DIFParser"></parser-->
         <parser class="org.apache.tika.parser.xml.FictionBookParser"></parser>
-        <!--parser class="org.apache.tika.parser.chm.ChmParser"></parser-->
+        <!--parser class="org.apache.tika.parser.microsoft.chm.ChmParser"></parser-->
         <!-- we uses strings parser for this
         <parser class="org.apache.tika.parser.code.SourceCodeParser"></parser>
         <parser class="org.apache.tika.parser.mat.MatParser"></parser> -->
