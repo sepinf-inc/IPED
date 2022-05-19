@@ -19,20 +19,6 @@
 
 <properties>
 
-    <detectors>		
-        <!-- custom detectors from Tika -->
-        <detector class="org.apache.tika.detect.OverrideDetector"></detector>
-        <detector class="org.apache.tika.parser.microsoft.POIFSContainerDetector"></detector>
-        <detector class="org.apache.tika.parser.pkg.ZipContainerDetector"></detector>
-        <detector class="org.apache.tika.parser.apple.BPListDetector"></detector>
-        <!-- custom detectors from IPED -->
-        <detector class="dpf.sp.gpinf.detector.SQLiteContainerDetector"></detector>
-        <!-- other custom detectors -->
-        <detector class="org.gagravarr.tika.OggDetector"></detector>
-        <!-- default Tika detector -->
-        <detector class="org.apache.tika.mime.MimeTypes"></detector>
-    </detectors>
-
     <parsers>
         <!--parser class="dpf.sp.gpinf.indexer.parsers.external.CompositeExternalParser"></parser-->
         
