@@ -99,7 +99,7 @@ public class OCRParser extends AbstractParser {
 
     private static final String SELECT_EXACT = "SELECT text FROM ocr WHERE id=?;"; //$NON-NLS-1$
 
-    private static final String SELECT_ALL = "SELECT id, text FROM ocr WHERE id LIKE ?;"; //$NON-NLS-1$
+    private static final String SELECT_ALL = "SELECT id, text FROM ocr WHERE id >= ? AND id < ?"; //$NON-NLS-1$
 
     public static final String ENABLE_PROP = TOOL_NAME + ".enabled"; //$NON-NLS-1$
     public static final String TOOL_PATH_PROP = TOOL_NAME + ".path"; //$NON-NLS-1$
@@ -359,7 +359,8 @@ public class OCRParser extends AbstractParser {
         if (!sourceDb.exists())
             return;
         try (PreparedStatement ps = getConnection(sourceDb.getParentFile()).prepareStatement(SELECT_ALL)) {
-            ps.setString(1, hash + "%"); //$NON-NLS-1$
+            ps.setString(1, hash);
+            ps.setString(2, hash.substring(0, hash.length() - 1) + (char) (hash.charAt(hash.length() - 1) + 1));
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 String id = rs.getString(1);
