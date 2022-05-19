@@ -270,7 +270,8 @@ public class ReportDialog implements ActionListener, TableModelListener {
                         .getAbsolutePath();
             }
             List<String> cmd = new ArrayList<>();
-            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, Bootstrap.class.getCanonicalName(), //$NON-NLS-1$ //$NON-NLS-2$
+            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, "-D" + Bootstrap.UI_REPORT_SYS_PROP, //$NON-NLS-1$ //$NON-NLS-2$
+                    Bootstrap.class.getCanonicalName(), 
                     "-d", input.getAbsolutePath(), //$NON-NLS-1$
                     "-o", output)); //$NON-NLS-1$
 
