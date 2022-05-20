@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.sql.SQLException;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -16,6 +17,7 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -28,12 +30,24 @@ public class OCRParserTest {
     private static String testRoot = System.getProperty("user.dir") + "/src/test";
     private static String osName = System.getProperty("os.name").toLowerCase();
     private static String OCR_OUTPUT_FOLDER_NAME = "ocr_output";
+    private static Logger LOGGER = LoggerFactory.getLogger(OCRParser.class);
 
+    /**
+     * Checks if tesseract is present to then enable OCR parsing property
+     */
+    private static void enableOCR() {
+        try {
+            String tesseractPath = System.getProperty(OCRParser.TOOL_PATH_PROP, "") + "tesseract";
+            OCRParser.checkVersionInfo(tesseractPath, "-v");
+            System.setProperty(OCRParser.ENABLE_PROP, "true");
+        } catch (IOException | InterruptedException e) {
+            LOGGER.error("Error testing tesseract");
+        }
+    }
 
     @BeforeClass
     public static void setUpTool() throws IOException {
         // Setting properties with default OCRConfig.txt values
-        System.setProperty(OCRParser.ENABLE_PROP, "true");
         System.setProperty(OCRParser.LANGUAGE_PROP, "por");
         System.setProperty(OCRParser.MIN_SIZE_PROP, "1000");
         System.setProperty(OCRParser.MAX_SIZE_PROP, "200000000");
@@ -45,12 +59,13 @@ public class OCRParserTest {
         System.setProperty(PDFOCRTextParser.MAX_CHARS_TO_OCR, "100");
         System.setProperty(OCRParser.PROCESS_NON_STANDARD_FORMATS_PROP, "true");
         System.setProperty(OCRParser.MAX_CONV_IMAGE_SIZE_PROP, "3000");
-
+        
         if (osName.startsWith("windows")) {
             String repoPath = "tesseract/tesseract-zip/5.0.0-alpha/tesseract-zip-5.0.0-alpha.zip";
             RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
-            System.setProperty(OCRParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/tesseract");
+            System.setProperty(OCRParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/tesseract/");
         }
+        enableOCR();
     }
 
     @AfterClass
