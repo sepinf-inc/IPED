@@ -6,6 +6,7 @@ import static org.junit.Assume.assumeTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.tika.exception.TikaException;
@@ -71,27 +72,26 @@ public class OCRParserTest {
             File tool_path = new File(System.clearProperty(OCRParser.TOOL_PATH_PROP));
             FileUtils.deleteDirectory(tool_path.getParentFile());
         }
-        // FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
+        FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
     }
 
     @Test
-    public void testOCRParsing() throws IOException, SAXException, TikaException {
-        OCRParser parser = new OCRParser();
+    public void testOCRParsing() throws IOException, SAXException, TikaException, SQLException {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        ItemInfo itemInfo = new ItemInfo(0, "tmp_hash", null, null, "tmp_path", false);
+        ItemInfo itemInfo = new ItemInfo(0, "test_hash", null, null, "test_path", false);
         context.set(ItemInfo.class, itemInfo);
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "image/png");
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
-        assumeTrue(parser.isEnabled());
         
-        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.png")) {
+        try (OCRParser parser = new OCRParser();
+            InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.png")) {
+            assumeTrue(parser.isEnabled());
+            
             parser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
             String hts = handler.toString();
-
-            System.out.println(hts);
 
             assertTrue(mts.contains("Content-Type=image/png"));
             assertTrue(hts.toLowerCase().contains("palavras grandes"));
