@@ -26,7 +26,9 @@ git clone https://github.com/sepinf-inc/IPED.git
 cd IPED
 mvn clean install
 ```
-It will generate a snapshot version of IPED in target/release folder.
+It will generate an snapshot version of IPED in target/release folder.
+
+<b>Attention:</b> the default master branch is the development one and is unstable. If you want to build a stable version, checkout some of the release tags after the clone step.
 
 On Linux you also must build The Sleuthkit and additional dependencies. Please refer to [Linux Section](https://github.com/sepinf-inc/IPED/wiki/Linux)
 
