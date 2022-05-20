@@ -91,7 +91,7 @@ public class OCRParserTest {
     }
 
     @Test
-    public void testOCRParsing() throws IOException, SAXException, TikaException, SQLException {
+    public void testOCRParserPNG() throws IOException, SAXException, TikaException, SQLException {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
@@ -108,9 +108,16 @@ public class OCRParserTest {
             String mts = metadata.toString();
             String hts = handler.toString();
 
+            System.out.println(hts);
             assertTrue(mts.contains("Content-Type=image/png"));
-            assertTrue(hts.toLowerCase().contains("palavras grandes"));
-            assertTrue(hts.toLowerCase().contains("esse é um texto em português"));
+            assertTrue(hts.contains("Lena"));
+            assertTrue(hts.contains("online"));
+            assertTrue(hts.contains("57%"));
+            assertTrue(hts.contains("10:04 am"));
+            assertTrue(hts.contains("Oi, tudo bem?"));
+            assertTrue(hts.contains("Tudo certo, o que estamos fazendo\naqui?"));
+            assertTrue(hts.contains("Isso é um print para testar o\nOCRParser"));
+            assertTrue(hts.contains("Boa sOrte GALeRa"));
         }
     }
 }
