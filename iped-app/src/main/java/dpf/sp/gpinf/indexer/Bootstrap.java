@@ -32,6 +32,8 @@ import dpf.sp.gpinf.indexer.util.UNOLibFinder;
  */
 public class Bootstrap {
 
+    public static final String UI_REPORT_SYS_PROP = "iped.ui.report";
+
     private static String separator = SystemUtils.IS_OS_WINDOWS ? ";" : ":";
 
     public static void main(String args[]) {
@@ -43,7 +45,10 @@ public class Bootstrap {
     }
 
     protected String getDefaultClassPath(Main iped) {
-        return iped.rootPath + "/iped.jar";
+        if (System.getProperty(UI_REPORT_SYS_PROP) == null)
+            return iped.rootPath + "/iped.jar";
+        else
+            return iped.rootPath + "/lib/iped-search-app.jar";
     }
 
     protected String getMainClassName() {
