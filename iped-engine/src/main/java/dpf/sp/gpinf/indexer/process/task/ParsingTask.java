@@ -226,7 +226,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         // Indexa conteudo de todos os elementos de HTMLs, como script, etc
         context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
         // we have seen very large records in valid docs
-        org.apache.poi.util.IOUtils.setByteArrayMaxOverride(-1);
+        org.apache.poi.hpsf.CodePageString.setMaxRecordLength(512_000);
 
         context.set(IStreamSource.class, evidence);
         context.set(IItemBase.class, evidence);
