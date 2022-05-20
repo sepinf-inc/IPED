@@ -1,12 +1,14 @@
 ﻿'''
 # External process used by FaceRecognitionTask.py to do the hard work to bypass python GIL and allow multiprocess parallelization.
 '''
+import sys
+stdout = sys.stdout
+sys.stdout = sys.stderr
 
 import face_recognition as fr
 import PIL
 from PIL import Image
 import numpy as np
-import sys
 import traceback
 
 PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -61,7 +63,7 @@ def main():
         if line == terminate:
             break
         if line == ping:
-            print(ping, flush=True)
+            print(ping, file=stdout, flush=True)
             continue
         
         processed_files += 1
@@ -95,24 +97,24 @@ def main():
                     upsample = 0
             
         except Exception:
-            print(imgError, flush=True)
+            print(imgError, file=stdout, flush=True)
             #traceback.print_exc()
             continue
         
         img = np.array(img)
         img = rotateImg(img, tiff_orient)
-                
+        
         face_locations = fr.face_locations(img, number_of_times_to_upsample=upsample, model=detection_model)
         
         num_faces = len(face_locations)
-        print(str(num_faces), flush=True)
+        print(str(num_faces), file=stdout, flush=True)
         if num_faces == 0:
             continue
         
         for i in range(num_faces):
             if scale != 1:
                 face_locations[i] = tuple(int(k / scale) for k in face_locations[i])
-            print(str(face_locations[i]), flush=True)
+            print(str(face_locations[i]), file=stdout, flush=True)
         
         if scale != 1:
             img = np.array(img0)
@@ -122,7 +124,7 @@ def main():
         
         for i in range(num_faces):
             for j in range(128):
-                print(str(face_encodings[i][j]), flush=True)
+                print(str(face_encodings[i][j]), file=stdout, flush=True)
     return
     
 if __name__ == "__main__":

@@ -79,7 +79,7 @@ public class LogConfiguration {
         }
     }
 
-    public void configureLogParameters(boolean noLog, boolean finalClassLoader) throws MalformedURLException {
+    public void configureLogParameters(boolean noLog) throws MalformedURLException {
 
         System.setProperty("logFileDate", df.format(new Date())); //$NON-NLS-1$
         File configFile = null;
@@ -102,9 +102,12 @@ public class LogConfiguration {
             System.out.println(
                     df.format(new Date()) + " Log4j2 configuration file not found: " + configFile.getAbsolutePath()); //$NON-NLS-1$
 
-        if (!noLog && finalClassLoader)
-            if (!setConsoleLogFile(false))
+        if (!noLog) {
+            if (!setConsoleLogFile(false)) {
                 setConsoleLogFile(true);
+            }
+        }
+
     }
 
     public PrintStream getSystemOut() {

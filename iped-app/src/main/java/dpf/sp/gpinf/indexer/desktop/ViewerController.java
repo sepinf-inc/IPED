@@ -6,6 +6,8 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,7 +75,7 @@ public class ViewerController {
     private boolean isFixed;
     private final Object lock = new Object();
 
-    public ViewerController(final String codePath) {
+    public ViewerController() {
         Window owner = App.get();
         
         // These viewers will have their own docking frame
@@ -113,13 +115,16 @@ public class ViewerController {
                     }
 
                     // LibreOffice viewer initialization
-                    LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(codePath).getParentFile());
+                    URI jarUri = LibreOfficeViewer.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+                    File moduledir = new File(jarUri).getParentFile().getParentFile();
+                    LibreOfficeFinder loFinder = new LibreOfficeFinder(moduledir);
                     final String pathLO = loFinder.getLOPath();
                     if (pathLO != null) {
                         SwingUtilities.invokeAndWait(new Runnable() {
                             @Override
                             public void run() {
-                                officeViewer = new LibreOfficeViewer(codePath + "/../lib/nativeview", pathLO); //$NON-NLS-1$
+                                String nativeLibFolder = new File(moduledir, "lib/nativeview").getAbsolutePath();
+                                officeViewer = new LibreOfficeViewer(nativeLibFolder, pathLO); // $NON-NLS-1$
                                 viewersRepository.addViewer(officeViewer);
                             }
                         });
