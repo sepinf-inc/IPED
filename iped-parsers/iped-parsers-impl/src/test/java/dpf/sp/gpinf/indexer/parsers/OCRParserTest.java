@@ -23,7 +23,6 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
-import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.parsers.util.RepoToolDownloader;
 
 public class OCRParserTest {
@@ -32,10 +31,16 @@ public class OCRParserTest {
     private static String OCR_OUTPUT_FOLDER_NAME = "ocr_output";
     private static Logger LOGGER = LoggerFactory.getLogger(OCRParser.class);
 
-    /**
-     * Checks if tesseract is present to then enable OCR parsing property
-     */
-    private static void enableOCR() {
+    @BeforeClass
+    public static void setUpTool() throws IOException {
+        
+        if (osName.startsWith("windows")) {
+            String repoPath = "tesseract/tesseract-zip/5.0.0-alpha/tesseract-zip-5.0.0-alpha.zip";
+            RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
+            System.setProperty(OCRParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/tesseract/");
+        }
+
+        // Checks if tesseract is present to then enable OCR parsing property
         try {
             String tesseractPath = System.getProperty(OCRParser.TOOL_PATH_PROP, "") + "tesseract";
             OCRParser.checkVersionInfo(tesseractPath, "-v");
@@ -45,44 +50,8 @@ public class OCRParserTest {
         }
     }
 
-    @BeforeClass
-    public static void setUpTool() throws IOException {
-        // Setting properties with default OCRConfig.txt values
-        System.setProperty(OCRParser.LANGUAGE_PROP, "por");
-        System.setProperty(OCRParser.MIN_SIZE_PROP, "1000");
-        System.setProperty(OCRParser.MAX_SIZE_PROP, "200000000");
-        System.setProperty(OCRParser.PAGE_SEGMODE_PROP, "1");
-        System.setProperty(PDFToImage.RESOLUTION_PROP, "250");
-        System.setProperty(PDFToImage.PDFLIB_PROP, "icepdf");
-        System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "true");
-        System.setProperty(PDFToImage.EXTERNAL_CONV_MAXMEM_PROP, "512M");
-        System.setProperty(PDFOCRTextParser.MAX_CHARS_TO_OCR, "100");
-        System.setProperty(OCRParser.PROCESS_NON_STANDARD_FORMATS_PROP, "true");
-        System.setProperty(OCRParser.MAX_CONV_IMAGE_SIZE_PROP, "3000");
-        
-        if (osName.startsWith("windows")) {
-            String repoPath = "tesseract/tesseract-zip/5.0.0-alpha/tesseract-zip-5.0.0-alpha.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
-            System.setProperty(OCRParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/tesseract/");
-        }
-        enableOCR();
-    }
-
     @AfterClass
     public static void removeTempToolsFolder() throws IOException {
-        System.clearProperty(OCRParser.ENABLE_PROP);
-        System.clearProperty(OCRParser.LANGUAGE_PROP);
-        System.clearProperty(OCRParser.MIN_SIZE_PROP);
-        System.clearProperty(OCRParser.MAX_SIZE_PROP);
-        System.clearProperty(OCRParser.PAGE_SEGMODE_PROP);
-        System.clearProperty(PDFToImage.RESOLUTION_PROP);
-        System.clearProperty(PDFToImage.PDFLIB_PROP);
-        System.clearProperty(PDFToImage.EXTERNAL_CONV_PROP);
-        System.clearProperty(PDFToImage.EXTERNAL_CONV_MAXMEM_PROP);
-        System.clearProperty(PDFOCRTextParser.MAX_CHARS_TO_OCR);
-        System.clearProperty(OCRParser.PROCESS_NON_STANDARD_FORMATS_PROP);
-        System.clearProperty(OCRParser.MAX_CONV_IMAGE_SIZE_PROP);
-
         if (osName.startsWith("windows")) {
             File tool_path = new File(System.clearProperty(OCRParser.TOOL_PATH_PROP));
             FileUtils.deleteDirectory(tool_path.getParentFile());
@@ -120,4 +89,5 @@ public class OCRParserTest {
             assertTrue(hts.contains("Boa sOrte GALeRa"));
         }
     }
+    
 }
