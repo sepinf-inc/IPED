@@ -124,4 +124,32 @@ public class OCRParserTest {
         }
     }
     
+    @Test
+    public void testOCRParserTIFF() throws IOException, SAXException, TikaException, SQLException {
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        ParseContext context = new ParseContext();
+        ItemInfo itemInfo = new ItemInfo(0, testName.getMethodName(), null, null, testName.getMethodName(), false);
+        context.set(ItemInfo.class, itemInfo);
+        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "image/tiff");
+        context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
+        
+        System.setProperty(OCRParser.LANGUAGE_PROP, "eng");
+
+        try (OCRParser parser = new OCRParser();
+            InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.tiff")) {
+            assumeTrue(parser.isEnabled());
+            
+            parser.parse(stream, handler, metadata, context);
+            String mts = metadata.toString();
+            String hts = handler.toString();
+
+            assertTrue(mts.contains("Content-Type=image/tiff"));
+            assertTrue(hts.contains("NuSTAR X-ray"));
+            assertTrue(hts.contains("Jupiter & Major Moons"));
+            assertTrue(hts.contains("Sun"));
+            assertTrue(hts.contains("relative-size"));
+            assertTrue(hts.contains("Inner Solar System"));
+        }
+    }
 }
