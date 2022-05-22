@@ -70,8 +70,14 @@ public class PythonParser extends AbstractParser {
                 String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
                 if (ipedRoot != null && new File(ipedRoot).exists()) {
                     PyConfig pyConfig = new PyConfig();
-                    pyConfig.setPythonHome(ipedRoot + "/python");
+                    String pythonHome = ipedRoot + "/python";
+                    pyConfig.setPythonHome(pythonHome);
+                    pyConfig.setIgnoreEnvironmentFlag(1);
+                    pyConfig.setNoUserSiteDirectory(1);
                     MainInterpreter.setInitParams(pyConfig);
+                    System.load(pythonHome + "/vcruntime140.dll");
+                    System.load(pythonHome + "/python39.dll");
+                    MainInterpreter.setJepLibraryPath(pythonHome + "/Lib/site-packages/jep/jep.dll");
                 }
             }
 
