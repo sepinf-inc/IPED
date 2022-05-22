@@ -16,7 +16,9 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -30,6 +32,9 @@ public class OCRParserTest {
     private static String osName = System.getProperty("os.name").toLowerCase();
     private static String OCR_OUTPUT_FOLDER_NAME = "ocr_output";
     private static Logger LOGGER = LoggerFactory.getLogger(OCRParser.class);
+
+    @Rule
+    public TestName testName = new TestName();
 
     @BeforeClass
     public static void setUpTool() throws IOException {
@@ -64,7 +69,7 @@ public class OCRParserTest {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        ItemInfo itemInfo = new ItemInfo(0, "test_hash", null, null, "test_path", false);
+        ItemInfo itemInfo = new ItemInfo(0, testName.getMethodName(), null, null, testName.getMethodName(), false);
         context.set(ItemInfo.class, itemInfo);
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "image/png");
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
@@ -77,16 +82,45 @@ public class OCRParserTest {
             String mts = metadata.toString();
             String hts = handler.toString();
 
-            System.out.println(hts);
             assertTrue(mts.contains("Content-Type=image/png"));
-            assertTrue(hts.contains("Lena"));
-            assertTrue(hts.contains("online"));
             assertTrue(hts.contains("57%"));
             assertTrue(hts.contains("10:04 am"));
             assertTrue(hts.contains("Oi, tudo bem?"));
-            assertTrue(hts.contains("Tudo certo, o que estamos fazendo\naqui?"));
-            assertTrue(hts.contains("Isso é um print para testar o\nOCRParser"));
+            assertTrue(hts.contains("Tudo certo, o que estamos fazendo"));
+            assertTrue(hts.contains("aqui?"));
+            assertTrue(hts.contains("Isso é um print para testar o"));
+            assertTrue(hts.contains("OCRParser"));
             assertTrue(hts.contains("Boa sOrte GALeRa"));
+        }
+    }
+
+    @Test
+    public void testOCRParserPDF() throws IOException, SAXException, TikaException, SQLException {
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        ParseContext context = new ParseContext();
+        ItemInfo itemInfo = new ItemInfo(0, testName.getMethodName(), null, null, testName.getMethodName(), false);
+        context.set(ItemInfo.class, itemInfo);
+        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/pdf");
+        context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
+        
+        try (OCRParser parser = new OCRParser();
+            InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.pdf")) {
+            assumeTrue(parser.isEnabled());
+            
+            parser.parse(stream, handler, metadata, context);
+            String mts = metadata.toString();
+            String hts = handler.toString();
+
+            assertTrue(mts.contains("Content-Type=application/pdf"));
+            assertTrue(hts.contains("RISC-V UNICICLO"));
+            assertTrue(hts.contains("Instruction [31-0]"));
+            assertTrue(hts.contains("MemtoReg"));
+            assertTrue(hts.contains("Lógico-Aritméticas com imediato: ADDi, ANDi, ORi, XORi, SLLi, SRLi"));
+            assertTrue(hts.contains("process (ALUop, funct3, funct7)"));
+            assertTrue(hts.contains("and s6, s5, s4"));
+            assertTrue(hts.contains("00000048 005324b3"));
+            assertTrue(hts.contains("as memórias de instruções e dados."));
         }
     }
     
