@@ -335,7 +335,19 @@
         <parser class="dpf.pi.gpinf.firefox.parsers.FirefoxSavedSessionParser"></parser>
         
         <!-- parser class="dpf.inc.sepinf.python.PythonParser"></parser-->
-        
     </parsers>
+
+    <encodingDetectors>
+        <encodingDetector class="dpf.sp.gpinf.indexer.tika.HtmlEncodingDetector"/>
+        <encodingDetector class="org.apache.tika.parser.txt.Icu4jEncodingDetector">
+            <params>
+                <param name="ignoreCharsets" type="list">
+                    <string>IBM420</string>
+                    <string>IBM424</string>
+                </param>
+            </params>
+        </encodingDetector>
+        <encodingDetector class="org.apache.tika.parser.txt.UniversalEncodingDetector"/>
+    </encodingDetectors>
 
 </properties>
