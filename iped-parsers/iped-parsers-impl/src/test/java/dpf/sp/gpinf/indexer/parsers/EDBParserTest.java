@@ -1,0 +1,66 @@
+package dpf.sp.gpinf.indexer.parsers;
+
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.sax.BodyContentHandler;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+
+import dpf.sp.gpinf.indexer.parsers.util.RepoToolDownloader;
+
+public class EDBParserTest {
+    private static String testRoot = System.getProperty("user.dir") + "/src/test";
+    private static String osName = System.getProperty("os.name").toLowerCase();
+
+    @BeforeClass
+    public static void setUpTool() throws IOException {
+        if (osName.startsWith("windows")) {
+            String repoPath = "libyal/libesedb/20151213.1/libesedb-20151213.1.zip";
+            RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
+            System.setProperty(EDBParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/esedbexport/");
+        }
+    }
+
+    @AfterClass
+    public static void removeTempToolsFolder() throws IOException {
+        if (osName.startsWith("windows")) {
+            File tool_path = new File(System.clearProperty(EDBParser.TOOL_PATH_PROP));
+            FileUtils.deleteDirectory(tool_path.getParentFile());
+        }
+    }
+
+    
+    @Test
+    public void testEDBParser() throws IOException, SAXException, TikaException {
+        Metadata metadata = new Metadata();
+        metadata.set(Metadata.CONTENT_TYPE, "x-edb");
+        ContentHandler handler = new BodyContentHandler(1 << 20);
+        ParseContext context = new ParseContext();
+        EDBParser parser = new EDBParser();
+
+        assumeFalse(parser.getSupportedTypes(context).isEmpty());
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_edb.edb")) {
+            parser.parse(stream, handler, metadata, context);
+            String mts = metadata.toString();
+            String hts = handler.toString();
+
+            // System.out.println(hts);
+
+            assertTrue(mts.contains("Content-Type=x-edb"));
+        }
+    }
+}
