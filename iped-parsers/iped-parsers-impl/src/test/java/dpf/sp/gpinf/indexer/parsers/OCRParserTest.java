@@ -74,6 +74,7 @@ public class OCRParserTest {
         context.set(ItemInfo.class, itemInfo);
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "image/png");
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
+        System.setProperty(OCRParser.LANGUAGE_PROP, "por");
         
         try (OCRParser parser = new OCRParser();
             InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.png")) {
@@ -104,6 +105,7 @@ public class OCRParserTest {
         context.set(ItemInfo.class, itemInfo);
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/pdf");
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
+        System.setProperty(OCRParser.LANGUAGE_PROP, "por");
         
         try (OCRParser parser = new OCRParser();
             InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.pdf")) {
@@ -112,8 +114,6 @@ public class OCRParserTest {
             parser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
             String hts = handler.toString();
-
-            System.out.println(hts);
 
             assertTrue(mts.contains("Content-Type=application/pdf"));
             assertTrue(hts.contains("RISC-V UNICICLO"));
