@@ -474,13 +474,15 @@ public class ExtractorIOS extends Extractor {
         if (undeleteChatsSessions != null && !undeleteChatsSessions.getTableRows().isEmpty()) {
             for (SqliteRow row : undeleteChatsSessions.getTableRows()) {
                 String contactId = row.getTextValue("ZCONTACTJID"); //$NON-NLS-1$
-                WAContact contact = contacts.getContact(contactId);
-                Chat c = new Chat(contact);
-                c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
-                c.setDeleted(row.isDeletedRow());
-                c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
-                c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                result.add(c);
+                if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
+                    WAContact contact = contacts.getContact(contactId);
+                    Chat c = new Chat(contact);
+                    c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
+                    c.setDeleted(row.isDeletedRow());
+                    c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
+                    c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                    result.add(c);
+                }
             }
         }
 
