@@ -30,7 +30,7 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
 
     }
 
-    private void removeTempToolsFolder() throws IOException {
+    private void tearDownTool() throws IOException {
         if (osName.startsWith("windows")) {
             File tool_path = new File(System.clearProperty(LibpffPSTParser.TOOL_PATH_PROP));
             FileUtils.deleteDirectory(tool_path.getParentFile());
@@ -58,7 +58,7 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
         } catch (IOException e) {
             // skip test
         } finally {
-            removeTempToolsFolder();
+            tearDownTool();
         }
     }
 

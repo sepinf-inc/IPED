@@ -36,7 +36,7 @@ public class EDBParserTest {
     }
 
     @AfterClass
-    public static void removeTempToolsFolder() throws IOException {
+    public static void tearDownTool() throws IOException {
         if (osName.startsWith("windows")) {
             File tool_path = new File(System.clearProperty(EDBParser.TOOL_PATH_PROP));
             FileUtils.deleteDirectory(tool_path.getParentFile());

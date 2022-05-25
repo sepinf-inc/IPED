@@ -34,7 +34,7 @@ public class IndexDatParserTest {
     }
     
     @AfterClass
-    public static void removeTempToolsFolder() throws IOException {
+    public static void tearDownTool() throws IOException {
         if (osName.startsWith("windows")) {
             File tool_path = new File(System.clearProperty(IndexDatParser.TOOL_PATH_PROP));
             FileUtils.deleteDirectory(tool_path.getParentFile());

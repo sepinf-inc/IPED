@@ -56,7 +56,7 @@ public class OCRParserTest {
     }
 
     @AfterClass
-    public static void removeTempToolsFolder() throws IOException {
+    public static void tearDownTool() throws IOException {
         if (osName.startsWith("windows")) {
             File tool_path = new File(System.clearProperty(OCRParser.TOOL_PATH_PROP));
             FileUtils.deleteDirectory(tool_path.getParentFile());
