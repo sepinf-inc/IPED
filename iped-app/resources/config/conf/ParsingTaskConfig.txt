@@ -30,7 +30,7 @@ minRawStringSize = 4
 
 # Configure internal or external (eg ufed) parsers for phone data with more than one parser.
 # Possible values: internal, external, all
-phoneParsersToUse = all
+phoneParsersToUse = internal
 
 # If true, takes into account the characters' position on the page when reconstructing the extracted text.
 # Needed to properly index rotated PDFs but doubles the processing time of PDFs.
