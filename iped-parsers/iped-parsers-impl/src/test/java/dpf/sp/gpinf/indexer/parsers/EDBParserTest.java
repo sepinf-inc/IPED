@@ -7,6 +7,7 @@ import static org.junit.Assume.assumeFalse;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.tika.exception.TikaException;
@@ -53,14 +54,22 @@ public class EDBParserTest {
 
         assumeFalse(parser.getSupportedTypes(context).isEmpty());
 
-        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_edb.edb")) {
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_EntClientDb.edb")) {
             parser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
             String hts = handler.toString();
 
-            // System.out.println(hts);
+            System.out.println(hts);
 
             assertTrue(mts.contains("Content-Type=x-edb"));
+            assertTrue(hts.contains("Sample Video"));
+            assertTrue(hts.contains("Title of police video"));
+            assertTrue(hts.contains("C:\\Users\\Felipe Costa\\Videos\\samples\\video.mp4"));
+            assertTrue(hts.contains("C:\\Users\\Felipe Costa\\Videos\\samples\\ocean_video.mkv"));
+            assertTrue(hts.contains("C:\\Users\\Felipe Costa\\Videos\\samples2\\police.mp4"));
+            assertTrue(hts.contains("SeriesId"));
+            assertTrue(hts.contains("ReleaseDate"));
+            assertTrue(hts.contains("idxSeriesIdDateAddedReleaseDate"));
         }
     }
 }

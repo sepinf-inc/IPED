@@ -45,7 +45,6 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         parser.setExtractOnlyActive(true);
-        parser.setExtractOnlyDeleted(false);
         parser.getSupportedTypes(pstContext);
         metadata.set(Metadata.RESOURCE_NAME_KEY, "pst_sample");
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_sample.pst")) {
@@ -57,6 +56,7 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
 
             // String test = psttracker.messagebody.get(0);
         } catch (IOException e) {
+            // skip test
         } finally {
             removeTempToolsFolder();
         }
