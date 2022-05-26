@@ -329,14 +329,7 @@
 
     <encodingDetectors>
         <encodingDetector class="dpf.sp.gpinf.indexer.tika.HtmlEncodingDetector"/>
-        <encodingDetector class="org.apache.tika.parser.txt.Icu4jEncodingDetector">
-            <params>
-                <param name="ignoreCharsets" type="list">
-                    <string>IBM420</string>
-                    <string>IBM424</string>
-                </param>
-            </params>
-        </encodingDetector>
+        <encodingDetector class="dpf.sp.gpinf.indexer.tika.Icu4jEncodingDetector"/>
         <encodingDetector class="org.apache.tika.parser.txt.UniversalEncodingDetector"/>
     </encodingDetectors>
 
