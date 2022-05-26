@@ -40,10 +40,10 @@ public class IndexDatParserTest {
             FileUtils.deleteDirectory(tool_path.getParentFile());
         }
     }
-    
+
+
     @Test
     public void testIndexDatParser() throws IOException, SAXException, TikaException {
-        
         IndexDatParser parser = new IndexDatParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new ToTextContentHandler();

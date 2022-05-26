@@ -59,8 +59,6 @@ public class EDBParserTest {
             String mts = metadata.toString();
             String hts = handler.toString();
 
-            System.out.println(hts);
-
             assertTrue(mts.contains("Content-Type=x-edb"));
             assertTrue(hts.contains("Sample Video"));
             assertTrue(hts.contains("Title of police video"));

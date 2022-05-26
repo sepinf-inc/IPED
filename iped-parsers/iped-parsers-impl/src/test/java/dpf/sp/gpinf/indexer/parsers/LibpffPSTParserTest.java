@@ -37,41 +37,6 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
     }
 
     @Test
-    public void testLibpffPSTParserFolders() throws IOException, SAXException, TikaException {
-        setUpTool();
-        LibpffPSTParser parser = new LibpffPSTParser();
-        Metadata metadata = new Metadata();
-        ContentHandler handler = new DefaultHandler();
-        parser.setExtractOnlyActive(true);
-        parser.getSupportedTypes(pstContext);
-        metadata.set(Metadata.RESOURCE_NAME_KEY, "pst_sample");
-        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_sample.pst")) {
-            if (parser.getSupportedTypes(pstContext).isEmpty()) throw new IOException();
-            parser.parse(stream, handler, metadata, pstContext);
-
-            // assertEquals("Anotações", psttracker.foldertitle.get(2));
-            // assertEquals("Caixa de Entrada", psttracker.foldertitle.get(3));
-            // assertEquals("Caixa de Saída", psttracker.foldertitle.get(4));
-            // assertEquals("Calendar", psttracker.foldertitle.get(5));
-            // assertEquals("Calendário", psttracker.foldertitle.get(6));
-            // assertEquals("Contatos", psttracker.foldertitle.get(7));
-            // assertEquals("Deleted Items", psttracker.foldertitle.get(8));
-            // assertEquals("Diário", psttracker.foldertitle.get(9));
-            // assertEquals("Itens Enviados", psttracker.foldertitle.get(10));
-            // assertEquals("Itens Excluídos", psttracker.foldertitle.get(11));
-            // assertEquals("Lixo eletrônico", psttracker.foldertitle.get(12));
-            // assertEquals("Rascunhos", psttracker.foldertitle.get(13));
-            // assertEquals("RSS Feeds", psttracker.foldertitle.get(14));
-            // assertEquals("Tarefas", psttracker.foldertitle.get(15));
-
-        } catch (IOException e) {
-            // skip test
-        } finally {
-            tearDownTool();
-        }
-    }
-
-    @Test
     public void testLibpffPSTParserUserInfo() throws IOException, SAXException, TikaException {
         setUpTool();
         LibpffPSTParser parser = new LibpffPSTParser();
@@ -116,7 +81,6 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
             assertEquals("Solved by using my abstrackpackage instead of hardcoding the parser. Sorry,"
                             + " my mistake. Thanks for the tip!! Good. I also confu(...)", psttracker.messagebody.get(1));
             assertEquals("2021-04-26", psttracker.messagedate.get(0).substring(0, 10));
-
             assertEquals("Re: Solicita documentação para contrato de estágio na DITEC/PF.", psttracker.messagesubject.get(2));
             assertEquals("Bom dia, Guilherme! A UnB assinou o TCE/PA? At.te,"
                             + " ELIZÃ‚NGELA RIBEIRO DE ANDRADE Fiscal do Contrato substituta NAD/SELO/DITEC/(...)", psttracker.messagebody.get(2));
@@ -125,8 +89,7 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
 
             // attachment
             assertEquals("This is a test message with attachment!!!", psttracker.messagesubject.get(3));
-            assertEquals("Hi there, it’s me again. Take a look\n" + "in this attachment. It is awesome.",
-                    psttracker.messagebody.get(3));
+            assertEquals("Hi there, it’s me again. Take a look\nin this attachment. It is awesome.", psttracker.messagebody.get(3));
             assertEquals("2021-04-27", psttracker.messagedate.get(2).substring(0, 10));
             assertTrue(psttracker.attachmentname.stream().anyMatch("lionel-animals-to-follow-on-instagram-1568319926.jpg"::equals));
             assertEquals("true", psttracker.isattachment.get(0));
@@ -138,5 +101,4 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
             tearDownTool();
         }
     }
-
 }
