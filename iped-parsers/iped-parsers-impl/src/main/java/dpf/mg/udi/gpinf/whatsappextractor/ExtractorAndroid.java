@@ -19,6 +19,7 @@ import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.SHARE_LOCAT
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.STICKER_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.SUBJECT_CHANGED;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.TEXT_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.UNKNOWN_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_JOINED_GROUP;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
@@ -476,7 +477,26 @@ public class ExtractorAndroid extends Extractor {
                     break;
             }
         }
-
+        if (m.getMessageType() == TEXT_MESSAGE && m.getData() == null) {
+            if (m.getMediaMime() != null) {
+                var mediaMime = m.getMediaMime();
+                if (mediaMime != null) {
+                    if (mediaMime.startsWith("image")) {
+                        m.setMessageType(IMAGE_MESSAGE);
+                    } else if (mediaMime.startsWith("video")) {
+                        m.setMessageType(VIDEO_MESSAGE);
+                    } else if (mediaMime.startsWith("application")) {
+                        m.setMessageType(APP_MESSAGE);
+                    } else if (mediaMime.startsWith("audio")) {
+                        m.setMessageType(AUDIO_MESSAGE);
+                    } else if (m.getMediaCaption() != null) {
+                        m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
+                    }
+                }
+            } else if (m.getMediaCaption() != null) {
+                m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
+            }
+        }
         m.setDeleted(deleted);
 
         return m;
