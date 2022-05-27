@@ -41,13 +41,13 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals(4, whatsapptracker.messageto.size());
             assertEquals(74, whatsapptracker.messagedate.size());
 
-            assertEquals("WhatsApp Chat [30] - Nickerida - 556183125151", whatsapptracker.title.get(0));
-            assertEquals("WhatsApp Chat [30] - Nickerida - 556183125151_message_0", whatsapptracker.title.get(1));
-            assertEquals("WhatsApp Chat [30] - Nickerida - 556183125151_message_1", whatsapptracker.title.get(2));
-            assertEquals("WhatsApp Chat [30] - Nickerida - 556183125151_message_2", whatsapptracker.title.get(3));
-            assertEquals("WhatsApp Chat [30] - Nickerida - 556183125151_message_3", whatsapptracker.title.get(4));
-            assertEquals("WhatsApp Group [6] - Lar - 556185747642-1461964508_message_1", whatsapptracker.title.get(61));
-            assertEquals("WhatsApp Group [6] - Lar - 556185747642-1461964508_message_2", whatsapptracker.title.get(62));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151", whatsapptracker.title.get(0));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_0", whatsapptracker.title.get(1));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_1", whatsapptracker.title.get(2));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_2", whatsapptracker.title.get(3));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_3", whatsapptracker.title.get(4));
+            assertEquals("WhatsApp Group - Lar - 556185747642-1461964508_message_1", whatsapptracker.title.get(61));
+            assertEquals("WhatsApp Group - Lar - 556185747642-1461964508_message_2", whatsapptracker.title.get(62));
 
             assertEquals("unknownAccount", whatsapptracker.participants.get(0));
             assertEquals("unknownAccount", whatsapptracker.participants.get(1));
