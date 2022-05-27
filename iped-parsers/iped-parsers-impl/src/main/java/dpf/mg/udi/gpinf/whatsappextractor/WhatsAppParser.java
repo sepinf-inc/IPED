@@ -284,6 +284,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (frag > 0 || nextBytes != null)
                     chatName += "_" + frag++; //$NON-NLS-1$
 
+                chatMetadata.set("chatId", Long.toString(c.getId()));
                 chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                 chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CHAT.toString());
                 chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));

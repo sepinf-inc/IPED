@@ -86,13 +86,13 @@ public class Chat {
     public String getTitle() {
         if (title == null) {
             if (isGroupChat()) {
-                title = "WhatsApp Group [" + getId() + "] - "; //$NON-NLS-1$ //$NON-NLS-2$
+                title = "WhatsApp Group - "; //$NON-NLS-1$ //$NON-NLS-2$
                 if (getSubject() != null && getSubject().trim().length() != 0) {
                     title += getSubject() + " - "; //$NON-NLS-1$
                 }
                 title += getPrintId();
             } else {
-                title = "WhatsApp Chat [" + getId() + "] - "; //$NON-NLS-1$
+                title = "WhatsApp Chat - "; //$NON-NLS-1$
                 if (remote != null && !remote.getName().trim().equals(getPrintId()))
                     title += remote.getName() + " - "; //$NON-NLS-1$
                 title += getPrintId();
