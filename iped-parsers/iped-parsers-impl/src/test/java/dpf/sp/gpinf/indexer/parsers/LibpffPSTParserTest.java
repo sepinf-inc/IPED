@@ -37,6 +37,34 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
     }
 
     @Test
+    public void testLibpffPSTParserOST() throws IOException, SAXException, TikaException {
+        setUpTool();
+        LibpffPSTParser parser = new LibpffPSTParser();
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new DefaultHandler();
+        parser.setExtractOnlyActive(true);
+        parser.getSupportedTypes(pstContext);
+        metadata.set(Metadata.RESOURCE_NAME_KEY, "ost_sample");
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_sample.ost")) {
+            if (parser.getSupportedTypes(pstContext).isEmpty()) throw new IOException();
+            parser.parse(stream, handler, metadata, pstContext);
+
+            assertEquals("This is a test email with two attachment files", psttracker.messagebody.get(0));
+            assertEquals("2", psttracker.numberofattachments.get(0));
+            assertEquals("1", psttracker.numberofattachments.get(6));
+            assertEquals("calibre.docx", psttracker.attachmentname.get(0));
+            assertEquals("sample.jpg", psttracker.attachmentname.get(1));
+            assertTrue(psttracker.messagedate.get(0).contains("2018-08-02"));
+            assertEquals("Microsoft Outlook Test Message", psttracker.messagesubject.get(3));
+
+        } catch (IOException e) {
+            // skip test
+        } finally {
+            tearDownTool();
+        }
+    }
+
+    @Test
     public void testLibpffPSTParserUserInfo() throws IOException, SAXException, TikaException {
         setUpTool();
         LibpffPSTParser parser = new LibpffPSTParser();
