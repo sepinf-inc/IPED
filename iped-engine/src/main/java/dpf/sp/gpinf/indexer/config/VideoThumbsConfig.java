@@ -29,6 +29,8 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     private static final String ORIGINAL_DIMENSION = "enableVideoThumbsOriginalDimension";
 
+    private static final String THUMBS_SUBITEMS = "enableVideoThumbsSubitems";
+
     private static final String MAX_DIMENSION_SIZE = "maxDimensionSize";
 
     /**
@@ -74,6 +76,11 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
      * Extracts video frames using original video resolution.
      */
     private Boolean videoThumbsOriginalDimension = false;
+
+    /**
+     * Extracts video frames as video subitems, for video frame pipelining purpouse .
+     */
+    private Boolean videoThumbsSubitems = false;
 
     /**
      * Max dimension size to use when extracting frames. Currently this has
@@ -125,6 +132,10 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
         return videoThumbsOriginalDimension;
     }
 
+    public Boolean getVideoThumbsSubitems() {
+        return videoThumbsSubitems;
+    }
+
     public int getMaxDimensionSize() {
         return maxDimensionSize;
     }
@@ -159,10 +170,16 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
             verbose = true;
         }
 
-        // Verbose do MPlayer
+        // VideoThumbsOriginalDimension
         value = properties.getProperty(ORIGINAL_DIMENSION); // $NON-NLS-1$
         if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
             videoThumbsOriginalDimension = true;
+        }
+
+        // VideoThumbsSubitems
+        value = properties.getProperty(THUMBS_SUBITEMS); // $NON-NLS-1$
+        if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
+            videoThumbsSubitems = true;
         }
 
         // Timeouts

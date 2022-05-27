@@ -257,7 +257,8 @@ public class VideoThumbTask extends ThumbTask {
         videoThumbsMaker.setTimeoutInfo(videoConfig.getTimeoutInfo());
         videoThumbsMaker.setVideoThumbsOriginalDimension(videoConfig.getVideoThumbsOriginalDimension());
         videoThumbsMaker.setMaxDimensionSize(videoConfig.getMaxDimensionSize());
-
+        videoThumbsMaker.setVideoThumbsSubitems(videoConfig.getVideoThumbsSubitems());
+  
         // Cria configurações de extração de cenas
         configs = new ArrayList<VideoThumbsOutputConfig>();
         configs.add(mainConfig = new VideoThumbsOutputConfig(null, videoConfig.getWidth(), videoConfig.getColumns(), videoConfig.getRows(), 2));
@@ -382,7 +383,9 @@ public class VideoThumbTask extends ThumbTask {
                 }
 
                 long t = System.currentTimeMillis();
-                r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs, numFrames);
+                
+                r = videoThumbsMaker.createThumbs(this.worker, evidence, tmpFolder, configs, numFrames);
+                
                 t = System.currentTimeMillis() - t;
                 if (r != null && isAnimated) {
                     //Clear video duration for animated images
