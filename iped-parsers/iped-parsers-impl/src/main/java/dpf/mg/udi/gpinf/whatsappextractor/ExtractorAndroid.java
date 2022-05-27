@@ -252,7 +252,7 @@ public class ExtractorAndroid extends Extractor {
             firstTry = false;
         } while (tryAgain);
 
-        return cleanChatList(chatList);
+        return list;
     }
 
     private List<Chat> undeleteChats(SQLiteUndeleteTable undeleteChatListTable,

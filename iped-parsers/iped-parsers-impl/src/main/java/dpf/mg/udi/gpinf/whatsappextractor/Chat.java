@@ -1,6 +1,5 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,7 +13,7 @@ public class Chat {
     private long id;
     private final WAContact remote;
     private String subject;
-    private List<Message> messages = new ArrayList<>();
+    private List<Message> messages;
     private String title = null;
     private boolean groupChat = false;
     private boolean deleted = false;
