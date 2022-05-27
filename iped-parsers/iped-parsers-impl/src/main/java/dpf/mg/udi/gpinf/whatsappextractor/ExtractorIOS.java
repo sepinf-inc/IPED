@@ -234,7 +234,7 @@ public class ExtractorIOS extends Extractor {
             firstTry = false;
         } while (tryAgain);
 
-        return list;
+        return cleanChatList(list);
     }
 
     private List<Message> extractMessages(Connection conn, Chat chat, Map<Long, List<SqliteRow>> undeletedMessages,
