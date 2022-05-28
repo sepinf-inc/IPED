@@ -329,8 +329,8 @@
 
     <encodingDetectors>
         <encodingDetector class="dpf.sp.gpinf.indexer.tika.HtmlEncodingDetector"/>
-        <encodingDetector class="dpf.sp.gpinf.indexer.tika.Icu4jEncodingDetector"/>
         <encodingDetector class="org.apache.tika.parser.txt.UniversalEncodingDetector"/>
+        <encodingDetector class="dpf.sp.gpinf.indexer.tika.Icu4jEncodingDetector"/>
     </encodingDetectors>
 
 </properties>
