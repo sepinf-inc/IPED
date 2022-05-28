@@ -6,7 +6,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 
 public abstract class Extractor {
     protected final File databaseFile;
@@ -101,6 +104,19 @@ public abstract class Extractor {
             }
         }
         return false;
+    }
+
+    protected List<Chat> cleanChatList(List<Chat> list) {
+        List<Chat> cleanedList = new ArrayList<>();
+        for (Chat c : list) {
+            String remote = c.getRemote() != null ? c.getRemote().getId() : null;
+            if (!c.getMessages().isEmpty() || !c.getGroupmembers().isEmpty()
+                    || (c.getSubject() != null && !c.getSubject().isBlank())
+                    || (remote != null && !(remote = remote.strip()).isEmpty() && !remote.equals("0"))) {
+                cleanedList.add(c);
+            }
+        }
+        return cleanedList;
     }
 
 }

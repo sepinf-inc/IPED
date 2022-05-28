@@ -1,5 +1,6 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,7 +14,7 @@ public class Chat {
     private long id;
     private final WAContact remote;
     private String subject;
-    private List<Message> messages;
+    private List<Message> messages = new ArrayList<>();
     private String title = null;
     private boolean groupChat = false;
     private boolean deleted = false;
@@ -86,16 +87,18 @@ public class Chat {
     public String getTitle() {
         if (title == null) {
             if (isGroupChat()) {
-                title = "WhatsApp Group - "; //$NON-NLS-1$ //$NON-NLS-2$
-                if (getSubject() != null && getSubject().trim().length() != 0) {
-                    title += getSubject() + " - "; //$NON-NLS-1$
+                title = "WhatsApp Group"; //$NON-NLS-1$ //$NON-NLS-2$
+                if (getSubject() != null && !getSubject().isBlank()) {
+                    title += " - " + getSubject().strip(); //$NON-NLS-1$
                 }
-                title += getPrintId();
             } else {
-                title = "WhatsApp Chat - "; //$NON-NLS-1$
-                if (remote != null && !remote.getName().trim().equals(getPrintId()))
-                    title += remote.getName() + " - "; //$NON-NLS-1$
-                title += getPrintId();
+                title = "WhatsApp Chat"; //$NON-NLS-1$
+                if (remote != null && remote.getName() != null
+                        && (getPrintId() == null || !remote.getName().strip().equals(getPrintId().strip())))
+                    title += " - " + remote.getName().strip(); //$NON-NLS-1$
+            }
+            if (getPrintId() != null && !getPrintId().isBlank()) {
+                title += " - " + getPrintId().strip();
             }
         }
         return title;
