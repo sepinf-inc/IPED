@@ -87,6 +87,15 @@ div.viewed {
     padding:0;
 }
 
+div.deletedIcon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACGElEQVR42pWTz2saQRTH39j9oWs09LQW2720ppRe9lQotJce+i/0EPIHBBIqBEJNDh6ChyaX4EEPPSpCTjn03oMBKY1kEdIt2I0FW4kYNdYUZd1dp2+XZnGrsfTBlxmGeZ958+Y7BP5Ep9NJE0Keww0xHo8hHo+/y+fzmcl1MgFQcJBhTiSTSdrtdtcKhUJmCtButxXLsmTDMGYm+/1+yOVy0Gw2KcMwa6lUKuMBtFotxTRNWdf1mYBgMOjOKaWaKIoxDwDJ/7zCRGiRSMQLaDQaCp4uD4fDuZmBQAB4ntei0agXUK/X/6sCSZK8gFqt5lQwGAxmZlDTBMIwIAgC8Bynvd/aevz64GDkAqrVqoI+kFFTyY10GgbHx3B/bw+IKIJ+enr1LZEgY4576+5WVdV5BZT3ZDTQ55UVuHVxAbclCe6srsKP3V3oX16CTsgHF1CpVBR8Htl23N8xOj+Hs40N2yzgwwrHlMKI0vJXw3jpAsrl8twmXh0dgbazAz67KkJoSBSfvVLVkgsolUqOE6+vYPeC4zhnrmsaqNvbYPb7zjpWCuzCQpMRxRcuoFgsOk2c6r5lwcflZRj1erC4tAQP1tfhC1YyaLWAE4QKyWazIYy74XD4DcuyTzGHRzEo3zXk++Eh+/PkhH+4udllQyH9F5rmbH//kT8WSxD8nvdwzxNUBLWICs6A2J2172Z/FNsoPVQT9ek3OcbuBA+nPxcAAAAASUVORK5CYII=");
+    margin:0;
+    padding:0;
+}
+
 /********************
  * WhatsApp Top Bar *
  ********************/
@@ -196,7 +205,8 @@ div.viewed {
 
 #conversation .incoming, #conversation .outgoing,
  #conversation .date, #conversation .systemmessage, 
- #conversation .specialmessage {
+ #conversation .specialmessage,
+ #conversation .recoveredChat {
 	cursor: pointer;
 	border-radius: 2px;
 	box-shadow: 0 0 6px #b8b7b7;
@@ -213,6 +223,17 @@ div.viewed {
 	margin: 0 auto;
 	text-align: center;
 	margin-top: 8px;
+	margin-bottom: 8px;
+}
+
+#conversation .recoveredChat
+{
+	background-color: #ec0000;
+	color: #ffffff;
+	width: 320px;
+	margin: 0 auto;
+	text-align: center;
+	margin-top: 12px;
 	margin-bottom: 8px;
 }
 

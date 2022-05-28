@@ -12,10 +12,12 @@ public abstract class WAContactsExtractor {
     protected final WAContactsDirectory directory;
     protected final File databaseFile;
     private HashSet<String> invalidCol = new HashSet<String>();
+    protected boolean recoverDeletedRecords;
 
-    protected WAContactsExtractor(File database, WAContactsDirectory directory) {
+    protected WAContactsExtractor(File database, WAContactsDirectory directory, boolean recoverDeletedRecords) {
         this.databaseFile = database;
         this.directory = directory;
+        this.recoverDeletedRecords = recoverDeletedRecords;
     }
 
     public WAContactsDirectory getContactsDirectory() {
