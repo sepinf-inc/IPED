@@ -61,8 +61,8 @@ public class PartMetParserTest extends BaseItemSearchContext {
             Exception exception = assertThrows(TikaException.class, () -> {
                 parser.parse(stream, handler, new Metadata(), context);
             });
-            String expectedExceptionMessage = "Detected part.met file format version not supported";
-            assertTrue(exception.getMessage().contains(expectedExceptionMessage));
+            String versionNotSupported = "14";
+            assertTrue(exception.getMessage().contains(versionNotSupported));
         }
     }
 }
