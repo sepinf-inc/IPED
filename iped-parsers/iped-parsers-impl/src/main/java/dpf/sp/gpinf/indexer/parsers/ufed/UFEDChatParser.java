@@ -74,7 +74,7 @@ public class UFEDChatParser extends AbstractParser {
         if (appToMime.containsKey(source)) {
             return appToMime.get(source);
         }
-        return UFED_CHAT_MIME;
+        return UFED_CHAT_PREVIEW_MIME;
     }
 
     @Override
