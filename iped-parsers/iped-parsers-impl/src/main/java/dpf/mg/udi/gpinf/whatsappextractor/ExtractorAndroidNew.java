@@ -60,10 +60,7 @@ public class ExtractorAndroidNew extends Extractor {
         List<Chat> list = new ArrayList<>();
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-
-            String selectChatQuery = SELECT_CHAT_VIEW;
-
-            try (ResultSet rs = stmt.executeQuery(selectChatQuery)) {
+            try (ResultSet rs = stmt.executeQuery(SELECT_CHAT_VIEW)) {
 
                 while (rs.next()) {
                     String contactId = rs.getString("contact"); //$NON-NLS-1$
@@ -80,7 +77,7 @@ public class ExtractorAndroidNew extends Extractor {
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c));
                     if (c.isGroupChat()) {
-                        setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
+                        // setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                     }
                 }
 
@@ -109,7 +106,13 @@ public class ExtractorAndroidNew extends Extractor {
                 int type = rs.getInt("messageType"); //$NON-NLS-1$
                 int status = rs.getInt("status"); //$NON-NLS-1$
                 String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
-                Integer edit_version = Integer.parseInt(SQLite3DBParser.getStringIfExists(rs, "edit_version"));
+                Integer edit_version;
+                try {
+                    edit_version = Integer.parseInt(SQLite3DBParser.getStringIfExists(rs, "edit_version"));
+                } catch (NumberFormatException e) {
+                    edit_version = null;
+                }
+
                 long media_size = rs.getLong("mediaSize"); //$NON-NLS-1$
 
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
@@ -278,7 +281,7 @@ public class ExtractorAndroidNew extends Extractor {
             + " subject, created_timestamp as creation, sort_timestamp FROM chat_view ORDER BY sort_timestamp DESC"; //$NON-NLS-1$
 
     private static final String SELECT_MESSAGES = "select  m._id AS id,cv._id as chatId, cv.raw_string_jid "
-            + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data"
+            + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
             + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
             + " mm.mime_type as mediaMime, mm.file_size as mediaSize, media_name as mediaName, "
             + " m.message_type as messageType,   latitude,  longitude, mm.media_duration,"
