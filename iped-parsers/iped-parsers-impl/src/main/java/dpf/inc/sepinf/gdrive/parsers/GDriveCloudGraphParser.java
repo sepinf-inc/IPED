@@ -397,7 +397,11 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
      */
 
     private String getGDriveCloudGraphQuery(Connection connection){
-        boolean col_exists = this.checkIfColumnExists(connection, "cloud_graph_entry", "photos_storage_policy");
+        boolean col_exists = false;
+        try {
+            col_exists = checkIfColumnExists(connection, "cloud_graph_entry", "photos_storage_policy");
+        } catch (SQLException ignore) {
+        }
         return
     		  " Select  "
     		+ " 	case  "
