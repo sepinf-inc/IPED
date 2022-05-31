@@ -19,17 +19,19 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
     private static String testRoot = System.getProperty("user.dir") + "/src/test";
     private static String osName = System.getProperty("os.name").toLowerCase();
 
-    
-    private void setUpTool() throws IOException {
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         if (osName.startsWith("windows")) {
             String repoPath = "libyal/libpff/20131028/libpff-20131028.zip";
             RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
             System.setProperty(LibpffPSTParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/pffexport/");
         }
-
     }
 
-    private void tearDownTool() throws IOException {
+    @Override
+    protected void tearDown() throws Exception {
         if (osName.startsWith("windows")) {
             File tool_path = new File(System.clearProperty(LibpffPSTParser.TOOL_PATH_PROP));
             FileUtils.deleteDirectory(tool_path.getParentFile());
@@ -38,7 +40,6 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
 
     @Test
     public void testLibpffPSTParserOST() throws IOException, SAXException, TikaException {
-        setUpTool();
         LibpffPSTParser parser = new LibpffPSTParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
@@ -59,14 +60,11 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
 
         } catch (IOException e) {
             // skip test
-        } finally {
-            tearDownTool();
         }
     }
 
     @Test
     public void testLibpffPSTParserUserInfo() throws IOException, SAXException, TikaException {
-        setUpTool();
         LibpffPSTParser parser = new LibpffPSTParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
@@ -86,15 +84,12 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
 
         } catch (IOException e) {
             // skip test
-        } finally {
-            tearDownTool();
         }
     }
 
 
     @Test
     public void testLibpffPSTParserInbox() throws IOException, SAXException, TikaException {
-        setUpTool();
         LibpffPSTParser parser = new LibpffPSTParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
@@ -125,8 +120,6 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
 
         } catch (IOException e) {
             // skip test
-        } finally {
-            tearDownTool();
         }
     }
 }
