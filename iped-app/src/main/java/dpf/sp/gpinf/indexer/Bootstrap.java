@@ -22,6 +22,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
+import dpf.sp.gpinf.indexer.util.Util;
 
 /**
  * Bootstrap class to start the main application process with a custom classpath
@@ -92,7 +93,18 @@ public class Bootstrap {
                 classpath = fillClassPathWithLibreOfficeJars(iped, classpath);
             }
 
-            String javaBin = SystemUtils.IS_OS_WINDOWS ? iped.rootPath + "/jre/bin/java.exe" : "java";
+            String javaBin = "java";
+            if (SystemUtils.IS_OS_WINDOWS) {
+                File javaHome = new File(System.getProperty("java.home"));
+                File embeddedJRE = new File(iped.rootPath + "/jre");
+                if (!javaHome.equals(embeddedJRE)) {
+                    String warn = Util.getJavaVersionWarn();
+                    if (warn != null) {
+                        System.err.println(warn);
+                    }
+                }
+                javaBin = javaHome.getPath() + "/bin/java.exe";
+            }
 
             List<String> cmd = new ArrayList<>();
             cmd.addAll(Arrays.asList(javaBin, "-cp", classpath));

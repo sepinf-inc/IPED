@@ -204,11 +204,6 @@
   			<version>3.0.4</version>
 		</dependency>
         <dependency>
-	    	<groupId>com.optimaize.languagedetector</groupId>
-    		<artifactId>language-detector</artifactId>
-    		<version>0.6</version>
-		</dependency>
-        <dependency>
    			<groupId>com.zaxxer</groupId>
    			<artifactId>SparseBitSet</artifactId>
    			<version>1.1</version>
@@ -272,6 +267,15 @@
             <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this -->
             <version>1.21</version>
         </dependency>
-    </dependencies>
-    
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-langdetect-optimaize</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-parser-nlp-module</artifactId>
+            <version>${tika.version}</version>
+         </dependency>
+     </dependencies>
 </project>

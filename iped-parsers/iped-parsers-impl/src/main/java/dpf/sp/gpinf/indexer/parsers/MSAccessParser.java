@@ -33,15 +33,15 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.IOUtils;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaMetadataKeys;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -97,7 +97,7 @@ public class MSAccessParser extends AbstractParser {
             database = builder.open();
 
             metadata.set(HttpHeaders.CONTENT_TYPE, ACCESS_MIME_TYPE);
-            metadata.remove(TikaMetadataKeys.RESOURCE_NAME_KEY);
+            metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
             for (Property prop : database.getSummaryProperties())
                 metadata.set(prop.getName(), prop.getValue().toString());
 
@@ -166,7 +166,7 @@ public class MSAccessParser extends AbstractParser {
                                         blobStream = oleBlob.getBinaryStream();
 
                                     if (content instanceof OleBlob.PackageContent) {
-                                        metadata.set(Metadata.RESOURCE_NAME_KEY,
+                                        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY,
                                                 ((PackageContent) content).getPrettyName());
                                     }
 

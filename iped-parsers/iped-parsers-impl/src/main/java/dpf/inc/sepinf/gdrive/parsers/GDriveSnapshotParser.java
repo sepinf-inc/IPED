@@ -128,7 +128,7 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         Metadata metadataSnapshotItem = new Metadata();
 
         metadataSnapshotItem.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, GDRIVE_SNAPSHOT_REG.toString());
-        metadataSnapshotItem.add(Metadata.RESOURCE_NAME_KEY, "GDrive Snapshot Entry " + i);
+        metadataSnapshotItem.add(TikaCoreProperties.RESOURCE_NAME_KEY, "GDrive Snapshot Entry " + i);
         metadataSnapshotItem.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
         // These properties need to get a "Date" type as parameters, so it can correctly

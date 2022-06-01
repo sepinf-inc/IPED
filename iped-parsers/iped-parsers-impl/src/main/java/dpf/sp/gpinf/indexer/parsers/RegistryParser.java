@@ -18,6 +18,7 @@ import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -113,7 +114,7 @@ public class RegistryParser extends AbstractParser {
         try {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
-            String filename = metadata.get(Metadata.RESOURCE_NAME_KEY);
+            String filename = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
             File tempFile = null;
             String[] finalCmd = null;
             for (String regName : regNames)
@@ -158,7 +159,7 @@ public class RegistryParser extends AbstractParser {
                 }
 
                 Metadata reportMetadata = new Metadata();
-                reportMetadata.set(Metadata.RESOURCE_NAME_KEY, filename + "-Report"); //$NON-NLS-1$
+                reportMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filename + "-Report"); //$NON-NLS-1$
                 reportMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
                 reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 

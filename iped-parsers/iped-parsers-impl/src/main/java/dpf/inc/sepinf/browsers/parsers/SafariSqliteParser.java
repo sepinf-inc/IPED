@@ -93,7 +93,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
                     ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-8"); //$NON-NLS-1$
                     Metadata historyMetadata = new Metadata();
                     historyMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, SAFARI_HISTORY.toString());
-                    historyMetadata.add(Metadata.RESOURCE_NAME_KEY, "Safari History"); //$NON-NLS-1$
+                    historyMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Safari History"); //$NON-NLS-1$
                     historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                     historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
                     historyMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
@@ -116,7 +116,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
                     Metadata metadataHistory = new Metadata();
 
                     metadataHistory.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, SAFARI_HISTORY_REG.toString());
-                    metadataHistory.add(Metadata.RESOURCE_NAME_KEY, "Safari History Entry " + i); //$NON-NLS-1$
+                    metadataHistory.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Safari History Entry " + i); //$NON-NLS-1$
                     metadataHistory.add(TikaCoreProperties.TITLE, h.getTitle());
                     metadataHistory.set(ExtraProperties.ACCESSED, h.getVisitDate());
                     metadataHistory.set(ExtraProperties.VISIT_DATE, h.getVisitDate());

@@ -10,12 +10,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.IOUtils;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -150,7 +151,7 @@ public class MultipleParser extends AbstractParser {
 
     private Metadata getNewMetadata(Metadata metadata) {
         Metadata newMetadata = new Metadata();
-        newMetadata.set(Metadata.RESOURCE_NAME_KEY, metadata.get(Metadata.RESOURCE_NAME_KEY));
+        newMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY));
         newMetadata.set(Metadata.CONTENT_LENGTH, metadata.get(Metadata.CONTENT_LENGTH));
         newMetadata.set(Metadata.CONTENT_TYPE, metadata.get(Metadata.CONTENT_TYPE));
         newMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
