@@ -32,7 +32,7 @@
         <!--dependencies-->
         <tika.version>2.4.0</tika.version>
         <tika.core.version>2.4.0-p1</tika.core.version>
-        <lucene.version>9.0.0</lucene.version>
+        <lucene.version>9.1.0</lucene.version>
         <sleuthkit.version>4.11.1-p2</sleuthkit.version>
         <libreoffice.version>7.2.2</libreoffice.version>
         <slf4j.version>1.7.25</slf4j.version>
