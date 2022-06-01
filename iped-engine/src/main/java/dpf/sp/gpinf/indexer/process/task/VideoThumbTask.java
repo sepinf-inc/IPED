@@ -55,7 +55,6 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
@@ -89,6 +88,16 @@ public class VideoThumbTask extends ThumbTask {
      * Caminho relativo para o MPlayer distribuído para Windows
      */
     private static String mplayerWin = "../mplayer/mplayer.exe"; //$NON-NLS-1$
+
+    /**
+     * Property to flag frames extracted as subitems from videos.
+     */
+    private static final String VIDEO_THUMB_PROP = "videoThumbnail"; //$NON-NLS-1$
+
+    /**
+     * Category name of frames extracted as subitems from videos.
+     */
+    private static final String VIDEO_THUMB_CATEGORY = "Video Thumbnails"; //$NON-NLS-1$
 
     /**
      * Objeto estático de inicialização. Necessário para garantir que seja feita
@@ -326,6 +335,11 @@ public class VideoThumbTask extends ThumbTask {
      */
     @Override
     protected void process(IItem evidence) throws Exception {
+
+        if (evidence.getExtraAttribute(VIDEO_THUMB_PROP) != null) {
+            evidence.setCategory(VIDEO_THUMB_CATEGORY);
+        }
+
         // Verifica se está desabilitado e se o tipo de arquivo é tratado
         if (!taskEnabled || (!isVideoType(evidence.getMediaType()) && !checkAnimatedImage(evidence)) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null) {
@@ -556,7 +570,7 @@ public class VideoThumbTask extends ThumbTask {
             String name = item.getName() + "_thumb_" + seqStr.substring(seqStr.length() - 5);
             newItem.setName(name);
             newItem.setPath(item.getPath() + ">>" + name);
-            newItem.setExtraAttribute("videoThumbnail", true);
+            newItem.setExtraAttribute(VIDEO_THUMB_PROP, true);
             newItem.setSubItem(true);
             newItem.setSubitemId(i);
 

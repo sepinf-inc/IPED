@@ -24,6 +24,7 @@
     {"name": "Multimedia", "categories":[
       {"name": "Audios", "mimes": ["audio"]},
       {"name": "Videos", "mimes": ["video", "application/vnd.rn-realmedia", "application/x-shockwave-flash"]},
+      {"name": "Video Thumbnails"},
       {"name": "Images", "mimes": ["image", "application/coreldraw", "application/x-vnd.corel.zcf.draw.document+zip", "application/vnd.oasis.opendocument.graphics", "application/vnd.oasis.opendocument.graphics-template", "application/vnd.oasis.opendocument.image", "application/vnd.oasis.opendocument.image-template", "application/vnd.sun.xml.draw", "application/vnd.sun.xml.draw.template", "application/vnd.stardivision.draw"], "categories":[
         {"name": "Temporary Internet Images"},
         {"name": "Images in System Folders"},
