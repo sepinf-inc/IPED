@@ -52,7 +52,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.rtf.RTFParser;
+import org.apache.tika.parser.microsoft.rtf.RTFParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -136,7 +136,7 @@ public class OutlookPSTParser extends AbstractParser {
         this.context = context;
         extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
-        String fileName = metadata.get(Metadata.RESOURCE_NAME_KEY);
+        String fileName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
         ItemInfo itemInfo = context.get(ItemInfo.class);
         if (itemInfo != null)
             fileName = itemInfo.getPath();
@@ -671,7 +671,7 @@ public class OutlookPSTParser extends AbstractParser {
                         filename = attach.getFilename();
 
                     Metadata metadata = new Metadata();
-                    metadata.set(Metadata.RESOURCE_NAME_KEY, filename);
+                    metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filename);
                     metadata.set(TikaCoreProperties.CREATED, attach.getCreationTime());
                     // metadata.set(TikaCoreProperties.MODIFIED,
                     // attach.getLastModificationTime());

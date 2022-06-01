@@ -21,6 +21,8 @@ public class WAContact {
     private byte[] avatar;
 
     private String avatarPath;
+    
+    private boolean deleted = false;
 
     public WAContact(String id) {
         if (id != null && id.contains("@")) { //$NON-NLS-1$
@@ -86,13 +88,13 @@ public class WAContact {
     }
 
     public String getName() {
-        if (waName != null)
+        if (waName != null && ! waName.isBlank())
             return waName;
-        else if (displayName != null)
+        else if (displayName != null && !displayName.isBlank())
             return displayName;
-        else if (givenName != null)
+        else if (givenName != null && !givenName.isBlank())
             return givenName;
-        else if (nickName != null)
+        else if (nickName != null && !nickName.isBlank())
             return nickName;
         else
             return id;
@@ -112,7 +114,10 @@ public class WAContact {
     }
 
     public String getFullId() {
-        return id + "@" + suffix; //$NON-NLS-1$
+        if (id == null || id.isBlank()) {
+            return "";
+        }
+        return id.strip() + (!suffix.isBlank() ? "@" + suffix.strip() : ""); //$NON-NLS-1$
     }
 
     public String getAvatarPath() {
@@ -121,6 +126,14 @@ public class WAContact {
 
     public void setAvatarPath(String avatarPath) {
         this.avatarPath = avatarPath;
+    }
+    
+    public boolean isDeleted() {
+        return deleted;
+    }
+    
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     @Override

@@ -5,10 +5,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.Policy;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -16,19 +12,12 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ag.ion.bion.officelayer.application.IOfficeApplication;
-import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Version;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.PluginConfig;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.ui.UiScale;
-import dpf.sp.gpinf.indexer.util.CustomLoader;
-import dpf.sp.gpinf.indexer.util.DefaultPolicy;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
-import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class AppMain {
@@ -143,12 +132,6 @@ public class AppMain {
     public void start(File casePath, Manager processingManager, String[] args) {
 
         try {
-            boolean fromCustomLoader = CustomLoader.isFromCustomLoader(args);
-            if (fromCustomLoader)
-                args = CustomLoader.clearCustomLoaderArgs(args);
-
-            boolean finalLoader = testPath != null || fromCustomLoader;
-
             loadArgs(args);
 
             if (casesPathFile == null)
@@ -162,48 +145,28 @@ public class AppMain {
             if ((logFile.exists() && !IOUtil.canWrite(logFile)) || !IOUtil.canCreateFile(logFile.getParentFile())) {
                 logFile = new File(System.getProperty("java.io.tmpdir"), appLogFileName);
             }
-            LogConfiguration logConfiguration = null;
 
             if (libDir == null)
                 libDir = detectLibDir();
 
+            LogConfiguration logConfiguration = null;
+
             if (processingManager == null) {
                 logConfiguration = new LogConfiguration(libDir.getParentFile().getAbsolutePath(), logFile);
-                logConfiguration.configureLogParameters(nolog, finalLoader);
+                logConfiguration.configureLogParameters(nolog);
 
                 Logger LOGGER = LoggerFactory.getLogger(AppMain.class);
-                if (!fromCustomLoader)
-                    LOGGER.info(Version.APP_NAME);
-            }
-
-            Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath());
-
-            if (!finalLoader && processingManager == null) {
+                LOGGER.info(Version.APP_NAME);
 
                 Configuration.getInstance().loadIpedRoot();
-
-                List<File> jars = new ArrayList<File>();
-                PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
-                jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
-                jars.add(pluginConfig.getTskJarFile());
-
-                System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH,
-                        new File(libDir, "nativeview").getAbsolutePath());
-                LibreOfficeFinder loFinder = new LibreOfficeFinder(libDir.getParentFile());
-                if (loFinder.getLOPath() != null)
-                    UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
-
-                String[] customArgs = CustomLoader.getCustomLoaderArgs(this.getClass().getName(), args, logFile);
-
-                CustomLoader.run(customArgs, jars);
-
-            } else {
-                App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager,
-                        libDir.getAbsolutePath());
-
-                UICaseDataLoader init = new UICaseDataLoader(processingManager);
-                init.execute();
             }
+            
+            Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath(), true);
+
+            App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager, libDir.getAbsolutePath());
+
+            UICaseDataLoader init = new UICaseDataLoader(processingManager);
+            init.execute();
 
         } catch (Exception e) {
             e.printStackTrace();

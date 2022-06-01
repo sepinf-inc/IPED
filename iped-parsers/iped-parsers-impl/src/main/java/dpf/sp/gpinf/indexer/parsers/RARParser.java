@@ -45,6 +45,7 @@ import com.github.junrar.exception.RarException;
 import com.github.junrar.rarfile.FileHeader;
 
 import dpf.sp.gpinf.indexer.parsers.util.Util;
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.ExtraProperties;
 
 /**
@@ -137,12 +138,17 @@ public class RARParser extends AbstractParser {
             EmbeddedDocumentExtractor extractor) throws RarException, IOException, SAXException {
         InputStream subFile = null;
         try {
-            subFile = rar.getInputStream(header);
+            if (header.getFullUnpackSize() > 0) {
+                subFile = rar.getInputStream(header);
+            } else {
+                subFile = new EmptyInputStream();
+            }
+
             Metadata entrydata = new Metadata();
             if (header.isDirectory())
                 entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
             
-            entrydata.set(Metadata.RESOURCE_NAME_KEY, header.getFileNameString().replace("\\", "/")); //$NON-NLS-1$ //$NON-NLS-2$
+            entrydata.set(TikaCoreProperties.RESOURCE_NAME_KEY, header.getFileNameString().replace("\\", "/")); //$NON-NLS-1$ //$NON-NLS-2$
             entrydata.set(TikaCoreProperties.CREATED, header.getCTime());
             entrydata.set(TikaCoreProperties.MODIFIED, header.getMTime());
             entrydata.set(ExtraProperties.ACCESSED, header.getATime());

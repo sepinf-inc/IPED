@@ -19,20 +19,6 @@
 
 <properties>
 
-    <detectors>		
-        <!-- custom detectors from Tika -->
-        <detector class="org.apache.tika.detect.OverrideDetector"></detector>
-        <detector class="org.apache.tika.parser.microsoft.POIFSContainerDetector"></detector>
-        <detector class="org.apache.tika.parser.pkg.ZipContainerDetector"></detector>
-        <detector class="org.apache.tika.parser.apple.BPListDetector"></detector>
-        <!-- custom detectors from IPED -->
-        <detector class="dpf.sp.gpinf.detector.SQLiteContainerDetector"></detector>
-        <!-- other custom detectors -->
-        <detector class="org.gagravarr.tika.OggDetector"></detector>
-        <!-- default Tika detector -->
-        <detector class="org.apache.tika.mime.MimeTypes"></detector>
-    </detectors>
-
     <parsers>
         <parser class="dpf.sp.gpinf.indexer.parsers.external.CompositeExternalParser"></parser>
         
@@ -63,11 +49,11 @@
         <!--<parser class="org.apache.tika.parser.image.HeifParser"></parser>-->
         <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser>
         <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
-        <!--<parser class="org.apache.tika.parser.jpeg.JpegParser"></parser>-->
+        <!--<parser class="org.apache.tika.parser.image.JpegParser"></parser>-->
         <!--We have our own impls
         <parser class="org.apache.tika.parser.mail.RFC822Parser"></parser>
         <parser class="org.apache.tika.parser.mbox.MboxParser"></parser>
-        <parser class="org.apache.tika.parser.mbox.OutlookPSTParser"></parser>-->
+        <parser class="org.apache.tika.parser.microsoft.pst.OutlookPSTParser"></parser>-->
         <!--Returns empty content for some EMFs. Used below in MultipleParser
         <parser class="org.apache.tika.parser.microsoft.EMFParser"></parser-->
         <!--<parser class="org.apache.tika.parser.microsoft.WMFParser"></parser>-->
@@ -107,7 +93,7 @@
         <!-- we have our own impls
         <parser class="org.apache.tika.parser.pkg.PackageParser"></parser>
         <parser class="org.apache.tika.parser.pkg.RarParser"></parser>-->
-        <parser class="org.apache.tika.parser.rtf.RTFParser"></parser>
+        <parser class="org.apache.tika.parser.microsoft.rtf.RTFParser"></parser>
         <parser class="org.apache.tika.parser.sas.SAS7BDATParser"></parser>
         <!--used by FLVParserWrapper internally
         <parser class="org.apache.tika.parser.video.FLVParser"></parser> -->
@@ -117,7 +103,7 @@
         <parser class="org.apache.tika.parser.xml.DcXMLParser"></parser>-->
         <parser class="org.apache.tika.parser.dif.DIFParser"></parser>
         <parser class="org.apache.tika.parser.xml.FictionBookParser"></parser>
-        <parser class="org.apache.tika.parser.chm.ChmParser"></parser>
+        <parser class="org.apache.tika.parser.microsoft.chm.ChmParser"></parser>
         <!-- we uses strings parser for this
         <parser class="org.apache.tika.parser.code.SourceCodeParser"></parser>
         <parser class="org.apache.tika.parser.mat.MatParser"></parser> -->
@@ -167,7 +153,7 @@
             <mime>image/jpeg</mime>
             <params>
                 <param name="parserName" type="string">JPEGParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.jpeg.JpegParser</param>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.JpegParser</param>
             </params>
         </parser>
         
@@ -309,6 +295,7 @@
                 <param name="linkMediasByNameAndApproxSizeFallback" type="bool">true</param>
                 <param name="downloadConnectionTimeout" type="int">500</param>
                 <param name="downloadReadTimeout" type="int">500</param>
+                <param name="recoverDeletedRecords" type="bool">true</param>
             </params>
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">
@@ -339,7 +326,12 @@
         <parser class="dpf.pi.gpinf.firefox.parsers.FirefoxSavedSessionParser"></parser>
         
         <parser class="dpf.inc.sepinf.python.PythonParser"></parser>
-        
     </parsers>
+
+    <encodingDetectors>
+        <encodingDetector class="dpf.sp.gpinf.indexer.tika.HtmlEncodingDetector"/>
+        <encodingDetector class="org.apache.tika.parser.txt.UniversalEncodingDetector"/>
+        <encodingDetector class="dpf.sp.gpinf.indexer.tika.Icu4jEncodingDetector"/>
+    </encodingDetectors>
 
 </properties>

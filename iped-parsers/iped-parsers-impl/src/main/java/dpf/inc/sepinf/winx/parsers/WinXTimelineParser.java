@@ -158,7 +158,7 @@ public class WinXTimelineParser extends SQLite3DBParser {
         Metadata metadataTimelineItem = new Metadata();
 
         metadataTimelineItem.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WIN10_TIMELINE_REG.toString());
-        metadataTimelineItem.add(Metadata.RESOURCE_NAME_KEY, "WinXTimeline Entry " + i);
+        metadataTimelineItem.add(TikaCoreProperties.RESOURCE_NAME_KEY, "WinXTimeline Entry " + i);
         metadataTimelineItem.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
         // These properties need to get a "Date" type as parameters, so it can correctly

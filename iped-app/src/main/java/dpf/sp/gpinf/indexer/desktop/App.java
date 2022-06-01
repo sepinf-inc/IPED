@@ -200,6 +200,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private List<DefaultSingleCDockable> viewerDocks;
     private ViewerController viewerController;
     private CButton timelineButton;
+    private CButton butSimSearch;
 
     Color defaultColor;
     Color defaultFocusedColor;
@@ -837,45 +838,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
 
-        if (SimilarImagesFilterActions.isFeatureEnabled()) {
-            final CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
-                    IconUtil.getToolbarIcon("find", resPath));
-            galleryTabDock.addAction(butSimSearch);
-            galleryTabDock.addSeparator();
-            butSimSearch.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    SimilarImagesFilterActions.searchSimilarImages(false);
-                }
-            });
-            butSimSearch.setEnabled(false);
-            resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-                public void valueChanged(ListSelectionEvent e) {
-                    if (e.getValueIsAdjusting()) {
-                        return;
-                    }
-                    butSimSearch.setEnabled(false);
-                    final int selIdx = resultsTable.getSelectedRow();
-                    // running in EDT can cause deadlock in UI if evidence was moved because this
-                    // thread can block when entering the static synchronized method
-                    // IndexItem.checkIfEvidenceFolderExists() called before by a worker thread
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            if (selIdx != -1) {
-                                IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
-                                if (itemId != null) {
-                                    IItem item = appCase.getItemByItemId(itemId);
-                                    if (item != null) {
-                                        boolean enabled = item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) != null;
-                                        butSimSearch.setEnabled(enabled);
-                                    }
-                                }
-                            }
-                        }
-                    }.start();
-                }
-            });
-        }
+        butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
+                IconUtil.getToolbarIcon("find", resPath));
+        galleryTabDock.addAction(butSimSearch);
+        galleryTabDock.addSeparator();
+        butSimSearch.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                SimilarImagesFilterActions.searchSimilarImages(false);
+            }
+        });
+        butSimSearch.setEnabled(false);
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
         CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"),
@@ -1452,5 +1424,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public IPEDSource getLastSelectedSource() {
         return this.lastSelectedSource;
+    }
+
+    public void setEnableGallerySimSearchButton(boolean enabled) {
+        this.butSimSearch.setEnabled(enabled);
     }
 }
