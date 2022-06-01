@@ -10,6 +10,7 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypesFactory;
 import org.slf4j.Logger;
@@ -49,7 +50,7 @@ public class SignatureTask extends AbstractTask {
         MediaType type = evidence.getMediaType();
         if (type == null) {
             Metadata metadata = new Metadata();
-            metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
+            metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, evidence.getName());
             try {
                 if (processFileSignatures) {
                     TikaInputStream tis = null;
@@ -91,7 +92,7 @@ public class SignatureTask extends AbstractTask {
                         String suffix = HFS_ATTR_SUFFIX[i++];
                         if (evidence.getName().endsWith(suffix)) {
                             String name = evidence.getName().substring(0, evidence.getName().lastIndexOf(suffix));
-                            metadata.set(Metadata.RESOURCE_NAME_KEY, name);
+                            metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, name);
                             type = detector.detect(null, metadata).getBaseType();
                         }
                     }

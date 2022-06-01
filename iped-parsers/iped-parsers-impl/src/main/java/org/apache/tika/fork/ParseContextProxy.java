@@ -37,7 +37,7 @@ public class ParseContextProxy extends ParseContext implements ForkProxy {
         // Indexa conteudo de todos os elementos de HTMLs, como script, etc
         context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
         // we have seen very large records in valid docs
-        org.apache.poi.util.IOUtils.setByteArrayMaxOverride(-1);
+        org.apache.poi.hpsf.CodePageString.setMaxRecordLength(512_000);
     }
 
     public <T> void set(Class<T> key, T value) {

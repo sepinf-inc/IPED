@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Property;
+import org.apache.tika.metadata.TikaCoreProperties;
 
 /**
  * Metadados extras produzidos pelos parsers do pacote.
@@ -16,7 +17,7 @@ public class ExtraProperties {
 
     public static final String GLOBAL_ID = "globalId"; //$NON-NLS-1$
 
-    public static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
+    public static final String TIKA_PARSER_USED = TikaCoreProperties.TIKA_PARSED_BY.getName();
 
     public static final String DATASOURCE_READER = "X-Reader"; //$NON-NLS-1$
 

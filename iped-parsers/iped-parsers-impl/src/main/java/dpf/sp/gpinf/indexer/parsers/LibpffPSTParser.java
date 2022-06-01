@@ -31,7 +31,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.rtf.RTFParser;
+import org.apache.tika.parser.microsoft.rtf.RTFParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -138,7 +138,7 @@ public class LibpffPSTParser extends AbstractParser {
         this.handler = handler;
         extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
-        String fileName = metadata.get(Metadata.RESOURCE_NAME_KEY);
+        String fileName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
         ItemInfo itemInfo = context.get(ItemInfo.class);
         if (itemInfo != null)
             fileName = itemInfo.getPath();
@@ -585,7 +585,7 @@ public class LibpffPSTParser extends AbstractParser {
             Metadata metadata = new Metadata();
             metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(++virtualId));
             metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(parent));
-            metadata.set(Metadata.RESOURCE_NAME_KEY, name);
+            metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, name);
             metadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
             if (deleted)
                 metadata.set(ExtraProperties.DELETED, "true"); //$NON-NLS-1$

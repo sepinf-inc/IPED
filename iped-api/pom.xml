@@ -29,7 +29,7 @@
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
-            <version>${tika.version}</version>
+            <version>${tika.core.version}</version>
         </dependency>
         <dependency>
             <groupId>org.sleuthkit</groupId>
