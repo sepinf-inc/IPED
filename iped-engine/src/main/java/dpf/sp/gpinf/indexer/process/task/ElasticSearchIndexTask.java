@@ -12,6 +12,13 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.opensearch.action.ActionListener;
 import org.opensearch.action.DocWriteRequest.OpType;
 import org.opensearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -55,13 +62,6 @@ import iped3.exception.IPEDException;
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
-import repackaged.org.apache.http.HttpHost;
-import repackaged.org.apache.http.auth.AuthScope;
-import repackaged.org.apache.http.auth.UsernamePasswordCredentials;
-import repackaged.org.apache.http.client.CredentialsProvider;
-import repackaged.org.apache.http.client.config.RequestConfig;
-import repackaged.org.apache.http.impl.client.BasicCredentialsProvider;
-import repackaged.org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 
 public class ElasticSearchIndexTask extends AbstractTask {
 
