@@ -30,7 +30,8 @@
         <plugin.rsc>${basedir}/resources/plugins</plugin.rsc>
         
         <!--dependencies-->
-        <tika.version>1.26</tika.version>
+        <tika.version>2.4.0</tika.version>
+        <tika.core.version>2.4.0-p1</tika.core.version>
         <lucene.version>9.0.0</lucene.version>
         <sleuthkit.version>4.11.1-p2</sleuthkit.version>
         <libreoffice.version>7.2.2</libreoffice.version>
@@ -108,6 +109,14 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>3.0.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <forceJavacCompilerUse>false</forceJavacCompilerUse>
+                </configuration>
             </plugin>
         </plugins>
     </build>

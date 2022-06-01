@@ -63,6 +63,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 import iped3.IItemBase;
 import iped3.io.IStreamSource;
+import iped3.util.ExtraProperties;
 
 public class EmailViewer extends HtmlViewer {
 
@@ -235,8 +236,7 @@ public class EmailViewer extends HtmlViewer {
             writer.write("<div class=\"ipedtheme\">");
             
             String[][] names = {
-                    { TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_TITLE.getName(),
-                            Messages.getString("EmailViewer.Subject") }, //$NON-NLS-1$
+                    { ExtraProperties.MESSAGE_SUBJECT, Messages.getString("EmailViewer.Subject") }, //$NON-NLS-1$
                     { Message.MESSAGE_FROM, Messages.getString("EmailViewer.From") }, //$NON-NLS-1$
                     { Message.MESSAGE_TO, Messages.getString("EmailViewer.To") }, //$NON-NLS-1$
                     { Message.MESSAGE_CC, Messages.getString("EmailViewer.Cc") }, //$NON-NLS-1$
@@ -497,7 +497,7 @@ public class EmailViewer extends HtmlViewer {
                     }
                 } else if (fieldname.equalsIgnoreCase("Subject")) { //$NON-NLS-1$
                     String subject = decodeIfUtf8(((UnstructuredField) parsedField).getValue());
-                    metadata.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_TITLE, subject);
+                    metadata.add(ExtraProperties.MESSAGE_SUBJECT, subject);
 
                 } else if (fieldname.equalsIgnoreCase("To")) { //$NON-NLS-1$
                     processAddressList(parsedField, "To:", Message.MESSAGE_TO); //$NON-NLS-1$

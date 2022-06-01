@@ -8,7 +8,7 @@ For more info about general parser api, see https://github.com/sepinf-inc/IPED/w
 from org.apache.tika.sax import XHTMLContentHandler
 from org.apache.tika.io import TikaInputStream
 from org.apache.tika.io import TemporaryResources
-from org.apache.tika.metadata import Metadata, Message
+from org.apache.tika.metadata import Metadata, Message, TikaCoreProperties
 from org.apache.tika.exception import TikaException
 from org.apache.tika.extractor import EmbeddedDocumentExtractor
 from org.apache.tika.sax import EmbeddedContentHandler
@@ -115,7 +115,7 @@ class PythonParserJabber:
             extractor = context.get(EmbeddedDocumentExtractor)
             tis = TikaInputStream.get(stream, tmpResources)
             tmpFilePath = tis.getFile().getAbsolutePath()
-            origFileName = metadata.get(Metadata.RESOURCE_NAME_KEY)
+            origFileName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY)
             
             # extract text from html chat to be indexed, searched for regexes and so on...
             HtmlParser().parse(tis, EmbeddedContentHandler(xhtml), metadata, context)
@@ -233,7 +233,7 @@ class PythonParserJabber:
                 '''
                 meta = Metadata()
                 meta.set(BasicProps.LENGTH, "")
-                meta.set(Metadata.RESOURCE_NAME_KEY, msg_name_prefix + str(msg_num))
+                meta.set(TikaCoreProperties.RESOURCE_NAME_KEY, msg_name_prefix + str(msg_num))
                 meta.set(Message.MESSAGE_FROM, iped_sender)
                 meta.set(Message.MESSAGE_TO, iped_receiver)
                 meta.set(ExtraProperties.MESSAGE_DATE,iped_date)

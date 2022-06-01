@@ -279,7 +279,7 @@ public class SevenZipParser extends AbstractParser {
             try {
                 final Metadata entrydata = new Metadata();
                 subitemPath = item.getPath().replace("\\", "/"); //$NON-NLS-1$ //$NON-NLS-2$
-                entrydata.set(Metadata.RESOURCE_NAME_KEY, subitemPath);
+                entrydata.set(TikaCoreProperties.RESOURCE_NAME_KEY, subitemPath);
                 entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, item.getPath());
                 entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, Util.getParentPath(item.getPath()));
                 entrydata.set(TikaCoreProperties.CREATED, item.getCreationTime());

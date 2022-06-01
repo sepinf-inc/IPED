@@ -154,7 +154,7 @@ public class IndexItem extends BasicProps {
 
         ignoredMetadata.add(Metadata.CONTENT_TYPE);
         ignoredMetadata.add(Metadata.CONTENT_LENGTH);
-        ignoredMetadata.add(Metadata.RESOURCE_NAME_KEY);
+        ignoredMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY);
         ignoredMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         ignoredMetadata.add(IndexerDefaultParser.INDEXER_TIMEOUT);
         ignoredMetadata.add(TikaCoreProperties.CONTENT_TYPE_HINT.getName());
@@ -593,12 +593,13 @@ public class IndexItem extends BasicProps {
             String[] coords = oValue.toString().split(";");
             double lat = Double.valueOf(coords[0].trim());
             double lon = Double.valueOf(coords[1].trim());
-            doc.add(new LatLonPoint(key, lat, lon));
-            doc.add(new LatLonDocValuesField(key, lat, lon));
-            doc.add(new StringField(key, oValue.toString(), Field.Store.YES));
-            // used to group values in metadata filter panel, sorting doesn't make sense
-            doc.add(new SortedSetDocValuesField(GEO_SSDV_PREFIX + key, new BytesRef(oValue.toString())));
-
+            if (lat >= -90.0 && lat <= 90.0 && lon >= -180.0 && lon <= 180.0) {
+                doc.add(new LatLonPoint(key, lat, lon));
+                doc.add(new LatLonDocValuesField(key, lat, lon));
+                doc.add(new StringField(key, oValue.toString(), Field.Store.YES));
+                // used to group values in metadata filter panel, sorting doesn't make sense
+                doc.add(new SortedSetDocValuesField(GEO_SSDV_PREFIX + key, new BytesRef(oValue.toString())));
+            }
         } else if (oValue instanceof Date) {
             String value = DateUtils.formatDate((Date) oValue);
             doc.add(new Field(key, value, dateField));

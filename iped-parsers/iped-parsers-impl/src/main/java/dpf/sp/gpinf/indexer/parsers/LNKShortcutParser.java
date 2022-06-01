@@ -30,7 +30,7 @@ import java.util.TimeZone;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaMetadataKeys;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -76,7 +76,7 @@ public class LNKShortcutParser extends AbstractParser {
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
 
         metadata.set(HttpHeaders.CONTENT_TYPE, LNK_MIME_TYPE);
-        metadata.remove(TikaMetadataKeys.RESOURCE_NAME_KEY);
+        metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();

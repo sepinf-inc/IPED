@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.parsers;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
@@ -25,6 +26,8 @@ public class TiffPageParser extends AbstractParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.image("tiff"));
 
+    private static final String preferredReader = "com.sun.imageio.plugins.tiff.TIFFImageReader";
+
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
     }
@@ -33,7 +36,16 @@ public class TiffPageParser extends AbstractParser {
             throws IOException, SAXException, TikaException {
         ImageReader reader = null;
         try (ImageInputStream iis = ImageIO.createImageInputStream(stream)) {
-            reader = ImageIO.getImageReaders(iis).next();
+            Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
+            while (it.hasNext()) {
+                reader = it.next();
+                if (reader.getClass().getName().equals(preferredReader)) {
+                    break;
+                }
+            }
+            if (reader == null) {
+                throw new TikaException("No TIFF image reader in classpath!");
+            }
             reader.setInput(iis, false, true);
             int numPages = reader.getNumImages(true);
             if (numPages > 0) {

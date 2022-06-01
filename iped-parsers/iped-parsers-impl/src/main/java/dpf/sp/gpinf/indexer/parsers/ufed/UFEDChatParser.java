@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,8 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
+import com.google.common.collect.ImmutableMap;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Message;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
@@ -46,6 +49,13 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview");
 
+    public static final Map<String, MediaType> appToMime = ImmutableMap.of("whatsapp",
+            MediaType.application("x-ufed-chat-preview-whatsapp"), "telegram",
+            MediaType.application("x-ufed-chat-preview-telegram"), "skype",
+            MediaType.application("x-ufed-chat-preview-skype"), "facebook",
+            MediaType.application("x-ufed-chat-preview-facebook"), "instagram",
+            MediaType.application("x-ufed-chat-preview-instagram"));
+
     public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner"; //$NON-NLS-1$
     public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner"; //$NON-NLS-1$
     public static final String CHILD_MSG_IDS = ExtraProperties.UFED_META_PREFIX + "msgChildIds"; //$NON-NLS-1$
@@ -57,6 +67,16 @@ public class UFEDChatParser extends AbstractParser {
 
     public static void setSupportedTypes(Set<MediaType> supportedTypes) {
         SUPPORTED_TYPES = supportedTypes;
+    }
+
+    public static MediaType getMediaType(String source) {
+        if (source != null) {
+            source = source.split(" ")[0].toLowerCase();
+            if (appToMime.containsKey(source)) {
+                return appToMime.get(source);
+            }
+        }
+        return UFED_CHAT_PREVIEW_MIME;
     }
 
     @Override
@@ -112,6 +132,8 @@ public class UFEDChatParser extends AbstractParser {
                 byte[] bytes = reportGenerator.generateNextChatHtml(chat, messages);
                 int frag = 0;
                 int firstMsg = 0;
+                MediaType previewMime = getMediaType(
+                        chat.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"));
                 while (bytes != null) {
                     Metadata chatMetadata = new Metadata();
                     int nextMsg = reportGenerator.getNextMsgNum();
@@ -130,10 +152,11 @@ public class UFEDChatParser extends AbstractParser {
                     }
 
                     String chatName = getChatName(chat);
+                    
                     if (frag > 0 || nextBytes != null)
                         chatName += "_" + frag++; //$NON-NLS-1$
                     chatMetadata.set(TikaCoreProperties.TITLE, chatName);
-                    chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, UFED_CHAT_PREVIEW_MIME.toString());
+                    chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, previewMime.toString());
                     chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);

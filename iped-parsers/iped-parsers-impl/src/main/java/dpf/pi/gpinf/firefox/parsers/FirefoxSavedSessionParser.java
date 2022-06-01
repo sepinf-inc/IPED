@@ -10,6 +10,7 @@ import java.util.Set;
 import java.io.ByteArrayOutputStream;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -286,7 +287,8 @@ public class FirefoxSavedSessionParser extends AbstractParser {
 
     private TikaException getTikaException(Metadata metadata, Exception cause) {
         TikaException e = new TikaException(
-                "Possible false positive LZ4 Mozilla Firefox file: " + metadata.get(Metadata.RESOURCE_NAME_KEY));
+                "Possible false positive LZ4 Mozilla Firefox file: "
+                        + metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY));
         if (cause != null) {
             e.initCause(cause);
         }

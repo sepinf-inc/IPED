@@ -48,8 +48,8 @@ import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.IOUtils;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -82,7 +82,7 @@ import iped3.util.MediaTypes;
  * @author Nassif
  *
  */
-public class OCRParser extends AbstractParser {
+public class OCRParser extends AbstractParser implements AutoCloseable {
 
     /**
      * 
@@ -342,6 +342,16 @@ public class OCRParser extends AbstractParser {
             throw new RuntimeException(e);
         }
         return conn;
+    }
+
+    @Override
+    public void close() throws SQLException {
+        synchronized (this.getClass()) {
+            for (Connection con : connMap.values()) {
+                con.close();
+            }
+            connMap.clear();
+        }
     }
 
     /**

@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaMetadataKeys;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.ToTextContentHandler;
 import org.junit.Test;
@@ -33,7 +33,7 @@ public class RegistryParserTest extends TestCase {
 
         RegistryParser parser = new RegistryParser();
         Metadata metadata = new Metadata();
-        metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SECURITY");
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "SECURITY");
         ContentHandler handler = new ToTextContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("test-files/test_security").toURI());
@@ -58,7 +58,7 @@ public class RegistryParserTest extends TestCase {
 
         RegistryParser parser = new RegistryParser();
         Metadata metadata = new Metadata();
-        metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SAM");
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "SAM");
         ContentHandler handler = new ToTextContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("test-files/test_sam").toURI());
@@ -81,7 +81,7 @@ public class RegistryParserTest extends TestCase {
     public void testRegistroParserSYSTEM() throws IOException, SAXException, TikaException, URISyntaxException {
         RegistryParser parser = new RegistryParser();
         Metadata metadata = new Metadata();
-        metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SYSTEM");
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "SYSTEM");
         ContentHandler handler = new ToTextContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("test-files/test_system").toURI());
@@ -112,7 +112,7 @@ public class RegistryParserTest extends TestCase {
 
         RegistryParser parser = new RegistryParser();
         Metadata metadata = new Metadata();
-        metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SOFTWARE");
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "SOFTWARE");
         ContentHandler handler = new ToTextContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("test-files/test_software").toURI());
@@ -143,7 +143,7 @@ public class RegistryParserTest extends TestCase {
 
         RegistryParser parser = new RegistryParser();
         Metadata metadata = new Metadata();
-        metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "NTUSER.DAT");
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "NTUSER.DAT");
         ContentHandler handler = new ToTextContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("test-files/test_ntuser.dat").toURI());
