@@ -21,8 +21,8 @@ index.number_of_shards = 1
 # Number of replicas for each index shard. Often goes to a different node.
 index.number_of_replicas = 1
 
-# Index lifecycle policy. You must define it in Elastic.
-index.lifecycle.name = default_policy
+# Index lifecycle policy. You must define it in Elastic. For opendistro must be commented
+# index.lifecycle.name = default_policy
 
 # Minimum size of bulk index requests in bytes. Items are accumulated until this size is reached.
 # This is a per thread setting

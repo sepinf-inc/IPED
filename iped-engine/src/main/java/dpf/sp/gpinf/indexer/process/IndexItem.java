@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -129,7 +130,7 @@ public class IndexItem extends BasicProps {
 
     private static volatile boolean collectMetaTypes = false;
 
-    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new HashMap<>();
     private static Map<File, File> localEvidenceMap = new ConcurrentHashMap<>();
 
     private static Map<String, Class<?>> typesMap = Collections
@@ -153,7 +154,7 @@ public class IndexItem extends BasicProps {
 
         ignoredMetadata.add(Metadata.CONTENT_TYPE);
         ignoredMetadata.add(Metadata.CONTENT_LENGTH);
-        ignoredMetadata.add(Metadata.RESOURCE_NAME_KEY);
+        ignoredMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY);
         ignoredMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         ignoredMetadata.add(IndexerDefaultParser.INDEXER_TIMEOUT);
         ignoredMetadata.add(TikaCoreProperties.CONTENT_TYPE_HINT.getName());
@@ -592,12 +593,13 @@ public class IndexItem extends BasicProps {
             String[] coords = oValue.toString().split(";");
             double lat = Double.valueOf(coords[0].trim());
             double lon = Double.valueOf(coords[1].trim());
-            doc.add(new LatLonPoint(key, lat, lon));
-            doc.add(new LatLonDocValuesField(key, lat, lon));
-            doc.add(new StringField(key, oValue.toString(), Field.Store.YES));
-            // used to group values in metadata filter panel, sorting doesn't make sense
-            doc.add(new SortedSetDocValuesField(GEO_SSDV_PREFIX + key, new BytesRef(oValue.toString())));
-
+            if (lat >= -90.0 && lat <= 90.0 && lon >= -180.0 && lon <= 180.0) {
+                doc.add(new LatLonPoint(key, lat, lon));
+                doc.add(new LatLonDocValuesField(key, lat, lon));
+                doc.add(new StringField(key, oValue.toString(), Field.Store.YES));
+                // used to group values in metadata filter panel, sorting doesn't make sense
+                doc.add(new SortedSetDocValuesField(GEO_SSDV_PREFIX + key, new BytesRef(oValue.toString())));
+            }
         } else if (oValue instanceof Date) {
             String value = DateUtils.formatDate((Date) oValue);
             doc.add(new Field(key, value, dateField));
@@ -915,23 +917,25 @@ public class IndexItem extends BasicProps {
                 if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
                     sourcePath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toString();
                 }
-                SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
-                if (sisf == null) {
-                    Class<?> clazz = Class.forName(className);
-                    try {
-                        Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                        sisf = c.newInstance(Path.of(sourcePath));
+                synchronized (inputStreamFactories) {
+                    SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
+                    if (sisf == null) {
+                        Class<?> clazz = Class.forName(className);
+                        try {
+                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                            sisf = c.newInstance(Path.of(sourcePath));
 
-                    } catch (NoSuchMethodException e) {
-                        Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                        sisf = c.newInstance(URI.create(sourcePath));
+                        } catch (NoSuchMethodException e) {
+                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                            sisf = c.newInstance(URI.create(sourcePath));
+                        }
+                        if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
+                            checkIfExistsAndAsk(sisf, iCase.getModuleDir());
+                        }
+                        inputStreamFactories.put(sourcePath, sisf);
                     }
-                    if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                        checkIfExistsAndAsk(sisf, iCase.getModuleDir());
-                    }
-                    inputStreamFactories.put(sourcePath, sisf);
+                    evidence.setInputStreamFactory(sisf);
                 }
-                evidence.setInputStreamFactory(sisf);
             }
 
             value = doc.get(IndexItem.TIMEOUT);
@@ -1016,6 +1020,11 @@ public class IndexItem extends BasicProps {
             value = doc.get(IndexItem.OFFSET);
             if (value != null) {
                 evidence.setFileOffset(Long.parseLong(value));
+            }
+
+            value = doc.get(IndexItem.ISROOT);
+            if (value != null) {
+                evidence.setRoot(Boolean.parseBoolean(value));
             }
 
             Set<String> multiValuedFields = new HashSet<>();

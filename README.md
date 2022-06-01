@@ -12,9 +12,9 @@ Since the beginning, the goal of the tool was efficient data processing and stab
 - Multiplatform support, tested on Windows and Linux systems
 - Portable cases without installation, you can run them from removable drives
 - Integrated and intuitive analysis interface
-- High multithread performance and support for large cases: up to 135 million items as of 12/12/2019
+- High multithread performance and support for large cases: up to 400GB/h processing speed using modern hardware and 135 million items in a (multi) case as of 12/12/2019
 
-Currently IPED uses the [Sleuthkit Library](https://github.com/sleuthkit/sleuthkit) only to decode disk images and file systems, so the same image formats are supported: RAW/DD, E01, ISO9660, AFF, VHD, VMDK. Also there is support for UDF(ISO), AD1 (AccessData) and UFDR (Cellebrite) formats. Recently support for APFS was added, thanks to BlackBag implementation for Sleuthkit.
+Currently IPED uses the [Sleuthkit Library](https://github.com/sleuthkit/sleuthkit) only to decode disk images and file systems, so the same image formats are supported: RAW/DD, E01, EX01, ISO9660, AFF, VHD, VMDK. Also there is support for UDF(ISO), AD1 (AccessData) and UFDR (Cellebrite) formats. Recently support for APFS was added, thanks to BlackBag implementation for Sleuthkit.
 
 If you are new to the tool, please refer to the [Beginner's Start Guide](https://github.com/lfcnassif/IPED/wiki/Beginner's-Start-Guide).
 
@@ -26,7 +26,9 @@ git clone https://github.com/sepinf-inc/IPED.git
 cd IPED
 mvn clean install
 ```
-It will generate a snapshot version of IPED in target/release folder.
+It will generate an snapshot version of IPED in target/release folder.
+
+<b>Attention:</b> the default master branch is the development one and is unstable. If you want to build a stable version, checkout some of the release tags after the clone step.
 
 On Linux you also must build The Sleuthkit and additional dependencies. Please refer to [Linux Section](https://github.com/sepinf-inc/IPED/wiki/Linux)
 

@@ -9,9 +9,7 @@
 import os
 import time
 import subprocess
-import numpy as np
 import threading, queue
-import FaceRecognitionProcess as fp
 import traceback
 import platform
 
@@ -31,10 +29,10 @@ maxProcesses = None
 numCreatedProcs = 0
 numCreatedProcsLock = threading.Lock()
 
+from java.lang import System
+ipedRoot = System.getProperty('iped.root')
+
 bin = 'python'
-terminate = fp.terminate
-imgError = fp.imgError
-ping = fp.ping
 
 detection_model = 'hog'
 max_size = 1024
@@ -67,8 +65,7 @@ def createExternalProcess():
     proc = None
     for i in range(3):
         if proc is None or proc.poll() is not None:
-            from java.lang import System
-            proc = subprocess.Popen([bin, os.path.join(System.getProperty('iped.root'), 'conf', 'scripts', processScript), str(max_size), detection_model, str(up_sampling)], 
+            proc = subprocess.Popen([bin, os.path.join(ipedRoot, 'conf', 'scripts', processScript), str(max_size), detection_model, str(up_sampling)], 
                                     stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         
         if pingExternalProcess(proc):
@@ -98,7 +95,7 @@ class FaceRecognitionTask:
     enabled = False
     
     def isEnabled(self):
-        return self.enabled
+        return FaceRecognitionTask.enabled
     
     def getConfigurables(self):
         from dpf.sp.gpinf.indexer.config import DefaultTaskPropertiesConfig
@@ -107,9 +104,18 @@ class FaceRecognitionTask:
     # This method is executed before starting the processing of items.
     def init(self, configuration):
         taskConfig = configuration.getTaskConfigurable(configFile)
-        self.enabled = taskConfig.isEnabled()
-        if not self.enabled:
+        FaceRecognitionTask.enabled = taskConfig.isEnabled()
+        if not FaceRecognitionTask.enabled:
             return
+        
+        global fp, terminate, imgError, ping
+        import FaceRecognitionProcess as fp
+        terminate = fp.terminate
+        imgError = fp.imgError
+        ping = fp.ping
+        
+        global np
+        import numpy as np
         
         # check if was called from gui the first time
         global maxProcesses, firstInstance
@@ -118,11 +124,12 @@ class FaceRecognitionTask:
         numProcs = extraProps.getProperty(numFaceRecognitionProcessesProp)
         if firstInstance and numProcs is not None:
             maxProcesses = int(numProcs)
-            # hides the terminal on windows gui
-            if platform.system().lower() == 'windows':
-                global bin
-                bin = 'pythonw'
         firstInstance = False
+        
+        # configure embedded python path on windows
+        if platform.system().lower() == 'windows':
+            global bin
+            bin = os.path.join(ipedRoot, 'python', 'pythonw')
         
         numProcs = extraProps.getProperty(numFaceRecognitionProcessesProp)
         if maxProcesses is None and numProcs is not None:
@@ -239,6 +246,15 @@ class FaceRecognitionTask:
             #face_locations = fr.face_locations(img)
             
             line = proc.stdout.readline().strip()
+
+            if not line:
+                time.sleep(3)
+                status = str(proc.poll())
+                logger.warn("[FaceRecognitionTask] Unexpected error from external process while processing {} ({} bytes) exit status=" + status, item.getPath(), item.getLength())
+                proc.kill()
+                proc = createExternalProcess()
+                return
+
             if line == imgError:
                 logger.info("[FaceRecognitionTask] Error loading image {} ({} bytes)", item.getPath(), item.getLength())
                 self.cacheResults(hash, [], [])

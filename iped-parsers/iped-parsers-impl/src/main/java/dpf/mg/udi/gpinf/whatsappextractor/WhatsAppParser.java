@@ -166,6 +166,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     private boolean mergeBackups = false;
     private int downloadConnectionTimeout = 500;
     private int downloadReadTimeout = 500;
+    private boolean recoverDeletedRecords = true;
+    
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -200,6 +202,11 @@ public class WhatsAppParser extends SQLite3DBParser {
     @Field
     public void setDownloadReadTimeout(int downloadReadTimeout) {
         this.downloadReadTimeout = downloadReadTimeout;
+    }
+    
+    @Field
+    public void setRecoverDeletedRecords(boolean recoverDeletedRecords) {
+        this.recoverDeletedRecords = recoverDeletedRecords;
     }
 
     private boolean isDownloadMediaFilesEnabled() {
@@ -277,10 +284,14 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (frag > 0 || nextBytes != null)
                     chatName += "_" + frag++; //$NON-NLS-1$
 
+                chatMetadata.set("chatId", Long.toString(c.getId()));
                 chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                 chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CHAT.toString());
                 chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
                 chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                if (c.isDeleted()) {
+                    chatMetadata.set(ExtraProperties.DELETED, Boolean.TRUE.toString());
+                }
 
                 if (extractMessages && msgSubset.size() > 0) {
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
@@ -337,8 +348,12 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                 String dbPath = ((ItemInfo) context.get(ItemInfo.class)).getPath();
                 WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
+                
+                File tempDbFile = tis.getFile();
+                exportWalLog(tempDbFile, context, tmp);
+                exportRollbackJournal(tempDbFile, context, tmp);
 
-                Extractor waExtractor = extFactory.createMessageExtractor(tis.getFile(), contacts, account);
+                Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempDbFile, contacts, account, recoverDeletedRecords);
                 List<Chat> chatList = waExtractor.getChatList();
                 createReport(chatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
 
@@ -357,7 +372,10 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private void parseDB(WhatsAppContext wcontext, Metadata metadata, ParseContext context, ExtractorFactory extFactory)
             throws IOException, SAXException, TikaException {
-
+        if (wcontext.getItem().getLength() == 0) {
+            wcontext.setParsingError(true);
+            throw new TikaException("Empty database");
+        }
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             WAContactsDirectory contacts = getWAContactsDirectoryForPath(wcontext.getItem().getPath(), searcher,
@@ -369,6 +387,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             wcontext.setChalist(extractChatList(wcontext, extFactory, metadata, context, contacts, account));
 
         } catch (Exception e) {
+            wcontext.setParsingError(true);
             if (e instanceof TikaException)
                 throw (TikaException) e;
             else
@@ -414,8 +433,13 @@ public class WhatsAppParser extends SQLite3DBParser {
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
         WhatsAppContext wcontext = new WhatsAppContext(false, context.get(IItemBase.class));
-
-        parseDB(wcontext, metadata, context, extFactory);
+        try {
+            parseDB(wcontext, metadata, context, extFactory);
+        } catch (Exception e) {
+            checkIfIsMainDBAndStore(wcontext);
+            wcontext.setParsingError(true);
+            throw e;
+        }
         if (isDownloadMediaFilesEnabled()) {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
@@ -439,7 +463,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static boolean checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
         IItemBase item = wcontext.getItem();
-        if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)) {
+        if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)
+                && wcontext.getChalist() != null) {
             wcontext.setMainDB(true);
             wcontext.setBackup(false);
         }
@@ -452,8 +477,14 @@ public class WhatsAppParser extends SQLite3DBParser {
         try (TemporaryResources tmp = new TemporaryResources()) {
             TikaInputStream tis = TikaInputStream.get(wcontext.getItem().getSeekableInputStream(), tmp);
             File tempFile = tis.getFile();
+            
+            String filePath = null;
+            filePath = wcontext.getItem().getPath();
+            
+            exportWalLog(tempFile, context, tmp);
+            exportRollbackJournal(tempFile, context, tmp);
             extFactory.setConnectionParams(tis, metadata, context, this);
-            Extractor waExtractor = extFactory.createMessageExtractor(tempFile, contacts, account);
+            Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempFile, contacts, account, recoverDeletedRecords);
             return waExtractor.getChatList();
         }
     }
@@ -462,8 +493,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (dbsSearchedFor) {
             return;
         }
-        String query = BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\" OR " + BasicProps.CONTENTTYPE + ":\"" //$NON-NLS-1$ //$NON-NLS-2$
-                + MSG_STORE_2 + "\"";
+        String query = "(" + BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\" OR " + BasicProps.CONTENTTYPE + ":\"" //$NON-NLS-1$ //$NON-NLS-2$
+                + MSG_STORE_2 + "\") AND NOT " + BasicProps.LENGTH + ":0";
         List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
         for (IItemBase it : result) {
             WhatsAppContext wcontext = new WhatsAppContext(false, it);
@@ -493,25 +524,33 @@ public class WhatsAppParser extends SQLite3DBParser {
         findOtherDBS(searcher);
 
         WhatsAppContext wcontext = dbsFound.get(DB.getId());
-        if (wcontext != null && wcontext.getChalist() == null) {
+        if (wcontext != null && wcontext.getChalist() == null && !wcontext.getParsingError()) {
             // if not parsed yet, parse the DB here
+            // If a parsing occurred do not try to parse again
             synchronized (wcontext) {
                 if (wcontext.getChalist() == null) {
-                    parseDB(wcontext, metadata, context, extFactory);
+                    try {
+                        parseDB(wcontext, metadata, context, extFactory);
+                    } catch (Exception e) {
+                        wcontext.setParsingError(true);
+                        throw e;
+                    }
                 }
             }
         }
 
         // parse DBs found above
         for (WhatsAppContext other : dbsFound.values().toArray(new WhatsAppContext[0])) {
-            if (other == wcontext)
+            if (other == wcontext || other.getParsingError())
                 continue;
             synchronized (other) {
-                if (other.getChalist() == null) {
-                    // if not parsed yet, parse the DB here
+                if (other.getChalist() == null && !other.getParsingError()) {
+                    // if not parsed yet, parse the DB here.
+                    // If a parsing occurred do not try to parse again
                     try {
                         parseDB(other, metadata, context, extFactory);
                     } catch (Exception e) {
+                        other.setParsingError(true);
                         other.setMainDB(false);
                         other.setBackup(false);
                         logger.warn("Could not parse DB {} ({} bytes): {}", other.getItem().getPath(),
@@ -519,6 +558,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                         logger.debug("", e);
                     }
                 }
+
             }
         }
 
@@ -729,12 +769,14 @@ public class WhatsAppParser extends SQLite3DBParser {
     private String formatContact(WAContact contact, Map<String, String> cache) {
         String result = cache.get(contact.getId());
         if (result == null) {
-            if (contact.getName() == null) {
+            if (contact.getName() == null || contact.getName().isBlank()) {
                 result = contact.getFullId();
-            } else if (contact.getName().trim().equals(contact.getId())) {
+            } else if (contact.getName().strip().equals(contact.getId())) {
                 result = contact.getFullId();
+            } else if (contact.getFullId().isBlank()) {
+                result = contact.getName().strip();
             } else {
-                result = contact.getName().trim() + " (" + contact.getFullId() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                result = contact.getName().strip() + " (" + contact.getFullId().strip() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
             }
             cache.put(contact.getId(), result);
         }
@@ -760,11 +802,14 @@ public class WhatsAppParser extends SQLite3DBParser {
             meta.set(TikaCoreProperties.TITLE, chatName + "_message_" + msgCount++); //$NON-NLS-1$
             meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_MESSAGE.toString());
             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentVirtualId));
-            meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(m.getId()));
+            meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(m.getUniqueId()));
             meta.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
             meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+            if (m.isDeleted()) {
+                meta.set(ExtraProperties.DELETED, Boolean.toString(true));
+            }
 
             if (!m.isSystemMessage()) {
                 String local = formatContact(account, cache);
@@ -983,8 +1028,11 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         if (extractor.shouldParseEmbedded(metadata)) {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            File contactDbFile = tis.getFile();
+            exportWalLog(contactDbFile, context, tmp);
+            exportRollbackJournal(contactDbFile, context, tmp);
             try {
-                WAContactsExtractor waExtractor = extFactory.createContactsExtractor(tis.getFile());
+                WAContactsExtractor waExtractor = extFactory.createContactsExtractor(contactDbFile, recoverDeletedRecords);
                 waExtractor.extractContactList();
 
                 ItemInfo itemInfo = context.get(ItemInfo.class);
@@ -1010,6 +1058,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.CONTACT_OF_ACCOUNT, account.getFullId());
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getStatus());
                     cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                    if (c.isDeleted()) {
+                        cMetadata.set(ExtraProperties.DELETED, Boolean.toString(c.isDeleted()));
+                    }
 
                     getAvatar(searcher, c);
                     if (c.getAvatar() != null) {
@@ -1070,11 +1121,11 @@ public class WhatsAppParser extends SQLite3DBParser {
         ParseContext context = new ParseContext();
         context.set(IItemSearcher.class, searcher);
         context.set(IItemBase.class, item);
-        ExtractorFactory extFactory = (ExtractorFactory) extFactoryClass.newInstance();
+        ExtractorFactory extFactory = (ExtractorFactory) extFactoryClass.getDeclaredConstructor().newInstance();
 
         try (InputStream is = item.getBufferedInputStream()) {
             extFactory.setConnectionParams(is, null, context, this);
-            WAContactsExtractor waExtractor = extFactory.createContactsExtractor(item.getTempFile());
+            WAContactsExtractor waExtractor = extFactory.createContactsExtractor(item.getTempFile(), recoverDeletedRecords);
             waExtractor.extractContactList();
             return waExtractor.getContactsDirectory();
         }
@@ -1087,9 +1138,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         ParseContext context;
         WhatsAppParser connFactory;
 
-        abstract Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account);
+        abstract Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory, WAAccount account, boolean recoverDeletedRecords);
 
-        abstract WAContactsExtractor createContactsExtractor(File file);
+        abstract WAContactsExtractor createContactsExtractor(File file, boolean recoverDeletedRecords);
 
         void setConnectionParams(InputStream is, Metadata metadata, ParseContext context, WhatsAppParser connFactory) {
             this.is = is;
@@ -1112,8 +1163,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     protected static class ExtractorAndroidFactory extends ExtractorFactory {
 
         @Override
-        public Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account) {
-            return new ExtractorAndroid(file, directory, account) {
+        public Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory, WAAccount account, boolean recoverDeletedRecords) {
+            return new ExtractorAndroid(itemPath, file, directory, account, recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorAndroidFactory.this.getConnection();
@@ -1122,8 +1173,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
 
         @Override
-        public WAContactsExtractor createContactsExtractor(File file) {
-            return new WAContactsExtractorAndroid(file, new WAContactsDirectory()) {
+        public WAContactsExtractor createContactsExtractor(File file, boolean recoverDeletedRecords) {
+            return new WAContactsExtractorAndroid(file, new WAContactsDirectory(), recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorAndroidFactory.this.getConnection();
@@ -1138,8 +1189,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     protected static class ExtractorIOSFactory extends ExtractorFactory {
 
         @Override
-        public Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account) {
-            return new ExtractorIOS(file, directory, account) {
+        public Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory, WAAccount account, boolean recoverDeletedRecords) {
+            return new ExtractorIOS(itemPath, file, directory, account, recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorIOSFactory.this.getConnection();
@@ -1148,8 +1199,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
 
         @Override
-        public WAContactsExtractor createContactsExtractor(File file) {
-            return new WAContactsExtractorIOS(file, new WAContactsDirectory()) {
+        public WAContactsExtractor createContactsExtractor(File file, boolean recoverDeletedRecords) {
+            return new WAContactsExtractorIOS(file, new WAContactsDirectory(), recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorIOSFactory.this.getConnection();

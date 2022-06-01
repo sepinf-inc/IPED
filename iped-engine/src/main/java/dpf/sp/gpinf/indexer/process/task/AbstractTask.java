@@ -170,6 +170,7 @@ public abstract class AbstractTask {
             Thread.sleep(1000);
         }
 
+
         AbstractTask prevTask = worker.runningTask;
         IItem prevEvidence = worker.evidence;
         worker.runningTask = this;
@@ -190,21 +191,6 @@ public abstract class AbstractTask {
         worker.evidence = prevEvidence;
         worker.runningTask = prevTask;
 
-        // ESTATISTICAS
-        if (nextTask == null && !evidence.isQueueEnd()) {
-            evidence.dispose();
-            stats.incProcessed();
-            if (!evidence.isSubItem() && !evidence.isCarved() && !evidence.isDeleted() && evidence.isToSumVolume()) {
-                stats.incActiveProcessed();
-            }
-            if (evidence.isToSumVolume()) {
-                Long len = evidence.getLength();
-                if (len == null) {
-                    len = 0L;
-                }
-                stats.addVolume(len);
-            }
-        }
     }
 
     /**
@@ -224,6 +210,28 @@ public abstract class AbstractTask {
                 evidence.dispose();
                 SkipCommitedTask.checkAgainLaterProcessedParents(evidence);
                 caseData.addItemToQueue(evidence, priority);
+                if (!evidence.isQueueEnd()) {
+                    worker.decItemsBeingProcessed();
+                }
+            }
+        } else if (!evidence.isQueueEnd()) {
+            // dec items being processed counter if this is last task
+            worker.decItemsBeingProcessed();
+
+            // clear resources
+            evidence.dispose();
+
+            // update statistics
+            stats.incProcessed();
+            if (!evidence.isSubItem() && !evidence.isCarved() && !evidence.isDeleted() && evidence.isToSumVolume()) {
+                stats.incActiveProcessed();
+            }
+            if (evidence.isToSumVolume()) {
+                Long len = evidence.getLength();
+                if (len == null) {
+                    len = 0L;
+                }
+                stats.addVolume(len);
             }
         }
     }

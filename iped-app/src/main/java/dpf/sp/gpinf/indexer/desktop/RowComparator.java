@@ -88,9 +88,11 @@ public class RowComparator implements Comparator<Integer> {
                 scoreCol = true;
 
             else {
-                LOGGER.info("Loading sort data for Column: " + fields[col]); //$NON-NLS-1$
+                long t = System.currentTimeMillis();
+                LOGGER.info("Loading sort data for Column {}...", fields[col]); //$NON-NLS-1$
                 loadDocValues(fields[col]);
-                LOGGER.info("Sort data loaded for Column: " + fields[col]); //$NON-NLS-1$
+                t = System.currentTimeMillis() - t;
+                LOGGER.info("Loading sort data for Column {} took {}ms", fields[col], t); //$NON-NLS-1$
             }
         }
     }

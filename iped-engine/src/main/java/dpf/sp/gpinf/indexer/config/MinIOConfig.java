@@ -1,8 +1,5 @@
 package dpf.sp.gpinf.indexer.config;
 
-import java.io.IOException;
-import java.nio.file.Path;
-
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class MinIOConfig extends AbstractTaskPropertiesConfig {
@@ -16,9 +13,13 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
 
+    private static final String ZIP_FILES_MAX_SIZE = "zipFilesMaxSize";
+
     private boolean enabled;
     private String host;
     private String port;
+
+    private long zipFilesMaxSize;
 
     @Override
     public boolean isEnabled() {
@@ -38,12 +39,20 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
         return port;
     }
 
+    public String getHostAndPort() {
+        if (port == null || port.isBlank())
+            return host;
+        else
+            return host + ":" + port;
+    }
+
     @Override
     public void processProperties(UTF8Properties properties) {
 
         enabled = Boolean.valueOf(properties.getProperty(ENABLE_KEY).trim());
         host = properties.getProperty(HOST_KEY).trim();
         port = properties.getProperty(PORT_KEY).trim();
+        setZipFilesMaxSize(Long.parseLong(properties.getProperty(ZIP_FILES_MAX_SIZE)));
 
     }
 
@@ -56,5 +65,14 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
     public String getTaskConfigFileName() {
         return CONFIG_FILE;
     }
+
+    public long getZipFilesMaxSize() {
+        return zipFilesMaxSize;
+    }
+
+    public void setZipFilesMaxSize(long zipFilesMaxSize) {
+        this.zipFilesMaxSize = zipFilesMaxSize;
+    }
+
 
 }

@@ -52,7 +52,7 @@ public class Worker extends Thread {
 
     private static String workerNamePrefix = "Worker-"; //$NON-NLS-1$
 
-    private static final int MIN_WAIT_TIME_TO_SEND_QUEUE_END = 1000;
+    private static final long MIN_WAIT_TIME_TO_SEND_QUEUE_END = 1000;
     private static volatile long lastItemProcessingTime = 0;
 
     public IndexWriter writer;
@@ -78,6 +78,16 @@ public class Worker extends Thread {
     public final int id;
 
     private boolean waiting = false;
+
+    private void incItemsBeingProcessed() {
+        itemsBeingProcessed++;
+        caseData.incItemsBeingProcessed();
+    }
+
+    public void decItemsBeingProcessed() {
+        itemsBeingProcessed--;
+        caseData.decItemsBeingProcessed();
+    }
 
     public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
         super(new ThreadGroup(workerNamePrefix + k), workerNamePrefix + k); // $NON-NLS-1$
@@ -157,7 +167,6 @@ public class Worker extends Thread {
         IItem prevEvidence = this.evidence;
         if (!evidence.isQueueEnd()) {
             this.evidence = evidence;
-            this.itemsBeingProcessed++;
         }
 
         try {
@@ -178,10 +187,6 @@ public class Worker extends Thread {
                 }
             }
 
-        }
-
-        if (!evidence.isQueueEnd()) {
-            this.itemsBeingProcessed--;
         }
 
         this.evidence = prevEvidence;
@@ -211,17 +216,13 @@ public class Worker extends Thread {
         } // caso contrário processa o item no worker atual
         else {
             if (!evidence.isQueueEnd()) {
-                caseData.incItemsBeingProcessed();
+                incItemsBeingProcessed();
             }
             long t = System.nanoTime() / 1000;
 
             process(evidence);
 
             runningTask.addSubitemProcessingTime(System.nanoTime() / 1000 - t);
-
-            if (!evidence.isQueueEnd()) {
-                caseData.decItemsBeingProcessed();
-            }
         }
 
     }
@@ -249,7 +250,7 @@ public class Worker extends Thread {
                             continue;
                         }
                         if (!evidence.isQueueEnd()) {
-                            caseData.incItemsBeingProcessed();
+                            incItemsBeingProcessed();
                         }
                     }
                 }
@@ -259,10 +260,6 @@ public class Worker extends Thread {
                     lastItemProcessingTime = System.currentTimeMillis();
 
                     process(evidence);
-                    
-                    if (!evidence.isQueueEnd()) {
-                        caseData.decItemsBeingProcessed();
-                    }
 
                 } else {
                     IItem queueEnd = evidence;
@@ -287,6 +284,7 @@ public class Worker extends Thread {
                                     + " itemsInThisWorker = " + itemsBeingProcessed + " itemsInAllWorkers = "
                                     + caseData.getItemsBeingProcessed());
                             process(queueEnd);
+
                         }
                     }
                 }

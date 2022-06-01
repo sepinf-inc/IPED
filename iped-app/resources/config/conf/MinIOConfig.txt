@@ -6,7 +6,11 @@
 enableMinIO = false
 
 # Host name or ip address of MinIO
-host = http://127.0.0.1
+host = http://HPW06
 
 # Port where MinIO is listening
 port = 9000
+
+# max size (bytes) of files to be included in the zip file
+zipFilesMaxSize = 32768
+

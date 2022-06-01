@@ -91,8 +91,8 @@ public abstract class AbstractPkgTest extends TestCase {
 
             subitemCount++;
             String hdigest = new DigestUtils(MD5).digestAsHex(stream);
-            if (metadata.get(Metadata.RESOURCE_NAME_KEY) != null)
-                filenames.add(metadata.get(Metadata.RESOURCE_NAME_KEY));
+            if (metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY) != null)
+                filenames.add(metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY));
             if (metadata.get(TikaCoreProperties.MODIFIED) != null)
                 modifieddate.add(metadata.get(TikaCoreProperties.MODIFIED));
             itensmd5.add(hdigest.toUpperCase());
@@ -188,8 +188,8 @@ public abstract class AbstractPkgTest extends TestCase {
             // attachment
             if (metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT) != null || false)
                 isattachment.add(metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
-            if (metadata.get(Metadata.RESOURCE_NAME_KEY) != null)
-                attachmentname.add(metadata.get(Metadata.RESOURCE_NAME_KEY));
+            if (metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY) != null)
+                attachmentname.add(metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY));
             if ((metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT) != null))
                 numberofattachments.add(metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
             // contact

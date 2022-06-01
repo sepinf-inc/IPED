@@ -20,7 +20,11 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketPermission;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.Policy;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
@@ -29,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
+import dpf.sp.gpinf.indexer.util.DefaultPolicy;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.configuration.Configurable;
@@ -45,6 +49,8 @@ public class Configuration {
     public static final String CONF_DIR = "conf"; //$NON-NLS-1$
     public static final String PROFILES_DIR = "profiles"; //$NON-NLS-1$
     public static final String CASE_PROFILE_DIR = "profile"; //$NON-NLS-1$
+
+    private static final File ipedRoot = new File(System.getProperty("user.home"), ".iped/ipedRoot.txt");
 
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
@@ -78,12 +84,7 @@ public class Configuration {
     private void configureLogger(String configPath) {
         // DataSource.testConnection(configPathStr);
         LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName()); //$NON-NLS-1$
-
-        logger = null;
-        if (Configuration.class.getClassLoader().getClass().getName().equals(CustomURLClassLoader.class.getName())) {
-            logger = LoggerFactory.getLogger(Configuration.class);
-            logger.info("Loading configuration from " + configPath); //$NON-NLS-1$
-        }
+        logger = LoggerFactory.getLogger(Configuration.class);
     }
 
     /**
@@ -99,13 +100,27 @@ public class Configuration {
 
         configureLogger(configPath);
 
-        System.setProperty(IConfigurationDirectory.IPED_ROOT, appRoot);
+        System.setProperty(IConfigurationDirectory.IPED_APP_ROOT, appRoot);
         System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);
 
         properties.load(new File(appRoot, LOCAL_CONFIG));
         File mainConfig = new File(configPath, CONFIG_FILE);
         if (mainConfig.exists()) {
             properties.load(mainConfig);
+        }
+    }
+
+    public void saveIpedRoot(String path) throws IOException {
+        System.setProperty(IConfigurationDirectory.IPED_ROOT, path);
+        ipedRoot.getParentFile().mkdirs();
+        Files.write(ipedRoot.toPath(), path.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public void loadIpedRoot() throws IOException {
+        if (ipedRoot.exists()) {
+            byte[] bytes = Files.readAllBytes(ipedRoot.toPath());
+            String path = new String(bytes, StandardCharsets.UTF_8);
+            System.setProperty(IConfigurationDirectory.IPED_ROOT, path);
         }
     }
 
@@ -120,12 +135,7 @@ public class Configuration {
 
             File nativelibs = new File(loaddbPathWin).getParentFile().getParentFile();
             nativelibs = new File(nativelibs, arch);
-
-            if (System.getProperty("ipedNativeLibsLoaded") == null) { //$NON-NLS-1$
-                Util.loadNatLibs(nativelibs);
-                System.setProperty("ipedNativeLibsLoaded", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-            }
-
+            Util.loadNatLibs(nativelibs);
         }
     }
 
@@ -155,6 +165,10 @@ public class Configuration {
 
         getConfiguration(configPathStr);
 
+        if (loadAll) {
+            logger.info("Loading configuration from " + configPath); //$NON-NLS-1$
+        }
+
         configDirectory = new ConfigurationDirectory(Paths.get(appRoot, LOCAL_CONFIG));
 
         File defaultProfile = new File(appRoot);
@@ -175,15 +189,12 @@ public class Configuration {
         configManager.loadConfig(pluginConfig);
         addPluginJarsToConfigurationLookup(configDirectory, pluginConfig);
 
-        loadNativeLibs();
-
-        if (!loadAll && !Configuration.class.getClassLoader().getClass().getName()
-                .equals(CustomURLClassLoader.class.getName())) {
-            // we still are in the application first classLoader, no need to load other
-            // configurables
+        if (!loadAll) {
             configManager.loadConfigs();
             return;
         }
+
+        loadNativeLibs();
 
         configManager.addObject(new LocalConfig());
         configManager.addObject(new OCRConfig());
@@ -203,6 +214,20 @@ public class Configuration {
         }
 
         configManager.loadConfigs();
+
+
+        // blocks internet access from html viewers
+        DefaultPolicy policy = new DefaultPolicy();
+        MinIOConfig minIOConfig = configManager.findObject(MinIOConfig.class);
+        if (minIOConfig.isEnabled()) {
+            String host = minIOConfig.getHostAndPort();
+            if (host.startsWith("http://") || host.startsWith("https://")) {
+                host = host.substring(host.indexOf("://") + 3);
+            }
+            policy.addAllowedPermission(new SocketPermission(host, "connect,resolve"));
+        }
+        Policy.setPolicy(policy);
+        System.setSecurityManager(new SecurityManager());
     }
 
     // add plugin jars to the configuration resource look up engine

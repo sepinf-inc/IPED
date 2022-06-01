@@ -67,6 +67,7 @@ import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.io.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.io.UFDRInputStreamFactory;
 import dpf.sp.gpinf.indexer.io.UFEDXMLWrapper;
+import dpf.sp.gpinf.indexer.io.ZIPInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
@@ -78,7 +79,6 @@ import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.ZipFile4j;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
@@ -87,8 +87,6 @@ import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
-import net.lingala.zip4j.exception.ZipException;
-import net.lingala.zip4j.model.FileHeader;
 
 public class UfedXmlReader extends DataSourceReader {
 
@@ -119,7 +117,6 @@ public class UfedXmlReader extends DataSourceReader {
     private static AtomicInteger counter = new AtomicInteger();
 
     File root, ufdrFile;
-    ZipFile4j ufdr;
     UFDRInputStreamFactory uisf;
     FileInputStreamFactory fisf, previewFisf;
     IItem rootItem;
@@ -136,9 +133,12 @@ public class UfedXmlReader extends DataSourceReader {
     @Override
     public boolean isSupported(File datasource) {
 
+        if (datasource.getName().toLowerCase().endsWith(".ufdr")) {
+            return true;
+        }
+
         InputStream xmlReport = lookUpXmlReportInputStream(datasource);
         IOUtil.closeQuietly(xmlReport);
-        // IOUtil.closeQuietly(ufdr);
 
         if (xmlReport != null)
             return true;
@@ -166,16 +166,11 @@ public class UfedXmlReader extends DataSourceReader {
         } else if (file.getName().toLowerCase().endsWith(".ufdr")) {
             try {
                 ufdrFile = file;
-                // File part1 = new File(file.getAbsolutePath().substring(0,
-                // file.getAbsolutePath().lastIndexOf('.')) + ".z01");
-                // SequenceSeekableByteChannel ssbc = new
-                // SequenceSeekableByteChannel(Files.newByteChannel(part1.toPath()),
-                // Files.newByteChannel(ufdrFile.toPath()));
-                ufdr = new ZipFile4j(file);
-                FileHeader xml = ufdr.getFileHeader("report.xml");
-                if (xml == null)
-                    xml = ufdr.getFileHeader("Report.xml");
-                return ufdr.getInputStream(xml);
+                String xml = "report.xml";
+                if (!getUISF().entryExists(xml)) {
+                    xml = "Report.xml";
+                }
+                return getUISF().getSeekableInputStream(xml);
 
             } catch (Exception e) {
                 throw new RuntimeException("Invalid UFDR file " + file.getAbsolutePath(), e);
@@ -184,15 +179,24 @@ public class UfedXmlReader extends DataSourceReader {
         return null;
     }
 
+    private UFDRInputStreamFactory getUISF() {
+        if (uisf == null) {
+            uisf = new UFDRInputStreamFactory(ufdrFile.toPath());
+        }
+        return uisf;
+    }
+
     private InputStream lookUpXmlReportInputStream(File root) {
         if (root.isFile())
             return getXmlInputStream(root);
         File[] files = root.listFiles();
         if (files != null) {
             for (File file : files) {
-                InputStream is = getXmlInputStream(file);
-                if (is != null)
-                    return is;
+                if (file.getName().toLowerCase().endsWith(".xml")) {
+                    InputStream is = getXmlInputStream(file);
+                    if (is != null)
+                        return is;
+                }
             }
         }
         return null;
@@ -339,7 +343,11 @@ public class UfedXmlReader extends DataSourceReader {
         DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"); //$NON-NLS-1$
         DateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"); //$NON-NLS-1$
         DateFormat df3 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"); //$NON-NLS-1$
-        DateFormat[] dfs = { df1, df2, df3 };
+        DateFormat df4 = new SimpleDateFormat("dd-MMM-yy hh:mm:ss XXX"); //$NON-NLS-1$
+        DateFormat df5 = new SimpleDateFormat("dd-MMM-yy hh:mm:ss  XXX"); //$NON-NLS-1$
+        DateFormat df6 = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss XXX"); //$NON-NLS-1$
+
+        DateFormat[] dfs = { df1, df2, df3, df4, df5, df6 };
 
         DateFormat out = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
@@ -678,11 +686,8 @@ public class UfedXmlReader extends DataSourceReader {
                     for (String attrVal : currentNode.atts.values()) {
                         if (attrVal.toLowerCase().startsWith(LAST_USE_PREFIX)) {
                             attrVal = attrVal.substring(LAST_USE_PREFIX.length()).trim();
-                            SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yy hh:mm:ss XXX");
-                            if (attrVal.contains("  "))
-                                df = new SimpleDateFormat("dd-MMM-yy hh:mm:ss  XXX");
                             try {
-                                Date date = df.parse(attrVal);
+                                Date date = parseDate(attrVal);
                                 this.lastUseToMsisdn.put(date, msisdn);
                             } catch (ParseException e) {
                                 e.printStackTrace();
@@ -1134,18 +1139,9 @@ public class UfedXmlReader extends DataSourceReader {
                 File file = new File(root, path);
                 item.setLength(file.length());
             } else {
-                if (uisf == null) {
-                    uisf = new UFDRInputStreamFactory(ufdrFile.toPath());
-                }
-                FileHeader zae = null;
-                try {
-                    zae = ufdr.getFileHeader(path);
-                } catch (ZipException e) {
-                    e.printStackTrace();
-                }
-                if (zae != null) {
-                    item.setLength(zae.getUncompressedSize());
-                    item.setInputStreamFactory(uisf);
+                if (getUISF().entryExists(path)) {
+                    item.setLength(getUISF().getEntrySize(path));
+                    item.setInputStreamFactory(getUISF());
                     path = UFDRInputStreamFactory.UFDR_PATH_PREFIX + path;
                     String id = item.getIdInDataSource() != null ? item.getIdInDataSource() + "_" + path : path;
                     item.setIdInDataSource(id);
@@ -1172,14 +1168,13 @@ public class UfedXmlReader extends DataSourceReader {
                 }
             } else {
                 try {
-                    FileHeader zae = ufdr.getFileHeader(path);
-                    if (zae == null) {
+                    if (!getUISF().entryExists(path)) {
                         return;
                     }
-                    try (InputStream is = ufdr.getInputStream(zae)) {
+                    try (InputStream is = getUISF().getSeekableInputStream(path)) {
                         mediaResults = readMediaResults(is);
                     }
-                } catch (ZipException | IOException e) {
+                } catch (IOException e) {
                     LOGGER.warn("Error reading UFDR mediaResult {}: {}", path, e.toString());
                 }
             }
@@ -1385,17 +1380,11 @@ public class UfedXmlReader extends DataSourceReader {
                 if (avatarPath != null) {
                     contact.getMetadata().remove(AVATAR_PATH_META);
                     byte[] bytes = null;
-                    if (ufdr != null) {
-                        FileHeader zae = null;
-                        try {
-                            zae = ufdr.getFileHeader(avatarPath);
-                        } catch (ZipException e) {
-                            e.printStackTrace();
-                        }
-                        if (zae != null)
-                            try (InputStream is = ufdr.getInputStream(zae)) {
+                    if (ufdrFile != null) {
+                        if (getUISF().entryExists(avatarPath))
+                            try (InputStream is = getUISF().getSeekableInputStream(avatarPath)) {
                                 bytes = IOUtils.toByteArray(is);
-                            } catch (ZipException e) {
+                            } catch (IOException e) {
                                 e.printStackTrace();
                             }
                     } else {
@@ -1568,11 +1557,6 @@ public class UfedXmlReader extends DataSourceReader {
         if (uisf != null) {
             uisf.close();
         }
-        if (ufdr != null) {
-            // not needed by zip4j
-            // ufdr.close();
-        }
-
     }
 
 }
