@@ -19,7 +19,6 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
     private static String testRoot = System.getProperty("user.dir") + "/src/test";
     private static String osName = System.getProperty("os.name").toLowerCase();
 
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -50,13 +49,16 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
             if (parser.getSupportedTypes(pstContext).isEmpty()) throw new IOException();
             parser.parse(stream, handler, metadata, pstContext);
 
-            assertEquals("This is a test email with two attachment files", psttracker.messagebody.get(0));
-            assertEquals("2", psttracker.numberofattachments.get(0));
-            assertEquals("1", psttracker.numberofattachments.get(6));
-            assertEquals("calibre.docx", psttracker.attachmentname.get(0));
-            assertEquals("sample.jpg", psttracker.attachmentname.get(1));
-            assertTrue(psttracker.messagedate.get(0).contains("2018-08-02"));
-            assertEquals("Microsoft Outlook Test Message", psttracker.messagesubject.get(3));
+            assertTrue(psttracker.messagebody.toString().contains("This is a test email with two attachment files"));
+            assertEquals(4, psttracker.numberofattachments.stream().mapToInt(Integer::parseInt).sum());
+            
+            String attachmentNames = psttracker.attachmentname.toString();
+            String messageDates = psttracker.messagedate.toString();
+            assertTrue(attachmentNames.contains("calibre.docx"));
+            assertTrue(attachmentNames.contains("sample.jpg"));
+            assertTrue(messageDates.contains("2018-08-02T06:15:12"));
+            assertTrue(messageDates.contains("2018-04-24T04:31:17"));
+            assertTrue(psttracker.messagesubject.toString().contains("Microsoft Outlook Test Message"));
 
         } catch (IOException e) {
             // skip test
@@ -98,26 +100,28 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_sample.pst")) {
             if (parser.getSupportedTypes(pstContext).isEmpty()) throw new IOException();
             parser.parse(stream, handler, metadata, pstContext);
-
+            
+            String messageSubjects = psttracker.messagesubject.toString();
+            String messageDates = psttracker.messagedate.toString();
+            String messageBodies = psttracker.messagebody.toString();
+            
             // real message
-            assertEquals("Re: [sepinf-inc/IPED] WIP Parsers tests (#481)", psttracker.messagesubject.get(1));
-            assertEquals("Solved by using my abstrackpackage instead of hardcoding the parser. Sorry,"
-                            + " my mistake. Thanks for the tip!! Good. I also confu(...)", psttracker.messagebody.get(1));
-            assertEquals("2021-04-26", psttracker.messagedate.get(0).substring(0, 10));
-            assertEquals("Re: Solicita documentação para contrato de estágio na DITEC/PF.", psttracker.messagesubject.get(2));
-            assertEquals("Bom dia, Guilherme! A UnB assinou o TCE/PA? At.te,"
-                            + " ELIZÃ‚NGELA RIBEIRO DE ANDRADE Fiscal do Contrato substituta NAD/SELO/DITEC/(...)", psttracker.messagebody.get(2));
-            assertEquals("2021-03-29", psttracker.messagedate.get(1).substring(0, 10));
-
-
+            assertTrue(messageSubjects.contains("Re: [sepinf-inc/IPED] WIP Parsers tests (#481)"));
+            assertTrue(messageSubjects.contains("Re: Solicita documentação para contrato de estágio na DITEC/PF."));
+            assertTrue(messageBodies.contains("Solved by using my abstrackpackage instead of hardcoding the parser. Sorry,"
+                            + " my mistake. Thanks for the tip!! Good. I also confu(...)"));
+            assertTrue(messageDates.contains("2021-04-26"));
+            assertTrue(messageBodies.contains("Bom dia, Guilherme! A UnB assinou o TCE/PA? At.te,"
+                            + " ELIZÃ‚NGELA RIBEIRO DE ANDRADE Fiscal do Contrato substituta NAD/SELO/DITEC/(...)"));
+            assertTrue(messageDates.contains("2021-03-29"));
+            
             // attachment
-            assertEquals("This is a test message with attachment!!!", psttracker.messagesubject.get(3));
-            assertEquals("Hi there, it’s me again. Take a look\nin this attachment. It is awesome.", psttracker.messagebody.get(3));
-            assertEquals("2021-04-27", psttracker.messagedate.get(2).substring(0, 10));
-            assertTrue(psttracker.attachmentname.stream().anyMatch("lionel-animals-to-follow-on-instagram-1568319926.jpg"::equals));
-            assertEquals("true", psttracker.isattachment.get(0));
-            assertEquals("1", psttracker.numberofattachments.get(5));
-
+            assertTrue(messageSubjects.contains("This is a test message with attachment!!!"));
+            assertTrue(messageBodies.contains("Hi there, it’s me again. Take a look\nin this attachment. It is awesome."));
+            assertTrue(messageDates.contains("2021-04-27"));
+            assertTrue(psttracker.attachmentname.contains("lionel-animals-to-follow-on-instagram-1568319926.jpg"));
+            assertEquals(2, psttracker.numberofattachments.stream().mapToInt(Integer::parseInt).sum());
+            
         } catch (IOException e) {
             // skip test
         }
