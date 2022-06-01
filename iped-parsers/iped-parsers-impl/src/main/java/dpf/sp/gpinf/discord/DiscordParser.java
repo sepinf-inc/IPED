@@ -34,8 +34,7 @@ import dpf.sp.gpinf.discord.json.DiscordAttachment;
 import dpf.sp.gpinf.discord.json.DiscordRoot;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
-
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -121,7 +120,8 @@ public class DiscordParser extends AbstractParser {
 			                        			for (IItemBase ib : externalFiles) {
 			                        				if (ib.getName() != null && ib.getName().equals(ce2.getName())) {
 			                        					att.setContent_type(getAttExtension(att.getUrl()));
-			                        					att.setUrl(Base64.getEncoder().encodeToString(IOUtils.toByteArray(ib.getBufferedStream())));
+                                                        att.setUrl(Base64.getEncoder().encodeToString(
+                                                                IOUtils.toByteArray(ib.getBufferedInputStream())));
 			                        					break;
 			                        				}
 			                        			}

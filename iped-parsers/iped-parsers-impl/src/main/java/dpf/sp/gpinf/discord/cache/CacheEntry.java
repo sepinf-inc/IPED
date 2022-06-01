@@ -1,7 +1,5 @@
 package dpf.sp.gpinf.discord.cache;
 
-import iped3.io.IItemBase;
-
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,6 +8,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
 
 import org.apache.commons.io.IOUtils;
+
+import iped3.IItemBase;
 
 /**
  * @author PCF Campanini

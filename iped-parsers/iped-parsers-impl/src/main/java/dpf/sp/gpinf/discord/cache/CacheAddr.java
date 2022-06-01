@@ -1,11 +1,12 @@
 package dpf.sp.gpinf.discord.cache;
 
-import iped3.io.IItemBase;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+
+import iped3.IItemBase;
 
 /**
  * @author PCF Campanini
@@ -108,7 +109,7 @@ public class CacheAddr {
 		case 0:
              for (IItemBase extFile : externalFiles)
  				if (extFile.getName().equals(fileNameStr)) {
- 					raf = new RandomAccessFile(extFile.getFile(),"r");
+                        raf = new RandomAccessFile(extFile.getTempFile(), "r");
  					return new RandomInputStream(raf, raf.getFilePointer());
  				}
 			break;
@@ -117,7 +118,7 @@ public class CacheAddr {
 		case 4:
 			for (IItemBase dataFile : dataFiles)
 				if (dataFile.getName().equals(("data_" + fileSelector))) {
-					raf = new RandomAccessFile(dataFile.getFile(), "r");
+                        raf = new RandomAccessFile(dataFile.getTempFile(), "r");
 					raf.seek(8192 + startBlock * getBlockSize());
 		            return new RandomInputStream(raf, raf.getFilePointer());
 				}

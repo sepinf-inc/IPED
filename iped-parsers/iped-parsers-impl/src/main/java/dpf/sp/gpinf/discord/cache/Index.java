@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dpf.sp.gpinf.discord.cache.CacheAddr.InputStreamNotAvailable;
-import iped3.io.IItemBase;
+import iped3.IItemBase;
 
 /**
  * 
