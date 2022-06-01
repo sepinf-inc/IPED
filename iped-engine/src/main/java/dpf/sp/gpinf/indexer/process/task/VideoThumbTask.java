@@ -19,10 +19,14 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -51,8 +55,11 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
+import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.CaseData;
+import gpinf.dev.data.Item;
 import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
@@ -257,7 +264,6 @@ public class VideoThumbTask extends ThumbTask {
         videoThumbsMaker.setTimeoutInfo(videoConfig.getTimeoutInfo());
         videoThumbsMaker.setVideoThumbsOriginalDimension(videoConfig.getVideoThumbsOriginalDimension());
         videoThumbsMaker.setMaxDimensionSize(videoConfig.getMaxDimensionSize());
-        videoThumbsMaker.setVideoThumbsSubitems(videoConfig.getVideoThumbsSubitems());
   
         // Cria configurações de extração de cenas
         configs = new ArrayList<VideoThumbsOutputConfig>();
@@ -332,7 +338,8 @@ public class VideoThumbTask extends ThumbTask {
 
         File mainOutFile = Util.getFileFromHash(baseFolder, evidence.getHash(), "jpg"); //$NON-NLS-1$
 
-        // Verifica se outro vídeo igual foi ou está em processamento
+        // TODO: update this results reusage logic to work when frames as subitems is enabled
+        /*
         synchronized (processedVideos) {
             if (processedVideos.containsKey(evidence.getHash())) {
                 while (processedVideos.get(evidence.getHash()) == null) {
@@ -351,6 +358,7 @@ public class VideoThumbTask extends ThumbTask {
 
             processedVideos.put(evidence.getHash(), null);
         }
+        */
 
         // Chama o método de extração de cenas
         File mainTmpFile = null;
@@ -383,14 +391,18 @@ public class VideoThumbTask extends ThumbTask {
                 }
 
                 long t = System.currentTimeMillis();
-                
-                r = videoThumbsMaker.createThumbs(this.worker, evidence, tmpFolder, configs, numFrames);
-                
+                r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs, numFrames);
                 t = System.currentTimeMillis() - t;
+
                 if (r != null && isAnimated) {
                     //Clear video duration for animated images
                     r.setVideoDuration(-1);
                 }
+
+                if (r.isSuccess() && videoConfig.getVideoThumbsSubitems()) {
+                    generateSubitems(evidence, mainConfig, r.getFrames(), r.getDimension());
+                }
+
                 if (r.isSuccess() && (mainOutFile.exists() || mainTmpFile.renameTo(mainOutFile))) {
                     (isAnimated ? totalAnimatedImagesProcessed : totalVideosProcessed).incrementAndGet();
                 } else {
@@ -416,7 +428,7 @@ public class VideoThumbTask extends ThumbTask {
             }
 
             if (r == null)
-                r = new VideoProcessResult();
+                r = new VideoProcessResult(null);
 
             // Atualiza atributo HasThumb do item
             evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
@@ -465,6 +477,10 @@ public class VideoThumbTask extends ThumbTask {
                 processedVideos.notifyAll();
             }
 
+            // TODO: this deletes subitems frames, so the logic to reuse frames from
+            // duplicated videos should be updated
+            r.close();
+
         }
     }
 
@@ -503,6 +519,76 @@ public class VideoThumbTask extends ThumbTask {
             }
         }
 
+    }
+
+    private void generateSubitems(IItem item, VideoThumbsOutputConfig config, List<File> frames,
+            Dimension dimension) throws IOException {
+
+        int w, h;
+
+        // Setting dimension for video subitems
+        if (videoConfig.getVideoThumbsOriginalDimension()) {
+            w = dimension.width;
+            h = dimension.height;
+        } else {
+            w = config.getThumbWidth();
+            h = dimension.height * w / dimension.width;
+        }
+        if (w > videoConfig.getMaxDimensionSize()) {
+            w = videoConfig.getMaxDimensionSize();
+        }
+        if (h > videoConfig.getMaxDimensionSize()) {
+            h = videoConfig.getMaxDimensionSize();
+        }
+
+        item.setHasChildren(true);
+
+        for (int i = 0; i < frames.size(); i++) {
+
+            File frame = frames.get(i);
+
+            // create a new item and set parent-child relationship
+            Item newItem = new Item();
+            newItem.setParent(item);
+
+            // set basic properties
+            String seqStr = new String("00000" + i);
+            String name = item.getName() + "_thumb_" + seqStr.substring(seqStr.length() - 5);
+            newItem.setName(name);
+            newItem.setPath(item.getPath() + ">>" + name);
+            newItem.setExtraAttribute("videoThumbnail", true);
+            newItem.setSubItem(true);
+            newItem.setSubitemId(i);
+
+            ExportFileTask extractor = new ExportFileTask();
+            extractor.setWorker(worker);
+
+            // export thumb data to internal database
+            BufferedImage img = adjustFrameDimension(ImageIO.read(frame), w, h);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(img, "jpg", baos);
+            ByteArrayInputStream is = new ByteArrayInputStream(baos.toByteArray());
+            extractor.extractFile(is, newItem, item.getLength());
+
+            ((CaseData) worker.caseData).calctrackIDAndUpdateID(newItem);
+
+            // add new item to processing queue
+            worker.processNewItem(newItem);
+
+        }
+
+    }
+
+    private BufferedImage adjustFrameDimension(BufferedImage original, int wFinal, int hFinal) {
+        BufferedImage img = new BufferedImage(wFinal, hFinal, BufferedImage.TYPE_INT_BGR);
+        Graphics2D g2 = (Graphics2D) img.getGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        if (original.getWidth() == wFinal && original.getHeight() == hFinal) {
+            return original;
+        } else {
+            g2.drawImage(original, 0, 0, wFinal, hFinal, null);
+        }
+        return img;
     }
 
     /**

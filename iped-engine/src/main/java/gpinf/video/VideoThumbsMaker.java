@@ -16,19 +16,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import java.util.concurrent.TimeUnit;
-import java.io.ByteArrayOutputStream;
-import java.io.ByteArrayInputStream;
 
 import javax.imageio.ImageIO;
 
-import iped3.IItem;
-import gpinf.dev.data.Item;
-import gpinf.dev.data.CaseData;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
-import dpf.sp.gpinf.indexer.process.Worker;
 
 
 /**
@@ -44,7 +36,6 @@ public class VideoThumbsMaker {
 
     private String mplayer = "mplayer.exe"; //$NON-NLS-1$
     private Boolean videoThumbsOriginalDimension = false;
-    private Boolean videoThumbsSubitems = false;
     private int maxDimensionSize = 1024;
     private int timeoutProcess = 45000;
     private int timeoutInfo = 15000;
@@ -76,14 +67,13 @@ public class VideoThumbsMaker {
         return info;
     }
 
-    public VideoProcessResult getInfo(Worker worker, IItem item, File tmp) throws Exception {        
-        return createThumbs(worker, item, tmp, null, 0);
+    public VideoProcessResult getInfo(File inOrg, File tmp) throws Exception {
+        return createThumbs(inOrg, tmp, null, 0);
     }
 
-    public VideoProcessResult createThumbs(Worker worker, IItem item, File tmp, List<VideoThumbsOutputConfig> outs, int numFrames) throws Exception {
-        File inOrg = item.getTempFile();
+    public VideoProcessResult createThumbs(File inOrg, File tmp, List<VideoThumbsOutputConfig> outs, int numFrames) throws Exception {
+
         long start = System.currentTimeMillis();
-        VideoProcessResult result = new VideoProcessResult();
 
         File in = inOrg;
         List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] { mplayer, "-demuxer", "lavf", "-nosound", "-noautosub", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
@@ -92,6 +82,8 @@ public class VideoThumbsMaker {
         File subTmp = new File(tmp, prefix + Thread.currentThread().getId() + "_" + System.currentTimeMillis()); //$NON-NLS-1$
         subTmp.mkdir();
         subTmp.deleteOnExit();
+
+        VideoProcessResult result = new VideoProcessResult(subTmp);
 
         boolean fixed = false;
         File lnk = null;
@@ -151,7 +143,6 @@ public class VideoThumbsMaker {
 
         if (result.getVideoDuration() == 0 || result.getDimension() == null || result.getDimension().width == 0
                 || result.getDimension().height == 0) {
-            cleanTemp(subTmp);
             return result;
         }
 
@@ -336,7 +327,6 @@ public class VideoThumbsMaker {
             lnk.delete();
         }
         if (images.size() == 0) {
-            cleanTemp(subTmp);
             return result;
         }
         if (transposed) {
@@ -344,11 +334,8 @@ public class VideoThumbsMaker {
         }
         for (VideoThumbsOutputConfig config : outs) {
             generateGridImage(config, images, result.getDimension());
-            if (getVideoThumbsSubitems()) {
-                generateSubitems(worker, item, config, images, result.getDimension());
-            }
+            result.setFrames(images);
         }
-        cleanTemp(subTmp);
 
         result.setTimeout(false);
         result.setSuccess(true);
@@ -474,84 +461,6 @@ public class VideoThumbsMaker {
                 "Frames=" + config.getRows() + "x" + config.getColumns()); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    private void generateSubitems(Worker worker, IItem item, VideoThumbsOutputConfig config, List<File> frames, Dimension dimension)
-    throws IOException {
-
-        int w, h;
-
-        // Setting dimension for video subitems
-        if (videoThumbsOriginalDimension) {
-            w = dimension.width;
-            h = dimension.height;
-        } else {
-            w = config.getThumbWidth();
-            h = dimension.height * w / dimension.width;
-        }
-        if (w > maxDimensionSize) {
-            w = maxDimensionSize;
-        }
-        if (h > maxDimensionSize) {
-            h = maxDimensionSize;
-        }
-
-        item.setHasChildren(true);
-
-        for (int i = 0; i < frames.size(); i++) {
-        
-            File frame = frames.get(i);
-    
-            // create a new item and set parent-child relationship
-            Item newItem = new Item();
-            newItem.setParent(item); 
-    
-            // set basic properties
-            String seqStr = new String("00000" + i);
-            String name = item.getName() + "_thumb_" + seqStr.substring(seqStr.length()-5);
-            newItem.setName(name);
-            newItem.setPath(item.getPath() + ">>" + name);
-            newItem.setExtraAttribute("videoThumbnail", true);
-            newItem.setSubItem(true);
-            newItem.setSubitemId(i);
-            
-            ExportFileTask extractor = new ExportFileTask();
-            extractor.setWorker(worker);
-            
-            // export thumb data to internal database
-            BufferedImage img = adjustFrameDimension(ImageIO.read(frame), w, h);            
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(img, "jpg", baos);
-            ByteArrayInputStream is = new ByteArrayInputStream(baos.toByteArray());
-            extractor.extractFile(is, newItem, item.getLength());            
-
-            ((CaseData) worker.caseData).calctrackIDAndUpdateID(newItem);
-            
-            // add new item to processing queue
-            worker.processNewItem(newItem);            
-            
-        }
-        
-    }
-
-    private BufferedImage adjustFrameDimension(BufferedImage original, int wFinal, int hFinal){
-        BufferedImage img = new BufferedImage(wFinal , hFinal, BufferedImage.TYPE_INT_BGR);
-        Graphics2D g2 = (Graphics2D) img.getGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        if (original.getWidth() == wFinal && original.getHeight() == hFinal){
-            return original;
-        } else {
-            g2.drawImage(original, 0, 0, wFinal, hFinal, null);
-        }            
-        return img;
-    }
-
-    public void cleanTemp(File subTmp) {
-        File[] files = subTmp.listFiles();
-        for (File file : files) {
-            file.delete();
-        }
-        subTmp.delete();
-    }
-
     private final ExecResult run(String[] cmds, int timeout, File currDir) {
         if (verbose) {
             System.err.print("CMD = "); //$NON-NLS-1$
@@ -620,20 +529,12 @@ public class VideoThumbsMaker {
         this.videoThumbsOriginalDimension = videoThumbsOriginalDimension;
     }
 
-    public void setVideoThumbsSubitems(Boolean videoThumbsSubitems) {
-        this.videoThumbsSubitems = videoThumbsSubitems;
-    }
-
     public void setMaxDimensionSize(int maxDimensionSize) {
         this.maxDimensionSize = maxDimensionSize;
     }
 
     public Boolean getVideoThumbsOriginalDimension() {
         return videoThumbsOriginalDimension;
-    }
-
-    public Boolean getVideoThumbsSubitems() {
-        return videoThumbsSubitems;
     }
 
     public void setTimeoutProcess(int timeoutProcess) {
