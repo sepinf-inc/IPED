@@ -157,9 +157,9 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>7.6.1-shaded4</version>
+            <groupId>org.opensearch.client</groupId>
+            <artifactId>opensearch-rest-high-level-client</artifactId>
+            <version>2.0.0-shaded</version>
         </dependency>
         <dependency>
             <groupId>io.minio</groupId>
