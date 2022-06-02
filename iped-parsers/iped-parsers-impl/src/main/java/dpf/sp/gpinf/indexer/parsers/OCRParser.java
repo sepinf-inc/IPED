@@ -18,13 +18,8 @@
  */
 package dpf.sp.gpinf.indexer.parsers;
 
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -61,7 +56,6 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteConfig.Pragma;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -69,7 +63,6 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
-import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
@@ -379,33 +372,6 @@ public class OCRParser extends AbstractParser {
 
     }
 
-    private BufferedImage getCompatibleImage(BufferedImage image) {
-        // obtain the current system graphical settings
-        GraphicsConfiguration gfx_config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
-                .getDefaultConfiguration();
-
-        /*
-         * if image is already compatible and optimized for current system settings,
-         * simply return it
-         */
-        if (image.getColorModel().equals(gfx_config.getColorModel()))
-            return image;
-
-        // image is not optimized, so create a new image that is
-        BufferedImage new_image = gfx_config.createCompatibleImage(image.getWidth(), image.getHeight(),
-                image.getTransparency());
-
-        // get the graphics context of the new image to draw the old image on
-        Graphics2D g2d = (Graphics2D) new_image.getGraphics();
-
-        // actually draw the image and dispose of context no longer needed
-        g2d.drawImage(image, 0, 0, null);
-        g2d.dispose();
-
-        // return the new optimized image
-        return new_image;
-    }
-
     private void parseTiff(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output)
             throws IOException, SAXException, TikaException {
 
@@ -428,7 +394,6 @@ public class OCRParser extends AbstractParser {
                         } catch (IOException e) {
                         }
 
-                        image = getCompatibleImage(image);
                         imageFile = File.createTempFile("iped-ocr", "." + PDFToImage.EXT); //$NON-NLS-1$ //$NON-NLS-2$
                         ImageIO.write(image, PDFToImage.EXT, imageFile);
                         File imageText = new File(imageFile.getAbsolutePath() + ".txt"); //$NON-NLS-1$
