@@ -127,7 +127,7 @@ public class IPEDSearcher implements IIPEDSearcher {
         if (!treeQuery)
             query = getNonTreeQuery();
 
-        collector = new NoScoringCollector(ipedCase.getReader().maxDoc());
+        collector = new NoScoringCollector(ipedCase);
         try {
             ipedCase.getSearcher().search(query, collector);
 
@@ -162,29 +162,52 @@ public class IPEDSearcher implements IIPEDSearcher {
 
         } while (scoreDocs.length > 0 && !canceled);
 
-        // see #925 why this sorting is needed, this can be optimized
-        sortResultsByFinalLuceneIds(totalScoreDocs);
+        // see #925 why this is needed
+        convertToFinalLuceneIds(totalScoreDocs);
+        Arrays.parallelSort(totalScoreDocs, new ScoreDocComparator());
 
         LuceneSearchResult searchResult = new LuceneSearchResult(0);
         searchResult = searchResult.addResults(totalScoreDocs);
         return searchResult;
     }
 
-    private void sortResultsByFinalLuceneIds(ScoreDoc[] totalScoreDocs) {
-        if (ipedCase instanceof IPEDMultiSource) {
-            Arrays.parallelSort(totalScoreDocs, new Comparator<ScoreDoc>() {
-                public int compare(ScoreDoc doc1, ScoreDoc doc2) {
-                    return ipedCase.getLuceneId(((IPEDMultiSource) ipedCase).getItemId(doc1.doc))
-                            - ipedCase.getLuceneId(((IPEDMultiSource) ipedCase).getItemId(doc2.doc));
+    private void convertToFinalLuceneIds(ScoreDoc[] scoreDocs) {
+        FinalDocIdConverter converter = new FinalDocIdConverter(ipedCase);
+        for (ScoreDoc doc : scoreDocs) {
+            doc.doc = converter.convertToFinalDocId(doc.doc);
+        }
+    }
+
+    public final static class FinalDocIdConverter {
+
+        private IPEDSource ipedCase;
+        private IPEDMultiSource multiCase;
+
+        public FinalDocIdConverter(IPEDSource ipedCase) {
+            if (ipedCase instanceof IPEDMultiSource) {
+                this.multiCase = (IPEDMultiSource) ipedCase;
+                if (this.multiCase.getAtomicSources().size() == 1) {
+                    this.ipedCase = multiCase.getAtomicSources().get(0);
                 }
-            });
-        } else {
-            Arrays.parallelSort(totalScoreDocs, new Comparator<ScoreDoc>() {
-                public int compare(ScoreDoc doc1, ScoreDoc doc2) {
-                    return ipedCase.getLuceneId(ipedCase.getId(doc1.doc))
-                            - ipedCase.getLuceneId(ipedCase.getId(doc2.doc));
-                }
-            });
+            } else {
+                this.ipedCase = ipedCase;
+            }
+        }
+
+        // TODO This may be optimized
+        public final int convertToFinalDocId(int docId) {
+            if (ipedCase != null) {
+                return ipedCase.getLuceneId(ipedCase.getId(docId));
+            } else {
+                return multiCase.getLuceneId(multiCase.getItemId(docId));
+            }
+        }
+    }
+
+    private final static class ScoreDocComparator implements Comparator<ScoreDoc> {
+        @Override
+        public final int compare(ScoreDoc doc1, ScoreDoc doc2) {
+            return doc1.doc - doc2.doc;
         }
     }
 
