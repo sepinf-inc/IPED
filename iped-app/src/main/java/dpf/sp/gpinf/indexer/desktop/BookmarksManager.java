@@ -509,11 +509,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         final ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
         final App app = App.get();
         if (checked.isSelected()) {
-            for (IPEDSource source : App.get().appCase.getAtomicSources()) {
-                for (IItemId itemId : app.ipedResult.getIterator()) {
-                    if(app.appCase.getMultiBookmarks().isChecked(itemId)) {
-                        uniqueSelectedIds.add(itemId);
-                    }
+            for (IItemId itemId : app.ipedResult.getIterator()) {
+                if (app.appCase.getMultiBookmarks().isChecked(itemId)) {
+                    uniqueSelectedIds.add(itemId);
                 }
             }
         } else if (highlighted.isSelected()) {
