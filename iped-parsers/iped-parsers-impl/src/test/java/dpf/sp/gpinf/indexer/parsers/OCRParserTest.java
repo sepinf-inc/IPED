@@ -222,16 +222,18 @@ public class OCRParserTest {
 
 
     private void setUpImageMagick() throws IOException {
-        System.setProperty(ExternalImageConverter.enabledProp, "true");
-        if (osName.startsWith("windows")) {
-            String repoPath = "org/imagemagick/imagemagick-zip/7.1.0-q8-x64/imagemagick-zip-7.1.0-q8-x64.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/tools");
-            System.setProperty(ExternalImageConverter.winToolPathPrefixProp, testRoot + "/tmp_tools");
+        if (System.getProperty(ExternalImageConverter.enabledProp, "").isEmpty()) {
+            System.setProperty(ExternalImageConverter.enabledProp, "true");
+            if (osName.startsWith("windows")) {
+                String repoPath = "org/imagemagick/imagemagick-zip/7.1.0-q8-x64/imagemagick-zip-7.1.0-q8-x64.zip";
+                RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/tools");
+                System.setProperty(ExternalImageConverter.winToolPathPrefixProp, testRoot + "/tmp_tools");
+            }
         }
     }
 
     private boolean isImageMagickInstalled(String magickDir) {
-        magickDir += osName.startsWith("windows") ? "/tools/imagemagick/magick" : "magick";
+        magickDir += osName.startsWith("windows") ? "/tools/imagemagick/magick" : "convert";
         try {
             Process process = Runtime.getRuntime().exec(magickDir + " -version");
             int result = process.waitFor();
