@@ -4,13 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
@@ -26,14 +25,14 @@ import org.xml.sax.SAXException;
 
 public class TorTcParser extends AbstractParser {
 
-    public static final MediaType SKYPE_MIME = MediaType.application("x-tor-tc-fragment"); //$NON-NLS-1$
-    private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<MediaType>();
-
-    static final String TORTC_PREFIX = "TORTC:";
-
-    static {
-        SUPPORTED_TYPES.add(SKYPE_MIME);
-    }
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    private static final MediaType TOR_TC_MIME = MediaType.application("x-tor-tc-fragment");
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(TOR_TC_MIME);
+    private static final String TORTC_PREFIX = "TORTC:";
+    private static final int MAX_BUFFER_SIZE = 1 << 24;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -92,19 +91,11 @@ public class TorTcParser extends AbstractParser {
 
     }
 
-    private static final int MAX_BUFFER_SIZE = 1 << 24;
-
     private static String readInputStream(InputStream is) throws IOException, TikaException {
-        TemporaryResources tmp = new TemporaryResources();
-        try {
-            ByteArrayOutputStream bout = new ByteArrayOutputStream();
-            IOUtils.copyLarge(is, bout, 0, MAX_BUFFER_SIZE);
-            AutoDetectReader reader = new AutoDetectReader(new ByteArrayInputStream(bout.toByteArray()));
-            return IOUtils.toString(reader);
-
-        } finally {
-            tmp.dispose();
-        }
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        IOUtils.copyLarge(is, bout, 0, MAX_BUFFER_SIZE);
+        AutoDetectReader reader = new AutoDetectReader(new ByteArrayInputStream(bout.toByteArray()));
+        return IOUtils.toString(reader);
     }
 
 }
