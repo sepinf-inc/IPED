@@ -5,8 +5,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.apache.tika.metadata.Property;
-
 import dpf.sp.gpinf.carver.api.CarvedItemListener;
 import dpf.sp.gpinf.carver.api.Carver;
 import dpf.sp.gpinf.carver.api.CarverType;
@@ -25,8 +23,6 @@ public abstract class AbstractCarver implements Carver {
 
     protected int maxWaitingHeaders = 1000;
 
-    // que subclasses a altere.
-    Object validCarvedObject;
     private ArrayList<CarvedItemListener> carvedItemListeners = new ArrayList<CarvedItemListener>();
 
     Hit lastEscapeFooter;
@@ -81,7 +77,7 @@ public abstract class AbstractCarver implements Carver {
             len = parentEvidence.getLength() - header.getOffset();
         }
         // verifica a validade dos bytes carveados
-        if (!ignoreCorrupted || isValid(parentEvidence, header, len)) {
+        if ((!ignoreCorrupted && !isSpecificIgnoreCorrupted()) || isValid(parentEvidence, header, len)) {
             IItem offsetFile = parentEvidence.createChildItem();
 
             String name = carvedNamePrefix + header.getOffset();
@@ -139,8 +135,8 @@ public abstract class AbstractCarver implements Carver {
     public boolean isValid(IItem parentEvidence, Hit headerOffset, long length) {
         try {
             // tenta parsear o conteudo
-            Object o = validateCarvedObject(parentEvidence, headerOffset, length);
-            validCarvedObject = o;
+            validateCarvedObject(parentEvidence, headerOffset, length);
+
         } catch (InvalidCarvedObjectException e) {
             // se der erro de parse retorna false
             return false;
@@ -150,10 +146,9 @@ public abstract class AbstractCarver implements Carver {
         return true;
     }
 
-    public Object validateCarvedObject(IItem parentEvidence, Hit header, long length)
+    public void validateCarvedObject(IItem parentEvidence, Hit header, long length)
             throws InvalidCarvedObjectException {
         // não faz qualquer parse, retornando nenhum objeto parseado.
-        return null;
     }
 
     @Override
@@ -233,5 +228,9 @@ public abstract class AbstractCarver implements Carver {
     @Override
     public void setIgnoreCorrupted(boolean ignore) {
         ignoreCorrupted = ignore;
+    }
+
+    public boolean isSpecificIgnoreCorrupted() {
+        return false;
     }
 }
