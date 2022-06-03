@@ -139,7 +139,6 @@
             <mime>application/vnd.rn-realmedia</mime>
             <mime>application/java-archive</mime>
         </parser>
-        <parser class="dpf.mt.gpinf.tor.tc.TorTcParser"></parser>
         
         <parser class="org.gagravarr.tika.FlacParser"></parser>
         <parser class="org.gagravarr.tika.OggParser"></parser>
@@ -288,6 +287,7 @@
             </params>
         </parser>
         <parser class="dpf.mt.gpinf.skype.parser.SkypeParser"></parser>
+        <parser class="dpf.mt.gpinf.tor.tc.TorTcParser"></parser>
         <parser class="dpf.mg.udi.gpinf.vcardparser.VCardParser"></parser>
         <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser">
             <params>
