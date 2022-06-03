@@ -36,7 +36,7 @@ function validateCarvedObject(parentEvidence, header, length){
 		
 		is.seek(header.getOffset());
 		is.read(buf);
-    	return parse(buf); //tenta interpretar o certificado com o tamanho do cabecalho incluso
+    	parse(buf); //tenta interpretar o certificado com o tamanho do cabecalho incluso
 	}catch(e){
 		var InvalidCarvedObjectException = Java.type("dpf.mt.gpinf.carving.InvalidCarvedObjectException")
     	var ex = new InvalidCarvedObjectException(e);
@@ -47,7 +47,6 @@ function validateCarvedObject(parentEvidence, header, length){
     	}
     }
 
-    return null;
 }
 
 function parse(buff){
