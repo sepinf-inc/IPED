@@ -44,11 +44,12 @@ public class TorTcParser extends AbstractParser {
         String value = null;
 
         if (i >= 0) {
-            int j = itemText.indexOf(" ", i + varName.length());
-            if (j > 0) {
-                value = itemText.substring(i + varName.length() + 1, j);
-            } else {
-                value = itemText.substring(i + varName.length() + 1);
+            int start = i + varName.length();
+            int j = itemText.indexOf(" ", start);
+            if (j > start) {
+                value = itemText.substring(start + 1, j);
+            } else if (start < itemText.length()) {
+                value = itemText.substring(start + 1);
             }
         }
 
@@ -72,13 +73,17 @@ public class TorTcParser extends AbstractParser {
             }
 
             int nextSpace = itemText.indexOf(" ");
-            metadata.add(TORTC_PREFIX + "CircuitStatus", itemText.substring(0, nextSpace));
-            itemText = itemText.substring(nextSpace + 1);
+            if (nextSpace != -1) {
+                metadata.add(TORTC_PREFIX + "CircuitStatus", itemText.substring(0, nextSpace));
+                itemText = itemText.substring(nextSpace + 1);
+            }
 
             nextSpace = itemText.indexOf(" ");
-            String circuitId = itemText.substring(0, nextSpace);
-            if (circuitId.indexOf("BUILD_FLAGS") > 2) {
-                metadata.add(TORTC_PREFIX + "CircuitId", circuitId);
+            if (nextSpace != -1) {
+                String circuitId = itemText.substring(0, nextSpace);
+                if (circuitId.indexOf("BUILD_FLAGS") > 2) {
+                    metadata.add(TORTC_PREFIX + "CircuitId", circuitId);
+                }
             }
 
             parseMetadata(itemText, "BUILD_FLAGS", metadata);
