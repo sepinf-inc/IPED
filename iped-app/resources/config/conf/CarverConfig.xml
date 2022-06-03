@@ -28,6 +28,7 @@
         </carverType>
         <carverType>
             <name>TOR_CIRCUIT_STATUS</name>
+            <carverClass>dpf.sp.gpinf.carving.carvers.TorTCCarver</carverClass>
             <minLength>10</minLength>
             <mediaType>application/x-tor-tc-fragment</mediaType>
             <maxLength>1000</maxLength>
