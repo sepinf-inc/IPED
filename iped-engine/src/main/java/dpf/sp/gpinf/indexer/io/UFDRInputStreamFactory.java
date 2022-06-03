@@ -15,8 +15,11 @@ public class UFDRInputStreamFactory extends ZIPInputStreamFactory {
 
     @Override
     public SeekableInputStream getSeekableInputStream(String path) throws IOException {
-        String internalPath = path.substring(path.indexOf(UFDR_PATH_PREFIX) + UFDR_PATH_PREFIX.length());
-        return super.getSeekableInputStream(internalPath);
+        int idx = path.indexOf(UFDR_PATH_PREFIX);
+        if (idx != -1) {
+            path = path.substring(path.indexOf(UFDR_PATH_PREFIX) + UFDR_PATH_PREFIX.length());
+        }
+        return super.getSeekableInputStream(path);
     }
 
 }

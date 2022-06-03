@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +93,7 @@ public class IPEDReader extends DataSourceReader {
 
     private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IPEDReader.class);
 
-    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new HashMap<>();
 
     IPEDSource ipedCase;
     HashSet<Integer> selectedLabels;
@@ -228,15 +229,15 @@ public class IPEDReader extends DataSourceReader {
     private void copyBookmarksToReport() throws ClassNotFoundException, IOException {
         if (listOnly)
             return;
-        int lastId = ipedCase.getLastId();
-        int totalItens = ipedCase.getTotalItens();
-        File stateFile = new File(output, Bookmarks.STATEFILENAME);
-        if (stateFile.exists()) {
-            IBookmarks reportState = Bookmarks.load(stateFile);
-            lastId += reportState.getLastId() + 1;
-            totalItens += reportState.getTotalItens();
+
+        int lastId = -1;
+        for (int i = 0; i < oldToNewIdMap.length; i++) {
+            if (oldToNewIdMap[i] > lastId) {
+                lastId = oldToNewIdMap[i];
+            }
         }
-        IBookmarks reportState = new Bookmarks(totalItens, lastId, output);
+
+        IBookmarks reportState = new Bookmarks(lastId - 1, lastId, output);
         reportState.loadState();
 
         for (int oldLabelId : selectedLabels) {
@@ -547,24 +548,25 @@ public class IPEDReader extends DataSourceReader {
                     if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
                         sourcePath = Util.getResolvedFile(basePath, sourcePath).toString();
                     }
-                    SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
-                    if (sisf == null) {
-                        Class<?> clazz = Class.forName(className);
-                        try {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                            sisf = c.newInstance(Path.of(sourcePath));
+                    synchronized(inputStreamFactories) {
+                        SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
+                        if (sisf == null) {
+                            Class<?> clazz = Class.forName(className);
+                            try {
+                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                                sisf = c.newInstance(Path.of(sourcePath));
 
-                        } catch (NoSuchMethodException e) {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                            sisf = c.newInstance(URI.create(sourcePath));
+                            } catch (NoSuchMethodException e) {
+                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                                sisf = c.newInstance(URI.create(sourcePath));
+                            }
+                            if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
+                                IndexItem.checkIfExistsAndAsk(sisf, ipedCase.getModuleDir());
+                            }
+                            inputStreamFactories.put(sourcePath, sisf);
                         }
-                        if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
-                            IndexItem.checkIfExistsAndAsk(sisf, ipedCase.getModuleDir());
-                        }
-                        inputStreamFactories.put(sourcePath, sisf);
+                        evidence.setInputStreamFactory(sisf);
                     }
-                    evidence.setInputStreamFactory(sisf);
-
                 } else if (evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX)) {
                     evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
 

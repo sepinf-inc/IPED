@@ -48,8 +48,8 @@ import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.IOUtils;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -82,7 +82,7 @@ import iped3.util.MediaTypes;
  * @author Nassif
  *
  */
-public class OCRParser extends AbstractParser {
+public class OCRParser extends AbstractParser implements AutoCloseable {
 
     /**
      * 
@@ -107,7 +107,7 @@ public class OCRParser extends AbstractParser {
 
     private static final String SELECT_EXACT = "SELECT text FROM ocr WHERE id=?;"; //$NON-NLS-1$
 
-    private static final String SELECT_ALL = "SELECT id, text FROM ocr WHERE id LIKE ?;"; //$NON-NLS-1$
+    private static final String SELECT_ALL = "SELECT id, text FROM ocr WHERE id >= ? AND id < ?"; //$NON-NLS-1$
 
     private static final String TESSERACT_ERROR_MSG = "tesseract returned error code ";
 
@@ -344,6 +344,16 @@ public class OCRParser extends AbstractParser {
         return conn;
     }
 
+    @Override
+    public void close() throws SQLException {
+        synchronized (this.getClass()) {
+            for (Connection con : connMap.values()) {
+                con.close();
+            }
+            connMap.clear();
+        }
+    }
+
     /**
      * Executes the configured external command and passes the given document stream
      * as a simple XHTML document to the given SAX content handler.
@@ -478,7 +488,8 @@ public class OCRParser extends AbstractParser {
         if (!sourceDb.exists())
             return;
         try (PreparedStatement ps = getConnection(sourceDb.getParentFile()).prepareStatement(SELECT_ALL)) {
-            ps.setString(1, hash + "%"); //$NON-NLS-1$
+            ps.setString(1, hash);
+            ps.setString(2, hash.substring(0, hash.length() - 1) + (char) (hash.charAt(hash.length() - 1) + 1));
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 String id = rs.getString(1);
@@ -489,33 +500,6 @@ public class OCRParser extends AbstractParser {
             throw new IOException(e);
         }
 
-    }
-
-    private BufferedImage getCompatibleImage(BufferedImage image) {
-        // obtain the current system graphical settings
-        GraphicsConfiguration gfx_config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
-                .getDefaultConfiguration();
-
-        /*
-         * if image is already compatible and optimized for current system settings,
-         * simply return it
-         */
-        if (image.getColorModel().equals(gfx_config.getColorModel()))
-            return image;
-
-        // image is not optimized, so create a new image that is
-        BufferedImage new_image = gfx_config.createCompatibleImage(image.getWidth(), image.getHeight(),
-                image.getTransparency());
-
-        // get the graphics context of the new image to draw the old image on
-        Graphics2D g2d = (Graphics2D) new_image.getGraphics();
-
-        // actually draw the image and dispose of context no longer needed
-        g2d.drawImage(image, 0, 0, null);
-        g2d.dispose();
-
-        // return the new optimized image
-        return new_image;
     }
 
     private void parseTiff(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output)
@@ -545,8 +529,6 @@ public class OCRParser extends AbstractParser {
                         reader.read(page, params);
                     } catch (IOException e) {
                     }
-
-                    image = getCompatibleImage(image);
 
                     if (image.getWidth() > MAX_CONV_IMAGE_SIZE || image.getHeight() > MAX_CONV_IMAGE_SIZE)
                         image = ImageUtil.resizeImage(image, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);
@@ -589,7 +571,6 @@ public class OCRParser extends AbstractParser {
                 }
             }
             if (img != null) {
-                img = getCompatibleImage(img);
 
                 if (img.getWidth() > MAX_CONV_IMAGE_SIZE || img.getHeight() > MAX_CONV_IMAGE_SIZE)
                     img = ImageUtil.resizeImage(img, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);

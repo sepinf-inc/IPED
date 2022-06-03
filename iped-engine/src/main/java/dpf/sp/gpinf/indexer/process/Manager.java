@@ -537,7 +537,7 @@ public class Manager {
 
             String currentDir = counter.currentDirectory();
             if (counter.isAlive() && currentDir != null && !currentDir.trim().isEmpty()) {
-                WorkerProvider.getInstance().firePropertyChange("mensagem", 0, //$NON-NLS-1$
+                WorkerProvider.getInstance().firePropertyChange("decodingDir", 0, //$NON-NLS-1$
                         Messages.getString("Manager.Adding") + currentDir.trim() + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
             WorkerProvider.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences()); //$NON-NLS-1$

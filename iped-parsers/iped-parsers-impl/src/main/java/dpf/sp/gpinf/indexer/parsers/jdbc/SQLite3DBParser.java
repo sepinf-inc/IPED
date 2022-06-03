@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -29,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.tika.io.IOExceptionWithCause;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -38,7 +38,6 @@ import org.apache.tika.parser.ParseContext;
 import org.sqlite.SQLiteConfig;
 
 import dpf.sp.gpinf.indexer.parsers.util.DelegatingConnection;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -71,14 +70,14 @@ public class SQLite3DBParser extends AbstractDBParser {
         try {
             Class.forName(getJDBCClassName());
         } catch (ClassNotFoundException e) {
-            throw new IOExceptionWithCause(e);
+            throw new IOException(e);
         }
         TemporaryResources tmp = new TemporaryResources();
         try {
             File dbFile = TikaInputStream.get(stream, tmp).getFile();
-            boolean isTempDb = IOUtil.isTemporaryFile(dbFile);
-            if (isTempDb)
-                exportWalLog(dbFile, context);
+
+            exportWalLog(dbFile, context, tmp);
+            exportRollbackJournal(dbFile, context, tmp);
 
             SQLiteConfig config = new SQLiteConfig();
             config.setReadOnly(true);
@@ -92,11 +91,10 @@ public class SQLite3DBParser extends AbstractDBParser {
                     super.close();
                     try {
                         tmp.close();
-                        if (isTempDb) {
-                            // these files may be created by sqlite, even if wal was not exported
-                            new File(dbFile.getAbsolutePath() + "-wal").delete();
-                            new File(dbFile.getAbsolutePath() + "-shm").delete();
-                        }
+                        String absPath = dbFile.getAbsolutePath();
+                        Files.deleteIfExists(Paths.get(absPath + "-wal"));
+                        Files.deleteIfExists(Paths.get(absPath + "-shm"));
+                        Files.deleteIfExists(Paths.get(absPath + "-journal"));
                     } catch (IOException e) {
                         throw new SQLException(e);
                     }
@@ -109,23 +107,36 @@ public class SQLite3DBParser extends AbstractDBParser {
         return connection;
     }
 
-    private File exportWalLog(File dbFile, ParseContext context) {
+    public static File exportWalLog(File dbFile, ParseContext context, TemporaryResources tmp) {
+        return exportRelatedFile(dbFile, "-wal", context, tmp);
+    }
+    
+    public static File exportRollbackJournal(File dbFile, ParseContext context, TemporaryResources tmp) {
+        return exportRelatedFile(dbFile, "-journal", context, tmp);
+    }
+    
+    private static File exportRelatedFile(File theFile, String suffix, ParseContext context, TemporaryResources tmp) {
         IItemSearcher searcher = context.get(IItemSearcher.class);
         if (searcher != null) {
-            IItemBase dbItem = context.get(IItemBase.class);
-            if (dbItem != null) {
-                String dbPath = dbItem.getPath();
-                String walQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(dbPath + "-wal") + "\"";
-                List<IItemBase> items = searcher.search(walQuery);
+            IItemBase parsingItem = context.get(IItemBase.class);
+            if (parsingItem != null) {
+                String parsingFilePath = parsingItem.getPath();
+                String relatedFileQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(parsingFilePath + suffix) + "\"";
+                List<IItemBase> items = searcher.search(relatedFileQuery);
                 if (items.size() > 0) {
-                    IItemBase wal = items.get(0);
-                    File walTemp = new File(dbFile.getAbsolutePath() + "-wal");
-                    try (InputStream in = wal.getBufferedInputStream()) {
-                        Files.copy(in, walTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    IItemBase relatedItem = items.get(0);
+                    File relatedFileTemp = new File(theFile.getAbsolutePath() + suffix);
+                    try (InputStream in = relatedItem.getBufferedInputStream()) {
+                        Files.copy(in, relatedFileTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    return walTemp;
+                    if (null != tmp) {
+                        tmp.addResource(()-> {
+                            relatedFileTemp.delete();
+                        });
+                    }
+                    return relatedFileTemp;
                 }
             }
         }
@@ -173,42 +184,48 @@ public class SQLite3DBParser extends AbstractDBParser {
         return new SQLite3TableReader(connection, tableName, context);
     }
 
-    public static boolean checkIfColumnExists(Connection connection, String table, String column) {
+    public static boolean checkIfColumnExists(Connection connection, String table, String column) throws SQLException  {
         String query = "SELECT name FROM pragma_table_info('" + table + "')";
-        try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(query);) {
+        try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(query)) {
             while (rs.next()) {
                 if (rs.getString(1).equals(column)) {
                     return true;
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
         return false;
     }
 
-    public static boolean containsTable(String table, Connection connection) {
+    public static boolean containsTable(String table, Connection connection) throws SQLException {
         SQLite3DBParser parser = new SQLite3DBParser();
-        try {
-            return parser.getTableNames(connection, null, null).contains(table);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
+        return parser.getTableNames(connection, null, null).contains(table);
     }
 
     public static String getStringIfExists(ResultSet rs, String col) throws SQLException {
         int colIdx;
+        String result = null;
         try {
             colIdx = rs.findColumn(col);
+            result = rs.getString(colIdx);
 
         } catch (SQLException e) {
-            // is there an error constant to check this?
-            if (e.toString().contains("no such column"))
-                return null;
-            else
+            if (!e.toString().contains("no such column"))
                 throw e;
         }
-        return rs.getString(colIdx);
+        return result;
+    }
+    
+    public static int getIntIfExists(ResultSet rs, String col) throws SQLException {
+        int colIdx;
+        int result = 0;
+        try {
+            colIdx = rs.findColumn(col);
+            result = rs.getInt(colIdx);
+
+        } catch (SQLException e) {
+            if (!e.toString().contains("no such column"))
+                throw e;
+        }
+        return result;
     }
 }

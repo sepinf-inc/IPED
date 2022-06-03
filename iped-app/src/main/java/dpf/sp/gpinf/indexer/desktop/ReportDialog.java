@@ -38,8 +38,8 @@ import javax.swing.table.JTableHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.Bootstrap;
 import dpf.sp.gpinf.indexer.CmdLineArgsImpl;
-import dpf.sp.gpinf.indexer.Main;
 
 public class ReportDialog implements ActionListener, TableModelListener {
 
@@ -270,7 +270,8 @@ public class ReportDialog implements ActionListener, TableModelListener {
                         .getAbsolutePath();
             }
             List<String> cmd = new ArrayList<>();
-            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, Main.class.getCanonicalName(), //$NON-NLS-1$ //$NON-NLS-2$
+            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, "-D" + Bootstrap.UI_REPORT_SYS_PROP, //$NON-NLS-1$ //$NON-NLS-2$
+                    Bootstrap.class.getCanonicalName(), 
                     "-d", input.getAbsolutePath(), //$NON-NLS-1$
                     "-o", output)); //$NON-NLS-1$
 

@@ -29,6 +29,7 @@ import javax.swing.JProgressBar;
 import javax.swing.RowSorter;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -122,13 +123,17 @@ public class SimilarFacesFilterActions {
                     e1.printStackTrace();
                 }
 
-                WaitDialog wait = new WaitDialog(app, Messages.getString("FaceSimilarity.LoadingFace"));
+                final WaitDialog wait = new WaitDialog(app, Messages.getString("FaceSimilarity.LoadingFace"));
 
                 FaceFeatureExtractor callable = new FaceFeatureExtractor(app.similarFacesRefItem,
                         app.appCase.getModuleDir()) {
                     @Override
                     protected void onFinish() {
-                        wait.setVisible(false);
+                        SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+                                wait.setVisible(false);
+                            }
+                        });
                     }
                 };
                 Future<byte[]> future = executor.submit(callable);
@@ -231,19 +236,25 @@ public class SimilarFacesFilterActions {
         public byte[] call() throws Exception {
 
             try {
-                if (task == null) {
+                if (FaceFeatureExtractor.task == null) {
                     File script = new File(moduleDir, SCRIPT_PATH);
-                    task = new PythonTask(script);
+                    PythonTask task = new PythonTask(script);
                     task.setCaseData(new CaseData(0));
                     AbstractTaskPropertiesConfig taskConfig = (AbstractTaskPropertiesConfig) ConfigurationManager.get()
                             .getTaskConfigurable(CONF_FILE);
-                    taskConfig.getConfiguration().setProperty(NUM_PROCESSES, "1");
+
+                    // if jep is not found, no config is returned for python tasks
+                    if (taskConfig != null) {
+                        taskConfig.getConfiguration().setProperty(NUM_PROCESSES, "1");
+                    }
+                    task.setThrowExceptionInsteadOfLogging(true);
                     task.init(ConfigurationManager.get());
                     Runtime.getRuntime().addShutdownHook(new Thread() {
                         public void run() {
                             dispose();
                         }
                     });
+                    FaceFeatureExtractor.task = task;
                 }
 
                 // populate info used by task
@@ -251,7 +262,7 @@ public class SimilarFacesFilterActions {
                 item.setExtraAttribute(ImageThumbTask.HAS_THUMB, true);
                 item.setHash(DigestUtils.md5Hex(Files.readAllBytes(item.getTempFile().toPath())));
 
-                task.process(item);
+                FaceFeatureExtractor.task.process(item);
                 // TODO enable when queue end is handled
                 // Item queueEnd = new Item();
                 // queueEnd.setQueueEnd(true);

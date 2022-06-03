@@ -1,41 +1,47 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.Deflater;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.tika.Tika;
+import org.apache.tika.io.TemporaryResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.MinIOConfig;
+import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import gpinf.dev.data.Item;
 import io.minio.BucketExistsArgs;
-import io.minio.ErrorCode;
+import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
-import io.minio.ObjectStat;
+import io.minio.ObjectWriteResponse;
 import io.minio.PutObjectArgs;
 import io.minio.StatObjectArgs;
+import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
-import io.minio.errors.InsufficientDataException;
-import io.minio.errors.InternalException;
-import io.minio.errors.InvalidBucketNameException;
-import io.minio.errors.InvalidResponseException;
-import io.minio.errors.ServerException;
-import io.minio.errors.XmlParserException;
 import iped3.ICaseData;
 import iped3.IItem;
 import iped3.configuration.Configurable;
@@ -54,7 +60,7 @@ public class MinIOTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(MinIOTask.class);
 
-    private static final int FOLDER_LEVELS = 4;
+    private static final int FOLDER_LEVELS = 2;
     private static final String CMD_LINE_KEY = "MinioCredentials";
     private static final String ACCESS_KEY = "accesskey";
     private static final String SECRET_KEY = "secretkey";
@@ -70,6 +76,41 @@ public class MinIOTask extends AbstractTask {
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
 
+    private static long zipFilesMaxSize = 0;
+    private static final long zipMaxSize = 8 * 1024 * 1024;
+    private static final long zipMaxFiles = 10000;
+    private TemporaryResources tmp = null;
+    private ZipArchiveOutputStream out = null;
+    private CountingOutputStream cos = null;
+    private File zipfile = null;
+    private long zipLength = 0;
+    private long zipFiles = 0;
+
+    private Map<Integer, QueueItem> queue = new TreeMap<>();
+    private boolean sendQueue = false;
+
+    private static class QueueItem {
+        public IItem item = null;
+        public String fullpath = null;
+
+        public QueueItem(IItem i, String fullpath) {
+            this.item = i;
+            this.fullpath = fullpath;
+        }
+    }
+
+    // Workaround for class loader issues with minio-8.3.8 and our custom class
+    // loader. Without this, reading streams from minio throws:
+    // NoClassDefFoundError: Could not initialize class
+    // org.simpleframework.xml.stream.NodeBuilder
+    static {
+        try {
+            new org.simpleframework.xml.stream.NodeBuilder();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
 
@@ -78,6 +119,8 @@ public class MinIOTask extends AbstractTask {
         if (!minIOConfig.isEnabled()) {
             return;
         }
+
+        zipFilesMaxSize = minIOConfig.getZipFilesMaxSize();
 
         String server = minIOConfig.getHost() + ":" + minIOConfig.getPort();
 
@@ -144,27 +187,52 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-
+        flushZipFile();
     }
 
-    private boolean checkIfExists(String hash) throws Exception {
-        boolean exists = false;
-        try {
-            ObjectStat stat = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
-            exists = true;
+    private void flushZipFile() throws Exception {
+        if (zipfile != null) {
+            logger.info("Flushing MinIOTask " + worker.id + " Sending zip containing " + zipFiles + " files");
+            sendZipFile();
+        }
+    }
 
-        } catch (ErrorResponseException e) {
-            ErrorCode code = e.errorResponse().errorCode();
-            if (code != ErrorCode.NO_SUCH_OBJECT && code != ErrorCode.NO_SUCH_KEY) {
-                throw e;
-            }
+    private String getZipName() {
+        return DigestUtils.md5Hex(zipfile.getName()).toUpperCase() + ".zip";
+    }
+
+    private String insertInZipFile(String hash, SeekableInputStream is, IItem i, boolean preview)
+            throws Exception {
+        if (out == null) {
+            zipLength = 0;
+            tmp = new TemporaryResources();
+            zipfile = tmp.createTemporaryFile();
+            cos = new CountingOutputStream(new BufferedOutputStream(new FileOutputStream(zipfile)));
+            out = new ZipArchiveOutputStream(cos);
+            out.setLevel(Deflater.NO_COMPRESSION);
+        }
+        String fullpath = bucket + "/zips/" + getZipName() + "/" + hash;
+
+        // insert into the queue of files waiting to be sent
+        if (!preview) {
+            queue.put(i.getId(), new QueueItem(i, fullpath));
         }
 
-        return exists;
+        zipFiles++;
+        ZipArchiveEntry entry = new ZipArchiveEntry(hash);
+        entry.setSize(is.size());
+        out.putArchiveEntry(entry);
+        IOUtils.copy(is, out);
+        out.closeArchiveEntry();
+        zipLength = cos.getByteCount();
+
+        return fullpath;
+
     }
 
-    private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
-            throws Exception {
+    private String insertWithZip(IItem i, String hash, SeekableInputStream is, String mediatype,
+            boolean preview) throws Exception {
+
         String bucketPath = buildPath(hash);
         // if preview saves in a preview folder
         if (preview) {
@@ -172,9 +240,83 @@ public class MinIOTask extends AbstractTask {
         }
         String fullPath = bucket + "/" + bucketPath;
 
-        if (length <= 0 || checkIfExists(bucketPath)) {
+        // if empty or already exists do not continue
+        if (is.size() <= 0) {
+            return null;
+        }
+
+        if (checkIfExists(bucketPath)) {
+            updateDataSource(i, fullPath);
             return fullPath;
         }
+
+        if (is.size() > zipFilesMaxSize) {
+            insertItem(hash, is, mediatype, bucketPath);
+            if (!preview) {
+                updateDataSource(i, fullPath);
+            }
+        } else {
+            fullPath = insertInZipFile(hash, is, i, preview);
+        }
+
+        return fullPath;
+
+    }
+
+    private void sendZipFile() throws Exception {
+        out.close();
+
+        if (zipFiles > 0) {
+            try (InputStream fi = new BufferedInputStream(new FileInputStream(zipfile))) {
+                ObjectWriteResponse aux = minioClient
+                        .putObject(PutObjectArgs.builder().bucket(bucket).object("/zips/" + getZipName())
+                                .userMetadata(Collections.singletonMap("x-minio-extrac", "true"))
+                                .stream(fi, zipfile.length(), Math.max(zipfile.length(), 1024 * 1024 * 5)).build());
+
+            }
+        }
+        // mark to send items to next tasks
+        sendQueue = true;
+
+        tmp.close();
+        zipFiles = 0;
+        zipLength = 0;
+        out = null;
+        cos = null;
+        tmp = null;
+        zipfile = null;
+    }
+
+    private void sendZipItemsToNextTask() throws Exception {
+        for (QueueItem i : queue.values()) {
+            if (i != null) {
+                updateDataSource(i.item, i.fullpath);
+                super.sendToNextTask(i.item);
+            }
+        }
+        queue.clear();
+        sendQueue = false;
+    }
+
+    private boolean checkIfExists(String hash) throws Exception {
+        boolean exists = false;
+        try {
+            StatObjectResponse stat = minioClient
+                    .statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
+            exists = true;
+
+        } catch (ErrorResponseException e) {
+            int code = e.response().code();
+            if (code != 404) {
+                throw e;
+            }
+        }
+
+        return exists;
+    }
+
+    private void insertItem(String hash, InputStream is, String mediatype, String bucketPath)
+            throws Exception {
 
         // create directory structure
         if (FOLDER_LEVELS > 0) {
@@ -184,10 +326,8 @@ public class MinIOTask extends AbstractTask {
         }
 
         try {
-            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, length, -1)
+            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, -1, 10 << 20)
                     .contentType(mediatype).build());
-
-            return fullPath;
 
         } catch (Exception e) {
             throw new Exception("Error when uploading object ", e);
@@ -206,42 +346,74 @@ public class MinIOTask extends AbstractTask {
         return tika.detect(name);
     }
 
+    @Override
+    protected boolean processQueueEnd() {
+        // TODO Auto-generated method stub
+        return true;
+    }
 
+    @Override
+    protected void sendToNextTask(IItem item) throws Exception {
+        if(!isEnabled()) {
+            super.sendToNextTask(item);
+            return;
+        }
+
+        if (item.isQueueEnd() && !queue.isEmpty()) {
+            flushZipFile();
+        }
+        // if queue contains the item it will be sent when the zipfile is sent;
+        if (queue.get(item.getId()) == null) {
+            super.sendToNextTask(item);
+
+        }
+        if (sendQueue) {
+            sendZipItemsToNextTask();
+        }
+
+    }
 
     @Override
     protected void process(IItem item) throws Exception {
+
+        if (item.isQueueEnd()) {
+            flushZipFile();
+            return;
+        }
 
         if (caseData.isIpedReport() || !item.isToAddToCase())
             return;
 
         String hash = item.getHash();
-        if (hash == null || hash.isEmpty() || item.getLength() == null || item.getLength() <= 0)
+        if (hash == null || hash.isEmpty() || item.getLength() == null)
             return;
 
         try (SeekableInputStream is = item.getSeekableInputStream()) {
-            String fullPath = insertItem(hash, new BufferedInputStream(is), is.size(), item.getMediaType().toString(), false);
-            if (fullPath != null) {
-                updateDataSource(item, fullPath);
-            }
+            insertWithZip(item, hash, is, item.getMediaType().toString(), false);
+
         } catch (Exception e) {
             // TODO: handle exception
             logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
         }
         if (item.getViewFile() != null && item.getViewFile().length() > 0) {
-            try (InputStream is = new FileInputStream(item.getViewFile())) {
-                String fullPath = insertItem(hash, is, item.getViewFile().length(),
-                        getMimeType(item.getViewFile().getName()), true);
+            try (SeekableFileInputStream is = new SeekableFileInputStream(item.getViewFile())) {
+                String mime = getMimeType(item.getViewFile().getName());
+                String fullPath = insertWithZip(item, hash, is, mime, true);
                 if (fullPath != null) {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
                             "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
-                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE, "type"
-                            + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + getMimeType(item.getViewFile().getName()));
+                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
+                            "type" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + mime);
                 }
             } catch (Exception e) {
                 // TODO: handle exception
                 logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
                         + item.getViewFile().length() + " bytes)", e);
             }
+        }
+
+        if (zipFiles >= zipMaxFiles || zipLength >= zipMaxSize) {
+            sendZipFile();
         }
 
     }
@@ -260,6 +432,9 @@ public class MinIOTask extends AbstractTask {
     }
 
     private void updateDataSource(IItem item, String id) {
+        if (id == null || item == null) {
+            return;
+        }
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(id);
         item.setFileOffset(-1);
@@ -326,12 +501,29 @@ public class MinIOTask extends AbstractTask {
         @Override
         public long size() throws IOException {
             if (size == null) {
-                try {
-                    size = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(id).build()).length();
-                } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException | InternalException
-                        | InvalidBucketNameException | InvalidResponseException | NoSuchAlgorithmException
-                        | ServerException | XmlParserException e) {
-                    throw new IOException(e);
+                if (id.contains(".zip/")) {
+                    try (GetObjectResponse res = minioClient.getObject(GetObjectArgs.builder().bucket(bucket).object(id)
+                            .offset(0L).extraHeaders(Collections.singletonMap("x-minio-extract", "true")).build())) {
+                        size = Long.valueOf(res.headers().get("Content-Length"));
+
+                    } catch (Exception e) {
+                        if (e instanceof IOException) {
+                            throw (IOException) e;
+                        }
+                        throw new IOException(e);
+                    }
+                } else {
+                    try {
+                        size = minioClient
+                                .statObject(StatObjectArgs.builder().bucket(bucket).object(id)
+                                        .extraHeaders(Collections.singletonMap("x-minio-extract", "true")).build())
+                                .size();
+                    } catch (Exception e) {
+                        if (e instanceof IOException) {
+                            throw (IOException) e;
+                        }
+                        throw new IOException(e);
+                    }
                 }
             }
             return size;
@@ -373,11 +565,13 @@ public class MinIOTask extends AbstractTask {
 
         private InputStream getInputStream(long pos) throws IOException {
             try {
-                return minioClient.getObject(bucket, id, pos);
+                return minioClient.getObject(GetObjectArgs.builder().bucket(bucket).object(id).offset(pos)
+                        .extraHeaders(Collections.singletonMap("x-minio-extract", "true")).build());
 
-            } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException | InternalException
-                    | InvalidBucketNameException | InvalidResponseException | NoSuchAlgorithmException | ServerException
-                    | XmlParserException e) {
+            } catch (Exception e) {
+                if (e instanceof IOException) {
+                    throw (IOException) e;
+                }
                 throw new IOException(e);
             }
         }

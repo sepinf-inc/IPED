@@ -25,6 +25,7 @@ import jep.NDArray;
 
 public class PythonTask extends AbstractTask {
 
+    private static final String JEP_NOT_FOUND = PythonParser.JEP_NOT_FOUND;
     private static final String DISABLED = PythonParser.DISABLED;
     private static final String SEE_MANUAL = PythonParser.SEE_MANUAL;
 
@@ -41,9 +42,14 @@ public class PythonTask extends AbstractTask {
     private boolean isEnabled = true;
     private boolean scriptLoaded = false;
     private boolean sendToNextTaskExists = true;
+    private boolean throwExceptionInsteadOfLogging = false;
 
     public PythonTask(File scriptFile) {
         this.scriptFile = scriptFile;
+    }
+
+    public void setThrowExceptionInsteadOfLogging(boolean value) {
+        this.throwExceptionInsteadOfLogging = value;
     }
 
     public void setCaseData(CaseData caseData) {
@@ -209,12 +215,18 @@ public class PythonTask extends AbstractTask {
             Jep jep = PythonParser.getJep();
             if (jep == null) {
                 isEnabled = false;
+                if (throwExceptionInsteadOfLogging) {
+                    throw new Exception(JEP_NOT_FOUND + SEE_MANUAL);
+                }
             } else {
                 loadScript(jep, true);
             }
         } catch (JepException e) {
+            String msg = e.getMessage() + ". " + scriptFile.getName() + DISABLED + SEE_MANUAL;
+            if (throwExceptionInsteadOfLogging) {
+                throw new Exception(msg);
+            }
             if (jepExceptionPerScript.get(scriptFile) == null) {
-                String msg = e.getMessage() + ". " + scriptFile.getName() + DISABLED + SEE_MANUAL;
                 LOGGER.error(msg);
                 e.printStackTrace();
                 jepExceptionPerScript.put(scriptFile, e);
@@ -265,7 +277,7 @@ public class PythonTask extends AbstractTask {
             getJep().invoke(getInstanceMethod("sendToNextTask"), item); //$NON-NLS-1$
             
         }catch(JepException e) {
-            if (e.toString().contains(" has no attribute ")) {
+            if (e.toString().contains(" has no attribute 'sendToNextTask'")) {
                 sendToNextTaskExists = false;
                 super.sendToNextTask(item);
             } else {

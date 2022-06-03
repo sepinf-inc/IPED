@@ -23,4 +23,8 @@ public class WAContactsDirectory {
     public void putAll(WAContactsDirectory directory) {
         this.contacts.putAll(directory.contacts);
     }
+    
+    public boolean hasContact(String id) {
+        return contacts.containsKey(id);
+    }
 }

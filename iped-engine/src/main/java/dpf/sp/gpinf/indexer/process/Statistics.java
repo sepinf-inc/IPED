@@ -288,7 +288,12 @@ public class Statistics {
         String warn = Util.getJavaVersionWarn();
         if (warn != null)
             LOGGER.error(warn); // $NON-NLS-1$ //$NON-NLS-2$
-        LOGGER.info("Architecture: {}", System.getProperty("os.arch")); //$NON-NLS-1$ //$NON-NLS-2$
+
+        String arch = System.getProperty("os.arch");
+        LOGGER.info("Architecture: {}", arch); //$NON-NLS-1$
+        if (!arch.contains("64")) {
+            throw new IPEDException("Java 32 bits not supported anymore. Please update to a 64 bits version.");
+        }
         LOGGER.info("Current Directory: {}", System.getProperty("user.dir")); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("CPU Cores: {}", Runtime.getRuntime().availableProcessors()); //$NON-NLS-1$
         LOGGER.info("numThreads: {}", localConfig.getNumThreads()); //$NON-NLS-1$
@@ -296,12 +301,16 @@ public class Statistics {
         long maxMemory = Runtime.getRuntime().maxMemory() / 1000000;
         LOGGER.info("Memory (Heap) Available: {} MB", maxMemory); //$NON-NLS-1$
 
-        StringBuilder args = new StringBuilder();
+        for (String path : System.getProperty("java.class.path").split(";")) {
+            LOGGER.info("ClassPath: {}", path);
+        }
+
         RuntimeMXBean bean = ManagementFactory.getRuntimeMXBean();
         for (String arg : bean.getInputArguments()) {
-            args.append(arg + " "); //$NON-NLS-1$
+            LOGGER.info("JVM Argument: {}", arg);
         }
-        LOGGER.info("Arguments: {}{}", args.toString(), System.getProperty("sun.java.command")); //$NON-NLS-1$ //$NON-NLS-2$
+
+        LOGGER.info("Java Command: {}", System.getProperty("sun.java.command"));
 
         StringBuilder options = new StringBuilder();
         options.append("Config Options: "); //$NON-NLS-1$
