@@ -509,10 +509,18 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         final ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
         final App app = App.get();
         if (checked.isSelected()) {
-            for (IItemId itemId : app.ipedResult.getIterator()) {
-                if (app.appCase.getMultiBookmarks().isChecked(itemId)) {
-                    uniqueSelectedIds.add(itemId);
+            int sourceId = 0;
+            for (IPEDSource source : app.appCase.getAtomicSources()) {
+                BitSet ids = new BitSet();
+                // we must add items in index order
+                for (int luceneId = 0; luceneId < source.getAtomicReader().maxDoc(); luceneId++) {
+                    int id = source.getId(luceneId);
+                    if (source.getBookmarks().isChecked(id) && !ids.get(id)) {
+                        uniqueSelectedIds.add(new ItemId(sourceId, id));
+                        ids.set(id);
+                    }
                 }
+                sourceId++;
             }
         } else if (highlighted.isSelected()) {
             BitSet bitSet = new BitSet();
