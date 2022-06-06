@@ -1,7 +1,10 @@
 06/06/2022: IPED-3.18.15
 News:
 #1064: Support new Telegram versions 8.5-8.7 (João Hauck)
+#1035: Decode base64 values from UFDR xml (Luís Nassif)
 #1049: Support more date formats when processing UFDR files from PA 7.54 (Luís Nassif)
+#1074: Optimize bookmarking when "Add duplicates (hash)" is selected (André Berenguel & Luís Nassif)
+#1117: Optimize time to generate report when OCR was enabled (André Berenguel & João Hauck)
 #1042: Upgrade to latest OpenJDK 8 + JFX in 3.x branch (Luís Nassif)
 Fixes:
 #1056: TelegramParser plugin not working with iped.exe/java8 [3.18.13 regression] (Luís Nassif)
