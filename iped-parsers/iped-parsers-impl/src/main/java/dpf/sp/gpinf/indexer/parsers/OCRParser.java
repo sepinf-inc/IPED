@@ -557,7 +557,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                     } catch (IOException e) {
                     }
 
-                    // image = getCompatibleImage(image);
+                    image = getCompatibleImage(image);
 
                     if (image.getWidth() > MAX_CONV_IMAGE_SIZE || image.getHeight() > MAX_CONV_IMAGE_SIZE)
                         image = ImageUtil.resizeImage(image, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);
@@ -600,7 +600,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                 }
             }
             if (img != null) {
-                // img = getCompatibleImage(img);
+                img = getCompatibleImage(img);
 
                 if (img.getWidth() > MAX_CONV_IMAGE_SIZE || img.getHeight() > MAX_CONV_IMAGE_SIZE)
                     img = ImageUtil.resizeImage(img, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);
