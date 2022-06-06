@@ -92,6 +92,7 @@ import dpf.sp.gpinf.indexer.util.SyncMetadata;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
+import iped3.ICaseData;
 import iped3.IItem;
 import iped3.exception.ZipBombException;
 import iped3.io.IItemBase;
@@ -272,7 +273,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         reader.close();
     }
 
-    private static boolean isToAlwaysExpand(CaseData caseData, IItem item) {
+    private static boolean isToAlwaysExpand(ICaseData caseData, IItem item) {
         if (caseData != null && caseData.isIpedReport()) {
             return false;
         }
