@@ -12,6 +12,7 @@ import iped3.io.SeekableInputStream;
 public class SeekableFileInputStream extends SeekableInputStream {
 
     private SeekableByteChannel sbc;
+    private long markPos, markLimit;
     private boolean closed = false;
 
     public SeekableFileInputStream(File file) throws IOException {
@@ -84,7 +85,9 @@ public class SeekableFileInputStream extends SeekableInputStream {
 
     @Override
     public void mark(int mark) {
-        checkIfClosed();
+        if (closed) {
+            return;
+        }
         try {
             markPos = sbc.position();
             markLimit = mark;
@@ -101,6 +104,12 @@ public class SeekableFileInputStream extends SeekableInputStream {
             sbc.position(markPos);
         else
             throw new IOException("Mark limit exceeded"); //$NON-NLS-1$
+    }
+
+    private void checkIfClosed() throws IOException {
+        if (closed) {
+            throw new IOException("Stream already closed.");
+        }
     }
 
     @Override
