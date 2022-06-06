@@ -9,7 +9,7 @@ News:
 Fixes:
 #1056: TelegramParser plugin not working with iped.exe/java8 [3.18.13 regression] (Luís Nassif)
 #1032: OutOfMemoryError while generating PDFs thumbnails using internal conversion (Luís Nassif)
-#795:  Missing DLL in OfficeViewer could cause LibreOffice window to be detached from main GUI (Luís Nassif)
+#795:  Missing DLL in OfficeViewer could cause LibreOffice window to be detached from main GUI (Luís Nassif & André Berenguel)
 #1028: AIOOBE generating report from another report caused by chat attachments parents not exported (Luís Nassif)
 #1031: Upgrade Microsoft client-sdk to 1.19.0 to fix audio transcription failing on Linux (Luís Nassif)
 #1137: OCR on TIF images > 3 pages fails on environments without X (Luís Nassif)
