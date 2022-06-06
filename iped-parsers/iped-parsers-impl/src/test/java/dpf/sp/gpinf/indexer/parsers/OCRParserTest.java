@@ -147,11 +147,14 @@ public class OCRParserTest {
             String hts = handler.toString();
 
             assertTrue(mts.contains("Content-Type=image/tiff"));
-            assertTrue(hts.contains("NuSTAR X-ray"));
-            assertTrue(hts.contains("Jupiter & Major Moons"));
-            assertTrue(hts.contains("Sun"));
-            assertTrue(hts.contains("relative-size"));
-            assertTrue(hts.contains("Inner Solar System"));
+            assertTrue(hts.contains("Literature must rest always on a principle"));
+            assertTrue(hts.contains("times and places are one; the stuff he deals with"));
+            assertTrue(hts.contains("extract from THE ENGLISH RENAISSANCE"));
+            assertTrue(hts.contains("The Quick Brown"));
+            assertTrue(hts.contains("Fox Jumps Over"));
+            assertTrue(hts.contains("The Lazy Dog."));
+            assertTrue(hts.contains("abcdefghijklmnopq"));
+            assertTrue(hts.contains("01234567890 01234567890"));
         }
     }
 
@@ -183,7 +186,6 @@ public class OCRParserTest {
             assertTrue(hts.contains("SAMPLE TEXT"));
             assertTrue(hts.contains("Centered Text"));
             assertTrue(hts.contains("sample .psd file"));
-
         }
     }
 
@@ -211,11 +213,11 @@ public class OCRParserTest {
             String hts = handler.toString();
 
             assertTrue(mts.contains("Content-Type=image/svg+xml"));
-            assertTrue(hts.contains("The Quick Brown"));
-            assertTrue(hts.contains("Fox Jumps Over"));
-            assertTrue(hts.contains("The Lazy Dog"));
-            assertTrue(hts.contains("ABCDE"));
-            assertTrue(hts.contains("uvwxyz"));
+            assertTrue(hts.contains("Transport"));
+            assertTrue(hts.contains("Aa Ee Qq"));
+            assertTrue(hts.contains("Rr Ss Tt"));
+            assertTrue(hts.contains("Manchester"));
+            assertTrue(hts.contains("abcdefghijklm"));
             assertTrue(hts.contains("0123456789"));
         }
     }
