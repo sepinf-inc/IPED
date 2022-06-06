@@ -70,9 +70,9 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>java</groupId>
-                                    <artifactId>jre</artifactId>
-                                    <version>1.8.0_152</version>
+                                    <groupId>bellsoft</groupId>
+                                    <artifactId>jre-full</artifactId>
+                                    <version>8u333+2</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
