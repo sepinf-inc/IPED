@@ -181,6 +181,8 @@ public class OCRParserTest {
             String mts = metadata.toString();
             String hts = handler.toString();
 
+            System.out.println(hts);
+
             assertTrue(mts.contains("Content-Type=image/vnd.adobe.photoshop"));
             assertTrue(hts.contains("Parsing non-standard file format"));
             assertTrue(hts.contains("SAMPLE TEXT"));
