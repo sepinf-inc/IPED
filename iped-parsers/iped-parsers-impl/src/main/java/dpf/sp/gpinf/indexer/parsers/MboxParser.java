@@ -82,7 +82,7 @@ public class MboxParser extends AbstractParser {
         String charsetName = "windows-1252"; //$NON-NLS-1$
         InputStreamReader isr = new InputStreamReader(stream, charsetName);
         BufferedReader reader = new BufferedReader(isr, 100000);
-        String name = metadata.get(Metadata.RESOURCE_NAME_KEY);
+        String name = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
 
         String line;
         int count = 0;

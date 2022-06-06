@@ -93,7 +93,7 @@ public class IPEDSource implements IIPEDSource {
      * workaround para JVM não coletar objeto, nesse caso Sleuthkit perde referencia
      * para FS_INFO
      */
-    private static List<SleuthkitCase> tskCaseList = new ArrayList<SleuthkitCase>();
+    private static List<SleuthkitCase> tskCaseList = Collections.synchronizedList(new ArrayList<SleuthkitCase>());
 
     private File casePath;
     private File moduleDir;

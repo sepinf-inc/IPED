@@ -50,12 +50,11 @@ import org.apache.poi.util.ReplacingInputStream;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.TaggedInputStream;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -118,12 +117,12 @@ public class RFC822Parser extends AbstractParser {
             stream = new ReplacingInputStream(new ReplacingInputStream(stream, "\r\n", "\n"), "\r", "\n");
         }
 
-        TaggedInputStream tagged = TaggedInputStream.get(stream);
+        TikaInputStream tstream = TikaInputStream.get(stream);
         try {
-            parser.parse(tagged);
+            parser.parse(tstream);
 
         } catch (IOException e) {
-            tagged.throwIfCauseOf(e);
+            tstream.throwIfCauseOf(e);
             throw new TikaException("Failed to parse an email message", e); //$NON-NLS-1$
 
         } catch (MimeException e) {
@@ -207,7 +206,7 @@ public class RFC822Parser extends AbstractParser {
                 if (attachName == null) {
                     attachName = Messages.getString("RFC822Parser.UnNamed"); //$NON-NLS-1$
                 }
-                submd.set(TikaMetadataKeys.RESOURCE_NAME_KEY, attachName);
+                submd.set(TikaCoreProperties.RESOURCE_NAME_KEY, attachName);
             }
 
             try {

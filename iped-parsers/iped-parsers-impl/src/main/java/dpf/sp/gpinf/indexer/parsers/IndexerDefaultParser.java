@@ -32,7 +32,7 @@ import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaMetadataKeys;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.CompositeParser;
 import org.apache.tika.parser.EmptyParser;
@@ -333,7 +333,7 @@ public class IndexerDefaultParser extends CompositeParser {
                 String[] names = metadata.names();
                 Arrays.sort(names);
                 for (String name : names) {
-                    if (name != null && !name.equals(TikaMetadataKeys.RESOURCE_NAME_KEY)
+                    if (name != null && !name.equals(TikaCoreProperties.RESOURCE_NAME_KEY)
                             && !name.equals("PLTE PLTEEntry") && !name.equals("Chroma Palette PaletteEntry") //$NON-NLS-1$ //$NON-NLS-2$
                             && !name.equals(Metadata.CONTENT_TYPE)) {
                         String text = name + ": "; //$NON-NLS-1$

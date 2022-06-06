@@ -76,7 +76,7 @@ public class IncrediMailParser extends AbstractParser {
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
 
-        String name = metadata.get(Metadata.RESOURCE_NAME_KEY);
+        String name = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
 
         String charsetName = "windows-1252"; //$NON-NLS-1$
         InputStreamReader isr = new InputStreamReader(stream, charsetName);

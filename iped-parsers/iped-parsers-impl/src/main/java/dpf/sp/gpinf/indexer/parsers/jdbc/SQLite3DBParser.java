@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.tika.io.IOExceptionWithCause;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -71,7 +70,7 @@ public class SQLite3DBParser extends AbstractDBParser {
         try {
             Class.forName(getJDBCClassName());
         } catch (ClassNotFoundException e) {
-            throw new IOExceptionWithCause(e);
+            throw new IOException(e);
         }
         TemporaryResources tmp = new TemporaryResources();
         try {

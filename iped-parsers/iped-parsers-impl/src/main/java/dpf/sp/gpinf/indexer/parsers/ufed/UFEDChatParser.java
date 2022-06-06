@@ -70,11 +70,13 @@ public class UFEDChatParser extends AbstractParser {
     }
 
     public static MediaType getMediaType(String source) {
-        source = source.split(" ")[0].toLowerCase();
-        if (appToMime.containsKey(source)) {
-            return appToMime.get(source);
+        if (source != null) {
+            source = source.split(" ")[0].toLowerCase();
+            if (appToMime.containsKey(source)) {
+                return appToMime.get(source);
+            }
         }
-        return UFED_CHAT_MIME;
+        return UFED_CHAT_PREVIEW_MIME;
     }
 
     @Override

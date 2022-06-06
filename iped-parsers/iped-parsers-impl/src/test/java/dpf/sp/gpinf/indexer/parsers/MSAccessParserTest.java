@@ -2,10 +2,12 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaMetadataKeys;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
@@ -45,15 +47,14 @@ public class MSAccessParserTest extends TestCase {
         Metadata metadata = new Metadata();
         BodyContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        metadata.add(TikaMetadataKeys.RESOURCE_NAME_KEY, filepath);
+        metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, filepath);
         context.set(Parser.class, parser);
         try (InputStream stream = getStream(filepath)) {
             parser.parse(stream, handler, metadata, context);
-
-            assertEquals("Arial Software", metadata.get(metadata.COMPANY));
-            assertEquals("Arial Software", metadata.get(metadata.AUTHOR));
+            assertEquals("Arial Software", metadata.get("Company"));
+            assertEquals("Arial Software", metadata.get("Author"));
             assertEquals("application/x-msaccess", metadata.get(metadata.CONTENT_TYPE));
-            assertEquals("Campaign_Template", metadata.get(StringUtils.capitalize(metadata.TITLE)));
+            assertEquals("Campaign_Template", metadata.get("Title"));
 
         }
     }

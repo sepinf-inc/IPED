@@ -1289,5 +1289,8 @@
     <mime-type type="application/x-ios-locations-db">
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
- 
+ 	
+ 	<mime-type type="application/x-tor-tc-fragment">
+	</mime-type>
+    
 </mime-info>
