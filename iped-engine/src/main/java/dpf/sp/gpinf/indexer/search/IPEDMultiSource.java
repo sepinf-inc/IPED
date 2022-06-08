@@ -211,7 +211,7 @@ public class IPEDMultiSource extends IPEDSource {
         return null;
     }
 
-    final public IIPEDSource getAtomicSourceBySourceId(int sourceId) {
+    final public IPEDSource getAtomicSourceBySourceId(int sourceId) {
         return cases.get(sourceId);
     }
 
@@ -276,11 +276,6 @@ public class IPEDMultiSource extends IPEDSource {
         IIPEDSource atomicCase = getAtomicSourceBySourceId(sourceid);
         int baseDoc = baseDocCache.get(sourceid);
         return atomicCase.getLuceneId(id.getId()) + baseDoc;
-    }
-
-    @Override
-    boolean isSplited(int id) {
-        throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
     }
 
     @Override
