@@ -123,8 +123,6 @@ public class IPEDSource implements IIPEDSource {
 
     private int lastId = 0;
 
-    BitSet splitedIds = new BitSet();
-
     LinkedHashSet<String> keywords = new LinkedHashSet<String>();
 
     Set<String> extraAttributes = new HashSet<String>();
@@ -210,7 +208,6 @@ public class IPEDSource implements IIPEDSource {
             populateLuceneIdToIdMap();
             invertIdToLuceneIdArray();
             populateEvidenceUUIDs();
-            splitedIds = getSplitedIds();
             countTotalItems();
 
             SleuthkitReader.loadImagePasswords(moduleDir);
@@ -255,6 +252,9 @@ public class IPEDSource implements IIPEDSource {
 
         LOGGER.info("Creating LuceneId to ID mapping..."); //$NON-NLS-1$
         ids = new int[reader.maxDoc()];
+        for (int i = 0; i < ids.length; i++) {
+            ids[i] = -1;
+        }
 
         NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.ID);
         if (ndv == null) {
@@ -272,8 +272,13 @@ public class IPEDSource implements IIPEDSource {
 
     protected void invertIdToLuceneIdArray() {
         docs = new int[lastId + 1];
-        for (int i = ids.length - 1; i >= 0; i--)
-            docs[ids[i]] = i;
+        for (int i = 0; i < docs.length; i++) {
+            docs[i] = -1;
+        }
+        for (int i = 0; i < ids.length; i++)
+            if (ids[i] > -1) {
+                docs[ids[i]] = i;
+            }
     }
 
     private void populateEvidenceUUIDs() throws IOException {
@@ -287,17 +292,6 @@ public class IPEDSource implements IIPEDSource {
 
     public Set<String> getEvidenceUUIDs() {
         return evidenceUUIDs;
-    }
-
-    private BitSet getSplitedIds() {
-        int[] sortedIds = Arrays.copyOf(this.ids, this.ids.length);
-        Arrays.sort(sortedIds);
-        BitSet splitedIds = new BitSet();
-        for (int i = 0; i < sortedIds.length - 1; i++)
-            if (sortedIds[i] == sortedIds[i + 1])
-                splitedIds.set(sortedIds[i]);
-
-        return splitedIds;
     }
 
     private void countTotalItems() {
@@ -668,10 +662,6 @@ public class IPEDSource implements IIPEDSource {
         else
             // we currently save text size at the end of processing, --append enters here
             return 0;
-    }
-
-    boolean isSplited(int id) {
-        return splitedIds.get(id);
     }
 
     public List<String> getLeafCategories() {
