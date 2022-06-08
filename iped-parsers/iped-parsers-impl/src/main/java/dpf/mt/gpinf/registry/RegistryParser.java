@@ -11,7 +11,7 @@ import java.util.Set;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaMetadataKeys;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -45,7 +45,7 @@ public class RegistryParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
         /* filtra os itens a serem parseados */
-        String nome = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY).toUpperCase();
+        String nome = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).toUpperCase();
         try {
             if (defaultRegistryKeyParser == null) {
                 defaultRegistryKeyParser = RegistryKeyParserManager.getRegistryKeyParserManager()

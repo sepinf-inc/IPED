@@ -139,7 +139,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         Metadata metadataCloudGraphItem = new Metadata();
 
         metadataCloudGraphItem.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, GDRIVE_CLOUD_GRAPH_REG.toString());
-        metadataCloudGraphItem.add(Metadata.RESOURCE_NAME_KEY, "GDrive CloudGraph Entry " + i);
+        metadataCloudGraphItem.add(TikaCoreProperties.RESOURCE_NAME_KEY, "GDrive CloudGraph Entry " + i);
         metadataCloudGraphItem.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
         // These properties need to get a "Date" type as parameters, so it can correctly
@@ -397,7 +397,11 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
      */
 
     private String getGDriveCloudGraphQuery(Connection connection){
-        boolean col_exists = this.checkIfColumnExists(connection, "cloud_graph_entry", "photos_storage_policy");
+        boolean col_exists = false;
+        try {
+            col_exists = checkIfColumnExists(connection, "cloud_graph_entry", "photos_storage_policy");
+        } catch (SQLException ignore) {
+        }
         return
     		  " Select  "
     		+ " 	case  "

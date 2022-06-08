@@ -96,9 +96,14 @@ public class CarverTask extends BaseCarveTask {
 
             tis = evidence.getBufferedInputStream();
 
+            // Images used to be carved from PUB files. But with Tika-2.4 PUB is a subtype
+            // of OLE (correct) and default carving config skips OLE files.
+            // TODO externalize this to CarverConfig.xml and implement a general approach
+            boolean isPUBFile = MediaTypes.MS_PUBLISHER.equals(type);
+
             // faz um loop na hierarquia de tipos mime
             while (!MediaType.OCTET_STREAM.equals(type)) {
-                if (carverConfig.isToNotProcess(type)) {
+                if (carverConfig.isToNotProcess(type) && !isPUBFile) {
                     tis.close();
                     return;
                 }

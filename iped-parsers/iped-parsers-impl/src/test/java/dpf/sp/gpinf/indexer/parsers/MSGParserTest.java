@@ -8,6 +8,7 @@ import java.util.List;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
@@ -49,7 +50,7 @@ public class MSGParserTest extends AbstractPkgTest {
         msgContext.set(EmbeddedDocumentExtractor.class, embeddedTracker);
         try (InputStream stream = getStream("test-files/test_msgSample.msg")) {
             parser.parse(stream, handler, metadata, msgContext);
-            assertEquals("Aula 02 No Ar! Semana Javascript Expert", metadata.get(Metadata.SUBJECT));
+            assertEquals("Aula 02 No Ar! Semana Javascript Expert", metadata.get(TikaCoreProperties.SUBJECT));
             assertEquals("Erick Wendel", metadata.get(Metadata.MESSAGE_FROM));
             assertEquals("Guilherme Monteiro", metadata.get(Metadata.MESSAGE_TO));
             assertEquals(0, embeddedTracker.attachmentsMeta.size());
@@ -72,7 +73,7 @@ public class MSGParserTest extends AbstractPkgTest {
             parser.parse(stream, handler, metadata, msgContext);
 
             assertEquals("[cic-bcc-l] Passe Estudantil - Atividades em Per?odo de F?rias",
-                    metadata.get(Metadata.SUBJECT));
+                    metadata.get(TikaCoreProperties.SUBJECT));
             assertEquals("Lista Informativa do Curso de Bacharelado em Ciência da Computação",
                     metadata.get(Metadata.MESSAGE_FROM));
             assertEquals(

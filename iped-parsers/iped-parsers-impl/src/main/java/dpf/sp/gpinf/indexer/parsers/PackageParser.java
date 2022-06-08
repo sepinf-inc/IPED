@@ -52,11 +52,11 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipExtraField;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.CloseShieldInputStream;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -184,7 +184,7 @@ public class PackageParser extends AbstractParser {
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
 
-        String nameKey = metadata.get(Metadata.RESOURCE_NAME_KEY);
+        String nameKey = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
         boolean isCarved = nameKey != null ? nameKey.startsWith("Carved") : false; //$NON-NLS-1$
         BooleanWrapper encrypted = new BooleanWrapper();
         HashSet<String> parentMap = new HashSet<>();
@@ -370,7 +370,7 @@ public class PackageParser extends AbstractParser {
     private void createParent(String name, String parent, EmbeddedDocumentExtractor extractor,
             XHTMLContentHandler xhtml) throws SAXException, IOException {
         Metadata entrydata = new Metadata();
-        entrydata.set(Metadata.RESOURCE_NAME_KEY, name);
+        entrydata.set(TikaCoreProperties.RESOURCE_NAME_KEY, name);
         entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
         entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, name);
         entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);
@@ -391,8 +391,8 @@ public class PackageParser extends AbstractParser {
             entrydata.set(Metadata.CONTENT_LENGTH, Long.toString(entry.getSize()));
         }
         if (name != null && name.length() > 0) {
-            entrydata.set(Metadata.RESOURCE_NAME_KEY, name);
-            entrydata.set(Metadata.EMBEDDED_RELATIONSHIP_ID, name);
+            entrydata.set(TikaCoreProperties.RESOURCE_NAME_KEY, name);
+            entrydata.set(TikaCoreProperties.EMBEDDED_RELATIONSHIP_ID, name);
             entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, name); // $NON-NLS-1$
         }
         if (entry instanceof ZipArchiveEntry) {

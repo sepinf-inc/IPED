@@ -11,6 +11,7 @@ import java.io.InputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.AfterClass;
@@ -54,7 +55,7 @@ public class RegistryParserTest {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler(28000000);
         ParseContext context = new ParseContext();
-        metadata.set(Metadata.RESOURCE_NAME_KEY, "software");
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "software");
         assumeFalse(parser.getSupportedTypes(context).isEmpty());
         try (InputStream stream = getStream("test-files/test_software")) {
             parser.parse(stream, handler, metadata, context);
@@ -73,8 +74,8 @@ public class RegistryParserTest {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "sam");
         assumeFalse(parser.getSupportedTypes(context).isEmpty());
-        metadata.set(Metadata.RESOURCE_NAME_KEY, "sam");
         try (InputStream stream = getStream("test-files/test_sam")) {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
@@ -92,7 +93,7 @@ public class RegistryParserTest {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        metadata.set(Metadata.RESOURCE_NAME_KEY, "security");
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "security");
         assumeFalse(parser.getSupportedTypes(context).isEmpty());
         try (InputStream stream = getStream("test-files/test_security")) {
             parser.parse(stream, handler, metadata, context);
@@ -111,7 +112,7 @@ public class RegistryParserTest {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler(6000000);
         ParseContext context = new ParseContext();
-        metadata.set(Metadata.RESOURCE_NAME_KEY, "system");
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "system");
         assumeFalse(parser.getSupportedTypes(context).isEmpty());
         try (InputStream stream = getStream("test-files/test_system")) {
             parser.parse(stream, handler, metadata, context);

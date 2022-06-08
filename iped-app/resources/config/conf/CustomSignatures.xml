@@ -252,7 +252,10 @@
     
     <mime-type type="application/x-whatsapp-db">
         <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="msgstore.db"/>
+        <glob pattern="msgstore.db.sqlite"/>
         <glob pattern="msgstore*.db"/>
+        <glob pattern="msgstore.db*.sqlite"/>
     </mime-type>
     
     <mime-type type="application/x-whatsapp-db-f">
@@ -304,6 +307,7 @@
     <mime-type type="application/x-whatsapp-chatstorage">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="ChatStorage.sqlite"/>
+        <glob pattern="ChatStorage*.sqlite"/>
     </mime-type>
     
     <mime-type type="application/x-whatsapp-wadb">
@@ -1126,6 +1130,26 @@
     	<sub-class-of type="application/x-preview-with-links"/>
     </mime-type>
     
+    <mime-type type="application/x-ufed-chat-preview-whatsapp">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-chat-preview-telegram">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-chat-preview-skype">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-chat-preview-facebook">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-chat-preview-instagram">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+    
     <mime-type type="application/x-ufed-chat-whatsapp">
     	<sub-class-of type="application/x-ufed-chat"/>
     </mime-type>
@@ -1265,5 +1289,8 @@
     <mime-type type="application/x-ios-locations-db">
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
- 
+ 	
+ 	<mime-type type="application/x-tor-tc-fragment">
+	</mime-type>
+    
 </mime-info>

@@ -1199,7 +1199,7 @@ public class SleuthkitReader extends DataSourceReader {
                     e.printStackTrace();
 
                 } finally {
-                    IOUtils.closeQuietly(stream);
+                    IOUtil.closeQuietly(stream);
                     String msg = out.toString().trim();
                     for (String line : msg.split("\n")) { //$NON-NLS-1$
                         if (!line.trim().isEmpty()) {

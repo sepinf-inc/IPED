@@ -8,6 +8,7 @@ import java.io.InputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -44,7 +45,7 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
         ContentHandler handler = new DefaultHandler();
         parser.setExtractOnlyActive(true);
         parser.getSupportedTypes(pstContext);
-        metadata.set(Metadata.RESOURCE_NAME_KEY, "ost_sample");
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "ost_sample");
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_sample.ost")) {
             if (parser.getSupportedTypes(pstContext).isEmpty()) throw new IOException();
             parser.parse(stream, handler, metadata, pstContext);
@@ -72,7 +73,7 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
         ContentHandler handler = new DefaultHandler();
         parser.setExtractOnlyActive(true);
         parser.getSupportedTypes(pstContext);
-        metadata.set(Metadata.RESOURCE_NAME_KEY, "pst_sample");
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "pst_sample");
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_sample.pst")) {
             if (parser.getSupportedTypes(pstContext).isEmpty()) throw new IOException();
             parser.parse(stream, handler, metadata, pstContext);

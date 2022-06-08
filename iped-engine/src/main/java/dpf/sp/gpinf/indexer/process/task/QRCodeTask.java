@@ -129,7 +129,7 @@ public class QRCodeTask extends AbstractTask {
         try (BufferedInputStream in = evidence.getBufferedInputStream()) {
             img = ImageIO.read(in);
         } catch (Exception e) {
-            logger.warn("Cannot read image file {} ({} bytes): {}", evidence.getPath(), evidence.getLength(),
+            logger.debug("Cannot read image file {} ({} bytes): {}", evidence.getPath(), evidence.getLength(),
                     e.toString());
             totalImagesFailed.incrementAndGet();
         }
