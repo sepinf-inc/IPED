@@ -9,10 +9,15 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -52,7 +57,23 @@ public class IndexTask extends AbstractTask {
     private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES"; //$NON-NLS-1$
     public static final String TEXT_SPLITTED = "textSplitted";
     public static final String FRAG_NUM = "fragNum";
+    public static final String FRAG_PARENT_ID = "fragParentId";
     public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
+
+    private static FieldType contentField;
+
+    private static final FieldType getContentFieldType() {
+        if (contentField == null) {
+            FieldType field = new FieldType();
+            field.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+            field.setOmitNorms(true);
+            IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
+            field.setStoreTermVectors(indexConfig.isStoreTermVectors());
+            field.freeze();
+            contentField = field;
+        }
+        return contentField;
+    }
 
     private IndexerDefaultParser autoParser;
     private List<IdLenPair> textSizes;
@@ -133,49 +154,8 @@ public class IndexTask extends AbstractTask {
 
         FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
                 indexConfig.getTextOverlapSize());
-        CloseFilterReader noCloseReader = new CloseFilterReader(fragReader);
-
-        int fragments = fragReader.estimateNumberOfFrags();
-        if (fragments == -1) {
-            fragments = 1;
-        }
-        String origtrackID = Util.getTrackID(evidence);
-        boolean splitted = false;
         try {
-            /**
-             * breaks very large texts in separate documents to be indexed
-             */
-            do {
-                // use fragName = 1 for all frags, except last, to check if last frag was
-                // indexed and to reuse same frag ID when continuing an aborted processing
-                int fragName = (--fragments) == 0 ? 0 : 1;
-
-                String fragPersistId = Util.generatetrackIDForTextFrag(origtrackID, fragName);
-                evidence.setExtraAttribute(IndexItem.TRACK_ID, fragPersistId);
-
-                if (fragments != 0) {
-                    splitted = true;
-                    stats.incSplits();
-                    evidence.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
-                    LOGGER.info("{} Splitting text of {}", Thread.currentThread().getName(), evidence.getPath()); //$NON-NLS-1$
-                }
-                if (splitted) {
-                    evidence.setExtraAttribute(FRAG_NUM, fragments);
-                }
-
-                Document doc = IndexItem.Document(evidence, noCloseReader, output);
-                worker.writer.addDocument(doc);
-
-                while (worker.state != STATE.RUNNING) {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-
-            } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
+            worker.writer.addDocuments(new DocumentsIterable(evidence, fragReader));
 
         } catch (IOException e) {
             if (IOUtil.isDiskFull(e))
@@ -184,11 +164,69 @@ public class IndexTask extends AbstractTask {
             else
                 throw e;
         } finally {
-            evidence.setExtraAttribute(IndexItem.TRACK_ID, origtrackID);
-            noCloseReader.reallyClose();
+            fragReader.close();
         }
 
         textSizes.add(new IdLenPair(evidence.getId(), fragReader.getTotalTextSize()));
+
+    }
+
+    private class DocumentsIterable implements Iterable<Document> {
+
+        private IItem item;
+        private FragmentingReader fragReader;
+        private boolean hasMoreContentFrags, parentIndexed = false;
+        private int numFrags = 0;
+
+        private DocumentsIterable(IItem item, FragmentingReader fragReader) {
+            this.item = item;
+            this.fragReader = fragReader;
+        }
+
+        public Iterator<Document> iterator() {
+            return new Iterator<Document>() {
+
+                public boolean hasNext() {
+                    try {
+                        while (worker.state != STATE.RUNNING) {
+                            Thread.sleep(1000);
+                        }
+                        if (Thread.interrupted()) {
+                            throw new InterruptedException();
+                        }
+                        hasMoreContentFrags = (numFrags == 0 || fragReader.nextFragment());
+                        return hasMoreContentFrags || !parentIndexed;
+
+                    } catch (InterruptedException | IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                public Document next() {
+                    if (hasMoreContentFrags) {
+                        if (++numFrags > 1) {
+                            stats.incSplits();
+                            LOGGER.info("{} Splitting text of {}", Thread.currentThread().getName(), item.getPath()); //$NON-NLS-1$
+                        }
+                        // child (content) document
+                        Document doc = new Document();
+                        doc.add(new IntPoint(FRAG_NUM, numFrags));
+                        doc.add(new IntPoint(FRAG_PARENT_ID, item.getId()));
+                        doc.add(new Field(IndexItem.CONTENT, new CloseFilterReader(fragReader), getContentFieldType()));
+                        return doc;
+                    } else {
+                        if (numFrags > 1) {
+                            item.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
+                        }
+                        // parent (metadata) document
+                        Document doc = IndexItem.Document(item, output);
+                        parentIndexed = true;
+                        return doc;
+                    }
+                }
+                
+            };
+        }
 
     }
 
