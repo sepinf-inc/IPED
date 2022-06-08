@@ -279,11 +279,6 @@ public class IPEDMultiSource extends IPEDSource {
     }
 
     @Override
-    public long getTextSize(int id) {
-        throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
-    }
-
-    @Override
     public int getLastId() {
         throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
     }

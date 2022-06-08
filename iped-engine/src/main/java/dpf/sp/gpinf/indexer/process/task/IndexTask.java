@@ -1,17 +1,14 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -25,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.io.CloseFilterReader;
@@ -54,11 +50,14 @@ import iped3.exception.IPEDException;
 public class IndexTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
-    private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES"; //$NON-NLS-1$
+
+    public static final String TEXT_SIZE = "textSize"; //$NON-NLS-1$
     public static final String TEXT_SPLITTED = "textSplitted";
     public static final String FRAG_NUM = "fragNum";
     public static final String FRAG_PARENT_ID = "fragParentId";
     public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
+
+    private static final AtomicBoolean finished = new AtomicBoolean();
 
     private static FieldType contentField;
 
@@ -76,20 +75,8 @@ public class IndexTask extends AbstractTask {
     }
 
     private IndexerDefaultParser autoParser;
-    private List<IdLenPair> textSizes;
 
     private IndexTaskConfig indexConfig;
-
-    public static class IdLenPair {
-
-        int id;
-        long length;
-
-        public IdLenPair(int id, long len) {
-            this.id = id;
-            this.length = len;
-        }
-    }
 
     public static boolean isTreeNodeOnly(IItem item) {
         return (!item.isToAddToCase() && (item.isDir() || item.isRoot() || item.hasChildren()))
@@ -167,8 +154,6 @@ public class IndexTask extends AbstractTask {
             fragReader.close();
         }
 
-        textSizes.add(new IdLenPair(evidence.getId(), fragReader.getTotalTextSize()));
-
     }
 
     private class DocumentsIterable implements Iterable<Document> {
@@ -218,6 +203,7 @@ public class IndexTask extends AbstractTask {
                         if (numFrags > 1) {
                             item.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
                         }
+                        item.setExtraAttribute(TEXT_SIZE, fragReader.getTotalTextSize());
                         // parent (metadata) document
                         Document doc = IndexItem.Document(item, output);
                         parentIndexed = true;
@@ -265,36 +251,6 @@ public class IndexTask extends AbstractTask {
             }
         }
 
-        textSizes = (List<IdLenPair>) caseData.getCaseObject(TEXT_SIZES);
-        if (textSizes == null) {
-            textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
-            caseData.putCaseObject(TEXT_SIZES, textSizes);
-
-            File prevFile = new File(output, "data/texts.size"); //$NON-NLS-1$
-            if (prevFile.exists()) {
-                FileInputStream fileIn = new FileInputStream(prevFile);
-                ObjectInputStream in = new ObjectInputStream(fileIn);
-
-                long[] textSizesArray;
-                Object array = (long[]) in.readObject();
-                if (array instanceof long[])
-                    textSizesArray = (long[]) array;
-                else {
-                    int i = 0;
-                    textSizesArray = new long[((int[]) array).length];
-                    for (int size : (int[]) array)
-                        textSizesArray[i++] = size * 1000L;
-                }
-                for (int i = 0; i < textSizesArray.length; i++) {
-                    if (textSizesArray[i] != 0 && i <= stats.getLastId()) {
-                        textSizes.add(new IdLenPair(i, textSizesArray[i]));
-                    }
-                }
-                in.close();
-                fileIn.close();
-            }
-        }
-
         IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
         loadExtraAttributes();
 
@@ -306,16 +262,10 @@ public class IndexTask extends AbstractTask {
     @Override
     public void finish() throws Exception {
 
-        textSizes = (List<IdLenPair>) caseData.getCaseObject(TEXT_SIZES);
-        if (textSizes != null) {
-            salvarTamanhoTextosExtraidos();
-
+        if (!finished.getAndSet(true)) {
             saveExtraAttributes(output);
-
             IndexItem.saveMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
         }
-        caseData.putCaseObject(TEXT_SIZES, null);
-
     }
 
     public static void saveExtraAttributes(File output) throws IOException {
@@ -332,20 +282,6 @@ public class IndexTask extends AbstractTask {
             Set<String> extraAttributes = (Set<String>) Util.readObject(extraAttributtesFile.getAbsolutePath());
             Item.getAllExtraAttributes().addAll(extraAttributes);
         }
-    }
-
-    private void salvarTamanhoTextosExtraidos() throws Exception {
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Saving extracted text sizes..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        LOGGER.info("Saving extracted text sizes..."); //$NON-NLS-1$
-
-        long[] textSizesArray = new long[stats.getLastId() + 1];
-
-        for (int i = 0; i < textSizes.size(); i++) {
-            IdLenPair pair = textSizes.get(i);
-            textSizesArray[pair.id] = pair.length;
-        }
-
-        Util.writeObject(textSizesArray, output.getAbsolutePath() + "/data/texts.size"); //$NON-NLS-1$
     }
 
 }

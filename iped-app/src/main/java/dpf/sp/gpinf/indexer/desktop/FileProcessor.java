@@ -39,6 +39,7 @@ import dpf.sp.gpinf.indexer.datasource.AD1DataSourceReader.AD1InputStreamFactory
 import dpf.sp.gpinf.indexer.io.ZIPInputStreamFactory;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
+import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
@@ -143,9 +144,6 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         IPEDSource iCase = (IPEDSource) App.get().appCase.getAtomicSource(docId);
         App.get().setLastSelectedSource(iCase);
         IItem item = IndexItem.getItem(doc, iCase, false);
-
-        long textSize = iCase.getTextSize(item.getId());
-        item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
 
         disposeItem(lastItem);
         lastItem = item;

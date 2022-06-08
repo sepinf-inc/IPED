@@ -18,13 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -37,7 +34,6 @@ import java.util.concurrent.Executors;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.LeafReader;
@@ -115,7 +111,6 @@ public class IPEDSource implements IIPEDSource {
     IMultiBookmarks multiBookmarks;
 
     private int[] ids, docs;
-    private long[] textSizes;
 
     protected int sourceId = -1;
 
@@ -211,20 +206,6 @@ public class IPEDSource implements IIPEDSource {
             countTotalItems();
 
             SleuthkitReader.loadImagePasswords(moduleDir);
-
-            File textSizesFile = new File(moduleDir, "data/texts.size"); //$NON-NLS-1$
-            if (textSizesFile.exists()) {
-                Object array = Util.readObject(textSizesFile.getAbsolutePath());
-                if (array instanceof long[])
-                    textSizes = (long[]) array;
-                else if (array instanceof int[]) {
-                    int i = 0;
-                    textSizes = new long[((int[]) array).length];
-                    for (int size : (int[]) array)
-                        textSizes[i++] = size * 1000L;
-                }
-            } else
-                textSizes = new long[lastId + 1];
 
             loadLeafCategories();
             loadCategoryTree();
@@ -654,14 +635,6 @@ public class IPEDSource implements IIPEDSource {
             e.printStackTrace();
         }
         return -1;
-    }
-
-    public long getTextSize(int id) {
-        if (id < textSizes.length)
-            return textSizes[id];
-        else
-            // we currently save text size at the end of processing, --append enters here
-            return 0;
     }
 
     public List<String> getLeafCategories() {
