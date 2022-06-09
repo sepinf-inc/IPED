@@ -360,17 +360,15 @@ public class JMapOptionsPane extends JOptionPane {
     public static String getGoogleAPIKey() {
         if (googleApiKey == null) {
             File f = getLastGoogleAPIKey();
-            try {
-                if (f != null) {
-                    DataInputStream dis;
-                    dis = new DataInputStream(new FileInputStream(f));
+            if (f != null) {
+                try (DataInputStream dis = new DataInputStream(new FileInputStream(f))) {
                     googleApiKey = dis.readLine();
                     if (googleApiKey == null)
                         return "";
                     return googleApiKey;
+                } catch (IOException e) {
+                	//ignore
                 }
-            } catch (FileNotFoundException e) {
-            } catch (IOException e) {
             }
             return "";
         } else {
@@ -381,10 +379,8 @@ public class JMapOptionsPane extends JOptionPane {
     public static String getSavedTilesSourceURL() {
         File f = getLastTileSourceURLFile();
         String tileSourceURL = null;
-        try {
-            if (f != null) {
-                DataInputStream dis;
-                dis = new DataInputStream(new FileInputStream(f));
+        if (f != null) {       	
+            try (DataInputStream dis = new DataInputStream(new FileInputStream(f))) {
                 tileSourceURL = dis.readLine();
                 if (tileSourceURL == null)
                     return null;
@@ -393,9 +389,8 @@ public class JMapOptionsPane extends JOptionPane {
                 } else {
                     return tileSourceURL;
                 }
+            } catch (IOException e) {
             }
-        } catch (FileNotFoundException e) {
-        } catch (IOException e) {
         }
         return null;
     }
