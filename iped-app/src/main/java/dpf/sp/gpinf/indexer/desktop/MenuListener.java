@@ -211,13 +211,12 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.copyChecked) {
             ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
-            for (int docId = 0; docId < App.get().appCase.getReader().maxDoc(); docId++) {
+            App.get().appCase.getLuceneIdStream().forEach(docId -> {
                 IItemId item = App.get().appCase.getItemId(docId);
                 if (App.get().appCase.getMultiBookmarks().isChecked(item)) {
                     uniqueSelectedIds.add(docId);
                 }
-
-            }
+            });
             setupFileChooser();
             fileChooser.setFileFilter(csvFilter);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
