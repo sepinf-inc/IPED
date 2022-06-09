@@ -46,7 +46,7 @@ import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 
 /**
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Hauck
  */
 public class ExtractorAndroidNew extends Extractor {
 
@@ -77,7 +77,7 @@ public class ExtractorAndroidNew extends Extractor {
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c));
                     if (c.isGroupChat()) {
-                        // setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
+                        setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                     }
                 }
 
@@ -292,7 +292,7 @@ public class ExtractorAndroidNew extends Extractor {
             + " left join message_vcard mv on m._id=mv.message_row_id"
             + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
 
-    // to address a field must use ` instead of '
-    private static final String SELECT_GROUP_MEMBERS = "select gjid as 'group', jid as member FROM group_participants where `group`=?"; //$NON-NLS-1$
+    private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
+            + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$
 
 }
