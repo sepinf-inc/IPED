@@ -59,7 +59,6 @@ import br.gov.pf.labld.graph.desktop.renderers.MoneyTransferNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PeopleNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PersonNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PhoneNodeRenderer;
-import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.ClearFilterListener;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.ItemId;

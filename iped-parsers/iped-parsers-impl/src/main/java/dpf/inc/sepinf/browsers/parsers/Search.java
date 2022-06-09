@@ -4,8 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import com.google.common.base.Strings;
-
 public class Search {
     private long id;
     private String terms = "";

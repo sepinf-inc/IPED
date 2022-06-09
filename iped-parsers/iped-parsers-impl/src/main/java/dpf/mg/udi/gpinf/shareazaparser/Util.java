@@ -21,7 +21,6 @@ package dpf.mg.udi.gpinf.shareazaparser;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.TimeZone;
 import java.util.UUID;
 
 import org.apache.commons.codec.binary.Base32;

@@ -1,7 +1,5 @@
 package org.apache.lucene.search;
 
-import org.apache.lucene.search.PointRangeQuery;
-
 public class PublicPointRangeQuery extends PointRangeQuery {
 
     private PointRangeQuery origQuery;
