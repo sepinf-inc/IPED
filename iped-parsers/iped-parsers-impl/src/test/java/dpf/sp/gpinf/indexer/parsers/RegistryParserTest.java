@@ -33,11 +33,9 @@ public class RegistryParserTest {
 
     @BeforeClass
     public static void setUpTool() throws IOException {
-        if (osName.startsWith("windows")) {
-            String repoPath = "keydet89/regripper/2.8_20180406_p01/regripper-2.8_20180406_p01.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
-            System.setProperty(RegistryParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/regripper/");
-        }
+        String repoPath = "keydet89/regripper/2.8_20180406_p01/regripper-2.8_20180406_p01.zip";
+        RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
+        System.setProperty(RegistryParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/regripper/");
     }
 
     @AfterClass
