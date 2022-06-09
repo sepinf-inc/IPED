@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
@@ -29,6 +28,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IStreamSource;
 
 /**
@@ -134,7 +134,7 @@ public class MultipleParser extends AbstractParser {
                     // merge even if parser fails, some meta could be extracted
                     mergeMetadata(metadata, newMetadata);
                     if (!firstTis) {
-                        IOUtils.closeQuietly(tis);
+                        IOUtil.closeQuietly(tis);
                     }
                     tis = null;
                 }

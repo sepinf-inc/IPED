@@ -49,8 +49,8 @@ public class CryptoAPIBlobParser extends AbstractParser {
             CapiBlob cb = new CapiBlob(tis);
 
             metadata.set(ALIAS, cb.getName());
-            metadata.set(HASPRIVATEKEY, (new Boolean(cb.getExPrivKeyLen() > 0)).toString());
-            metadata.set(HASPUBLICKEY, (new Boolean(cb.getExPubKeyLen() > 0)).toString());
+            metadata.set(HASPRIVATEKEY, cb.getExPrivKeyLen() > 0);
+            metadata.set(HASPUBLICKEY, cb.getExPubKeyLen() > 0);
 
         } catch (Exception e) {
 

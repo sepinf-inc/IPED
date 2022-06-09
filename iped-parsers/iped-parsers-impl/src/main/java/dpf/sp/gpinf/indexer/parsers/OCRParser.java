@@ -696,7 +696,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    IOUtils.closeQuietly(stream);
+                    IOUtil.closeQuietly(stream);
                 }
 
                 String msg = out.toString().replaceAll(OUTPUT_REGEX, "").replaceAll("\r?\n", " ").trim();

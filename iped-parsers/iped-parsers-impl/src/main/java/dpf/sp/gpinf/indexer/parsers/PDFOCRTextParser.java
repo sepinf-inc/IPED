@@ -163,7 +163,7 @@ public class PDFOCRTextParser extends PDFParser {
                     } catch (Exception e) {
                         exception = e;
                     } finally {
-                        tis = TikaInputStream.get(file);
+                        tis = TikaInputStream.get(file.toPath());
                     }
                 }
 
@@ -202,7 +202,7 @@ public class PDFOCRTextParser extends PDFParser {
             metadata.set(Office.CHARACTER_COUNT, charCount);
 
             if (ocrParser.isEnabled() && !processEmbeddedImages && charCount / numPages <= maxCharsToOcr) {
-                tis = TikaInputStream.get(file);
+                tis = TikaInputStream.get(file.toPath());
                 try {
                     ocrParser.parse(tis, countHandler, metadata, context);
 
