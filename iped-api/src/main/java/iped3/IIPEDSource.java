@@ -81,8 +81,6 @@ public interface IIPEDSource extends Closeable {
 
     int getSourceId();
 
-    long getTextSize(int id);
-
     int getTotalItens();
 
     Set<String> getEvidenceUUIDs();

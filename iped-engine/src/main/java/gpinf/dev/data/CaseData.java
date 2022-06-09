@@ -227,12 +227,6 @@ public class CaseData implements ICaseData {
             Integer previousId = globalToIdMap.get(trackID);
             if (previousId != null) {
                 item.setId(previousId.intValue());
-            } else {
-                String splittedTextId = Util.generatetrackIDForTextFrag(Util.getTrackID(item), 1);
-                previousId = globalToIdMap.get(new HashValue(splittedTextId));
-                if (previousId != null) {
-                    item.setId(previousId.intValue());
-                }
             }
         }
         ((Item) item).setAllowGetId(true);

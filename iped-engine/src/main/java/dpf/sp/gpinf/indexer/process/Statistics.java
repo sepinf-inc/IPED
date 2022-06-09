@@ -233,8 +233,14 @@ public class Statistics {
                     + Math.round((100f * sec) / totalTime) + "%)"); //$NON-NLS-1$
         }
 
+        int numDocs;
+        try (IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(indexDir))) {
+            numDocs = reader.numDocs();
+        }
+
         LOGGER.info("Partial commits took {} seconds", manager.partialCommitsTime.get());
-        LOGGER.info("File Splits: {}", getSplits()); //$NON-NLS-1$
+        LOGGER.info("Index internal docs: {}", numDocs); //$NON-NLS-1$
+        LOGGER.info("Text Splits: {}", getSplits()); //$NON-NLS-1$
         LOGGER.info("Timeouts: {}", getTimeouts()); //$NON-NLS-1$
         LOGGER.info("Parsing Exceptions: {}", IndexerDefaultParser.parsingErrors); //$NON-NLS-1$
         LOGGER.info("I/O read errors: {}", this.getIoErrors()); //$NON-NLS-1$
@@ -244,10 +250,7 @@ public class Statistics {
         LOGGER.info("Carved Ignored (corrupted): {}", carvedIgnored); //$NON-NLS-1$
         LOGGER.info("Ignored Items: {}", ignored); //$NON-NLS-1$
 
-        IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(indexDir));
-        int indexed = reader.numDocs() - getSplits() - previousIndexedFiles;
-        reader.close();
-
+        int indexed = (numDocs - getSplits() - previousIndexedFiles) / 2;
         LOGGER.info("Total Indexed: {}", indexed); //$NON-NLS-1$
 
         long processedVolume = getVolume() / (1024 * 1024);

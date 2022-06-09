@@ -20,14 +20,11 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
@@ -38,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.lucene.NoScoringCollector;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.IIPEDSearcher;
@@ -52,7 +48,7 @@ public class IPEDSearcher implements IIPEDSearcher {
 
     IPEDSource ipedCase;
     Query query;
-    boolean treeQuery, noScore;
+    boolean treeQuery, noScore, rewriteQuery = true;
     NoScoringCollector collector;
 
     private volatile boolean canceled;
@@ -92,6 +88,10 @@ public class IPEDSearcher implements IIPEDSearcher {
         }
     }
 
+    public void setRewritequery(boolean rewriteQuery) {
+        this.rewriteQuery = rewriteQuery;
+    }
+
     public Query getQuery() {
         return query;
     }
@@ -117,15 +117,22 @@ public class IPEDSearcher implements IIPEDSearcher {
     }
 
     LuceneSearchResult luceneSearch() throws IOException {
-        return filterFragmentedResults(searchAll());
+        return searchAll();
     }
 
     private LuceneSearchResult searchAll() throws IOException {
 
         // System.out.println("searching");
 
-        if (!treeQuery)
-            query = getNonTreeQuery();
+        Query query = this.query;
+        if (query instanceof MatchAllDocsQuery) {
+            query = QueryBuilder.getMatchAllItemsQuery();
+        } else if (rewriteQuery) {
+            query = new QueryBuilder(ipedCase, true).rewriteQuery(query);
+        }
+        if (!treeQuery) {
+            query = getNonTreeQuery(query);
+        }
 
         collector = new NoScoringCollector(ipedCase.getReader().maxDoc());
         try {
@@ -139,12 +146,12 @@ public class IPEDSearcher implements IIPEDSearcher {
             return collector.getSearchResults();
 
         // otherwise get results computing score
+        LuceneSearchResult searchResult = new LuceneSearchResult(0);
 
         // sort by index doc order: needed by features using docValues that iterate over results
         Sort sort = new Sort(SortField.FIELD_DOC);
         int maxResults = MAX_SIZE_TO_SCORE;
         ScoreDoc[] scoreDocs = null;
-        ScoreDoc[] totalScoreDocs = null;
         do {
             ScoreDoc lastScoreDoc = null;
             if (scoreDocs != null)
@@ -152,128 +159,18 @@ public class IPEDSearcher implements IIPEDSearcher {
 
             scoreDocs = ipedCase.getSearcher().searchAfter(lastScoreDoc, query, maxResults, sort, true).scoreDocs;
 
-            if (totalScoreDocs == null) {
-                totalScoreDocs = scoreDocs;
-            } else {
-                int prevLen = totalScoreDocs.length;
-                totalScoreDocs = Arrays.copyOf(totalScoreDocs, prevLen + scoreDocs.length);
-                System.arraycopy(scoreDocs, 0, totalScoreDocs, prevLen, scoreDocs.length);
-            }
+            searchResult = searchResult.addResults(scoreDocs);
 
         } while (scoreDocs.length > 0 && !canceled);
 
-        // see #925 why this sorting is needed, this can be optimized
-        sortResultsByFinalLuceneIds(totalScoreDocs);
-
-        LuceneSearchResult searchResult = new LuceneSearchResult(0);
-        searchResult = searchResult.addResults(totalScoreDocs);
         return searchResult;
     }
 
-    private void sortResultsByFinalLuceneIds(ScoreDoc[] totalScoreDocs) {
-        if (ipedCase instanceof IPEDMultiSource) {
-            Arrays.parallelSort(totalScoreDocs, new Comparator<ScoreDoc>() {
-                public int compare(ScoreDoc doc1, ScoreDoc doc2) {
-                    return ipedCase.getLuceneId(((IPEDMultiSource) ipedCase).getItemId(doc1.doc))
-                            - ipedCase.getLuceneId(((IPEDMultiSource) ipedCase).getItemId(doc2.doc));
-                }
-            });
-        } else {
-            Arrays.parallelSort(totalScoreDocs, new Comparator<ScoreDoc>() {
-                public int compare(ScoreDoc doc1, ScoreDoc doc2) {
-                    return ipedCase.getLuceneId(ipedCase.getId(doc1.doc))
-                            - ipedCase.getLuceneId(ipedCase.getId(doc2.doc));
-                }
-            });
-        }
-    }
-
-    private Query getNonTreeQuery() {
+    private Query getNonTreeQuery(Query query) {
         BooleanQuery.Builder result = new BooleanQuery.Builder();
         result.add(query, Occur.MUST);
         result.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST_NOT); //$NON-NLS-1$
         return result.build();
-    }
-
-    private LuceneSearchResult filterFragmentedResults(LuceneSearchResult prevResult) {
-
-        // System.out.println("fragments");
-
-        if (ipedCase instanceof IPEDMultiSource)
-            return filterFragmentedResultsMulti((IPEDMultiSource) ipedCase, prevResult);
-
-        HashSet<Integer> duplicates = new HashSet<Integer>();
-        int[] docs = prevResult.getLuceneIds();
-        for (int i = 0; i < prevResult.getLength(); i++) {
-            int id = ipedCase.getId(docs[i]);
-            if (ipedCase.isSplited(id)) {
-                if (!duplicates.contains(id)) {
-                    duplicates.add(id);
-                } else {
-                    docs[i] = -1;
-                }
-            }
-        }
-
-        prevResult.clearResults();
-        return prevResult;
-
-    }
-
-    private LuceneSearchResult filterFragmentedResultsMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) {
-        HashMap<Integer, HashSet<Integer>> duplicates = new HashMap<Integer, HashSet<Integer>>();
-        int[] docs = prevResult.getLuceneIds();
-        if (prevResult.getLength() <= MAX_SIZE_TO_SCORE) {
-
-            for (int i = 0; i < prevResult.getLength(); i++) {
-                IItemId item = ipedCase.getItemId(docs[i]);
-                IPEDSource atomicSource = (IPEDSource) ipedCase.getAtomicSourceBySourceId(item.getSourceId());
-                int id = item.getId();
-                if (atomicSource.isSplited(id)) {
-                    HashSet<Integer> dups = duplicates.get(atomicSource.getSourceId());
-                    if (dups == null) {
-                        dups = new HashSet<Integer>();
-                        duplicates.put(atomicSource.getSourceId(), dups);
-                    }
-                    if (!dups.contains(id)) {
-                        dups.add(id);
-                    } else {
-                        docs[i] = -1;
-                    }
-                }
-            }
-
-            // Otimização: considera que itens estão em ordem crescente do LuceneId (qdo não
-            // usa scores)
-        } else {
-            IPEDSource atomicSource = null;
-            int baseDoc = 0;
-            int maxdoc = 0;
-            for (int i = 0; i < docs.length; i++) {
-                if (atomicSource == null || docs[i] >= baseDoc + maxdoc) {
-                    atomicSource = (IPEDSource) ipedCase.getAtomicSource(docs[i]);
-                    baseDoc = ipedCase.getBaseLuceneId(atomicSource);
-                    maxdoc = atomicSource.getReader().maxDoc();
-                }
-                int id = atomicSource.getId(docs[i] - baseDoc);
-                if (atomicSource.isSplited(id)) {
-                    HashSet<Integer> dups = duplicates.get(atomicSource.getSourceId());
-                    if (dups == null) {
-                        dups = new HashSet<Integer>();
-                        duplicates.put(atomicSource.getSourceId(), dups);
-                    }
-                    if (!dups.contains(id)) {
-                        dups.add(id);
-                    } else {
-                        docs[i] = -1;
-                    }
-                }
-            }
-        }
-
-        prevResult.clearResults();
-        return prevResult;
-
     }
 
 }

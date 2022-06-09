@@ -56,20 +56,18 @@ public class DERCarver extends AbstractCarver {
     }
 
     @Override
-    public Object validateCarvedObject(IItem parentEvidence, Hit header, long length)
+    public void validateCarvedObject(IItem parentEvidence, Hit header, long length)
             throws InvalidCarvedObjectException {
-        Certificate cert = null;
 
         try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             byte[] buf = new byte[(int) length];
             is.seek(header.getOffset());
             is.read(buf);
-            cert = parse(buf); // tenta interpretar o certificado com o tamanho do cabecalho incluso
+            parse(buf); // tenta interpretar o certificado com o tamanho do cabecalho incluso
         } catch (Exception e) {
             throw new InvalidCarvedObjectException(e);
         }
 
-        return cert;
     }
 
     public Certificate parse(byte[] buff) throws IOException {
