@@ -506,24 +506,30 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     }
 
     private ArrayList<IItemId> getUniqueSelectedIds() {
-        ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
-
+        final ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
+        final App app = App.get();
         if (checked.isSelected()) {
-            for (IPEDSource source : App.get().appCase.getAtomicSources()) {
-                for (int id = 0; id <= source.getLastId(); id++) {
-                    if (source.getBookmarks().isChecked(id)) {
-                        uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
+            int sourceId = 0;
+            for (IPEDSource source : app.appCase.getAtomicSources()) {
+                BitSet ids = new BitSet();
+                // we must add items in index order
+                for (int luceneId = 0; luceneId < source.getAtomicReader().maxDoc(); luceneId++) {
+                    int id = source.getId(luceneId);
+                    if (source.getBookmarks().isChecked(id) && !ids.get(id)) {
+                        uniqueSelectedIds.add(new ItemId(sourceId, id));
+                        ids.set(id);
                     }
                 }
+                sourceId++;
             }
-
         } else if (highlighted.isSelected()) {
-            App app = App.get();
-            for (Integer row : App.get().resultsTable.getSelectedRows()) {
-                int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
-                IItemId id = app.ipedResult.getItem(rowModel);
-                uniqueSelectedIds.add(id);
+            BitSet bitSet = new BitSet();
+            for (int row : app.resultsTable.getSelectedRows()) {
+                int rowModel = app.resultsTable.convertRowIndexToModel(row);
+                bitSet.set(rowModel);
             }
+            // we must add items in index order
+            bitSet.stream().forEach(rowModel -> uniqueSelectedIds.add(app.ipedResult.getItem(rowModel)));
         }
 
         return uniqueSelectedIds;

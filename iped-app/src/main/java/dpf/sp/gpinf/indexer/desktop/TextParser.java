@@ -40,6 +40,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
@@ -50,7 +51,7 @@ import iped3.io.IStreamSource;
 
 public class TextParser extends CancelableWorker implements ITextParser {
 
-    public static final String TEXT_SIZE = "textSize"; //$NON-NLS-1$
+    public static final String TEXT_SIZE = IndexTask.TEXT_SIZE;
 
     private static TextParser parsingTask;
     private IStreamSource content;

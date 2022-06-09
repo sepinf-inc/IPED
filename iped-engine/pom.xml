@@ -162,6 +162,10 @@
             <version>2.0.0</version>
         </dependency>
         <dependency>
+ 			<groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-join</artifactId>
+            <version>${lucene.version}</version>        </dependency>
+        <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
             <version>8.3.8</version>

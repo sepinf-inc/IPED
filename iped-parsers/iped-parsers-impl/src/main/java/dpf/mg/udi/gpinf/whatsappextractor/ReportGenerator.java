@@ -169,7 +169,8 @@ public class ReportGenerator {
         switch (message.getMessageType()) {
             case UNKNOWN_MESSAGE:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println("<i>" + Messages.getString("WhatsAppReport.UnknwonMessage") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                out.println("<i>ID: " + message.getId() + " " + Messages.getString("WhatsAppReport.UnknwonMessage") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        + "</i>");
                 break;
             case ENCRIPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
