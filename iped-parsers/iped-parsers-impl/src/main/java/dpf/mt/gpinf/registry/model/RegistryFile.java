@@ -67,7 +67,7 @@ public class RegistryFile {
             int hiveDataReadCount = 32; // inicia com o tamanho do cabecalho ja lido + offset
             while (hiveDataReadCount < hb.size) {
                 HiveCell cell = readCell(fis);
-                readCells.put(new Integer(pos), cell);
+                readCells.put(pos, cell);
 
                 hiveDataReadCount += cell.getSize();
                 pos += cell.getSize();
@@ -113,7 +113,7 @@ public class RegistryFile {
     }
 
     public HiveCell getCell(int offset) {
-        return readCells.get(new Integer(offset));
+        return readCells.get(offset);
     }
 
     public HiveCell getRootCell() {

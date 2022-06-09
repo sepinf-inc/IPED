@@ -114,9 +114,9 @@ public class CertificateParser extends AbstractParser {
             metadata.set(ISSUER, cert.getIssuerX500Principal().getName());
             metadata.set(SUBJECT, cert.getSubjectX500Principal().getName());
             if (cert.getBasicConstraints() <= -1) {
-                metadata.set(ISSUBJECTAUTHORITY, (new Boolean(false)).toString());
+                metadata.set(ISSUBJECTAUTHORITY, Boolean.FALSE.toString());
             } else {
-                metadata.set(ISSUBJECTAUTHORITY, (new Boolean(true)).toString());
+                metadata.set(ISSUBJECTAUTHORITY, Boolean.TRUE.toString());
             }
             metadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
             metadata.set(TikaCoreProperties.TITLE, "Certificado:" + cert.getSubjectX500Principal().getName());

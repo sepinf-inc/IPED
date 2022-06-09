@@ -147,13 +147,13 @@ public class MenuListener implements ActionListener {
 
         if (e.getSource() == menu.deepCheckHighlighted) {
             KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
-                    System.currentTimeMillis(), KeyEvent.CTRL_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
+                    System.currentTimeMillis(), KeyEvent.CTRL_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
             for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
                 kl.keyPressed(keyCTRL_R_Pressed);
 
         } else if (e.getSource() == menu.deepUncheckHighlighted) {
             KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
-                    System.currentTimeMillis(), KeyEvent.ALT_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
+                    System.currentTimeMillis(), KeyEvent.ALT_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
             for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
                 kl.keyPressed(keyCTRL_R_Pressed);
         }
