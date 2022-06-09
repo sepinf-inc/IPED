@@ -401,7 +401,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 }
                 // must reset docValues to call getOrd again
                 sdv = reader.getSortedDocValues(BasicProps.HASH);
-                for (int doc = 0; doc < reader.maxDoc(); doc++) {
+                Iterator<Integer> docIt = ipedCase.getLuceneIdStream().iterator();
+                while (docIt.hasNext()) {
+                	int doc = docIt.next();
                     int ord = DocValuesUtil.getOrd(sdv, doc);
                     if (ord != -1 && hashOrd.get(ord) && !luceneIds.get(doc)) {
                         IItemId itemId = ipedCase.getItemId(doc);
@@ -513,13 +515,14 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             for (IPEDSource source : app.appCase.getAtomicSources()) {
                 BitSet ids = new BitSet();
                 // we must add items in index order
-                for (int luceneId = 0; luceneId < source.getAtomicReader().maxDoc(); luceneId++) {
+                final int finalSourceId = sourceId;
+                source.getLuceneIdStream().forEach(luceneId -> {
                     int id = source.getId(luceneId);
                     if (source.getBookmarks().isChecked(id) && !ids.get(id)) {
-                        uniqueSelectedIds.add(new ItemId(sourceId, id));
+                        uniqueSelectedIds.add(new ItemId(finalSourceId, id));
                         ids.set(id);
                     }
-                }
+                });
                 sourceId++;
             }
         } else if (highlighted.isSelected()) {

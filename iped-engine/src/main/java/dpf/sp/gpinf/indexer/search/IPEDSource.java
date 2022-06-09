@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -111,6 +113,7 @@ public class IPEDSource implements IIPEDSource {
     IMultiBookmarks multiBookmarks;
 
     private int[] ids, docs;
+    private BitSet parentDocs;
 
     protected int sourceId = -1;
 
@@ -236,6 +239,8 @@ public class IPEDSource implements IIPEDSource {
         for (int i = 0; i < ids.length; i++) {
             ids[i] = -1;
         }
+        
+        parentDocs = new BitSet(ids.length);
 
         NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.ID);
         if (ndv == null) {
@@ -246,6 +251,7 @@ public class IPEDSource implements IIPEDSource {
         int i;
         while ((i = ndv.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
             ids[i] = (int) ndv.longValue();
+            parentDocs.set(i);
             if (ids[i] > lastId)
                 lastId = ids[i];
         }
@@ -256,10 +262,11 @@ public class IPEDSource implements IIPEDSource {
         for (int i = 0; i < docs.length; i++) {
             docs[i] = -1;
         }
-        for (int i = 0; i < ids.length; i++)
+        for (int i = 0; i < ids.length; i++) {
             if (ids[i] > -1) {
                 docs[ids[i]] = i;
             }
+        }
     }
 
     private void populateEvidenceUUIDs() throws IOException {
@@ -613,6 +620,11 @@ public class IPEDSource implements IIPEDSource {
 
     public int getId(int luceneId) {
         return ids[luceneId];
+    }
+    
+    @Override
+    public IntStream getLuceneIdStream() {
+    	return parentDocs.stream();
     }
 
     public int getLuceneId(IItemId itemId) {

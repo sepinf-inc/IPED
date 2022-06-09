@@ -111,7 +111,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
             return;
         }
         selectedHashOrds.clear();
-        for (int luceneId = 0; luceneId < App.get().appCase.getReader().maxDoc(); luceneId++) {
+        App.get().appCase.getLuceneIdStream().forEach(luceneId -> {
             IItemId itemId = App.get().appCase.getItemId(luceneId);
             if (App.get().appCase.getMultiBookmarks().isChecked(itemId)) {
                 int ord = DocValuesUtil.getOrd(sdv, luceneId);
@@ -119,7 +119,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
                     selectedHashOrds.set(ord);
                 }
             }
-        }
+        });
     }
 
 }
