@@ -757,7 +757,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         this.codeArea.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent event) {
-                if (event.getButton() == event.BUTTON3) {
+                if (event.getButton() == MouseEvent.BUTTON3) {
                     verifyEnabledItensPopupMenu();
                     jPopupMenu.show(event.getComponent(), event.getX(), event.getY());
                 }

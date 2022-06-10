@@ -177,7 +177,7 @@ public class PostBoxCoding {
     }
 
     public double decodeDoubleForKey(String key) {
-        if (findOfset(key, this.DOUBLE)) {
+        if (findOfset(key, DOUBLE)) {
             // todo verify if it is little or big endian
             long bits = readInt64(offset, false);
             return Double.longBitsToDouble(bits);
