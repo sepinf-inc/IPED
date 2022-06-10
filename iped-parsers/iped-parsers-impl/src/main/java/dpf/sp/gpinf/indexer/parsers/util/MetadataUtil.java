@@ -359,6 +359,7 @@ public class MetadataUtil {
         String thumb = metadata.get(ExtraProperties.THUMBNAIL_BASE64);
         removeIgnorable(metadata);
         normalizeMSGMetadata(metadata);
+        normalizeMessageMetadata(metadata);
         removeDuplicateKeys(metadata);
         normalizeGPSMeta(metadata);
         normalizeCase(metadata);
@@ -511,6 +512,15 @@ public class MetadataUtil {
         }
     }
 
+    private static void normalizeMessageMetadata(Metadata metadata) {
+        String from = metadata.get(Message.MESSAGE_FROM);
+        metadata.remove(Message.MESSAGE_FROM);
+        metadata.set(ExtraProperties.COMMUNICATION_FROM, from);
+        String to = metadata.get(Message.MESSAGE_TO);
+        metadata.remove(Message.MESSAGE_TO);
+        metadata.set(ExtraProperties.COMMUNICATION_TO, to);
+    }
+
     private static void normalizeMSGMetadata(Metadata metadata) {
         if (!metadata.get(Metadata.CONTENT_TYPE).equals(MediaTypes.OUTLOOK_MSG.toString()))
             return;
@@ -521,7 +531,7 @@ public class MetadataUtil {
         metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
 
         if (metadata.get(TikaCoreProperties.CREATED) != null)
-            metadata.set(ExtraProperties.MESSAGE_DATE, metadata.get(TikaCoreProperties.CREATED));
+            metadata.set(ExtraProperties.COMMUNICATION_DATE, metadata.get(TikaCoreProperties.CREATED));
 
         String value = metadata.get(Message.MESSAGE_FROM);
         if (value == null)

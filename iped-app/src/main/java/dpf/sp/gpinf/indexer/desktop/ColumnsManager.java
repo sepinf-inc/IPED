@@ -527,7 +527,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> nerFields = new ArrayList<String>();
         ArrayList<String> ufedFields = new ArrayList<String>();
         ArrayList<String> hashDbFields = new ArrayList<String>();
-        ArrayList<String> emailFields = new ArrayList<String>();
+        ArrayList<String> communicationFields = new ArrayList<String>();
         ArrayList<String> commonFields = new ArrayList<String>();
 
         for (String f : allExtraAttrs) {
@@ -559,15 +559,15 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 nerFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
-            else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.EMAIL_BASIC_PROPS.contains(f))
-                emailFields.add(f);
+            else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
+                communicationFields.add(f);
             else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
                 commonFields.add(f);
         }
 
         String[][] customGroups = new String[][] { defaultFields.clone(), hashDbFields.toArray(new String[0]),
                 extraAttrs.toArray(new String[0]), commonFields.toArray(new String[0]),
-                emailFields.toArray(new String[0]),
+                communicationFields.toArray(new String[0]),
                 audioFields.toArray(new String[0]), imageFields.toArray(new String[0]),
                 videoFields.toArray(new String[0]), pdfFields.toArray(new String[0]),
                 officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),

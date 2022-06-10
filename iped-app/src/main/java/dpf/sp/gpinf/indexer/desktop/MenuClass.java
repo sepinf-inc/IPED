@@ -30,8 +30,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
-import org.apache.tika.metadata.Metadata;
-
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
@@ -40,6 +38,7 @@ import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import iped3.IItem;
+import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
 
 public class MenuClass extends JPopupMenu {
@@ -250,8 +249,8 @@ public class MenuClass extends JPopupMenu {
         if (item != null) {
             enableGoToChat = MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME)
                     || (VCardParser.VCARD_MIME.equals(item.getMediaType())
-                            && item.getMetadata().get(Metadata.MESSAGE_FROM) != null
-                            && item.getMetadata().get(Metadata.MESSAGE_TO) != null);
+                            && item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM) != null
+                            && item.getMetadata().get(ExtraProperties.COMMUNICATION_TO) != null);
         }
         navigateToParentChat.setEnabled(enableGoToChat);
         this.add(navigateToParentChat);
@@ -303,8 +302,8 @@ public class MenuClass extends JPopupMenu {
         this.addSeparator();
         addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
         addToGraph.setEnabled(App.get().appGraphAnalytics.isEnabled() && item != null
-                && item.getMetadata().get(Metadata.MESSAGE_FROM) != null
-                && item.getMetadata().get(Metadata.MESSAGE_TO) != null);
+                && item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM) != null
+                && item.getMetadata().get(ExtraProperties.COMMUNICATION_TO) != null);
         addToGraph.addActionListener(menuListener);
         this.add(addToGraph);
 

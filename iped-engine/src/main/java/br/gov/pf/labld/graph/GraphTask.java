@@ -438,7 +438,7 @@ public class GraphTask extends AbstractTask {
 
     private void processCommunicationMetadata(IItem evidence) throws IOException {
         Metadata metadata = evidence.getMetadata();
-        String sender = metadata.get(Message.MESSAGE_FROM);
+        String sender = metadata.get(ExtraProperties.COMMUNICATION_FROM);
         if (sender == null || sender.trim().isEmpty()) {
             return;
         }
@@ -458,7 +458,7 @@ public class GraphTask extends AbstractTask {
         relProps.put(RELATIONSHIP_SOURCE, evidence.getDataSource().getUUID());
 
         List<String> recipients = new ArrayList<>();
-        recipients.addAll(Arrays.asList(metadata.getValues(Message.MESSAGE_TO)));
+        recipients.addAll(Arrays.asList(metadata.getValues(ExtraProperties.COMMUNICATION_TO)));
         recipients.addAll(Arrays.asList(metadata.getValues(Message.MESSAGE_CC)));
         recipients.addAll(Arrays.asList(metadata.getValues(Message.MESSAGE_BCC)));
 
