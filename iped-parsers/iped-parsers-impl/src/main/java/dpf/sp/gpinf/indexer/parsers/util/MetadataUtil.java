@@ -151,6 +151,8 @@ public class MetadataUtil {
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Width");
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Height");
         rename.put(ExtraProperties.UFED_META_PREFIX + "Altitude", ExtraProperties.COMMON_META_PREFIX + TikaCoreProperties.ALTITUDE.getName());
+        rename.put(Message.MESSAGE_FROM, ExtraProperties.COMMUNICATION_FROM);
+        rename.put(Message.MESSAGE_TO, ExtraProperties.COMMUNICATION_TO);
         return rename;
     }
 
@@ -359,7 +361,6 @@ public class MetadataUtil {
         String thumb = metadata.get(ExtraProperties.THUMBNAIL_BASE64);
         removeIgnorable(metadata);
         normalizeMSGMetadata(metadata);
-        normalizeMessageMetadata(metadata);
         removeDuplicateKeys(metadata);
         normalizeGPSMeta(metadata);
         normalizeCase(metadata);
@@ -510,15 +511,6 @@ public class MetadataUtil {
                     metadata.remove(key);
             }
         }
-    }
-
-    private static void normalizeMessageMetadata(Metadata metadata) {
-        String from = metadata.get(Message.MESSAGE_FROM);
-        metadata.remove(Message.MESSAGE_FROM);
-        metadata.set(ExtraProperties.COMMUNICATION_FROM, from);
-        String to = metadata.get(Message.MESSAGE_TO);
-        metadata.remove(Message.MESSAGE_TO);
-        metadata.set(ExtraProperties.COMMUNICATION_TO, to);
     }
 
     private static void normalizeMSGMetadata(Metadata metadata) {
