@@ -474,6 +474,11 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private static boolean checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
+        String type = wcontext.getItem().getMediaType().toString();
+        // this is not used for IOS
+        if (type.equals(CHAT_STORAGE.toString()) || type.equals(CHAT_STORAGE_2.toString())) {
+            return false;
+        }
         IItemBase item = wcontext.getItem();
         if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)
                 && wcontext.getChalist() != null) {
