@@ -10,7 +10,11 @@ import dpf.sp.gpinf.indexer.parsers.util.Util;
 
 public class HtmlEncodingDetector extends org.apache.tika.parser.html.HtmlEncodingDetector {
 
-    private static String utf8Header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"; //$NON-NLS-1$
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private static String utf8Header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"; //$NON-NLS-1$
 
     @Override
     public Charset detect(InputStream input, Metadata metadata) throws IOException {

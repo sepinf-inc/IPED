@@ -27,7 +27,11 @@ import netscape.javascript.JSObject;
 
 public class MapaCanvasWebkit extends AbstractMapaCanvas {
 
-    WebView browser;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	WebView browser;
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
     JSInterfaceFunctions jsInterface = new JSGoogleInterfaceFunctions(this);

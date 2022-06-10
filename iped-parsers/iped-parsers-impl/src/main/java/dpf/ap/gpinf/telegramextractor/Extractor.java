@@ -576,7 +576,12 @@ public class Extractor {
     };
 
     class NoSuchTable extends SQLException {
-        public NoSuchTable(String table) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		public NoSuchTable(String table) {
             super("There is no table with name " + table);
         }
     }

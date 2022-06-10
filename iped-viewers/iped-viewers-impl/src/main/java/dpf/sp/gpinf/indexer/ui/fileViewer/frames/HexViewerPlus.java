@@ -1725,7 +1725,12 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         ActionMap aMap = rootPane.getActionMap();
         aMap.put("escape", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			public void actionPerformed(ActionEvent e) {
                 dialogOpcoes.setVisible(false);
             };
         });
@@ -2101,7 +2106,12 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         ActionMap aMap = rootPane.getActionMap();
         aMap.put("escape", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			public void actionPerformed(ActionEvent e) {
                 dialogSelecionar.setVisible(false);
             };
         });
@@ -2194,7 +2204,12 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         ActionMap aMap = rootPane.getActionMap();
         aMap.put("escape", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			public void actionPerformed(ActionEvent e) {
                 dialogIrParaResultado.setVisible(false);
             };
         });
@@ -2357,7 +2372,12 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         ActionMap aMap = rootPane.getActionMap();
         aMap.put("escape", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			public void actionPerformed(ActionEvent e) {
                 dialogIrParaEndereco.setVisible(false);
             };
         });
@@ -2597,7 +2617,12 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         ActionMap aMap = rootPane.getActionMap();
         aMap.put("escape", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			public void actionPerformed(ActionEvent e) {
                 dialogPesquisar.setVisible(false);
             };
         });
@@ -2606,7 +2631,11 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 }
 
 class HVPComboField extends JComboBox {
-    private int base = 10;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private int base = 10;
     private boolean textAllowed = false;
     JTextField textfield;
 
@@ -2784,7 +2813,11 @@ class HVPComboField extends JComboBox {
 }
 
 class HVPTextField extends JTextField {
-    private int base = 10;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private int base = 10;
     private boolean textAllowed = false;
 
     @Override
@@ -3070,7 +3103,11 @@ class Hits {
 
 class FilterComboBox extends JComboBox<String> {
 
-    private List<String> entries;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private List<String> entries;
 
     public List<String> getEntries() {
         return entries;
@@ -3119,7 +3156,12 @@ class FilterComboBox extends JComboBox<String> {
 
 class HVPSettings implements Serializable {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(HVPSettings.class);
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private static Logger LOGGER = LoggerFactory.getLogger(HVPSettings.class);
 
     public int mode = 0;
     public int codeType = 3;
@@ -3310,7 +3352,11 @@ class customFileFilter extends javax.swing.filechooser.FileFilter {
 
 class RoundButton extends JButton {
 
-    Shape shape;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	Shape shape;
     int radius = 12;
     Color buttonFocusColor = UIManager.getColor("Button.focus");
 
@@ -3399,7 +3445,11 @@ class RoundButton extends JButton {
 
 class CursorComponent extends JComponent {
 
-    CodeArea codeArea;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	CodeArea codeArea;
     private Charset charMappingCharset = null;
     protected final char[] charMapping = new char[256];
     protected Map<Character, Character> unprintableCharactersMapping = null;

@@ -541,7 +541,12 @@ public class GraphFileWriter implements Closeable, Flushable {
 
         private Set<String> prevNodeRecords = Collections
                 .newSetFromMap(new LinkedHashMap<String, Boolean>(16, 0.75f, true) {
-                    @Override
+                    /**
+					 * 
+					 */
+					private static final long serialVersionUID = 1L;
+
+					@Override
                     protected boolean removeEldestEntry(Entry entry) {
                         return this.size() > 10000;
                     }

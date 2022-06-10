@@ -57,7 +57,12 @@ import iped3.IItemId;
 
 public class GalleryModel extends AbstractTableModel {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(GalleryModel.class);
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private static Logger LOGGER = LoggerFactory.getLogger(GalleryModel.class);
 
     /**
      * Max Sleuthkit connection pool size. Using more threads than this sometimes

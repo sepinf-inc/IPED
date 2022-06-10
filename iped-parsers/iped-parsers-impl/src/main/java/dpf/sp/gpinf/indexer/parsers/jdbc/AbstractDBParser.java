@@ -46,7 +46,9 @@ import iped3.util.ExtraProperties;
  */
 abstract class AbstractDBParser extends AbstractParser {
 
-    private final static byte[] EMPTY_BYTE_ARR = new byte[0];
+    private static final long serialVersionUID = 1L;
+
+	private final static byte[] EMPTY_BYTE_ARR = new byte[0];
 
     public static final MediaType TABLE_REPORT = MediaType.application("x-database-table");
 

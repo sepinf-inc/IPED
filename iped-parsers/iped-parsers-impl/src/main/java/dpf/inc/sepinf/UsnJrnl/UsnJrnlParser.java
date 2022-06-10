@@ -32,7 +32,12 @@ import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 public class UsnJrnlParser extends AbstractParser {
-    public enum ReportType {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public enum ReportType {
         CSV, HTML
     };
 

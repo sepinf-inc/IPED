@@ -380,7 +380,12 @@ public class ExportFileTree extends CancelableWorker {
             // [Triage] Patch para o caso de o arquivo selecionado já existir. Na versão
             // original, ele era sobrescrito silenciosamente.
             JFileChooser fileChooser = new JFileChooser() {
-                @Override
+                /**
+				 * 
+				 */
+				private static final long serialVersionUID = 1L;
+
+				@Override
                 public void approveSelection() {
                     File f = getSelectedFile();
                     if (f.exists() && f.isFile() && getDialogType() == SAVE_DIALOG) {

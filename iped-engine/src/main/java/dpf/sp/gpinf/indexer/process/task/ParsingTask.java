@@ -280,7 +280,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         return subitensDiscovered.get();
     }
 
-    public void process(IItem evidence) throws IOException {
+	public void process(IItem evidence) throws IOException {
 
         long start = System.nanoTime() / 1000;
 
