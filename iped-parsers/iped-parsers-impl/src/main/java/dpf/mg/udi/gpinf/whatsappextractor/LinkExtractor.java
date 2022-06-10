@@ -116,7 +116,7 @@ public class LinkExtractor implements Closeable {
         }
     }
 
-    private byte[] deriveCipherKey(byte[] mediakey) {
+    private byte[] deriveCipherKey(byte[] mediakey, String mediaType) {
 
         HKDF hkg = new HKDF();
 
@@ -126,16 +126,16 @@ public class LinkExtractor implements Closeable {
 
     }
 
-    public byte[] getCipherKey(byte[] rawData, byte[] mediakey) {
+    public byte[] getCipherKey(byte[] rawData, byte[] mediakey, String mediaType) {
         if (mediakey != null) {
-            return deriveCipherKey(mediakey);
+            return deriveCipherKey(mediakey, mediaType);
         }
         try {
             ByteArrayInputStream bis = new ByteArrayInputStream(rawData);
             ObjectInput in = new ObjectInputStream(bis);
             MediaData media = (MediaData) in.readObject();
             if (media.mediaKey != null) {
-                return deriveCipherKey(media.mediaKey);
+                return deriveCipherKey(media.mediaKey, mediaType);
             }
 
         } catch (Exception ex) {
@@ -146,7 +146,6 @@ public class LinkExtractor implements Closeable {
 
     }
 
-    private String mediaType = "";
 
     public static String capitalize(String aux) {
         if (aux != null && !aux.isEmpty()) {
@@ -191,21 +190,25 @@ public class LinkExtractor implements Closeable {
                 if (tipo == null) {
                     continue;
                 }
-                mediaType = tipo;
+                String mediaType = tipo;
                 if (tipo.indexOf("/") >= 0) {
                     mediaType = tipo.substring(0, tipo.indexOf("/"));
                 }
-                mediaType = capitalize(mediaType).trim();
+                if (mediaType.equals("application")) {
+                    mediaType = "Document";
+                } else {
+                    mediaType = capitalize(mediaType).trim();
+                }
                 mediaType = "WhatsApp " + mediaType + " Keys";
 
                 tipo = tipo.substring(tipo.indexOf("/") + 1);
 
                 byte[] rawData = rs.getBytes("data");
                 byte[] mediaKey=rs.getBytes("mediaKey");
-                if (mediaKey != null && mediaKey.length > 34) {
+                if (mediaKey != null && mediaKey.length == 76) {
                     mediaKey=Arrays.copyOfRange(mediaKey, 2, 34);
                 }
-                byte[] key = getCipherKey(rawData, mediaKey);
+                byte[] key = getCipherKey(rawData, mediaKey, mediaType);
                 if (key != null) {
                     byte[] cipherkey = Arrays.copyOfRange(key, 16, 48);
                     byte[] iv = Arrays.copyOfRange(key, 0, 16);
@@ -252,7 +255,8 @@ public class LinkExtractor implements Closeable {
 
     }
 
-    public static final String sql_ios = "SELECT ZMEDIAURL as url, ZVCARDNAME as hash, ZVCARDSTRING as tipo, null as data, ZMESSAGE as _id, ZMEDIAKEY as mediaKey from ZWAMEDIAITEM where url like '%whatsapp%.enc' AND mediaKey is not null and hash is not NULL AND hash in (?) group by url";
+    public static final String sql_ios = "SELECT ZMEDIAURL as url, ZVCARDNAME as hash, ZVCARDSTRING as tipo, null as data, ZMESSAGE as _id, ZMEDIAKEY as mediaKey from ZWAMEDIAITEM "
+            + "where url like '%whatsapp%.enc' AND mediaKey is not null and hash is not NULL AND hash in (?) AND length(mediaKey)=76 group by url";
 
     public static final String sql_android_old = "SELECT m.media_url as url,m.media_hash as hash ,m.media_mime_type as tipo,m.thumb_image as data, m._id, null as mediaKey FROM messages m "
             + "where m.media_url like '%whatsapp%.enc' and m.media_hash is not null and m.media_hash in (?) group by url";
