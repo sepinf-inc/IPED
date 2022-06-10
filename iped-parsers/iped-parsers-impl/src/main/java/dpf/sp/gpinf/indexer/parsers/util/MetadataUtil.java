@@ -565,14 +565,17 @@ public class MetadataUtil {
         metadata.remove(recipMetaName.getName());
         metadata.remove(recipMetaDisplayName.getName());
         metadata.remove(recipMetaEmail.getName());
-        for (int i = 0; i < recipientNames.length; i++) {
-            String value = recipientNames[i];
-            if (value == null)
-                value = ""; //$NON-NLS-1$
-            if (!value.toLowerCase().contains(recipientsDisplay[i].toLowerCase()))
-                value += " " + recipientsDisplay[i]; //$NON-NLS-1$
-            if (!value.toLowerCase().contains(recipientsEmails[i].toLowerCase()))
-                value += " \"" + recipientsEmails[i] + "\""; //$NON-NLS-1$ //$NON-NLS-2$
+        int length = Math.max(Math.max(recipientNames.length, recipientsDisplay.length), recipientsEmails.length);
+        for (int i = 0; i < length; i++) {
+            String value = "";
+            if (i < recipientNames.length && recipientNames[i] != null)
+                value = recipientNames[i].trim();
+            if (i < recipientsDisplay.length && recipientsDisplay[i] != null
+                    && !value.toLowerCase().contains(recipientsDisplay[i].toLowerCase().trim()))
+                value += " " + recipientsDisplay[i].trim(); //$NON-NLS-1$
+            if (i < recipientsEmails.length && recipientsEmails[i] != null
+                    && !value.toLowerCase().contains(recipientsEmails[i].toLowerCase().trim()))
+                value += " \"" + recipientsEmails[i].trim() + "\""; //$NON-NLS-1$ //$NON-NLS-2$
             metadata.add(destMeta, value);
         }
     }
