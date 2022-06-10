@@ -1,13 +1,13 @@
 package dpf.sp.gpinf.carver.api;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.carver.api.Signature.SignatureType;
-
-import java.io.Serializable;
-import java.util.ArrayList;
 
 public class CarverType implements Serializable {
     /**

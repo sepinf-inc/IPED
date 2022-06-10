@@ -133,7 +133,10 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         this.graph = new Graph();
 
         this.graphPane = new GraphPane(graph) {
-            @Override
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
             public void updateUI() {
                 updateThemeColors();
                 super.updateUI();

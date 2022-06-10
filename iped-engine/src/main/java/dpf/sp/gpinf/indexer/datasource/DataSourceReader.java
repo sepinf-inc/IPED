@@ -18,15 +18,14 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import iped3.ICaseData;
-import iped3.datasource.IDataSource;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import gpinf.dev.data.Item;
+import iped3.ICaseData;
+import iped3.datasource.IDataSource;
 
 /**
  * Classe abstrata base para leitura dos itens de uma fonte de dados (pasta,

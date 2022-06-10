@@ -50,14 +50,19 @@ import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.ui.controls.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
+import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 
 public class GalleryModel extends AbstractTableModel {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(GalleryModel.class);
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private static Logger LOGGER = LoggerFactory.getLogger(GalleryModel.class);
 
     /**
      * Max Sleuthkit connection pool size. Using more threads than this sometimes

@@ -41,7 +41,11 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 
 public class JMapOptionsPane extends JOptionPane {
 
-    static final String BING_URL = "http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1";
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	static final String BING_URL = "http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1";
     static final String OSM_URL = "https://tile.openstreetmap.org/${z}/${x}/${y}.png";
 
     static File userHome = new File(System.getProperty("user.home"), ".iped");

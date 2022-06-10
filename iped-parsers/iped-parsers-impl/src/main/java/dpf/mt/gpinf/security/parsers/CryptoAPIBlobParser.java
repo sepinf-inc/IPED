@@ -3,7 +3,6 @@ package dpf.mt.gpinf.security.parsers;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,7 +21,8 @@ import dpf.mt.gpinf.security.parsers.capi.CapiBlob;
 
 public class CryptoAPIBlobParser extends AbstractParser {
 
-    public static final MediaType CAPI_MIME = MediaType.application("crypto-api-file");
+    private static final long serialVersionUID = 1L;
+	public static final MediaType CAPI_MIME = MediaType.application("crypto-api-file");
     private static Set<MediaType> SUPPORTED_TYPES = null;
     public static final String ALIAS = "capi:alias"; //$NON-NLS-1$
     public static final Property HASPRIVATEKEY = Property.internalBoolean("capi:hasPrivateKey"); //$NON-NLS-1$

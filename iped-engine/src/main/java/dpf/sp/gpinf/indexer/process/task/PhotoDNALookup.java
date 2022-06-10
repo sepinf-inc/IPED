@@ -78,7 +78,7 @@ public class PhotoDNALookup extends AbstractTask {
                 if (pdnaLookupConfig.isEnabled()) {
                     try {
                         Class<?> c = Class.forName("br.dpf.sepinf.photodna.PhotoDNATransforms");
-                        transforms = (PhotoDNATransforms) c.newInstance();
+                        transforms = (PhotoDNATransforms) c.getDeclaredConstructor().newInstance();
                     } catch (ClassNotFoundException e) {
                         LOGGER.error(PhotoDNATask.PDNA_NOT_FOUND_MSG);
                         init.set(true);

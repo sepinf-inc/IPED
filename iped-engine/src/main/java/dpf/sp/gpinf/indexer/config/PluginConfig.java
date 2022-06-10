@@ -3,11 +3,10 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
 import org.apache.commons.lang.SystemUtils;
-
-import java.nio.file.DirectoryStream.Filter;
 
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.configuration.IConfigurationDirectory;

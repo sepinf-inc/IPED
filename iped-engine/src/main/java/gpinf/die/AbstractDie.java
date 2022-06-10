@@ -23,7 +23,7 @@ public abstract class AbstractDie {
 
             DieClassLoader classLoader = new DieClassLoader();
             Class<?> dieClass = classLoader.loadClass(b);
-            return (AbstractDie) dieClass.newInstance();
+            return (AbstractDie) dieClass.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             e.printStackTrace();
         }

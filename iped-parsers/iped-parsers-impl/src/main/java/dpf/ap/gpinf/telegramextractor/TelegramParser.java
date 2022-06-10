@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Base64;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -37,7 +36,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -57,6 +55,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -137,7 +136,7 @@ public class TelegramParser extends SQLite3DBParser {
         try (Connection conn = getConnection(stream, metadata, context)) {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(Extractor.DECODER_CLASS)
-                    .newInstance();
+                    .getDeclaredConstructor().newInstance();
             Extractor e = new Extractor(conn, d);
             e.setSearcher(searcher);
             e.extractContacts();
@@ -407,7 +406,8 @@ public class TelegramParser extends SQLite3DBParser {
         XPath xpath = xPathfactory.newXPath();
         XPathExpression expr = xpath.compile("//string[@name=\"user\"]");
         NodeList nl = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-        DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(Extractor.DECODER_CLASS).newInstance();
+        DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(Extractor.DECODER_CLASS)
+                .getDeclaredConstructor().newInstance();
 
         if (nl.getLength() > 0) {
             Element e = (Element) nl.item(0);

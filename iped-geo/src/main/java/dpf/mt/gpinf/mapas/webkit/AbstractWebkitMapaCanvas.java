@@ -1,7 +1,6 @@
 package dpf.mt.gpinf.mapas.webkit;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
-
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -16,7 +15,11 @@ import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
 public abstract class AbstractWebkitMapaCanvas extends AbstractMapaCanvas {
-    WebView browser;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	WebView browser;
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
 

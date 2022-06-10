@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -11,6 +12,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
 import junit.framework.TestCase;
 
 public class PDFOCRTextParserTest extends TestCase {
@@ -33,7 +35,6 @@ public class PDFOCRTextParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testPDFOCRTextParsingICE() throws IOException, SAXException, TikaException {
 
@@ -62,7 +63,7 @@ public class PDFOCRTextParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings({ "deprecation", "static-access" })
+    @SuppressWarnings("static-access")
     @Test
     public void testPDFOCRTextEmbbedMetadata() throws IOException, SAXException, TikaException {
 
@@ -148,7 +149,7 @@ public class PDFOCRTextParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings({ "deprecation", "static-access" })
+    @SuppressWarnings("static-access")
     @Test
     public void testPDFOCRTextImagesEmbbedMetadata() throws IOException, SAXException, TikaException {
 

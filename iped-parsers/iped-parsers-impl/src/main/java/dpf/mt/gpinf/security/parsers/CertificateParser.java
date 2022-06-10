@@ -42,7 +42,11 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 public class CertificateParser extends AbstractParser {
-    public static final MediaType PEM_MIME = MediaType.application("x-pem-file");
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	public static final MediaType PEM_MIME = MediaType.application("x-pem-file");
     public static final MediaType DER_MIME = MediaType.application("pkix-cert");
     private static final MediaType PKCS7_MIME = MediaType.application("pkcs7-mime");
     private static final MediaType PKCS7_SIGNATURE = MediaType.application("pkcs7-signature");

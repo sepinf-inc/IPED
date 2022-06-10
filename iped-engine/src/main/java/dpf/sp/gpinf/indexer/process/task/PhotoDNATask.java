@@ -46,7 +46,7 @@ public class PhotoDNATask extends AbstractTask {
 
         try {
             Class<?> c = Class.forName("br.dpf.sepinf.photodna.PhotoDNA");
-            photodna = (PhotoDNA) c.newInstance();
+            photodna = (PhotoDNA) c.getDeclaredConstructor().newInstance();
 
         } catch (ClassNotFoundException e) {
             pdnaConfig.setEnabled(false);

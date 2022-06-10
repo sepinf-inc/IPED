@@ -33,7 +33,11 @@ import iped3.util.BasicProps;
 
 public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
 
-    IMultiSearchResultProvider resultsProvider;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
     MapaCanvasFactory mcf;
 

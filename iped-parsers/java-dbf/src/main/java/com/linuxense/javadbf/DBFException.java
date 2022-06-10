@@ -15,7 +15,9 @@ import java.io.IOException;
 
 public class DBFException extends IOException {
 
-    public DBFException() {
+    private static final long serialVersionUID = 1L;
+
+	public DBFException() {
 
         super();
     }

@@ -86,7 +86,12 @@ public class ExternalParser extends AbstractParser {
          * A null consumer
          */
         LineConsumer NULL = new LineConsumer() {
-            @Override
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
             public void consume(String line) {
                 // ignores
             }

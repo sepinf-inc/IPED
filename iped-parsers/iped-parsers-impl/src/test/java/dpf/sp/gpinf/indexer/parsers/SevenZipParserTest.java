@@ -1,16 +1,18 @@
 package dpf.sp.gpinf.indexer.parsers;
 
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+
+import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
-import java.text.DateFormat;
 
 public class SevenZipParserTest extends AbstractPkgTest {
 

@@ -105,7 +105,12 @@ public class PDFBoxViewer extends AbstractViewer {
         super(new BorderLayout());
 
         imgPanel = new JPanel() {
-            @Override
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
             public void paintComponent(Graphics g) {
                 // System.out.println("painting");
                 super.paintComponent(g);

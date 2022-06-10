@@ -14,7 +14,11 @@ import org.apache.commons.io.IOUtils;
 import dpf.mt.gpinf.mapas.util.Messages;
 
 abstract public class AbstractMapaCanvas extends Canvas {
-    MapSelectionListener mapSelectionListener = null;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	MapSelectionListener mapSelectionListener = null;
     MarkerEventListener markerEventListener = null;
     MarkerCheckBoxListener markerCheckBoxListener = null;
 

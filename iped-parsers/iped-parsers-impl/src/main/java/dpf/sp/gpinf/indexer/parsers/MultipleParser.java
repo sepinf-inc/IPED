@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,11 +75,12 @@ public class MultipleParser extends AbstractParser {
     }
 
     @Field
-    public void setParsers(String value) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+    public void setParsers(String value) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
+            IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         String[] parsers = value.split(";");
         for (String p : parsers) {
             if (!(p = p.trim()).isEmpty()) {
-                this.parsers.add((Parser) Class.forName(p).newInstance());
+                this.parsers.add((Parser) Class.forName(p).getDeclaredConstructor().newInstance());
             }
         }
     }

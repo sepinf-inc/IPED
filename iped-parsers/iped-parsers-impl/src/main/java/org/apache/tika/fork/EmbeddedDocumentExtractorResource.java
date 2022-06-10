@@ -8,7 +8,6 @@ import java.io.InputStream;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
 
 public class EmbeddedDocumentExtractorResource implements ForkResource {
 
