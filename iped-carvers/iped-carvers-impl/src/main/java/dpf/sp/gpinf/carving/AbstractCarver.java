@@ -169,7 +169,7 @@ public abstract class AbstractCarver implements Carver {
         if (hit.getSignature().isHeader() && !hit.getSignature().getCarverType().hasFooter()) {
             if (!hit.getSignature().getCarverType().hasLengthRef()) {
                 // carveia a partir da informação de tamanho
-                IItem e = carveFromHeader(parentEvidence, hit);
+                carveFromHeader(parentEvidence, hit);
             } else {
                 // adiciona header para ser processado depois
                 headersWaitingFooters.addLast(hit);
@@ -181,7 +181,7 @@ public abstract class AbstractCarver implements Carver {
             // se já foi encontrado um header anterior
             if (header != null) {
                 // carveia a partir da informação de tamanho
-                IItem e = carveFromLengthRef(parentEvidence, header, hit);
+                carveFromLengthRef(parentEvidence, header, hit);
             }
         }
 
