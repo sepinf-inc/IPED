@@ -89,11 +89,6 @@ public class Item implements IItem {
         Counter.setStartID(start);
     }
 
-    /**
-     * Identificador utilizado para serialização da classe.
-     */
-    private static final long serialVersionUID = 98653214753695125L;
-
     /** representa a evidência de origem (imagem dd, pasta) do item */
     private IDataSource dataSource;
 
@@ -643,7 +638,7 @@ public class Item implements IItem {
             }
             if (tmpFile != null) {
                 try {
-                    tis = TikaInputStream.get(tmpFile);
+                    tis = TikaInputStream.get(tmpFile.toPath());
                 } catch (FileNotFoundException fnfe) {
                     tmpFile = null;
                 }

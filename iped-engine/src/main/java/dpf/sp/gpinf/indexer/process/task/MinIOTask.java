@@ -37,10 +37,8 @@ import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
-import io.minio.ObjectWriteResponse;
 import io.minio.PutObjectArgs;
 import io.minio.StatObjectArgs;
-import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
 import iped3.ICaseData;
 import iped3.IItem;
@@ -268,8 +266,7 @@ public class MinIOTask extends AbstractTask {
 
         if (zipFiles > 0) {
             try (InputStream fi = new BufferedInputStream(new FileInputStream(zipfile))) {
-                ObjectWriteResponse aux = minioClient
-                        .putObject(PutObjectArgs.builder().bucket(bucket).object("/zips/" + getZipName())
+                minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object("/zips/" + getZipName())
                                 .userMetadata(Collections.singletonMap("x-minio-extrac", "true"))
                                 .stream(fi, zipfile.length(), Math.max(zipfile.length(), 1024 * 1024 * 5)).build());
 
@@ -301,8 +298,7 @@ public class MinIOTask extends AbstractTask {
     private boolean checkIfExists(String hash) throws Exception {
         boolean exists = false;
         try {
-            StatObjectResponse stat = minioClient
-                    .statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
+            minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
             exists = true;
 
         } catch (ErrorResponseException e) {

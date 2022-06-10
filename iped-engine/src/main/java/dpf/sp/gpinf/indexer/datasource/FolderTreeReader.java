@@ -30,9 +30,6 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
@@ -44,8 +41,6 @@ import iped3.IItem;
 import iped3.util.ExtraProperties;
 
 public class FolderTreeReader extends DataSourceReader {
-
-    private static Logger LOGGER = LoggerFactory.getLogger(FolderTreeReader.class);
 
     public static final String FS_OWNER = "fileSystemOwner"; //$NON-NLS-1$
 
