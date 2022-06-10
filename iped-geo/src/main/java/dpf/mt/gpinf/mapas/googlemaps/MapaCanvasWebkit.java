@@ -103,8 +103,6 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
 
     @Override
     public void setText(final String html) {
-        final MapaCanvasWebkit mapa = this;
-
         Platform.runLater(new Runnable() {
             public void run() {
                 webEngine.loadContent(html);

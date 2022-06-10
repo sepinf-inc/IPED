@@ -100,8 +100,8 @@ abstract public class AbstractMapaCanvas extends Canvas {
         StringBuffer html = new StringBuffer(src);
 
         Set<String> keys = Messages.getKeys();
-        for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
-            String key = (String) iterator.next();
+        for (Iterator<String> iterator = keys.iterator(); iterator.hasNext();) {
+            String key = iterator.next();
             if (key.startsWith(prefix)) {
                 int i = html.indexOf("{{" + key + "}}");
                 html.replace(i, i + key.length() + 4, Messages.getString(key));
