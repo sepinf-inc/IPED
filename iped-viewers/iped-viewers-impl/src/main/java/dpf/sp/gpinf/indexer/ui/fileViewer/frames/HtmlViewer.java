@@ -38,7 +38,6 @@ public class HtmlViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HtmlViewer.class);
 
-    private static final long serialVersionUID = 1L;
     private JFXPanel jfxPanel;
     private static int MAX_SIZE = 10000000;
 
