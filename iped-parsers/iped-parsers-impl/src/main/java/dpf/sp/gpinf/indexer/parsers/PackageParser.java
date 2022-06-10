@@ -68,9 +68,9 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped3.io.IStreamSource;
 import iped3.util.ExtraProperties;
-import dpf.sp.gpinf.indexer.parsers.util.Util;
 
 /**
  * Parser for various packaging formats. Package entries will be written to the

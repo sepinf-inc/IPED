@@ -1,11 +1,11 @@
 package dpf.sp.gpinf.carving;
 
+import java.io.IOException;
+import java.util.ArrayDeque;
+
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import iped3.IItem;
-
-import java.io.IOException;
-import java.util.ArrayDeque;
 
 public class FromFarthestHeaderCarver extends DefaultCarver {
 

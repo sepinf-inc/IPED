@@ -61,9 +61,8 @@ public class SleuthkitServer {
         System.setIn(new ByteArrayInputStream(new byte[0]));
         System.setOut(System.err);
 
-        try {
+        try (RandomAccessFile raf = new RandomAccessFile(pipePath, "rw")) {
             int size = MMAP_FILE_SIZE;
-            RandomAccessFile raf = new RandomAccessFile(pipePath, "rw"); //$NON-NLS-1$
             raf.setLength(size);
             FileChannel fc = raf.getChannel();
             out = fc.map(MapMode.READ_WRITE, 0, size);

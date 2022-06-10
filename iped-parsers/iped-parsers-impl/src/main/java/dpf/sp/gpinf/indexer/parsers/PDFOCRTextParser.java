@@ -36,7 +36,6 @@ import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
-import org.apache.tika.metadata.DublinCore;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Office;
@@ -163,7 +162,7 @@ public class PDFOCRTextParser extends PDFParser {
                     } catch (Exception e) {
                         exception = e;
                     } finally {
-                        tis = TikaInputStream.get(file);
+                        tis = TikaInputStream.get(file.toPath());
                     }
                 }
 
@@ -202,7 +201,7 @@ public class PDFOCRTextParser extends PDFParser {
             metadata.set(Office.CHARACTER_COUNT, charCount);
 
             if (ocrParser.isEnabled() && !processEmbeddedImages && charCount / numPages <= maxCharsToOcr) {
-                tis = TikaInputStream.get(file);
+                tis = TikaInputStream.get(file.toPath());
                 try {
                     ocrParser.parse(tis, countHandler, metadata, context);
 

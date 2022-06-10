@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.Item;
 import iped3.IItem;

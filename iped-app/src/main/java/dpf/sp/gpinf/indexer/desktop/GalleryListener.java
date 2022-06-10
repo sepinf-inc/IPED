@@ -18,7 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -29,8 +28,6 @@ import javax.swing.event.ListSelectionListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import iped3.IItemId;
 
 public class GalleryListener implements ListSelectionListener, MouseListener, KeyListener {
 

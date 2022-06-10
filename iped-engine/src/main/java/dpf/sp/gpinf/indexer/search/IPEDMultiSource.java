@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
@@ -211,7 +212,7 @@ public class IPEDMultiSource extends IPEDSource {
         return null;
     }
 
-    final public IIPEDSource getAtomicSourceBySourceId(int sourceId) {
+    final public IPEDSource getAtomicSourceBySourceId(int sourceId) {
         return cases.get(sourceId);
     }
 
@@ -277,15 +278,20 @@ public class IPEDMultiSource extends IPEDSource {
         int baseDoc = baseDocCache.get(sourceid);
         return atomicCase.getLuceneId(id.getId()) + baseDoc;
     }
-
-    @Override
-    boolean isSplited(int id) {
-        throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
-    }
-
-    @Override
-    public long getTextSize(int id) {
-        throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
+    
+    @SuppressWarnings("resource")
+	@Override
+    public IntStream getLuceneIdStream() {
+    	IntStream is = null;
+    	for (int i = 0; i < cases.size(); i++) {
+    		IntStream next = cases.get(i).getLuceneIdStream();
+    		if (is == null) {
+    			is = next;
+    		} else {
+    			is = IntStream.concat(is, next);
+    		}
+    	}
+    	return is;
     }
 
     @Override

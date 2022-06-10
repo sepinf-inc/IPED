@@ -18,9 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.parsers;
 
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -696,7 +693,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    IOUtils.closeQuietly(stream);
+                    IOUtil.closeQuietly(stream);
                 }
 
                 String msg = out.toString().replaceAll(OUTPUT_REGEX, "").replaceAll("\r?\n", " ").trim();

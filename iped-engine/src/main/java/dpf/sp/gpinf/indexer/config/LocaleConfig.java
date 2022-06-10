@@ -1,13 +1,12 @@
 package dpf.sp.gpinf.indexer.config;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Path;
 import java.util.Locale;
 
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
-
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Path;
 
 public class LocaleConfig extends AbstractPropertiesConfigurable {
 

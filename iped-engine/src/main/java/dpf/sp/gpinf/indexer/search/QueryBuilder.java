@@ -1,6 +1,6 @@
 package dpf.sp.gpinf.indexer.search;
 
-import java.text.DecimalFormat;
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +23,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
+import org.apache.lucene.search.DocValuesFieldExistsQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
@@ -35,6 +36,9 @@ import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.WildcardQuery;
+import org.apache.lucene.search.join.QueryBitSetProducer;
+import org.apache.lucene.search.join.ScoreMode;
+import org.apache.lucene.search.join.ToParentBlockJoinQuery;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
@@ -55,14 +59,23 @@ public class QueryBuilder {
 
     private static IIPEDSource prevIpedCase;
 
+    private static QueryBitSetProducer parentsFilter;
+
     private static Object lock = new Object();
 
     private IIPEDSource ipedCase;
 
     private boolean allowLeadingWildCard = true;
 
+    private boolean mapChildToParentDocs = false;
+
     public QueryBuilder(IIPEDSource ipedCase) {
         this.ipedCase = ipedCase;
+    }
+
+    public QueryBuilder(IIPEDSource ipedCase, boolean mapChildToParentDocs) {
+        this.ipedCase = ipedCase;
+        this.mapChildToParentDocs = mapChildToParentDocs;
     }
 
     public void setAllowLeadingWildcard(boolean allow) {
@@ -120,27 +133,61 @@ public class QueryBuilder {
         return LocalizedProperties.getNonLocalizedField(field);
     }
 
-    public Query getNonLocalizedQuery(Query query) {
+    private Query getContentQuery(Query query, String field) {
+        if (!mapChildToParentDocs || !BasicProps.CONTENT.equals(field)) {
+            return query;
+        }
+        ToParentBlockJoinQuery blockJoinQuery = new ToParentBlockJoinQuery(query, getParentsFilter(), ScoreMode.Total);
+        return blockJoinQuery;
+    }
+
+    private QueryBitSetProducer getParentsFilter() {
+        synchronized (lock) {
+            if (ipedCase == prevIpedCase && parentsFilter != null) {
+                return parentsFilter;
+            }
+            parentsFilter = new QueryBitSetProducer(new DocValuesFieldExistsQuery(BasicProps.ID));
+            ipedCase.getReader().leaves().forEach(context -> {
+                try {
+                    parentsFilter.getBitSet(context);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            prevIpedCase = ipedCase;
+            return parentsFilter;
+        }
+    }
+
+    public static Query getMatchAllItemsQuery() {
+        return new DocValuesFieldExistsQuery(BasicProps.ID);
+    }
+
+    public Query rewriteQuery(Query query) {
         if (query == null) {
             return null;
         }
         if (query instanceof MatchAllDocsQuery) {
+            return getMatchAllItemsQuery();
+
+        } else if (query instanceof DocValuesFieldExistsQuery) {
             return query;
 
         } else if (query instanceof BooleanQuery) {
             BooleanQuery.Builder builder = new BooleanQuery.Builder();
             for (BooleanClause clause : ((BooleanQuery) query).clauses()) {
-                builder.add(getNonLocalizedQuery(clause.getQuery()), clause.getOccur());
+                builder.add(rewriteQuery(clause.getQuery()), clause.getOccur());
             }
+            builder.setMinimumNumberShouldMatch(((BooleanQuery) query).getMinimumNumberShouldMatch());
             return builder.build();
 
         } else if (query instanceof BoostQuery) {
             BoostQuery bq = (BoostQuery) query;
-            return new BoostQuery(getNonLocalizedQuery(bq.getQuery()), bq.getBoost());
+            return new BoostQuery(rewriteQuery(bq.getQuery()), bq.getBoost());
 
         } else if (query instanceof TermQuery) {
             Term term = ((TermQuery) query).getTerm();
-            return new TermQuery(getNonLocalizedTerm(term));
+            return getContentQuery(new TermQuery(getNonLocalizedTerm(term)), term.field());
 
         } else if (query instanceof PhraseQuery) {
             PhraseQuery pq = (PhraseQuery) query;
@@ -160,34 +207,34 @@ public class QueryBuilder {
                 for (String term : category.split(" ")) {
                     builder.add(new Term(BasicProps.CATEGORY, term), i++);
                 }
-            }else {
+            } else {
                 for (Term term : pq.getTerms()) {
                     builder.add(getNonLocalizedTerm(term), pq.getPositions()[i++]);
                 }
             }
-            return builder.build();
+            return getContentQuery(builder.build(), pq.getField());
 
         } else if (query instanceof PrefixQuery) {
             PrefixQuery pq = (PrefixQuery) query;
-            return new PrefixQuery(getNonLocalizedTerm(pq.getPrefix()));
+            return getContentQuery(new PrefixQuery(getNonLocalizedTerm(pq.getPrefix())), pq.getField());
 
         } else if (query instanceof WildcardQuery) {
             WildcardQuery q = (WildcardQuery) query;
-            return new WildcardQuery(getNonLocalizedTerm(q.getTerm()));
+            return getContentQuery(new WildcardQuery(getNonLocalizedTerm(q.getTerm())), q.getField());
 
         } else if (query instanceof FuzzyQuery) {
             FuzzyQuery q = (FuzzyQuery) query;
-            return new FuzzyQuery(getNonLocalizedTerm(q.getTerm()), q.getMaxEdits(), q.getPrefixLength(),
-                    FuzzyQuery.defaultMaxExpansions, q.getTranspositions());
+            return getContentQuery(new FuzzyQuery(getNonLocalizedTerm(q.getTerm()), q.getMaxEdits(),
+                    q.getPrefixLength(), FuzzyQuery.defaultMaxExpansions, q.getTranspositions()), q.getField());
 
         } else if (query instanceof RegexpQuery) {
             RegexpQuery q = (RegexpQuery) query;
-            return new RegexpQuery(getNonLocalizedTerm(q.getRegexp()));
+            return getContentQuery(new RegexpQuery(getNonLocalizedTerm(q.getRegexp())), q.getField());
 
         } else if (query instanceof TermRangeQuery) {
             TermRangeQuery q = (TermRangeQuery) query;
-            return new TermRangeQuery(getNonLocalizedField(q.getField()), q.getLowerTerm(), q.getUpperTerm(),
-                    q.includesLower(), q.includesUpper());
+            return getContentQuery(new TermRangeQuery(getNonLocalizedField(q.getField()), q.getLowerTerm(),
+                    q.getUpperTerm(), q.includesLower(), q.includesUpper()), q.getField());
 
         } else if (query instanceof PointRangeQuery) {
             PointRangeQuery q = (PointRangeQuery) query;
@@ -195,7 +242,7 @@ public class QueryBuilder {
 
         } else if (query instanceof ConstantScoreQuery) {
             ConstantScoreQuery q = (ConstantScoreQuery) query;
-            return new ConstantScoreQuery(getNonLocalizedQuery(q.getQuery()));
+            return new ConstantScoreQuery(rewriteQuery(q.getQuery()));
 
         } else {
             // TODO: handle MultiPhraseQuery and DisjunctionMaxQuery
@@ -284,7 +331,7 @@ public class QueryBuilder {
                     q = parser.parse(texto, null);
                 }
                 q = handleNegativeQueries(q, analyzer);
-                q = getNonLocalizedQuery(q);
+                q = rewriteQuery(q);
                 return q;
 
             } catch (org.apache.lucene.queryparser.flexible.core.QueryNodeException e) {

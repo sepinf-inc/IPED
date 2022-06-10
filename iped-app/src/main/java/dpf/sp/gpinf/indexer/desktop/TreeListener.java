@@ -40,7 +40,6 @@ import org.apache.lucene.search.TermQuery;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;

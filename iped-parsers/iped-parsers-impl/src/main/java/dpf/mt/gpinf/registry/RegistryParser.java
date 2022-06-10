@@ -28,7 +28,9 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 
 public class RegistryParser extends AbstractParser {
 
-    public static final MediaType REGISTRY_MIME = MediaType.application("x-windows-registry");
+    private static final long serialVersionUID = 1L;
+
+	public static final MediaType REGISTRY_MIME = MediaType.application("x-windows-registry");
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(REGISTRY_MIME);
 

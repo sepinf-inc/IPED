@@ -6,36 +6,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
-import junit.framework.TestCase;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
-import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import iped3.IHashValue;
 import iped3.IItem;
@@ -44,7 +29,7 @@ import iped3.datasource.IDataSource;
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
-import iped3.util.ExtraProperties;
+import junit.framework.TestCase;
 
 public abstract class BaseItemSearchContext extends TestCase {
 

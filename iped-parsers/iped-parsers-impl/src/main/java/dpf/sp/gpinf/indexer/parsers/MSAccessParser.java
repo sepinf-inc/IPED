@@ -18,22 +18,17 @@
  */
 package dpf.sp.gpinf.indexer.parsers;
 
-import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -45,8 +40,6 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
-import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -66,6 +59,7 @@ import com.healthmarketscience.jackcess.util.OleBlob.EmbeddedContent;
 import com.healthmarketscience.jackcess.util.OleBlob.PackageContent;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
  * Parser para arquivos MS Access.
@@ -178,7 +172,7 @@ public class MSAccessParser extends AbstractParser {
 
                                 } finally {
                                     if (blobStream != null)
-                                        IOUtils.closeQuietly(blobStream);
+                                        IOUtil.closeQuietly(blobStream);
                                 }
 
                             } else if (column.getType().equals(DataType.BINARY)) {

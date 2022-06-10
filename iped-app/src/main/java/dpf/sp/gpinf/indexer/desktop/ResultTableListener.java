@@ -203,7 +203,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         if (App.get().resultsTable.getSelectedRow() == -1)
             return;
 
-        if (evt.getKeyCode() == KeyEvent.VK_C && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+        if (evt.getKeyCode() == KeyEvent.VK_C && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
             int selCol = App.get().resultsTable.getSelectedColumn();
             if (selCol < 0)
                 return;
@@ -215,15 +215,15 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         } else if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
             itemSelection();
             evt.consume();
-        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
             // Shortcut to Deep-Selection (Item plus sub-items)
             recursiveItemSelection(true);
             evt.consume();
-        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.ALT_MASK) != 0)) {
+        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0)) {
             // Shortcut to Deep-Selection Remove (Item plus sub-items)
             recursiveItemSelection(false);
             evt.consume();
-        } else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+        } else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
             // Shortcut to BookmarkManager Window
             BookmarksManager.setVisible();
             evt.consume();
@@ -312,7 +312,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     @Override
     public void keyTyped(KeyEvent evt) {
         char c = evt.getKeyChar();
-        if (c == ' ' || (evt.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK | InputEvent.SHIFT_MASK)) != 0 ||
+        if (c == ' ' || (evt.getModifiersEx() & (InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) != 0 ||
                c == KeyEvent.VK_TAB || c == KeyEvent.VK_ESCAPE || c == KeyEvent.VK_BACK_SPACE || c == KeyEvent.VK_DELETE)
             return;
 

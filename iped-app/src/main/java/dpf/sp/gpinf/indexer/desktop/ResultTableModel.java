@@ -35,13 +35,12 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.util.BytesRef;
 
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
-import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;

@@ -137,10 +137,9 @@ public class Bookmarks implements Serializable, IBookmarks {
 
     public synchronized void checkAll() {
         selectedItens = totalItems;
-        int maxLuceneId = ipedCase.getReader().maxDoc() - 1;
-        for (int i = 0; i <= maxLuceneId; i++) {
+        ipedCase.getLuceneIdStream().forEach(i -> {
             selected[ipedCase.getId(i)] = true;
-        }
+        });
     }
 
     public List<String> getBookmarkList(int itemId) {

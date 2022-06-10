@@ -11,10 +11,10 @@ import java.security.cert.X509Certificate;
 import org.apache.commons.codec.DecoderException;
 import org.apache.tika.mime.MediaType;
 
-import dpf.sp.gpinf.carving.AbstractCarver;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
+import dpf.sp.gpinf.carving.AbstractCarver;
 import iped3.IItem;
 import iped3.io.SeekableInputStream;
 

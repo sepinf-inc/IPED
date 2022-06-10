@@ -7,7 +7,12 @@ import java.util.StringTokenizer;
 
 public class KeyPathPatternMap<V> extends HashMap<String, V> {
 
-    public V getPatternMatch(String keyPath) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public V getPatternMatch(String keyPath) {
         V result = get(keyPath);
 
         if (result == null) {

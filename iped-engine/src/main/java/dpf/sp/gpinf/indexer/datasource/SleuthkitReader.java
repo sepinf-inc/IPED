@@ -49,7 +49,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
-import org.apache.tika.io.IOUtils;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;

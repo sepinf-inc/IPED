@@ -249,7 +249,7 @@ public class GraphTask extends AbstractTask {
                 || SkypeParser.ATTACHMENT_MIME_TYPE.toString().equals(mediaType)
                 || SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(mediaType)
                 || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(mediaType)
-                || MediaTypes.UFED_MESSAGE_MIME.equals(mediaType)) {
+                || MediaTypes.UFED_MESSAGE_MIME.toString().equals(mediaType)) {
             return "message";
         }
         if (mediaType.startsWith("message") || MediaTypes.OUTLOOK_MSG.toString().equals(mediaType)) {
@@ -268,7 +268,7 @@ public class GraphTask extends AbstractTask {
 
         if (WhatsAppParser.WHATSAPP_CALL.toString().equals(mediaType)
                 || TelegramParser.TELEGRAM_CALL.toString().equals(mediaType)
-                || MediaTypes.UFED_CALL_MIME.equals(mediaType)) {
+                || MediaTypes.UFED_CALL_MIME.toString().equals(mediaType)) {
             return "call";
         }
         int ufedIdx = mediaType.indexOf(UfedXmlReader.UFED_MIME_PREFIX);

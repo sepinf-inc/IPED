@@ -463,7 +463,7 @@ public class SkypeSqlite implements SkypeStorage {
                 if (c == null) {
                     c = criaConvResultSet(rs);
                     resultado.add(c);
-                    conversations.put(new Integer(c.getId()), c);
+                    conversations.put(Integer.parseInt(c.getId()), c);
                 }
 
                 /*
@@ -478,7 +478,7 @@ public class SkypeSqlite implements SkypeStorage {
                     /* cria uma nova conversação */
                     c = criaConvResultSet(rs);
                     resultado.add(c);
-                    conversations.put(new Integer(c.getId()), c);
+                    conversations.put(Integer.parseInt(c.getId()), c);
                 }
 
                 SkypeMessage sm = null;
@@ -662,7 +662,7 @@ public class SkypeSqlite implements SkypeStorage {
                 SkypeFileTransfer f = new SkypeFileTransfer();
 
                 f.setId(rs.getInt("id")); //$NON-NLS-1$
-                f.setConversation(conversations.get(new Integer(rs.getInt("convo_id")))); //$NON-NLS-1$
+                f.setConversation(conversations.get(rs.getInt("convo_id"))); //$NON-NLS-1$
                 f.setAccept(rs.getDate("accepttime")); //$NON-NLS-1$
                 f.setType(rs.getShort("type")); //$NON-NLS-1$
                 f.setStart(rs.getDate("starttime")); //$NON-NLS-1$

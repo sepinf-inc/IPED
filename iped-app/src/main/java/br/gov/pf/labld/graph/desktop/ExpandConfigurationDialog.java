@@ -160,7 +160,9 @@ public class ExpandConfigurationDialog extends JDialog implements MouseListener 
 
     private class RadioAction extends AbstractAction {
 
-        @Override
+        private static final long serialVersionUID = 1L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             loadData();
         }

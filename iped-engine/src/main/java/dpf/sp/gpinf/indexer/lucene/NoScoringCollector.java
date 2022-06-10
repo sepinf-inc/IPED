@@ -8,8 +8,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 
-import dpf.sp.gpinf.indexer.search.IPEDSearcher.FinalDocIdConverter;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
 /**
@@ -25,13 +23,10 @@ public class NoScoringCollector extends SimpleCollector {
     private int totalHits = 0;
     private BitSet bits;
 
-    private FinalDocIdConverter docIdConverter;
-
     private volatile boolean canceled = false;
 
-    public NoScoringCollector(IPEDSource ipedCase) {
-        this.docIdConverter = new FinalDocIdConverter(ipedCase);
-        this.bits = new BitSet(ipedCase.getReader().maxDoc());
+    public NoScoringCollector(int maxDoc) {
+        this.bits = new BitSet(maxDoc);
     }
 
     public void cancel() {
@@ -43,13 +38,8 @@ public class NoScoringCollector extends SimpleCollector {
         if (canceled)
             throw new InterruptedIOException("Search canceled!"); //$NON-NLS-1$
 
-        doc += docBase;
-        // see #925 why this is needed
-        doc = docIdConverter.convertToFinalDocId(doc);
-        if (!bits.get(doc)) {
-            bits.set(doc);
-            totalHits++;
-        }
+        bits.set(doc + docBase);
+        totalHits++;
     }
 
     @Override

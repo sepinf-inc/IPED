@@ -12,7 +12,6 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
 import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorService;
-import dpf.sp.gpinf.indexer.process.task.regex.RegexValidatorService;
 
 public class PhoneRegexValidatorService extends BasicAbstractRegexValidatorService {
 

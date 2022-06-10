@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
@@ -29,6 +29,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IStreamSource;
 
 /**
@@ -74,11 +75,12 @@ public class MultipleParser extends AbstractParser {
     }
 
     @Field
-    public void setParsers(String value) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+    public void setParsers(String value) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
+            IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         String[] parsers = value.split(";");
         for (String p : parsers) {
             if (!(p = p.trim()).isEmpty()) {
-                this.parsers.add((Parser) Class.forName(p).newInstance());
+                this.parsers.add((Parser) Class.forName(p).getDeclaredConstructor().newInstance());
             }
         }
     }
@@ -134,7 +136,7 @@ public class MultipleParser extends AbstractParser {
                     // merge even if parser fails, some meta could be extracted
                     mergeMetadata(metadata, newMetadata);
                     if (!firstTis) {
-                        IOUtils.closeQuietly(tis);
+                        IOUtil.closeQuietly(tis);
                     }
                     tis = null;
                 }

@@ -25,10 +25,8 @@
 package dpf.sp.gpinf.indexer.desktop.parallelsorter;
 
 import java.text.Collator;
-import java.util.*;
-import javax.swing.DefaultRowSorter;
-import javax.swing.RowFilter;
-import javax.swing.SortOrder;
+import java.util.Comparator;
+
 import javax.swing.table.TableModel;
 import javax.swing.table.TableStringConverter;
 

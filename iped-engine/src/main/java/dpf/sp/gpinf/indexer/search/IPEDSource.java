@@ -18,12 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,11 +31,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.LeafReader;
@@ -115,15 +113,13 @@ public class IPEDSource implements IIPEDSource {
     IMultiBookmarks multiBookmarks;
 
     private int[] ids, docs;
-    private long[] textSizes;
+    private BitSet parentDocs;
 
     protected int sourceId = -1;
 
     int totalItens = 0;
 
     private int lastId = 0;
-
-    BitSet splitedIds = new BitSet();
 
     LinkedHashSet<String> keywords = new LinkedHashSet<String>();
 
@@ -210,24 +206,9 @@ public class IPEDSource implements IIPEDSource {
             populateLuceneIdToIdMap();
             invertIdToLuceneIdArray();
             populateEvidenceUUIDs();
-            splitedIds = getSplitedIds();
             countTotalItems();
 
             SleuthkitReader.loadImagePasswords(moduleDir);
-
-            File textSizesFile = new File(moduleDir, "data/texts.size"); //$NON-NLS-1$
-            if (textSizesFile.exists()) {
-                Object array = Util.readObject(textSizesFile.getAbsolutePath());
-                if (array instanceof long[])
-                    textSizes = (long[]) array;
-                else if (array instanceof int[]) {
-                    int i = 0;
-                    textSizes = new long[((int[]) array).length];
-                    for (int size : (int[]) array)
-                        textSizes[i++] = size * 1000L;
-                }
-            } else
-                textSizes = new long[lastId + 1];
 
             loadLeafCategories();
             loadCategoryTree();
@@ -255,6 +236,11 @@ public class IPEDSource implements IIPEDSource {
 
         LOGGER.info("Creating LuceneId to ID mapping..."); //$NON-NLS-1$
         ids = new int[reader.maxDoc()];
+        for (int i = 0; i < ids.length; i++) {
+            ids[i] = -1;
+        }
+        
+        parentDocs = new BitSet(ids.length);
 
         NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.ID);
         if (ndv == null) {
@@ -265,6 +251,7 @@ public class IPEDSource implements IIPEDSource {
         int i;
         while ((i = ndv.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
             ids[i] = (int) ndv.longValue();
+            parentDocs.set(i);
             if (ids[i] > lastId)
                 lastId = ids[i];
         }
@@ -272,8 +259,14 @@ public class IPEDSource implements IIPEDSource {
 
     protected void invertIdToLuceneIdArray() {
         docs = new int[lastId + 1];
-        for (int i = ids.length - 1; i >= 0; i--)
-            docs[ids[i]] = i;
+        for (int i = 0; i < docs.length; i++) {
+            docs[i] = -1;
+        }
+        for (int i = 0; i < ids.length; i++) {
+            if (ids[i] > -1) {
+                docs[ids[i]] = i;
+            }
+        }
     }
 
     private void populateEvidenceUUIDs() throws IOException {
@@ -287,17 +280,6 @@ public class IPEDSource implements IIPEDSource {
 
     public Set<String> getEvidenceUUIDs() {
         return evidenceUUIDs;
-    }
-
-    private BitSet getSplitedIds() {
-        int[] sortedIds = Arrays.copyOf(this.ids, this.ids.length);
-        Arrays.sort(sortedIds);
-        BitSet splitedIds = new BitSet();
-        for (int i = 0; i < sortedIds.length - 1; i++)
-            if (sortedIds[i] == sortedIds[i + 1])
-                splitedIds.set(sortedIds[i]);
-
-        return splitedIds;
     }
 
     private void countTotalItems() {
@@ -639,6 +621,11 @@ public class IPEDSource implements IIPEDSource {
     public int getId(int luceneId) {
         return ids[luceneId];
     }
+    
+    @Override
+    public IntStream getLuceneIdStream() {
+    	return parentDocs.stream();
+    }
 
     public int getLuceneId(IItemId itemId) {
         return docs[itemId.getId()];
@@ -660,18 +647,6 @@ public class IPEDSource implements IIPEDSource {
             e.printStackTrace();
         }
         return -1;
-    }
-
-    public long getTextSize(int id) {
-        if (id < textSizes.length)
-            return textSizes[id];
-        else
-            // we currently save text size at the end of processing, --append enters here
-            return 0;
-    }
-
-    boolean isSplited(int id) {
-        return splitedIds.get(id);
     }
 
     public List<String> getLeafCategories() {

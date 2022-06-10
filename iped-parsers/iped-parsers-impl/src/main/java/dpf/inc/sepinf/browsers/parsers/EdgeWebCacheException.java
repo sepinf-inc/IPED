@@ -1,7 +1,9 @@
 package dpf.inc.sepinf.browsers.parsers;
 
 public class EdgeWebCacheException extends Exception {
-    public EdgeWebCacheException() {
+    private static final long serialVersionUID = 1L;
+
+	public EdgeWebCacheException() {
 
     }
 
