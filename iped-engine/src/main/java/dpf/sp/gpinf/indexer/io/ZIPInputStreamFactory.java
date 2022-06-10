@@ -127,6 +127,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         return -1;
     }
 
+    @SuppressWarnings("resource")
     @Override
     public SeekableInputStream getSeekableInputStream(String path) throws IOException {
         Path tmp = null;

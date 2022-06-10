@@ -280,6 +280,11 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         return subitensDiscovered.get();
     }
 
+    @SuppressWarnings("resource")
+    private void setEmptyTextCache(IItem evidence) {
+        ((Item) evidence).setParsedTextCache(new TextCache());
+    }
+
 	public void process(IItem evidence) throws IOException {
 
         long start = System.nanoTime() / 1000;
@@ -288,7 +293,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         Parser parser = autoParser.getLeafParser(evidence.getMetadata());
         if (parser instanceof EmptyParser) {
-            ((Item) evidence).setParsedTextCache(new TextCache());
+            setEmptyTextCache(evidence);
             return;
         }
 
