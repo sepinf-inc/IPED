@@ -41,7 +41,6 @@ import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 
-@SuppressWarnings("restriction")
 public abstract class MetadataViewer extends AbstractViewer {
 
     private DecimalFormat df = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
@@ -123,7 +122,6 @@ public abstract class MetadataViewer extends AbstractViewer {
             viewer.init();
     }
 
-    @SuppressWarnings("restriction")
     private void selectTab(int tabIdx) {
         Platform.runLater(new Runnable() {
             @Override

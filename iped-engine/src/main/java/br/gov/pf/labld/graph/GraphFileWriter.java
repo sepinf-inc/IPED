@@ -795,7 +795,6 @@ public class GraphFileWriter implements Closeable, Flushable {
             Util.fsync(fieldData.toPath());
         }
 
-        @SuppressWarnings("unchecked")
         private void loadFieldData() throws IOException {
             if (fieldData.exists()) {
                 try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(fieldData.toPath()))) {

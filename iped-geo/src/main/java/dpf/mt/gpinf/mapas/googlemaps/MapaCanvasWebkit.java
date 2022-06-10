@@ -34,7 +34,6 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
     String googleApiKey = "";
     File keyStore = new File(System.getProperty("user.home") + "/.iped/googleApi.key");
 
-    @SuppressWarnings("restriction")
     public MapaCanvasWebkit() {
         this.jfxPanel = new JFXPanel();
 

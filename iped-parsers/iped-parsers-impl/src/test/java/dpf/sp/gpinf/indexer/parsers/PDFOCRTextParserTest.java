@@ -35,7 +35,6 @@ public class PDFOCRTextParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testPDFOCRTextParsingICE() throws IOException, SAXException, TikaException {
 
@@ -64,7 +63,7 @@ public class PDFOCRTextParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings({ "deprecation", "static-access" })
+    @SuppressWarnings("static-access")
     @Test
     public void testPDFOCRTextEmbbedMetadata() throws IOException, SAXException, TikaException {
 
@@ -150,7 +149,7 @@ public class PDFOCRTextParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings({ "deprecation", "static-access" })
+    @SuppressWarnings("static-access")
     @Test
     public void testPDFOCRTextImagesEmbbedMetadata() throws IOException, SAXException, TikaException {
 

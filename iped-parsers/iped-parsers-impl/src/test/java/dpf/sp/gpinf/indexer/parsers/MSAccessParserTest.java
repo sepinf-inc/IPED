@@ -37,7 +37,7 @@ public class MSAccessParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings({ "deprecation", "static-access" })
+    @SuppressWarnings("static-access")
     @Test
     public void testMSAccessMetadata() throws IOException, SAXException, TikaException {
 

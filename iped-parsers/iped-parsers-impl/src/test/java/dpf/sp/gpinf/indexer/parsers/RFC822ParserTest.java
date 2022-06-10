@@ -32,7 +32,6 @@ public class RFC822ParserTest extends TestCase {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testSimple() throws IOException, SAXException, TikaException {
         RFC822Parser parser = new RFC822Parser();
@@ -63,7 +62,6 @@ public class RFC822ParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testMultipart() throws IOException, SAXException, TikaException {
         RFC822Parser parser = new RFC822Parser();
@@ -98,7 +96,6 @@ public class RFC822ParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testQuotedPrintable() throws IOException, SAXException, TikaException {
         RFC822Parser parser = new RFC822Parser();

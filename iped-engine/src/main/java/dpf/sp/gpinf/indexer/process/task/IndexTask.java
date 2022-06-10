@@ -258,7 +258,6 @@ public class IndexTask extends AbstractTask {
 
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void finish() throws Exception {
 

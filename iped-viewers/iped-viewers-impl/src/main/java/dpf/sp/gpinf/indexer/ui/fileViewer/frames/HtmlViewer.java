@@ -34,7 +34,6 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
-@SuppressWarnings("restriction")
 public class HtmlViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HtmlViewer.class);
