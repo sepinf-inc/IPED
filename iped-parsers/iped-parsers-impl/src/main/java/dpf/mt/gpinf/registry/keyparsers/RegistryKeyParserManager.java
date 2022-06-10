@@ -97,7 +97,7 @@ public class RegistryKeyParserManager {
                     String className = parserEl.getAttribute("class");
 
                     Class<?> classe = Thread.currentThread().getContextClassLoader().loadClass(className);
-                    RegistryKeyParser rkp = (RegistryKeyParser) classe.newInstance();
+                    RegistryKeyParser rkp = (RegistryKeyParser) classe.getDeclaredConstructor().newInstance();
                     NodeList patternsEl = parserEl.getElementsByTagName("key");
                     for (int k = 0; k < patternsEl.getLength(); k++) {
                         Element patternEl = (Element) patternsEl.item(k);

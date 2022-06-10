@@ -38,7 +38,7 @@ public class OutlookDBXParser extends AbstractParser {
 
         try {
             String implName = System.getProperty(DBX_PARSER_IMPL_SYS_PROP, DEFAULT_DBX_PARSER_IMPL);
-            parserImpl = (Parser) Class.forName(implName).newInstance();
+            parserImpl = (Parser) Class.forName(implName).getDeclaredConstructor().newInstance();
             return parserImpl.getSupportedTypes(context);
 
         } catch (Throwable e) {

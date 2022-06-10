@@ -136,7 +136,7 @@ public class TelegramParser extends SQLite3DBParser {
         try (Connection conn = getConnection(stream, metadata, context)) {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(Extractor.DECODER_CLASS)
-                    .newInstance();
+                    .getDeclaredConstructor().newInstance();
             Extractor e = new Extractor(conn, d);
             e.setSearcher(searcher);
             e.extractContacts();
@@ -406,7 +406,8 @@ public class TelegramParser extends SQLite3DBParser {
         XPath xpath = xPathfactory.newXPath();
         XPathExpression expr = xpath.compile("//string[@name=\"user\"]");
         NodeList nl = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-        DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(Extractor.DECODER_CLASS).newInstance();
+        DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(Extractor.DECODER_CLASS)
+                .getDeclaredConstructor().newInstance();
 
         if (nl.getLength() > 0) {
             Element e = (Element) nl.item(0);
