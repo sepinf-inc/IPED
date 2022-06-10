@@ -1,7 +1,6 @@
 package dpf.mt.gpinf.mapas.webkit;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
-
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;

@@ -40,12 +40,12 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.lnk.LNKLinkLocation;
 import dpf.sp.gpinf.indexer.parsers.lnk.LNKLinkTracker;
+import dpf.sp.gpinf.indexer.parsers.lnk.LNKParser;
 import dpf.sp.gpinf.indexer.parsers.lnk.LNKShellItem;
 import dpf.sp.gpinf.indexer.parsers.lnk.LNKShellItemFileEntry;
 import dpf.sp.gpinf.indexer.parsers.lnk.LNKShellItemNetwork;
 import dpf.sp.gpinf.indexer.parsers.lnk.LNKShortcut;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.parsers.lnk.LNKParser;
 
 /**
  * Parser para arquivos de atalho (LNK) do Windows Referencias utilizadas sobre

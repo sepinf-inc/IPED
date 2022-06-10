@@ -18,11 +18,12 @@
  */
 package dpf.sp.gpinf.indexer.ui.hitsViewer;
 
-import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import java.nio.ByteBuffer;
 
 import javax.swing.table.AbstractTableModel;
+
+import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 
 public class HitsTableModel extends AbstractTableModel {
 

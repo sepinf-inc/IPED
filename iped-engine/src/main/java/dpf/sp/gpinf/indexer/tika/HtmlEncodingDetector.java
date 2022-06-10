@@ -3,8 +3,10 @@ package dpf.sp.gpinf.indexer.tika;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import dpf.sp.gpinf.indexer.parsers.util.Util;
+
 import org.apache.tika.metadata.Metadata;
+
+import dpf.sp.gpinf.indexer.parsers.util.Util;
 
 public class HtmlEncodingDetector extends org.apache.tika.parser.html.HtmlEncodingDetector {
 

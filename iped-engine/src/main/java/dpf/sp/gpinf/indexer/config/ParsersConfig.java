@@ -2,13 +2,12 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryStream.Filter;
-
-import iped3.configuration.Configurable;
-
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import iped3.configuration.Configurable;
 
 public class ParsersConfig implements Configurable<String> {
 
