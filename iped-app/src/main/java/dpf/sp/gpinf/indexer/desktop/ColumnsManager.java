@@ -78,7 +78,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     public static final String[] groupNames = { Messages.getString("ColumnsManager.Basic"),
             Messages.getString("ColumnsManager.HashDB"), Messages.getString("ColumnsManager.Advanced"), //$NON-NLS-2$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.Common"), // $NON-NLS-2$
-            Messages.getString("ColumnsManager.Message"), Messages.getString("ColumnsManager.Audio"), //$NON-NLS-2$
+            Messages.getString("ColumnsManager.Communication"), Messages.getString("ColumnsManager.Audio"), //$NON-NLS-2$
             Messages.getString("ColumnsManager.Image"), Messages.getString("ColumnsManager.Video"), //$NON-NLS-1$
             Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), //$NON-NLS-1$ //$NON-NLS-2$
