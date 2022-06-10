@@ -32,8 +32,7 @@ public class GPXFeatureListFactory implements FeatureListFactory {
 
     @Override
     public List<Object> parseFeatureList(File file) throws IOException {
-        try {
-            TemporaryResources tmp = new TemporaryResources();
+        try (TemporaryResources tmp = new TemporaryResources()) {
             File srcFile = tmp.createTemporaryFile();
             xslTransform(file, srcFile, GeofileParser.class.getResourceAsStream("gpxtokml.xsl"));
 
