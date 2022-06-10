@@ -202,7 +202,7 @@ public class LinkExtractor implements Closeable {
 
                 byte[] rawData = rs.getBytes("data");
                 byte[] mediaKey=rs.getBytes("mediaKey");
-                if(mediaKey.length==76) {
+                if (mediaKey != null && mediaKey.length > 34) {
                     mediaKey=Arrays.copyOfRange(mediaKey, 2, 34);
                 }
                 byte[] key = getCipherKey(rawData, mediaKey);
