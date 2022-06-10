@@ -112,6 +112,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     public static final MediaType CHAT_STORAGE = MediaType.application("x-whatsapp-chatstorage"); //$NON-NLS-1$
 
+    public static final MediaType CHAT_STORAGE_2 = MediaType.application("x-whatsapp-chatstorage-f"); //$NON-NLS-1$
+
     public static final MediaType CONTACTS_V2 = MediaType.application("x-whatsapp-contactsv2"); //$NON-NLS-1$
 
     public static final MediaType WHATSAPP_CHAT = MediaType.parse("application/x-whatsapp-chat"); //$NON-NLS-1$
@@ -155,7 +157,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static int dbsSearchedForAndAdded = 0;
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2,
-            WA_USER_XML, WA_USER_PLIST, MSG_STORE_2);
+            WA_USER_XML, WA_USER_PLIST, MSG_STORE_2, CHAT_STORAGE_2);
 
     private static final Map<String, WAContactsDirectory> contactsDirectoriesMap = new ConcurrentHashMap<>();
 
@@ -242,11 +244,17 @@ public class WhatsAppParser extends SQLite3DBParser {
             } else if (mimetype.equals(WA_DB.toString())) {
                 parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(CHAT_STORAGE.toString())) {
-                parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
+                if (isDownloadMediaFilesEnabled()) {
+                    parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorIOSFactory());
+                } else {
+                    parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
+                }
             } else if (mimetype.equals(CONTACTS_V2.toString())) {
                 parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorIOSFactory());
             } else if (mimetype.equals(MSG_STORE_2.toString())) {
                 mergeParsedDBsAndOutputResults(stream, handler, metadata, context, new ExtractorAndroidFactory());
+            } else if (mimetype.equals(CHAT_STORAGE_2.toString())) {
+                parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
             }
 
 
@@ -462,7 +470,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         checkIfIsMainDBAndStore(wcontext);
 
-        metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
+        metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, extFactory.getType2().toString());
     }
 
     private static boolean checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
@@ -1183,6 +1191,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         }
 
+        public abstract MediaType getType2();
+
 
     }
 
@@ -1229,12 +1239,17 @@ public class WhatsAppParser extends SQLite3DBParser {
             };
         }
 
+        @Override
+        public MediaType getType2() {
+            // TODO Auto-generated method stub
+            return MSG_STORE_2;
+        }
+
     }
 
     // must be static and non be private because of newInstance in getContacts()
     // method
     protected static class ExtractorIOSFactory extends ExtractorFactory {
-        private Connection conn = null;
 
 
         @Override
@@ -1242,7 +1257,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             return new ExtractorIOS(itemPath, file, directory, account, recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
-                    return ExtractorIOSFactory.this.conn;
+                    return ExtractorIOSFactory.this.getConnection();
                 }
             };
         }
@@ -1252,9 +1267,15 @@ public class WhatsAppParser extends SQLite3DBParser {
             return new WAContactsExtractorIOS(file, new WAContactsDirectory(), recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
-                    return ExtractorIOSFactory.this.conn;
+                    return ExtractorIOSFactory.this.getConnection();
                 }
             };
+        }
+
+        @Override
+        public MediaType getType2() {
+            // TODO Auto-generated method stub
+            return CHAT_STORAGE_2;
         }
 
     }

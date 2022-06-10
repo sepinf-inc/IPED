@@ -162,10 +162,8 @@ public class LinkExtractor implements Closeable {
             return;
         }
 
-        String sql = sql_android_old;
-        if (SQLite3DBParser.containsTable("message_media", con)) {
-            sql = sql_android;
-        }
+        String sql = getQuery();
+
 
         StringBuilder base64Hashes = null;
         for (String hash : hashes) {
@@ -183,6 +181,7 @@ public class LinkExtractor implements Closeable {
             while (rs.next()) {
                 String link = rs.getString("url");
                 String hash = rs.getString("hash");
+
 
                 String decoded = new String(Hex.encodeHex(Base64.getDecoder().decode(hash), false));
                 if (!hashes.contains(decoded)) {
@@ -202,7 +201,11 @@ public class LinkExtractor implements Closeable {
                 tipo = tipo.substring(tipo.indexOf("/") + 1);
 
                 byte[] rawData = rs.getBytes("data");
-                byte[] key = getCipherKey(rawData, rs.getBytes("mediaKey"));
+                byte[] mediaKey=rs.getBytes("mediaKey");
+                if(mediaKey.length==76) {
+                    mediaKey=Arrays.copyOfRange(mediaKey, 2, 34);
+                }
+                byte[] key = getCipherKey(rawData, mediaKey);
                 if (key != null) {
                     byte[] cipherkey = Arrays.copyOfRange(key, 16, 48);
                     byte[] iv = Arrays.copyOfRange(key, 0, 16);
@@ -234,6 +237,22 @@ public class LinkExtractor implements Closeable {
     public ArrayList<LinkDownloader> getLinks() {
         return links;
     }
+
+    private String getQuery() throws SQLException {
+
+        String sql = sql_android_old;
+        if (SQLite3DBParser.containsTable("message_media", con)) {
+            sql = sql_android;
+        }
+        if (SQLite3DBParser.containsTable("ZWAMEDIAITEM", con)) {
+            sql = sql_ios;
+        }
+        return sql;
+    
+
+    }
+
+    public static final String sql_ios = "SELECT ZMEDIAURL as url, ZVCARDNAME as hash, ZVCARDSTRING as tipo, null as data, ZMESSAGE as _id, ZMEDIAKEY as mediaKey from ZWAMEDIAITEM where url like '%whatsapp%.enc' AND mediaKey is not null and hash is not NULL AND hash in (?) group by url";
 
     public static final String sql_android_old = "SELECT m.media_url as url,m.media_hash as hash ,m.media_mime_type as tipo,m.thumb_image as data, m._id, null as mediaKey FROM messages m "
             + "where m.media_url like '%whatsapp%.enc' and m.media_hash is not null and m.media_hash in (?) group by url";
