@@ -414,7 +414,7 @@ public class MetadataPanel extends JPanel
             Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
             for (String f : fields) {
                 if (f.equals(ResultTableModel.BOOKMARK_COL) || f.equals(ResultTableModel.SCORE_COL)
-                        || f.startsWith(ImageSimilarityTask.SIMILARITY_FEATURES)
+                        || f.startsWith(ImageSimilarityTask.IMAGE_FEATURES)
                         || f.startsWith(SimilarFacesSearch.FACE_FEATURES))
                     continue;
                 if (filterStr.isEmpty() || f.toLowerCase().contains(filterStr))

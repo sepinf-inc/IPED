@@ -106,7 +106,7 @@ public class SimilarImagesFilterActions {
                     app.similarImagesQueryRefItem = new Item();
                     app.similarImagesQueryRefItem.setName(file.getName());
                     app.similarImagesQueryRefItem.setThumb(baos.toByteArray());
-                    app.similarImagesQueryRefItem.setExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES,
+                    app.similarImagesQueryRefItem.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES,
                             new ImageSimilarity().extractFeatures(img));
                 } else {
                     JOptionPane.showMessageDialog(App.get(), Messages.getString("ImageSimilarity.ExternalError"),
@@ -122,7 +122,7 @@ public class SimilarImagesFilterActions {
                 if (itemId != null) {
                     app.similarImagesQueryRefItem = app.appCase.getItemByItemId(itemId);
                     if (app.similarImagesQueryRefItem
-                            .getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) == null) {
+                            .getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) == null) {
                         app.similarImagesQueryRefItem = null;
                     }
                 }

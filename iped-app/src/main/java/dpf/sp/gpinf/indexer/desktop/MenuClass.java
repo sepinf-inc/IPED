@@ -269,7 +269,7 @@ public class MenuClass extends JPopupMenu {
 
         similarImagesCurrent = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.Current")); //$NON-NLS-1$
         similarImagesCurrent.addActionListener(menuListener);
-        similarImagesCurrent.setEnabled(item != null && item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) != null);
+        similarImagesCurrent.setEnabled(item != null && item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) != null);
         submenu.add(similarImagesCurrent);
 
         similarImagesExternal = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.External")); //$NON-NLS-1$

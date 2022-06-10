@@ -424,13 +424,13 @@ public class IndexItem extends BasicProps {
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
 
-        byte[] similarityFeatures = (byte[]) evidence.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
+        byte[] similarityFeatures = (byte[]) evidence.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES);
         // clear extra property to don't add it again later when iterating over extra props
-        evidence.getExtraAttributeMap().remove(ImageSimilarityTask.SIMILARITY_FEATURES);
+        evidence.getExtraAttributeMap().remove(ImageSimilarityTask.IMAGE_FEATURES);
         if (similarityFeatures != null) {
-            doc.add(new BinaryDocValuesField(ImageSimilarityTask.SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
-            doc.add(new StoredField(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures));
-            doc.add(new IntPoint(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures[0], similarityFeatures[1],
+            doc.add(new BinaryDocValuesField(ImageSimilarityTask.IMAGE_FEATURES, new BytesRef(similarityFeatures)));
+            doc.add(new StoredField(ImageSimilarityTask.IMAGE_FEATURES, similarityFeatures));
+            doc.add(new IntPoint(ImageSimilarityTask.IMAGE_FEATURES, similarityFeatures[0], similarityFeatures[1],
                     similarityFeatures[2], similarityFeatures[3]));
         }
 
@@ -948,9 +948,9 @@ public class IndexItem extends BasicProps {
                     }
                 }
 
-                BytesRef bytesRef = doc.getBinaryValue(ImageSimilarityTask.SIMILARITY_FEATURES);
+                BytesRef bytesRef = doc.getBinaryValue(ImageSimilarityTask.IMAGE_FEATURES);
                 if (bytesRef != null) {
-                    evidence.setExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES, bytesRef.bytes);
+                    evidence.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES, bytesRef.bytes);
                 }
 
                 File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
