@@ -8,7 +8,6 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
 

@@ -1,8 +1,5 @@
 package dpf.sp.gpinf.indexer.config;
 
-import java.io.IOException;
-import java.nio.file.Path;
-
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class SplitLargeBinaryConfig extends AbstractTaskPropertiesConfig {

@@ -19,7 +19,6 @@ package org.apache.tika.fork;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -43,8 +42,8 @@ class InputStreamProxy2 extends InputStream implements ForkProxy {
     public TikaInputStream getTikaInputStream() {
         if (file != null && tis == null) {
             try {
-                tis = TikaInputStream.get(file);
-            } catch (FileNotFoundException e) {
+                tis = TikaInputStream.get(file.toPath());
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }

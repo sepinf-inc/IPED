@@ -617,7 +617,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             return;
         }
 
-        KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers(), true);
+        KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiersEx(), true);
 
         if (e.getSource() == list) {
             if (list.getSelectedIndices().length != 1) {
@@ -625,7 +625,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 e.consume();
                 return;
             }
-            if ((e.getModifiers() & KeyEvent.ALT_MASK) != 0) {
+            if ((e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert2"));
                 e.consume();
                 return;
@@ -662,7 +662,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             }
             ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
             bookmark(uniqueSelectedIds, Collections.singletonList(bookmark),
-                    (e.getModifiers() & KeyEvent.ALT_MASK) == 0);
+                    (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) == 0);
             e.consume();
         }
 
@@ -670,7 +670,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     // alt key remove from bookmark
     private KeyStroke getRemoveKey(KeyStroke k) {
-        return KeyStroke.getKeyStroke(k.getKeyCode(), KeyEvent.ALT_MASK, true);
+        return KeyStroke.getKeyStroke(k.getKeyCode(), KeyEvent.ALT_DOWN_MASK, true);
     }
 
     private void showMessage(String msg) {
@@ -679,7 +679,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     
     public boolean hasSingleKeyShortcut() {
        for (KeyStroke k : keystrokeToBookmark.keySet()) {
-           if ((k.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK | InputEvent.SHIFT_MASK)) == 0) {
+           if ((k.getModifiers() & (InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
                int c = k.getKeyCode();
                if ((c >= KeyEvent.VK_0 && c <= KeyEvent.VK_9) || (c >= KeyEvent.VK_A && c <= KeyEvent.VK_Z)) {
                    return true;

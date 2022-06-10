@@ -61,7 +61,6 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -283,18 +282,18 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         codeArea.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if ((e.getKeyCode() == KeyEvent.VK_C) && ((e.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+                if ((e.getKeyCode() == KeyEvent.VK_C) && ((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
                     if (codeArea.getActiveSection().ordinal() == 0) { // HexArea
                         codeArea.copyAsCode();
                     } else {
                         codeArea.copy();
                     }
                 }
-                if ((e.getKeyCode() == KeyEvent.VK_F) && ((e.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+                if ((e.getKeyCode() == KeyEvent.VK_F) && ((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
                     dialogPesquisar.setLocationRelativeTo(codeArea);
                     dialogPesquisar.setVisible(true);
                 }
-                if ((e.getKeyCode() == KeyEvent.VK_G) && ((e.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+                if ((e.getKeyCode() == KeyEvent.VK_G) && ((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
                     dialogIrParaEndereco.setLocationRelativeTo(codeArea);
                     dialogIrParaEndereco.setVisible(true);
                 }
@@ -2627,9 +2626,9 @@ class HVPComboField extends JComboBox {
                     char c = ev.getKeyChar();
                     int k = ev.getKeyCode();
                     boolean copy = ((ev.getKeyCode() == KeyEvent.VK_C)
-                            && ((ev.getModifiers() & KeyEvent.CTRL_MASK) != 0));
+                            && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
                     boolean paste = ((ev.getKeyCode() == KeyEvent.VK_V)
-                            && ((ev.getModifiers() & KeyEvent.CTRL_MASK) != 0));
+                            && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
 
                     if (isDigitBase(c) || k == KeyEvent.VK_BACK_SPACE || k == KeyEvent.VK_DELETE
                             || k == KeyEvent.VK_RIGHT || k == KeyEvent.VK_LEFT || k == KeyEvent.VK_ENTER
@@ -2798,8 +2797,8 @@ class HVPTextField extends JTextField {
 
         char c = ev.getKeyChar();
         int k = ev.getKeyCode();
-        boolean copy = ((ev.getKeyCode() == KeyEvent.VK_C) && ((ev.getModifiers() & KeyEvent.CTRL_MASK) != 0));
-        boolean paste = ((ev.getKeyCode() == KeyEvent.VK_V) && ((ev.getModifiers() & KeyEvent.CTRL_MASK) != 0));
+        boolean copy = ((ev.getKeyCode() == KeyEvent.VK_C) && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
+        boolean paste = ((ev.getKeyCode() == KeyEvent.VK_V) && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
 
         if (isDigitBase(c) || k == KeyEvent.VK_BACK_SPACE || k == KeyEvent.VK_DELETE || k == KeyEvent.VK_RIGHT
                 || k == KeyEvent.VK_LEFT || k == KeyEvent.VK_ENTER || k == KeyEvent.VK_KP_LEFT

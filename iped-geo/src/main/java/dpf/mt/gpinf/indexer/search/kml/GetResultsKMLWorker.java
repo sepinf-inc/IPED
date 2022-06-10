@@ -18,7 +18,6 @@ import dpf.mt.gpinf.mapas.util.Messages;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.IItemId;
-import iped3.desktop.ProgressDialog;
 import iped3.search.IIPEDSearcher;
 import iped3.search.IMultiSearchResult;
 import iped3.search.IMultiSearchResultProvider;

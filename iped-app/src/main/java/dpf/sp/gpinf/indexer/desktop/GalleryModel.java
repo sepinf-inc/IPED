@@ -234,7 +234,7 @@ public class GalleryModel extends AbstractTableModel {
 
                     if (image == null && stream != null && imgThumbTask.getImageThumbConfig().isExtractThumb()
                             && mediaType.equals("image/jpeg")) { //$NON-NLS-1$
-                        image = ImageMetadataUtil.getThumb(new CloseShieldInputStream(stream));
+                        image = ImageMetadataUtil.getThumb(CloseShieldInputStream.wrap(stream));
                         stream.reset();
                     }
 

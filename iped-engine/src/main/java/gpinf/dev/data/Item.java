@@ -636,7 +636,7 @@ public class Item implements IItem {
 
         File file = null;
         if (IOUtil.hasFile(this) && (file = IOUtil.getFile(this)).isFile()) {
-            tis = TikaInputStream.get(file);
+            tis = TikaInputStream.get(file.toPath());
         } else {
             if (tmpFile == null && tis != null && tis.hasFile()) {
                 tmpFile = tis.getFile();

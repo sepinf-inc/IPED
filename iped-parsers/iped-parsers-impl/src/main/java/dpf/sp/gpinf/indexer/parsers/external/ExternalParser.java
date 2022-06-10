@@ -462,10 +462,10 @@ public class ExternalParser extends AbstractParser {
         Thread t = new Thread() {
             public void run() {
                 try {
-                    IOUtils.copy(stream, new NullOutputStream());
+                    IOUtils.copy(stream, NullOutputStream.NULL_OUTPUT_STREAM);
                 } catch (IOException e) {
                 } finally {
-                    IOUtils.closeQuietly(stream);
+                    IOUtil.closeQuietly(stream);
                 }
             }
         };
@@ -502,7 +502,7 @@ public class ExternalParser extends AbstractParser {
         } catch (IOException e) {
             // Ignore
         } finally {
-            IOUtils.closeQuietly(stream);
+            IOUtil.closeQuietly(stream);
         }
     }
 
