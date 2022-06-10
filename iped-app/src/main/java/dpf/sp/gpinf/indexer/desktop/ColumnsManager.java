@@ -410,7 +410,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (int i = newColStart; i < App.get().resultsTable.getColumnCount(); i++) {
             TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
             String colName = col.getHeaderValue().toString();
-            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)) {
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)
+                    || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
                 App.get().resultsTable.moveColumn(i, newPosEmail++);
                 newPosOther++;
             } else if (colName.toLowerCase().startsWith(ExtraProperties.UFED_META_PREFIX)) {
@@ -424,7 +425,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (int i = newPosOther; i <= lastOldCol; i++) {
             TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
             String colName = col.getHeaderValue().toString();
-            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)) {
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)
+                    || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
                 App.get().resultsTable.moveColumn(i, newPosEmail++);
             }
         }
