@@ -411,10 +411,12 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     // update all handlers as it could only download files from one handler
-    private synchronized static void updateHandlers() throws SAXException {
-        for (ContentHandler handler : handlerToUpdate) {
-            if (handler != null) {
-                handler.characters(" ".toCharArray(), 0, 1);
+    private static void updateHandlers() throws SAXException {
+        synchronized (handlerToUpdate) {
+            for (ContentHandler handler : handlerToUpdate) {
+                if (handler != null) {
+                    handler.characters(" ".toCharArray(), 0, 1);
+                }
             }
         }
     }
