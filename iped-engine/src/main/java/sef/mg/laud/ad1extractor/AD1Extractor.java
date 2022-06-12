@@ -135,7 +135,7 @@ public class AD1Extractor implements Closeable {
 
         PC += root_info_len;
         readBytesFromRelativeFilePos(vector_dynamic, PC, root_name_len);
-        String root_name = new String(vector_dynamic, charset);
+        // String root_name = new String(vector_dynamic, charset);
 
         PC = PC_first_file;
 

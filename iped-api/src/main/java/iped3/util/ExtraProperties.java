@@ -39,7 +39,15 @@ public class ExtraProperties {
 
     public static final String MESSAGE_SUBJECT = MESSAGE_PREFIX + "Subject"; //$NON-NLS-1$
 
-    public static final Property MESSAGE_DATE = Property.internalDate(MESSAGE_PREFIX + "Date"); //$NON-NLS-1$
+    public static final String COMMUNICATION_PREFIX = "Communication:";
+
+    public static final String COMMUNICATION_FROM = COMMUNICATION_PREFIX + "From";
+
+    public static final String COMMUNICATION_TO = COMMUNICATION_PREFIX + "To";
+
+    public static final Property COMMUNICATION_DATE = Property.internalDate(COMMUNICATION_PREFIX + "Date"); //$NON-NLS-1$
+
+    public static final Property MESSAGE_DATE = COMMUNICATION_DATE;
 
     public static final String PARTICIPANTS = "Participants";
 
@@ -133,7 +141,7 @@ public class ExtraProperties {
 
     public static final String DOWNLOADED_DATA = "downloadedData";
 
-    public static final List<String> EMAIL_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_DATE.getName(),
-            MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,
+    public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, COMMUNICATION_DATE.getName(),
+            MESSAGE_BODY, COMMUNICATION_FROM, COMMUNICATION_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,
             Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT, MESSAGE_ATTACHMENT_COUNT.getName());
 }

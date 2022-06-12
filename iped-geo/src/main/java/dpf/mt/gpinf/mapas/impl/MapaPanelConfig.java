@@ -63,8 +63,8 @@ public class MapaPanelConfig implements Configurable<UTF8Properties> {
             }
 
             Set<Object> keys = properties.keySet();
-            for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
-                Object object = (Object) iterator.next();
+            for (Iterator<Object> iterator = keys.iterator(); iterator.hasNext();) {
+                Object object = iterator.next();
                 if (!"tileServerUrlPattern".equals(object.toString())) {
                     defaultTilesSources.put(object.toString(), properties.getProperty(object.toString()));
                 }

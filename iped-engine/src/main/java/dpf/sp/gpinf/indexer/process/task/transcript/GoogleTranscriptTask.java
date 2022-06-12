@@ -39,14 +39,14 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
     // must be set in environment variable
     private static final String CREDENTIAL_KEY = "GOOGLE_APPLICATION_CREDENTIALS";
 
-    private static final MediaType mp3 = MediaType.audio("mpeg");
-    private static final MediaType ogg = MediaType.audio("vorbis");
-    private static final MediaType flac = MediaType.audio("x-flac");
-    private static final MediaType oggflac = MediaType.audio("x-oggflac");
-    private static final MediaType oggopus = MediaType.audio("opus");
-    private static final MediaType amr = MediaType.audio("amr");
-    private static final MediaType aac = MediaType.audio("x-aac");
-    private static final MediaType speex = MediaType.audio("speex");
+    public static final MediaType mp3 = MediaType.audio("mpeg");
+    public static final MediaType ogg = MediaType.audio("vorbis");
+    public static final MediaType flac = MediaType.audio("x-flac");
+    public static final MediaType oggflac = MediaType.audio("x-oggflac");
+    public static final MediaType oggopus = MediaType.audio("opus");
+    public static final MediaType amr = MediaType.audio("amr");
+    public static final MediaType aac = MediaType.audio("x-aac");
+    public static final MediaType speex = MediaType.audio("speex");
 
     private static final int MAX_WAV_TIME = 59;
     private static final int MAX_WAV_SIZE = 16000 * 2 * MAX_WAV_TIME;
@@ -147,7 +147,7 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
             return new TreeSet<>(Arrays.asList(files));
         } else {
             LOGGER.error("Failed to split audio file " + evidence.getPath());
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
     }
 

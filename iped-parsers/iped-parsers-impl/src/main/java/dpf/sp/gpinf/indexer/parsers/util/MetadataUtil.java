@@ -151,6 +151,8 @@ public class MetadataUtil {
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Width");
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Height");
         rename.put(ExtraProperties.UFED_META_PREFIX + "Altitude", ExtraProperties.COMMON_META_PREFIX + TikaCoreProperties.ALTITUDE.getName());
+        rename.put(Message.MESSAGE_FROM, ExtraProperties.COMMUNICATION_FROM);
+        rename.put(Message.MESSAGE_TO, ExtraProperties.COMMUNICATION_TO);
         return rename;
     }
 
@@ -521,7 +523,7 @@ public class MetadataUtil {
         metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
 
         if (metadata.get(TikaCoreProperties.CREATED) != null)
-            metadata.set(ExtraProperties.MESSAGE_DATE, metadata.get(TikaCoreProperties.CREATED));
+            metadata.set(ExtraProperties.COMMUNICATION_DATE, metadata.get(TikaCoreProperties.CREATED));
 
         String value = metadata.get(Message.MESSAGE_FROM);
         if (value == null)
@@ -563,14 +565,17 @@ public class MetadataUtil {
         metadata.remove(recipMetaName.getName());
         metadata.remove(recipMetaDisplayName.getName());
         metadata.remove(recipMetaEmail.getName());
-        for (int i = 0; i < recipientNames.length; i++) {
-            String value = recipientNames[i];
-            if (value == null)
-                value = ""; //$NON-NLS-1$
-            if (!value.toLowerCase().contains(recipientsDisplay[i].toLowerCase()))
-                value += " " + recipientsDisplay[i]; //$NON-NLS-1$
-            if (!value.toLowerCase().contains(recipientsEmails[i].toLowerCase()))
-                value += " \"" + recipientsEmails[i] + "\""; //$NON-NLS-1$ //$NON-NLS-2$
+        int length = Math.max(Math.max(recipientNames.length, recipientsDisplay.length), recipientsEmails.length);
+        for (int i = 0; i < length; i++) {
+            String value = "";
+            if (i < recipientNames.length && recipientNames[i] != null)
+                value = recipientNames[i].trim();
+            if (i < recipientsDisplay.length && recipientsDisplay[i] != null
+                    && !value.toLowerCase().contains(recipientsDisplay[i].toLowerCase().trim()))
+                value += " " + recipientsDisplay[i].trim(); //$NON-NLS-1$
+            if (i < recipientsEmails.length && recipientsEmails[i] != null
+                    && !value.toLowerCase().contains(recipientsEmails[i].toLowerCase().trim()))
+                value += " \"" + recipientsEmails[i].trim() + "\""; //$NON-NLS-1$ //$NON-NLS-2$
             metadata.add(destMeta, value);
         }
     }

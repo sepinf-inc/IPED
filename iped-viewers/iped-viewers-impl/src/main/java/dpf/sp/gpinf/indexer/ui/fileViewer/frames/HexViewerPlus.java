@@ -881,7 +881,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 .asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
         String[] cursors = new String[CursorShape.values().length];
         int i = 0;
-        for (Enum e : CursorShape.values()) {
+        for (Enum<CursorShape> e : CursorShape.values()) {
             cursors[i++] = e.toString();
         }
 
@@ -2543,7 +2543,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 texto = jtfTextoHex.getText().toString();
                 jtfTextoHex.requestFocus();
 
-                if (((DefaultComboBoxModel) jtfTextoHex.getModel()).getIndexOf(texto) == -1) {
+                if (((DefaultComboBoxModel<String>) jtfTextoHex.getModel()).getIndexOf(texto) == -1) {
                     jtfTextoHex.addItem(texto);
                 }
                 jtfTextoHex.setSelectedItem(texto);
@@ -2630,7 +2630,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
     }
 }
 
-class HVPComboField extends JComboBox {
+class HVPComboField extends JComboBox<String> {
     /**
 	 * 
 	 */
@@ -3483,6 +3483,10 @@ class CursorComponent extends JComponent {
         }
     }
 
+    public int getBlinkRate() {
+        return this.blinkRate;
+    }
+
     public void setBlinkRate(int blinkRate) {
         if (blinkRate < 0) {
             throw new IllegalArgumentException("Blink rate cannot be negative");
@@ -3552,7 +3556,7 @@ class CursorComponent extends JComponent {
         int lineHeight = codeArea.getLineHeight();
         int charWidth = codeArea.getCharWidth();
         int linesPerRect = codeArea.getLinesPerRect();
-        int codeDigits = codeArea.getCodeType().getMaxDigits();
+        // int codeDigits = codeArea.getCodeType().getMaxDigits();
         Point cursorPoint = caret.getCursorPoint(bytesPerLine, lineHeight, charWidth, linesPerRect);
 
         if (cursorPoint == null) {

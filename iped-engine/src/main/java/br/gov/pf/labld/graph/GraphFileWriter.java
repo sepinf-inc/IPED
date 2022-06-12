@@ -547,7 +547,7 @@ public class GraphFileWriter implements Closeable, Flushable {
 					private static final long serialVersionUID = 1L;
 
 					@Override
-                    protected boolean removeEldestEntry(Entry entry) {
+                    protected boolean removeEldestEntry(Entry<String, Boolean> entry) {
                         return this.size() > 10000;
                     }
                 });

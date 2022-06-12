@@ -151,7 +151,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             contentType = item.getMediaType().toString();
         }
         
-        boolean enabled = item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) != null;
+        boolean enabled = item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) != null;
         App.get().setEnableGallerySimSearchButton(enabled);
 
         IItem viewItem = item;

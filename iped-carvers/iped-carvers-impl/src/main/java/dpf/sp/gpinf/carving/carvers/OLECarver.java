@@ -26,8 +26,6 @@ public class OLECarver extends AbstractCarver {
             byte buf[] = new byte[512];
             is.read(buf);
 
-            int off = (int) header.getOffset();
-
             int blockSizeOff = 0x1E;
 
             int blockSize = (int) Math.pow(2, ((buf[blockSizeOff] & 0xff) << 0 | (buf[blockSizeOff + 1] & 0xff) << 8));

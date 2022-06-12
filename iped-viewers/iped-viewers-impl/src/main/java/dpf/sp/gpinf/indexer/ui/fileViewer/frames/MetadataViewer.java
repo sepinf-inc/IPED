@@ -307,7 +307,7 @@ public abstract class MetadataViewer extends AbstractViewer {
             sb.append("<tr><td class=\"s1\">" + LocalizedProperties.getLocalizedField(key) + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
             if (value instanceof Collection) {
                 ArrayList<Object> formattedVals = new ArrayList<>();
-                for (Object v : (Collection) value) {
+                for (Object v : (Collection<?>) value) {
                     formattedVals.add(format(v));
                 }
                 value = formattedVals;
