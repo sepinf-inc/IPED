@@ -173,7 +173,6 @@ public class ExtractorAndroidNew extends Extractor {
             case 0:
                 result = TEXT_MESSAGE;
             case 7:
-
                 switch (actionType) {
                     case 1:
                         result = SUBJECT_CHANGED;

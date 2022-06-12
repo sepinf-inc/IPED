@@ -507,7 +507,6 @@ public class ExtractorAndroid extends Extractor {
         Message.MessageType result = UNKNOWN_MESSAGE;
         switch (messageType) {
             case 0:
-            case 7:
                 if (status == 6) {
                     switch (mediaSize) {
                         case 1:
