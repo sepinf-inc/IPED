@@ -141,6 +141,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     // a global set to prevent redownload files;
     private static final Set<String> hashesDownloaded = Collections.synchronizedSet(new HashSet<>());
 
+    private static final List<ContentHandler> handlerToUpdate = new ArrayList<>();
+
     private static final Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
     private static final String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
     private static final String IS_BACKUP_FROM = "isBackupFrom";
@@ -408,10 +410,20 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
 
-    private static final void waitDownloads(List<Future<?>> futures) {
+    // update all handlers as it could only download files from one handler
+    private synchronized static void updateHandlers() throws SAXException {
+        for (ContentHandler handler : handlerToUpdate) {
+            if (handler != null) {
+                handler.characters(" ".toCharArray(), 0, 1);
+            }
+        }
+    }
+
+    private static final void waitDownloads(List<Future<?>> futures) throws SAXException {
         try {
             for (Future<?> f : futures) {
                 f.get();
+                updateHandlers();
             }
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
@@ -462,7 +474,18 @@ public class WhatsAppParser extends SQLite3DBParser {
                 futures.addAll(searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor,
                         wcontext.getItem().getTempFile(), context, downloadedFiles));
             }
-            waitDownloads(futures);
+            if (futures.size() > 0) {
+                synchronized (handlerToUpdate) {
+                    handler.startDocument();
+                    handlerToUpdate.add(handler);
+                }
+                waitDownloads(futures);
+
+                synchronized (handlerToUpdate) {
+                    handlerToUpdate.remove(handler);
+                    handler.endDocument();
+                }
+            }
             if (downloadedFiles.get() > 0) {
                 logger.info("Downloaded {} files from {}", downloadedFiles.get(), wcontext.getItem().getName());
             }
@@ -1327,6 +1350,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
         }
     }
+    
 
     private List<Future<?>> searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
@@ -1499,8 +1523,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                     if (ld == null || ld.getHash() == null || !hashesDownloaded.add(ld.getHash())) {
                         continue;
                     }
-                    Runnable r = new Runnable() {
 
+                    Runnable r = new Runnable() {
+                        
                         @Override
                         public void run() {
 
@@ -1511,6 +1536,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 ld.downloadUsingStream(f);
 
                                 ld.decript(f, fout);
+
+
 
                                 Metadata downloadMetadata = new Metadata();
 
