@@ -677,21 +677,6 @@ public class ExtractorAndroid extends Extractor {
             + "AND messages.key_from_me = message_thumbnails.key_from_me) " //$NON-NLS-1$
             + "WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
-    private static final String SELECT_MESSAGES_NO_MESSAGES = "select  m._id AS id, cv.raw_string_jid "
-            + " as remoteId,m.sender_jid_row_id, jid.raw_string as remoteResource, status, IFNULL(mv.vcard,text_data) as data,"
-            + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
-            + " mm.mime_type as mediaMime, mm.file_size as mediaSize, media_name as mediaName, "
-            + " m.message_type as messageType, null as rawData,  latitude,  longitude, mm.media_duration,"
-            + " null as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData, ms.action_type as actionType "
-            + " from message m  inner join chat_view cv on m.chat_row_id=cv._id left join message_media mm on mm.message_row_id=m._id"
-            + " left join jid on jid._id=m.sender_jid_row_id left join message_location ml on m._id=ml.message_row_id "
-            + " left join message_system ms on m._id=ms.message_row_id"
-            + " left join message_vcard mv on m._id=mv.message_row_id"
-            + " left join message_thumbnail mt on m._id=mt.message_row_id where remoteId=? and status!=-1 ;";
-
-    private static final String VERIFY_THUMBS_TABLE_EXISTS = "SELECT name FROM sqlite_master " //$NON-NLS-1$
-            + "WHERE type='table' AND name='message_thumbnails'"; //$NON-NLS-1$
-
     // to address a field must use ` instead of '
     private static final String SELECT_GROUP_MEMBERS = "select gjid as 'group', jid as member FROM group_participants where `group`=?"; //$NON-NLS-1$
 
