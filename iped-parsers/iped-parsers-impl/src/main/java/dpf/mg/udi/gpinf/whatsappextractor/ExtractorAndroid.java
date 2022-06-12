@@ -77,7 +77,6 @@ public class ExtractorAndroid extends Extractor {
     private boolean hasMediaDurationCol = false;
     private boolean hasGroupParticiantsTable = true;
     private SQLException parsingException = null;
-    private boolean hasMessages = false;
 
     public ExtractorAndroid(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
@@ -312,16 +311,6 @@ public class ExtractorAndroid extends Extractor {
             }
         }
         return result;
-    }
-
-    private boolean databaseHasMessage(Connection conn) throws SQLException {
-        DatabaseMetaData md = conn.getMetaData();
-        try (ResultSet rs = md.getColumns(null, null, "messages", "_id")) { //$NON-NLS-1$ //$NON-NLS-2$
-            if (rs.next()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private boolean databaseHasChatView(Connection conn) throws SQLException {
