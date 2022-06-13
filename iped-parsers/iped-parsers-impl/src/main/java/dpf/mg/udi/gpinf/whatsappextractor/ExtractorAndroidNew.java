@@ -93,7 +93,7 @@ public class ExtractorAndroidNew extends Extractor {
 
     private void extractAddOns(Connection conn, Message m) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_ADD_ONS)) {
-            stmt.setLong(0, m.getId());
+            stmt.setLong(1, m.getId());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 MessageAddOn addOn = new MessageAddOn();
