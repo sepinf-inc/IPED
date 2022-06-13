@@ -46,11 +46,13 @@ import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.io.FragmentingReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIODataRef;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.configuration.Configurable;
 import iped3.exception.IPEDException;
+import iped3.io.ISeekableInputStreamFactory;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 import repackaged.org.apache.http.HttpHost;
@@ -474,15 +476,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private XContentBuilder getJsonMetadataBuilder(IItem item) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
-        String inputStreamSrcPath = getInputStreamSourcePath(item);
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field("document_content", "document")
                 .field(BasicProps.SUBITEMID, item.getSubitemId()).field(BasicProps.PARENTID, item.getParentId())
                 .field(BasicProps.PARENTIDs, item.getParentIds())
-                .field(IndexItem.ID_IN_SOURCE, item.getIdInDataSource())
-                .field(IndexItem.SOURCE_PATH, inputStreamSrcPath)
-                .field(IndexItem.SOURCE_DECODER,
-                        inputStreamSrcPath != null ? item.getInputStreamFactory().getClass().getName() : null)
                 // TODO boost name?
                 .field(BasicProps.NAME, item.getName()).field(BasicProps.LENGTH, item.getLength())
                 .field(BasicProps.TYPE, item.getType()).field(BasicProps.PATH, item.getPath())
@@ -496,6 +493,17 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.ISDIR, item.isDir()).field(BasicProps.ISROOT, item.isRoot())
                 .field(BasicProps.CARVED, item.isCarved()).field(BasicProps.SUBITEM, item.isSubItem())
                 .field(BasicProps.OFFSET, item.getFileOffset()).field("extraAttributes", item.getExtraAttributeMap());
+
+        ISeekableInputStreamFactory isisf = item.getInputStreamFactory();
+        String idInSource = item.getIdInDataSource();
+        MinIODataRef minIODataRef = (MinIODataRef) item.getTempAttribute(MinIODataRef.class.getName());
+        if (minIODataRef != null) {
+            isisf = minIODataRef.inputStreamFactory;
+            idInSource = minIODataRef.idInDataSource;
+        }
+        String sourcePath = getInputStreamSourcePath(isisf);
+        builder.field(IndexItem.ID_IN_SOURCE, idInSource).field(IndexItem.SOURCE_PATH, sourcePath)
+                .field(IndexItem.SOURCE_DECODER, sourcePath != null ? isisf.getClass().getName() : null);
 
         for (String key : getMetadataKeys(item)) {
             if (PREVIEW_IN_DATASOURCE.equals(key)) {
@@ -561,9 +569,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
         return sb.toString();
     }
 
-    private String getInputStreamSourcePath(IItem item) {
-        if (item.getInputStreamFactory() != null) {
-            URI uri = item.getInputStreamFactory().getDataSourceURI();
+    private String getInputStreamSourcePath(ISeekableInputStreamFactory sisf) {
+        if (sisf != null) {
+            URI uri = sisf.getDataSourceURI();
             if (uri != null) {
                 return Util.getRelativePath(output, uri);
             }
