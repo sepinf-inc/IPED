@@ -334,7 +334,7 @@ public abstract class MetadataViewer extends AbstractViewer {
         if (str.length() >= minLenToCollapse) {
             sb.append("<details tabindex=\"-1\"><summary><b>[");
             sb.append(df.format(str.length()));
-            sb.append(" ").append(Messages.getString("MetadataViewer.Characters")).append("]</b> ");
+            sb.append(" chars]</b> ");
             sb.append(SimpleHTMLEncoder.htmlEncode(str.substring(0, collapsedSubstringLen)));
             sb.append("<b>...</b>");
             sb.append("</summary><span>");
