@@ -102,7 +102,8 @@ public class SimilarDocumentSearch {
     }
 
     private static CharArraySet getStopWords() {
-        CharArraySet stopSet = BrazilianAnalyzer.getDefaultStopSet();
+        CharArraySet stopSet = new CharArraySet(16, false);
+        stopSet.addAll(BrazilianAnalyzer.getDefaultStopSet());
         stopSet.addAll(PortugueseAnalyzer.getDefaultStopSet());
         stopSet.addAll(EnglishAnalyzer.getDefaultStopSet());
         return stopSet;
