@@ -63,6 +63,7 @@ public class Message {
     private Set<String> childPornSets = new HashSet<>();
     private IItemBase mediaItem = null;
     private String mediaQuery = null;
+    private List<MessageAddOn> AddOns = new ArrayList<>();
 
     static {
         try {
@@ -404,6 +405,14 @@ public class Message {
 
     public void setMediaQuery(String mediaQuery) {
         this.mediaQuery = mediaQuery;
+    }
+
+    public boolean addMessageAddOn(MessageAddOn m) {
+        return AddOns.add(m);
+    }
+
+    public List<MessageAddOn> getAddOns() {
+        return AddOns;
     }
 
     public static enum MessageType {

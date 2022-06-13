@@ -515,6 +515,9 @@ public class ReportGenerator {
                 }
                 break;
         }
+        if (message.getAddOns().size() > 0) {
+            // toDo implements a vizualization for the add ons like thumbs up
+        }
         if (!message.getChildPornSets().isEmpty()) {
             out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
                     + format(message.getChildPornSets().toString()) + "</i></p>");
