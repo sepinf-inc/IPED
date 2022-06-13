@@ -427,13 +427,29 @@ public class MinIOTask extends AbstractTask {
         return path.split("/", 2);
     }
 
+    static class MinIODataRef {
+
+        final SeekableInputStreamFactory inputStreamFactory;
+        final String idInDataSource;
+
+        MinIODataRef(SeekableInputStreamFactory inputStreamFactory, String id) {
+            this.inputStreamFactory = inputStreamFactory;
+            this.idInDataSource = id;
+        }
+    }
+
     private void updateDataSource(IItem item, String id) {
         if (id == null || item == null) {
             return;
         }
-        item.setInputStreamFactory(inputStreamFactory);
-        item.setIdInDataSource(id);
-        item.setFileOffset(-1);
+        MinIODataRef minIORef = new MinIODataRef(inputStreamFactory, id);
+        item.setTempAttribute(MinIODataRef.class.getName(), minIORef);
+
+        if (minIOConfig.isToUpdateRefsToMinIO()) {
+            item.setInputStreamFactory(inputStreamFactory);
+            item.setIdInDataSource(id);
+            item.setFileOffset(-1);
+        }
     }
 
     public static class MinIOInputInputStreamFactory extends SeekableInputStreamFactory {
