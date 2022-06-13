@@ -39,7 +39,6 @@ public class MSGParserTest extends AbstractPkgTest {
         }
     };
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testMSGParser() throws IOException, SAXException, TikaException {
         MSGParser parser = new MSGParser();
@@ -59,7 +58,6 @@ public class MSGParserTest extends AbstractPkgTest {
         }
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testMSGParserAttach() throws IOException, SAXException, TikaException {
         MSGParser parser = new MSGParser();

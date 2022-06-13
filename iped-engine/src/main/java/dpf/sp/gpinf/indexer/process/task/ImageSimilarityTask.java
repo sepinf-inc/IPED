@@ -28,7 +28,7 @@ public class ImageSimilarityTask extends AbstractTask {
 
     public static final String enableParam = "enableImageSimilarity"; //$NON-NLS-1$
 
-    public static final String SIMILARITY_FEATURES = "similarityFeatures"; //$NON-NLS-1$
+    public static final String IMAGE_FEATURES = "imageFeatures"; //$NON-NLS-1$
 
     private static boolean taskEnabled = false;
     private static final AtomicBoolean init = new AtomicBoolean(false);
@@ -104,7 +104,7 @@ public class ImageSimilarityTask extends AbstractTask {
             BufferedImage img = ImageIO.read(new ByteArrayInputStream(thumb));
             byte[] features = imageSimilarity.extractFeatures(img);
             if (features != null) {
-                evidence.setExtraAttribute(SIMILARITY_FEATURES, features);
+                evidence.setExtraAttribute(IMAGE_FEATURES, features);
                 totalProcessed.incrementAndGet();
             } else {
                 totalFailed.incrementAndGet();

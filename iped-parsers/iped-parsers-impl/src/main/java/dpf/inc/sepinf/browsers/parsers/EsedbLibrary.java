@@ -1,7 +1,11 @@
 package dpf.inc.sepinf.browsers.parsers;
 
-import com.sun.jna.*;
-import com.sun.jna.ptr.*;
+import com.sun.jna.Library;
+import com.sun.jna.Memory;
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.LongByReference;
+import com.sun.jna.ptr.PointerByReference;
 
 /*
  * Libesedb JNA interface mapping and usage.

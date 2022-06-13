@@ -127,8 +127,6 @@ public class JSInterfaceFunctionsOpenStreet implements JSInterfaceFunctions {
     public void checkMarkerBF(String markerId, boolean checked) {
         MarkerCheckBoxListener l = map.getMarkerCheckBoxListener();
         if (l != null) {
-            int id = 0;
-
             l.onClicked(markerId, checked);
         }
     }

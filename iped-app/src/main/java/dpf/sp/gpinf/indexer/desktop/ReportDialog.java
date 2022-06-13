@@ -149,7 +149,11 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
         table.getColumnModel().getColumn(0).setHeaderRenderer(new DefaultTableCellRenderer() {
 
-            private boolean listenerAdded = false;
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+			private boolean listenerAdded = false;
 
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -175,7 +179,12 @@ public class ReportDialog implements ActionListener, TableModelListener {
     }
 
     private class TableModel extends DefaultTableModel {
-        TableModel(Object[][] data, Object[] columnNames) {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		TableModel(Object[][] data, Object[] columnNames) {
             super(data, columnNames);
         }
 

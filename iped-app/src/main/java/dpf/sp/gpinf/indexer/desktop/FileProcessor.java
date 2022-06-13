@@ -39,13 +39,12 @@ import dpf.sp.gpinf.indexer.datasource.AD1DataSourceReader.AD1InputStreamFactory
 import dpf.sp.gpinf.indexer.io.ZIPInputStreamFactory;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
-import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
+import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
 import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import gpinf.dev.data.DataSource;
-import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
 import iped3.io.ISeekableInputStreamFactory;
@@ -152,7 +151,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             contentType = item.getMediaType().toString();
         }
         
-        boolean enabled = item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) != null;
+        boolean enabled = item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) != null;
         App.get().setEnableGallerySimSearchButton(enabled);
 
         IItem viewItem = item;

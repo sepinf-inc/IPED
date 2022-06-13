@@ -41,7 +41,12 @@ public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSort
     private static Logger logger = LoggerFactory.getLogger(ResultTableRowSorter.class);
 
     private static volatile Map<Integer, RowComparator> comparatorCache = new LinkedHashMap<Integer, RowComparator>(16, 0.75f, true){
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		@Override
         protected boolean removeEldestEntry(Map.Entry<Integer, RowComparator> eldest) {
             return this.size() > MAX_COMPARATOR_CACHE;
         }

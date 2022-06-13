@@ -2,7 +2,12 @@ package iped3.exception;
 
 public class IPEDException extends RuntimeException {
 
-    public IPEDException(String msg) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public IPEDException(String msg) {
         super(msg);
     }
 

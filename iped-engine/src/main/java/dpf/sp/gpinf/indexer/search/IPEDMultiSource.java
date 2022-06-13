@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
@@ -276,6 +277,21 @@ public class IPEDMultiSource extends IPEDSource {
         IIPEDSource atomicCase = getAtomicSourceBySourceId(sourceid);
         int baseDoc = baseDocCache.get(sourceid);
         return atomicCase.getLuceneId(id.getId()) + baseDoc;
+    }
+    
+    @SuppressWarnings("resource")
+	@Override
+    public IntStream getLuceneIdStream() {
+    	IntStream is = null;
+    	for (int i = 0; i < cases.size(); i++) {
+    		IntStream next = cases.get(i).getLuceneIdStream();
+    		if (is == null) {
+    			is = next;
+    		} else {
+    			is = IntStream.concat(is, next);
+    		}
+    	}
+    	return is;
     }
 
     @Override

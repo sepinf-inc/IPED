@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.arabidopsis.ahocorasick;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * <p>

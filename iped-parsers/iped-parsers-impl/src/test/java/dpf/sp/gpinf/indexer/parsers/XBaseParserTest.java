@@ -1,8 +1,10 @@
 package dpf.sp.gpinf.indexer.parsers;
 
 import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.io.InputStream;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;

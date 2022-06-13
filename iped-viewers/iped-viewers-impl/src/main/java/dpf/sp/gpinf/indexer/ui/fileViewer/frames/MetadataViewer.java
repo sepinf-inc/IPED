@@ -41,7 +41,6 @@ import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 
-@SuppressWarnings("restriction")
 public abstract class MetadataViewer extends AbstractViewer {
 
     private DecimalFormat df = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
@@ -123,7 +122,6 @@ public abstract class MetadataViewer extends AbstractViewer {
             viewer.init();
     }
 
-    @SuppressWarnings("restriction")
     private void selectTab(int tabIdx) {
         Platform.runLater(new Runnable() {
             @Override
@@ -309,7 +307,7 @@ public abstract class MetadataViewer extends AbstractViewer {
             sb.append("<tr><td class=\"s1\">" + LocalizedProperties.getLocalizedField(key) + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
             if (value instanceof Collection) {
                 ArrayList<Object> formattedVals = new ArrayList<>();
-                for (Object v : (Collection) value) {
+                for (Object v : (Collection<?>) value) {
                     formattedVals.add(format(v));
                 }
                 value = formattedVals;

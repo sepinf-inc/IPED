@@ -1,24 +1,19 @@
 package dpf.mt.gpinf.indexer.search.kml;
 
-import java.awt.Dialog.ModalityType;
 import java.awt.FileDialog;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang.ArrayUtils;
 
 import dpf.mt.gpinf.mapas.util.Messages;
 import iped3.IItemId;
 import iped3.desktop.GUIProvider;
-import iped3.desktop.ProgressDialog;
 import iped3.search.IMultiSearchResultProvider;
-import iped3.util.BasicProps;
 
 public class KMLResult {
     private static FileDialog fDialog;

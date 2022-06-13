@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
@@ -211,6 +212,11 @@ public class TextParser extends CancelableWorker implements ITextParser {
         }
     }
 
+    @SuppressWarnings("resource")
+    private FileChannel getFileChannel(File tmpFile) throws FileNotFoundException {
+        return new RandomAccessFile(tmpFile, "rw").getChannel();
+    }
+
     public void parseText() {
         ParsingReader textReader = null;
         try {
@@ -238,7 +244,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
             tmp.dispose();
             File tmpFile = tmp.createTemporaryFile();
-            parsedFile = new RandomAccessFile(tmpFile, "rw").getChannel(); //$NON-NLS-1$
+            parsedFile = getFileChannel(tmpFile);
             tmp.addResource(parsedFile);
 
             String contents, fieldName = IndexItem.CONTENT;

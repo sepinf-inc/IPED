@@ -22,7 +22,7 @@ public class AudioTranscriptTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
         AudioTranscriptConfig transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
 
-        impl = (AbstractTranscriptTask) Class.forName(transcriptConfig.getClassName()).newInstance();
+        impl = (AbstractTranscriptTask) Class.forName(transcriptConfig.getClassName()).getDeclaredConstructor().newInstance();
         impl.setWorker(worker);
         impl.init(configurationManager);
     }

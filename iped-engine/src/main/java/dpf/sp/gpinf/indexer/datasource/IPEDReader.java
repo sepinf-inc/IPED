@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -60,13 +59,13 @@ import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.HashDBLookupTask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.LedCarveTask;
+import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIOInputInputStreamFactory;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.process.task.QRCodeTask;
-import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIOInputInputStreamFactory;
+import dpf.sp.gpinf.indexer.search.Bookmarks;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
-import dpf.sp.gpinf.indexer.search.Bookmarks;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
@@ -76,8 +75,8 @@ import gpinf.dev.data.Item;
 import iped3.ICaseData;
 import iped3.IIPEDSource;
 import iped3.datasource.IDataSource;
-import iped3.search.IIPEDSearcher;
 import iped3.search.IBookmarks;
+import iped3.search.IIPEDSearcher;
 import iped3.search.IMultiBookmarks;
 import iped3.search.SearchResult;
 import iped3.util.BasicProps;
@@ -609,7 +608,7 @@ public class IPEDReader extends DataSourceReader {
 
             // armazena metadados de emails, necessário para emails de PST
             if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))
-                for (String key : ExtraProperties.EMAIL_BASIC_PROPS) {
+                for (String key : ExtraProperties.COMMUNICATION_BASIC_PROPS) {
                     for (String val : doc.getValues(key))
                         evidence.getMetadata().add(key, val);
                 }

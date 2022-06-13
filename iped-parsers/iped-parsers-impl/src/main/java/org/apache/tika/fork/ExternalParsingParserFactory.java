@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -21,6 +20,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class ExternalParsingParserFactory extends ParserFactory {
 
@@ -64,7 +64,7 @@ public class ExternalParsingParserFactory extends ParserFactory {
                     // including metadata populated at end of parsing
                     metadataHandler.emitMetadata();
 
-                    IOUtils.closeQuietly(tis);
+                    IOUtil.closeQuietly(tis);
                 }
             }
         };

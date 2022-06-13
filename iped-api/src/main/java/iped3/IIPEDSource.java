@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
@@ -66,6 +67,8 @@ public interface IIPEDSource extends Closeable {
     int getLuceneId(IItemId itemId);
 
     int getLuceneId(int id);
+    
+    IntStream getLuceneIdStream();
 
     IBookmarks getBookmarks();
 

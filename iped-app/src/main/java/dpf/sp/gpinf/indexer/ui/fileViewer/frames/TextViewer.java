@@ -3,7 +3,6 @@ package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 import java.util.Set;
 
 import dpf.sp.gpinf.indexer.desktop.TextParser;
-import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import iped3.io.IStreamSource;
 
 public class TextViewer extends ATextViewer {

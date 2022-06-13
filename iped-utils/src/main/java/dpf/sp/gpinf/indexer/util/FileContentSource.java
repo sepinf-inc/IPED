@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 
-import iped3.io.SeekableInputStream;
 import iped3.io.IStreamSource;
+import iped3.io.SeekableInputStream;
 
 public class FileContentSource implements IStreamSource {
 

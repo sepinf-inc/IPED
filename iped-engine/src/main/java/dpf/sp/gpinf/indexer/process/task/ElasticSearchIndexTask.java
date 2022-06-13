@@ -61,6 +61,7 @@ import iped3.exception.IPEDException;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
+
 public class ElasticSearchIndexTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ElasticSearchIndexTask.class);

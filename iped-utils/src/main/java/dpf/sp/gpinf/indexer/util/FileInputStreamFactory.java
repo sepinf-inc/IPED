@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 
 public class FileInputStreamFactory extends SeekableInputStreamFactory {

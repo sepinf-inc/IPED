@@ -19,10 +19,10 @@ import org.w3c.dom.Node;
 
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.IStreamSource;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import iped3.IItem;
+import iped3.io.IStreamSource;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -34,12 +34,10 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
-@SuppressWarnings("restriction")
 public class HtmlViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HtmlViewer.class);
 
-    private static final long serialVersionUID = 1L;
     private JFXPanel jfxPanel;
     private static int MAX_SIZE = 10000000;
 

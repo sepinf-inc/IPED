@@ -29,7 +29,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.ItemId;
 import iped3.IItemId;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {

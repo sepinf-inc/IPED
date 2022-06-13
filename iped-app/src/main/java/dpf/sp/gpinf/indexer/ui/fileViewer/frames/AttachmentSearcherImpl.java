@@ -10,10 +10,10 @@ import com.zaxxer.sparsebits.SparseBitSet;
 
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.BookmarksController;
+import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
-import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.util.BasicProps;
@@ -111,7 +111,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
             return;
         }
         selectedHashOrds.clear();
-        for (int luceneId = 0; luceneId < App.get().appCase.getReader().maxDoc(); luceneId++) {
+        App.get().appCase.getLuceneIdStream().forEach(luceneId -> {
             IItemId itemId = App.get().appCase.getItemId(luceneId);
             if (App.get().appCase.getMultiBookmarks().isChecked(itemId)) {
                 int ord = DocValuesUtil.getOrd(sdv, luceneId);
@@ -119,7 +119,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
                     selectedHashOrds.set(ord);
                 }
             }
-        }
+        });
     }
 
 }

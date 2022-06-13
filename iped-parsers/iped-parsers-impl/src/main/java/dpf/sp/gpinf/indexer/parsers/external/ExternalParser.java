@@ -86,7 +86,12 @@ public class ExternalParser extends AbstractParser {
          * A null consumer
          */
         LineConsumer NULL = new LineConsumer() {
-            @Override
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
             public void consume(String line) {
                 // ignores
             }
@@ -462,10 +467,10 @@ public class ExternalParser extends AbstractParser {
         Thread t = new Thread() {
             public void run() {
                 try {
-                    IOUtils.copy(stream, new NullOutputStream());
+                    IOUtils.copy(stream, NullOutputStream.NULL_OUTPUT_STREAM);
                 } catch (IOException e) {
                 } finally {
-                    IOUtils.closeQuietly(stream);
+                    IOUtil.closeQuietly(stream);
                 }
             }
         };
@@ -502,7 +507,7 @@ public class ExternalParser extends AbstractParser {
         } catch (IOException e) {
             // Ignore
         } finally {
-            IOUtils.closeQuietly(stream);
+            IOUtil.closeQuietly(stream);
         }
     }
 

@@ -86,4 +86,8 @@ class DenseEdgeList implements EdgeList {
 
         return result;
     }
+
+    public boolean isWild() {
+        return wild;
+    }
 }

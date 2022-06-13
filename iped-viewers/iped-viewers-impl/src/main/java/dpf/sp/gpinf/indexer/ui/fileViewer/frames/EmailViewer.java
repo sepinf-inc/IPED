@@ -2,7 +2,6 @@ package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,8 +51,6 @@ import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.RFC822Parser;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
@@ -66,12 +63,6 @@ import iped3.io.IStreamSource;
 import iped3.util.ExtraProperties;
 
 public class EmailViewer extends HtmlViewer {
-
-    private static Logger LOGGER = LoggerFactory.getLogger(EmailViewer.class);
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1L;
 
     MailContentHandler mch;
     MimeStreamParser parser;

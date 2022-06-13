@@ -45,11 +45,11 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.utils.ProcessUtils;
-import org.apache.tika.utils.SystemUtils;
 import org.apache.tika.sax.AbstractRecursiveParserWrapperHandler;
 import org.apache.tika.sax.RecursiveParserWrapperHandler;
 import org.apache.tika.sax.TeeContentHandler;
+import org.apache.tika.utils.ProcessUtils;
+import org.apache.tika.utils.SystemUtils;
 import org.xml.sax.ContentHandler;
 
 import dpf.sp.gpinf.indexer.parsers.util.ComputeThumb;

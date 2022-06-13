@@ -1,7 +1,5 @@
 package dpf.sp.gpinf.indexer.lucene.analysis;
 
-import java.util.Set;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.FilteringTokenFilter;
 import org.apache.lucene.analysis.TokenStream;
@@ -18,7 +16,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
  */
 public class StandardASCIIAnalyzer extends Analyzer {
 
-    private Set<?> stopSet;
+    // private Set<?> stopSet;
 
     /**
      * Specifies whether deprecated acronyms should be replaced with HOST type. See

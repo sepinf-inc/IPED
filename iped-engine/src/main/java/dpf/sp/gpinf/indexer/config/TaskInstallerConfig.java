@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
@@ -44,8 +45,7 @@ public class TaskInstallerConfig implements Configurable<List<String>> {
         for (String xml : xmls) {
             try {
                 loadTasks(xml, tasks);
-            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException
-                    | ParserConfigurationException | SAXException | IOException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
@@ -68,8 +68,9 @@ public class TaskInstallerConfig implements Configurable<List<String>> {
         this.xmls.add(new String(bytes, StandardCharsets.UTF_8));
     }
 
-    private void loadTasks(String xml, Map<String, AbstractTask> tasks) throws InstantiationException,
-            IllegalAccessException, IOException, ClassNotFoundException, ParserConfigurationException, SAXException {
+	private void loadTasks(String xml, Map<String, AbstractTask> tasks) throws InstantiationException,
+			IllegalAccessException, IOException, ClassNotFoundException, ParserConfigurationException, SAXException,
+			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 
         DocumentBuilder dombuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         Document dom = dombuilder.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
@@ -79,7 +80,7 @@ public class TaskInstallerConfig implements Configurable<List<String>> {
             Node attr = node.getAttributes().getNamedItem("class"); //$NON-NLS-1$
             if (attr != null) {
                 String className = attr.getNodeValue();
-                tasks.putIfAbsent(className, (AbstractTask) Class.forName(className).newInstance());
+                tasks.putIfAbsent(className, (AbstractTask) Class.forName(className).getDeclaredConstructor().newInstance());
             }
             attr = node.getAttributes().getNamedItem("script"); //$NON-NLS-1$
             if (attr != null) {

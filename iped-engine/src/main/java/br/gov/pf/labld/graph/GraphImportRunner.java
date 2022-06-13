@@ -1,11 +1,9 @@
 package br.gov.pf.labld.graph;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,7 +17,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.IOUtils;
 import org.neo4j.cli.AdminTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

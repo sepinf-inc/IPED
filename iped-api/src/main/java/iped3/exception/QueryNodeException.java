@@ -11,7 +11,9 @@ package iped3.exception;
  */
 public class QueryNodeException extends Exception {
 
-    public QueryNodeException(Exception cause) {
+    private static final long serialVersionUID = 1L;
+
+	public QueryNodeException(Exception cause) {
         super(cause);
     }
 

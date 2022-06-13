@@ -44,7 +44,11 @@ import iped3.util.ExtraProperties;
 
 public class GeofileParser extends AbstractParser {
 
-    public static final MediaType GPX_MIME = MediaType.application("gpx");
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	public static final MediaType GPX_MIME = MediaType.application("gpx");
     public static final MediaType KML_MIME = MediaType.application("vnd.google-earth.kml+xml");
     public static final MediaType JSON_GOOGLE_MIME = MediaType.application("json-location");
 
@@ -65,7 +69,7 @@ public class GeofileParser extends AbstractParser {
         File file = tis.getFile();
 
         String resourceName = metadata.get("resourceName");
-        String ext = resourceName.substring(resourceName.lastIndexOf("."));
+        // String ext = resourceName.substring(resourceName.lastIndexOf("."));
         String mimeType = metadata.get("Indexer-Content-Type");
 
         try {

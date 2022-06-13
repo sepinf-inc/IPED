@@ -1,11 +1,9 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import dpf.sp.gpinf.indexer.util.Util;
 import iped3.search.IBookmarks;
 
 public class SaveStateThread extends Thread {

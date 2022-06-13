@@ -143,7 +143,7 @@ public class GraphGenerator {
                     newGroup.setProperty("name", currentName);
                     newGroup.setProperty("isGroup", true);
 
-                    List<Long> groupedIds = evidences.values().stream().map(e -> new Long(e.getId()))
+                    List<Long> groupedIds = evidences.values().stream().map(e -> e.getId())
                             .collect(Collectors.toList());
                     newGroup.setProperty("groupedIds", (Long[]) groupedIds.toArray(new Long[groupedIds.size()]));
 

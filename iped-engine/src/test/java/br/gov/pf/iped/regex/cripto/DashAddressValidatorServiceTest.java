@@ -1,10 +1,9 @@
 package br.gov.pf.iped.regex.cripto;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
-
-import br.gov.pf.iped.regex.cripto.BCHAddressValidatorService;
 
 public class DashAddressValidatorServiceTest {
 

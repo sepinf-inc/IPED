@@ -76,7 +76,7 @@ class DBFHeader {
         languageDriver = dataInput.readByte(); /* 29 */
         reserv4 = Utils.readLittleEndianShort(dataInput); /* 30-31 */
 
-        Vector v_fields = new Vector();
+        Vector<DBFField> v_fields = new Vector<>();
 
         DBFField field = DBFField.createField(dataInput); /* 32 each */
         while (field != null) {

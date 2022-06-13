@@ -1,16 +1,21 @@
 package dpf.sp.gpinf.carving;
 
-import dpf.sp.gpinf.carver.api.CarverType;
-import dpf.sp.gpinf.carver.api.Hit;
-import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
-import iped3.IItem;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.io.*;
-import java.security.cert.Certificate;
+
+import dpf.sp.gpinf.carver.api.CarverType;
+import dpf.sp.gpinf.carver.api.Hit;
+import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
+import iped3.IItem;
 
 public class JSCarver extends DefaultCarver {
     ScriptEngine engine;
@@ -48,7 +53,7 @@ public class JSCarver extends DefaultCarver {
     public void validateCarvedObject(IItem parentEvidence, Hit header, long length)
             throws InvalidCarvedObjectException {
         try {
-            Certificate cert = (Certificate) inv.invokeFunction("validateCarvedObject", parentEvidence, header, length);
+            inv.invokeFunction("validateCarvedObject", parentEvidence, header, length);
 
         } catch (ScriptException e) {
             throw new InvalidCarvedObjectException(e);

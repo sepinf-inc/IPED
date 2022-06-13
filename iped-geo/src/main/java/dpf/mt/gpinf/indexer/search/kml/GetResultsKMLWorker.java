@@ -10,6 +10,7 @@ import java.util.TimeZone;
 import java.util.function.Consumer;
 
 import javax.swing.JProgressBar;
+import javax.swing.SortOrder;
 
 import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Metadata;
@@ -18,7 +19,6 @@ import dpf.mt.gpinf.mapas.util.Messages;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.IItemId;
-import iped3.desktop.ProgressDialog;
 import iped3.search.IIPEDSearcher;
 import iped3.search.IMultiSearchResult;
 import iped3.search.IMultiSearchResultProvider;
@@ -64,7 +64,7 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResul
         boolean descendingOrder = false;
         try {
             coluna = app.getSortColumn();
-            descendingOrder = app.getSortOrder().equals(app.getSortOrder().DESCENDING);
+            descendingOrder = app.getSortOrder().equals(SortOrder.DESCENDING);
         } catch (Exception ex) {
             coluna = BasicProps.ID;
             descendingOrder = false;

@@ -401,7 +401,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 }
                 // must reset docValues to call getOrd again
                 sdv = reader.getSortedDocValues(BasicProps.HASH);
-                for (int doc = 0; doc < reader.maxDoc(); doc++) {
+                Iterator<Integer> docIt = ipedCase.getLuceneIdStream().iterator();
+                while (docIt.hasNext()) {
+                	int doc = docIt.next();
                     int ord = DocValuesUtil.getOrd(sdv, doc);
                     if (ord != -1 && hashOrd.get(ord) && !luceneIds.get(doc)) {
                         IItemId itemId = ipedCase.getItemId(doc);
@@ -513,13 +515,14 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             for (IPEDSource source : app.appCase.getAtomicSources()) {
                 BitSet ids = new BitSet();
                 // we must add items in index order
-                for (int luceneId = 0; luceneId < source.getAtomicReader().maxDoc(); luceneId++) {
+                final int finalSourceId = sourceId;
+                source.getLuceneIdStream().forEach(luceneId -> {
                     int id = source.getId(luceneId);
                     if (source.getBookmarks().isChecked(id) && !ids.get(id)) {
-                        uniqueSelectedIds.add(new ItemId(sourceId, id));
+                        uniqueSelectedIds.add(new ItemId(finalSourceId, id));
                         ids.set(id);
                     }
-                }
+                });
                 sourceId++;
             }
         } else if (highlighted.isSelected()) {
@@ -614,7 +617,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             return;
         }
 
-        KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers(), true);
+        KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiersEx(), true);
 
         if (e.getSource() == list) {
             if (list.getSelectedIndices().length != 1) {
@@ -622,7 +625,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 e.consume();
                 return;
             }
-            if ((e.getModifiers() & KeyEvent.ALT_MASK) != 0) {
+            if ((e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert2"));
                 e.consume();
                 return;
@@ -659,7 +662,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             }
             ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
             bookmark(uniqueSelectedIds, Collections.singletonList(bookmark),
-                    (e.getModifiers() & KeyEvent.ALT_MASK) == 0);
+                    (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) == 0);
             e.consume();
         }
 
@@ -667,7 +670,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     // alt key remove from bookmark
     private KeyStroke getRemoveKey(KeyStroke k) {
-        return KeyStroke.getKeyStroke(k.getKeyCode(), KeyEvent.ALT_MASK, true);
+        return KeyStroke.getKeyStroke(k.getKeyCode(), KeyEvent.ALT_DOWN_MASK, true);
     }
 
     private void showMessage(String msg) {
@@ -676,7 +679,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     
     public boolean hasSingleKeyShortcut() {
        for (KeyStroke k : keystrokeToBookmark.keySet()) {
-           if ((k.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK | InputEvent.SHIFT_MASK)) == 0) {
+           if ((k.getModifiers() & (InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
                int c = k.getKeyCode();
                if ((c >= KeyEvent.VK_0 && c <= KeyEvent.VK_9) || (c >= KeyEvent.VK_A && c <= KeyEvent.VK_Z)) {
                    return true;
