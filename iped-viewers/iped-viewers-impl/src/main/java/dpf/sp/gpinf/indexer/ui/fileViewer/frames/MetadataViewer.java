@@ -9,6 +9,7 @@ import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -16,7 +17,6 @@ import java.util.Set;
 
 import javax.swing.UIManager;
 
-import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
@@ -349,7 +349,7 @@ public abstract class MetadataViewer extends AbstractViewer {
         if (value instanceof Number) {
             return df.format(Double.valueOf(((Number) value).doubleValue()));
         } else if (value instanceof byte[]) {
-            return new String(Hex.encodeHex((byte[]) value));
+            return Base64.getEncoder().encodeToString((byte[]) value);
         }
         return value.toString();
     }
