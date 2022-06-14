@@ -254,7 +254,7 @@ public class LinkExtractor implements Closeable {
             sql = sql_ios;
         }
         return sql;
-    
+
 
     }
 
