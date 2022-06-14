@@ -894,7 +894,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (m.getMediaSize() != 0) {
                 meta.set("mediaSize", Long.toString(m.getMediaSize()));
             }
-            if (m.getMediaQuery() != null) {
+            if (m.getMediaQuery() != null && m.getMediaSize() > 2) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery())); // $NON-NLS-1$
             }
