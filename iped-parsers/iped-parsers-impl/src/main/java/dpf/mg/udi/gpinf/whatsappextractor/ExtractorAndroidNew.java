@@ -306,7 +306,7 @@ public class ExtractorAndroidNew extends Extractor {
     private static final String SELECT_MESSAGES = "select  m._id AS id,cv._id as chatId, cv.raw_string_jid "
             + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
             + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
-            + " mm.mime_type as mediaMime, mm.file_size as mediaSize, media_name as mediaName, "
+            + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
             + " m.message_type as messageType,   latitude,  longitude, mm.media_duration,"
             + " null as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData, ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
             + " from message m  inner join chat_view cv on m.chat_row_id=cv._id left join message_media mm on mm.message_row_id=m._id"
