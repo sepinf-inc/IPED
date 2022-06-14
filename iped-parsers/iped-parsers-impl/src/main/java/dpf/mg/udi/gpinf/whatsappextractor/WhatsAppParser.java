@@ -475,16 +475,16 @@ public class WhatsAppParser extends SQLite3DBParser {
                         wcontext.getItem().getTempFile(), context, downloadedFiles));
             }
             if (futures.size() > 0) {
+                handler.startDocument();
                 synchronized (handlerToUpdate) {
-                    handler.startDocument();
                     handlerToUpdate.add(handler);
                 }
                 waitDownloads(futures);
 
                 synchronized (handlerToUpdate) {
                     handlerToUpdate.remove(handler);
-                    handler.endDocument();
                 }
+                handler.endDocument();
             }
             if (downloadedFiles.get() > 0) {
                 logger.info("Downloaded {} files from {}", downloadedFiles.get(), wcontext.getItem().getName());
