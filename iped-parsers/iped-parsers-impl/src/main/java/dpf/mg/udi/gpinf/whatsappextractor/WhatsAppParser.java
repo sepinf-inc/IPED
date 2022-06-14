@@ -259,12 +259,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                 parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
             }
 
-
-
         } catch (Exception e) {
             // log all whatsapp exceptions
             e.printStackTrace();
-            throw new IOException(e);
+            throw e;
         }
 
     }
