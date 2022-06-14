@@ -35,10 +35,6 @@ import iped3.desktop.util.Messages;
 
 public class ProgressDialog implements ActionListener, Runnable {
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
     private static long DEFAULT_MILLIS_TO_POPUP = 500;
 
     private long millisToPopup;
@@ -55,27 +51,27 @@ public class ProgressDialog implements ActionListener, Runnable {
 
     private volatile boolean canceled = false, closed = false;
 
-    private CancelableWorker task;
+    private CancelableWorker<?, ?> task;
 
     private int length = 0;
     private int extraWidth = 0;
 
-    public void setTask(CancelableWorker task) {
+    public void setTask(CancelableWorker<?, ?> task) {
         this.task = task;
     }
 
-    public ProgressDialog(Component parent, CancelableWorker task) {
+    public ProgressDialog(Component parent, CancelableWorker<?, ?> task) {
         this(parent, task, false);
     }
 
-    public ProgressDialog(Component parent, CancelableWorker task, int lines) {
+    public ProgressDialog(Component parent, CancelableWorker<?, ?> task, int lines) {
         this(parent, task, false);
         if (lines <= 0)
             lines = 1;
         this.length = 20 * lines;
     }
 
-    public ProgressDialog(Component parent, CancelableWorker task, boolean indeterminate) {
+    public ProgressDialog(Component parent, CancelableWorker<?, ?> task, boolean indeterminate) {
         this(parent, task, indeterminate, DEFAULT_MILLIS_TO_POPUP, Dialog.ModalityType.MODELESS);
     }
 
@@ -89,7 +85,7 @@ public class ProgressDialog implements ActionListener, Runnable {
             });
     }
 
-    public ProgressDialog(Component parent, CancelableWorker task, boolean indeterminate, long millisToPopup,
+    public ProgressDialog(Component parent, CancelableWorker<?, ?> task, boolean indeterminate, long millisToPopup,
             Dialog.ModalityType modal) {
         this.parent = parent;
         this.task = task;

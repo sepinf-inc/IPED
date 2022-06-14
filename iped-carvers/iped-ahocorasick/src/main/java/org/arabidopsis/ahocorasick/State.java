@@ -41,7 +41,7 @@ class State {
     // sparse edge representation. I did a few tests, and there's a
     // local minima here. We may want to choose a more sophisticated
     // strategy.
-    private static final int THRESHOLD_TO_USE_SPARSE = Integer.MAX_VALUE;
+    protected static final int THRESHOLD_TO_USE_SPARSE = Integer.MAX_VALUE;
 
     private int depth;
     public DenseEdgeList edgeList;

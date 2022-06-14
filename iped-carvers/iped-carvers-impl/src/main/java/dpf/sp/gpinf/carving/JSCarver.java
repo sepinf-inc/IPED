@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.security.cert.Certificate;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -54,7 +53,7 @@ public class JSCarver extends DefaultCarver {
     public void validateCarvedObject(IItem parentEvidence, Hit header, long length)
             throws InvalidCarvedObjectException {
         try {
-            Certificate cert = (Certificate) inv.invokeFunction("validateCarvedObject", parentEvidence, header, length);
+            inv.invokeFunction("validateCarvedObject", parentEvidence, header, length);
 
         } catch (ScriptException e) {
             throw new InvalidCarvedObjectException(e);

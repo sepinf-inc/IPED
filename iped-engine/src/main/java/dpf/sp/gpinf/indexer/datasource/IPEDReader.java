@@ -608,7 +608,7 @@ public class IPEDReader extends DataSourceReader {
 
             // armazena metadados de emails, necessário para emails de PST
             if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))
-                for (String key : ExtraProperties.EMAIL_BASIC_PROPS) {
+                for (String key : ExtraProperties.COMMUNICATION_BASIC_PROPS) {
                     for (String val : doc.getValues(key))
                         evidence.getMetadata().add(key, val);
                 }

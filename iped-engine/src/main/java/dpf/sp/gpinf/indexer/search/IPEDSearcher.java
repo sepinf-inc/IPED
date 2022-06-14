@@ -30,8 +30,6 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.lucene.NoScoringCollector;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -41,8 +39,6 @@ import iped3.search.IIPEDSearcher;
 import iped3.search.SearchResult;
 
 public class IPEDSearcher implements IIPEDSearcher {
-
-    private static Logger LOGGER = LoggerFactory.getLogger(IPEDSearcher.class);
 
     public static final int MAX_SIZE_TO_SCORE = 1000000;
 

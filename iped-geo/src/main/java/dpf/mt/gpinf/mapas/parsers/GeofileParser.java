@@ -69,7 +69,7 @@ public class GeofileParser extends AbstractParser {
         File file = tis.getFile();
 
         String resourceName = metadata.get("resourceName");
-        String ext = resourceName.substring(resourceName.lastIndexOf("."));
+        // String ext = resourceName.substring(resourceName.lastIndexOf("."));
         String mimeType = metadata.get("Indexer-Content-Type");
 
         try {

@@ -21,7 +21,7 @@ import iped3.desktop.ProgressDialog;
  * Classe para descompactar o aplicativo LibreOffice
  *
  */
-public class LOExtractor extends CancelableWorker {
+public class LOExtractor extends CancelableWorker<Object, Object> {
 
     private File output, input;
     private ProgressDialog progressMonitor;

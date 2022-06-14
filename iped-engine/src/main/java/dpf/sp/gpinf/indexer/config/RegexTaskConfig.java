@@ -16,7 +16,7 @@ import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.exception.IPEDException;
 
-public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<?>>> implements Externalizable {
+public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<dpf.sp.gpinf.indexer.config.RegexTaskConfig.RegexEntry>>> implements Externalizable {
 
     /**
      * 
@@ -96,14 +96,14 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<?>>> 
     }
 
     @Override
-    public Pair<Boolean, List<?>> getConfiguration() {
+    public Pair<Boolean, List<RegexEntry>> getConfiguration() {
         return Pair.of(formatRegexMatches, regexList);
     }
 
     @Override
-    public void setConfiguration(Pair<Boolean, List<?>> config) {
+    public void setConfiguration(Pair<Boolean, List<RegexEntry>> config) {
         formatRegexMatches = config.getLeft();
-        regexList = (List<RegexEntry>) config.getRight();
+        regexList = config.getRight();
     }
 
     @Override

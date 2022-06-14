@@ -16,7 +16,7 @@ import java.util.TimeZone;
  */
 public class FileHeader {
 
-    private static final int FILESIZE_CODE = 3;
+    // private static final int FILESIZE_CODE = 3;
     private static final int ACCESSED_DATE_CODE = 7;
     private static final int CREATED_DATE_CODE = 8;
     private static final int MODIFIED_DATE_CODE = 9;

@@ -48,6 +48,9 @@ public abstract class MetadataViewer extends AbstractViewer {
     private TabPane tabPane;
     private JFXPanel jfxPanel;
     private List<HtmlViewer> htmlViewers = new ArrayList<>();
+    
+    private static final int minLenToCollapse = 128;
+    private static final int collapsedSubstringLen = 32;
 
     public static class FieldComparator implements Comparator<String> {
         @Override
@@ -205,6 +208,7 @@ public abstract class MetadataViewer extends AbstractViewer {
         sb.append("background-color:").append(UiUtil.getHexRGB(color3)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append("border: 1px solid ").append(borderColor).append("; word-break: break-all; word-wrap: break-word; text-align:left;}\n"); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append("textarea {readonly: readonly; height: 60px; width: 100%; resize: none;}\n"); //$NON-NLS-1$
+        sb.append("*:focus {outline: none;}\n"); //$NON-NLS-1$
         sb.append("</style></head>\n"); //$NON-NLS-1$
         sb.append("<body style=\"");//$NON-NLS-1$
 
@@ -241,12 +245,12 @@ public abstract class MetadataViewer extends AbstractViewer {
             sb.append("<tr><td class=\"s1\">"); //$NON-NLS-1$
             sb.append(LocalizedProperties.getLocalizedField(meta));
             sb.append("</td><td class=\"s2\">"); //$NON-NLS-1$
+            String val = null;
             if (!metadata.isMultiValued(meta)) {
-                String val = metadata.get(meta);
+                val = metadata.get(meta);
                 if (isNumeric(meta)) {
                     val = df.format(Double.valueOf(val));
                 }
-                sb.append(SimpleHTMLEncoder.htmlEncode(val));
             } else {
                 String[] vals = metadata.getValues(meta);
                 if (isNumeric(meta)) {
@@ -254,8 +258,9 @@ public abstract class MetadataViewer extends AbstractViewer {
                         vals[i] = df.format(Double.valueOf(vals[i]));
                     }
                 }
-                sb.append(SimpleHTMLEncoder.htmlEncode(Arrays.asList(vals).toString()));
+                val = Arrays.asList(vals).toString();
             }
+            appendCollapsibleString(sb, val);
             sb.append("</td></tr>"); //$NON-NLS-1$
         }
         sb.append("</table>"); //$NON-NLS-1$
@@ -304,17 +309,39 @@ public abstract class MetadataViewer extends AbstractViewer {
 
     private void fillProp(StringBuilder sb, String key, Object value) {
         if (value != null && !value.toString().isEmpty()) {
-            sb.append("<tr><td class=\"s1\">" + LocalizedProperties.getLocalizedField(key) + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
+            sb.append("<tr><td class=\"s1\">");
+            sb.append(LocalizedProperties.getLocalizedField(key));
+            sb.append("</td>");
+
+            String val = null;
             if (value instanceof Collection) {
                 ArrayList<Object> formattedVals = new ArrayList<>();
-                for (Object v : (Collection) value) {
+                for (Object v : (Collection<?>) value) {
                     formattedVals.add(format(v));
                 }
-                value = formattedVals;
+                val = formattedVals.toString();
             } else {
-                value = format(value);
+                val = format(value);
             }
-            sb.append("<td class=\"s2\">" + SimpleHTMLEncoder.htmlEncode(value.toString()) + "</td></tr>"); //$NON-NLS-1$ //$NON-NLS-2$
+
+            sb.append("<td class=\"s2\">");
+            appendCollapsibleString(sb, val);
+            sb.append("</td></tr>");
+        }
+    }
+    
+    private void appendCollapsibleString(StringBuilder sb, String str) {
+        if (str.length() >= minLenToCollapse) {
+            sb.append("<details tabindex=\"-1\"><summary><b>[");
+            sb.append(df.format(str.length()));
+            sb.append(" chars]</b> ");
+            sb.append(SimpleHTMLEncoder.htmlEncode(str.substring(0, collapsedSubstringLen)));
+            sb.append("<b>...</b>");
+            sb.append("</summary><span>");
+            sb.append(SimpleHTMLEncoder.htmlEncode(str));
+            sb.append("</span></details>");
+        } else {
+            sb.append(SimpleHTMLEncoder.htmlEncode(str));
         }
     }
 

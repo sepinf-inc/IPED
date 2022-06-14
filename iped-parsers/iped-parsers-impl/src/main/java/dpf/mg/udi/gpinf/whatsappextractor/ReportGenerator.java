@@ -169,7 +169,7 @@ public class ReportGenerator {
         switch (message.getMessageType()) {
             case UNKNOWN_MESSAGE:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println("<i>" + Messages.getString("WhatsAppReport.UnknwonMessage") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                out.println("<i>" + Messages.getString("WhatsAppReport.UnknwonMessage") + " [ID: " + message.getId() + "]</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 break;
             case ENCRIPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -351,7 +351,9 @@ public class ReportGenerator {
                     case CONTACT_MESSAGE:
                         out.println("<b>" + Messages.getString("WhatsAppReport.Contact") + "</b><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         for (String c : message.getVcards()) {
-                            VCardParser.printHtmlFromString(out, c);
+                            if (c != null) {
+                                VCardParser.printHtmlFromString(out, c);
+                            }
                         }
                         break;
                     case DELETED_MESSAGE:
@@ -512,6 +514,9 @@ public class ReportGenerator {
                     message.addChildPornSets(ChildPornHashLookup.lookupHash(mediaItem.getHash()));
                 }
                 break;
+        }
+        if (message.getAddOns().size() > 0) {
+            // toDo implements a vizualization for the add ons like thumbs up
         }
         if (!message.getChildPornSets().isEmpty()) {
             out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "

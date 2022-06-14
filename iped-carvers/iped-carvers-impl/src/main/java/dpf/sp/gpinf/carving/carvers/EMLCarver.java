@@ -38,7 +38,7 @@ public class EMLCarver extends DefaultCarver {
         }
         if (firstHead != null) {
             headersWaitingFooters.addLast(firstHead);
-            IItem e = carveFromFooter(parentEvidence, lastFooter);
+            carveFromFooter(parentEvidence, lastFooter);
         }
         lastFooter = null;
     }

@@ -31,10 +31,7 @@ import iped3.io.IStreamSource;
 public class IcePDFViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IcePDFViewer.class);
-    /**
-     *
-     */
-    private static final long serialVersionUID = -4538119351386926692L;
+
     private volatile SwingController pdfController;
     private volatile JPanel viewerPanel;
     private volatile JLabel labelMsg;

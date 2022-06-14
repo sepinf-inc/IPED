@@ -47,7 +47,7 @@ public class QRCodeTask extends AbstractTask {
 
     private static final String QRCODE_TEXT = "QRCodeText";
     private static final String QRCODE_HEX = "QRCodeHex";
-    private static final String QRCODE_TYPE = "QRCodeType";
+    // private static final String QRCODE_TYPE = "QRCodeType";
     private static final String QRCODE_POINTS = "QRCodePoints";
 
     private static final AtomicLong totalImagesProcessed = new AtomicLong();

@@ -337,7 +337,7 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
     }
 
     @Override
-    public TopDocs searchNearestVectors(String field, float[] target, int k, Bits acceptDocs) throws IOException {
+    public TopDocs searchNearestVectors(String field, float[] target, int k, Bits acceptDocs, int visitedLimit) throws IOException {
         ensureOpen();
         int size = in.leaves().size();
         TopDocs[] docsPerLeaf = new TopDocs[size];
@@ -360,7 +360,7 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
                 }
             }
 
-            docsPerLeaf[i] = reader.searchNearestVectors(field, target, k, leafBits);
+            docsPerLeaf[i] = reader.searchNearestVectors(field, target, k, leafBits, visitedLimit);
             for (ScoreDoc doc : docsPerLeaf[i].scoreDocs) {
                 doc.doc += context.docBase;
             }

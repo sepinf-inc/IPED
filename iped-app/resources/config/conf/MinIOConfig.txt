@@ -14,3 +14,7 @@ port = 9000
 # max size (bytes) of files to be included in the zip file
 zipFilesMaxSize = 32768
 
+# Update case item content internal references to MinIO server.
+# If true, the case will depend on MinIO to access file contents.
+# If false, the case won't depend on MinIO, even if files were exported to it.
+updateRefsToMinIO = false

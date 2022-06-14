@@ -2,8 +2,8 @@ package dpf.sp.gpinf.indexer.process.task.regex;
 
 import java.io.IOException;
 
-import org.elasticsearch.common.xcontent.ToXContentFragment;
-import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.opensearch.common.xcontent.ToXContentFragment;
+import org.opensearch.common.xcontent.XContentBuilder;
 
 public class RegexHits implements ToXContentFragment {
 

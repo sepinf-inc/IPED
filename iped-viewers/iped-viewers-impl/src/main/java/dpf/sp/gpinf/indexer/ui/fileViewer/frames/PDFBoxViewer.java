@@ -18,7 +18,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Set;
@@ -36,11 +35,8 @@ import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 
-import org.apache.pdfbox.cos.COSObject;
 import org.apache.pdfbox.io.MemoryUsageSetting;
-import org.apache.pdfbox.pdmodel.DefaultResourceCache;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
@@ -49,9 +45,8 @@ import iped3.io.IStreamSource;
 
 public class PDFBoxViewer extends AbstractViewer {
 
-    private static final long serialVersionUID = -7364831780786494299L;
-
-    private final JLabel pageCounter1 = new JLabel(Messages.getString("TiffViewer.Page")); //$NON-NLS-1$
+    // private final JLabel pageCounter1 = new
+    // JLabel(Messages.getString("TiffViewer.Page")); //$NON-NLS-1$
     private JTextField pageCounter2 = new JTextField(3);
     private JLabel pageCounter3 = new JLabel(" / "); //$NON-NLS-1$
 
@@ -70,7 +65,7 @@ public class PDFBoxViewer extends AbstractViewer {
     volatile private int currentPage = 0;
     volatile private int numPages = 0;
     volatile private double zoomFactor = 1;
-    volatile private int rotation = 0;
+    // volatile private int rotation = 0;
     volatile private boolean painting = false;
 
     static {
@@ -82,13 +77,6 @@ public class PDFBoxViewer extends AbstractViewer {
         }
         // Faster rendering in some cases with a lot of images per page
         System.setProperty("org.apache.pdfbox.rendering.UsePureJavaCMYKConversion", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-    }
-
-    private class NoResourceCache extends DefaultResourceCache {
-        @Override
-        public void put(COSObject indirect, PDXObject xobject) throws IOException {
-            // do not cache images to prevent OutOfMemory
-        }
     }
 
     @Override
@@ -187,7 +175,7 @@ public class PDFBoxViewer extends AbstractViewer {
 
         currentPage = 1;
         numPages = 0;
-        rotation = 0;
+        // rotation = 0;
         image = null;
 
         if (content != currentContent && currentContent != null)
