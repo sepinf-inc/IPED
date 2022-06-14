@@ -63,7 +63,7 @@ public class Message {
     private Set<String> childPornSets = new HashSet<>();
     private IItemBase mediaItem = null;
     private String mediaQuery = null;
-    private List<MessageAddOn> AddOns = new ArrayList<>();
+    private List<MessageAddOn> addOns = new ArrayList<>();
 
     static {
         try {
@@ -408,11 +408,11 @@ public class Message {
     }
 
     public boolean addMessageAddOn(MessageAddOn m) {
-        return AddOns.add(m);
+        return addOns.add(m);
     }
 
     public List<MessageAddOn> getAddOns() {
-        return AddOns;
+        return addOns;
     }
 
     public static enum MessageType {
