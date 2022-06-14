@@ -13,6 +13,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import dpf.sp.gpinf.indexer.parsers.util.ComputeThumb;
+import iped3.util.ExtraProperties;
 import junit.framework.TestCase;
 
 public class PDFOCRTextParserTest extends TestCase {
@@ -170,10 +172,13 @@ public class PDFOCRTextParserTest extends TestCase {
     @Test
     public void testPDFOCRTextImagesEmbbedHandler() throws IOException, SAXException, TikaException {
 
+        System.setProperty(PDFOCRTextParser.CREATE_THUMB, "true");
+        System.setProperty(PDFOCRTextParser.THUMB_SIZE,"600");
         PDFOCRTextParser parser = new PDFOCRTextParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
+        context.set(ComputeThumb.class, new ComputeThumb());
         try (InputStream stream = getStream("test-files/test_pdfImages.pdf")) {
             parser.parse(stream, handler, metadata, context);
 
@@ -182,6 +187,32 @@ public class PDFOCRTextParserTest extends TestCase {
             assertTrue(hts.contains("finite polygon size (see Figure 1)."));
             assertTrue(hts.contains("William T. Freeman, Thouis R. Jones, and"));
             assertTrue(hts.contains("To generate our training set, we start from a collec"));
+        }
+    }
+
+
+    @Test
+    public void testPDFOCRTextThumbnail() throws IOException, SAXException, TikaException {
+
+        System.setProperty(PDFOCRTextParser.CREATE_THUMB, "true");
+        System.setProperty(PDFOCRTextParser.THUMB_SIZE,"600");
+        PDFOCRTextParser parser = new PDFOCRTextParser();
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        ParseContext context = new ParseContext();
+        context.set(ComputeThumb.class, new ComputeThumb());
+        try (InputStream stream = getStream("test-files/test_pdfImages.pdf")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String base64Thumb = metadata.get(ExtraProperties.THUMBNAIL_BASE64);
+
+            assertTrue(base64Thumb != null);
+            // assertTrue(base64Thumb.contains("/9j/4AAQSkZJRgABAgAAAQABAAD/2wBDAAgGBgcGBQgHB"));
+            // assertTrue(base64Thumb.contains("+Ff/JL/AA9/16D+ZrsK4/4V/wDJL/D3/XoP5muwoAKKK"));
+            // assertTrue(base64Thumb.contains("eU2D39qT/AIS+NC5ktwcRh9kb7iOZcjPGWPlYC46nr6A"));
+            // assertTrue(base64Thumb.contains("BUhzIAMryuXJwc4zxigCsulaFeC3ujebjKRLF5jJ829W"));
+            // assertTrue(base64Thumb.contains("PC/jx4l0bxLrekTaNqMN7HDbOsjREkKS2cUUUUAf/9k="));
+
         }
     }
 
