@@ -115,7 +115,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
 
         SQLiteContainerDetector detector = new SQLiteContainerDetector();
         Metadata metadata = new Metadata();
-        try (InputStream stream = getStream("test-files/test_whatsappMsgStore.db")) {
+        try (InputStream stream = getStream("test-files/test_whatsAppMsgStore.db")) {
             TikaInputStream tis = TikaInputStream.get(stream);
             MediaType assertion = detector.detect(tis, metadata);
             assertEquals(assertion.toString(), "application/x-whatsapp-db");
