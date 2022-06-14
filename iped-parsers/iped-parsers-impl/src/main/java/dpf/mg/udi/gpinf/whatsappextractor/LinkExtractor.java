@@ -130,6 +130,9 @@ public class LinkExtractor implements Closeable {
         if (mediakey != null) {
             return deriveCipherKey(mediakey, mediaType);
         }
+        if (rawData == null) {
+            return null;
+        }
         try {
             ByteArrayInputStream bis = new ByteArrayInputStream(rawData);
             ObjectInput in = new ObjectInputStream(bis);
