@@ -97,4 +97,76 @@ public class SQLiteContainerDetectorTest extends TestCase {
 
         }
     }
+
+    @Test
+    public void testSQLiteContainerDetectorGDriveSnapshot() throws IOException, SAXException, TikaException {
+        
+        SQLiteContainerDetector detector = new SQLiteContainerDetector();
+        Metadata metadata = new Metadata();
+        try (InputStream stream = getStream("test-files/test_snapshot.db")) {
+            TikaInputStream tis = TikaInputStream.get(stream);
+            MediaType assertion = detector.detect(tis, metadata);
+            assertEquals(assertion.toString(), "application/x-gdrive-snapshot");
+        }
+    }
+
+    @Test
+    public void testSQLiteContainerDetectorWhatsappMsgStore() throws IOException, SAXException, TikaException {
+
+        SQLiteContainerDetector detector = new SQLiteContainerDetector();
+        Metadata metadata = new Metadata();
+        try (InputStream stream = getStream("test-files/test_whatsappMsgStore.db")) {
+            TikaInputStream tis = TikaInputStream.get(stream);
+            MediaType assertion = detector.detect(tis, metadata);
+            assertEquals(assertion.toString(), "application/x-whatsapp-db");
+        }
+    }
+
+    @Test
+    public void testSQLiteContainerDetectorFirefoxPlaces() throws IOException, SAXException, TikaException {
+
+        SQLiteContainerDetector detector = new SQLiteContainerDetector();
+        Metadata metadata = new Metadata();
+        try (InputStream stream = getStream("test-files/test_places.sqlite")) {
+            TikaInputStream tis = TikaInputStream.get(stream);
+            MediaType assertion = detector.detect(tis, metadata);
+            assertEquals(assertion.toString(), "application/x-firefox-places");
+        }
+    }
+
+    @Test
+    public void testSQLiteContainerDetectorTelegramDB() throws IOException, SAXException, TikaException {
+
+        SQLiteContainerDetector detector = new SQLiteContainerDetector();
+        Metadata metadata = new Metadata();
+        try (InputStream stream = getStream("test-files/test_telegramCache4.db")) {
+            TikaInputStream tis = TikaInputStream.get(stream);
+            MediaType assertion = detector.detect(tis, metadata);
+            assertEquals(assertion.toString(), "application/x-telegram-db");
+        }
+    }
+
+    @Test
+    public void testSQLiteContainerDetectorSafari() throws IOException, SAXException, TikaException {
+
+        SQLiteContainerDetector detector = new SQLiteContainerDetector();
+        Metadata metadata = new Metadata();
+        try (InputStream stream = getStream("test-files/test_OCR.png")) {
+            TikaInputStream tis = TikaInputStream.get(stream);
+            MediaType assertion = detector.detect(tis, metadata);
+            assertEquals(assertion.toString(), "application/octet-stream");
+        }
+    }
+
+    @Test
+    public void testSQLiteContainerDetectorInvalid() throws IOException, SAXException, TikaException {
+
+        SQLiteContainerDetector detector = new SQLiteContainerDetector();
+        Metadata metadata = new Metadata();
+        try (InputStream stream = getStream("test-files/test_OCR.png")) {
+            TikaInputStream tis = TikaInputStream.get(stream);
+            MediaType assertion = detector.detect(tis, metadata);
+            assertEquals(assertion.toString(), "application/octet-stream");
+        }
+    }
 }

@@ -120,7 +120,6 @@ public class OCRParserTest {
             assertTrue(hts.contains("Instruction [31-0]"));
             assertTrue(hts.contains("MemtoReg"));
             assertTrue(hts.contains("Lógico-Aritméticas com imediato: ADDi, ANDi, ORi, XORi, SLLi, SRLi"));
-            assertTrue(hts.contains("process (ALUop, funct3, funct7)"));
             assertTrue(hts.contains("and s6, s5, s4"));
             assertTrue(hts.contains("00000048 005324b3"));
             assertTrue(hts.contains("as memórias de instruções e dados."));
@@ -155,6 +154,16 @@ public class OCRParserTest {
             assertTrue(hts.contains("The Lazy Dog."));
             assertTrue(hts.contains("abcdefghijklmnopq"));
             assertTrue(hts.contains("01234567890 01234567890"));
+
+            // test ocr-results.db copying
+            File ocrCopyDir = new File(OCR_OUTPUT_FOLDER_NAME + "/text_copy");
+            File ocrResultsDir = new File(OCR_OUTPUT_FOLDER_NAME);
+            OCRParser.copyOcrResults(testName.getMethodName(), ocrResultsDir, ocrCopyDir);
+            File ocrCopy = new File(ocrCopyDir.getAbsolutePath() + "/text/ocr-results.db");
+            File ocrResults = new File(ocrResultsDir.getAbsolutePath() + "/text/ocr-results.db");
+            assertTrue(ocrCopy.exists() && ocrResults.exists());
+            boolean copySucceeded = FileUtils.contentEquals(ocrCopy, ocrResults);
+            assertTrue(copySucceeded);
         }
     }
 
