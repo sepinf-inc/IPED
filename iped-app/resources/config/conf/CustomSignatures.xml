@@ -310,6 +310,10 @@
         <glob pattern="ChatStorage*.sqlite"/>
     </mime-type>
     
+    <mime-type type="application/x-whatsapp-chatstorage-f">
+        <sub-class-of type="application/x-whatsapp-chatstorage"/>
+    </mime-type>
+    
     <mime-type type="application/x-whatsapp-wadb">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="wa*.db"/>

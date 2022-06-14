@@ -130,7 +130,7 @@ public class LinkDownloader {
             df.decryptStream(out);
 
         } catch (Exception e) {
-            throw new Exception("cipher error");
+            throw new Exception("cipher error " + urlStr);
         }
 
         try (InputStream is = new FileInputStream(dest)) {

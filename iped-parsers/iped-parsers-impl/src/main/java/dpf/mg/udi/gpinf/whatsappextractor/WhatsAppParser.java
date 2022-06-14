@@ -112,6 +112,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     public static final MediaType CHAT_STORAGE = MediaType.application("x-whatsapp-chatstorage"); //$NON-NLS-1$
 
+    public static final MediaType CHAT_STORAGE_2 = MediaType.application("x-whatsapp-chatstorage-f"); //$NON-NLS-1$
+
     public static final MediaType CONTACTS_V2 = MediaType.application("x-whatsapp-contactsv2"); //$NON-NLS-1$
 
     public static final MediaType WHATSAPP_CHAT = MediaType.parse("application/x-whatsapp-chat"); //$NON-NLS-1$
@@ -139,6 +141,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     // a global set to prevent redownload files;
     private static final Set<String> hashesDownloaded = Collections.synchronizedSet(new HashSet<>());
 
+    private static final List<ContentHandler> handlerToUpdate = new ArrayList<>();
+
     private static final Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
     private static final String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
     private static final String IS_BACKUP_FROM = "isBackupFrom";
@@ -155,7 +159,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static int dbsSearchedForAndAdded = 0;
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2,
-            WA_USER_XML, WA_USER_PLIST, MSG_STORE_2);
+            WA_USER_XML, WA_USER_PLIST, MSG_STORE_2, CHAT_STORAGE_2);
 
     private static final Map<String, WAContactsDirectory> contactsDirectoriesMap = new ConcurrentHashMap<>();
 
@@ -167,7 +171,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private int downloadConnectionTimeout = 500;
     private int downloadReadTimeout = 500;
     private boolean recoverDeletedRecords = true;
-    
+
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -203,7 +207,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     public void setDownloadReadTimeout(int downloadReadTimeout) {
         this.downloadReadTimeout = downloadReadTimeout;
     }
-    
+
     @Field
     public void setRecoverDeletedRecords(boolean recoverDeletedRecords) {
         this.recoverDeletedRecords = recoverDeletedRecords;
@@ -212,6 +216,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private boolean isDownloadMediaFilesEnabled() {
         return Boolean.valueOf(System.getProperty(DOWNLOAD_MEDIA_FILES_PROP));
     }
+
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
@@ -228,6 +233,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         try (TemporaryResources tmp = new TemporaryResources()) {
             stream = TikaInputStream.get(stream, tmp);
+
             if (mimetype.equals(WA_USER_XML.toString())) {
                 parseWhatsAppAccount(stream, context, handler, true);
             } else if (mimetype.equals(WA_USER_PLIST.toString())) {
@@ -240,12 +246,19 @@ public class WhatsAppParser extends SQLite3DBParser {
             } else if (mimetype.equals(WA_DB.toString())) {
                 parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(CHAT_STORAGE.toString())) {
-                parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
+                if (isDownloadMediaFilesEnabled()) {
+                    parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorIOSFactory());
+                } else {
+                    parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
+                }
             } else if (mimetype.equals(CONTACTS_V2.toString())) {
                 parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorIOSFactory());
             } else if (mimetype.equals(MSG_STORE_2.toString())) {
                 mergeParsedDBsAndOutputResults(stream, handler, metadata, context, new ExtractorAndroidFactory());
+            } else if (mimetype.equals(CHAT_STORAGE_2.toString())) {
+                parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
             }
+
         } catch (Exception e) {
             // log all whatsapp exceptions
             e.printStackTrace();
@@ -330,7 +343,6 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void parseWhatsappMessages(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
-        extFactory.setConnectionParams(stream, metadata, context, this);
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
         IItemSearcher searcher = context.get(IItemSearcher.class);
@@ -348,11 +360,11 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                 String dbPath = ((ItemInfo) context.get(ItemInfo.class)).getPath();
                 WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
-                
+
                 File tempDbFile = tis.getFile();
                 exportWalLog(tempDbFile, context, tmp);
                 exportRollbackJournal(tempDbFile, context, tmp);
-
+                extFactory.setConnectionParams(tis, metadata, context, this);
                 Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempDbFile, contacts, account, recoverDeletedRecords);
                 List<Chat> chatList = waExtractor.getChatList();
                 createReport(chatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
@@ -396,10 +408,22 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
 
-    private static final void waitDownloads(List<Future<?>> futures) {
+    // update all handlers as it could only download files from one handler
+    private static void updateHandlers() throws SAXException {
+        synchronized (handlerToUpdate) {
+            for (ContentHandler handler : handlerToUpdate) {
+                if (handler != null) {
+                    handler.characters(" ".toCharArray(), 0, 1);
+                }
+            }
+        }
+    }
+
+    private static final void waitDownloads(List<Future<?>> futures) throws SAXException {
         try {
             for (Future<?> f : futures) {
                 f.get();
+                updateHandlers();
             }
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
@@ -450,7 +474,18 @@ public class WhatsAppParser extends SQLite3DBParser {
                 futures.addAll(searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor,
                         wcontext.getItem().getTempFile(), context, downloadedFiles));
             }
-            waitDownloads(futures);
+            if (futures.size() > 0) {
+                handler.startDocument();
+                synchronized (handlerToUpdate) {
+                    handlerToUpdate.add(handler);
+                }
+                waitDownloads(futures);
+
+                synchronized (handlerToUpdate) {
+                    handlerToUpdate.remove(handler);
+                }
+                handler.endDocument();
+            }
             if (downloadedFiles.get() > 0) {
                 logger.info("Downloaded {} files from {}", downloadedFiles.get(), wcontext.getItem().getName());
             }
@@ -458,10 +493,15 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         checkIfIsMainDBAndStore(wcontext);
 
-        metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
+        metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, extFactory.getType2().toString());
     }
 
     private static boolean checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
+        String type = wcontext.getItem().getMediaType().toString();
+        // this is not used for IOS
+        if (type.equals(CHAT_STORAGE.toString()) || type.equals(CHAT_STORAGE_2.toString())) {
+            return false;
+        }
         IItemBase item = wcontext.getItem();
         if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)
                 && wcontext.getChalist() != null) {
@@ -473,16 +513,17 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private List<Chat> extractChatList(WhatsAppContext wcontext, ExtractorFactory extFactory, Metadata metadata,
             ParseContext context, WAContactsDirectory contacts, WAAccount account)
-            throws WAExtractorException, IOException {
+            throws WAExtractorException, IOException, SQLException {
         try (TemporaryResources tmp = new TemporaryResources()) {
             TikaInputStream tis = TikaInputStream.get(wcontext.getItem().getSeekableInputStream(), tmp);
             File tempFile = tis.getFile();
-            
+
             String filePath = null;
             filePath = wcontext.getItem().getPath();
-            
+
             exportWalLog(tempFile, context, tmp);
             exportRollbackJournal(tempFile, context, tmp);
+
             extFactory.setConnectionParams(tis, metadata, context, this);
             Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempFile, contacts, account, recoverDeletedRecords);
             return waExtractor.getChatList();
@@ -620,6 +661,18 @@ public class WhatsAppParser extends SQLite3DBParser {
                 } else if (!wcontext.isMainDB() && db.isMainDB()) {
                     mainDb = db;
                     other = wcontext;
+                } else if (wcontext.getItem().getHash().equals(db.getItem().getHash())) {
+
+                    if (wcontext.getItem().getId() > db.getItem().getId()) {
+                        wcontext.setBackup(true);
+                        wcontext.setMainDBItem(db.getItem());
+                        addBackupMessage(wcontext, wcontext.getMainDBItem(),
+                                new XHTMLContentHandler(handler, metadata));
+                        backupsMerged.incrementAndGet();
+                        return;
+                    }
+                    continue;
+
                 } else {
                     // skip if both are mainDB or if both are backups
                     continue;
@@ -651,7 +704,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                     }
                 }
             }
-
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
             if (!extractor.shouldParseEmbedded(metadata)) {
@@ -842,7 +894,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (m.getMediaSize() != 0) {
                 meta.set("mediaSize", Long.toString(m.getMediaSize()));
             }
-            if (m.getMediaQuery() != null) {
+            if (m.getMediaQuery() != null && m.getMediaSize() > 2) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery())); // $NON-NLS-1$
             }
@@ -878,8 +930,11 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (m.getVcards() != null && !m.getVcards().isEmpty()) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, VCardParser.VCARD_MIME.toString());
                 for (String vcard : m.getVcards()) {
-                    extractor.parseEmbedded(new ByteArrayInputStream(vcard.getBytes(StandardCharsets.UTF_8)), handler,
-                            meta, false);
+                    if (vcard != null) {
+                        extractor.parseEmbedded(new ByteArrayInputStream(vcard.getBytes(StandardCharsets.UTF_8)),
+                                handler, meta, false);
+                    }
+
                 }
             } else {
                 meta.set(BasicProps.LENGTH, ""); //$NON-NLS-1$
@@ -1138,11 +1193,15 @@ public class WhatsAppParser extends SQLite3DBParser {
         ParseContext context;
         WhatsAppParser connFactory;
 
-        abstract Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory, WAAccount account, boolean recoverDeletedRecords);
+
+
+        abstract Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory,
+                WAAccount account, boolean recoverDeletedRecords);
 
         abstract WAContactsExtractor createContactsExtractor(File file, boolean recoverDeletedRecords);
 
-        void setConnectionParams(InputStream is, Metadata metadata, ParseContext context, WhatsAppParser connFactory) {
+        private void setConnectionParams(InputStream is, Metadata metadata, ParseContext context,
+                WhatsAppParser connFactory) {
             this.is = is;
             this.metadata = metadata;
             this.context = context;
@@ -1150,26 +1209,52 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
 
         protected Connection getConnection() throws SQLException {
+
             try {
                 return connFactory.getConnection(is, metadata, context);
             } catch (IOException e) {
                 throw new SQLException(e);
             }
+
+
         }
+
+        public abstract MediaType getType2();
+
+
     }
 
     // must be static and non be private because of newInstance in getContacts()
     // method
     protected static class ExtractorAndroidFactory extends ExtractorFactory {
 
+        private boolean new_db = false;
+
+
         @Override
-        public Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory, WAAccount account, boolean recoverDeletedRecords) {
+        public Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory,
+                WAAccount account, boolean recoverDeletedRecords) {
+            try (Connection conn = getConnection()) {
+                new_db = !SQLite3DBParser.containsTable("messages", conn);
+            } catch (Exception e) {
+                new_db = false;
+            }
+            if (new_db) {
+                return new ExtractorAndroidNew(itemPath, file, directory, account) {
+                    @Override
+                    protected Connection getConnection() throws SQLException {
+                        return ExtractorAndroidFactory.this.getConnection();
+                    }
+                };
+            }
+
             return new ExtractorAndroid(itemPath, file, directory, account, recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorAndroidFactory.this.getConnection();
                 }
             };
+
         }
 
         @Override
@@ -1182,11 +1267,18 @@ public class WhatsAppParser extends SQLite3DBParser {
             };
         }
 
+        @Override
+        public MediaType getType2() {
+            // TODO Auto-generated method stub
+            return MSG_STORE_2;
+        }
+
     }
 
     // must be static and non be private because of newInstance in getContacts()
     // method
     protected static class ExtractorIOSFactory extends ExtractorFactory {
+
 
         @Override
         public Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory, WAAccount account, boolean recoverDeletedRecords) {
@@ -1206,6 +1298,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                     return ExtractorIOSFactory.this.getConnection();
                 }
             };
+        }
+
+        @Override
+        public MediaType getType2() {
+            // TODO Auto-generated method stub
+            return CHAT_STORAGE_2;
         }
 
     }
@@ -1253,10 +1351,11 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
+
     private List<Future<?>> searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
             AtomicInteger downloadedFiles) {
-        
+
         // just save heavy item refs if creating report, per chat, not per database
         boolean saveItemRef = downloadedFiles == null;
 
@@ -1424,6 +1523,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     if (ld == null || ld.getHash() == null || !hashesDownloaded.add(ld.getHash())) {
                         continue;
                     }
+
                     Runnable r = new Runnable() {
 
                         @Override
@@ -1436,6 +1536,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 ld.downloadUsingStream(f);
 
                                 ld.decript(f, fout);
+
+
 
                                 Metadata downloadMetadata = new Metadata();
 
