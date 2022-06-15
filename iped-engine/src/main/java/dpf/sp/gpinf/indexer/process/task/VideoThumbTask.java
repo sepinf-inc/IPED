@@ -352,26 +352,25 @@ public class VideoThumbTask extends ThumbTask {
         File mainOutFile = Util.getFileFromHash(baseFolder, evidence.getHash(), "jpg"); //$NON-NLS-1$
 
         // TODO: update this results reusage logic to work when frames as subitems is enabled
-        /*
-        synchronized (processedVideos) {
-            if (processedVideos.containsKey(evidence.getHash())) {
-                while (processedVideos.get(evidence.getHash()) == null) {
-                    processedVideos.wait();
+        if (!videoConfig.getVideoThumbsSubitems()) {
+            synchronized (processedVideos) {
+                if (processedVideos.containsKey(evidence.getHash())) {
+                    while (processedVideos.get(evidence.getHash()) == null) {
+                        processedVideos.wait();
+                    }
+                    VideoProcessResult r = processedVideos.get(evidence.getHash());
+                    evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
+                    if (r.isSuccess()) {
+                        saveMetadata(r, evidence.getMetadata());
+                        evidence.setViewFile(mainOutFile);
+                        File thumbFile = getThumbFile(evidence);
+                        hasThumb(evidence, thumbFile);
+                    }
+                    return;
                 }
-                VideoProcessResult r = processedVideos.get(evidence.getHash());
-                evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
-                if (r.isSuccess()) {
-                    saveMetadata(r, evidence.getMetadata());
-                    evidence.setViewFile(mainOutFile);
-                    File thumbFile = getThumbFile(evidence);
-                    hasThumb(evidence, thumbFile);
-                }
-                return;
+                processedVideos.put(evidence.getHash(), null);
             }
-
-            processedVideos.put(evidence.getHash(), null);
         }
-        */
 
         // Chama o método de extração de cenas
         File mainTmpFile = null;
@@ -490,7 +489,7 @@ public class VideoThumbTask extends ThumbTask {
                 processedVideos.notifyAll();
             }
 
-            // TODO: this deletes subitems frames, so the logic to reuse frames from
+            // TODO: this deletes temp frames, so the logic to reuse frames from
             // duplicated videos should be updated
             r.close();
 
