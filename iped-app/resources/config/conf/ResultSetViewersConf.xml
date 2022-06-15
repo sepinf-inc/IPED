@@ -1,7 +1,7 @@
 <resultSetViewers>
 
 	<resultSetViewer>
-		<class>dpf.mt.gpinf.mapas.impl.MapaViewer</class>
+		<class>iped.geo.impl.MapaViewer</class>
 	</resultSetViewer>
 
 </resultSetViewers>

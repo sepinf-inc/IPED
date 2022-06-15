@@ -15,7 +15,7 @@ public class FixedResultSetViewerConfiguration implements ResultSetViewerConfigu
     public List<ResultSetViewer> getResultSetViewers() {
         try {
             if (viewers.size() == 0) {
-                Class<?> mapaClass = Class.forName("dpf.mt.gpinf.mapas.impl.MapaViewer");
+                Class<?> mapaClass = Class.forName("iped.geo.MapaViewer");
                 ResultSetViewer mapa = (ResultSetViewer) mapaClass.getDeclaredConstructor().newInstance();
                 viewers.add(mapa);
             }

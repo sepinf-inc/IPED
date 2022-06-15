@@ -321,7 +321,7 @@
             <mime>application/irpf</mime>
             <mime>application/x-nls</mime>
         </parser>
-        <parser class="dpf.mt.gpinf.mapas.parsers.GeofileParser"></parser>
+        <parser class="iped.geo.parsers.GeofileParser"></parser>
         <parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
         <parser class="dpf.inc.sepinf.gdrive.parsers.GDriveMainParser"></parser>
         <parser class="dpf.pi.gpinf.firefox.parsers.FirefoxSavedSessionParser"></parser>
