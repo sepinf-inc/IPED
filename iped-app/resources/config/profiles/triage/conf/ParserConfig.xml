@@ -294,6 +294,7 @@
             </params>
         </parser>
         <parser class="dpf.mt.gpinf.skype.parser.SkypeParser"></parser>
+        <parser class="dpf.mt.gpinf.tor.tc.TorTcParser"></parser>
         <parser class="dpf.mg.udi.gpinf.vcardparser.VCardParser"></parser>
         <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser">
             <params>
@@ -301,7 +302,7 @@
                 <param name="mergeBackups" type="bool">false</param>
                 <param name="linkMediasByNameAndApproxSizeFallback" type="bool">true</param>
                 <param name="downloadConnectionTimeout" type="int">500</param>
-                <param name="downloadReadTimeout" type="int">500</param>
+                <param name="downloadReadTimeout" type="int">1000</param>
             </params>
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">

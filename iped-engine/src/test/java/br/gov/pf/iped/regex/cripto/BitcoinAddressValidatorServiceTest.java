@@ -5,8 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import br.gov.pf.iped.regex.cripto.BitcoinAddressValidatorService;
-
 public class BitcoinAddressValidatorServiceTest {
 
     BitcoinAddressValidatorService service = new BitcoinAddressValidatorService();

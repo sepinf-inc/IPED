@@ -1,12 +1,9 @@
 package dpf.sp.gpinf.indexer.config;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
-
-import java.nio.file.Path;
 
 public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 

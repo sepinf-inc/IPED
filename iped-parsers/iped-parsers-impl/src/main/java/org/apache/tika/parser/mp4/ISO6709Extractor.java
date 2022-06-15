@@ -28,7 +28,8 @@ import org.apache.tika.metadata.Metadata;
  * Copied and pasted from Tika-1.28.2.
  */
 class ISO6709Extractor implements Serializable {
-    // based on: https://en.wikipedia.org/wiki/ISO_6709
+    private static final long serialVersionUID = 1L;
+	// based on: https://en.wikipedia.org/wiki/ISO_6709
     // strip lat long -- ignore crs for now
     private static final Pattern ISO6709_PATTERN = Pattern
             .compile("\\A([-+])(\\d{2,6})(\\.\\d+)?([-+])(\\d{3,7})(\\.\\d+)?");

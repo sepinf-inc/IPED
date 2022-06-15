@@ -51,7 +51,7 @@ public class Bookmarks implements Serializable, IBookmarks {
     private static Logger LOGGER = LoggerFactory.getLogger(Bookmarks.class);
 
     public static String EXT = "." + Version.APP_EXT.toLowerCase(); //$NON-NLS-1$
-    public static String STATEFILENAME = "marcadores" + EXT; //$NON-NLS-1$
+    public static String STATEFILENAME = "bookmarks" + EXT; //$NON-NLS-1$
 
     static int bookmarkBits = Byte.SIZE;
 
@@ -137,10 +137,9 @@ public class Bookmarks implements Serializable, IBookmarks {
 
     public synchronized void checkAll() {
         selectedItens = totalItems;
-        int maxLuceneId = ipedCase.getReader().maxDoc() - 1;
-        for (int i = 0; i <= maxLuceneId; i++) {
+        ipedCase.getLuceneIdStream().forEach(i -> {
             selected[ipedCase.getId(i)] = true;
-        }
+        });
     }
 
     public List<String> getBookmarkList(int itemId) {

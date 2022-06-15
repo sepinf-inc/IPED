@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
@@ -40,6 +41,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
@@ -50,7 +52,7 @@ import iped3.io.IStreamSource;
 
 public class TextParser extends CancelableWorker implements ITextParser {
 
-    public static final String TEXT_SIZE = "textSize"; //$NON-NLS-1$
+    public static final String TEXT_SIZE = IndexTask.TEXT_SIZE;
 
     private static TextParser parsingTask;
     private IStreamSource content;
@@ -210,6 +212,11 @@ public class TextParser extends CancelableWorker implements ITextParser {
         }
     }
 
+    @SuppressWarnings("resource")
+    private FileChannel getFileChannel(File tmpFile) throws FileNotFoundException {
+        return new RandomAccessFile(tmpFile, "rw").getChannel();
+    }
+
     public void parseText() {
         ParsingReader textReader = null;
         try {
@@ -237,7 +244,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
             tmp.dispose();
             File tmpFile = tmp.createTemporaryFile();
-            parsedFile = new RandomAccessFile(tmpFile, "rw").getChannel(); //$NON-NLS-1$
+            parsedFile = getFileChannel(tmpFile);
             tmp.addResource(parsedFile);
 
             String contents, fieldName = IndexItem.CONTENT;

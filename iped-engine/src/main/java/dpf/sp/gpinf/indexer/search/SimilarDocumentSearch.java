@@ -1,29 +1,37 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.br.BrazilianAnalyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.pt.PortugueseAnalyzer;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.mlt.MoreLikeThis;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DocValuesFieldExistsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.join.QueryBitSetProducer;
+import org.apache.lucene.search.join.ToChildBlockJoinQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import iped3.IIPEDSource;
 import iped3.IItemId;
+import iped3.util.BasicProps;
 
 public class SimilarDocumentSearch {
 
+    private static Logger logger = LoggerFactory.getLogger(SimilarDocumentSearch.class);
+
     private static final CharArraySet stopSet = getStopWords();
 
-    public Query getQueryForSimilarDocs(IItemId item, int matchPercent, IIPEDSource appCase) {
-
-        int docId = appCase.getLuceneId(item);
+    public Query getQueryForSimilarDocs(IItemId item, int matchPercent, IPEDSource appCase) {
 
         MoreLikeThis mlt = new MoreLikeThis(appCase.getReader());
         String[] fields = { IndexItem.CONTENT };
@@ -56,19 +64,34 @@ public class SimilarDocumentSearch {
              * String[] keyTerms = mlt.retrieveInterestingTerms(pr, IndexItem.CONTENT);
              */
 
-            // Funciona apenas com term vectors
-            String[] keyTerms = mlt.retrieveInterestingTerms(docId);
+            // Approach below Works just with term vectors indexed
+            // TODO: test approach above again, so we could disable term vectors, decreasing
+            // index size a lot, and we could also accept external documents not in the case
+
+            Query parentQuery = IntPoint.newExactQuery(BasicProps.ID, item.getId());
+            QueryBitSetProducer parentFilter = new QueryBitSetProducer(new DocValuesFieldExistsQuery(BasicProps.ID));
+            ToChildBlockJoinQuery toChildQuery = new ToChildBlockJoinQuery(parentQuery, parentFilter);
+
+            if (appCase instanceof IPEDMultiSource) {
+                appCase = ((IPEDMultiSource) appCase).getAtomicSourceBySourceId(item.getSourceId());
+            }
+            IPEDSearcher searcher = new IPEDSearcher(appCase, toChildQuery);
+            searcher.setRewritequery(false);
+
+            int[] docs = searcher.luceneSearch().docs;
+            Arrays.sort(docs);
+            int docId = docs[0];
+
+            List<String> keyTerms = Arrays.asList(mlt.retrieveInterestingTerms(docId));
 
             BooleanQuery.Builder query = new BooleanQuery.Builder();
-            System.out.print(keyTerms.length + ": "); //$NON-NLS-1$
+            logger.info("{} representative terms: {}", keyTerms.size(), keyTerms.toString());
 
             for (String s : keyTerms) {
                 query.add(new TermQuery(new Term(IndexItem.CONTENT, s)), Occur.SHOULD);
-                System.out.print(s + " "); //$NON-NLS-1$
             }
-            System.out.println();
 
-            query.setMinimumNumberShouldMatch(keyTerms.length * matchPercent / 100);
+            query.setMinimumNumberShouldMatch(keyTerms.size() * matchPercent / 100);
 
             return query.build();
 
@@ -79,7 +102,8 @@ public class SimilarDocumentSearch {
     }
 
     private static CharArraySet getStopWords() {
-        CharArraySet stopSet = BrazilianAnalyzer.getDefaultStopSet();
+        CharArraySet stopSet = new CharArraySet(16, false);
+        stopSet.addAll(BrazilianAnalyzer.getDefaultStopSet());
         stopSet.addAll(PortugueseAnalyzer.getDefaultStopSet());
         stopSet.addAll(EnglishAnalyzer.getDefaultStopSet());
         return stopSet;

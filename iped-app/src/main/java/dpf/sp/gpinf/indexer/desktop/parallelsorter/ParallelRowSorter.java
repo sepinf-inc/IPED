@@ -544,7 +544,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         } else {
             // sort the data
             // patch
-            Arrays.parallelSort(viewToModel);
+            Arrays.parallelSort(viewToModel, new RowComparator(this));
 
             // Update the modelToView array
             setModelToViewFromViewToModel(false);
@@ -595,7 +595,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
 
             // sort them
             // patch
-            Arrays.parallelSort(viewToModel);
+            Arrays.parallelSort(viewToModel, new RowComparator(this));
 
             // Update the modelToView array
             setModelToViewFromViewToModel(false);
@@ -673,7 +673,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
             viewToModel[i].modelIndex = i;
         }
         for (i = recreateFrom; i < rowCount; i++) {
-            viewToModel[i] = new Row(this, i);
+            viewToModel[i] = new Row(i);
         }
     }
 
@@ -1030,7 +1030,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         // Build the list of Rows to add into added
         for (i = firstRow; i <= lastRow; i++) {
             if (include(i)) {
-                added.add(new Row(this, i));
+                added.add(new Row(i));
             }
         }
 
@@ -1045,7 +1045,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
 
         // Insert newly added rows into viewToModel
         if (added.size() > 0) {
-            Collections.sort(added);
+            Collections.sort(added, new RowComparator(this));
             System.out.println("collections sort");
             Row[] lastViewToModel = viewToModel;
             viewToModel = new Row[viewToModel.length + added.size()];
@@ -1127,7 +1127,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
 
             // Sort the update rows
             // patch
-            Arrays.parallelSort(updated);
+            Arrays.parallelSort(updated, new RowComparator(this));
 
             // Build the intermediary array: the array of
             // viewToModel without the effected rows.
@@ -1158,7 +1158,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
                     // This row was filtered out
                     if (include(i)) {
                         // No longer filtered
-                        updated.add(new Row(this, i));
+                        updated.add(new Row(i));
                         newlyVisible++;
                     }
                 } else {
@@ -1175,7 +1175,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
             }
 
             // Sort the updated rows
-            Collections.sort(updated);
+            Collections.sort(updated, new RowComparator(this));
             System.out.println("collections sort");
 
             // Build the intermediary array: the array of
@@ -1349,17 +1349,26 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
      * the sortKeys to do the actual comparison.
      */
     // NOTE: this class is static so that it can be placed in an array
-    private static class Row implements Comparable<Row> {
-        private ParallelRowSorter sorter;
+    private static class Row {
         int modelIndex;
 
-        public Row(ParallelRowSorter sorter, int index) {
-            this.sorter = sorter;
+        public Row(int index) {
             modelIndex = index;
         }
-
-        public int compareTo(Row o) {
-            return sorter.compare(modelIndex, o.modelIndex);
-        }
     }
+    
+    private static class RowComparator implements Comparator<Row> {
+
+        private ParallelRowSorter sorter;
+
+        private RowComparator(ParallelRowSorter sorter) {
+            this.sorter = sorter;
+        }
+
+        public int compare(Row r1, Row r2) {
+            return sorter.compare(r1.modelIndex, r2.modelIndex);
+        }
+
+    }
+
 }

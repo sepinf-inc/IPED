@@ -12,12 +12,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.DataInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -30,7 +30,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JRootPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
@@ -42,7 +41,11 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 
 public class JMapOptionsPane extends JOptionPane {
 
-    static final String BING_URL = "http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1";
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	static final String BING_URL = "http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1";
     static final String OSM_URL = "https://tile.openstreetmap.org/${z}/${x}/${y}.png";
 
     static File userHome = new File(System.getProperty("user.home"), ".iped");
@@ -61,7 +64,7 @@ public class JMapOptionsPane extends JOptionPane {
     JTextField txGoogleApiKey = new JTextField();
     HashMap<String, String> defaultTilesSources;
     JRadioButton btnLeaflet;
-    JComboBox cbTileSrcs;
+    JComboBox<String> cbTileSrcs;
     JRadioButton rbOutra;
 
     private JMapOptionsPane(Component parentComponent) {
@@ -73,8 +76,6 @@ public class JMapOptionsPane extends JOptionPane {
             dialog = new JDialog((Dialog) window, title, true);
         else
             dialog = new JDialog((Frame) null, title, true);
-
-        int style = JRootPane.PLAIN_DIALOG;
 
         JButton btOk = new JButton("Ok");
         JButton btCancel = new JButton("Cancel");
@@ -149,15 +150,15 @@ public class JMapOptionsPane extends JOptionPane {
 
         JPanel paneTileUrlSelect = new JPanel();
 
-        cbTileSrcs = new JComboBox();
+        cbTileSrcs = new JComboBox<>();
 
         MapaPanelConfig mpc = (MapaPanelConfig) ConfigurationManager.get().findObjects(MapaPanelConfig.class)
                 .toArray()[0];
         defaultTilesSources = mpc.getDefaultTilesSources();
 
         Set<String> ms = defaultTilesSources.keySet();
-        for (Iterator iterator = ms.iterator(); iterator.hasNext();) {
-            String key = (String) iterator.next();
+        for (Iterator<String> iterator = ms.iterator(); iterator.hasNext();) {
+            String key = iterator.next();
 
             cbTileSrcs.addItem(key);
         }
@@ -307,8 +308,8 @@ public class JMapOptionsPane extends JOptionPane {
 
             boolean achou = false;
             Set<String> ms = defaultTilesSources.keySet();
-            for (Iterator iterator = ms.iterator(); iterator.hasNext();) {
-                String key = (String) iterator.next();
+            for (Iterator<String> iterator = ms.iterator(); iterator.hasNext();) {
+                String key = iterator.next();
                 if (defaultTilesSources.get(key).equals(tilesSourceURL)) {
                     cbTileSrcs.setSelectedItem(key);
                     achou = true;
@@ -360,17 +361,15 @@ public class JMapOptionsPane extends JOptionPane {
     public static String getGoogleAPIKey() {
         if (googleApiKey == null) {
             File f = getLastGoogleAPIKey();
-            try {
-                if (f != null) {
-                    DataInputStream dis;
-                    dis = new DataInputStream(new FileInputStream(f));
-                    googleApiKey = dis.readLine();
+            if (f != null) {
+                try (BufferedReader reader = Files.newBufferedReader(f.toPath(), StandardCharsets.UTF_8)) {
+                    googleApiKey = reader.readLine();
                     if (googleApiKey == null)
                         return "";
                     return googleApiKey;
+                } catch (IOException e) {
+                	//ignore
                 }
-            } catch (FileNotFoundException e) {
-            } catch (IOException e) {
             }
             return "";
         } else {
@@ -381,11 +380,9 @@ public class JMapOptionsPane extends JOptionPane {
     public static String getSavedTilesSourceURL() {
         File f = getLastTileSourceURLFile();
         String tileSourceURL = null;
-        try {
-            if (f != null) {
-                DataInputStream dis;
-                dis = new DataInputStream(new FileInputStream(f));
-                tileSourceURL = dis.readLine();
+        if (f != null) {       	
+            try (BufferedReader reader = Files.newBufferedReader(f.toPath(), StandardCharsets.UTF_8)) {
+                tileSourceURL = reader.readLine();
                 if (tileSourceURL == null)
                     return null;
                 if (tileSourceURL.length() <= 2) {
@@ -393,9 +390,8 @@ public class JMapOptionsPane extends JOptionPane {
                 } else {
                     return tileSourceURL;
                 }
+            } catch (IOException e) {
             }
-        } catch (FileNotFoundException e) {
-        } catch (IOException e) {
         }
         return null;
     }
@@ -421,11 +417,8 @@ public class JMapOptionsPane extends JOptionPane {
         }
 
         if (tileServerUrlFile != null) {
-            try {
-                FileWriter fw = new FileWriter(tileServerUrlFile);
+            try (BufferedWriter fw = Files.newBufferedWriter(tileServerUrlFile.toPath(), StandardCharsets.UTF_8)) {
                 fw.write(singleton.getUrl() + "\n");
-                fw.flush();
-                fw.close();
             } catch (IOException e) {
                 // skip temp cache
             }
@@ -433,12 +426,9 @@ public class JMapOptionsPane extends JOptionPane {
 
         // salva temporariamente a chave API do google utilizada
         if (singleton.btnGoogleMaps.isSelected()) {
-            try {
-                getLastGoogleAPIKey();
-                FileWriter fw = new FileWriter(googleApiKeyFile);
+            getLastGoogleAPIKey();
+            try (BufferedWriter fw = Files.newBufferedWriter(googleApiKeyFile.toPath(), StandardCharsets.UTF_8)) {
                 fw.write(singleton.txGoogleApiKey.getText() + "\n");
-                fw.flush();
-                fw.close();
             } catch (IOException e) {
                 // skip temp cache
             }

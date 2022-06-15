@@ -32,8 +32,6 @@ public abstract class AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(AbstractViewer.class);
 
-    private static final long serialVersionUID = 1L;
-
     protected static final String resPath = "/dpf/sp/gpinf/indexer/search/viewer/res/";
 
     private JPanel panel;

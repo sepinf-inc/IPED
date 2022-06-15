@@ -13,15 +13,15 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.desktop.ProgressDialog;
 import iped3.desktop.CancelableWorker;
+import iped3.desktop.ProgressDialog;
 
 /**
  *
  * Classe para descompactar o aplicativo LibreOffice
  *
  */
-public class LOExtractor extends CancelableWorker {
+public class LOExtractor extends CancelableWorker<Object, Object> {
 
     private File output, input;
     private ProgressDialog progressMonitor;

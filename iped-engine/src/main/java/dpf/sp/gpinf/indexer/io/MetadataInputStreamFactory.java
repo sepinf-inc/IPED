@@ -7,7 +7,6 @@ import java.util.Arrays;
 
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaCoreProperties;
 
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;

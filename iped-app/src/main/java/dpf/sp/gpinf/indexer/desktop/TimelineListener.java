@@ -7,8 +7,8 @@ import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.RowSorter;
-import javax.swing.SortOrder;
 import javax.swing.RowSorter.SortKey;
+import javax.swing.SortOrder;
 
 import bibliothek.gui.dock.common.action.CButton;
 import iped3.util.BasicProps;

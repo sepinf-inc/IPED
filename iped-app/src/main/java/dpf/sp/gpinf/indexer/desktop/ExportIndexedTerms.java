@@ -9,9 +9,7 @@ import java.io.OutputStreamWriter;
 
 import javax.swing.JFileChooser;
 
-import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 

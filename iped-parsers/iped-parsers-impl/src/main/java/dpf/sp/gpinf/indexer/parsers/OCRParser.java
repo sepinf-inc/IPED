@@ -18,9 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.parsers;
 
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -502,33 +499,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
     }
 
-    private BufferedImage getCompatibleImage(BufferedImage image) {
-        // obtain the current system graphical settings
-        GraphicsConfiguration gfx_config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
-                .getDefaultConfiguration();
-
-        /*
-         * if image is already compatible and optimized for current system settings,
-         * simply return it
-         */
-        if (image.getColorModel().equals(gfx_config.getColorModel()))
-            return image;
-
-        // image is not optimized, so create a new image that is
-        BufferedImage new_image = gfx_config.createCompatibleImage(image.getWidth(), image.getHeight(),
-                image.getTransparency());
-
-        // get the graphics context of the new image to draw the old image on
-        Graphics2D g2d = (Graphics2D) new_image.getGraphics();
-
-        // actually draw the image and dispose of context no longer needed
-        g2d.drawImage(image, 0, 0, null);
-        g2d.dispose();
-
-        // return the new optimized image
-        return new_image;
-    }
-
     private void parseTiff(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output)
             throws IOException, SAXException, TikaException {
 
@@ -556,8 +526,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                         reader.read(page, params);
                     } catch (IOException e) {
                     }
-
-                    image = getCompatibleImage(image);
 
                     if (image.getWidth() > MAX_CONV_IMAGE_SIZE || image.getHeight() > MAX_CONV_IMAGE_SIZE)
                         image = ImageUtil.resizeImage(image, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);
@@ -600,7 +568,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                 }
             }
             if (img != null) {
-                img = getCompatibleImage(img);
 
                 if (img.getWidth() > MAX_CONV_IMAGE_SIZE || img.getHeight() > MAX_CONV_IMAGE_SIZE)
                     img = ImageUtil.resizeImage(img, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);
@@ -726,7 +693,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    IOUtils.closeQuietly(stream);
+                    IOUtil.closeQuietly(stream);
                 }
 
                 String msg = out.toString().replaceAll(OUTPUT_REGEX, "").replaceAll("\r?\n", " ").trim();

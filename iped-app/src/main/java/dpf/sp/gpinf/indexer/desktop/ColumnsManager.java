@@ -78,7 +78,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     public static final String[] groupNames = { Messages.getString("ColumnsManager.Basic"),
             Messages.getString("ColumnsManager.HashDB"), Messages.getString("ColumnsManager.Advanced"), //$NON-NLS-2$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.Common"), // $NON-NLS-2$
-            Messages.getString("ColumnsManager.Message"), Messages.getString("ColumnsManager.Audio"), //$NON-NLS-2$
+            Messages.getString("ColumnsManager.Communication"), Messages.getString("ColumnsManager.Audio"), //$NON-NLS-2$
             Messages.getString("ColumnsManager.Image"), Messages.getString("ColumnsManager.Video"), //$NON-NLS-1$
             Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -410,7 +410,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (int i = newColStart; i < App.get().resultsTable.getColumnCount(); i++) {
             TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
             String colName = col.getHeaderValue().toString();
-            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)) {
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)
+                    || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
                 App.get().resultsTable.moveColumn(i, newPosEmail++);
                 newPosOther++;
             } else if (colName.toLowerCase().startsWith(ExtraProperties.UFED_META_PREFIX)) {
@@ -424,7 +425,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (int i = newPosOther; i <= lastOldCol; i++) {
             TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
             String colName = col.getHeaderValue().toString();
-            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)) {
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)
+                    || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
                 App.get().resultsTable.moveColumn(i, newPosEmail++);
             }
         }
@@ -527,7 +529,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> nerFields = new ArrayList<String>();
         ArrayList<String> ufedFields = new ArrayList<String>();
         ArrayList<String> hashDbFields = new ArrayList<String>();
-        ArrayList<String> emailFields = new ArrayList<String>();
+        ArrayList<String> communicationFields = new ArrayList<String>();
         ArrayList<String> commonFields = new ArrayList<String>();
 
         for (String f : allExtraAttrs) {
@@ -559,15 +561,15 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 nerFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
-            else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.EMAIL_BASIC_PROPS.contains(f))
-                emailFields.add(f);
+            else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
+                communicationFields.add(f);
             else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
                 commonFields.add(f);
         }
 
         String[][] customGroups = new String[][] { defaultFields.clone(), hashDbFields.toArray(new String[0]),
                 extraAttrs.toArray(new String[0]), commonFields.toArray(new String[0]),
-                emailFields.toArray(new String[0]),
+                communicationFields.toArray(new String[0]),
                 audioFields.toArray(new String[0]), imageFields.toArray(new String[0]),
                 videoFields.toArray(new String[0]), pdfFields.toArray(new String[0]),
                 officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),

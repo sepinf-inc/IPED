@@ -130,8 +130,9 @@ public class ItemProducer extends Thread implements Closeable {
                 Set<HashValue> parentsWithLostSubitems = (Set<HashValue>) caseData
                         .getCaseObject(SkipCommitedTask.PARENTS_WITH_LOST_SUBITEMS);
                 if (parentsWithLostSubitems != null && parentsWithLostSubitems.size() > 0) {
-                    IPEDReader reader = new IPEDReader(caseData, output, listOnly);
-                    reader.read(parentsWithLostSubitems, manager);
+                    try (IPEDReader reader = new IPEDReader(caseData, output, listOnly)) {
+                    	reader.read(parentsWithLostSubitems, manager);	
+                    }
                 }
 
             }

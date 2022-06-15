@@ -41,7 +41,6 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ImageSimilarityLowScoreFilter;
 import dpf.sp.gpinf.indexer.search.ImageSimilarityScorer;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;

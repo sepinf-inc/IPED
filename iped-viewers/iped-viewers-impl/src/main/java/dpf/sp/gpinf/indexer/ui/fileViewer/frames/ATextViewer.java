@@ -9,7 +9,6 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Set;
@@ -23,11 +22,11 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
 
-import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
-import iped3.io.IStreamSource;
+import dpf.sp.gpinf.indexer.ITextParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
-import dpf.sp.gpinf.indexer.ITextParser;
+import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
+import iped3.io.IStreamSource;
 
 public abstract class ATextViewer extends AbstractViewer implements KeyListener {
 

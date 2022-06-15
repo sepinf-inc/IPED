@@ -102,7 +102,7 @@ public class Contact implements ContactInterface {
 
     public static Contact getContactFromBytes(byte[] bytes, DecoderTelegramInterface d) {
 
-        d.setDecoderData(bytes, d.USER);
+        d.setDecoderData(bytes, DecoderTelegramInterface.USER);
         Contact c = new Contact(0);
         d.getUserData(c);
         c.setPhotos(d.getPhotoData());
