@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.util;
+package iped.util;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

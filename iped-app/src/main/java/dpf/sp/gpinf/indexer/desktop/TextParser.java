@@ -44,9 +44,9 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped.IItem;
 import iped.io.IStreamSource;
+import iped.util.LocalizedFormat;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 

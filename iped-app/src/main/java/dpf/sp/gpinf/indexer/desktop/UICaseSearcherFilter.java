@@ -46,10 +46,10 @@ import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.search.SimilarImagesSearch;
 import dpf.sp.gpinf.indexer.search.TimelineResults;
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped.IItemId;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
+import iped.util.LocalizedFormat;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 

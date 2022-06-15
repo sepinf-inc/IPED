@@ -71,15 +71,15 @@ import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
 import iped.IItem;
 import iped.configuration.Configurable;
+import iped.util.ExternalImageConverter;
+import iped.util.IOUtil;
+import iped.util.ImageUtil;
+import iped.util.LocalizedFormat;
 
 /**
  * Tarefa de geração de relatório no formato HTML do itens selecionados, gerado

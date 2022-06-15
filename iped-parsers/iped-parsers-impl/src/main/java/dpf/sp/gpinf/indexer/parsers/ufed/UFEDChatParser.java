@@ -29,10 +29,10 @@ import com.google.common.collect.ImmutableMap;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Message;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.util.DateUtil;
 import iped.IItemBase;
 import iped.search.IItemSearcher;
 import iped.util.BasicProps;
+import iped.util.DateUtil;
 import iped.util.ExtraProperties;
 import iped.util.MediaTypes;
 

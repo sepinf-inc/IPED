@@ -1,6 +1,6 @@
 package dpf.sp.gpinf.indexer.config;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import iped.util.UTF8Properties;
 
 public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
 

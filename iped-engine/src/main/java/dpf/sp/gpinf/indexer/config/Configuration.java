@@ -34,10 +34,10 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.DefaultPolicy;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
+import iped.util.UTF8Properties;
 
 /**
  * Classe principal de carregamento e acesso às configurações da aplicação.

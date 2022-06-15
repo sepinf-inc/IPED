@@ -32,13 +32,7 @@ import dpf.sp.gpinf.indexer.lucene.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.tika.SyncMetadata;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
-import dpf.sp.gpinf.indexer.util.HashValue;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
-import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped.IHashValue;
@@ -46,6 +40,12 @@ import iped.IItem;
 import iped.datasource.IDataSource;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
+import iped.util.EmptyInputStream;
+import iped.util.HashValue;
+import iped.util.IOUtil;
+import iped.util.LimitedSeekableInputStream;
+import iped.util.SeekableByteChannelImpl;
+import iped.util.SeekableFileInputStream;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso,

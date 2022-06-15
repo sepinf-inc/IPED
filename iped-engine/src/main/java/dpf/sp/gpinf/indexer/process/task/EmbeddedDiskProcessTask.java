@@ -20,7 +20,6 @@ import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.search.ItemSearcher;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.Item;
 import iped.IItem;
@@ -28,6 +27,7 @@ import iped.IItemBase;
 import iped.configuration.Configurable;
 import iped.search.IItemSearcher;
 import iped.util.BasicProps;
+import iped.util.IOUtil;
 import iped.util.MediaTypes;
 
 public class EmbeddedDiskProcessTask extends AbstractTask {

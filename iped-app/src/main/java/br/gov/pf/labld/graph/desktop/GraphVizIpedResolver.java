@@ -10,7 +10,7 @@ import org.kharon.layout.graphviz.GraphVizResolver;
 import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped.util.IOUtil;
 
 public class GraphVizIpedResolver implements GraphVizResolver {
 

@@ -18,12 +18,12 @@ import javax.swing.filechooser.FileFilter;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
-import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.dev.data.Item;
 import gpinf.similarity.ImageSimilarity;
 import iped.IItemId;
+import iped.util.ExternalImageConverter;
+import iped.util.IOUtil;
+import iped.util.ImageUtil;
 
 public class SimilarImagesFilterActions {
     private static final int sampleFactor = 3;

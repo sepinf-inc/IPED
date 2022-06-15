@@ -43,11 +43,11 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.FileContentSource;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped.io.IStreamSource;
+import iped.util.FileContentSource;
+import iped.util.IOUtil;
 import iped.util.MediaTypes;
+import iped.util.SimpleHTMLEncoder;
 
 /**
  *

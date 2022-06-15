@@ -16,8 +16,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.util.XMLUtil;
 import iped.exception.IPEDException;
+import iped.util.XMLUtil;
 import iped3.desktop.ResultSetViewer;
 import iped3.desktop.ResultSetViewerConfiguration;
 

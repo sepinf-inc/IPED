@@ -22,7 +22,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped.util.IOUtil;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 

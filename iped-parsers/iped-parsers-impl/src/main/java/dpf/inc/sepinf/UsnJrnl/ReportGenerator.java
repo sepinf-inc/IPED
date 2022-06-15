@@ -17,7 +17,7 @@ import java.util.List;
 
 import org.apache.tika.io.TemporaryResources;
 
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import iped.util.SimpleHTMLEncoder;
 
 public class ReportGenerator {
 

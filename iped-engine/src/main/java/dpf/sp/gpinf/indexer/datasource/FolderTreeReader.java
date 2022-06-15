@@ -33,12 +33,12 @@ import java.util.regex.Pattern;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
-import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import iped.ICaseData;
 import iped.IItem;
 import iped.util.ExtraProperties;
+import iped.util.FileInputStreamFactory;
 
 public class FolderTreeReader extends DataSourceReader {
 

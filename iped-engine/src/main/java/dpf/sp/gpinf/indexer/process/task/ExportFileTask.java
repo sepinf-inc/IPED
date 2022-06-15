@@ -80,11 +80,6 @@ import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.HashValue;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Category;
 import iped.ICaseData;
@@ -93,6 +88,11 @@ import iped.IItem;
 import iped.configuration.Configurable;
 import iped.exception.ZipBombException;
 import iped.io.SeekableInputStream;
+import iped.util.FileInputStreamFactory;
+import iped.util.HashValue;
+import iped.util.IOUtil;
+import iped.util.SeekableFileInputStream;
+import iped.util.SeekableInputStreamFactory;
 
 /**
  * Responsável por extrair subitens de containers. Também exporta itens ativos

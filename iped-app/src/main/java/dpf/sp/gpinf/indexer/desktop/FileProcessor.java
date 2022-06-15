@@ -43,10 +43,10 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
-import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import gpinf.dev.data.DataSource;
 import iped.IItem;
 import iped.io.ISeekableInputStreamFactory;
+import iped.util.FileInputStreamFactory;
 import iped3.desktop.CancelableWorker;
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {

@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Base64;
 
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped.util.IOUtil;
 
 /**
  *

@@ -9,8 +9,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped.configuration.Configurable;
+import iped.util.UTF8Properties;
 
 public class MapaPanelConfig implements Configurable<UTF8Properties> {
     /**

@@ -30,7 +30,6 @@ import org.xml.sax.SAXException;
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
 import dpf.sp.gpinf.indexer.parsers.util.IndentityHtmlParser;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
 import ezvcard.io.chain.ChainingHtmlWriter;
@@ -47,6 +46,7 @@ import ezvcard.property.VCardProperty;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import iped.util.ExtraProperties;
+import iped.util.SimpleHTMLEncoder;
 
 public class VCardParser extends AbstractParser {
 

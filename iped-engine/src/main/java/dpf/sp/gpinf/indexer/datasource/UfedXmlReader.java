@@ -74,9 +74,6 @@ import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
-import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
@@ -85,7 +82,10 @@ import iped.ICaseData;
 import iped.IItem;
 import iped.datasource.IDataSource;
 import iped.util.ExtraProperties;
+import iped.util.FileInputStreamFactory;
+import iped.util.IOUtil;
 import iped.util.MediaTypes;
+import iped.util.SimpleHTMLEncoder;
 
 public class UfedXmlReader extends DataSourceReader {
 

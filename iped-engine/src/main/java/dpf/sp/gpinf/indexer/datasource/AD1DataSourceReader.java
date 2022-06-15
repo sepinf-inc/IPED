@@ -5,13 +5,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import iped.ICaseData;
 import iped.IItem;
 import iped.exception.IPEDException;
 import iped.io.SeekableInputStream;
+import iped.util.SeekableInputStreamFactory;
 import sef.mg.laud.ad1extractor.AD1Extractor;
 import sef.mg.laud.ad1extractor.FileHeader;
 

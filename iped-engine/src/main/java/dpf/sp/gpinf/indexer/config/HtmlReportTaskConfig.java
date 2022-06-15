@@ -1,7 +1,7 @@
 package dpf.sp.gpinf.indexer.config;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import gpinf.dev.data.ReportInfo;
+import iped.util.UTF8Properties;
 
 public class HtmlReportTaskConfig extends AbstractTaskPropertiesConfig {
 

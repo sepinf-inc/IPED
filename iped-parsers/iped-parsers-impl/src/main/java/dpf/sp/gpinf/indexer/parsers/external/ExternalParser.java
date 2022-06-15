@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped.util.IOUtil;
 
 /**
  * Parser that uses an external program (like catdoc or pdf2txt) to extract text

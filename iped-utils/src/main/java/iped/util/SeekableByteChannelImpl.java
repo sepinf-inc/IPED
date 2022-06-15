@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package iped.util;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

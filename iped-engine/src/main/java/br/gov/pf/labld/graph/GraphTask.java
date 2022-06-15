@@ -49,13 +49,13 @@ import dpf.sp.gpinf.indexer.parsers.ufed.UfedMessage;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexHits;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.exception.IPEDException;
 import iped.util.BasicProps;
 import iped.util.ExtraProperties;
+import iped.util.IOUtil;
 import iped.util.MediaTypes;
 
 public class GraphTask extends AbstractTask {

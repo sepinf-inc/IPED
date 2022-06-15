@@ -65,8 +65,6 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.sleuthkit.TouchSleuthkitImages;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Category;
 import gpinf.dev.data.Item;
@@ -77,6 +75,8 @@ import iped.exception.IPEDException;
 import iped.search.IBookmarks;
 import iped.search.IMultiBookmarks;
 import iped.util.BasicProps;
+import iped.util.IOUtil;
+import iped.util.SelectImagePathWithDialog;
 
 public class IPEDSource implements IIPEDSource {
 

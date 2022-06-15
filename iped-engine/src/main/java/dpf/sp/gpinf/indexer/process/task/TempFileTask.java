@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.Item;
 import iped.IItem;
 import iped.configuration.Configurable;
+import iped.util.IOUtil;
 
 /**
  * Tarefa para geração de arquivos temporários para os itens antes do

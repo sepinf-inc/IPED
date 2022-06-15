@@ -98,8 +98,6 @@ import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemSearcher;
 import dpf.sp.gpinf.indexer.tika.SyncMetadata;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
@@ -113,7 +111,9 @@ import iped.exception.ZipBombException;
 import iped.io.IStreamSource;
 import iped.search.IItemSearcher;
 import iped.util.BasicProps;
+import iped.util.EmptyInputStream;
 import iped.util.ExtraProperties;
+import iped.util.IOUtil;
 import iped.util.MediaTypes;
 
 /**

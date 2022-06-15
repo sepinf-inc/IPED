@@ -65,6 +65,7 @@ import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import iped.IItem;
 import iped.util.BasicProps;
 import iped.util.ExtraProperties;
+import iped.util.IOUtil;
 
 public class Util {
 

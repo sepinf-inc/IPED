@@ -30,11 +30,11 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.emule.KnownMetEntry;
 import gpinf.emule.KnownMetParser;
 import iped.IItem;
 import iped.configuration.Configurable;
+import iped.util.IOUtil;
 
 /**
  * Tarefa específica para carving de arquivos known.met do e-Mule.

@@ -8,9 +8,9 @@ import java.nio.file.Path;
 
 import org.apache.commons.lang.SystemUtils;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped.configuration.IConfigurationDirectory;
 import iped.exception.IPEDException;
+import iped.util.UTF8Properties;
 
 public class PluginConfig extends AbstractPropertiesConfigurable {
 

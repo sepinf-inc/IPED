@@ -16,10 +16,10 @@ import java.util.zip.GZIPOutputStream;
 
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
-import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped.ICaseData;
 import iped.IItem;
+import iped.util.HashValue;
 
 /**
  * Classe que define todos os dados do caso.

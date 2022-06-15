@@ -54,7 +54,6 @@ import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.io.FragmentingReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIODataRef;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped.IItem;
 import iped.configuration.Configurable;
@@ -62,6 +61,7 @@ import iped.exception.IPEDException;
 import iped.io.ISeekableInputStreamFactory;
 import iped.util.BasicProps;
 import iped.util.ExtraProperties;
+import iped.util.IOUtil;
 
 public class ElasticSearchIndexTask extends AbstractTask {
 

@@ -35,8 +35,8 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.RawISOConverter;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped.util.ExtraProperties;
+import iped.util.IOUtil;
 import net.sf.sevenzipjbinding.ExtractAskMode;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
 import net.sf.sevenzipjbinding.IArchiveExtractCallback;

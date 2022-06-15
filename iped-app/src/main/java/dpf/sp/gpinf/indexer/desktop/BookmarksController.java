@@ -8,7 +8,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.search.Bookmarks;
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
+import iped.util.LocalizedFormat;
 
 public class BookmarksController {
 

@@ -14,9 +14,9 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
-import dpf.sp.gpinf.indexer.util.FileContentSource;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped.io.IStreamSource;
+import iped.util.FileContentSource;
+import iped.util.IOUtil;
 
 /**
  * Visualizador para versão Html dos arquivos gerados pelos parsers do Tika.

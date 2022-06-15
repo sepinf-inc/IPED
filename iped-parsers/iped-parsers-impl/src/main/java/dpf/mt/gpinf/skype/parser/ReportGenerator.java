@@ -17,10 +17,10 @@ import dpf.mt.gpinf.skype.parser.v8.SkypeMessageV12;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped.IItemBase;
 import iped.search.IItemSearcher;
 import iped.util.BasicProps;
+import iped.util.SimpleHTMLEncoder;
 
 /**
  * Classe responsável por gerar a representação HTML dos registros encontrados

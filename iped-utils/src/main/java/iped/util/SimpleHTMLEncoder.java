@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package iped.util;
 
 /**
  * Copyright 2005 The Apache Software Foundation

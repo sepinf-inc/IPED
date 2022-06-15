@@ -25,7 +25,7 @@ import dpf.sp.gpinf.carver.api.Signature;
 import dpf.sp.gpinf.carver.api.Signature.SignatureType;
 import dpf.sp.gpinf.carving.DefaultCarver;
 import dpf.sp.gpinf.carving.JSCarver;
-import dpf.sp.gpinf.indexer.util.XMLUtil;
+import iped.util.XMLUtil;
 
 public class XMLCarverConfiguration implements CarverConfiguration, Serializable {
     /**

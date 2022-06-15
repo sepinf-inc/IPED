@@ -73,14 +73,14 @@ import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped.IItem;
 import iped.IItemBase;
 import iped.io.SeekableInputStream;
 import iped.search.IItemSearcher;
 import iped.util.BasicProps;
+import iped.util.EmptyInputStream;
 import iped.util.ExtraProperties;
+import iped.util.SimpleHTMLEncoder;
 
 /**
  * Parser para banco de dados do WhatsApp

@@ -6,8 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import iped.util.LocalizedFormat;
+import iped.util.SimpleHTMLEncoder;
 
 /**
  * Reúne métodos auxiliares para formatação de dados.

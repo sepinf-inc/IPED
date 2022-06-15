@@ -10,7 +10,7 @@ import java.util.TreeSet;
 import com.fasterxml.jackson.annotation.JsonAlias;
 
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
+import iped.util.LocalizedFormat;
 
 public class Category implements Serializable, Comparable<Category> {
 

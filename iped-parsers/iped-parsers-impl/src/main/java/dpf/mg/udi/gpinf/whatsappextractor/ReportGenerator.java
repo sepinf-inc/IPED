@@ -16,9 +16,9 @@ import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped.IItemBase;
 import iped.util.ExtraProperties;
+import iped.util.SimpleHTMLEncoder;
 
 /**
  *

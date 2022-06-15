@@ -34,7 +34,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
+import iped.util.LocalizedFormat;
 
 public class SubitemTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {

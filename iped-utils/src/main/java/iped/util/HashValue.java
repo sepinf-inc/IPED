@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package iped.util;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;

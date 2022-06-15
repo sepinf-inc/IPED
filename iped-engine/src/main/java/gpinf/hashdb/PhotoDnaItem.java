@@ -1,6 +1,6 @@
 package gpinf.hashdb;
 
-import dpf.sp.gpinf.indexer.util.HashValue;
+import iped.util.HashValue;
 
 public class PhotoDnaItem extends HashValue {
     /**

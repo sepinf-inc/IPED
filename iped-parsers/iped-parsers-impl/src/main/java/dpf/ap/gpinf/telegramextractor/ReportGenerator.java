@@ -26,9 +26,9 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped.IItemBase;
 import iped.search.IItemSearcher;
+import iped.util.SimpleHTMLEncoder;
 
 public class ReportGenerator {
 

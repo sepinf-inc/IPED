@@ -26,10 +26,10 @@ import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.util.ExtraProperties;
+import iped.util.IOUtil;
 
 public abstract class AbstractTranscriptTask extends AbstractTask {
 

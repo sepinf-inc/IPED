@@ -16,14 +16,14 @@ import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Metadata;
 
 import dpf.mt.gpinf.mapas.util.Messages;
-import dpf.sp.gpinf.indexer.util.DateUtil;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped.IItemId;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.search.IMultiSearchResultProvider;
 import iped.util.BasicProps;
+import iped.util.DateUtil;
 import iped.util.ExtraProperties;
+import iped.util.SimpleHTMLEncoder;
 
 public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResult, Integer> {
     IMultiSearchResultProvider app;

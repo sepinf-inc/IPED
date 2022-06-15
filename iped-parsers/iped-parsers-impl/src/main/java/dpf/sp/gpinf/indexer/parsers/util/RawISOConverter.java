@@ -10,7 +10,7 @@ import java.io.OutputStream;
 
 import org.apache.tika.io.TemporaryResources;
 
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped.util.IOUtil;
 
 public class RawISOConverter {
 

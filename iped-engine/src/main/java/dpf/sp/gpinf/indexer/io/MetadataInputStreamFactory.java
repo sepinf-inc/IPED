@@ -9,10 +9,10 @@ import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.tika.metadata.Metadata;
 
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
 import iped.util.ExtraProperties;
+import iped.util.SeekableFileInputStream;
+import iped.util.SeekableInputStreamFactory;
 
 public class MetadataInputStreamFactory extends SeekableInputStreamFactory {
 

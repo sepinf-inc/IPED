@@ -33,15 +33,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.led.ImageViewPanel;
 import iped.IItemBase;
 import iped.io.IStreamSource;
 import iped.io.SeekableInputStream;
+import iped.util.ExternalImageConverter;
+import iped.util.IOUtil;
+import iped.util.IconUtil;
+import iped.util.ImageUtil;
 import iped.util.MediaTypes;
 
 public class ImageViewer extends AbstractViewer implements ActionListener {

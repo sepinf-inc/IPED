@@ -29,7 +29,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped.util.IOUtil;
 
 public class GenericOLEParser extends AbstractParser {
 

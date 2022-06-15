@@ -66,15 +66,15 @@ import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.search.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.ui.controls.HoverButton;
-import dpf.sp.gpinf.indexer.util.IconUtil;
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
-import dpf.sp.gpinf.indexer.util.StringUtil;
 import iped.IItemId;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.search.IMultiSearchResult;
 import iped.util.BasicProps;
 import iped.util.ExtraProperties;
+import iped.util.IconUtil;
+import iped.util.LocalizedFormat;
+import iped.util.StringUtil;
 
 public class MetadataPanel extends JPanel
         implements ActionListener, ListSelectionListener, ClearFilterListener, ChangeListener {

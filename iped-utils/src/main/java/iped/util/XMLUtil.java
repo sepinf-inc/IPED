@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package iped.util;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;

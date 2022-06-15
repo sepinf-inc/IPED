@@ -34,9 +34,9 @@ import org.slf4j.LoggerFactory;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped.IItem;
 import iped.configuration.Configurable;
+import iped.util.IOUtil;
 
 /**
  * Classe para calcular e manipular hashes.

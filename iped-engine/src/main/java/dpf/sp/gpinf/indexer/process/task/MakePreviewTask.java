@@ -32,13 +32,13 @@ import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.tika.EmptyEmbeddedDocumentExtractor;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped.IItem;
 import iped.IItemBase;
 import iped.configuration.Configurable;
 import iped.search.IItemSearcher;
+import iped.util.IOUtil;
 
 public class MakePreviewTask extends AbstractTask {
 

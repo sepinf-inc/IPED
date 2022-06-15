@@ -26,12 +26,12 @@ import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.PhotoDNALookupConfig;
-import dpf.sp.gpinf.indexer.util.HashValue;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.hashdb.HashDBDataSource;
 import gpinf.hashdb.PhotoDnaItem;
 import iped.IItem;
 import iped.configuration.Configurable;
+import iped.util.HashValue;
+import iped.util.IOUtil;
 
 public class PhotoDNALookup extends AbstractTask {
 

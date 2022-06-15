@@ -26,7 +26,7 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.station.screen.ScreenDockProperty;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MultiViewer;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped.util.IOUtil;
 
 public class PanelsLayout {
     private static final File dir = new File(System.getProperty("user.home"), ".iped");

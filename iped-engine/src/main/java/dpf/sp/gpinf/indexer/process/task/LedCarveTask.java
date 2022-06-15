@@ -25,12 +25,12 @@ import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.hashdb.HashDBDataSource;
 import gpinf.hashdb.LedHashDB;
 import gpinf.hashdb.LedItem;
 import iped.IItem;
 import iped.configuration.Configurable;
+import iped.util.IOUtil;
 import iped.util.MediaTypes;
 
 public class LedCarveTask extends BaseCarveTask {

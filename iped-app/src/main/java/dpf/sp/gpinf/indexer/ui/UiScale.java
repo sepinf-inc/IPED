@@ -7,7 +7,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import iped.util.UTF8Properties;
 
 public class UiScale {
 

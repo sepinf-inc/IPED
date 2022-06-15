@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.MinIOConfig;
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
@@ -44,6 +42,8 @@ import iped.ICaseData;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.io.SeekableInputStream;
+import iped.util.SeekableFileInputStream;
+import iped.util.SeekableInputStreamFactory;
 
 /**
  * Task to export files to MinIO object storage service.

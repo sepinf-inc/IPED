@@ -65,9 +65,9 @@ import dpf.sp.gpinf.indexer.parsers.util.CharCountContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
-import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
+import iped.util.ExternalImageConverter;
+import iped.util.IOUtil;
+import iped.util.ImageUtil;
 import iped.util.MediaTypes;
 
 /**

@@ -52,8 +52,8 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped.IItem;
+import iped.util.LocalizedFormat;
 
 /**
  * Dialog de progresso do processamento, fornecendo previsão de término,

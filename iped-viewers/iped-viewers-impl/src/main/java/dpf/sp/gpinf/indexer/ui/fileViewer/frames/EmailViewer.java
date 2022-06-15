@@ -55,12 +55,12 @@ import org.apache.tika.parser.ParseContext;
 import dpf.sp.gpinf.indexer.parsers.RFC822Parser;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.FileContentSource;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 import iped.IItemBase;
 import iped.io.IStreamSource;
 import iped.util.ExtraProperties;
+import iped.util.FileContentSource;
+import iped.util.IOUtil;
 
 public class EmailViewer extends HtmlViewer {
 

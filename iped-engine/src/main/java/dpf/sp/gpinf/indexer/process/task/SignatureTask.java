@@ -18,10 +18,10 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.SignatureConfig;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.io.SeekableInputStream;
+import iped.util.IOUtil;
 import iped.util.MediaTypes;
 
 /**

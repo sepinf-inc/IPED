@@ -66,9 +66,6 @@ import dpf.sp.gpinf.indexer.search.Bookmarks;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
-import dpf.sp.gpinf.indexer.util.DateUtil;
-import dpf.sp.gpinf.indexer.util.HashValue;
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
@@ -80,8 +77,11 @@ import iped.search.IIPEDSearcher;
 import iped.search.IMultiBookmarks;
 import iped.search.SearchResult;
 import iped.util.BasicProps;
+import iped.util.DateUtil;
 import iped.util.ExtraProperties;
+import iped.util.HashValue;
 import iped.util.MediaTypes;
+import iped.util.SeekableInputStreamFactory;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.

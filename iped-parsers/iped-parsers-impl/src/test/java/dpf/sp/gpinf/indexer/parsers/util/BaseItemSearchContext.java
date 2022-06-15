@@ -21,7 +21,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import iped.IHashValue;
 import iped.IItem;
 import iped.IItemBase;
@@ -29,6 +28,7 @@ import iped.datasource.IDataSource;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
 import iped.search.IItemSearcher;
+import iped.util.SeekableFileInputStream;
 import junit.framework.TestCase;
 
 public abstract class BaseItemSearchContext extends TestCase {

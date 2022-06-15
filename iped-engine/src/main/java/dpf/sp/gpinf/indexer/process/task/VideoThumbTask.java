@@ -51,7 +51,6 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
@@ -59,6 +58,7 @@ import gpinf.video.VideoThumbsOutputConfig;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.util.ExtraProperties;
+import iped.util.ImageUtil;
 
 /**
  * Tarefa de geração de imagem com miniaturas (thumbs) de cenas extraídas de

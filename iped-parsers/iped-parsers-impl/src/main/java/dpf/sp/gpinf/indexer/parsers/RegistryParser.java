@@ -30,8 +30,8 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped.util.ExtraProperties;
+import iped.util.SimpleHTMLEncoder;
 
 public class RegistryParser extends AbstractParser {
 

@@ -3,7 +3,7 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import iped.util.UTF8Properties;
 
 public abstract class AbstractTaskPropertiesConfig extends AbstractTaskConfig<UTF8Properties> {
 

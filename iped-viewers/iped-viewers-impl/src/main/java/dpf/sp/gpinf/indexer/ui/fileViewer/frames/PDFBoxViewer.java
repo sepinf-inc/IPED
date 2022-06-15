@@ -40,8 +40,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped.io.IStreamSource;
+import iped.util.IOUtil;
 
 public class PDFBoxViewer extends AbstractViewer {
 

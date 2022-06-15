@@ -10,10 +10,10 @@ import java.util.List;
 import dpf.mg.udi.gpinf.whatsappextractor.Message;
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped.IItemBase;
 import iped.search.IItemSearcher;
 import iped.util.ExtraProperties;
+import iped.util.SimpleHTMLEncoder;
 
 /**
  *

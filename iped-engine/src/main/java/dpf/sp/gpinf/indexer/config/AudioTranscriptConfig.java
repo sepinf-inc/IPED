@@ -3,7 +3,7 @@ package dpf.sp.gpinf.indexer.config;
 import java.util.ArrayList;
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import iped.util.UTF8Properties;
 
 public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 

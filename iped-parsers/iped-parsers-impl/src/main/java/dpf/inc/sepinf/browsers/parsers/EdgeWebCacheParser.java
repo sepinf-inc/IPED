@@ -41,10 +41,10 @@ import com.sun.jna.ptr.PointerByReference;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
-import dpf.sp.gpinf.indexer.util.TimeConverter;
 import iped.util.BasicProps;
+import iped.util.EmptyInputStream;
 import iped.util.ExtraProperties;
+import iped.util.TimeConverter;
 
 public class EdgeWebCacheParser extends AbstractParser {
 

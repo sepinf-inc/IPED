@@ -23,7 +23,7 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.SwingUtilities;
 
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
+import iped.util.LocalizedFormat;
 
 public class TextParserListener implements PropertyChangeListener {
 

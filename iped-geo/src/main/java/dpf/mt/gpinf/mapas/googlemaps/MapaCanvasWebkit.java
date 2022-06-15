@@ -11,7 +11,7 @@ import org.apache.commons.io.IOUtils;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.impl.JMapOptionsPane;
 import dpf.mt.gpinf.mapas.webkit.JSInterfaceFunctions;
-import dpf.sp.gpinf.indexer.util.UiUtil;
+import iped.util.UiUtil;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;

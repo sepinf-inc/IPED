@@ -36,8 +36,8 @@ import com.dd.plist.PropertyListParser;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped.util.BasicProps;
+import iped.util.EmptyInputStream;
 import iped.util.ExtraProperties;
 
 /**

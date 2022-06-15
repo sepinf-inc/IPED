@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped.io.IStreamSource;
+import iped.util.IOUtil;
 
 public class CADViewer extends AbstractViewer {
 

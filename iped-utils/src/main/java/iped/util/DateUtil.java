@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.util;
+package iped.util;
 
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;

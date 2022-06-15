@@ -29,8 +29,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped.io.IStreamSource;
+import iped.util.IOUtil;
 
 /**
  * Runs a list of parsers sequentially on a file.

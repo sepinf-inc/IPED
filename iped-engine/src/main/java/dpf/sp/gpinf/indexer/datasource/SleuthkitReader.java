@@ -84,8 +84,6 @@ import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitClient;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
@@ -93,7 +91,9 @@ import iped.ICaseData;
 import iped.IItem;
 import iped.exception.IPEDException;
 import iped.util.BasicProps;
+import iped.util.IOUtil;
 import iped.util.MediaTypes;
+import iped.util.UTF8Properties;
 
 public class SleuthkitReader extends DataSourceReader {
 

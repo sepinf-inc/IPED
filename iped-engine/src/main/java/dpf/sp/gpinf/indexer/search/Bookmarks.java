@@ -35,11 +35,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Version;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped.IIPEDSource;
 import iped.search.IBookmarks;
 import iped.search.SearchResult;
+import iped.util.IOUtil;
 
 public class Bookmarks implements Serializable, IBookmarks {
 

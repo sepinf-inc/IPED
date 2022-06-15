@@ -29,8 +29,8 @@ import com.google.cloud.speech.v1p1beta1.SpeechRecognitionResult;
 import com.google.protobuf.ByteString;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped.exception.IPEDException;
+import iped.util.IOUtil;
 
 public class GoogleTranscriptTask extends AbstractTranscriptTask {
 

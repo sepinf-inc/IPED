@@ -7,9 +7,9 @@ import java.util.List;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
-import dpf.sp.gpinf.indexer.util.RandomFilterInputStream;
 import iped.IItem;
 import iped.configuration.Configurable;
+import iped.util.RandomFilterInputStream;
 
 public class EntropyTask extends AbstractTask {
 

@@ -19,10 +19,10 @@ import org.w3c.dom.Node;
 
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.UiUtil;
 import iped.IItem;
 import iped.io.IStreamSource;
+import iped.util.IOUtil;
+import iped.util.UiUtil;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;

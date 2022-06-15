@@ -22,7 +22,7 @@ import org.sqlite.SQLiteConfig.Encoding;
 import org.sqlite.SQLiteConfig.JournalMode;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
-import dpf.sp.gpinf.indexer.util.HashValue;
+import iped.util.HashValue;
 
 public class HashDBDataSource {
     private Connection connection;

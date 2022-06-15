@@ -33,9 +33,9 @@ import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
-import dpf.sp.gpinf.indexer.util.HashValue;
 import gpinf.dev.data.Item;
 import iped.ICaseData;
+import iped.util.HashValue;
 
 /**
  * Responsável por instanciar e executar o contador e o produtor de itens do

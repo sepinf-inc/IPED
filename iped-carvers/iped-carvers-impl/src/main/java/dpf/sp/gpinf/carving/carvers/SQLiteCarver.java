@@ -9,9 +9,9 @@ import org.apache.tika.mime.MediaType;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carving.AbstractCarver;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped.IItem;
 import iped.io.SeekableInputStream;
+import iped.util.IOUtil;
 
 public class SQLiteCarver extends AbstractCarver {
 

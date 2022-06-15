@@ -17,8 +17,8 @@ import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.ui.UiScale;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped.util.IOUtil;
 
 public class AppMain {
 

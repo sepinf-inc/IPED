@@ -46,12 +46,12 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.PythonTask;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
-import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped.IItem;
 import iped.IItemId;
+import iped.util.FileInputStreamFactory;
+import iped.util.ImageUtil;
 import jep.NDArray;
 
 public class SimilarFacesFilterActions {

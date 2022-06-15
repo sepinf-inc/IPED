@@ -45,7 +45,7 @@ import com.github.junrar.exception.RarException;
 import com.github.junrar.rarfile.FileHeader;
 
 import dpf.sp.gpinf.indexer.parsers.util.Util;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import iped.util.EmptyInputStream;
 import iped.util.ExtraProperties;
 
 /**

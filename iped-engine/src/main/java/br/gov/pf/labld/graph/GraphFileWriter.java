@@ -44,8 +44,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 
-import dpf.sp.gpinf.indexer.util.StringUtil;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped.util.StringUtil;
 
 public class GraphFileWriter implements Closeable, Flushable {
 

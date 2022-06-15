@@ -31,12 +31,12 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker.STATE;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.exception.IPEDException;
+import iped.util.IOUtil;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a

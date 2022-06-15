@@ -29,7 +29,7 @@ import dpf.inc.sepinf.gdrive.parsers.GDriveMainParser;
 import dpf.inc.sepinf.winx.parsers.WinXTimelineParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped.util.IOUtil;
 
 /**
  * Detects subtypes of SQLite based on table names.

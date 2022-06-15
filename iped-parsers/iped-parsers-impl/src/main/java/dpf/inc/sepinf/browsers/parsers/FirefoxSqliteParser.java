@@ -33,8 +33,8 @@ import com.github.openjson.JSONObject;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped.util.BasicProps;
+import iped.util.EmptyInputStream;
 import iped.util.ExtraProperties;
 
 /**

@@ -44,12 +44,12 @@ import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
-import dpf.sp.gpinf.indexer.util.DateUtil;
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped.IItemId;
 import iped.search.IMultiSearchResult;
 import iped.util.BasicProps;
+import iped.util.DateUtil;
+import iped.util.LocalizedFormat;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel {
 

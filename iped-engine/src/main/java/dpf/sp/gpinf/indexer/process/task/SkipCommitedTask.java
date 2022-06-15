@@ -28,12 +28,12 @@ import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.exception.IPEDException;
 import iped.util.BasicProps;
+import iped.util.HashValue;
 
 /**
  * Task to ignore already commited files into index. Commited containers without

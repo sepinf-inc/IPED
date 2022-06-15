@@ -79,9 +79,9 @@ import ag.ion.bion.officelayer.text.ITextRange;
 import ag.ion.noa.search.ISearchResult;
 import ag.ion.noa.search.SearchDescriptor;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.ProcessUtil;
 import iped.io.IStreamSource;
+import iped.util.IOUtil;
+import iped.util.ProcessUtil;
 
 public class LibreOfficeViewer extends AbstractViewer {
 

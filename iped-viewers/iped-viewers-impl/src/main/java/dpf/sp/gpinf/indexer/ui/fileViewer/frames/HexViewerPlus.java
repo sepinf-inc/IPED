@@ -107,11 +107,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.UiUtil;
 import iped.io.IStreamSource;
 import iped.io.SeekableInputStream;
+import iped.util.IOUtil;
+import iped.util.SeekableFileInputStream;
+import iped.util.UiUtil;
 
 /**
  *

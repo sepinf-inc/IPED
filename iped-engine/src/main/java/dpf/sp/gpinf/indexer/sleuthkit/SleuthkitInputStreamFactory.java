@@ -15,10 +15,10 @@ import org.sqlite.SQLiteException;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
+import iped.util.EmptyInputStream;
+import iped.util.IOUtil;
+import iped.util.SeekableInputStreamFactory;
 
 public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
 

@@ -59,7 +59,7 @@ import com.healthmarketscience.jackcess.util.OleBlob.EmbeddedContent;
 import com.healthmarketscience.jackcess.util.OleBlob.PackageContent;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped.util.IOUtil;
 
 /**
  * Parser para arquivos MS Access.

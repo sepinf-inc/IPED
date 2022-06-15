@@ -9,7 +9,7 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.UIManager;
 
-import dpf.sp.gpinf.indexer.util.UiUtil;
+import iped.util.UiUtil;
 
 /**
  * A flat button with no background or border. 

@@ -55,12 +55,12 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
-import dpf.sp.gpinf.indexer.util.StringUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped.IItemId;
 import iped.util.BasicProps;
 import iped.util.ExtraProperties;
+import iped.util.StringUtil;
 import iped3.desktop.IColumnsManager;
 import iped3.desktop.ProgressDialog;
 

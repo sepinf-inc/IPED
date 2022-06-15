@@ -25,10 +25,10 @@ import dpf.sp.gpinf.carving.JSCarver;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.Item;
 import iped.IItem;
 import iped.configuration.Configurable;
+import iped.util.IOUtil;
 import iped.util.MediaTypes;
 
 /**

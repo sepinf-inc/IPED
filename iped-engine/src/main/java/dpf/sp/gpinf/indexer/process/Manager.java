@@ -78,7 +78,6 @@ import dpf.sp.gpinf.indexer.search.ItemSearcher;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitClient;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
@@ -88,6 +87,7 @@ import iped.exception.IPEDException;
 import iped.search.IItemSearcher;
 import iped.search.SearchResult;
 import iped.util.BasicProps;
+import iped.util.IOUtil;
 
 /**
  * Classe responsável pela preparação do processamento, inicialização do

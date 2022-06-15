@@ -26,10 +26,10 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IconUtil;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
 import iped.io.IStreamSource;
+import iped.util.IOUtil;
+import iped.util.IconUtil;
+import iped.util.ImageUtil;
 
 public class TiffViewer extends ImageViewer {
     private final JTextField textCurrentPage = new JTextField(2);

@@ -22,9 +22,9 @@ import org.apache.commons.compress.archivers.zip.ZipSplitReadOnlySeekableByteCha
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.IOUtils;
 
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
+import iped.util.SeekableFileInputStream;
+import iped.util.SeekableInputStreamFactory;
 
 public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements Closeable {
 

@@ -27,7 +27,7 @@ import java.security.MessageDigest;
 
 import javax.xml.bind.DatatypeConverter;
 
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped.util.IOUtil;
 
 public class Util {
 

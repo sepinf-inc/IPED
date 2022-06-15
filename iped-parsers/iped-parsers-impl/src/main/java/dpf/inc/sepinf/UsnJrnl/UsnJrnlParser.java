@@ -23,13 +23,13 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped.IItemBase;
 import iped.io.SeekableInputStream;
 import iped.search.IItemSearcher;
 import iped.util.BasicProps;
+import iped.util.EmptyInputStream;
 import iped.util.ExtraProperties;
+import iped.util.IOUtil;
 
 public class UsnJrnlParser extends AbstractParser {
     /**

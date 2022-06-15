@@ -12,7 +12,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped.util.IOUtil;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 

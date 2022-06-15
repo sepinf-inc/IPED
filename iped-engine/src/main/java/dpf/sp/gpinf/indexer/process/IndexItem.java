@@ -80,20 +80,20 @@ import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIOInputInputStreamFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.DateUtil;
-import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
-import dpf.sp.gpinf.indexer.util.StringUtil;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import iped.IItem;
 import iped.datasource.IDataSource;
 import iped.util.BasicProps;
+import iped.util.DateUtil;
 import iped.util.ExtraProperties;
+import iped.util.FileInputStreamFactory;
+import iped.util.IOUtil;
+import iped.util.SeekableInputStreamFactory;
+import iped.util.SelectImagePathWithDialog;
+import iped.util.StringUtil;
+import iped.util.UTF8Properties;
 import jep.NDArray;
 
 /**

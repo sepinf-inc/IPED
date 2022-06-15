@@ -6,9 +6,9 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IOUtil.ExternalOpenEnum;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import iped.util.IOUtil;
+import iped.util.UTF8Properties;
+import iped.util.IOUtil.ExternalOpenEnum;
 
 public class AnalysisConfig extends AbstractPropertiesConfigurable {
 

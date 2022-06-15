@@ -13,10 +13,10 @@ import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
-import dpf.sp.gpinf.indexer.util.FileContentSource;
 import iped.IItem;
 import iped.io.IStreamSource;
 import iped.util.ExtraProperties;
+import iped.util.FileContentSource;
 import iped.util.MediaTypes;
 
 public class ReferencedFileViewer extends AbstractViewer {
