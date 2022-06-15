@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -59,6 +58,11 @@ public class DIETask extends AbstractTask {
      * Field name used to store the detection result (a score from 1 to 1000, inclusive).
      */
     public static String DIE_SCORE = "nudityScore"; //$NON-NLS-1$
+
+    /**
+     * Raw nudity prediciton score [0, 1].
+     */
+    public static String DIE_RAW_SCORE = "nudityRawScore"; //$NON-NLS-1$
 
     /**
      * Field name used to store a detection "class" (a value from 1 to 5, derived from the score).
@@ -226,7 +230,7 @@ public class DIETask extends AbstractTask {
                 List<Float> features = die.extractFeatures(img);
                 if (features != null) {
                     double p = predictor.predict(features);
-                    update(evidence, predictionToScore(p));
+                    update(evidence, predictionToScore(p), p);
                     totalImagesProcessed.incrementAndGet();
                 } else {
                     totalImagesFailed.incrementAndGet();
@@ -240,17 +244,16 @@ public class DIETask extends AbstractTask {
                     prevResult = videoResults.get(evidence.getHash());
                 }
                 if (prevResult != null) {
-                    update(evidence, prevResult.intValue());
+                    update(evidence, prevResult, null);
                     return;
                 }
                 //For videos call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
                 File viewFile = evidence.getViewFile();
                 if (viewFile != null && viewFile.exists()) {
-                    int score = -1;
-                    List<Integer> subitemsScoreInt = (List<Integer>) evidence.getTempAttribute(DIE_SCORE);
-                    if (subitemsScoreInt != null && !subitemsScoreInt.isEmpty()) {
-                        List<Double> subitemsScore = subitemsScoreInt.stream().map(i -> (double) i).collect(Collectors.toList());
-                        score = (int) videoScore(subitemsScore);
+                    double prediction = -1;
+                    List<Double> subitemsRawScore = (List<Double>) evidence.getTempAttribute(DIE_RAW_SCORE);
+                    if (subitemsRawScore != null && !subitemsRawScore.isEmpty()) {
+                        prediction = videoScore(subitemsRawScore);
                     } else {
                         List<BufferedImage> frames = ImageUtil.getFrames(viewFile);
                         List<Double> pvideo = new ArrayList<Double>();
@@ -264,13 +267,13 @@ public class DIETask extends AbstractTask {
                             }
                         }
                         if (!pvideo.isEmpty()) {
-                            double p = videoScore(pvideo);
-                            score = predictionToScore(p); 
+                            prediction = videoScore(pvideo);
                         }
                     }
                     
-                    if (score != -1) {
-                        update(evidence, score);
+                    if (prediction != -1) {
+                        int score = predictionToScore(prediction);
+                        update(evidence, score, null);
                         totalVideosProcessed.incrementAndGet();
                         synchronized (videoResults) {
                             videoResults.put(evidence.getHash(), (short) score);
@@ -317,10 +320,11 @@ public class DIETask extends AbstractTask {
     /**
      * Update DIE attributes of a evidence.
      */
-    private void update(IItem evidence, int score) throws Exception {
+    private void update(IItem evidence, int score, Double prediction) throws Exception {
         evidence.setExtraAttribute(DIE_SCORE, score);
         int classe = Math.min(5, Math.max(1, score / 200 + 1));
         evidence.setExtraAttribute(DIE_CLASS, classe);
+        evidence.setTempAttribute(DIE_RAW_SCORE, prediction);
     }
     
     /**

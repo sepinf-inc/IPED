@@ -556,7 +556,7 @@ public class VideoThumbTask extends ThumbTask {
 
         item.setHasChildren(true);
 
-        List<Integer> framesNudityScore = new ArrayList<>();
+        List<Double> framesNudityScore = new ArrayList<>();
 
         for (int i = 0; i < frames.size(); i++) {
 
@@ -588,7 +588,7 @@ public class VideoThumbTask extends ThumbTask {
             // add new item to processing queue
             worker.processNewItem(newItem, ProcessTime.NOW);
             
-            Integer nudityScore = (Integer) newItem.getExtraAttribute(DIETask.DIE_SCORE);
+            Double nudityScore = (Double) newItem.getTempAttribute(DIETask.DIE_RAW_SCORE);
             if (nudityScore != null) {
                 framesNudityScore.add(nudityScore);
             }
@@ -596,7 +596,7 @@ public class VideoThumbTask extends ThumbTask {
         }
         
         if (!framesNudityScore.isEmpty()) {
-            item.setTempAttribute(DIETask.DIE_SCORE, framesNudityScore);
+            item.setTempAttribute(DIETask.DIE_RAW_SCORE, framesNudityScore);
         }
 
     }
