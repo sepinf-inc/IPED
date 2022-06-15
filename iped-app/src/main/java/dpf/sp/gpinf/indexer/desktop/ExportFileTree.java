@@ -52,8 +52,8 @@ import iped.IIPEDSource;
 import iped.IItem;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
-import iped3.desktop.CancelableWorker;
-import iped3.desktop.ProgressDialog;
+import iped.viewers.api.CancelableWorker;
+import iped.viewers.util.ProgressDialog;
 
 public class ExportFileTree extends CancelableWorker {
 

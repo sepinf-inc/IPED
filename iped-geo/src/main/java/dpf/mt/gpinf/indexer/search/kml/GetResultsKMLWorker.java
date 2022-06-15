@@ -25,7 +25,7 @@ import iped.search.IMultiSearchResultProvider;
 import iped.util.DateUtil;
 import iped.util.SimpleHTMLEncoder;
 
-public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResult, Integer> {
+public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLResult, Integer> {
     IMultiSearchResultProvider app;
     String[] colunas;
     JProgressBar progress;

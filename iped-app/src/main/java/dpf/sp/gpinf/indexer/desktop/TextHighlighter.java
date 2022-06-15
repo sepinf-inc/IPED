@@ -30,8 +30,8 @@ import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.search.highlight.TokenSources;
 
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
-import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
+import iped.viewers.ATextViewer;
+import iped.viewers.util.LuceneSimpleHTMLEncoder;
 
 public class TextHighlighter {
 

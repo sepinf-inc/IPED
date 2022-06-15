@@ -36,19 +36,20 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
-import dpf.sp.gpinf.indexer.ITextParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import iped.IItem;
 import iped.io.IStreamSource;
 import iped.util.LocalizedFormat;
-import iped3.desktop.CancelableWorker;
-import iped3.desktop.ProgressDialog;
+import iped.viewers.ATextViewer;
+import iped.viewers.api.CancelableWorker;
+import iped.viewers.api.IProgressMonitor;
+import iped.viewers.api.ITextParser;
+import iped.viewers.util.ProgressDialog;
 
 public class TextParser extends CancelableWorker implements ITextParser {
 
@@ -58,7 +59,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
     private IStreamSource content;
     volatile int id;
     private IItem item;
-    private ProgressDialog progressMonitor;
+    private IProgressMonitor progressMonitor;
 
     private static Object lock = new Object();
     private TemporaryResources tmp;
@@ -139,12 +140,12 @@ public class TextParser extends CancelableWorker implements ITextParser {
     }
 
     @Override
-    public ProgressDialog getProgressMonitor() {
+    public IProgressMonitor getProgressMonitor() {
         return this.progressMonitor;
     }
 
     @Override
-    public void setProgressMonitor(ProgressDialog monitor) {
+    public void setProgressMonitor(IProgressMonitor monitor) {
         this.progressMonitor = monitor;
     }
 

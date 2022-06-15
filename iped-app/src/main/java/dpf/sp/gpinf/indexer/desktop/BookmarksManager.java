@@ -81,7 +81,7 @@ import iped.IItem;
 import iped.IItemId;
 import iped.properties.BasicProps;
 import iped.util.LocalizedFormat;
-import iped3.desktop.ProgressDialog;
+import iped.viewers.util.ProgressDialog;
 
 public class BookmarksManager implements ActionListener, ListSelectionListener, KeyListener {
 

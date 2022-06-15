@@ -24,7 +24,6 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
-import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
 import iped.IItem;
@@ -33,6 +32,7 @@ import iped.exception.IPEDException;
 import iped.util.ExternalImageConverter;
 import iped.util.IOUtil;
 import iped.util.ImageUtil;
+import iped.viewers.util.ImageMetadataUtil;
 
 /**
  * Explicit Image Detection (DIE) Task .

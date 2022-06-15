@@ -20,9 +20,9 @@ import ag.ion.bion.officelayer.application.IOfficeApplication;
 import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
-import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
-import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped.viewers.util.LibreOfficeFinder;
+import iped.viewers.util.UNOLibFinder;
 
 /**
  * Bootstrap class to start the main application process with a custom classpath

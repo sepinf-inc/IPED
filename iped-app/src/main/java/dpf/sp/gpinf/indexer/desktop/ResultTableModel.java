@@ -42,7 +42,6 @@ import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.TimelineResults.TimeItemId;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped.IItemId;
 import iped.localization.LocalizedProperties;
@@ -50,6 +49,7 @@ import iped.properties.BasicProps;
 import iped.search.IMultiSearchResult;
 import iped.util.DateUtil;
 import iped.util.LocalizedFormat;
+import iped.viewers.ATextViewer;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel {
 

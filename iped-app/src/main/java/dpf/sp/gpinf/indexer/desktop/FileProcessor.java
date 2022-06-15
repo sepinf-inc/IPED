@@ -34,7 +34,6 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.datasource.AD1DataSourceReader.AD1InputStreamFactory;
 import dpf.sp.gpinf.indexer.io.ZIPInputStreamFactory;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -42,12 +41,13 @@ import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
 import gpinf.dev.data.DataSource;
 import iped.IItem;
 import iped.io.ISeekableInputStreamFactory;
 import iped.util.FileInputStreamFactory;
-import iped3.desktop.CancelableWorker;
+import iped.viewers.ImageViewer;
+import iped.viewers.api.CancelableWorker;
+import iped.viewers.api.IFileProcessor;
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
     private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);

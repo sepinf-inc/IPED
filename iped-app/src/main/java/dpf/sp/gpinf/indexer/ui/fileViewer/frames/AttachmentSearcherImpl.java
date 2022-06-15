@@ -13,10 +13,10 @@ import dpf.sp.gpinf.indexer.desktop.BookmarksController;
 import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
 import iped.IItem;
 import iped.IItemId;
 import iped.properties.BasicProps;
+import iped.viewers.api.AttachmentSearcher;
 
 public class AttachmentSearcherImpl implements AttachmentSearcher {
 

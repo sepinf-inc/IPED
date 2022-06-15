@@ -47,7 +47,6 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
 import dpf.sp.gpinf.indexer.ui.UiScale;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AbstractViewer;
 import iped.IIPEDSource;
 import iped.IItem;
 import iped.IItemId;
@@ -55,6 +54,7 @@ import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.search.SearchResult;
 import iped.util.SpinnerDialog;
+import iped.viewers.AbstractViewer;
 
 public class MenuListener implements ActionListener {
 

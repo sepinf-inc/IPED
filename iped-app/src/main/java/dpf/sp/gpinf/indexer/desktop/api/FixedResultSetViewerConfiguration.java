@@ -4,8 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-import iped3.desktop.ResultSetViewer;
-import iped3.desktop.ResultSetViewerConfiguration;
+import iped.viewers.api.ResultSetViewer;
+import iped.viewers.api.ResultSetViewerConfiguration;
 
 public class FixedResultSetViewerConfiguration implements ResultSetViewerConfiguration {
 

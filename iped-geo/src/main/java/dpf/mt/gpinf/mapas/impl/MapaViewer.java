@@ -15,8 +15,8 @@ import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import dpf.mt.gpinf.mapas.util.Messages;
 import iped.IItemId;
 import iped.search.IMultiSearchResultProvider;
-import iped3.desktop.GUIProvider;
-import iped3.desktop.ResultSetViewer;
+import iped.viewers.api.GUIProvider;
+import iped.viewers.api.ResultSetViewer;
 
 public class MapaViewer implements ResultSetViewer, TableModelListener, ListSelectionListener {
 

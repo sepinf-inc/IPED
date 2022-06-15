@@ -128,11 +128,7 @@ import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.PanelsLayout;
 import dpf.sp.gpinf.indexer.ui.controls.CSelButton;
 import dpf.sp.gpinf.indexer.ui.controls.CustomButton;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AbstractViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
-import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
-import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped.IIPEDSource;
 import iped.IItem;
@@ -141,10 +137,14 @@ import iped.search.IMultiSearchResult;
 import iped.search.IMultiSearchResultProvider;
 import iped.util.IconUtil;
 import iped.util.UiUtil;
-import iped3.desktop.GUIProvider;
-import iped3.desktop.IColumnsManager;
-import iped3.desktop.ResultSetViewer;
-import iped3.desktop.ResultSetViewerConfiguration;
+import iped.viewers.ATextViewer;
+import iped.viewers.AbstractViewer;
+import iped.viewers.api.GUIProvider;
+import iped.viewers.api.IColumnsManager;
+import iped.viewers.api.ResultSetViewer;
+import iped.viewers.api.ResultSetViewerConfiguration;
+import iped.viewers.components.HitsTable;
+import iped.viewers.components.HitsTableModel;
 
 public class App extends JFrame implements WindowListener, IMultiSearchResultProvider, GUIProvider {
     /**

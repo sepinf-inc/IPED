@@ -13,7 +13,7 @@ import org.apache.commons.lang.ArrayUtils;
 import dpf.mt.gpinf.mapas.util.Messages;
 import iped.IItemId;
 import iped.search.IMultiSearchResultProvider;
-import iped3.desktop.GUIProvider;
+import iped.viewers.api.GUIProvider;
 
 public class KMLResult {
     private static FileDialog fDialog;

@@ -14,8 +14,8 @@ import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import iped3.desktop.CancelableWorker;
-import iped3.desktop.ProgressDialog;
+import iped.viewers.api.CancelableWorker;
+import iped.viewers.util.ProgressDialog;
 
 public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> implements PropertyChangeListener {
 

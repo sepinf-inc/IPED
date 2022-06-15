@@ -26,13 +26,13 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
-import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.properties.MediaTypes;
 import iped.util.ExternalImageConverter;
 import iped.util.ImageUtil;
 import iped.util.ImageUtil.BooleanWrapper;
+import iped.viewers.util.ImageMetadataUtil;
 
 public class ImageThumbTask extends ThumbTask {
 

@@ -39,11 +39,11 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToThumb;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
-import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.util.IOUtil;
 import iped.util.ImageUtil;
+import iped.viewers.util.LibreOfficeFinder;
 
 public class DocThumbTask extends ThumbTask {
 

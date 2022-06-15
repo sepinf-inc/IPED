@@ -31,8 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.desktop.parallelsorter.ParallelTableRowSorter;
-import iped3.desktop.CancelableWorker;
-import iped3.desktop.ProgressDialog;
+import iped.viewers.api.CancelableWorker;
+import iped.viewers.util.ProgressDialog;
 
 public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSortModel> {
     

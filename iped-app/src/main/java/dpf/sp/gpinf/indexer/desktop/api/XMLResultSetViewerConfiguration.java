@@ -18,8 +18,8 @@ import org.xml.sax.SAXException;
 
 import iped.exception.IPEDException;
 import iped.util.XMLUtil;
-import iped3.desktop.ResultSetViewer;
-import iped3.desktop.ResultSetViewerConfiguration;
+import iped.viewers.api.ResultSetViewer;
+import iped.viewers.api.ResultSetViewerConfiguration;
 
 public class XMLResultSetViewerConfiguration implements ResultSetViewerConfiguration {
 

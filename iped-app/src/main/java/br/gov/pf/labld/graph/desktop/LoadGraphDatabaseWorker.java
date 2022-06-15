@@ -23,8 +23,8 @@ import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import iped.util.IOUtil;
-import iped3.desktop.CancelableWorker;
-import iped3.desktop.ProgressDialog;
+import iped.viewers.api.CancelableWorker;
+import iped.viewers.util.ProgressDialog;
 
 class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
 

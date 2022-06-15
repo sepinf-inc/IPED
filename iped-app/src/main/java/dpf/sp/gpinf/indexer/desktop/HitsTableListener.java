@@ -26,7 +26,7 @@ import javax.swing.JTextPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
+import iped.viewers.ATextViewer;
 
 public class HitsTableListener implements ListSelectionListener {
 

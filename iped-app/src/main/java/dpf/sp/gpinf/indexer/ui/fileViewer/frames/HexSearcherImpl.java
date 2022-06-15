@@ -17,10 +17,11 @@ import org.exbin.deltahex.swing.CodeArea;
 
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexViewerPlus.HexSearcher;
 import iped.io.SeekableInputStream;
-import iped3.desktop.CancelableWorker;
-import iped3.desktop.ProgressDialog;
+import iped.viewers.HexViewerPlus.HexSearcher;
+import iped.viewers.HexViewerPlus.Hits;
+import iped.viewers.api.CancelableWorker;
+import iped.viewers.util.ProgressDialog;
 
 /**
  *

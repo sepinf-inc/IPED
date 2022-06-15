@@ -4,6 +4,7 @@ import java.util.Set;
 
 import dpf.sp.gpinf.indexer.desktop.TextParser;
 import iped.io.IStreamSource;
+import iped.viewers.ATextViewer;
 
 public class TextViewer extends ATextViewer {
 

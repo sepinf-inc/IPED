@@ -61,8 +61,8 @@ import iped.localization.LocalizedProperties;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.util.StringUtil;
-import iped3.desktop.IColumnsManager;
-import iped3.desktop.ProgressDialog;
+import iped.viewers.api.IColumnsManager;
+import iped.viewers.util.ProgressDialog;
 
 public class ColumnsManager implements ActionListener, Serializable, IColumnsManager {
 

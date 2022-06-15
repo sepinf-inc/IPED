@@ -71,7 +71,6 @@ import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
 import iped.IItem;
@@ -80,6 +79,7 @@ import iped.util.ExternalImageConverter;
 import iped.util.IOUtil;
 import iped.util.ImageUtil;
 import iped.util.LocalizedFormat;
+import iped.viewers.util.ImageMetadataUtil;
 
 /**
  * Tarefa de geração de relatório no formato HTML do itens selecionados, gerado

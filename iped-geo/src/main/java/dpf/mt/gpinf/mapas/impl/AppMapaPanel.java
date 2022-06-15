@@ -25,7 +25,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped.IItemId;
 import iped.properties.BasicProps;
 import iped.search.IMultiSearchResultProvider;
-import iped3.desktop.GUIProvider;
+import iped.viewers.api.GUIProvider;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas

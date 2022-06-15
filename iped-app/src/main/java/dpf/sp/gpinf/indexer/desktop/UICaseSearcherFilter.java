@@ -50,8 +50,8 @@ import iped.IItemId;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.util.LocalizedFormat;
-import iped3.desktop.CancelableWorker;
-import iped3.desktop.ProgressDialog;
+import iped.viewers.api.CancelableWorker;
+import iped.viewers.util.ProgressDialog;
 
 public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Object> {
 
