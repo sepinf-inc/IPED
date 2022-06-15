@@ -575,6 +575,11 @@ public class VideoThumbTask extends ThumbTask {
             newItem.setSubItem(true);
             newItem.setSubitemId(i);
 
+            newItem.setAccessDate(item.getAccessDate());
+            newItem.setModificationDate(item.getModDate());
+            newItem.setCreationDate(item.getCreationDate());
+            newItem.setChangeDate(item.getChangeDate());
+
             ExportFileTask extractor = new ExportFileTask();
             extractor.setWorker(worker);
 
