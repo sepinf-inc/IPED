@@ -1,13 +1,14 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.sax.BodyContentHandler;
-import org.junit.Test;
-import org.xml.sax.ContentHandler;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.sax.BodyContentHandler;
+import org.junit.Test;
+import org.xml.sax.ContentHandler;
 
 public class RARParserTest extends AbstractPkgTest {
 
@@ -100,7 +101,7 @@ public class RARParserTest extends AbstractPkgTest {
 
             assertEquals("mockfolder", tracker.filenames.get(0));
             Date date = parseFromDefaultDateFormat(tracker.modifieddate.get(0));
-            assertEquals(df.parse("09/04/2021 08:26:10"), date);
+            assertEquals(df.parse("09/04/2021 08:26:11"), date);
             assertEquals("D41D8CD98F00B204E9800998ECF8427E", tracker.itensmd5.get(0));
             assertEquals("true", tracker.isfolder.get(0));
 
@@ -136,13 +137,13 @@ public class RARParserTest extends AbstractPkgTest {
 
             assertEquals("mocksheets3.xlsx", tracker.filenames.get(6));
             date = parseFromDefaultDateFormat(tracker.modifieddate.get(6));
-            assertEquals(df.parse("09/04/2021 09:24:00"), date);
+            assertEquals(df.parse("09/04/2021 09:24:01"), date);
             assertEquals("70699181ACE6063C5565C1655E5F8661", tracker.itensmd5.get(6));
             assertEquals("false", tracker.isfolder.get(6));
 
             assertEquals("mocksheets4.xlsx", tracker.filenames.get(7));
             date = parseFromDefaultDateFormat(tracker.modifieddate.get(7));
-            assertEquals(df.parse("09/04/2021 09:23:48"), date);
+            assertEquals(df.parse("09/04/2021 09:23:49"), date);
             assertEquals("5EB65E9DE8B5C7756101AE7D81CA4A50", tracker.itensmd5.get(7));
             assertEquals("false", tracker.isfolder.get(7));
 
@@ -166,13 +167,13 @@ public class RARParserTest extends AbstractPkgTest {
 
             assertEquals("mocktext3.txt", tracker.filenames.get(11));
             date = parseFromDefaultDateFormat(tracker.modifieddate.get(11));
-            assertEquals(df.parse("09/04/2021 09:22:40"), date);
+            assertEquals(df.parse("09/04/2021 09:22:41"), date);
             assertEquals("C03511CB57B7B5D71D0B0848D26EB6FE", tracker.itensmd5.get(11));
             assertEquals("false", tracker.isfolder.get(11));
 
             assertEquals("mocktext4.txt", tracker.filenames.get(12));
             date = parseFromDefaultDateFormat(tracker.modifieddate.get(12));
-            assertEquals(df.parse("09/04/2021 09:22:46"), date);
+            assertEquals(df.parse("09/04/2021 09:22:47"), date);
             assertEquals("C2186D0182395690DC449FB589423050", tracker.itensmd5.get(12));
             assertEquals("false", tracker.isfolder.get(12));
 
@@ -196,7 +197,7 @@ public class RARParserTest extends AbstractPkgTest {
 
             assertEquals("mockfolder/mocktext5.txt", tracker.filenames.get(16));
             date = parseFromDefaultDateFormat(tracker.modifieddate.get(16));
-            assertEquals(df.parse("09/04/2021 09:26:00"), date);
+            assertEquals(df.parse("09/04/2021 09:26:01"), date);
             assertEquals("6212E7FBA5A8FE2FFF5EEA267D4009BE", tracker.itensmd5.get(16));
             assertEquals("false", tracker.isfolder.get(16));
 
@@ -208,7 +209,7 @@ public class RARParserTest extends AbstractPkgTest {
 
             assertEquals("mockfolder/mocksheets5.xlsx", tracker.filenames.get(18));
             date = parseFromDefaultDateFormat(tracker.modifieddate.get(18));
-            assertEquals(df.parse("09/04/2021 09:26:16"), date);
+            assertEquals(df.parse("09/04/2021 09:26:17"), date);
             assertEquals("0E3FD8870A4F85F0975DEBD0C8E24ECF", tracker.itensmd5.get(18));
             assertEquals("false", tracker.isfolder.get(18));
         }

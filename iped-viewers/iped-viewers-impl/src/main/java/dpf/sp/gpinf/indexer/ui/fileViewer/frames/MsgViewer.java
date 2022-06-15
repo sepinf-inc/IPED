@@ -34,7 +34,7 @@ import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.HtmlEncodingDetector;
-import org.apache.tika.parser.rtf.RTFParser;
+import org.apache.tika.parser.microsoft.rtf.RTFParser;
 import org.bbottema.rtftohtml.RTF2HTMLConverter;
 import org.bbottema.rtftohtml.impl.RTF2HTMLConverterRFCCompliant;
 import org.slf4j.Logger;
@@ -57,10 +57,6 @@ import iped3.util.MediaTypes;
 public class MsgViewer extends HtmlViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(MsgViewer.class);
-    /**
-     *
-     */
-    private static final long serialVersionUID = 12L;
 
     private HtmlEncodingDetector detector = new HtmlEncodingDetector();
     private Charset win1252 = Charset.forName("windows-1252");

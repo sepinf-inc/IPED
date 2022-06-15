@@ -226,7 +226,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         // Indexa conteudo de todos os elementos de HTMLs, como script, etc
         context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
         // we have seen very large records in valid docs
-        org.apache.poi.util.IOUtils.setByteArrayMaxOverride(-1);
+        org.apache.poi.hpsf.CodePageString.setMaxRecordLength(512_000);
 
         context.set(IStreamSource.class, evidence);
         context.set(IItemBase.class, evidence);
@@ -257,7 +257,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         Long len = evidence.getLength();
         if (len != null)
             metadata.set(Metadata.CONTENT_LENGTH, len.toString());
-        metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, evidence.getName());
         if (evidence.getMediaType() != null) {
             metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
             metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
@@ -280,7 +280,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         return subitensDiscovered.get();
     }
 
-    public void process(IItem evidence) throws IOException {
+    @SuppressWarnings("resource")
+    private void setEmptyTextCache(IItem evidence) {
+        ((Item) evidence).setParsedTextCache(new TextCache());
+    }
+
+	public void process(IItem evidence) throws IOException {
 
         long start = System.nanoTime() / 1000;
 
@@ -288,7 +293,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         Parser parser = autoParser.getLeafParser(evidence.getMetadata());
         if (parser instanceof EmptyParser) {
-            ((Item) evidence).setParsedTextCache(new TextCache());
+            setEmptyTextCache(evidence);
             return;
         }
 

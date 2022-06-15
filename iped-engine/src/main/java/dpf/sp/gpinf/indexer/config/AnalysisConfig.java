@@ -7,8 +7,8 @@ import java.nio.file.Path;
 
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.IOUtil.ExternalOpenEnum;
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class AnalysisConfig extends AbstractPropertiesConfigurable {
 

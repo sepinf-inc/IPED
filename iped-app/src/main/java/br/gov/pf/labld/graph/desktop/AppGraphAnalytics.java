@@ -59,7 +59,6 @@ import br.gov.pf.labld.graph.desktop.renderers.MoneyTransferNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PeopleNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PersonNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PhoneNodeRenderer;
-import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.ClearFilterListener;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -134,7 +133,10 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         this.graph = new Graph();
 
         this.graphPane = new GraphPane(graph) {
-            @Override
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
             public void updateUI() {
                 updateThemeColors();
                 super.updateUI();

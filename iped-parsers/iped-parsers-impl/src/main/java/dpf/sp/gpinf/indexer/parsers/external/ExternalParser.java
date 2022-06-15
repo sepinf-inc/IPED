@@ -36,12 +36,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.NullOutputStream;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.IOUtils;
-import org.apache.tika.io.NullOutputStream;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -85,7 +86,12 @@ public class ExternalParser extends AbstractParser {
          * A null consumer
          */
         LineConsumer NULL = new LineConsumer() {
-            @Override
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
             public void consume(String line) {
                 // ignores
             }
@@ -328,13 +334,14 @@ public class ExternalParser extends AbstractParser {
                     extractMetadata(is, metadata);
                 } else {
                     File tmpFile = inputToStdIn ? null : stream.getFile();
-                    extractOutput(is, xhtml, metadata.get(Metadata.RESOURCE_NAME_KEY), tmpFile);
+                    extractOutput(is, xhtml, metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY), tmpFile);
                 }
             }
 
         } catch (InterruptedException e) {
-            LOGGER.warn(parserName + " interrupted while processing " + metadata.get(Metadata.RESOURCE_NAME_KEY) + " ("
-                    + metadata.get(Metadata.CONTENT_LENGTH) + " bytes)");
+            LOGGER.warn(
+                    parserName + " interrupted while processing " + metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY)
+                            + " (" + metadata.get(Metadata.CONTENT_LENGTH) + " bytes)");
 
             if (process != null)
                 process.destroyForcibly();
@@ -460,10 +467,10 @@ public class ExternalParser extends AbstractParser {
         Thread t = new Thread() {
             public void run() {
                 try {
-                    IOUtils.copy(stream, new NullOutputStream());
+                    IOUtils.copy(stream, NullOutputStream.NULL_OUTPUT_STREAM);
                 } catch (IOException e) {
                 } finally {
-                    IOUtils.closeQuietly(stream);
+                    IOUtil.closeQuietly(stream);
                 }
             }
         };
@@ -500,7 +507,7 @@ public class ExternalParser extends AbstractParser {
         } catch (IOException e) {
             // Ignore
         } finally {
-            IOUtils.closeQuietly(stream);
+            IOUtil.closeQuietly(stream);
         }
     }
 

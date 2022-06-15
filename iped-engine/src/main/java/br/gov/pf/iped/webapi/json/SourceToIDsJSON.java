@@ -23,7 +23,7 @@ public class SourceToIDsJSON {
         this();
         for (DocIDJSON doc : docs) {
             String source = doc.getSource();
-            Integer id = new Integer(doc.getId());
+            Integer id = doc.getId();
             if (!this.sourceToids.containsKey(source)) {
                 this.sourceToids.put(source, new ArrayList<Integer>());
             }

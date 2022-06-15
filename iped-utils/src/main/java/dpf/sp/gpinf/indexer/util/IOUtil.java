@@ -201,6 +201,9 @@ public class IOUtil {
         if (!file.exists()) {
             return false;
         }
+        if (file.isDirectory()) {
+            return IOUtil.canCreateFile(file);
+        }
         try (FileOutputStream fos = new FileOutputStream(file, true)) {
             return true;
 
@@ -307,18 +310,22 @@ public class IOUtil {
         }
     }
 
-    public static void copyDirectory(File origem, File destino, boolean recursive) throws IOException {
-        if (!destino.exists())
-            if (!destino.mkdirs())
-                throw new IOException("Fail to create folder " + destino.getAbsolutePath()); //$NON-NLS-1$
-        String[] subdir = origem.list();
+    public static void copyDirectory(File source, File dest, boolean recursive) throws IOException {
+        if (!dest.exists() && !dest.mkdirs()) {
+            throw new IOException("Fail to create folder " + dest.getAbsolutePath()); //$NON-NLS-1$
+        }
+        String[] subdir = source.list();
+        if (subdir == null) {
+            throw new IOException("Source is not a directory: " + source.getAbsolutePath());
+        }
         for (int i = 0; i < subdir.length; i++) {
-            File subFile = new File(origem, subdir[i]);
+            File subFile = new File(source, subdir[i]);
             if (subFile.isDirectory()) {
-                if (recursive)
-                    copyDirectory(subFile, new File(destino, subdir[i]));
+                if (recursive) {
+                    copyDirectory(subFile, new File(dest, subdir[i]));
+                }
             } else {
-                File subDestino = new File(destino, subdir[i]);
+                File subDestino = new File(dest, subdir[i]);
                 copyFile(subFile, subDestino);
             }
         }

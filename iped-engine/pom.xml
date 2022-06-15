@@ -157,9 +157,15 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>7.6.1-shaded4</version>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-join</artifactId>
+            <version>${lucene.version}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.opensearch.client</groupId>
+            <artifactId>opensearch-rest-high-level-client</artifactId>
+            <version>2.0.0</version>
         </dependency>
         <dependency>
             <groupId>io.minio</groupId>
@@ -204,11 +210,6 @@
   			<version>3.0.4</version>
 		</dependency>
         <dependency>
-	    	<groupId>com.optimaize.languagedetector</groupId>
-    		<artifactId>language-detector</artifactId>
-    		<version>0.6</version>
-		</dependency>
-        <dependency>
    			<groupId>com.zaxxer</groupId>
    			<artifactId>SparseBitSet</artifactId>
    			<version>1.1</version>
@@ -248,6 +249,10 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-nop</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>javax.xml.bind</groupId>
+                    <artifactId>jaxb-api</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 		<dependency>
@@ -272,6 +277,15 @@
             <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this -->
             <version>1.21</version>
         </dependency>
-    </dependencies>
-    
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-langdetect-optimaize</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-parser-nlp-module</artifactId>
+            <version>${tika.version}</version>
+         </dependency>
+     </dependencies>
 </project>

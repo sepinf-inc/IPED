@@ -1,14 +1,15 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+
 import java.io.IOException;
 import java.io.InputStream;
-import junit.framework.TestCase;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.DublinCore;
 import org.apache.tika.metadata.Metadata;
@@ -16,12 +17,14 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
+import org.junit.Test;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
 import iped3.util.ExtraProperties;
-import org.junit.Test;
+import junit.framework.TestCase;
 
 public class RFC822ParserTest extends TestCase {
 
@@ -29,7 +32,6 @@ public class RFC822ParserTest extends TestCase {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testSimple() throws IOException, SAXException, TikaException {
         RFC822Parser parser = new RFC822Parser();
@@ -52,7 +54,7 @@ public class RFC822ParserTest extends TestCase {
                             + "test=test#test ] Guilherme Andreuce com(...)",
                     metadata.get(ExtraProperties.MESSAGE_BODY));
             assertEquals("2021-04-12T08:25:34Z", metadata.get(ExtraProperties.MESSAGE_DATE));
-            assertEquals("Guilherme Andreuce <guilhermeandreuce@gmail.com>", metadata.get(Metadata.AUTHOR));
+            assertEquals("Guilherme Andreuce <guilhermeandreuce@gmail.com>", metadata.get(TikaCoreProperties.CREATOR));
             assertEquals("test@test.pf.gov", metadata.get(Metadata.MESSAGE_TO));
             assertEquals("0", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
             assertEquals(null, metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
@@ -60,7 +62,6 @@ public class RFC822ParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testMultipart() throws IOException, SAXException, TikaException {
         RFC822Parser parser = new RFC822Parser();
@@ -84,19 +85,17 @@ public class RFC822ParserTest extends TestCase {
             String hts = handler.toString();
             assertTrue(hts.contains("logo.gif"));
             assertEquals("DigitalPebble <julien@digitalpebble.com>", metadata.get(TikaCoreProperties.CREATOR));
-            assertEquals("DigitalPebble <julien@digitalpebble.com>", metadata.get(Metadata.AUTHOR));
             assertEquals("This is a test for parsing multi-part mails. "
                     + "With some funky HTML code an a picture attached. " + "Text specific to body 1. -- ** *(...)",
                     metadata.get(ExtraProperties.MESSAGE_BODY));
             assertEquals(null, metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
             assertEquals("lists.digitalpebble@gmail.com", metadata.get(Metadata.MESSAGE_TO));
             assertEquals("1", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
-            assertEquals("Test Multi Part Message", metadata.get(Metadata.TITLE));
+            assertEquals("Test Multi Part Message", metadata.get(TikaCoreProperties.TITLE));
         }
 
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testQuotedPrintable() throws IOException, SAXException, TikaException {
         RFC822Parser parser = new RFC822Parser();
@@ -110,13 +109,12 @@ public class RFC822ParserTest extends TestCase {
             // Unicode
             assertEquals("Another Person <another.person@another-example.com>",
                     metadata.get(TikaCoreProperties.CREATOR));
-            assertEquals("Another Person <another.person@another-example.com>", metadata.get(Metadata.AUTHOR));
             assertEquals("Düsseldorf has non-ascii. Lines can be split like this. Spaces at the end of a line \r\n"
                     + "must be encoded.", metadata.get(ExtraProperties.MESSAGE_BODY));
             assertEquals(null, metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
             assertEquals("A. Person <a.person@example.com>", metadata.get(Metadata.MESSAGE_TO));
             assertEquals("0", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
-            assertEquals("Sample with Quoted Printable Text", metadata.get(Metadata.TITLE));
+            assertEquals("Sample with Quoted Printable Text", metadata.get(TikaCoreProperties.TITLE));
         }
 
     }

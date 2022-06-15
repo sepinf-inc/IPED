@@ -47,7 +47,7 @@ public class QRCodeTask extends AbstractTask {
 
     private static final String QRCODE_TEXT = "QRCodeText";
     private static final String QRCODE_HEX = "QRCodeHex";
-    private static final String QRCODE_TYPE = "QRCodeType";
+    // private static final String QRCODE_TYPE = "QRCodeType";
     private static final String QRCODE_POINTS = "QRCodePoints";
 
     private static final AtomicLong totalImagesProcessed = new AtomicLong();
@@ -129,7 +129,7 @@ public class QRCodeTask extends AbstractTask {
         try (BufferedInputStream in = evidence.getBufferedInputStream()) {
             img = ImageIO.read(in);
         } catch (Exception e) {
-            logger.warn("Cannot read image file {} ({} bytes): {}", evidence.getPath(), evidence.getLength(),
+            logger.debug("Cannot read image file {} ({} bytes): {}", evidence.getPath(), evidence.getLength(),
                     e.toString());
             totalImagesFailed.incrementAndGet();
         }

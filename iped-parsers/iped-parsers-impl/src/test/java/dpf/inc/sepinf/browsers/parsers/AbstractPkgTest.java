@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import junit.framework.TestCase;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -19,6 +19,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import iped3.util.ExtraProperties;
+import junit.framework.TestCase;
 
 public abstract class AbstractPkgTest extends TestCase {
     protected ParseContext firefoxContext;

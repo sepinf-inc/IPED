@@ -9,7 +9,9 @@ import javax.swing.table.AbstractTableModel;
 
 public class CompositeDelegateTableModel extends AbstractTableModel {
 
-    List<AbstractTableModel> models = new ArrayList<AbstractTableModel>();
+    private static final long serialVersionUID = 1L;
+
+	List<AbstractTableModel> models = new ArrayList<AbstractTableModel>();
 
     AbstractTableModel currentSource;
 

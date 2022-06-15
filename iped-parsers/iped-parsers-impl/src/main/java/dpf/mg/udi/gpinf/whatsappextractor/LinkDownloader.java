@@ -49,6 +49,8 @@ public class LinkDownloader {
     }
 
     class URLnotFound extends IOException {
+        private static final long serialVersionUID = -6150655171948292830L;
+
         public URLnotFound() {
             super("URL not found");
         }
@@ -128,7 +130,7 @@ public class LinkDownloader {
             df.decryptStream(out);
 
         } catch (Exception e) {
-            throw new Exception("cipher error");
+            throw new Exception("cipher error " + urlStr);
         }
 
         try (InputStream is = new FileInputStream(dest)) {

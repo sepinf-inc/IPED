@@ -18,15 +18,12 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -544,8 +541,13 @@ public class GraphFileWriter implements Closeable, Flushable {
 
         private Set<String> prevNodeRecords = Collections
                 .newSetFromMap(new LinkedHashMap<String, Boolean>(16, 0.75f, true) {
-                    @Override
-                    protected boolean removeEldestEntry(Entry entry) {
+                    /**
+					 * 
+					 */
+					private static final long serialVersionUID = 1L;
+
+					@Override
+                    protected boolean removeEldestEntry(Entry<String, Boolean> entry) {
                         return this.size() > 10000;
                     }
                 });
@@ -798,7 +800,6 @@ public class GraphFileWriter implements Closeable, Flushable {
             Util.fsync(fieldData.toPath());
         }
 
-        @SuppressWarnings("unchecked")
         private void loadFieldData() throws IOException {
             if (fieldData.exists()) {
                 try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(fieldData.toPath()))) {

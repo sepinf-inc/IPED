@@ -71,8 +71,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.text.JTextComponent;
 
 import org.apache.lucene.search.Query;
@@ -112,16 +110,15 @@ import bibliothek.gui.dock.themes.basic.action.BasicButtonHandler;
 import bibliothek.gui.dock.themes.basic.action.BasicSelectableHandler;
 import bibliothek.gui.dock.themes.basic.action.BasicTitleViewItem;
 import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
-import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Version;
+import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.Manager;
-import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -141,7 +138,6 @@ import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
 import iped3.IItem;
-import iped3.IItemId;
 import iped3.desktop.GUIProvider;
 import iped3.desktop.IColumnsManager;
 import iped3.desktop.ResultSetViewer;
@@ -200,6 +196,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private List<DefaultSingleCDockable> viewerDocks;
     private ViewerController viewerController;
     private CButton timelineButton;
+    private CButton butSimSearch;
 
     Color defaultColor;
     Color defaultFocusedColor;
@@ -837,45 +834,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
 
-        if (SimilarImagesFilterActions.isFeatureEnabled()) {
-            final CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
-                    IconUtil.getToolbarIcon("find", resPath));
-            galleryTabDock.addAction(butSimSearch);
-            galleryTabDock.addSeparator();
-            butSimSearch.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    SimilarImagesFilterActions.searchSimilarImages(false);
-                }
-            });
-            butSimSearch.setEnabled(false);
-            resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-                public void valueChanged(ListSelectionEvent e) {
-                    if (e.getValueIsAdjusting()) {
-                        return;
-                    }
-                    butSimSearch.setEnabled(false);
-                    final int selIdx = resultsTable.getSelectedRow();
-                    // running in EDT can cause deadlock in UI if evidence was moved because this
-                    // thread can block when entering the static synchronized method
-                    // IndexItem.checkIfEvidenceFolderExists() called before by a worker thread
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            if (selIdx != -1) {
-                                IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
-                                if (itemId != null) {
-                                    IItem item = appCase.getItemByItemId(itemId);
-                                    if (item != null) {
-                                        boolean enabled = item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) != null;
-                                        butSimSearch.setEnabled(enabled);
-                                    }
-                                }
-                            }
-                        }
-                    }.start();
-                }
-            });
-        }
+        butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
+                IconUtil.getToolbarIcon("find", resPath));
+        galleryTabDock.addAction(butSimSearch);
+        galleryTabDock.addSeparator();
+        butSimSearch.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                SimilarImagesFilterActions.searchSimilarImages(false);
+            }
+        });
+        butSimSearch.setEnabled(false);
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
         CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"),
@@ -1452,5 +1420,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public IPEDSource getLastSelectedSource() {
         return this.lastSelectedSource;
+    }
+
+    public void setEnableGallerySimSearchButton(boolean enabled) {
+        this.butSimSearch.setEnabled(enabled);
     }
 }

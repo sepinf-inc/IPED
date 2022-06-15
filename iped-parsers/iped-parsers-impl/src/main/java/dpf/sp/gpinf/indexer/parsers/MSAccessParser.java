@@ -18,17 +18,13 @@
  */
 package dpf.sp.gpinf.indexer.parsers;
 
-import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
@@ -36,17 +32,14 @@ import java.util.Set;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.IOUtils;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaMetadataKeys;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
-import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -66,6 +59,7 @@ import com.healthmarketscience.jackcess.util.OleBlob.EmbeddedContent;
 import com.healthmarketscience.jackcess.util.OleBlob.PackageContent;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
  * Parser para arquivos MS Access.
@@ -97,7 +91,7 @@ public class MSAccessParser extends AbstractParser {
             database = builder.open();
 
             metadata.set(HttpHeaders.CONTENT_TYPE, ACCESS_MIME_TYPE);
-            metadata.remove(TikaMetadataKeys.RESOURCE_NAME_KEY);
+            metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
             for (Property prop : database.getSummaryProperties())
                 metadata.set(prop.getName(), prop.getValue().toString());
 
@@ -166,7 +160,7 @@ public class MSAccessParser extends AbstractParser {
                                         blobStream = oleBlob.getBinaryStream();
 
                                     if (content instanceof OleBlob.PackageContent) {
-                                        metadata.set(Metadata.RESOURCE_NAME_KEY,
+                                        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY,
                                                 ((PackageContent) content).getPrettyName());
                                     }
 
@@ -178,7 +172,7 @@ public class MSAccessParser extends AbstractParser {
 
                                 } finally {
                                     if (blobStream != null)
-                                        IOUtils.closeQuietly(blobStream);
+                                        IOUtil.closeQuietly(blobStream);
                                 }
 
                             } else if (column.getType().equals(DataType.BINARY)) {

@@ -3,9 +3,9 @@ package dpf.sp.gpinf.carving.carvers;
 import java.io.IOException;
 import java.util.ArrayDeque;
 
+import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carving.DefaultCarver;
 import iped3.IItem;
-import dpf.sp.gpinf.carver.api.Hit;
 
 public class EMLCarver extends DefaultCarver {
     Hit lastFooter = null;
@@ -38,7 +38,7 @@ public class EMLCarver extends DefaultCarver {
         }
         if (firstHead != null) {
             headersWaitingFooters.addLast(firstHead);
-            IItem e = carveFromFooter(parentEvidence, lastFooter);
+            carveFromFooter(parentEvidence, lastFooter);
         }
         lastFooter = null;
     }

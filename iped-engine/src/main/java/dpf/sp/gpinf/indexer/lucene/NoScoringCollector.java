@@ -25,8 +25,8 @@ public class NoScoringCollector extends SimpleCollector {
 
     private volatile boolean canceled = false;
 
-    public NoScoringCollector(int capacity) {
-        bits = new BitSet(capacity);
+    public NoScoringCollector(int maxDoc) {
+        this.bits = new BitSet(maxDoc);
     }
 
     public void cancel() {
@@ -38,8 +38,8 @@ public class NoScoringCollector extends SimpleCollector {
         if (canceled)
             throw new InterruptedIOException("Search canceled!"); //$NON-NLS-1$
 
-        totalHits++;
         bits.set(doc + docBase);
+        totalHits++;
     }
 
     @Override

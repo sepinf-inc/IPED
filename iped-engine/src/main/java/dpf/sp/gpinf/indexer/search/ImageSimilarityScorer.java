@@ -72,7 +72,7 @@ public class ImageSimilarityScorer {
         this.result = result;
         this.len = result.getLength();
         this.refItem = refItem;
-        this.refSimilarityFeatures = (byte[]) refItem.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
+        this.refSimilarityFeatures = (byte[]) refItem.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES);
     }
 
     public void score() throws IOException {
@@ -91,7 +91,7 @@ public class ImageSimilarityScorer {
                     BinaryDocValues similarityFeaturesValues = null;
                     try {
                         similarityFeaturesValues = leafReader
-                                .getBinaryDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
+                                .getBinaryDocValues(ImageSimilarityTask.IMAGE_FEATURES);
                     } catch (IOException e) {
                         e.printStackTrace();
                         return;
@@ -154,7 +154,7 @@ public class ImageSimilarityScorer {
         BinaryDocValues similarityFeaturesValues = null;
         try {
             similarityFeaturesValues = ipedCase.getLeafReader()
-                    .getBinaryDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
+                    .getBinaryDocValues(ImageSimilarityTask.IMAGE_FEATURES);
         } catch (IOException e) {
             e.printStackTrace();
             return;

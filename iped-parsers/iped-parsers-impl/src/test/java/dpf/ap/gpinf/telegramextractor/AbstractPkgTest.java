@@ -1,21 +1,12 @@
 package dpf.ap.gpinf.telegramextractor;
 
-import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.SeekableByteChannel;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
 import java.util.Set;
-import junit.framework.TestCase;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -26,13 +17,12 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import iped3.IItemBase;
-import iped3.datasource.IDataSource;
-import iped3.io.ISeekableInputStreamFactory;
-import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
+import junit.framework.TestCase;
 
 public abstract class AbstractPkgTest extends TestCase {
 

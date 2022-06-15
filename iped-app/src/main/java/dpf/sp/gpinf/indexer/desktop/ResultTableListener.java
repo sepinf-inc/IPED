@@ -49,7 +49,9 @@ import iped3.util.BasicProps;
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 
     public static boolean syncingSelectedItems = false;
+    private static volatile int lastTableDoc = -1;
     private static Logger logger = LoggerFactory.getLogger(ResultTableListener.class);
+
     private long lastKeyTime = -1;
     private String lastKeyString = ""; //$NON-NLS-1$
     private Collator collator = Collator.getInstance();
@@ -61,9 +63,16 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     @Override
     public void valueChanged(ListSelectionEvent evt) {
 
+        if (evt.getValueIsAdjusting()) {
+            return;
+        }
+
         BookmarksManager.updateCounters();
 
-        if (App.get().resultsTable.getSelectedRowCount() == 0 || evt.getValueIsAdjusting()) {
+        if (App.get().resultsTable.getSelectedRowCount() == 0) {
+            App.get().setEnableGallerySimSearchButton(false);
+            App.get().setLastSelectedDoc(-1);
+            lastTableDoc = -1;
             return;
         }
 
@@ -96,22 +105,21 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             syncingSelectedItems = false;
         }
 
-        processSelectedFile();
+        processSelectedFile(false);
 
     }
 
-    private synchronized void processSelectedFile() {
+    private synchronized void processSelectedFile(boolean isMouseEvent) {
 
-        // if(App.get().resultsTable.getSelectedRowCount() > 1)
-        // return;
         int viewIndex = App.get().resultsTable.getSelectionModel().getLeadSelectionIndex();
 
         if (viewIndex != -1) {
             int modelIdx = App.get().resultsTable.convertRowIndexToModel(viewIndex);
             IItemId item = App.get().ipedResult.getItem(modelIdx);
             int docId = App.get().appCase.getLuceneId(item);
-            if (docId != App.get().getLastSelectedDoc()) {
+            int lastAppDoc = App.get().getLastSelectedDoc();
 
+            if (docId != lastAppDoc && (!isMouseEvent || docId == lastTableDoc)) {
                 App.get().hitsTable.scrollRectToVisible(new Rectangle());
                 App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
                 App.get().hitsDock.setTitleText(Messages.getString("AppListener.NoHits")); //$NON-NLS-1$
@@ -120,6 +128,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
                 App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title")); //$NON-NLS-1$
 
+                lastTableDoc = docId;
                 FileProcessor parsingTask = new FileProcessor(docId, true);
                 parsingTask.execute();
             }
@@ -140,7 +149,9 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             showContextMenu(itemId, evt);
 
         } else {
-            processSelectedFile();
+            // should be triggered when user clicks on an already selected file on table but
+            // the viewing file is another one clicked on another tab (e.g. subitem tab)
+            processSelectedFile(true);
 
         }
 
@@ -192,7 +203,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         if (App.get().resultsTable.getSelectedRow() == -1)
             return;
 
-        if (evt.getKeyCode() == KeyEvent.VK_C && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+        if (evt.getKeyCode() == KeyEvent.VK_C && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
             int selCol = App.get().resultsTable.getSelectedColumn();
             if (selCol < 0)
                 return;
@@ -204,15 +215,15 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         } else if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
             itemSelection();
             evt.consume();
-        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
             // Shortcut to Deep-Selection (Item plus sub-items)
             recursiveItemSelection(true);
             evt.consume();
-        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.ALT_MASK) != 0)) {
+        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0)) {
             // Shortcut to Deep-Selection Remove (Item plus sub-items)
             recursiveItemSelection(false);
             evt.consume();
-        } else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+        } else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
             // Shortcut to BookmarkManager Window
             BookmarksManager.setVisible();
             evt.consume();
@@ -301,7 +312,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     @Override
     public void keyTyped(KeyEvent evt) {
         char c = evt.getKeyChar();
-        if (c == ' ' || (evt.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK | InputEvent.SHIFT_MASK)) != 0 ||
+        if (c == ' ' || (evt.getModifiersEx() & (InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) != 0 ||
                c == KeyEvent.VK_TAB || c == KeyEvent.VK_ESCAPE || c == KeyEvent.VK_BACK_SPACE || c == KeyEvent.VK_DELETE)
             return;
 

@@ -6,40 +6,30 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.IOExceptionWithCause;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.ToXMLContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
-import org.json.simple.parser.JSONParser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.openjson.JSONObject;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
@@ -113,7 +103,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     ToXMLContentHandler bookmarksHandler = new ToXMLContentHandler(tmpBookmarksFile, "UTF-8"); //$NON-NLS-1$
                     Metadata bookmarksMetadata = new Metadata();
                     bookmarksMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MOZ_BOOKMARKS.toString());
-                    bookmarksMetadata.add(Metadata.RESOURCE_NAME_KEY, "Firefox Bookmarks"); //$NON-NLS-1$
+                    bookmarksMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Firefox Bookmarks"); //$NON-NLS-1$
                     bookmarksMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
                     bookmarksMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
                     bookmarksMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
@@ -135,7 +125,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     Metadata metadataBookmark = new Metadata();
 
                     metadataBookmark.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MOZ_BOOKMARKS_REG.toString());
-                    metadataBookmark.add(Metadata.RESOURCE_NAME_KEY, "Firefox Bookmark Entry " + i); //$NON-NLS-1$
+                    metadataBookmark.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Firefox Bookmark Entry " + i); //$NON-NLS-1$
                     metadataBookmark.add(TikaCoreProperties.TITLE, b.getTitle());
                     metadataBookmark.set(TikaCoreProperties.CREATED, b.getDateAdded());
                     metadataBookmark.set(TikaCoreProperties.MODIFIED, b.getLastModified());
@@ -153,7 +143,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-8"); //$NON-NLS-1$
                     Metadata historyMetadata = new Metadata();
                     historyMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MOZ_HISTORY.toString());
-                    historyMetadata.add(Metadata.RESOURCE_NAME_KEY, "Firefox History"); //$NON-NLS-1$
+                    historyMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Firefox History"); //$NON-NLS-1$
                     historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                     historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
                     historyMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
@@ -175,7 +165,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     Metadata metadataHistory = new Metadata();
 
                     metadataHistory.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MOZ_HISTORY_REG.toString());
-                    metadataHistory.add(Metadata.RESOURCE_NAME_KEY, "Firefox History Entry " + i); //$NON-NLS-1$
+                    metadataHistory.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Firefox History Entry " + i); //$NON-NLS-1$
                     metadataHistory.add(TikaCoreProperties.TITLE, h.getTitle());
                     metadataHistory.set(ExtraProperties.ACCESSED, h.getVisitDate());
                     metadataHistory.set(ExtraProperties.VISIT_DATE, h.getVisitDate());
@@ -193,7 +183,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     ToXMLContentHandler downloadsHandler = new ToXMLContentHandler(tmpDownloadFile, "UTF-8"); //$NON-NLS-1$
                     Metadata downloadsMetadata = new Metadata();
                     downloadsMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MOZ_DOWNLOADS.toString());
-                    downloadsMetadata.add(Metadata.RESOURCE_NAME_KEY, "Firefox Downloads"); //$NON-NLS-1$
+                    downloadsMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Firefox Downloads"); //$NON-NLS-1$
                     downloadsMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(2));
                     downloadsMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
                     downloadsMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
@@ -215,7 +205,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     Metadata metadataDownload = new Metadata();
 
                     metadataDownload.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MOZ_DOWNLOADS_REG.toString());
-                    metadataDownload.add(Metadata.RESOURCE_NAME_KEY, "Firefox Download Entry " + i); //$NON-NLS-1$
+                    metadataDownload.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Firefox Download Entry " + i); //$NON-NLS-1$
                     metadataDownload.add(ExtraProperties.URL, d.getUrlFromDownload());
                     metadataDownload.add(ExtraProperties.LOCAL_PATH, d.getDownloadedLocalPath());
                     metadataDownload.set(TikaCoreProperties.CREATED, d.getDownloadedDate());

@@ -38,6 +38,8 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.Office;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.pdf.PDFParser;
@@ -160,7 +162,7 @@ public class PDFOCRTextParser extends PDFParser {
                     } catch (Exception e) {
                         exception = e;
                     } finally {
-                        tis = TikaInputStream.get(file);
+                        tis = TikaInputStream.get(file.toPath());
                     }
                 }
 
@@ -190,16 +192,16 @@ public class PDFOCRTextParser extends PDFParser {
             }
 
             if (numPages == 0)
-                if (metadata.get(Metadata.RESOURCE_NAME_KEY).startsWith("Carved")) //$NON-NLS-1$
+                if (metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).startsWith("Carved")) //$NON-NLS-1$
                     throw new TikaException("PDF document contains zero pages"); //$NON-NLS-1$
                 else
                     numPages = 1;
 
             int charCount = countHandler.getCharCount();
-            metadata.set(Metadata.CHARACTER_COUNT, charCount);
+            metadata.set(Office.CHARACTER_COUNT, charCount);
 
             if (ocrParser.isEnabled() && !processEmbeddedImages && charCount / numPages <= maxCharsToOcr) {
-                tis = TikaInputStream.get(file);
+                tis = TikaInputStream.get(file.toPath());
                 try {
                     ocrParser.parse(tis, countHandler, metadata, context);
 
@@ -276,28 +278,28 @@ public class PDFOCRTextParser extends PDFParser {
                 PInfo info = iceDoc.getInfo();
                 String value = info.getSubject();
                 if (value != null)
-                    metadata.add(Metadata.SUBJECT, value);
+                    metadata.add(TikaCoreProperties.SUBJECT, value);
                 value = info.getTitle();
                 if (value != null)
-                    metadata.add(Metadata.TITLE, value);
+                    metadata.add(TikaCoreProperties.TITLE, value);
                 value = info.getAuthor();
                 if (value != null)
-                    metadata.add(Metadata.AUTHOR, value);
+                    metadata.add(TikaCoreProperties.CREATOR, value);
                 value = info.getCreator();
                 if (value != null)
-                    metadata.add(Metadata.CREATOR, value);
+                    metadata.add(TikaCoreProperties.CREATOR, value);
                 value = info.getProducer();
                 if (value != null)
-                    metadata.add(Metadata.APPLICATION_NAME, value);
+                    metadata.add(TikaCoreProperties.CREATOR_TOOL, value);
                 value = info.getKeywords();
                 if (value != null)
-                    metadata.add(Metadata.KEYWORDS, value);
+                    metadata.add(Office.KEYWORDS, value);
                 PDate date = info.getCreationDate();
                 if (date != null)
-                    metadata.add(Metadata.CREATION_DATE, date.toString());
+                    metadata.add(TikaCoreProperties.CREATED, date.toString());
                 date = info.getModDate();
                 if (date != null)
-                    metadata.add(Metadata.MODIFIED, date.toString());
+                    metadata.add(TikaCoreProperties.MODIFIED, date.toString());
 
             } catch (Exception e) {
                 e.printStackTrace();

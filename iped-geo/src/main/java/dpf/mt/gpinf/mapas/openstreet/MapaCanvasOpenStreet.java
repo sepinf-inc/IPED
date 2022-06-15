@@ -24,7 +24,11 @@ import netscape.javascript.JSObject;
 
 public class MapaCanvasOpenStreet extends AbstractMapaCanvas {
 
-    WebView browser;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	WebView browser;
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
     JSInterfaceFunctionsOpenStreet jsInterface = new JSInterfaceFunctionsOpenStreet(this);
@@ -113,8 +117,6 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas {
 
     @Override
     public void setText(final String html) {
-        final MapaCanvasOpenStreet mapa = this;
-
         Platform.runLater(new Runnable() {
             public void run() {
                 webEngine.loadContent(html);

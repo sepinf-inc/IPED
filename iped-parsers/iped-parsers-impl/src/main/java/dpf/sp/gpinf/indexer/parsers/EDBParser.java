@@ -23,6 +23,7 @@ import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -117,7 +118,7 @@ public class EDBParser extends AbstractParser {
                 for (File table : tables) {
 
                     Metadata tableMetadata = new Metadata();
-                    tableMetadata.set(Metadata.RESOURCE_NAME_KEY, TABLE_PREFIX + "-" + table.getName()); //$NON-NLS-1$
+                    tableMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, TABLE_PREFIX + "-" + table.getName()); //$NON-NLS-1$
                     tableMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     if (metadata.get(Metadata.CONTENT_TYPE).endsWith("x-webcache")) //$NON-NLS-1$
@@ -194,7 +195,7 @@ public class EDBParser extends AbstractParser {
                         writer.write(SimpleHTMLEncoder.htmlEncode(name));
 
                         Metadata meta = new Metadata();
-                        meta.set(Metadata.RESOURCE_NAME_KEY, name);
+                        meta.set(TikaCoreProperties.RESOURCE_NAME_KEY, name);
                         try (InputStream is = new ByteArrayInputStream(Hex.decodeHex(value.toCharArray()))) {
                             extractor.parseEmbedded(is, handler, meta, true);
 

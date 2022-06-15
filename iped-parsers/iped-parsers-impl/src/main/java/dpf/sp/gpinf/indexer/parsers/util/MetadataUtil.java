@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.Office;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -150,6 +151,8 @@ public class MetadataUtil {
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Width");
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Height");
         rename.put(ExtraProperties.UFED_META_PREFIX + "Altitude", ExtraProperties.COMMON_META_PREFIX + TikaCoreProperties.ALTITUDE.getName());
+        rename.put(Message.MESSAGE_FROM, ExtraProperties.COMMUNICATION_FROM);
+        rename.put(Message.MESSAGE_TO, ExtraProperties.COMMUNICATION_TO);
         return rename;
     }
 
@@ -163,7 +166,7 @@ public class MetadataUtil {
     
     private static Set<String> getIgnorePreviewMetas() {
         ignorePreviewMetas = new HashSet<>();
-        ignorePreviewMetas.add(Metadata.RESOURCE_NAME_KEY);
+        ignorePreviewMetas.add(TikaCoreProperties.RESOURCE_NAME_KEY);
         ignorePreviewMetas.add(Metadata.CONTENT_LENGTH);
         ignorePreviewMetas.add(Metadata.CONTENT_TYPE);
         ignorePreviewMetas.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
@@ -176,9 +179,9 @@ public class MetadataUtil {
         Set<String> generalKeys = new HashSet<String>();
 
         generalKeys.add(Metadata.CONTENT_TYPE);
-        generalKeys.add(Metadata.RESOURCE_NAME_KEY);
+        generalKeys.add(TikaCoreProperties.RESOURCE_NAME_KEY);
         generalKeys.add(Metadata.CONTENT_LENGTH);
-        generalKeys.add(Metadata.EMBEDDED_RELATIONSHIP_ID);
+        generalKeys.add(TikaCoreProperties.EMBEDDED_RELATIONSHIP_ID);
         generalKeys.add(TikaCoreProperties.ORIGINAL_RESOURCE_NAME.getName());
         generalKeys.add(TikaCoreProperties.TIKA_META_EXCEPTION_WARNING.getName());
         generalKeys.add(TikaCoreProperties.TIKA_META_EXCEPTION_EMBEDDED_STREAM.getName());
@@ -234,7 +237,6 @@ public class MetadataUtil {
         props.add(TikaCoreProperties.CREATED);
         props.add(TikaCoreProperties.MODIFIED);
         props.add(TikaCoreProperties.COMMENTS);
-        props.add(TikaCoreProperties.KEYWORDS);
         props.add(TikaCoreProperties.FORMAT);
         props.add(TikaCoreProperties.IDENTIFIER);
         props.add(TikaCoreProperties.CONTRIBUTOR);
@@ -249,10 +251,7 @@ public class MetadataUtil {
         props.add(TikaCoreProperties.TITLE);
         props.add(TikaCoreProperties.DESCRIPTION);
         props.add(TikaCoreProperties.PRINT_DATE);
-        props.add(TikaCoreProperties.TRANSITION_KEYWORDS_TO_DC_SUBJECT);
-        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_DESCRIPTION);
-        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_TITLE);
-        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_OO_SUBJECT);
+        props.add(Office.KEYWORDS);
         props.add(IPTC.COPYRIGHT_OWNER_ID);
         props.add(IPTC.IMAGE_CREATOR_ID);
         props.add(IPTC.IMAGE_SUPPLIER_ID);
@@ -274,7 +273,7 @@ public class MetadataUtil {
         props.add(TikaCoreProperties.CREATED.getName());
         props.add(TikaCoreProperties.MODIFIED.getName());
         props.add(TikaCoreProperties.COMMENTS.getName());
-        props.add(TikaCoreProperties.KEYWORDS.getName());
+        props.add(Office.KEYWORDS.getName());
 
         // set by PDF and rarely set by OpenOffice/DcXML parsers today
         // props.add(TikaCoreProperties.FORMAT.getName());
@@ -524,7 +523,7 @@ public class MetadataUtil {
         metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
 
         if (metadata.get(TikaCoreProperties.CREATED) != null)
-            metadata.set(ExtraProperties.MESSAGE_DATE, metadata.get(TikaCoreProperties.CREATED));
+            metadata.set(ExtraProperties.COMMUNICATION_DATE, metadata.get(TikaCoreProperties.CREATED));
 
         String value = metadata.get(Message.MESSAGE_FROM);
         if (value == null)
@@ -566,14 +565,17 @@ public class MetadataUtil {
         metadata.remove(recipMetaName.getName());
         metadata.remove(recipMetaDisplayName.getName());
         metadata.remove(recipMetaEmail.getName());
-        for (int i = 0; i < recipientNames.length; i++) {
-            String value = recipientNames[i];
-            if (value == null)
-                value = ""; //$NON-NLS-1$
-            if (!value.toLowerCase().contains(recipientsDisplay[i].toLowerCase()))
-                value += " " + recipientsDisplay[i]; //$NON-NLS-1$
-            if (!value.toLowerCase().contains(recipientsEmails[i].toLowerCase()))
-                value += " \"" + recipientsEmails[i] + "\""; //$NON-NLS-1$ //$NON-NLS-2$
+        int length = Math.max(Math.max(recipientNames.length, recipientsDisplay.length), recipientsEmails.length);
+        for (int i = 0; i < length; i++) {
+            String value = "";
+            if (i < recipientNames.length && recipientNames[i] != null)
+                value = recipientNames[i].trim();
+            if (i < recipientsDisplay.length && recipientsDisplay[i] != null
+                    && !value.toLowerCase().contains(recipientsDisplay[i].toLowerCase().trim()))
+                value += " " + recipientsDisplay[i].trim(); //$NON-NLS-1$
+            if (i < recipientsEmails.length && recipientsEmails[i] != null
+                    && !value.toLowerCase().contains(recipientsEmails[i].toLowerCase().trim()))
+                value += " \"" + recipientsEmails[i].trim() + "\""; //$NON-NLS-1$ //$NON-NLS-2$
             metadata.add(destMeta, value);
         }
     }

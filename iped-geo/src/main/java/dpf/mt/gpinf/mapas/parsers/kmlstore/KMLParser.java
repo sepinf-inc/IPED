@@ -34,7 +34,7 @@ public class KMLParser {
          * GeometryFactory will be used to create the geometry attribute of each
          * feature, using a Point object for the location.
          */
-        GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
+        // GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
 
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName("placemark");
@@ -81,8 +81,8 @@ public class KMLParser {
                 String timestamp = null, name = null;
                 Coordinate coord = null;
 
-                for (Iterator iterator2 = tracks.iterator(); iterator2.hasNext();) {
-                    Element element2 = (Element) iterator2.next();
+                for (Iterator<Element> iterator2 = tracks.iterator(); iterator2.hasNext();) {
+                    Element element2 = iterator2.next();
                     if (element2.getName().toLowerCase().equals("when")) {
                         timestamp = element2.getText();
                         name = element2.getText();
@@ -221,8 +221,8 @@ public class KMLParser {
         if (ele.getName().toLowerCase().equals("polygon")) {
             Element boundary = null;
             List<Element> eles = ele.getChildren();
-            for (Iterator iterator = eles.iterator(); iterator.hasNext();) {
-                Element element = (Element) iterator.next();
+            for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
+                Element element = iterator.next();
                 if (element.getName().toLowerCase().equals("outerboundaryis")) {
                     boundary = element;
                     break;

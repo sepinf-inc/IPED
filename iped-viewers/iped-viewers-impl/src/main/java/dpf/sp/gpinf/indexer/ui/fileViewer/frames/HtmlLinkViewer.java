@@ -36,8 +36,6 @@ import netscape.javascript.JSObject;
  * @author Nassif
  *
  */
-
-@SuppressWarnings("restriction")
 public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HtmlLinkViewer.class);
@@ -175,7 +173,6 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
 
     }
 
-    @SuppressWarnings("restriction")
     private void runScript(String script) {
         Platform.runLater(new Runnable() {
             @Override

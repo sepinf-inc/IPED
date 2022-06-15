@@ -136,7 +136,7 @@ public class AdvancedSearchDialog extends JDialog {
 
         this.queryTextArea = new JTextArea();
         this.queryTextArea.getActionMap().put("Execute", new ExecuteAction());
-        KeyStroke controlS = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_MASK);
+        KeyStroke controlS = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK);
         this.queryTextArea.getInputMap().put(controlS, "Execute");
 
         JScrollPane queryScroll = new JScrollPane(queryTextArea);

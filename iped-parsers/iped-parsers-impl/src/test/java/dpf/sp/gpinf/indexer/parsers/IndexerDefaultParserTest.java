@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -9,12 +10,16 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
+import iped3.util.ExtraProperties;
 import junit.framework.TestCase;
 
 public class IndexerDefaultParserTest extends TestCase {
 
     // This class will test some files such as: Image, Video, Document, Text,
     // Package, PDF and an Unknown file type.
+
+    private static final String PARSED_BY = ExtraProperties.TIKA_PARSER_USED;
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
@@ -54,7 +59,7 @@ public class IndexerDefaultParserTest extends TestCase {
             String mts = metadata.toString();
 
             assertTrue(hts.contains("Indexer-Content-Type: image/png"));
-            assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.image.ImageParser"));
+            assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.image.ImageParser"));
             assertTrue(hts.contains(
                     "image:IHDR: width=512, height=512, bitDepth=8, colorType=RGB, compressionMethod=deflate, filterMethod=adaptive"));
             assertTrue(hts.contains("image:tiff:BitsPerSample: 8 8 8"));
@@ -84,7 +89,7 @@ public class IndexerDefaultParserTest extends TestCase {
             String mts = metadata.toString();
 
             assertTrue(hts.contains("Indexer-Content-Type: video/x-flv"));
-            assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.video.FLVParser"));
+            assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.video.FLVParser"));
             assertTrue(hts.contains("video:audiocodecid: 2.0"));
             assertTrue(hts.contains("video:audiodatarate: 0.0"));
             assertTrue(hts.contains("video:audiosamplerate: 44100.0"));
@@ -132,28 +137,18 @@ public class IndexerDefaultParserTest extends TestCase {
 
             assertTrue(hts.contains(
                     "Indexer-Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
-            assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.microsoft.ooxml.OOXMLParser"));
-            assertTrue(hts.contains("office:Application-Name: Microsoft Office Word"));
-            assertTrue(hts.contains("office:Application-Version: 12.0000"));
-            assertTrue(hts.contains("office:Character Count: 2724"));
-            assertTrue(hts.contains("office:Character-Count-With-Spaces: 3222"));
-            assertTrue(hts.contains("office:Line-Count: 22"));
-            assertTrue(hts.contains("office:Page-Count: 1"));
-            assertTrue(hts.contains("office:Paragraph-Count: 6"));
-            assertTrue(hts.contains("office:Revision-Number: 5"));
-            assertTrue(hts.contains("office:Template: Normal.dotm"));
-            assertTrue(hts.contains("office:Word-Count: 504"));
-            assertTrue(hts.contains("office:cp:revision: 5"));
+            assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.microsoft.ooxml.OOXMLParser"));
             assertTrue(hts.contains("common:dc:creator: Guilherme Andreúce Sobreira Monteiro"));
             assertTrue(hts.contains("common:dcterms:created: 2021-04-08T17:03:00Z"));
             assertTrue(hts.contains("common:dcterms:modified: 2021-04-09T12:25:00Z"));
+            assertTrue(hts.contains("common:meta:last-author: Guilherme Andreúce Sobreira Monteiro"));
+            assertTrue(hts.contains("office:cp:revision: 5"));
             assertTrue(hts.contains("office:extended-properties:AppVersion: 12.0000"));
             assertTrue(hts.contains("office:extended-properties:Application: Microsoft Office Word"));
             assertTrue(hts.contains("office:extended-properties:DocSecurityString: None"));
             assertTrue(hts.contains("office:extended-properties:Template: Normal.dotm"));
             assertTrue(hts.contains("office:meta:character-count: 2724"));
             assertTrue(hts.contains("office:meta:character-count-with-spaces: 3222"));
-            assertTrue(hts.contains("common:meta:last-author: Guilherme Andreúce Sobreira Monteiro"));
             assertTrue(hts.contains("office:meta:line-count: 22"));
             assertTrue(hts.contains("office:meta:page-count: 1"));
             assertTrue(hts.contains("office:meta:paragraph-count: 6"));
@@ -188,10 +183,10 @@ public class IndexerDefaultParserTest extends TestCase {
 
             assertTrue(hts.contains("Content-Encoding: UTF-8"));
             assertTrue(hts.contains("Indexer-Content-Type: text/plain"));
-            assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.csv.TextAndCSVParser"));
+            assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.csv.TextAndCSVParser"));
 
             assertTrue(mts.contains("Content-Type=text/plain"));
-            assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
+            assertTrue(mts.contains(PARSED_BY + "=org.apache.tika.parser.csv.TextAndCSVParser"));
             assertTrue(mts.contains("charset=UTF-8"));
 
         }
@@ -232,10 +227,10 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(hts.contains("mockdoc5.docx"));
 
             assertTrue(hts.contains("Indexer-Content-Type: application/x-rar-compressed; version=4"));
-            assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.pkg.RarParser"));
+            assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.pkg.RarParser"));
 
             assertTrue(mts.contains("Indexer-Content-Type=application/x-rar-compressed; version=4"));
-            assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.pkg.RarParser"));
+            assertTrue(mts.contains(PARSED_BY + "=org.apache.tika.parser.pkg.RarParser"));
             assertTrue(mts.contains("Content-Type=application/x-rar-compressed; version=4"));
 
         }
@@ -260,7 +255,7 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(hts.contains("UROP-Diabetes Management Project February 2016-Present"));
 
             assertTrue(hts.contains("Indexer-Content-Type: application/pdf"));
-            assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.pdf.PDFParser"));
+            assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.pdf.PDFParser"));
             assertTrue(hts.contains("pdf:PDFExtensionVersion: 1.7 Adobe Extension Level 8"));
             assertTrue(hts.contains("pdf:PDFVersion: 1.7"));
             assertTrue(hts.contains("pdf:access_permission:assemble_document: true"));
@@ -271,11 +266,8 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(hts.contains("pdf:access_permission:extract_for_accessibility: true"));
             assertTrue(hts.contains("pdf:access_permission:fill_in_form: true"));
             assertTrue(hts.contains("pdf:access_permission:modify_annotations: true"));
-            assertTrue(hts
-                    .contains("pdf:charsPerPage: 2767 2772 2990 3056 3204 3614 3627 3796 3971 3988 4242 4462 4683 64"));
-            assertTrue(hts.contains("pdf:created: 2017-08-29T19:12:20Z"));
-            assertTrue(hts.contains(
-                    "pdf:dc:format: application/pdf; version=\"1.7 Adobe Extension Level 8\" application/pdf; version=1.7"));
+            assertTrue(hts.contains("pdf:charsPerPage: 2767 2772 2990 3056 3204 3614 3627 3796 3971 3988 4242 4462 4683 64"));
+            assertTrue(hts.contains("pdf:dc:format: application/pdf; version=\"1.7 Adobe Extension Level 8\" application/pdf; version=1.7"));
             assertTrue(hts.contains("common:dc:language: en-US"));
             assertTrue(hts.contains("common:dcterms:created: 2017-08-29T19:12:20Z"));
             assertTrue(hts.contains("common:dcterms:modified: 2017-09-12T19:12:44Z"));
@@ -289,7 +281,6 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(hts.contains("pdf:hasXFA: false"));
             assertTrue(hts.contains("pdf:hasXMP: true"));
             assertTrue(hts.contains("pdf:producer: Adobe PDF Library 15.0"));
-            assertTrue(hts.contains("pdf:trapped: False"));
             assertTrue(hts.contains("pdf:unmappedUnicodeCharsPerPage: 0"));
             assertTrue(hts.contains("pdf:xmp:CreateDate: 2017-08-29T14:12:20Z"));
             assertTrue(hts.contains("common:xmp:CreatorTool: Adobe InDesign CC 2017 (Macintosh)"));
@@ -301,7 +292,7 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(hts.contains("pdf:xmpTPg:NPages: 14"));
 
             assertTrue(mts.contains("Content-Type=application/pdf"));
-            assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.pdf.PDFParser"));
+            assertTrue(mts.contains(PARSED_BY + "=org.apache.tika.parser.pdf.PDFParser"));
             assertTrue(mts.contains("pdf:PDFVersion=1.7"));
 
         }
@@ -326,7 +317,7 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(hts.contains("OnATTACK_OBJECT_CMD (id)"));
 
             assertTrue(mts.contains("Content-Type=text/plain; charset=EUC-KR"));
-            assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
+            assertTrue(mts.contains(PARSED_BY + "=org.apache.tika.parser.csv.TextAndCSVParser"));
             assertTrue(mts.contains("Content-Encoding=EUC-KR"));
 
         }
@@ -347,7 +338,7 @@ public class IndexerDefaultParserTest extends TestCase {
 
             String mts = metadata.toString();
 
-            assertTrue(mts.contains("X-Parsed-By=dpf.sp.gpinf.indexer.parsers.RawStringParser"));
+            assertEquals("dpf.sp.gpinf.indexer.parsers.RawStringParser", metadata.get(PARSED_BY));
             assertTrue(mts.contains("compressRatioLZ4=0.5720935240387917"));
             assertTrue(mts.contains("Content-Type=application/octet-stream"));
 
@@ -366,7 +357,7 @@ public class IndexerDefaultParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String mts = metadata.toString();
-            assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.microsoft.OfficeParser"));
+            assertTrue(mts.contains(PARSED_BY + "=org.apache.tika.parser.microsoft.OfficeParser"));
             assertTrue(mts.contains("Indexer-Content-Type=application/x-tika-ooxml-protected"));
             assertTrue(mts.contains("encryptedDocument=true"));
             assertTrue(mts.contains("Content-Type=application/x-tika-ooxml-protected"));

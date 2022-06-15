@@ -1,6 +1,5 @@
 package br.gov.pf.labld.graph.desktop;
 
-import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;

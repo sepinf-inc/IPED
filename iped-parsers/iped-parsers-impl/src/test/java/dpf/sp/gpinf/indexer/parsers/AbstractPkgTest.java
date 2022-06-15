@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
 import static org.apache.commons.codec.digest.MessageDigestAlgorithms.MD5;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
-import junit.framework.TestCase;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
@@ -27,6 +27,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import iped3.util.ExtraProperties;
+import junit.framework.TestCase;
 
 public abstract class AbstractPkgTest extends TestCase {
     protected ParseContext trackingContext;
@@ -91,8 +92,8 @@ public abstract class AbstractPkgTest extends TestCase {
 
             subitemCount++;
             String hdigest = new DigestUtils(MD5).digestAsHex(stream);
-            if (metadata.get(Metadata.RESOURCE_NAME_KEY) != null)
-                filenames.add(metadata.get(Metadata.RESOURCE_NAME_KEY));
+            if (metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY) != null)
+                filenames.add(metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY));
             if (metadata.get(TikaCoreProperties.MODIFIED) != null)
                 modifieddate.add(metadata.get(TikaCoreProperties.MODIFIED));
             itensmd5.add(hdigest.toUpperCase());
@@ -188,8 +189,8 @@ public abstract class AbstractPkgTest extends TestCase {
             // attachment
             if (metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT) != null || false)
                 isattachment.add(metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
-            if (metadata.get(Metadata.RESOURCE_NAME_KEY) != null)
-                attachmentname.add(metadata.get(Metadata.RESOURCE_NAME_KEY));
+            if (metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY) != null)
+                attachmentname.add(metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY));
             if ((metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT) != null))
                 numberofattachments.add(metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
             // contact

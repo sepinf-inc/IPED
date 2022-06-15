@@ -15,7 +15,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.tika.detect.Detector;
-import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -133,7 +132,7 @@ public class SQLiteContainerDetector implements Detector {
             return SkypeParser.SKYPE_MIME;
 
         if ((tableNames.contains("chat_list") || tableNames.contains("chat")) && //$NON-NLS-1$
-                tableNames.contains("messages") && //$NON-NLS-1$
+                (tableNames.contains("messages") || tableNames.contains("message")) && //$NON-NLS-1$
                 tableNames.contains("group_participants") && //$NON-NLS-1$
                 tableNames.contains("media_refs") && //$NON-NLS-1$
                 tableNames.contains("receipts") && //$NON-NLS-1$
@@ -191,7 +190,8 @@ public class SQLiteContainerDetector implements Detector {
 
         if (tableNames.contains("dialogs") && tableNames.contains("chats") && tableNames.contains("users")
                 && (tableNames.contains("messages") || tableNames.contains("messages_v2"))
-                && (tableNames.contains("media_v2") || tableNames.contains("media_v3")))
+                && (tableNames.contains("media") || tableNames.contains("media_v2") || tableNames.contains("media_v3")
+                        || tableNames.contains("media_v4")))
             return TelegramParser.TELEGRAM_DB;
         
         if (tableNames.contains("t1") && tableNames.contains("t2") && tableNames.contains("t7")

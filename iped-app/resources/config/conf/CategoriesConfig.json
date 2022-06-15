@@ -42,7 +42,16 @@
     {"name": "Databases", "mimes": ["application/x-edb", "application/x-edb-table", "application/irpf", "application/x-msaccess", "application/x-dbf", "application/vnd.oasis.opendocument.database", "application/x-sqlite3", "application/x-mysql-db", "application/x-berkeley-db", "application/x-mssql-data", "application/x-database-table"]},
     {"name": "Compressed Archives", "mimes": ["application/x-tika-ooxml", "application/zlib", "application/applefile", "application/vnd.ms-tnef", "application/zip", "application/x-rar-compressed", "application/x-tar", "application/gzip", "application/x-gzip", "application/x-xz", "application/x-bzip", "application/x-bzip2", "application/x-7z-compressed", "application/x-arj", "application/x-gtar", "application/x-archive", "application/x-cpio", "application/x-tika-unix-dump", "application/x-snappy-framed", "application/x-snappy", "application/x-snappy-raw", "application/x-compress", "application/x-java-pack200", "application/x-lzma", "application/x-lz4", "application/x-lz4-block", "application/x-brotli", "application/zstd", "application/deflate64", "image/x-emf-compressed"]},
     {"name": "Contacts", "mimes": ["text/x-vcard", "application/x-vcard-html", "application/windows-adress-book", "application/outlook-contact", "application/x-livecontacts", "application/x-livecontacts-table", "contact/x-skype-contact", "application/x-whatsapp-wadb", "application/x-whatsapp-contactsv2", "contact/x-whatsapp-contact", "application/x-ufed-html-contacts", "application/x-ufed-contact", "contact/x-telegram-contact", "application/x-ios-addressbook-db"]},
-    {"name": "Chats", "mimes": ["application/messenger-plus", "application/messenger-chat", "application/sqlite-skype", "application/skype", "application/x-whatsapp-db", "application/x-whatsapp-chatstorage", "application/x-whatsapp-chat", "application/x-skype-conversation", "application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-whatsapp", "application/x-ufed-chat-preview", "application/x-telegram-chat", "application/x-jabber-chat"]},
+    {"name": "Chats", "categories":[
+		{"name":"WhatsApp", "mimes":["application/x-whatsapp-db", "application/x-whatsapp-chatstorage", "application/x-whatsapp-chat","application/x-ufed-chat-whatsapp","application/x-ufed-chat-preview-whatsapp"]},
+		{"name":"Messenger","mimes":["application/messenger-plus", "application/messenger-chat"]},
+		{"name":"Skype","mimes":["application/sqlite-skype", "application/skype",  "application/x-skype-conversation","application/x-ufed-chat-preview-skype"]},
+		{"name":"Telegram","mimes":["application/x-telegram-chat","application/x-ufed-chat-telegram","application/x-ufed-chat-preview-telegram"]},
+		{"name":"Jabber","mimes":["application/x-jabber-chat"]},
+		{"name":"Facebook","mimes":["application/x-ufed-chat-preview-facebook"]},
+		{"name":"Instagram","mimes":["application/x-ufed-chat-preview-instagram"]},
+		{"name":"Others Chats","mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
+	]},
     {"name": "Windows Registry", "mimes": ["application/x-windows-registry", "application/x-windows-registry-report"]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
     {"name": "Programs and Libraries", "mimes": ["application/x-superfetch", "application/x-elf-log", "application/x-elf-file", "application/x-prefetch", "application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"]},
@@ -59,7 +68,8 @@
       {"name": "Internet History", "mimes": ["application/x-msie-cache", "application/x-webcache", "application/x-webcache-table", "application/x-ufed-html-webhistory", "application/x-firefox-places", "application/x-firefox-history", "application/x-firefox-downloads", "application/x-chrome-sqlite", "application/x-chrome-history", "application/x-chrome-downloads", "application/x-chrome-searches", "application/x-edge-web-cache", "application/x-edge-history", "application/x-safari-sqlite", "application/x-safari-history", "application/x-safari-plist", "application/x-safari-downloads"]},
       {"name": "Internet History Entries", "mimes": ["application/x-ufed-visitedpage", "application/x-firefox-history-registry", "application/x-firefox-downloads-registry", "application/x-chrome-history-registry", "application/x-chrome-downloads-registry", "application/x-edge-history-registry", "application/x-safari-downloads-registry", "application/x-safari-history-registry"]},
       {"name": "Web Bookmarks", "mimes": ["application/x-ufed-html-bookmarks", "application/x-ufed-webbookmark", "application/x-firefox-bookmarks", "application/x-firefox-bookmarks-registry"]},
-      {"name": "Mozilla Firefox Saved Session", "mimes": ["application/x-firefox-savedsession"]}
+      {"name": "Mozilla Firefox Saved Session", "mimes": ["application/x-firefox-savedsession"]},
+      {"name": "TorTCFragment", "mimes": ["application/x-tor-tc-fragment"]}
     ]}, 
     
     {"name": "Image Disks", "categories":[

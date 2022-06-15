@@ -18,9 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -32,6 +29,9 @@ import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 
 import org.apache.lucene.search.Query;
+
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 
 public class AppListener implements ActionListener, MouseListener, ClearFilterListener {
 
@@ -51,7 +51,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         a.setBounds(a.x, 0, a.width, a.height);
         App.get().resultsTable.scrollRectToVisible(a);
         App.get().gallery.scrollRectToVisible(new Rectangle());
-
+        App.get().setEnableGallerySimSearchButton(false);
         App.get().ipedResult = new MultiSearchResult();
         App.get().setLastSelectedDoc(-1);
         App.get().resultsModel.fireTableDataChanged();

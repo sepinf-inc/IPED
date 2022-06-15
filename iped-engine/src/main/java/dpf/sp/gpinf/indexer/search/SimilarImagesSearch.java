@@ -20,7 +20,7 @@ public class SimilarImagesSearch {
     private static final int range = 64;
 
     public Query getQueryForSimilarImages(IItem item) {
-        byte[] similarityFeatures = (byte[]) item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
+        byte[] similarityFeatures = (byte[]) item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES);
         if (similarityFeatures == null) {
             return null;
         }
@@ -33,7 +33,7 @@ public class SimilarImagesSearch {
             upper[i] = refVal + range;
         }
         BooleanQuery.Builder similarImagesQuery = new BooleanQuery.Builder();
-        similarImagesQuery.add(IntPoint.newRangeQuery(ImageSimilarityTask.SIMILARITY_FEATURES, lower, upper),
+        similarImagesQuery.add(IntPoint.newRangeQuery(ImageSimilarityTask.IMAGE_FEATURES, lower, upper),
                 Occur.MUST);
 
         return similarImagesQuery.build();

@@ -67,8 +67,6 @@ import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.io.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.io.UFDRInputStreamFactory;
 import dpf.sp.gpinf.indexer.io.UFEDXMLWrapper;
-import dpf.sp.gpinf.indexer.io.ZIPInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
@@ -76,6 +74,7 @@ import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -823,7 +822,7 @@ public class UfedXmlReader extends DataSourceReader {
                         || "MMS".equals(type)) { //$NON-NLS-1$
                     String date = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "TimeStamp"); //$NON-NLS-1$
                     item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "TimeStamp"); //$NON-NLS-1$
-                    item.getMetadata().set(ExtraProperties.MESSAGE_DATE, date);
+                    item.getMetadata().set(ExtraProperties.COMMUNICATION_DATE, date);
 
                     String subject = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Subject"); //$NON-NLS-1$
                     item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "Subject"); //$NON-NLS-1$
@@ -865,9 +864,9 @@ public class UfedXmlReader extends DataSourceReader {
                                 : identifier == null ? name : name + "(" + identifier + ")"; //$NON-NLS-1$ //$NON-NLS-2$
                         if (value != null) {
                             if ("From".equalsIgnoreCase(role)) //$NON-NLS-1$
-                                parentItem.getMetadata().add(Message.MESSAGE_FROM, value);
+                                parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_FROM, value);
                             else if ("To".equalsIgnoreCase(role)) //$NON-NLS-1$
-                                parentItem.getMetadata().add(Message.MESSAGE_TO, value);
+                                parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_TO, value);
                             else if ("Cc".equalsIgnoreCase(role)) //$NON-NLS-1$
                                 parentItem.getMetadata().add(Message.MESSAGE_CC, value);
                             else if ("Bcc".equalsIgnoreCase(role)) //$NON-NLS-1$
@@ -1027,11 +1026,11 @@ public class UfedXmlReader extends DataSourceReader {
             }
         };
 
-        private Property toProperty = Property.internalText(Message.MESSAGE_TO);
+        private Property toProperty = Property.internalText(ExtraProperties.COMMUNICATION_TO);
 
         private void fillMissingInfo(Item item) {
-            String from = item.getMetadata().get(Message.MESSAGE_FROM);
-            String to = item.getMetadata().get(Message.MESSAGE_TO);
+            String from = item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM);
+            String to = item.getMetadata().get(ExtraProperties.COMMUNICATION_TO);
             boolean fromOwner = Boolean.valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "fromOwner"));
             if (to == null) {
                 if (item.getMediaType() != null
@@ -1063,13 +1062,13 @@ public class UfedXmlReader extends DataSourceReader {
                 likelyMsisdn += Messages.getString("UfedXmlReader.LowConfidence");
                 String direction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Type");
                 String status = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Status");
-                if (item.getMetadata().get(Message.MESSAGE_TO) == null && likelyMsisdn != null
+                if (item.getMetadata().get(ExtraProperties.COMMUNICATION_TO) == null && likelyMsisdn != null
                         && ("Incoming".equals(direction) || "Missed".equals(direction)
                                 || (!fromOwner && ("Read".equals(status) || "Unread".equals(status))))) {
-                    item.getMetadata().set(Message.MESSAGE_TO, likelyMsisdn);
+                    item.getMetadata().set(ExtraProperties.COMMUNICATION_TO, likelyMsisdn);
                 } else if (from == null && likelyMsisdn != null && ("Outgoing".equals(direction) || fromOwner
                         || "Sent".equals(status) || "Unsent".equals(status))) {
-                    item.getMetadata().set(Message.MESSAGE_FROM, likelyMsisdn);
+                    item.getMetadata().set(ExtraProperties.COMMUNICATION_FROM, likelyMsisdn);
                 }
             }
         }
@@ -1297,8 +1296,8 @@ public class UfedXmlReader extends DataSourceReader {
                 // //$NON-NLS-1$
 
                 String[] ufedMetas = { ExtraProperties.UFED_META_PREFIX + "Subject", //$NON-NLS-1$
-                        Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,
-                        ExtraProperties.UFED_META_PREFIX + "TimeStamp" //$NON-NLS-1$
+                        ExtraProperties.COMMUNICATION_FROM, ExtraProperties.COMMUNICATION_TO, Message.MESSAGE_CC,
+                        Message.MESSAGE_BCC, ExtraProperties.UFED_META_PREFIX + "TimeStamp" //$NON-NLS-1$
                 };
                 String[] printHeaders = { Messages.getString("UfedXmlReader.Subject"), //$NON-NLS-1$
                         Messages.getString("UfedXmlReader.From"), Messages.getString("UfedXmlReader.To"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -1314,7 +1313,7 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
 
-                for (String prop : Arrays.asList(Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC)) {
+                for (String prop : Arrays.asList(ExtraProperties.COMMUNICATION_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC)) {
                     for (String val : email.getMetadata().getValues(prop)) {
                         MetadataUtil.fillRecipientAddress(email.getMetadata(), val);
                     }

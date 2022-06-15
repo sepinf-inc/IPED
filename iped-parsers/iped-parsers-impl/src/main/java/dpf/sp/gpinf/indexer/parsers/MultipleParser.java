@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,10 +13,10 @@ import java.util.TreeSet;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.IOUtils;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -28,6 +29,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IStreamSource;
 
 /**
@@ -73,11 +75,12 @@ public class MultipleParser extends AbstractParser {
     }
 
     @Field
-    public void setParsers(String value) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+    public void setParsers(String value) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
+            IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         String[] parsers = value.split(";");
         for (String p : parsers) {
             if (!(p = p.trim()).isEmpty()) {
-                this.parsers.add((Parser) Class.forName(p).newInstance());
+                this.parsers.add((Parser) Class.forName(p).getDeclaredConstructor().newInstance());
             }
         }
     }
@@ -133,7 +136,7 @@ public class MultipleParser extends AbstractParser {
                     // merge even if parser fails, some meta could be extracted
                     mergeMetadata(metadata, newMetadata);
                     if (!firstTis) {
-                        IOUtils.closeQuietly(tis);
+                        IOUtil.closeQuietly(tis);
                     }
                     tis = null;
                 }
@@ -150,7 +153,7 @@ public class MultipleParser extends AbstractParser {
 
     private Metadata getNewMetadata(Metadata metadata) {
         Metadata newMetadata = new Metadata();
-        newMetadata.set(Metadata.RESOURCE_NAME_KEY, metadata.get(Metadata.RESOURCE_NAME_KEY));
+        newMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY));
         newMetadata.set(Metadata.CONTENT_LENGTH, metadata.get(Metadata.CONTENT_LENGTH));
         newMetadata.set(Metadata.CONTENT_TYPE, metadata.get(Metadata.CONTENT_TYPE));
         newMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE,

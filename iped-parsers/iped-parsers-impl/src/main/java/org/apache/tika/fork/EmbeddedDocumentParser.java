@@ -8,16 +8,15 @@ import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped3.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import iped3.util.ExtraProperties;
 
 public class EmbeddedDocumentParser implements EmbeddedDocumentExtractor, Serializable {
 
@@ -80,7 +79,7 @@ public class EmbeddedDocumentParser implements EmbeddedDocumentExtractor, Serial
 
     public static NameTitle getNameTitle(Metadata metadata, int child) {
         boolean hasTitle = false;
-        String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
+        String name = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
         if (name == null || name.isEmpty()) {
             name = metadata.get(ExtraProperties.MESSAGE_SUBJECT);
             if (name == null || name.isEmpty()) {
@@ -91,7 +90,7 @@ public class EmbeddedDocumentParser implements EmbeddedDocumentExtractor, Serial
             }
         }
         if (name == null || name.isEmpty()) {
-            name = metadata.get(TikaMetadataKeys.EMBEDDED_RELATIONSHIP_ID);
+            name = metadata.get(TikaCoreProperties.EMBEDDED_RELATIONSHIP_ID);
         }
 
         if (name == null || name.isEmpty()) {

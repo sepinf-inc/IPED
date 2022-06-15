@@ -65,6 +65,9 @@ public class ReportGenerator {
         out.println("<br>" + Messages.getString("WhatsAppReport.NickName") + format(contact.getNickName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.SortName") + format(contact.getSortName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.Status") + format(contact.getStatus())); //$NON-NLS-1$ //$NON-NLS-2$
+        if (contact.isDeleted()) {
+            out.println("<br><i>" + Messages.getString("WhatsAppReport.ContactDeleted") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        }
 
         out.println("</body>\n</html>"); //$NON-NLS-1$
 
@@ -119,7 +122,8 @@ public class ReportGenerator {
         ByteArrayOutputStream chatBytes = new ByteArrayOutputStream();
         PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(chatBytes, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
-        printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), () -> {
+        printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), c.isDeleted(),
+                () -> {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
             if (c.getRecoveredFrom() != null) {
@@ -160,12 +164,12 @@ public class ReportGenerator {
             WAContactsDirectory contactsDirectory,
             WAAccount account) {
 
-        out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
+        out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {
             case UNKNOWN_MESSAGE:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println("<i>" + Messages.getString("WhatsAppReport.UnknwonMessage") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                out.println("<i>" + Messages.getString("WhatsAppReport.UnknwonMessage") + " [ID: " + message.getId() + "]</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 break;
             case ENCRIPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -315,6 +319,12 @@ public class ReportGenerator {
                             out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
                         }
                         break;
+                    case UNKNOWN_MEDIA_MESSAGE:
+                        if (message.getMediaCaption() != null) {
+                            out.println("<i>" + Messages.getString("WhatsAppReport.UnknownMediaMessage") + "</i><br/>");
+                            out.print(format(message.getMediaCaption()) + "<br/>"); //$NON-NLS-1$
+                        }
+                        break;
                     case URL_MESSAGE:
                         out.println("<a href=\"" + format(message.getUrl()) + "\">" + format(message.getUrl()) //$NON-NLS-1$ //$NON-NLS-2$
                                 + "</a><br/>"); //$NON-NLS-1$
@@ -341,7 +351,9 @@ public class ReportGenerator {
                     case CONTACT_MESSAGE:
                         out.println("<b>" + Messages.getString("WhatsAppReport.Contact") + "</b><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         for (String c : message.getVcards()) {
-                            VCardParser.printHtmlFromString(out, c);
+                            if (c != null) {
+                                VCardParser.printHtmlFromString(out, c);
+                            }
                         }
                         break;
                     case DELETED_MESSAGE:
@@ -503,6 +515,9 @@ public class ReportGenerator {
                 }
                 break;
         }
+        if (message.getAddOns().size() > 0) {
+            // toDo implements a vizualization for the add ons like thumbs up
+        }
         if (!message.getChildPornSets().isEmpty()) {
             out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
                     + format(message.getChildPornSets().toString()) + "</i></p>");
@@ -528,6 +543,12 @@ public class ReportGenerator {
             }
         }
         out.println("</span>"); //$NON-NLS-1$
+        if (message.isDeleted()) {
+            out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
+            out.println("<i>" + Messages.getString("WhatsAppReport.MessageDeleted") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            out.println("<div class=\"deletedIcon\"></div>"); //$NON-NLS-1$
+            out.println("</span>"); //$NON-NLS-1$
+        }
 
         if (message.getRecoveredFrom() != null) {
             out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
@@ -550,12 +571,20 @@ public class ReportGenerator {
             return "File"; //$NON-NLS-1$
     }
 
-    private void printMessageFile(PrintWriter out, String title, String id, byte[] avatar, Supplier<String> messages) {
+    private void printMessageFile(PrintWriter out, String title, String id, byte[] avatar, boolean isDeleted, Supplier<String> messages) {
         String strAvatar;
         if (avatar == null || avatar.length == 0) {
             strAvatar = Util.getImageResourceAsEmbedded("img/avatar.png");
         } else {
             strAvatar = "data:image/jpg;base64," + Util.encodeBase64(avatar);
+        }
+        String deletedDiv;
+        if (isDeleted) {
+            deletedDiv = "<div class=\"linha\"><div class=\"recoveredChat\">"
+                    + Messages.getString("WhatsAppReport.RecoveredChat")
+                    + "</div></div>";
+        } else {
+            deletedDiv = "";
         }
         StringSubstitutor interpolator = new StringSubstitutor(new StringLookup() {
 
@@ -574,6 +603,8 @@ public class ReportGenerator {
                         return js;
                     case "css":
                         return css;
+                    case "deleted":
+                        return deletedDiv;
                 }
                 return StringLookupFactory.INSTANCE.interpolatorStringLookup().lookup(key);
             }

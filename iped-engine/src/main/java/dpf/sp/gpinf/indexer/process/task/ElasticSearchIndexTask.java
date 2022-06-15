@@ -12,31 +12,37 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.codec.digest.DigestUtils;
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.DocWriteRequest.OpType;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.client.Cancellable;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.Requests;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.CreateIndexResponse;
-import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.client.indices.PutMappingRequest;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.settings.Settings.Builder;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.opensearch.action.ActionListener;
+import org.opensearch.action.DocWriteRequest.OpType;
+import org.opensearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.opensearch.action.bulk.BulkItemResponse;
+import org.opensearch.action.bulk.BulkRequest;
+import org.opensearch.action.bulk.BulkResponse;
+import org.opensearch.action.index.IndexRequest;
+import org.opensearch.action.support.master.AcknowledgedResponse;
+import org.opensearch.client.Cancellable;
+import org.opensearch.client.RequestOptions;
+import org.opensearch.client.Requests;
+import org.opensearch.client.RestClient;
+import org.opensearch.client.RestClientBuilder;
+import org.opensearch.client.RestClientBuilder.HttpClientConfigCallback;
+import org.opensearch.client.RestHighLevelClient;
+import org.opensearch.client.indices.CreateIndexRequest;
+import org.opensearch.client.indices.CreateIndexResponse;
+import org.opensearch.client.indices.GetIndexRequest;
+import org.opensearch.client.indices.PutMappingRequest;
+import org.opensearch.common.settings.Settings;
+import org.opensearch.common.settings.Settings.Builder;
+import org.opensearch.common.unit.TimeValue;
+import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.common.xcontent.XContentFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,20 +53,15 @@ import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.io.FragmentingReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIODataRef;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.configuration.Configurable;
 import iped3.exception.IPEDException;
+import iped3.io.ISeekableInputStreamFactory;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
-import repackaged.org.apache.http.HttpHost;
-import repackaged.org.apache.http.auth.AuthScope;
-import repackaged.org.apache.http.auth.UsernamePasswordCredentials;
-import repackaged.org.apache.http.client.CredentialsProvider;
-import repackaged.org.apache.http.client.config.RequestConfig;
-import repackaged.org.apache.http.impl.client.BasicCredentialsProvider;
-import repackaged.org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 
 public class ElasticSearchIndexTask extends AbstractTask {
 
@@ -475,15 +476,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private XContentBuilder getJsonMetadataBuilder(IItem item) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
-        String inputStreamSrcPath = getInputStreamSourcePath(item);
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field("document_content", "document")
                 .field(BasicProps.SUBITEMID, item.getSubitemId()).field(BasicProps.PARENTID, item.getParentId())
                 .field(BasicProps.PARENTIDs, item.getParentIds())
-                .field(IndexItem.ID_IN_SOURCE, item.getIdInDataSource())
-                .field(IndexItem.SOURCE_PATH, inputStreamSrcPath)
-                .field(IndexItem.SOURCE_DECODER,
-                        inputStreamSrcPath != null ? item.getInputStreamFactory().getClass().getName() : null)
                 // TODO boost name?
                 .field(BasicProps.NAME, item.getName()).field(BasicProps.LENGTH, item.getLength())
                 .field(BasicProps.TYPE, item.getType()).field(BasicProps.PATH, item.getPath())
@@ -497,6 +493,17 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.ISDIR, item.isDir()).field(BasicProps.ISROOT, item.isRoot())
                 .field(BasicProps.CARVED, item.isCarved()).field(BasicProps.SUBITEM, item.isSubItem())
                 .field(BasicProps.OFFSET, item.getFileOffset()).field("extraAttributes", item.getExtraAttributeMap());
+
+        ISeekableInputStreamFactory isisf = item.getInputStreamFactory();
+        String idInSource = item.getIdInDataSource();
+        MinIODataRef minIODataRef = (MinIODataRef) item.getTempAttribute(MinIODataRef.class.getName());
+        if (minIODataRef != null) {
+            isisf = minIODataRef.inputStreamFactory;
+            idInSource = minIODataRef.idInDataSource;
+        }
+        String sourcePath = getInputStreamSourcePath(isisf);
+        builder.field(IndexItem.ID_IN_SOURCE, idInSource).field(IndexItem.SOURCE_PATH, sourcePath)
+                .field(IndexItem.SOURCE_DECODER, sourcePath != null ? isisf.getClass().getName() : null);
 
         for (String key : getMetadataKeys(item)) {
             if (PREVIEW_IN_DATASOURCE.equals(key)) {
@@ -562,9 +569,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
         return sb.toString();
     }
 
-    private String getInputStreamSourcePath(IItem item) {
-        if (item.getInputStreamFactory() != null) {
-            URI uri = item.getInputStreamFactory().getDataSourceURI();
+    private String getInputStreamSourcePath(ISeekableInputStreamFactory sisf) {
+        if (sisf != null) {
+            URI uri = sisf.getDataSourceURI();
             if (uri != null) {
                 return Util.getRelativePath(output, uri);
             }

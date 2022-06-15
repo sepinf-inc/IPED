@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.codec.binary.Hex;
@@ -28,8 +29,10 @@ public class Message {
     private static File thumbsfile;
     private static FileChannel fileChannel;
     private static AtomicLong fileOffset = new AtomicLong();
+    private static AtomicInteger deletedCounter = new AtomicInteger();
 
     private long id;
+    private int deletedId = -1;
     private String remoteId;
     private String remoteResource;
     private String localResource;
@@ -60,6 +63,7 @@ public class Message {
     private Set<String> childPornSets = new HashSet<>();
     private IItemBase mediaItem = null;
     private String mediaQuery = null;
+    private List<MessageAddOn> addOns = new ArrayList<>();
 
     static {
         try {
@@ -90,6 +94,19 @@ public class Message {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    /**
+     * Deleted recovered messages may have the same id as an allocated message. This
+     * returns a global unique id for a decoded database.
+     * 
+     * @return a unique string id
+     */
+    public String getUniqueId() {
+        if (deletedId == -1) {
+            deletedId = deletedCounter.getAndIncrement();
+        }
+        return !deleted ? Long.toString(id) : id + "_" + deletedId;
     }
 
     public String getRemoteId() {
@@ -280,7 +297,11 @@ public class Message {
     }
 
     public void setLatitude(double latitude) {
-        this.latitude = latitude;
+        if (latitude < -90.0 || latitude > 90.0) {
+            this.latitude = 0.0;
+        } else {
+            this.latitude = latitude;
+        }
     }
 
     public double getLongitude() {
@@ -288,7 +309,11 @@ public class Message {
     }
 
     public void setLongitude(double longitude) {
-        this.longitude = longitude;
+        if (longitude < -180.0 || longitude > 180.0) {
+            this.longitude = 0.0;
+        } else {
+            this.longitude = longitude;
+        }
     }
 
     public String getUrl() {
@@ -340,6 +365,7 @@ public class Message {
             case YOU_ADMIN:
             case UNKNOWN_MESSAGE:
                 return true;
+            default:
         }
         return false;
     }
@@ -381,8 +407,16 @@ public class Message {
         this.mediaQuery = mediaQuery;
     }
 
+    public boolean addMessageAddOn(MessageAddOn m) {
+        return addOns.add(m);
+    }
+
+    public List<MessageAddOn> getAddOns() {
+        return addOns;
+    }
+
     public static enum MessageType {
-        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, MESSAGES_NOW_ENCRYPTED, ENCRIPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_FROM_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE,STICKER_MESSAGE, UNKNOWN_MESSAGE
+        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, UNKNOWN_MEDIA_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, MESSAGES_NOW_ENCRYPTED, ENCRIPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_FROM_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE, STICKER_MESSAGE, UNKNOWN_MESSAGE
     }
 
     public static enum MessageStatus {

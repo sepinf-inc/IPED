@@ -21,8 +21,32 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.lucene.index.*;
+import org.apache.lucene.index.BinaryDocValues;
+import org.apache.lucene.index.CompositeReader;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.DocValues;
+import org.apache.lucene.index.DocValuesType;
+import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.FieldInfos;
+import org.apache.lucene.index.Fields;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafMetaData;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.MultiBits;
+import org.apache.lucene.index.MultiDocValues;
 import org.apache.lucene.index.MultiDocValues.MultiSortedDocValues;
+import org.apache.lucene.index.MultiReader;
+import org.apache.lucene.index.MultiTerms;
+import org.apache.lucene.index.NumericDocValues;
+import org.apache.lucene.index.OrdinalMap;
+import org.apache.lucene.index.PointValues;
+import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.index.SortedNumericDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.index.StoredFieldVisitor;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.VectorValues;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TotalHits;
@@ -313,7 +337,7 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
     }
 
     @Override
-    public TopDocs searchNearestVectors(String field, float[] target, int k, Bits acceptDocs) throws IOException {
+    public TopDocs searchNearestVectors(String field, float[] target, int k, Bits acceptDocs, int visitedLimit) throws IOException {
         ensureOpen();
         int size = in.leaves().size();
         TopDocs[] docsPerLeaf = new TopDocs[size];
@@ -336,7 +360,7 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
                 }
             }
 
-            docsPerLeaf[i] = reader.searchNearestVectors(field, target, k, leafBits);
+            docsPerLeaf[i] = reader.searchNearestVectors(field, target, k, leafBits, visitedLimit);
             for (ScoreDoc doc : docsPerLeaf[i].scoreDocs) {
                 doc.doc += context.docBase;
             }

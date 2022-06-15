@@ -25,6 +25,7 @@
           </span>
         </div>
         <div id="conversation"><br><br><br>
+        ${deleted}
         ${messages}
         <br><br><br>
         <div id="lastmsg">&nbsp;</div>

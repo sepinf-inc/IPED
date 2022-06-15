@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;

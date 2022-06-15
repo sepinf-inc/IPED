@@ -27,7 +27,6 @@ import java.util.Set;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.IOExceptionWithCause;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Database;
 import org.apache.tika.metadata.Metadata;
@@ -40,7 +39,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import iped3.util.ExtraProperties;
 
 /**
@@ -48,7 +46,9 @@ import iped3.util.ExtraProperties;
  */
 abstract class AbstractDBParser extends AbstractParser {
 
-    private final static byte[] EMPTY_BYTE_ARR = new byte[0];
+    private static final long serialVersionUID = 1L;
+
+	private final static byte[] EMPTY_BYTE_ARR = new byte[0];
 
     public static final MediaType TABLE_REPORT = MediaType.application("x-database-table");
 
@@ -216,7 +216,7 @@ abstract class AbstractDBParser extends AbstractParser {
         try {
             connection = DriverManager.getConnection(connectionString);
         } catch (SQLException e) {
-            throw new IOExceptionWithCause(e);
+            throw new IOException(e);
         }
         return connection;
     }

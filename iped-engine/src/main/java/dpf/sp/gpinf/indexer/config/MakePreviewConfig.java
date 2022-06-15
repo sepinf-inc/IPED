@@ -1,14 +1,13 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import dpf.sp.gpinf.indexer.util.Util;
-
-import java.nio.file.Path;
 
 public class MakePreviewConfig extends AbstractTaskConfig<List<Set<String>>> {
 

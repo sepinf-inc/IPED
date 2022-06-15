@@ -86,10 +86,7 @@ import iped3.io.IStreamSource;
 public class LibreOfficeViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(LibreOfficeViewer.class);
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1L;
+
     private IOfficeApplication officeApplication;
     private NativeView nat;
     private volatile IFrame officeFrame;

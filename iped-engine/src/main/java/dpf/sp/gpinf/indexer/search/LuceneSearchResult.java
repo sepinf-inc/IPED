@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.util.Arrays;
 import java.util.Comparator;
+
 import org.apache.lucene.search.ScoreDoc;
 
 import iped3.IIPEDSource;

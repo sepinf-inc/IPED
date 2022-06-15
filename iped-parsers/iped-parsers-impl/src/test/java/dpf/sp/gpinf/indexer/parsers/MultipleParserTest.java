@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -10,6 +11,8 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
+import iped3.util.ExtraProperties;
 import junit.framework.TestCase;
 
 public class MultipleParserTest extends TestCase {
@@ -46,8 +49,8 @@ public class MultipleParserTest extends TestCase {
             assertTrue(hts.contains("C:\\ARJ\\ -m -b -x"));
             assertTrue(hts.contains("ARJ32 v 3.10/Win32"));
 
-            assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.executable.ExecutableParser"));
-            assertTrue(mts.contains("X-Parsed-By=dpf.sp.gpinf.indexer.parsers.RawStringParser"));
+            assertTrue(mts.contains(ExtraProperties.TIKA_PARSER_USED + "=org.apache.tika.parser.executable.ExecutableParser"));
+            assertTrue(mts.contains(ExtraProperties.TIKA_PARSER_USED + "=dpf.sp.gpinf.indexer.parsers.RawStringParser"));
             assertTrue(mts.contains("machine:endian=Little"));
             assertTrue(mts.contains("machine:platform=Windows"));
             assertTrue(mts.contains("machine:architectureBits=32"));

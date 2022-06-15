@@ -42,7 +42,11 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 public class CertificateParser extends AbstractParser {
-    public static final MediaType PEM_MIME = MediaType.application("x-pem-file");
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	public static final MediaType PEM_MIME = MediaType.application("x-pem-file");
     public static final MediaType DER_MIME = MediaType.application("pkix-cert");
     private static final MediaType PKCS7_MIME = MediaType.application("pkcs7-mime");
     private static final MediaType PKCS7_SIGNATURE = MediaType.application("pkcs7-signature");
@@ -114,9 +118,9 @@ public class CertificateParser extends AbstractParser {
             metadata.set(ISSUER, cert.getIssuerX500Principal().getName());
             metadata.set(SUBJECT, cert.getSubjectX500Principal().getName());
             if (cert.getBasicConstraints() <= -1) {
-                metadata.set(ISSUBJECTAUTHORITY, (new Boolean(false)).toString());
+                metadata.set(ISSUBJECTAUTHORITY, Boolean.FALSE.toString());
             } else {
-                metadata.set(ISSUBJECTAUTHORITY, (new Boolean(true)).toString());
+                metadata.set(ISSUBJECTAUTHORITY, Boolean.TRUE.toString());
             }
             metadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
             metadata.set(TikaCoreProperties.TITLE, "Certificado:" + cert.getSubjectX500Principal().getName());

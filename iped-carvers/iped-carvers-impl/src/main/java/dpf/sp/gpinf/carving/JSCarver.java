@@ -1,16 +1,21 @@
 package dpf.sp.gpinf.carving;
 
-import dpf.sp.gpinf.carver.api.CarverType;
-import dpf.sp.gpinf.carver.api.Hit;
-import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
-import iped3.IItem;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.io.*;
-import java.security.cert.Certificate;
+
+import dpf.sp.gpinf.carver.api.CarverType;
+import dpf.sp.gpinf.carver.api.Hit;
+import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
+import iped3.IItem;
 
 public class JSCarver extends DefaultCarver {
     ScriptEngine engine;
@@ -31,7 +36,7 @@ public class JSCarver extends DefaultCarver {
     @Override
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         try {
-            Double l = (Double) inv.invokeFunction("getLengthFromHeader", parentEvidence, header);
+            Number l = (Number) inv.invokeFunction("getLengthFromHeader", parentEvidence, header);
             return l.longValue();
         } catch (ScriptException e) {
             throw new IOException(e);
@@ -45,15 +50,15 @@ public class JSCarver extends DefaultCarver {
     }
 
     @Override
-    public Object validateCarvedObject(IItem parentEvidence, Hit header, long length)
+    public void validateCarvedObject(IItem parentEvidence, Hit header, long length)
             throws InvalidCarvedObjectException {
         try {
-            Certificate cert = (Certificate) inv.invokeFunction("validateCarvedObject", parentEvidence, header, length);
-            return cert;
+            inv.invokeFunction("validateCarvedObject", parentEvidence, header, length);
+
         } catch (ScriptException e) {
             throw new InvalidCarvedObjectException(e);
         } catch (NoSuchMethodException e) {
-            return super.validateCarvedObject(parentEvidence, header, length); // se o método de validação não for
+            super.validateCarvedObject(parentEvidence, header, length); // se o método de validação não for
             // implementado considera o objeto
             // válido
         }

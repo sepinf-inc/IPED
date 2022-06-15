@@ -20,7 +20,6 @@ package dpf.sp.gpinf.indexer.process;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -73,11 +72,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.DateUtils;
 
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.lucene.analysis.FastASCIIFoldingFilter;
-import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
@@ -86,6 +81,8 @@ import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIOInputInputStreamFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
 import dpf.sp.gpinf.indexer.util.StringUtil;
@@ -137,7 +134,6 @@ public class IndexItem extends BasicProps {
             .synchronizedMap(new TreeMap<String, Class<?>>(StringUtil.getIgnoreCaseComparator()));
     private static Map<String, Class<?>> newtypesMap = new ConcurrentHashMap<String, Class<?>>();
 
-    private static FieldType contentField;
     private static FieldType storedTokenizedNoNormsField = new FieldType();
     private static FieldType dateField = new FieldType();
 
@@ -154,7 +150,7 @@ public class IndexItem extends BasicProps {
 
         ignoredMetadata.add(Metadata.CONTENT_TYPE);
         ignoredMetadata.add(Metadata.CONTENT_LENGTH);
-        ignoredMetadata.add(Metadata.RESOURCE_NAME_KEY);
+        ignoredMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY);
         ignoredMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         ignoredMetadata.add(IndexerDefaultParser.INDEXER_TIMEOUT);
         ignoredMetadata.add(TikaCoreProperties.CONTENT_TYPE_HINT.getName());
@@ -166,19 +162,6 @@ public class IndexItem extends BasicProps {
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
         BasicProps.SET.add(SOURCE_DECODER);
-    }
-
-    private static final FieldType getContentField() {
-        if (contentField == null) {
-            FieldType field = new FieldType();
-            field.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-            field.setOmitNorms(true);
-            IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
-            field.setStoreTermVectors(indexConfig.isStoreTermVectors());
-            field.freeze();
-            contentField = field;
-        }
-        return contentField;
     }
 
     public static boolean isByte(String field) {
@@ -260,7 +243,7 @@ public class IndexItem extends BasicProps {
         return new String(output, 0, len).trim();
     }
 
-    public static Document Document(IItem evidence, Reader reader, File output) {
+    public static Document Document(IItem evidence, File output) {
         Document doc = new Document();
 
         doc.add(new IntPoint(ID, evidence.getId()));
@@ -441,23 +424,19 @@ public class IndexItem extends BasicProps {
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
 
-        byte[] similarityFeatures = (byte[]) evidence.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
+        byte[] similarityFeatures = (byte[]) evidence.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES);
         // clear extra property to don't add it again later when iterating over extra props
-        evidence.getExtraAttributeMap().remove(ImageSimilarityTask.SIMILARITY_FEATURES);
+        evidence.getExtraAttributeMap().remove(ImageSimilarityTask.IMAGE_FEATURES);
         if (similarityFeatures != null) {
-            doc.add(new BinaryDocValuesField(ImageSimilarityTask.SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
-            doc.add(new StoredField(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures));
-            doc.add(new IntPoint(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures[0], similarityFeatures[1],
+            doc.add(new BinaryDocValuesField(ImageSimilarityTask.IMAGE_FEATURES, new BytesRef(similarityFeatures)));
+            doc.add(new StoredField(ImageSimilarityTask.IMAGE_FEATURES, similarityFeatures));
+            doc.add(new IntPoint(ImageSimilarityTask.IMAGE_FEATURES, similarityFeatures[0], similarityFeatures[1],
                     similarityFeatures[2], similarityFeatures[3]));
         }
 
         long off = evidence.getFileOffset();
         if (off != -1) {
             doc.add(new StoredField(OFFSET, Long.toString(off)));
-        }
-
-        if (reader != null) {
-            doc.add(new Field(CONTENT, reader, getContentField()));
         }
 
         if (typesMap.size() == 0) {
@@ -593,12 +572,13 @@ public class IndexItem extends BasicProps {
             String[] coords = oValue.toString().split(";");
             double lat = Double.valueOf(coords[0].trim());
             double lon = Double.valueOf(coords[1].trim());
-            doc.add(new LatLonPoint(key, lat, lon));
-            doc.add(new LatLonDocValuesField(key, lat, lon));
-            doc.add(new StringField(key, oValue.toString(), Field.Store.YES));
-            // used to group values in metadata filter panel, sorting doesn't make sense
-            doc.add(new SortedSetDocValuesField(GEO_SSDV_PREFIX + key, new BytesRef(oValue.toString())));
-
+            if (lat >= -90.0 && lat <= 90.0 && lon >= -180.0 && lon <= 180.0) {
+                doc.add(new LatLonPoint(key, lat, lon));
+                doc.add(new LatLonDocValuesField(key, lat, lon));
+                doc.add(new StringField(key, oValue.toString(), Field.Store.YES));
+                // used to group values in metadata filter panel, sorting doesn't make sense
+                doc.add(new SortedSetDocValuesField(GEO_SSDV_PREFIX + key, new BytesRef(oValue.toString())));
+            }
         } else if (oValue instanceof Date) {
             String value = DateUtils.formatDate((Date) oValue);
             doc.add(new Field(key, value, dateField));
@@ -968,9 +948,9 @@ public class IndexItem extends BasicProps {
                     }
                 }
 
-                BytesRef bytesRef = doc.getBinaryValue(ImageSimilarityTask.SIMILARITY_FEATURES);
+                BytesRef bytesRef = doc.getBinaryValue(ImageSimilarityTask.IMAGE_FEATURES);
                 if (bytesRef != null) {
-                    evidence.setExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES, bytesRef.bytes);
+                    evidence.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES, bytesRef.bytes);
                 }
 
                 File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$

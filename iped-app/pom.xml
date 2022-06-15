@@ -454,7 +454,7 @@
                                 <artifactItem>
                                     <groupId>dpf.ap</groupId>
     								<artifactId>telegram-decoder-impl</artifactId>
-    								<version>1.0.6-SNAPSHOT</version>
+    								<version>${telegram.impl.version}</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${plugin.dir}</outputDirectory>
@@ -622,7 +622,7 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>dpf.sp.gpinf.indexer.Main</mainClass>
+                                    <mainClass>dpf.sp.gpinf.indexer.Bootstrap</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>
@@ -662,7 +662,7 @@
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
-                                    <mainClass>dpf.sp.gpinf.indexer.desktop.AppMain</mainClass>
+                                    <mainClass>dpf.sp.gpinf.indexer.BootstrapUI</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>

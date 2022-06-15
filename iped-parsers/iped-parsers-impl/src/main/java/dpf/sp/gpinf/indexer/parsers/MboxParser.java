@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -82,7 +81,7 @@ public class MboxParser extends AbstractParser {
         String charsetName = "windows-1252"; //$NON-NLS-1$
         InputStreamReader isr = new InputStreamReader(stream, charsetName);
         BufferedReader reader = new BufferedReader(isr, 100000);
-        String name = metadata.get(Metadata.RESOURCE_NAME_KEY);
+        String name = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
 
         String line;
         int count = 0;

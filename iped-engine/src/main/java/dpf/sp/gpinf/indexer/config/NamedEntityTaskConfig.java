@@ -1,7 +1,5 @@
 package dpf.sp.gpinf.indexer.config;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

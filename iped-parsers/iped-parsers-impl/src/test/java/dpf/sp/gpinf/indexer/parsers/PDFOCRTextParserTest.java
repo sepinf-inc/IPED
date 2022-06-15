@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -11,6 +12,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
 import junit.framework.TestCase;
 
 public class PDFOCRTextParserTest extends TestCase {
@@ -33,7 +35,6 @@ public class PDFOCRTextParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testPDFOCRTextParsingICE() throws IOException, SAXException, TikaException {
 
@@ -48,20 +49,21 @@ public class PDFOCRTextParserTest extends TestCase {
 
             String mts = metadata.toString();
 
-            assertEquals("PScript5.dll Version 5.2", metadata.get(Metadata.CREATOR));
-            assertEquals("Speeches by Andrew G Haldane", metadata.get(Metadata.SUBJECT));
-            assertEquals("The Bank of England", metadata.get(Metadata.AUTHOR));
-            assertEquals("April 28, 2009 10:06:56 (UTC +01:00)", metadata.get(Metadata.CREATION_DATE));
+            assertEquals("PScript5.dll Version 5.2", metadata.getValues(TikaCoreProperties.CREATOR)[1]);
+            assertEquals("Acrobat Distiller 7.0.5 (Windows)", metadata.get(TikaCoreProperties.CREATOR_TOOL));
+            assertEquals("Speeches by Andrew G Haldane", metadata.get(TikaCoreProperties.SUBJECT));
+            assertEquals("The Bank of England", metadata.get(TikaCoreProperties.CREATOR));
+            assertEquals("April 28, 2009 10:06:56 (UTC +01:00)", metadata.get(TikaCoreProperties.CREATED));
             assertEquals(
                     "Rethinking the Financial Network, Speech by Andrew G Haldane, Executive Director, Financial Stability delivered at the Financial Student Association, Amsterdam on 28 April 2009",
-                    metadata.get(Metadata.TITLE));
+                    metadata.get(TikaCoreProperties.TITLE));
             assertEquals("application/pdf", metadata.get(Metadata.CONTENT_TYPE));
             assertTrue(mts.contains("Content-Type=application/pdf"));
         }
 
     }
 
-    @SuppressWarnings({ "deprecation", "static-access" })
+    @SuppressWarnings("static-access")
     @Test
     public void testPDFOCRTextEmbbedMetadata() throws IOException, SAXException, TikaException {
 
@@ -77,10 +79,10 @@ public class PDFOCRTextParserTest extends TestCase {
                             + " Executive Director, Financial Stability delivered at the Financial"
                             + " Student Association, Amsterdam on 28 April 2009",
                     metadata.get(TikaCoreProperties.TITLE));
-            assertEquals("Speeches by Andrew G Haldane", metadata.get(Metadata.SUBJECT));
+            assertEquals("Speeches by Andrew G Haldane", metadata.get(TikaCoreProperties.SUBJECT));
             assertEquals("The Bank of England", metadata.get(TikaCoreProperties.CREATOR));
-            assertEquals(metadata.get(TikaCoreProperties.CREATOR), metadata.get(metadata.AUTHOR));
-            assertEquals("Speeches by Andrew G Haldane", metadata.get(metadata.DESCRIPTION));
+            assertEquals("PScript5.dll Version 5.2", metadata.get(TikaCoreProperties.CREATOR_TOOL));
+            assertEquals("Speeches by Andrew G Haldane", metadata.get(TikaCoreProperties.DESCRIPTION));
         }
 
     }
@@ -147,7 +149,7 @@ public class PDFOCRTextParserTest extends TestCase {
 
     }
 
-    @SuppressWarnings({ "deprecation", "static-access" })
+    @SuppressWarnings("static-access")
     @Test
     public void testPDFOCRTextImagesEmbbedMetadata() throws IOException, SAXException, TikaException {
 
@@ -161,8 +163,7 @@ public class PDFOCRTextParserTest extends TestCase {
             assertEquals("g2free.lo", metadata.get(TikaCoreProperties.TITLE));
             assertEquals("QuarkXPress(tm) 4.11", metadata.get(TikaCoreProperties.CREATOR_TOOL));
             assertEquals("E", metadata.get(TikaCoreProperties.CREATOR));
-            assertEquals(metadata.get(TikaCoreProperties.CREATOR), metadata.get(metadata.AUTHOR));
-            assertEquals("2002-02-21", metadata.get(metadata.CREATION_DATE).substring(0, 10));
+            assertEquals("2002-02-21", metadata.get(TikaCoreProperties.CREATED).substring(0, 10));
         }
     }
 

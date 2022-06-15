@@ -12,10 +12,6 @@ import org.apache.logging.log4j.core.filter.AbstractFilter;
 @Plugin(name = "PackageRegexpFilter", category = "Core", elementType = "filter", printObject = true)
 public class PackageRegexpFilter extends AbstractFilter {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -8773522832741324758L;
     private Pattern pattern;
 
     private PackageRegexpFilter(final String regex, final Result onMatch, final Result onMismatch) {
