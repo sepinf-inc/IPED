@@ -90,10 +90,10 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
-import iped3.IItem;
-import iped3.datasource.IDataSource;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.IItem;
+import iped.datasource.IDataSource;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 import jep.NDArray;
 
 /**

@@ -24,7 +24,7 @@ import org.apache.commons.io.IOUtils;
 
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import iped3.io.SeekableInputStream;
+import iped.io.SeekableInputStream;
 
 public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements Closeable {
 

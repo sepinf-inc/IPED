@@ -5,7 +5,7 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
-import iped3.configuration.EnabledInterface;
+import iped.configuration.EnabledInterface;
 
 public class EnableTaskProperty extends AbstractPropertiesConfigurable implements EnabledInterface {
 

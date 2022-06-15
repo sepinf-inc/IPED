@@ -14,9 +14,9 @@ import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
-import iped3.IItem;
-import iped3.IItemId;
-import iped3.util.BasicProps;
+import iped.IItem;
+import iped.IItemId;
+import iped.util.BasicProps;
 
 public class AttachmentSearcherImpl implements AttachmentSearcher {
 

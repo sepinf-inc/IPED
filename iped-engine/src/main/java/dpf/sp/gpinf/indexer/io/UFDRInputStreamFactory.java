@@ -3,7 +3,7 @@ package dpf.sp.gpinf.indexer.io;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import iped3.io.SeekableInputStream;
+import iped.io.SeekableInputStream;
 
 public class UFDRInputStreamFactory extends ZIPInputStreamFactory {
 

@@ -34,7 +34,7 @@ import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.ui.UiScale;
-import iped3.exception.IPEDException;
+import iped.exception.IPEDException;
 
 /**
  * Processing program entry point.

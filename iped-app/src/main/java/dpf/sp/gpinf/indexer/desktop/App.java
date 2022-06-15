@@ -136,15 +136,15 @@ import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IIPEDSource;
-import iped3.IItem;
+import iped.IIPEDSource;
+import iped.IItem;
+import iped.search.IIPEDSearcher;
+import iped.search.IMultiSearchResult;
+import iped.search.IMultiSearchResultProvider;
 import iped3.desktop.GUIProvider;
 import iped3.desktop.IColumnsManager;
 import iped3.desktop.ResultSetViewer;
 import iped3.desktop.ResultSetViewerConfiguration;
-import iped3.search.IIPEDSearcher;
-import iped3.search.IMultiSearchResult;
-import iped3.search.IMultiSearchResultProvider;
 
 public class App extends JFrame implements WindowListener, IMultiSearchResultProvider, GUIProvider {
     /**

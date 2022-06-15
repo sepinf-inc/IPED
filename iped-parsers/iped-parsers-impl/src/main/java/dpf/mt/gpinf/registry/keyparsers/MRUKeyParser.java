@@ -27,7 +27,7 @@ import dpf.mt.gpinf.registry.model.KeyNode;
 import dpf.mt.gpinf.registry.model.KeyValue;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
-import iped3.util.ExtraProperties;
+import iped.util.ExtraProperties;
 
 public class MRUKeyParser extends HtmlKeyParser {
     @Override

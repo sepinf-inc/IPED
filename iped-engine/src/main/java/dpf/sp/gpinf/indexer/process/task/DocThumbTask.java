@@ -42,8 +42,8 @@ import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
-import iped3.IItem;
-import iped3.configuration.Configurable;
+import iped.IItem;
+import iped.configuration.Configurable;
 
 public class DocThumbTask extends ThumbTask {
 

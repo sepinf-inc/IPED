@@ -41,7 +41,7 @@ import org.apache.pdfbox.rendering.PDFRenderer;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.IStreamSource;
+import iped.io.IStreamSource;
 
 public class PDFBoxViewer extends AbstractViewer {
 

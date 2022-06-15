@@ -30,8 +30,8 @@ import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.hashdb.HashDBDataSource;
 import gpinf.hashdb.PhotoDnaItem;
-import iped3.IItem;
-import iped3.configuration.Configurable;
+import iped.IItem;
+import iped.configuration.Configurable;
 
 public class PhotoDNALookup extends AbstractTask {
 

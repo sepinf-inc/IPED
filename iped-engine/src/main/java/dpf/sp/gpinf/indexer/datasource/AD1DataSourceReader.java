@@ -8,10 +8,10 @@ import java.nio.file.Paths;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
-import iped3.ICaseData;
-import iped3.IItem;
-import iped3.exception.IPEDException;
-import iped3.io.SeekableInputStream;
+import iped.ICaseData;
+import iped.IItem;
+import iped.exception.IPEDException;
+import iped.io.SeekableInputStream;
 import sef.mg.laud.ad1extractor.AD1Extractor;
 import sef.mg.laud.ad1extractor.FileHeader;
 

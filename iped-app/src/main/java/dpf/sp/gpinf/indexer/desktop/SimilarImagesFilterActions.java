@@ -23,7 +23,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.dev.data.Item;
 import gpinf.similarity.ImageSimilarity;
-import iped3.IItemId;
+import iped.IItemId;
 
 public class SimilarImagesFilterActions {
     private static final int sampleFactor = 3;

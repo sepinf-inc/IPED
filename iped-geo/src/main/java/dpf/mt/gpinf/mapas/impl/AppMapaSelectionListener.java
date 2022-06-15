@@ -7,8 +7,8 @@ import javax.swing.JTable;
 
 import dpf.mt.gpinf.indexer.search.kml.GetResultsKMLWorker;
 import dpf.mt.gpinf.mapas.MapSelectionListener;
-import iped3.IItemId;
-import iped3.util.BasicProps;
+import iped.IItemId;
+import iped.util.BasicProps;
 
 public class AppMapaSelectionListener implements MapSelectionListener {
     AppMapaPanel mapaPanel;

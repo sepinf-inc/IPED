@@ -5,7 +5,7 @@ import java.util.ArrayDeque;
 
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carving.DefaultCarver;
-import iped3.IItem;
+import iped.IItem;
 
 public class EMLCarver extends DefaultCarver {
     Hit lastFooter = null;

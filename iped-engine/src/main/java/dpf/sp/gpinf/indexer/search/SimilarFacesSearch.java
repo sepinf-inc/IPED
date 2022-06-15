@@ -11,8 +11,8 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.util.BytesRef;
 
-import iped3.IItem;
-import iped3.IItemId;
+import iped.IItem;
+import iped.IItemId;
 
 public class SimilarFacesSearch {
 

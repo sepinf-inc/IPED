@@ -34,7 +34,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import iped3.IIPEDSource;
+import iped.IIPEDSource;
 
 @Api(value = "Sources")
 @Path("sources")

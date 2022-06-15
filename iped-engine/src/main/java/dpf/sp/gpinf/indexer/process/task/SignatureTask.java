@@ -19,10 +19,10 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.SignatureConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.IItem;
-import iped3.configuration.Configurable;
-import iped3.io.SeekableInputStream;
-import iped3.util.MediaTypes;
+import iped.IItem;
+import iped.configuration.Configurable;
+import iped.io.SeekableInputStream;
+import iped.util.MediaTypes;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.

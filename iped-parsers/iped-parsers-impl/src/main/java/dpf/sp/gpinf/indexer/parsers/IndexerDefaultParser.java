@@ -54,7 +54,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.IStreamSource;
+import iped.io.IStreamSource;
 
 /**
  * Parser padrão do IPED. Como o AutoDetectParser, detecta o tipo do arquivo e

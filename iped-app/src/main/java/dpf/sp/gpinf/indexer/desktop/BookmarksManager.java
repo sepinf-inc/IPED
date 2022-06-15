@@ -78,10 +78,10 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
-import iped3.IItem;
-import iped3.IItemId;
+import iped.IItem;
+import iped.IItemId;
+import iped.util.BasicProps;
 import iped3.desktop.ProgressDialog;
-import iped3.util.BasicProps;
 
 public class BookmarksManager implements ActionListener, ListSelectionListener, KeyListener {
 

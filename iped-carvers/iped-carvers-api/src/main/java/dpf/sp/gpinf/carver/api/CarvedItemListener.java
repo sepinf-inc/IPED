@@ -1,6 +1,6 @@
 package dpf.sp.gpinf.carver.api;
 
-import iped3.IItem;
+import iped.IItem;
 
 public interface CarvedItemListener {
 

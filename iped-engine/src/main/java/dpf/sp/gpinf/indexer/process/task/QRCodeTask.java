@@ -26,8 +26,8 @@ import com.google.zxing.multi.qrcode.QRCodeMultiReader;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
-import iped3.IItem;
-import iped3.configuration.Configurable;
+import iped.IItem;
+import iped.configuration.Configurable;
 
 public class QRCodeTask extends AbstractTask {
 

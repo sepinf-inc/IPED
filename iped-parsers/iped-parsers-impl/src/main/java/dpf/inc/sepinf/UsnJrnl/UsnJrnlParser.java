@@ -25,11 +25,11 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.IItemBase;
-import iped3.io.SeekableInputStream;
-import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.IItemBase;
+import iped.io.SeekableInputStream;
+import iped.search.IItemSearcher;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 
 public class UsnJrnlParser extends AbstractParser {
     /**

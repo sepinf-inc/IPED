@@ -58,11 +58,11 @@ import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.util.StringUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
-import iped3.IItemId;
+import iped.IItemId;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 import iped3.desktop.IColumnsManager;
 import iped3.desktop.ProgressDialog;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
 
 public class ColumnsManager implements ActionListener, Serializable, IColumnsManager {
 
@@ -88,7 +88,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private static final File getGlobalColsFile() {
         String name = "visibleCols"; //$NON-NLS-1$
-        String locale = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+        String locale = System.getProperty(iped.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".dat"; //$NON-NLS-1$

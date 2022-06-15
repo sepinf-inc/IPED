@@ -39,9 +39,9 @@ import org.slf4j.LoggerFactory;
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
-import iped3.IItemBase;
-import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
+import iped.IItemBase;
+import iped.search.IItemSearcher;
+import iped.util.BasicProps;
 
 public class Extractor {
 

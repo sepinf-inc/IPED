@@ -11,9 +11,9 @@ import java.util.StringTokenizer;
 import org.apache.commons.lang.ArrayUtils;
 
 import dpf.mt.gpinf.mapas.util.Messages;
-import iped3.IItemId;
+import iped.IItemId;
+import iped.search.IMultiSearchResultProvider;
 import iped3.desktop.GUIProvider;
-import iped3.search.IMultiSearchResultProvider;
 
 public class KMLResult {
     private static FileDialog fDialog;

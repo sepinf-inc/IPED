@@ -17,9 +17,9 @@ import org.apache.lucene.util.BytesRef;
 import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import gpinf.similarity.ImageSimilarity;
-import iped3.IItem;
-import iped3.IItemId;
-import iped3.util.BasicProps;
+import iped.IItem;
+import iped.IItemId;
+import iped.util.BasicProps;
 
 public class ImageSimilarityScorer {
     /**

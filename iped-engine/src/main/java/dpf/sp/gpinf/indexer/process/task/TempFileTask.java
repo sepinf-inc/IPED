@@ -11,8 +11,8 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.Item;
-import iped3.IItem;
-import iped3.configuration.Configurable;
+import iped.IItem;
+import iped.configuration.Configurable;
 
 /**
  * Tarefa para geração de arquivos temporários para os itens antes do

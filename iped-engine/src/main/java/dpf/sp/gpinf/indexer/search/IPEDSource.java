@@ -70,13 +70,13 @@ import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Category;
 import gpinf.dev.data.Item;
-import iped3.IIPEDSource;
-import iped3.IItem;
-import iped3.IItemId;
-import iped3.exception.IPEDException;
-import iped3.search.IBookmarks;
-import iped3.search.IMultiBookmarks;
-import iped3.util.BasicProps;
+import iped.IIPEDSource;
+import iped.IItem;
+import iped.IItemId;
+import iped.exception.IPEDException;
+import iped.search.IBookmarks;
+import iped.search.IMultiBookmarks;
+import iped.util.BasicProps;
 
 public class IPEDSource implements IIPEDSource {
 

@@ -5,8 +5,8 @@ import java.nio.charset.StandardCharsets;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
 import dpf.sp.gpinf.carving.DefaultCarver;
-import iped3.IItem;
-import iped3.io.SeekableInputStream;
+import iped.IItem;
+import iped.io.SeekableInputStream;
 
 public class TorTCCarver extends DefaultCarver {
 

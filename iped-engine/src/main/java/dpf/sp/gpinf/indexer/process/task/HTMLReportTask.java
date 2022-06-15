@@ -78,8 +78,8 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
-import iped3.IItem;
-import iped3.configuration.Configurable;
+import iped.IItem;
+import iped.configuration.Configurable;
 
 /**
  * Tarefa de geração de relatório no formato HTML do itens selecionados, gerado

@@ -9,7 +9,7 @@ import java.sql.ResultSet;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IItem;
+import iped.IItem;
 
 public abstract class ThumbTask extends AbstractTask {
 

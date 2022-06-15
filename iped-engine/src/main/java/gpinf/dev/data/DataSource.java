@@ -3,7 +3,7 @@ package gpinf.dev.data;
 import java.io.File;
 import java.util.UUID;
 
-import iped3.datasource.IDataSource;
+import iped.datasource.IDataSource;
 
 /**
  * Representa uma fonte de dados, como imagem de dispositivo, disco físico,

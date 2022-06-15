@@ -12,7 +12,7 @@ import org.kharon.OverlappedEdges;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import iped3.IItemId;
+import iped.IItemId;
 
 public class FilterSelectedEdges {
 

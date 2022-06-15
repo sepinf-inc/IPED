@@ -47,9 +47,9 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IItemId;
-import iped3.search.IMultiSearchResult;
-import iped3.util.BasicProps;
+import iped.IItemId;
+import iped.search.IMultiSearchResult;
+import iped.util.BasicProps;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel {
 

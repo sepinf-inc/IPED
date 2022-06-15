@@ -20,8 +20,8 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped3.io.IStreamSource;
-import iped3.util.MediaTypes;
+import iped.io.IStreamSource;
+import iped.util.MediaTypes;
 
 /**
  * Classe base para todas as interfaces gráficas de visualizadores.

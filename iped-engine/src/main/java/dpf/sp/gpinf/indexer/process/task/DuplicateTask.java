@@ -15,9 +15,9 @@ import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.HashValue;
-import iped3.IHashValue;
-import iped3.IItem;
-import iped3.configuration.Configurable;
+import iped.IHashValue;
+import iped.IItem;
+import iped.configuration.Configurable;
 
 /**
  * Tarefa de verificação de arquivos duplicados. Ignora o arquivo caso

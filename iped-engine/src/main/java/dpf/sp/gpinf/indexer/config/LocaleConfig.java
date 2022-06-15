@@ -52,7 +52,7 @@ public class LocaleConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.trim().isEmpty())
             locale = Locale.forLanguageTag(value.trim());
 
-        System.setProperty(iped3.util.Messages.LOCALE_SYS_PROP, locale.toLanguageTag()); // $NON-NLS-1$
+        System.setProperty(iped.util.Messages.LOCALE_SYS_PROP, locale.toLanguageTag()); // $NON-NLS-1$
     }
 
     public Locale getLocale() {

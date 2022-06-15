@@ -16,8 +16,8 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import gpinf.similarity.ImageSimilarity;
-import iped3.IItem;
-import iped3.configuration.Configurable;
+import iped.IItem;
+import iped.configuration.Configurable;
 
 /**
  * Image Similarity task.

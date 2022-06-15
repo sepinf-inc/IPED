@@ -82,12 +82,12 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
-import iped3.ICaseData;
-import iped3.IItem;
-import iped3.exception.IPEDException;
-import iped3.search.IItemSearcher;
-import iped3.search.SearchResult;
-import iped3.util.BasicProps;
+import iped.ICaseData;
+import iped.IItem;
+import iped.exception.IPEDException;
+import iped.search.IItemSearcher;
+import iped.search.SearchResult;
+import iped.util.BasicProps;
 
 /**
  * Classe responsável pela preparação do processamento, inicialização do
@@ -818,8 +818,8 @@ public class Manager {
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, iped3.util.Messages.BUNDLES_FOLDER),
-                    new File(output, iped3.util.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, iped.util.Messages.BUNDLES_FOLDER),
+                    new File(output, iped.util.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
 
             if (!analysisConfig.isEmbedLibreOffice()) {
                 new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$

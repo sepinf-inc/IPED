@@ -10,7 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import iped3.io.IStreamSource;
+import iped.io.IStreamSource;
 
 public class MultiViewer extends AbstractViewer {
 

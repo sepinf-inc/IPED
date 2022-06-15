@@ -37,9 +37,9 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IIPEDSource;
-import iped3.search.IBookmarks;
-import iped3.search.SearchResult;
+import iped.IIPEDSource;
+import iped.search.IBookmarks;
+import iped.search.SearchResult;
 
 public class Bookmarks implements Serializable, IBookmarks {
 

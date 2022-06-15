@@ -41,11 +41,11 @@ import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IHashValue;
-import iped3.IItem;
-import iped3.datasource.IDataSource;
-import iped3.io.ISeekableInputStreamFactory;
-import iped3.io.SeekableInputStream;
+import iped.IHashValue;
+import iped.IItem;
+import iped.datasource.IDataSource;
+import iped.io.ISeekableInputStreamFactory;
+import iped.io.SeekableInputStream;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso,
@@ -956,7 +956,7 @@ public class Item implements IItem {
         this.parentId = parentId;
     }
 
-    public void setParent(iped3.IItem parent) {
+    public void setParent(iped.IItem parent) {
         int parentId = parent.getId();
         this.setParentId(parentId);
         this.addParentIds(parent.getParentIds());

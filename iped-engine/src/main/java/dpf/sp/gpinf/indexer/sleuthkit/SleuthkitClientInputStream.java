@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitServer.FLAGS;
-import iped3.io.SeekableInputStream;
+import iped.io.SeekableInputStream;
 
 public class SleuthkitClientInputStream extends SeekableInputStream {
 

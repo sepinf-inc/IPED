@@ -42,7 +42,7 @@ public class LocalizedFormat {
     }
 
     private static final Locale getLocale() {
-        String localeStr = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP);
+        String localeStr = System.getProperty(iped.util.Messages.LOCALE_SYS_PROP);
         Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
         return locale;
     }

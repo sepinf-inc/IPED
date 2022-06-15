@@ -37,9 +37,9 @@ import dpf.sp.gpinf.indexer.desktop.themes.Theme;
 import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
-import iped3.IItem;
-import iped3.util.ExtraProperties;
-import iped3.util.MediaTypes;
+import iped.IItem;
+import iped.util.ExtraProperties;
+import iped.util.MediaTypes;
 
 public class MenuClass extends JPopupMenu {
 

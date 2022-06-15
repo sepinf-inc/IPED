@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import iped3.configuration.Configurable;
-import iped3.configuration.IConfigurationDirectory;
+import iped.configuration.Configurable;
+import iped.configuration.IConfigurationDirectory;
 
 public class ConfigurationDirectory implements IConfigurationDirectory {
 

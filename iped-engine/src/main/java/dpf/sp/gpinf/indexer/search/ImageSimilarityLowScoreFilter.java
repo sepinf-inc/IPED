@@ -3,8 +3,8 @@ package dpf.sp.gpinf.indexer.search;
 import java.util.ArrayList;
 import java.util.List;
 
-import iped3.IItemId;
-import iped3.search.IMultiSearchResult;
+import iped.IItemId;
+import iped.search.IMultiSearchResult;
 
 public class ImageSimilarityLowScoreFilter {
 

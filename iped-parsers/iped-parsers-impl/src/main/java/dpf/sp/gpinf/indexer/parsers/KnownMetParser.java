@@ -50,10 +50,10 @@ import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import gpinf.emule.KnownMetEntry;
-import iped3.IItemBase;
-import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.IItemBase;
+import iped.search.IItemSearcher;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 
 /**
  * Parser para arquivos known.met do e-Mule, que armazena arquivos conhecidos,

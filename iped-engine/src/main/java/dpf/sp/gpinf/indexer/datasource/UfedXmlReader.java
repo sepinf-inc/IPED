@@ -81,11 +81,11 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
-import iped3.ICaseData;
-import iped3.IItem;
-import iped3.datasource.IDataSource;
-import iped3.util.ExtraProperties;
-import iped3.util.MediaTypes;
+import iped.ICaseData;
+import iped.IItem;
+import iped.datasource.IDataSource;
+import iped.util.ExtraProperties;
+import iped.util.MediaTypes;
 
 public class UfedXmlReader extends DataSourceReader {
 

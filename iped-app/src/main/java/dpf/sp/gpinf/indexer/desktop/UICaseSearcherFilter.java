@@ -47,11 +47,11 @@ import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.search.SimilarImagesSearch;
 import dpf.sp.gpinf.indexer.search.TimelineResults;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
-import iped3.IItemId;
+import iped.IItemId;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
-import iped3.exception.ParseException;
-import iped3.exception.QueryNodeException;
 
 public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Object> {
 

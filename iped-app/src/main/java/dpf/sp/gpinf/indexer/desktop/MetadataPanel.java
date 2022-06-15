@@ -69,12 +69,12 @@ import dpf.sp.gpinf.indexer.ui.controls.HoverButton;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.StringUtil;
-import iped3.IItemId;
-import iped3.exception.ParseException;
-import iped3.exception.QueryNodeException;
-import iped3.search.IMultiSearchResult;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.IItemId;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
+import iped.search.IMultiSearchResult;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 
 public class MetadataPanel extends JPanel
         implements ActionListener, ListSelectionListener, ClearFilterListener, ChangeListener {

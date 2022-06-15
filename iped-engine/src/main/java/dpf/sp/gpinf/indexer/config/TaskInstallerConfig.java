@@ -26,8 +26,8 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.PythonTask;
 import dpf.sp.gpinf.indexer.process.task.ScriptTask;
-import iped3.configuration.Configurable;
-import iped3.exception.IPEDException;
+import iped.configuration.Configurable;
+import iped.exception.IPEDException;
 
 public class TaskInstallerConfig implements Configurable<List<String>> {
 

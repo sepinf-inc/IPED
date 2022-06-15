@@ -110,8 +110,8 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.UiUtil;
-import iped3.io.IStreamSource;
-import iped3.io.SeekableInputStream;
+import iped.io.IStreamSource;
+import iped.io.SeekableInputStream;
 
 /**
  *

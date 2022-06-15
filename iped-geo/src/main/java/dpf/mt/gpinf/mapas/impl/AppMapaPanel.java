@@ -22,10 +22,10 @@ import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.util.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import iped3.IItemId;
+import iped.IItemId;
+import iped.search.IMultiSearchResultProvider;
+import iped.util.BasicProps;
 import iped3.desktop.GUIProvider;
-import iped3.search.IMultiSearchResultProvider;
-import iped3.util.BasicProps;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas

@@ -1,7 +1,7 @@
 package dpf.sp.gpinf.indexer.util;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import iped3.IItem;
+import iped.IItem;
 
 public class ItemInfoFactory {
 

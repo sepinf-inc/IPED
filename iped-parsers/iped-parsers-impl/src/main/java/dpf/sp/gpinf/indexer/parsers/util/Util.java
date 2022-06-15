@@ -28,8 +28,8 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.IItemBase;
-import iped3.search.IItemSearcher;
+import iped.IItemBase;
+import iped.search.IItemSearcher;
 
 public class Util {
 

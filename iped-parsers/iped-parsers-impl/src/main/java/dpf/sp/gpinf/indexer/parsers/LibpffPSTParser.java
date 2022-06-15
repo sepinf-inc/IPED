@@ -45,7 +45,7 @@ import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.util.ExtraProperties;
+import iped.util.ExtraProperties;
 
 public class LibpffPSTParser extends AbstractParser {
 

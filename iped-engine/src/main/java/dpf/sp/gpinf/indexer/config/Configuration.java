@@ -36,8 +36,8 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.DefaultPolicy;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.configuration.Configurable;
-import iped3.configuration.IConfigurationDirectory;
+import iped.configuration.Configurable;
+import iped.configuration.IConfigurationDirectory;
 
 /**
  * Classe principal de carregamento e acesso às configurações da aplicação.

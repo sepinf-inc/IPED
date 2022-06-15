@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import br.dpf.sepinf.photodna.api.PhotoDNA;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PhotoDNAConfig;
-import iped3.IItem;
-import iped3.configuration.Configurable;
+import iped.IItem;
+import iped.configuration.Configurable;
 
 public class PhotoDNATask extends AbstractTask {
 

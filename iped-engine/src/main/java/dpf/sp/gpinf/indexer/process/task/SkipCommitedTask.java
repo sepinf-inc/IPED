@@ -30,10 +30,10 @@ import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IItem;
-import iped3.configuration.Configurable;
-import iped3.exception.IPEDException;
-import iped3.util.BasicProps;
+import iped.IItem;
+import iped.configuration.Configurable;
+import iped.exception.IPEDException;
+import iped.util.BasicProps;
 
 /**
  * Task to ignore already commited files into index. Commited containers without

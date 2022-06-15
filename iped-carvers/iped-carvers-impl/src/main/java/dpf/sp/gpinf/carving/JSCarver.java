@@ -15,7 +15,7 @@ import javax.script.ScriptException;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
-import iped3.IItem;
+import iped.IItem;
 
 public class JSCarver extends DefaultCarver {
     ScriptEngine engine;

@@ -14,10 +14,10 @@ import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
-import iped3.IItem;
-import iped3.io.IStreamSource;
-import iped3.util.ExtraProperties;
-import iped3.util.MediaTypes;
+import iped.IItem;
+import iped.io.IStreamSource;
+import iped.util.ExtraProperties;
+import iped.util.MediaTypes;
 
 public class ReferencedFileViewer extends AbstractViewer {
 

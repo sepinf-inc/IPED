@@ -22,13 +22,13 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import iped3.IHashValue;
-import iped3.IItem;
-import iped3.IItemBase;
-import iped3.datasource.IDataSource;
-import iped3.io.ISeekableInputStreamFactory;
-import iped3.io.SeekableInputStream;
-import iped3.search.IItemSearcher;
+import iped.IHashValue;
+import iped.IItem;
+import iped.IItemBase;
+import iped.datasource.IDataSource;
+import iped.io.ISeekableInputStreamFactory;
+import iped.io.SeekableInputStream;
+import iped.search.IItemSearcher;
 import junit.framework.TestCase;
 
 public abstract class BaseItemSearchContext extends TestCase {

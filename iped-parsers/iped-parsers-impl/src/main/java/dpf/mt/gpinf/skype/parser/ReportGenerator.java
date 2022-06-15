@@ -18,9 +18,9 @@ import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.IItemBase;
-import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
+import iped.IItemBase;
+import iped.search.IItemSearcher;
+import iped.util.BasicProps;
 
 /**
  * Classe responsável por gerar a representação HTML dos registros encontrados

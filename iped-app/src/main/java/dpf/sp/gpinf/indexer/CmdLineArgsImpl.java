@@ -23,8 +23,8 @@ import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.ICaseData;
-import iped3.exception.IPEDException;
+import iped.ICaseData;
+import iped.exception.IPEDException;
 
 /**
  * Classe para leitura dos parâmetros informados via linha de comando.

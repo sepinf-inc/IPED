@@ -56,12 +56,12 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIODataRef;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IItem;
-import iped3.configuration.Configurable;
-import iped3.exception.IPEDException;
-import iped3.io.ISeekableInputStreamFactory;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.IItem;
+import iped.configuration.Configurable;
+import iped.exception.IPEDException;
+import iped.io.ISeekableInputStreamFactory;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 
 public class ElasticSearchIndexTask extends AbstractTask {
 

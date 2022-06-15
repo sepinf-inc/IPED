@@ -27,9 +27,9 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import gpinf.dev.data.Item;
-import iped3.IItem;
-import iped3.configuration.Configurable;
-import iped3.exception.IPEDException;
+import iped.IItem;
+import iped.configuration.Configurable;
+import iped.exception.IPEDException;
 
 public class NamedEntityTask extends AbstractTask {
 

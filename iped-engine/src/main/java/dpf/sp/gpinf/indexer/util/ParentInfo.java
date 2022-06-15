@@ -2,8 +2,8 @@ package dpf.sp.gpinf.indexer.util;
 
 import java.util.List;
 
-import iped3.IItem;
-import iped3.datasource.IDataSource;
+import iped.IItem;
+import iped.datasource.IDataSource;
 
 public class ParentInfo {
 

@@ -2,8 +2,8 @@ package dpf.sp.gpinf.indexer.ui.fileViewer.util;
 
 import java.io.File;
 
-import iped3.IItem;
-import iped3.IItemId;
+import iped.IItem;
+import iped.IItemId;
 
 public interface AttachmentSearcher {
 

@@ -18,10 +18,10 @@ import dpf.sp.gpinf.indexer.search.ItemId;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import iped3.IItemId;
-import iped3.search.IIPEDSearcher;
-import iped3.search.IMultiBookmarks;
-import iped3.search.IMultiSearchResult;
+import iped.IItemId;
+import iped.search.IIPEDSearcher;
+import iped.search.IMultiBookmarks;
+import iped.search.IMultiSearchResult;
 
 @Api(value = "Selection")
 @Path("selection")

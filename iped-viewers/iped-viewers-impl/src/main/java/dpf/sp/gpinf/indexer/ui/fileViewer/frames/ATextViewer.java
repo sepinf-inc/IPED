@@ -26,7 +26,7 @@ import dpf.sp.gpinf.indexer.ITextParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
-import iped3.io.IStreamSource;
+import iped.io.IStreamSource;
 
 public abstract class ATextViewer extends AbstractViewer implements KeyListener {
 

@@ -2,7 +2,7 @@ package dpf.sp.gpinf.carver.api;
 
 import java.io.IOException;
 
-import iped3.IItem;
+import iped.IItem;
 
 public interface Carver {
 

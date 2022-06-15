@@ -6,8 +6,8 @@ import javax.swing.JTable;
 
 import dpf.mt.gpinf.indexer.search.kml.GetResultsKMLWorker;
 import dpf.mt.gpinf.mapas.MarkerEventListener;
-import iped3.IItemId;
-import iped3.search.IMultiSearchResult;
+import iped.IItemId;
+import iped.search.IMultiSearchResult;
 
 public class AppMapMarkerEventListener implements MarkerEventListener {
     AppMapaPanel mapaPanel;

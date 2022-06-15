@@ -30,7 +30,7 @@ import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitServer.FLAGS;
-import iped3.io.SeekableInputStream;
+import iped.io.SeekableInputStream;
 
 public class SleuthkitClient implements Comparable<SleuthkitClient> {
 

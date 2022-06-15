@@ -46,9 +46,9 @@ import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import gpinf.ares.AresEntry;
-import iped3.IItemBase;
-import iped3.search.IItemSearcher;
-import iped3.util.ExtraProperties;
+import iped.IItemBase;
+import iped.search.IItemSearcher;
+import iped.util.ExtraProperties;
 
 /**
  * Parser para arquivos ShareL.dat e ShareL.dat do Ares Galaxy.

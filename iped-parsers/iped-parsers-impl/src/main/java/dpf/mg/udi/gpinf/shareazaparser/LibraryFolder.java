@@ -26,7 +26,7 @@ import java.util.Map;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.SAXException;
 
-import iped3.search.IItemSearcher;
+import iped.search.IItemSearcher;
 
 /**
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>

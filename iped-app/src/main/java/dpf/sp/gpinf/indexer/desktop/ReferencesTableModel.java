@@ -39,9 +39,9 @@ import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import iped3.IItem;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.IItem;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 
 public class ReferencesTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {

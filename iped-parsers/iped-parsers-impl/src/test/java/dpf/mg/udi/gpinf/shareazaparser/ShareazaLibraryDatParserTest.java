@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped3.util.ExtraProperties;
+import iped.util.ExtraProperties;
 import junit.framework.TestCase;
 
 public class ShareazaLibraryDatParserTest extends TestCase {

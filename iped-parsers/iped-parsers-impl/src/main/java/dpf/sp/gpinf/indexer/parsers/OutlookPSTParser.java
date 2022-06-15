@@ -75,7 +75,7 @@ import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.util.ExtraProperties;
+import iped.util.ExtraProperties;
 
 /**
  * Parser para arquivos PST. Extrai emails, anexos, contatos, tarefas, etc. O

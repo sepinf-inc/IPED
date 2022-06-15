@@ -53,7 +53,7 @@ import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IItemId;
+import iped.IItemId;
 
 public class GalleryModel extends AbstractTableModel {
 

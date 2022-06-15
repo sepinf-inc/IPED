@@ -16,7 +16,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import iped3.util.ExtraProperties;
+import iped.util.ExtraProperties;
 
 public class EmbeddedDocumentParser implements EmbeddedDocumentExtractor, Serializable {
 

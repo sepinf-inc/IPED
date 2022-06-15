@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 
-import iped3.io.SeekableInputStream;
+import iped.io.SeekableInputStream;
 
 public class SeekableByteChannelImpl implements SeekableByteChannel {
 

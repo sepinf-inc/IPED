@@ -8,8 +8,8 @@ import java.util.Collections;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import iped3.IItem;
-import iped3.configuration.Configurable;
+import iped.IItem;
+import iped.configuration.Configurable;
 
 public class DatabaseTask extends AbstractTask {
 

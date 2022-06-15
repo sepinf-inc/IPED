@@ -2,10 +2,11 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
-import java.nio.file.Path;
 
-import iped3.configuration.Configurable;
-import iped3.configuration.EnabledInterface;
+import iped.configuration.Configurable;
+import iped.configuration.EnabledInterface;
+
+import java.nio.file.Path;
 
 public abstract class AbstractTaskConfig<T> implements Configurable<T>, EnabledInterface {
     

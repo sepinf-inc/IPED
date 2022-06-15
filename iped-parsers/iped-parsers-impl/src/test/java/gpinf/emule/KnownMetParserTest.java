@@ -13,7 +13,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.parsers.util.BaseItemSearchContext;
-import iped3.util.ExtraProperties;
+import iped.util.ExtraProperties;
 
 public class KnownMetParserTest extends BaseItemSearchContext {
 

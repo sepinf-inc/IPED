@@ -11,8 +11,8 @@ import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carving.AbstractCarver;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.IItem;
-import iped3.io.SeekableInputStream;
+import iped.IItem;
+import iped.io.SeekableInputStream;
 
 public class MOVCarver extends AbstractCarver {
 

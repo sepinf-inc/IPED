@@ -72,16 +72,16 @@ import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
-import iped3.ICaseData;
-import iped3.IIPEDSource;
-import iped3.datasource.IDataSource;
-import iped3.search.IBookmarks;
-import iped3.search.IIPEDSearcher;
-import iped3.search.IMultiBookmarks;
-import iped3.search.SearchResult;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
-import iped3.util.MediaTypes;
+import iped.ICaseData;
+import iped.IIPEDSource;
+import iped.datasource.IDataSource;
+import iped.search.IBookmarks;
+import iped.search.IIPEDSearcher;
+import iped.search.IMultiBookmarks;
+import iped.search.SearchResult;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
+import iped.util.MediaTypes;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.

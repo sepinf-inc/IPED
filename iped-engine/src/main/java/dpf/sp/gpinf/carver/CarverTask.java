@@ -27,9 +27,9 @@ import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.Item;
-import iped3.IItem;
-import iped3.configuration.Configurable;
-import iped3.util.MediaTypes;
+import iped.IItem;
+import iped.configuration.Configurable;
+import iped.util.MediaTypes;
 
 /**
  * Classe responsável pelo Data Carving. Utiliza o algoritmo aho-corasick, o

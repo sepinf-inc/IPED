@@ -43,8 +43,8 @@ import javax.swing.JOptionPane;
 
 import org.slf4j.LoggerFactory;
 
-import iped3.IItem;
-import iped3.IItemBase;
+import iped.IItem;
+import iped.IItemBase;
 
 public class IOUtil {
 

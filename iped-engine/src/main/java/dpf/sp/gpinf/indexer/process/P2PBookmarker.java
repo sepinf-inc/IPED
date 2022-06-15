@@ -22,9 +22,9 @@ import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import iped3.ICaseData;
-import iped3.search.SearchResult;
-import iped3.util.ExtraProperties;
+import iped.ICaseData;
+import iped.search.SearchResult;
+import iped.util.ExtraProperties;
 
 public class P2PBookmarker {
 

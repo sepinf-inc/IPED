@@ -20,10 +20,10 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.lucene.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.lucene.analysis.AppAnalyzer;
-import iped3.IIPEDSource;
-import iped3.IItem;
-import iped3.IItemId;
-import iped3.exception.IPEDException;
+import iped.IIPEDSource;
+import iped.IItem;
+import iped.IItemId;
+import iped.exception.IPEDException;
 
 public class IPEDMultiSource extends IPEDSource {
 

@@ -2,9 +2,9 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.util.Iterator;
 
-import iped3.IIPEDSource;
-import iped3.IItemId;
-import iped3.search.IMultiSearchResult;
+import iped.IIPEDSource;
+import iped.IItemId;
+import iped.search.IMultiSearchResult;
 
 public class MultiSearchResult implements IMultiSearchResult {
 

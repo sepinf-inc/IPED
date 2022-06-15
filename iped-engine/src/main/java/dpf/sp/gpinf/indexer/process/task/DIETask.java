@@ -30,9 +30,9 @@ import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
-import iped3.IItem;
-import iped3.configuration.Configurable;
-import iped3.exception.IPEDException;
+import iped.IItem;
+import iped.configuration.Configurable;
+import iped.exception.IPEDException;
 
 /**
  * Explicit Image Detection (DIE) Task .

@@ -30,7 +30,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.IStreamSource;
+import iped.io.IStreamSource;
 
 /**
  * Runs a list of parsers sequentially on a file.

@@ -20,7 +20,7 @@ import org.vosk.Recognizer;
 
 import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import iped3.exception.IPEDException;
+import iped.exception.IPEDException;
 
 public class VoskTranscriptTask extends AbstractTranscriptTask {
 

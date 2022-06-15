@@ -25,8 +25,8 @@ import dpf.mt.gpinf.registry.model.KeyNode;
 import dpf.mt.gpinf.registry.model.KeyValue;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 
 public class HtmlKeyParser implements RegistryKeyParser {
 

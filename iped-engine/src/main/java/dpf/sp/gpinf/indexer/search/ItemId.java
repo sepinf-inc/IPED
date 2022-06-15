@@ -1,6 +1,6 @@
 package dpf.sp.gpinf.indexer.search;
 
-import iped3.IItemId;
+import iped.IItemId;
 
 public class ItemId implements IItemId {
 

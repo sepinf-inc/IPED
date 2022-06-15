@@ -38,9 +38,9 @@ import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IItemId;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.IItemId;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 
 public class RowComparator implements Comparator<Integer> {
 

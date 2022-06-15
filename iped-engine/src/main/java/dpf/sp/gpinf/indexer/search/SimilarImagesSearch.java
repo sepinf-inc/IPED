@@ -6,7 +6,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
-import iped3.IItem;
+import iped.IItem;
 
 public class SimilarImagesSearch {
     /**

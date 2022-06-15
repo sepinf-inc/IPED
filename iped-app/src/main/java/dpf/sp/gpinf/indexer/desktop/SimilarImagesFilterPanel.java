@@ -15,7 +15,7 @@ import java.io.ByteArrayInputStream;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
-import iped3.IItem;
+import iped.IItem;
 
 public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListener {
     private static final long serialVersionUID = -6323740427378842045L;

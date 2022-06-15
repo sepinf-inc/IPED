@@ -2,7 +2,7 @@ package dpf.mg.udi.gpinf.whatsappextractor;
 
 import java.util.List;
 
-import iped3.IItemBase;
+import iped.IItemBase;
 
 public class WhatsAppContext {
 

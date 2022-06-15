@@ -17,7 +17,7 @@ import java.nio.file.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped3.IItem;
+import iped.IItem;
 
 public class TextCache implements Closeable {
 

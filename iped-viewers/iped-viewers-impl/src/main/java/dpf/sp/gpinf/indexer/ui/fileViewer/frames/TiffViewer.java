@@ -29,7 +29,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import iped3.io.IStreamSource;
+import iped.io.IStreamSource;
 
 public class TiffViewer extends ImageViewer {
     private final JTextField textCurrentPage = new JTextField(2);

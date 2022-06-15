@@ -29,7 +29,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import iped3.IItemId;
+import iped.IItemId;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 

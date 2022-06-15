@@ -48,12 +48,12 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IIPEDSource;
-import iped3.IItem;
+import iped.IIPEDSource;
+import iped.IItem;
+import iped.search.IIPEDSearcher;
+import iped.search.IMultiSearchResult;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
-import iped3.search.IIPEDSearcher;
-import iped3.search.IMultiSearchResult;
 
 public class ExportFileTree extends CancelableWorker {
 

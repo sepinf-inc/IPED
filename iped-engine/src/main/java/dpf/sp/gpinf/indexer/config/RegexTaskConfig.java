@@ -14,7 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.exception.IPEDException;
+import iped.exception.IPEDException;
 
 public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<dpf.sp.gpinf.indexer.config.RegexTaskConfig.RegexEntry>>> implements Externalizable {
 

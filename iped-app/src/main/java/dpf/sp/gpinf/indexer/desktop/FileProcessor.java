@@ -45,9 +45,9 @@ import dpf.sp.gpinf.indexer.sleuthkit.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
 import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import gpinf.dev.data.DataSource;
-import iped3.IItem;
+import iped.IItem;
+import iped.io.ISeekableInputStreamFactory;
 import iped3.desktop.CancelableWorker;
-import iped3.io.ISeekableInputStreamFactory;
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
     private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
@@ -94,7 +94,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             doc.add(new StoredField(IndexItem.NAME, "Help")); //$NON-NLS-1$
             doc.add(new StoredField(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString()));
 
-            String locale = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP);
+            String locale = System.getProperty(iped.util.Messages.LOCALE_SYS_PROP);
             String helpPath = IPEDSource.MODULE_DIR + "/help/Help_" + locale + ".htm"; // $NON-NLS-1$ // $NON-NLS-2$
             if (!new File(caseDir, helpPath).exists()) {
                 helpPath = IPEDSource.MODULE_DIR + "/help/Help.htm"; // $NON-NLS-1$

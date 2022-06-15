@@ -9,9 +9,9 @@ import java.util.List;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 
-import iped3.IItemBase;
-import iped3.search.IItemSearcher;
-import iped3.search.SearchResult;
+import iped.IItemBase;
+import iped.search.IItemSearcher;
+import iped.search.SearchResult;
 
 public class ItemSearcher implements IItemSearcher {
 

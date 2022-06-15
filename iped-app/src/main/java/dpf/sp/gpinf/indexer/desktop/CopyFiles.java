@@ -36,8 +36,8 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IItem;
-import iped3.IItemId;
+import iped.IItem;
+import iped.IItemId;
 
 public class CopyFiles extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 

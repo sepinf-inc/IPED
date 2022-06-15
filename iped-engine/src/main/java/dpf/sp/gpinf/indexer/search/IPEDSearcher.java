@@ -33,10 +33,10 @@ import org.apache.lucene.search.TermQuery;
 
 import dpf.sp.gpinf.indexer.lucene.NoScoringCollector;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import iped3.exception.ParseException;
-import iped3.exception.QueryNodeException;
-import iped3.search.IIPEDSearcher;
-import iped3.search.SearchResult;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
+import iped.search.IIPEDSearcher;
+import iped.search.SearchResult;
 
 public class IPEDSearcher implements IIPEDSearcher {
 

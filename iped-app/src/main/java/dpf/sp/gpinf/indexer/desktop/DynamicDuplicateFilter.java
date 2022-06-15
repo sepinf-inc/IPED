@@ -12,8 +12,8 @@ import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import iped3.IItemId;
-import iped3.search.IMultiSearchResult;
+import iped.IItemId;
+import iped.search.IMultiSearchResult;
 
 public class DynamicDuplicateFilter {
 

@@ -42,9 +42,9 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
-import iped3.IItem;
-import iped3.IItemId;
-import iped3.util.BasicProps;
+import iped.IItem;
+import iped.IItemId;
+import iped.util.BasicProps;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 

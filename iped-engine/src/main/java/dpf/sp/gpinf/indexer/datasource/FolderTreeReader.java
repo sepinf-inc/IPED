@@ -36,9 +36,9 @@ import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
-import iped3.ICaseData;
-import iped3.IItem;
-import iped3.util.ExtraProperties;
+import iped.ICaseData;
+import iped.IItem;
+import iped.util.ExtraProperties;
 
 public class FolderTreeReader extends DataSourceReader {
 

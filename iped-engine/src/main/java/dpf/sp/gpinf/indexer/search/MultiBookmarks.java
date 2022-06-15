@@ -18,12 +18,12 @@ import javax.swing.KeyStroke;
 import org.apache.commons.lang.ArrayUtils;
 
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IIPEDSource;
-import iped3.IItemId;
-import iped3.search.IBookmarks;
-import iped3.search.IMultiBookmarks;
-import iped3.search.IMultiSearchResult;
-import iped3.search.SelectionListener;
+import iped.IIPEDSource;
+import iped.IItemId;
+import iped.search.IBookmarks;
+import iped.search.IMultiBookmarks;
+import iped.search.IMultiSearchResult;
+import iped.search.SelectionListener;
 
 public class MultiBookmarks implements Serializable, IMultiBookmarks {
 

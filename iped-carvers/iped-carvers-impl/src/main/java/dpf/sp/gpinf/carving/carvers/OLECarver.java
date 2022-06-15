@@ -7,8 +7,8 @@ import org.apache.commons.codec.DecoderException;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carving.AbstractCarver;
-import iped3.IItem;
-import iped3.io.SeekableInputStream;
+import iped.IItem;
+import iped.io.SeekableInputStream;
 
 public class OLECarver extends AbstractCarver {
 

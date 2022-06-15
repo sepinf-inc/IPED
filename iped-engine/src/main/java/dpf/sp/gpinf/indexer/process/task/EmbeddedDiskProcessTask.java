@@ -23,12 +23,12 @@ import dpf.sp.gpinf.indexer.search.ItemSearcher;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.Item;
-import iped3.IItem;
-import iped3.IItemBase;
-import iped3.configuration.Configurable;
-import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
-import iped3.util.MediaTypes;
+import iped.IItem;
+import iped.IItemBase;
+import iped.configuration.Configurable;
+import iped.search.IItemSearcher;
+import iped.util.BasicProps;
+import iped.util.MediaTypes;
 
 public class EmbeddedDiskProcessTask extends AbstractTask {
 

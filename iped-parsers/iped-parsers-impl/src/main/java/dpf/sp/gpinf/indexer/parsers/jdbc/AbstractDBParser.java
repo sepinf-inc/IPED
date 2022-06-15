@@ -39,7 +39,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import iped3.util.ExtraProperties;
+import iped.util.ExtraProperties;
 
 /**
  * Abstract class that handles iterating through tables within a database.

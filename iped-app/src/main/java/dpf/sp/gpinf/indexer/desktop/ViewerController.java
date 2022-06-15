@@ -48,7 +48,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TiffViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TikaHtmlViewer;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
-import iped3.io.IStreamSource;
+import iped.io.IStreamSource;
 
 /**
  * Central controller for all viewers. To add a new viewer it should be added in

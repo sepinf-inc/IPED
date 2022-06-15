@@ -19,9 +19,9 @@ public class Messages {
 
     public static String get(String key) {
         if (RESOURCE_BUNDLE == null) {
-            String localeStr = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+            String localeStr = System.getProperty(iped.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
             Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
-            RESOURCE_BUNDLE = iped3.util.Messages.getExternalBundle(BUNDLE_NAME, locale);
+            RESOURCE_BUNDLE = iped.util.Messages.getExternalBundle(BUNDLE_NAME, locale);
         }
         try {
             return RESOURCE_BUNDLE.getString(key);
@@ -34,9 +34,9 @@ public class Messages {
 
     public static List<String> getKeys(String prefix) {
         if (RESOURCE_BUNDLE == null) {
-            String localeStr = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+            String localeStr = System.getProperty(iped.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
             Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
-            RESOURCE_BUNDLE = iped3.util.Messages.getExternalBundle(BUNDLE_NAME, locale);
+            RESOURCE_BUNDLE = iped.util.Messages.getExternalBundle(BUNDLE_NAME, locale);
         }
         try {
             List<String> ret = new ArrayList<String>();

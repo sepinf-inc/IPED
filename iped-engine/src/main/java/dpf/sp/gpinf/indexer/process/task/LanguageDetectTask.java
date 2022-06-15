@@ -21,8 +21,8 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import gpinf.dev.data.Item;
-import iped3.IItem;
-import iped3.configuration.Configurable;
+import iped.IItem;
+import iped.configuration.Configurable;
 
 public class LanguageDetectTask extends AbstractTask {
 

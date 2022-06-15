@@ -75,12 +75,12 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.IItem;
-import iped3.IItemBase;
-import iped3.io.SeekableInputStream;
-import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.IItem;
+import iped.IItemBase;
+import iped.io.SeekableInputStream;
+import iped.search.IItemSearcher;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 
 /**
  * Parser para banco de dados do WhatsApp

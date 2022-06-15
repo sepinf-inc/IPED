@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import iped3.configuration.Configurable;
-import iped3.configuration.IConfigurationDirectory;
-import iped3.configuration.ObjectManager;
+import iped.configuration.Configurable;
+import iped.configuration.IConfigurationDirectory;
+import iped.configuration.ObjectManager;
 
 public class ConfigurationManager implements ObjectManager<Configurable<?>> {
 

@@ -16,10 +16,10 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import iped3.IItemId;
-import iped3.search.IIPEDSearcher;
-import iped3.search.IMultiSearchResult;
-import iped3.search.SearchResult;
+import iped.IItemId;
+import iped.search.IIPEDSearcher;
+import iped.search.IMultiSearchResult;
+import iped.search.SearchResult;
 
 @Api(value = "Search")
 @Path("search")

@@ -62,9 +62,9 @@ import com.sun.jna.Native;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
-import iped3.IItem;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.IItem;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 
 public class Util {
 

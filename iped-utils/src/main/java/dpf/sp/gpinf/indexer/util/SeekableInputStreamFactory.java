@@ -3,8 +3,8 @@ package dpf.sp.gpinf.indexer.util;
 import java.io.IOException;
 import java.net.URI;
 
-import iped3.io.ISeekableInputStreamFactory;
-import iped3.io.SeekableInputStream;
+import iped.io.ISeekableInputStreamFactory;
+import iped.io.SeekableInputStream;
 
 public abstract class SeekableInputStreamFactory implements ISeekableInputStreamFactory {
 

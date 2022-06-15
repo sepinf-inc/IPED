@@ -24,8 +24,8 @@ import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import iped3.IIPEDSource;
-import iped3.IItem;
+import iped.IIPEDSource;
+import iped.IItem;
 
 @Api(value = "Documents")
 @Path("/sources/{sourceID}/docs/{id}/text")

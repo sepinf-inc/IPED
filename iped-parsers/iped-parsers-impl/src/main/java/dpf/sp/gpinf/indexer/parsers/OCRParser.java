@@ -68,7 +68,7 @@ import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import iped3.util.MediaTypes;
+import iped.util.MediaTypes;
 
 /**
  * Parser OCR para imagens e PDFs via Tesseract. No caso de PDFs, é gerada uma

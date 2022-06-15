@@ -5,7 +5,7 @@ import java.util.Set;
 import javax.swing.JLabel;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import iped3.io.IStreamSource;
+import iped.io.IStreamSource;
 
 public class NoJavaFXViewer extends AbstractViewer {
 

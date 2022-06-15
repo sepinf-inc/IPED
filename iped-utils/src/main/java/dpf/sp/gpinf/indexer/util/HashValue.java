@@ -3,7 +3,7 @@ package dpf.sp.gpinf.indexer.util;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
-import iped3.IHashValue;
+import iped.IHashValue;
 
 public class HashValue extends IHashValue {
 

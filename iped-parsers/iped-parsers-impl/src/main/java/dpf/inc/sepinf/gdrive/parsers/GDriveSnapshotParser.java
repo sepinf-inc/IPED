@@ -31,8 +31,8 @@ import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 
 /**
  * Parser for snapshot.db Google Drive forensic artifact

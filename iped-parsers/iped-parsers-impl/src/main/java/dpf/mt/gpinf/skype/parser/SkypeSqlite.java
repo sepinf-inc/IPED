@@ -18,9 +18,9 @@ import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import iped3.IItemBase;
-import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
+import iped.IItemBase;
+import iped.search.IItemSearcher;
+import iped.util.BasicProps;
 
 /**
  * Classe de persistência (apenas leitura) para acesso aos dados no banco de

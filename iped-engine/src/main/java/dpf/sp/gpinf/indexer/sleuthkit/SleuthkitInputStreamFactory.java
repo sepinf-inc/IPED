@@ -18,7 +18,7 @@ import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import iped3.io.SeekableInputStream;
+import iped.io.SeekableInputStream;
 
 public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
 

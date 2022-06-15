@@ -46,8 +46,8 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.io.IStreamSource;
-import iped3.util.MediaTypes;
+import iped.io.IStreamSource;
+import iped.util.MediaTypes;
 
 /**
  *

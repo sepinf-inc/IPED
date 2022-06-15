@@ -11,8 +11,8 @@ import org.apache.tika.metadata.Metadata;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import iped3.io.SeekableInputStream;
-import iped3.util.ExtraProperties;
+import iped.io.SeekableInputStream;
+import iped.util.ExtraProperties;
 
 public class MetadataInputStreamFactory extends SeekableInputStreamFactory {
 

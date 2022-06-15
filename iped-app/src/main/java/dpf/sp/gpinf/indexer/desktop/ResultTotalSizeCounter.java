@@ -8,8 +8,8 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import iped3.IItemId;
-import iped3.search.IMultiSearchResult;
+import iped.IItemId;
+import iped.search.IMultiSearchResult;
 
 public class ResultTotalSizeCounter {
 

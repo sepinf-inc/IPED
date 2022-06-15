@@ -36,7 +36,7 @@ import dpf.sp.gpinf.indexer.lucene.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IItemId;
+import iped.IItemId;
 
 public class CopyProperties extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 

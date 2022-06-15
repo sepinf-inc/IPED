@@ -11,9 +11,9 @@ import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
 import dpf.sp.gpinf.carver.api.Signature.SignatureType;
-import iped3.IItem;
-import iped3.util.ExtraProperties;
-import iped3.util.MediaTypes;
+import iped.IItem;
+import iped.util.ExtraProperties;
+import iped.util.MediaTypes;
 
 public abstract class AbstractCarver implements Carver {
     protected static String carvedNamePrefix = "Carved-";// esta propriedade não foi declarada estatica para permitir

@@ -50,8 +50,8 @@ import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
-import iped3.IItem;
-import iped3.IItemId;
+import iped.IItem;
+import iped.IItemId;
 import jep.NDArray;
 
 public class SimilarFacesFilterActions {

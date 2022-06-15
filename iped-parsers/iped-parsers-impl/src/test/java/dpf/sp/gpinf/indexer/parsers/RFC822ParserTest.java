@@ -23,7 +23,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import iped3.util.ExtraProperties;
+import iped.util.ExtraProperties;
 import junit.framework.TestCase;
 
 public class RFC822ParserTest extends TestCase {

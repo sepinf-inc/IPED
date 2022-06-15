@@ -1,6 +1,6 @@
 package dpf.sp.gpinf.indexer.desktop;
 
-import iped3.search.IMultiSearchResult;
+import iped.search.IMultiSearchResult;
 
 public interface SearchResultTableModel {
 

@@ -34,7 +34,7 @@ import org.apache.tika.parser.xml.DcXMLParser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped3.io.IStreamSource;
+import iped.io.IStreamSource;
 
 /**
  * Parser customizado para arquivos XML. Usa um parser menos restrito que o

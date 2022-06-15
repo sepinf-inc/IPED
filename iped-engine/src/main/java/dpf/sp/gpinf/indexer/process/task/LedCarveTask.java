@@ -29,9 +29,9 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.hashdb.HashDBDataSource;
 import gpinf.hashdb.LedHashDB;
 import gpinf.hashdb.LedItem;
-import iped3.IItem;
-import iped3.configuration.Configurable;
-import iped3.util.MediaTypes;
+import iped.IItem;
+import iped.configuration.Configurable;
+import iped.util.MediaTypes;
 
 public class LedCarveTask extends BaseCarveTask {
 

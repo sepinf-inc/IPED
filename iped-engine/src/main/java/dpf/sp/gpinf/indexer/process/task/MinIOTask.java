@@ -40,10 +40,10 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
-import iped3.ICaseData;
-import iped3.IItem;
-import iped3.configuration.Configurable;
-import iped3.io.SeekableInputStream;
+import iped.ICaseData;
+import iped.IItem;
+import iped.configuration.Configurable;
+import iped.io.SeekableInputStream;
 
 /**
  * Task to export files to MinIO object storage service.

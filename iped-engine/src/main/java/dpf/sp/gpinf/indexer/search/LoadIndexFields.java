@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.lucene.index.IndexReader;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import iped3.IIPEDSource;
+import iped.IIPEDSource;
 
 public class LoadIndexFields {
 

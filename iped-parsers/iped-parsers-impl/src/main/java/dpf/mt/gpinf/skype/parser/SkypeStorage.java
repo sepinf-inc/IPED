@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.sql.Connection;
 import java.util.Collection;
 
-import iped3.search.IItemSearcher;
+import iped.search.IItemSearcher;
 
 public interface SkypeStorage extends Closeable {
 

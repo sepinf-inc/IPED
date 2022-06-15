@@ -81,7 +81,7 @@ import ag.ion.noa.search.SearchDescriptor;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ProcessUtil;
-import iped3.io.IStreamSource;
+import iped.io.IStreamSource;
 
 public class LibreOfficeViewer extends AbstractViewer {
 

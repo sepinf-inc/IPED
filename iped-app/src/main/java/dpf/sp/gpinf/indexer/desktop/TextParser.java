@@ -45,10 +45,10 @@ import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
-import iped3.IItem;
+import iped.IItem;
+import iped.io.IStreamSource;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
-import iped3.io.IStreamSource;
 
 public class TextParser extends CancelableWorker implements ITextParser {
 

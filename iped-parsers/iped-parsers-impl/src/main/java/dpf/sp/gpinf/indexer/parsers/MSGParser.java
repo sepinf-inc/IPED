@@ -14,7 +14,7 @@ import org.apache.tika.parser.microsoft.OfficeParser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped3.util.ExtraProperties;
+import iped.util.ExtraProperties;
 
 public class MSGParser extends OfficeParser {
 

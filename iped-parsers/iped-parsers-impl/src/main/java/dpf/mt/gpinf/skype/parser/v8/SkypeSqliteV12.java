@@ -27,7 +27,7 @@ import dpf.mt.gpinf.skype.parser.SkypeFileTransfer;
 import dpf.mt.gpinf.skype.parser.SkypeMessage;
 import dpf.mt.gpinf.skype.parser.SkypeParserException;
 import dpf.mt.gpinf.skype.parser.SkypeStorage;
-import iped3.search.IItemSearcher;
+import iped.search.IItemSearcher;
 
 public class SkypeSqliteV12 implements SkypeStorage {
     private File mainDb;

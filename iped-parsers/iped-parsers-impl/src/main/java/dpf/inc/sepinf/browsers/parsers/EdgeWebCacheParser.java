@@ -43,8 +43,8 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.TimeConverter;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.util.BasicProps;
+import iped.util.ExtraProperties;
 
 public class EdgeWebCacheParser extends AbstractParser {
 

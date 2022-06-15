@@ -18,8 +18,8 @@ import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.ICaseData;
-import iped3.IItem;
+import iped.ICaseData;
+import iped.IItem;
 
 /**
  * Classe que define todos os dados do caso.

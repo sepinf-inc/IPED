@@ -3,8 +3,8 @@ package dpf.sp.gpinf.carving;
 import java.io.IOException;
 
 import dpf.sp.gpinf.carver.api.Hit;
-import iped3.IItem;
-import iped3.io.SeekableInputStream;
+import iped.IItem;
+import iped.io.SeekableInputStream;
 
 public class DefaultCarver extends AbstractCarver {
 

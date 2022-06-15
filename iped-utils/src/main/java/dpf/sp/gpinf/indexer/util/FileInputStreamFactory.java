@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import iped3.io.SeekableInputStream;
+import iped.io.SeekableInputStream;
 
 public class FileInputStreamFactory extends SeekableInputStreamFactory {
 

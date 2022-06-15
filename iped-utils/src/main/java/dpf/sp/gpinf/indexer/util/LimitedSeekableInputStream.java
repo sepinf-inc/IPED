@@ -20,7 +20,7 @@ package dpf.sp.gpinf.indexer.util;
 
 import java.io.IOException;
 
-import iped3.io.SeekableInputStream;
+import iped.io.SeekableInputStream;
 
 public class LimitedSeekableInputStream extends SeekableInputStream {
 

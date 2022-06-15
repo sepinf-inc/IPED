@@ -38,9 +38,9 @@ import org.apache.tika.parser.ParseContext;
 import org.sqlite.SQLiteConfig;
 
 import dpf.sp.gpinf.indexer.parsers.util.DelegatingConnection;
-import iped3.IItemBase;
-import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
+import iped.IItemBase;
+import iped.search.IItemSearcher;
+import iped.util.BasicProps;
 
 /**
  * This is the implementation of the db parser for SQLite.

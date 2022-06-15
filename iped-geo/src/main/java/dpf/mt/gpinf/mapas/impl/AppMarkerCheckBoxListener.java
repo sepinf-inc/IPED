@@ -4,8 +4,8 @@ import javax.swing.JTable;
 
 import dpf.mt.gpinf.indexer.search.kml.GetResultsKMLWorker;
 import dpf.mt.gpinf.mapas.MarkerCheckBoxListener;
-import iped3.IItemId;
-import iped3.search.IMultiSearchResult;
+import iped.IItemId;
+import iped.search.IMultiSearchResult;
 
 public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
     AppMapaPanel mapaPanel;

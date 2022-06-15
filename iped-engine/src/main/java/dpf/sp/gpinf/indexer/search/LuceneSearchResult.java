@@ -23,8 +23,8 @@ import java.util.Comparator;
 
 import org.apache.lucene.search.ScoreDoc;
 
-import iped3.IIPEDSource;
-import iped3.search.SearchResult;
+import iped.IIPEDSource;
+import iped.search.SearchResult;
 
 /**
  * Classe que armazena os resultados de uma pesquisa. Decompõe ScoreDoc[] para

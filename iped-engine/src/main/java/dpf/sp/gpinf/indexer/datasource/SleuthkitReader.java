@@ -89,11 +89,11 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
-import iped3.ICaseData;
-import iped3.IItem;
-import iped3.exception.IPEDException;
-import iped3.util.BasicProps;
-import iped3.util.MediaTypes;
+import iped.ICaseData;
+import iped.IItem;
+import iped.exception.IPEDException;
+import iped.util.BasicProps;
+import iped.util.MediaTypes;
 
 public class SleuthkitReader extends DataSourceReader {
 

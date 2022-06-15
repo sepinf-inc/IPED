@@ -34,8 +34,8 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import iped3.search.IIPEDSearcher;
-import iped3.search.IMultiSearchResult;
+import iped.search.IIPEDSearcher;
+import iped.search.IMultiSearchResult;
 
 public class DuplicatesTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {

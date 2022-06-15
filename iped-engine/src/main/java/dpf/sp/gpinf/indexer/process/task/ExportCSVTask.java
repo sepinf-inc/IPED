@@ -41,8 +41,8 @@ import dpf.sp.gpinf.indexer.lucene.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IItem;
-import iped3.configuration.Configurable;
+import iped.IItem;
+import iped.configuration.Configurable;
 
 /**
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.

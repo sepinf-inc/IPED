@@ -35,7 +35,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.util.ExtraProperties;
+import iped.util.ExtraProperties;
 
 public class EDBParser extends AbstractParser {
 
