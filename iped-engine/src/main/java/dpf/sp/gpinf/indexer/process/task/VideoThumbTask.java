@@ -57,7 +57,6 @@ import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
@@ -583,8 +582,6 @@ public class VideoThumbTask extends ThumbTask {
             ImageIO.write(img, "jpg", baos);
             ByteArrayInputStream is = new ByteArrayInputStream(baos.toByteArray());
             extractor.extractFile(is, newItem, item.getLength());
-
-            ((CaseData) worker.caseData).calctrackIDAndUpdateID(newItem);
 
             // add new item to processing queue
             worker.processNewItem(newItem);

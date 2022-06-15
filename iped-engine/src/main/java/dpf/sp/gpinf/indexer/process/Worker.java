@@ -220,6 +220,8 @@ public class Worker extends Thread {
             }
             long t = System.nanoTime() / 1000;
 
+            caseData.calctrackIDAndUpdateID(evidence);
+
             process(evidence);
 
             runningTask.addSubitemProcessingTime(System.nanoTime() / 1000 - t);

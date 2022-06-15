@@ -28,7 +28,6 @@ import org.apache.tika.mime.MediaType;
 import dpf.sp.gpinf.carver.api.CarverConfiguration;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.util.MediaTypes;
@@ -132,8 +131,6 @@ public abstract class BaseCarveTask extends AbstractTask {
             numSubitems = 0;
         }
         parentEvidence.setExtraAttribute(NUM_CARVED_AND_FRAGS, numSubitems.intValue() + 1);
-
-        ((CaseData) caseData).calctrackIDAndUpdateID(offsetFile);
 
         worker.processNewItem(offsetFile);
     }
