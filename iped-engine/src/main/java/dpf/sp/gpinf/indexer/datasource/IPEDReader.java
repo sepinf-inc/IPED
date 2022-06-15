@@ -72,15 +72,15 @@ import gpinf.dev.data.Item;
 import iped.ICaseData;
 import iped.IIPEDSource;
 import iped.datasource.IDataSource;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.search.IBookmarks;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiBookmarks;
 import iped.search.SearchResult;
-import iped.util.BasicProps;
 import iped.util.DateUtil;
-import iped.util.ExtraProperties;
 import iped.util.HashValue;
-import iped.util.MediaTypes;
 import iped.util.SeekableInputStreamFactory;
 
 /*

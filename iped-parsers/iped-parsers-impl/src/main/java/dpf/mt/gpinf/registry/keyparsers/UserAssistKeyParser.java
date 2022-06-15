@@ -26,7 +26,7 @@ import dpf.mt.gpinf.registry.model.KeyNode;
 import dpf.mt.gpinf.registry.model.KeyValue;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 
 public class UserAssistKeyParser extends HtmlKeyParser {
     static HashMap<String, String> knownFolders = new HashMap<String, String>();

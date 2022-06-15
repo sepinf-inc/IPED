@@ -16,7 +16,7 @@ import org.apache.tika.parser.video.FLVParser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 
 public class FLVParserWrapper extends AbstractParser {
 

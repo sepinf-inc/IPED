@@ -70,7 +70,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped.io.IStreamSource;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 
 /**
  * Parser for various packaging formats. Package entries will be written to the

@@ -25,10 +25,10 @@ import gpinf.dev.data.Item;
 import iped.IItem;
 import iped.IItemBase;
 import iped.configuration.Configurable;
+import iped.properties.BasicProps;
+import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
-import iped.util.BasicProps;
 import iped.util.IOUtil;
-import iped.util.MediaTypes;
 
 public class EmbeddedDiskProcessTask extends AbstractTask {
 

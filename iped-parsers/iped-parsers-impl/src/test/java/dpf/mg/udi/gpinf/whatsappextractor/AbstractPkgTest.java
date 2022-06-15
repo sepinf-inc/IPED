@@ -18,7 +18,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.BaseItemSearchContext;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 
 public abstract class AbstractPkgTest extends BaseItemSearchContext {
 

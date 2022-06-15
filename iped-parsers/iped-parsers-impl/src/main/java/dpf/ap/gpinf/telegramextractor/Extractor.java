@@ -40,8 +40,8 @@ import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import iped.IItemBase;
+import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
-import iped.util.BasicProps;
 
 public class Extractor {
 

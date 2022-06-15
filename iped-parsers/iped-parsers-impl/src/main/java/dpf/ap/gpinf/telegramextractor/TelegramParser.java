@@ -56,10 +56,10 @@ import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import iped.IItemBase;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.BasicProps;
 import iped.util.EmptyInputStream;
-import iped.util.ExtraProperties;
 
 public class TelegramParser extends SQLite3DBParser {
 

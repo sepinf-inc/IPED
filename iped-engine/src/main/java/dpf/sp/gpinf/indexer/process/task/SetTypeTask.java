@@ -11,7 +11,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped.IItem;
 import iped.configuration.Configurable;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 
 /**
  * Seta o tipo (extensão correta) dos itens com base no seu mediaType

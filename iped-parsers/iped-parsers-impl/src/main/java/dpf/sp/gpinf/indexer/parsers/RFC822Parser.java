@@ -65,7 +65,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 
 /**
  * Uses apache-mime4j to parse emails. Each part is treated with the

@@ -43,12 +43,12 @@ import org.apache.lucene.search.join.ToParentBlockJoinQuery;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
-import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped.IIPEDSource;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
-import iped.util.BasicProps;
+import iped.localization.LocalizedProperties;
+import iped.properties.BasicProps;
 import iped.util.LocalizedFormat;
 
 public class QueryBuilder {

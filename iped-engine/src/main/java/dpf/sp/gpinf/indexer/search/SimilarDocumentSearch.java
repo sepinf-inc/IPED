@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped.IItemId;
-import iped.util.BasicProps;
+import iped.properties.BasicProps;
 
 public class SimilarDocumentSearch {
 

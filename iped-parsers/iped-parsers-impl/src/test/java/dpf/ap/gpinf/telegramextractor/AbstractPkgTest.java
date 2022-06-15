@@ -20,8 +20,8 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import iped.IItemBase;
+import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.ExtraProperties;
 import junit.framework.TestCase;
 
 public abstract class AbstractPkgTest extends TestCase {

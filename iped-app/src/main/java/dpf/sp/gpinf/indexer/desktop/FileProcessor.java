@@ -94,7 +94,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             doc.add(new StoredField(IndexItem.NAME, "Help")); //$NON-NLS-1$
             doc.add(new StoredField(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString()));
 
-            String locale = System.getProperty(iped.util.Messages.LOCALE_SYS_PROP);
+            String locale = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP);
             String helpPath = IPEDSource.MODULE_DIR + "/help/Help_" + locale + ".htm"; // $NON-NLS-1$ // $NON-NLS-2$
             if (!new File(caseDir, helpPath).exists()) {
                 helpPath = IPEDSource.MODULE_DIR + "/help/Help.htm"; // $NON-NLS-1$

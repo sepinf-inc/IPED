@@ -33,9 +33,9 @@ import com.github.openjson.JSONObject;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
-import iped.util.BasicProps;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.util.EmptyInputStream;
-import iped.util.ExtraProperties;
 
 /**
  * Parser para histórico do Firefox

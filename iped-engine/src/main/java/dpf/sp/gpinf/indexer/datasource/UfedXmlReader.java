@@ -81,10 +81,10 @@ import gpinf.dev.data.Item;
 import iped.ICaseData;
 import iped.IItem;
 import iped.datasource.IDataSource;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.util.FileInputStreamFactory;
 import iped.util.IOUtil;
-import iped.util.MediaTypes;
 import iped.util.SimpleHTMLEncoder;
 
 public class UfedXmlReader extends DataSourceReader {

@@ -57,7 +57,7 @@ import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
 import iped.IItem;
 import iped.configuration.Configurable;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 import iped.util.ImageUtil;
 
 /**

@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import iped.IItem;
 import iped.exception.IPEDException;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.util.IOUtil;
-import iped.util.MediaTypes;
 
 public class ExternalFileOpen {
 

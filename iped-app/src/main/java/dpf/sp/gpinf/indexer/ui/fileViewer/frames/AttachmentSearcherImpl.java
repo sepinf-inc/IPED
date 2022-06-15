@@ -16,7 +16,7 @@ import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
 import iped.IItem;
 import iped.IItemId;
-import iped.util.BasicProps;
+import iped.properties.BasicProps;
 
 public class AttachmentSearcherImpl implements AttachmentSearcher {
 

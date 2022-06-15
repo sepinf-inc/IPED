@@ -30,8 +30,8 @@ import gpinf.hashdb.LedHashDB;
 import gpinf.hashdb.LedItem;
 import iped.IItem;
 import iped.configuration.Configurable;
+import iped.properties.MediaTypes;
 import iped.util.IOUtil;
-import iped.util.MediaTypes;
 
 public class LedCarveTask extends BaseCarveTask {
 

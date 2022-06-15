@@ -39,8 +39,8 @@ import dpf.mt.gpinf.mapas.parsers.kmlstore.FeatureListFactoryRegister;
 import dpf.mt.gpinf.mapas.parsers.kmlstore.Folder;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
-import iped.util.BasicProps;
-import iped.util.ExtraProperties;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 
 public class GeofileParser extends AbstractParser {
 

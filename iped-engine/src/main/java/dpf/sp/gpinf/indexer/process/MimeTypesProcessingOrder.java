@@ -20,7 +20,7 @@ import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.parsers.PartMetParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
-import iped.util.MediaTypes;
+import iped.properties.MediaTypes;
 
 /**
  * Classe de definição de prioridade de processamento de itens com base no

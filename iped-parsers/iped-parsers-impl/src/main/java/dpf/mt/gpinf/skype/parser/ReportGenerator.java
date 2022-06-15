@@ -18,8 +18,8 @@ import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped.IItemBase;
+import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
-import iped.util.BasicProps;
 import iped.util.SimpleHTMLEncoder;
 
 /**

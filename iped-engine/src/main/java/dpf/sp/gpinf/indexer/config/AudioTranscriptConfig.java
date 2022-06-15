@@ -86,7 +86,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
         String langs = properties.getProperty(LANG_KEY).trim();
         if (LANG_AUTO_VAL.equalsIgnoreCase(langs)) {
-            languages.add(System.getProperty(iped.util.Messages.LOCALE_SYS_PROP));
+            languages.add(System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP));
         } else {
             for (String lang : langs.split(";")) {
                 languages.add(lang.trim());

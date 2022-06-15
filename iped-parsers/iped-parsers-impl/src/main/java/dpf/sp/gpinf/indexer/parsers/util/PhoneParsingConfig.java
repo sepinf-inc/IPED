@@ -1,7 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers.util;
 
 import iped.IItemBase;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 
 public class PhoneParsingConfig {
 

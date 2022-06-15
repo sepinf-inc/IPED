@@ -45,8 +45,8 @@ import com.github.junrar.exception.RarException;
 import com.github.junrar.rarfile.FileHeader;
 
 import dpf.sp.gpinf.indexer.parsers.util.Util;
+import iped.properties.ExtraProperties;
 import iped.util.EmptyInputStream;
-import iped.util.ExtraProperties;
 
 /**
  * RAR file parser. No support for Rar5 format as of 2020-10-11 because of

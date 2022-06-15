@@ -19,7 +19,7 @@ import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import gpinf.similarity.ImageSimilarity;
 import iped.IItem;
 import iped.IItemId;
-import iped.util.BasicProps;
+import iped.properties.BasicProps;
 
 public class ImageSimilarityScorer {
     /**

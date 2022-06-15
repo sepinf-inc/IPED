@@ -10,8 +10,8 @@ import org.apache.lucene.index.SortedSetDocValues;
 import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped.IItemId;
-import iped.util.BasicProps;
-import iped.util.ExtraProperties;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 
 public class TimelineResults {
 

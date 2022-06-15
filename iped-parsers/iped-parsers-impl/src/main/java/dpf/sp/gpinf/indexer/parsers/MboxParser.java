@@ -43,7 +43,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 
 /**
  * Parser para arquivos MBOX.

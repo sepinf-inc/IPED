@@ -15,9 +15,9 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
 import iped.IItem;
 import iped.io.IStreamSource;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.util.FileContentSource;
-import iped.util.MediaTypes;
 
 public class ReferencedFileViewer extends AbstractViewer {
 

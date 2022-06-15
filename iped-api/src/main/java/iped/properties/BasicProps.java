@@ -1,4 +1,4 @@
-package iped.util;
+package iped.properties;
 
 import java.util.HashSet;
 import java.util.Set;

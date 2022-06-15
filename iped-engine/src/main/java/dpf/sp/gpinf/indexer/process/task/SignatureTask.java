@@ -21,8 +21,8 @@ import dpf.sp.gpinf.indexer.config.SignatureConfig;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.io.SeekableInputStream;
+import iped.properties.MediaTypes;
 import iped.util.IOUtil;
-import iped.util.MediaTypes;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.

@@ -20,7 +20,7 @@ import dpf.mt.gpinf.registry.model.KeyNode;
 import dpf.mt.gpinf.registry.model.KeyValue;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 
 public class CertificateKeyParser extends HtmlKeyParser {
 

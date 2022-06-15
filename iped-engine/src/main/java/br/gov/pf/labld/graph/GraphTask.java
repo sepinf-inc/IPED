@@ -53,10 +53,10 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.exception.IPEDException;
-import iped.util.BasicProps;
-import iped.util.ExtraProperties;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.util.IOUtil;
-import iped.util.MediaTypes;
 
 public class GraphTask extends AbstractTask {
 

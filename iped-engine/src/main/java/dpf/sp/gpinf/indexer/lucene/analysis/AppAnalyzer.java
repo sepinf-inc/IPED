@@ -28,10 +28,10 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
-import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.PhotoDNATask;
+import iped.localization.LocalizedProperties;
 
 /*
  * Define analizadores, tokenizadores implicitamente, de indexação específicos para cada propriedade, 

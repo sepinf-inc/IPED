@@ -44,9 +44,9 @@ import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import iped.io.IStreamSource;
+import iped.properties.MediaTypes;
 import iped.util.FileContentSource;
 import iped.util.IOUtil;
-import iped.util.MediaTypes;
 import iped.util.SimpleHTMLEncoder;
 
 /**

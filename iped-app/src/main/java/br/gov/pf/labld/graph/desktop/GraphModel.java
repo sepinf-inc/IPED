@@ -16,8 +16,8 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.NotFoundException;
 
 import br.gov.pf.labld.graph.GraphConfiguration;
-import iped.util.BasicProps;
-import iped.util.ExtraProperties;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 
 public class GraphModel {
 

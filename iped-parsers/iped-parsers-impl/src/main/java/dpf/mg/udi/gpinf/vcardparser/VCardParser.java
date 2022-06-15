@@ -45,7 +45,7 @@ import ezvcard.property.TextProperty;
 import ezvcard.property.VCardProperty;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 import iped.util.SimpleHTMLEncoder;
 
 public class VCardParser extends AbstractParser {

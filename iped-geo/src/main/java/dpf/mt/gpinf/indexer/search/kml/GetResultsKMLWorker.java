@@ -17,12 +17,12 @@ import org.apache.tika.metadata.Metadata;
 
 import dpf.mt.gpinf.mapas.util.Messages;
 import iped.IItemId;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.search.IMultiSearchResultProvider;
-import iped.util.BasicProps;
 import iped.util.DateUtil;
-import iped.util.ExtraProperties;
 import iped.util.SimpleHTMLEncoder;
 
 public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResult, Integer> {

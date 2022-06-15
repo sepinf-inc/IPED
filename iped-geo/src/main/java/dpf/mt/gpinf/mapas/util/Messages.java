@@ -21,9 +21,9 @@ public class Messages {
 
     public static String getString(String key) {
         if (RESOURCE_BUNDLE == null) {
-            String localeProp = System.getProperty(iped.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+            String localeProp = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
             Locale locale = localeProp != null ? Locale.forLanguageTag(localeProp) : Locale.getDefault();
-            RESOURCE_BUNDLE = iped.util.Messages.getExternalBundle(BUNDLE_NAME, locale);
+            RESOURCE_BUNDLE = iped.localization.Messages.getExternalBundle(BUNDLE_NAME, locale);
             String finalLocale = RESOURCE_BUNDLE.getLocale().toLanguageTag();
 
             if (finalLocale.equals("und")) //$NON-NLS-1$

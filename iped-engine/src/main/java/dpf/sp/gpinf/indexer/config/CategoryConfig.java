@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
 import gpinf.dev.data.Category;
-import iped.util.MediaTypes;
+import iped.properties.MediaTypes;
 
 public class CategoryConfig extends AbstractTaskConfig<Category> {
 

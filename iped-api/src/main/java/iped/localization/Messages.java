@@ -1,4 +1,4 @@
-package iped.util;
+package iped.localization;
 
 import java.io.File;
 import java.io.IOException;

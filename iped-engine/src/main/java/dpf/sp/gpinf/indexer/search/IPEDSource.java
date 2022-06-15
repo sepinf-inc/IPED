@@ -72,9 +72,9 @@ import iped.IIPEDSource;
 import iped.IItem;
 import iped.IItemId;
 import iped.exception.IPEDException;
+import iped.properties.BasicProps;
 import iped.search.IBookmarks;
 import iped.search.IMultiBookmarks;
-import iped.util.BasicProps;
 import iped.util.IOUtil;
 import iped.util.SelectImagePathWithDialog;
 

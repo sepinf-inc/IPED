@@ -31,9 +31,9 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.TiffPageParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
-import iped.util.BasicProps;
-import iped.util.ExtraProperties;
-import iped.util.MediaTypes;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 
 public class MetadataUtil {
 

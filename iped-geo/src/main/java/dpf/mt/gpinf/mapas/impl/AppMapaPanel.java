@@ -23,8 +23,8 @@ import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.util.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped.IItemId;
+import iped.properties.BasicProps;
 import iped.search.IMultiSearchResultProvider;
-import iped.util.BasicProps;
 import iped3.desktop.GUIProvider;
 
 /* 

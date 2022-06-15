@@ -76,10 +76,10 @@ import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import iped.IItem;
 import iped.IItemBase;
 import iped.io.SeekableInputStream;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.BasicProps;
 import iped.util.EmptyInputStream;
-import iped.util.ExtraProperties;
 import iped.util.SimpleHTMLEncoder;
 
 /**

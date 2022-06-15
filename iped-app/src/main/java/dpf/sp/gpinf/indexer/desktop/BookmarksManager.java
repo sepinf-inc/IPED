@@ -79,7 +79,7 @@ import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped.IItem;
 import iped.IItemId;
-import iped.util.BasicProps;
+import iped.properties.BasicProps;
 import iped.util.LocalizedFormat;
 import iped3.desktop.ProgressDialog;
 

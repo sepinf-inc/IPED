@@ -1,4 +1,4 @@
-package iped.util;
+package iped.properties;
 
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;

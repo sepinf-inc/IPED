@@ -58,7 +58,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 import iped.IItemBase;
 import iped.io.IStreamSource;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 import iped.util.FileContentSource;
 import iped.util.IOUtil;
 

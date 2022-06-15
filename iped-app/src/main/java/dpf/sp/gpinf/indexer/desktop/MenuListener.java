@@ -51,9 +51,9 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AbstractViewer;
 import iped.IIPEDSource;
 import iped.IItem;
 import iped.IItemId;
+import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.search.SearchResult;
-import iped.util.ExtraProperties;
-import iped.util.MediaTypes;
 import iped.util.SpinnerDialog;
 
 public class MenuListener implements ActionListener {

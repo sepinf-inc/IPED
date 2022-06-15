@@ -31,7 +31,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped.IItem;
-import iped.util.MediaTypes;
+import iped.properties.MediaTypes;
 
 /**
  * Classe base de tarefas de carving. Centraliza contador de itens carveados e

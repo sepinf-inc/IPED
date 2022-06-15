@@ -90,9 +90,9 @@ import gpinf.dev.data.Item;
 import iped.ICaseData;
 import iped.IItem;
 import iped.exception.IPEDException;
-import iped.util.BasicProps;
+import iped.properties.BasicProps;
+import iped.properties.MediaTypes;
 import iped.util.IOUtil;
-import iped.util.MediaTypes;
 import iped.util.UTF8Properties;
 
 public class SleuthkitReader extends DataSourceReader {

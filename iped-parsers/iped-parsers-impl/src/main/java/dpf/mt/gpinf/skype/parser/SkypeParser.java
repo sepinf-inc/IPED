@@ -33,10 +33,10 @@ import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import iped.IItemBase;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.BasicProps;
 import iped.util.EmptyInputStream;
-import iped.util.ExtraProperties;
 import iped.util.IOUtil;
 
 /**

@@ -32,7 +32,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.exception.IPEDException;
-import iped.util.BasicProps;
+import iped.properties.BasicProps;
 import iped.util.HashValue;
 
 /**

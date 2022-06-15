@@ -10,7 +10,7 @@ import org.apache.tika.metadata.Metadata;
 
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import iped.io.SeekableInputStream;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 import iped.util.SeekableFileInputStream;
 import iped.util.SeekableInputStreamFactory;
 

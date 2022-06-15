@@ -33,9 +33,9 @@ import dpf.sp.gpinf.detector.SQLiteContainerDetector;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
-import iped.util.BasicProps;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.util.EmptyInputStream;
-import iped.util.ExtraProperties;
 
 /**
  * Parser for the Windows 10 Timeline feature (v1803/1809/1903+)

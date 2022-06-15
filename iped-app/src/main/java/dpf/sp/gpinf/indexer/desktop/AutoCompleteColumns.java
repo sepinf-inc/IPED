@@ -26,7 +26,7 @@ import java.util.List;
 
 import javax.swing.text.JTextComponent;
 
-import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
+import iped.localization.LocalizedProperties;
 
 public class AutoCompleteColumns {
     public AutoCompleteColumns(final JTextComponent editor) {

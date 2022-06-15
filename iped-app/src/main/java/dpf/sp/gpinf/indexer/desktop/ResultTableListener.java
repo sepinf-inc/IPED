@@ -44,7 +44,7 @@ import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import iped.IItem;
 import iped.IItemId;
-import iped.util.BasicProps;
+import iped.properties.BasicProps;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 

@@ -1,4 +1,4 @@
-package iped.util;
+package iped.properties;
 
 import java.util.Arrays;
 import java.util.List;

@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.localization;
+package iped.localization;
 
 import java.util.Enumeration;
 import java.util.Locale;
@@ -19,9 +19,9 @@ public class LocalizedProperties {
         if (!map.isEmpty()) {
             return;
         }
-        String localeStr = System.getProperty(iped.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+        String localeStr = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
         Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
-        RESOURCE_BUNDLE = iped.util.Messages.getExternalBundle(BUNDLE_NAME, locale);
+        RESOURCE_BUNDLE = iped.localization.Messages.getExternalBundle(BUNDLE_NAME, locale);
 
         Enumeration<String> keys = (Enumeration<String>) RESOURCE_BUNDLE.getKeys();
         while (keys.hasMoreElements()) {

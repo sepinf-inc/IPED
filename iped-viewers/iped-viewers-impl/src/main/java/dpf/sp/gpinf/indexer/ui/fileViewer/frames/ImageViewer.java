@@ -38,11 +38,11 @@ import gpinf.led.ImageViewPanel;
 import iped.IItemBase;
 import iped.io.IStreamSource;
 import iped.io.SeekableInputStream;
+import iped.properties.MediaTypes;
 import iped.util.ExternalImageConverter;
 import iped.util.IOUtil;
 import iped.util.IconUtil;
 import iped.util.ImageUtil;
-import iped.util.MediaTypes;
 
 public class ImageViewer extends AbstractViewer implements ActionListener {
 

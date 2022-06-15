@@ -109,12 +109,12 @@ import iped.IItemBase;
 import iped.configuration.Configurable;
 import iped.exception.ZipBombException;
 import iped.io.IStreamSource;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
-import iped.util.BasicProps;
 import iped.util.EmptyInputStream;
-import iped.util.ExtraProperties;
 import iped.util.IOUtil;
-import iped.util.MediaTypes;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO,

@@ -43,7 +43,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 import iped.util.IOUtil;
 import iped.util.SimpleHTMLEncoder;
 

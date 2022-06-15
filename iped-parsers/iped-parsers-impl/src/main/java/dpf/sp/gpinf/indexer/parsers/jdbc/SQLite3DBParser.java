@@ -39,8 +39,8 @@ import org.sqlite.SQLiteConfig;
 
 import dpf.sp.gpinf.indexer.parsers.util.DelegatingConnection;
 import iped.IItemBase;
+import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
-import iped.util.BasicProps;
 
 /**
  * This is the implementation of the db parser for SQLite.

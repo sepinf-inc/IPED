@@ -46,8 +46,8 @@ import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import gpinf.ares.AresEntry;
 import iped.IItemBase;
+import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.ExtraProperties;
 import iped.util.LocalizedFormat;
 
 /**

@@ -36,9 +36,9 @@ import com.dd.plist.PropertyListParser;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import iped.util.BasicProps;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.util.EmptyInputStream;
-import iped.util.ExtraProperties;
 
 /**
  * Parser para histórico do Safari - plist

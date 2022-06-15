@@ -30,11 +30,11 @@ import com.google.common.collect.ImmutableMap;
 import dpf.mg.udi.gpinf.whatsappextractor.Message;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import iped.IItemBase;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
-import iped.util.BasicProps;
 import iped.util.DateUtil;
-import iped.util.ExtraProperties;
-import iped.util.MediaTypes;
 
 public class UFEDChatParser extends AbstractParser {
 

@@ -37,7 +37,7 @@ import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import iped.ICaseData;
 import iped.IItem;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 import iped.util.FileInputStreamFactory;
 
 public class FolderTreeReader extends DataSourceReader {

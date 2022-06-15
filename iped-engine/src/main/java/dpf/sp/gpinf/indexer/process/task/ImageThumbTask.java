@@ -29,9 +29,9 @@ import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import iped.IItem;
 import iped.configuration.Configurable;
+import iped.properties.MediaTypes;
 import iped.util.ExternalImageConverter;
 import iped.util.ImageUtil;
-import iped.util.MediaTypes;
 import iped.util.ImageUtil.BooleanWrapper;
 
 public class ImageThumbTask extends ThumbTask {

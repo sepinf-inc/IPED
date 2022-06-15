@@ -57,7 +57,7 @@ import dpf.sp.gpinf.indexer.parsers.util.CharCountContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ComputeThumb;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToThumb;
-import iped.util.ExtraProperties;
+import iped.properties.ExtraProperties;
 
 /**
  * Parser para arquivos PDF. Chama o parser OCR caso habilitado se o PDF tiver
