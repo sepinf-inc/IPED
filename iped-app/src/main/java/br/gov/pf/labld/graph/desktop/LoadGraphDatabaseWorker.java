@@ -145,7 +145,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
                 AppGraphAnalytics.LOGGER.error("Graph database not found: " + dbDataDir.getAbsolutePath());
                 return false;
             }
-            if (!IOUtil.canWrite(dbDataDir) || !IOUtil.canCreateFile(dbDataDir)) {
+            if (!IOUtil.canWrite(dbDataDir)) {
                 neo4jHome = copyToTempFolder(dbDataDir);
             }
             graphService.start(neo4jHome);

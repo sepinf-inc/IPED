@@ -201,6 +201,9 @@ public class IOUtil {
         if (!file.exists()) {
             return false;
         }
+        if (file.isDirectory()) {
+            return IOUtil.canCreateFile(file);
+        }
         try (FileOutputStream fos = new FileOutputStream(file, true)) {
             return true;
 
