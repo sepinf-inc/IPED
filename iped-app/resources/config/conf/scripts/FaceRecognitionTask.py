@@ -93,6 +93,7 @@ def pingExternalProcess(proc):
 class FaceRecognitionTask:
 
     enabled = False
+    videoSubitems = False
     
     def isEnabled(self):
         return FaceRecognitionTask.enabled
@@ -107,6 +108,10 @@ class FaceRecognitionTask:
         FaceRecognitionTask.enabled = taskConfig.isEnabled()
         if not FaceRecognitionTask.enabled:
             return
+        
+        from dpf.sp.gpinf.indexer.config import VideoThumbsConfig
+        videoConfig = configuration.findObject(VideoThumbsConfig);
+        FaceRecognitionTask.videoSubitems = videoConfig.getVideoThumbsSubitems();
         
         global fp, terminate, imgError, ping
         import FaceRecognitionProcess as fp
@@ -204,7 +209,7 @@ class FaceRecognitionTask:
         mediaType = item.getMediaType().toString()
         if mediaType.startswith('image'):
             img_path = item.getTempFile().getAbsolutePath()
-        elif mediaType.startswith('video'):
+        elif mediaType.startswith('video') and not FaceRecognitionTask.videoSubitems:
             img_path = item.getViewFile().getAbsolutePath()
             isVideo = True
         else:
