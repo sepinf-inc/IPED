@@ -1,17 +1,17 @@
-package dpf.sp.gpinf.carving;
+package iped.carver.standard;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import dpf.sp.gpinf.carver.api.CarvedItemListener;
-import dpf.sp.gpinf.carver.api.Carver;
-import dpf.sp.gpinf.carver.api.CarverType;
-import dpf.sp.gpinf.carver.api.Hit;
-import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
-import dpf.sp.gpinf.carver.api.Signature.SignatureType;
 import iped.IItem;
+import iped.carver.api.CarvedItemListener;
+import iped.carver.api.Carver;
+import iped.carver.api.CarverType;
+import iped.carver.api.Hit;
+import iped.carver.api.InvalidCarvedObjectException;
+import iped.carver.api.Signature.SignatureType;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 

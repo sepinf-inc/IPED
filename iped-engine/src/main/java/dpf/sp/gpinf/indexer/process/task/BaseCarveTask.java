@@ -25,12 +25,12 @@ import java.util.Set;
 
 import org.apache.tika.mime.MediaType;
 
-import dpf.sp.gpinf.carver.api.CarverConfiguration;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped.IItem;
+import iped.carver.api.CarverConfiguration;
 import iped.properties.MediaTypes;
 
 /**

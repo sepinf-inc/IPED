@@ -1,12 +1,12 @@
-package dpf.sp.gpinf.carving.carvers;
+package iped.carver.custom;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
 
-import dpf.sp.gpinf.carver.api.CarverType;
-import dpf.sp.gpinf.carver.api.Hit;
-import dpf.sp.gpinf.carving.FromFarthestHeaderCarver;
 import iped.IItem;
+import iped.carver.api.CarverType;
+import iped.carver.api.Hit;
+import iped.carver.standard.FromFarthestHeaderCarver;
 import iped.io.SeekableInputStream;
 import iped.util.IOUtil;
 

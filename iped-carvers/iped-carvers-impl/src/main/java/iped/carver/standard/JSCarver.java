@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.carving;
+package iped.carver.standard;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,10 +12,10 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import dpf.sp.gpinf.carver.api.CarverType;
-import dpf.sp.gpinf.carver.api.Hit;
-import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
 import iped.IItem;
+import iped.carver.api.CarverType;
+import iped.carver.api.Hit;
+import iped.carver.api.InvalidCarvedObjectException;
 
 public class JSCarver extends DefaultCarver {
     ScriptEngine engine;

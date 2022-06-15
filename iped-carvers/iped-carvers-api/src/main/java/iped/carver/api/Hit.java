@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.carver.api;
+package iped.carver.api;
 
 public class Hit {
 

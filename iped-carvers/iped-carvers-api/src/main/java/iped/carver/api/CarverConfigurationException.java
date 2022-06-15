@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.carver.api;
+package iped.carver.api;
 
 public class CarverConfigurationException extends Exception {
     private static final long serialVersionUID = 1L;

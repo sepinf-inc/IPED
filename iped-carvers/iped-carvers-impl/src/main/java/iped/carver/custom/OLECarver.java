@@ -1,13 +1,13 @@
-package dpf.sp.gpinf.carving.carvers;
+package iped.carver.custom;
 
 import java.io.IOException;
 
 import org.apache.commons.codec.DecoderException;
 
-import dpf.sp.gpinf.carver.api.CarverType;
-import dpf.sp.gpinf.carver.api.Hit;
-import dpf.sp.gpinf.carving.AbstractCarver;
 import iped.IItem;
+import iped.carver.api.CarverType;
+import iped.carver.api.Hit;
+import iped.carver.standard.AbstractCarver;
 import iped.io.SeekableInputStream;
 
 public class OLECarver extends AbstractCarver {

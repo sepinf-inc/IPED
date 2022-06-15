@@ -1,11 +1,11 @@
-package dpf.sp.gpinf.carving.carvers;
+package iped.carver.custom;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
 
-import dpf.sp.gpinf.carver.api.Hit;
-import dpf.sp.gpinf.carving.DefaultCarver;
 import iped.IItem;
+import iped.carver.api.Hit;
+import iped.carver.standard.DefaultCarver;
 
 public class EMLCarver extends DefaultCarver {
     Hit lastFooter = null;

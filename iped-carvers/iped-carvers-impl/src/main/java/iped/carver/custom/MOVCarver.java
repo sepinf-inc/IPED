@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.carving.carvers;
+package iped.carver.custom;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -7,10 +7,10 @@ import java.util.HashSet;
 import org.apache.commons.codec.DecoderException;
 import org.apache.tika.mime.MediaType;
 
-import dpf.sp.gpinf.carver.api.CarverType;
-import dpf.sp.gpinf.carver.api.Hit;
-import dpf.sp.gpinf.carving.AbstractCarver;
 import iped.IItem;
+import iped.carver.api.CarverType;
+import iped.carver.api.Hit;
+import iped.carver.standard.AbstractCarver;
 import iped.io.SeekableInputStream;
 import iped.util.IOUtil;
 
