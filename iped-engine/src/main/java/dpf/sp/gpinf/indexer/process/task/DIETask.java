@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -245,20 +246,30 @@ public class DIETask extends AbstractTask {
                 //For videos call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
                 File viewFile = evidence.getViewFile();
                 if (viewFile != null && viewFile.exists()) {
-                    List<BufferedImage> frames = ImageUtil.getFrames(viewFile);
-                    List<Double> pvideo = new ArrayList<Double>();
-                    if (frames != null) {
-                        for (BufferedImage frame : frames) {
-                            List<Float> features = die.extractFeatures(frame);
-                            if (features != null) {
-                                double p = predictor.predict(features);
-                                pvideo.add(p);
+                    int score = -1;
+                    List<Integer> subitemsScoreInt = (List<Integer>) evidence.getTempAttribute(DIE_SCORE);
+                    if (subitemsScoreInt != null && !subitemsScoreInt.isEmpty()) {
+                        List<Double> subitemsScore = subitemsScoreInt.stream().map(i -> (double) i).collect(Collectors.toList());
+                        score = (int) videoScore(subitemsScore);
+                    } else {
+                        List<BufferedImage> frames = ImageUtil.getFrames(viewFile);
+                        List<Double> pvideo = new ArrayList<Double>();
+                        if (frames != null) {
+                            for (BufferedImage frame : frames) {
+                                List<Float> features = die.extractFeatures(frame);
+                                if (features != null) {
+                                    double p = predictor.predict(features);
+                                    pvideo.add(p);
+                                }
                             }
                         }
+                        if (!pvideo.isEmpty()) {
+                            double p = videoScore(pvideo);
+                            score = predictionToScore(p); 
+                        }
                     }
-                    if (!pvideo.isEmpty()) {
-                        double p = videoScore(pvideo);
-                        int score = predictionToScore(p);
+                    
+                    if (score != -1) {
                         update(evidence, score);
                         totalVideosProcessed.incrementAndGet();
                         synchronized (videoResults) {

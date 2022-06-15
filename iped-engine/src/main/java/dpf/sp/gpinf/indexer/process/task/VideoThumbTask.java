@@ -55,6 +55,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
+import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
@@ -555,6 +556,8 @@ public class VideoThumbTask extends ThumbTask {
 
         item.setHasChildren(true);
 
+        List<Integer> framesNudityScore = new ArrayList<>();
+
         for (int i = 0; i < frames.size(); i++) {
 
             File frame = frames.get(i);
@@ -583,8 +586,17 @@ public class VideoThumbTask extends ThumbTask {
             extractor.extractFile(is, newItem, item.getLength());
 
             // add new item to processing queue
-            worker.processNewItem(newItem);
+            worker.processNewItem(newItem, ProcessTime.NOW);
+            
+            Integer nudityScore = (Integer) newItem.getExtraAttribute(DIETask.DIE_SCORE);
+            if (nudityScore != null) {
+                framesNudityScore.add(nudityScore);
+            }
 
+        }
+        
+        if (!framesNudityScore.isEmpty()) {
+            item.setTempAttribute(DIETask.DIE_SCORE, framesNudityScore);
         }
 
     }
