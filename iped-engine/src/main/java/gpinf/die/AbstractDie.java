@@ -1,4 +1,4 @@
-package iped.engine.task.die;
+package gpinf.die;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;

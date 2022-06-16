@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
+import gpinf.die.AbstractDie;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.CmdLineArgs;

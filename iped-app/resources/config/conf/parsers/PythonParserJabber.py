@@ -13,10 +13,10 @@ from org.apache.tika.exception import TikaException
 from org.apache.tika.extractor import EmbeddedDocumentExtractor
 from org.apache.tika.sax import EmbeddedContentHandler
 from org.apache.tika.parser.html import HtmlParser
-from iped3.util import ExtraProperties
-from iped3.util import BasicProps
+from iped.properties import ExtraProperties
+from iped.properties import BasicProps
 from dpf.sp.gpinf.indexer.parsers import IndexerDefaultParser
-from dpf.sp.gpinf.indexer.util import EmptyInputStream
+from iped.util import EmptyInputStream
 from dpf.mg.udi.gpinf.whatsappextractor import Util
 from dpf.sp.gpinf.indexer.parsers.util import IndentityHtmlParser
 from org.apache.commons.codec.binary import StringUtils
