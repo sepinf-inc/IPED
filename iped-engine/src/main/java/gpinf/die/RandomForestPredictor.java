@@ -74,8 +74,6 @@ public class RandomForestPredictor {
 
     public static RandomForestPredictor load(File file, int maxTrees) throws Exception {
         DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-        int skip = in.readInt();
-        in.skipBytes(skip);
         int ver = in.readInt();
         int trees = in.readInt();
         int[] t = new int[trees];
