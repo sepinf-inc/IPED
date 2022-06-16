@@ -19,7 +19,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileFilter;
 
-import gpinf.dev.data.ReportInfo;
+import iped.engine.data.ReportInfo;
 
 public class ReportInfoDialog extends JDialog implements ActionListener {
 

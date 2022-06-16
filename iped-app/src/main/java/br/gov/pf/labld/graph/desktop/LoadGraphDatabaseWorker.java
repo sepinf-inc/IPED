@@ -11,17 +11,17 @@ import javax.swing.SwingWorker;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import br.gov.pf.labld.graph.GraphFileWriter;
-import br.gov.pf.labld.graph.GraphGenerator;
-import br.gov.pf.labld.graph.GraphImportRunner.ImportListener;
-import br.gov.pf.labld.graph.GraphService;
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
-import br.gov.pf.labld.graph.GraphTask;
-import br.gov.pf.labld.graph.GraphTaskConfig;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.graph.GraphFileWriter;
+import iped.engine.graph.GraphGenerator;
+import iped.engine.graph.GraphService;
+import iped.engine.graph.GraphServiceFactoryImpl;
+import iped.engine.graph.GraphTask;
+import iped.engine.graph.GraphTaskConfig;
+import iped.engine.graph.GraphImportRunner.ImportListener;
+import iped.engine.search.IPEDSource;
 import iped.util.IOUtil;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.util.ProgressDialog;

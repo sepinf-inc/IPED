@@ -7,10 +7,10 @@ import javax.swing.SwingWorker;
 
 import org.kharon.Node;
 
-import br.gov.pf.labld.graph.GraphService;
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
-import br.gov.pf.labld.graph.NodeQueryListener;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import iped.engine.graph.GraphService;
+import iped.engine.graph.GraphServiceFactoryImpl;
+import iped.engine.graph.NodeQueryListener;
 
 class AddNodeWorker extends SwingWorker<Void, Node> implements NodeQueryListener {
 

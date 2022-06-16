@@ -7,9 +7,9 @@ import javax.swing.JOptionPane;
 import org.kharon.layout.graphviz.GraphVizAlgorithm;
 import org.kharon.layout.graphviz.GraphVizResolver;
 
-import dpf.sp.gpinf.indexer.config.Configuration;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import iped.engine.config.Configuration;
 import iped.util.IOUtil;
 
 public class GraphVizIpedResolver implements GraphVizResolver {

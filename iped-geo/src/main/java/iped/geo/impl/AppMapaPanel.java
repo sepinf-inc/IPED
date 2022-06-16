@@ -17,8 +17,8 @@ import javax.swing.JProgressBar;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped.IItemId;
+import iped.engine.config.ConfigurationManager;
 import iped.geo.AbstractMapaCanvas;
 import iped.geo.kml.GetResultsKMLWorker;
 import iped.geo.kml.KMLResult;

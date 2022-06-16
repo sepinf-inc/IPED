@@ -30,13 +30,13 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.process.Manager;
-import dpf.sp.gpinf.indexer.process.task.ParsingTask;
-import dpf.sp.gpinf.indexer.process.task.SignatureTask;
-import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.core.Manager;
+import iped.engine.search.IPEDMultiSource;
+import iped.engine.search.IPEDSource;
+import iped.engine.task.ParsingTask;
+import iped.engine.task.SignatureTask;
 
 public class UICaseDataLoader extends SwingWorker<Void, Integer> {
 

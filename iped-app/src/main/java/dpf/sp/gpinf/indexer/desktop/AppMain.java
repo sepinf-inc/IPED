@@ -13,11 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.LogConfiguration;
-import dpf.sp.gpinf.indexer.Version;
-import dpf.sp.gpinf.indexer.config.Configuration;
-import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.ui.UiScale;
-import dpf.sp.gpinf.indexer.util.Util;
+import iped.engine.Version;
+import iped.engine.config.Configuration;
+import iped.engine.core.Manager;
+import iped.engine.util.Util;
 import iped.util.IOUtil;
 
 public class AppMain {

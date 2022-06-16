@@ -10,9 +10,9 @@ import org.kharon.Edge;
 import org.kharon.OverlappedEdges;
 
 import dpf.sp.gpinf.indexer.desktop.App;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.ItemId;
 import iped.IItemId;
+import iped.engine.search.IPEDSource;
+import iped.engine.search.ItemId;
 
 public class FilterSelectedEdges {
 

@@ -46,11 +46,11 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 
-import br.gov.pf.labld.graph.FreeQueryListener;
-import br.gov.pf.labld.graph.GraphService;
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import iped.engine.graph.FreeQueryListener;
+import iped.engine.graph.GraphService;
+import iped.engine.graph.GraphServiceFactoryImpl;
 
 public class AdvancedSearchDialog extends JDialog {
 

@@ -17,10 +17,10 @@ import java.util.regex.Pattern;
 import org.apache.tika.utils.SystemUtils;
 
 import ag.ion.bion.officelayer.application.IOfficeApplication;
-import dpf.sp.gpinf.indexer.config.Configuration;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.PluginConfig;
-import dpf.sp.gpinf.indexer.util.Util;
+import iped.engine.config.Configuration;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.PluginConfig;
+import iped.engine.util.Util;
 import iped.viewers.util.LibreOfficeFinder;
 import iped.viewers.util.UNOLibFinder;
 

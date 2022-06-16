@@ -34,12 +34,12 @@ import org.apache.lucene.document.Document;
 import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.task.HashTask;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped.IItem;
+import iped.engine.search.IPEDSearcher;
+import iped.engine.search.LuceneSearchResult;
+import iped.engine.search.MultiSearchResult;
+import iped.engine.task.HashTask;
+import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 

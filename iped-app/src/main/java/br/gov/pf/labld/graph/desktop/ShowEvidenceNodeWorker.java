@@ -4,13 +4,13 @@ import java.util.Arrays;
 
 import javax.swing.SwingWorker;
 
-import br.gov.pf.labld.graph.GraphService;
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
-import br.gov.pf.labld.graph.NodeQueryListener;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.FileProcessor;
 import dpf.sp.gpinf.indexer.desktop.Messages;
-import dpf.sp.gpinf.indexer.search.ItemId;
+import iped.engine.graph.GraphService;
+import iped.engine.graph.GraphServiceFactoryImpl;
+import iped.engine.graph.NodeQueryListener;
+import iped.engine.search.ItemId;
 
 class ShowEvidenceNodeWorker extends SwingWorker<Void, Void> implements NodeQueryListener {
 

@@ -7,7 +7,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import dpf.sp.gpinf.indexer.search.Bookmarks;
+import iped.engine.search.Bookmarks;
 import iped.util.LocalizedFormat;
 
 public class BookmarksController {

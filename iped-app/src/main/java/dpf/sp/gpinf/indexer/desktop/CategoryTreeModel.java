@@ -12,7 +12,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-import gpinf.dev.data.Category;
+import iped.engine.data.Category;
 
 public class CategoryTreeModel implements TreeModel {
 

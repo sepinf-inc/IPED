@@ -13,7 +13,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 
-import dpf.sp.gpinf.indexer.process.IndexItem;
+import iped.engine.task.index.IndexItem;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.util.ProgressDialog;
 

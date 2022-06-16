@@ -19,11 +19,13 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
-import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
-import dpf.sp.gpinf.indexer.util.Util;
 import iped.ICaseData;
+import iped.engine.CmdLineArgs;
+import iped.engine.Version;
+import iped.engine.config.LocalConfig;
+import iped.engine.task.SkipCommitedTask;
+import iped.engine.util.Util;
 import iped.exception.IPEDException;
 
 /**

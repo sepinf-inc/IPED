@@ -32,11 +32,11 @@ import javax.swing.table.AbstractTableModel;
 
 import org.neo4j.graphdb.Node;
 
-import br.gov.pf.labld.graph.GraphService;
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
-import br.gov.pf.labld.graph.NodeQueryListener;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import iped.engine.graph.GraphService;
+import iped.engine.graph.GraphServiceFactoryImpl;
+import iped.engine.graph.NodeQueryListener;
 
 public class EntitySearchDialog extends JDialog implements KeyListener, MouseListener {
 

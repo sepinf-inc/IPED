@@ -28,8 +28,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 import org.apache.lucene.document.Document;
 
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped.IItemId;
+import iped.engine.task.index.IndexItem;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 

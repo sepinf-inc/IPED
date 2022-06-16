@@ -28,13 +28,13 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 
-import br.gov.pf.labld.graph.GraphService;
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
-import br.gov.pf.labld.graph.LabelQueryListener;
 import br.gov.pf.labld.graph.desktop.CheckboxListCellRenderer.CheckboxListItem;
 import br.gov.pf.labld.graph.desktop.CheckboxListCellRenderer.CheckboxSelectionMouseAdapter;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import iped.engine.graph.GraphService;
+import iped.engine.graph.GraphServiceFactoryImpl;
+import iped.engine.graph.LabelQueryListener;
 
 public class ExportLinksDialog extends JDialog {
 

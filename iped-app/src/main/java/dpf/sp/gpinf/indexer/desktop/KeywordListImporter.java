@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.util.Util;
+import iped.engine.search.IPEDSearcher;
+import iped.engine.util.Util;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.util.ProgressDialog;
 

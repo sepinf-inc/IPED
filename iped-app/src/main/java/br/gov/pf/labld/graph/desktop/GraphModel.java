@@ -15,7 +15,7 @@ import org.kharon.Node;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.NotFoundException;
 
-import br.gov.pf.labld.graph.GraphConfiguration;
+import iped.engine.graph.GraphConfiguration;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 

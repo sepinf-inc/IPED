@@ -23,7 +23,7 @@ import java.io.Serializable;
 
 import javax.swing.filechooser.FileFilter;
 
-import dpf.sp.gpinf.indexer.search.Bookmarks;
+import iped.engine.search.Bookmarks;
 
 public class SearchStateFilter extends FileFilter implements Serializable {
 

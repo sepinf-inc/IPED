@@ -43,13 +43,6 @@ import org.neo4j.graphdb.Relationship;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.gov.pf.labld.graph.EdgeQueryListener;
-import br.gov.pf.labld.graph.GraphConfiguration;
-import br.gov.pf.labld.graph.GraphService;
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
-import br.gov.pf.labld.graph.GraphTask;
-import br.gov.pf.labld.graph.NodeEdgeQueryListener;
-import br.gov.pf.labld.graph.PathQueryListener;
 import br.gov.pf.labld.graph.desktop.renderers.CarNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.CompanyNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.DocumentNodeRenderer;
@@ -61,7 +54,14 @@ import br.gov.pf.labld.graph.desktop.renderers.PersonNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PhoneNodeRenderer;
 import dpf.sp.gpinf.indexer.desktop.ClearFilterListener;
 import dpf.sp.gpinf.indexer.desktop.Messages;
-import dpf.sp.gpinf.indexer.search.ItemId;
+import iped.engine.graph.EdgeQueryListener;
+import iped.engine.graph.GraphConfiguration;
+import iped.engine.graph.GraphService;
+import iped.engine.graph.GraphServiceFactoryImpl;
+import iped.engine.graph.GraphTask;
+import iped.engine.graph.NodeEdgeQueryListener;
+import iped.engine.graph.PathQueryListener;
+import iped.engine.search.ItemId;
 
 public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
 

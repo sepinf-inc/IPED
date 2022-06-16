@@ -17,11 +17,11 @@ import org.neo4j.graphdb.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.gov.pf.labld.graph.ExportLinksQuery;
-import br.gov.pf.labld.graph.GraphService;
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
-import br.gov.pf.labld.graph.LinkQueryListener;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import iped.engine.graph.ExportLinksQuery;
+import iped.engine.graph.GraphService;
+import iped.engine.graph.GraphServiceFactoryImpl;
+import iped.engine.graph.LinkQueryListener;
 
 public class ExportLinksWorker extends SwingWorker<Void, Void> implements LinkQueryListener {
 

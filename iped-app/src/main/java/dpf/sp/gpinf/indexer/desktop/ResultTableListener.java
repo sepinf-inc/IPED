@@ -39,10 +39,10 @@ import javax.swing.event.ListSelectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped.IItem;
 import iped.IItemId;
+import iped.engine.search.IPEDSearcher;
+import iped.engine.search.MultiSearchResult;
 import iped.properties.BasicProps;
 import iped.viewers.ATextViewer;
 

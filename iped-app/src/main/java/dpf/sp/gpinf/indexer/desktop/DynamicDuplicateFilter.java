@@ -8,11 +8,11 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 
-import dpf.sp.gpinf.indexer.lucene.DocValuesUtil;
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped.IItemId;
+import iped.engine.lucene.DocValuesUtil;
+import iped.engine.search.IPEDMultiSource;
+import iped.engine.search.MultiSearchResult;
+import iped.engine.task.index.IndexItem;
 import iped.search.IMultiSearchResult;
 
 public class DynamicDuplicateFilter {

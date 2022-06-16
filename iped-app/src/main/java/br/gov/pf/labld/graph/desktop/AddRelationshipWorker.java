@@ -8,10 +8,10 @@ import javax.swing.SwingWorker;
 import org.kharon.Edge;
 import org.neo4j.graphdb.Relationship;
 
-import br.gov.pf.labld.graph.EdgeQueryListener;
-import br.gov.pf.labld.graph.GraphService;
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import iped.engine.graph.EdgeQueryListener;
+import iped.engine.graph.GraphService;
+import iped.engine.graph.GraphServiceFactoryImpl;
 
 class AddRelationshipWorker extends SwingWorker<Void, Void> implements EdgeQueryListener {
 

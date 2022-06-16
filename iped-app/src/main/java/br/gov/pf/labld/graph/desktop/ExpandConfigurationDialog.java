@@ -33,10 +33,10 @@ import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 import javax.swing.table.AbstractTableModel;
 
-import br.gov.pf.labld.graph.ConnectionQueryListener;
-import br.gov.pf.labld.graph.GraphService;
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import iped.engine.graph.ConnectionQueryListener;
+import iped.engine.graph.GraphService;
+import iped.engine.graph.GraphServiceFactoryImpl;
 
 public class ExpandConfigurationDialog extends JDialog implements MouseListener {
 

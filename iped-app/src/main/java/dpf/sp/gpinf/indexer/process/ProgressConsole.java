@@ -9,9 +9,10 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import dpf.sp.gpinf.indexer.localization.Messages;
-import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import iped.IItem;
+import iped.engine.core.Worker;
+import iped.engine.localization.Messages;
+import iped.engine.task.AbstractTask;
 import iped.util.LocalizedFormat;
 
 public class ProgressConsole implements PropertyChangeListener {

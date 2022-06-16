@@ -680,7 +680,7 @@
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
-                                    <mainClass>br.gov.pf.iped.webapi.Main</mainClass>
+                                    <mainClass>iped.engine.webapi.Main</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>
@@ -698,7 +698,7 @@
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
-                                    <mainClass>gpinf.hashdb.HashDBTool</mainClass>
+                                    <mainClass>iped.engine.hashdb.HashDBTool</mainClass>
                                 </manifest>
                             </archive>
                             <includes>

@@ -18,11 +18,11 @@ import org.neo4j.graphdb.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
-import br.gov.pf.labld.graph.PathQueryListener;
-import br.gov.pf.labld.graph.links.SearchLinksQuery;
-import br.gov.pf.labld.graph.links.SearchLinksQueryProvider;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import iped.engine.graph.GraphServiceFactoryImpl;
+import iped.engine.graph.PathQueryListener;
+import iped.engine.graph.links.SearchLinksQuery;
+import iped.engine.graph.links.SearchLinksQueryProvider;
 
 public class SearchLinksWorker extends SwingWorker<Void, Void> implements PathQueryListener {
 

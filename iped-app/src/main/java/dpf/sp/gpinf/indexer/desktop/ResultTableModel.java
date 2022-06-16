@@ -38,12 +38,12 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.util.BytesRef;
 
-import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.TimelineResults.TimeItemId;
-import dpf.sp.gpinf.indexer.util.Util;
 import iped.IItemId;
+import iped.engine.datasource.SleuthkitReader;
+import iped.engine.localization.CategoryLocalization;
+import iped.engine.search.TimelineResults.TimeItemId;
+import iped.engine.task.index.IndexItem;
+import iped.engine.util.Util;
 import iped.localization.LocalizedProperties;
 import iped.properties.BasicProps;
 import iped.search.IMultiSearchResult;

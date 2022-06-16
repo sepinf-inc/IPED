@@ -41,18 +41,20 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 
-import dpf.sp.gpinf.indexer.Version;
-import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.AppMain;
-import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.process.Worker.STATE;
-import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
-import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
-import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import iped.IItem;
+import iped.engine.Version;
+import iped.engine.WorkerProvider;
+import iped.engine.core.Statistics;
+import iped.engine.core.Worker;
+import iped.engine.core.Worker.STATE;
+import iped.engine.localization.Messages;
+import iped.engine.task.AbstractTask;
+import iped.engine.task.BaseCarveTask;
+import iped.engine.task.ExportFileTask;
+import iped.engine.task.ParsingTask;
 import iped.util.LocalizedFormat;
 
 /**
@@ -353,7 +355,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.VolumeFound")); //$NON-NLS-1$
         msg.append("</td><td>"); //$NON-NLS-1$
-        long discoveredVol = Statistics.get().caseData.getDiscoveredVolume() / (1 << 20);
+        long discoveredVol = Statistics.get().getCaseData().getDiscoveredVolume() / (1 << 20);
         msg.append(sizeFormat.format(discoveredVol) + " MB"); //$NON-NLS-1$
         msg.append("</td></tr>"); //$NON-NLS-1$
         msg.append("<tr><td>"); //$NON-NLS-1$
@@ -364,7 +366,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.ItemsFound")); //$NON-NLS-1$
         msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(Statistics.get().caseData.getDiscoveredEvidences());
+        msg.append(Statistics.get().getCaseData().getDiscoveredEvidences());
         msg.append("</td></tr>"); //$NON-NLS-1$
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.ItemsProcessed")); //$NON-NLS-1$

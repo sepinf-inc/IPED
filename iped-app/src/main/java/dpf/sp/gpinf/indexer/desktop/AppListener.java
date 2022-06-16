@@ -30,8 +30,8 @@ import javax.swing.JOptionPane;
 
 import org.apache.lucene.search.Query;
 
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import iped.engine.search.LuceneSearchResult;
+import iped.engine.search.MultiSearchResult;
 
 public class AppListener implements ActionListener, MouseListener, ClearFilterListener {
 

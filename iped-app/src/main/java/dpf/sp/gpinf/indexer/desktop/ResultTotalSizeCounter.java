@@ -7,8 +7,8 @@ import javax.swing.SwingUtilities;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped.IItemId;
+import iped.engine.task.index.IndexItem;
 import iped.search.IMultiSearchResult;
 
 public class ResultTotalSizeCounter {

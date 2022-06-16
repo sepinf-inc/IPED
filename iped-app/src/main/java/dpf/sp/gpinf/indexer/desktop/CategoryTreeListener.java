@@ -15,8 +15,8 @@ import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import gpinf.dev.data.Category;
+import iped.engine.data.Category;
+import iped.engine.task.index.IndexItem;
 
 public class CategoryTreeListener implements TreeSelectionListener, TreeExpansionListener, ClearFilterListener {
 

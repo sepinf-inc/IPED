@@ -8,8 +8,8 @@ import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
-import br.gov.pf.labld.graph.ExportLinksQuery;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import iped.engine.graph.ExportLinksQuery;
 
 public class ExportLinksAction extends AbstractAction {
 

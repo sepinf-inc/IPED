@@ -31,16 +31,16 @@ import javax.swing.WindowConstants;
 
 import org.neo4j.graphdb.Node;
 
-import br.gov.pf.labld.graph.DynLabel;
-import br.gov.pf.labld.graph.GraphService;
-import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
-import br.gov.pf.labld.graph.NodeQueryListener;
 import br.gov.pf.labld.graph.desktop.CheckboxListCellRenderer.CheckboxListItem;
 import br.gov.pf.labld.graph.desktop.CheckboxListCellRenderer.CheckboxSelectionMouseAdapter;
-import br.gov.pf.labld.graph.links.SearchLinksQuery;
-import br.gov.pf.labld.graph.links.SearchLinksQueryProvider;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import iped.engine.graph.DynLabel;
+import iped.engine.graph.GraphService;
+import iped.engine.graph.GraphServiceFactoryImpl;
+import iped.engine.graph.NodeQueryListener;
+import iped.engine.graph.links.SearchLinksQuery;
+import iped.engine.graph.links.SearchLinksQueryProvider;
 
 public class SearchLinksDialog extends JDialog {
 

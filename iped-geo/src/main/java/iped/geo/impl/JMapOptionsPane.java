@@ -36,7 +36,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import iped.engine.config.ConfigurationManager;
 import iped.geo.localization.Messages;
 
 public class JMapOptionsPane extends JOptionPane {

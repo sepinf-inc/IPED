@@ -31,13 +31,13 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.desktop.themes.Theme;
 import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
-import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
-import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import iped.IItem;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.IndexTaskConfig;
+import iped.engine.search.SimilarFacesSearch;
+import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 

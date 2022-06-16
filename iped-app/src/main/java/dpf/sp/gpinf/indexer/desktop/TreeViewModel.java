@@ -33,10 +33,10 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
 
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import iped.engine.search.IPEDSearcher;
+import iped.engine.search.LuceneSearchResult;
+import iped.engine.search.MultiSearchResult;
+import iped.engine.task.index.IndexItem;
 
 public class TreeViewModel implements TreeModel {
 

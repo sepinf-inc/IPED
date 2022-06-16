@@ -26,7 +26,7 @@ import javax.swing.UIManager;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
-import dpf.sp.gpinf.indexer.process.IndexItem;
+import iped.engine.task.index.IndexItem;
 
 public class TreeCellRenderer extends DefaultTreeCellRenderer {
 

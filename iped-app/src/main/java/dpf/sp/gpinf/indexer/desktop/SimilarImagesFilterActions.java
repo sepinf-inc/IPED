@@ -16,11 +16,11 @@ import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.filechooser.FileFilter;
 
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
-import gpinf.dev.data.Item;
-import gpinf.similarity.ImageSimilarity;
 import iped.IItemId;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.data.Item;
+import iped.engine.task.similarity.ImageSimilarity;
+import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.util.ExternalImageConverter;
 import iped.util.IOUtil;
 import iped.util.ImageUtil;
