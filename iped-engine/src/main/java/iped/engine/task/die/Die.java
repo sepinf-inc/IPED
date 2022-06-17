@@ -1,5 +1,5 @@
 
-package gpinf.die;
+package iped.engine.task.die;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
