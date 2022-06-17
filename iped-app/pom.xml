@@ -622,7 +622,7 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>dpf.sp.gpinf.indexer.Bootstrap</mainClass>
+                                    <mainClass>iped.app.bootstrap.Bootstrap</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>
@@ -662,7 +662,7 @@
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
-                                    <mainClass>dpf.sp.gpinf.indexer.BootstrapUI</mainClass>
+                                    <mainClass>iped.app.bootstrap.BootstrapUI</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>
