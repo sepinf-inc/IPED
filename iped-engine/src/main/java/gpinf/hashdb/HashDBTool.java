@@ -95,6 +95,7 @@ public class HashDBTool {
     private int totIns, totRem, totUpd, totSkip, totComb, totIgn, totNoProd;
     private boolean dbExists = true, skipOpt, inputFolderUsed;
     private String delimiter;
+    private final Set<String> skipCols = new HashSet<String>();
 
     public static void main(String[] args) {
         HashDBTool tool = new HashDBTool();
@@ -595,6 +596,7 @@ public class HashDBTool {
                     if (col.equalsIgnoreCase(photoDnaPropertyName)) {
                         photoDnaCol = i;
                     }
+                    if (skipCols.contains(col.toLowerCase())) continue;
                     colIdx[i] = getPropertyId(col);
                     propCols[numPropCols++] = i;
                 }
@@ -1329,6 +1331,13 @@ public class HashDBTool {
                 }
                 delimiter = value;
                 i++;
+            } else if (arg.equalsIgnoreCase("-skipCol")) {
+                if (value == null) {
+                    System.out.println("ERROR: -skipCol must be followed by a column name.");
+                    return false;
+                }
+                skipCols.add(value.toLowerCase());
+                i++;
             } else if (arg.equalsIgnoreCase("-replace")) {
                 if (mode != ProcessMode.UNDEFINED) {
                     System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
@@ -1382,14 +1391,15 @@ public class HashDBTool {
         System.out.println();
         System.out.println("Usage: java -jar iped-hashdb.jar -d <input file or folder> -o <output DB file>");
         System.out.println("            [-replace | -replaceAll | -remove | -removeAll] [-noOpt]");
+        System.out.println("            [-delimiter <char>] [-skipCol <column name>]");
         System.out.println();
-        System.out.println("  -d");
+        System.out.println("  -d <input file or folder>");
         System.out.println("    Input files (can be used multiple times). If a folder is used, it processes");
         System.out.println("    all files with '.csv' extension, NSRL or Project Vic files. CSV Input files");
         System.out.println("    should use plain text format, one item per line, with columns separated by");
         System.out.println("    commas. The first line must be a header, defining the columns names. There");
         System.out.println("    must be one or more hash columns and one or more properties columns.");
-        System.out.println("  -o");
+        System.out.println("  -o <output DB file>");
         System.out.println("    Output database file. If it exists, data will be added to (or removed");
         System.out.println("    from) the existing database.");
         System.out.println();
@@ -1412,9 +1422,11 @@ public class HashDBTool {
         System.out.println("  -noOpt");
         System.out.println("    Skip optimizations (reclaim empty space and database analisys) executed");
         System.out.println("    after processing input file(s).");
-        System.out.println("  -delimiter");
+        System.out.println("  -delimiter <char>");
         System.out.println("    Specify the column delimiter used in the CSV files to be imported. Default");
         System.out.println("    delimiter is comma (,).");
+        System.out.println("  -skipCol <column name>");
+        System.out.println("    Skip the specified column when importing a CSV. Can be use multiple times.");
     }
 
     enum ProcessMode {
