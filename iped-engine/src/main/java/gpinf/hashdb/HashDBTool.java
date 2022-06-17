@@ -97,6 +97,7 @@ public class HashDBTool {
     private String delimiter;
     private final Set<String> skipCols = new HashSet<String>();
     private final Map<String, String> renameCols = new HashMap<String, String>();
+    private final Map<String, String> addCols = new HashMap<String, String>();
 
     public static void main(String[] args) {
         HashDBTool tool = new HashDBTool();
@@ -572,6 +573,9 @@ public class HashDBTool {
                 System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
                 return false;
             }
+            header = new ArrayList<String>(header);
+            int orgHdrSize = header.size();
+            header.addAll(addCols.keySet());
             int[] colIdx = new int[header.size()];
             int nsrlProductCodeCol = -1;
             int photoDnaCol = -1;
@@ -607,6 +611,10 @@ public class HashDBTool {
             }
             propCols = Arrays.copyOf(propCols, numPropCols);
             hashCols = Arrays.copyOf(hashCols, numHashCols);
+            String[] fixedValues = new String[header.size() - orgHdrSize];
+            for (int i = orgHdrSize; i < header.size(); i++) {
+                fixedValues[i - orgHdrSize] = addCols.get(header.get(i));
+            }
 
             byte[][] prevHashes = new byte[hashTypes.length][];
             byte[][] hashes = new byte[hashTypes.length][];
@@ -653,7 +661,7 @@ public class HashDBTool {
                     System.arraycopy(hashes, 0, prevHashes, 0, hashes.length);
                 }
                 for (int i : propCols) {
-                    String val = record.get(i).trim();
+                    String val = i >= orgHdrSize ? fixedValues[i - orgHdrSize] : record.get(i).trim();
                     if (!val.isEmpty()) {
                         if (i == photoDnaCol) {
                             if (val.length() == photoDnaHexLen) {
@@ -1103,6 +1111,8 @@ public class HashDBTool {
                 System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
                 return false;
             }
+            header = new ArrayList<String>(header);
+            header.addAll(addCols.keySet());
             boolean hasHash = false;
             boolean hasProperty = false;
             for (String col : header) {
@@ -1354,6 +1364,13 @@ public class HashDBTool {
                 }
                 renameCols.put(value1.toLowerCase(), value2);
                 i += 2;
+            } else if (arg.equalsIgnoreCase("-addCol")) {
+                if (value1 == null || value2 == null) {
+                    System.out.println("ERROR: -addCol must be followed by the column name and its fixed value.");
+                    return false;
+                }
+                addCols.put(value1, value2);
+                i += 2;
             } else if (arg.equalsIgnoreCase("-replace")) {
                 if (mode != ProcessMode.UNDEFINED) {
                     System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
@@ -1409,6 +1426,7 @@ public class HashDBTool {
         System.out.println("            [-replace | -replaceAll | -remove | -removeAll] [-noOpt]");
         System.out.println("            [-delimiter <char>] [-skipCol <column name>]");
         System.out.println("            [-renameCol <current name> <new name>]");
+        System.out.println("            [-addCol <column name> <fixed value>]");
         System.out.println();
         System.out.println("  -d <input file or folder>");
         System.out.println("    Input files (can be used multiple times). If a folder is used, it processes");
@@ -1442,11 +1460,15 @@ public class HashDBTool {
         System.out.println("  -delimiter <char>");
         System.out.println("    Specify the column delimiter used in the CSV files to be imported. Default");
         System.out.println("    delimiter is comma (,).");
+        System.out.println();
+        System.out.println("Optional parameters to modify columns and values when importing CSVs (can be");
+        System.out.println("used multiple times:");
         System.out.println("  -skipCol <column name>");
-        System.out.println("    Skip the specified column when importing a CSV. Can be use multiple times.");
+        System.out.println("    Skip the specified column.");
         System.out.println("  -renameCol <current name> <new name>");
-        System.out.println("    Rename the column the current name to the new, when importing a CSV. Can");
-        System.out.println("    be use multiple times.");
+        System.out.println("    Rename the column the current name to the new.");
+        System.out.println("  -addCol <column name> <fixed value>");
+        System.out.println("    Add a fixed column (for all imported lines), with a given name and value. ");
     }
 
     enum ProcessMode {
