@@ -34,6 +34,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVFormat.Builder;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.sqlite.SQLiteConfig;
@@ -92,6 +93,7 @@ public class HashDBTool {
     private ProcessMode mode = ProcessMode.UNDEFINED;
     private int totIns, totRem, totUpd, totSkip, totComb, totIgn, totNoProd;
     private boolean dbExists = true, skipOpt, inputFolderUsed;
+    private String delimiter;
 
     public static void main(String[] args) {
         HashDBTool tool = new HashDBTool();
@@ -557,7 +559,11 @@ public class HashDBTool {
             } else {
                 in = new BufferedReader(new FileReader(file), 1 << 20);
             }
-            CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build().parse(in);
+            Builder builder = CSVFormat.DEFAULT.builder();
+            if (delimiter != null)
+                builder.setDelimiter(delimiter);
+            CSVParser parser = builder.setHeader().setSkipHeaderRecord(true).build().parse(in);
+            
             List<String> header = new ArrayList<String>(parser.getHeaderNames());
             if (header == null || header.isEmpty()) {
                 System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
@@ -1078,7 +1084,10 @@ public class HashDBTool {
         BufferedReader in = null;
         try {
             in = new BufferedReader(new FileReader(file));
-            CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build().parse(in);
+            Builder builder = CSVFormat.DEFAULT.builder();
+            if (delimiter != null)
+                builder.setDelimiter(delimiter);
+            CSVParser parser = builder.setHeader().setSkipHeaderRecord(true).build().parse(in);
             List<String> header = parser.getHeaderNames();
             if (header == null || header.isEmpty()) {
                 System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
@@ -1305,6 +1314,17 @@ public class HashDBTool {
                     return false;
                 }
                 i++;
+            } else if (arg.equalsIgnoreCase("-delimiter")) {
+                if (value == null) {
+                    System.out.println("ERROR: -delimiter must be followed by the delimiter character.");
+                    return false;
+                }
+                if (delimiter != null) {
+                    System.out.println("ERROR: -delimiter must be used only once.");
+                    return false;
+                }
+                delimiter = value;
+                i++;
             } else if (arg.equalsIgnoreCase("-replace")) {
                 if (mode != ProcessMode.UNDEFINED) {
                     System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
@@ -1388,6 +1408,9 @@ public class HashDBTool {
         System.out.println("  -noOpt");
         System.out.println("    Skip optimizations (reclaim empty space and database analisys) executed");
         System.out.println("    after processing input file(s).");
+        System.out.println("  -delimiter");
+        System.out.println("    Specify the column delimiter used in the CSV files to be imported. Default");
+        System.out.println("    delimiter is comma (,).");
     }
 
     enum ProcessMode {
