@@ -2,10 +2,14 @@ package gpinf.hashdb;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 
 public class HashDB {
     public static final String[] hashTypes = new String[] {"MD5","SHA1","SHA256","SHA512","EDONKEY"};
@@ -123,5 +127,14 @@ public class HashDB {
         Set<String> all = toSet(a);
         all.addAll(toSet(b));
         return toStr(all);
+    }
+    
+    public static String convertHexToBase64(String hex) {
+        try {
+            byte[] bytes = Hex.decodeHex(hex.toCharArray());
+            return Base64.getEncoder().encodeToString(bytes);
+        } catch (DecoderException e) {
+            throw new IllegalArgumentException("Invalid hexadecimal string " + hex, e);
+        }
     }
 }

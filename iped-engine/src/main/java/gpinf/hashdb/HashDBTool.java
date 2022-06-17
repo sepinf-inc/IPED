@@ -73,6 +73,7 @@ public class HashDBTool {
     private static final String vicPrefix = "vic";
     private static final String photoDnaPropertyName = "photoDna";
     private static final int photoDnaBase64Len = 192;    
+    private static final int photoDnaHexLen = 288;    
 
     private final List<File> inputs = new ArrayList<File>();
     private File output;
@@ -649,6 +650,9 @@ public class HashDBTool {
                     String val = record.get(i).trim();
                     if (!val.isEmpty()) {
                         if (i == photoDnaCol) {
+                            if (val.length() == photoDnaHexLen) {
+                                val = HashDB.convertHexToBase64(val);
+                            }
                             if (val.length() != photoDnaBase64Len) {
                                 in.close();
                                 throw new RuntimeException("Record #" + cnt + ": invalid PhotoDna size content:\n" + record);
