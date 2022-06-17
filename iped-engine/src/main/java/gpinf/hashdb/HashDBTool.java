@@ -76,11 +76,10 @@ public class HashDBTool {
     private static final int photoDnaHexLen = 288;
     
     private static final String icsePrefix = "icse";
-    private static final String icseSetPropertyValue = "ICSE";
-    private static final String icseStatusPropertyValue = "pedo";
+    private static final String icseSetPropertyValue = "ICSE"; 
+    private static final String icseStatusPropertyValue = "pedo"; 
     private static final String icseHeaderColumns = "MD5;SHA1;PhotoDNA;Image ID;Is distributed;Victim identified;Offender identified;Series name;Number of submissions;File Available;Media Type;Baseline";
-    private static final String icseHeaderRenamedColumns = ";;" + photoDnaPropertyName
-            + ";ImageID;IsDistributed;VictimIdentified;OffenderIdentified;SeriesName;NumSubmissions;FileAvailable;MediaType;Baseline";
+    private static final String icseHeaderRenamedColumns = ";;;ImageID;IsDistributed;VictimIdentified;OffenderIdentified;SeriesName;NumSubmissions;FileAvailable;MediaType;Baseline";
     private static final String icseFlagColumns = "IsDistributed;VictimIdentified;OffenderIdentified;FileAvailable;Baseline";
     private static final String icseDelimiter = ";";
 
@@ -114,8 +113,12 @@ public class HashDBTool {
         boolean success = tool.run(args);
         tool.finish(success);
     }
+    
+    public HashDBTool() {
+        renameCols.put(photoDnaPropertyName.toLowerCase(), photoDnaPropertyName);        
+    }
 
-    boolean run(String[] args) {
+    public boolean run(String[] args) {
         if (!parseParameters(args)) return false;
         if (!checkInputFiles()) return false;
         if (inputs.isEmpty()) System.exit(0);
@@ -1243,6 +1246,7 @@ public class HashDBTool {
                     renameCols.put(currName.toLowerCase(), icsePrefix + newName);
                 }
             }
+            renameCols.put(photoDnaPropertyName.toLowerCase(), photoDnaPropertyName);
 
             // Add fixed property values
             addCols.put(setPropertyName, icseSetPropertyValue);
