@@ -557,7 +557,7 @@ public class HashDBTool {
             } else {
                 in = new BufferedReader(new FileReader(file), 1 << 20);
             }
-            CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
+            CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build().parse(in);
             List<String> header = new ArrayList<String>(parser.getHeaderNames());
             if (header == null || header.isEmpty()) {
                 System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
@@ -846,7 +846,7 @@ public class HashDBTool {
         BufferedReader in = null;
         try {
             in = new BufferedReader(new FileReader(file), 1 << 20);
-            CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
+            CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build().parse(in);
             List<String> header = parser.getHeaderNames();
             if (header == null || header.isEmpty()) {
                 System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
@@ -1033,7 +1033,7 @@ public class HashDBTool {
             } else {
                 in = new BufferedReader(new FileReader(file));
             }
-            CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
+            CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build().parse(in);
             List<String> header = parser.getHeaderNames();
             if (header == null || header.isEmpty()) {
                 System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
@@ -1078,7 +1078,7 @@ public class HashDBTool {
         BufferedReader in = null;
         try {
             in = new BufferedReader(new FileReader(file));
-            CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
+            CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build().parse(in);
             List<String> header = parser.getHeaderNames();
             if (header == null || header.isEmpty()) {
                 System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
