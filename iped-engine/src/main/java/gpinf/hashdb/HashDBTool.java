@@ -76,10 +76,11 @@ public class HashDBTool {
     private static final int photoDnaHexLen = 288;
     
     private static final String icsePrefix = "icse";
-    private static final String icseSetPropertyValue = "ICSE"; 
-    private static final String icseStatusPropertyValue = "pedo"; 
+    private static final String icseSetPropertyValue = "ICSE";
+    private static final String icseStatusPropertyValue = "pedo";
     private static final String icseHeaderColumns = "MD5;SHA1;PhotoDNA;Image ID;Is distributed;Victim identified;Offender identified;Series name;Number of submissions;File Available;Media Type;Baseline";
-    private static final String icseHeaderRenamedColumns = ";;;ImageID;IsDistributed;VictimIdentified;OffenderIdentified;SeriesName;NumSubmissions;FileAvailable;MediaType;Baseline";
+    private static final String icseHeaderRenamedColumns = ";;" + photoDnaPropertyName
+            + ";ImageID;IsDistributed;VictimIdentified;OffenderIdentified;SeriesName;NumSubmissions;FileAvailable;MediaType;Baseline";
     private static final String icseFlagColumns = "IsDistributed;VictimIdentified;OffenderIdentified;FileAvailable;Baseline";
     private static final String icseDelimiter = ";";
 
