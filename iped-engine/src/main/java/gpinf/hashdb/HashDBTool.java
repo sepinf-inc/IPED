@@ -98,6 +98,7 @@ public class HashDBTool {
     private final Set<String> skipCols = new HashSet<String>();
     private final Map<String, String> renameCols = new HashMap<String, String>();
     private final Map<String, String> addCols = new HashMap<String, String>();
+    private final Map<String, Map<String, String>> mapColValues = new HashMap<String, Map<String, String>>();
 
     public static void main(String[] args) {
         HashDBTool tool = new HashDBTool();
@@ -583,12 +584,16 @@ public class HashDBTool {
             int numPropCols = 0;
             int[] hashCols = new int[header.size()];
             int[] propCols = new int[header.size()];
+            List<Map<String, String>> mapValuesPerCol = mapColValues.isEmpty() ? null : new ArrayList<Map<String, String>>(); 
             for (int i = 0; i < header.size(); i++) {
                 String col = header.get(i);
-                if (skipCols.contains(col.toLowerCase())) continue;
                 if (renameCols.containsKey(col.toLowerCase())) {
                     col = renameCols.get(col.toLowerCase());
                 }
+                if (mapValuesPerCol != null) {
+                    mapValuesPerCol.add(mapColValues.get(col.toLowerCase()));
+                }
+                if (skipCols.contains(col.toLowerCase())) continue;
                 int h = hashType(col);
                 if (h >= 0) {
                     colIdx[i] = h;
@@ -663,6 +668,15 @@ public class HashDBTool {
                 for (int i : propCols) {
                     String val = i >= orgHdrSize ? fixedValues[i - orgHdrSize] : record.get(i).trim();
                     if (!val.isEmpty()) {
+                        if (mapValuesPerCol != null) {
+                            Map<String, String> map = mapValuesPerCol.get(i);
+                            if (map != null) {
+                                String newVal = map.get(val.toLowerCase());
+                                if (newVal != null) {
+                                    val = newVal;
+                                }
+                            }
+                        }
                         if (i == photoDnaCol) {
                             if (val.length() == photoDnaHexLen) {
                                 val = HashDB.convertHexToBase64(val);
@@ -1116,10 +1130,10 @@ public class HashDBTool {
             boolean hasHash = false;
             boolean hasProperty = false;
             for (String col : header) {
-                if (skipCols.contains(col.toLowerCase())) continue;
                 if (renameCols.containsKey(col.toLowerCase())) {
                     col = renameCols.get(col.toLowerCase());
                 }
+                if (skipCols.contains(col.toLowerCase())) continue;
                 if (hashType(col) >= 0) hasHash = true;
                 else hasProperty = true;
             }
@@ -1302,6 +1316,7 @@ public class HashDBTool {
             String arg = args[i];
             String value1 = i == args.length - 1 ? null : args[i + 1];
             String value2 = i >= args.length - 2 ? null : args[i + 2];
+            String value3 = i >= args.length - 3 ? null : args[i + 3];
             if (arg.equalsIgnoreCase("-d")) {
                 if (value1 == null) {
                     System.out.println("ERROR: -d must be followed by a file or a folder.");
@@ -1371,6 +1386,17 @@ public class HashDBTool {
                 }
                 addCols.put(value1, value2);
                 i += 2;
+            } else if (arg.equalsIgnoreCase("-mapValue")) {
+                if (value1 == null || value2 == null || value3 == null) {
+                    System.out.println("ERROR: -mapValue must be followed by a column name, current value and new value.");
+                    return false;
+                }
+                Map<String, String> map = mapColValues.get(value1.toLowerCase());
+                if (map == null) {
+                    mapColValues.put(value1.toLowerCase(), map = new HashMap<String, String>());
+                }
+                map.put(value2.toLowerCase(), value3);
+                i += 3;
             } else if (arg.equalsIgnoreCase("-replace")) {
                 if (mode != ProcessMode.UNDEFINED) {
                     System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
@@ -1424,9 +1450,9 @@ public class HashDBTool {
         System.out.println();
         System.out.println("Usage: java -jar iped-hashdb.jar -d <input file or folder> -o <output DB file>");
         System.out.println("            [-replace | -replaceAll | -remove | -removeAll] [-noOpt]");
-        System.out.println("            [-delimiter <char>] [-skipCol <column name>]");
-        System.out.println("            [-renameCol <current name> <new name>]");
-        System.out.println("            [-addCol <column name> <fixed value>]");
+        System.out.println("            [-delimiter <char>] [-addCol <column name> <fixed value>]");
+        System.out.println("            [-renameCol <current name> <new name>] [-skipCol <column name>]");
+        System.out.println("            [-mapValue <column name> <current value> <new value>]");
         System.out.println();
         System.out.println("  -d <input file or folder>");
         System.out.println("    Input files (can be used multiple times). If a folder is used, it processes");
@@ -1461,14 +1487,18 @@ public class HashDBTool {
         System.out.println("    Specify the column delimiter used in the CSV files to be imported. Default");
         System.out.println("    delimiter is comma (,).");
         System.out.println();
-        System.out.println("Optional parameters to modify columns and values when importing CSVs (can be");
-        System.out.println("used multiple times:");
+        System.out.println("Optional parameters to modify columns and values when importing CSVs. Can be");
+        System.out.println("used multiple times. Column names and values used to find columns and lines");
+        System.out.println("are case insensitive.");
         System.out.println("  -skipCol <column name>");
         System.out.println("    Skip the specified column.");
         System.out.println("  -renameCol <current name> <new name>");
-        System.out.println("    Rename the column the current name to the new.");
+        System.out.println("    Rename the column the current name to the new one.");
         System.out.println("  -addCol <column name> <fixed value>");
-        System.out.println("    Add a fixed column (for all imported lines), with a given name and value. ");
+        System.out.println("    Add a fixed column (for all imported lines), with a given name and value.");
+        System.out.println("  -mapValue <column name> <current value> <new value>");
+        System.out.println("    Replace the current value specified by the new value, when found in the");
+        System.out.println("    specified column.");
     }
 
     enum ProcessMode {
