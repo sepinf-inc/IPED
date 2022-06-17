@@ -81,7 +81,7 @@ public class MetadataPanel extends JPanel
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetadataPanel.class);
 
-    private static final String RES_PATH = "/dpf/sp/gpinf/indexer/desktop/";
+    private static final String RES_PATH = "/" + MetadataPanel.class.getPackageName().replace('.', '/') + '/';
     private static final String SORT_COUNT = Messages.getString("MetadataPanel.Hits"); //$NON-NLS-1$
     private static final String SORT_ALFANUM = Messages.getString("MetadataPanel.AlphaNumeric"); //$NON-NLS-1$
     private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$

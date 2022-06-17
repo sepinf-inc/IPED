@@ -233,7 +233,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     boolean isMultiCase;
     public JLabel status;
 
-    private static final String resPath = "/dpf/sp/gpinf/indexer/desktop/";
+    private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
     final static String FILTRO_TODOS = Messages.getString("App.NoFilter"); //$NON-NLS-1$
     final static String FILTRO_SELECTED = Messages.getString("App.Checked"); //$NON-NLS-1$

@@ -31,7 +31,7 @@ public class Main {
             throws IOException, ParseException {
         // create a resource config that scans for JAX-RS resources and providers
         // in gpinf.api package
-        String resources = "iped.engine.webapi";
+        String resources = Main.class.getPackageName();
         BeanConfig beanConfig = new BeanConfig();
         beanConfig.setVersion(Version.APP_VERSION);
         beanConfig.setSchemes(new String[] { "http" });
