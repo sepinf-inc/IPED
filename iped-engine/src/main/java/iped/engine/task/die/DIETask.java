@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
-import gpinf.die.AbstractDie;
+import gpinf.die.Die;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.CmdLineArgs;
@@ -50,11 +50,6 @@ public class DIETask extends AbstractTask {
      * It uses a binary classifier that returns a double value from 0 (normal image) to 1 (explicit).
      */
     private static RandomForestPredictor predictor;
-
-    /**
-     * Object responsible for extracting features from images.
-     */
-    private static AbstractDie die;
 
     /**
      * Field name used to store the detection result (a score from 1 to 1000, inclusive).
@@ -154,11 +149,6 @@ public class DIETask extends AbstractTask {
                 if (predictor == null)
                     throw new IPEDException("Error loading DIE database file: " + dieDat.getAbsolutePath()); //$NON-NLS-1$
 
-                // Instantiate feature extraction object
-                die = AbstractDie.loadImplementation(dieDat);
-                if (die == null)
-                    throw new IPEDException("Error loading DIE implementation: " + dieDat.getAbsolutePath()); //$NON-NLS-1$
-
                 logger.info("Task enabled."); //$NON-NLS-1$
                 logger.info("Model version: " + predictor.getVersion()); //$NON-NLS-1$
                 logger.info("Trees loaded: " + predictor.size()); //$NON-NLS-1$
@@ -179,7 +169,6 @@ public class DIETask extends AbstractTask {
     public void finish() throws Exception {
         synchronized (finished) {
             if (taskEnabled && !finished.get()) {
-                die = null;
                 predictor = null;
                 long totalImages = totalImagesProcessed.longValue() + totalImagesFailed.longValue();
                 if (totalImages != 0) {
@@ -224,7 +213,7 @@ public class DIETask extends AbstractTask {
                 } else {
                     img = getBufferedImage(evidence);
                 }
-                List<Float> features = die.extractFeatures(img);
+                List<Float> features = Die.extractFeatures(img);
                 if (features != null) {
                     double p = predictor.predict(features);
                     update(evidence, predictionToScore(p));
@@ -251,7 +240,7 @@ public class DIETask extends AbstractTask {
                     List<Double> pvideo = new ArrayList<Double>();
                     if (frames != null) {
                         for (BufferedImage frame : frames) {
-                            List<Float> features = die.extractFeatures(frame);
+                            List<Float> features = Die.extractFeatures(frame);
                             if (features != null) {
                                 double p = predictor.predict(features);
                                 pvideo.add(p);
@@ -353,10 +342,11 @@ public class DIETask extends AbstractTask {
                     IOUtil.closeQuietly(stream);
                 }
             }
+            int size = Die.getExpectedImageSize();
             if (img == null) {
                 BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
-                    img = ImageUtil.getSubSampledImage(stream, die.getExpectedImageSize(), die.getExpectedImageSize());
+                    img = ImageUtil.getSubSampledImage(stream, size, size);
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }
@@ -364,7 +354,7 @@ public class DIETask extends AbstractTask {
             if (img == null) {
                 BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
-                    img = externalImageConverter.getImage(stream, die.getExpectedImageSize(), false, evidence.getLength());
+                    img = externalImageConverter.getImage(stream, size, false, evidence.getLength());
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }
