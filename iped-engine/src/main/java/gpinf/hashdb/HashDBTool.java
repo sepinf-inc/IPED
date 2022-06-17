@@ -96,6 +96,7 @@ public class HashDBTool {
     private boolean dbExists = true, skipOpt, inputFolderUsed;
     private String delimiter;
     private final Set<String> skipCols = new HashSet<String>();
+    private final Map<String, String> renameCols = new HashMap<String, String>();
 
     public static void main(String[] args) {
         HashDBTool tool = new HashDBTool();
@@ -580,6 +581,10 @@ public class HashDBTool {
             int[] propCols = new int[header.size()];
             for (int i = 0; i < header.size(); i++) {
                 String col = header.get(i);
+                if (skipCols.contains(col.toLowerCase())) continue;
+                if (renameCols.containsKey(col.toLowerCase())) {
+                    col = renameCols.get(col.toLowerCase());
+                }
                 int h = hashType(col);
                 if (h >= 0) {
                     colIdx[i] = h;
@@ -596,7 +601,6 @@ public class HashDBTool {
                     if (col.equalsIgnoreCase(photoDnaPropertyName)) {
                         photoDnaCol = i;
                     }
-                    if (skipCols.contains(col.toLowerCase())) continue;
                     colIdx[i] = getPropertyId(col);
                     propCols[numPropCols++] = i;
                 }
@@ -1102,6 +1106,10 @@ public class HashDBTool {
             boolean hasHash = false;
             boolean hasProperty = false;
             for (String col : header) {
+                if (skipCols.contains(col.toLowerCase())) continue;
+                if (renameCols.containsKey(col.toLowerCase())) {
+                    col = renameCols.get(col.toLowerCase());
+                }
                 if (hashType(col) >= 0) hasHash = true;
                 else hasProperty = true;
             }
@@ -1282,13 +1290,14 @@ public class HashDBTool {
         }
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
-            String value = i == args.length - 1 ? null : args[i + 1];
+            String value1 = i == args.length - 1 ? null : args[i + 1];
+            String value2 = i >= args.length - 2 ? null : args[i + 2];
             if (arg.equalsIgnoreCase("-d")) {
-                if (value == null) {
+                if (value1 == null) {
                     System.out.println("ERROR: -d must be followed by a file or a folder.");
                     return false;
                 }
-                File in = new File(value);
+                File in = new File(value1);
                 if (!in.exists()) {
                     System.out.println("ERROR: Input file/folder '" + in + "' not found.");
                     return false;
@@ -1306,7 +1315,7 @@ public class HashDBTool {
                 }
                 i++;
             } else if (arg.equalsIgnoreCase("-o")) {
-                if (value == null) {
+                if (value1 == null) {
                     System.out.println("ERROR: -o must be followed by a file.");
                     return false;
                 }
@@ -1314,14 +1323,14 @@ public class HashDBTool {
                     System.out.println("ERROR: -o must be used only once.");
                     return false;
                 }
-                output = new File(value);
+                output = new File(value1);
                 if (output.exists() && output.isDirectory()) {
                     System.out.println("ERROR: Output must be a file, not a folder.");
                     return false;
                 }
                 i++;
             } else if (arg.equalsIgnoreCase("-delimiter")) {
-                if (value == null) {
+                if (value1 == null) {
                     System.out.println("ERROR: -delimiter must be followed by the delimiter character.");
                     return false;
                 }
@@ -1329,15 +1338,22 @@ public class HashDBTool {
                     System.out.println("ERROR: -delimiter must be used only once.");
                     return false;
                 }
-                delimiter = value;
+                delimiter = value1;
                 i++;
             } else if (arg.equalsIgnoreCase("-skipCol")) {
-                if (value == null) {
+                if (value1 == null) {
                     System.out.println("ERROR: -skipCol must be followed by a column name.");
                     return false;
                 }
-                skipCols.add(value.toLowerCase());
+                skipCols.add(value1.toLowerCase());
                 i++;
+            } else if (arg.equalsIgnoreCase("-renameCol")) {
+                if (value1 == null || value2 == null) {
+                    System.out.println("ERROR: -renameCol must be followed by the current and the new column name.");
+                    return false;
+                }
+                renameCols.put(value1.toLowerCase(), value2);
+                i += 2;
             } else if (arg.equalsIgnoreCase("-replace")) {
                 if (mode != ProcessMode.UNDEFINED) {
                     System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
@@ -1392,6 +1408,7 @@ public class HashDBTool {
         System.out.println("Usage: java -jar iped-hashdb.jar -d <input file or folder> -o <output DB file>");
         System.out.println("            [-replace | -replaceAll | -remove | -removeAll] [-noOpt]");
         System.out.println("            [-delimiter <char>] [-skipCol <column name>]");
+        System.out.println("            [-renameCol <current name> <new name>]");
         System.out.println();
         System.out.println("  -d <input file or folder>");
         System.out.println("    Input files (can be used multiple times). If a folder is used, it processes");
@@ -1427,6 +1444,9 @@ public class HashDBTool {
         System.out.println("    delimiter is comma (,).");
         System.out.println("  -skipCol <column name>");
         System.out.println("    Skip the specified column when importing a CSV. Can be use multiple times.");
+        System.out.println("  -renameCol <current name> <new name>");
+        System.out.println("    Rename the column the current name to the new, when importing a CSV. Can");
+        System.out.println("    be use multiple times.");
     }
 
     enum ProcessMode {
