@@ -330,9 +330,9 @@
     </parsers>
 
     <encodingDetectors>
-        <encodingDetector class="dpf.sp.gpinf.indexer.tika.HtmlEncodingDetector"/>
+        <encodingDetector class="iped.engine.tika.HtmlEncodingDetector"/>
         <encodingDetector class="org.apache.tika.parser.txt.UniversalEncodingDetector"/>
-        <encodingDetector class="dpf.sp.gpinf.indexer.tika.Icu4jEncodingDetector"/>
+        <encodingDetector class="iped.engine.tika.Icu4jEncodingDetector"/>
     </encodingDetectors>
 
 </properties>
