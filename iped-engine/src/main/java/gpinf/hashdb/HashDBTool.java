@@ -73,7 +73,15 @@ public class HashDBTool {
     private static final String vicPrefix = "vic";
     private static final String photoDnaPropertyName = "photoDna";
     private static final int photoDnaBase64Len = 192;    
-    private static final int photoDnaHexLen = 288;    
+    private static final int photoDnaHexLen = 288;
+    
+    private static final String icsePrefix = "icse";
+    private static final String icseSetPropertyValue = "ICSE"; 
+    private static final String icseStatusPropertyValue = "pedo"; 
+    private static final String icseHeaderColumns = "MD5;SHA1;PhotoDNA;Image ID;Is distributed;Victim identified;Offender identified;Series name;Number of submissions;File Available;Media Type;Baseline";
+    private static final String icseHeaderRenamedColumns = ";;;ImageID;IsDistributed;VictimIdentified;OffenderIdentified;SeriesName;NumSubmissions;FileAvailable;MediaType;Baseline";
+    private static final String icseFlagColumns = "IsDistributed;VictimIdentified;OffenderIdentified;FileAvailable;Baseline";
+    private static final String icseDelimiter = ";";
 
     private final List<File> inputs = new ArrayList<File>();
     private File output;
@@ -92,7 +100,7 @@ public class HashDBTool {
     private final Map<String, Integer> propertyNameToId = new HashMap<String, Integer>();
     private Map<Integer, String> nsrlProdCodeToName;
     private ProcessMode mode = ProcessMode.UNDEFINED;
-    private int totIns, totRem, totUpd, totSkip, totComb, totIgn, totNoProd;
+    private int totIns, totRem, totUpd, totSkip, totComb, totIgn, totNoProd, totInvHash;
     private boolean dbExists = true, skipOpt, inputFolderUsed;
     private String delimiter;
     private final Set<String> skipCols = new HashSet<String>();
@@ -538,10 +546,25 @@ public class HashDBTool {
 
     private boolean readFile(File file) {
         FileType type = getFileType(file);
-        totIns = totRem = totUpd = totSkip = totComb = totIgn = totNoProd = 0;
+        totIns = totRem = totUpd = totSkip = totComb = totIgn = totNoProd = totInvHash = 0;
         System.out.println("\nReading " + (type == FileType.INPUT ? "" : type.toString() + " ") + "file " + file.getPath() + "...");
         if (type == FileType.NSRL_PROD) return readNSRLProd(file);
         if (type == FileType.PROJECT_VIC) return readProjectVIC(file);
+        
+        String savedDelimiter = null;
+        Set<String> savedSkipCols = null;
+        Map<String, String> savedRenameCols = null;
+        Map<String, String> savedAddCols = null;
+        Map<String, Map<String, String>> savedMapColValues = null;
+        if (type == FileType.ICSE) {
+            savedDelimiter = delimiter;
+            savedSkipCols = new HashSet<String>(skipCols);
+            savedRenameCols = new HashMap<String, String>(renameCols);
+            savedAddCols = new HashMap<String, String>(addCols);
+            savedMapColValues = new HashMap<String, Map<String, String>>(mapColValues);
+            if (!setupIcse(file)) return false;
+        }
+            
         BufferedReader in = null;
         ZipInputStream zipInput = null;
         try {
@@ -633,14 +656,19 @@ public class HashDBTool {
                 CSVRecord record = it.next();
                 cnt++;
                 if ((cnt & 8191) == 0) updatePercentage(record.getCharacterPosition() / (double) len);
-                if (!record.isConsistent()) {
+                if (type != FileType.ICSE && !record.isConsistent()) {
                     in.close();
+                    System.out.println();
                     throw new RuntimeException("Record #" + cnt + ": number of columns does not match header columns " + record.size() + "/" + numCols + ".\n" + record.toString());
                 }
                 Arrays.fill(hashes, null);
                 for (int i : hashCols) {
                     int idx = colIdx[i];
-                    hashes[idx] = hashStrToBytes(record.get(i).trim(), hashBytesLen[idx]);
+                    byte[] b = hashes[idx] = hashStrToBytes(record.get(i).trim(), hashBytesLen[idx]);
+                    if (b != null && b.length == 0) {
+                        totInvHash++;
+                        hashes[idx] = null;
+                    }
                 }
                 boolean sameHashes = true;
                 for (int i = 0; i < hashes.length; i++) {
@@ -660,6 +688,7 @@ public class HashDBTool {
                 } else {
                     if (prevRecord != null && !process(prevHashes, properties)) {
                         in.close();
+                        System.out.println();
                         throw new RuntimeException("Record #" + (cnt - 1) + ": invalid content:\n" + prevRecord);
                     }
                     properties.clear();
@@ -683,6 +712,7 @@ public class HashDBTool {
                             }
                             if (val.length() != photoDnaBase64Len) {
                                 in.close();
+                                System.out.println();
                                 throw new RuntimeException("Record #" + cnt + ": invalid PhotoDna size content:\n" + record);
                             }
                         } else if (i == nsrlProductCodeCol) {
@@ -704,6 +734,7 @@ public class HashDBTool {
             }
             if (!process(prevHashes, properties)) {
                 in.close();
+                System.out.println();
                 throw new RuntimeException("Record #" + (cnt - 1) + ": invalid content:\n" + prevRecord);
             }
             updatePercentage(-1);
@@ -720,6 +751,18 @@ public class HashDBTool {
             try {
                 if (zipInput != null) zipInput.close();
             } catch (Exception e) {}
+
+            if (type == FileType.ICSE) {
+                delimiter = savedDelimiter;
+                skipCols.clear();
+                skipCols.addAll(savedSkipCols);
+                renameCols.clear();
+                renameCols.putAll(savedRenameCols);
+                addCols.clear();
+                addCols.putAll(savedAddCols);
+                mapColValues.clear();
+                mapColValues.putAll(savedMapColValues);
+            }
         }
         return true;
     }
@@ -937,6 +980,7 @@ public class HashDBTool {
         if (totIgn > 0) System.out.println(totIgn + " zero length hash" + (totIgn == 1 ? " was" : "es were") + " ignored.");
         if (totComb > 0) System.out.println(totComb + " record" + (totComb == 1 ? "" : "s") + " combined.");
         if (totNoProd > 0) System.out.println("WARNING: " + totNoProd + " NSRL record" + (totNoProd == 1 ? "" : "s") + " with invalid product code.");
+        if (totInvHash > 0) System.out.println("WARNING: " + totInvHash + " record" + (totInvHash == 1 ? "" : "s") + " with invalid hash length ignored.");
     }
 
     private static void updatePercentage(double pct) {
@@ -982,8 +1026,8 @@ public class HashDBTool {
                 if (!checkNSRLHeader(prodFile, FileType.NSRL_PROD)) return false;
                 //Insert NSRL Product file before the main file. 
                 inputs.add(i++, prodFile);
-            } else if (type == FileType.CSV || type == FileType.INPUT) {
-                if (!checkInputHeader(file)) return false;
+            } else if (type == FileType.CSV || type == FileType.INPUT || type == FileType.ICSE) {
+                if (!checkInputHeader(file, type)) return false;
             } else if (type == FileType.PROJECT_VIC) {
                 //Identification was based on its content (plus file extension) 
             } else {
@@ -1019,7 +1063,7 @@ public class HashDBTool {
         if (name.equalsIgnoreCase(nsrlMainFileName)) return FileType.NSRL_MAIN;
         if (name.equalsIgnoreCase(nsrlMainZipFileName)) return FileType.NSRL_MAIN_ZIP;
         if (name.equalsIgnoreCase(nsrlProdFileName)) return FileType.NSRL_PROD;
-        if (name.endsWith(".csv")) return FileType.CSV;
+        if (name.endsWith(".csv")) return isIcseCsv(file) ? FileType.ICSE : FileType.CSV;
         if (name.endsWith(".json") && isProjectVicJson(file)) return FileType.PROJECT_VIC;
         if (!inputFolderUsed) return FileType.INPUT;
         return FileType.UNKNOWN;
@@ -1112,13 +1156,16 @@ public class HashDBTool {
         return true;
     }
 
-    private boolean checkInputHeader(File file) {
+    private boolean checkInputHeader(File file, FileType type) {
         BufferedReader in = null;
         try {
             in = new BufferedReader(new FileReader(file));
             Builder builder = CSVFormat.DEFAULT.builder();
-            if (delimiter != null)
+            if (type == FileType.ICSE) {
+                builder.setDelimiter(icseDelimiter);
+            } else if (delimiter != null) {
                 builder.setDelimiter(delimiter);
+            }
             CSVParser parser = builder.setHeader().setSkipHeaderRecord(true).build().parse(in);
             List<String> header = parser.getHeaderNames();
             if (header == null || header.isEmpty()) {
@@ -1155,6 +1202,113 @@ public class HashDBTool {
             } catch (Exception e) {}
         }
         return true;
+    }
+
+    private boolean setupIcse(File file) {
+        BufferedReader in = null;
+        try {
+            in = new BufferedReader(new FileReader(file));
+            Builder builder = CSVFormat.DEFAULT.builder();
+            builder.setDelimiter(icseDelimiter);
+            CSVParser parser = builder.setHeader().setSkipHeaderRecord(true).build().parse(in);
+            List<String> header = parser.getHeaderNames();
+            String[] cols = icseHeaderColumns.split(icseDelimiter);
+
+            // Set ICSE delimiter
+            delimiter = icseDelimiter;
+
+            // Ignore all columns not in icseHeaderColumns
+            skipCols.clear();
+            for (String h : header) {
+                boolean found = false;
+                for (String col : cols) {
+                    if (col.equalsIgnoreCase(h)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    skipCols.add(h.toLowerCase());
+                }
+            }
+
+            // Rename columns
+            String[] renCols = icseHeaderRenamedColumns.split(icseDelimiter);
+            renameCols.clear();
+            for (int i = 0; i < cols.length; i++) {
+                String currName = cols[i];
+                String newName = renCols[i];
+                if (!newName.isEmpty()) {
+                    renameCols.put(currName.toLowerCase(), icsePrefix + newName);
+                }
+            }
+
+            // Add fixed property values
+            addCols.put(setPropertyName, icseSetPropertyValue);
+            addCols.put(statusPropertyName, icseStatusPropertyValue);
+
+            // Map property values for flag columns
+            String[] falseValues = { "n", "no", "f", "false" };
+            String[] trueValues = { "y", "yes", "t", "true" };
+            Map<String, String> flagMap = new HashMap<String, String>();
+            for (String v : falseValues) {
+                flagMap.put(v, "false");
+            }
+            for (String v : trueValues) {
+                flagMap.put(v, "true");
+            }
+            mapColValues.clear();
+            String[] flagCols = icseFlagColumns.split(icseDelimiter);
+            for (String col : flagCols) {
+                mapColValues.put((icsePrefix + col).toLowerCase(), flagMap);
+            }
+
+            return true;
+        } catch (Exception e) {
+            System.out.println("Error reading file: " + file);
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (in != null)
+                    in.close();
+            } catch (Exception e) {
+            }
+        }
+    }
+    
+    private boolean isIcseCsv(File file) {
+        BufferedReader in = null;
+        try {
+            in = new BufferedReader(new FileReader(file));
+            Builder builder = CSVFormat.DEFAULT.builder();
+            builder.setDelimiter(icseDelimiter);
+            CSVParser parser = builder.setHeader().setSkipHeaderRecord(true).build().parse(in);
+            List<String> header = parser.getHeaderNames();
+            String[] cols = icseHeaderColumns.split(icseDelimiter);
+            if (header != null && header.size() >= cols.length) {
+                for (String col : cols) {
+                    boolean found = false;
+                    for (String h : header) {
+                        if (col.equalsIgnoreCase(h)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                        return false;
+                }
+                return true;
+            }
+        } catch (Exception e) {
+        } finally {
+            try {
+                if (in != null)
+                    in.close();
+            } catch (Exception e) {
+            }
+        }
+        return false;
     }
 
     private void deleteUnused() throws SQLException {
@@ -1446,7 +1600,8 @@ public class HashDBTool {
         System.out.println("    Allows importing CSV files with a set of hashes and associated properties");
         System.out.println("    into a database that can be later used during IPED case processing, to");
         System.out.println("    search for these hashes and add their properties to the case item when a");
-        System.out.println("    hit is found. NIST NSRL files and Project VIC JSON can also be imported.");
+        System.out.println("    hit is found. NIST NSRL files, Project VIC JSON and INTERPOL ICSE");
+        System.out.println("    database CSV can also be imported directly.");
         System.out.println();
         System.out.println("Usage: java -jar iped-hashdb.jar -d <input file or folder> -o <output DB file>");
         System.out.println("            [-replace | -replaceAll | -remove | -removeAll] [-noOpt]");
@@ -1456,10 +1611,11 @@ public class HashDBTool {
         System.out.println();
         System.out.println("  -d <input file or folder>");
         System.out.println("    Input files (can be used multiple times). If a folder is used, it processes");
-        System.out.println("    all files with '.csv' extension, NSRL or Project Vic files. CSV Input files");
+        System.out.println("    all files with '.csv' extension, NSRL or Project Vic files. CSV input files");
         System.out.println("    should use plain text format, one item per line, with columns separated by");
-        System.out.println("    commas. The first line must be a header, defining the columns names. There");
-        System.out.println("    must be one or more hash columns and one or more properties columns.");
+        System.out.println("    commas (or another character specified by '-delimiter' parameter). The first");
+        System.out.println("    line must be a header, defining the columns names. There must be one or more");
+        System.out.println("    hash columns and one or more properties columns.");
         System.out.println("  -o <output DB file>");
         System.out.println("    Output database file. If it exists, data will be added to (or removed");
         System.out.println("    from) the existing database.");
@@ -1487,9 +1643,9 @@ public class HashDBTool {
         System.out.println("    Specify the column delimiter used in the CSV files to be imported. Default");
         System.out.println("    delimiter is comma (,).");
         System.out.println();
-        System.out.println("Optional parameters to modify columns and values when importing CSVs. Can be");
-        System.out.println("used multiple times. Column names and values used to find columns and lines");
-        System.out.println("are case insensitive.");
+        System.out.println("Optional parameters to modify columns and values when importing CSVs (not used");
+        System.out.println("for ProjectVIC, NSRL and ICSE. Can be used multiple times. Column names and");
+        System.out.println("values used to find columns and lines are case insensitive.");
         System.out.println("  -skipCol <column name>");
         System.out.println("    Skip the specified column.");
         System.out.println("  -renameCol <current name> <new name>");
@@ -1506,6 +1662,6 @@ public class HashDBTool {
     }
 
     enum FileType {
-        CSV, NSRL_MAIN, NSRL_MAIN_ZIP, NSRL_PROD, PROJECT_VIC, UNKNOWN, INPUT;
+        CSV, NSRL_MAIN, NSRL_MAIN_ZIP, NSRL_PROD, PROJECT_VIC, UNKNOWN, INPUT, ICSE;
     }
 }

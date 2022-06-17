@@ -34,12 +34,12 @@ public class HashDB {
         return ret;
     }
 
-    public static byte[] hashStrToBytes(String s, int len) throws RuntimeException {
+    public static byte[] hashStrToBytes(String s, int len) {
         if (s.length() == 0) {
             return null;
         }
         if (s.length() != len << 1) {
-            throw new RuntimeException("Invalid hash length: " + s);
+            return new byte[0];
         }
         return hashStrToBytes(s);
     }
