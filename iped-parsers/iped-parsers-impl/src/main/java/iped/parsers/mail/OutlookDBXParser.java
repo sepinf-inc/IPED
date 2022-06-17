@@ -31,7 +31,7 @@ public class OutlookDBXParser extends AbstractParser {
 
     public static final String DBX_PARSER_IMPL_SYS_PROP = "dbxParserImpl"; //$NON-NLS-1$
 
-    private static final String DEFAULT_DBX_PARSER_IMPL = "iped.parsers.standard.OutlookDBXParserImpl"; //$NON-NLS-1$
+    private static final String DEFAULT_DBX_PARSER_IMPL = "dpf.sp.gpinf.indexer.parsers.OutlookDBXParserImpl"; //$NON-NLS-1$
 
     private Parser parserImpl;
 

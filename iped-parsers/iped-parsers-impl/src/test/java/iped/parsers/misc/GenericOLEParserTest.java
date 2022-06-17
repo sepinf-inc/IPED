@@ -2,22 +2,57 @@ package iped.parsers.misc;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.misc.GenericOLEParser;
 import iped.parsers.util.AbstractPkgTest;
 
 public class GenericOLEParserTest extends AbstractPkgTest {
 
+    protected ParseContext oleContext;
+    protected EmbeddedOLEParser oletracker;
+
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
+    }
+
+    protected void setUp() throws Exception {
+        super.setUp();
+        oletracker = new EmbeddedOLEParser();
+        oleContext = new ParseContext();
+        oleContext.set(Parser.class, oletracker);
+    }
+
+    @SuppressWarnings("serial")
+    protected static class EmbeddedOLEParser extends AbstractParser {
+
+        protected List<String> documentfolder = new ArrayList<String>();
+
+        public Set<MediaType> getSupportedTypes(ParseContext context) {
+            return (new AutoDetectParser()).getSupportedTypes(context);
+        }
+
+        public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+                throws IOException, SAXException, TikaException {
+
+            if (metadata.get(TikaCoreProperties.TITLE) != null)
+                documentfolder.add(metadata.get(TikaCoreProperties.TITLE));
+        }
+
     }
 
     @Test

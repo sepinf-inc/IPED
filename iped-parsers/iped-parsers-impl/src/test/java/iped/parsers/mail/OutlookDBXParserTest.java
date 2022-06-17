@@ -10,7 +10,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.mail.OutlookDBXParser;
 import iped.parsers.util.AbstractPkgTest;
 
 public class OutlookDBXParserTest extends AbstractPkgTest {

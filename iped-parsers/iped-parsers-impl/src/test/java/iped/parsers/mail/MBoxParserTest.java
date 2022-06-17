@@ -1,23 +1,68 @@
 package iped.parsers.mail;
 
+import static org.apache.commons.codec.digest.MessageDigestAlgorithms.MD5;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.mail.MboxParser;
 import iped.parsers.util.AbstractPkgTest;
+import iped.properties.ExtraProperties;
 
 public class MBoxParserTest extends AbstractPkgTest {
 
+    protected EmbeddedMboxParser mboxtracker;
+    protected ParseContext mboxContext;
+
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
+    }
+
+    public void setUp() throws Exception {
+        super.setUp();
+        mboxtracker = new EmbeddedMboxParser();
+        mboxContext = new ParseContext();
+        mboxContext.set(Parser.class, mboxtracker);
+    }
+
+    @SuppressWarnings("serial")
+    protected static class EmbeddedMboxParser extends AbstractParser {
+        protected List<String> messagesubject = new ArrayList<String>();
+        protected List<String> contenttype = new ArrayList<String>();
+        protected List<String> contentmd5 = new ArrayList<String>();
+
+        public Set<MediaType> getSupportedTypes(ParseContext context) {
+            return (new AutoDetectParser()).getSupportedTypes(context);
+        }
+
+        public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+                throws IOException, SAXException, TikaException {
+
+            String hdigest = new DigestUtils(MD5).digestAsHex(stream);
+            if (metadata.get(ExtraProperties.MESSAGE_SUBJECT) != null)
+                messagesubject.add(metadata.get(ExtraProperties.MESSAGE_SUBJECT));
+            if (metadata.get(HttpHeaders.CONTENT_TYPE) != null)
+                contenttype.add(metadata.get(HttpHeaders.CONTENT_TYPE));
+            contentmd5.add(hdigest.toUpperCase());
+
+        }
+
     }
 
     @Test
