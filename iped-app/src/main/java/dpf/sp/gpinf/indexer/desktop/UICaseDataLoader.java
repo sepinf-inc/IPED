@@ -30,13 +30,13 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.Manager;
 import iped.engine.search.IPEDMultiSource;
 import iped.engine.search.IPEDSource;
 import iped.engine.task.ParsingTask;
 import iped.engine.task.SignatureTask;
+import iped.parsers.standard.StandardParser;
 
 public class UICaseDataLoader extends SwingWorker<Void, Integer> {
 
@@ -104,7 +104,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
 
                 SignatureTask.installCustomSignatures();
                 ParsingTask.setupParsingOptions(ConfigurationManager.get());
-                IndexerDefaultParser autoParser = new IndexerDefaultParser();
+                StandardParser autoParser = new StandardParser();
                 App.get().setAutoParser(autoParser);
 
                 FileProcessor exibirAjuda = new FileProcessor(-1, false);

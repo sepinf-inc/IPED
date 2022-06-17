@@ -6,7 +6,7 @@ import java.nio.charset.Charset;
 
 import org.apache.tika.metadata.Metadata;
 
-import dpf.sp.gpinf.indexer.parsers.util.Util;
+import iped.parsers.util.Util;
 
 public class HtmlEncodingDetector extends org.apache.tika.parser.html.HtmlEncodingDetector {
 

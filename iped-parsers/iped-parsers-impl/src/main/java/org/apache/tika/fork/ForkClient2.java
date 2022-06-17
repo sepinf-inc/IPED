@@ -52,9 +52,9 @@ import org.apache.tika.utils.ProcessUtils;
 import org.apache.tika.utils.SystemUtils;
 import org.xml.sax.ContentHandler;
 
-import dpf.sp.gpinf.indexer.parsers.util.ComputeThumb;
-import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
+import iped.parsers.util.ComputeThumb;
+import iped.parsers.util.ItemInfo;
+import iped.parsers.util.OCROutputFolder;
 
 class ForkClient2 {
     private static AtomicInteger CLIENT_COUNTER = new AtomicInteger(0);

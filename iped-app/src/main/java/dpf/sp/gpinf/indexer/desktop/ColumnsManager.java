@@ -41,8 +41,6 @@ import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import iped.IItemId;
 import iped.engine.config.AnalysisConfig;
@@ -58,6 +56,8 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.task.regex.RegexTask;
 import iped.engine.util.Util;
 import iped.localization.LocalizedProperties;
+import iped.parsers.ocr.OCRParser;
+import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.util.StringUtil;
@@ -104,7 +104,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
             IndexItem.PARENTIDs, IndexItem.SUBITEMID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
             IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
-            IndexerDefaultParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT, ExtraProperties.CSAM_HASH_HITS,
+            StandardParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT, ExtraProperties.CSAM_HASH_HITS,
             ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS,
             ExtraProperties.LINKED_ITEMS, ExtraProperties.TIKA_PARSER_USED, IndexItem.META_ADDRESS,
             IndexItem.MFT_SEQUENCE, IndexItem.FILESYSTEM_ID };

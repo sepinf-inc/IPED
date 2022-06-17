@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.inc.sepinf.python.PythonParser;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
@@ -18,6 +17,7 @@ import iped.engine.config.LocalConfig;
 import iped.engine.data.CaseData;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IPEDSource;
+import iped.parsers.python.PythonParser;
 import iped.util.ImageUtil;
 import jep.Jep;
 import jep.JepException;

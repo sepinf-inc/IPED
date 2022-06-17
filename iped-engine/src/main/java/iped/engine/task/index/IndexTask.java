@@ -21,7 +21,6 @@ import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.CmdLineArgs;
@@ -39,6 +38,7 @@ import iped.engine.task.ParsingTask;
 import iped.engine.task.SkipCommitedTask;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
+import iped.parsers.standard.StandardParser;
 import iped.util.IOUtil;
 
 /**
@@ -77,7 +77,7 @@ public class IndexTask extends AbstractTask {
         return contentField;
     }
 
-    private IndexerDefaultParser autoParser;
+    private StandardParser autoParser;
 
     private IndexTaskConfig indexConfig;
 
@@ -257,7 +257,7 @@ public class IndexTask extends AbstractTask {
         IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
         loadExtraAttributes();
 
-        this.autoParser = new IndexerDefaultParser();
+        this.autoParser = new StandardParser();
 
     }
 

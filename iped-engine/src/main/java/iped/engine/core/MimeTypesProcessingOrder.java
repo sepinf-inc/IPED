@@ -9,17 +9,17 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
-import dpf.ap.gpinf.telegramextractor.TelegramParser;
-import dpf.inc.sepinf.UsnJrnl.UsnJrnlParser;
-import dpf.inc.sepinf.python.PythonParser;
-import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
-import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
-import dpf.mt.gpinf.skype.parser.SkypeParser;
-import dpf.sp.gpinf.indexer.parsers.AresParser;
-import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
-import dpf.sp.gpinf.indexer.parsers.PartMetParser;
-import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
-import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
+import iped.parsers.ares.AresParser;
+import iped.parsers.emule.KnownMetParser;
+import iped.parsers.emule.PartMetParser;
+import iped.parsers.jdbc.SQLite3Parser;
+import iped.parsers.python.PythonParser;
+import iped.parsers.shareaza.ShareazaLibraryDatParser;
+import iped.parsers.skype.SkypeParser;
+import iped.parsers.telegram.TelegramParser;
+import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.usnjrnl.UsnJrnlParser;
+import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.MediaTypes;
 
 /**

@@ -67,7 +67,6 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.Pragma;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
-import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import iped.ICaseData;
 import iped.IHashValue;
 import iped.IItem;
@@ -88,6 +87,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.exception.ZipBombException;
 import iped.io.SeekableInputStream;
+import iped.parsers.util.ExportFolder;
 import iped.util.FileInputStreamFactory;
 import iped.util.HashValue;
 import iped.util.IOUtil;

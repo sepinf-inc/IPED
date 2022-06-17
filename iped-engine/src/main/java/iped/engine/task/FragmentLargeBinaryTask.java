@@ -3,7 +3,6 @@ package iped.engine.task;
 import java.util.Arrays;
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
@@ -11,6 +10,7 @@ import iped.engine.config.SplitLargeBinaryConfig;
 import iped.engine.data.Item;
 import iped.engine.datasource.SleuthkitReader;
 import iped.engine.util.TextCache;
+import iped.parsers.standard.StandardParser;
 
 /**
  * Breaks large binary files (indexed by strings) into smaller pieces to be
@@ -22,7 +22,7 @@ import iped.engine.util.TextCache;
 public class FragmentLargeBinaryTask extends BaseCarveTask {
 
     private SplitLargeBinaryConfig splitConfig;
-    private IndexerDefaultParser autoParser;
+    private StandardParser autoParser;
 
     @Override
     public List<Configurable<?>> getConfigurables() {
@@ -32,7 +32,7 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         splitConfig = configurationManager.findObject(SplitLargeBinaryConfig.class);
-        autoParser = new IndexerDefaultParser();
+        autoParser = new StandardParser();
     }
 
     @Override

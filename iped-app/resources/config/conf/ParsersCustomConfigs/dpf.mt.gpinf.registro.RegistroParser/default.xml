@@ -1,7 +1,7 @@
 <registryparserconfig>
 
 <registryKeyParsers>
-	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.HtmlKeyParser">
+	<registryKeyParser class="iped.parsers.registry.keys.HtmlKeyParser">
 		<key name="ROOT/Microsoft/Windows NT/CurrentVersion/"/>
 		<key name="ROOT/Microsoft/Windows NT/CurrentVersion/ProfileList/*"/>
 		<key name="ROOT/Microsoft/Windows NT/CurrentVersion/NetworkCards"/>

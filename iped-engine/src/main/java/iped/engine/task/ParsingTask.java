@@ -55,30 +55,6 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.ap.gpinf.telegramextractor.TelegramParser;
-import dpf.inc.sepinf.python.PythonParser;
-import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
-import dpf.sp.gpinf.indexer.parsers.EDBParser;
-import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
-import dpf.sp.gpinf.indexer.parsers.MultipleParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
-import dpf.sp.gpinf.indexer.parsers.PackageParser;
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
-import dpf.sp.gpinf.indexer.parsers.RegistryParser;
-import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
-import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
-import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
-import dpf.sp.gpinf.indexer.parsers.util.ComputeThumb;
-import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
-import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
-import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
-import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
-import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
-import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import iped.IItem;
 import iped.IItemBase;
 import iped.configuration.Configurable;
@@ -109,6 +85,30 @@ import iped.engine.util.TextCache;
 import iped.engine.util.Util;
 import iped.exception.ZipBombException;
 import iped.io.IStreamSource;
+import iped.parsers.browsers.IndexDatParser;
+import iped.parsers.compress.PackageParser;
+import iped.parsers.compress.SevenZipParser;
+import iped.parsers.external.ExternalParser;
+import iped.parsers.external.ExternalParsersFactory;
+import iped.parsers.mail.LibpffPSTParser;
+import iped.parsers.misc.EDBParser;
+import iped.parsers.misc.MultipleParser;
+import iped.parsers.misc.PDFTextParser;
+import iped.parsers.ocr.OCRParser;
+import iped.parsers.python.PythonParser;
+import iped.parsers.registry.RegRipperParser;
+import iped.parsers.standard.StandardParser;
+import iped.parsers.standard.RawStringParser;
+import iped.parsers.telegram.TelegramParser;
+import iped.parsers.util.ComputeThumb;
+import iped.parsers.util.EmbeddedItem;
+import iped.parsers.util.EmbeddedParent;
+import iped.parsers.util.IgnoreCorruptedCarved;
+import iped.parsers.util.ItemInfo;
+import iped.parsers.util.MetadataUtil;
+import iped.parsers.util.OCROutputFolder;
+import iped.parsers.util.PDFToImage;
+import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -161,7 +161,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private volatile int depth = 0;
     private Map<Object, ParentInfo> idToItemMap = new HashMap<>();
     private int numSubitems = 0;
-    private IndexerDefaultParser autoParser;
+    private StandardParser autoParser;
 
     private static Set<MediaType> getTypesToCheckZipbomb() {
         HashSet<MediaType> set = new HashSet<>();
@@ -185,12 +185,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         // no op
     }
 
-    public ParsingTask(IItem evidence, IndexerDefaultParser parser) {
+    public ParsingTask(IItem evidence, StandardParser parser) {
         this.evidence = evidence;
         this.autoParser = parser;
     }
 
-    public ParsingTask(Worker worker, IndexerDefaultParser parser) {
+    public ParsingTask(Worker worker, StandardParser parser) {
         this.setWorker(worker);
         this.autoParser = parser;
     }
@@ -260,10 +260,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, evidence.getName());
         if (evidence.getMediaType() != null) {
             metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
-            metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
+            metadata.set(StandardParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
         }
         if (evidence.isTimedOut()) {
-            metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true"); //$NON-NLS-1$
+            metadata.set(StandardParser.INDEXER_TIMEOUT, "true"); //$NON-NLS-1$
         }
     }
 
@@ -308,7 +308,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 .findObject(SplitLargeBinaryConfig.class);
         if (((Item) evidence).getTextCache() == null
                 && ((evidence.getLength() == null || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
-                        || IndexerDefaultParser.isSpecificParser(parser))) {
+                        || StandardParser.isSpecificParser(parser))) {
             try {
                 depth++;
                 ParsingTask task = new ParsingTask(worker, autoParser);
@@ -342,7 +342,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             return parser.getClass().getSimpleName();
     }
 
-    public static boolean hasSpecificParser(IndexerDefaultParser autoParser, IItem evidence) {
+    public static boolean hasSpecificParser(StandardParser autoParser, IItem evidence) {
         return autoParser.hasSpecificParser(evidence.getMetadata());
     }
 
@@ -416,9 +416,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private final void handleMetadata(IItem evidence) {
         // Ajusta metadados:
         Metadata metadata = evidence.getMetadata();
-        if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
+        if (metadata.get(StandardParser.ENCRYPTED_DOCUMENT) != null) {
             evidence.setExtraAttribute(ParsingTask.ENCRYPTED, "true"); //$NON-NLS-1$
-            metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
+            metadata.remove(StandardParser.ENCRYPTED_DOCUMENT);
         }
 
         String value = metadata.get(OCRParser.OCR_CHAR_COUNT);
@@ -446,7 +446,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         }
 
         String prevMediaType = evidence.getMediaType().toString();
-        String parsedMediaType = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+        String parsedMediaType = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
         if (!prevMediaType.equals(parsedMediaType)) {
             evidence.setMediaType(MediaType.parse(parsedMediaType));
         }
@@ -564,7 +564,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             subItem.setMetadata(metadata);
 
             boolean updateInputStream = false;
-            String contentTypeStr = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+            String contentTypeStr = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
             if (contentTypeStr != null) {
                 MediaType type = MediaType.parse(contentTypeStr);
                 subItem.setMediaType(type);
@@ -762,7 +762,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         setupParsingOptions(configurationManager);
 
-        this.autoParser = new IndexerDefaultParser();
+        this.autoParser = new StandardParser();
 
     }
 
@@ -789,12 +789,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         ExternalParsersConfig extParsersConfig = configurationManager.findObject(ExternalParsersConfig.class);
         System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
         System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, extParsersConfig.getTmpConfigFilePath());
-        System.setProperty(IndexerDefaultParser.FALLBACK_PARSER_PROP, String.valueOf(parsingConfig.isParseUnknownFiles()));
-        System.setProperty(IndexerDefaultParser.ERROR_PARSER_PROP, String.valueOf(parsingConfig.isParseCorruptedFiles()));
-        System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP,
+        System.setProperty(StandardParser.FALLBACK_PARSER_PROP, String.valueOf(parsingConfig.isParseUnknownFiles()));
+        System.setProperty(StandardParser.ERROR_PARSER_PROP, String.valueOf(parsingConfig.isParseCorruptedFiles()));
+        System.setProperty(StandardParser.ENTROPY_TEST_PROP,
                 String.valueOf(configurationManager.getEnableTaskProperty(EntropyTask.ENABLE_PARAM)));
-        System.setProperty(PDFOCRTextParser.SORT_PDF_CHARS, String.valueOf(parsingConfig.isSortPDFChars()));
-        System.setProperty(PDFOCRTextParser.PROCESS_INLINE_IMAGES, String.valueOf(parsingConfig.isProcessImagesInPDFs()));
+        System.setProperty(PDFTextParser.SORT_PDF_CHARS, String.valueOf(parsingConfig.isSortPDFChars()));
+        System.setProperty(PDFTextParser.PROCESS_INLINE_IMAGES, String.valueOf(parsingConfig.isProcessImagesInPDFs()));
         System.setProperty(RawStringParser.MIN_STRING_SIZE, String.valueOf(parsingConfig.getMinRawStringSize()));
         System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/conf/parsers");
 
@@ -807,7 +807,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
         if (localConfig.getRegRipperFolder() != null) {
-            System.setProperty(RegistryParser.TOOL_PATH_PROP, appRoot + "/" + localConfig.getRegRipperFolder()); //$NON-NLS-1$
+            System.setProperty(RegRipperParser.TOOL_PATH_PROP, appRoot + "/" + localConfig.getRegRipperFolder()); //$NON-NLS-1$
         }
 
         setupOCROptions(configurationManager.findObject(OCRConfig.class));
@@ -825,7 +825,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             System.setProperty(PDFToImage.PDFLIB_PROP, ocrConfig.getPdfToImgLib());
             System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, ocrConfig.getExternalPdfToImgConv());
             System.setProperty(PDFToImage.EXTERNAL_CONV_MAXMEM_PROP, ocrConfig.getExternalConvMaxMem());
-            System.setProperty(PDFOCRTextParser.MAX_CHARS_TO_OCR, ocrConfig.getMaxPdfTextSize2OCR());
+            System.setProperty(PDFTextParser.MAX_CHARS_TO_OCR, ocrConfig.getMaxPdfTextSize2OCR());
             System.setProperty(OCRParser.PROCESS_NON_STANDARD_FORMATS_PROP, ocrConfig.getProcessNonStandard());
             System.setProperty(OCRParser.MAX_CONV_IMAGE_SIZE_PROP, ocrConfig.getMaxConvImageSize());
         }

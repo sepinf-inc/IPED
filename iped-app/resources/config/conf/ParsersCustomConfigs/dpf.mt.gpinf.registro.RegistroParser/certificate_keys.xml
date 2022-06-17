@@ -1,7 +1,7 @@
 <registryparserconfig>
 
 <registryKeyParsers>
-	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.CertificateKeyParser">
+	<registryKeyParser class="iped.parsers.registry.keys.CertificateKeyParser">
 		<key name="ROOT/Microsoft/SystemCertificates/*/Certificates"/>
 		<key name="ROOT/Software/Microsoft/SystemCertificates/*/Certificates"/>
 

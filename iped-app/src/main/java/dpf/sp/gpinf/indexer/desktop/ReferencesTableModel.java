@@ -31,15 +31,15 @@ import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
 
-import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
-import dpf.sp.gpinf.indexer.parsers.AresParser;
-import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import iped.IItem;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.HashTask;
 import iped.engine.task.index.IndexItem;
+import iped.parsers.ares.AresParser;
+import iped.parsers.emule.KnownMetParser;
+import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 

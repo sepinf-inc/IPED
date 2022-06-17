@@ -113,7 +113,6 @@ import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.ui.PanelsLayout;
 import dpf.sp.gpinf.indexer.ui.controls.CSelButton;
 import dpf.sp.gpinf.indexer.ui.controls.CustomButton;
@@ -132,6 +131,7 @@ import iped.engine.search.ItemId;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.util.Util;
+import iped.parsers.standard.StandardParser;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.search.IMultiSearchResultProvider;
@@ -257,7 +257,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private String codePath;
 
-    private IndexerDefaultParser autoDetectParser;
+    private StandardParser autoDetectParser;
 
     private String fontStartTag = null;
 
@@ -365,11 +365,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.query = query;
     }
 
-    public IndexerDefaultParser getAutoParser() {
+    public StandardParser getAutoParser() {
         return this.autoDetectParser;
     }
 
-    public void setAutoParser(IndexerDefaultParser autoParser) {
+    public void setAutoParser(StandardParser autoParser) {
         this.autoDetectParser = autoParser;
     }
 

@@ -35,10 +35,10 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
-import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
-import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import iped.geo.parsers.kmlstore.FeatureListFactoryRegister;
 import iped.geo.parsers.kmlstore.Folder;
+import iped.parsers.util.EmbeddedItem;
+import iped.parsers.util.EmbeddedParent;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 

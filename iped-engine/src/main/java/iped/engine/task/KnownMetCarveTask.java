@@ -28,12 +28,12 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import gpinf.emule.KnownMetEntry;
-import gpinf.emule.KnownMetParser;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
+import iped.parsers.emule.KnownMetEntry;
+import iped.parsers.emule.KnownMetDecoder;
 import iped.util.IOUtil;
 
 /**
@@ -166,7 +166,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                                     try {
                                         inParse = evidence.getBufferedInputStream();
                                         inParse.skip(offset);
-                                        List<KnownMetEntry> l = KnownMetParser.parseToList(inParse, len);
+                                        List<KnownMetEntry> l = KnownMetDecoder.parseToList(inParse, len);
                                         if (!l.isEmpty()) {
                                             addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met", //$NON-NLS-1$ //$NON-NLS-2$
                                                     eMuleMediaType);

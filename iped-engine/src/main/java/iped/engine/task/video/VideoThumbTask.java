@@ -42,11 +42,9 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.XMP;
 import org.apache.tika.metadata.XMPDM;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.mp4.ISO6709Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.config.Configuration;
@@ -56,6 +54,8 @@ import iped.engine.config.VideoThumbsConfig;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.ThumbTask;
 import iped.engine.util.Util;
+import iped.parsers.util.ISO6709Converter;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
 import iped.util.ImageUtil;
 

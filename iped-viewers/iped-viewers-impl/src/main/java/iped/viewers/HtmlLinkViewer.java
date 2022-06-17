@@ -13,12 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
-import dpf.ap.gpinf.telegramextractor.TelegramParser;
-import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
-import dpf.mt.gpinf.skype.parser.SkypeParser;
 import iped.IItem;
 import iped.IItemId;
 import iped.io.IStreamSource;
+import iped.parsers.skype.SkypeParser;
+import iped.parsers.telegram.TelegramParser;
+import iped.parsers.whatsapp.WhatsAppParser;
 import iped.search.SelectionListener;
 import iped.util.IOUtil;
 import iped.viewers.api.AttachmentSearcher;

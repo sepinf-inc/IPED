@@ -40,9 +40,9 @@ import org.bbottema.rtftohtml.impl.RTF2HTMLConverterRFCCompliant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
-import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped.io.IStreamSource;
+import iped.parsers.util.ToXMLContentHandler;
+import iped.parsers.util.Util;
 import iped.properties.MediaTypes;
 import iped.util.FileContentSource;
 import iped.util.IOUtil;

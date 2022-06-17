@@ -43,7 +43,6 @@ import javax.swing.JScrollPane;
 
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.AppMain;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import iped.IItem;
 import iped.engine.Version;
 import iped.engine.WorkerProvider;
@@ -55,6 +54,7 @@ import iped.engine.task.AbstractTask;
 import iped.engine.task.BaseCarveTask;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.ParsingTask;
+import iped.parsers.standard.StandardParser;
 import iped.util.LocalizedFormat;
 
 /**
@@ -406,7 +406,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.ParsingErrors")); //$NON-NLS-1$
         msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(IndexerDefaultParser.parsingErrors);
+        msg.append(StandardParser.parsingErrors);
         msg.append("</td></tr>"); //$NON-NLS-1$
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.ReadErrors")); //$NON-NLS-1$

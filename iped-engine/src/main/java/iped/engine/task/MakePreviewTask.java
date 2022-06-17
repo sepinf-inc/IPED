@@ -21,10 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
-import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import iped.IItem;
 import iped.IItemBase;
 import iped.configuration.Configurable;
@@ -36,6 +32,10 @@ import iped.engine.io.TimeoutException;
 import iped.engine.tika.EmptyEmbeddedDocumentExtractor;
 import iped.engine.util.ItemInfoFactory;
 import iped.engine.util.Util;
+import iped.parsers.standard.StandardParser;
+import iped.parsers.util.ItemInfo;
+import iped.parsers.util.ToCSVContentHandler;
+import iped.parsers.util.ToXMLContentHandler;
 import iped.search.IItemSearcher;
 import iped.util.IOUtil;
 import iped.viewers.HtmlLinkViewer;
@@ -48,7 +48,7 @@ public class MakePreviewTask extends AbstractTask {
 
     private MakePreviewConfig previewConfig;
 
-    private IndexerDefaultParser parser;
+    private StandardParser parser;
 
     private volatile Throwable exception;
 
@@ -60,7 +60,7 @@ public class MakePreviewTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
         previewConfig = configurationManager.findObject(MakePreviewConfig.class);
 
-        parser = new IndexerDefaultParser();
+        parser = new StandardParser();
         parser.setPrintMetadata(false);
         parser.setIgnoreStyle(false);
     }

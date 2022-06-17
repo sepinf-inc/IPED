@@ -18,8 +18,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
-import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import iped.ICaseData;
 import iped.engine.CmdLineArgs;
 import iped.engine.Version;
@@ -27,6 +25,8 @@ import iped.engine.config.LocalConfig;
 import iped.engine.task.SkipCommitedTask;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
+import iped.parsers.ocr.OCRParser;
+import iped.parsers.whatsapp.WhatsAppParser;
 
 /**
  * Classe para leitura dos parâmetros informados via linha de comando.

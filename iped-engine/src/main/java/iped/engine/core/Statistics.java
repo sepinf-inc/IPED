@@ -19,7 +19,6 @@ import org.apache.lucene.index.IndexReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import iped.ICaseData;
 import iped.IItem;
 import iped.engine.CmdLineArgs;
@@ -36,6 +35,7 @@ import iped.engine.task.ParsingTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
+import iped.parsers.standard.StandardParser;
 import iped.util.HashValue;
 
 /**
@@ -247,7 +247,7 @@ public class Statistics {
         LOGGER.info("Index internal docs: {}", numDocs); //$NON-NLS-1$
         LOGGER.info("Text Splits: {}", getSplits()); //$NON-NLS-1$
         LOGGER.info("Timeouts: {}", getTimeouts()); //$NON-NLS-1$
-        LOGGER.info("Parsing Exceptions: {}", IndexerDefaultParser.parsingErrors); //$NON-NLS-1$
+        LOGGER.info("Parsing Exceptions: {}", StandardParser.parsingErrors); //$NON-NLS-1$
         LOGGER.info("I/O read errors: {}", this.getIoErrors()); //$NON-NLS-1$
         LOGGER.info("Subitems Found: {}", ParsingTask.getSubitensDiscovered()); //$NON-NLS-1$
         LOGGER.info("Exported Items: {}", extracted); //$NON-NLS-1$

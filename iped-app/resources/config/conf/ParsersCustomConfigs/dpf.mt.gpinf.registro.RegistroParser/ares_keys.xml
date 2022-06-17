@@ -2,7 +2,7 @@
 
 <registryKeyParsers>
 
-	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.HtmlKeyParser">
+	<registryKeyParser class="iped.parsers.registry.keys.HtmlKeyParser">
 		<key name="ROOT/Software/Ares">
 			<decoder type="REG_SZ" function="hexDatatostring">
 				<include valueName="General.Language"/>
@@ -11,7 +11,7 @@
 		</key>
 	</registryKeyParser>
 
-	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.HtmlKeyParser">
+	<registryKeyParser class="iped.parsers.registry.keys.HtmlKeyParser">
 		<key name="ROOT/Software/Ares/Search.History/*">
 			<decoder type="REG_SZ" function="hextostring" decodeValueName="yes"/>
 		</key>

@@ -20,10 +20,10 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
-import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import iped.IItemBase;
 import iped.io.IStreamSource;
 import iped.localization.LocalizedProperties;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;

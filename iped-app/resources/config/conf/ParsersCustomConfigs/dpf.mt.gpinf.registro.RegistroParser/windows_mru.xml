@@ -2,7 +2,7 @@
 
 <registryKeyParsers>
 
-	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.HtmlKeyParser">
+	<registryKeyParser class="iped.parsers.registry.keys.HtmlKeyParser">
         <key name="ROOT/Microsoft/Windows/CurrentVersion/Explorer/RecentDocs/*">
         </key>
 
@@ -22,12 +22,12 @@
         </key>
 	</registryKeyParser>
 
-	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.MRUKeyParser">
+	<registryKeyParser class="iped.parsers.registry.keys.MRUKeyParser">
         <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/ComDlg32/OpenSavePidlMRU/*">
         </key>        
 	</registryKeyParser>
 
-	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.UserAssistKeyParser">
+	<registryKeyParser class="iped.parsers.registry.keys.UserAssistKeyParser">
         <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/UserAssist/*/Count">
 			<decoder type="REG_BINARY" function="decodeUserAssist" decodeValueName="yes"/>
         </key>        

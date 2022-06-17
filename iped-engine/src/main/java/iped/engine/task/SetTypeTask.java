@@ -7,10 +7,10 @@ import java.util.List;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.mime.MediaType;
 
-import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
+import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
 
 /**

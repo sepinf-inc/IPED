@@ -38,7 +38,6 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import iped.IItem;
 import iped.IItemId;
 import iped.engine.config.AbstractTaskPropertiesConfig;
@@ -50,6 +49,7 @@ import iped.engine.search.SimilarFacesSearch;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.PythonTask;
 import iped.engine.task.index.IndexItem;
+import iped.parsers.util.IgnoreContentHandler;
 import iped.util.FileInputStreamFactory;
 import iped.util.ImageUtil;
 import jep.NDArray;

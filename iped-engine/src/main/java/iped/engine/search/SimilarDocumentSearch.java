@@ -49,13 +49,13 @@ public class SimilarDocumentSearch {
         mlt.setStopWords(stopSet);
         try {
             /*
-             * IndexerDefaultParser autoParser = new IndexerDefaultParser();
+             * StandardParser autoParser = new StandardParser();
              * autoParser.setFallback(Configuration.fallBackParser);
              * autoParser.setErrorParser(Configuration.errorParser);
              * autoParser.setPrintMetadata(false);
              * 
              * EvidenceFile ev = App.get().appCase.getItemByItemId(item); Metadata m = new
-             * Metadata(); m.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+             * Metadata(); m.set(StandardParser.INDEXER_CONTENT_TYPE,
              * ev.getMediaType().toString());
              * 
              * ParsingReader pr = new ParsingReader(autoParser, ev.getStream(), m, new

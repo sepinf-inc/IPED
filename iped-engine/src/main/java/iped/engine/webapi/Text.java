@@ -18,7 +18,6 @@ import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.ToTextContentHandler;
 import org.xml.sax.ContentHandler;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import iped.IIPEDSource;
@@ -26,6 +25,7 @@ import iped.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.search.IPEDSource;
 import iped.engine.task.ParsingTask;
+import iped.parsers.standard.StandardParser;
 
 @Api(value = "Documents")
 @Path("/sources/{sourceID}/docs/{id}/text")
@@ -39,7 +39,7 @@ public class Text {
 
         IIPEDSource source = Sources.getSource(sourceID);
         final IItem item = source.getItemByID(id);
-        final IndexerDefaultParser parser = new IndexerDefaultParser();
+        final StandardParser parser = new StandardParser();
         final ParseContext context = getTikaContext(item, parser, (IPEDSource) source);
         final Metadata metadata = new Metadata();
 
@@ -60,7 +60,7 @@ public class Text {
     }
 
     public static ParseContext getTikaContext(IItem item, Parser parser, IPEDSource source) throws Exception {
-        ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) parser);
+        ParsingTask expander = new ParsingTask(item, (StandardParser) parser);
         expander.init(ConfigurationManager.get());
         ParseContext context = expander.getTikaContext(source);
         expander.setExtractEmbedded(false);

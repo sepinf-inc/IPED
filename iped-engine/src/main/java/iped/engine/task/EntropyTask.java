@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
+import iped.parsers.standard.RawStringParser;
 import iped.util.RandomFilterInputStream;
 
 public class EntropyTask extends AbstractTask {

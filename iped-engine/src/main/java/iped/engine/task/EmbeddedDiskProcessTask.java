@@ -15,7 +15,6 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import iped.IItem;
 import iped.IItemBase;
 import iped.configuration.Configurable;
@@ -25,6 +24,7 @@ import iped.engine.data.Item;
 import iped.engine.datasource.SleuthkitReader;
 import iped.engine.search.ItemSearcher;
 import iped.engine.util.TextCache;
+import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
@@ -133,7 +133,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 item.setExtraAttribute(ParsingTask.NUM_SUBITEMS, numSubitems);
             }
             if (reader.hasDecodingError()) {
-                item.getMetadata().set(IndexerDefaultParser.PARSER_EXCEPTION, Boolean.TRUE.toString());
+                item.getMetadata().set(StandardParser.PARSER_EXCEPTION, Boolean.TRUE.toString());
             } else {
                 ((Item) item).setParsedTextCache(new TextCache());
             }

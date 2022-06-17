@@ -41,7 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
-import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.ui.UiScale;
 import iped.IIPEDSource;
 import iped.IItem;
@@ -50,6 +49,7 @@ import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IPEDSource;
 import iped.engine.search.ItemId;
 import iped.engine.search.SimilarDocumentSearch;
+import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.search.SearchResult;

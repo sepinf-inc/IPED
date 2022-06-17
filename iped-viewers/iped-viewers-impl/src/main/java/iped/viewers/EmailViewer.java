@@ -52,10 +52,10 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 
-import dpf.sp.gpinf.indexer.parsers.RFC822Parser;
-import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped.IItemBase;
 import iped.io.IStreamSource;
+import iped.parsers.mail.RFC822Parser;
+import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
 import iped.util.FileContentSource;
 import iped.util.IOUtil;

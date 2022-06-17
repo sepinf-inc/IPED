@@ -7,7 +7,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.util.CorruptedCarvedException;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.CmdLineArgs;
@@ -18,6 +17,7 @@ import iped.engine.core.Worker;
 import iped.engine.core.Worker.STATE;
 import iped.engine.data.CaseData;
 import iped.engine.io.TimeoutException;
+import iped.parsers.util.CorruptedCarvedException;
 
 /**
  * Classe que representa uma tarefa de procesamento (assinatura, hash, carving,

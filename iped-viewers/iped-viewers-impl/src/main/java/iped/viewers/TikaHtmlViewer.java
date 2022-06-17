@@ -13,8 +13,8 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
-import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import iped.io.IStreamSource;
+import iped.parsers.util.ToXMLContentHandler;
 import iped.util.FileContentSource;
 import iped.util.IOUtil;
 

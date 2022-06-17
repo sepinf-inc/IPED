@@ -27,7 +27,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.ui.UiScale;
@@ -37,6 +36,7 @@ import iped.engine.config.Configuration;
 import iped.engine.core.Manager;
 import iped.engine.localization.Messages;
 import iped.exception.IPEDException;
+import iped.parsers.ocr.OCRParser;
 
 /**
  * Processing program entry point.

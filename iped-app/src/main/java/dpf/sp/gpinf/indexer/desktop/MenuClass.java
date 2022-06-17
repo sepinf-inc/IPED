@@ -30,7 +30,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
-import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.sp.gpinf.indexer.desktop.themes.Theme;
 import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
 import iped.IItem;
@@ -38,6 +37,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.search.SimilarFacesSearch;
 import iped.engine.task.similarity.ImageSimilarityTask;
+import iped.parsers.vcard.VCardParser;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 

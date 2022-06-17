@@ -17,12 +17,12 @@ import com.optimaize.langdetect.ngram.NgramExtractors;
 import com.optimaize.langdetect.profiles.LanguageProfile;
 import com.optimaize.langdetect.profiles.LanguageProfileReader;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.data.Item;
+import iped.parsers.standard.StandardParser;
 
 public class LanguageDetectTask extends AbstractTask {
 
@@ -92,7 +92,7 @@ public class LanguageDetectTask extends AbstractTask {
 
         String text = new String(cbuf, 0, off);
 
-        int start = text.lastIndexOf(IndexerDefaultParser.METADATA_HEADER);
+        int start = text.lastIndexOf(StandardParser.METADATA_HEADER);
         if (start != -1)
             text = text.substring(0, start);
 

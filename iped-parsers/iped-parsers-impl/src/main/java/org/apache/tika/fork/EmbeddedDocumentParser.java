@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import iped.parsers.util.ItemInfo;
+import iped.parsers.util.Messages;
 import iped.properties.ExtraProperties;
 
 public class EmbeddedDocumentParser implements EmbeddedDocumentExtractor, Serializable {

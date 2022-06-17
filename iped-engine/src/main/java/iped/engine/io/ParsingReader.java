@@ -40,12 +40,12 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.util.CorruptedCarvedException;
-import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.core.MimeTypesProcessingOrder;
+import iped.parsers.standard.StandardParser;
+import iped.parsers.util.CorruptedCarvedException;
+import iped.parsers.util.ItemInfo;
 
 /**
  * Reader for the text content from a given binary stream. This class uses a
@@ -148,8 +148,8 @@ public class ParsingReader extends Reader {
         this.reader = new BufferedReader(pipedReader);
         this.writer = new FastPipedWriter(pipedReader);
 
-        String timeout = metadata.get(IndexerDefaultParser.INDEXER_TIMEOUT);
-        String mediaType = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+        String timeout = metadata.get(StandardParser.INDEXER_TIMEOUT);
+        String mediaType = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
         if (timeout != null || MediaType.OCTET_STREAM.toString().equals(mediaType)) {
             pipedReader.setTimeoutPaused(true);
         }
@@ -161,9 +161,9 @@ public class ParsingReader extends Reader {
         // until proxies for item and itemSearcher are implemented,
         // we do not run parsers that use them in forkParser
         if (MimeTypesProcessingOrder.getProcessingPriority(MediaType.parse(mediaType)) == 0) {
-            ((IndexerDefaultParser) parser).setCanUseForkParser(true);
+            ((StandardParser) parser).setCanUseForkParser(true);
         } else
-            ((IndexerDefaultParser) parser).setCanUseForkParser(false);
+            ((StandardParser) parser).setCanUseForkParser(false);
     }
 
     public void startBackgroundParsing() {

@@ -16,8 +16,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
-import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupProvider;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.config.Configuration;
@@ -27,6 +25,8 @@ import iped.engine.config.HashTaskConfig;
 import iped.engine.config.LocalConfig;
 import iped.engine.hashdb.HashDB;
 import iped.engine.hashdb.HashDBDataSource;
+import iped.parsers.util.ChildPornHashLookup;
+import iped.parsers.util.ChildPornHashLookup.LookupProvider;
 
 public class HashDBLookupTask extends AbstractTask {
 

@@ -21,14 +21,14 @@ import org.apache.tika.parser.ner.corenlp.CoreNLPNERecogniser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.NamedEntityTaskConfig;
 import iped.engine.data.Item;
 import iped.exception.IPEDException;
+import iped.parsers.standard.StandardParser;
+import iped.parsers.util.IgnoreContentHandler;
 import iped.util.EmptyInputStream;
 
 public class NamedEntityTask extends AbstractTask {
@@ -159,7 +159,7 @@ public class NamedEntityTask extends AbstractTask {
                 String textFrag = new String(cbuf, 0, off);
                 // filter out metadata from last frag
                 if (i == -1) {
-                    int k = textFrag.lastIndexOf(IndexerDefaultParser.METADATA_HEADER);
+                    int k = textFrag.lastIndexOf(StandardParser.METADATA_HEADER);
                     if (k != -1)
                         textFrag = textFrag.substring(0, k);
                 }

@@ -60,11 +60,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
-import dpf.ap.gpinf.telegramextractor.TelegramParser;
-import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
-import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
-import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
-import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import iped.ICaseData;
 import iped.IItem;
 import iped.datasource.IDataSource;
@@ -81,6 +76,11 @@ import iped.engine.task.ImageThumbTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
+import iped.parsers.telegram.TelegramParser;
+import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.util.MetadataUtil;
+import iped.parsers.util.PhoneParsingConfig;
+import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.util.FileInputStreamFactory;
@@ -1395,7 +1395,7 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                     if (bytes != null) {
                         bw.write("<img src=\"data:image/jpg;base64," //$NON-NLS-1$
-                                + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(bytes)
+                                + iped.parsers.whatsapp.Util.encodeBase64(bytes)
                                 + "\" width=\"150\"/><br>\n"); //$NON-NLS-1$
                         contact.setThumb(bytes);
                         contact.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());

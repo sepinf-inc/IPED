@@ -72,9 +72,6 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.DateUtils;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import iped.IItem;
 import iped.datasource.IDataSource;
 import iped.engine.data.DataSource;
@@ -85,6 +82,9 @@ import iped.engine.task.ImageThumbTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
 import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.engine.util.Util;
+import iped.parsers.ocr.OCRParser;
+import iped.parsers.standard.StandardParser;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.util.DateUtil;
@@ -151,8 +151,8 @@ public class IndexItem extends BasicProps {
         ignoredMetadata.add(Metadata.CONTENT_TYPE);
         ignoredMetadata.add(Metadata.CONTENT_LENGTH);
         ignoredMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY);
-        ignoredMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
-        ignoredMetadata.add(IndexerDefaultParser.INDEXER_TIMEOUT);
+        ignoredMetadata.add(StandardParser.INDEXER_CONTENT_TYPE);
+        ignoredMetadata.add(StandardParser.INDEXER_TIMEOUT);
         ignoredMetadata.add(TikaCoreProperties.CONTENT_TYPE_HINT.getName());
         ignoredMetadata.add("File Name"); //$NON-NLS-1$
         ignoredMetadata.add("File Size"); //$NON-NLS-1$

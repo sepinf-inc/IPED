@@ -19,7 +19,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import iped.parsers.standard.StandardParser;
 import iped.util.IOUtil;
 
 public class ExternalParsingParserFactory extends ParserFactory {
@@ -32,7 +32,7 @@ public class ExternalParsingParserFactory extends ParserFactory {
     public Parser build() throws IOException, SAXException, TikaException {
 
         TikaConfig tikaConfig = TikaConfig.getDefaultConfig();
-        final IndexerDefaultParser recursiveParser = new IndexerDefaultParser();
+        final StandardParser recursiveParser = new StandardParser();
 
         CompositeParser c = new CompositeParser(tikaConfig.getMediaTypeRegistry(),
                 ((CompositeParser) tikaConfig.getParser()).getAllComponentParsers()) {

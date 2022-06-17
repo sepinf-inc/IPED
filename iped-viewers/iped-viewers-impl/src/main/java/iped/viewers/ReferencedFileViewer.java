@@ -8,11 +8,11 @@ import javax.swing.JLabel;
 
 import org.apache.tika.Tika;
 
-import dpf.ap.gpinf.telegramextractor.TelegramParser;
-import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
-import dpf.mt.gpinf.skype.parser.SkypeParser;
 import iped.IItem;
 import iped.io.IStreamSource;
+import iped.parsers.skype.SkypeParser;
+import iped.parsers.telegram.TelegramParser;
+import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.util.FileContentSource;

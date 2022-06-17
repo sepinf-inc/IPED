@@ -17,9 +17,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped.IItem;
 import iped.io.IStreamSource;
+import iped.parsers.util.Util;
 import iped.util.IOUtil;
 import iped.util.UiUtil;
 import iped.viewers.localization.Messages;

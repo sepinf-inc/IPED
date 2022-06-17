@@ -32,15 +32,15 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
-import dpf.sp.gpinf.indexer.parsers.util.PDFToThumb;
-import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped.IItem;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.DocThumbTaskConfig;
 import iped.engine.config.ParsingTaskConfig;
+import iped.parsers.misc.PDFTextParser;
+import iped.parsers.standard.StandardParser;
+import iped.parsers.util.PDFToThumb;
+import iped.parsers.util.Util;
 import iped.util.IOUtil;
 import iped.util.ImageUtil;
 import iped.viewers.util.LibreOfficeFinder;
@@ -102,8 +102,8 @@ public class DocThumbTask extends ThumbTask {
                         ParsingTaskConfig parsingConfig = configurationManager.findObject(ParsingTaskConfig.class);
                         if (parsingConfig.isEnableExternalParsing()) {
                             externalParsingEnabled = true;
-                            System.setProperty(PDFOCRTextParser.CREATE_THUMB, Boolean.TRUE.toString());
-                            System.setProperty(PDFOCRTextParser.THUMB_SIZE, Integer.toString(docThumbsConfig.getThumbSize()));
+                            System.setProperty(PDFTextParser.CREATE_THUMB, Boolean.TRUE.toString());
+                            System.setProperty(PDFTextParser.THUMB_SIZE, Integer.toString(docThumbsConfig.getThumbSize()));
                             conversionMode = "external parsing";
                         }
                         logger.info("PDF Conversion: " + conversionMode);
@@ -206,7 +206,7 @@ public class DocThumbTask extends ThumbTask {
         }
         Metadata metadata = item.getMetadata();
         if (metadata != null) {
-            String pe = metadata.get(IndexerDefaultParser.PARSER_EXCEPTION);
+            String pe = metadata.get(StandardParser.PARSER_EXCEPTION);
             if (Boolean.valueOf(pe)) {
                 return;
             }
