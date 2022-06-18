@@ -254,7 +254,7 @@
         <parser class="iped.parsers.browsers.SafariSqliteParser"></parser>
         <parser class="iped.parsers.browsers.SafariPlistParser"></parser>
         
-           <parser class="iped.parsers.misc.EDBParser"></parser>
+           <parser class="iped.parsers.database.EDBParser"></parser>
         <parser class="iped.parsers.registry.RegRipperParser"></parser>
         <parser class="iped.parsers.browsers.IndexDatParser"></parser>
         <parser class="iped.parsers.compress.PackageParser"></parser>    
@@ -264,7 +264,7 @@
         </parser>
         <parser class="iped.parsers.mail.RFC822Parser"></parser>
         <parser class="iped.parsers.mail.MSGParser"></parser>
-        <parser class="iped.parsers.misc.MSAccessParser"></parser>
+        <parser class="iped.parsers.database.MSAccessParser"></parser>
         <parser class="iped.parsers.mail.MboxParser"></parser>
         <parser class="iped.parsers.mail.IncrediMailParser"></parser>
         <parser class="iped.parsers.mail.OutlookPSTParser">
@@ -274,7 +274,7 @@
             </params>
         </parser>
         <parser class="iped.parsers.mail.OutlookDBXParser"></parser>
-        <parser class="iped.parsers.misc.XBaseParser"></parser>
+        <parser class="iped.parsers.database.XBaseParser"></parser>
         <parser class="iped.parsers.jdbc.SQLite3Parser"></parser>
         <parser class="iped.parsers.usnjrnl.UsnJrnlParser">
             <params>

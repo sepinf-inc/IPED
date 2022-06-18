@@ -1,4 +1,4 @@
-package iped.parsers.misc;
+package iped.parsers.database;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

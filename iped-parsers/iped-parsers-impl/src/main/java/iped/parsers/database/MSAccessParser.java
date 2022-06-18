@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package iped.parsers.misc;
+package iped.parsers.database;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

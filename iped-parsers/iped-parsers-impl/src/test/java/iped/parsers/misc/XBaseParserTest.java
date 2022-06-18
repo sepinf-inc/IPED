@@ -13,7 +13,7 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import iped.parsers.misc.XBaseParser;
+import iped.parsers.database.XBaseParser;
 
 public class XBaseParserTest {
 

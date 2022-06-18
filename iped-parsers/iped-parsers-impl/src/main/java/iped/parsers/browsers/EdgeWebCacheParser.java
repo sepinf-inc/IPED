@@ -38,7 +38,7 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.ptr.PointerByReference;
 
-import iped.parsers.misc.EDBParser;
+import iped.parsers.database.EDBParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.properties.BasicProps;

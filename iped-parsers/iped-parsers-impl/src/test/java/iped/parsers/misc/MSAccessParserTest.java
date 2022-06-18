@@ -14,7 +14,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import iped.parsers.misc.MSAccessParser;
+import iped.parsers.database.MSAccessParser;
 import junit.framework.TestCase;
 
 public class MSAccessParserTest extends TestCase {
