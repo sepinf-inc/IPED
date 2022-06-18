@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.edge;
 
 public class EdgeWebCacheException extends Exception {
     private static final long serialVersionUID = 1L;

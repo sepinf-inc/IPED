@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.safari;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -6,13 +6,13 @@ import java.util.TimeZone;
 
 import com.google.common.base.Strings;
 
-public class FirefoxMozPlace {
+public class SafariVisit {
     private long id;
     private String title = "";
     private String url;
     private Date visitDate;
 
-    public FirefoxMozPlace(long id, String title, long visitDate, String url) {
+    public SafariVisit(long id, String title, long visitDate, String url) {
         this.id = id;
         if (!Strings.isNullOrEmpty(title)) {
             this.title = title;
@@ -58,5 +58,4 @@ public class FirefoxMozPlace {
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         return format.format(visitDate);
     }
-
 }

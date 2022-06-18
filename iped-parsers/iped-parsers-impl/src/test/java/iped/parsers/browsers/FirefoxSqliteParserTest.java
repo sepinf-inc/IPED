@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.browsers.FirefoxSqliteParser;
+import iped.parsers.browsers.firefox.FirefoxSqliteParser;
 
 public class FirefoxSqliteParserTest extends AbstractPkgTest {
 

@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.safari;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,6 +34,7 @@ import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
 
+import iped.parsers.browsers.Download;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.properties.BasicProps;

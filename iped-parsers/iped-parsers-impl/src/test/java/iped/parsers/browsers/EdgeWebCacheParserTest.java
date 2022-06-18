@@ -23,7 +23,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.browsers.EdgeWebCacheParser;
+import iped.parsers.browsers.edge.EdgeWebCacheParser;
 import iped.parsers.util.ItemInfo;
 import iped.properties.ExtraProperties;
 

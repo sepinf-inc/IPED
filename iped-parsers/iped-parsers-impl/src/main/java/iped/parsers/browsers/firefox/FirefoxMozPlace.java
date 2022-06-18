@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.firefox;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -6,21 +6,19 @@ import java.util.TimeZone;
 
 import com.google.common.base.Strings;
 
-public class FirefoxMozVisit {
+public class FirefoxMozPlace {
     private long id;
     private String title = "";
     private String url;
-    private long visitCount = 0;
-    private Date lastVisitDate;
+    private Date visitDate;
 
-    public FirefoxMozVisit(long id, String title, String url, long visitCount, long lastVisitDate) {
+    public FirefoxMozPlace(long id, String title, long visitDate, String url) {
         this.id = id;
         if (!Strings.isNullOrEmpty(title)) {
             this.title = title;
         }
         this.url = url;
-        this.visitCount = visitCount;
-        this.lastVisitDate = new Date(lastVisitDate);
+        this.visitDate = new Date(visitDate);
     }
 
     public long getId() {
@@ -47,25 +45,18 @@ public class FirefoxMozVisit {
         this.url = url;
     }
 
-    public long getVisitCount() {
-        return visitCount;
+    public Date getVisitDate() {
+        return visitDate;
     }
 
-    public void setVisitCount(long visitCount) {
-        this.visitCount = visitCount;
+    public void setVisitDate(long visitDate) {
+        this.visitDate = new Date(visitDate);
     }
 
-    public Date getLastVisitDate() {
-        return lastVisitDate;
-    }
-
-    public void setLastVisitDate(long visitDate) {
-        this.lastVisitDate = new Date(visitDate);
-    }
-
-    public String getLastVisitDateAsString() {
+    public String getVisitDateAsString() {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return format.format(lastVisitDate);
+        return format.format(visitDate);
     }
+
 }

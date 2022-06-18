@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.firefox;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,6 +31,10 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.openjson.JSONObject;
 
+import iped.parsers.browsers.AbstractSqliteBrowserParser;
+import iped.parsers.browsers.Download;
+import iped.parsers.browsers.ResumedVisit;
+import iped.parsers.browsers.Visit;
 import iped.parsers.jdbc.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;

@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.edge;
 
 import com.sun.jna.ptr.PointerByReference;
 

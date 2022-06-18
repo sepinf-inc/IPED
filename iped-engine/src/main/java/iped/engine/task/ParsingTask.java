@@ -85,7 +85,7 @@ import iped.engine.util.TextCache;
 import iped.engine.util.Util;
 import iped.exception.ZipBombException;
 import iped.io.IStreamSource;
-import iped.parsers.browsers.IndexDatParser;
+import iped.parsers.browsers.ie.IndexDatParser;
 import iped.parsers.compress.PackageParser;
 import iped.parsers.compress.SevenZipParser;
 import iped.parsers.database.EDBParser;

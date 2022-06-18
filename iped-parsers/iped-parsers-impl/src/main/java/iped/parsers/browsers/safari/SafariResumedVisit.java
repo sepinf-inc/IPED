@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.safari;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

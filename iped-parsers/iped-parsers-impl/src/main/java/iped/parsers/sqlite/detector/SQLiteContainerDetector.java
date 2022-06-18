@@ -21,9 +21,9 @@ import org.apache.tika.mime.MediaType;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteOpenMode;
 
-import iped.parsers.browsers.ChromeSqliteParser;
-import iped.parsers.browsers.FirefoxSqliteParser;
-import iped.parsers.browsers.SafariSqliteParser;
+import iped.parsers.browsers.chrome.ChromeSqliteParser;
+import iped.parsers.browsers.firefox.FirefoxSqliteParser;
+import iped.parsers.browsers.safari.SafariSqliteParser;
 import iped.parsers.gdrive.GDriveMainParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;

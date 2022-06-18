@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.safari;
 
 public class SafariBookmark {
     private long id;

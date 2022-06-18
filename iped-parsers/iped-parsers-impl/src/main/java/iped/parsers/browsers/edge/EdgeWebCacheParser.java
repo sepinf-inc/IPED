@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.edge;
 
 import java.io.File;
 import java.io.FileInputStream;

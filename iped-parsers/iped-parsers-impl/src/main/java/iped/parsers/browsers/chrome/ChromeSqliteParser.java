@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.chrome;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,6 +27,11 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.browsers.AbstractSqliteBrowserParser;
+import iped.parsers.browsers.Download;
+import iped.parsers.browsers.ResumedVisit;
+import iped.parsers.browsers.Search;
+import iped.parsers.browsers.Visit;
 import iped.parsers.jdbc.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;

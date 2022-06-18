@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package iped.parsers.browsers;
+package iped.parsers.browsers.ie;
 
 import java.io.File;
 import java.io.IOException;

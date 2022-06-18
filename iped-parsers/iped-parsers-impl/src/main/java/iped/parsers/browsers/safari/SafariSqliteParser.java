@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.safari;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.browsers.AbstractSqliteBrowserParser;
 import iped.parsers.jdbc.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;

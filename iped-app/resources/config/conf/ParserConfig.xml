@@ -244,19 +244,19 @@
             </params>
         </parser>
         
-        <parser class="iped.parsers.browsers.FirefoxSqliteParser">
+        <parser class="iped.parsers.browsers.firefox.FirefoxSqliteParser">
             <params>
                 <param name="extractEntries" type="bool">true</param>
             </params>
         </parser>
-        <parser class="iped.parsers.browsers.ChromeSqliteParser"></parser>
-        <parser class="iped.parsers.browsers.EdgeWebCacheParser"></parser>
-        <parser class="iped.parsers.browsers.SafariSqliteParser"></parser>
-        <parser class="iped.parsers.browsers.SafariPlistParser"></parser>
+        <parser class="iped.parsers.browsers.chrome.ChromeSqliteParser"></parser>
+        <parser class="iped.parsers.browsers.edge.EdgeWebCacheParser"></parser>
+        <parser class="iped.parsers.browsers.safari.SafariSqliteParser"></parser>
+        <parser class="iped.parsers.browsers.safari.SafariPlistParser"></parser>
         
            <parser class="iped.parsers.database.EDBParser"></parser>
         <parser class="iped.parsers.registry.RegRipperParser"></parser>
-        <parser class="iped.parsers.browsers.IndexDatParser"></parser>
+        <parser class="iped.parsers.browsers.ie.IndexDatParser"></parser>
         <parser class="iped.parsers.compress.PackageParser"></parser>    
         <parser class="iped.parsers.compress.SevenZipParser"></parser>
         <parser class="iped.parsers.misc.XMLParser">
@@ -324,7 +324,7 @@
         <parser class="iped.geo.parsers.GeofileParser"></parser>
         <parser class="iped.parsers.winx.WinXTimelineParser"></parser>
         <parser class="iped.parsers.gdrive.GDriveMainParser"></parser>
-        <parser class="iped.parsers.firefox.FirefoxSavedSessionParser"></parser>
+        <parser class="iped.parsers.browsers.firefox.FirefoxSavedSessionParser"></parser>
         
         <parser class="iped.parsers.python.PythonParser"></parser>
     </parsers>
