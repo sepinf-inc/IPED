@@ -1,4 +1,4 @@
-package iped.parsers.jdbc;
+package iped.parsers.sqlite;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -34,7 +34,7 @@ import org.xml.sax.SAXException;
 /**
  * This is the main class for parsing SQLite3 files. When {@link #parse} is
  * called, this creates a new
- * {@link org.apache.tika.parser.jdbc.SQLite3DBParser}.
+ * {@link org.apache.iped.parsers.sqlite.SQLite3DBParser}.
  * <p>
  * Given potential conflicts of native libraries in web servers, users will need
  * to add org.xerial's sqlite-jdbc jar to the class path for this parser to

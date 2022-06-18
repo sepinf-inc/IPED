@@ -44,7 +44,7 @@ import iped.properties.ExtraProperties;
 /**
  * Abstract class that handles iterating through tables within a database.
  */
-abstract class AbstractDBParser extends AbstractParser {
+public abstract class AbstractDBParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
 

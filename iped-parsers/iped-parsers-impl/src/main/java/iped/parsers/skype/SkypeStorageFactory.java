@@ -8,8 +8,8 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 
-import iped.parsers.jdbc.SQLite3DBParser;
 import iped.parsers.skype.v8.SkypeSqliteV12;
+import iped.parsers.sqlite.SQLite3DBParser;
 
 public class SkypeStorageFactory extends SQLite3DBParser {
     /**

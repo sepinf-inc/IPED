@@ -57,7 +57,7 @@ import iped.util.IOUtil;
 /**
  * General base class to iterate through rows of a JDBC table
  */
-class JDBCTableReader {
+public class JDBCTableReader {
 
     private final static Attributes EMPTY_ATTRIBUTES = new AttributesImpl();
     private final Connection connection;

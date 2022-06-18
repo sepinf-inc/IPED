@@ -52,7 +52,7 @@ import org.xml.sax.SAXException;
 
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import iped.data.IItemBase;
-import iped.parsers.jdbc.SQLite3DBParser;
+import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.PhoneParsingConfig;

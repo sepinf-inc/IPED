@@ -28,7 +28,7 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import com.drew.lang.Charsets;
 import com.whatsapp.MediaData;
 
-import iped.parsers.jdbc.SQLite3DBParser;
+import iped.parsers.sqlite.SQLite3DBParser;
 
 /**
  *

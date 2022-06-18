@@ -1,4 +1,4 @@
-package iped.parsers.jdbc;
+package iped.parsers.sqlite;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -38,6 +38,8 @@ import org.apache.tika.parser.ParseContext;
 import org.sqlite.SQLiteConfig;
 
 import iped.data.IItemBase;
+import iped.parsers.jdbc.AbstractDBParser;
+import iped.parsers.jdbc.JDBCTableReader;
 import iped.parsers.util.DelegatingConnection;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;

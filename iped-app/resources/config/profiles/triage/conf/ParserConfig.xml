@@ -282,7 +282,7 @@
         <parser class="iped.parsers.mail.OutlookDBXParser"></parser>
         <parser class="iped.parsers.database.XBaseParser"></parser>
         <!--Will be processed by RawStringParser below-->
-        <!--parser class="iped.parsers.jdbc.SQLite3Parser"></parser-->
+        <!--parser class="iped.parsers.sqlite.SQLite3Parser"></parser-->
         <parser class="iped.parsers.usnjrnl.UsnJrnlParser">
             <params>
                 <param name="extractEntries" type="bool">false</param>

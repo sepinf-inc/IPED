@@ -41,7 +41,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import iped.parsers.jdbc.SQLite3DBParser;
+import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
 
 /**

@@ -29,8 +29,8 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.jdbc.SQLite3DBParser;
-import iped.parsers.jdbc.SQLite3Parser;
+import iped.parsers.sqlite.SQLite3DBParser;
+import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.sqlite.detector.SQLiteContainerDetector;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;

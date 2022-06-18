@@ -35,7 +35,7 @@ import iped.parsers.browsers.AbstractSqliteBrowserParser;
 import iped.parsers.browsers.Download;
 import iped.parsers.browsers.ResumedVisit;
 import iped.parsers.browsers.Visit;
-import iped.parsers.jdbc.SQLite3Parser;
+import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;

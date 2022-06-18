@@ -2,7 +2,7 @@ package iped.parsers.browsers;
 
 import org.apache.tika.config.Field;
 
-import iped.parsers.jdbc.SQLite3DBParser;
+import iped.parsers.sqlite.SQLite3DBParser;
 
 public abstract class AbstractSqliteBrowserParser extends SQLite3DBParser {
 

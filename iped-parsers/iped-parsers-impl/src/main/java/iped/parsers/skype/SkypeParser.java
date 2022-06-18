@@ -28,7 +28,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.data.IItemBase;
-import iped.parsers.jdbc.SQLite3Parser;
+import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.ItemInfo;
