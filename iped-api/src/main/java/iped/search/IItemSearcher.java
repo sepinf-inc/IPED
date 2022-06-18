@@ -8,7 +8,7 @@ package iped.search;
 import java.io.Closeable;
 import java.util.List;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 
 /**
  *

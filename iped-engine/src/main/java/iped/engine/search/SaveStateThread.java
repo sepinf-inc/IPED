@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import iped.search.IBookmarks;
+import iped.data.IBookmarks;
 
 public class SaveStateThread extends Thread {
 

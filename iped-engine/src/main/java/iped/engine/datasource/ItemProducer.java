@@ -29,7 +29,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.ICaseData;
+import iped.data.ICaseData;
 import iped.engine.WorkerProvider;
 import iped.engine.core.Manager;
 import iped.engine.data.Item;

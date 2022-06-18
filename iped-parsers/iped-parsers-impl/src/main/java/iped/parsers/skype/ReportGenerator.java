@@ -11,7 +11,7 @@ import java.util.List;
 import org.apache.tika.metadata.Metadata;
 import org.xml.sax.ContentHandler;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.parsers.skype.v8.SkypeContactV8;
 import iped.parsers.skype.v8.SkypeConversationV14;
 import iped.parsers.skype.v8.SkypeMessageV12;

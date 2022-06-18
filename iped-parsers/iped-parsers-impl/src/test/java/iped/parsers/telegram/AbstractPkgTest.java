@@ -18,7 +18,7 @@ import org.apache.tika.parser.Parser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.parsers.util.ItemInfo;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;

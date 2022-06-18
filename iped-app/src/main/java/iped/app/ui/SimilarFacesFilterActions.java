@@ -38,8 +38,8 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.SAXException;
 
-import iped.IItem;
-import iped.IItemId;
+import iped.data.IItem;
+import iped.data.IItemId;
 import iped.engine.config.AbstractTaskPropertiesConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.TaskInstallerConfig;

@@ -10,8 +10,8 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
 
-import iped.IItem;
 import iped.configuration.Configurable;
+import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FileSystemConfig;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;

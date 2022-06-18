@@ -2,7 +2,7 @@ package iped.parsers.whatsapp;
 
 import java.util.List;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 
 public class WhatsAppContext {
 

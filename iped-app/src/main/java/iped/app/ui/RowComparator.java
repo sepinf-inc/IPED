@@ -34,7 +34,7 @@ import org.apache.lucene.index.SortedSetDocValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.engine.localization.CategoryLocalization;
 import iped.engine.search.TimelineResults.TimeItemId;
 import iped.engine.task.index.IndexItem;

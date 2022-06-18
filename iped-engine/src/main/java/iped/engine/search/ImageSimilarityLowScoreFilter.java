@@ -3,7 +3,7 @@ package iped.engine.search;
 import java.util.ArrayList;
 import java.util.List;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.search.IMultiSearchResult;
 
 public class ImageSimilarityLowScoreFilter {

@@ -21,8 +21,8 @@ package iped.engine.task;
 import java.util.Arrays;
 import java.util.List;
 
-import iped.IItem;
 import iped.configuration.Configurable;
+import iped.data.IItem;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
 

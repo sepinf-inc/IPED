@@ -17,7 +17,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
 import iped.geo.AbstractMapaCanvas;
 import iped.geo.kml.GetResultsKMLWorker;

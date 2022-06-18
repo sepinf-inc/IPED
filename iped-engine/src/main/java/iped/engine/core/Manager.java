@@ -46,8 +46,8 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 
-import iped.ICaseData;
-import iped.IItem;
+import iped.data.ICaseData;
+import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.WorkerProvider;
 import iped.engine.config.AnalysisConfig;

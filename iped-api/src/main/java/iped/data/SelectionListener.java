@@ -3,16 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package iped;
+package iped.data;
 
-/**
- *
- * @author WERNECK
- */
-public interface IItemId extends Comparable<IItemId> {
+public interface SelectionListener {
 
-    int getId();
+    void setSelected(IItemId item, boolean value);
 
-    int getSourceId();
+    void clearAll();
+
+    void selectAll();
 
 }

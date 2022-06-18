@@ -21,9 +21,9 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 
-import iped.IHashValue;
-import iped.IItem;
-import iped.IItemBase;
+import iped.data.IHashValue;
+import iped.data.IItem;
+import iped.data.IItemBase;
 import iped.datasource.IDataSource;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;

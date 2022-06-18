@@ -31,7 +31,7 @@ import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;

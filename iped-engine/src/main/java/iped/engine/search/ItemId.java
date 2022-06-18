@@ -1,6 +1,6 @@
 package iped.engine.search;
 
-import iped.IItemId;
+import iped.data.IItemId;
 
 public class ItemId implements IItemId {
 

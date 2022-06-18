@@ -1,6 +1,6 @@
 package iped.parsers.util;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.properties.ExtraProperties;
 
 public class PhoneParsingConfig {

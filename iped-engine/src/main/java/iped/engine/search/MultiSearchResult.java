@@ -2,8 +2,8 @@ package iped.engine.search;
 
 import java.util.Iterator;
 
-import iped.IIPEDSource;
-import iped.IItemId;
+import iped.data.IIPEDSource;
+import iped.data.IItemId;
 import iped.search.IMultiSearchResult;
 
 public class MultiSearchResult implements IMultiSearchResult {

@@ -3,7 +3,7 @@ package iped.search;
 import javax.swing.JTable;
 import javax.swing.SortOrder;
 
-import iped.IIPEDSource;
+import iped.data.IIPEDSource;
 
 public interface IMultiSearchResultProvider {
     IMultiSearchResult getResults();

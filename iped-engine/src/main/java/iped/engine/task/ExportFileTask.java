@@ -67,10 +67,10 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.Pragma;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
-import iped.ICaseData;
-import iped.IHashValue;
-import iped.IItem;
 import iped.configuration.Configurable;
+import iped.data.ICaseData;
+import iped.data.IHashValue;
+import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.WorkerProvider;
 import iped.engine.config.CategoryConfig;

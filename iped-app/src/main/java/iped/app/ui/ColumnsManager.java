@@ -41,8 +41,8 @@ import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItemId;
 import iped.app.ui.controls.HintTextField;
+import iped.data.IItemId;
 import iped.engine.config.AnalysisConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.data.Item;

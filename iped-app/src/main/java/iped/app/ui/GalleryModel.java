@@ -43,8 +43,8 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItemId;
 import iped.app.ui.controls.ErrorIcon;
+import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.task.HTMLReportTask;
 import iped.engine.task.ImageThumbTask;

@@ -59,7 +59,7 @@ import org.apache.tika.mime.MediaType;
 
 import com.sun.jna.Native;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.engine.localization.Messages;
 import iped.engine.task.BaseCarveTask;
 import iped.engine.task.index.IndexItem;

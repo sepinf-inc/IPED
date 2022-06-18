@@ -9,7 +9,7 @@ import java.util.List;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.search.IItemSearcher;
 import iped.search.SearchResult;
 

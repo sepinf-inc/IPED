@@ -3,10 +3,10 @@ package iped.carver.custom;
 import java.io.IOException;
 import java.util.ArrayDeque;
 
-import iped.IItem;
 import iped.carver.api.CarverType;
 import iped.carver.api.Hit;
 import iped.carver.standard.FromFarthestHeaderCarver;
+import iped.data.IItem;
 import iped.io.SeekableInputStream;
 import iped.util.IOUtil;
 

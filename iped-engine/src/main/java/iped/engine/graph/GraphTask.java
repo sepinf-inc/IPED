@@ -33,8 +33,8 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil.Leniency;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
-import iped.IItem;
 import iped.configuration.Configurable;
+import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.WorkerProvider;
 import iped.engine.config.ConfigurationManager;

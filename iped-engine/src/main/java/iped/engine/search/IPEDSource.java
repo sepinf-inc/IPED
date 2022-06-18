@@ -52,9 +52,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IIPEDSource;
-import iped.IItem;
-import iped.IItemId;
+import iped.data.IBookmarks;
+import iped.data.IIPEDSource;
+import iped.data.IItem;
+import iped.data.IItemId;
+import iped.data.IMultiBookmarks;
 import iped.engine.config.AnalysisConfig;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.Configuration;
@@ -73,8 +75,6 @@ import iped.engine.task.index.IndexTask;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.properties.BasicProps;
-import iped.search.IBookmarks;
-import iped.search.IMultiBookmarks;
 import iped.util.IOUtil;
 import iped.util.SelectImagePathWithDialog;
 

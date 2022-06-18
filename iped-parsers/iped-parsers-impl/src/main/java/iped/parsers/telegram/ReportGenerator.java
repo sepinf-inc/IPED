@@ -25,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.parsers.util.Messages;
 import iped.search.IItemSearcher;
 import iped.util.SimpleHTMLEncoder;

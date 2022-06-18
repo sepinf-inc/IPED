@@ -34,7 +34,7 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.engine.data.DataSource;
 import iped.engine.datasource.AD1DataSourceReader.AD1InputStreamFactory;
 import iped.engine.io.ZIPInputStreamFactory;

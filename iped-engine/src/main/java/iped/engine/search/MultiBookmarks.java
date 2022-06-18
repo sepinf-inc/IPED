@@ -17,13 +17,13 @@ import javax.swing.KeyStroke;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import iped.IIPEDSource;
-import iped.IItemId;
+import iped.data.IBookmarks;
+import iped.data.IIPEDSource;
+import iped.data.IItemId;
+import iped.data.IMultiBookmarks;
+import iped.data.SelectionListener;
 import iped.engine.util.Util;
-import iped.search.IBookmarks;
-import iped.search.IMultiBookmarks;
 import iped.search.IMultiSearchResult;
-import iped.search.SelectionListener;
 
 public class MultiBookmarks implements Serializable, IMultiBookmarks {
 

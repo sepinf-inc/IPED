@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import iped.IIPEDSource;
+import iped.data.IIPEDSource;
 import iped.engine.config.Configuration;
 import iped.engine.search.IPEDMultiSource;
 import iped.engine.search.IPEDSource;

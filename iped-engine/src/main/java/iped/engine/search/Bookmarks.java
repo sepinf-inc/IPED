@@ -34,10 +34,10 @@ import javax.swing.KeyStroke;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IIPEDSource;
+import iped.data.IBookmarks;
+import iped.data.IIPEDSource;
 import iped.engine.Version;
 import iped.engine.util.Util;
-import iped.search.IBookmarks;
 import iped.search.SearchResult;
 import iped.util.IOUtil;
 

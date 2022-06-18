@@ -41,9 +41,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingOutputStream;
 
-import iped.IIPEDSource;
-import iped.IItem;
 import iped.app.ui.TreeViewModel.Node;
+import iped.data.IIPEDSource;
+import iped.data.IItem;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;

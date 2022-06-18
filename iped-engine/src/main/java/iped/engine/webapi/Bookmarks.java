@@ -19,13 +19,13 @@ import javax.ws.rs.core.Response;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import iped.IItemId;
+import iped.data.IItemId;
+import iped.data.IMultiBookmarks;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.ItemId;
 import iped.engine.webapi.json.DataListJSON;
 import iped.engine.webapi.json.DocIDJSON;
 import iped.engine.webapi.json.SourceToIDsJSON;
-import iped.search.IMultiBookmarks;
 import iped.search.IMultiSearchResult;
 
 @Api(value = "Bookmarks")

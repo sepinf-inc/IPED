@@ -4,7 +4,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JTable;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.geo.MarkerEventListener;
 import iped.geo.kml.GetResultsKMLWorker;
 import iped.search.IMultiSearchResult;

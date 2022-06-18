@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 
-import iped.IIPEDSource;
+import iped.data.IIPEDSource;
 import iped.engine.task.index.IndexItem;
 
 public class LoadIndexFields {

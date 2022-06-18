@@ -5,7 +5,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.engine.task.similarity.ImageSimilarityTask;
 
 public class SimilarImagesSearch {

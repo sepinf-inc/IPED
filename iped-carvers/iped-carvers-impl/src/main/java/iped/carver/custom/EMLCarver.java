@@ -3,9 +3,9 @@ package iped.carver.custom;
 import java.io.IOException;
 import java.util.ArrayDeque;
 
-import iped.IItem;
 import iped.carver.api.Hit;
 import iped.carver.standard.DefaultCarver;
+import iped.data.IItem;
 
 public class EMLCarver extends DefaultCarver {
     Hit lastFooter = null;

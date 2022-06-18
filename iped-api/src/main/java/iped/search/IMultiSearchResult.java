@@ -5,7 +5,7 @@
  */
 package iped.search;
 
-import iped.IItemId;
+import iped.data.IItemId;
 
 /**
  *

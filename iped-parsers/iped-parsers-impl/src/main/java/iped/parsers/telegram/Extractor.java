@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.parsers.jdbc.SQLite3DBParser;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;

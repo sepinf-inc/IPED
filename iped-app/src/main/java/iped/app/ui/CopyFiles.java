@@ -34,8 +34,8 @@ import javax.swing.SwingWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItem;
-import iped.IItemId;
+import iped.data.IItem;
+import iped.data.IItemId;
 import iped.engine.util.Util;
 import iped.util.IOUtil;
 

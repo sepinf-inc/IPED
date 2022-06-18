@@ -53,9 +53,9 @@ import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItemId;
 import iped.app.ui.controls.HintTextField;
 import iped.app.ui.controls.HoverButton;
+import iped.data.IItemId;
 import iped.engine.localization.CategoryLocalization;
 import iped.engine.search.ItemId;
 import iped.engine.search.MultiSearchResult;

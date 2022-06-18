@@ -20,8 +20,8 @@ import org.xml.sax.ContentHandler;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import iped.IIPEDSource;
-import iped.IItem;
+import iped.data.IIPEDSource;
+import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.search.IPEDSource;
 import iped.engine.task.ParsingTask;

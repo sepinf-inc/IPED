@@ -7,7 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Message;
 import iped.parsers.whatsapp.Util;

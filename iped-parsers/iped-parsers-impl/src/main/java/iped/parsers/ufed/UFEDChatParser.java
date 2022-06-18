@@ -27,7 +27,7 @@ import org.xml.sax.SAXException;
 
 import com.google.common.collect.ImmutableMap;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.whatsapp.Message;
 import iped.properties.BasicProps;

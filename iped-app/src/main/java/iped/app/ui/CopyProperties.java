@@ -32,7 +32,7 @@ import javax.swing.SwingWorker;
 
 import org.apache.lucene.document.Document;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.engine.lucene.analysis.CategoryTokenizer;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;

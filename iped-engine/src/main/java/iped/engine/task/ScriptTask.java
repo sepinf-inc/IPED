@@ -32,8 +32,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import iped.IItem;
 import iped.configuration.Configurable;
+import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IPEDSource;

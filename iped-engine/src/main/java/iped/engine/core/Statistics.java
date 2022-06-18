@@ -19,8 +19,8 @@ import org.apache.lucene.index.IndexReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.ICaseData;
-import iped.IItem;
+import iped.data.ICaseData;
+import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;

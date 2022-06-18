@@ -60,8 +60,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
-import iped.ICaseData;
-import iped.IItem;
+import iped.data.ICaseData;
+import iped.data.IItem;
 import iped.datasource.IDataSource;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ParsingTaskConfig;

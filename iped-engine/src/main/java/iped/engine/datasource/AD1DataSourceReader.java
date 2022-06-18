@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import iped.ICaseData;
-import iped.IItem;
+import iped.data.ICaseData;
+import iped.data.IItem;
 import iped.engine.data.DataSource;
 import iped.engine.data.Item;
 import iped.engine.datasource.ad1.AD1Extractor;

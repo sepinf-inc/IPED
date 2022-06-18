@@ -7,7 +7,7 @@ import javax.swing.SwingUtilities;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.engine.task.index.IndexItem;
 import iped.search.IMultiSearchResult;
 

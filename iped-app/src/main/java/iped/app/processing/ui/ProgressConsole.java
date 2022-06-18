@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.engine.core.Worker;
 import iped.engine.localization.Messages;
 import iped.engine.task.AbstractTask;

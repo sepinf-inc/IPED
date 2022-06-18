@@ -2,7 +2,7 @@ package iped.geo.impl;
 
 import javax.swing.JTable;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.geo.MarkerCheckBoxListener;
 import iped.geo.kml.GetResultsKMLWorker;
 import iped.search.IMultiSearchResult;

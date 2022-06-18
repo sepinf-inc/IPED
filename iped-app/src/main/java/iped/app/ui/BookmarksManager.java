@@ -70,8 +70,8 @@ import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItem;
-import iped.IItemId;
+import iped.data.IItem;
+import iped.data.IItemId;
 import iped.engine.lucene.DocValuesUtil;
 import iped.engine.search.IPEDMultiSource;
 import iped.engine.search.IPEDSearcher;

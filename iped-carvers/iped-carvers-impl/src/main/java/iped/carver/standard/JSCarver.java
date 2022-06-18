@@ -12,10 +12,10 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import iped.IItem;
 import iped.carver.api.CarverType;
 import iped.carver.api.Hit;
 import iped.carver.api.InvalidCarvedObjectException;
+import iped.data.IItem;
 
 public class JSCarver extends DefaultCarver {
     ScriptEngine engine;

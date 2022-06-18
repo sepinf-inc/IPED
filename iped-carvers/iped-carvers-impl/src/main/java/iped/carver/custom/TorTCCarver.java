@@ -2,10 +2,10 @@ package iped.carver.custom;
 
 import java.nio.charset.StandardCharsets;
 
-import iped.IItem;
 import iped.carver.api.Hit;
 import iped.carver.api.InvalidCarvedObjectException;
 import iped.carver.standard.DefaultCarver;
+import iped.data.IItem;
 import iped.io.SeekableInputStream;
 
 public class TorTCCarver extends DefaultCarver {

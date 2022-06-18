@@ -10,9 +10,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 
-import iped.IHashValue;
-import iped.IItem;
 import iped.configuration.Configurable;
+import iped.data.IHashValue;
+import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.lucene.SlowCompositeReaderWrapper;

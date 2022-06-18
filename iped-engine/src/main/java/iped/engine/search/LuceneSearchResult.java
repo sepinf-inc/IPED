@@ -23,7 +23,7 @@ import java.util.Comparator;
 
 import org.apache.lucene.search.ScoreDoc;
 
-import iped.IIPEDSource;
+import iped.data.IIPEDSource;
 import iped.search.SearchResult;
 
 /**

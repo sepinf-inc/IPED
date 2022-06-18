@@ -72,7 +72,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.DateUtils;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.datasource.IDataSource;
 import iped.engine.data.DataSource;
 import iped.engine.data.Item;

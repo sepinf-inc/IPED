@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.engine.lucene.DocValuesUtil;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;

@@ -14,8 +14,8 @@ import java.util.TreeMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import iped.ICaseData;
-import iped.IItem;
+import iped.data.ICaseData;
+import iped.data.IItem;
 import iped.engine.core.MimeTypesProcessingOrder;
 import iped.engine.task.SkipCommitedTask;
 import iped.engine.util.Util;

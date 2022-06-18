@@ -22,7 +22,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 
-import iped.ICaseData;
+import iped.data.ICaseData;
 import iped.datasource.IDataSource;
 import iped.engine.CmdLineArgs;
 import iped.engine.data.Item;

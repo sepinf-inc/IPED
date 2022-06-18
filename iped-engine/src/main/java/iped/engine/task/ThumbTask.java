@@ -6,7 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.HtmlReportTaskConfig;
 import iped.engine.util.Util;

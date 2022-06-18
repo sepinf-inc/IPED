@@ -37,7 +37,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.sqlite.SQLiteConfig;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.parsers.util.DelegatingConnection;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;

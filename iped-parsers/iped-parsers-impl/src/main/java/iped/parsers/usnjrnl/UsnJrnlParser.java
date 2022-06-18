@@ -22,7 +22,7 @@ import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.io.SeekableInputStream;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;

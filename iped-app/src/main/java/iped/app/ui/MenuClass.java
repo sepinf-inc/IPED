@@ -30,9 +30,9 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
-import iped.IItem;
 import iped.app.ui.themes.Theme;
 import iped.app.ui.themes.ThemeManager;
+import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.search.SimilarFacesSearch;

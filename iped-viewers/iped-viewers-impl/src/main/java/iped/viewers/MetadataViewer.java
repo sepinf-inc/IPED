@@ -20,7 +20,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.io.IStreamSource;
 import iped.localization.LocalizedProperties;
 import iped.parsers.util.MetadataUtil;

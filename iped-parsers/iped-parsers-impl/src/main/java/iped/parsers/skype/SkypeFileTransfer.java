@@ -2,7 +2,7 @@ package iped.parsers.skype;
 
 import java.util.Date;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.parsers.util.Messages;
 
 /**

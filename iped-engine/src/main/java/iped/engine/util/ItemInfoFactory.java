@@ -1,6 +1,6 @@
 package iped.engine.util;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.parsers.util.ItemInfo;
 
 public class ItemInfoFactory {

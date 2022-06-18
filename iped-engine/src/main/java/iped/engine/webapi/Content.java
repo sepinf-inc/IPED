@@ -19,8 +19,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import iped.IIPEDSource;
-import iped.IItem;
+import iped.data.IIPEDSource;
+import iped.data.IItem;
 
 @Api(value = "Documents")
 @Path("sources/{sourceID}/docs/{id}/content")

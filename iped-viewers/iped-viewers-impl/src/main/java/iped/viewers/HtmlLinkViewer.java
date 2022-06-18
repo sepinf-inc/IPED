@@ -13,13 +13,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
-import iped.IItem;
-import iped.IItemId;
+import iped.data.IItem;
+import iped.data.IItemId;
+import iped.data.SelectionListener;
 import iped.io.IStreamSource;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.whatsapp.WhatsAppParser;
-import iped.search.SelectionListener;
 import iped.util.IOUtil;
 import iped.viewers.api.AttachmentSearcher;
 import iped.viewers.localization.Messages;

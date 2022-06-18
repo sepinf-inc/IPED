@@ -39,8 +39,8 @@ import javax.swing.event.ListSelectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItem;
-import iped.IItemId;
+import iped.data.IItem;
+import iped.data.IItemId;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
 import iped.properties.BasicProps;

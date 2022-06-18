@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingOutputStream;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.engine.search.ItemId;
 
 public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {

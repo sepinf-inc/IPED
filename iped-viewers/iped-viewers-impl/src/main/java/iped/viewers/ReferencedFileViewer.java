@@ -8,7 +8,7 @@ import javax.swing.JLabel;
 
 import org.apache.tika.Tika;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.io.IStreamSource;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;

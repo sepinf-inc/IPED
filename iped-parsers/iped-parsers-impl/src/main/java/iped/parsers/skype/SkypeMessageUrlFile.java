@@ -1,6 +1,6 @@
 package iped.parsers.skype;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 
 /**
  * Classe que representa um arquivo enviado via URL registrado no arquivo

@@ -8,7 +8,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.engine.lucene.DocValuesUtil;
 import iped.engine.search.IPEDMultiSource;
 import iped.engine.search.MultiSearchResult;

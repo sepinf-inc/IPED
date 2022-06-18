@@ -16,7 +16,7 @@ import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.filechooser.FileFilter;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.data.Item;
 import iped.engine.task.similarity.ImageSimilarity;

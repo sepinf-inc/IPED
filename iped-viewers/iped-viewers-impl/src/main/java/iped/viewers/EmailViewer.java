@@ -52,7 +52,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.io.IStreamSource;
 import iped.parsers.mail.RFC822Parser;
 import iped.parsers.util.Util;

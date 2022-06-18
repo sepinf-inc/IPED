@@ -2,7 +2,7 @@ package iped.engine.util;
 
 import java.util.List;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.datasource.IDataSource;
 
 public class ParentInfo {

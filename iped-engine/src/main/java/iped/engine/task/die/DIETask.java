@@ -18,8 +18,8 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItem;
 import iped.configuration.Configurable;
+import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;

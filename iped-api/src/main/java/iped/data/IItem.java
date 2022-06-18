@@ -1,4 +1,4 @@
-package iped;
+package iped.data;
 
 import java.io.BufferedInputStream;
 import java.io.File;

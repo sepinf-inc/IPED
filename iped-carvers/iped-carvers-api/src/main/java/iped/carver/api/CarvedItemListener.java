@@ -1,6 +1,6 @@
 package iped.carver.api;
 
-import iped.IItem;
+import iped.data.IItem;
 
 public interface CarvedItemListener {
 

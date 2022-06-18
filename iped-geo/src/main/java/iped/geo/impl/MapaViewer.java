@@ -12,7 +12,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.geo.localization.Messages;
 import iped.search.IMultiSearchResultProvider;
 import iped.viewers.api.GUIProvider;

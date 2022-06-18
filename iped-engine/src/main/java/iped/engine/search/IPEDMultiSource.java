@@ -18,9 +18,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IIPEDSource;
-import iped.IItem;
-import iped.IItemId;
+import iped.data.IIPEDSource;
+import iped.data.IItem;
+import iped.data.IItemId;
 import iped.engine.lucene.SlowCompositeReaderWrapper;
 import iped.engine.lucene.analysis.AppAnalyzer;
 import iped.exception.IPEDException;

@@ -36,7 +36,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
-import iped.IItem;
+import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.io.ParsingReader;
 import iped.engine.task.ParsingTask;

@@ -18,7 +18,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
-import iped.ICaseData;
+import iped.data.ICaseData;
 import iped.engine.CmdLineArgs;
 import iped.engine.Version;
 import iped.engine.config.LocalConfig;

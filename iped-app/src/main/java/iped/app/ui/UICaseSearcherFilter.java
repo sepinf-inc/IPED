@@ -35,8 +35,8 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItemId;
 import iped.app.graph.FilterSelectedEdges;
+import iped.data.IItemId;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IPEDSource;
 import iped.engine.search.ImageSimilarityLowScoreFilter;

@@ -2,7 +2,7 @@ package iped.carver.api;
 
 import java.io.IOException;
 
-import iped.IItem;
+import iped.data.IItem;
 
 public interface Carver {
 

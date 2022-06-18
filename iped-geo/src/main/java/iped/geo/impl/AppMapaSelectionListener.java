@@ -5,7 +5,7 @@ import java.util.HashSet;
 
 import javax.swing.JTable;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.geo.MapSelectionListener;
 import iped.geo.kml.GetResultsKMLWorker;
 import iped.properties.BasicProps;

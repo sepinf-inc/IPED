@@ -41,9 +41,9 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 
-import iped.IItem;
 import iped.app.ui.App;
 import iped.app.ui.AppMain;
+import iped.data.IItem;
 import iped.engine.Version;
 import iped.engine.WorkerProvider;
 import iped.engine.core.Statistics;

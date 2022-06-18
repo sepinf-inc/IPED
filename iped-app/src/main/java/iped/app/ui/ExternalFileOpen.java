@@ -7,8 +7,8 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItem;
 import iped.app.ui.viewers.AttachmentSearcherImpl;
+import iped.data.IItem;
 import iped.exception.IPEDException;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;

@@ -4,10 +4,10 @@ import java.io.IOException;
 
 import org.apache.commons.codec.DecoderException;
 
-import iped.IItem;
 import iped.carver.api.CarverType;
 import iped.carver.api.Hit;
 import iped.carver.standard.AbstractCarver;
+import iped.data.IItem;
 import iped.io.SeekableInputStream;
 
 public class OLECarver extends AbstractCarver {

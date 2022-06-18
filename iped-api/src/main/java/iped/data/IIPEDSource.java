@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package iped;
+package iped.data;
 
 import java.io.Closeable;
 import java.io.File;
@@ -20,8 +20,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 import iped.exception.IPEDException;
-import iped.search.IBookmarks;
-import iped.search.IMultiBookmarks;
 
 /**
  *

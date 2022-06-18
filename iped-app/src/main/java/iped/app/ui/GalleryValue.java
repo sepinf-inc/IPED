@@ -22,7 +22,7 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.ImageIcon;
 
-import iped.IItemId;
+import iped.data.IItemId;
 
 public class GalleryValue {
 

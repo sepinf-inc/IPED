@@ -3,7 +3,7 @@ package iped.util;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
-import iped.IHashValue;
+import iped.data.IHashValue;
 
 public class HashValue extends IHashValue {
 

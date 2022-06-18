@@ -15,7 +15,7 @@ import javax.swing.SortOrder;
 import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Metadata;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.geo.localization.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;

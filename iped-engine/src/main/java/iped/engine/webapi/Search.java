@@ -12,7 +12,7 @@ import javax.ws.rs.core.MediaType;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IPEDSource;
 import iped.engine.webapi.json.DocIDJSON;

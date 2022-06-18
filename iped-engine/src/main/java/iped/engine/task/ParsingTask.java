@@ -55,9 +55,9 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.IItem;
-import iped.IItemBase;
 import iped.configuration.Configurable;
+import iped.data.IItem;
+import iped.data.IItemBase;
 import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;

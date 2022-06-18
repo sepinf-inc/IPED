@@ -28,8 +28,8 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IHashValue;
-import iped.IItem;
+import iped.data.IHashValue;
+import iped.data.IItem;
 import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
 import iped.engine.lucene.analysis.CategoryTokenizer;
@@ -956,7 +956,7 @@ public class Item implements IItem {
         this.parentId = parentId;
     }
 
-    public void setParent(iped.IItem parent) {
+    public void setParent(iped.data.IItem parent) {
         int parentId = parent.getId();
         this.setParentId(parentId);
         this.addParentIds(parent.getParentIds());

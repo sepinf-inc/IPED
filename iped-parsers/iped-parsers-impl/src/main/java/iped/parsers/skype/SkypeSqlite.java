@@ -18,7 +18,7 @@ import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import iped.IItemBase;
+import iped.data.IItemBase;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
 

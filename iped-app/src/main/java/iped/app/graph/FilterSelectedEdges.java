@@ -9,8 +9,8 @@ import java.util.Set;
 import org.kharon.Edge;
 import org.kharon.OverlappedEdges;
 
-import iped.IItemId;
 import iped.app.ui.App;
+import iped.data.IItemId;
 import iped.engine.search.IPEDSource;
 import iped.engine.search.ItemId;
 

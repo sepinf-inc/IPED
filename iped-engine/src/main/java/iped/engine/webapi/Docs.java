@@ -15,7 +15,7 @@ import org.apache.lucene.index.IndexableField;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import iped.IIPEDSource;
+import iped.data.IIPEDSource;
 import iped.engine.webapi.json.DocPropsJSON;
 
 @Api(value = "Documents")

@@ -2,8 +2,8 @@ package iped.viewers.api;
 
 import java.io.File;
 
-import iped.IItem;
-import iped.IItemId;
+import iped.data.IItem;
+import iped.data.IItemId;
 
 public interface AttachmentSearcher {
 

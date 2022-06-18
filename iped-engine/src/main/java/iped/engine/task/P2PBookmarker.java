@@ -8,7 +8,7 @@ import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.ICaseData;
+import iped.data.ICaseData;
 import iped.engine.localization.Messages;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IPEDSource;

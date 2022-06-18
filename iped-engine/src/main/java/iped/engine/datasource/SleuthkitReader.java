@@ -73,8 +73,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteException;
 
-import iped.ICaseData;
-import iped.IItem;
+import iped.data.ICaseData;
+import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.WorkerProvider;
 import iped.engine.config.ConfigurationManager;

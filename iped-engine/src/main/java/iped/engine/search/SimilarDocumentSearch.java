@@ -21,7 +21,7 @@ import org.apache.lucene.search.join.ToChildBlockJoinQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.IItemId;
+import iped.data.IItemId;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
 

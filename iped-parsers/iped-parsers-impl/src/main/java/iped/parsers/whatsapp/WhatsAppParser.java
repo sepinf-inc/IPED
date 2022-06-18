@@ -65,8 +65,8 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.IItem;
-import iped.IItemBase;
+import iped.data.IItem;
+import iped.data.IItemBase;
 import iped.io.SeekableInputStream;
 import iped.parsers.jdbc.SQLite3DBParser;
 import iped.parsers.jdbc.SQLite3Parser;

@@ -8,10 +8,10 @@ import org.apache.lucene.util.BytesRef;
 
 import com.zaxxer.sparsebits.SparseBitSet;
 
-import iped.IItem;
-import iped.IItemId;
 import iped.app.ui.App;
 import iped.app.ui.BookmarksController;
+import iped.data.IItem;
+import iped.data.IItemId;
 import iped.engine.lucene.DocValuesUtil;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
