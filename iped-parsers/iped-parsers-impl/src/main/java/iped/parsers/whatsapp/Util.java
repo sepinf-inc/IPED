@@ -14,8 +14,6 @@ import iped.util.IOUtil;
  */
 public class Util {
 
-    private static final String RESOURCE_PATH = "/iped/parsers/whatsapp/"; //$NON-NLS-1$
-
     public static String encodeBase64(byte[] data) {
         return Base64.getEncoder().encodeToString(data);
     }
@@ -48,7 +46,7 @@ public class Util {
     private static byte[] readResourceAsBytes(String resource) {
         byte[] result = null;
         try {
-            result = IOUtil.loadInputStream(Util.class.getResourceAsStream(RESOURCE_PATH + resource));
+            result = IOUtil.loadInputStream(Util.class.getResourceAsStream(resource));
         } catch (IOException e) {
             e.printStackTrace();
         } catch (Throwable e) {
