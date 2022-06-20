@@ -1,4 +1,7 @@
-package org.apache.lucene.search;
+package iped.engine.lucene;
+
+import org.apache.commons.codec.binary.Hex;
+import org.apache.lucene.search.PointRangeQuery;
 
 public class PublicPointRangeQuery extends PointRangeQuery {
 
@@ -11,7 +14,8 @@ public class PublicPointRangeQuery extends PointRangeQuery {
 
     @Override
     protected String toString(int dimension, byte[] value) {
-        return origQuery.toString(dimension, value);
+        //return origQuery.toString(dimension, value);
+        return "Dim:" + dimension + " Value:" + Hex.encodeHexString(value);
     }
 
 }
