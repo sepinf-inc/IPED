@@ -45,7 +45,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.ExportFolder;
 import iped.parsers.util.Messages;
@@ -146,7 +146,7 @@ public class KnownMetParser extends AbstractParser {
             cells.clear();
             String trClass = ""; //$NON-NLS-1$
             KnownMetEntry e = null;
-            IItemBase item = null;
+            IItemReader item = null;
             if (i == -1) {
                 for (int j = 0; j < header.length; j++) {
                     cells.add(header[j]);
@@ -240,18 +240,18 @@ public class KnownMetParser extends AbstractParser {
         xhtml.endDocument();
     }
 
-    public static IItemBase searchItemInCase(IItemSearcher searcher, String hashAlgo, String hash) {
+    public static IItemReader searchItemInCase(IItemSearcher searcher, String hashAlgo, String hash) {
         if (searcher == null) {
             return null;
         }
-        List<IItemBase> items = searcher.search(hashAlgo + ":" + hash); //$NON-NLS-1$
+        List<IItemReader> items = searcher.search(hashAlgo + ":" + hash); //$NON-NLS-1$
         if (items == null || items.isEmpty()) {
             return null;
         }
         return items.get(0);
     }
 
-    public static void printNameWithLink(XHTMLContentHandler xhtml, IItemBase item, String name) throws SAXException {
+    public static void printNameWithLink(XHTMLContentHandler xhtml, IItemReader item, String name) throws SAXException {
         String hashPath = getPathFromHash(new File("../../../../", ExportFolder.getExportPath()), //$NON-NLS-1$
                 item.getHash(), item.getExt());
 

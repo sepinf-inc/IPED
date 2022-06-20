@@ -1,6 +1,6 @@
 package iped.parsers.skype;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 
 /**
  * Classe que representa um arquivo enviado via URL registrado no arquivo
@@ -15,8 +15,8 @@ public class SkypeMessageUrlFile {
     private String localFile;
     private String filename;
     private int size;
-    private IItemBase cacheFile;
-    private IItemBase thumbFile;
+    private IItemReader cacheFile;
+    private IItemReader thumbFile;
     private String uri;
 
     public int getId() {
@@ -51,14 +51,14 @@ public class SkypeMessageUrlFile {
         this.size = size;
     }
 
-    public IItemBase getCacheFile() {
+    public IItemReader getCacheFile() {
         if (cacheFile != null)
             return cacheFile;
         else
             return thumbFile;
     }
 
-    public void setCacheFile(IItemBase cacheFile) {
+    public void setCacheFile(IItemReader cacheFile) {
         if (cacheFile.getLength() != null && cacheFile.getLength() > 0) {
             this.cacheFile = cacheFile;
         }
@@ -72,14 +72,14 @@ public class SkypeMessageUrlFile {
         this.uri = uri;
     }
 
-    public IItemBase getThumbFile() {
+    public IItemReader getThumbFile() {
         if (thumbFile != null)
             return thumbFile;
         else
             return cacheFile;
     }
 
-    public void setThumbFile(IItemBase thumbFile) {
+    public void setThumbFile(IItemReader thumbFile) {
         if (thumbFile.getLength() != null && thumbFile.getLength() > 0) {
             this.thumbFile = thumbFile;
         }

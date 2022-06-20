@@ -1,6 +1,6 @@
 package iped.parsers.util;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.properties.ExtraProperties;
 
 public class PhoneParsingConfig {
@@ -22,7 +22,7 @@ public class PhoneParsingConfig {
         ufdrSourceReaderName = ufdrReaderName;
     }
 
-    public static final boolean isFromUfdrDatasourceReader(IItemBase item) {
+    public static final boolean isFromUfdrDatasourceReader(IItemReader item) {
         return item != null && ufdrSourceReaderName != null
                 && ufdrSourceReaderName.equals(item.getExtraAttribute(ExtraProperties.DATASOURCE_READER));
     }

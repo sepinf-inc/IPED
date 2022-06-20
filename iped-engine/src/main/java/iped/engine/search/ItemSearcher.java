@@ -9,7 +9,7 @@ import java.util.List;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.engine.data.IPEDSource;
 import iped.search.IItemSearcher;
 import iped.search.SearchResult;
@@ -31,24 +31,24 @@ public class ItemSearcher implements IItemSearcher {
     }
 
     @Override
-    public List<IItemBase> search(String luceneQuery) {
+    public List<IItemReader> search(String luceneQuery) {
 
-        List<IItemBase> items = new ArrayList<IItemBase>();
-        for (IItemBase item : searchIterable(luceneQuery)) {
+        List<IItemReader> items = new ArrayList<IItemReader>();
+        for (IItemReader item : searchIterable(luceneQuery)) {
             items.add(item);
         }
         return items;
     }
 
     @Override
-    public Iterable<IItemBase> searchIterable(String luceneQuery) {
+    public Iterable<IItemReader> searchIterable(String luceneQuery) {
 
         SearchResult result = getResult(luceneQuery);
 
-        return new Iterable<IItemBase>() {
+        return new Iterable<IItemReader>() {
             @Override
-            public Iterator<IItemBase> iterator() {
-                return new Iterator<IItemBase>() {
+            public Iterator<IItemReader> iterator() {
+                return new Iterator<IItemReader>() {
 
                     int pos = 0;
 
@@ -58,7 +58,7 @@ public class ItemSearcher implements IItemSearcher {
                     }
 
                     @Override
-                    public IItemBase next() {
+                    public IItemReader next() {
                         return iSource.getItemByID(result.getId(pos++));
                     }
 

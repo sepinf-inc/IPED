@@ -29,7 +29,7 @@ import iped.io.SeekableInputStream;
  * @author Wladimir Leite (GPINF/SP)
  * @author Nassif (GPINF/SP)
  */
-public interface IItem extends IItemBase {
+public interface IItem extends IItemReader {
 
     /**
      * Adiciona o item a uma categoria.

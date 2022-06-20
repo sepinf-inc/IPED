@@ -11,7 +11,7 @@ import java.util.List;
 import org.apache.tika.metadata.Metadata;
 import org.xml.sax.ContentHandler;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.skype.v8.SkypeContactV8;
 import iped.parsers.skype.v8.SkypeConversationV14;
 import iped.parsers.skype.v8.SkypeMessageV12;
@@ -124,7 +124,7 @@ public class ReportGenerator {
             if (sm.getAnexoUri() != null && sm.getAnexoUri().getCacheFile() != null) {
                 out.print("<TD>");
                 try {
-                    IItemBase item = sm.getAnexoUri().getCacheFile();
+                    IItemReader item = sm.getAnexoUri().getCacheFile();
                     byte[] thumb = item.getThumb();
                     String query = BasicProps.HASH + ":" + item.getHash();
                     String exportPath = iped.parsers.util.Util.getExportPath(item);
@@ -370,14 +370,14 @@ public class ReportGenerator {
 
     private void insertLinkAndThumb(PrintWriter out, SkypeFileTransfer c, IItemSearcher searcher) {
 
-        IItemBase item = c.getItem();
+        IItemReader item = c.getItem();
         if (item != null) {
             String query = c.getItemQuery();
             out.println("<p>" + Messages.getString("SkypeReport.LikelyFile") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
             String quotedQuery = SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
             out.println(
                     "<input class=\"check\" type=\"checkbox\" onclick=\"app.check(" + quotedQuery + ",this.checked)\"");
-            List<IItemBase> result = Util.getItems(query, searcher);
+            List<IItemReader> result = Util.getItems(query, searcher);
             if (result != null && !result.isEmpty()) {
                 out.println(" name=\"" + result.get(0).getHash() + "\"");
             }

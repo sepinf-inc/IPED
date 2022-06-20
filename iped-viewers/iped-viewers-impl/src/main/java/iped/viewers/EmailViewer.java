@@ -52,7 +52,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.io.IStreamSource;
 import iped.parsers.mail.RFC822Parser;
 import iped.parsers.util.Util;
@@ -106,8 +106,8 @@ public class EmailViewer extends HtmlViewer {
         TikaInputStream tagged = null;
         try {
             InputStream stream = content.getSeekableInputStream();
-            if (content instanceof IItemBase
-                    && RFC822Parser.RFC822_MAC_MIME.equals(((IItemBase) content).getMediaType())) {
+            if (content instanceof IItemReader
+                    && RFC822Parser.RFC822_MAC_MIME.equals(((IItemReader) content).getMediaType())) {
                 mch.isOutlookMacMail = true;
                 stream = new ReplacingInputStream(new ReplacingInputStream(stream, "\r\n", "\n"), "\r", "\n");
             }

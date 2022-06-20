@@ -14,7 +14,7 @@ import iped.datasource.IDataSource;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.IStreamSource;
 
-public interface IItemBase extends IStreamSource {
+public interface IItemReader extends IStreamSource {
     /**
      *
      * @return o id do item

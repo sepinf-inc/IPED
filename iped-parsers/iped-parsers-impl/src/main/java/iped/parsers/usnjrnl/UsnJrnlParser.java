@@ -22,7 +22,7 @@ import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.io.SeekableInputStream;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
@@ -230,7 +230,7 @@ public class UsnJrnlParser extends AbstractParser {
         ArrayList<UsnJrnlEntry> entries = new ArrayList<>();
         int n = 1;
         IItemSearcher searcher = context.get(IItemSearcher.class);
-        IItemBase item = context.get(IItemBase.class);
+        IItemReader item = context.get(IItemReader.class);
         try (SeekableInputStream sis = item.getSeekableInputStream()) {
             jumpZeros(sis, 0, sis.size());
             while (findNextEntry(sis)) {
@@ -266,7 +266,7 @@ public class UsnJrnlParser extends AbstractParser {
 
     }
 
-    private void rebuildFullPaths(List<UsnJrnlEntry> entries, IItemSearcher searcher, IItemBase item) {
+    private void rebuildFullPaths(List<UsnJrnlEntry> entries, IItemSearcher searcher, IItemReader item) {
         StringBuilder query = new StringBuilder();
         query.append(BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID());
         query.append(" && ");
@@ -288,16 +288,16 @@ public class UsnJrnlParser extends AbstractParser {
             }
         }
         query.append(")");
-        List<IItemBase> parents = searcher.search(query.toString());
-        HashMap<Long, IItemBase> map = new HashMap<>();
-        for (IItemBase parent : parents) {
+        List<IItemReader> parents = searcher.search(query.toString());
+        HashMap<Long, IItemReader> map = new HashMap<>();
+        for (IItemReader parent : parents) {
             long meta = Long.parseLong((String) parent.getExtraAttribute(BasicProps.META_ADDRESS));
             long seq = Long.parseLong((String) parent.getExtraAttribute(BasicProps.MFT_SEQUENCE));
             long fullRef = seq << 48 | meta;
             map.put(fullRef, parent);
         }
         for (UsnJrnlEntry entry : entries) {
-            IItemBase parent = map.get(entry.getParentMftRefAsLong());
+            IItemReader parent = map.get(entry.getParentMftRefAsLong());
             if (parent != null) {
                 entry.setFullPath(parent.getPath() + "/" + entry.getFileName());
             }

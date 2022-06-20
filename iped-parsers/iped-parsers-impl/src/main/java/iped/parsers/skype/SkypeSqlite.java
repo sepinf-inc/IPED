@@ -18,7 +18,7 @@ import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
 
@@ -48,7 +48,7 @@ public class SkypeSqlite implements SkypeStorage {
     private String skypeName;
     private Hashtable<Integer, SkypeConversation> conversations = null;
 
-    List<IItemBase> cachedMediaList = null;
+    List<IItemReader> cachedMediaList = null;
 
     SkypeAccount account;
 
@@ -66,8 +66,8 @@ public class SkypeSqlite implements SkypeStorage {
         baseSkypeFolder = searcher.escapeQuery(baseSkypeFolder);
 
         String query = BasicProps.PATH + ":\"" + baseSkypeFolder + STORAGE_DB_PATH + "\""; //$NON-NLS-1$//$NON-NLS-2$
-        List<IItemBase> items = searcher.search(query);
-        for (IItemBase item : items) {
+        List<IItemReader> items = searcher.search(query);
+        for (IItemReader item : items) {
             if (item.getName().equalsIgnoreCase("storage_db.db")) { //$NON-NLS-1$
                 storageDbPath = getTempFile(item);
                 break;
@@ -77,7 +77,7 @@ public class SkypeSqlite implements SkypeStorage {
                                                                                     // searchers for media_cache_v2,
                                                                                     // media_cache_v3, etc
         items = searcher.search(query);
-        for (IItemBase item : items)
+        for (IItemReader item : items)
             if (item.getName().equalsIgnoreCase("cache_db.db")) { //$NON-NLS-1$
                 cacheMediaDbPath = getTempFile(item);
                 break;
@@ -87,7 +87,7 @@ public class SkypeSqlite implements SkypeStorage {
         cachedMediaList = searcher.search(query);
     }
 
-    private File getTempFile(IItemBase item) {
+    private File getTempFile(IItemReader item) {
         try (InputStream is = item.getBufferedInputStream()) {
             Path temp = Files.createTempFile("sqlite-parser", null); //$NON-NLS-1$
             Files.copy(is, temp, StandardCopyOption.REPLACE_EXISTING);
@@ -334,7 +334,7 @@ public class SkypeSqlite implements SkypeStorage {
                 }
 
                 // search thumb
-                for (IItemBase item : cachedMediaList) {
+                for (IItemReader item : cachedMediaList) {
                     String nome = item.getName();
                     if (nome.startsWith("i" + urlFile.getId() + "^") && nome.contains("thumb")) { //$NON-NLS-1$ //$NON-NLS-2$
                         urlFile.setThumbFile(item);
@@ -343,7 +343,7 @@ public class SkypeSqlite implements SkypeStorage {
                 }
 
                 boolean originalFound = false;
-                for (IItemBase item : cachedMediaList) {
+                for (IItemReader item : cachedMediaList) {
                     String nome = item.getName();
                     if (nome.startsWith("i" + urlFile.getId() + "^") && item.getLength() == urlFile.getSize()) { //$NON-NLS-1$ //$NON-NLS-2$
                                                                                                                  // //$NON-NLS-3$
@@ -376,7 +376,7 @@ public class SkypeSqlite implements SkypeStorage {
             if (name.startsWith("^") && name.indexOf("^", 1) == 51) {
                 name = name.split("\\^")[1];
             }
-            for (IItemBase item : cachedMediaList) {
+            for (IItemReader item : cachedMediaList) {
                 if (item.getName().contains(name) && item.getLength() == nameSize.size) {
                     urlFile.setCacheFile(item);
                     return urlFile;

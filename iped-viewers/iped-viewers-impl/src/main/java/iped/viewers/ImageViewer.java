@@ -32,7 +32,7 @@ import javax.swing.event.ChangeListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.io.IStreamSource;
 import iped.io.SeekableInputStream;
 import iped.properties.MediaTypes;
@@ -109,8 +109,8 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
             try {
                 in = new BufferedInputStream(content.getSeekableInputStream());
                 // needed for embedded jbig2
-                String mimeType = content instanceof IItemBase
-                        ? MediaTypes.getMimeTypeIfJBIG2((IItemBase) content)
+                String mimeType = content instanceof IItemReader
+                        ? MediaTypes.getMimeTypeIfJBIG2((IItemReader) content)
                         : null;
                 image = ImageUtil.getSubSampledImage(in, maxDim, maxDim, mimeType);
 

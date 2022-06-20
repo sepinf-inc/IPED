@@ -22,7 +22,7 @@ import org.xml.sax.SAXException;
 
 import iped.configuration.Configurable;
 import iped.data.IItem;
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.MakePreviewConfig;
 import iped.engine.config.ParsingTaskConfig;
@@ -137,7 +137,7 @@ public class MakePreviewTask extends AbstractTask {
             final ParseContext context = new ParseContext();
             IItemSearcher itemSearcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
             context.set(IItemSearcher.class, itemSearcher);
-            context.set(IItemBase.class, evidence);
+            context.set(IItemReader.class, evidence);
             context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(evidence));
             context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
 

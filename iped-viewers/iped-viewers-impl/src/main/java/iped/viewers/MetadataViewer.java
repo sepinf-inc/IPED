@@ -20,7 +20,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.io.IStreamSource;
 import iped.localization.LocalizedProperties;
 import iped.parsers.util.MetadataUtil;
@@ -155,9 +155,9 @@ public abstract class MetadataViewer extends AbstractViewer {
                     WebEngine webEngine = viewer.webEngine;
                     webEngine.loadContent(UiUtil.getUIEmptyHtml());
 
-                    if (content instanceof IItemBase) {
+                    if (content instanceof IItemReader) {
                         viewer.highlightTerms = terms;
-                        String preview = generatePreview((IItemBase) content, htmlViewers.indexOf(viewer));
+                        String preview = generatePreview((IItemReader) content, htmlViewers.indexOf(viewer));
                         try {
                             if (viewer.tmpFile == null) {
                                 viewer.tmpFile = File.createTempFile("metadata", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -181,7 +181,7 @@ public abstract class MetadataViewer extends AbstractViewer {
         });
     }
 
-    private String generatePreview(IItemBase item, int tabIndex) {
+    private String generatePreview(IItemReader item, int tabIndex) {
         Color color1 = new Color(0xD7D7D7); 
         Color color2 = new Color(0xF2F2F2);
         Color color3 = new Color(0xF2F2F2);
@@ -267,7 +267,7 @@ public abstract class MetadataViewer extends AbstractViewer {
         sb.append("</table>"); //$NON-NLS-1$
     }
 
-    private void fillBasicProps(StringBuilder sb, IItemBase item) {
+    private void fillBasicProps(StringBuilder sb, IItemReader item) {
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.BasicProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         fillProp(sb, BasicProps.NAME, item.getName());
@@ -285,7 +285,7 @@ public abstract class MetadataViewer extends AbstractViewer {
         sb.append("</table>"); //$NON-NLS-1$
     }
 
-    private void fillAdvancedProps(StringBuilder sb, IItemBase item) {
+    private void fillAdvancedProps(StringBuilder sb, IItemReader item) {
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.AdvancedProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         fillProp(sb, BasicProps.CONTENTTYPE, item.getMediaType());

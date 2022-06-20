@@ -27,7 +27,7 @@ import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ChildPornHashLookup;
@@ -217,7 +217,7 @@ public class SkypeParser extends AbstractParser {
                                 meta.set(TikaCoreProperties.MODIFIED, sm.getDataEdicao());
                             }
                             if (sm.getAnexoUri() != null && sm.getAnexoUri().getCacheFile() != null) {
-                                IItemBase item = sm.getAnexoUri().getCacheFile();
+                                IItemReader item = sm.getAnexoUri().getCacheFile();
                                 String referenceQuery = BasicProps.HASH + ":" + item.getHash();
                                 meta.set(ExtraProperties.LINKED_ITEMS, referenceQuery); // $NON-NLS-1$
                                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, ATTACHMENT_MIME_TYPE);
@@ -383,8 +383,8 @@ public class SkypeParser extends AbstractParser {
         return sizeQuery + " && " + BasicProps.NAME + ":\"" + name + "\""; //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
     }
 
-    private IItemBase getItem(String query, IItemSearcher searcher) {
-        List<IItemBase> items = searcher.search(query);
+    private IItemReader getItem(String query, IItemSearcher searcher) {
+        List<IItemReader> items = searcher.search(query);
         if (items.size() > 0)
             return items.get(0);
         else

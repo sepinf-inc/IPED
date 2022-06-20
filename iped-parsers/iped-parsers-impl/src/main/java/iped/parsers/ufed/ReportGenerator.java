@@ -7,7 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Message;
 import iped.parsers.whatsapp.Util;
@@ -41,7 +41,7 @@ public class ReportGenerator {
         return SimpleHTMLEncoder.htmlEncode(text);
     }
 
-    public byte[] generateNextChatHtml(IItemBase c, List<UfedMessage> msgs) throws UnsupportedEncodingException {
+    public byte[] generateNextChatHtml(IItemReader c, List<UfedMessage> msgs) throws UnsupportedEncodingException {
 
         if ((!firstHtml && currentMsg == 0) || (currentMsg > 0 && currentMsg == msgs.size()))
             return null;

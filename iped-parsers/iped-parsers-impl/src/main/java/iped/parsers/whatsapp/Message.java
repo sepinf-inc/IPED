@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.codec.binary.Hex;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.util.ChildPornHashLookup;
 
 /**
@@ -61,7 +61,7 @@ public class Message {
     private MessageStatus messageStatus;
     private String recoveredFrom = null;
     private Set<String> childPornSets = new HashSet<>();
-    private IItemBase mediaItem = null;
+    private IItemReader mediaItem = null;
     private String mediaQuery = null;
     private List<MessageAddOn> addOns = new ArrayList<>();
 
@@ -391,11 +391,11 @@ public class Message {
         this.childPornSets.addAll(sets);
     }
     
-    public IItemBase getMediaItem() {
+    public IItemReader getMediaItem() {
         return mediaItem;
     }
 
-    public void setMediaItem(IItemBase mediaItem) {
+    public void setMediaItem(IItemReader mediaItem) {
         this.mediaItem = mediaItem;
     }
 

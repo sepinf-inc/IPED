@@ -54,7 +54,7 @@ import org.xml.sax.SAXException;
 
 import iped.configuration.Configurable;
 import iped.data.IItem;
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
@@ -229,7 +229,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         org.apache.poi.hpsf.CodePageString.setMaxRecordLength(512_000);
 
         context.set(IStreamSource.class, evidence);
-        context.set(IItemBase.class, evidence);
+        context.set(IItemReader.class, evidence);
         if (ipedsource != null) {
             context.set(IItemSearcher.class, new ItemSearcher(ipedsource));
         } else {

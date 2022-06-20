@@ -8,7 +8,7 @@ package iped.search;
 import java.io.Closeable;
 import java.util.List;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 
 /**
  *
@@ -16,9 +16,9 @@ import iped.data.IItemBase;
  */
 public interface IItemSearcher extends Closeable {
 
-    List<IItemBase> search(String luceneQuery);
+    List<IItemReader> search(String luceneQuery);
 
-    Iterable<IItemBase> searchIterable(String luceneQuery);
+    Iterable<IItemReader> searchIterable(String luceneQuery);
 
     String escapeQuery(String string);
 

@@ -51,7 +51,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
@@ -364,8 +364,8 @@ public class TelegramParser extends SQLite3DBParser {
 
     private Contact searchAndroidAccount(IItemSearcher searcher, String dbPath) {
         String query = BasicProps.CONTENTTYPE + ":\"" + TELEGRAM_USER_CONF.toString() + "\"";
-        List<IItemBase> result = searcher.search(query);
-        IItemBase item = getBestItem(result, dbPath);
+        List<IItemReader> result = searcher.search(query);
+        IItemReader item = getBestItem(result, dbPath);
         if (item != null) {
             try (InputStream is = item.getBufferedInputStream()) {
                 Contact account = decodeAndroidAccount(is);
@@ -383,12 +383,12 @@ public class TelegramParser extends SQLite3DBParser {
         return account;
     }
 
-    private IItemBase getBestItem(List<IItemBase> result, String path) {
+    private IItemReader getBestItem(List<IItemReader> result, String path) {
         if (result.size() == 1) {
             return result.get(0);
         } else if (result.size() > 1) {
             while ((path = new File(path).getParent()) != null) {
-                for (IItemBase item : result) {
+                for (IItemReader item : result) {
                     if (item.getPath().startsWith(path)) {
                         return item;
                     }
@@ -462,7 +462,7 @@ public class TelegramParser extends SQLite3DBParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        IItemBase item = context.get(IItemBase.class);
+        IItemReader item = context.get(IItemReader.class);
         if ((!enabledForUfdr || PhoneParsingConfig.isExternalPhoneParsersOnly())
                 && PhoneParsingConfig.isFromUfdrDatasourceReader(item)) {
             return;

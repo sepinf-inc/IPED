@@ -4,7 +4,7 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 
 public class MediaTypes {
 
@@ -78,7 +78,7 @@ public class MediaTypes {
         return false;
     }
 
-    public static String getMimeTypeIfJBIG2(IItemBase item) {
+    public static String getMimeTypeIfJBIG2(IItemReader item) {
         if (item.getMediaType() != null && item.getMediaType().equals(JBIG2)) {
             return JBIG2.toString();
         }

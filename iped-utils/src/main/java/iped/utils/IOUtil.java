@@ -44,7 +44,7 @@ import javax.swing.JOptionPane;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IItem;
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.localization.Messages;
 
 public class IOUtil {
@@ -386,12 +386,12 @@ public class IOUtil {
         os.write(buf);
     }
 
-    public static boolean hasFile(IItemBase item) {
+    public static boolean hasFile(IItemReader item) {
         return item.getInputStreamFactory() instanceof FileInputStreamFactory
                 && (!(item instanceof IItem) || ((IItem) item).getFileOffset() == -1);
     }
 
-    public static File getFile(IItemBase item) {
+    public static File getFile(IItemReader item) {
         if (hasFile(item)) {
             FileInputStreamFactory fisf = ((FileInputStreamFactory) item.getInputStreamFactory());
             return fisf.getPath(item.getIdInDataSource()).toFile();

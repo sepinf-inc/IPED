@@ -66,7 +66,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.data.IItem;
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.io.SeekableInputStream;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLite3Parser;
@@ -222,7 +222,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        IItemBase item = context.get(IItemBase.class);
+        IItemReader item = context.get(IItemReader.class);
         if (PhoneParsingConfig.isExternalPhoneParsersOnly() && PhoneParsingConfig.isFromUfdrDatasourceReader(item)) {
             return;
         }
@@ -456,7 +456,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void parseAndCheckIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
-        WhatsAppContext wcontext = new WhatsAppContext(false, context.get(IItemBase.class));
+        WhatsAppContext wcontext = new WhatsAppContext(false, context.get(IItemReader.class));
         try {
             parseDB(wcontext, metadata, context, extFactory);
         } catch (Exception e) {
@@ -502,7 +502,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (type.equals(CHAT_STORAGE.toString()) || type.equals(CHAT_STORAGE_2.toString())) {
             return false;
         }
-        IItemBase item = wcontext.getItem();
+        IItemReader item = wcontext.getItem();
         if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)
                 && wcontext.getChalist() != null) {
             wcontext.setMainDB(true);
@@ -536,8 +536,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         String query = "(" + BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\" OR " + BasicProps.CONTENTTYPE + ":\"" //$NON-NLS-1$ //$NON-NLS-2$
                 + MSG_STORE_2 + "\") AND NOT " + BasicProps.LENGTH + ":0";
-        List<IItemBase> result = iped.parsers.util.Util.getItems(query, searcher);
-        for (IItemBase it : result) {
+        List<IItemReader> result = iped.parsers.util.Util.getItems(query, searcher);
+        for (IItemReader it : result) {
             WhatsAppContext wcontext = new WhatsAppContext(false, it);
             if (checkIfIsMainDBAndStore(wcontext)) {
                 dbsSearchedForAndAdded++;
@@ -546,7 +546,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         dbsSearchedFor = true;
     }
 
-    private void addBackupMessage(WhatsAppContext item, IItemBase main, XHTMLContentHandler xhtml) throws SAXException {
+    private void addBackupMessage(WhatsAppContext item, IItemReader main, XHTMLContentHandler xhtml) throws SAXException {
         IItem i = (IItem) item.getItem();
         i.getMetadata().set(IS_BACKUP_FROM, main.getExtraAttribute(ExtraProperties.GLOBAL_ID).toString());
         xhtml.startDocument();
@@ -557,7 +557,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void mergeParsedDBsAndOutputResults(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
-        IItemBase DB = context.get(IItemBase.class);
+        IItemReader DB = context.get(IItemReader.class);
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
         // this call is needed when processing was stopped and is being resumed, so DBs
@@ -790,8 +790,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         else
             query += "\"group.net.whatsapp.WhatsApp.shared.plist\""; //$NON-NLS-1$
         if (searcher != null) {
-            List<IItemBase> result = searcher.search(query);
-            IItemBase item = getBestItem(result, dbPath);
+            List<IItemReader> result = searcher.search(query);
+            IItemReader item = getBestItem(result, dbPath);
             if (item != null) {
                 try (InputStream is = item.getBufferedInputStream()) {
                     WAAccount account = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
@@ -807,9 +807,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         return account;
     }
 
-    private IItemBase getBestItem(List<IItemBase> result, String path) {
+    private IItemReader getBestItem(List<IItemReader> result, String path) {
         while ((path = new File(path).getParent()) != null) {
-            for (IItemBase item : result) {
+            for (IItemReader item : result) {
                 if (item.getPath().startsWith(path)) {
                     return item;
                 }
@@ -986,7 +986,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private void getAvatar(IItemSearcher searcher, WAContact contact) {
         if (searcher != null && contact.getAvatar() == null) {
-            List<IItemBase> result = searcher
+            List<IItemReader> result = searcher
                     .search(BasicProps.NAME + ":\"" + escape(searcher, contact.getFullId()) + ".j\""); //$NON-NLS-1$ //$NON-NLS-2$
             if (result.isEmpty()) {
                 if (contact.getAvatarPath() != null) {
@@ -1036,12 +1036,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             return string;
     }
 
-    private List<IItemBase> filterAvatars(List<IItemBase> avatars, String id) {
+    private List<IItemReader> filterAvatars(List<IItemReader> avatars, String id) {
         // WhatsApp initial release 2009-01-01
         long startTime = 1230768000;
         long endTime = System.currentTimeMillis() / 1000;
-        ArrayList<IItemBase> result = new ArrayList<IItemBase>();
-        for (IItemBase item : avatars) {
+        ArrayList<IItemReader> result = new ArrayList<IItemReader>();
+        for (IItemReader item : avatars) {
             // filter group avatars and unrelated images
             if (item.getName().startsWith(id) && item.getName().split("-").length < 3) { //$NON-NLS-1$
                 String str = item.getName().substring(id.length());
@@ -1065,9 +1065,9 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     // sort newer avatar to be first
-    private class AvatarComparator implements Comparator<IItemBase> {
+    private class AvatarComparator implements Comparator<IItemReader> {
         @Override
-        public int compare(IItemBase o1, IItemBase o2) {
+        public int compare(IItemReader o1, IItemReader o2) {
             return o2.getName().compareTo(o1.getName());
         }
     }
@@ -1168,14 +1168,14 @@ public class WhatsAppParser extends SQLite3DBParser {
         String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\""; //$NON-NLS-1$ //$NON-NLS-2$
         query += " && " + BasicProps.CONTENTTYPE + ":(\"" + WA_DB.toString() + "\" || \"" + CONTACTS_V2.toString() //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + "\")"; //$NON-NLS-1$
-        List<IItemBase> items = searcher.search(query);
+        List<IItemReader> items = searcher.search(query);
         if (items.size() == 0) {
             return new WAContactsDirectory();
         }
-        IItemBase item = items.get(0);
+        IItemReader item = items.get(0);
         ParseContext context = new ParseContext();
         context.set(IItemSearcher.class, searcher);
-        context.set(IItemBase.class, item);
+        context.set(IItemReader.class, item);
         ExtractorFactory extFactory = (ExtractorFactory) extFactoryClass.getDeclaredConstructor().newInstance();
 
         try (InputStream is = item.getBufferedInputStream()) {
@@ -1342,7 +1342,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         return futures;
     }
 
-    private void setItemToMessage(IItemBase item, List<Message> messageList, String query, boolean isHashQuery, boolean saveItemRef) {
+    private void setItemToMessage(IItemReader item, List<Message> messageList, String query, boolean isHashQuery, boolean saveItemRef) {
         if (messageList != null && saveItemRef) {
             for (Message m : messageList) {
                 m.setMediaItem(item);
@@ -1400,8 +1400,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             allHashesQueryBuilder.append(")"); //$NON-NLS-1$
             String allHashesQuery = allHashesQueryBuilder.toString();
-            List<IItemBase> result = iped.parsers.util.Util.getItems(allHashesQuery, searcher);
-            for (IItemBase item : result) {
+            List<IItemReader> result = iped.parsers.util.Util.getItems(allHashesQuery, searcher);
+            for (IItemReader item : result) {
                 String hash = (String) item.getExtraAttribute("sha-256"); //$NON-NLS-1$
                 List<Message> messageList = hashesToSearchFor.remove(hash);
 
@@ -1425,8 +1425,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
 
             String fileNameAndSizeQuery = fileNameAndSizeQueryBuilder.toString();
-            List<IItemBase> result = iped.parsers.util.Util.getItems(fileNameAndSizeQuery, searcher);
-            for (IItemBase item : result) {
+            List<IItemReader> result = iped.parsers.util.Util.getItems(fileNameAndSizeQuery, searcher);
+            for (IItemReader item : result) {
                 if (item.getName() != null && !item.getName().isEmpty() && item.getLength() != null
                         && item.getLength() > 0) {
                     String fileName = item.getName();
@@ -1479,8 +1479,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                     fallBackQueryBuilder.append(")"); //$NON-NLS-1$
 
                     String fallBackQuery = fallBackQueryBuilder.toString();
-                    List<IItemBase> result = iped.parsers.util.Util.getItems(fallBackQuery, searcher);
-                    for (IItemBase item : result) {
+                    List<IItemReader> result = iped.parsers.util.Util.getItems(fallBackQuery, searcher);
+                    for (IItemReader item : result) {
                         if (item.getName() != null && item.getLength() != null && item.getLength() > 0) {
                             String fileName = item.getName();
                             if (fileName.contains("/")) { //$NON-NLS-1$
@@ -1577,7 +1577,7 @@ public class WhatsAppParser extends SQLite3DBParser {
      * @param mediaSize
      * @return
      */
-    private boolean itemStreamEndsWithZeros(IItemBase item, long mediaSize) {
+    private boolean itemStreamEndsWithZeros(IItemReader item, long mediaSize) {
         try (SeekableInputStream sis = item.getSeekableInputStream()) {
             sis.seek(mediaSize);
             byte[] bytes = new byte[15];

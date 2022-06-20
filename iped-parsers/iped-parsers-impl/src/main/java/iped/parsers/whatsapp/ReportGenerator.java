@@ -12,7 +12,7 @@ import org.apache.commons.text.StringSubstitutor;
 import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.parsers.vcard.VCardParser;
@@ -279,7 +279,7 @@ public class ReportGenerator {
                 break;
 
             default:
-                IItemBase mediaItem = null;
+                IItemReader mediaItem = null;
                 byte[] thumb = null;
                 String name = null, number = null;
                 String query = null;

@@ -25,7 +25,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.properties.ExtraProperties;
@@ -97,7 +97,7 @@ public class PartMetParser extends AbstractParser {
         int hashDBHits = 0;
         HashSet<String> hashSets = new HashSet<String>();
         hashSets.addAll(ChildPornHashLookup.lookupHash(KnownMetParser.EDONKEY, e.getHash()));
-        IItemBase item = KnownMetParser.searchItemInCase(searcher, KnownMetParser.EDONKEY, e.getHash());
+        IItemReader item = KnownMetParser.searchItemInCase(searcher, KnownMetParser.EDONKEY, e.getHash());
         if (item != null)
             hashSets.addAll(ChildPornHashLookup.lookupHash(item.getHash()));
         if (!hashSets.isEmpty())

@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.configuration.Configurable;
 import iped.data.IItem;
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.data.Item;
@@ -104,9 +104,9 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                     dotIdx = item.getName().length();
                 String query = BasicProps.PARENTID + ":" + item.getParentId() + " && " + BasicProps.NAME + ":\""
                         + QueryParserUtil.escape(item.getName().substring(0, dotIdx)) + "\"";
-                List<IItemBase> possibleParts = searcher.search(query);
+                List<IItemReader> possibleParts = searcher.search(query);
                 logger.info("Found {} possible image segments of {}", possibleParts.size(), item.getPath());
-                for (IItemBase possiblePart : possibleParts) {
+                for (IItemReader possiblePart : possibleParts) {
                     // export DD parts
                     exportItem(possiblePart);
                 }
@@ -141,7 +141,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     }
 
-    private File exportItem(IItemBase item) throws IOException {
+    private File exportItem(IItemReader item) throws IOException {
         File imageFile = null;
         if (item instanceof IItem && IOUtil.hasFile((IItem) item)) {
             imageFile = IOUtil.getFile((IItem) item);

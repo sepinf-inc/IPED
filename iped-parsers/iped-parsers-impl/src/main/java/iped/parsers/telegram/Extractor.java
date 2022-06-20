@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
@@ -375,7 +375,7 @@ public class Extractor {
     private void loadDocument(Message message, List<String> names, long size) {
         for (String name : names) {
             String query = getQuery(name, size);
-            IItemBase item = getFileFromQuery(query);
+            IItemReader item = getFileFromQuery(query);
             if (item != null) {
                 if (message.getMediaMime() == null) {
                     message.setMediaMime(item.getMediaType().toString());
@@ -396,7 +396,7 @@ public class Extractor {
 
         for (PhotoData p : list) {
             String query = getQuery(p.getName(), p.getSize());
-            IItemBase r = getFileFromQuery(query);
+            IItemReader r = getFileFromQuery(query);
             if (r != null) {
                 message.setLinkImage(r.getThumb());
                 message.setMediaHash(r.getHash());
@@ -412,7 +412,7 @@ public class Extractor {
     private void loadImage(Message message, List<PhotoData> list) {
         for (PhotoData p : list) {
             String query = getQuery(p.getName(), p.getSize());
-            IItemBase r = getFileFromQuery(query);
+            IItemReader r = getFileFromQuery(query);
             if (r != null) {
                 message.setThumb(r.getThumb());
                 message.setMediaHash(r.getHash());
@@ -430,8 +430,8 @@ public class Extractor {
         return query;
     }
 
-    private IItemBase getFileFromQuery(String query) {
-        List<IItemBase> result = iped.parsers.util.Util.getItems(query, searcher);
+    private IItemReader getFileFromQuery(String query) {
+        List<IItemReader> result = iped.parsers.util.Util.getItems(query, searcher);
         if (result != null && !result.isEmpty()) {
             return result.get(0);
         }
@@ -524,7 +524,7 @@ public class Extractor {
     protected void searchAvatarFileName(Contact contact, List<PhotoData> photos) throws IOException {
         if (photos == null)
             return;
-        List<IItemBase> result = null;
+        List<IItemReader> result = null;
         String name = null;
         for (PhotoData photo : photos) {
             if (photo.getName() != null) {

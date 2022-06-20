@@ -26,13 +26,13 @@ import java.util.Set;
 
 import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.util.ChildPornHashLookup;
 
 public class Message implements MessageInterface {
     private long id;
     private String mediaHash = null;
-    private IItemBase mediaItem = null;
+    private IItemReader mediaItem = null;
     private String mediaName = null;
     private String mediaExt = null;
     private String mediaComment = null;
@@ -79,11 +79,11 @@ public class Message implements MessageInterface {
         throw new UnsupportedOperationException("Use setMediaItem() instead");
     }
 
-    public IItemBase getMediaItem() {
+    public IItemReader getMediaItem() {
         return this.mediaItem;
     }
 
-    public void setMediaItem(IItemBase mediaItem) {
+    public void setMediaItem(IItemReader mediaItem) {
         this.mediaItem = mediaItem;
     }
 

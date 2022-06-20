@@ -18,7 +18,7 @@ import org.apache.tika.parser.Parser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.util.ItemInfo;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -42,12 +42,12 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public Iterable<IItemBase> searchIterable(String luceneQuery) {
+            public Iterable<IItemReader> searchIterable(String luceneQuery) {
                 return Collections.emptyList();
             }
 
             @Override
-            public List<IItemBase> search(String luceneQuery) {
+            public List<IItemReader> search(String luceneQuery) {
                 return Collections.emptyList();
             }
 

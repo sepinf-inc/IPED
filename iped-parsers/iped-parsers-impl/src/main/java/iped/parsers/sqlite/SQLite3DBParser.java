@@ -37,7 +37,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.sqlite.SQLiteConfig;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.jdbc.AbstractDBParser;
 import iped.parsers.jdbc.JDBCTableReader;
 import iped.parsers.util.DelegatingConnection;
@@ -120,13 +120,13 @@ public class SQLite3DBParser extends AbstractDBParser {
     private static File exportRelatedFile(File theFile, String suffix, ParseContext context, TemporaryResources tmp) {
         IItemSearcher searcher = context.get(IItemSearcher.class);
         if (searcher != null) {
-            IItemBase parsingItem = context.get(IItemBase.class);
+            IItemReader parsingItem = context.get(IItemReader.class);
             if (parsingItem != null) {
                 String parsingFilePath = parsingItem.getPath();
                 String relatedFileQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(parsingFilePath + suffix) + "\"";
-                List<IItemBase> items = searcher.search(relatedFileQuery);
+                List<IItemReader> items = searcher.search(relatedFileQuery);
                 if (items.size() > 0) {
-                    IItemBase relatedItem = items.get(0);
+                    IItemReader relatedItem = items.get(0);
                     File relatedFileTemp = new File(theFile.getAbsolutePath() + suffix);
                     try (InputStream in = relatedItem.getBufferedInputStream()) {
                         Files.copy(in, relatedFileTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);

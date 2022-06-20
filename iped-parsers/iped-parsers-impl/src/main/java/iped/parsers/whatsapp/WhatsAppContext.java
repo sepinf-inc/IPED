@@ -2,22 +2,22 @@ package iped.parsers.whatsapp;
 
 import java.util.List;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 
 public class WhatsAppContext {
 
     private boolean isMainDB;
     private boolean isBackup;
 
-    private IItemBase item;
+    private IItemReader item;
     private List<Chat> chalist = null;
 
-    private IItemBase mainDBItem;
+    private IItemReader mainDBItem;
 
     private boolean parsingError = false;
 
 
-    public WhatsAppContext(boolean isMainDB, IItemBase item) {
+    public WhatsAppContext(boolean isMainDB, IItemReader item) {
         this.setMainDB(isMainDB);
         this.setItem(item);
         this.setBackup(false);
@@ -33,11 +33,11 @@ public class WhatsAppContext {
         this.isMainDB = isMainDB;
     }
 
-    public IItemBase getItem() {
+    public IItemReader getItem() {
         return item;
     }
 
-    public void setItem(IItemBase item) {
+    public void setItem(IItemReader item) {
         this.item = item;
     }
 
@@ -57,11 +57,11 @@ public class WhatsAppContext {
         this.isBackup = isBackup;
     }
 
-    public IItemBase getMainDBItem() {
+    public IItemReader getMainDBItem() {
         return mainDBItem;
     }
 
-    public void setMainDBItem(IItemBase mainDBItem) {
+    public void setMainDBItem(IItemReader mainDBItem) {
         this.mainDBItem = mainDBItem;
     }
 

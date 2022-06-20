@@ -25,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.util.Messages;
 import iped.search.IItemSearcher;
 import iped.utils.SimpleHTMLEncoder;
@@ -144,7 +144,7 @@ public class ReportGenerator {
         byte thumb[] = m.getThumb();
 
         if (thumb == null && m.getMediaHash() != null) {
-            List<IItemBase> result = null;
+            List<IItemReader> result = null;
             result = iped.parsers.util.Util.getItems("hash:" + m.getMediaHash(), searcher);
             if (result != null && !result.isEmpty()) {
                 thumb = result.get(0).getThumb();

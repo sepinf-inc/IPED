@@ -26,7 +26,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.standard.StandardParser;
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.standard.RawStringParser;
 import iped.search.IItemSearcher;
 import iped.utils.IOUtil;
@@ -252,14 +252,14 @@ public class Util {
         t.start();
     }
 
-    public static List<IItemBase> getItems(String query, IItemSearcher searcher) {
+    public static List<IItemReader> getItems(String query, IItemSearcher searcher) {
         if (searcher == null)
             return Collections.emptyList();
-        List<IItemBase> items = searcher.search(query);
+        List<IItemReader> items = searcher.search(query);
         return items;
     }
 
-    public static String getExportPath(IItemBase item) {
+    public static String getExportPath(IItemReader item) {
         String hash = item.getHash();
         String ext = item.getType(); // $NON-NLS-1$
         return getExportPath(hash, ext);
@@ -281,7 +281,7 @@ public class Util {
         return "javascript:openIfExists('" + exportPath + "','" + path + "')";
     }
 
-    public static String getReportHref(IItemBase item) {
+    public static String getReportHref(IItemReader item) {
         String exportPath = getExportPath(item);
         String originalPath = getSourceFileIfExists(item).orElse("");
         return "javascript:openIfExists('" + exportPath + "','" + originalPath + "')";
@@ -298,7 +298,7 @@ public class Util {
         return null;
     }
 
-    public static Optional<String> getSourceFileIfExists(IItemBase item) {
+    public static Optional<String> getSourceFileIfExists(IItemReader item) {
         if (IOUtil.hasFile(item)) {
             String path = normalizePath(IOUtil.getFile(item));
             if (path != null) {
@@ -327,7 +327,7 @@ public class Util {
         return file.toPath().toAbsolutePath().normalize().toString();
     }
 
-    public static byte[] getPreview(IItemBase item) {
+    public static byte[] getPreview(IItemReader item) {
         byte[] thumb = null;
         InputStream is = null;
         try {
@@ -345,7 +345,7 @@ public class Util {
         return thumb;
     }
 
-    public static String getThumbPath(IItemBase item) {
+    public static String getThumbPath(IItemReader item) {
         String thumbPath = null;
         String mime = item.getMediaType().toString();
         String hash = item.getHash();

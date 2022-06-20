@@ -28,7 +28,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.search.IItemSearcher;
@@ -236,7 +236,7 @@ class LibraryFile extends ShareazaEntity {
             html.startElement("td"); //$NON-NLS-1$
             if (o != null) {
                 if (col == 1) {
-                    IItemBase item = KnownMetParser.searchItemInCase(searcher, "md5", md5);
+                    IItemReader item = KnownMetParser.searchItemInCase(searcher, "md5", md5);
                     if (item != null) {
                         KnownMetParser.printNameWithLink(html, item, name);
                         foundInCase = true;

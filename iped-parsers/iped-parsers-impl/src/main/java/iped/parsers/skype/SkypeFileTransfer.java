@@ -2,7 +2,7 @@ package iped.parsers.skype;
 
 import java.util.Date;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.util.Messages;
 
 /**
@@ -26,7 +26,7 @@ public class SkypeFileTransfer {
     int bytesTransferred;
     SkypeConversation conversation = null;
     private String itemQuery;
-    private IItemBase item;
+    private IItemReader item;
 
     public int getId() {
         return id;
@@ -149,11 +149,11 @@ public class SkypeFileTransfer {
         this.itemQuery = itemQuery;
     }
 
-    public IItemBase getItem() {
+    public IItemReader getItem() {
         return item;
     }
 
-    public void setItem(IItemBase item) {
+    public void setItem(IItemReader item) {
         this.item = item;
     }
 

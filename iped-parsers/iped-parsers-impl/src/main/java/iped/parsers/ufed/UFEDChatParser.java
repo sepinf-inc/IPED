@@ -27,7 +27,7 @@ import org.xml.sax.SAXException;
 
 import com.google.common.collect.ImmutableMap;
 
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.whatsapp.Message;
 import iped.properties.BasicProps;
@@ -92,7 +92,7 @@ public class UFEDChatParser extends AbstractParser {
         xhtml.startDocument();
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            IItemBase chat = context.get(IItemBase.class);
+            IItemReader chat = context.get(IItemReader.class);
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 
@@ -103,8 +103,8 @@ public class UFEDChatParser extends AbstractParser {
 
             List<UfedMessage> messages = new ArrayList<>();
 
-            for (IItemBase msg : searcher.searchIterable(query)) {
-                List<IItemBase> subItems = null;
+            for (IItemReader msg : searcher.searchIterable(query)) {
+                List<IItemReader> subItems = null;
                 String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                 if (attachRefs.length > 0) {
                     String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
@@ -118,7 +118,7 @@ public class UFEDChatParser extends AbstractParser {
                     UfedMessage m = createMessage(msg);
                     messages.add(m);
                 } else {
-                    for (IItemBase subitem : subItems) {
+                    for (IItemReader subitem : subItems) {
                         UfedMessage m = createMessage(msg, subitem);
                         messages.add(m);
                     }
@@ -175,11 +175,11 @@ public class UFEDChatParser extends AbstractParser {
 
     }
 
-    private UfedMessage createMessage(IItemBase msg) {
+    private UfedMessage createMessage(IItemReader msg) {
         return createMessage(msg, null);
     }
 
-    private UfedMessage createMessage(IItemBase msg, IItemBase attach) {
+    private UfedMessage createMessage(IItemReader msg, IItemReader attach) {
         UfedMessage m = new UfedMessage();
         m.setId(msg.getId());
         for (String body : msg.getMetadata().getValues(ExtraProperties.MESSAGE_BODY)) {
@@ -222,7 +222,7 @@ public class UFEDChatParser extends AbstractParser {
         return m;
     }
 
-    public static String getChatName(IItemBase item) {
+    public static String getChatName(IItemReader item) {
         String name = "Chat"; //$NON-NLS-1$
         String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
         if (source != null)

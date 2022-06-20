@@ -23,7 +23,7 @@ import org.apache.tika.parser.ParseContext;
 
 import iped.data.IHashValue;
 import iped.data.IItem;
-import iped.data.IItemBase;
+import iped.data.IItemReader;
 import iped.datasource.IDataSource;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
@@ -665,12 +665,12 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
-            public Iterable<IItemBase> searchIterable(String luceneQuery) {
+            public Iterable<IItemReader> searchIterable(String luceneQuery) {
                 return Collections.emptyList();
             }
 
             @Override
-            public List<IItemBase> search(String luceneQuery) {
+            public List<IItemReader> search(String luceneQuery) {
                 return Collections.emptyList();
             }
 
@@ -683,7 +683,7 @@ public abstract class BaseItemSearchContext extends TestCase {
         ParseContext context = new ParseContext();
         context.set(ItemInfo.class, itemInfo);
         context.set(IItemSearcher.class, itemSearcher);
-        context.set(IItemBase.class, item);
+        context.set(IItemReader.class, item);
         context.set(IItem.class, item);
         return context;
 
