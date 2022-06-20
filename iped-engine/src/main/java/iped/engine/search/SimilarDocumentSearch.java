@@ -13,7 +13,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.mlt.MoreLikeThis;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.DocValuesFieldExistsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.join.QueryBitSetProducer;
@@ -71,7 +70,7 @@ public class SimilarDocumentSearch {
             // index size a lot, and we could also accept external documents not in the case
 
             Query parentQuery = IntPoint.newExactQuery(BasicProps.ID, item.getId());
-            QueryBitSetProducer parentFilter = new QueryBitSetProducer(new DocValuesFieldExistsQuery(BasicProps.ID));
+            QueryBitSetProducer parentFilter = new QueryBitSetProducer(QueryBuilder.getMatchAllItemsQuery());
             ToChildBlockJoinQuery toChildQuery = new ToChildBlockJoinQuery(parentQuery, parentFilter);
 
             if (appCase instanceof IPEDMultiSource) {
