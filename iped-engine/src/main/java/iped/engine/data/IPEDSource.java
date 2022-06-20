@@ -385,7 +385,11 @@ public class IPEDSource implements IIPEDSource {
             IPEDSearcher searcher = new IPEDSearcher(this, query);
             searcher.setNoScoring(true);
             try {
-                category.setNumItems(searcher.search().getLength());
+                if (this instanceof IPEDMultiSource) {
+                    category.setNumItems(searcher.multiSearch().getLength());
+                } else {
+                    category.setNumItems(searcher.search().getLength());
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();
