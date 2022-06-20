@@ -1,4 +1,4 @@
-package iped.parsers.firefox;
+package iped.parsers.browsers.firefox;
 
 import java.io.IOException;
 import java.io.InputStream;

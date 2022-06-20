@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.ie;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;

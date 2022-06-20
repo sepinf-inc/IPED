@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.firefox;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.browsers.AbstractPkgTest;
 import iped.parsers.browsers.firefox.FirefoxSqliteParser;
 
 public class FirefoxSqliteParserTest extends AbstractPkgTest {

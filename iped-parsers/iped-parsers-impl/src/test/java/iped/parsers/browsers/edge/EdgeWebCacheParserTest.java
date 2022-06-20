@@ -1,4 +1,4 @@
-package iped.parsers.browsers;
+package iped.parsers.browsers.edge;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;

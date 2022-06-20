@@ -1,4 +1,4 @@
-package iped.parsers.jdbc;
+package iped.parsers.sqlite;
 
 import java.io.IOException;
 import java.io.InputStream;

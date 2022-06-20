@@ -1,4 +1,4 @@
-package iped.parsers.misc;
+package iped.parsers.database;
 
 import static org.junit.Assert.assertTrue;
 

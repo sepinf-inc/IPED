@@ -22,26 +22,26 @@ import iped.properties.ExtraProperties;
 import junit.framework.TestCase;
 
 public abstract class AbstractPkgTest extends TestCase {
-    protected ParseContext firefoxContext;
-    protected ParseContext chromeContext;
-    protected ParseContext safariContext;
-    protected ParseContext safariContexthst;
-    protected ParseContext safariContextbkm;
-    protected ParseContext safariContextdwl;
+    public ParseContext firefoxContext;
+    public ParseContext chromeContext;
+    public ParseContext safariContext;
+    public ParseContext safariContexthst;
+    public ParseContext safariContextbkm;
+    public ParseContext safariContextdwl;
 
-    protected Parser autoDetectParser;
-    protected EmbeddedFirefoxParser firefoxtracker;
-    protected EmbeddedChromeParser chrometracker;
-    protected EmbeddedSafariParser safaritracker;
-    protected EmbeddedSafariParserHst safaritrackerhst;
-    protected EmbeddedSafariParserBkm safaritrackerbkm;
-    protected EmbeddedSafariParserDwl safaritrackerdwl;
-    protected ItemInfo itemInfo;
-    protected ItemInfo itemInfohst;
-    protected ItemInfo itemInfobkm;
-    protected ItemInfo itemInfodwl;
+    public Parser autoDetectParser;
+    public EmbeddedFirefoxParser firefoxtracker;
+    public EmbeddedChromeParser chrometracker;
+    public EmbeddedSafariParser safaritracker;
+    public EmbeddedSafariParserHst safaritrackerhst;
+    public EmbeddedSafariParserBkm safaritrackerbkm;
+    public EmbeddedSafariParserDwl safaritrackerdwl;
+    public ItemInfo itemInfo;
+    public ItemInfo itemInfohst;
+    public ItemInfo itemInfobkm;
+    public ItemInfo itemInfodwl;
 
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
 
         firefoxtracker = new EmbeddedFirefoxParser();
@@ -76,12 +76,12 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    protected static class EmbeddedChromeParser extends AbstractParser {
+    public static class EmbeddedChromeParser extends AbstractParser {
 
-        protected List<String> bookmarktitle = new ArrayList<String>();
-        protected List<String> bookmarkurl = new ArrayList<String>();
-        protected List<String> bookmarkcreated = new ArrayList<String>();
-        protected List<String> bookmarkmodified = new ArrayList<String>();
+        public List<String> bookmarktitle = new ArrayList<String>();
+        public List<String> bookmarkurl = new ArrayList<String>();
+        public List<String> bookmarkcreated = new ArrayList<String>();
+        public List<String> bookmarkmodified = new ArrayList<String>();
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
@@ -106,12 +106,12 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    protected static class EmbeddedSafariParserDwl extends AbstractParser {
+    public static class EmbeddedSafariParserDwl extends AbstractParser {
 
-        protected List<String> downloadurl = new ArrayList<String>();
-        protected List<String> downloadlocalpath = new ArrayList<String>();
-        protected List<String> downloadtotalbytes = new ArrayList<String>();
-        protected List<String> downloadreceivedbytes = new ArrayList<String>();
+        public List<String> downloadurl = new ArrayList<String>();
+        public List<String> downloadlocalpath = new ArrayList<String>();
+        public List<String> downloadtotalbytes = new ArrayList<String>();
+        public List<String> downloadreceivedbytes = new ArrayList<String>();
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
@@ -136,10 +136,10 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    protected static class EmbeddedSafariParserBkm extends AbstractParser {
+    public static class EmbeddedSafariParserBkm extends AbstractParser {
 
-        protected List<String> bookmarktitle = new ArrayList<String>();
-        protected List<String> bookmarkurl = new ArrayList<String>();
+        public List<String> bookmarktitle = new ArrayList<String>();
+        public List<String> bookmarkurl = new ArrayList<String>();
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
@@ -158,12 +158,12 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    protected static class EmbeddedSafariParserHst extends AbstractParser {
+    public static class EmbeddedSafariParserHst extends AbstractParser {
 
-        protected List<String> historytitle = new ArrayList<String>();
-        protected List<String> historyaccessed = new ArrayList<String>();
-        protected List<String> historyvisitdate = new ArrayList<String>();
-        protected List<String> historyurl = new ArrayList<String>();
+        public List<String> historytitle = new ArrayList<String>();
+        public List<String> historyaccessed = new ArrayList<String>();
+        public List<String> historyvisitdate = new ArrayList<String>();
+        public List<String> historyurl = new ArrayList<String>();
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
@@ -188,7 +188,7 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    protected static class EmbeddedSafariParser extends AbstractParser {
+    public static class EmbeddedSafariParser extends AbstractParser {
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
@@ -201,12 +201,12 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    protected static class EmbeddedFirefoxParser extends AbstractParser {
+    public static class EmbeddedFirefoxParser extends AbstractParser {
 
-        protected List<String> bookmarktitle = new ArrayList<String>();
-        protected List<String> bookmarkurl = new ArrayList<String>();
-        protected List<String> bookmarkcreated = new ArrayList<String>();
-        protected List<String> bookmarkmodified = new ArrayList<String>();
+        public List<String> bookmarktitle = new ArrayList<String>();
+        public List<String> bookmarkurl = new ArrayList<String>();
+        public List<String> bookmarkcreated = new ArrayList<String>();
+        public List<String> bookmarkmodified = new ArrayList<String>();
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
