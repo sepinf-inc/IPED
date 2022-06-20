@@ -72,9 +72,9 @@ import iped.localization.LocalizedProperties;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IMultiSearchResult;
-import iped.util.IconUtil;
-import iped.util.LocalizedFormat;
-import iped.util.StringUtil;
+import iped.utils.IconUtil;
+import iped.utils.LocalizedFormat;
+import iped.utils.StringUtil;
 
 public class MetadataPanel extends JPanel
         implements ActionListener, ListSelectionListener, ClearFilterListener, ChangeListener {

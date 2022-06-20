@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 
-import iped.util.ImageUtil;
+import iped.utils.ImageUtil;
 
 
 

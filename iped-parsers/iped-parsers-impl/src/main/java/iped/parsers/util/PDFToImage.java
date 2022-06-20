@@ -42,7 +42,7 @@ import org.icepdf.core.util.GraphicsRenderingHints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Classe utilitária para converter páginas de arquivos PDF para arquivos de

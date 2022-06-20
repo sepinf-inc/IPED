@@ -25,7 +25,7 @@ import bibliothek.gui.dock.common.location.CMaximalExternalizedLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.station.screen.ScreenDockProperty;
 import iped.app.ui.App;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 import iped.viewers.MultiViewer;
 
 public class PanelsLayout {

@@ -36,7 +36,7 @@ import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.task.AbstractTask;
 import iped.engine.util.Util;
-import iped.util.UTF8Properties;
+import iped.utils.UTF8Properties;
 import iped.viewers.util.DefaultPolicy;
 
 /**

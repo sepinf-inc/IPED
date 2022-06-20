@@ -45,8 +45,8 @@ import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
-import iped.util.IOUtil;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.IOUtil;
+import iped.utils.SimpleHTMLEncoder;
 
 public class LibpffPSTParser extends AbstractParser {
 

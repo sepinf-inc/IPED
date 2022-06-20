@@ -11,7 +11,7 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.localization.Messages;
 

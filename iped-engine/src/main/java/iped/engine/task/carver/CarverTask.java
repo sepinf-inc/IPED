@@ -29,7 +29,7 @@ import iped.engine.config.FileSystemConfig;
 import iped.engine.data.Item;
 import iped.engine.task.BaseCarveTask;
 import iped.properties.MediaTypes;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Classe responsável pelo Data Carving. Utiliza o algoritmo aho-corasick, o

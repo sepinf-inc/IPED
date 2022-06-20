@@ -92,8 +92,8 @@ import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.properties.BasicProps;
 import iped.properties.MediaTypes;
-import iped.util.IOUtil;
-import iped.util.UTF8Properties;
+import iped.utils.IOUtil;
+import iped.utils.UTF8Properties;
 
 public class SleuthkitReader extends DataSourceReader {
 

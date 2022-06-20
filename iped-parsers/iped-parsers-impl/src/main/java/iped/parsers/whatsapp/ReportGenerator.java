@@ -18,7 +18,7 @@ import iped.parsers.util.Messages;
 import iped.parsers.vcard.VCardParser;
 import iped.parsers.whatsapp.Message.MessageType;
 import iped.properties.ExtraProperties;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.SimpleHTMLEncoder;
 
 /**
  *

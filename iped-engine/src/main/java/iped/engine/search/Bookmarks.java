@@ -39,7 +39,7 @@ import iped.data.IIPEDSource;
 import iped.engine.Version;
 import iped.engine.util.Util;
 import iped.search.SearchResult;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class Bookmarks implements Serializable, IBookmarks {
 

@@ -3,7 +3,7 @@ package iped.engine.config;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 
-import iped.util.UTF8Properties;
+import iped.utils.UTF8Properties;
 
 import java.nio.file.Path;
 

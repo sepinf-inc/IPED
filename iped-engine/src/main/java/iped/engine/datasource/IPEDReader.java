@@ -79,9 +79,9 @@ import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.search.IIPEDSearcher;
 import iped.search.SearchResult;
-import iped.util.DateUtil;
-import iped.util.HashValue;
-import iped.util.SeekableInputStreamFactory;
+import iped.utils.DateUtil;
+import iped.utils.HashValue;
+import iped.utils.SeekableInputStreamFactory;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.

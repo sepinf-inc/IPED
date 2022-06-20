@@ -10,7 +10,7 @@ import java.util.TreeSet;
 import com.fasterxml.jackson.annotation.JsonAlias;
 
 import iped.engine.localization.CategoryLocalization;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 
 public class Category implements Serializable, Comparable<Category> {
 

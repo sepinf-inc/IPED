@@ -33,8 +33,8 @@ import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.parsers.emule.KnownMetEntry;
+import iped.utils.IOUtil;
 import iped.parsers.emule.KnownMetDecoder;
-import iped.util.IOUtil;
 
 /**
  * Tarefa específica para carving de arquivos known.met do e-Mule.

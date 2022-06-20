@@ -31,7 +31,7 @@ import iped.engine.hashdb.HashDBDataSource;
 import iped.engine.hashdb.LedHashDB;
 import iped.engine.hashdb.LedItem;
 import iped.properties.MediaTypes;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class LedCarveTask extends BaseCarveTask {
 

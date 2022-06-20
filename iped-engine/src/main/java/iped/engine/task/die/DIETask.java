@@ -30,9 +30,9 @@ import iped.engine.task.ImageThumbTask;
 import iped.engine.task.video.VideoThumbTask;
 import iped.exception.IPEDException;
 import iped.parsers.util.MetadataUtil;
-import iped.util.ExternalImageConverter;
-import iped.util.IOUtil;
-import iped.util.ImageUtil;
+import iped.utils.ExternalImageConverter;
+import iped.utils.IOUtil;
+import iped.utils.ImageUtil;
 import iped.viewers.util.ImageMetadataUtil;
 
 /**

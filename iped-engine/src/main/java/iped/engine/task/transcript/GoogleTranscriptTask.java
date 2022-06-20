@@ -30,7 +30,7 @@ import com.google.protobuf.ByteString;
 
 import iped.engine.config.ConfigurationManager;
 import iped.exception.IPEDException;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class GoogleTranscriptTask extends AbstractTranscriptTask {
 

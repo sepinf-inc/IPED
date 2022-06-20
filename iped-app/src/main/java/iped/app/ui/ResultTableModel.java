@@ -47,8 +47,8 @@ import iped.engine.util.Util;
 import iped.localization.LocalizedProperties;
 import iped.properties.BasicProps;
 import iped.search.IMultiSearchResult;
-import iped.util.DateUtil;
-import iped.util.LocalizedFormat;
+import iped.utils.DateUtil;
+import iped.utils.LocalizedFormat;
 import iped.viewers.ATextViewer;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel {

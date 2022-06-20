@@ -36,7 +36,7 @@ import iped.data.IItemId;
 import iped.engine.lucene.analysis.CategoryTokenizer;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
-import iped.util.DateUtil;
+import iped.utils.DateUtil;
 
 public class CopyProperties extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 

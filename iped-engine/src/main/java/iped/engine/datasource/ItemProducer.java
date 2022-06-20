@@ -35,7 +35,7 @@ import iped.engine.core.Manager;
 import iped.engine.data.Item;
 import iped.engine.localization.Messages;
 import iped.engine.task.SkipCommitedTask;
-import iped.util.HashValue;
+import iped.utils.HashValue;
 
 /**
  * Responsável por instanciar e executar o contador e o produtor de itens do

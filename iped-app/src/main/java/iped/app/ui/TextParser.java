@@ -44,7 +44,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.task.index.IndexTask;
 import iped.io.IStreamSource;
 import iped.parsers.util.MetadataUtil;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 import iped.viewers.ATextViewer;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.api.IProgressMonitor;

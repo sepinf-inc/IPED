@@ -6,8 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import iped.parsers.util.Messages;
-import iped.util.LocalizedFormat;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.LocalizedFormat;
+import iped.utils.SimpleHTMLEncoder;
 
 /**
  * Reúne métodos auxiliares para formatação de dados.

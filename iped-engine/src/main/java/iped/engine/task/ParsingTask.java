@@ -113,8 +113,8 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
-import iped.util.EmptyInputStream;
-import iped.util.IOUtil;
+import iped.utils.EmptyInputStream;
+import iped.utils.IOUtil;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO,

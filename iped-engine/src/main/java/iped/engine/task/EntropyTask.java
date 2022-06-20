@@ -9,7 +9,7 @@ import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.parsers.standard.RawStringParser;
-import iped.util.RandomFilterInputStream;
+import iped.utils.RandomFilterInputStream;
 
 public class EntropyTask extends AbstractTask {
 

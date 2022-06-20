@@ -36,7 +36,7 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellEditor;
 
-import iped.util.ImageUtil;
+import iped.utils.ImageUtil;
 
 public class GalleryCellEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {
 

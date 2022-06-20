@@ -5,7 +5,7 @@ import java.awt.Component;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 
 public class BookmarkTreeCellRenderer extends DefaultTreeCellRenderer {
     /**

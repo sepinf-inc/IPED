@@ -22,7 +22,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SignatureConfig;
 import iped.io.SeekableInputStream;
 import iped.properties.MediaTypes;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.

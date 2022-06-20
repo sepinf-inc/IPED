@@ -52,7 +52,7 @@ import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 
 /**
  * Parser para arquivos known.met do e-Mule, que armazena arquivos conhecidos,

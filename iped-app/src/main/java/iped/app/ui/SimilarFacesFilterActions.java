@@ -50,8 +50,8 @@ import iped.engine.task.ImageThumbTask;
 import iped.engine.task.PythonTask;
 import iped.engine.task.index.IndexItem;
 import iped.parsers.util.IgnoreContentHandler;
-import iped.util.FileInputStreamFactory;
-import iped.util.ImageUtil;
+import iped.utils.FileInputStreamFactory;
+import iped.utils.ImageUtil;
 import jep.NDArray;
 
 public class SimilarFacesFilterActions {

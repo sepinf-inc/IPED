@@ -20,7 +20,7 @@ import iped.parsers.util.Messages;
 import iped.parsers.util.Util;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.SimpleHTMLEncoder;
 
 /**
  * Classe responsável por gerar a representação HTML dos registros encontrados

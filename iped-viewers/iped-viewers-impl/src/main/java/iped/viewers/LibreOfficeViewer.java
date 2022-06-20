@@ -79,8 +79,8 @@ import ag.ion.bion.officelayer.text.ITextRange;
 import ag.ion.noa.search.ISearchResult;
 import ag.ion.noa.search.SearchDescriptor;
 import iped.io.IStreamSource;
-import iped.util.IOUtil;
-import iped.util.ProcessUtil;
+import iped.utils.IOUtil;
+import iped.utils.ProcessUtil;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 

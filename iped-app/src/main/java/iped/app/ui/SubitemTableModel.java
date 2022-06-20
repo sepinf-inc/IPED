@@ -34,7 +34,7 @@ import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 
 public class SubitemTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {

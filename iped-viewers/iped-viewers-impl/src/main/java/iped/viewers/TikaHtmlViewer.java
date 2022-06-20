@@ -15,8 +15,8 @@ import org.apache.tika.parser.Parser;
 
 import iped.io.IStreamSource;
 import iped.parsers.util.ToXMLContentHandler;
-import iped.util.FileContentSource;
-import iped.util.IOUtil;
+import iped.utils.FileContentSource;
+import iped.utils.IOUtil;
 
 /**
  * Visualizador para versão Html dos arquivos gerados pelos parsers do Tika.

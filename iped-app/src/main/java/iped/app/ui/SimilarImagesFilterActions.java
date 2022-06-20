@@ -21,9 +21,9 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.data.Item;
 import iped.engine.task.similarity.ImageSimilarity;
 import iped.engine.task.similarity.ImageSimilarityTask;
-import iped.util.ExternalImageConverter;
-import iped.util.IOUtil;
-import iped.util.ImageUtil;
+import iped.utils.ExternalImageConverter;
+import iped.utils.IOUtil;
+import iped.utils.ImageUtil;
 
 public class SimilarImagesFilterActions {
     private static final int sampleFactor = 3;

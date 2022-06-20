@@ -38,7 +38,7 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.jdbc.JDBCTableReader;
 import iped.parsers.util.Messages;
-import iped.util.TimeConverter;
+import iped.utils.TimeConverter;
 
 /**
  * Concrete class for SQLLite table parsing. This overrides column type handling

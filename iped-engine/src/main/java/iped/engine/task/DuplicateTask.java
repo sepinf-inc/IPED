@@ -17,7 +17,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.lucene.SlowCompositeReaderWrapper;
 import iped.engine.task.index.IndexItem;
-import iped.util.HashValue;
+import iped.utils.HashValue;
 
 /**
  * Tarefa de verificação de arquivos duplicados. Ignora o arquivo caso

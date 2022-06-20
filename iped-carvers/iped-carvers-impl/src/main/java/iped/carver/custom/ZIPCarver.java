@@ -8,7 +8,7 @@ import iped.carver.api.Hit;
 import iped.carver.standard.FromFarthestHeaderCarver;
 import iped.data.IItem;
 import iped.io.SeekableInputStream;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /*
  * Author: Patrick Dalla Bernardina

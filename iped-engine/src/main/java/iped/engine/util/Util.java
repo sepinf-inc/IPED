@@ -65,7 +65,7 @@ import iped.engine.task.BaseCarveTask;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class Util {
 

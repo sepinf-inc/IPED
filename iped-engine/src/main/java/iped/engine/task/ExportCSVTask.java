@@ -41,8 +41,8 @@ import iped.engine.config.EnableTaskProperty;
 import iped.engine.localization.Messages;
 import iped.engine.lucene.analysis.CategoryTokenizer;
 import iped.engine.util.Util;
-import iped.util.HashValue;
-import iped.util.IOUtil;
+import iped.utils.HashValue;
+import iped.utils.IOUtil;
 
 /**
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.

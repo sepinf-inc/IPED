@@ -21,8 +21,8 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
-import iped.util.DateUtil;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.DateUtil;
+import iped.utils.SimpleHTMLEncoder;
 import iped.viewers.api.IMultiSearchResultProvider;
 
 public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLResult, Integer> {

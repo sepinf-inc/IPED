@@ -18,7 +18,7 @@ import iped.engine.data.CaseData;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.IPEDSource;
 import iped.parsers.python.PythonParser;
-import iped.util.ImageUtil;
+import iped.utils.ImageUtil;
 import jep.Jep;
 import jep.JepException;
 import jep.NDArray;

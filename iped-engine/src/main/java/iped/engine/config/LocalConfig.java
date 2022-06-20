@@ -9,7 +9,7 @@ import java.util.Random;
 
 import org.slf4j.Logger;
 
-import iped.util.UTF8Properties;
+import iped.utils.UTF8Properties;
 
 public class LocalConfig extends AbstractPropertiesConfigurable {
 

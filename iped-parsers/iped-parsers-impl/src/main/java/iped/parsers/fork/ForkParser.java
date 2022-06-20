@@ -45,7 +45,7 @@ import org.apache.tika.sax.AbstractRecursiveParserWrapperHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class ForkParser extends AbstractParser {
 

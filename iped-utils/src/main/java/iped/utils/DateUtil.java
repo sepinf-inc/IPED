@@ -1,4 +1,4 @@
-package iped.util;
+package iped.utils;
 
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;

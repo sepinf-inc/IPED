@@ -38,7 +38,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.util.Util;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Parser para históricos index.dat do Internet Explorer 9 e anteriores. Utiliza

@@ -27,7 +27,7 @@ import java.security.MessageDigest;
 
 import javax.xml.bind.DatatypeConverter;
 
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class Util {
 

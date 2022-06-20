@@ -46,7 +46,7 @@ import iped.parsers.util.IndentityHtmlParser;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Util;
 import iped.properties.ExtraProperties;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.SimpleHTMLEncoder;
 
 public class VCardParser extends AbstractParser {
 

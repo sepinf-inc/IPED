@@ -8,7 +8,7 @@ import java.util.HashMap;
 import org.apache.commons.io.IOUtils;
 
 import iped.geo.AbstractMapaCanvas;
-import iped.util.UiUtil;
+import iped.utils.UiUtil;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;

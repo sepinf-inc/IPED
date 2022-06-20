@@ -39,7 +39,7 @@ import iped.engine.task.SkipCommitedTask;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.parsers.standard.StandardParser;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a

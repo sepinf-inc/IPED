@@ -36,7 +36,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.parsers.standard.StandardParser;
-import iped.util.HashValue;
+import iped.utils.HashValue;
 
 /**
  * Classe que armazena estatísticas diversas, como número de itens processados,

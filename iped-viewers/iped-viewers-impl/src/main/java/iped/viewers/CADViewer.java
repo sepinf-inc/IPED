@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.io.IStreamSource;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 

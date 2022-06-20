@@ -80,7 +80,7 @@ import iped.engine.search.ItemId;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 import iped.viewers.util.ProgressDialog;
 
 public class BookmarksManager implements ActionListener, ListSelectionListener, KeyListener {

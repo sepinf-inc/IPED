@@ -23,8 +23,8 @@ import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.IOUtils;
 
 import iped.io.SeekableInputStream;
-import iped.util.SeekableFileInputStream;
-import iped.util.SeekableInputStreamFactory;
+import iped.utils.SeekableFileInputStream;
+import iped.utils.SeekableInputStreamFactory;
 
 public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements Closeable {
 

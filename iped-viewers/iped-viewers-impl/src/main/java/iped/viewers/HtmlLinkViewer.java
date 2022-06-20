@@ -20,7 +20,7 @@ import iped.io.IStreamSource;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.whatsapp.WhatsAppParser;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 import iped.viewers.api.AttachmentSearcher;
 import iped.viewers.localization.Messages;
 import javafx.application.Platform;

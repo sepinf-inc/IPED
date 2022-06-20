@@ -29,7 +29,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.task.AbstractTask;
 import iped.properties.ExtraProperties;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public abstract class AbstractTranscriptTask extends AbstractTask {
 

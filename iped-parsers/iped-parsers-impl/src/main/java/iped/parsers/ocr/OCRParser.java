@@ -67,9 +67,9 @@ import iped.parsers.util.ItemInfo;
 import iped.parsers.util.OCROutputFolder;
 import iped.parsers.util.PDFToImage;
 import iped.properties.MediaTypes;
-import iped.util.ExternalImageConverter;
-import iped.util.IOUtil;
-import iped.util.ImageUtil;
+import iped.utils.ExternalImageConverter;
+import iped.utils.IOUtil;
+import iped.utils.ImageUtil;
 
 /**
  * Parser OCR para imagens e PDFs via Tesseract. No caso de PDFs, é gerada uma

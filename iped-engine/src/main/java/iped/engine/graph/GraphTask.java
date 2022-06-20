@@ -56,7 +56,7 @@ import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class GraphTask extends AbstractTask {
 

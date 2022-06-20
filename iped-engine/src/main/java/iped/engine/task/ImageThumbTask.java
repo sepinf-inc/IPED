@@ -29,9 +29,9 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ImageThumbTaskConfig;
 import iped.properties.MediaTypes;
-import iped.util.ExternalImageConverter;
-import iped.util.ImageUtil;
-import iped.util.ImageUtil.BooleanWrapper;
+import iped.utils.ExternalImageConverter;
+import iped.utils.ImageUtil;
+import iped.utils.ImageUtil.BooleanWrapper;
 import iped.viewers.util.ImageMetadataUtil;
 
 public class ImageThumbTask extends ThumbTask {

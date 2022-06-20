@@ -17,7 +17,7 @@ import java.util.List;
 
 import org.apache.tika.io.TemporaryResources;
 
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.SimpleHTMLEncoder;
 
 public class ReportGenerator {
 

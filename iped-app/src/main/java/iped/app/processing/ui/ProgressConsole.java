@@ -13,7 +13,7 @@ import iped.data.IItem;
 import iped.engine.core.Worker;
 import iped.engine.localization.Messages;
 import iped.engine.task.AbstractTask;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 
 public class ProgressConsole implements PropertyChangeListener {
 

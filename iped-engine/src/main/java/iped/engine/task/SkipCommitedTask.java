@@ -34,7 +34,7 @@ import iped.engine.task.index.IndexTask;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.properties.BasicProps;
-import iped.util.HashValue;
+import iped.utils.HashValue;
 
 /**
  * Task to ignore already commited files into index. Commited containers without

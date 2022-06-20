@@ -22,7 +22,7 @@ import iped.engine.graph.GraphTask;
 import iped.engine.graph.GraphTaskConfig;
 import iped.engine.graph.GraphImportRunner.ImportListener;
 import iped.engine.search.IPEDSource;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.util.ProgressDialog;
 

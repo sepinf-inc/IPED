@@ -18,7 +18,7 @@ import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.core.Manager;
 import iped.engine.util.Util;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class AppMain {
 

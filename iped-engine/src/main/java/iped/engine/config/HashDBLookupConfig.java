@@ -8,7 +8,7 @@ import java.nio.file.Path;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import iped.util.UTF8Properties;
+import iped.utils.UTF8Properties;
 
 public class HashDBLookupConfig extends AbstractTaskConfig<Pair<Boolean, String>> {
 

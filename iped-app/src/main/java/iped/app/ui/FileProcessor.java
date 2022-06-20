@@ -44,7 +44,7 @@ import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.io.ISeekableInputStreamFactory;
-import iped.util.FileInputStreamFactory;
+import iped.utils.FileInputStreamFactory;
 import iped.viewers.ImageViewer;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.api.IFileProcessor;

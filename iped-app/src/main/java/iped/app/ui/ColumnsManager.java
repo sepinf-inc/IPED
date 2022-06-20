@@ -60,7 +60,7 @@ import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.util.StringUtil;
+import iped.utils.StringUtil;
 import iped.viewers.api.IColumnsManager;
 import iped.viewers.util.ProgressDialog;
 

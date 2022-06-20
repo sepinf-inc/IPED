@@ -20,7 +20,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import iped.parsers.standard.StandardParser;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class ExternalParsingParserFactory extends ParserFactory {
 

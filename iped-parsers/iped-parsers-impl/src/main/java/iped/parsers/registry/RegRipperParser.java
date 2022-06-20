@@ -33,7 +33,7 @@ import iped.parsers.standard.StandardParser;
 import iped.parsers.util.Messages;
 import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.SimpleHTMLEncoder;
 
 public class RegRipperParser extends AbstractParser {
 

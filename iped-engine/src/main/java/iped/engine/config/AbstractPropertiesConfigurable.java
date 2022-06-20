@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import iped.configuration.Configurable;
-import iped.util.UTF8Properties;
+import iped.utils.UTF8Properties;
 
 public abstract class AbstractPropertiesConfigurable implements Configurable<UTF8Properties> {
 

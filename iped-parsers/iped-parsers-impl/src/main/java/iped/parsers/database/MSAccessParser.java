@@ -59,7 +59,7 @@ import com.healthmarketscience.jackcess.util.OleBlob.EmbeddedContent;
 import com.healthmarketscience.jackcess.util.OleBlob.PackageContent;
 
 import iped.parsers.util.Messages;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Parser para arquivos MS Access.

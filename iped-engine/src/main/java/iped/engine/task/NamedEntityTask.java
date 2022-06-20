@@ -29,7 +29,7 @@ import iped.engine.data.Item;
 import iped.exception.IPEDException;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.IgnoreContentHandler;
-import iped.util.EmptyInputStream;
+import iped.utils.EmptyInputStream;
 
 public class NamedEntityTask extends AbstractTask {
 

@@ -13,7 +13,7 @@ import iped.parsers.whatsapp.Message;
 import iped.parsers.whatsapp.Util;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.SimpleHTMLEncoder;
 
 /**
  *

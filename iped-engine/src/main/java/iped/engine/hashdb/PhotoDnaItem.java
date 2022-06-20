@@ -1,6 +1,6 @@
 package iped.engine.hashdb;
 
-import iped.util.HashValue;
+import iped.utils.HashValue;
 
 public class PhotoDnaItem extends HashValue {
     /**

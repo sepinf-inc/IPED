@@ -29,7 +29,7 @@ import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
 import iped.parsers.util.ItemInfo;
 import iped.search.IItemSearcher;
-import iped.util.SeekableFileInputStream;
+import iped.utils.SeekableFileInputStream;
 import junit.framework.TestCase;
 
 public abstract class BaseItemSearchContext extends TestCase {

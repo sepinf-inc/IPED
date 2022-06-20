@@ -43,8 +43,8 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.MinIOConfig;
 import iped.engine.task.index.ElasticSearchIndexTask;
 import iped.io.SeekableInputStream;
-import iped.util.SeekableFileInputStream;
-import iped.util.SeekableInputStreamFactory;
+import iped.utils.SeekableFileInputStream;
+import iped.utils.SeekableInputStreamFactory;
 
 /**
  * Task to export files to MinIO object storage service.

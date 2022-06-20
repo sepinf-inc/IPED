@@ -88,11 +88,11 @@ import iped.engine.util.Util;
 import iped.exception.ZipBombException;
 import iped.io.SeekableInputStream;
 import iped.parsers.util.ExportFolder;
-import iped.util.FileInputStreamFactory;
-import iped.util.HashValue;
-import iped.util.IOUtil;
-import iped.util.SeekableFileInputStream;
-import iped.util.SeekableInputStreamFactory;
+import iped.utils.FileInputStreamFactory;
+import iped.utils.HashValue;
+import iped.utils.IOUtil;
+import iped.utils.SeekableFileInputStream;
+import iped.utils.SeekableInputStreamFactory;
 
 /**
  * Responsável por extrair subitens de containers. Também exporta itens ativos

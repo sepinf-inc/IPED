@@ -30,7 +30,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.standard.RawStringParser;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class GenericOLEParser extends AbstractParser {
 

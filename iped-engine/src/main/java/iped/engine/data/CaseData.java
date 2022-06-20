@@ -19,7 +19,7 @@ import iped.data.IItem;
 import iped.engine.core.MimeTypesProcessingOrder;
 import iped.engine.task.SkipCommitedTask;
 import iped.engine.util.Util;
-import iped.util.HashValue;
+import iped.utils.HashValue;
 
 /**
  * Classe que define todos os dados do caso.

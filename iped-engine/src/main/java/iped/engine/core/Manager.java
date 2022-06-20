@@ -89,7 +89,7 @@ import iped.exception.IPEDException;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
 import iped.search.SearchResult;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Classe responsável pela preparação do processamento, inicialização do

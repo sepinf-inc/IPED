@@ -1,7 +1,7 @@
 package iped.engine.config;
 
 import iped.engine.data.ReportInfo;
-import iped.util.UTF8Properties;
+import iped.utils.UTF8Properties;
 
 public class HtmlReportTaskConfig extends AbstractTaskPropertiesConfig {
 

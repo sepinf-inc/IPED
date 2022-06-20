@@ -33,7 +33,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.util.RandomFilterInputStream;
+import iped.utils.RandomFilterInputStream;
 
 /**
  * Parser que extrai strings brutas de um arquivo qualquer. Útil para binários,

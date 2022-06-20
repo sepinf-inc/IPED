@@ -29,7 +29,7 @@ import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.parsers.winx.WinXTimelineParser;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Detects subtypes of SQLite based on table names.

@@ -22,7 +22,7 @@ import javax.swing.JViewport;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.UIManager;
 
-import iped.util.ImageUtil;
+import iped.utils.ImageUtil;
 
 /**
  * Painel especializado em exibição de uma imagem. Já inclui rolagem e zoom da

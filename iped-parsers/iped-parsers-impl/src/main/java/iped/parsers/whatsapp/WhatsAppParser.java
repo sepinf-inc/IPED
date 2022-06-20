@@ -79,8 +79,8 @@ import iped.parsers.whatsapp.Message.MessageType;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.EmptyInputStream;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.EmptyInputStream;
+import iped.utils.SimpleHTMLEncoder;
 
 /**
  * Parser para banco de dados do WhatsApp

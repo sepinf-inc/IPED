@@ -62,7 +62,7 @@ import iped.exception.IPEDException;
 import iped.io.ISeekableInputStreamFactory;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class ElasticSearchIndexTask extends AbstractTask {
 

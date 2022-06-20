@@ -38,7 +38,7 @@ import iped.engine.config.FileSystemConfig;
 import iped.engine.data.DataSource;
 import iped.engine.data.Item;
 import iped.properties.ExtraProperties;
-import iped.util.FileInputStreamFactory;
+import iped.utils.FileInputStreamFactory;
 
 public class FolderTreeReader extends DataSourceReader {
 

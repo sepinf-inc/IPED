@@ -45,7 +45,7 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 
 import iped.engine.util.Util;
-import iped.util.StringUtil;
+import iped.utils.StringUtil;
 
 public class GraphFileWriter implements Closeable, Flushable {
 

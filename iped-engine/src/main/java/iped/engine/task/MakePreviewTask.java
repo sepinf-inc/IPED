@@ -37,7 +37,7 @@ import iped.parsers.util.ItemInfo;
 import iped.parsers.util.ToCSVContentHandler;
 import iped.parsers.util.ToXMLContentHandler;
 import iped.search.IItemSearcher;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 import iped.viewers.HtmlLinkViewer;
 
 public class MakePreviewTask extends AbstractTask {

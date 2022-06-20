@@ -49,7 +49,7 @@ import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.localization.LocalizedProperties;
 import iped.properties.BasicProps;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 
 public class QueryBuilder {
 

@@ -6,9 +6,9 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
 import iped.engine.search.SaveStateThread;
-import iped.util.IOUtil;
-import iped.util.UTF8Properties;
-import iped.util.IOUtil.ExternalOpenEnum;
+import iped.utils.IOUtil;
+import iped.utils.UTF8Properties;
+import iped.utils.IOUtil.ExternalOpenEnum;
 
 public class AnalysisConfig extends AbstractPropertiesConfigurable {
 

@@ -49,7 +49,7 @@ import iped.engine.search.SimilarImagesSearch;
 import iped.engine.search.TimelineResults;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.util.ProgressDialog;
 

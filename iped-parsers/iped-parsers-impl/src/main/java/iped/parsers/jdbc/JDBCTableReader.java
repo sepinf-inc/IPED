@@ -52,7 +52,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * General base class to iterate through rows of a JDBC table

@@ -28,7 +28,7 @@ import java.util.List;
 import iped.data.IItemBase;
 import iped.parsers.util.Messages;
 import iped.search.IItemSearcher;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.SimpleHTMLEncoder;
 
 public class ReportGenerator {
 

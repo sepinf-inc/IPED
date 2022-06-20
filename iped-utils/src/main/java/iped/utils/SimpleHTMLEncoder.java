@@ -1,4 +1,4 @@
-package iped.util;
+package iped.utils;
 
 /**
  * Copyright 2005 The Apache Software Foundation

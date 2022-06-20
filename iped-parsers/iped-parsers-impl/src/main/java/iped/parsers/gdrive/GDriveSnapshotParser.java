@@ -32,7 +32,7 @@ import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.util.EmptyInputStream;
+import iped.utils.EmptyInputStream;
 
 /**
  * Parser for snapshot.db Google Drive forensic artifact

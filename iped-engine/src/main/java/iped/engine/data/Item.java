@@ -40,12 +40,12 @@ import iped.engine.util.TextCache;
 import iped.engine.util.Util;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
-import iped.util.EmptyInputStream;
-import iped.util.HashValue;
-import iped.util.IOUtil;
-import iped.util.LimitedSeekableInputStream;
-import iped.util.SeekableByteChannelImpl;
-import iped.util.SeekableFileInputStream;
+import iped.utils.EmptyInputStream;
+import iped.utils.HashValue;
+import iped.utils.IOUtil;
+import iped.utils.LimitedSeekableInputStream;
+import iped.utils.SeekableByteChannelImpl;
+import iped.utils.SeekableFileInputStream;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso,

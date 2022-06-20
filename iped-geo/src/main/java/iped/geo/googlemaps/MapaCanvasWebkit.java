@@ -11,7 +11,7 @@ import org.apache.commons.io.IOUtils;
 import iped.geo.AbstractMapaCanvas;
 import iped.geo.impl.JMapOptionsPane;
 import iped.geo.webkit.JSInterfaceFunctions;
-import iped.util.UiUtil;
+import iped.utils.UiUtil;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;

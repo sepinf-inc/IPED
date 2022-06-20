@@ -51,8 +51,8 @@ import iped.engine.task.ImageThumbTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.Util;
-import iped.util.ExternalImageConverter;
-import iped.util.ImageUtil;
+import iped.utils.ExternalImageConverter;
+import iped.utils.ImageUtil;
 import iped.viewers.util.ImageMetadataUtil;
 
 public class GalleryModel extends AbstractTableModel {

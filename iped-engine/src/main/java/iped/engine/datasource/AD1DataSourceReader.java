@@ -13,7 +13,7 @@ import iped.engine.datasource.ad1.AD1Extractor;
 import iped.engine.datasource.ad1.FileHeader;
 import iped.exception.IPEDException;
 import iped.io.SeekableInputStream;
-import iped.util.SeekableInputStreamFactory;
+import iped.utils.SeekableInputStreamFactory;
 
 public class AD1DataSourceReader extends DataSourceReader {
 

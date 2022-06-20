@@ -33,7 +33,7 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 
-import iped.util.ImageUtil;
+import iped.utils.ImageUtil;
 
 public class GalleryCellRenderer implements TableCellRenderer {
 

@@ -59,7 +59,7 @@ import iped.parsers.util.PhoneParsingConfig;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.EmptyInputStream;
+import iped.utils.EmptyInputStream;
 
 public class TelegramParser extends SQLite3DBParser {
 

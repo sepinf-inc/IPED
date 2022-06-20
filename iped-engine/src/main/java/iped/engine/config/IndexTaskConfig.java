@@ -2,7 +2,7 @@ package iped.engine.config;
 
 import java.util.ArrayList;
 
-import iped.util.UTF8Properties;
+import iped.utils.UTF8Properties;
 
 public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
 

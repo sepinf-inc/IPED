@@ -3,7 +3,7 @@ package iped.engine.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.util.UTF8Properties;
+import iped.utils.UTF8Properties;
 
 public class DocThumbTaskConfig extends AbstractTaskPropertiesConfig {
 

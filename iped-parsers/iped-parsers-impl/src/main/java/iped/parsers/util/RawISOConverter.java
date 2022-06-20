@@ -10,7 +10,7 @@ import java.io.OutputStream;
 
 import org.apache.tika.io.TemporaryResources;
 
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class RawISOConverter {
 

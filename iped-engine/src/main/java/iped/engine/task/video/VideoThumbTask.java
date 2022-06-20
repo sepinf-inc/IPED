@@ -57,7 +57,7 @@ import iped.engine.util.Util;
 import iped.parsers.util.ISO6709Converter;
 import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
-import iped.util.ImageUtil;
+import iped.utils.ImageUtil;
 
 /**
  * Tarefa de geração de imagem com miniaturas (thumbs) de cenas extraídas de

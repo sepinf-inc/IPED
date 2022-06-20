@@ -28,8 +28,8 @@ import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.EmptyInputStream;
-import iped.util.IOUtil;
+import iped.utils.EmptyInputStream;
+import iped.utils.IOUtil;
 
 public class UsnJrnlParser extends AbstractParser {
     /**

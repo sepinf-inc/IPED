@@ -36,7 +36,7 @@ import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.HashTaskConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Classe para calcular e manipular hashes.

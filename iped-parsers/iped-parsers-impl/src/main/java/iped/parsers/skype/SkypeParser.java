@@ -36,8 +36,8 @@ import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.EmptyInputStream;
-import iped.util.IOUtil;
+import iped.utils.EmptyInputStream;
+import iped.utils.IOUtil;
 
 /**
  * Parser para banco de dados do Skype

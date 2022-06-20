@@ -76,7 +76,7 @@ import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.SimpleHTMLEncoder;
 
 /**
  * Parser para arquivos PST. Extrai emails, anexos, contatos, tarefas, etc. O

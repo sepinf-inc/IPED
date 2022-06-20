@@ -41,8 +41,8 @@ import iped.parsers.misc.PDFTextParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.PDFToThumb;
 import iped.parsers.util.Util;
-import iped.util.IOUtil;
-import iped.util.ImageUtil;
+import iped.utils.IOUtil;
+import iped.utils.ImageUtil;
 import iped.viewers.util.LibreOfficeFinder;
 
 public class DocThumbTask extends ThumbTask {

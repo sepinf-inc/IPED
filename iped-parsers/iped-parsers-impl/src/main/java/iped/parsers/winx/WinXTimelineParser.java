@@ -35,7 +35,7 @@ import iped.parsers.sqlite.detector.SQLiteContainerDetector;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.util.EmptyInputStream;
+import iped.utils.EmptyInputStream;
 
 /**
  * Parser for the Windows 10 Timeline feature (v1803/1809/1903+)

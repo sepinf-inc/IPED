@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Base64;
 
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  *

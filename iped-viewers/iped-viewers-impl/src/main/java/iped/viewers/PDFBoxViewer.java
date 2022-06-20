@@ -40,7 +40,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 import iped.io.IStreamSource;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 

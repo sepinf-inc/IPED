@@ -10,7 +10,7 @@ import org.kharon.layout.graphviz.GraphVizResolver;
 import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.engine.config.Configuration;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class GraphVizIpedResolver implements GraphVizResolver {
 

@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import iped.util.UTF8Properties;
+import iped.utils.UTF8Properties;
 
 public class NamedEntityTaskConfig extends AbstractTaskPropertiesConfig {
 

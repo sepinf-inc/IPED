@@ -83,9 +83,9 @@ import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
-import iped.util.FileInputStreamFactory;
-import iped.util.IOUtil;
-import iped.util.SimpleHTMLEncoder;
+import iped.utils.FileInputStreamFactory;
+import iped.utils.IOUtil;
+import iped.utils.SimpleHTMLEncoder;
 
 public class UfedXmlReader extends DataSourceReader {
 

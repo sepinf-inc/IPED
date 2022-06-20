@@ -8,7 +8,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import iped.engine.search.Bookmarks;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 
 public class BookmarksController {
 

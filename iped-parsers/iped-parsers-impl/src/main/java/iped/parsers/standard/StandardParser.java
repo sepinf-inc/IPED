@@ -54,7 +54,7 @@ import iped.parsers.util.IgnoreCorruptedCarved;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Parser padrão do IPED. Como o AutoDetectParser, detecta o tipo do arquivo e

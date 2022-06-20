@@ -87,13 +87,13 @@ import iped.parsers.standard.StandardParser;
 import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.util.DateUtil;
-import iped.util.FileInputStreamFactory;
-import iped.util.IOUtil;
-import iped.util.SeekableInputStreamFactory;
-import iped.util.SelectImagePathWithDialog;
-import iped.util.StringUtil;
-import iped.util.UTF8Properties;
+import iped.utils.DateUtil;
+import iped.utils.FileInputStreamFactory;
+import iped.utils.IOUtil;
+import iped.utils.SeekableInputStreamFactory;
+import iped.utils.SelectImagePathWithDialog;
+import iped.utils.StringUtil;
+import iped.utils.UTF8Properties;
 import jep.NDArray;
 
 /**

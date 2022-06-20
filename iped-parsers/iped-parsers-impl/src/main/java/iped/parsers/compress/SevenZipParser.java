@@ -36,7 +36,7 @@ import org.xml.sax.SAXException;
 import iped.parsers.util.RawISOConverter;
 import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 import net.sf.sevenzipjbinding.ExtractAskMode;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
 import net.sf.sevenzipjbinding.IArchiveExtractCallback;

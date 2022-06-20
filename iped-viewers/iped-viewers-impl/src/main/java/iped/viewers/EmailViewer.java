@@ -57,8 +57,8 @@ import iped.io.IStreamSource;
 import iped.parsers.mail.RFC822Parser;
 import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
-import iped.util.FileContentSource;
-import iped.util.IOUtil;
+import iped.utils.FileContentSource;
+import iped.utils.IOUtil;
 import iped.viewers.localization.Messages;
 import iped.viewers.util.LuceneSimpleHTMLEncoder;
 

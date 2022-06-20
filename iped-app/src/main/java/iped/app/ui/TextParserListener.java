@@ -23,7 +23,7 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.SwingUtilities;
 
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 
 public class TextParserListener implements PropertyChangeListener {
 

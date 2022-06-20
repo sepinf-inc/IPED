@@ -48,7 +48,7 @@ import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 
 /**
  * Parser para arquivos ShareL.dat e ShareL.dat do Ares Galaxy.

@@ -34,7 +34,7 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
-import iped.util.DateUtil;
+import iped.utils.DateUtil;
 
 public class UFEDChatParser extends AbstractParser {
 

@@ -31,7 +31,7 @@ import org.xml.sax.SAXException;
 import iped.io.IStreamSource;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Runs a list of parsers sequentially on a file.

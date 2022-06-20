@@ -30,8 +30,8 @@ import iped.engine.config.LocalConfig;
 import iped.engine.config.PhotoDNALookupConfig;
 import iped.engine.hashdb.HashDBDataSource;
 import iped.engine.hashdb.PhotoDnaItem;
-import iped.util.HashValue;
-import iped.util.IOUtil;
+import iped.utils.HashValue;
+import iped.utils.IOUtil;
 
 public class PhotoDNALookup extends AbstractTask {
 

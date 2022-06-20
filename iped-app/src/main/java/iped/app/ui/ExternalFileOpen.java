@@ -12,7 +12,7 @@ import iped.data.IItem;
 import iped.exception.IPEDException;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class ExternalFileOpen {
 

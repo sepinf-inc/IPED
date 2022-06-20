@@ -12,7 +12,7 @@ import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.data.Item;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 /**
  * Tarefa para geração de arquivos temporários para os itens antes do

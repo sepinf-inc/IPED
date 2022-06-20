@@ -55,7 +55,7 @@ import iped.engine.task.BaseCarveTask;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.ParsingTask;
 import iped.parsers.standard.StandardParser;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 
 /**
  * Dialog de progresso do processamento, fornecendo previsão de término,

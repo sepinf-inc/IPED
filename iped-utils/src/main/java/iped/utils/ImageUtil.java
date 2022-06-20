@@ -1,4 +1,4 @@
-package iped.util;
+package iped.utils;
 
 import java.awt.Color;
 import java.awt.Dimension;

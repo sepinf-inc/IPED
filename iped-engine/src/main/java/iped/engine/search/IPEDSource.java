@@ -75,8 +75,8 @@ import iped.engine.task.index.IndexTask;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.properties.BasicProps;
-import iped.util.IOUtil;
-import iped.util.SelectImagePathWithDialog;
+import iped.utils.IOUtil;
+import iped.utils.SelectImagePathWithDialog;
 
 public class IPEDSource implements IIPEDSource {
 

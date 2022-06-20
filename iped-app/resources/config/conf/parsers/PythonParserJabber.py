@@ -16,7 +16,7 @@ from org.apache.tika.parser.html import HtmlParser
 from iped.properties import ExtraProperties
 from iped.properties import BasicProps
 from iped.parsers.standard import StandardParser
-from iped.util import EmptyInputStream
+from iped.utils import EmptyInputStream
 from iped.parsers.whatsapp import Util
 from iped.parsers.util import IndentityHtmlParser
 from org.apache.commons.codec.binary import StringUtils

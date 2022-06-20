@@ -28,7 +28,7 @@ import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class EmbeddedDiskProcessTask extends AbstractTask {
 

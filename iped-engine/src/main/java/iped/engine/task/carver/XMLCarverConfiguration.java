@@ -25,7 +25,7 @@ import iped.carver.api.Signature;
 import iped.carver.api.Signature.SignatureType;
 import iped.carver.standard.DefaultCarver;
 import iped.carver.standard.JSCarver;
-import iped.util.XMLUtil;
+import iped.utils.XMLUtil;
 
 public class XMLCarverConfiguration implements CarverConfiguration, Serializable {
     /**

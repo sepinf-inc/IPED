@@ -29,7 +29,7 @@ import iped.parsers.standard.StandardParser;
 import iped.data.IItemBase;
 import iped.parsers.standard.RawStringParser;
 import iped.search.IItemSearcher;
-import iped.util.IOUtil;
+import iped.utils.IOUtil;
 
 public class Util {
 

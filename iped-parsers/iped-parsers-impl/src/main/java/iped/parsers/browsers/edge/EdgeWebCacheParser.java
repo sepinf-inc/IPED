@@ -43,8 +43,8 @@ import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.util.EmptyInputStream;
-import iped.util.TimeConverter;
+import iped.utils.EmptyInputStream;
+import iped.utils.TimeConverter;
 
 public class EdgeWebCacheParser extends AbstractParser {
 

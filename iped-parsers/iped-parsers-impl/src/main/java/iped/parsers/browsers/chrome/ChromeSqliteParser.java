@@ -36,7 +36,7 @@ import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.util.EmptyInputStream;
+import iped.utils.EmptyInputStream;
 
 /**
  * Parser para histórico do Chrome

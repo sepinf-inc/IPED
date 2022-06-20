@@ -26,9 +26,9 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import iped.io.IStreamSource;
-import iped.util.IOUtil;
-import iped.util.IconUtil;
-import iped.util.ImageUtil;
+import iped.utils.IOUtil;
+import iped.utils.IconUtil;
+import iped.utils.ImageUtil;
 import iped.viewers.localization.Messages;
 
 public class TiffViewer extends ImageViewer {

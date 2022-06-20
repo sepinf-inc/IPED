@@ -1,6 +1,6 @@
 package iped.engine.config;
 
-import iped.util.UTF8Properties;
+import iped.utils.UTF8Properties;
 
 public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
 

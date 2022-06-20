@@ -16,9 +16,9 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FileSystemConfig;
 import iped.engine.datasource.SleuthkitReader;
 import iped.io.SeekableInputStream;
-import iped.util.EmptyInputStream;
-import iped.util.IOUtil;
-import iped.util.SeekableInputStreamFactory;
+import iped.utils.EmptyInputStream;
+import iped.utils.IOUtil;
+import iped.utils.SeekableInputStreamFactory;
 
 public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
 

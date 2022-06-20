@@ -30,7 +30,7 @@ import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.util.LocalizedFormat;
+import iped.utils.LocalizedFormat;
 
 /**
  * e-Mule "part.met" files parser. These files store information about files

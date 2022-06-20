@@ -1,4 +1,4 @@
-package iped.util;
+package iped.utils;
 
 import java.util.Locale;
 import java.util.MissingResourceException;

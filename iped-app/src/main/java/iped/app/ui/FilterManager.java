@@ -29,7 +29,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import iped.util.UTF8Properties;
+import iped.utils.UTF8Properties;
 
 public class FilterManager implements ActionListener, ListSelectionListener {
 

@@ -17,7 +17,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import iped.exception.IPEDException;
-import iped.util.XMLUtil;
+import iped.utils.XMLUtil;
 import iped.viewers.api.ResultSetViewer;
 import iped.viewers.api.ResultSetViewerConfiguration;
 
