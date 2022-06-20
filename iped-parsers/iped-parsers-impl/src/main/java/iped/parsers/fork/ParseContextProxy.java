@@ -1,9 +1,10 @@
-package org.apache.tika.fork;
+package iped.parsers.fork;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.tika.fork.ForkProxy;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;

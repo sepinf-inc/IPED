@@ -11,7 +11,6 @@ import java.util.List;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
-import org.apache.tika.fork.ParsingTimeout;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -32,6 +31,7 @@ import iped.engine.io.TimeoutException;
 import iped.engine.tika.EmptyEmbeddedDocumentExtractor;
 import iped.engine.util.ItemInfoFactory;
 import iped.engine.util.Util;
+import iped.parsers.fork.ParsingTimeout;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.ToCSVContentHandler;

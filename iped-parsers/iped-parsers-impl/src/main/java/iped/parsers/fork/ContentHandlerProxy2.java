@@ -14,12 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.tika.fork;
+package iped.parsers.fork;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import org.apache.tika.fork.ForkProxy;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -55,7 +56,7 @@ class ContentHandlerProxy2 implements ContentHandler, ForkProxy {
 
     private void sendRequest(int type) throws SAXException {
         try {
-            output.writeByte(ForkServer2.RESOURCE);
+            output.writeByte(ForkServer.RESOURCE);
             output.writeByte(resource);
             output.writeByte(type);
         } catch (IOException e) {

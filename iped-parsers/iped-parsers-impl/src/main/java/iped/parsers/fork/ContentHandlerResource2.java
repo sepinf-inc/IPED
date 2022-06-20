@@ -14,12 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.tika.fork;
+package iped.parsers.fork;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import org.apache.tika.fork.ForkResource;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
@@ -43,15 +44,15 @@ class ContentHandlerResource2 implements ForkResource {
 
     private void internalProcess(DataInputStream input) throws IOException, SAXException {
         int type = input.readUnsignedByte();
-        if (type == ContentHandlerProxy.START_DOCUMENT) {
+        if (type == ContentHandlerProxy2.START_DOCUMENT) {
             handler.startDocument();
-        } else if (type == ContentHandlerProxy.END_DOCUMENT) {
+        } else if (type == ContentHandlerProxy2.END_DOCUMENT) {
             handler.endDocument();
-        } else if (type == ContentHandlerProxy.START_PREFIX_MAPPING) {
+        } else if (type == ContentHandlerProxy2.START_PREFIX_MAPPING) {
             handler.startPrefixMapping(readString(input), readString(input));
-        } else if (type == ContentHandlerProxy.END_PREFIX_MAPPING) {
+        } else if (type == ContentHandlerProxy2.END_PREFIX_MAPPING) {
             handler.endPrefixMapping(readString(input));
-        } else if (type == ContentHandlerProxy.START_ELEMENT) {
+        } else if (type == ContentHandlerProxy2.START_ELEMENT) {
             String uri = readString(input);
             String localName = readString(input);
             String qName = readString(input);
@@ -65,20 +66,20 @@ class ContentHandlerResource2 implements ForkResource {
                 }
             }
             handler.startElement(uri, localName, qName, atts);
-        } else if (type == ContentHandlerProxy.END_ELEMENT) {
+        } else if (type == ContentHandlerProxy2.END_ELEMENT) {
             String uri = readString(input);
             String localName = readString(input);
             String qName = readString(input);
             handler.endElement(uri, localName, qName);
-        } else if (type == ContentHandlerProxy.CHARACTERS) {
+        } else if (type == ContentHandlerProxy2.CHARACTERS) {
             char[] ch = readCharacters(input);
             handler.characters(ch, 0, ch.length);
-        } else if (type == ContentHandlerProxy.IGNORABLE_WHITESPACE) {
+        } else if (type == ContentHandlerProxy2.IGNORABLE_WHITESPACE) {
             char[] ch = readCharacters(input);
             handler.characters(ch, 0, ch.length);
-        } else if (type == ContentHandlerProxy.PROCESSING_INSTRUCTION) {
+        } else if (type == ContentHandlerProxy2.PROCESSING_INSTRUCTION) {
             handler.processingInstruction(readString(input), readString(input));
-        } else if (type == ContentHandlerProxy.SKIPPED_ENTITY) {
+        } else if (type == ContentHandlerProxy2.SKIPPED_ENTITY) {
             handler.skippedEntity(readString(input));
         }
     }

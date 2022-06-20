@@ -1,4 +1,4 @@
-package org.apache.tika.fork;
+package iped.parsers.fork;
 
 import java.io.Serializable;
 

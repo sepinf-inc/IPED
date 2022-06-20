@@ -1,4 +1,4 @@
-package org.apache.tika.fork;
+package iped.parsers.fork;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -10,6 +10,8 @@ import java.util.List;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.fork.ForkProxy;
+import org.apache.tika.fork.ForkResource;
 import org.apache.tika.metadata.Metadata;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -58,7 +60,7 @@ public class EmbeddedDocumentExtractorProxy implements EmbeddedDocumentExtractor
             // needed to update progress
             handler.characters("".toCharArray(), 0, 0);
 
-            output.writeByte(ForkServer2.RESOURCE);
+            output.writeByte(ForkServer.RESOURCE);
             output.writeByte(resource);
 
             List<ForkResource> r = new ArrayList<>();
@@ -105,10 +107,10 @@ public class EmbeddedDocumentExtractorProxy implements EmbeddedDocumentExtractor
             int type = input.read();
             if (type == -1) {
                 throw new IOException("Lost connection to a forked client process");
-            } else if (type == ForkServer2.RESOURCE) {
+            } else if (type == ForkServer.RESOURCE) {
                 ForkResource resource = resources.get(input.readUnsignedByte());
                 resource.process(input, output);
-            } else if ((byte) type == ForkServer2.ERROR) {
+            } else if ((byte) type == ForkServer.ERROR) {
                 throw new IOException("Error waiting response from fork client");
             } else {
                 return null;

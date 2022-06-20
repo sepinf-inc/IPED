@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.tika.fork;
+package iped.parsers.fork;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -28,13 +28,15 @@ import java.lang.reflect.Method;
 import java.net.URL;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.fork.ForkProxy;
+import org.apache.tika.fork.ParserFactoryFactory;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.ParserFactory;
 import org.apache.tika.sax.ContentHandlerDecorator;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-class ForkServer2 implements Runnable {
+class ForkServer implements Runnable {
 
     public static final byte ERROR = -1;
 
@@ -81,7 +83,7 @@ class ForkServer2 implements Runnable {
 
         URL.setURLStreamHandlerFactory(new MemoryURLStreamHandlerFactory());
 
-        ForkServer2 server = new ForkServer2(System.in, System.out, serverPulseMillis, serverParseTimeoutMillis,
+        ForkServer server = new ForkServer(System.in, System.out, serverPulseMillis, serverParseTimeoutMillis,
                 serverWaitTimeoutMillis);
         System.setIn(new ByteArrayInputStream(new byte[0]));
         System.setOut(System.err);
@@ -123,7 +125,7 @@ class ForkServer2 implements Runnable {
      * @throws IOException
      *             if the server instance could not be created
      */
-    public ForkServer2(InputStream input, OutputStream output, long serverPulseMillis, long serverParserTimeoutMillis,
+    public ForkServer(InputStream input, OutputStream output, long serverPulseMillis, long serverParserTimeoutMillis,
             long serverWaitTimeoutMillis) throws IOException {
         this.input = new DataInputStream(input);
         this.output = new DataOutputStream(output);
@@ -206,12 +208,12 @@ class ForkServer2 implements Runnable {
             throw new TikaException("eof! pipe closed?!");
         }
 
-        Object firstObject = readObject(ForkServer2.class.getClassLoader());
+        Object firstObject = readObject(ForkServer.class.getClassLoader());
         switch (configIndex) {
             case INIT_PARSER_FACTORY_FACTORY:
                 if (firstObject instanceof ParserFactoryFactory) {
                     // the user has submitted a parser factory, but no class loader
-                    classLoader = ForkServer2.class.getClassLoader();
+                    classLoader = ForkServer.class.getClassLoader();
                     ParserFactory parserFactory = ((ParserFactoryFactory) firstObject).build();
                     parser = parserFactory.build();
                 } else {
@@ -233,7 +235,7 @@ class ForkServer2 implements Runnable {
                     // the user has submitted a parser factory and a class loader
                     ParserFactory parserFactory = ((ParserFactoryFactory) firstObject).build();
                     parser = parserFactory.build();
-                    classLoader = (ClassLoader) readObject(ForkServer2.class.getClassLoader());
+                    classLoader = (ClassLoader) readObject(ForkServer.class.getClassLoader());
                     Thread.currentThread().setContextClassLoader(classLoader);
                 } else {
                     throw new IllegalStateException("Expecing ParserFactoryFactory followed by a class loader");
@@ -330,7 +332,7 @@ class ForkServer2 implements Runnable {
         }
 
         // Tell the parent process that we successfully received this object
-        output.writeByte(ForkServer2.DONE);
+        output.writeByte(ForkServer.DONE);
         output.flush();
 
         return object;

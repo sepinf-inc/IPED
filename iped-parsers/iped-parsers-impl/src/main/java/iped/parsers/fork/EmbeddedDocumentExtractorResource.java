@@ -1,4 +1,4 @@
-package org.apache.tika.fork;
+package iped.parsers.fork;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.fork.ForkProxy;
+import org.apache.tika.fork.ForkResource;
 import org.apache.tika.metadata.Metadata;
 import org.xml.sax.ContentHandler;
 
@@ -29,10 +31,10 @@ public class EmbeddedDocumentExtractorResource implements ForkResource {
             Metadata metadata = (Metadata) readObject(input, output);
 
             extractor.parseEmbedded(is, handler, metadata, true);
-            output.write(ForkServer2.DONE);
+            output.write(ForkServer.DONE);
 
         } catch (Exception e) {
-            output.write(ForkServer2.ERROR);
+            output.write(ForkServer.ERROR);
             e.printStackTrace();
             return e;
         } finally {
@@ -50,7 +52,7 @@ public class EmbeddedDocumentExtractorResource implements ForkResource {
         }
 
         // Tell the parent process that we successfully received this object
-        output.writeByte(ForkServer2.DONE);
+        output.writeByte(ForkServer.DONE);
         output.flush();
 
         return object;

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.tika.fork;
+package iped.parsers.fork;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.tika.fork.ForkProxy;
 import org.apache.tika.io.TikaInputStream;
 
 class InputStreamProxy2 extends InputStream implements ForkProxy {
@@ -74,7 +75,7 @@ class InputStreamProxy2 extends InputStream implements ForkProxy {
             return tis.read();
         }
 
-        output.writeByte(ForkServer2.RESOURCE);
+        output.writeByte(ForkServer.RESOURCE);
         output.writeByte(resource);
         output.writeInt(1);
         output.flush();
@@ -93,7 +94,7 @@ class InputStreamProxy2 extends InputStream implements ForkProxy {
             return tis.read(b, off, len);
         }
 
-        output.writeByte(ForkServer2.RESOURCE);
+        output.writeByte(ForkServer.RESOURCE);
         output.writeByte(resource);
         output.writeInt(len);
         output.flush();

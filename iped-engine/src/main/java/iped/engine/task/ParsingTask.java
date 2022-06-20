@@ -36,9 +36,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
-import org.apache.tika.fork.EmbeddedDocumentParser;
-import org.apache.tika.fork.EmbeddedDocumentParser.NameTitle;
-import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -91,6 +88,9 @@ import iped.parsers.compress.SevenZipParser;
 import iped.parsers.database.EDBParser;
 import iped.parsers.external.ExternalParser;
 import iped.parsers.external.ExternalParsersFactory;
+import iped.parsers.fork.EmbeddedDocumentParser;
+import iped.parsers.fork.ForkParser;
+import iped.parsers.fork.EmbeddedDocumentParser.NameTitle;
 import iped.parsers.mail.LibpffPSTParser;
 import iped.parsers.misc.MultipleParser;
 import iped.parsers.misc.PDFTextParser;
@@ -776,11 +776,11 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         // child external processes
 
         if (parsingConfig.isEnableExternalParsing()) {
-            ForkParser2.setEnabled(true);
+            ForkParser.setEnabled(true);
             PluginConfig pluginConfig = configurationManager.findObject(PluginConfig.class);
-            ForkParser2.setPluginDir(pluginConfig.getPluginFolder().getAbsolutePath());
-            ForkParser2.setPoolSize(parsingConfig.getNumExternalParsers());
-            ForkParser2.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
+            ForkParser.setPluginDir(pluginConfig.getPluginFolder().getAbsolutePath());
+            ForkParser.setPoolSize(parsingConfig.getNumExternalParsers());
+            ForkParser.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
             // do not open extra processes for OCR if ForkParser is enabled
             System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
         }

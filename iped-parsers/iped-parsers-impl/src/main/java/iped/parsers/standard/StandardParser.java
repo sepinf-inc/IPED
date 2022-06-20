@@ -28,7 +28,6 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -49,6 +48,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.io.IStreamSource;
+import iped.parsers.fork.ForkParser;
 import iped.parsers.util.CorruptedCarvedException;
 import iped.parsers.util.IgnoreCorruptedCarved;
 import iped.parsers.util.ItemInfo;
@@ -239,8 +239,8 @@ public class StandardParser extends CompositeParser {
             try {
                 if (length != 0) {
                     if (metadata.get(INDEXER_TIMEOUT) == null) {
-                        if (canUseForkParser && ForkParser2.isEnabled() && hasSpecificParser(metadata))
-                            ForkParser2.getForkParser().parse(tis, sch, metadata, context);
+                        if (canUseForkParser && ForkParser.isEnabled() && hasSpecificParser(metadata))
+                            ForkParser.getForkParser().parse(tis, sch, metadata, context);
                         else
                             super.parse(tis, sch, metadata, context);
                     } else {

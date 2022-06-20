@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.tika.fork;
+package iped.parsers.fork;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +32,7 @@ import java.util.Set;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.fork.ParserFactoryFactory;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -46,7 +47,7 @@ import org.xml.sax.SAXException;
 
 import iped.util.IOUtil;
 
-public class ForkParser2 extends AbstractParser {
+public class ForkParser extends AbstractParser {
 
     /** Serial version UID */
     private static final long serialVersionUID = -4962742892274663950L;
@@ -59,7 +60,7 @@ public class ForkParser2 extends AbstractParser {
 
     private static String plugin_dir = null;
 
-    private static ForkParser2 instance;
+    private static ForkParser instance;
 
     // these are used by the legacy usage
     private final ClassLoader loader;
@@ -79,7 +80,7 @@ public class ForkParser2 extends AbstractParser {
 
     private int currentlyInUse = 0;
 
-    private final Queue<ForkClient2> pool = new LinkedList<>();
+    private final Queue<ForkClient> pool = new LinkedList<>();
 
     @Field
     private long serverPulseMillis = 1000;
@@ -113,15 +114,15 @@ public class ForkParser2 extends AbstractParser {
         serverMaxHeapMB = maxHeapMB;
     }
 
-    public static ForkParser2 getForkParser() {
+    public static ForkParser getForkParser() {
         if (!enabled) {
             return null;
         }
         if (instance == null) {
-            synchronized (ForkParser2.class) {
+            synchronized (ForkParser.class) {
                 if (instance == null) {
 
-                    instance = new ForkParser2(getMainJarsPath(), new File(plugin_dir).toPath(),
+                    instance = new ForkParser(getMainJarsPath(), new File(plugin_dir).toPath(),
                             new ParserFactoryFactory(ExternalParsingParserFactory.class.getName(),
                                     Collections.EMPTY_MAP));
                     instance.setJavaCommand(getCommand(serverMaxHeapMB));
@@ -135,7 +136,7 @@ public class ForkParser2 extends AbstractParser {
     }
 
     private static Path getMainJarsPath() {
-        URL url = ForkParser2.class.getProtectionDomain().getCodeSource().getLocation();
+        URL url = ForkParser.class.getProtectionDomain().getCodeSource().getLocation();
         Path jarPath = null;
         try {
             jarPath = new File(url.toURI()).getParentFile().toPath();
@@ -165,7 +166,7 @@ public class ForkParser2 extends AbstractParser {
      *            including tika-core and all desired parsers and dependencies
      * @param factoryFactory
      */
-    public ForkParser2(Path tikaBin, Path pluginDir, ParserFactoryFactory factoryFactory) {
+    public ForkParser(Path tikaBin, Path pluginDir, ParserFactoryFactory factoryFactory) {
         loader = null;
         parser = null;
         this.tikaBin = tikaBin;
@@ -186,7 +187,7 @@ public class ForkParser2 extends AbstractParser {
      *            to use for all classes besides the parser in the child
      *            process/server
      */
-    public ForkParser2(Path tikaBin, ParserFactoryFactory parserFactoryFactory, ClassLoader classLoader) {
+    public ForkParser(Path tikaBin, ParserFactoryFactory parserFactoryFactory, ClassLoader classLoader) {
         parser = null;
         loader = classLoader;
         this.tikaBin = tikaBin;
@@ -199,7 +200,7 @@ public class ForkParser2 extends AbstractParser {
      * @param parser
      *            the parser to delegate to. This one cannot be another ForkParser
      */
-    public ForkParser2(ClassLoader loader, Parser parser) {
+    public ForkParser(ClassLoader loader, Parser parser) {
         if (parser instanceof ForkParser) {
             throw new IllegalArgumentException(
                     "The underlying parser of a ForkParser should not be a ForkParser, but a specific implementation.");
@@ -210,12 +211,12 @@ public class ForkParser2 extends AbstractParser {
         this.parser = parser;
     }
 
-    public ForkParser2(ClassLoader loader) {
+    public ForkParser(ClassLoader loader) {
         this(loader, new AutoDetectParser());
     }
 
-    public ForkParser2() {
-        this(ForkParser2.class.getClassLoader());
+    public ForkParser() {
+        this(ForkParser.class.getClassLoader());
     }
 
     /**
@@ -347,7 +348,7 @@ public class ForkParser2 extends AbstractParser {
         Throwable t;
 
         boolean alive = false;
-        ForkClient2 client = null;
+        ForkClient client = null;
         TemporaryResources tmp = new TemporaryResources();
         try {
             // must create temp file because of parsers that read directly from stream when
@@ -399,7 +400,7 @@ public class ForkParser2 extends AbstractParser {
     }
 
     public synchronized void close() {
-        for (ForkClient2 client : pool) {
+        for (ForkClient client : pool) {
             client.close();
         }
         pool.clear();
@@ -407,10 +408,10 @@ public class ForkParser2 extends AbstractParser {
     }
 
     // patched to concurrently start new clients
-    private ForkClient2 acquireClient() throws IOException, TikaException {
+    private ForkClient acquireClient() throws IOException, TikaException {
         while (true) {
             boolean startNew = false;
-            ForkClient2 client;
+            ForkClient client;
 
             synchronized (this) {
                 client = pool.poll();
@@ -453,22 +454,22 @@ public class ForkParser2 extends AbstractParser {
         }
     }
 
-    private ForkClient2 newClient() throws IOException, TikaException {
+    private ForkClient newClient() throws IOException, TikaException {
         TimeoutLimits timeoutLimits = new TimeoutLimits(serverPulseMillis, serverParseTimeoutMillis,
                 serverWaitTimeoutMillis);
         if (loader == null && parser == null && tikaBin != null && parserFactoryFactory != null) {
-            return new ForkClient2(tikaBin, pluginDir, parserFactoryFactory, java, timeoutLimits);
+            return new ForkClient(tikaBin, pluginDir, parserFactoryFactory, java, timeoutLimits);
         } else if (loader != null && parser != null && tikaBin == null && parserFactoryFactory == null) {
-            return new ForkClient2(loader, parser, java, timeoutLimits);
+            return new ForkClient(loader, parser, java, timeoutLimits);
         } else if (loader != null && parser == null && tikaBin != null && parserFactoryFactory != null) {
-            return new ForkClient2(tikaBin, pluginDir, parserFactoryFactory, loader, java, timeoutLimits);
+            return new ForkClient(tikaBin, pluginDir, parserFactoryFactory, loader, java, timeoutLimits);
         } else {
             // TODO: make this more useful
             throw new IllegalStateException("Unexpected combination of state items");
         }
     }
 
-    private synchronized void releaseClient(ForkClient2 client, boolean alive) {
+    private synchronized void releaseClient(ForkClient client, boolean alive) {
         currentlyInUse--;
         if (currentlyInUse + pool.size() < poolSize && alive) {
             if (maxFilesProcessedPerClient > 0 && client.getFilesProcessed() >= maxFilesProcessedPerClient) {

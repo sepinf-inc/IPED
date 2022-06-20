@@ -26,7 +26,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
-import org.apache.tika.fork.ParsingTimeout;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -43,6 +42,7 @@ import org.xml.sax.SAXException;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.core.MimeTypesProcessingOrder;
+import iped.parsers.fork.ParsingTimeout;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.CorruptedCarvedException;
 import iped.parsers.util.ItemInfo;
