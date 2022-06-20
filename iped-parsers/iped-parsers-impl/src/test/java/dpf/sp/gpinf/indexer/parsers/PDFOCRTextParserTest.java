@@ -1,7 +1,11 @@
 package dpf.sp.gpinf.indexer.parsers;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Base64;
+
+import javax.imageio.ImageIO;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -178,7 +182,6 @@ public class PDFOCRTextParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        context.set(ComputeThumb.class, new ComputeThumb());
         try (InputStream stream = getStream("test-files/test_pdfImages.pdf")) {
             parser.parse(stream, handler, metadata, context);
 
@@ -205,14 +208,10 @@ public class PDFOCRTextParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String base64Thumb = metadata.get(ExtraProperties.THUMBNAIL_BASE64);
+            assertNotNull(base64Thumb);
 
-            assertTrue(base64Thumb != null);
-            // assertTrue(base64Thumb.contains("/9j/4AAQSkZJRgABAgAAAQABAAD/2wBDAAgGBgcGBQgHB"));
-            // assertTrue(base64Thumb.contains("+Ff/JL/AA9/16D+ZrsK4/4V/wDJL/D3/XoP5muwoAKKK"));
-            // assertTrue(base64Thumb.contains("eU2D39qT/AIS+NC5ktwcRh9kb7iOZcjPGWPlYC46nr6A"));
-            // assertTrue(base64Thumb.contains("BUhzIAMryuXJwc4zxigCsulaFeC3ujebjKRLF5jJ829W"));
-            // assertTrue(base64Thumb.contains("PC/jx4l0bxLrekTaNqMN7HDbOsjREkKS2cUUUUAf/9k="));
-
+            byte[] thumbImage = Base64.getDecoder().decode(base64Thumb);
+            assertEquals(ImageIO.read(new ByteArrayInputStream(thumbImage)).getHeight(), 600);
         }
     }
 

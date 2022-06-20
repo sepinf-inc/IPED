@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +26,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
+import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.parsers.util.RepoToolDownloader;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 
@@ -75,11 +77,11 @@ public class OCRParserTest {
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "image/png");
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "por");
-        
+
         try (OCRParser parser = new OCRParser();
             InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.png")) {
             assumeTrue(parser.isEnabled());
-            
+
             parser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
             String hts = handler.toString();
@@ -96,8 +98,7 @@ public class OCRParserTest {
         }
     }
 
-    @Test
-    public void testOCRParserPDF() throws IOException, SAXException, TikaException, SQLException {
+    private void assertPDFParsing() throws IOException, SAXException, TikaException, SQLException {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
@@ -125,6 +126,20 @@ public class OCRParserTest {
             assertTrue(hts.contains("as memórias de instruções e dados."));
         }
     }
+
+    @Test
+    public void testOCRParserPDF() throws IOException, SAXException, TikaException, SQLException {
+        assertPDFParsing();
+        // convert pdf using icepdf
+        System.setProperty(PDFToImage.PDFLIB_PROP, "icepdf");
+        FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
+        assertPDFParsing();
+        // convert pdf externally
+        // System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "true");
+        // FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
+        // assertPDFParsing();
+    }
+
     
     @Test
     public void testOCRParserTIFF() throws IOException, SAXException, TikaException, SQLException {
@@ -140,7 +155,7 @@ public class OCRParserTest {
         try (OCRParser parser = new OCRParser();
             InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.tiff")) {
             assumeTrue(parser.isEnabled());
-            
+
             parser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
             String hts = handler.toString();
@@ -185,7 +200,7 @@ public class OCRParserTest {
             setUpImageMagick();
             String magickDir = System.getProperty(ExternalImageConverter.winToolPathPrefixProp, "");
             assumeTrue(isImageMagickInstalled(magickDir));
-            
+
             parser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
             String hts = handler.toString();
@@ -216,7 +231,7 @@ public class OCRParserTest {
             setUpImageMagick();
             String magickDir = System.getProperty(ExternalImageConverter.winToolPathPrefixProp, "");
             assumeTrue(isImageMagickInstalled(magickDir));
-            
+
             parser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
             String hts = handler.toString();
