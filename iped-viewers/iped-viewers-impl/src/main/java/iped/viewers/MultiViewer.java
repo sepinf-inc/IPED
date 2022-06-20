@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import iped.io.IStreamSource;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 
 public class MultiViewer extends AbstractViewer {

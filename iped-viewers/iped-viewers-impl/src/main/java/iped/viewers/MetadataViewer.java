@@ -30,6 +30,7 @@ import iped.properties.MediaTypes;
 import iped.util.LocalizedFormat;
 import iped.util.SimpleHTMLEncoder;
 import iped.util.UiUtil;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;

@@ -111,6 +111,7 @@ import iped.io.SeekableInputStream;
 import iped.util.IOUtil;
 import iped.util.SeekableFileInputStream;
 import iped.util.UiUtil;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 
 /**

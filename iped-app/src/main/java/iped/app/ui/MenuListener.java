@@ -54,7 +54,7 @@ import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.search.SearchResult;
 import iped.util.SpinnerDialog;
-import iped.viewers.AbstractViewer;
+import iped.viewers.api.AbstractViewer;
 
 public class MenuListener implements ActionListener {
 

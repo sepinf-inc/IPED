@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.io.IStreamSource;
 import iped.util.IOUtil;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 
 public class CADViewer extends AbstractViewer {

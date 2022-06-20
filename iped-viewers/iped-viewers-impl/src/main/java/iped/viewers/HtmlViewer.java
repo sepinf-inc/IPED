@@ -22,6 +22,7 @@ import iped.io.IStreamSource;
 import iped.parsers.util.Util;
 import iped.util.IOUtil;
 import iped.util.UiUtil;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;

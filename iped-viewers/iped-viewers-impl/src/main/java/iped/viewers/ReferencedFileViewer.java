@@ -16,6 +16,7 @@ import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.util.FileContentSource;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.api.AttachmentSearcher;
 import iped.viewers.localization.Messages;
 

@@ -23,6 +23,7 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
 
 import iped.io.IStreamSource;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.api.ITextParser;
 import iped.viewers.components.HitsTable;
 import iped.viewers.localization.Messages;

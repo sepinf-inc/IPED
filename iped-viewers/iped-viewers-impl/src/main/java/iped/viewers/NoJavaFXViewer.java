@@ -5,6 +5,7 @@ import java.util.Set;
 import javax.swing.JLabel;
 
 import iped.io.IStreamSource;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 
 public class NoJavaFXViewer extends AbstractViewer {

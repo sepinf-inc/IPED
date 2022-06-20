@@ -81,6 +81,7 @@ import ag.ion.noa.search.SearchDescriptor;
 import iped.io.IStreamSource;
 import iped.util.IOUtil;
 import iped.util.ProcessUtil;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 
 public class LibreOfficeViewer extends AbstractViewer {

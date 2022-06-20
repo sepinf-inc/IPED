@@ -1,4 +1,4 @@
-package iped.viewers;
+package iped.viewers.api;
 
 import java.awt.Component;
 import java.awt.Image;

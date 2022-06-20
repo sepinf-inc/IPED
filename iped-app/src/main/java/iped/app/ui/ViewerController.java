@@ -31,7 +31,6 @@ import iped.app.ui.viewers.TextViewer;
 import iped.engine.task.index.IndexItem;
 import iped.io.IStreamSource;
 import iped.viewers.ATextViewer;
-import iped.viewers.AbstractViewer;
 import iped.viewers.CADViewer;
 import iped.viewers.EmailViewer;
 import iped.viewers.HexViewerPlus;
@@ -47,6 +46,7 @@ import iped.viewers.ReferencedFileViewer;
 import iped.viewers.TiffViewer;
 import iped.viewers.TikaHtmlViewer;
 import iped.viewers.LibreOfficeViewer.NotSupported32BitPlatformExcepion;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.components.HitsTable;
 import iped.viewers.util.LibreOfficeFinder;
 

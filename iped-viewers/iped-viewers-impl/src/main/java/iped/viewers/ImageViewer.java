@@ -40,6 +40,7 @@ import iped.util.ExternalImageConverter;
 import iped.util.IOUtil;
 import iped.util.IconUtil;
 import iped.util.ImageUtil;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.components.ImageViewPanel;
 import iped.viewers.localization.Messages;
 import iped.viewers.util.ImageMetadataUtil;

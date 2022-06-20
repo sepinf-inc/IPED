@@ -137,7 +137,7 @@ import iped.search.IMultiSearchResult;
 import iped.util.IconUtil;
 import iped.util.UiUtil;
 import iped.viewers.ATextViewer;
-import iped.viewers.AbstractViewer;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IColumnsManager;
 import iped.viewers.api.IMultiSearchResultProvider;

@@ -41,6 +41,7 @@ import org.apache.pdfbox.rendering.PDFRenderer;
 
 import iped.io.IStreamSource;
 import iped.util.IOUtil;
+import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
 
 public class PDFBoxViewer extends AbstractViewer {
