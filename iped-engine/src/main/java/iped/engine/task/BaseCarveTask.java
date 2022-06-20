@@ -25,7 +25,7 @@ import java.util.Set;
 
 import org.apache.tika.mime.MediaType;
 
-import iped.carver.api.CarverConfiguration;
+import iped.carvers.api.CarverConfiguration;
 import iped.data.IItem;
 import iped.engine.data.CaseData;
 import iped.engine.data.Item;

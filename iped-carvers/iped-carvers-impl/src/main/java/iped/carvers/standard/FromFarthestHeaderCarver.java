@@ -1,10 +1,10 @@
-package iped.carver.standard;
+package iped.carvers.standard;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
 
-import iped.carver.api.CarverType;
-import iped.carver.api.Hit;
+import iped.carvers.api.CarverType;
+import iped.carvers.api.Hit;
 import iped.data.IItem;
 
 public class FromFarthestHeaderCarver extends DefaultCarver {

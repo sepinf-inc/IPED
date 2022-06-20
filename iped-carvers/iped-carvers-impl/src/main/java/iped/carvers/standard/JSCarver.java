@@ -1,4 +1,4 @@
-package iped.carver.standard;
+package iped.carvers.standard;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,9 +12,9 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import iped.carver.api.CarverType;
-import iped.carver.api.Hit;
-import iped.carver.api.InvalidCarvedObjectException;
+import iped.carvers.api.CarverType;
+import iped.carvers.api.Hit;
+import iped.carvers.api.InvalidCarvedObjectException;
 import iped.data.IItem;
 
 public class JSCarver extends DefaultCarver {

@@ -22,13 +22,13 @@
         <carverType>
             <name>SQLITE</name>
             <mediaType>application/x-sqlite3</mediaType>
-            <carverClass>iped.carver.custom.SQLiteCarver</carverClass>
+            <carverClass>iped.carvers.custom.SQLiteCarver</carverClass>
             <minLength>10000</minLength>
             <maxLength>100000000</maxLength>
         </carverType>
         <carverType>
             <name>TOR_CIRCUIT_STATUS</name>
-            <carverClass>iped.carver.custom.TorTCCarver</carverClass>
+            <carverClass>iped.carvers.custom.TorTCCarver</carverClass>
             <minLength>10</minLength>
             <mediaType>application/x-tor-tc-fragment</mediaType>
             <maxLength>1000</maxLength>
@@ -40,13 +40,13 @@
         </carverType>
           <carverType>
             <name>OLE</name>
-            <carverClass>iped.carver.custom.OLECarver</carverClass>
+            <carverClass>iped.carvers.custom.OLECarver</carverClass>
             <minLength>1000</minLength>
             <maxLength>50000000</maxLength>
         </carverType>
         <carverType>
             <name>ZIP</name>
-            <carverClass>iped.carver.custom.ZIPCarver</carverClass>
+            <carverClass>iped.carvers.custom.ZIPCarver</carverClass>
             <signatures>
                 <headerSignature>PK\03\04</headerSignature>
                 <footerSignature>PK\05\06??????????????????</footerSignature>
@@ -57,7 +57,7 @@
         
          <carverType>
             <name>MOV</name>
-            <carverClass>iped.carver.custom.MOVCarver</carverClass>
+            <carverClass>iped.carvers.custom.MOVCarver</carverClass>
             <minLength>100000</minLength>
             <maxLength>500000000</maxLength>
         </carverType>
@@ -65,7 +65,7 @@
         <!--carverType>
             <name>DER</name>
             <mediaType>application/pkix-cert</mediaType>
-            <carverClass>iped.carver.custom.DERCarver</carverClass>
+            <carverClass>iped.carvers.custom.DERCarver</carverClass>
         </carverType-->
 
         <carverType>
@@ -80,7 +80,7 @@
             <minLength>1000</minLength>
             <maxLength>10000000</maxLength>
             <mediaType>message/rfc822</mediaType>
-            <carverClass>iped.carver.custom.EMLCarver</carverClass>
+            <carverClass>iped.carvers.custom.EMLCarver</carverClass>
         </carverType>
         
         <carverType>
@@ -355,7 +355,7 @@
             <minLength>100000</minLength>
             <maxLength>500000000</maxLength>
             <mediaType>video/mpeg</mediaType>
-            <carverClass>iped.carver.standard.FromFarthestHeaderCarver</carverClass>
+            <carverClass>iped.carvers.standard.FromFarthestHeaderCarver</carverClass>
         </carverType>
 <!--
         <carverType>

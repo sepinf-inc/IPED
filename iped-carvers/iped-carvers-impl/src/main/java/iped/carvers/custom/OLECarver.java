@@ -1,12 +1,12 @@
-package iped.carver.custom;
+package iped.carvers.custom;
 
 import java.io.IOException;
 
 import org.apache.commons.codec.DecoderException;
 
-import iped.carver.api.CarverType;
-import iped.carver.api.Hit;
-import iped.carver.standard.AbstractCarver;
+import iped.carvers.api.CarverType;
+import iped.carvers.api.Hit;
+import iped.carvers.standard.AbstractCarver;
 import iped.data.IItem;
 import iped.io.SeekableInputStream;
 

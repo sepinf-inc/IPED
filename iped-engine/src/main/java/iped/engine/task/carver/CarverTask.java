@@ -16,12 +16,12 @@ import org.arabidopsis.ahocorasick.Searcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.carver.api.CarvedItemListener;
-import iped.carver.api.Carver;
-import iped.carver.api.CarverType;
-import iped.carver.api.Hit;
-import iped.carver.api.Signature;
-import iped.carver.standard.JSCarver;
+import iped.carvers.api.CarvedItemListener;
+import iped.carvers.api.Carver;
+import iped.carvers.api.CarverType;
+import iped.carvers.api.Hit;
+import iped.carvers.api.Signature;
+import iped.carvers.standard.JSCarver;
 import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;

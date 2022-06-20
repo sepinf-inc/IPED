@@ -1,4 +1,4 @@
-package iped.carver.api;
+package iped.carvers.api;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -7,7 +7,7 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.mime.MediaType;
 
-import iped.carver.api.Signature.SignatureType;
+import iped.carvers.api.Signature.SignatureType;
 
 public class CarverType implements Serializable {
     /**

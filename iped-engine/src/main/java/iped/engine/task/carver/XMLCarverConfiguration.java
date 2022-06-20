@@ -16,15 +16,15 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import iped.carver.api.CarvedItemListener;
-import iped.carver.api.Carver;
-import iped.carver.api.CarverConfiguration;
-import iped.carver.api.CarverConfigurationException;
-import iped.carver.api.CarverType;
-import iped.carver.api.Signature;
-import iped.carver.api.Signature.SignatureType;
-import iped.carver.standard.DefaultCarver;
-import iped.carver.standard.JSCarver;
+import iped.carvers.api.CarvedItemListener;
+import iped.carvers.api.Carver;
+import iped.carvers.api.CarverConfiguration;
+import iped.carvers.api.CarverConfigurationException;
+import iped.carvers.api.CarverType;
+import iped.carvers.api.Signature;
+import iped.carvers.api.Signature.SignatureType;
+import iped.carvers.standard.DefaultCarver;
+import iped.carvers.standard.JSCarver;
 import iped.utils.XMLUtil;
 
 public class XMLCarverConfiguration implements CarverConfiguration, Serializable {

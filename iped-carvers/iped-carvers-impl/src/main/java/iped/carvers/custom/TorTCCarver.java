@@ -1,10 +1,10 @@
-package iped.carver.custom;
+package iped.carvers.custom;
 
 import java.nio.charset.StandardCharsets;
 
-import iped.carver.api.Hit;
-import iped.carver.api.InvalidCarvedObjectException;
-import iped.carver.standard.DefaultCarver;
+import iped.carvers.api.Hit;
+import iped.carvers.api.InvalidCarvedObjectException;
+import iped.carvers.standard.DefaultCarver;
 import iped.data.IItem;
 import iped.io.SeekableInputStream;
 

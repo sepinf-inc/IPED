@@ -1,8 +1,8 @@
-package iped.carver.standard;
+package iped.carvers.standard;
 
 import java.io.IOException;
 
-import iped.carver.api.Hit;
+import iped.carvers.api.Hit;
 import iped.data.IItem;
 import iped.io.SeekableInputStream;
 

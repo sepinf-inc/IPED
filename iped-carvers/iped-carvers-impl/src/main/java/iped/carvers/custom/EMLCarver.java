@@ -1,10 +1,10 @@
-package iped.carver.custom;
+package iped.carvers.custom;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
 
-import iped.carver.api.Hit;
-import iped.carver.standard.DefaultCarver;
+import iped.carvers.api.Hit;
+import iped.carvers.standard.DefaultCarver;
 import iped.data.IItem;
 
 public class EMLCarver extends DefaultCarver {

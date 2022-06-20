@@ -38,7 +38,7 @@ function validateCarvedObject(parentEvidence, header, length){
 		is.read(buf);
     	parse(buf); //tenta interpretar o certificado com o tamanho do cabecalho incluso
 	}catch(e){
-		var InvalidCarvedObjectException = Java.type("iped.carver.api.InvalidCarvedObjectException")
+		var InvalidCarvedObjectException = Java.type("iped.carvers.api.InvalidCarvedObjectException")
     	var ex = new InvalidCarvedObjectException(e);
 		throw ex;		
     }finally{

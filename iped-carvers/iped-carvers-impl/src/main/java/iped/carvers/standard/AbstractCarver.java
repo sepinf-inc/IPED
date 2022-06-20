@@ -1,16 +1,16 @@
-package iped.carver.standard;
+package iped.carvers.standard;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import iped.carver.api.CarvedItemListener;
-import iped.carver.api.Carver;
-import iped.carver.api.CarverType;
-import iped.carver.api.Hit;
-import iped.carver.api.InvalidCarvedObjectException;
-import iped.carver.api.Signature.SignatureType;
+import iped.carvers.api.CarvedItemListener;
+import iped.carvers.api.Carver;
+import iped.carvers.api.CarverType;
+import iped.carvers.api.Hit;
+import iped.carvers.api.InvalidCarvedObjectException;
+import iped.carvers.api.Signature.SignatureType;
 import iped.data.IItem;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;

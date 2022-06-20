@@ -1,4 +1,4 @@
-package iped.carver.api;
+package iped.carvers.api;
 
 import java.io.Serializable;
 
