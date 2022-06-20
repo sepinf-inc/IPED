@@ -24,8 +24,8 @@ import iped.geo.kml.GetResultsKMLWorker;
 import iped.geo.kml.KMLResult;
 import iped.geo.localization.Messages;
 import iped.properties.BasicProps;
-import iped.search.IMultiSearchResultProvider;
 import iped.viewers.api.GUIProvider;
+import iped.viewers.api.IMultiSearchResultProvider;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas

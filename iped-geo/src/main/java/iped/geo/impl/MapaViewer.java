@@ -14,8 +14,8 @@ import javax.swing.event.TableModelListener;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import iped.data.IItemId;
 import iped.geo.localization.Messages;
-import iped.search.IMultiSearchResultProvider;
 import iped.viewers.api.GUIProvider;
+import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.ResultSetViewer;
 
 public class MapaViewer implements ResultSetViewer, TableModelListener, ListSelectionListener {

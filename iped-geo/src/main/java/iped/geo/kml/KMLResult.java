@@ -12,8 +12,8 @@ import org.apache.commons.lang.ArrayUtils;
 
 import iped.data.IItemId;
 import iped.geo.localization.Messages;
-import iped.search.IMultiSearchResultProvider;
 import iped.viewers.api.GUIProvider;
+import iped.viewers.api.IMultiSearchResultProvider;
 
 public class KMLResult {
     private static FileDialog fDialog;

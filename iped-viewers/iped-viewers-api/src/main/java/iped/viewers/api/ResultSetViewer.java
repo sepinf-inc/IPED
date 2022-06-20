@@ -4,7 +4,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
-import iped.search.IMultiSearchResultProvider;
 
 /*
  * Defines a viewer for a set of results controlled by a MultiSearchResultProvider
