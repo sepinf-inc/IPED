@@ -1147,15 +1147,15 @@ public class SleuthkitReader extends DataSourceReader {
 
         if (embeddedDisk) {
             // always add to queue to avoid deadlock if expanding many virtual disks simultaneously
-            caseData.addItemFirstNonBlocking(item);
+            Manager.getInstance().getProcessingQueues().addItemFirstNonBlocking(item);
         } else {
             if (embeddedDisksBeingDecoded.get() < Manager.getInstance().getNumWorkers()) {
                 // this can block if queue is full, but we have at least 1 worker running
-                caseData.addItem(item);
+                Manager.getInstance().getProcessingQueues().addItem(item);
             } else {
                 // avoid deadlock if all workers are trying to decode virtual disks and the main
                 // evidence is still being decoded
-                caseData.addItemNonBlocking(item);
+                Manager.getInstance().getProcessingQueues().addItemNonBlocking(item);
             }
 
         }

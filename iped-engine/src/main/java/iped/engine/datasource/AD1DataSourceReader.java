@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 
 import iped.data.ICaseData;
 import iped.data.IItem;
+import iped.engine.core.Manager;
 import iped.engine.data.DataSource;
 import iped.engine.data.Item;
 import iped.engine.datasource.ad1.AD1Extractor;
@@ -73,7 +74,7 @@ public class AD1DataSourceReader extends DataSourceReader {
         rootItem.setHash(""); //$NON-NLS-1$
         rootItem.setIdInDataSource("");
 
-        caseData.addItem(rootItem);
+        Manager.getInstance().addItemToQueue(rootItem);
 
         return rootItem;
     }
@@ -100,7 +101,7 @@ public class AD1DataSourceReader extends DataSourceReader {
             item.setInputStreamFactory(inputStreamFactory);
             item.setIdInDataSource(Long.toString(header.object_address));
 
-            caseData.addItem(item);
+            Manager.getInstance().addItemToQueue(item);
 
         } else {
             caseData.incDiscoveredEvidences(1);

@@ -133,7 +133,7 @@ public abstract class BaseCarveTask extends AbstractTask {
         }
         parentEvidence.setExtraAttribute(NUM_CARVED_AND_FRAGS, numSubitems.intValue() + 1);
 
-        ((CaseData) caseData).calctrackIDAndUpdateID(offsetFile);
+        Util.calctrackIDAndUpdateID((CaseData) caseData, offsetFile);
 
         worker.processNewItem(offsetFile);
     }

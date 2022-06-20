@@ -203,12 +203,12 @@ public abstract class AbstractTask {
     protected void sendToNextTask(IItem evidence) throws Exception {
         if (nextTask != null) {
             int priority = QueuesProcessingOrder.getProcessingQueue(evidence.getMediaType());
-            if (evidence.isRoot() || priority <= caseData.getCurrentQueuePriority())
+            if (evidence.isRoot() || priority <= worker.manager.getProcessingQueues().getCurrentQueuePriority())
                 nextTask.processAndSendToNextTask(evidence);
             else {
                 evidence.dispose();
                 SkipCommitedTask.checkAgainLaterProcessedParents(evidence);
-                caseData.addItemToQueue(evidence, priority);
+                worker.manager.getProcessingQueues().addItemToQueue(evidence, priority);
                 if (!evidence.isQueueEnd()) {
                     worker.decItemsBeingProcessed();
                 }

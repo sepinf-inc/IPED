@@ -121,12 +121,12 @@ import iped.utils.IOUtil;
 public class Manager {
 
     private static long commitIntervalMillis = 30 * 60 * 1000;
-    private static int QUEUE_SIZE = 100000;
     private static Logger LOGGER = LogManager.getLogger(Manager.class);
     private static String FINISHED_FLAG = "data/processing_finished";
     private static Manager instance;
 
     private CaseData caseData;
+    private ProcessingQueues processingQueues;
 
     private List<File> sources;
     private File output, finalIndexDir, indexDir, palavrasChave;
@@ -159,6 +159,14 @@ public class Manager {
         return caseData;
     }
 
+    public void addItemToQueue(IItem item) throws InterruptedException {
+        this.processingQueues.addItem(item);
+    }
+
+    public ProcessingQueues getProcessingQueues() {
+        return processingQueues;
+    }
+
     public Manager(List<File> sources, File output, File palavras) {
 
         this.localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
@@ -170,7 +178,8 @@ public class Manager {
         this.output = output;
         this.palavrasChave = palavras;
 
-        this.caseData = new CaseData(QUEUE_SIZE);
+        this.caseData = new CaseData();
+        this.processingQueues = new ProcessingQueues(caseData);
 
         for (File source : sources) {
             if (source.getName().toLowerCase().endsWith(Bookmarks.EXT)) {
@@ -564,15 +573,16 @@ public class Manager {
                 if (searcher != null) {
                     searcher.close();
                 }
-                IItem queueEnd = caseData.peekItemFromCurrentQueue();
+                IItem queueEnd = processingQueues.peekItemFromCurrentQueue();
                 if (!queueEnd.isQueueEnd()) {
                     throw new IPEDException("Tried to get queue end from queue, but failed! Please warn the dev team.");
                 }
-                if (caseData.changeToNextQueue() != null) {
-                    LOGGER.info("Changed to processing queue with priority " + caseData.getCurrentQueuePriority()); //$NON-NLS-1$
+                if (processingQueues.changeToNextQueue() != null) {
+                    LOGGER.info(
+                            "Changed to processing queue with priority " + processingQueues.getCurrentQueuePriority()); //$NON-NLS-1$
                     caseData.putCaseObject(IItemSearcher.class.getName(),
                             new ItemSearcher(output.getParentFile(), writer));
-                    caseData.addLastToCurrentQueue(queueEnd);
+                    processingQueues.addLastToCurrentQueue(queueEnd);
                     for (int k = 0; k < workers.length; k++) {
                         workers[k].processNextQueue();
                     }

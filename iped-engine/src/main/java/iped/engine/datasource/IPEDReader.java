@@ -64,9 +64,9 @@ import iped.engine.search.LuceneSearchResult;
 import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.LedCarveTask;
+import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
 import iped.engine.task.ParsingTask;
 import iped.engine.task.QRCodeTask;
-import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
 import iped.engine.task.carver.CarverTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
@@ -678,7 +678,7 @@ public class IPEDReader extends DataSourceReader {
                 evidence.getMetadata().add(UFEDChatParser.CHILD_MSG_IDS, Integer.toString(newId));
             }
 
-            caseData.addItem(evidence);
+            Manager.getInstance().addItemToQueue(evidence);
         }
 
     }

@@ -13,30 +13,6 @@ import java.io.Serializable;
 public interface ICaseData extends Serializable {
 
     /**
-     * Adiciona um arquivo de evidência.
-     *
-     * @param item
-     *            arquivo a ser adicionado
-     * @throws InterruptedException
-     */
-    void addItem(IItem item) throws InterruptedException;
-
-    void addItemFirst(IItem item) throws InterruptedException;
-
-    void addItemNonBlocking(IItem item);
-
-    void addItemFirstNonBlocking(IItem item);
-
-    void addItemToQueue(IItem item, int queuePriority) throws InterruptedException;
-
-    Integer changeToNextQueue();
-
-    /**
-     * @return true se o caso contém um report
-     */
-    boolean containsReport();
-
-    /**
      * Retorna um objeto armazenado no caso.
      *
      * @param key
@@ -44,8 +20,6 @@ public interface ICaseData extends Serializable {
      * @return O objeto armazenado no caso
      */
     Object getCaseObject(String key);
-
-    Integer getCurrentQueuePriority();
 
     int getDiscoveredEvidences();
 
@@ -61,8 +35,6 @@ public interface ICaseData extends Serializable {
      *            tamanho do novo item descoberto
      */
     void incDiscoveredVolume(Long volume);
-
-    boolean isIpedReport();
 
     /**
      * Armazena um objeto genérico no caso.
@@ -91,6 +63,13 @@ public interface ICaseData extends Serializable {
      *            se o caso contém um report
      */
     void setContainsReport(boolean containsReport);
+
+    /**
+     * @return true se o caso contém um report
+     */
+    boolean containsReport();
+
+    boolean isIpedReport();
 
     void setIpedReport(boolean ipedReport);
 

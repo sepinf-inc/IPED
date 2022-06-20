@@ -35,6 +35,7 @@ import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FileSystemConfig;
+import iped.engine.core.Manager;
 import iped.engine.data.DataSource;
 import iped.engine.data.Item;
 import iped.properties.ExtraProperties;
@@ -184,14 +185,15 @@ public class FolderTreeReader extends DataSourceReader {
                 item.setLength(attr.size());
 
                 try {
-                    caseData.addItem(item);
+                    Manager.getInstance().addItemToQueue(item);
 
                 } catch (InterruptedException e) {
                     return FileVisitResult.TERMINATE;
                 }
 
                 if (attr.isDirectory()) {
-                    // must getId() after caseData.addItem(), it could set item id to previous id
+                    // must getId() after Manager.getInstance().addItemToQueue();, it could set item
+                    // id to previous id
                     // with --continue
                     parents.addLast(item);
                 }

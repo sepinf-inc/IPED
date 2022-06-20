@@ -81,12 +81,12 @@ public class Worker extends Thread {
 
     private void incItemsBeingProcessed() {
         itemsBeingProcessed++;
-        caseData.incItemsBeingProcessed();
+        manager.getProcessingQueues().incItemsBeingProcessed();
     }
 
     public void decItemsBeingProcessed() {
         itemsBeingProcessed--;
-        caseData.decItemsBeingProcessed();
+        manager.getProcessingQueues().decItemsBeingProcessed();
     }
 
     public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
@@ -211,8 +211,9 @@ public class Worker extends Thread {
         caseData.incDiscoveredEvidences(1);
         // Se a fila está pequena, enfileira
         if (time == ProcessTime.LATER
-                || (time == ProcessTime.AUTO && caseData.getCurrentQueueSize() < 10 * manager.getWorkers().length)) {
-            caseData.addItemFirstNonBlocking(evidence);
+                || (time == ProcessTime.AUTO
+                        && manager.getProcessingQueues().getCurrentQueueSize() < 10 * manager.getWorkers().length)) {
+            manager.getProcessingQueues().addItemFirstNonBlocking(evidence);
         } // caso contrário processa o item no worker atual
         else {
             if (!evidence.isQueueEnd()) {
@@ -243,8 +244,8 @@ public class Worker extends Thread {
                         sleep = false;
                         Thread.sleep(100);
                     }
-                    synchronized (caseData) {
-                        evidence = caseData.pollFirstFromCurrentQueue();
+                    synchronized (manager.getProcessingQueues()) {
+                        evidence = manager.getProcessingQueues().pollFirstFromCurrentQueue();
                         if (evidence == null) {
                             sleep = true;
                             continue;
@@ -263,8 +264,8 @@ public class Worker extends Thread {
 
                 } else {
                     IItem queueEnd = evidence;
-                    if (caseData.isNoItemInQueueOrBeingProcessed()) {
-                        caseData.addLastToCurrentQueue(queueEnd);
+                    if (manager.getProcessingQueues().isNoItemInQueueOrBeingProcessed()) {
+                        manager.getProcessingQueues().addLastToCurrentQueue(queueEnd);
                         evidence = null;
 
                         LOGGER.debug(this.getName() + " going to wait queue change.");
@@ -277,12 +278,14 @@ public class Worker extends Thread {
                             }
                         }
                     } else {
-                        caseData.addLastToCurrentQueue(queueEnd);
+                        manager.getProcessingQueues().addLastToCurrentQueue(queueEnd);
                         long timeSinceLastItemProcessed = System.currentTimeMillis() - lastItemProcessingTime;
                         if (itemsBeingProcessed > 0 && timeSinceLastItemProcessed >= MIN_WAIT_TIME_TO_SEND_QUEUE_END) {
-                            LOGGER.debug(this.getName() + " Queue size = " + caseData.getCurrentQueueSize()
+                            LOGGER.debug(
+                                    this.getName() + " Queue size = "
+                                            + manager.getProcessingQueues().getCurrentQueueSize()
                                     + " itemsInThisWorker = " + itemsBeingProcessed + " itemsInAllWorkers = "
-                                    + caseData.getItemsBeingProcessed());
+                                            + manager.getProcessingQueues().getItemsBeingProcessed());
                             process(queueEnd);
 
                         }
@@ -290,7 +293,7 @@ public class Worker extends Thread {
                 }
 
             } catch (InterruptedException e) {
-                if (caseData.getCurrentQueuePriority() == null) {
+                if (manager.getProcessingQueues().getCurrentQueuePriority() == null) {
                     try {
                         finishTasks();
                     } catch (Exception e1) {

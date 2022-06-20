@@ -65,6 +65,7 @@ import iped.data.IItem;
 import iped.datasource.IDataSource;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ParsingTaskConfig;
+import iped.engine.core.Manager;
 import iped.engine.data.CaseData;
 import iped.engine.data.DataSource;
 import iped.engine.data.Item;
@@ -291,7 +292,7 @@ public class UfedXmlReader extends DataSourceReader {
         pathToParent.put(rootItem.getPath(), rootItem);
 
         caseData.incDiscoveredEvidences(1);
-        caseData.addItem(rootItem);
+        Manager.getInstance().addItemToQueue(rootItem);
     }
 
     private void addVirtualDecodedFolder() throws InterruptedException {
@@ -312,7 +313,7 @@ public class UfedXmlReader extends DataSourceReader {
         pathToParent.put(decodedFolder.getPath(), decodedFolder);
 
         caseData.incDiscoveredEvidences(1);
-        caseData.addItem(decodedFolder);
+        Manager.getInstance().addItemToQueue(decodedFolder);
     }
 
     private class XMLErrorHandler implements ErrorHandler {
@@ -491,7 +492,7 @@ public class UfedXmlReader extends DataSourceReader {
 
             try {
                 caseData.incDiscoveredEvidences(1);
-                caseData.addItem(parent);
+                Manager.getInstance().addItemToQueue(parent);
 
             } catch (InterruptedException e) {
                 throw new SAXException(e);
@@ -599,7 +600,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
                     item.setHash(""); //$NON-NLS-1$
 
-                    ((CaseData) caseData).calctrackIDAndUpdateID(parent);
+                    Util.calctrackIDAndUpdateID((CaseData) caseData, parent);
                     item.setParent(parent);
                     if (!mergeInParentNode.contains(type))
                         parent.setHasChildren(true);
@@ -771,7 +772,7 @@ public class UfedXmlReader extends DataSourceReader {
                 itemSeq.remove(itemSeq.size() - 1);
                 setMediaResult(item);
                 try {
-                    caseData.addItem(item);
+                    Manager.getInstance().addItemToQueue(item);
                 } catch (Exception e) {
                     throw new SAXException(e);
                 }
@@ -984,7 +985,7 @@ public class UfedXmlReader extends DataSourceReader {
                     try {
                         caseData.incDiscoveredVolume(item.getLength());
                         caseData.incDiscoveredEvidences(1);
-                        caseData.addItem(item);
+                        Manager.getInstance().addItemToQueue(item);
                     } catch (Exception e) {
                         throw new SAXException(e);
                     }
@@ -1009,7 +1010,7 @@ public class UfedXmlReader extends DataSourceReader {
             try {
                 caseData.incDiscoveredVolume(item.getLength());
                 fillMissingInfo(item);
-                caseData.addItem(item);
+                Manager.getInstance().addItemToQueue(item);
 
             } catch (Exception e) {
                 throw new SAXException(e);

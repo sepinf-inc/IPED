@@ -42,6 +42,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -60,11 +61,15 @@ import org.apache.tika.mime.MediaType;
 import com.sun.jna.Native;
 
 import iped.data.IItem;
+import iped.engine.data.CaseData;
+import iped.engine.data.Item;
 import iped.engine.localization.Messages;
 import iped.engine.task.BaseCarveTask;
+import iped.engine.task.SkipCommitedTask;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
+import iped.utils.HashValue;
 import iped.utils.IOUtil;
 
 public class Util {
@@ -142,6 +147,25 @@ public class Util {
             return generateTrackID(item);
         }
         return id;
+    }
+    
+    /**
+     * Computes trackID and reassign the item ID if it was mapped to a different ID
+     * in a previous processing, being resumed or restarted.
+     * 
+     * @param item
+     */
+    public static void calctrackIDAndUpdateID(CaseData caseData, IItem item) {
+        HashValue trackID = new HashValue(Util.getTrackID(item));
+        Map<HashValue, Integer> globalToIdMap = (Map<HashValue, Integer>) caseData.getCaseObject(SkipCommitedTask.trackID_ID_MAP);
+        // changes id to previous processing id if using --continue
+        if (globalToIdMap != null) {
+            Integer previousId = globalToIdMap.get(trackID);
+            if (previousId != null) {
+                item.setId(previousId.intValue());
+            }
+        }
+        ((Item) item).setAllowGetId(true);
     }
 
     public static String generatetrackIDForTextFrag(String trackID, int fragNum) {

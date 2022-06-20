@@ -238,7 +238,7 @@ public class SimilarFacesFilterActions {
                 if (FaceFeatureExtractor.task == null) {
                     File script = new File(moduleDir, SCRIPT_PATH);
                     PythonTask task = new PythonTask(script);
-                    task.setCaseData(new CaseData(0));
+                    task.setCaseData(new CaseData());
                     AbstractTaskPropertiesConfig taskConfig = (AbstractTaskPropertiesConfig) ConfigurationManager.get()
                             .getTaskConfigurable(CONF_FILE);
 

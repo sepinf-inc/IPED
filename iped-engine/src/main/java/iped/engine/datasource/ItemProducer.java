@@ -140,7 +140,7 @@ public class ItemProducer extends Thread implements Closeable {
                 Item evidence = new Item();
                 evidence.setPath("[queue-end]");
                 evidence.setQueueEnd(true);
-                caseData.addItem(evidence);
+                Manager.getInstance().addItemToQueue(evidence);
 
             } else {
                 LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$
