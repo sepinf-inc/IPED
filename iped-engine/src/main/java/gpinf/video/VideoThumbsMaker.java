@@ -426,7 +426,7 @@ public class VideoThumbsMaker {
         double rate = images.size() * 0.999 / (config.getRows() * config.getColumns());
         int border = config.getBorder();
         int w, h;
-        // setting dimension for galery thumbs
+        // setting dimension for gallery thumbs
         w = config.getThumbWidth();
         h = dimension.height * w / dimension.width;
         if (w > maxDimensionSize) {
@@ -440,6 +440,8 @@ public class VideoThumbsMaker {
                 2 + config.getRows() * (h + border) + border, BufferedImage.TYPE_INT_BGR);
         Graphics2D g2 = (Graphics2D) img.getGraphics();
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         g2.setColor(new Color(222, 222, 222));
         g2.fillRect(0, 0, img.getWidth(), img.getHeight());
