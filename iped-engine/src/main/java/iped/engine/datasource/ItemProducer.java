@@ -30,11 +30,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.ICaseData;
-import iped.engine.WorkerProvider;
 import iped.engine.core.Manager;
 import iped.engine.data.Item;
 import iped.engine.localization.Messages;
 import iped.engine.task.SkipCommitedTask;
+import iped.engine.util.UIPropertyListenerProvider;
 import iped.utils.HashValue;
 
 /**
@@ -108,7 +108,7 @@ public class ItemProducer extends Thread implements Closeable {
                 }
 
                 if (listOnly) {
-                    WorkerProvider.getInstance().firePropertyChange("mensagem", 0, //$NON-NLS-1$
+                    UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", 0, //$NON-NLS-1$
                             Messages.getString("ItemProducer.Adding") + source.getAbsolutePath() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
                     LOGGER.info("Adding '{}'", source.getAbsolutePath()); //$NON-NLS-1$
                 }
@@ -145,7 +145,7 @@ public class ItemProducer extends Thread implements Closeable {
             } else {
                 LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$
             }
-            WorkerProvider.getInstance().firePropertyChange("taskSize", 0, //$NON-NLS-1$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("taskSize", 0, //$NON-NLS-1$
                     (int) (caseData.getDiscoveredVolume() / 1000000));
 
         } catch (Throwable e) {

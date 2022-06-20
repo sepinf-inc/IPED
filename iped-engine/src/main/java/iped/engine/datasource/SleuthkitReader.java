@@ -76,7 +76,6 @@ import org.sqlite.SQLiteException;
 import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
-import iped.engine.WorkerProvider;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FileSystemConfig;
 import iped.engine.config.SplitLargeBinaryConfig;
@@ -88,6 +87,7 @@ import iped.engine.sleuthkit.SleuthkitClient;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.BaseCarveTask;
 import iped.engine.task.index.IndexItem;
+import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.properties.BasicProps;
@@ -369,7 +369,7 @@ public class SleuthkitReader extends DataSourceReader {
                             sleuthCase = SleuthkitCase.openCase(dbPath);
 
                         } else {
-                            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                            UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                                     Messages.getString("SleuthkitReader.Creating") + dbPath); //$NON-NLS-1$
                             LOGGER.info("Creating database {}", dbPath); //$NON-NLS-1$
                             sleuthCase = SleuthkitCase.newCase(dbPath);
@@ -408,7 +408,7 @@ public class SleuthkitReader extends DataSourceReader {
                     }
                 }
 
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                         Messages.getString("SleuthkitReader.WaitDecode") + image.getAbsolutePath()); //$NON-NLS-1$
                 LOGGER.info("Decoding image {}", image.getAbsolutePath()); //$NON-NLS-1$
 

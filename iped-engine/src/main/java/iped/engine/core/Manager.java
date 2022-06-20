@@ -49,7 +49,6 @@ import org.apache.lucene.store.Directory;
 import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
-import iped.engine.WorkerProvider;
 import iped.engine.config.AnalysisConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
@@ -84,6 +83,7 @@ import iped.engine.task.P2PBookmarker;
 import iped.engine.task.index.ElasticSearchIndexTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.index.IndexTask;
+import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.properties.BasicProps;
@@ -481,7 +481,7 @@ public class Manager {
     }
 
     private void openIndex() throws IOException {
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.OpeningIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.OpeningIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         boolean newIndex = !indexDir.exists();
         LOGGER.info((newIndex ? "Creating" : "Opening") + " index: {}", indexDir.getAbsoluteFile());
@@ -518,7 +518,7 @@ public class Manager {
             workers[k].start();
         }
 
-        WorkerProvider.getInstance().firePropertyChange("workers", 0, workers); //$NON-NLS-1$
+        UIPropertyListenerProvider.getInstance().firePropertyChange("workers", 0, workers); //$NON-NLS-1$
     }
 
     private void monitorProcessing() throws Exception {
@@ -527,7 +527,7 @@ public class Manager {
         long start = System.currentTimeMillis();
 
         while (someWorkerAlive) {
-            if (WorkerProvider.getInstance().isCancelled()) {
+            if (UIPropertyListenerProvider.getInstance().isCancelled()) {
                 exception = new IPEDException("Processing canceled!"); //$NON-NLS-1$
             }
 
@@ -539,12 +539,12 @@ public class Manager {
 
             String currentDir = counter.currentDirectory();
             if (counter.isAlive() && currentDir != null && !currentDir.trim().isEmpty()) {
-                WorkerProvider.getInstance().firePropertyChange("decodingDir", 0, //$NON-NLS-1$
+                UIPropertyListenerProvider.getInstance().firePropertyChange("decodingDir", 0, //$NON-NLS-1$
                         Messages.getString("Manager.Adding") + currentDir.trim() + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
-            WorkerProvider.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences()); //$NON-NLS-1$
-            WorkerProvider.getInstance().firePropertyChange("processed", -1, stats.getProcessed()); //$NON-NLS-1$
-            WorkerProvider.getInstance().firePropertyChange("progresso", 0, (int) (stats.getVolume() / 1000000)); //$NON-NLS-1$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences()); //$NON-NLS-1$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("processed", -1, stats.getProcessed()); //$NON-NLS-1$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("progresso", 0, (int) (stats.getVolume() / 1000000)); //$NON-NLS-1$
 
             boolean changeToNextQueue = !producer.isAlive();
             for (int k = 0; k < workers.length; k++) {
@@ -599,7 +599,7 @@ public class Manager {
             public void run() {
                 try {
                     long start = System.currentTimeMillis() / 1000;
-                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitStarted"));
+                    UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitStarted"));
                     LOGGER.info("Prepare commit started...");
                     writer.prepareCommit();
 
@@ -620,7 +620,7 @@ public class Manager {
                     writer.commit();
 
                     long end = System.currentTimeMillis() / 1000;
-                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitFinished"));
+                    UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitFinished"));
                     LOGGER.info("Commit finished in " + (end - start) + "s");
                     partialCommitsTime.addAndGet(end - start);
 
@@ -655,7 +655,7 @@ public class Manager {
         }
 
         if (indexConfig.isForceMerge()) {
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.Optimizing")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.Optimizing")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("Optimizing Index..."); //$NON-NLS-1$
             try {
                 writer.forceMerge(1);
@@ -667,13 +667,13 @@ public class Manager {
 
         stats.commit();
 
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.ClosingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.ClosingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         LOGGER.info("Closing Index..."); //$NON-NLS-1$
         writer.close();
         writer = null;
 
         if (!indexDir.getCanonicalPath().equalsIgnoreCase(finalIndexDir.getCanonicalPath())) {
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CopyingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CopyingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("Moving Index..."); //$NON-NLS-1$
             try {
                 Files.move(indexDir.toPath(), finalIndexDir.toPath());
@@ -707,7 +707,7 @@ public class Manager {
 
         try {
             LOGGER.info("Filtering keywords..."); //$NON-NLS-1$
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                     Messages.getString("Manager.FilteringKeywords")); //$NON-NLS-1$
             ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", //$NON-NLS-1$
                     Charset.defaultCharset().name());
@@ -752,7 +752,7 @@ public class Manager {
             return;
         }
 
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+        UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                 Messages.getString("Manager.DeletingTreeNodes")); //$NON-NLS-1$
         LOGGER.info("Deleting empty tree nodes"); //$NON-NLS-1$
 

@@ -27,12 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IItem;
-import iped.engine.WorkerProvider;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.data.CaseData;
 import iped.engine.localization.Messages;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.TaskInstaller;
+import iped.engine.util.UIPropertyListenerProvider;
 import iped.exception.IPEDException;
 
 /**
@@ -121,7 +121,7 @@ public class Worker extends Thread {
         for (AbstractTask task : tasks) {
             if (this.getName().equals(workerNamePrefix + 0)) {
                 LOGGER.info("Starting " + task.getName()); //$NON-NLS-1$
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                         Messages.getString("Worker.Starting") + task.getName()); //$NON-NLS-1$
             }
             task.init(ConfigurationManager.get());

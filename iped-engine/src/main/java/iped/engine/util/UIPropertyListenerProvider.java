@@ -1,4 +1,4 @@
-package iped.engine;
+package iped.engine.util;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -6,9 +6,9 @@ import java.util.ArrayList;
 
 import javax.swing.SwingUtilities;
 
-public class WorkerProvider {
+public class UIPropertyListenerProvider {
 
-    private static WorkerProvider instance = new WorkerProvider();
+    private static UIPropertyListenerProvider instance = new UIPropertyListenerProvider();
 
     private ArrayList<PropertyChangeListener> listeners = new ArrayList<>();
     private ArrayList<PropertyChangeListener> uiListeners = new ArrayList<>();
@@ -17,10 +17,10 @@ public class WorkerProvider {
 
     private volatile boolean canceled = false;
 
-    private WorkerProvider() {
+    private UIPropertyListenerProvider() {
     }
 
-    public static WorkerProvider getInstance() {
+    public static UIPropertyListenerProvider getInstance() {
         return instance;
     }
 

@@ -63,7 +63,6 @@ import org.slf4j.LoggerFactory;
 import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
-import iped.engine.WorkerProvider;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.HtmlReportTaskConfig;
@@ -75,6 +74,7 @@ import iped.engine.localization.CategoryLocalization;
 import iped.engine.localization.Messages;
 import iped.engine.search.IPEDSource;
 import iped.engine.task.video.VideoThumbTask;
+import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.utils.ExternalImageConverter;
 import iped.utils.IOUtil;
@@ -274,7 +274,7 @@ public class HTMLReportTask extends AbstractTask {
                 return;
             }
 
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                     Messages.getString("HTMLReportTask.MakingHtmlReport")); //$NON-NLS-1$
 
             // Pasta com arquivos HTML formatado que são utilizados como entrada.

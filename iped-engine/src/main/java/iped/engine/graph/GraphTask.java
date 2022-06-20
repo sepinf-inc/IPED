@@ -36,7 +36,6 @@ import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
-import iped.engine.WorkerProvider;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.datasource.IPEDReader;
 import iped.engine.datasource.UfedXmlReader;
@@ -45,6 +44,7 @@ import iped.engine.graph.GraphConfiguration.GraphEntityMetadata;
 import iped.engine.search.IPEDSource;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.regex.RegexHits;
+import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.parsers.mail.OutlookPSTParser;
@@ -153,7 +153,7 @@ public class GraphTask extends AbstractTask {
     }
 
     private void finishGraphGeneration() throws IOException {
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Generating graph database...");
+        UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", "Generating graph database...");
         logger.info("Generating graph database...");
         File graphDbHome = new File(output, DB_HOME_DIR);
         File graphCSVs = new File(output, CSVS_PATH);
@@ -165,7 +165,7 @@ public class GraphTask extends AbstractTask {
     @Override
     public void finish() throws Exception {
         if (graphFileWriter != null) {
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Finishing graph CSVs...");
+            UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", "Finishing graph CSVs...");
             logger.info("Finishing graph CSVs...");
             List<File> srcCases = (List<File>) caseData.getCaseObject(IPEDReader.REPORTING_CASES);
             // TODO merge multicase nodes, copying nodes from single case reports for now
@@ -188,7 +188,7 @@ public class GraphTask extends AbstractTask {
             }
             logger.info("Finishing graph CSVs finished.");
             finishGraphGeneration();
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Compressing graph CSVs...");
+            UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", "Compressing graph CSVs...");
             logger.info("Compressing graph CSVs...");
             graphFileWriter.compressGeneratedCSVFiles();
             logger.info("Compressing graph CSVs finished.");

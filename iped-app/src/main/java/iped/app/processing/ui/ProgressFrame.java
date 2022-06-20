@@ -45,7 +45,6 @@ import iped.app.ui.App;
 import iped.app.ui.AppMain;
 import iped.data.IItem;
 import iped.engine.Version;
-import iped.engine.WorkerProvider;
 import iped.engine.core.Statistics;
 import iped.engine.core.Worker;
 import iped.engine.core.Worker.STATE;
@@ -54,6 +53,7 @@ import iped.engine.task.AbstractTask;
 import iped.engine.task.BaseCarveTask;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.ParsingTask;
+import iped.engine.util.UIPropertyListenerProvider;
 import iped.parsers.standard.StandardParser;
 import iped.utils.LocalizedFormat;
 
@@ -71,7 +71,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     long rate = 0, instantRate;
     int volume, taskSize;
     long secsToEnd;
-    private WorkerProvider task;
+    private UIPropertyListenerProvider task;
     private Date indexStart;
     private Worker[] workers;
     private NumberFormat sizeFormat = LocalizedFormat.getNumberInstance();
@@ -90,7 +90,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         }
     }
 
-    public ProgressFrame(WorkerProvider task) {
+    public ProgressFrame(UIPropertyListenerProvider task) {
         super(Version.APP_NAME);
 
         this.setBounds(0, 0, 800, 400);

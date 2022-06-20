@@ -32,10 +32,10 @@ import iped.app.processing.ui.ProgressConsole;
 import iped.app.processing.ui.ProgressFrame;
 import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
-import iped.engine.WorkerProvider;
 import iped.engine.config.Configuration;
 import iped.engine.core.Manager;
 import iped.engine.localization.Messages;
+import iped.engine.util.UIPropertyListenerProvider;
 import iped.exception.IPEDException;
 import iped.parsers.ocr.OCRParser;
 
@@ -172,7 +172,7 @@ public class Main {
             cmdLineParams.saveIntoCaseData(manager.getCaseData());
             manager.process();
 
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Main.Finished")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Main.Finished")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("{} finished.", Version.APP_EXT); //$NON-NLS-1$
             success = true;
 
@@ -203,7 +203,7 @@ public class Main {
         // Set the UiScale (must be before any UI-related code).
         UiScale.loadUserSetting();
 
-        WorkerProvider provider = WorkerProvider.getInstance();
+        UIPropertyListenerProvider provider = UIPropertyListenerProvider.getInstance();
         provider.setExecutorThread(Thread.currentThread());
 
         Object frame = null;
@@ -239,7 +239,7 @@ public class Main {
         return success;
     }
 
-    private static void interruptIfBootstrapDied(InputStream is, WorkerProvider provider) {
+    private static void interruptIfBootstrapDied(InputStream is, UIPropertyListenerProvider provider) {
         Thread t = new Thread() {
             public void run() {
                 byte[] buf = new byte[4096];

@@ -72,7 +72,6 @@ import iped.data.ICaseData;
 import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
-import iped.engine.WorkerProvider;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
@@ -84,6 +83,7 @@ import iped.engine.data.Category;
 import iped.engine.localization.Messages;
 import iped.engine.search.IPEDSource;
 import iped.engine.task.index.IndexItem;
+import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.ZipBombException;
 import iped.io.SeekableInputStream;
@@ -769,17 +769,17 @@ public class ExportFileTask extends AbstractTask {
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
             if (extractDir != null && extractDir.exists()) {
                 SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(IndexItem.ID_IN_SOURCE);
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "",
                         Messages.getString("ExportFileTask.DeletingData1"));
                 Integer deleted = deleteIgnoredSubitemsFromFS(sdv, output.getParentFile().toPath(), extractDir);
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "",
                         Messages.getString("ExportFileTask.DeletedData1").replace("{}", deleted.toString()));
             }
             if (storage.get(output) != null && !storage.get(output).isEmpty()) {
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "",
                         Messages.getString("ExportFileTask.DeletingData2"));
                 Integer deleted = deleteIgnoredSubitemsFromStorage(ipedCase, output);
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "",
                         Messages.getString("ExportFileTask.DeletedData2").replace("{}", deleted.toString()));
             }
         }

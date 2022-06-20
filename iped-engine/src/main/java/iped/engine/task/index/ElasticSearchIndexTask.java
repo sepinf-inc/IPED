@@ -49,7 +49,6 @@ import org.slf4j.LoggerFactory;
 import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
-import iped.engine.WorkerProvider;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ElasticSearchTaskConfig;
 import iped.engine.config.IndexTaskConfig;
@@ -57,6 +56,7 @@ import iped.engine.io.FragmentingReader;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.MinIOTask;
 import iped.engine.task.MinIOTask.MinIODataRef;
+import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.io.ISeekableInputStreamFactory;
@@ -284,7 +284,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     public static void commit() throws IOException, InterruptedException {
         if (!isEnabled)
             return;
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Commiting to ElasticSearch...");
+        UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", "Commiting to ElasticSearch...");
         for (ElasticSearchIndexTask instance : taskInstances) {
             LOGGER.info("Commiting Worker-" + instance.worker.id + " ElasticSearchTask..."); //$NON-NLS-1$ //$NON-NLS-2$
             instance.onCommit.set(true);
