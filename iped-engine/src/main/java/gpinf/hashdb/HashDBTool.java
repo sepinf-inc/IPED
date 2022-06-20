@@ -614,11 +614,16 @@ public class HashDBTool {
             List<Map<String, String>> mapValuesPerCol = mapColValues.isEmpty() ? null : new ArrayList<Map<String, String>>(); 
             for (int i = 0; i < header.size(); i++) {
                 String col = header.get(i);
+                String origCol = col;
                 if (renameCols.containsKey(col.toLowerCase())) {
                     col = renameCols.get(col.toLowerCase());
                 }
                 if (mapValuesPerCol != null) {
-                    mapValuesPerCol.add(mapColValues.get(col.toLowerCase()));
+                    Map<String, String> map = mapColValues.get(col.toLowerCase());
+                    if (map == null && !origCol.equals(col)) {
+                        map = mapColValues.get(origCol.toLowerCase());
+                    }
+                    mapValuesPerCol.add(map);
                 }
                 if (skipCols.contains(col.toLowerCase())) continue;
                 int h = hashType(col);
