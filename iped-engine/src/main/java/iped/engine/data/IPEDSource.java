@@ -622,7 +622,6 @@ public class IPEDSource implements IIPEDSource {
         return ids[luceneId];
     }
     
-    @Override
     public IntStream getLuceneIdStream() {
     	return parentDocs.stream();
     }
@@ -697,7 +696,7 @@ public class IPEDSource implements IIPEDSource {
         return this.multiBookmarks;
     }
 
-    public int getTotalItens() {
+    public int getTotalItems() {
         return totalItens;
     }
 

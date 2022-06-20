@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IBookmarks;
-import iped.data.IIPEDSource;
 import iped.engine.Version;
 import iped.engine.util.SaveStateThread;
 import iped.engine.util.Util;
@@ -72,10 +71,10 @@ public class Bookmarks implements Serializable, IBookmarks {
     // for future use when implementing extended bookmark types
     private Map<String, Serializable> extendedBookmarks;
 
-    private transient IIPEDSource ipedCase;
+    private transient IPEDSource ipedCase;
 
-    public Bookmarks(IIPEDSource ipedCase, File modulePath) {
-        this(ipedCase.getTotalItens(), ipedCase.getLastId(), modulePath);
+    public Bookmarks(IPEDSource ipedCase, File modulePath) {
+        this(ipedCase.getTotalItems(), ipedCase.getLastId(), modulePath);
         this.ipedCase = ipedCase;
     }
 

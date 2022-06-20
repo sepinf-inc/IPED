@@ -81,7 +81,7 @@ public class BookmarksController {
             public void run() {
                 App.get().checkBox.setText(
                         LocalizedFormat.format(App.get().appCase.getMultiBookmarks().getTotalChecked()) + " / " //$NON-NLS-1$
-                                + LocalizedFormat.format(App.get().appCase.getTotalItens()));
+                                + LocalizedFormat.format(App.get().appCase.getTotalItems()));
                 App.get().checkBox.setSelected(App.get().appCase.getMultiBookmarks().getTotalChecked() > 0);
                 App.get().bookmarksListener.updateModelAndSelection();
                 App.get().resultsTable.repaint();

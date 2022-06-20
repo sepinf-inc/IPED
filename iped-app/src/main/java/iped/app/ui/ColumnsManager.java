@@ -321,7 +321,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         if (!autoManageCols)
             return;
 
-        if (App.get().ipedResult.getLength() == App.get().appCase.getTotalItens()
+        if (App.get().ipedResult.getLength() == App.get().appCase.getTotalItems()
                 || App.get().ipedResult.getLength() == 0)
             return;
 
