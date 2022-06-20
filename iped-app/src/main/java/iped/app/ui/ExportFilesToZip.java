@@ -42,7 +42,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingOutputStream;
 
 import iped.data.IItem;
-import iped.engine.search.ItemId;
+import iped.engine.data.ItemId;
 
 public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 

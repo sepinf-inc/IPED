@@ -41,7 +41,7 @@ import org.xml.sax.SAXException;
 
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ParsingTaskConfig;
-import iped.engine.core.MimeTypesProcessingOrder;
+import iped.engine.core.QueuesProcessingOrder;
 import iped.parsers.fork.ParsingTimeout;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.CorruptedCarvedException;
@@ -160,7 +160,7 @@ public class ParsingReader extends Reader {
         // Executa parsing em outra JVM, isolando problemas, mas impacta desempenho
         // until proxies for item and itemSearcher are implemented,
         // we do not run parsers that use them in forkParser
-        if (MimeTypesProcessingOrder.getProcessingPriority(MediaType.parse(mediaType)) == 0) {
+        if (QueuesProcessingOrder.getProcessingQueue(MediaType.parse(mediaType)) == 0) {
             ((StandardParser) parser).setCanUseForkParser(true);
         } else
             ((StandardParser) parser).setCanUseForkParser(false);

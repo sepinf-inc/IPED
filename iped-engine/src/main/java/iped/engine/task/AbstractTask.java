@@ -11,7 +11,7 @@ import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.core.MimeTypesProcessingOrder;
+import iped.engine.core.QueuesProcessingOrder;
 import iped.engine.core.Statistics;
 import iped.engine.core.Worker;
 import iped.engine.core.Worker.STATE;
@@ -202,7 +202,7 @@ public abstract class AbstractTask {
      */
     protected void sendToNextTask(IItem evidence) throws Exception {
         if (nextTask != null) {
-            int priority = MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType());
+            int priority = QueuesProcessingOrder.getProcessingQueue(evidence.getMediaType());
             if (evidence.isRoot() || priority <= caseData.getCurrentQueuePriority())
                 nextTask.processAndSendToNextTask(evidence);
             else {

@@ -31,6 +31,8 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 
+import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
 import iped.engine.lucene.NoScoringCollector;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;

@@ -22,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IItemId;
+import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
 

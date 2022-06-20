@@ -37,11 +37,11 @@ import org.slf4j.LoggerFactory;
 
 import iped.app.graph.FilterSelectedEdges;
 import iped.data.IItemId;
+import iped.engine.data.IPEDSource;
+import iped.engine.data.ItemId;
 import iped.engine.search.IPEDSearcher;
-import iped.engine.search.IPEDSource;
 import iped.engine.search.ImageSimilarityLowScoreFilter;
 import iped.engine.search.ImageSimilarityScorer;
-import iped.engine.search.ItemId;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.engine.search.SimilarFacesSearch;

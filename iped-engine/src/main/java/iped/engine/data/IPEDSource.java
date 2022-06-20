@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package iped.engine.search;
+package iped.engine.data;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,13 +61,13 @@ import iped.engine.config.AnalysisConfig;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.data.Category;
-import iped.engine.data.Item;
 import iped.engine.datasource.SleuthkitReader;
 import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
 import iped.engine.lucene.SlowCompositeReaderWrapper;
 import iped.engine.lucene.analysis.AppAnalyzer;
+import iped.engine.search.IPEDSearcher;
+import iped.engine.search.IndexerSimilarity;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.sleuthkit.TouchSleuthkitImages;
 import iped.engine.task.index.IndexItem;
@@ -385,7 +385,7 @@ public class IPEDSource implements IIPEDSource {
             IPEDSearcher searcher = new IPEDSearcher(this, query);
             searcher.setNoScoring(true);
             try {
-                category.setNumItems(searcher.luceneSearch().getLength());
+                category.setNumItems(searcher.search().getLength());
 
             } catch (Exception e) {
                 e.printStackTrace();

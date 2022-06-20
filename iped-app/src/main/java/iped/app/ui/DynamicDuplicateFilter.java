@@ -9,8 +9,8 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 
 import iped.data.IItemId;
+import iped.engine.data.IPEDMultiSource;
 import iped.engine.lucene.DocValuesUtil;
-import iped.engine.search.IPEDMultiSource;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
 import iped.search.IMultiSearchResult;

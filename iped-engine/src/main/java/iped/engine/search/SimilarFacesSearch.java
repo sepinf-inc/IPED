@@ -13,6 +13,8 @@ import org.apache.lucene.util.BytesRef;
 
 import iped.data.IItem;
 import iped.data.IItemId;
+import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
 
 public class SimilarFacesSearch {
 

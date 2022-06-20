@@ -9,9 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.ICaseData;
+import iped.engine.data.IPEDSource;
 import iped.engine.localization.Messages;
 import iped.engine.search.IPEDSearcher;
-import iped.engine.search.IPEDSource;
 import iped.engine.task.index.IndexItem;
 import iped.parsers.ares.AresParser;
 import iped.parsers.emule.KnownMetParser;

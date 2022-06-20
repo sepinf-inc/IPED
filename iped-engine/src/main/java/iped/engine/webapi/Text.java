@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiOperation;
 import iped.data.IIPEDSource;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.search.IPEDSource;
+import iped.engine.data.IPEDSource;
 import iped.engine.task.ParsingTask;
 import iped.parsers.standard.StandardParser;
 

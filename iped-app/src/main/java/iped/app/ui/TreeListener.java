@@ -39,7 +39,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
 import iped.app.ui.TreeViewModel.Node;
-import iped.engine.search.IPEDSource;
+import iped.engine.data.IPEDSource;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;

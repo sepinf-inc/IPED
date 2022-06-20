@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package iped.engine.search;
+package iped.engine.data;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import iped.data.IBookmarks;
 import iped.data.IIPEDSource;
 import iped.engine.Version;
+import iped.engine.util.SaveStateThread;
 import iped.engine.util.Util;
 import iped.search.SearchResult;
 import iped.utils.IOUtil;

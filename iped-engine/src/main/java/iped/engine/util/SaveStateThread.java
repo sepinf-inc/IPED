@@ -1,4 +1,4 @@
-package iped.engine.search;
+package iped.engine.util;
 
 import java.io.File;
 import java.util.Map;

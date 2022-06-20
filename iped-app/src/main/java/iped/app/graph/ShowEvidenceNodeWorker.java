@@ -7,10 +7,10 @@ import javax.swing.SwingWorker;
 import iped.app.ui.App;
 import iped.app.ui.FileProcessor;
 import iped.app.ui.Messages;
+import iped.engine.data.ItemId;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.NodeQueryListener;
-import iped.engine.search.ItemId;
 
 class ShowEvidenceNodeWorker extends SwingWorker<Void, Void> implements NodeQueryListener {
 

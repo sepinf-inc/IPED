@@ -33,7 +33,7 @@ import iped.properties.MediaTypes;
  * @author Nassif
  *
  */
-public class MimeTypesProcessingOrder {
+public class QueuesProcessingOrder {
 
     /** Mapa do mimeType para sua prioridade de processamento */
     private static Map<MediaType, Integer> mediaTypes = installTypesToPostProcess();
@@ -94,7 +94,7 @@ public class MimeTypesProcessingOrder {
     }
 
     /** Obtém a prioridade de processamento do mimeType */
-    public static int getProcessingPriority(MediaType mediaType) {
+    public static int getProcessingQueue(MediaType mediaType) {
 
         if (mediaRegistry == null) {
             setMediaRegistry();
@@ -113,7 +113,7 @@ public class MimeTypesProcessingOrder {
     }
 
     /** Obtém todas as prioridades de processamento configuradas */
-    public static Set<Integer> getProcessingPriorities() {
+    public static Set<Integer> getProcessingQueues() {
         Set<Integer> priorities = new TreeSet<Integer>();
         for (Integer p : mediaTypes.values())
             priorities.add(p);

@@ -11,8 +11,8 @@ import org.kharon.OverlappedEdges;
 
 import iped.app.ui.App;
 import iped.data.IItemId;
-import iped.engine.search.IPEDSource;
-import iped.engine.search.ItemId;
+import iped.engine.data.IPEDSource;
+import iped.engine.data.ItemId;
 
 public class FilterSelectedEdges {
 

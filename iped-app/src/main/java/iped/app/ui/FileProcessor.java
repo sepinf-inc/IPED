@@ -36,9 +36,9 @@ import org.slf4j.LoggerFactory;
 
 import iped.data.IItem;
 import iped.engine.data.DataSource;
+import iped.engine.data.IPEDSource;
 import iped.engine.datasource.AD1DataSourceReader.AD1InputStreamFactory;
 import iped.engine.io.ZIPInputStreamFactory;
-import iped.engine.search.IPEDSource;
 import iped.engine.search.SimilarFacesSearch;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.index.IndexItem;

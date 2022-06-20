@@ -32,8 +32,8 @@ import org.slf4j.LoggerFactory;
 
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.Manager;
-import iped.engine.search.IPEDMultiSource;
-import iped.engine.search.IPEDSource;
+import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
 import iped.engine.task.ParsingTask;
 import iped.engine.task.SignatureTask;
 import iped.parsers.standard.StandardParser;

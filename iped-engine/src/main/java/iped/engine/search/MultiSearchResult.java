@@ -4,6 +4,8 @@ import java.util.Iterator;
 
 import iped.data.IIPEDSource;
 import iped.data.IItemId;
+import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.ItemId;
 import iped.search.IMultiSearchResult;
 
 public class MultiSearchResult implements IMultiSearchResult {

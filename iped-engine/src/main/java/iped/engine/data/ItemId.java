@@ -1,4 +1,4 @@
-package iped.engine.search;
+package iped.engine.data;
 
 import iped.data.IItemId;
 

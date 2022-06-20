@@ -16,7 +16,7 @@ import java.util.zip.GZIPOutputStream;
 
 import iped.data.ICaseData;
 import iped.data.IItem;
-import iped.engine.core.MimeTypesProcessingOrder;
+import iped.engine.core.QueuesProcessingOrder;
 import iped.engine.task.SkipCommitedTask;
 import iped.engine.util.Util;
 import iped.utils.HashValue;
@@ -107,7 +107,7 @@ public class CaseData implements ICaseData {
     private void initQueues() {
         queues = new TreeMap<Integer, LinkedList<IItem>>();
         queues.put(0, new LinkedList<IItem>());
-        for (Integer priority : MimeTypesProcessingOrder.getProcessingPriorities())
+        for (Integer priority : QueuesProcessingOrder.getProcessingQueues())
             queues.put(priority, new LinkedList<IItem>());
     }
 

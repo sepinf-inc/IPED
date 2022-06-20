@@ -5,7 +5,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
-import iped.engine.search.SaveStateThread;
+import iped.engine.util.SaveStateThread;
 import iped.utils.IOUtil;
 import iped.utils.UTF8Properties;
 import iped.utils.IOUtil.ExternalOpenEnum;

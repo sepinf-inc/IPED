@@ -10,6 +10,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 
 import iped.data.IItemBase;
+import iped.engine.data.IPEDSource;
 import iped.search.IItemSearcher;
 import iped.search.SearchResult;
 

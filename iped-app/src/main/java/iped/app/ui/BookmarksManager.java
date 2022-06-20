@@ -72,11 +72,11 @@ import org.slf4j.LoggerFactory;
 
 import iped.data.IItem;
 import iped.data.IItemId;
+import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
+import iped.engine.data.ItemId;
 import iped.engine.lucene.DocValuesUtil;
-import iped.engine.search.IPEDMultiSource;
 import iped.engine.search.IPEDSearcher;
-import iped.engine.search.IPEDSource;
-import iped.engine.search.ItemId;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;

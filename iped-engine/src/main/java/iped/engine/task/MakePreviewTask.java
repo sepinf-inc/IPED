@@ -26,7 +26,7 @@ import iped.data.IItemBase;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.MakePreviewConfig;
 import iped.engine.config.ParsingTaskConfig;
-import iped.engine.core.MimeTypesProcessingOrder;
+import iped.engine.core.QueuesProcessingOrder;
 import iped.engine.io.TimeoutException;
 import iped.engine.tika.EmptyEmbeddedDocumentExtractor;
 import iped.engine.util.ItemInfoFactory;
@@ -168,7 +168,7 @@ public class MakePreviewTask extends AbstractTask {
             }
             final ProgressContentHandler pch = new ProgressContentHandler(handler);
 
-            if (MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType()) == 0) {
+            if (QueuesProcessingOrder.getProcessingQueue(evidence.getMediaType()) == 0) {
                 parser.setCanUseForkParser(true);
             } else
                 parser.setCanUseForkParser(false);

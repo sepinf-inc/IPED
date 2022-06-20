@@ -1,4 +1,4 @@
-package iped.engine.search;
+package iped.engine.data;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +23,7 @@ import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.lucene.SlowCompositeReaderWrapper;
 import iped.engine.lucene.analysis.AppAnalyzer;
+import iped.engine.search.LuceneSearchResult;
 import iped.exception.IPEDException;
 
 public class IPEDMultiSource extends IPEDSource {

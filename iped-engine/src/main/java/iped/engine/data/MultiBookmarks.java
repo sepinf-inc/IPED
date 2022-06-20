@@ -1,4 +1,4 @@
-package iped.engine.search;
+package iped.engine.data;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +22,7 @@ import iped.data.IIPEDSource;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.data.SelectionListener;
+import iped.engine.search.MultiSearchResult;
 import iped.engine.util.Util;
 import iped.search.IMultiSearchResult;
 

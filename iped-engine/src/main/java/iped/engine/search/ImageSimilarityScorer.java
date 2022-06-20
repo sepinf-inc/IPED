@@ -16,6 +16,7 @@ import org.apache.lucene.util.BytesRef;
 
 import iped.data.IItem;
 import iped.data.IItemId;
+import iped.engine.data.IPEDSource;
 import iped.engine.lucene.DocValuesUtil;
 import iped.engine.task.similarity.ImageSimilarity;
 import iped.engine.task.similarity.ImageSimilarityTask;

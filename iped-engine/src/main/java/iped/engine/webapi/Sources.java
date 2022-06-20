@@ -31,8 +31,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import iped.data.IIPEDSource;
 import iped.engine.config.Configuration;
-import iped.engine.search.IPEDMultiSource;
-import iped.engine.search.IPEDSource;
+import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
 import iped.engine.webapi.json.DataListJSON;
 import iped.engine.webapi.json.SourceJSON;
 

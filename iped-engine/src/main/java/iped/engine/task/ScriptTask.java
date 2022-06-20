@@ -35,8 +35,8 @@ import javax.script.ScriptException;
 import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.data.IPEDSource;
 import iped.engine.search.IPEDSearcher;
-import iped.engine.search.IPEDSource;
 
 public class ScriptTask extends AbstractTask {
 
