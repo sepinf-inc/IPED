@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.DateTools;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
@@ -23,7 +24,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
-import org.apache.lucene.search.DocValuesFieldExistsQuery;
+import org.apache.lucene.search.FieldExistsQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
@@ -146,7 +147,7 @@ public class QueryBuilder {
             if (ipedCase == prevIpedCase && parentsFilter != null) {
                 return parentsFilter;
             }
-            parentsFilter = new QueryBitSetProducer(new DocValuesFieldExistsQuery(BasicProps.ID));
+            parentsFilter = new QueryBitSetProducer(new FieldExistsQuery(BasicProps.ID));
             ipedCase.getReader().leaves().forEach(context -> {
                 try {
                     parentsFilter.getBitSet(context);
@@ -160,7 +161,7 @@ public class QueryBuilder {
     }
 
     public static Query getMatchAllItemsQuery() {
-        return new DocValuesFieldExistsQuery(BasicProps.ID);
+        return IntPoint.newRangeQuery(BasicProps.ID, Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
     public Query rewriteQuery(Query query) {
@@ -170,7 +171,7 @@ public class QueryBuilder {
         if (query instanceof MatchAllDocsQuery) {
             return getMatchAllItemsQuery();
 
-        } else if (query instanceof DocValuesFieldExistsQuery) {
+        } else if (query instanceof FieldExistsQuery) {
             return query;
 
         } else if (query instanceof BooleanQuery) {
