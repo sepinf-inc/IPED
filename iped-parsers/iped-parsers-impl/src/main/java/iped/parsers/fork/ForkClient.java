@@ -126,7 +126,7 @@ class ForkClient {
         }
         dirString = ProcessUtils.escapeCommandLine(dirString);
         command.add(dirString);
-        command.add("org.apache.tika.fork.ForkServer2");
+        command.add(ForkServer.class.getName());
         command.add(Long.toString(timeoutLimits.getPulseMS()));
         command.add(Long.toString(timeoutLimits.getParseTimeoutMS()));
         command.add(Long.toString(timeoutLimits.getWaitTimeoutMS()));
