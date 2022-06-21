@@ -381,7 +381,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.SubitemsProcessed")); //$NON-NLS-1$
         msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(ParsingTask.getSubitensDiscovered());
+        msg.append(Statistics.get().getSubitemsDiscovered());
         msg.append("</td></tr>"); //$NON-NLS-1$
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.Carved")); //$NON-NLS-1$

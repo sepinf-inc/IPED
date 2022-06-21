@@ -55,6 +55,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.config.VideoThumbsConfig;
+import iped.engine.core.Statistics;
 import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.Item;
 import iped.engine.task.ExportFileTask;
@@ -591,6 +592,10 @@ public class VideoThumbTask extends ThumbTask {
             ImageIO.write(img, "jpg", baos);
             ByteArrayInputStream is = new ByteArrayInputStream(baos.toByteArray());
             extractor.extractFile(is, newItem, item.getLength());
+
+            Statistics.get().incSubitemsDiscovered();
+            // we don't add subitem size to processed items stats
+            newItem.setSumVolume(false);
 
             // add new item to processing queue
             worker.processNewItem(newItem, ProcessTime.NOW);
