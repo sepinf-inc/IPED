@@ -10,7 +10,6 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 
-import iped.parsers.compress.RARParser;
 import iped.parsers.util.AbstractPkgTest;
 
 public class RARParserTest extends AbstractPkgTest {

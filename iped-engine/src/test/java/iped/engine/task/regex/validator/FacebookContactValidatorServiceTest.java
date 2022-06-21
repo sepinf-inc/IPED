@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import iped.engine.task.regex.validator.FacebookContactValidatorService;
-
 public class FacebookContactValidatorServiceTest {
 
     private FacebookContactValidatorService service = new FacebookContactValidatorService();

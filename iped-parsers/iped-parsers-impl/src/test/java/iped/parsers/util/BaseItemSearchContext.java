@@ -27,7 +27,6 @@ import iped.data.IItemReader;
 import iped.datasource.IDataSource;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
-import iped.parsers.util.ItemInfo;
 import iped.search.IItemSearcher;
 import iped.utils.SeekableFileInputStream;
 import junit.framework.TestCase;

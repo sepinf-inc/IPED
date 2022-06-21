@@ -7,8 +7,8 @@ import java.nio.file.Path;
 
 import iped.engine.util.SaveStateThread;
 import iped.utils.IOUtil;
-import iped.utils.UTF8Properties;
 import iped.utils.IOUtil.ExternalOpenEnum;
+import iped.utils.UTF8Properties;
 
 public class AnalysisConfig extends AbstractPropertiesConfigurable {
 

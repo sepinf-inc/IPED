@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import iped.engine.task.regex.validator.IPLRegexValidatorService;
-
 public class IPLRegexValidatorServiceTest {
 
     private IPLRegexValidatorService service = new IPLRegexValidatorService();

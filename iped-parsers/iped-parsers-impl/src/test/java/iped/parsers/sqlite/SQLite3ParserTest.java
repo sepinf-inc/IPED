@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.sqlite.SQLite3Parser;
 import junit.framework.TestCase;
 
 public class SQLite3ParserTest extends TestCase {

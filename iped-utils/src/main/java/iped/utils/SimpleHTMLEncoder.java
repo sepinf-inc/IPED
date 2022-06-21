@@ -1,6 +1,5 @@
 package iped.utils;
-
-/**
+/*
  * Copyright 2005 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +16,7 @@ package iped.utils;
  */
 
 /**
- * Simple {@link Encoder} implementation to escape text for HTML output
+ * Simple implementation to escape text for HTML output
  * 
  */
 public class SimpleHTMLEncoder {

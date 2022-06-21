@@ -18,7 +18,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.compress.PackageParser;
 import iped.parsers.util.AbstractPkgTest;
 
 public class PackageParserTest extends AbstractPkgTest {

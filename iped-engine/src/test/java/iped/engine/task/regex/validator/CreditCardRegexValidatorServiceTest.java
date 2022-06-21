@@ -5,8 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import iped.engine.task.regex.validator.CreditCardRegexValidatorService;
-
 public class CreditCardRegexValidatorServiceTest {
 
     private CreditCardRegexValidatorService service = new CreditCardRegexValidatorService();

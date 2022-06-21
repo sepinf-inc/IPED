@@ -3,10 +3,9 @@ package iped.engine.config;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Path;
 
 import iped.utils.UTF8Properties;
-
-import java.nio.file.Path;
 
 public class OCRConfig extends AbstractPropertiesConfigurable {
     /**

@@ -13,8 +13,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.mail.LibpffPSTParser;
-
 public class LibpffPSTParserTest {
 
     private static InputStream getStream(String name) {

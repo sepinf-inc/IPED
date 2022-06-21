@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.ares.AresParser;
 import iped.properties.ExtraProperties;
 import junit.framework.TestCase;
 

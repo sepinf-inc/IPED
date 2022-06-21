@@ -10,7 +10,6 @@ import org.apache.tika.mime.MediaType;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import iped.parsers.sqlite.detector.SQLiteContainerDetector;
 import junit.framework.TestCase;
 
 public class SQLiteContainerDetectorTest extends TestCase {

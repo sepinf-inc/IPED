@@ -8,7 +8,6 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 
-import iped.parsers.misc.XMLParser;
 import junit.framework.TestCase;
 
 public class XMLParserTest extends TestCase {

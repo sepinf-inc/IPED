@@ -12,7 +12,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.util.ISO6709Converter;
-import iped.parsers.video.EmptyVideoParser;
 import junit.framework.TestCase;
 
 public class EmptyVideoParserTest extends TestCase {

@@ -6,8 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import iped.engine.task.regex.validator.CNPJRegexValidatorService;
-
 public class CNPJValidatorServiceTest {
 
     private CNPJRegexValidatorService service = new CNPJRegexValidatorService();

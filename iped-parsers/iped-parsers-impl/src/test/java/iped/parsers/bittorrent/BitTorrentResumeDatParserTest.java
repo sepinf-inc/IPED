@@ -12,7 +12,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.bittorrent.BitTorrentResumeDatParser;
 import junit.framework.TestCase;
 
 public class BitTorrentResumeDatParserTest extends TestCase {

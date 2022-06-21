@@ -15,7 +15,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.registry.RegistryParser;
 import iped.parsers.registry.model.HiveCell;
 import iped.parsers.registry.model.KeyNode;
 import iped.parsers.registry.model.RegistryFile;

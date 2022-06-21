@@ -12,7 +12,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.misc.MultipleParser;
 import iped.parsers.standard.RawStringParser;
 import iped.properties.ExtraProperties;
 import junit.framework.TestCase;

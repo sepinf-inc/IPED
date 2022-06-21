@@ -2,11 +2,10 @@ package iped.engine.task.carver;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Path;
 
 import iped.engine.config.AbstractTaskConfig;
 import iped.engine.config.Configuration;
-
-import java.nio.file.Path;
 
 public class CarverTaskConfig extends AbstractTaskConfig<XMLCarverConfiguration> {
 

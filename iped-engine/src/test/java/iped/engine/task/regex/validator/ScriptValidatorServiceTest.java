@@ -9,8 +9,6 @@ import java.nio.file.Paths;
 
 import org.junit.Test;
 
-import iped.engine.task.regex.validator.ScriptValidatorService;
-
 public class ScriptValidatorServiceTest {
 
     @Test

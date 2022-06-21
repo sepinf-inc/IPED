@@ -14,7 +14,6 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 
-import iped.parsers.compress.SevenZipParser;
 import iped.parsers.util.AbstractPkgTest;
 
 public class SevenZipParserTest extends AbstractPkgTest {

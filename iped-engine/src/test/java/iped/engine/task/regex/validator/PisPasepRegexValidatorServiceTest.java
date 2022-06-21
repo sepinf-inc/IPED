@@ -6,8 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import iped.engine.task.regex.validator.PisPasepRegexValidatorService;
-
 public class PisPasepRegexValidatorServiceTest {
 
     private PisPasepRegexValidatorService service = new PisPasepRegexValidatorService();

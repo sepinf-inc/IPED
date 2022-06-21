@@ -12,7 +12,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.gdrive.GDriveCloudGraphParser;
 import junit.framework.TestCase;
 
 public class GDriveCloudGraphParserTest extends TestCase {

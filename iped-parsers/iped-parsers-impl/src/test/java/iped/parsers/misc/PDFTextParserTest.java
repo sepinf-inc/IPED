@@ -13,7 +13,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import iped.parsers.misc.PDFTextParser;
 import junit.framework.TestCase;
 
 public class PDFTextParserTest extends TestCase {

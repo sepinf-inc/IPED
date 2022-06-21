@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import iped.engine.task.regex.validator.cripto.EthereumAddressValidatorService;
-
 public class EthereumAddressValidatorServiceTest {
 
     EthereumAddressValidatorService service = new EthereumAddressValidatorService();

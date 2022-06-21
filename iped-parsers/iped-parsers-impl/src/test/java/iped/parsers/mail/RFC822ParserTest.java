@@ -23,7 +23,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import iped.parsers.mail.RFC822Parser;
 import iped.properties.ExtraProperties;
 import junit.framework.TestCase;
 

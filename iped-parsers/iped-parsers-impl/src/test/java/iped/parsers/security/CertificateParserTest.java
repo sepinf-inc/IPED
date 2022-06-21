@@ -17,7 +17,6 @@ import org.xml.sax.SAXException;
 
 import com.google.common.net.HttpHeaders;
 
-import iped.parsers.security.CertificateParser;
 import iped.parsers.standard.StandardParser;
 import junit.framework.TestCase;
 

@@ -15,7 +15,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import iped.parsers.mail.MSGParser;
 import iped.parsers.util.AbstractPkgTest;
 import iped.properties.ExtraProperties;
 

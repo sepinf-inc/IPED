@@ -8,10 +8,6 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import iped.engine.task.regex.validator.swift.SwiftCode;
-import iped.engine.task.regex.validator.swift.SwiftCodeService;
-import iped.engine.task.regex.validator.swift.SwiftCountry;
-
 public class SwiftCodeServiceTest {
 
     private SwiftCodeService service = new SwiftCodeService();

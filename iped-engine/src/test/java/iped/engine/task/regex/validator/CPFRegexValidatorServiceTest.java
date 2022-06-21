@@ -6,9 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import iped.engine.task.regex.validator.AbstractDocRegexValidatorService;
-import iped.engine.task.regex.validator.CPFRegexValidatorService;
-
 public class CPFRegexValidatorServiceTest {
 
     private AbstractDocRegexValidatorService service = new CPFRegexValidatorService();

@@ -25,9 +25,9 @@ import org.slf4j.Logger;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.standard.StandardParser;
 import iped.data.IItemReader;
 import iped.parsers.standard.RawStringParser;
+import iped.parsers.standard.StandardParser;
 import iped.search.IItemSearcher;
 import iped.utils.IOUtil;
 

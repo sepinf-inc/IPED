@@ -10,7 +10,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.image.TiffPageParser;
 import iped.parsers.util.ToXMLContentHandler;
 import junit.framework.TestCase;
 

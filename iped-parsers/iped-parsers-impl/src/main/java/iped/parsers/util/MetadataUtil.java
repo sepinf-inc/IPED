@@ -26,10 +26,10 @@ import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 
-import iped.parsers.standard.StandardParser;
 import iped.parsers.image.TiffPageParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.RawStringParser;
+import iped.parsers.standard.StandardParser;
 import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;

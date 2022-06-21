@@ -12,7 +12,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.standard.RawStringParser;
 import iped.parsers.util.LimitedContentHandler;
 import iped.parsers.util.ToCSVContentHandler;
 import junit.framework.TestCase;

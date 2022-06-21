@@ -3,11 +3,10 @@ package iped.engine.config;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream.Filter;
-
-import iped.configuration.Configurable;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import iped.configuration.Configurable;
 
 public class ExternalParsersConfig implements Configurable<String> {
 

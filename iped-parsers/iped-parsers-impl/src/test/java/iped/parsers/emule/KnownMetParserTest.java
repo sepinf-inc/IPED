@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.emule.KnownMetParser;
 import iped.parsers.util.BaseItemSearchContext;
 import iped.properties.ExtraProperties;
 

@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.video.FLVParserWrapper;
 import junit.framework.TestCase;
 
 public class FLVParserWrapperTest extends TestCase {

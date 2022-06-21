@@ -13,7 +13,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.browsers.AbstractPkgTest;
-import iped.parsers.browsers.chrome.ChromeSqliteParser;
 import iped.parsers.standard.StandardParser;
 
 public class ChromeSqliteParserTest extends AbstractPkgTest {

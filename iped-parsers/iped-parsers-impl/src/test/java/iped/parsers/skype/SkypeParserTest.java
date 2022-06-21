@@ -12,7 +12,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.skype.SkypeParser;
 import iped.parsers.util.BaseItemSearchContext;
 
 public class SkypeParserTest extends BaseItemSearchContext {

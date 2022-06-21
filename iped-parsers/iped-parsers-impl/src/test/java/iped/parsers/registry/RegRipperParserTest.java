@@ -16,8 +16,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.registry.RegRipperParser;
-
 public class RegRipperParserTest {
 
     private static InputStream getStream(String name) {

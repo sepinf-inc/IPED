@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import iped.engine.task.regex.validator.PhoneRegexValidatorService;
-
 public class PhoneRegexValidatorServiceTest {
 
     private PhoneRegexValidatorService service = new PhoneRegexValidatorService();

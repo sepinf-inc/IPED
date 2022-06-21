@@ -54,7 +54,6 @@ import iped.engine.config.ElasticSearchTaskConfig;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.io.FragmentingReader;
 import iped.engine.task.AbstractTask;
-import iped.engine.task.MinIOTask;
 import iped.engine.task.MinIOTask.MinIODataRef;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;

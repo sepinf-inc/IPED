@@ -16,8 +16,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.usnjrnl.UsnJrnlParser;
-
 public class UsnJrnlParserTest extends AbstractPkgTest {
 
     private static int getVersion() {
