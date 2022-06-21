@@ -1,7 +1,7 @@
 ﻿# Python task script example. It must be installed in TaskInstaller.xml to be executed.
 # The script could access any item properties, extracted text, thumbs and raw bytes.
 # The script can set extra item properties/columns in process() method, ignore items or create bookmarks in finish().
-# You need to install jep (pip install jep) and include jep.dll(.so) in PATH or LD_LIBRARY_PATH (Linux)
+# On Linux, you need to install jep (pip install jep) and include jep.so in LD_LIBRARY_PATH.
 # see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 
