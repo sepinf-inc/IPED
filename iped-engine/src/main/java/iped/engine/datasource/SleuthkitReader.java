@@ -85,7 +85,7 @@ import iped.engine.data.Item;
 import iped.engine.localization.Messages;
 import iped.engine.sleuthkit.SleuthkitClient;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
-import iped.engine.task.BaseCarveTask;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;

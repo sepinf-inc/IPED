@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package iped.engine.task;
+package iped.engine.task.carver;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,8 +27,8 @@ import org.apache.tika.mime.MediaType;
 
 import iped.carvers.api.CarverConfiguration;
 import iped.data.IItem;
-import iped.engine.data.CaseData;
 import iped.engine.data.Item;
+import iped.engine.task.AbstractTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.properties.MediaTypes;
@@ -132,8 +132,6 @@ public abstract class BaseCarveTask extends AbstractTask {
             numSubitems = 0;
         }
         parentEvidence.setExtraAttribute(NUM_CARVED_AND_FRAGS, numSubitems.intValue() + 1);
-
-        Util.calctrackIDAndUpdateID((CaseData) caseData, offsetFile);
 
         worker.processNewItem(offsetFile);
     }

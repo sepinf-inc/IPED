@@ -47,7 +47,7 @@ import iped.data.IItem;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
-import iped.engine.task.BaseCarveTask;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.search.IIPEDSearcher;

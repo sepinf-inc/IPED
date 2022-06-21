@@ -50,9 +50,9 @@ import iped.engine.core.Worker;
 import iped.engine.core.Worker.STATE;
 import iped.engine.localization.Messages;
 import iped.engine.task.AbstractTask;
-import iped.engine.task.BaseCarveTask;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.ParsingTask;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.parsers.standard.StandardParser;
 import iped.utils.LocalizedFormat;
@@ -381,7 +381,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.SubitemsProcessed")); //$NON-NLS-1$
         msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(ParsingTask.getSubitensDiscovered());
+        msg.append(Statistics.get().getSubitemsDiscovered());
         msg.append("</td></tr>"); //$NON-NLS-1$
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.Carved")); //$NON-NLS-1$

@@ -502,20 +502,16 @@ public class ImageUtil {
         int imgHeight = img.getHeight();
 
         final int border = 2;
-        int frameWidth = (imgWidth - 2 * border - border * nCols) / nCols;
-        int frameHeight = (imgHeight - 2 * border - border * nRows) / nRows;
+        int frameWidth = (imgWidth - 2 - border * (nCols + 1)) / nCols;
+        int frameHeight = (imgHeight - 2 - border * (nRows + 1)) / nRows;
         if (frameWidth <= 2 || frameHeight <= 2) return null;
 
         List<BufferedImage> frames = new ArrayList<BufferedImage>();
         for (int row = 0; row < nRows; row++) {
-            int y = row * (frameHeight + border) + border;
+            int y = row * (frameHeight + border) + 1 + border;
             for (int col = 0; col < nCols; col++) {
-                int x = col * (frameWidth + border) + border;
-                BufferedImage frame = new BufferedImage(frameWidth - 2, frameHeight - 2, BufferedImage.TYPE_3BYTE_BGR);
-                Graphics2D g2 = frame.createGraphics();
-                g2.drawImage(img, 0, 0, frameWidth - 2, frameHeight - 2, x + 1, y + 1, x + frameWidth - 1, y + frameHeight - 1, null);
-                g2.dispose();
-                frames.add(frame);
+                int x = col * (frameWidth + border) + 1 + border;
+                frames.add(img.getSubimage(x, y, frameWidth, frameHeight));
             }
         }
         return frames;

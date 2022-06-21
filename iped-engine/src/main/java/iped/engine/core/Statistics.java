@@ -11,6 +11,7 @@ import java.lang.management.RuntimeMXBean;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.JOptionPane;
 
@@ -29,9 +30,8 @@ import iped.engine.config.ExportByKeywordsConfig;
 import iped.engine.config.LocalConfig;
 import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
-import iped.engine.task.BaseCarveTask;
 import iped.engine.task.ExportFileTask;
-import iped.engine.task.ParsingTask;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
@@ -69,6 +69,7 @@ public class Statistics {
     int ignored = 0;
     int previousIndexedFiles = 0;
     int ioerrors = 0;
+    AtomicInteger subitensDiscovered = new AtomicInteger();
 
     public static Statistics get(ICaseData caseData, File indexDir) {
         if (instance == null) {
@@ -213,6 +214,14 @@ public class Statistics {
         lastId = id;
     }
 
+    public void incSubitemsDiscovered() {
+        this.subitensDiscovered.incrementAndGet();
+    }
+
+    public int getSubitemsDiscovered() {
+        return this.subitensDiscovered.get();
+    }
+
     public void logStatistics(Manager manager) throws Exception {
 
         int processed = getProcessed();
@@ -249,7 +258,7 @@ public class Statistics {
         LOGGER.info("Timeouts: {}", getTimeouts()); //$NON-NLS-1$
         LOGGER.info("Parsing Exceptions: {}", StandardParser.parsingErrors); //$NON-NLS-1$
         LOGGER.info("I/O read errors: {}", this.getIoErrors()); //$NON-NLS-1$
-        LOGGER.info("Subitems Found: {}", ParsingTask.getSubitensDiscovered()); //$NON-NLS-1$
+        LOGGER.info("Subitems Found: {}", getSubitemsDiscovered()); //$NON-NLS-1$
         LOGGER.info("Exported Items: {}", extracted); //$NON-NLS-1$
         LOGGER.info("Total Carved Items: {}", BaseCarveTask.getItensCarved()); //$NON-NLS-1$
         LOGGER.info("Carved Ignored (corrupted): {}", carvedIgnored); //$NON-NLS-1$

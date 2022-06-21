@@ -1,0 +1,5 @@
+# Enables video frames extraction as video subitems.
+# If enabled, parallel to videoThumbs creation, video frames are to be created
+# as video subitems, so video frames will able to participate of the 
+# image processing pipeline (ocr, image similarity, and others)
+enableVideoThumbsSubitems = true

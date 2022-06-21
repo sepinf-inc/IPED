@@ -23,6 +23,7 @@ import iped.engine.config.EnableTaskProperty;
 import iped.engine.data.Item;
 import iped.engine.datasource.SleuthkitReader;
 import iped.engine.search.ItemSearcher;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.TextCache;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;

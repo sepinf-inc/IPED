@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -65,6 +64,7 @@ import iped.engine.config.ParsersConfig;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.config.PluginConfig;
 import iped.engine.config.SplitLargeBinaryConfig;
+import iped.engine.core.Statistics;
 import iped.engine.core.Worker;
 import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.CaseData;
@@ -142,7 +142,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private static final int MAX_SUBITEM_DEPTH = 100;
     private static final String SUBITEM_DEPTH = "subitemDepth"; //$NON-NLS-1$
 
-    public static AtomicInteger subitensDiscovered = new AtomicInteger();
     public static AtomicLong totalText = new AtomicLong();
     public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
 
@@ -274,10 +273,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType())
                 || WhatsAppParser.WA_USER_XML.equals(item.getMediaType()) 
                 || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType());
-    }
-
-    public static int getSubitensDiscovered() {
-        return subitensDiscovered.get();
     }
 
     @SuppressWarnings("resource")
@@ -672,7 +667,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                     // subitems)
                     ProcessTime time = ProcessTime.LATER;
                     worker.processNewItem(subItem, time);
-                    subitensDiscovered.incrementAndGet();
+                    Statistics.get().incSubitemsDiscovered();
                     numSubitems++;
 
                     long diff = (System.nanoTime() / 1000) - start;
