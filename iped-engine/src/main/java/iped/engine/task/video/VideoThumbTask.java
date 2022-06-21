@@ -384,8 +384,8 @@ public class VideoThumbTask extends ThumbTask {
                 mainOutFile.getParentFile().mkdirs();
             }
 
-            // Já existe a pasta? Então não é necessário gerar.
-            if (mainOutFile.exists()) {
+            // if output file exists and subitems are disabled, reuse previous result
+            if (mainOutFile.exists() && !videoConfig.getVideoThumbsSubitems()) {
                 synchronized (processedVideos) {
                     r = processedVideos.get(evidence.getHash());
                 }
@@ -487,10 +487,12 @@ public class VideoThumbTask extends ThumbTask {
                 }
             }
 
-            // Guarda resultado do processamento
-            synchronized (processedVideos) {
-                processedVideos.put(evidence.getHash(), r);
-                processedVideos.notifyAll();
+            if (!videoConfig.getVideoThumbsSubitems()) {
+                // store processing result to be reused
+                synchronized (processedVideos) {
+                    processedVideos.put(evidence.getHash(), r);
+                    processedVideos.notifyAll();
+                }
             }
 
             // TODO: this deletes temp frames, so the logic to reuse frames from
