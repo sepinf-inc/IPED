@@ -90,6 +90,14 @@ enableSplitLargeBinary = true
 # Indexes files contents. If disabled, indexes only the properties of files.
 indexFileContents = true
 
+# Enables indexing to an ElasticSearch/OpenSearch cluster.
+# You must configure at least host/port options in conf/ElasticSearchConfig.txt
+enableIndexToElasticSearch = false
+
+# Enable exporting files to MinIO object storage cluster.
+# You must configure at least host/port options in conf/MinIOConfig.txt
+enableMinIO = false
+
 # Enable audio transcription.
 # Default implementation uses VOSK transcription [EXPERIMENTAL] on local CPU (slow and medium quality).
 # We include Vosk portable models for 'en' and 'pt-BR', the lang model is taken from 'locale' in LocalConfig.txt

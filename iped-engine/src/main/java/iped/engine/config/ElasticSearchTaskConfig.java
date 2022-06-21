@@ -26,7 +26,6 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
     private static final String CONNECT_TIMEOUT_KEY = "connect_timeout_millis";
     private static final String CUSTOM_ANALYZER_KEY = "useCustomAnalyzer";
 
-    private boolean enabled = false;
     private String host;
     private int port = 9200;
     private String protocol;
@@ -40,16 +39,6 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
     private int index_replicas = 1;
     private String index_policy = "";
     private boolean useCustomAnalyzer;
-
-    @Override
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
 
     public String getHost() {
         return host;
@@ -116,7 +105,6 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
     @Override
     public void processProperties(UTF8Properties props) {
 
-        enabled = Boolean.valueOf(props.getProperty(ENABLED_KEY).trim());
         host = props.getProperty(HOST_KEY).trim();
         port = Integer.valueOf(props.getProperty(PORT_KEY).trim());
         protocol = props.getProperty(PROTOCOL_KEY);

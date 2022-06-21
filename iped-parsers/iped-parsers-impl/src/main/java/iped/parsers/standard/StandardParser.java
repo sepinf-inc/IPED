@@ -125,7 +125,7 @@ public class StandardParser extends CompositeParser {
         this.errorParser = parser;
     }
 
-    private static synchronized void incParsingErrors() {
+    public static synchronized void incParsingErrors() {
         parsingErrors++;
     }
 
