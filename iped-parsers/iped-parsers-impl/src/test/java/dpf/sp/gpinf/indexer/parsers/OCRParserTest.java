@@ -134,7 +134,7 @@ public class OCRParserTest {
         System.setProperty(PDFToImage.PDFLIB_PROP, "icepdf");
         FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
         assertPDFParsing();
-        // convert pdf externally
+        // convert pdf externally (fails because the classpath when testing lacks the necessary jars)
         // System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "true");
         // FileUtils.deleteDirectory(new File(OCR_OUTPUT_FOLDER_NAME));
         // assertPDFParsing();

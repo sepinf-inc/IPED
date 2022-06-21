@@ -2,10 +2,17 @@ package dpf.mg.udi.gpinf.vcardparser;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -187,19 +194,25 @@ public class VCardParserTest extends TestCase {
 
     }
 
-    // comment out useless test without asserts
-    /*
-     * @Test public void testVCardCompleteHTMLToString() throws IOException,
-     * SAXException, TikaException {
-     * 
-     * VCardParser parser = new VCardParser(); Metadata metadata = new Metadata();
-     * ContentHandler handler = new BodyContentHandler(); try(InputStream stream =
-     * getStream("test-files/test_contactsCompleteWithoutThumbHTMLToString.vcf")){
-     * ParseContext context = new ParseContext(); parser.getSupportedTypes(context);
-     * 
-     * parser.parse(stream, handler, metadata, context);
-     * 
-     * } }
-     */
+    @Test
+    public void testVCardHtmlFromString() throws IOException, SAXException, TikaException, URISyntaxException {
+        StringWriter out = new StringWriter();
+        PrintWriter writer = new PrintWriter(out);
+        URI uri = this.getClass().getResource("/test-files/test_contactsCompleteInfo.vcf").toURI();
+        String vcardText = Files.readString(Paths.get(uri).toAbsolutePath());
+
+        VCardParser.printHtmlFromString(writer, vcardText);
+        writer.flush();
+        String vcardHTML = out.toString();
+
+        assertTrue(vcardHTML.contains("Taxi Lago Norte"));
+        assertTrue(vcardHTML.contains("Sushi Loko Flamingo"));
+        assertTrue(vcardHTML.contains("(61)3468-2000"));
+        assertTrue(vcardHTML.contains("myContacts"));
+        assertTrue(vcardHTML.contains("Smart Assistência Técnica"));
+        assertTrue(vcardHTML.contains("Magnanimo Test@paraparaparapara el raton para el"));
+        assertTrue(vcardHTML.contains("casado"));
+
+    }
 
 }

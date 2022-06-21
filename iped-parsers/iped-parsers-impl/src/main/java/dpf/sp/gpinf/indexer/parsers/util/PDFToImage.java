@@ -225,6 +225,7 @@ public class PDFToImage implements Closeable {
 
         if (!success)
             System.exit(1);
+
     }
 
 }
