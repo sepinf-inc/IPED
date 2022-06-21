@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package iped.engine.task;
+package iped.engine.task.carver;
 
 import java.io.BufferedInputStream;
 import java.util.Arrays;

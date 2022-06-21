@@ -9,6 +9,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SplitLargeBinaryConfig;
 import iped.engine.data.Item;
 import iped.engine.datasource.SleuthkitReader;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.TextCache;
 import iped.parsers.standard.StandardParser;
 

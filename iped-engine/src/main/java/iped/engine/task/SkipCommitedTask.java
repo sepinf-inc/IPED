@@ -29,6 +29,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.datasource.UfedXmlReader;
 import iped.engine.lucene.DocValuesUtil;
 import iped.engine.lucene.SlowCompositeReaderWrapper;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.index.IndexTask;
 import iped.engine.util.Util;
