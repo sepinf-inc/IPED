@@ -15,22 +15,11 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
     private static final String UPDATE_REFS_TO_MINIO = "updateRefsToMinIO";
     private static final String ZIP_FILES_MAX_SIZE = "zipFilesMaxSize";
 
-    private boolean enabled;
     private String host;
     private String port;
     private boolean updateRefsToMinIO = false;
 
     private long zipFilesMaxSize;
-
-    @Override
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    @Override
-    public void setEnabled(boolean value) {
-        enabled = value;
-    }
 
     public String getHost() {
         return host;
@@ -50,7 +39,6 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
     @Override
     public void processProperties(UTF8Properties properties) {
 
-        enabled = Boolean.valueOf(properties.getProperty(ENABLE_KEY).trim());
         host = properties.getProperty(HOST_KEY).trim();
         port = properties.getProperty(PORT_KEY).trim();
         setZipFilesMaxSize(Long.parseLong(properties.getProperty(ZIP_FILES_MAX_SIZE)));
