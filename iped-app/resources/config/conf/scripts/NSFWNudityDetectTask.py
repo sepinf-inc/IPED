@@ -98,7 +98,7 @@ class NSFWNudityDetectTask:
         return True
         
     def getConfigurables(self):
-        from dpf.sp.gpinf.indexer.config import EnableTaskProperty
+        from iped.engine.config import EnableTaskProperty
         return [EnableTaskProperty(enableProp)]
     
     def init(self, configuration):

@@ -99,7 +99,7 @@ class FaceRecognitionTask:
         return FaceRecognitionTask.enabled
     
     def getConfigurables(self):
-        from dpf.sp.gpinf.indexer.config import DefaultTaskPropertiesConfig
+        from iped.engine.config import DefaultTaskPropertiesConfig
         return [DefaultTaskPropertiesConfig(enableProp, configFile)]
     
     # This method is executed before starting the processing of items.
