@@ -135,6 +135,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             }
             if (reader.hasDecodingError()) {
                 item.getMetadata().set(StandardParser.PARSER_EXCEPTION, Boolean.TRUE.toString());
+                StandardParser.incParsingErrors();
             } else {
                 ((Item) item).setParsedTextCache(new TextCache());
             }
