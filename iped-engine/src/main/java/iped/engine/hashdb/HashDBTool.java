@@ -59,6 +59,12 @@ public class HashDBTool {
     private static final String nsrlSetPropertyValue = "NSRL";
     private static final String nsrlPrefix = "nsrl";
 
+    private static final String caidDataModelKey = "odata.metadata";
+    private static final String caidDataModelValue = "http://github.com/ICMEC/ProjectVic/DataModels/1.2.xml#Media";
+    private static final String caidSetPropertyValue = "CAID";
+    private static final String caidStatusPropertyValue = "known";
+    private static final String caidPrefix = "caid";
+
     private static final String setPropertyName = "set";
     private static final String statusPropertyName = "status";
 
@@ -554,6 +560,7 @@ public class HashDBTool {
         System.out.println("\nReading " + (type == FileType.INPUT ? "" : type.toString() + " ") + "file " + file.getPath() + "...");
         if (type == FileType.NSRL_PROD) return readNSRLProd(file);
         if (type == FileType.PROJECT_VIC) return readProjectVIC(file);
+        if (type == FileType.NIST_CAID) return readNistCaid(file);
 
         String savedDelimiter = null;
         Set<String> savedSkipCols = null;
@@ -814,7 +821,7 @@ public class HashDBTool {
             int cnt = 0;
             long len = file.length();
             while (jp.nextToken() != JsonToken.END_OBJECT) {
-                if (!checkVicDataModel(jp.getCurrentName(), jp.nextTextValue())) {
+                if (!checkDataModel(jp.getCurrentName(), jp.nextTextValue(), FileType.PROJECT_VIC)) {
                     jp.close();
                     raf.close();
                     throw new RuntimeException("Error: Unknown ProjectVic JSON data model!");
@@ -843,7 +850,11 @@ public class HashDBTool {
                                 String value = jp.nextTextValue().trim();
                                 int idx = hashType(name);
                                 if (idx >= 0) {
-                                    hashes[idx] = hashStrToBytes(value, hashBytesLen[idx]);
+                                    byte[] h = hashes[idx] = hashStrToBytes(value, hashBytesLen[idx]);
+                                    if (h.length == 0) {
+                                        hashes[idx] = null;
+                                        totInvHash++;
+                                    }
                                     hasHash = true;
                                 }
                             } else if ("PhotoDNA".equalsIgnoreCase(name)) {
@@ -929,10 +940,144 @@ public class HashDBTool {
         }
         return true;
     }
-    
-    private boolean checkVicDataModel(String key, String value) {
-        return (vicDataModelKey13.equalsIgnoreCase(key) && vicDataModelValue13.equalsIgnoreCase(value))
-                || (vicDataModelKey20.equalsIgnoreCase(key) && vicDataModelValue20.equalsIgnoreCase(value));
+
+    private boolean readNistCaid(File file) {
+        FileInputStream is = null;
+        RandomAccessFile raf = null;
+        JsonParser jp = null;
+        try {
+            long t = System.currentTimeMillis();
+            int setPropertyId = getPropertyId(setPropertyName);
+            int statusPropertyId = getPropertyId(statusPropertyName);
+
+            JsonFactory jfactory = new JsonFactory();
+            raf = new RandomAccessFile(file, "r");
+            is = new FileInputStream(raf.getFD());
+            jp = jfactory.createParser(is);
+            if (jp.nextToken() != JsonToken.START_OBJECT) {
+                throw new RuntimeException("Error: root JSON should be an object.");
+            }
+
+            byte[][] hashes = new byte[hashTypes.length][];
+            Map<Integer, Set<String>> properties = new HashMap<Integer, Set<String>>();
+            boolean hasHash = false;
+            int cnt = 0;
+            long len = file.length();
+            while (jp.nextToken() != JsonToken.END_OBJECT) {
+                if (!checkDataModel(jp.getCurrentName(), jp.nextTextValue(), FileType.NIST_CAID)) {
+                    jp.close();
+                    raf.close();
+                    throw new RuntimeException("Error: Unknown NIST CAID JSON data model!");
+                }
+                if (jp.nextFieldName().equals("value")) {
+                    int arrayDepth = 0;
+                    do {
+                        JsonToken token = jp.nextToken();
+                        if (token == JsonToken.START_ARRAY)
+                            arrayDepth++;
+                        else if (token == JsonToken.END_ARRAY)
+                            arrayDepth--;
+                        else if (arrayDepth == 1) {
+                            String name = jp.currentName();
+                            if (token == JsonToken.START_OBJECT) {
+                                Arrays.fill(hashes, null);
+                                properties.clear();
+                                hasHash = false;
+                            } else if ("MD5".equalsIgnoreCase(name) || "SHA1".equalsIgnoreCase(name)) {
+                                String value = jp.nextTextValue().trim();
+                                int idx = hashType(name);
+                                if (idx >= 0) {
+                                    byte[] h = hashes[idx] = hashStrToBytes(value, hashBytesLen[idx]);
+                                    if (h.length == 0) {
+                                        hashes[idx] = null;
+                                        totInvHash++;
+                                    }
+                                    hasHash = true;
+                                }
+                            } else if ("MediaSize".equalsIgnoreCase(name)) {
+                                token = jp.nextToken();
+                                String value = null;
+                                if (token == JsonToken.VALUE_STRING) {
+                                    value = jp.getText();
+                                    if (value != null) {
+                                        value = value.replace('|', ' ').trim();
+                                    }
+                                }
+                                if (value != null && !value.isEmpty()) {
+                                    merge(properties, getPropertyId(caidPrefix + name), value);
+                                }
+                            } else if (token == JsonToken.END_OBJECT) {
+                                if (hasHash && !properties.isEmpty()) {
+                                    merge(properties, setPropertyId, caidSetPropertyValue);
+                                    merge(properties, statusPropertyId, caidStatusPropertyValue);
+                                    process(hashes, properties);
+                                    if ((cnt++ & 8191) == 0) {
+                                        long pos = raf.getFilePointer();
+                                        updatePercentage(pos / (double) len);
+                                    }
+                                    hasHash = false;
+                                }
+                            }
+                        } else {
+                            String name = jp.currentName();
+                            if ("FileName".equalsIgnoreCase(name)) {
+                                token = jp.nextToken();
+                                String value = null;
+                                if (token == JsonToken.VALUE_STRING) {
+                                    value = jp.getText();
+                                    if (value != null) {
+                                        value = value.replace('|', ' ').trim();
+                                    }
+                                }
+                                if (value != null && !value.isEmpty()) {
+                                    merge(properties, getPropertyId(caidPrefix + name), value);
+                                }
+                            }
+                        }
+                    } while (arrayDepth > 0);
+                } else {
+                    jp.close();
+                    raf.close();
+                    throw new RuntimeException(
+                            "Error: Unexpected property in NIST CAID JSON '" + jp.currentName() + "'.");
+                }
+            }
+            updatePercentage(-1);
+            System.out.println("\r" + cnt + " records read in " + endTime(t));
+            printTotals();
+        } catch (Exception e) {
+            System.out.println("Error reading file: " + file);
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (jp != null)
+                    jp.close();
+            } catch (Exception e) {
+            }
+            try {
+                if (is != null)
+                    is.close();
+            } catch (Exception e) {
+            }
+            try {
+                if (raf != null)
+                    raf.close();
+            } catch (Exception e) {
+            }
+        }
+        return true;
+    }
+
+    private boolean checkDataModel(String key, String value, FileType type) {
+        if (type == FileType.PROJECT_VIC) {
+            return (vicDataModelKey13.equalsIgnoreCase(key) && vicDataModelValue13.equalsIgnoreCase(value))
+                    || (vicDataModelKey20.equalsIgnoreCase(key) && vicDataModelValue20.equalsIgnoreCase(value));
+        }
+        if (type == FileType.NIST_CAID) {
+            return caidDataModelKey.equalsIgnoreCase(key) && caidDataModelValue.equalsIgnoreCase(value);
+        }
+        return false;
     }
 
     private boolean readNSRLProd(File file) {
@@ -1043,7 +1188,7 @@ public class HashDBTool {
             } else if (type == FileType.CSV || type == FileType.INPUT || type == FileType.ICSE) {
                 if (!checkInputHeader(file, type))
                     return false;
-            } else if (type == FileType.PROJECT_VIC) {
+            } else if (type == FileType.PROJECT_VIC || type == FileType.NIST_CAID) {
                 //Identification was based on its content (plus file extension) 
             } else {
                 if (type == FileType.UNKNOWN) {
@@ -1080,12 +1225,14 @@ public class HashDBTool {
         if (name.equalsIgnoreCase(nsrlProdFileName)) return FileType.NSRL_PROD;
         if (name.endsWith(".csv"))
             return isIcseCsv(file) ? FileType.ICSE : FileType.CSV;
-        if (name.endsWith(".json") && isProjectVicJson(file)) return FileType.PROJECT_VIC;
+        if (name.endsWith(".json") && isKnownJson(file, FileType.PROJECT_VIC)) return FileType.PROJECT_VIC;
+        if (name.endsWith(".json") && isKnownJson(file, FileType.NIST_CAID))
+            return FileType.NIST_CAID;
         if (!inputFolderUsed) return FileType.INPUT;
         return FileType.UNKNOWN;
     }
 
-    private boolean isProjectVicJson(File file) {
+    private boolean isKnownJson(File file, FileType type) {
         Reader reader = null;
         JsonParser jp = null;
         try {
@@ -1094,9 +1241,7 @@ public class HashDBTool {
             jp = jfactory.createParser(reader);
             if (jp.nextToken() != JsonToken.START_OBJECT) return false;
             if (jp.nextToken() != JsonToken.END_OBJECT) {
-                if (checkVicDataModel(jp.getCurrentName(), jp.nextTextValue())) {
-                    return true;
-                }
+                return checkDataModel(jp.getCurrentName(), jp.nextTextValue(), type);
             }
         } catch (Exception e) {
             return false;
@@ -1108,7 +1253,7 @@ public class HashDBTool {
                 if (reader != null) reader.close();
             } catch (Exception e) {}
         }
-        return true;
+        return false;
     }
 
     private boolean checkNSRLHeader(File file, FileType type) {
@@ -1619,8 +1764,8 @@ public class HashDBTool {
         System.out.println("    Allows importing CSV files with a set of hashes and associated properties");
         System.out.println("    into a database that can be later used during IPED case processing, to");
         System.out.println("    search for these hashes and add their properties to the case item when a");
-        System.out.println("    hit is found. NIST NSRL files, Project VIC JSON and INTERPOL ICSE");
-        System.out.println("    database CSV can also be imported directly.");
+        System.out.println("    hit is found. NIST NSRL RDS files, NIST CAID Non-RDS JSON, Project VIC JSON");
+        System.out.println("    and INTERPOL ICSE database CSV can also be imported directly.");
         System.out.println();
         System.out.println("Usage: java -jar iped-hashdb.jar -d <input file or folder> -o <output DB file>");
         System.out.println("            [-replace | -replaceAll | -remove | -removeAll] [-noOpt]");
@@ -1681,6 +1826,6 @@ public class HashDBTool {
     }
 
     enum FileType {
-        CSV, NSRL_MAIN, NSRL_MAIN_ZIP, NSRL_PROD, PROJECT_VIC, UNKNOWN, INPUT, ICSE;
+        CSV, NSRL_MAIN, NSRL_MAIN_ZIP, NSRL_PROD, PROJECT_VIC, UNKNOWN, INPUT, ICSE, NIST_CAID;
     }
 }
