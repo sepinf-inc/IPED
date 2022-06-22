@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 import org.apache.commons.io.IOUtils;
 
-import iped.geo.AbstractMapaCanvas;
+import iped.geo.AbstractMapCanvas;
 import iped.utils.UiUtil;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -22,7 +22,7 @@ import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
-public class MapaCanvasOpenStreet extends AbstractMapaCanvas {
+public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
     /**
 	 * 
@@ -38,7 +38,7 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas {
 
     String url;
 
-    public MapaCanvasOpenStreet() {
+    public MapCanvasOpenStreet() {
         this.jfxPanel = new JFXPanel();
 
         Platform.runLater(new Runnable() {

@@ -12,13 +12,13 @@ import netscape.javascript.JSObject;
 
 public class JSInterfaceFunctionsOpenStreet implements JSInterfaceFunctions {
 
-    MapaCanvasOpenStreet map;
+    MapCanvasOpenStreet map;
 
-    public MapaCanvasOpenStreet getMap() {
+    public MapCanvasOpenStreet getMap() {
         return map;
     }
 
-    public JSInterfaceFunctionsOpenStreet(MapaCanvasOpenStreet map) {
+    public JSInterfaceFunctionsOpenStreet(MapCanvasOpenStreet map) {
         this.map = map;
     }
 

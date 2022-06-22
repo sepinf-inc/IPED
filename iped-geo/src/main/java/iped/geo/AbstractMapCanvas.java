@@ -13,7 +13,7 @@ import org.apache.commons.io.IOUtils;
 
 import iped.geo.localization.Messages;
 
-abstract public class AbstractMapaCanvas extends Canvas {
+abstract public class AbstractMapCanvas extends Canvas {
     /**
 	 * 
 	 */
@@ -113,7 +113,7 @@ abstract public class AbstractMapaCanvas extends Canvas {
 
     public String getToolBarHtml() throws IOException {
         return replaceLocalizedMarks(
-                IOUtils.toString(AbstractMapaCanvas.class.getResourceAsStream("toolbar.html"), "UTF-8"), "toolbar");
+                IOUtils.toString(AbstractMapCanvas.class.getResourceAsStream("toolbar.html"), "UTF-8"), "toolbar");
     }
 
 }

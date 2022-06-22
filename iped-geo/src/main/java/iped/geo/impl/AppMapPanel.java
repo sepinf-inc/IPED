@@ -19,7 +19,7 @@ import javax.swing.SwingUtilities;
 
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
-import iped.geo.AbstractMapaCanvas;
+import iped.geo.AbstractMapCanvas;
 import iped.geo.kml.GetResultsKMLWorker;
 import iped.geo.kml.KMLResult;
 import iped.geo.localization.Messages;
@@ -31,7 +31,7 @@ import iped.viewers.api.IMultiSearchResultProvider;
  * Classe que controla a integração da classe App com a classe MapaCanvas
  */
 
-public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
+public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
     /**
 	 * 
@@ -39,9 +39,9 @@ public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
 	private static final long serialVersionUID = 1L;
 	IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
-    MapaCanvasFactory mcf;
+    MapCanvasFactory mcf;
 
-    AbstractMapaCanvas browserCanvas;
+    AbstractMapCanvas browserCanvas;
     boolean mapaDesatualizado = true; // variável para registrar se os dados a serem apresentados pelo mapa precisa
                                       // renderização
     KMLResult kmlResult;
@@ -50,11 +50,11 @@ public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
     ActionListener changeTileServer = null;
 
     String tilesSourceURL = null, savedTilesSourceURL = null;
-    private MapaPanelConfig mpConfig;
+    private MapPanelConfig mpConfig;
     
     private JProgressBar gpsProgressBar;
 
-    public AppMapaPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
+    public AppMapPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
         this.guiProvider = guiProvider;
         this.setLayout(new BorderLayout());
@@ -68,7 +68,7 @@ public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
         gpsProgressBar.setStringPainted(true);
         gpsProgressBar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.gray, 1), BorderFactory.createEmptyBorder(4, 0, 4, 0)));
         
-        mcf = new MapaCanvasFactory(this);
+        mcf = new MapCanvasFactory(this);
 
         this.addMouseListener(new MouseListener() {
             @Override
@@ -95,7 +95,7 @@ public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
 
         savedTilesSourceURL = JMapOptionsPane.getSavedTilesSourceURL();
 
-        mpConfig = new MapaPanelConfig();
+        mpConfig = new MapPanelConfig();
 
         try {
             ConfigurationManager.get().addObject(mpConfig);

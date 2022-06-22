@@ -10,10 +10,10 @@ import iped.geo.MapSelectionListener;
 import iped.geo.kml.GetResultsKMLWorker;
 import iped.properties.BasicProps;
 
-public class AppMapaSelectionListener implements MapSelectionListener {
-    AppMapaPanel mapaPanel;
+public class AppMapSelectionListener implements MapSelectionListener {
+    AppMapPanel mapaPanel;
 
-    public AppMapaSelectionListener(AppMapaPanel mapaPanel) {
+    public AppMapSelectionListener(AppMapPanel mapaPanel) {
         this.mapaPanel = mapaPanel;
     }
 
