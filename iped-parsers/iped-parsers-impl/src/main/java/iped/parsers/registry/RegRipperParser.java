@@ -206,19 +206,19 @@ public class RegRipperParser extends AbstractParser {
     private static String adjustDateFormat(String content) {
         final char[] dateFormat = "Aaa Aaa nN nN:NN:NN NNNN".toCharArray(); //$NON-NLS-1$
         final String[] srcWDay = new String[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
-        final String[] tgtWDay = new String[] { Messages.getString("RegRipperParser.Sun"), //$NON-NLS-1$
-                Messages.getString("RegRipperParser.Mon"), Messages.getString("RegRipperParser.Tue"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegRipperParser.Wed"), Messages.getString("RegRipperParser.Thu"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegRipperParser.Fri"), Messages.getString("RegRipperParser.Sat") }; //$NON-NLS-1$ //$NON-NLS-2$
+        final String[] tgtWDay = new String[] { Messages.getString("RegistryParser.Sun"), //$NON-NLS-1$
+                Messages.getString("RegistryParser.Mon"), Messages.getString("RegistryParser.Tue"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Wed"), Messages.getString("RegistryParser.Thu"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Fri"), Messages.getString("RegistryParser.Sat") }; //$NON-NLS-1$ //$NON-NLS-2$
         final String[] srcMonth = new String[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
                 "Nov", "Dec" }; //$NON-NLS-1$ //$NON-NLS-2$
-        final String[] tgtMonth = new String[] { Messages.getString("RegRipperParser.Jan"), //$NON-NLS-1$
-                Messages.getString("RegRipperParser.Feb"), Messages.getString("RegRipperParser.Mar"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegRipperParser.Apr"), Messages.getString("RegRipperParser.May"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegRipperParser.Jun"), Messages.getString("RegRipperParser.Jul"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegRipperParser.Aug"), Messages.getString("RegRipperParser.Sep"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegRipperParser.Oct"), Messages.getString("RegRipperParser.Nov"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegRipperParser.Dec") }; //$NON-NLS-1$
+        final String[] tgtMonth = new String[] { Messages.getString("RegistryParser.Jan"), //$NON-NLS-1$
+                Messages.getString("RegistryParser.Feb"), Messages.getString("RegistryParser.Mar"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Apr"), Messages.getString("RegistryParser.May"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Jun"), Messages.getString("RegistryParser.Jul"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Aug"), Messages.getString("RegistryParser.Sep"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Oct"), Messages.getString("RegistryParser.Nov"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Dec") }; //$NON-NLS-1$
 
         char[] c = content.toCharArray();
         boolean changed = false;
