@@ -1,34 +1,34 @@
 package iped.geo.impl;
 
-import iped.geo.AbstractMapaCanvas;
-import iped.geo.googlemaps.MapaCanvasWebkit;
+import iped.geo.AbstractMapCanvas;
+import iped.geo.googlemaps.MapCanvasWebkit;
 import iped.geo.kml.KMLResult;
-import iped.geo.openstreet.MapaCanvasOpenStreet;
+import iped.geo.openstreet.MapCanvasOpenStreet;
 
-public class MapaCanvasFactory {
+public class MapCanvasFactory {
 
-    MapaCanvasOpenStreet browserCanvasOS;
-    AbstractMapaCanvas browserCanvasWK;
-    AppMapaPanel appMapaPanel;
+    MapCanvasOpenStreet browserCanvasOS;
+    AbstractMapCanvas browserCanvasWK;
+    AppMapPanel appMapaPanel;
 
-    public MapaCanvasFactory(AppMapaPanel appMapaPanel) {
+    public MapCanvasFactory(AppMapPanel appMapaPanel) {
         this.appMapaPanel = appMapaPanel;
     }
 
-    public AbstractMapaCanvas createMapCanvas(String url) {
-        AbstractMapaCanvas browserCanvas;
+    public AbstractMapCanvas createMapCanvas(String url) {
+        AbstractMapCanvas browserCanvas;
         boolean browserCanvasWasNull = false;
 
         if (url.contains("googlemaps")) {
             if (browserCanvasWK == null) {
                 browserCanvasWasNull = true;
-                browserCanvasWK = new MapaCanvasWebkit();
+                browserCanvasWK = new MapCanvasWebkit();
             }
             browserCanvas = browserCanvasWK;
         } else {
             if (browserCanvasOS == null) {
                 browserCanvasWasNull = true;
-                browserCanvasOS = new MapaCanvasOpenStreet();
+                browserCanvasOS = new MapCanvasOpenStreet();
             }
             browserCanvasOS.setUrl(url);
             browserCanvas = browserCanvasOS;
@@ -42,7 +42,7 @@ public class MapaCanvasFactory {
                 }
             });
 
-            browserCanvas.setMapSelectionListener(new AppMapaSelectionListener(appMapaPanel));
+            browserCanvas.setMapSelectionListener(new AppMapSelectionListener(appMapaPanel));
             browserCanvas.setMarkerEventListener(new AppMapMarkerEventListener(appMapaPanel));
             browserCanvas.setMarkerCheckBoxListener(new AppMarkerCheckBoxListener(appMapaPanel));
             browserCanvas.setOnChangeTileServer(appMapaPanel.changeTileServer);

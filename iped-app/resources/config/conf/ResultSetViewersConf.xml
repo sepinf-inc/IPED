@@ -1,7 +1,7 @@
 <resultSetViewers>
 
 	<resultSetViewer>
-		<class>iped.geo.impl.MapaViewer</class>
+		<class>iped.geo.impl.MapViewer</class>
 	</resultSetViewer>
 
 </resultSetViewers>

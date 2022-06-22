@@ -18,19 +18,19 @@ import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.ResultSetViewer;
 
-public class MapaViewer implements ResultSetViewer, TableModelListener, ListSelectionListener {
+public class MapViewer implements ResultSetViewer, TableModelListener, ListSelectionListener {
 
     JTable resultsTable;
     IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
-    AppMapaPanel mapaPanel;
+    AppMapPanel mapaPanel;
     JScrollPane mapsScroll;
     DefaultSingleCDockable dockable; // dockable where the viewer is installed
 
     public static volatile boolean desabilitaTemp = false;
     public static volatile boolean updatingCheckbox = false;
 
-    public MapaViewer() {
+    public MapViewer() {
     }
 
     @Override
@@ -38,7 +38,7 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
         this.resultsTable = resultsTable;
         this.resultsProvider = resultsProvider;
         this.guiProvider = guiProvider;
-        mapaPanel = new AppMapaPanel(resultsProvider, guiProvider);
+        mapaPanel = new AppMapPanel(resultsProvider, guiProvider);
         mapsScroll = new JScrollPane(mapaPanel);
         resultsTable.getModel().addTableModelListener(this);
         resultsTable.getSelectionModel().addListSelectionListener(this);
