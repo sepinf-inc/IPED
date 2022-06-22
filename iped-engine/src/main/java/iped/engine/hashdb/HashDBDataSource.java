@@ -96,7 +96,8 @@ public class HashDBDataSource {
                 md5 = HashDB.hashBytesToStr(md5Bytes);
             }
             rs.close();
-            if (md5 == null) return null;
+            if (md5 == null)
+                return null;
 
             long length = -1;
             String ext = null;
@@ -115,7 +116,8 @@ public class HashDBDataSource {
                 }
             }
             rs.close();
-            if (length == -1) return null;
+            if (length == -1)
+                return null;
             return new LedItem(length, md5, ext);
         } catch (Exception e) {
             e.printStackTrace();
@@ -138,15 +140,20 @@ public class HashDBDataSource {
         int propIdPhotoDna = -1;
         for (int propId : propertyIdToName.keySet()) {
             String propName = propertyIdToName.get(propId);
-            if (propName.equalsIgnoreCase(photoDna) || (statusFilter != null && propName.equalsIgnoreCase(propertyStatus))) {
-                if (propName.equalsIgnoreCase(photoDna)) propIdPhotoDna = propId; 
-                if (first) first = false;
-                else sb.append(',');
+            if (propName.equalsIgnoreCase(photoDna)
+                    || (statusFilter != null && propName.equalsIgnoreCase(propertyStatus))) {
+                if (propName.equalsIgnoreCase(photoDna))
+                    propIdPhotoDna = propId;
+                if (first)
+                    first = false;
+                else
+                    sb.append(',');
                 sb.append(propId);
             }
         }
         sb.append(')');
-        if (first) return null;
+        if (first)
+            return null;
 
         ArrayList<PhotoDnaItem> photoDNAHashSet = new ArrayList<PhotoDnaItem>();
         Statement stmt = connection.createStatement();
@@ -160,7 +167,7 @@ public class HashDBDataSource {
             String propValue = rs.getString(3);
             if (propId == propIdPhotoDna) {
                 String[] values = propValue.split("\\|");
-                for(String photoDna : values) {
+                for (String photoDna : values) {
                     if (photoDna.length() == photoDnaBase64Len) {
                         try {
                             byte[] bytes = decoderBase64.decode(photoDna);
@@ -175,7 +182,7 @@ public class HashDBDataSource {
         }
         rs.close();
         stmt.close();
-        
+
         if (statusFilter != null) {
             for (int i = 0; i < photoDNAHashSet.size(); i++) {
                 PhotoDnaItem item = photoDNAHashSet.get(i);
@@ -194,14 +201,18 @@ public class HashDBDataSource {
         boolean first = true;
         for (int propId : propertyIdToName.keySet()) {
             String propName = propertyIdToName.get(propId);
-            if (propName.equalsIgnoreCase(propertyStatus) || propName.equalsIgnoreCase(ledMd5_512) || propName.equalsIgnoreCase(ledMd5_64k)) {
-                if (first) first = false;
-                else sb.append(',');
+            if (propName.equalsIgnoreCase(propertyStatus) || propName.equalsIgnoreCase(ledMd5_512)
+                    || propName.equalsIgnoreCase(ledMd5_64k)) {
+                if (first)
+                    first = false;
+                else
+                    sb.append(',');
                 sb.append(propId);
             }
         }
         sb.append(')');
-        if (first) return null;
+        if (first)
+            return null;
 
         Map<Integer, HashValue> hashIdToMd5_512 = new HashMap<Integer, HashValue>();
         Map<Integer, HashValue> hashIdToMd5_64k = new HashMap<Integer, HashValue>();
@@ -235,10 +246,12 @@ public class HashDBDataSource {
         stmt.close();
 
         hashIdToMd5_512.keySet().retainAll(setHashIds);
-        if (hashIdToMd5_512.isEmpty()) return null;
+        if (hashIdToMd5_512.isEmpty())
+            return null;
 
         hashIdToMd5_64k.keySet().retainAll(setHashIds);
-        if (hashIdToMd5_64k.isEmpty()) return null;
+        if (hashIdToMd5_64k.isEmpty())
+            return null;
         setHashIds = null;
 
         List<HashValue> listMd5_512 = new ArrayList<HashValue>(hashIdToMd5_512.values());
@@ -247,7 +260,8 @@ public class HashDBDataSource {
         HashValue prev = null;
         int cnt = 0;
         for (HashValue curr : listMd5_512) {
-            if (curr.equals(prev)) continue;
+            if (curr.equals(prev))
+                continue;
             cnt++;
             prev = curr;
         }
@@ -255,7 +269,8 @@ public class HashDBDataSource {
         int pos = 0;
         prev = null;
         for (HashValue hv : listMd5_512) {
-            if (hv.equals(prev)) continue;
+            if (hv.equals(prev))
+                continue;
             System.arraycopy(hv.getBytes(), 0, md5_512, pos, 16);
             pos += 16;
             prev = hv;
@@ -279,12 +294,14 @@ public class HashDBDataSource {
 
     public synchronized List<String> lookupSets(String algorithm, String hash) throws Exception {
         int idx = HashDB.hashType(algorithm);
-        if (idx < 0) return null;
+        if (idx < 0)
+            return null;
         byte[][] hashes = new byte[HashDB.hashTypes.length][];
         hashes[idx] = HashDB.hashStrToBytes(hash, HashDB.hashBytesLen[idx]);
         Map<String, String> properties = new HashMap<String, String>();
         lookup(hashes, properties);
-        if (properties.isEmpty()) return null;
+        if (properties.isEmpty())
+            return null;
 
         boolean pedo = false;
         List<String> hashSets = null;
@@ -294,7 +311,8 @@ public class HashDBDataSource {
                     pedo = true;
                 }
             } else if (prop.equalsIgnoreCase(propertySet)) {
-                if (hashSets == null) hashSets = new ArrayList<String>();
+                if (hashSets == null)
+                    hashSets = new ArrayList<String>();
                 hashSets.addAll(HashDB.toSet(properties.get(prop)));
             }
         }
@@ -308,12 +326,14 @@ public class HashDBDataSource {
                 mask |= 1 << i;
             }
         }
-        if (mask == 0) return;
+        if (mask == 0)
+            return;
         PreparedStatement stmtSelect = stmtSelectHash[mask];
         int k = 0;
         for (int i = 0; i < hashes.length; i++) {
             byte[] h = hashes[i];
-            if (h != null && presentHashes[i]) stmtSelect.setBytes(++k, h);
+            if (h != null && presentHashes[i])
+                stmtSelect.setBytes(++k, h);
         }
         ResultSet rs1 = stmtSelect.executeQuery();
         while (rs1.next()) {
@@ -341,23 +361,29 @@ public class HashDBDataSource {
         if (stmtSelectMD5 != null) {
             try {
                 stmtSelectMD5.close();
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         }
         if (stmtSelectHash != null) {
             for (PreparedStatement stmt : stmtSelectHash) {
                 try {
-                    if (stmt != null) stmt.close();
-                } catch (Exception e) {}
+                    if (stmt != null)
+                        stmt.close();
+                } catch (Exception e) {
+                }
             }
         }
         if (stmtSelectHashProperties != null) {
             try {
                 stmtSelectHashProperties.close();
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         }
         try {
-            if (connection != null) connection.close();
-        } catch (Exception e) {}
+            if (connection != null)
+                connection.close();
+        } catch (Exception e) {
+        }
     }
 
     private void connect(File dbFile) throws Exception {
@@ -392,9 +418,12 @@ public class HashDBDataSource {
             boolean first = true;
             for (int j = 0; j < hashTypes.length; j++) {
                 if (((1 << j) & i) != 0) {
-                    if (!presentHashes[j]) continue NEXT;
-                    if (first) first = false;
-                    else sb1.append(" OR ");
+                    if (!presentHashes[j])
+                        continue NEXT;
+                    if (first)
+                        first = false;
+                    else
+                        sb1.append(" OR ");
                     sb1.append(hashTypes[j]).append("=?");
                 }
             }
@@ -402,7 +431,8 @@ public class HashDBDataSource {
             stmtSelectHash[i].setFetchSize(hashTypes.length);
         }
 
-        stmtSelectHashProperties = connection.prepareStatement("select PROPERTY_ID, VALUE from HASHES_PROPERTIES where HASH_ID=?");
+        stmtSelectHashProperties = connection
+                .prepareStatement("select PROPERTY_ID, VALUE from HASHES_PROPERTIES where HASH_ID=?");
         stmtSelectHashProperties.setFetchSize(64);
 
         stmtSelectMD5 = connection.prepareStatement("select MD5 from HASHES where HASH_ID=?");

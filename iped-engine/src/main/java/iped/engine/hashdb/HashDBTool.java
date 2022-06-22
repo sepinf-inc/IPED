@@ -70,15 +70,15 @@ public class HashDBTool {
 
     private static final String vicDataModelKey13 = "odata.metadata";
     private static final String vicDataModelValue13 = "http://github.com/ICMEC/ProjectVic/DataModels/1.3.xml#Media";
-    
+
     private static final String vicDataModelKey20 = "@odata.context";
     private static final String vicDataModelValue20 = "http://github.com/VICSDATAMODEL/ProjectVic/DataModels/2.0.xml/Default/$metadata#Media";
-    
+
     private static final String vicSetPropertyValue = "ProjectVIC";
-    private static final String[] vicStatusPropertyValues = new String[] {"known","pedo","pedo"};
+    private static final String[] vicStatusPropertyValues = new String[] { "known", "pedo", "pedo" };
     private static final String vicPrefix = "vic";
     private static final String photoDnaPropertyName = "photoDna";
-    private static final int photoDnaBase64Len = 192;    
+    private static final int photoDnaBase64Len = 192;
     private static final int photoDnaHexLen = 288;
 
     private static final String icsePrefix = "icse";
@@ -125,16 +125,25 @@ public class HashDBTool {
     }
 
     public boolean run(String[] args) {
-        if (!parseParameters(args)) return false;
-        if (!checkInputFiles()) return false;
-        if (inputs.isEmpty()) System.exit(0);
+        if (!parseParameters(args))
+            return false;
+        if (!checkInputFiles())
+            return false;
+        if (inputs.isEmpty())
+            System.exit(0);
         dbExists = output.exists();
-        if (!connect()) return false;
-        if (!dbExists && !createDatabase()) return false;
-        if (!prepare()) return false;
-        if (!initSequences()) return false;
-        if (!loadProperties()) return false;
-        if (!readFiles()) return false;
+        if (!connect())
+            return false;
+        if (!dbExists && !createDatabase())
+            return false;
+        if (!prepare())
+            return false;
+        if (!initSequences())
+            return false;
+        if (!loadProperties())
+            return false;
+        if (!readFiles())
+            return false;
         return true;
     }
 
@@ -183,20 +192,24 @@ public class HashDBTool {
     }
 
     private boolean process(byte[][] newHashes, Map<Integer, Set<String>> newProperties) throws Exception {
-        if (newProperties.isEmpty()) return true;
+        if (newProperties.isEmpty())
+            return true;
         if (isZeroLength(newHashes)) {
             totIgn++;
             return true;
         }
         int mask = 0;
         for (int i = 0; i < newHashes.length; i++) {
-            if (newHashes[i] != null) mask |= 1 << i;
+            if (newHashes[i] != null)
+                mask |= 1 << i;
         }
-        if (mask == 0) return true;
+        if (mask == 0)
+            return true;
         PreparedStatement stmtSelect = stmtSelectHash[mask];
         int k = 0;
         for (byte[] h : newHashes) {
-            if (h != null) stmtSelect.setBytes(++k, h);
+            if (h != null)
+                stmtSelect.setBytes(++k, h);
         }
         ResultSet rs = stmtSelect.executeQuery();
         byte[][] currHashes = new byte[hashTypes.length][];
@@ -207,7 +220,8 @@ public class HashDBTool {
             if (prevHashId == -1) {
                 prevHashId = hashId;
             } else {
-                if (otherPrevHashIds == null) otherPrevHashIds = new ArrayList<Integer>();
+                if (otherPrevHashIds == null)
+                    otherPrevHashIds = new ArrayList<Integer>();
                 otherPrevHashIds.add(hashId);
             }
             for (int i = 0; i < hashTypes.length; i++) {
@@ -222,16 +236,20 @@ public class HashDBTool {
             if (mode != ProcessMode.REMOVE && mode != ProcessMode.REMOVE_ALL) {
                 totIns++;
                 int hashId = ++lastHashId;
-                if (!insertHash(hashId, newHashes)) return false;
-                if (!insertHashProperties(hashId, newProperties)) return false;
+                if (!insertHash(hashId, newHashes))
+                    return false;
+                if (!insertHashProperties(hashId, newProperties))
+                    return false;
             }
         } else {
             if (mode == ProcessMode.REMOVE_ALL) {
-                if (!removeHash(prevHashId)) return false;
+                if (!removeHash(prevHashId))
+                    return false;
                 totRem++;
                 if (otherPrevHashIds != null) {
                     for (int id : otherPrevHashIds) {
-                        if (!removeHash(id)) return false;
+                        if (!removeHash(id))
+                            return false;
                     }
                 }
             } else {
@@ -239,17 +257,23 @@ public class HashDBTool {
                 if (otherPrevHashIds != null) {
                     for (int id : otherPrevHashIds) {
                         Map<Integer, Set<String>> otherProperties = getProperties(id);
-                        if (otherProperties == null) return false;
-                        if (!removeHash(id)) return false;
+                        if (otherProperties == null)
+                            return false;
+                        if (!removeHash(id))
+                            return false;
                         if (!currProperties.equals(otherProperties)) {
                             Map<Integer, Set<String>> propertiesToAdd = new HashMap<Integer, Set<String>>();
                             Set<Integer> propertiesToRemove = new HashSet<Integer>();
-                            mergeProperties(currProperties, otherProperties, ProcessMode.MERGE, propertiesToAdd, propertiesToRemove);
+                            mergeProperties(currProperties, otherProperties, ProcessMode.MERGE, propertiesToAdd,
+                                    propertiesToRemove);
                             if (propertiesToAdd.keySet().equals(propertiesToRemove)) {
-                                if (!updateHashProperties(prevHashId, propertiesToAdd)) return false;
+                                if (!updateHashProperties(prevHashId, propertiesToAdd))
+                                    return false;
                             } else {
-                                if (!removeHashProperties(prevHashId, propertiesToRemove)) return false;
-                                if (!insertHashProperties(prevHashId, propertiesToAdd)) return false;
+                                if (!removeHashProperties(prevHashId, propertiesToRemove))
+                                    return false;
+                                if (!insertHashProperties(prevHashId, propertiesToAdd))
+                                    return false;
                             }
                         }
                     }
@@ -257,7 +281,8 @@ public class HashDBTool {
                 if (newProperties.equals(currProperties)) {
                     if (mode == ProcessMode.REMOVE) {
                         totRem++;
-                        if (!removeHash(prevHashId)) return false;
+                        if (!removeHash(prevHashId))
+                            return false;
                     } else {
                         totSkip++;
                     }
@@ -267,16 +292,20 @@ public class HashDBTool {
                     mergeProperties(newProperties, currProperties, mode, propertiesToAdd, propertiesToRemove);
                     if (propertiesToAdd.isEmpty() && propertiesToRemove.equals(currProperties.keySet())) {
                         totRem++;
-                        if (!removeHash(prevHashId)) return false;
+                        if (!removeHash(prevHashId))
+                            return false;
                     } else if (propertiesToAdd.isEmpty() && propertiesToRemove.isEmpty()) {
                         totSkip++;
                     } else {
                         totUpd++;
                         if (propertiesToAdd.keySet().equals(propertiesToRemove)) {
-                            if (!updateHashProperties(prevHashId, propertiesToAdd)) return false;
+                            if (!updateHashProperties(prevHashId, propertiesToAdd))
+                                return false;
                         } else {
-                            if (!removeHashProperties(prevHashId, propertiesToRemove)) return false;
-                            if (!insertHashProperties(prevHashId, propertiesToAdd)) return false;
+                            if (!removeHashProperties(prevHashId, propertiesToRemove))
+                                return false;
+                            if (!insertHashProperties(prevHashId, propertiesToAdd))
+                                return false;
                         }
                     }
                 }
@@ -290,7 +319,8 @@ public class HashDBTool {
 
     }
 
-    private void mergeProperties(Map<Integer, Set<String>> newProp, Map<Integer, Set<String>> oldProp, ProcessMode m, Map<Integer, Set<String>> propertiesToAdd, Set<Integer> propertiesToRemove) {
+    private void mergeProperties(Map<Integer, Set<String>> newProp, Map<Integer, Set<String>> oldProp, ProcessMode m,
+            Map<Integer, Set<String>> propertiesToAdd, Set<Integer> propertiesToRemove) {
         if (m == ProcessMode.REPLACE_ALL) {
             propertiesToRemove.addAll(oldProp.keySet());
             propertiesToRemove.removeAll(newProp.keySet());
@@ -300,12 +330,14 @@ public class HashDBTool {
             Set<String> bv = oldProp.get(id);
             if (m == ProcessMode.REPLACE_ALL) {
                 if (!av.equals(bv)) {
-                    if (bv != null) propertiesToRemove.add(id);
+                    if (bv != null)
+                        propertiesToRemove.add(id);
                     propertiesToAdd.put(id, av);
                 }
             } else if (m == ProcessMode.REPLACE) {
                 if (!av.equals(bv)) {
-                    if (bv != null) propertiesToRemove.add(id);
+                    if (bv != null)
+                        propertiesToRemove.add(id);
                     propertiesToAdd.put(id, av);
                 }
             } else if (m == ProcessMode.REMOVE) {
@@ -335,7 +367,7 @@ public class HashDBTool {
             }
         }
     }
-    
+
     private boolean isZeroLength(byte[][] hashes) {
         for (int i = 0; i < hashes.length; i++) {
             byte[] h = hashes[i];
@@ -351,8 +383,10 @@ public class HashDBTool {
         for (int i = 0; i < a.length; i++) {
             byte[] ai = a[i];
             byte[] bi = b[i];
-            if (ai == null && bi != null) return false;
-            if (ai != null && bi == null) return false;
+            if (ai == null && bi != null)
+                return false;
+            if (ai != null && bi == null)
+                return false;
             if (ai != null && bi != null && !Arrays.equals(ai, bi)) {
                 ok = false;
                 break;
@@ -362,11 +396,13 @@ public class HashDBTool {
             System.out.println("\nWARNING: Unexpected hash inconsistency!");
             System.out.println("\tNew:");
             for (int i = 0; i < a.length; i++) {
-                if (a[i] != null) System.out.println("\t\t" + hashTypes[i] + "\t" + hashBytesToStr(a[i]));
+                if (a[i] != null)
+                    System.out.println("\t\t" + hashTypes[i] + "\t" + hashBytesToStr(a[i]));
             }
             System.out.println("\tCurrent:");
             for (int i = 0; i < b.length; i++) {
-                if (b[i] != null) System.out.println("\t\t" + hashTypes[i] + "\t" + hashBytesToStr(b[i]));
+                if (b[i] != null)
+                    System.out.println("\t\t" + hashTypes[i] + "\t" + hashBytesToStr(b[i]));
             }
             System.out.println();
         }
@@ -398,7 +434,8 @@ public class HashDBTool {
                 String value = rs.getString(2);
                 prop.put(propId, toSet(value));
             }
-            if (prop.isEmpty()) return null;
+            if (prop.isEmpty())
+                return null;
             return prop;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -518,7 +555,8 @@ public class HashDBTool {
                 if (statement != null) {
                     statement.close();
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         }
         return false;
     }
@@ -549,7 +587,8 @@ public class HashDBTool {
 
     private boolean readFiles() {
         for (File file : inputs) {
-            if (!readFile(file)) return false;
+            if (!readFile(file))
+                return false;
         }
         return true;
     }
@@ -557,10 +596,14 @@ public class HashDBTool {
     private boolean readFile(File file) {
         FileType type = getFileType(file);
         totIns = totRem = totUpd = totSkip = totComb = totIgn = totNoProd = totInvHash = 0;
-        System.out.println("\nReading " + (type == FileType.INPUT ? "" : type.toString() + " ") + "file " + file.getPath() + "...");
-        if (type == FileType.NSRL_PROD) return readNSRLProd(file);
-        if (type == FileType.PROJECT_VIC) return readProjectVIC(file);
-        if (type == FileType.NIST_CAID) return readNistCaid(file);
+        System.out.println("\nReading " + (type == FileType.INPUT ? "" : type.toString() + " ") + "file "
+                + file.getPath() + "...");
+        if (type == FileType.NSRL_PROD)
+            return readNSRLProd(file);
+        if (type == FileType.PROJECT_VIC)
+            return readProjectVIC(file);
+        if (type == FileType.NIST_CAID)
+            return readNistCaid(file);
 
         String savedDelimiter = null;
         Set<String> savedSkipCols = null;
@@ -580,7 +623,9 @@ public class HashDBTool {
         BufferedReader in = null;
         ZipInputStream zipInput = null;
         try {
-            int setPropertyId = type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP ? getPropertyId(setPropertyName) : -1;
+            int setPropertyId = type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP
+                    ? getPropertyId(setPropertyName)
+                    : -1;
             long len = file.length();
             if (type == FileType.NSRL_MAIN_ZIP) {
                 zipInput = new ZipInputStream(new FileInputStream(file));
@@ -593,7 +638,8 @@ public class HashDBTool {
                     }
                 }
                 if (in == null) {
-                    System.out.println("ERROR: Invalid NSRL ZIP file " + file.getPath() + ", NSRL text file entry not found.");
+                    System.out.println(
+                            "ERROR: Invalid NSRL ZIP file " + file.getPath() + ", NSRL text file entry not found.");
                     return false;
                 }
             } else {
@@ -642,13 +688,14 @@ public class HashDBTool {
                     hashCols[numHashCols++] = i;
                 } else {
                     if (type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP) {
-                        if (!col.equals(nsrlProductCode) && !col.equals(nsrlSpecialCode)) continue;
+                        if (!col.equals(nsrlProductCode) && !col.equals(nsrlSpecialCode))
+                            continue;
                         if (col.equals(nsrlProductCode)) {
                             nsrlProductCodeCol = i;
                             col = nsrlProductName;
                         }
                         header.set(i, col = nsrlPrefix + col);
-                    } 
+                    }
                     if (col.equalsIgnoreCase(photoDnaPropertyName)) {
                         photoDnaCol = i;
                     }
@@ -674,11 +721,13 @@ public class HashDBTool {
             while (it.hasNext()) {
                 CSVRecord record = it.next();
                 cnt++;
-                if ((cnt & 8191) == 0) updatePercentage(record.getCharacterPosition() / (double) len);
+                if ((cnt & 8191) == 0)
+                    updatePercentage(record.getCharacterPosition() / (double) len);
                 if (type != FileType.ICSE && !record.isConsistent()) {
                     in.close();
                     System.out.println();
-                    throw new RuntimeException("Record #" + cnt + ": number of columns does not match header columns " + record.size() + "/" + numCols + ".\n" + record.toString());
+                    throw new RuntimeException("Record #" + cnt + ": number of columns does not match header columns "
+                            + record.size() + "/" + numCols + ".\n" + record.toString());
                 }
                 Arrays.fill(hashes, null);
                 for (int i : hashCols) {
@@ -693,7 +742,8 @@ public class HashDBTool {
                 for (int i = 0; i < hashes.length; i++) {
                     byte[] a = hashes[i];
                     byte[] b = prevHashes[i];
-                    if (a == null && b == null) continue;
+                    if (a == null && b == null)
+                        continue;
                     if (a == null || b == null || !Arrays.equals(a, b)) {
                         sameHashes = false;
                         break;
@@ -732,13 +782,14 @@ public class HashDBTool {
                             if (val.length() != photoDnaBase64Len) {
                                 in.close();
                                 System.out.println();
-                                throw new RuntimeException("Record #" + cnt + ": invalid PhotoDna size content:\n" + record);
+                                throw new RuntimeException(
+                                        "Record #" + cnt + ": invalid PhotoDna size content:\n" + record);
                             }
                         } else if (i == nsrlProductCodeCol) {
                             int prodCode = Integer.parseInt(val);
                             val = nsrlProdCodeToName.get(prodCode);
                             if (val == null) {
-                                val = "Product #" + prodCode; 
+                                val = "Product #" + prodCode;
                                 totNoProd++;
                             }
                         }
@@ -765,11 +816,15 @@ public class HashDBTool {
             return false;
         } finally {
             try {
-                if (in != null) in.close();
-            } catch (Exception e) {}
+                if (in != null)
+                    in.close();
+            } catch (Exception e) {
+            }
             try {
-                if (zipInput != null) zipInput.close();
-            } catch (Exception e) {}
+                if (zipInput != null)
+                    zipInput.close();
+            } catch (Exception e) {
+            }
 
             if (type == FileType.ICSE) {
                 delimiter = savedDelimiter;
@@ -830,8 +885,10 @@ public class HashDBTool {
                     int arrayDepth = 0;
                     do {
                         JsonToken token = jp.nextToken();
-                        if (token == JsonToken.START_ARRAY) arrayDepth++;
-                        else if (token == JsonToken.END_ARRAY) arrayDepth--;
+                        if (token == JsonToken.START_ARRAY)
+                            arrayDepth++;
+                        else if (token == JsonToken.END_ARRAY)
+                            arrayDepth--;
                         else if (arrayDepth == 1) {
                             String name = jp.currentName();
                             if (token == JsonToken.START_OBJECT) {
@@ -865,7 +922,10 @@ public class HashDBTool {
                                         merge(properties, photoDnaPropertyId, value);
                                     }
                                 }
-                            } else if ("VictimIdentified".equalsIgnoreCase(name) || "OffenderIdentified".equalsIgnoreCase(name) || "IsDistributed".equalsIgnoreCase(name) || "Series".equalsIgnoreCase(name) || "IsPrecategorized".equalsIgnoreCase(name) || "Tags".equalsIgnoreCase(name)) {
+                            } else if ("VictimIdentified".equalsIgnoreCase(name)
+                                    || "OffenderIdentified".equalsIgnoreCase(name)
+                                    || "IsDistributed".equalsIgnoreCase(name) || "Series".equalsIgnoreCase(name)
+                                    || "IsPrecategorized".equalsIgnoreCase(name) || "Tags".equalsIgnoreCase(name)) {
                                 token = jp.nextToken();
                                 String value = null;
                                 if (token == JsonToken.VALUE_STRING) {
@@ -917,7 +977,8 @@ public class HashDBTool {
                 } else {
                     jp.close();
                     raf.close();
-                    throw new RuntimeException("Error: Unexpected property in ProjectVic JSON '" + jp.currentName() + "'.");
+                    throw new RuntimeException(
+                            "Error: Unexpected property in ProjectVic JSON '" + jp.currentName() + "'.");
                 }
             }
             updatePercentage(-1);
@@ -929,14 +990,20 @@ public class HashDBTool {
             return false;
         } finally {
             try {
-                if (jp != null) jp.close();
-            } catch (Exception e) {}
+                if (jp != null)
+                    jp.close();
+            } catch (Exception e) {
+            }
             try {
-                if (is != null) is.close();
-            } catch (Exception e) {}
+                if (is != null)
+                    is.close();
+            } catch (Exception e) {
+            }
             try {
-                if (raf != null) raf.close();
-            } catch (Exception e) {}
+                if (raf != null)
+                    raf.close();
+            } catch (Exception e) {
+            }
         }
         return true;
     }
@@ -1094,8 +1161,10 @@ public class HashDBTool {
             int colProdName = -1;
             for (int i = 0; i < header.size(); i++) {
                 String col = header.get(i);
-                if (col.equals(nsrlProductCode)) colProdCode = i;
-                else if (col.equals(nsrlProductName)) colProdName = i;
+                if (col.equals(nsrlProductCode))
+                    colProdCode = i;
+                else if (col.equals(nsrlProductName))
+                    colProdName = i;
             }
             if (colProdCode < 0 || colProdName < 0) {
                 in.close();
@@ -1110,7 +1179,9 @@ public class HashDBTool {
                 cnt++;
                 if (!record.isConsistent()) {
                     in.close();
-                    throw new RuntimeException("Error: Record #" + cnt + ": number of columns does not match header columns " + record.size() + "/" + numCols + ".\n" + record);
+                    throw new RuntimeException(
+                            "Error: Record #" + cnt + ": number of columns does not match header columns "
+                                    + record.size() + "/" + numCols + ".\n" + record);
                 }
                 int code = Integer.parseInt(record.get(colProdCode));
                 String name = record.get(colProdName);
@@ -1123,20 +1194,30 @@ public class HashDBTool {
             return false;
         } finally {
             try {
-                if (in != null) in.close();
-            } catch (Exception e) {}
+                if (in != null)
+                    in.close();
+            } catch (Exception e) {
+            }
         }
         return true;
     }
 
     private void printTotals() {
-        if (totIns > 0) System.out.println(totIns + " hash" + (totIns == 1 ? "" : "es") + " inserted.");
-        if (totRem > 0) System.out.println(totRem + " hash" + (totRem == 1 ? "" : "es") + " removed.");
-        if (totUpd > 0) System.out.println(totUpd + " hash" + (totUpd == 1 ? "" : "es") + " updated.");
-        if (totSkip > 0) System.out.println(totSkip + " hash" + (totSkip == 1 ? " was" : "es were") + " already in the database.");
-        if (totIgn > 0) System.out.println(totIgn + " zero length hash" + (totIgn == 1 ? " was" : "es were") + " ignored.");
-        if (totComb > 0) System.out.println(totComb + " record" + (totComb == 1 ? "" : "s") + " combined.");
-        if (totNoProd > 0) System.out.println("WARNING: " + totNoProd + " NSRL record" + (totNoProd == 1 ? "" : "s") + " with invalid product code.");
+        if (totIns > 0)
+            System.out.println(totIns + " hash" + (totIns == 1 ? "" : "es") + " inserted.");
+        if (totRem > 0)
+            System.out.println(totRem + " hash" + (totRem == 1 ? "" : "es") + " removed.");
+        if (totUpd > 0)
+            System.out.println(totUpd + " hash" + (totUpd == 1 ? "" : "es") + " updated.");
+        if (totSkip > 0)
+            System.out.println(totSkip + " hash" + (totSkip == 1 ? " was" : "es were") + " already in the database.");
+        if (totIgn > 0)
+            System.out.println(totIgn + " zero length hash" + (totIgn == 1 ? " was" : "es were") + " ignored.");
+        if (totComb > 0)
+            System.out.println(totComb + " record" + (totComb == 1 ? "" : "s") + " combined.");
+        if (totNoProd > 0)
+            System.out.println("WARNING: " + totNoProd + " NSRL record" + (totNoProd == 1 ? "" : "s")
+                    + " with invalid product code.");
         if (totInvHash > 0)
             System.out.println("WARNING: " + totInvHash + " record" + (totInvHash == 1 ? "" : "s")
                     + " with invalid hash length ignored.");
@@ -1146,7 +1227,8 @@ public class HashDBTool {
         char[] bar = new char[60];
         Arrays.fill(bar, ' ');
         if (pct >= 0) {
-            if (pct > 1) pct = 1;
+            if (pct > 1)
+                pct = 1;
             bar[1] = '[';
             int len = (int) Math.round(pct * (bar.length - 3));
             for (int i = 0; i < len; i++) {
@@ -1176,20 +1258,23 @@ public class HashDBTool {
             File file = inputs.get(i);
             FileType type = getFileType(file);
             if (type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP) {
-                if (!checkNSRLHeader(file, type)) return false;
+                if (!checkNSRLHeader(file, type))
+                    return false;
                 File prodFile = new File(file.getParentFile(), nsrlProdFileName);
                 if (!prodFile.exists() || !prodFile.isFile()) {
-                    System.out.println("ERROR: File " + prodFile.getName() + " must be present in the same folder of NSRL main file (" + file.getName() + ").");
+                    System.out.println("ERROR: File " + prodFile.getName()
+                            + " must be present in the same folder of NSRL main file (" + file.getName() + ").");
                     return false;
                 }
-                if (!checkNSRLHeader(prodFile, FileType.NSRL_PROD)) return false;
-                //Insert NSRL Product file before the main file. 
+                if (!checkNSRLHeader(prodFile, FileType.NSRL_PROD))
+                    return false;
+                // Insert NSRL Product file before the main file.
                 inputs.add(i++, prodFile);
             } else if (type == FileType.CSV || type == FileType.INPUT || type == FileType.ICSE) {
                 if (!checkInputHeader(file, type))
                     return false;
             } else if (type == FileType.PROJECT_VIC || type == FileType.NIST_CAID) {
-                //Identification was based on its content (plus file extension) 
+                // Identification was based on its content (plus file extension)
             } else {
                 if (type == FileType.UNKNOWN) {
                     System.out.println("File " + file.getPath() + " skipped.");
@@ -1206,7 +1291,7 @@ public class HashDBTool {
                     FileType t2 = getFileType(f2);
                     if (t2 == FileType.NSRL_MAIN) {
                         if (f1.getParentFile().equals(f2.getParentFile())) {
-                            //If both TXT and ZIP are present, process only the TXT file
+                            // If both TXT and ZIP are present, process only the TXT file
                             System.out.println("File " + f1.getPath() + " skipped.");
                             inputs.remove(i--);
                             break;
@@ -1220,15 +1305,20 @@ public class HashDBTool {
 
     private FileType getFileType(File file) {
         String name = file.getName().toLowerCase();
-        if (name.equalsIgnoreCase(nsrlMainFileName)) return FileType.NSRL_MAIN;
-        if (name.equalsIgnoreCase(nsrlMainZipFileName)) return FileType.NSRL_MAIN_ZIP;
-        if (name.equalsIgnoreCase(nsrlProdFileName)) return FileType.NSRL_PROD;
+        if (name.equalsIgnoreCase(nsrlMainFileName))
+            return FileType.NSRL_MAIN;
+        if (name.equalsIgnoreCase(nsrlMainZipFileName))
+            return FileType.NSRL_MAIN_ZIP;
+        if (name.equalsIgnoreCase(nsrlProdFileName))
+            return FileType.NSRL_PROD;
         if (name.endsWith(".csv"))
             return isIcseCsv(file) ? FileType.ICSE : FileType.CSV;
-        if (name.endsWith(".json") && isKnownJson(file, FileType.PROJECT_VIC)) return FileType.PROJECT_VIC;
+        if (name.endsWith(".json") && isKnownJson(file, FileType.PROJECT_VIC))
+            return FileType.PROJECT_VIC;
         if (name.endsWith(".json") && isKnownJson(file, FileType.NIST_CAID))
             return FileType.NIST_CAID;
-        if (!inputFolderUsed) return FileType.INPUT;
+        if (!inputFolderUsed)
+            return FileType.INPUT;
         return FileType.UNKNOWN;
     }
 
@@ -1239,7 +1329,8 @@ public class HashDBTool {
             JsonFactory jfactory = new JsonFactory();
             reader = Files.newBufferedReader(file.toPath());
             jp = jfactory.createParser(reader);
-            if (jp.nextToken() != JsonToken.START_OBJECT) return false;
+            if (jp.nextToken() != JsonToken.START_OBJECT)
+                return false;
             if (jp.nextToken() != JsonToken.END_OBJECT) {
                 return checkDataModel(jp.getCurrentName(), jp.nextTextValue(), type);
             }
@@ -1247,11 +1338,15 @@ public class HashDBTool {
             return false;
         } finally {
             try {
-                if (jp != null) jp.close();
-            } catch (Exception e) {}
+                if (jp != null)
+                    jp.close();
+            } catch (Exception e) {
+            }
             try {
-                if (reader != null) reader.close();
-            } catch (Exception e) {}
+                if (reader != null)
+                    reader.close();
+            } catch (Exception e) {
+            }
         }
         return false;
     }
@@ -1270,7 +1365,8 @@ public class HashDBTool {
                     }
                 }
                 if (in == null) {
-                    System.out.println("ERROR: Invalid NSRL ZIP file " + file.getPath() + ", NSRL text file entry not found.");
+                    System.out.println(
+                            "ERROR: Invalid NSRL ZIP file " + file.getPath() + ", NSRL text file entry not found.");
                     return false;
                 }
             } else {
@@ -1286,9 +1382,12 @@ public class HashDBTool {
             boolean hasProductCode = false;
             boolean hasProductName = false;
             for (String col : header) {
-                if (hashType(col) >= 0) hasHash = true;
-                else if (col.equalsIgnoreCase(nsrlProductCode)) hasProductCode = true;
-                else if (col.equalsIgnoreCase(nsrlProductName)) hasProductName = true;
+                if (hashType(col) >= 0)
+                    hasHash = true;
+                else if (col.equalsIgnoreCase(nsrlProductCode))
+                    hasProductCode = true;
+                else if (col.equalsIgnoreCase(nsrlProductName))
+                    hasProductName = true;
             }
             if (!hasHash && (type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP)) {
                 System.out.println("ERROR: Invalid NSRL file " + file + ", no hash was found in its header.");
@@ -1308,11 +1407,15 @@ public class HashDBTool {
             return false;
         } finally {
             try {
-                if (in != null) in.close();
-            } catch (Exception e) {}
+                if (in != null)
+                    in.close();
+            } catch (Exception e) {
+            }
             try {
-                if (zipInput != null) zipInput.close();
-            } catch (Exception e) {}
+                if (zipInput != null)
+                    zipInput.close();
+            } catch (Exception e) {
+            }
         }
         return true;
     }
@@ -1343,8 +1446,10 @@ public class HashDBTool {
                 }
                 if (skipCols.contains(col.toLowerCase()))
                     continue;
-                if (hashType(col) >= 0) hasHash = true;
-                else hasProperty = true;
+                if (hashType(col) >= 0)
+                    hasHash = true;
+                else
+                    hasProperty = true;
             }
             if (!hasHash) {
                 System.out.println("ERROR: File " + file + " header must contain at least one hash column.");
@@ -1360,8 +1465,10 @@ public class HashDBTool {
             return false;
         } finally {
             try {
-                if (in != null) in.close();
-            } catch (Exception e) {}
+                if (in != null)
+                    in.close();
+            } catch (Exception e) {
+            }
         }
         return true;
     }
@@ -1476,8 +1583,10 @@ public class HashDBTool {
 
     private void deleteUnused() throws SQLException {
         Statement stmt = connection.createStatement();
-        stmt.executeUpdate("delete from HASHES where not exists (select 1 from HASHES_PROPERTIES where HASH_ID = HASHES.HASH_ID)");
-        stmt.executeUpdate("delete from PROPERTIES where not exists (select 1 from HASHES_PROPERTIES where PROPERTY_ID = PROPERTIES.PROPERTY_ID)");
+        stmt.executeUpdate(
+                "delete from HASHES where not exists (select 1 from HASHES_PROPERTIES where HASH_ID = HASHES.HASH_ID)");
+        stmt.executeUpdate(
+                "delete from PROPERTIES where not exists (select 1 from HASHES_PROPERTIES where PROPERTY_ID = PROPERTIES.PROPERTY_ID)");
         stmt.close();
     }
 
@@ -1536,29 +1645,43 @@ public class HashDBTool {
                     connection.rollback();
                 }
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
         try {
-            if (stmtInsertHash != null) stmtInsertHash.close();
-            if (stmtInsertProperty != null) stmtInsertProperty.close();
-            if (stmtInsertHashProperty != null) stmtInsertHashProperty.close();
-            if (stmtUpdateHashProperty != null) stmtUpdateHashProperty.close();
-            if (stmtRemoveHash != null) stmtRemoveHash.close();
-            if (stmtUpdateHash != null) stmtUpdateHash.close();
-            if (stmtRemoveHashProperties != null) stmtRemoveHashProperties.close();
-            if (stmtRemoveAllHashProperties != null) stmtRemoveAllHashProperties.close();
-            if (stmtSelectHashProperties != null) stmtSelectHashProperties.close();
+            if (stmtInsertHash != null)
+                stmtInsertHash.close();
+            if (stmtInsertProperty != null)
+                stmtInsertProperty.close();
+            if (stmtInsertHashProperty != null)
+                stmtInsertHashProperty.close();
+            if (stmtUpdateHashProperty != null)
+                stmtUpdateHashProperty.close();
+            if (stmtRemoveHash != null)
+                stmtRemoveHash.close();
+            if (stmtUpdateHash != null)
+                stmtUpdateHash.close();
+            if (stmtRemoveHashProperties != null)
+                stmtRemoveHashProperties.close();
+            if (stmtRemoveAllHashProperties != null)
+                stmtRemoveAllHashProperties.close();
+            if (stmtSelectHashProperties != null)
+                stmtSelectHashProperties.close();
             if (stmtSelectHash != null) {
                 for (PreparedStatement stmt : stmtSelectHash) {
-                    if (stmt != null) stmt.close();
+                    if (stmt != null)
+                        stmt.close();
                 }
             }
-            if (connection != null) connection.close();
-        } catch (Exception e) {}
+            if (connection != null)
+                connection.close();
+        } catch (Exception e) {
+        }
         try {
             if (!success && !dbExists && output != null && output.exists()) {
                 output.delete();
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
     }
 
     private boolean prepare() {
@@ -1578,17 +1701,21 @@ public class HashDBTool {
             sb.delete(0, sb.length());
             sb.append("update HASHES set ");
             for (int i = 0; i < hashTypes.length; i++) {
-                if (i > 0) sb.append(", ");
+                if (i > 0)
+                    sb.append(", ");
                 sb.append(hashTypes[i]).append("=?");
             }
             sb.append(" where HASH_ID=?");
             stmtUpdateHash = connection.prepareStatement(sb.toString());
 
-            stmtInsertProperty = connection.prepareStatement("insert into PROPERTIES (PROPERTY_ID, PROPERTY_NAME) values (?, ?)");
-            stmtInsertHashProperty = connection.prepareStatement("insert into HASHES_PROPERTIES (HASH_ID, PROPERTY_ID, VALUE) values (?, ?, ?)");
-            stmtUpdateHashProperty = connection.prepareStatement("update HASHES_PROPERTIES set VALUE=? where HASH_ID=? and PROPERTY_ID=?");
+            stmtInsertProperty = connection
+                    .prepareStatement("insert into PROPERTIES (PROPERTY_ID, PROPERTY_NAME) values (?, ?)");
+            stmtInsertHashProperty = connection
+                    .prepareStatement("insert into HASHES_PROPERTIES (HASH_ID, PROPERTY_ID, VALUE) values (?, ?, ?)");
+            stmtUpdateHashProperty = connection
+                    .prepareStatement("update HASHES_PROPERTIES set VALUE=? where HASH_ID=? and PROPERTY_ID=?");
 
-            //Prepared statements for each possible combination of hash types
+            // Prepared statements for each possible combination of hash types
             sb.delete(0, sb.length());
             sb.append("select HASH_ID");
             for (String h : hashTypes) {
@@ -1601,8 +1728,10 @@ public class HashDBTool {
                 boolean first = true;
                 for (int j = 0; j < hashTypes.length; j++) {
                     if (((1 << j) & i) != 0) {
-                        if (first) first = false;
-                        else sb1.append(" OR ");
+                        if (first)
+                            first = false;
+                        else
+                            sb1.append(" OR ");
                         sb1.append(hashTypes[j]).append("=?");
                     }
                 }
@@ -1611,10 +1740,12 @@ public class HashDBTool {
             }
 
             stmtRemoveHash = connection.prepareStatement("delete from HASHES where HASH_ID=?");
-            stmtRemoveHashProperties = connection.prepareStatement("delete from HASHES_PROPERTIES where HASH_ID=? and PROPERTY_ID=?");
+            stmtRemoveHashProperties = connection
+                    .prepareStatement("delete from HASHES_PROPERTIES where HASH_ID=? and PROPERTY_ID=?");
             stmtRemoveAllHashProperties = connection.prepareStatement("delete from HASHES_PROPERTIES where HASH_ID=?");
 
-            stmtSelectHashProperties = connection.prepareStatement("select PROPERTY_ID, VALUE from HASHES_PROPERTIES where HASH_ID=?");
+            stmtSelectHashProperties = connection
+                    .prepareStatement("select PROPERTY_ID, VALUE from HASHES_PROPERTIES where HASH_ID=?");
             stmtSelectHashProperties.setFetchSize(64);
 
             return true;
@@ -1717,25 +1848,29 @@ public class HashDBTool {
                 i += 3;
             } else if (arg.equalsIgnoreCase("-replace")) {
                 if (mode != ProcessMode.UNDEFINED) {
-                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
+                    System.out.println(
+                            "ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
                     return false;
                 }
                 mode = ProcessMode.REPLACE;
             } else if (arg.equalsIgnoreCase("-replaceAll")) {
                 if (mode != ProcessMode.UNDEFINED) {
-                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
+                    System.out.println(
+                            "ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
                     return false;
                 }
                 mode = ProcessMode.REPLACE_ALL;
             } else if (arg.equalsIgnoreCase("-remove")) {
                 if (mode != ProcessMode.UNDEFINED) {
-                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
+                    System.out.println(
+                            "ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
                     return false;
                 }
                 mode = ProcessMode.REMOVE;
             } else if (arg.equalsIgnoreCase("-removeAll")) {
                 if (mode != ProcessMode.UNDEFINED) {
-                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
+                    System.out.println(
+                            "ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
                     return false;
                 }
                 mode = ProcessMode.REMOVE_ALL;
@@ -1754,7 +1889,8 @@ public class HashDBTool {
             System.out.println("ERROR: No output file defined (-o <output database file>).");
             return false;
         }
-        if (mode == ProcessMode.UNDEFINED) mode = ProcessMode.MERGE;
+        if (mode == ProcessMode.UNDEFINED)
+            mode = ProcessMode.MERGE;
         return true;
     }
 
