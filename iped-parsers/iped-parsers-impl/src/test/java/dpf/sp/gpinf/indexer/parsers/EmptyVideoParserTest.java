@@ -29,10 +29,12 @@ public class EmptyVideoParserTest extends TestCase {
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         ISO6709Converter converter = new ISO6709Converter();
-        converter.populateLocation(metadata, getName());
+        converter.populateLocation(metadata, "+48.8577+002.295/");
         try (InputStream stream = getStream("test-files/test_videoMp4.mp4")) {
             parser.parse(stream, handler, metadata, context);
-
+            
+            assertEquals(metadata.get(Metadata.LATITUDE), "+48.8577");
+            assertEquals(metadata.get(Metadata.LONGITUDE), "+002.295");
         }
 
     }

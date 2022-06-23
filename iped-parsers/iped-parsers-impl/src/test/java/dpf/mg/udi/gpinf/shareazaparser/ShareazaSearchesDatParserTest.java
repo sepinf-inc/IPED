@@ -13,7 +13,7 @@ import org.xml.sax.SAXException;
 
 import junit.framework.TestCase;
 
-public class ShareazaSearchesDatParserTests extends TestCase {
+public class ShareazaSearchesDatParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
