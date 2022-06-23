@@ -70,7 +70,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
     private int openedStreams = 0;
     private Set<Long> currentStreams = new HashSet<>();
     private int priority = 0;
-    private volatile long requestTime = 0;
+    private long requestTime = 0;
 
     static class TimeoutMonitor extends Thread {
         public void run() {
@@ -86,11 +86,11 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
         }
     }
 
-    private void checkTimeout() {
+    private synchronized void checkTimeout() {
         if (requestTime == 0)
             return;
         if (SleuthkitServer.getByte(out, 0) != FLAGS.SQLITE_READ) {
-            logger.info("Waiting SleuthkitServer database read..."); //$NON-NLS-1$
+            logger.info("Waiting SleuthkitServer {} database read...", id); //$NON-NLS-1$
             return;
         }
         if (System.currentTimeMillis() / 1000 - requestTime >= TIMEOUT_SECONDS) {
@@ -103,7 +103,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
         }
     }
 
-    public void enableTimeoutCheck(boolean enable) {
+    public synchronized void enableTimeoutCheck(boolean enable) {
         if (enable)
             requestTime = System.currentTimeMillis() / 1000;
         else
@@ -210,7 +210,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
             }
 
             if (!ok) {
-                throw new Exception("Error starting SleuthkitServer"); //$NON-NLS-1$
+                throw new Exception("Error starting SleuthkitServer " + id); //$NON-NLS-1$
             }
 
         } catch (Exception e) {
@@ -269,7 +269,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
             }
             process = null;
             if (!serverError)
-                logger.info("Restarting SleuthkitServer to clean possible resource leaks."); //$NON-NLS-1$
+                logger.info("Restarting SleuthkitServer {} to clean possible resource leaks.", id); //$NON-NLS-1$
             serverError = false;
             openedStreams = 0;
             currentStreams.clear();
