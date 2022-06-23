@@ -139,7 +139,18 @@ public class SQLite3DBParser extends AbstractDBParser {
                 String relatedFileQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(parsingFilePath + suffix) + "\"";
                 List<IItemReader> items = searcher.search(relatedFileQuery);
                 if (items.size() > 0) {
-                    IItemReader relatedItem = items.get(0);
+                    IItemReader relatedItem = null;
+                    // pick the journal/wal with same deleted status
+                    for (IItemReader i : items) {
+                        if (i.isDeleted() == parsingItem.isDeleted()) {
+                            relatedItem = i;
+                            break;
+                        }
+                    }
+                    // fallback to first item found
+                    if (relatedItem == null) {
+                        relatedItem = items.get(0);
+                    }
                     File relatedFileTemp = new File(theFile.getAbsolutePath() + suffix);
                     try (InputStream in = relatedItem.getBufferedInputStream()) {
                         Files.copy(in, relatedFileTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
