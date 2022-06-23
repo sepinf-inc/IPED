@@ -111,7 +111,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
 
         } catch (IOException e) {
             client.serverError = true;
-            LOGGER.error(getCrashMsg());
+            LOGGER.error("Wait response error: " + getCrashMsg());
             throw e;
 
         } finally {
@@ -120,7 +120,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
 
         byte cmd;
         long time = 0;
-        while (FLAGS.isClientCmd(cmd = SleuthkitServer.getByte(mbb, 0))) {
+        while (FLAGS.isClientCmd(cmd = SleuthkitServer.getByte(mbb, 0)) || cmd == FLAGS.SQLITE_READ) {
             try {
                 if (time == 0) {
                     time = System.currentTimeMillis();
@@ -158,7 +158,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
             SleuthkitServer.notify(os);
         } catch (IOException e) {
             client.serverError = true;
-            LOGGER.error(getCrashMsg());
+            LOGGER.error("Notify error: " + getCrashMsg());
             throw e;
         }
     }
