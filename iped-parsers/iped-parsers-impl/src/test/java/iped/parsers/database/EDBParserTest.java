@@ -7,7 +7,6 @@ import static org.junit.Assume.assumeFalse;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.tika.exception.TikaException;
