@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tika.utils.SystemUtils;
@@ -44,7 +45,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
     private static List<SleuthkitClient> clientsList = new ArrayList<>();
 
-    public static int NUM_TSK_SERVERS;
+    public static final int NUM_TSK_SERVERS;
 
     private static final HashMap<String, String> newEnvVars = new HashMap<>();
 
@@ -56,21 +57,20 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
         NUM_TSK_SERVERS = config.getNumImageReaders();
     }
 
-    Process process;
     int id = idStart.getAndIncrement();;
+    Process process;
     InputStream is;
     FileChannel fc;
     File pipe;
-    MappedByteBuffer out;
+    MappedByteBuffer mbb;
     OutputStream os;
     Random rand = new Random();
 
-    volatile boolean serverError = false;
-
+    private boolean serverError = false;
     private int openedStreams = 0;
-    private Set<Long> currentStreams = new HashSet<>();
+    private Set<SleuthkitClientInputStream> currentStreams = new HashSet<>();
     private int priority = 0;
-    private volatile long requestTime = 0;
+    private long requestTime = 0;
 
     static class TimeoutMonitor extends Thread {
         public void run() {
@@ -86,24 +86,30 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
         }
     }
 
-    private void checkTimeout() {
+    synchronized boolean isServerError() {
+        return serverError;
+    }
+
+    synchronized void setServerError(boolean error) {
+        serverError = error;
+    }
+
+    private synchronized void checkTimeout() {
         if (requestTime == 0)
             return;
-        if (SleuthkitServer.getByte(out, 0) != FLAGS.SQLITE_READ) {
-            logger.info("Waiting SleuthkitServer database read..."); //$NON-NLS-1$
+        if (SleuthkitServer.getByte(mbb, 0) != FLAGS.SQLITE_READ) {
+            logger.info("Waiting SleuthkitServer {} database read...", id); //$NON-NLS-1$
             return;
         }
         if (System.currentTimeMillis() / 1000 - requestTime >= TIMEOUT_SECONDS) {
             logger.error("Timeout waiting SleuthkitServer " + id + " response! Restarting...");
-            if (process != null) {
-                process.destroyForcibly();
-            }
             serverError = true;
             requestTime = 0;
+            finishProcess(false);
         }
     }
 
-    public void enableTimeoutCheck(boolean enable) {
+    synchronized void enableTimeoutCheck(boolean enable) {
         if (enable)
             requestTime = System.currentTimeMillis() / 1000;
         else
@@ -152,7 +158,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
     public static void shutDownServers() {
         for (SleuthkitClient sc : clientsList)
-            sc.finishProcessAndClearMmap();
+            sc.finishProcess(true);
     }
 
     private SleuthkitClient() {
@@ -161,7 +167,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
         }
     }
 
-    private void start() {
+    private synchronized void start() {
 
         LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         String pipePath = localConfig.getIndexerTemp() + "/pipe-" + id; //$NON-NLS-1$
@@ -194,8 +200,8 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
             try (RandomAccessFile raf = new RandomAccessFile(pipePath, "rw")) { //$NON-NLS-1$
                 raf.setLength(size);
                 fc = raf.getChannel();
-                out = fc.map(MapMode.READ_WRITE, 0, size);
-                out.load();
+                mbb = fc.map(MapMode.READ_WRITE, 0, size);
+                mbb.load();
             } catch (ClosedByInterruptException e) {
                 // clear interrupt status
                 Thread.interrupted();
@@ -204,25 +210,24 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
             is.read();
             boolean ok = false;
-            while (!(ok = SleuthkitServer.getByte(out, 0) == FLAGS.DONE)
-                    && SleuthkitServer.getByte(out, 0) != FLAGS.ERROR) {
+            while (!(ok = SleuthkitServer.getByte(mbb, 0) == FLAGS.DONE)
+                    && SleuthkitServer.getByte(mbb, 0) != FLAGS.ERROR) {
                 Thread.sleep(1);
             }
 
             if (!ok) {
-                throw new Exception("Error starting SleuthkitServer"); //$NON-NLS-1$
+                throw new Exception("Error starting SleuthkitServer " + id); //$NON-NLS-1$
             }
+
+            logger.info("Starting SleuthkitServer {} started.", id);
 
         } catch (Exception e) {
             e.printStackTrace();
-            if (process != null) {
-                process.destroyForcibly();
-            }
-            process = null;
+            finishProcess(false);
         }
     }
 
-    private void logStdErr(final InputStream is, final int id) {
+    private static void logStdErr(final InputStream is, final int id) {
         new Thread() {
             public void run() {
                 byte[] b = new byte[1024 * 1024];
@@ -241,7 +246,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
         }.start();
     }
 
-    private boolean ping() {
+    private synchronized boolean ping() {
         int i = rand.nextInt(255) + 1;
         try {
             os.write(i);
@@ -256,42 +261,48 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
         return false;
     }
 
+    private synchronized boolean isFineToUse() {
+        if (serverError) {
+            return false;
+        }
+        if (!ping()) {
+            logger.warn("Ping SleuthkitServer " + this.id + " failed! Restarting..."); //$NON-NLS-1$ //$NON-NLS-2$
+            return false;
+        }
+        if (openedStreams > MAX_STREAMS && currentStreams.size() == 0) {
+            logger.info("Restarting SleuthkitServer {} to clean possible resource leaks.", id); //$NON-NLS-1$
+            return false;
+        }
+        return true;
+    }
+
     public synchronized SeekableInputStream getInputStream(int id, String path) throws IOException {
 
-        if (!serverError && !ping()) {
-            logger.warn("Ping SleuthkitServer " + this.id + " failed! Restarting..."); //$NON-NLS-1$ //$NON-NLS-2$
-            serverError = true;
+        if (!isFineToUse()) {
+            restartServer();
         }
 
-        if (serverError || (openedStreams > MAX_STREAMS && currentStreams.size() == 0)) {
-            if (process != null) {
-                process.destroyForcibly();
-            }
-            process = null;
-            if (!serverError)
-                logger.info("Restarting SleuthkitServer to clean possible resource leaks."); //$NON-NLS-1$
-            serverError = false;
-            openedStreams = 0;
-            currentStreams.clear();
-            synchronized (lock) {
-                priority = 1;
-            }
-        }
+        SleuthkitClientInputStream stream = new SleuthkitClientInputStream(id, path, this);
+        currentStreams.add(stream);
+        openedStreams++;
+        return stream;
+    }
+
+    synchronized void restartServer() throws IOException {
+
+        finishProcess(false);
 
         while (process == null || !isAlive(process)) {
             start();
         }
 
-        SleuthkitClientInputStream stream = new SleuthkitClientInputStream(id, path, this);
-
-        currentStreams.add(stream.streamId);
-        openedStreams++;
-
-        return stream;
+        openedStreams = 0;
+        currentStreams.forEach(s -> s.seekAfterRestart = true);
+        serverError = false;
     }
 
-    public synchronized void removeStream(long streamID) {
-        boolean removed = currentStreams.remove(streamID);
+    synchronized void removeStream(SleuthkitClientInputStream stream) {
+        boolean removed = currentStreams.remove(stream);
         if (removed) {
             synchronized (lock) {
                 clientPriorityQueue.remove(this);
@@ -301,23 +312,36 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
         }
     }
 
-    private void finishProcessAndClearMmap() {
-        process.destroyForcibly();
+    private synchronized void finishProcess(boolean deletemmapFile) {
+        if (process != null) {
+            process.destroyForcibly();
+            try {
+                process.waitFor(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            process = null;
+        }
         try {
-            fc.close();
+            if (fc != null) {
+                fc.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
         fc = null;
-        out = null;
-        int tries = 10;
-        do {
-            System.gc();
-            logger.info("Trying to delete " + pipe.getAbsolutePath());
-        } while (!pipe.delete() && tries-- > 0);
+        mbb = null;
+
+        if (deletemmapFile) {
+            int tries = 10;
+            do {
+                System.gc();
+                logger.info("Trying to delete " + pipe.getAbsolutePath());
+            } while (!pipe.delete() && tries-- > 0);
+        }
     }
 
-    private boolean isAlive(Process p) {
+    private static boolean isAlive(Process p) {
         try {
             p.exitValue();
             return false;

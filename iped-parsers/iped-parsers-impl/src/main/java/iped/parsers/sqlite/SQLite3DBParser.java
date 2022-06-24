@@ -43,6 +43,7 @@ import iped.parsers.jdbc.JDBCTableReader;
 import iped.parsers.util.DelegatingConnection;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
+import iped.utils.IOUtil;
 
 /**
  * This is the implementation of the db parser for SQLite.
@@ -76,13 +77,25 @@ public class SQLite3DBParser extends AbstractDBParser {
         }
         TemporaryResources tmp = new TemporaryResources();
         try {
-            File dbFile = TikaInputStream.get(stream, tmp).getFile();
+            final File dbFile;
+            File tikaFile = TikaInputStream.get(stream, tmp).getFile();
+            if (!IOUtil.isTemporaryFile(tikaFile)) {
+                File tempFile = Files.createTempFile("sqlite_tmp", ".db").toFile();
+                tmp.addResource(() -> {
+                    tempFile.delete();
+                });
+                IOUtil.copyFile(tikaFile, tempFile);
+                dbFile = tempFile;
+            } else {
+                dbFile = tikaFile;
+            }
 
             exportWalLog(dbFile, context, tmp);
             exportRollbackJournal(dbFile, context, tmp);
 
             SQLiteConfig config = new SQLiteConfig();
-            config.setReadOnly(true);
+            // don't set this: see #1186
+            // config.setReadOnly(true);
 
             String connectionString = getConnectionString(dbFile);
             connection = config.createConnection(connectionString);
@@ -126,7 +139,18 @@ public class SQLite3DBParser extends AbstractDBParser {
                 String relatedFileQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(parsingFilePath + suffix) + "\"";
                 List<IItemReader> items = searcher.search(relatedFileQuery);
                 if (items.size() > 0) {
-                    IItemReader relatedItem = items.get(0);
+                    IItemReader relatedItem = null;
+                    // pick the journal/wal with same deleted status
+                    for (IItemReader i : items) {
+                        if (i.isDeleted() == parsingItem.isDeleted()) {
+                            relatedItem = i;
+                            break;
+                        }
+                    }
+                    // fallback to first item found
+                    if (relatedItem == null) {
+                        relatedItem = items.get(0);
+                    }
                     File relatedFileTemp = new File(theFile.getAbsolutePath() + suffix);
                     try (InputStream in = relatedItem.getBufferedInputStream()) {
                         Files.copy(in, relatedFileTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
