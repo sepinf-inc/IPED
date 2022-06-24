@@ -46,5 +46,5 @@ index.mapping.total_fields.limit = 10000
 # converts them to lowercase and uses asciifolding filter
 useCustomAnalyzer = true
 
-#Validate the ssl certificate, it is not recommended that this is set to false in production
-validateSSL = false 
+# Validate the SSL certificate, it is not recommended to disable this in production
+validateSSL = true
