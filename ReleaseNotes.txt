@@ -1,4 +1,4 @@
-xx/06/2022: IPED-4.0.0-beta
+24/06/2022: IPED-4.0.0-beta
 News:
 #361:  Face recognition functionality (Luis Nassif & Rui Santana)
 #118:  Centralized hash database, refactor importing and look up for different hashsets: NSRL, ProjectVic, LED, PhotoDNA, CSV (Wladimir Leite)
@@ -100,6 +100,7 @@ News:
 #649:  Minor Visual Enhancements in Metadata Panel (Wladimir Leite)
 #906:  Group all layout and appearance related menu items  (Wladimir Leite)
 #799:  Just show "initial graph includes the most linked entities" message if the graph tab is selected (Luís Nassif)
+#1188: Improve robustness of external image reading processes (Luis Nassif)
 #772:  Enable robustImageReading by default for faster E01 or APFS processing (Luís Nassif)
 #612:  Decrease minFileSize2OCR and increase maxFileSize2OCR default values (Luis Nassif)
 #642:  Optimization if parseUnknown = false and robustImageReading = true (Luís Nassif)
@@ -127,6 +128,7 @@ News:
 #850:  Change "indexador" folder to "iped" in whole codebase (Luis Nassif)
 Fixes:
 #420:  Fix diacritics normalization and filtering rules for other languages (Luis Nassif)
+#1187: Multiple "Possible SleuthkitServer X crash reading..." non problematic files (Luis Nassif)
 #586:  Python modules loading error: jep.JepException: <class 'ModuleNotFoundError'>: No module named 'org.apache' (Luis Nassif)
 #380:  Error when more than one python task is enabled at the same time (Luis Nassif)
 #731:  ArrayIndexOutOfBoundsException: -2147483629 when using log scale on Metadata panel if an infinite value is present in a numeric field (Wladimir Leite)
