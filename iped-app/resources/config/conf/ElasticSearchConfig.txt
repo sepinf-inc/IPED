@@ -2,9 +2,6 @@
 # ElasticSearch Task configuration
 #################################
 
-# Enable indexing to ElasticSearch cluster
-enableIndexToElasticSearch = false
-
 # Host name or ip address of Elastic cluster
 host = Sepinf-hpw03
 
