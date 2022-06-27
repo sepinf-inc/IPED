@@ -575,6 +575,10 @@ public class HashDBTool {
             config.setOpenMode(SQLiteOpenMode.EXCLUSIVE);
             config.setTransactionMode(TransactionMode.EXCLUSIVE);
             config.enforceForeignKeys(false);
+            File parent = output.getParentFile();
+            if (parent != null) {
+                config.setTempStoreDirectory(parent.getAbsolutePath());
+            }
             connection = config.createConnection("jdbc:sqlite:" + output.getAbsolutePath());
             connection.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
             connection.setAutoCommit(false);
