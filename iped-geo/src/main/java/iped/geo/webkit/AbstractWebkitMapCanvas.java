@@ -1,6 +1,6 @@
 package iped.geo.webkit;
 
-import iped.geo.AbstractMapaCanvas;
+import iped.geo.AbstractMapCanvas;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -14,7 +14,7 @@ import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
-public abstract class AbstractWebkitMapaCanvas extends AbstractMapaCanvas {
+public abstract class AbstractWebkitMapCanvas extends AbstractMapCanvas {
     /**
 	 * 
 	 */
@@ -25,7 +25,7 @@ public abstract class AbstractWebkitMapaCanvas extends AbstractMapaCanvas {
 
     JSInterfaceFunctions jsInterface;
 
-    public AbstractWebkitMapaCanvas() {
+    public AbstractWebkitMapCanvas() {
         this.jfxPanel = new JFXPanel();
 
         Platform.runLater(new Runnable() {

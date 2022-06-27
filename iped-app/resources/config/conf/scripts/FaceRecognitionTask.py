@@ -109,7 +109,7 @@ class FaceRecognitionTask:
         if not FaceRecognitionTask.enabled:
             return
         
-        from dpf.sp.gpinf.indexer.config import VideoThumbsConfig
+        from iped.engine.config import VideoThumbsConfig
         videoConfig = configuration.findObject(VideoThumbsConfig);
         FaceRecognitionTask.videoSubitems = videoConfig.getVideoThumbsSubitems();
         

@@ -10,9 +10,9 @@ import iped.geo.kml.GetResultsKMLWorker;
 import iped.search.IMultiSearchResult;
 
 public class AppMapMarkerEventListener implements MarkerEventListener {
-    AppMapaPanel mapaPanel;
+    AppMapPanel mapaPanel;
 
-    public AppMapMarkerEventListener(AppMapaPanel mapaPanel) {
+    public AppMapMarkerEventListener(AppMapPanel mapaPanel) {
         this.mapaPanel = mapaPanel;
     }
 

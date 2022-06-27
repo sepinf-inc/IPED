@@ -1,7 +1,7 @@
 ﻿# Python nudity detection based on yahoo open_nsfw algorithm.
-# You need to install jep (pip install jep==3.9.1), pillow, keras, and tensorflow backend.
+# You need to install pillow, keras, and tensorflow backend.
 # Tested on Windows with python 3.8.6, pillow 8.1.0, keras 2.4.3, tensorflow 2.4.1.
-# You also need to include jep.dll(.so) in PATH env var (usually C:\Users\XXX\AppData\Roaming\Python\Python38\site-packages\jep) or LD_LIBRARY_PATH (Linux)
+# On Linux, you must also install jep (pip install jep) and include jep.so in LD_LIBRARY_PATH.
 
 # If computed thumbnail will be reused or computed again
 useImageThumbs = True

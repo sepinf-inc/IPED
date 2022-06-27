@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 import org.apache.commons.io.IOUtils;
 
-import iped.geo.AbstractMapaCanvas;
+import iped.geo.AbstractMapCanvas;
 import iped.geo.impl.JMapOptionsPane;
 import iped.geo.webkit.JSInterfaceFunctions;
 import iped.utils.UiUtil;
@@ -25,7 +25,7 @@ import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
-public class MapaCanvasWebkit extends AbstractMapaCanvas {
+public class MapCanvasWebkit extends AbstractMapCanvas {
 
     /**
 	 * 
@@ -38,7 +38,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
     String googleApiKey = "";
     File keyStore = new File(System.getProperty("user.home") + "/.iped/googleApi.key");
 
-    public MapaCanvasWebkit() {
+    public MapCanvasWebkit() {
         this.jfxPanel = new JFXPanel();
 
         Platform.runLater(new Runnable() {

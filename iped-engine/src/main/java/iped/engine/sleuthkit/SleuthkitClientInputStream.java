@@ -1,11 +1,8 @@
 package iped.engine.sleuthkit;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InterruptedIOException;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.MappedByteBuffer;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -26,22 +23,17 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
     String path;
     SleuthkitClient client;
     long streamId = next.getAndIncrement();
-    private InputStream in;
-    OutputStream os;
     int bufPos = 0;
     byte[] buf;
-    MappedByteBuffer mbb;
     boolean closed = false, empty = true;
     long position = 0;
     Long size;
+    boolean seekAfterRestart = false;
 
     public SleuthkitClientInputStream(int id, String path, SleuthkitClient client) {
         this.sleuthId = id;
         this.path = path;
         this.client = client;
-        this.mbb = client.out;
-        this.in = client.is;
-        this.os = client.os;
     }
 
     private String getServerId() {
@@ -54,9 +46,6 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
         if (closed) {
             throw new IOException("Stream is closed!"); //$NON-NLS-1$
         }
-        if (client.serverError) {
-            throw new IOException(getServerId() + " returned an error before."); //$NON-NLS-1$
-        }
 
         int read = readIn(b, off, len);
         return read;
@@ -67,14 +56,21 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
 
         if (empty) {
             synchronized (client) {
+                if (client.isServerError()) {
+                    client.restartServer();
+                }
+                if (seekAfterRestart) {
+                    seek(position);
+                    seekAfterRestart = false;
+                }
                 byte cmd = sendRead(len);
                 if (cmd == FLAGS.EOF) {
                     return -1;
                 }
-                int size = mbb.getInt(13);
+                int size = client.mbb.getInt(13);
                 buf = new byte[size];
-                mbb.position(17);
-                mbb.get(buf, 0, size);
+                client.mbb.position(17);
+                client.mbb.get(buf, 0, size);
                 bufPos = 0;
                 empty = false;
             }
@@ -93,10 +89,10 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
     }
 
     private byte sendRead(int len) throws IOException {
-        mbb.putInt(1, sleuthId);
-        mbb.putLong(5, streamId);
-        mbb.putInt(13, len);
-        SleuthkitServer.commitByte(mbb, 0, FLAGS.READ);
+        client.mbb.putInt(1, sleuthId);
+        client.mbb.putLong(5, streamId);
+        client.mbb.putInt(13, len);
+        SleuthkitServer.commitByte(client.mbb, 0, FLAGS.READ);
         notifyServer();
         return waitServerResponse();
     }
@@ -105,13 +101,13 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
 
         client.enableTimeoutCheck(true);
         try {
-            int b = in.read();
+            int b = client.is.read();
             if (b == -1)
                 throw new IOException(getServerId() + " pipe closed!"); //$NON-NLS-1$
 
         } catch (IOException e) {
-            client.serverError = true;
-            LOGGER.error(getCrashMsg());
+            client.setServerError(true);
+            LOGGER.error("Wait response error: " + getCrashMsg());
             throw e;
 
         } finally {
@@ -120,7 +116,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
 
         byte cmd;
         long time = 0;
-        while (FLAGS.isClientCmd(cmd = SleuthkitServer.getByte(mbb, 0))) {
+        while (FLAGS.isClientCmd(cmd = SleuthkitServer.getByte(client.mbb, 0)) || cmd == FLAGS.SQLITE_READ) {
             try {
                 if (time == 0) {
                     time = System.currentTimeMillis();
@@ -129,7 +125,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
                 LOGGER.warn("Waiting " + getServerId() + " memory write..."); //$NON-NLS-1$
 
                 if (System.currentTimeMillis() - time >= TIMEOUT) {
-                    client.serverError = true;
+                    client.setServerError(true);
                     LOGGER.error("MemoryReadTimeout waiting " + getServerId() + ": " + path); //$NON-NLS-1$
                     throw new IOException("MemoryReadTimeout waiting " + getServerId() + ": " + path); //$NON-NLS-1$
                 }
@@ -140,10 +136,10 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
         }
 
         if (cmd == FLAGS.EXCEPTION) {
-            int len = mbb.getInt(13);
+            int len = client.mbb.getInt(13);
             byte[] b = new byte[len];
-            mbb.position(17);
-            mbb.get(b);
+            client.mbb.position(17);
+            client.mbb.get(b);
             try {
                 throw new IOException(getServerId() + " error: " + new String(b, "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (UnsupportedEncodingException e) {
@@ -155,10 +151,10 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
 
     private void notifyServer() throws IOException {
         try {
-            SleuthkitServer.notify(os);
+            SleuthkitServer.notify(client.os);
         } catch (IOException e) {
-            client.serverError = true;
-            LOGGER.error(getCrashMsg());
+            client.setServerError(true);
+            LOGGER.error("Notify error: " + getCrashMsg());
             throw e;
         }
     }
@@ -173,26 +169,27 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
         if (closed) {
             throw new IOException("Stream is closed!"); //$NON-NLS-1$
         }
-        if (client.serverError) {
-            throw new IOException(getServerId() + " returned an error before."); //$NON-NLS-1$
-        }
 
         long dif = pos - position;
         if (!empty && bufPos + dif >= 0 && bufPos + dif < buf.length) {
             bufPos += dif;
 
-        } else
+        } else {
             synchronized (client) {
-                mbb.putInt(1, sleuthId);
-                mbb.putLong(5, streamId);
-                mbb.putLong(13, pos);
-                SleuthkitServer.commitByte(mbb, 0, FLAGS.SEEK);
+                if (client.isServerError()) {
+                    client.restartServer();
+                }
+                client.mbb.putInt(1, sleuthId);
+                client.mbb.putLong(5, streamId);
+                client.mbb.putLong(13, pos);
+                SleuthkitServer.commitByte(client.mbb, 0, FLAGS.SEEK);
                 notifyServer();
                 waitServerResponse();
                 empty = true;
                 bufPos = 0;
+                seekAfterRestart = false;
             }
-
+        }
         position = pos;
 
     }
@@ -211,17 +208,17 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
         if (closed) {
             throw new IOException("Stream is closed!"); //$NON-NLS-1$
         }
-        if (client.serverError) {
-            throw new IOException(getServerId() + " returned an error before."); //$NON-NLS-1$
-        }
 
         synchronized (client) {
-            mbb.putInt(1, sleuthId);
-            mbb.putLong(5, streamId);
-            SleuthkitServer.commitByte(mbb, 0, FLAGS.SIZE);
+            if (client.isServerError()) {
+                client.restartServer();
+            }
+            client.mbb.putInt(1, sleuthId);
+            client.mbb.putLong(5, streamId);
+            SleuthkitServer.commitByte(client.mbb, 0, FLAGS.SIZE);
             notifyServer();
             waitServerResponse();
-            size = mbb.getLong(13);
+            size = client.mbb.getLong(13);
             return size;
         }
 
@@ -229,11 +226,9 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
 
     @Override
     public int read() throws IOException {
+
         if (closed) {
             throw new IOException("Stream is closed!"); //$NON-NLS-1$
-        }
-        if (client.serverError) {
-            throw new IOException(getServerId() + " returned an error before."); //$NON-NLS-1$
         }
 
         byte[] b = new byte[1];
@@ -252,16 +247,19 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
     @Override
     public void close() throws IOException {
 
+        if (closed) {
+            return;
+        }
         synchronized (client) {
-            if (!closed && !client.serverError) {
-                mbb.putInt(1, sleuthId);
-                mbb.putLong(5, streamId);
-                SleuthkitServer.commitByte(mbb, 0, FLAGS.CLOSE);
+            if (!client.isServerError()) {
+                client.mbb.putInt(1, sleuthId);
+                client.mbb.putLong(5, streamId);
+                SleuthkitServer.commitByte(client.mbb, 0, FLAGS.CLOSE);
                 notifyServer();
                 waitServerResponse();
             }
+            client.removeStream(this);
         }
-        client.removeStream(streamId);
         empty = true;
         closed = true;
 

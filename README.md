@@ -39,12 +39,14 @@ If you want to contribute to the project, refer to [Contributing](https://github
 Some of IPED several features are listed below:
 
 - Supported hashes: md5, sha-1, sha-256, sha-512 and edonkey. PhotoDNA is also available for law enforcement (please contact iped@dpf.gov.br)
-- Fast hash deduplication, NIST NSRL, ProjectVIC and LED hashset lookup
+- Supported hash sets: NIST NSRL, ProjectVIC, Interpol ICSE, standard CSV format
+- Fast hash deduplication 
 - Signature analysis
 - Categorization by file type and properties
 - Recursive container expansion of dozens of file formats
+- Embedded forensic/virtual disks expansion: supports splitted or single segment DD, E01, EX01, VHD, VHDX, VMDK (differential VMDKs are also supported) 
 - Image and video gallery for hundreds of formats
-- Georeferencing of GPS data (needs Google Maps Javascript API key)
+- Georeferencing of GPS data, using Google Maps, Bing or OpenStreetMaps
 - Regex searches with optional script validation for credit cards, emails, urls, money values, bitcoin, ethereum, ripple wallets...
 - Embedded hex, unicode text, metadata and native viewers
 - File content and metadata indexing and fast searching, including unknown files and unallocated space
@@ -57,6 +59,8 @@ Some of IPED several features are listed below:
 - Customizable filters based on any file metadata
 - Similar document search with configurable threshold
 - Similar image search, using internal or external image
+- Similar face Recognition, optimized to run without GPU, using face_recognition python library
+- Unified table timeline view and event filtering for timeline analysis
 - Powerful file grouping (clustering) based on ANY metadata
 - Support for multicases up to 135 million items
 - Extensible with javascript and python (including cpython extensions) scripts
@@ -65,7 +69,7 @@ Some of IPED several features are listed below:
 - Custom parsers for Emule, Shareaza, Ares, WhatsApp, Skype, Telegram, Bittorrent, ActivitiesCache, and more...
 - Fast nudity detection for images and videos using random forests algorithm (thanks to its author Wladimir Leite)
 - Nudity detection using Yahoo open-nsfw deeplearning model (needs keras and jep)
-- Audio Transcription, implementations with Azure and Google Cloud services
+- Audio Transcription, local and remote implementations with Azure and Google Cloud services
 - Graph analysis for communications (calls, emails, instant messages...)
 - Stable processing with out-of-process file system decoding and file parsing
 - Resuming or restarting of stopped or aborted processing (--continue/--restart options)

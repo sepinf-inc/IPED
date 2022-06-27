@@ -8,9 +8,9 @@ import iped.geo.kml.GetResultsKMLWorker;
 import iped.search.IMultiSearchResult;
 
 public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
-    AppMapaPanel mapaPanel;
+    AppMapPanel mapaPanel;
 
-    public AppMarkerCheckBoxListener(AppMapaPanel mapaPanel) {
+    public AppMarkerCheckBoxListener(AppMapPanel mapaPanel) {
         this.mapaPanel = mapaPanel;
     }
 
@@ -18,7 +18,7 @@ public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
     public void onClicked(String mid, boolean checked) {
         // desabilita renderização automatica pela alteração no modelo por ser uma
         // alteração feita no próprio mapa;
-        MapaViewer.desabilitaTemp = true;
+        MapViewer.desabilitaTemp = true;
 
         // procura pela posição correspondente na tabela do item clicado no mapa
         int pos = 0;

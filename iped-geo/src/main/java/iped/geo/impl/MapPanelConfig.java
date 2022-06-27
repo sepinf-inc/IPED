@@ -12,7 +12,7 @@ import java.util.Set;
 import iped.configuration.Configurable;
 import iped.utils.UTF8Properties;
 
-public class MapaPanelConfig implements Configurable<UTF8Properties> {
+public class MapPanelConfig implements Configurable<UTF8Properties> {
     /**
      * 
      */
