@@ -23,15 +23,10 @@ import iped.viewers.timelinegraph.IpedChartPanel;
 import iped.viewers.timelinegraph.IpedChartsPanel;
 
 public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionListener {
-	IpedChartPanel ipedChartPanel = null;
 
 	static HashMap<String, SimpleDateFormat> sdfMap = null;
 
 	IpedChartsPanel ipedChartsPanel;
-
-	public TimePeriodSelectionPopupMenu(IpedChartsPanel ipedChartsPanel) {
-		this.ipedChartsPanel = ipedChartsPanel;
-	}
 
 	JTimePeriodMenuItem yearMenu;
 	JTimePeriodMenuItem quarterMenu;
@@ -69,8 +64,8 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 		sdfMap.put("Millisecond",new SimpleDateFormat("dd-MM-YYYY HH:mm:ss"));
 	}
 
-	public TimePeriodSelectionPopupMenu(IpedChartPanel ipedChartPanel) {
-		this.ipedChartPanel = ipedChartPanel;
+	public TimePeriodSelectionPopupMenu(IpedChartsPanel ipedChartsPanel) {
+		this.ipedChartsPanel = ipedChartsPanel;
 
 		yearMenu = new JTimePeriodMenuItem("Year", Year.class);
 		yearMenu.addActionListener(this);

@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -135,7 +136,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 		timelineSelectionPopupMenu = new TimelineFilterSelectionPopupMenu(chartPanel);
 		domainPopupMenu = new DomainPopupMenu(chartPanel, resultsProvider);
-		timePeriodSelectionPopupMenu = new TimePeriodSelectionPopupMenu(chartPanel);
+		timePeriodSelectionPopupMenu = new TimePeriodSelectionPopupMenu(this);
 		legendItemPopupMenu = new LegendItemPopupMenu(chartPanel);
 	}
 	
@@ -224,7 +225,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	public void selectItemsOnInterval(Date start, Date end, boolean clearPreviousSelection) {
 		selectItemsOnInterval(start, end, true, clearPreviousSelection);
 	}
-	
+
 	public void selectItemsOnInterval(Date start, Date end, boolean select, boolean clearPreviousSelection) {
 		JTable t = resultsProvider.getResultsTable();
 		t.getSelectionModel().setValueIsAdjusting(true);
@@ -437,12 +438,29 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	}
 
 	public TimePeriod getDateOnConfiguredTimePeriod(Date date) {
+		Class[] cArg = new Class[1];
+        cArg[0] = Date.class;
 		try {
-			Class[] cArg = new Class[1];
-	        cArg[0] = Date.class;
 			TimePeriod t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(date);
 			return t;
-		}catch( InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e){
+		}catch(InvocationTargetException e) {
+			try {
+				TimePeriod t = null;
+		        Calendar cal = Calendar.getInstance();
+		        cal.set(1900, 0, 1, 0, 0, 0);
+				if(date.before(cal.getTime())){
+					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime());
+				}
+		        cal.set(9999, 12, 31, 23, 59, 59);
+				if(date.after(cal.getTime())){
+					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime());
+				}
+				return t;
+			}catch(InvocationTargetException | InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e2) {
+				e2.printStackTrace();
+				return null;
+			}
+		}catch( InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e){
 			e.printStackTrace();
 			return null;
 		}
