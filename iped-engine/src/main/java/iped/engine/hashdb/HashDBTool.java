@@ -8,6 +8,7 @@ import static iped.engine.hashdb.HashDB.hashTypes;
 import static iped.engine.hashdb.HashDB.toSet;
 import static iped.engine.hashdb.HashDB.toStr;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -852,7 +853,7 @@ public class HashDBTool {
     }
 
     private boolean readProjectVIC(File file) {
-        FileInputStream is = null;
+        BufferedInputStream bis = null;
         RandomAccessFile raf = null;
         JsonParser jp = null;
         String hashName = null;
@@ -864,8 +865,8 @@ public class HashDBTool {
 
             JsonFactory jfactory = new JsonFactory();
             raf = new RandomAccessFile(file, "r");
-            is = new FileInputStream(raf.getFD());
-            jp = jfactory.createParser(is);
+            bis = new BufferedInputStream(new FileInputStream(raf.getFD()));
+            jp = jfactory.createParser(bis);
             if (jp.nextToken() != JsonToken.START_OBJECT) {
                 throw new RuntimeException("Error: root JSON should be an object.");
             }
@@ -995,8 +996,8 @@ public class HashDBTool {
             } catch (Exception e) {
             }
             try {
-                if (is != null)
-                    is.close();
+                if (bis != null)
+                    bis.close();
             } catch (Exception e) {
             }
             try {
@@ -1009,7 +1010,7 @@ public class HashDBTool {
     }
 
     private boolean readNistCaid(File file) {
-        FileInputStream is = null;
+        BufferedInputStream bis = null;
         RandomAccessFile raf = null;
         JsonParser jp = null;
         try {
@@ -1019,8 +1020,8 @@ public class HashDBTool {
 
             JsonFactory jfactory = new JsonFactory();
             raf = new RandomAccessFile(file, "r");
-            is = new FileInputStream(raf.getFD());
-            jp = jfactory.createParser(is);
+            bis = new BufferedInputStream(new FileInputStream(raf.getFD()));
+            jp = jfactory.createParser(bis);
             if (jp.nextToken() != JsonToken.START_OBJECT) {
                 throw new RuntimeException("Error: root JSON should be an object.");
             }
@@ -1123,8 +1124,8 @@ public class HashDBTool {
             } catch (Exception e) {
             }
             try {
-                if (is != null)
-                    is.close();
+                if (bis != null)
+                    bis.close();
             } catch (Exception e) {
             }
             try {
