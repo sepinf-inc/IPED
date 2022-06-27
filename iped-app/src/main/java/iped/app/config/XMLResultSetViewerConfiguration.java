@@ -10,12 +10,15 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import iped.engine.task.ExportFileTask;
 import iped.exception.IPEDException;
 import iped.utils.XMLUtil;
 import iped.viewers.api.ResultSetViewer;
@@ -25,6 +28,7 @@ public class XMLResultSetViewerConfiguration implements ResultSetViewerConfigura
 
     Document doc;
     List<ResultSetViewer> viewers = null;
+    private static Logger LOGGER = LoggerFactory.getLogger(XMLResultSetViewerConfiguration.class);    
 
     public XMLResultSetViewerConfiguration(File xmlFile) throws IPEDException {
         try {
@@ -56,11 +60,16 @@ public class XMLResultSetViewerConfiguration implements ResultSetViewerConfigura
 
         for (int i = 0; i < resultSetViewerEls.getLength(); i++) {
             Element resultSetViewerEl = (Element) resultSetViewerEls.item(i);
-
             Element rsViewerClass = XMLUtil.getFirstElement(resultSetViewerEl, "class");
-            Class<?> classe = Class.forName(rsViewerClass.getTextContent());
-            ResultSetViewer rsViewer = (ResultSetViewer) classe.getDeclaredConstructor().newInstance();
-            viewers.add(rsViewer);
+
+            try {
+                Class<?> classe = Class.forName(rsViewerClass.getTextContent());
+                ResultSetViewer rsViewer = (ResultSetViewer) classe.getDeclaredConstructor().newInstance();
+                viewers.add(rsViewer);
+            }catch(Exception e) {
+            	LOGGER.warn("ResultSetViewer class not found in classpath: {}.",rsViewerClass.getTextContent());
+            	e.printStackTrace();
+            }
         }
     }
 

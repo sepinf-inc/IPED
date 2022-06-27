@@ -1,5 +1,6 @@
 package iped.viewers.api;
 
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
@@ -19,7 +20,7 @@ public interface ResultSetViewer {
 
     public String getID();
 
-    public JScrollPane getPanel();
+    public JPanel getPanel();
 
     public void redraw();
 

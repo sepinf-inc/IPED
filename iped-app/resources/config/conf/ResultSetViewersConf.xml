@@ -4,5 +4,9 @@
 		<class>iped.geo.impl.MapaViewer</class>
 	</resultSetViewer>
 
+	<resultSetViewer>
+		<class>iped.viewers.timelinegraph.IpedChartsPanel</class>
+	</resultSetViewer>
+
 </resultSetViewers>
 
