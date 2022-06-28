@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
+import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -37,6 +38,8 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     private static String XMLFilePath = userDir + "/src/test/ExternalParsers.xml";
     private static String osName = System.getProperty("os.name").toLowerCase();
     private static File XMLFile;
+    private static List<ExternalParser> parsers;
+    private static ExternalParser superfetchParser, prefetchParser;
 
     private static ExternalParserConfigGenerator createDefaultExternalParserConfig(String name, String toolPath, String checkCommand,
         String command, MediaType mimeType) throws TikaException, TransformerException {
@@ -75,6 +78,10 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             repoPath = "libyal/sccainfo/20170205.1/sccainfo-20170205.1.zip";
             RepoToolDownloader.unzipFromUrl(repoPath, absoluteToolsPath);
         }
+
+        parsers = ExternalParsersConfigReader.read(new FileInputStream(XMLFile));
+        superfetchParser = parsers.get(0);
+        prefetchParser = parsers.get(1);
     }
 
     @AfterClass
@@ -88,8 +95,6 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     @Test
     public void testSuperFetch() throws IOException, TikaException, SAXException, TransformerException {
 
-        ExternalParser parser = ExternalParsersConfigReader.read(new FileInputStream(XMLFile)).get(0);
-
         ContentHandler handler = new BodyContentHandler(1 << 20);
         ParseContext context = new ParseContext();
         Metadata metadata = new Metadata();
@@ -99,13 +104,42 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
 
             assumeTrue(osName.startsWith("windows"));
-            parser.parse(stream, handler, metadata, context);
+            superfetchParser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
             String hts = handler.toString();
 
             assertTrue(mts.contains(fileName));
             assertTrue(hts.contains("Creation time"));
             assertTrue(hts.contains("Mar 25, 2015 11:08:36.956950100 UTC"));
+
+        }
+
+    }
+
+    @Test
+    public void testPreFetch() throws IOException, TikaException, SAXException, TransformerException {
+
+        ContentHandler handler = new BodyContentHandler(1 << 20);
+        ParseContext context = new ParseContext();
+        Metadata metadata = new Metadata();
+        String fileName = "test_prefetch.pf";
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
+
+            assumeTrue(osName.startsWith("windows"));
+            prefetchParser.parse(stream, handler, metadata, context);
+            String mts = metadata.toString();
+            String hts = handler.toString();
+
+            assertTrue(hts.contains("TEAMS.EXE"));
+            assertTrue(hts.toLowerCase().contains("format version"));
+            assertTrue(hts.toLowerCase().contains("30"));
+            assertTrue(hts.toLowerCase().contains("0x92d8a64c"));
+            assertTrue(hts.toLowerCase().contains("jun 08, 2022 12:09:38.412736500 utc"));
+            assertTrue(hts.toLowerCase().contains("last run time"));
+            assertTrue(hts.toLowerCase().contains("users\\felipe costa\\appdata\\local\\microsoft\\teams\\current\\teams.exe"));
+            System.out.println(hts);
 
         }
 
