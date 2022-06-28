@@ -3,11 +3,11 @@ package iped.viewers.timelinegraph;
 import java.awt.Graphics2D;
 import java.awt.geom.RectangularShape;
 
-import org.jfree.chart.renderer.xy.GradientXYBarPainter;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.ui.RectangleEdge;
 
-public class IpedXYBarPainter extends GradientXYBarPainter{
+public class IpedXYBarPainter extends StandardXYBarPainter{
 	
 	XYBarRenderer parentRenderer;
 	
