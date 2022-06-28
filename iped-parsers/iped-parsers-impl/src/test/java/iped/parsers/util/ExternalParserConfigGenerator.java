@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
