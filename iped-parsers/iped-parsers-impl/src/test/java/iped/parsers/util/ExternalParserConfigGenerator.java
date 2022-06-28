@@ -28,7 +28,7 @@ import iped.parsers.external.ExternalParsersConfigReaderMetKeys;
 public class ExternalParserConfigGenerator implements ExternalParsersConfigReaderMetKeys {
     private Document document;
     private Element root, winToolPath, parser, name, check, checkCommand,
-        errorCodes, command, mimeTypes, metadata, outputCharset;
+        errorCodes, command, mimeTypes, metadata, outputCharset, firstLinesToIgnore;
 
     public ExternalParserConfigGenerator() throws TikaException, TransformerException {
         DocumentBuilder docBuilder = XMLReaderUtils.getDocumentBuilder();
@@ -56,6 +56,8 @@ public class ExternalParserConfigGenerator implements ExternalParsersConfigReade
         parser.appendChild(metadata);
         outputCharset = document.createElement(OUTPUT_CHARSET);
         parser.appendChild(outputCharset);
+        firstLinesToIgnore = document.createElement(LINES_TO_IGNORE);
+        parser.appendChild(firstLinesToIgnore);
 
     }
 
@@ -86,6 +88,11 @@ public class ExternalParserConfigGenerator implements ExternalParsersConfigReade
 
     public void setWinToolPath(String strWinToolPath) {
         addTextContent(winToolPath, strWinToolPath);
+    }
+
+    public void setFirstLinesToIgnore(int intFirstLinesToIgnore) {
+        String strFirstLinesToIgnore = String.valueOf(intFirstLinesToIgnore);
+        addTextContent(firstLinesToIgnore, strFirstLinesToIgnore);
     }
 
     public void addMimeTypes(HashSet<MediaType> mediaTypes) {
