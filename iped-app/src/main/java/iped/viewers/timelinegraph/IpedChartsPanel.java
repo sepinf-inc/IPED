@@ -2,10 +2,8 @@ package iped.viewers.timelinegraph;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -202,7 +200,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
         chartPanel.setMouseWheelEnabled(true);
         chartPanel.setDomainZoomable(true);
-        chartPanel.setRangeZoomable(false);
+        chartPanel.setRangeZoomable(true);
         chartPanel.setDisplayToolTips(true);
         ToolTipManager ttm = ToolTipManager.sharedInstance();
         ttm.setInitialDelay(0);
@@ -285,8 +283,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		HashMap<String, TimeTableCumulativeXYDataset> result = new HashMap<String, TimeTableCumulativeXYDataset>();
 
 		try {
-			//legendItems = new LegendItemCollection();
-
 	        sourceSearchResults = resultsProvider.getResults();
 
 	        LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
@@ -317,7 +313,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	        timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
 			timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
 			BinaryDocValues eventsInDocOrdsValues = reader.getBinaryDocValues(ExtraProperties.TIME_EVENT_ORDS);
-			
 			
 			if(sourceSearchResults.getLength()>0) {
 		        for (IItemId item : sourceSearchResults.getIterator()) {
@@ -359,7 +354,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	           		if(item instanceof TimeItemId) {
 	           			//on timeline view
 	           			TimeItemId timeItemId = (TimeItemId) item;
-	               		TimePeriod t = getDateOnConfiguredTimePeriod(ISO8601DATEFORMAT.parse(timeStampValues.lookupOrd(timeItemId.getTimeStampOrd()).utf8ToString()));
+	               		TimePeriod t = DateUtil.getDateOnConfiguredTimePeriod(timePeriodClass,ISO8601DATEFORMAT.parse(timeStampValues.lookupOrd(timeItemId.getTimeStampOrd()).utf8ToString()));
 	               		
 	               		if(t!=null) {
 		               		String events = timeEventGroupValues.lookupOrd(timeItemId.getTimeEventOrd()).utf8ToString();
@@ -380,7 +375,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 			                }
 
 			               	try {
-			               		TimePeriod t = getDateOnConfiguredTimePeriod(ISO8601DATEFORMAT.parse(timeStampValues.lookupOrd(ord).utf8ToString()));
+			               		TimePeriod t = DateUtil.getDateOnConfiguredTimePeriod(timePeriodClass, ISO8601DATEFORMAT.parse(timeStampValues.lookupOrd(ord).utf8ToString()));
 
 			               		if(t!=null) {
 				               		String events = timeEventGroupValues.lookupOrd(eventOrd[pos++]).utf8ToString();
@@ -437,34 +432,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		this.timePeriodClass = timePeriodClass;
 	}
 
-	public TimePeriod getDateOnConfiguredTimePeriod(Date date) {
-		Class[] cArg = new Class[1];
-        cArg[0] = Date.class;
-		try {
-			TimePeriod t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(date);
-			return t;
-		}catch(InvocationTargetException e) {
-			try {
-				TimePeriod t = null;
-		        Calendar cal = Calendar.getInstance();
-		        cal.set(1900, 0, 1, 0, 0, 0);
-				if(date.before(cal.getTime())){
-					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime());
-				}
-		        cal.set(9999, 12, 31, 23, 59, 59);
-				if(date.after(cal.getTime())){
-					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime());
-				}
-				return t;
-			}catch(InvocationTargetException | InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e2) {
-				e2.printStackTrace();
-				return null;
-			}
-		}catch( InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e){
-			e.printStackTrace();
-			return null;
-		}
-	}
 	
 	public void addEventLegent(String event) {
 		Iterator<LegendItem> it = legendItems.iterator();
@@ -538,8 +505,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting())
             return;
-        
-        System.out.println("teste");
 
     }
 
@@ -550,6 +515,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             /* somente chamado se o tab estiver sendo exibido */
             if (dockable != null && dockable.isShowing()) {
     			refreshChart();
+
     			this.repaint();
 			}else {
 				isUpdated = false;

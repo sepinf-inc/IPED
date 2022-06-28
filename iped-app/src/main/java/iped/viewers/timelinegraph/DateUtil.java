@@ -1,7 +1,10 @@
 package iped.viewers.timelinegraph;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Calendar;
 import java.util.Date;
+
+import org.jfree.data.time.TimePeriod;
 
 public class DateUtil {
 
@@ -31,4 +34,32 @@ public class DateUtil {
         return cal.getTime();
     }
 
+	static public TimePeriod getDateOnConfiguredTimePeriod(Class<? extends TimePeriod> timePeriodClass, Date date) {
+		Class[] cArg = new Class[1];
+        cArg[0] = Date.class;
+		try {
+			TimePeriod t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(date);
+			return t;
+		}catch(InvocationTargetException e) {
+			try {
+				TimePeriod t = null;
+		        Calendar cal = Calendar.getInstance();
+		        cal.set(1900, 0, 1, 0, 0, 0);
+				if(date.before(cal.getTime())){
+					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime());
+				}
+		        cal.set(9999, 12, 31, 23, 59, 59);
+				if(date.after(cal.getTime())){
+					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime());
+				}
+				return t;
+			}catch(InvocationTargetException | InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e2) {
+				e2.printStackTrace();
+				return null;
+			}
+		}catch( InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e){
+			e.printStackTrace();
+			return null;
+		}
+	}
 }
