@@ -1,7 +1,7 @@
 package iped.parsers.external;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -62,6 +62,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     @BeforeClass
     public static void setUp() throws IOException, TikaException, TransformerException, ParserConfigurationException, SAXException {
         XMLFile = new File(XMLFilePath);
+        new File(absoluteTmpPath).mkdir();
 
         // download all external parsers tools
         if (osName.startsWith("windows")) {
@@ -89,9 +90,9 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         recyclebinConfigGenerator.writeDocumentToFile(XMLFile);
 
         parsers = ExternalParsersConfigReader.read(new FileInputStream(XMLFile));
-        superfetchParser = parsers.get(0);
-        prefetchParser = parsers.get(1);
-        recyclebinParser = parsers.get(2);
+        superfetchParser = parsers.size() > 0 ? parsers.get(0) : null;
+        prefetchParser = parsers.size() > 1 ? parsers.get(1) : null;
+        recyclebinParser = parsers.size() > 2 ? parsers.get(2) : null;
     }
 
     @AfterClass
@@ -113,8 +114,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
 
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
 
-            String[] checkCommand = new String[] { absoluteTmpPath + "libagdb/agdbinfo", "-V" };
-            assumeTrue(ExternalParser.check(checkCommand, 1));
+            assumeNotNull(superfetchParser);
             superfetchParser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
             String hts = handler.toString();
@@ -139,11 +139,9 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
 
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
 
-            String[] checkCommand = new String[] { absoluteTmpPath + "sccainfo/sccainfo", "-V" };
-            assumeTrue(ExternalParser.check(checkCommand, 1));
+            assumeNotNull(prefetchParser);
             prefetchParser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
-            System.out.println(hts);
 
             assertTrue(hts.contains("TEAMS.EXE"));
             assertTrue(hts.contains("30"));
