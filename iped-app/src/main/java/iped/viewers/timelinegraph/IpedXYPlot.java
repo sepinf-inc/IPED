@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Date;
 import java.util.HashSet;
@@ -13,7 +14,10 @@ import org.jfree.chart.LegendItem;
 import org.jfree.chart.LegendItemCollection;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.Plot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.xy.XYDataset;
@@ -166,5 +170,78 @@ public class IpedXYPlot extends XYPlot{
     		drawDefinedFiltersDates(dates, g2, area, xor);
 		}
     	
+    }
+    
+    /**
+     * Multiplies the range on the range axis/axes by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param info  the plot rendering info.
+     * @param source  the source point.
+     * @param useAnchor  a flag that controls whether or not the source point
+     *         is used for the zoom anchor.
+     *
+     * @see #zoomDomainAxes(double, PlotRenderingInfo, Point2D, boolean)
+     */
+    @Override
+    public void zoomRangeAxes(double factor, PlotRenderingInfo info,
+                              Point2D source, boolean useAnchor) {
+
+        // perform the zoom on each range axis
+        for (int i=0; i< this.getRangeAxisCount(); i++) {
+        	ValueAxis yAxis = this.getRangeAxis(i);
+            if (yAxis == null) {
+                continue;
+            }
+            if (useAnchor) {
+                // get the relevant source coordinate given the plot orientation
+                double sourceY = source.getY();
+                if (this.getOrientation() == PlotOrientation.HORIZONTAL) {
+                    sourceY = source.getX();
+                }
+                double anchorY = yAxis.java2DToValue(sourceY,
+                        info.getDataArea(), getRangeAxisEdge());
+                yAxis.resizeRange2(factor, 0);
+            } else {
+                yAxis.resizeRange(factor);
+            }
+        }
+    }
+
+    /**
+     * Multiplies the range on the range axis/axes by the specified factor.
+     *
+     * @param factor  the zoom factor.
+     * @param info  the plot rendering info.
+     * @param source  the source point.
+     *
+     * @see #zoomDomainAxes(double, PlotRenderingInfo, Point2D, boolean)
+     */
+    @Override
+    public void zoomRangeAxes(double factor, PlotRenderingInfo info,
+                              Point2D source) {
+        // delegate to other method
+        zoomRangeAxes(factor, info, source, false);
+    }    
+
+    /**
+     * Zooms in on the range axes.
+     *
+     * @param lowerPercent  the lower bound.
+     * @param upperPercent  the upper bound.
+     * @param info  the plot rendering info.
+     * @param source  the source point.
+     *
+     * @see #zoomDomainAxes(double, double, PlotRenderingInfo, Point2D)
+     */
+    @Override
+    public void zoomRangeAxes(double lowerPercent, double upperPercent,
+                              PlotRenderingInfo info, Point2D source) {
+        for (int i=0; i< this.getRangeAxisCount(); i++) {
+        	ValueAxis yAxis = this.getRangeAxis(i);
+            if (yAxis != null) {
+                yAxis.zoomRange(0, upperPercent);
+            }
+        }
     }
 }
