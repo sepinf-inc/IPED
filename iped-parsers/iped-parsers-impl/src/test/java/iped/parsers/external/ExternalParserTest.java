@@ -32,10 +32,10 @@ import org.junit.Test;
 
 // WIP: parsing only superfetch file for now
 public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
-    private static String toolsPath = "/src/test/tmp_tools/";
+    private static String tmpPath = "/src/test/tmp/";
     private static String userDir = System.getProperty("user.dir");
-    private static String absoluteToolsPath = userDir + toolsPath;
-    private static String XMLFilePath = userDir + "/src/test/ExternalParsers.xml";
+    private static String absoluteTmpPath = userDir + tmpPath;
+    private static String XMLFilePath = absoluteTmpPath + "/ExternalParsers.xml";
     private static String osName = System.getProperty("os.name").toLowerCase();
     private static File XMLFile;
     private static List<ExternalParser> parsers;
@@ -62,22 +62,23 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     public static void setUp() throws IOException, TikaException, TransformerException, ParserConfigurationException, SAXException {
         XMLFile = new File(XMLFilePath);
 
+        if (osName.startsWith("windows")) {
+            String repoPath = "libyal/libagdb/20181111.1/libagdb-20181111.1.zip";
+            RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
+            repoPath = "libyal/sccainfo/20170205.1/sccainfo-20170205.1.zip";
+            RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
+        }
+
         // add SuperFetch parser configuration
         ExternalParserConfigGenerator superFetchConfigGenerator = createDefaultExternalParserConfig("SuperFetchParser",
-            toolsPath + "libagdb/", "agdbinfo -V", "agdbinfo ${INPUT}", MediaType.application("x-superfetch"));
+            tmpPath + "libagdb/", "agdbinfo -V", "agdbinfo ${INPUT}", MediaType.application("x-superfetch"));
         superFetchConfigGenerator.writeDocumentToFile(XMLFile);
 
         // append Prefetch parser configuration to the same file
         ExternalParserConfigGenerator preFetchConfigGenerator = createDefaultExternalParserConfig("PrefetchParser",
-            toolsPath + "sccainfo/", "sccainfo -V", "sccainfo ${INPUT}", MediaType.application("x-prefetch"));
+            tmpPath + "sccainfo/", "sccainfo -V", "sccainfo ${INPUT}", MediaType.application("x-prefetch"));
         preFetchConfigGenerator.writeDocumentToFile(XMLFile);
 
-        if (osName.startsWith("windows")) {
-            String repoPath = "libyal/libagdb/20181111.1/libagdb-20181111.1.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, absoluteToolsPath);
-            repoPath = "libyal/sccainfo/20170205.1/sccainfo-20170205.1.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, absoluteToolsPath);
-        }
 
         parsers = ExternalParsersConfigReader.read(new FileInputStream(XMLFile));
         superfetchParser = parsers.get(0);
@@ -87,7 +88,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     @AfterClass
     public static void tearDown() throws IOException {
         if (osName.startsWith("windows")) {
-            FileUtils.deleteDirectory(new File(absoluteToolsPath));
+            FileUtils.deleteDirectory(new File(absoluteTmpPath));
         }
         XMLFile.delete();
     }
@@ -103,7 +104,8 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
 
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
 
-            assumeTrue(osName.startsWith("windows"));
+            String[] checkCommand = new String[] { absoluteTmpPath + "libagdb/agdbinfo", "-V" };
+            assumeTrue(ExternalParser.check(checkCommand, 1));
             superfetchParser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
             String hts = handler.toString();
@@ -127,7 +129,8 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
 
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
 
-            assumeTrue(osName.startsWith("windows"));
+            String[] checkCommand = new String[] { absoluteTmpPath + "sccainfo/sccainfo", "-V" };
+            assumeTrue(ExternalParser.check(checkCommand, 1));
             prefetchParser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
             String hts = handler.toString();
@@ -139,7 +142,6 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             assertTrue(hts.toLowerCase().contains("jun 08, 2022 12:09:38.412736500 utc"));
             assertTrue(hts.toLowerCase().contains("last run time"));
             assertTrue(hts.toLowerCase().contains("users\\felipe costa\\appdata\\local\\microsoft\\teams\\current\\teams.exe"));
-            System.out.println(hts);
 
         }
 
