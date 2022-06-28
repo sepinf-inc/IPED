@@ -89,8 +89,8 @@ public class IpedCombinedDomainXYPlot extends CombinedDomainXYPlot{
         if (info != null) {
             info.setDataArea(dataArea);
         }
-
-        super.draw(g2, dataArea, anchor, parentState, info);
+        
+        super.draw(g2, area, anchor, parentState, info);
     }
 
 	public void setSkipFireEventChange(boolean b) {
@@ -181,4 +181,18 @@ public class IpedCombinedDomainXYPlot extends CombinedDomainXYPlot{
 			setDataset(i, null);
 		}
 	}
+
+    /**
+     * Calculates the axis space required.
+     *
+     * @param g2  the graphics device.
+     * @param plotArea  the plot area.
+     *
+     * @return The space.
+     */
+    @Override
+    protected AxisSpace calculateAxisSpace(Graphics2D g2,
+            Rectangle2D plotArea) {
+    	return super.calculateAxisSpace(g2, plotArea);
+    }
 }
