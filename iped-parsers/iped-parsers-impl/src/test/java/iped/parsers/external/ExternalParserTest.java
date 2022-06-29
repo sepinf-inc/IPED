@@ -41,8 +41,8 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     private static List<ExternalParser> parsers;
     private static ExternalParser superfetchParser, prefetchParser, recyclebinParser;
 
-    private static ExternalParserConfigGenerator createDefaultExternalParserConfig(String name, String toolPath, String checkCommand,
-        String command, MediaType mimeType, int firstLinesToIgnore) throws TikaException, TransformerException {
+    private static ExternalParserConfigGenerator createExternalParserConfig(String name, String toolPath, String checkCommand,
+        String command, String mimeType, int firstLinesToIgnore, String charset) throws TikaException, TransformerException {
 
         ExternalParserConfigGenerator parserConfigGenerator = new ExternalParserConfigGenerator();
         parserConfigGenerator.setParserName(name);
@@ -51,10 +51,10 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         parserConfigGenerator.setErrorCodes(1);
         parserConfigGenerator.setCommand(command);
         HashSet<MediaType> mimeTypes = new HashSet<>();
-        mimeTypes.add(mimeType);
+        mimeTypes.add(MediaType.application(mimeType));
         parserConfigGenerator.addMimeTypes(mimeTypes);
-        parserConfigGenerator.setOutputCharset("ISO-8859-1");
         parserConfigGenerator.setFirstLinesToIgnore(firstLinesToIgnore);
+        parserConfigGenerator.setOutputCharset(charset);
 
         return parserConfigGenerator;
     }
@@ -74,19 +74,21 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
         }
 
+
+
         // add SuperFetch parser configuration to xml file
-        ExternalParserConfigGenerator superfetchConfigGenerator = createDefaultExternalParserConfig("SuperFetchParser", tmpPath + "libagdb/", 
-            "agdbinfo -V", "agdbinfo ${INPUT}", MediaType.application("x-superfetch"), 0);
+        ExternalParserConfigGenerator superfetchConfigGenerator = createExternalParserConfig("SuperFetchParser", tmpPath + "libagdb/", 
+            "agdbinfo -V", "agdbinfo ${INPUT}", "x-superfetch", 0, "ISO-8859-1");
         superfetchConfigGenerator.writeDocumentToFile(XMLFile);
 
         // append Prefetch parser configuration to the same file
-        ExternalParserConfigGenerator prefetchConfigGenerator = createDefaultExternalParserConfig("PrefetchParser", tmpPath + "sccainfo/",
-            "sccainfo -V", "sccainfo ${INPUT}", MediaType.application("x-prefetch"), 0);
+        ExternalParserConfigGenerator prefetchConfigGenerator = createExternalParserConfig("PrefetchParser", tmpPath + "sccainfo/",
+            "sccainfo -V", "sccainfo ${INPUT}", "x-prefetch", 0, "ISO-8859-1");
         prefetchConfigGenerator.writeDocumentToFile(XMLFile);
 
         // append RecycleBin parser
-        ExternalParserConfigGenerator recyclebinConfigGenerator = createDefaultExternalParserConfig("RecycleBinParser", tmpPath + "rifiuti/",
-            "rifiuti-vista -v", "rifiuti-vista -8 ${INPUT}", MediaType.application("x-recyclebin"), 3);
+        ExternalParserConfigGenerator recyclebinConfigGenerator = createExternalParserConfig("RecycleBinParser", tmpPath + "rifiuti/",
+            "rifiuti-vista -v", "rifiuti-vista -8 ${INPUT}", "x-recyclebin", 3, "UTF-8");
         recyclebinConfigGenerator.writeDocumentToFile(XMLFile);
 
         parsers = ExternalParsersConfigReader.read(new FileInputStream(XMLFile));
@@ -148,6 +150,27 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             assertTrue(hts.contains("0x92d8a64c"));
             assertTrue(hts.contains("Jun 08, 2022 12:09:38.412736500 UTC"));
             assertTrue(hts.toLowerCase().contains("users\\felipe costa\\appdata\\local\\microsoft\\teams\\current\\teams.exe"));
+        }
+    }
+
+    @Test
+    public void testRecycleBin() throws IOException, TikaException, SAXException, TransformerException {
+
+        ContentHandler handler = new BodyContentHandler(1 << 20);
+        ParseContext context = new ParseContext();
+        Metadata metadata = new Metadata();
+        String fileName = "test_$I.png";
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
+
+            assumeNotNull(recyclebinParser);
+            recyclebinParser.parse(stream, handler, metadata, context);
+            String hts = handler.toString();
+
+            assertTrue(hts.contains("2022-06-29 12:56:50"));
+            assertTrue(hts.contains("473831"));
+            assertTrue(hts.contains("C:\\Users\\Felipe Costa\\OneDrive\\Área de Trabalho\\test_lenaPng.png"));
         }
     }
 
