@@ -8,6 +8,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import iped.app.ui.App;
+import iped.app.ui.Messages;
 import iped.viewers.timelinegraph.IpedChartPanel;
 
 public class TimelineFilterSelectionPopupMenu extends JPopupMenu implements ActionListener{
@@ -29,19 +30,19 @@ public class TimelineFilterSelectionPopupMenu extends JPopupMenu implements Acti
 	public TimelineFilterSelectionPopupMenu(IpedChartPanel ipedChartPanel) {
 		this.ipedChartPanel = ipedChartPanel;
 
-		filterSelection = new JMenuItem("Filtrar os intervalos definidos.");
+		filterSelection = new JMenuItem(Messages.getString("TimeLineGraph.filterAllDefinedIntervals"));
 		filterSelection.addActionListener(this);
         add(filterSelection);
 
-        selectItems = new JMenuItem("Selecionar itens neste intervalos.");
+        selectItems = new JMenuItem(Messages.getString("TimeLineGraph.selectItensOnThisInterval"));
         selectItems.addActionListener(this);
         add(selectItems);
 
-        clearFilter = new JMenuItem("Excluir intervalo.");
+        clearFilter = new JMenuItem(Messages.getString("TimeLineGraph.deleteInterval"));
         clearFilter.addActionListener(this);
         add(clearFilter);
 
-        continueSelection = new JMenuItem("Continuar seleção de intervalos...");
+        continueSelection = new JMenuItem(Messages.getString("TimeLineGraph.continueIntervalSelection"));
         continueSelection.addActionListener(this);
         add(continueSelection);
 	}

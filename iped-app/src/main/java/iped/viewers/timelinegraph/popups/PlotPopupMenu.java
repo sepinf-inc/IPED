@@ -10,6 +10,7 @@ import javax.swing.JPopupMenu;
 
 import org.jfree.chart.entity.XYItemEntity;
 
+import iped.app.ui.Messages;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.timelinegraph.IpedChartPanel;
 
@@ -22,18 +23,29 @@ public class PlotPopupMenu extends JPopupMenu implements ActionListener{
 
 	JMenuItem filterBeforeMenu;
 	JMenuItem filterAfterMenu;
+	JMenuItem selectBeforeMenu;
+	JMenuItem selectAfterMenu;
 
 	public PlotPopupMenu(IpedChartPanel ipedChartPanel, IMultiSearchResultProvider resultsProvider) {
 		this.ipedChartPanel = ipedChartPanel;
 		this.resultsProvider = resultsProvider;
 
-		filterBeforeMenu = new JMenuItem("Filtrar anteriores a ");
+		
+		filterBeforeMenu = new JMenuItem(" ");
 		filterBeforeMenu.addActionListener(this);
         add(filterBeforeMenu);
 
-        filterAfterMenu = new JMenuItem("Filtrar posteriores a ");
+        selectBeforeMenu = new JMenuItem(" ");
+        selectBeforeMenu.addActionListener(this);
+        add(selectBeforeMenu);
+
+        filterAfterMenu = new JMenuItem(" ");
         filterAfterMenu.addActionListener(this);
         add(filterAfterMenu); 
+
+        selectAfterMenu = new JMenuItem(" ");
+        selectAfterMenu.addActionListener(this);
+        add(selectAfterMenu);
 	}
 
 	@Override
@@ -51,8 +63,10 @@ public class PlotPopupMenu extends JPopupMenu implements ActionListener{
 	public void setDate(Date date) {
 		this.date = date;
 		
-		filterBeforeMenu.setText("Filtrar anteriores a "+ sdf.format(date));
-		filterAfterMenu.setText("Filtrar posteriores a "+ sdf.format(date));
+		filterBeforeMenu.setText(Messages.getString("TimeLineGraph.filterBefore")+" "+ sdf.format(date));
+		filterAfterMenu.setText(Messages.getString("TimeLineGraph.filterAfter")+" "+ sdf.format(date));
+		selectBeforeMenu.setText(Messages.getString("TimeLineGraph.selectBefore")+" "+ sdf.format(date));
+		selectAfterMenu.setText(Messages.getString("TimeLineGraph.selectAfter")+" "+ sdf.format(date));
 	}	
 
 }

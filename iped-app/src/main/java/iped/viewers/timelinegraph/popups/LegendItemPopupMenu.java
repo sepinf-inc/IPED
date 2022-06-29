@@ -11,6 +11,7 @@ import javax.swing.JPopupMenu;
 import org.jfree.chart.entity.LegendItemEntity;
 import org.jfree.chart.plot.XYPlot;
 
+import iped.app.ui.Messages;
 import iped.viewers.timelinegraph.IpedChartPanel;
 import iped.viewers.timelinegraph.IpedCombinedDomainXYPlot;
 
@@ -25,11 +26,12 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
 	public LegendItemPopupMenu(IpedChartPanel ipedChartPanel) {
 		this.ipedChartPanel = ipedChartPanel;		
 
-		hide = new JCheckBoxMenuItem("Esconder no gráfico.");
+		hide = new JCheckBoxMenuItem(Messages.getString("TimeLineGraph.hideSeriesOnChart"));
+		hide.setSelected(false);
 		hide.addActionListener(this);
         add(hide);
 
-		filter = new JMenuItem("Excluir do conjunto de resultados (filtrar).");
+		filter = new JMenuItem(Messages.getString("TimeLineGraph.filterEventFromResultSet"));
 		filter.addActionListener(this);
         add(filter); 
 	}

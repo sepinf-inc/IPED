@@ -10,6 +10,7 @@ import javax.swing.JTable;
 
 import org.jfree.chart.entity.XYItemEntity;
 
+import iped.app.ui.Messages;
 import iped.data.IItemId;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.timelinegraph.TimeTableCumulativeXYDataset;
@@ -26,20 +27,20 @@ public class DataItemPopupMenu extends JPopupMenu implements ActionListener {
 	
 	public DataItemPopupMenu(IMultiSearchResultProvider resultsProvider) {
 		this.resultsProvider = resultsProvider;
-
-		selectEventItens = new JMenuItem("selecionar itens do evento do periodo");
+		
+		selectEventItens = new JMenuItem(Messages.getString("TimeLineGraph.selectEventItensOnPeriod"));
 		selectEventItens.addActionListener(this);
         add(selectEventItens);
 
-		selectPeriodItens = new JMenuItem("selecionar itens do periodo");
+		selectPeriodItens = new JMenuItem(Messages.getString("TimeLineGraph.selectItensOnPeriod"));
         selectPeriodItens.addActionListener(this);
         add(selectPeriodItens); 
 
-        checkEventItens = new JMenuItem("marcar itens do evento do periodo");
+        checkEventItens = new JMenuItem(Messages.getString("TimeLineGraph.checkEventItensOnPeriod"));
         checkEventItens.addActionListener(this);
         add(checkEventItens);
 
-        checkPeriodItens = new JMenuItem("marcar itens do periodo");
+        checkPeriodItens = new JMenuItem(Messages.getString("TimeLineGraph.checkItensOnPeriod"));
         checkPeriodItens.addActionListener(this);
         add(checkPeriodItens); 
 

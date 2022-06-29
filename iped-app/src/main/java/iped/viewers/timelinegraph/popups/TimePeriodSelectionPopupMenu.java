@@ -19,7 +19,7 @@ import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
 
-import iped.viewers.timelinegraph.IpedChartPanel;
+import iped.app.ui.Messages;
 import iped.viewers.timelinegraph.IpedChartsPanel;
 
 public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionListener {
@@ -67,39 +67,48 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 	public TimePeriodSelectionPopupMenu(IpedChartsPanel ipedChartsPanel) {
 		this.ipedChartsPanel = ipedChartsPanel;
 
-		yearMenu = new JTimePeriodMenuItem("Year", Year.class);
+		yearMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Year"), Year.class);
+		yearMenu.setActionCommand("Year");
 		yearMenu.addActionListener(this);
 		add(yearMenu);
 
-		quarterMenu = new JTimePeriodMenuItem("Quarter", Quarter.class);
+		quarterMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Quarter"), Quarter.class);
+		quarterMenu.setActionCommand("Quarter");
 		quarterMenu.addActionListener(this);
 		add(quarterMenu);
 
-		monthMenu = new JTimePeriodMenuItem("Month", Month.class);
+		monthMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Month"), Month.class);
+		monthMenu.setActionCommand("Month");
 		monthMenu.addActionListener(this);
 		add(monthMenu);
 
-		weekMenu = new JTimePeriodMenuItem("Week", Week.class);
+		weekMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Week"), Week.class);
+		weekMenu.setActionCommand("Week");
 		weekMenu.addActionListener(this);
 		add(weekMenu);
 
-		dayMenu = new JTimePeriodMenuItem("Day", Day.class);
+		dayMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Day"), Day.class);
+		dayMenu.setActionCommand("Day");
 		dayMenu.addActionListener(this);
 		add(dayMenu);
 
-		hourMenu = new JTimePeriodMenuItem("Hour", Hour.class);
+		hourMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Hour"), Hour.class);
+		hourMenu.setActionCommand("Hour");
 		hourMenu.addActionListener(this);
 		add(hourMenu);
 
-		minuteMenu = new JTimePeriodMenuItem("Minute", Minute.class);
+		minuteMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Minute"), Minute.class);
+		minuteMenu.setActionCommand("Minute");
 		minuteMenu.addActionListener(this);
 		add(minuteMenu);
 
-		secondMenu = new JTimePeriodMenuItem("Second", Second.class);
+		secondMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Second"), Second.class);
+		secondMenu.setActionCommand("Second");
 		secondMenu.addActionListener(this);
 		add(secondMenu);
 
-		millisecondMenu = new JTimePeriodMenuItem("Millisecond", Millisecond.class);
+		millisecondMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Millisecond"), Millisecond.class);
+		millisecondMenu.setActionCommand("Millisecond");
 		millisecondMenu.addActionListener(this);
 		add(millisecondMenu);
 	}
