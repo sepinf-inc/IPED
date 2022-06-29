@@ -3,22 +3,18 @@ package iped.viewers.timelinegraph;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.Iterator;
 
 import org.jfree.chart.LegendItem;
 import org.jfree.chart.LegendItemCollection;
 import org.jfree.chart.axis.AxisSpace;
 import org.jfree.chart.axis.DateAxis;
-import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.event.PlotChangeEvent;
 import org.jfree.chart.plot.CombinedDomainXYPlot;
-import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.PlotState;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.ui.RectangleInsets;
-import org.jfree.chart.util.Args;
 import org.jfree.data.xy.XYDataset;
 
 public class IpedCombinedDomainXYPlot extends CombinedDomainXYPlot{

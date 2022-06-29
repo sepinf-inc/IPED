@@ -18,9 +18,23 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
+import org.jfree.chart.ChartMouseEvent;
+import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.entity.AxisEntity;
+import org.jfree.chart.entity.ChartEntity;
+import org.jfree.chart.entity.LegendItemEntity;
+import org.jfree.chart.entity.PlotEntity;
+import org.jfree.chart.entity.XYItemEntity;
 import org.jfree.chart.plot.PlotRenderingInfo;
+import org.jfree.chart.plot.XYPlot;
+
+import iped.viewers.timelinegraph.popups.DataItemPopupMenu;
+import iped.viewers.timelinegraph.popups.PlotPopupMenu;
+import iped.viewers.timelinegraph.popups.LegendItemPopupMenu;
+import iped.viewers.timelinegraph.popups.TimePeriodSelectionPopupMenu;
+import iped.viewers.timelinegraph.popups.TimelineFilterSelectionPopupMenu;
 
 public class IpedChartPanel extends ChartPanel implements KeyListener{
 	Rectangle2D filterIntervalRectangle;
@@ -42,6 +56,13 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	private AffineTransform affineTransform;
 	Date[] mouseOverDates = null;
 
+    TimelineFilterSelectionPopupMenu timelineSelectionPopupMenu = null;
+    PlotPopupMenu domainPopupMenu = null;
+    LegendItemPopupMenu legendItemPopupMenu = null;
+    DataItemPopupMenu itemPopupMenu = null;
+    TimePeriodSelectionPopupMenu timePeriodSelectionPopupMenu = null;
+
+	
 	public IpedChartPanel(JFreeChart chart, IpedChartsPanel ipedChartsPanel) {
 		super(chart, false);
 		useBuffer = false;
@@ -54,7 +75,56 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	    this.affineTransform = new AffineTransform();
 	    this.affineTransform.rotate(Math.toRadians(90), 0, 0);
 	    
-		// TODO Auto-generated constructor stub
+		timelineSelectionPopupMenu = new TimelineFilterSelectionPopupMenu(this);
+		domainPopupMenu = new PlotPopupMenu(this, ipedChartsPanel.getResultsProvider());
+		legendItemPopupMenu = new LegendItemPopupMenu(this);
+        itemPopupMenu = new DataItemPopupMenu(ipedChartsPanel.getResultsProvider());
+    	timePeriodSelectionPopupMenu = new TimePeriodSelectionPopupMenu(ipedChartsPanel);
+        
+        IpedChartPanel self = this;
+	
+        this.addChartMouseListener(new ChartMouseListener() {
+			@Override
+			public void chartMouseMoved(ChartMouseEvent event) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void chartMouseClicked(ChartMouseEvent event) {
+				ChartEntity ce = event.getEntity();
+				if(ce instanceof XYItemEntity) {
+					XYItemEntity ie = ((XYItemEntity) ce);
+					itemPopupMenu.setChartEntity(ie);
+					itemPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
+				}
+
+				if(ce instanceof PlotEntity) {
+					PlotEntity ie = ((PlotEntity) ce);
+					XYPlot plot = (XYPlot) ie.getPlot();
+
+					Date[] filteredDate = self.getDefinedFilter(event.getTrigger().getX());
+					if(filteredDate!=null) {
+						timelineSelectionPopupMenu.setDates(filteredDate);
+						timelineSelectionPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
+					}else {
+						domainPopupMenu.setDate(new Date((long) ipedChartsPanel.getDomainAxis().java2DToValue(event.getTrigger().getX(), self.getScreenDataArea(), plot.getDomainAxisEdge())));
+						domainPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
+					}
+				}
+				
+				if(ce instanceof AxisEntity) {
+					timePeriodSelectionPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
+				}
+				
+				if(ce instanceof LegendItemEntity) {
+					LegendItemEntity le = (LegendItemEntity) ce;
+					
+					legendItemPopupMenu.setLegendItemEntity(le);
+					legendItemPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
+				}
+			}
+		});
 	}
 	
 	@Override
@@ -192,19 +262,19 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         if (this.filterIntervalRectangle != null) {
             boolean filterTrigger1 = Math.abs(e.getX()
                 - this.filterIntervalPoint.getX()) >= this.filterTriggerDistance;
-                
+
             if (filterTrigger1) {
                 if ((e.getX() < this.filterIntervalPoint.getX())) {
                     restoreAutoBounds();
                 }
                 else {
                     Date[] filterDates = new Date[2];
-
                     filterDates[0]=startFilterDate;
                     filterDates[1]=endFilterDate;
-
                     definedFilters.add(filterDates);
-           			ipedChartsPanel.selectItemsOnInterval(filterDates[0],filterDates[1],false);
+
+					timelineSelectionPopupMenu.setDates(filterDates);
+					timelineSelectionPopupMenu.show(e.getComponent(), e.getX(), e.getY());
 
                     mouseOverDates=filterDates;
                 }
@@ -232,7 +302,13 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
                 displayPopupMenu(e.getX(), e.getY());
             }
         }
-
+	}
+	
+	public void addFilter(Date startDate, Date endDate) {
+        Date[] filterDates = new Date[2];
+        filterDates[0]=startDate;
+        filterDates[1]=endDate;
+        definedFilters.add(filterDates);
 	}
 
     /**

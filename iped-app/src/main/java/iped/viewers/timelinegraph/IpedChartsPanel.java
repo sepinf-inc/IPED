@@ -24,19 +24,12 @@ import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.Query;
-import org.jfree.chart.ChartMouseEvent;
-import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.LegendItem;
 import org.jfree.chart.LegendItemCollection;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.DateTickMarkPosition;
 import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.entity.AxisEntity;
-import org.jfree.chart.entity.ChartEntity;
-import org.jfree.chart.entity.LegendItemEntity;
-import org.jfree.chart.entity.PlotEntity;
-import org.jfree.chart.entity.XYItemEntity;
 import org.jfree.chart.labels.XYToolTipGenerator;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StackedXYBarRenderer;
@@ -64,11 +57,6 @@ import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
-import iped.viewers.timelinegraph.popups.DataItemPopupMenu;
-import iped.viewers.timelinegraph.popups.DomainPopupMenu;
-import iped.viewers.timelinegraph.popups.LegendItemPopupMenu;
-import iped.viewers.timelinegraph.popups.TimePeriodSelectionPopupMenu;
-import iped.viewers.timelinegraph.popups.TimelineFilterSelectionPopupMenu;
 
 public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer {
 
@@ -86,10 +74,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     String timePeriodString = "Day";
 
 	boolean isUpdated = false;
-    
-
-    DataItemPopupMenu itemPopupMenu = null;
-    TimePeriodSelectionPopupMenu timePeriodSelectionPopupMenu = null;
 
     String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
 
@@ -102,10 +86,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	XYLineAndShapeRenderer lineRenderer = new XYLineAndShapeRenderer();
 	XYItemRenderer renderer = null;
 	XYToolTipGenerator toolTipGenerator = null;
-
-    TimelineFilterSelectionPopupMenu timelineSelectionPopupMenu = null;
-    DomainPopupMenu domainPopupMenu = null;
-    LegendItemPopupMenu legendItemPopupMenu = null;
     
     boolean applyFilters = false;
 	private XYBarPainter barPainter;
@@ -131,11 +111,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		stackedRenderer.setDrawBarOutline(false);
 
 		lineRenderer.setDefaultShapesVisible(true);
-
-		timelineSelectionPopupMenu = new TimelineFilterSelectionPopupMenu(chartPanel);
-		domainPopupMenu = new DomainPopupMenu(chartPanel, resultsProvider);
-		timePeriodSelectionPopupMenu = new TimePeriodSelectionPopupMenu(this);
-		legendItemPopupMenu = new LegendItemPopupMenu(chartPanel);
 	}
 	
 	public IpedChartsPanel(boolean b) {
@@ -153,51 +128,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         resultsTable.getModel().addTableModelListener(this);
         resultsTable.getSelectionModel().addListSelectionListener(this);
 
-        itemPopupMenu = new DataItemPopupMenu(resultsProvider);
-	
-        chartPanel.addChartMouseListener(new ChartMouseListener() {
-			@Override
-			public void chartMouseMoved(ChartMouseEvent event) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void chartMouseClicked(ChartMouseEvent event) {
-				ChartEntity ce = event.getEntity();
-				if(ce instanceof XYItemEntity) {
-					XYItemEntity ie = ((XYItemEntity) ce);
-					itemPopupMenu.setChartEntity(ie);
-					itemPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
-				}
-
-				if(ce instanceof PlotEntity) {
-					PlotEntity ie = ((PlotEntity) ce);
-					XYPlot plot = (XYPlot) ie.getPlot();
-
-					Date[] filteredDate = chartPanel.getDefinedFilter(event.getTrigger().getX());
-					if(filteredDate!=null) {
-						timelineSelectionPopupMenu.setDates(filteredDate);
-						timelineSelectionPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
-					}else {
-						domainPopupMenu.setDate(new Date((long) domainAxis.java2DToValue(event.getTrigger().getX(), chartPanel.getScreenDataArea(), plot.getDomainAxisEdge())));
-						domainPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
-					}
-				}
-				
-				if(ce instanceof AxisEntity) {
-					timePeriodSelectionPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
-				}
-				
-				if(ce instanceof LegendItemEntity) {
-					LegendItemEntity le = (LegendItemEntity) ce;
-					
-					legendItemPopupMenu.setLegendItemEntity(le);
-					legendItemPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
-				}
-			}
-		});
-
         chartPanel.setMouseWheelEnabled(true);
         chartPanel.setDomainZoomable(true);
         chartPanel.setRangeZoomable(true);
@@ -214,6 +144,10 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         domainAxis.setLowerMargin(0.01);
         domainAxis.setUpperMargin(0.01);
         combinedPlot.setDomainAxis(domainAxis);
+	}
+
+	public DateAxis getDomainAxis() {
+		return domainAxis;
 	}
 
 	public void unselectItemsOnInterval(Date start, Date end, boolean clearPreviousSelection) {
