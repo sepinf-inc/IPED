@@ -1,9 +1,13 @@
 package iped.viewers.timelinegraph;
 
 import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 
+import org.jfree.chart.axis.DateTickUnitType;
 import org.jfree.data.time.TimePeriod;
 
 public class DateUtil {
@@ -60,6 +64,41 @@ public class DateUtil {
 		}catch( InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e){
 			e.printStackTrace();
 			return null;
+		}
+	}
+	
+	static HashMap<DateTickUnitType, DateFormat> dateFormaters = new HashMap<DateTickUnitType, DateFormat>();
+	static {
+		dateFormaters.put(DateTickUnitType.YEAR, new SimpleDateFormat("yyyy"));
+		dateFormaters.put(DateTickUnitType.MONTH, new SimpleDateFormat("MMM-yyyy"));
+		dateFormaters.put(DateTickUnitType.DAY, new SimpleDateFormat("d-MMM'\n'yyyy"));
+		dateFormaters.put(DateTickUnitType.HOUR, new SimpleDateFormat("HH:'00'\nd-MMM-yyyy"));
+		dateFormaters.put(DateTickUnitType.MINUTE, new SimpleDateFormat("HH:mm\nd-MMM-yyyy"));
+		dateFormaters.put(DateTickUnitType.SECOND, new SimpleDateFormat(" HH:mm:ss\nd-MMM-yyyy"));
+		dateFormaters.put(DateTickUnitType.MILLISECOND, new SimpleDateFormat("HH:mm:ss.SSS\nd-MMM-yyyy"));
+	}
+	
+	static public DateFormat getLongDateFormaterTickUnit(DateTickUnitType tickUnitType) {
+		return dateFormaters.get(tickUnitType);
+	}
+	
+	static public int getUpperCalendarField(int calendarField) {
+		switch (calendarField) {
+		case Calendar.DAY_OF_MONTH:
+			return Calendar.MONTH;
+		case Calendar.HOUR:
+		case Calendar.HOUR_OF_DAY:
+			return Calendar.DAY_OF_MONTH;
+		case Calendar.MINUTE:
+			return Calendar.HOUR;
+		case Calendar.SECOND:
+			return Calendar.MINUTE;
+		case Calendar.MILLISECOND:
+			return Calendar.SECOND;
+		case Calendar.MONTH:
+			return Calendar.YEAR;
+		default:
+			return calendarField;
 		}
 	}
 }

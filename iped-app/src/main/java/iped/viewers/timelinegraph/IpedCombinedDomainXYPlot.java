@@ -70,6 +70,10 @@ public class IpedCombinedDomainXYPlot extends CombinedDomainXYPlot{
     @Override
     public void draw(Graphics2D g2, Rectangle2D area, Point2D anchor,
             PlotState parentState, PlotRenderingInfo info) {
+        if(!(g2 instanceof IpedGraphicsWrapper)) {
+        	g2 = new IpedGraphicsWrapper(g2);
+        }
+
         // set up info collection...
         if (info != null) {
             info.setPlotArea(area);
@@ -103,46 +107,6 @@ public class IpedCombinedDomainXYPlot extends CombinedDomainXYPlot{
     @Override
     public LegendItemCollection getLegendItems() {
     	return legends.getLegendItems();    	
-    }
-
-    public LegendItemCollection getLegendItems2() {
-        if (this.getFixedLegendItems() != null) {
-            return this.getFixedLegendItems();
-        }
-        LegendItemCollection result = new LegendItemCollection();
-        
-        XYItemRenderer renderer = getRenderer(0);
-        XYPlot oldPlot = renderer.getPlot();
-
-        for (int datasetIndex=0; datasetIndex<getDatasetCount(); datasetIndex++) {
-        	XYDataset dataset = this.getDataset(datasetIndex);
-            if (dataset == null) {
-                continue;
-            }
-            renderer = getRenderer(datasetIndex);
-
-            if (renderer == null) {
-                renderer = getRenderer(0);
-            }
-            if (renderer != null) {
-                int seriesCount = dataset.getSeriesCount();
-                for (int i = 0; i < seriesCount; i++) {
-                    if (renderer.isSeriesVisible(i)
-                            && renderer.isSeriesVisibleInLegend(i)) {
-                        renderer.setPlot((XYPlot)getSubplots().get(datasetIndex));
-                        LegendItem item = renderer.getLegendItem(
-                                0, i);
-                        if (item != null) {
-                            result.add(item);
-                        }
-                    }
-                }
-            }
-        }
-
-        renderer.setPlot(oldPlot);
-
-        return result;
     }
 
 	public void add(int pos, XYPlot subplot, XYDataset dataset) {

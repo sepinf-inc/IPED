@@ -78,7 +78,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
 
 	/* chart fields */
-    DateAxis domainAxis = new DateAxis("Date ("+timePeriodString+")");
+    IpedDateAxis domainAxis = new IpedDateAxis("Date ("+timePeriodString+")");
     IpedCombinedDomainXYPlot combinedPlot = new IpedCombinedDomainXYPlot();
     JFreeChart chart = new JFreeChart(combinedPlot);
     IpedChartPanel chartPanel = new IpedChartPanel(chart, this);

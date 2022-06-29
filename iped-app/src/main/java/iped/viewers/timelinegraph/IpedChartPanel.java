@@ -3,9 +3,9 @@ package iped.viewers.timelinegraph;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -40,6 +40,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	Rectangle2D filterIntervalRectangle;
 	Point2D filterIntervalPoint;
 	Color filterIntervalFillPaint;
+	
+	int lastMouseMoveX=-1;
 
     IpedChartsPanel ipedChartsPanel = null;
 	
@@ -130,11 +132,19 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	@Override
 	public void mouseMoved(MouseEvent e) {
 		int mods = e.getModifiersEx();
+		int x=e.getX();
 		if ((mods & this.filterMask) == this.filterMask){
             setCursor(Cursor.getPredefinedCursor(
                     Cursor.E_RESIZE_CURSOR));
 		}else {
+			System.out.printf("move: %d - %d \n", lastMouseMoveX, x);
+			
             setCursor(Cursor.getDefaultCursor());
+            Graphics2D g2 = (Graphics2D) getGraphics();
+            if(lastMouseMoveX>=0) {
+                drawDateCursor(g2, lastMouseMoveX, true);
+            }
+            drawDateCursor(g2, x, true);
 		}
 		super.mouseMoved(e);
 	}
@@ -176,8 +186,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         			int x = (int) ipedChartsPanel.domainAxis.dateToJava2D(startFilterDate,  this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge());
 
         			Rectangle2D screenDataArea = getScreenDataArea(x, e.getY());
-
-
 
                     if (screenDataArea != null) {
                         this.filterIntervalPoint = getPointInRectangle(x, e.getY(),
@@ -346,6 +354,55 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         }
     }
 
+
+    /**
+     * Draws zoom rectangle (if present).
+     * The drawing is performed in XOR mode, therefore
+     * when this method is called twice in a row,
+     * the second call will completely restore the state
+     * of the canvas.
+     *
+     * @param g2 the graphics device.
+     * @param xor  use XOR for drawing?
+     */
+    private void drawDateCursor(Graphics2D g2, int x, boolean xor) {
+        if (xor) {
+            // Set XOR mode to draw the zoom rectangle
+           g2.setXORMode(Color.GRAY);
+       }
+       g2.setPaint(Color.BLACK);
+       g2.setStroke(this.filterLimitStroke);
+       g2.setFont(g2.getFont().deriveFont(affineTransform));//rotate text 90
+       
+       Rectangle2D screenDataArea = getScreenDataArea(
+               x,
+               2);
+       
+       double maxX = screenDataArea.getMaxX();
+       double minX = screenDataArea.getMinX();
+       if((x>minX)&&(x<maxX)) {
+           double minY = screenDataArea.getMinY();
+           double maxY = screenDataArea.getMaxY();
+           
+           double h = screenDataArea.getHeight();
+           g2.drawLine(x,(int)minY,x,(int)maxY);
+
+           Date correspondingDate = new Date((long) ipedChartsPanel.domainAxis.java2DToValue(x, this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge()));
+           correspondingDate = DateUtil.removeFromDatePart(correspondingDate, Calendar.DAY_OF_MONTH);
+
+           String strDate = iped.utils.DateUtil.dateToString(correspondingDate); 
+           g2.drawString(strDate, x+2, (int) minY+g2.getFontMetrics().getHeight()+2);
+       }
+
+       lastMouseMoveX=x;
+
+       if (xor) {
+           // Reset to the default 'overwrite' mode
+           g2.setPaintMode();
+       }
+    }
+    
+    
 	private void drawDefinedFiltersDates(Date[] dates, Graphics2D g2, boolean xor) {
         if (xor) {
             // Set XOR mode to draw the zoom rectangle
@@ -559,6 +616,33 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 
 	public IpedChartsPanel getIpedChartsPanel() {
 		return ipedChartsPanel;
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+        Graphics2D g2 = (Graphics2D) getGraphics();
+        drawDateCursor(g2, lastMouseMoveX, true);
+		lastMouseMoveX=-1;
+		super.mouseExited(e);
+	}
+
+	@Override
+	public void paint(Graphics g) {
+        Graphics2D g2 = (Graphics2D) getGraphics();
+        drawDateCursor(g2, lastMouseMoveX, true);
+		lastMouseMoveX=-1;
+		super.paint(g);
+	}
+
+	@Override
+	public Graphics getGraphics() {
+		Graphics g = super.getGraphics();
+		
+		if(g instanceof IpedGraphicsWrapper) {
+			return g;
+		}else {
+			return new IpedGraphicsWrapper((Graphics2D) g);
+		}
 	}
 
 }
