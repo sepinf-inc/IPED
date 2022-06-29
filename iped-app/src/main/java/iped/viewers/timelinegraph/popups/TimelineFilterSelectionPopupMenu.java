@@ -12,7 +12,8 @@ import iped.viewers.timelinegraph.IpedChartPanel;
 
 public class TimelineFilterSelectionPopupMenu extends JPopupMenu implements ActionListener{
 	JMenuItem filterSelection;
-	JMenuItem selectSelection;
+	JMenuItem selectItems;
+	JMenuItem continueSelection;
 	JMenuItem clearFilter;
 	IpedChartPanel ipedChartPanel;
 	Date[] dates = null;
@@ -28,17 +29,21 @@ public class TimelineFilterSelectionPopupMenu extends JPopupMenu implements Acti
 	public TimelineFilterSelectionPopupMenu(IpedChartPanel ipedChartPanel) {
 		this.ipedChartPanel = ipedChartPanel;
 
-		filterSelection = new JMenuItem("Filtrar a partir dos intervalos definidos");
+		filterSelection = new JMenuItem("Filtrar os intervalos definidos.");
 		filterSelection.addActionListener(this);
         add(filterSelection);
 
-        clearFilter = new JMenuItem("Excluir intervalo");
+        selectItems = new JMenuItem("Selecionar itens neste intervalos.");
+        selectItems.addActionListener(this);
+        add(selectItems);
+
+        clearFilter = new JMenuItem("Excluir intervalo.");
         clearFilter.addActionListener(this);
         add(clearFilter);
 
-        selectSelection = new JMenuItem("Continuar seleção...");
-        selectSelection.addActionListener(this);
-        add(selectSelection);
+        continueSelection = new JMenuItem("Continuar seleção de intervalos...");
+        continueSelection.addActionListener(this);
+        add(continueSelection);
 	}
 
 	@Override
@@ -52,6 +57,10 @@ public class TimelineFilterSelectionPopupMenu extends JPopupMenu implements Acti
 			ipedChartPanel.getIpedChartsPanel().setApplyFilters(true);
 			App app = (App) ipedChartPanel.getIpedChartsPanel().getResultsProvider();			
 			app.getAppListener().updateFileListing();
+		}
+
+		if(e.getSource()==selectItems) {
+			ipedChartPanel.getIpedChartsPanel().selectItemsOnInterval(dates[0], dates[1], false);
 		}
 	}
 

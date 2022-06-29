@@ -13,7 +13,7 @@ import org.jfree.chart.entity.XYItemEntity;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.timelinegraph.IpedChartPanel;
 
-public class DomainPopupMenu extends JPopupMenu implements ActionListener{
+public class PlotPopupMenu extends JPopupMenu implements ActionListener{
 	XYItemEntity chartEntity;
 	IMultiSearchResultProvider resultsProvider;
 	Date date;
@@ -23,7 +23,7 @@ public class DomainPopupMenu extends JPopupMenu implements ActionListener{
 	JMenuItem filterBeforeMenu;
 	JMenuItem filterAfterMenu;
 
-	public DomainPopupMenu(IpedChartPanel ipedChartPanel, IMultiSearchResultProvider resultsProvider) {
+	public PlotPopupMenu(IpedChartPanel ipedChartPanel, IMultiSearchResultProvider resultsProvider) {
 		this.ipedChartPanel = ipedChartPanel;
 		this.resultsProvider = resultsProvider;
 
@@ -39,10 +39,12 @@ public class DomainPopupMenu extends JPopupMenu implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==filterBeforeMenu) {
-			//ipedChartsPanel.setFilteredEndDate(date);			
+			Date firstDate = new Date(0);
+			ipedChartPanel.addFilter(firstDate, date);
 		}
 		if(e.getSource()==filterAfterMenu) {
-			//ipedChartsPanel.setFilteredStartDate(date);			
+			Date lastDate = new Date(Long.MAX_VALUE);
+			ipedChartPanel.addFilter(date, lastDate);
 		}
 	}
 
