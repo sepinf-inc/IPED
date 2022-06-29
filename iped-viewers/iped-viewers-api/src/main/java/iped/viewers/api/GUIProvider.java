@@ -12,7 +12,9 @@ public interface GUIProvider {
     FileDialog createFileDialog(String title, int mode);
 
     IColumnsManager getColumnsManager();
-    
+
     Set<String> getSelectedBookmarks();
+
+    Set<String> getSelectedCategories();
 
 }

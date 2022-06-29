@@ -22,8 +22,10 @@ import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.entity.AxisEntity;
 import org.jfree.chart.entity.ChartEntity;
+import org.jfree.chart.entity.JFreeChartEntity;
 import org.jfree.chart.entity.LegendItemEntity;
 import org.jfree.chart.entity.PlotEntity;
 import org.jfree.chart.entity.XYItemEntity;
@@ -32,6 +34,7 @@ import org.jfree.chart.plot.XYPlot;
 
 import iped.viewers.timelinegraph.popups.DataItemPopupMenu;
 import iped.viewers.timelinegraph.popups.PlotPopupMenu;
+import iped.viewers.timelinegraph.popups.SeriesAxisPopupMenu;
 import iped.viewers.timelinegraph.popups.LegendItemPopupMenu;
 import iped.viewers.timelinegraph.popups.TimePeriodSelectionPopupMenu;
 import iped.viewers.timelinegraph.popups.TimelineFilterSelectionPopupMenu;
@@ -63,7 +66,9 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
     LegendItemPopupMenu legendItemPopupMenu = null;
     DataItemPopupMenu itemPopupMenu = null;
     TimePeriodSelectionPopupMenu timePeriodSelectionPopupMenu = null;
-
+    SeriesAxisPopupMenu seriesAxisPopupMenu = null;
+	boolean splitByBookmark=true;
+	boolean splitByCategory=false;
 	
 	public IpedChartPanel(JFreeChart chart, IpedChartsPanel ipedChartsPanel) {
 		super(chart, false);
@@ -82,6 +87,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 		legendItemPopupMenu = new LegendItemPopupMenu(this);
         itemPopupMenu = new DataItemPopupMenu(ipedChartsPanel.getResultsProvider());
     	timePeriodSelectionPopupMenu = new TimePeriodSelectionPopupMenu(ipedChartsPanel);
+    	seriesAxisPopupMenu = new SeriesAxisPopupMenu(this);
         
         IpedChartPanel self = this;
 	
@@ -116,7 +122,16 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 				}
 				
 				if(ce instanceof AxisEntity) {
-					timePeriodSelectionPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
+					if(((AxisEntity) ce).getAxis() instanceof DateAxis) {
+						timePeriodSelectionPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
+					}else {
+						seriesAxisPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
+					}
+				}
+				if(ce instanceof JFreeChartEntity) {
+					if(event.getTrigger().getX()<self.getScreenDataArea().getMinX()) {
+						seriesAxisPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
+					}
 				}
 				
 				if(ce instanceof LegendItemEntity) {
@@ -643,6 +658,28 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 		}else {
 			return new IpedGraphicsWrapper((Graphics2D) g);
 		}
+	}
+
+	public boolean getSplitByBookmark() {
+		return splitByBookmark;
+	}
+
+	public void setSplitByBookmark(boolean breakByBookmark) {
+		if(breakByBookmark) {
+			splitByCategory=false;
+		}
+		this.splitByBookmark = breakByBookmark;
+	}
+
+	public boolean getSplitByCategory() {
+		return splitByCategory;
+	}
+
+	public void setSplitByCategory(boolean breakByCategory) {
+		if(breakByCategory) {
+			splitByBookmark=false;
+		}
+		this.splitByCategory = breakByCategory;
 	}
 
 }

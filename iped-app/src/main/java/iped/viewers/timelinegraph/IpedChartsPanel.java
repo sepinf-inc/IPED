@@ -22,8 +22,10 @@ import javax.swing.event.TableModelListener;
 
 import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.BytesRef;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.LegendItem;
 import org.jfree.chart.LegendItemCollection;
@@ -38,6 +40,7 @@ import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.ui.VerticalAlignment;
+import org.jfree.data.general.Dataset;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimePeriod;
 import org.jfree.data.xy.XYDataset;
@@ -50,6 +53,8 @@ import iped.data.IMultiBookmarks;
 import iped.engine.lucene.DocValuesUtil;
 import iped.engine.search.QueryBuilder;
 import iped.engine.search.TimelineResults.TimeItemId;
+import iped.engine.task.index.IndexItem;
+import iped.localization.LocalizedProperties;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IMultiSearchResult;
@@ -86,7 +91,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	XYLineAndShapeRenderer lineRenderer = new XYLineAndShapeRenderer();
 	XYItemRenderer renderer = null;
 	XYToolTipGenerator toolTipGenerator = null;
-    
+	
+	String metadataToBreakChart = null;
+
     boolean applyFilters = false;
 	private XYBarPainter barPainter;
 
@@ -222,13 +229,23 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	        LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
 
 	        Set<String> selectedBookmarks = guiProvider.getSelectedBookmarks();
+	        Set<String> selectedCategories = guiProvider.getSelectedCategories();
+			SortedSetDocValues categoriesValues = null;
 
             HashSet<TimeTableCumulativeXYDataset> datasetsToIncludeItem = new HashSet<TimeTableCumulativeXYDataset>();
-            if(selectedBookmarks.size()>0) {
+            if(selectedBookmarks.size()>0 && chartPanel.getSplitByBookmark()) {
             	for (Iterator<String> iterator = selectedBookmarks.iterator(); iterator.hasNext();) {
 					String bookmark = (String) iterator.next();
 					TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset();
 					result.put(bookmark, dataset);
+				}
+            }else if(selectedCategories.size()>0 && chartPanel.getSplitByCategory()) {
+            	categoriesValues = reader.getSortedSetDocValues(BasicProps.CATEGORY);
+            	
+            	for (Iterator<String> iterator = selectedCategories.iterator(); iterator.hasNext();) {
+					String category = (String) iterator.next();
+					TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset();
+					result.put(LocalizedProperties.getNonLocalizedField(category.toLowerCase()), dataset);
 				}
             }else{
             	TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset();
@@ -253,7 +270,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		            int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
 
 		            /* locate all selected bookmarks corresponding datasets to include item */
-		            if(selectedBookmarks.size()>0) {
+		            if(selectedBookmarks.size()>0 && chartPanel.getSplitByBookmark()) {
 			            datasetsToIncludeItem.clear();
 
 		            	List<String> itemBookmars = multiBookmarks.getBookmarkList(item);
@@ -264,6 +281,17 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 								datasetsToIncludeItem.add(dataset);
 							}
 						}
+		            }
+
+		            /* locate all selected bookmarks corresponding datasets to include item */
+		            if(selectedCategories.size()>0 && chartPanel.getSplitByCategory()) {
+			            datasetsToIncludeItem.clear();
+
+			            categoriesValues.advanceExact(luceneId);
+			            String category = categoriesValues.lookupOrd(categoriesValues.nextOrd()).utf8ToString();
+			            
+			            TimeTableCumulativeXYDataset ds = result.get(LocalizedProperties.getNonLocalizedField(category.toLowerCase()));
+			            datasetsToIncludeItem.add(ds);
 		            }
 
 		            String eventsInDocStr = DocValuesUtil.getVal(eventsInDocOrdsValues, luceneId);
@@ -549,5 +577,13 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 	public void setApplyFilters(boolean applyFilters) {
 		this.applyFilters = applyFilters;
+	}
+
+	public String getMetadataToBreakChart() {
+		return metadataToBreakChart;
+	}
+
+	public void setMetadataToBreakChart(String metadataToBreakChart) {
+		this.metadataToBreakChart = metadataToBreakChart;
 	}
 }
