@@ -25,7 +25,6 @@ import iped.parsers.util.RepoToolDownloader;
 
 public class RegRipperParserTest {
     private static String testRoot = System.getProperty("user.dir") + "/src/test";
-    private static String osName = System.getProperty("os.name").toLowerCase();
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
@@ -40,10 +39,8 @@ public class RegRipperParserTest {
 
     @AfterClass
     public static void tearDownTool() throws IOException {
-        if (osName.startsWith("windows")) {
-            File tool_path = new File(System.clearProperty(RegRipperParser.TOOL_PATH_PROP));
-            FileUtils.deleteDirectory(tool_path.getParentFile());
-        }
+        File tool_path = new File(System.clearProperty(RegRipperParser.TOOL_PATH_PROP));
+        FileUtils.deleteDirectory(tool_path.getParentFile());
     }
 
     @Test
