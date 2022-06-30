@@ -30,7 +30,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-// WIP: parsing only superfetch file for now
+
 public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     private static String tmpPath = "/src/test/tmp/";
     private static String userDir = System.getProperty("user.dir");
@@ -39,7 +39,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     private static String osName = System.getProperty("os.name").toLowerCase();
     private static File XMLFile;
     private static List<ExternalParser> parsers;
-    private static ExternalParser superfetchParser, prefetchParser, recyclebinParser, recyclebinInfo2Parser;
+    private static ExternalParser superfetchParser, prefetchParser, recyclebinParser, recyclebinInfo2Parser, EvtxLogParser;
 
     private static ExternalParserConfigGenerator createExternalParserConfig(String name, String toolPath, String checkCommand,
         String command, String mimeType, int firstLinesToIgnore, String charset) throws TikaException, TransformerException {
@@ -72,9 +72,9 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
             repoPath = "abelcheung/rifiuti2/0.6.1/rifiuti2-0.6.1.zip";  // recyclebin and recyclebinINFO2 parsers
             RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
+            repoPath = "libyal/evtxexport/20170122.1/evtxexport-20170122.1.zip";
+            RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
         }
-
-
 
         // add SuperFetch parser configuration to xml file
         ExternalParserConfigGenerator superfetchConfigGenerator = createExternalParserConfig("SuperFetchParser", tmpPath + "libagdb/", 
@@ -96,11 +96,17 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             "rifiuti -v", "rifiuti -8 ${INPUT}", "x-info2", 3, "UTF-8");
         recyclebinInfo2ConfigGenerator.writeDocumentToFile(XMLFile);
 
+        // append EvtxLogParser parser
+        ExternalParserConfigGenerator evtxLogConfigGenerator = createExternalParserConfig("EvtxLogParser", tmpPath + "evtxexport/",
+            "evtxexport -V", "evtxexport ${INPUT}", "x-elf-file", 0, "ISO-8859-1");
+        evtxLogConfigGenerator.writeDocumentToFile(XMLFile);
+
         parsers = ExternalParsersConfigReader.read(new FileInputStream(XMLFile));
         superfetchParser = parsers.size() > 0 ? parsers.get(0) : null;
         prefetchParser = parsers.size() > 1 ? parsers.get(1) : null;
         recyclebinParser = parsers.size() > 2 ? parsers.get(2) : null;
         recyclebinInfo2Parser = parsers.size() > 3 ? parsers.get(3) : null;
+        EvtxLogParser = parsers.size() > 4 ? parsers.get(4) : null;
     }
 
     @AfterClass
@@ -121,7 +127,6 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
 
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
-
             assumeNotNull(superfetchParser);
             superfetchParser.parse(stream, handler, metadata, context);
             String mts = metadata.toString();
@@ -146,7 +151,6 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
 
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
-
             assumeNotNull(prefetchParser);
             prefetchParser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
@@ -169,7 +173,6 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
 
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
-
             assumeNotNull(recyclebinParser);
             recyclebinParser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
@@ -190,10 +193,10 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
 
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
-
             assumeNotNull(recyclebinInfo2Parser);
             recyclebinInfo2Parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
+            System.out.println(hts);
 
             assertTrue(hts.contains("2008-10-28 15:53:42"));
             assertTrue(hts.contains("No"));
@@ -203,6 +206,33 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             assertTrue(hts.contains("Yes"));
             assertTrue(hts.contains("2727936"));
             assertTrue(hts.contains("C:\\Documents and Settings\\Administrator\\Desktop\\GetDataBackforFAT-v3.63_PConline"));
+        }
+    }
+
+
+    @Test
+    public void testEvtxLogParser() throws IOException, TikaException, SAXException, TransformerException {
+
+        ContentHandler handler = new BodyContentHandler(1 << 25);
+        ParseContext context = new ParseContext();
+        Metadata metadata = new Metadata();
+        String fileName = "test_evtxLog.evtx";
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
+            assumeNotNull(EvtxLogParser);
+            EvtxLogParser.parse(stream, handler, metadata, context);
+            String hts = handler.toString();
+
+            assertTrue(hts.contains("Jun 29, 2022 15:11:27.519191500 UTC"));
+            assertTrue(hts.contains("Microsoft-Windows-Servicing"));
+            assertTrue(hts.contains("Microsoft-Hyper-V-ClientEdition"));
+            assertTrue(hts.contains("0x0"));
+            assertTrue(hts.contains("DISM Package Manager Provider"));
+            assertTrue(hts.contains("Jun 02, 2022"));
+            assertTrue(hts.contains("Microsoft-Windows-Subsystem-Linux"));
+            assertTrue(hts.contains("Microsoft-Windows-Lxss-Optional"));
+            assertTrue(hts.contains("0d (13)"));
         }
     }
 
