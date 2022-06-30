@@ -96,7 +96,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     boolean applyFilters = false;
 	private XYBarPainter barPainter;
-
+	
 	public IpedChartsPanel() {
 		this(true);
 		if(chart.getTitle()!=null) {
@@ -135,7 +135,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         resultsTable.getModel().addTableModelListener(this);
         resultsTable.getSelectionModel().addListSelectionListener(this);
 
-        chartPanel.setMouseWheelEnabled(true);
         chartPanel.setDomainZoomable(true);
         chartPanel.setRangeZoomable(true);
         chartPanel.setDisplayToolTips(true);
@@ -219,8 +218,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     		t.getSelectionModel().setValueIsAdjusting(false);
 		}
 	}
-	
+
 	public HashMap<String, TimeTableCumulativeXYDataset> createDataSets(){
+		
 		HashMap<String, TimeTableCumulativeXYDataset> result = new HashMap<String, TimeTableCumulativeXYDataset>();
 
 		try {
@@ -269,7 +269,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		        for (IItemId item : sourceSearchResults.getIterator()) {
 		            int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
 
-		            /* locate all selected bookmarks corresponding datasets to include item */
+		            // locate all selected bookmarks corresponding datasets to include item 
 		            if(selectedBookmarks.size()>0 && chartPanel.getSplitByBookmark()) {
 			            datasetsToIncludeItem.clear();
 
@@ -283,7 +283,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 						}
 		            }
 
-		            /* locate all selected bookmarks corresponding datasets to include item */
+		            // locate all selected bookmarks corresponding datasets to include item 
 		            if(selectedCategories.size()>0 && chartPanel.getSplitByCategory()) {
 			            datasetsToIncludeItem.clear();
 
@@ -294,10 +294,13 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 			            datasetsToIncludeItem.add(ds);
 		            }
 
+		            
 		            String eventsInDocStr = DocValuesUtil.getVal(eventsInDocOrdsValues, luceneId);
 		            if (eventsInDocStr.isEmpty()) {
 		                continue;
 		            }
+		            loadOrdsFromString(eventsInDocStr, eventsInDocOrds);
+		            
 
 		            boolean tsvAdv = timeStampValues.advanceExact(luceneId);
 		            boolean tegvAdv = timeEventGroupValues.advanceExact(luceneId);
@@ -312,6 +315,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		                    eventOrd[k] = (int) ord;
 		                }
 		            }
+		            
 		            pos = 0;
 	           		if(item instanceof TimeItemId) {
 	           			//on timeline view
@@ -375,6 +379,32 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		}
 		
 	}
+
+    private static final void loadOrdsFromString(String string, int[][] ret) {
+        int len = string.length();
+        int i = 0, j = 0, k = 0;
+        do {
+            j = string.indexOf(IndexItem.EVENT_IDX_SEPARATOR, i);
+            if (j == -1) {
+                j = len;
+            }
+            loadOrdsFromStringInner(string.substring(i, j), j - i, ret[k++]);
+            i = j + 1;
+        } while (j < len);
+    }
+
+    private static final void loadOrdsFromStringInner(String string, int len, int[] ret) {
+        int i = 0, j = 0, k = 0;
+        do {
+            j = string.indexOf(IndexItem.EVENT_IDX_SEPARATOR2, i);
+            if (j == -1) {
+                j = len;
+            }
+            ret[k++] = Integer.parseInt(string.substring(i, j));
+            i = j + 1;
+        } while (j < len);
+        ret[k] = -1;
+    }
 
 	public void refreshChart() {
 		try {

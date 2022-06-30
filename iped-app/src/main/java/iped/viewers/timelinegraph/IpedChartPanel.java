@@ -142,6 +142,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 				}
 			}
 		});
+        
+        this.addMouseWheelListener(new IpedTimelineMouseWheelHandler(this));
 	}
 	
 	@Override
