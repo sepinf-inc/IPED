@@ -39,7 +39,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     private static String osName = System.getProperty("os.name").toLowerCase();
     private static File XMLFile;
     private static List<ExternalParser> parsers;
-    private static ExternalParser superfetchParser, prefetchParser, recyclebinParser;
+    private static ExternalParser superfetchParser, prefetchParser, recyclebinParser, recyclebinInfo2Parser;
 
     private static ExternalParserConfigGenerator createExternalParserConfig(String name, String toolPath, String checkCommand,
         String command, String mimeType, int firstLinesToIgnore, String charset) throws TikaException, TransformerException {
@@ -70,7 +70,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
             repoPath = "libyal/sccainfo/20170205.1/sccainfo-20170205.1.zip";
             RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
-            repoPath = "abelcheung/rifiuti2/0.6.1/rifiuti2-0.6.1.zip";
+            repoPath = "abelcheung/rifiuti2/0.6.1/rifiuti2-0.6.1.zip";  // recyclebin and recyclebinINFO2 parsers
             RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
         }
 
@@ -91,10 +91,16 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             "rifiuti-vista -v", "rifiuti-vista -8 ${INPUT}", "x-recyclebin", 3, "UTF-8");
         recyclebinConfigGenerator.writeDocumentToFile(XMLFile);
 
+        // append RecycleBinInfo2 parser
+        ExternalParserConfigGenerator recyclebinInfo2ConfigGenerator = createExternalParserConfig("RecycleInfo2Parser", tmpPath + "rifiuti/",
+            "rifiuti -v", "rifiuti -8 ${INPUT}", "x-info2", 3, "UTF-8");
+        recyclebinInfo2ConfigGenerator.writeDocumentToFile(XMLFile);
+
         parsers = ExternalParsersConfigReader.read(new FileInputStream(XMLFile));
         superfetchParser = parsers.size() > 0 ? parsers.get(0) : null;
         prefetchParser = parsers.size() > 1 ? parsers.get(1) : null;
         recyclebinParser = parsers.size() > 2 ? parsers.get(2) : null;
+        recyclebinInfo2Parser = parsers.size() > 3 ? parsers.get(3) : null;
     }
 
     @AfterClass
@@ -159,7 +165,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         Metadata metadata = new Metadata();
-        String fileName = "test_$I.png";
+        String fileName = "test_recyclebin.png";
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
 
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
@@ -171,6 +177,32 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             assertTrue(hts.contains("2022-06-29 12:56:50"));
             assertTrue(hts.contains("473831"));
             assertTrue(hts.contains("C:\\Users\\Felipe Costa\\OneDrive\\Área de Trabalho\\test_lenaPng.png"));
+        }
+    }
+
+    @Test
+    public void testRecycleBinInfo2() throws IOException, TikaException, SAXException, TransformerException {
+
+        ContentHandler handler = new BodyContentHandler();
+        ParseContext context = new ParseContext();
+        Metadata metadata = new Metadata();
+        String fileName = "test_recyclebinINFO2";
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
+
+            assumeNotNull(recyclebinInfo2Parser);
+            recyclebinInfo2Parser.parse(stream, handler, metadata, context);
+            String hts = handler.toString();
+
+            assertTrue(hts.contains("2008-10-28 15:53:42"));
+            assertTrue(hts.contains("No"));
+            assertTrue(hts.contains("4096"));
+            assertTrue(hts.contains("C:\\Documents and Settings\\All Users\\Desktop\\有道桌面词典.lnk"));
+            assertTrue(hts.contains("2008-11-19 05:07:35"));
+            assertTrue(hts.contains("Yes"));
+            assertTrue(hts.contains("2727936"));
+            assertTrue(hts.contains("C:\\Documents and Settings\\Administrator\\Desktop\\GetDataBackforFAT-v3.63_PConline"));
         }
     }
 
