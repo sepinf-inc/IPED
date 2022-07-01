@@ -32,6 +32,7 @@ import org.jfree.chart.entity.XYItemEntity;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 
+import iped.app.ui.App;
 import iped.viewers.timelinegraph.popups.DataItemPopupMenu;
 import iped.viewers.timelinegraph.popups.PlotPopupMenu;
 import iped.viewers.timelinegraph.popups.SeriesAxisPopupMenu;
@@ -54,6 +55,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	private double filterTriggerDistance;
 
 	ArrayList<Date[]> definedFilters = new ArrayList<Date[]>();
+	ArrayList<String> excludedEvents = new ArrayList<String>();
 
 	Date startFilterDate = null;
 	Date endFilterDate = null;
@@ -623,12 +625,13 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 			ipedChartsPanel.selectItemsOnInterval(dates[0],dates[1],false);
 		}
 	}
-	
+
 	public void removeAllFilters() {
 		for (Date[] removedDates : definedFilters) {
 			ipedChartsPanel.unselectItemsOnInterval(removedDates[0],removedDates[1],false);
 		}
 		definedFilters.clear();
+		this.repaint();
 	}
 
 	public IpedChartsPanel getIpedChartsPanel() {
@@ -683,5 +686,34 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 		}
 		this.splitByCategory = breakByCategory;
 	}
+
+	public ArrayList<Date[]> getDefinedFilters() {
+		return definedFilters;
+	}
+
+	public void setDefinedFilters(ArrayList<Date[]> definedFilters) {
+		this.definedFilters = definedFilters;
+	}
+
+	public void filterSelection() {
+		this.getIpedChartsPanel().setInternalUpdate(true);
+		App app = (App) this.getIpedChartsPanel().getResultsProvider();			
+		app.getAppListener().updateFileListing();
+		app.setDockablesColors();
+		this.getIpedChartsPanel().setInternalUpdate(false);
+	}
+
+	public ArrayList<String> getExcludedEvents() {
+		return excludedEvents;
+	}
+
+	public void setExcludedEvents(ArrayList<String> excludedEvents) {
+		this.excludedEvents = excludedEvents;
+	}
+
+	public boolean hasNoFilter() {
+		return (definedFilters.size()==0)&&(excludedEvents.size()==0);
+	}
+
 
 }

@@ -53,10 +53,28 @@ public class PlotPopupMenu extends JPopupMenu implements ActionListener{
 		if(e.getSource()==filterBeforeMenu) {
 			Date firstDate = new Date(0);
 			ipedChartPanel.addFilter(firstDate, date);
+			ipedChartPanel.repaint();
+			ipedChartPanel.getIpedChartsPanel().setApplyFilters(true);
+			ipedChartPanel.filterSelection();
 		}
 		if(e.getSource()==filterAfterMenu) {
 			Date lastDate = new Date(Long.MAX_VALUE);
 			ipedChartPanel.addFilter(date, lastDate);
+			ipedChartPanel.repaint();
+			ipedChartPanel.getIpedChartsPanel().setApplyFilters(true);
+			ipedChartPanel.filterSelection();
+		}
+		if(e.getSource()==selectBeforeMenu) {
+			Date firstDate = new Date(0);
+			ipedChartPanel.addFilter(firstDate, date);
+			ipedChartPanel.repaint();
+			ipedChartPanel.getIpedChartsPanel().selectItemsOnInterval(firstDate, date, false);
+		}
+		if(e.getSource()==selectAfterMenu) {
+			Date lastDate = new Date(Long.MAX_VALUE);
+			ipedChartPanel.addFilter(date, lastDate);
+			ipedChartPanel.repaint();
+			ipedChartPanel.getIpedChartsPanel().selectItemsOnInterval(date, lastDate, false);
 		}
 	}
 

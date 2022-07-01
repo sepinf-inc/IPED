@@ -86,7 +86,7 @@ public class IpedLegendItemCollection implements LegendItemSource{
         
         Paint paint = dw.getNextPaint();
         
-        LegendItem item = new LegendItem(seriesKey, paint);
+        LegendItem item = new IpedLegendItem(seriesKey, paint, plot);
         item.setShape(shape);
 
         item.setLineVisible(true);

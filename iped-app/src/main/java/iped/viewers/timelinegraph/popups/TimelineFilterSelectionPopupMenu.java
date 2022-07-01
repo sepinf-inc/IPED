@@ -51,18 +51,23 @@ public class TimelineFilterSelectionPopupMenu extends JPopupMenu implements Acti
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==clearFilter) {
 			ipedChartPanel.removeFilter(dates);
+			if(ipedChartPanel.hasNoFilter()) {
+				ipedChartPanel.getIpedChartsPanel().setApplyFilters(false);
+				App app = (App) ipedChartPanel.getIpedChartsPanel().getGUIProvider();
+				app.setDockablesColors();
+			}
+			ipedChartPanel.filterSelection();
 			ipedChartPanel.repaint();
 		}
 
 		if(e.getSource()==filterSelection) {
 			ipedChartPanel.getIpedChartsPanel().setApplyFilters(true);
-			App app = (App) ipedChartPanel.getIpedChartsPanel().getResultsProvider();			
-			app.getAppListener().updateFileListing();
+			ipedChartPanel.filterSelection();
 		}
 
 		if(e.getSource()==selectItems) {
 			ipedChartPanel.getIpedChartsPanel().selectItemsOnInterval(dates[0], dates[1], false);
 		}
 	}
-
+	
 }

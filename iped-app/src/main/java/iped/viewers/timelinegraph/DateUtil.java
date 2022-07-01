@@ -2,6 +2,7 @@ package iped.viewers.timelinegraph;
 
 import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -11,6 +12,7 @@ import org.jfree.chart.axis.DateTickUnitType;
 import org.jfree.data.time.TimePeriod;
 
 public class DateUtil {
+    static SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
 
     public static Date removeFromDatePart(Date date, int fromDatePart) {
         Calendar cal = Calendar.getInstance();
@@ -100,5 +102,18 @@ public class DateUtil {
 		default:
 			return calendarField;
 		}
+	}
+
+	public static Date ISO8601DateParse(String strDate) {
+		try {
+			return ISO8601DATEFORMAT.parse(strDate);
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public static String ISO8601DateFormat(Date date) {
+		return ISO8601DATEFORMAT.format(date);
 	}
 }

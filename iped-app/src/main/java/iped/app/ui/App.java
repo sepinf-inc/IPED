@@ -72,6 +72,7 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.text.JTextComponent;
+import javax.swing.tree.TreePath;
 
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
@@ -104,6 +105,7 @@ import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
+import bibliothek.gui.dock.common.intern.CDockable;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
 import bibliothek.gui.dock.themes.basic.action.BasicButtonHandler;
@@ -124,6 +126,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocaleConfig;
 import iped.engine.core.Manager;
+import iped.engine.data.Category;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
@@ -141,6 +144,7 @@ import iped.viewers.api.AbstractViewer;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IColumnsManager;
 import iped.viewers.api.IMultiSearchResultProvider;
+import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
 import iped.viewers.api.ResultSetViewerConfiguration;
 import iped.viewers.components.HitsTable;
@@ -165,6 +169,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public IPEDMultiSource appCase;
 
     FilterManager filterManager;
+
     public JDialog dialogBar;
     JProgressBar progressBar;
     JComboBox<String> queryComboBox, filterComboBox;
@@ -765,6 +770,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         clearAllFilters.addClearListener(similarFacesFilterPanel);
         clearAllFilters.addClearListener(timelineListener);
 
+
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
         subItemTable.addMouseListener(subItemModel);
         subItemTable.getSelectionModel().addListSelectionListener(subItemModel);
@@ -873,6 +879,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     resultSetViewer.getPanel());
 
             resultSetViewer.setDockableContainer(tabDock);
+            
+            if(resultSetViewer instanceof ClearFilterListener) {
+                clearAllFilters.addClearListener((ClearFilterListener)resultSetViewer);
+            }
 
             rsTabDock.add(tabDock);
             tabDock.addCDockableLocationListener(new CDockableLocationListener() {
@@ -1106,7 +1116,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
 
-    private void setDockablesColors() {
+    public void setDockablesColors() {
+    	for(int i=0; i<dockingControl.getCDockableCount();i++) {
+    		DefaultSingleCDockable tabDock = (DefaultSingleCDockable) dockingControl.getCDockable(i);
+    		Component c = tabDock.getContentPane().getComponent(0);
+    		if(c instanceof IQueryFilterer) {
+   		        setTabColor(tabDock, !((IQueryFilterer) c).hasFiltersApplied());
+    		}
+    	}
+    	
         setTabColor(categoriesTabDock, categoriesDefaultColor);
         setTabColor(metadataTabDock, metadataDefaultColor);
         setTabColor(evidenceTabDock, evidenceDefaultColor);
@@ -1425,4 +1443,24 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public void setEnableGallerySimSearchButton(boolean enabled) {
         this.butSimSearch.setEnabled(enabled);
     }
+    
+    public List<ResultSetViewer> getResultSetViewers(){
+    	return getResultSetViewerConfiguration().getResultSetViewers();
+    }
+
+	@Override
+	public Set<String> getSelectedBookmarks() {
+        return bookmarksListener.selection;
+	}
+
+	@Override
+	public Set<String> getSelectedCategories() {
+        HashSet<TreePath> paths = categoryListener.getSelection();
+        HashSet<String> result = new HashSet<String>();
+        for (TreePath path : paths) {
+            Category category = (Category) path.getLastPathComponent();
+            result.add(category.getName());
+        }
+        return result;
+	}
 }
