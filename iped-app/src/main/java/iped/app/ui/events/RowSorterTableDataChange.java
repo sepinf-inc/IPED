@@ -1,4 +1,4 @@
-package iped.app.ui;
+package iped.app.ui.events;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableModel;

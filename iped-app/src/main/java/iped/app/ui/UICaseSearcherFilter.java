@@ -332,6 +332,7 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
                     App.get().resultsModel.fireTableDataChanged();
                     App.get().galleryModel.fireTableStructureChanged();
                 }
+                App.get().resultsModel.fireTableDataChanged();
                 ColumnsManager.getInstance().updateDinamicCols();
                 new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
 

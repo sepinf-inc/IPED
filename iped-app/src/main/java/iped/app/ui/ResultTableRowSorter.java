@@ -30,6 +30,7 @@ import javax.swing.RowSorter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.events.RowSorterTableDataChange;
 import iped.app.ui.parallelsorter.ParallelTableRowSorter;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.util.ProgressDialog;
@@ -79,7 +80,7 @@ public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSort
     public void setSortKeys(final List<? extends SortKey> sortKeys) {
         if (sortKeys == null) {
             super.setSortKeys(null);
-            App.get().resultsModel.fireTableDataChanged();
+            App.get().resultsModel.fireTableChanged(new RowSorterTableDataChange(App.get().resultsModel));
         } else {
             BackgroundSort backgroundSort = new BackgroundSort(sortKeys);
             backgroundSort.execute();
