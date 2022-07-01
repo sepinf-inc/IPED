@@ -3,6 +3,7 @@ package iped.geo.impl;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -55,8 +56,8 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
     }
 
     @Override
-    public JScrollPane getPanel() {
-        return mapsScroll;
+    public JPanel getPanel() {
+        return mapaPanel;
     }
 
     @Override

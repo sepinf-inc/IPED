@@ -50,7 +50,7 @@ import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
 import iped.app.ui.App;
 import iped.app.ui.ClearFilterListener;
-import iped.app.ui.RowSorterTableDataChange;
+import iped.app.ui.events.RowSorterTableDataChange;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.engine.lucene.DocValuesUtil;
@@ -483,12 +483,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 			            }
 	           		}
 		        }
-			}
-
-			for (String series : result.keySet()) {
-				System.out.println(series);
-				int sc = ((TimeTableCumulativeXYDataset)result.get(series)).getSeriesCount();
-				System.out.println(sc);
 			}
 
 			return result;
