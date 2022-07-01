@@ -92,7 +92,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     IpedDateAxis domainAxis = new IpedDateAxis("Date ("+timePeriodString+")");
     IpedCombinedDomainXYPlot combinedPlot = new IpedCombinedDomainXYPlot(this);
     JFreeChart chart = new JFreeChart(combinedPlot);
-    IpedChartPanel chartPanel = new IpedChartPanel(chart, this);
+    IpedChartPanel chartPanel = null;
 	StackedXYBarRenderer stackedRenderer = new StackedXYBarRenderer(0.15);
 	XYLineAndShapeRenderer lineRenderer = new XYLineAndShapeRenderer();
 	XYItemRenderer renderer = null;
@@ -143,6 +143,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		this.resultsTable = resultsTable;
 		this.resultsProvider = resultsProvider;
 		this.guiProvider = guiProvider;
+		
+		chartPanel = new IpedChartPanel(chart, this);
 
         resultsTable.getModel().addTableModelListener(this);
         resultsTable.getSelectionModel().addListSelectionListener(this);
@@ -800,6 +802,36 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 	public void setChartPanel(IpedChartPanel chartPanel) {
 		this.chartPanel = chartPanel;
+	}
+	
+
+	public void checkItems(List<IItemId> items) {
+        JTable t = resultsProvider.getResultsTable();
+
+		for (int i = 0; i < resultsProvider.getResults().getLength(); i++) {
+            IItemId item = resultsProvider.getResults().getItem(i);
+            if(items.contains(item)) {
+            	Boolean checked = (Boolean) t.getValueAt(t.convertRowIndexToView(i), t.convertColumnIndexToView(1));
+    	        t.setValueAt(!checked.booleanValue(), t.convertRowIndexToView(i), t.convertColumnIndexToView(1));
+            }
+        }
+	}
+	
+	public void selectItems(List<IItemId> items) {
+		JTable t = resultsProvider.getResultsTable();
+		t.getSelectionModel().setValueIsAdjusting(true);
+
+		try {
+	        for (int i = 0; i < resultsProvider.getResults().getLength(); i++) {
+	            IItemId item = resultsProvider.getResults().getItem(i);
+	            if(items.contains(item)) {
+	                int row = t.convertRowIndexToView(i);
+	                t.addRowSelectionInterval(row, row);
+	            }
+	        }
+		}finally{
+			t.getSelectionModel().setValueIsAdjusting(false);
+		}
 	}
 	
 }

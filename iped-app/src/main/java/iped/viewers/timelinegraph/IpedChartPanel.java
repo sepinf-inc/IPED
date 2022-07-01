@@ -25,6 +25,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.entity.AxisEntity;
 import org.jfree.chart.entity.ChartEntity;
+import org.jfree.chart.entity.EntityCollection;
 import org.jfree.chart.entity.JFreeChartEntity;
 import org.jfree.chart.entity.LegendItemEntity;
 import org.jfree.chart.entity.PlotEntity;
@@ -87,7 +88,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 		timelineSelectionPopupMenu = new TimelineFilterSelectionPopupMenu(this);
 		domainPopupMenu = new PlotPopupMenu(this, ipedChartsPanel.getResultsProvider());
 		legendItemPopupMenu = new LegendItemPopupMenu(this);
-        itemPopupMenu = new DataItemPopupMenu(ipedChartsPanel.getResultsProvider());
+        itemPopupMenu = new DataItemPopupMenu(this);
     	timePeriodSelectionPopupMenu = new TimePeriodSelectionPopupMenu(ipedChartsPanel);
     	seriesAxisPopupMenu = new SeriesAxisPopupMenu(this);
         
@@ -103,10 +104,27 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 			@Override
 			public void chartMouseClicked(ChartMouseEvent event) {
 				ChartEntity ce = event.getEntity();
+				int x = event.getTrigger().getX();
 				if(ce instanceof XYItemEntity) {
 					XYItemEntity ie = ((XYItemEntity) ce);
 					itemPopupMenu.setChartEntity(ie);
-					itemPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
+					itemPopupMenu.show(event.getTrigger().getComponent(), x, event.getTrigger().getY());
+					
+					ArrayList<XYItemEntity> entityList = new ArrayList<XYItemEntity>();
+					EntityCollection entities = self.getChartRenderingInfo().getEntityCollection();		            
+		            if (entities != null) {
+		                int entityCount = entities.getEntityCount();
+		                for (int i = entityCount - 1; i >= 0; i--) {
+		                    ChartEntity entity = (ChartEntity) entities.getEntity(i);
+		                    if(entity instanceof XYItemEntity) {
+			                    if (entity.getArea().getBounds().getMaxX()>x && entity.getArea().getBounds().getMinX()<x) {
+			                    	entityList.add((XYItemEntity)entity);
+			                    }
+		                    }
+		                }
+		            }
+					itemPopupMenu.setChartEntityList(entityList);
+					
 				}
 
 				if(ce instanceof PlotEntity) {
