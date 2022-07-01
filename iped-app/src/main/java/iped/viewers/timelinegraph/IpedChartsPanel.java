@@ -533,7 +533,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 					HashMap<String, TimeTableCumulativeXYDataset> result = createDataSets();
 					if(result!=null && result.size()>0) {
 						createChart(result);
-						//chartPanel.removeAllFilters();
 				        isUpdated=true;
 					}
 
@@ -634,7 +633,11 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 	@Override
 	public void tableChanged(TableModelEvent e) {
-		if(internalUpdate || (e instanceof RowSorterTableDataChange)) {
+		if((e instanceof RowSorterTableDataChange)) {
+			return;
+		}
+		if(internalUpdate) {
+			internalUpdate=false;
 			return;
 		}
 		//all data changed

@@ -718,7 +718,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 		App app = (App) this.getIpedChartsPanel().getResultsProvider();			
 		app.getAppListener().updateFileListing();
 		app.setDockablesColors();
-		this.getIpedChartsPanel().setInternalUpdate(false);
 	}
 
 	public ArrayList<String> getExcludedEvents() {
