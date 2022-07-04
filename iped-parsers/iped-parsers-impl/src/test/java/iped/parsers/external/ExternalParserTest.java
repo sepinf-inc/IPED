@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -39,7 +40,8 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     private static String osName = System.getProperty("os.name").toLowerCase();
     private static File XMLFile;
     private static List<ExternalParser> parsers;
-    private static ExternalParser superfetchParser, prefetchParser, recyclebinParser, recyclebinInfo2Parser, EvtxLogParser;
+    private static ExternalParser superfetchParser, prefetchParser, recyclebinParser,
+        recyclebinInfo2Parser, EvtxLogParser, EvtLogParser;
 
     private static ExternalParserConfigGenerator createExternalParserConfig(String name, String toolPath, String checkCommand,
         String command, String mimeType, int firstLinesToIgnore, String charset) throws TikaException, TransformerException {
@@ -66,14 +68,15 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
 
         // download all external parsers tools
         if (osName.startsWith("windows")) {
-            String repoPath = "libyal/libagdb/20181111.1/libagdb-20181111.1.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
-            repoPath = "libyal/sccainfo/20170205.1/sccainfo-20170205.1.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
-            repoPath = "abelcheung/rifiuti2/0.6.1/rifiuti2-0.6.1.zip";  // recyclebin and recyclebinINFO2 parsers
-            RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
-            repoPath = "libyal/evtxexport/20170122.1/evtxexport-20170122.1.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
+            List<String> repoPaths = new ArrayList<>();
+            repoPaths.add("libyal/libagdb/20181111.1/libagdb-20181111.1.zip");
+            repoPaths.add("libyal/sccainfo/20170205.1/sccainfo-20170205.1.zip");
+            repoPaths.add("abelcheung/rifiuti2/0.6.1/rifiuti2-0.6.1.zip"); // recyclebin and recyclebinINFO2 parsers
+            repoPaths.add("libyal/evtxexport/20170122.1/evtxexport-20170122.1.zip");
+            repoPaths.add("libyal/evtexport/20180317.1/evtexport-20180317.1.zip");
+            for (String repoPath : repoPaths) {
+                RepoToolDownloader.unzipFromUrl(repoPath, absoluteTmpPath);
+            }
         }
 
         // add SuperFetch parser configuration to xml file
@@ -101,12 +104,18 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             "evtxexport -V", "evtxexport ${INPUT}", "x-elf-file", 0, "ISO-8859-1");
         evtxLogConfigGenerator.writeDocumentToFile(XMLFile);
 
+        // append EvtLogParser parser
+        ExternalParserConfigGenerator evtLogConfigGenerator = createExternalParserConfig("EvtLogParser", tmpPath + "evtexport/",
+            "evtexport -V", "evtexport ${INPUT}", "x-elf-log", 0, "ISO-8859-1");
+        evtLogConfigGenerator.writeDocumentToFile(XMLFile);
+
         parsers = ExternalParsersConfigReader.read(new FileInputStream(XMLFile));
         superfetchParser = parsers.size() > 0 ? parsers.get(0) : null;
         prefetchParser = parsers.size() > 1 ? parsers.get(1) : null;
         recyclebinParser = parsers.size() > 2 ? parsers.get(2) : null;
         recyclebinInfo2Parser = parsers.size() > 3 ? parsers.get(3) : null;
         EvtxLogParser = parsers.size() > 4 ? parsers.get(4) : null;
+        EvtLogParser = parsers.size() > 5 ? parsers.get(5) : null;
     }
 
     @AfterClass
