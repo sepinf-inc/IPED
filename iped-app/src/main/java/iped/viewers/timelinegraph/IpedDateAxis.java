@@ -284,4 +284,8 @@ public class IpedDateAxis extends DateAxis {
 		return dateFormaters.get(dateTickUnit.getUnitType());
 	}
 
+	public String dateToString(Date date) {
+		return ISO8601DATEFORMAT.format(date);
+	}
+
 }
