@@ -2,6 +2,7 @@ package iped.viewers.timelinegraph;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -96,9 +97,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     IpedCombinedDomainXYPlot combinedPlot = new IpedCombinedDomainXYPlot(this);
     JFreeChart chart = new JFreeChart(combinedPlot);
     IpedChartPanel chartPanel = null;
-	StackedXYBarRenderer stackedRenderer = new StackedXYBarRenderer(0.00);
-	XYLineAndShapeRenderer lineRenderer = new XYLineAndShapeRenderer();
-	XYItemRenderer renderer = null;
+	IpedStackedXYBarRenderer renderer = null;
 	XYToolTipGenerator toolTipGenerator = null;
 	
 	String metadataToBreakChart = null;
@@ -128,12 +127,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 				return "<html>"+dataset.getSeriesKey(series)+":"+dataset.getYValue(series, item)+"</html>";
 			}
 		};
-
-		stackedRenderer.setDefaultToolTipGenerator(toolTipGenerator);
-		stackedRenderer.setDefaultItemLabelsVisible(true);
-		stackedRenderer.setDrawBarOutline(false);
-
-		lineRenderer.setDefaultShapesVisible(true);
 	}
 	
 	public IpedChartsPanel(boolean b) {
@@ -149,6 +142,12 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		this.guiProvider = guiProvider;
 		
 		chartPanel = new IpedChartPanel(chart, this);
+		
+		renderer = new IpedStackedXYBarRenderer(this);
+		((IpedStackedXYBarRenderer)renderer).setBarPainter(new IpedXYBarPainter((XYBarRenderer)renderer));
+		((IpedStackedXYBarRenderer)renderer).setMargin(0);
+		renderer.setDefaultToolTipGenerator(toolTipGenerator);
+		renderer.setDefaultItemLabelsVisible(true);
 
         resultsTable.getModel().addTableModelListener(this);
         resultsTable.getSelectionModel().addListSelectionListener(this);
@@ -496,13 +495,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		// TODO Auto-generated method stub
 	}
 
-    public XYItemRenderer getRenderer() {
-		renderer = new IpedStackedXYBarRenderer();
-		((IpedStackedXYBarRenderer)renderer).setBarPainter(new IpedXYBarPainter((XYBarRenderer)renderer));
-		((IpedStackedXYBarRenderer)renderer).setMargin(0.0);
-		renderer.setDefaultToolTipGenerator(toolTipGenerator);
-		renderer.setDefaultItemLabelsVisible(true);
-
+    public IpedStackedXYBarRenderer getRenderer() {
 		return renderer;
     }
     
@@ -675,6 +668,18 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 	public TimeZone getTimeZone() {
 		return timeZone;
+	}
+
+	public double getTimePeriodLength() {
+		Class[] cArg = new Class[1];
+        cArg[0] = Date.class;
+		try {
+			TimePeriod t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(new Date());
+			return t.getEnd().getTime()-t.getStart().getTime();
+		}catch (Exception e) {
+		}
+
+		return 0;
 	}
 	
 }
