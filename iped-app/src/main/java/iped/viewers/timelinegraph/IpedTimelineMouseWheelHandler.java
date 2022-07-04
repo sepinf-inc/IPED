@@ -16,7 +16,7 @@ import org.jfree.chart.plot.Zoomable;
 public class IpedTimelineMouseWheelHandler implements MouseWheelListener, Serializable {
 
     /** The chart panel. */
-    private ChartPanel chartPanel;
+    private IpedChartPanel chartPanel;
 
     /** The zoom factor. */
     double zoomFactor;
@@ -26,7 +26,7 @@ public class IpedTimelineMouseWheelHandler implements MouseWheelListener, Serial
      *
      * @param chartPanel  the chart panel ({@code null} not permitted).
      */
-    public IpedTimelineMouseWheelHandler(ChartPanel chartPanel) {
+    public IpedTimelineMouseWheelHandler(IpedChartPanel chartPanel) {
         this.chartPanel = chartPanel;
         this.zoomFactor = 0.10;
         this.chartPanel.addMouseWheelListener(this);

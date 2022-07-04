@@ -18,7 +18,13 @@ import org.jfree.data.xy.XYDataset;
 public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
 	HashMap<Dataset, HashSet<Integer>> invisibleSeries = new HashMap<Dataset, HashSet<Integer>>(); 
 	HashMap<Dataset, HashSet<Integer>> invisibleSeriesInLegend = new HashMap<Dataset, HashSet<Integer>>();
+	
+	IpedChartsPanel ipedChartsPanel;
 
+	public IpedStackedXYBarRenderer(IpedChartsPanel ipedChartsPanel) {
+		super();
+		this.ipedChartsPanel = ipedChartsPanel;
+	}
 
 	public Paint getItemPaint(int row, int column) {
 		IpedCombinedDomainXYPlot rootPlot = (IpedCombinedDomainXYPlot) getPlot().getRootPlot();
@@ -89,5 +95,11 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
 		if(notify) {
 			fireChangeEvent();
 		}
+	}
+
+	@Override
+	public double getMargin() {
+		double length = ipedChartsPanel.getDomainAxis().lengthToJava2D(ipedChartsPanel.getTimePeriodLength(), ipedChartsPanel.getChartPanel().getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge());
+		return super.getMargin()/length;
 	}
 }
