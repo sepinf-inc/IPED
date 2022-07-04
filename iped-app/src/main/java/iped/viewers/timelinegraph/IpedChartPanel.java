@@ -17,7 +17,6 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.TimeZone;
 
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
@@ -86,6 +85,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	    this.filterLimitStroke = new BasicStroke(3,BasicStroke.CAP_SQUARE,BasicStroke.JOIN_MITER, 1);
 	    this.affineTransform = new AffineTransform();
 	    this.affineTransform.rotate(Math.toRadians(90), 0, 0);
+	    this.affineTransform.scale(0.8, 0.8);
 	    
 		timelineSelectionPopupMenu = new TimelineFilterSelectionPopupMenu(this);
 		domainPopupMenu = new PlotPopupMenu(this, ipedChartsPanel.getResultsProvider());
@@ -471,8 +471,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
            g2.setXORMode(Color.GRAY);
        }
 
-        String strStartDate = iped.utils.DateUtil.dateToString(dates[0]); 
-        String strEndDate = iped.utils.DateUtil.dateToString(dates[1]);
+        String strStartDate = ipedChartsPanel.getDomainAxis().dateToString(dates[0]); 
+        String strEndDate = ipedChartsPanel.getDomainAxis().dateToString(dates[1]);
         
         int xstart = (int) ipedChartsPanel.domainAxis.dateToJava2D(dates[0],  this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge());
         int xend = (int) ipedChartsPanel.domainAxis.dateToJava2D(dates[1],  this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge());
@@ -548,69 +548,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
             result = scale(plotInfo.getSubplotInfo(subplotIndex).getDataArea());
         }
         return result;
-    }
-    
-    /**
-     * Draws defined filters rectangles (if present).
-     * The drawing is performed in XOR mode, therefore
-     * when this method is called twice in a row,
-     * the second call will completely restore the state
-     * of the canvas.
-     *
-     * @param g2 the graphics device.
-     * @param xor  use XOR for drawing?
-     */
-    private void drawDefinedFilterRectangles2(Date[] dates, Graphics2D g2, boolean xor) {
-        if (xor) {
-            // Set XOR mode to draw the zoom rectangle
-           g2.setXORMode(Color.GRAY);
-       }
-       g2.setPaint(this.filterIntervalFillPaint);
-
-       int xstart = (int) ipedChartsPanel.domainAxis.dateToJava2D(dates[0],  this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge());
-       int xend = (int) ipedChartsPanel.domainAxis.dateToJava2D(dates[1],  this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge());
-
-       Rectangle2D screenDataArea = getScreenDataArea(
-               xend,
-               2);
-
-       double minX = screenDataArea.getMinX();
-       double maxX = screenDataArea.getMaxX();
-       double maxY = screenDataArea.getMaxY();
-
-       int x = (int) Math.max(minX, xstart);
-       int y = (int) screenDataArea.getMinY();
-       int w = (int) Math.min(xend-x,
-               maxX - x);
-       double h = screenDataArea.getHeight();
-
-       Rectangle2D rectangle2d = new Rectangle2D.Double(x, y, w, h);
-       
-       g2.fill(rectangle2d);
-       
-       drawDefinedFiltersDates(dates, g2, xor);
-
-       
-       if (xor) {
-           // Reset to the default 'overwrite' mode
-           g2.setPaintMode();
-       }
-    }
-    
-    /**
-     * Draws defined filters rectangles (if present).
-     * The drawing is performed in XOR mode, therefore
-     * when this method is called twice in a row,
-     * the second call will completely restore the state
-     * of the canvas.
-     *
-     * @param g2 the graphics device.
-     * @param xor  use XOR for drawing?
-     */
-    public void drawDefinedFiltersRectangles(Graphics2D g2, boolean xor) {
-    	for (Date[] dates : this.definedFilters) {
-    		drawDefinedFilterRectangles2(dates, g2, xor);
-   		}
     }
     
     public Date[] getDefinedFilter(int x) {
@@ -755,6 +692,11 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 
 	public boolean hasNoFilter() {
 		return (definedFilters.size()==0)&&(excludedEvents.size()==0);
+	}
+
+	@Override
+	public void zoom(Rectangle2D selection) {
+		super.zoom(selection);
 	}
 
 }
