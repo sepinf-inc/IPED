@@ -3,10 +3,15 @@ package iped.viewers.timelinegraph;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
+import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.DateTick;
@@ -18,13 +23,25 @@ import org.jfree.chart.axis.TickType;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.TextAnchor;
 import org.jfree.chart.util.Args;
+import org.jfree.data.Range;
 import org.jfree.data.time.Month;
 import org.jfree.data.time.RegularTimePeriod;
+import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.Year;
 
 public class IpedDateAxis extends DateAxis {
+    static SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+	HashMap<DateTickUnitType, DateFormat> dateFormaters = new HashMap<DateTickUnitType, DateFormat>();
+    
     public IpedDateAxis(String string) {
 		super(string);
+		dateFormaters.put(DateTickUnitType.YEAR, new SimpleDateFormat("yyyy"));
+		dateFormaters.put(DateTickUnitType.MONTH, new SimpleDateFormat("MMM-yyyy"));
+		dateFormaters.put(DateTickUnitType.DAY, new SimpleDateFormat("d-MMM'\n'yyyy"));
+		dateFormaters.put(DateTickUnitType.HOUR, new SimpleDateFormat("HH:'00'\nd-MMM-yyyy"));
+		dateFormaters.put(DateTickUnitType.MINUTE, new SimpleDateFormat("HH:mm\nd-MMM-yyyy"));
+		dateFormaters.put(DateTickUnitType.SECOND, new SimpleDateFormat(" HH:mm:ss\nd-MMM-yyyy"));
+		dateFormaters.put(DateTickUnitType.MILLISECOND, new SimpleDateFormat("HH:mm:ss.SSS\nd-MMM-yyyy"));
 	}
 
     /**
@@ -88,11 +105,11 @@ public class IpedDateAxis extends DateAxis {
                     tickLabel = formatter.format(tickDate);
                 }
                 else {
-    		        Calendar cal = Calendar.getInstance();
+    		        Calendar cal = ISO8601DATEFORMAT.getCalendar();
     		        cal.setTime(tickDate);
     		        int upperTickUnitCalendarValue = cal.get(DateUtil.getUpperCalendarField(this.getTickUnit().getCalendarField()));
                 	if(lastUpperTickUnitCalendarValue!=upperTickUnitCalendarValue) {
-                        tickLabel = DateUtil.getLongDateFormaterTickUnit(this.getTickUnit().getUnitType()).format(tickDate);
+                        tickLabel = getLongDateFormaterTickUnit(this.getTickUnit()).format(tickDate);
                         lastUpperTickUnitCalendarValue=upperTickUnitCalendarValue;
                 	}else {
                         tickLabel = this.getTickUnit().dateToString(tickDate);
@@ -206,5 +223,65 @@ public class IpedDateAxis extends DateAxis {
             Rectangle2D drawArea, boolean vertical) {
         return super.findMaximumTickLabelHeight(ticks, g2, drawArea, vertical)*2;//doubled as tick labels upper text are painted bellow main tick label
     }
+
+	static public TimePeriod getDateOnConfiguredTimePeriod(Class<? extends TimePeriod> timePeriodClass, Date date) {
+		Class[] cArg = new Class[2];
+        cArg[0] = Date.class;
+        cArg[1] = Calendar.class;
+		try {
+			TimePeriod t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(date, ISO8601DATEFORMAT.getCalendar());
+			return t;
+		}catch(InvocationTargetException e) {
+			try {
+				TimePeriod t = null;
+		        Calendar cal = ISO8601DATEFORMAT.getCalendar();
+		        cal.set(1900, 0, 1, 0, 0, 0);
+				if(date.before(cal.getTime())){
+					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime());
+				}
+		        cal.set(9999, 12, 31, 23, 59, 59);
+				if(date.after(cal.getTime())){
+					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime());
+				}
+				return t;
+			}catch(InvocationTargetException | InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e2) {
+				e2.printStackTrace();
+				return null;
+			}
+		}catch( InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e){
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public static String ISO8601DateFormat(Date date) {
+		return ISO8601DATEFORMAT.format(date);
+	}
+
+
+	public static Date ISO8601DateParse(String strDate) {
+		try {
+			return ISO8601DATEFORMAT.parse(strDate);
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@Override
+	public void setTimeZone(TimeZone zone) {
+		ISO8601DATEFORMAT.setTimeZone(zone);
+		
+		for(DateFormat f: dateFormaters.values()) {
+			f.setCalendar(ISO8601DATEFORMAT.getCalendar());
+		}
+		
+		super.setTimeZone(zone);
+	}
+	
+	
+	public DateFormat getLongDateFormaterTickUnit(DateTickUnit dateTickUnit) {
+		return dateFormaters.get(dateTickUnit.getUnitType());
+	}
 
 }

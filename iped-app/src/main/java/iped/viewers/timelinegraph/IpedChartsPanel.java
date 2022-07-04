@@ -7,8 +7,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -30,7 +33,6 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.LegendItem;
 import org.jfree.chart.LegendItemCollection;
-import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.DateTickMarkPosition;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.labels.XYToolTipGenerator;
@@ -49,6 +51,7 @@ import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
 import iped.app.ui.App;
+import iped.app.ui.CaseSearcherFilter;
 import iped.app.ui.ClearFilterListener;
 import iped.app.ui.events.RowSorterTableDataChange;
 import iped.data.IItemId;
@@ -68,7 +71,8 @@ import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
-import iped.viewers.timelinegraph.TimelineCache.ItemEvent;
+import iped.viewers.timelinegraph.swingworkers.CheckWorker;
+import iped.viewers.timelinegraph.swingworkers.SelectWorker;
 
 public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener {
 
@@ -78,7 +82,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	private DefaultSingleCDockable dockable;
 	CDockableLocationListener dockableLocationListener;
 	
-	IMultiSearchResult sourceSearchResults;	
     LegendItemCollection legendItems = null;
     
     Class<? extends TimePeriod> timePeriodClass = Day.class;
@@ -93,7 +96,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     IpedCombinedDomainXYPlot combinedPlot = new IpedCombinedDomainXYPlot(this);
     JFreeChart chart = new JFreeChart(combinedPlot);
     IpedChartPanel chartPanel = null;
-	StackedXYBarRenderer stackedRenderer = new StackedXYBarRenderer(0.15);
+	StackedXYBarRenderer stackedRenderer = new StackedXYBarRenderer(0.00);
 	XYLineAndShapeRenderer lineRenderer = new XYLineAndShapeRenderer();
 	XYItemRenderer renderer = null;
 	XYToolTipGenerator toolTipGenerator = null;
@@ -104,8 +107,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     boolean applyFilters = false;
 	private XYBarPainter barPainter;
-	TimelineCache timelineCache;
 	private boolean internalUpdate;
+	private TimeZone timeZone = TimeZone.getDefault();
+	private Locale locale = Locale.getDefault();
 	
 	private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 	
@@ -124,7 +128,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 				return "<html>"+dataset.getSeriesKey(series)+":"+dataset.getYValue(series, item)+"</html>";
 			}
 		};
-		
+
 		stackedRenderer.setDefaultToolTipGenerator(toolTipGenerator);
 		stackedRenderer.setDefaultItemLabelsVisible(true);
 		stackedRenderer.setDrawBarOutline(false);
@@ -134,7 +138,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	
 	public IpedChartsPanel(boolean b) {
 		super(b);
-		
+
 		this.setLayout(new BorderLayout());
 	}
 
@@ -165,194 +169,36 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         domainAxis.setUpperMargin(0.01);
         combinedPlot.setDomainAxis(domainAxis);
         
-        timelineCache = new TimelineCache(resultsProvider);
-        timelineCache.execute();
-        
         loading = (ImageIcon) new ImageIcon(IconUtil.class.getResource(resPath + "loading.gif"));
         loadingLabel = new JLabel("", loading, JLabel.CENTER);
 	}
 
-	public DateAxis getDomainAxis() {
+	public IpedDateAxis getDomainAxis() {
 		return domainAxis;
 	}
 
-	public void unselectItemsOnInterval(Date start, Date end, boolean clearPreviousSelection) {
-		selectItemsOnInterval(start, end, false, clearPreviousSelection);
-	}
-
-	public void selectItemsOnInterval(Date start, Date end, boolean clearPreviousSelection) {
-		selectItemsOnInterval(start, end, true, clearPreviousSelection);
-	}
-
-	public void selectItemsOnInterval(Date start, Date end, boolean select, boolean clearPreviousSelection) {
-		JTable t = resultsProvider.getResultsTable();
-		t.getSelectionModel().setValueIsAdjusting(true);
-
-		if(clearPreviousSelection) {
-			t.clearSelection();
-		}
-
-        LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
-
-        SortedSetDocValues timeStampValues;
-        SortedSetDocValues timeEventGroupValues;
-
-        try {
-            timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
-    		timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-    		BinaryDocValues eventsInDocOrdsValues = reader.getBinaryDocValues(ExtraProperties.TIME_EVENT_ORDS);
-    		
-    		System.out.println("selecao iniciando");
-
-    		for (int i = 0; i < resultsProvider.getResults().getLength(); i++) {
-                IItemId item = resultsProvider.getResults().getItem(i);
-
-                int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
-                
-                boolean tsvAdv = timeStampValues.advanceExact(luceneId);
-                
-                if(tsvAdv) {
-                	long ord;
-    	            while ((ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-    	                if (ord > Integer.MAX_VALUE) {
-    	                    throw new RuntimeException("Integer overflow when converting timestamp ord to int");
-    	                }
-
-    	                Date d = DateUtil.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString());
-    	                if(start.getTime()<=d.getTime() && end.getTime()>=d.getTime()) {
-    		                int row = t.convertRowIndexToView(i);
-    		                if(select) {
-        		                t.addRowSelectionInterval(row, row);
-    		                }else {
-    		                	t.removeRowSelectionInterval(row, row);
-    		                }
-    	                }
-    	            }            	
-                }
-            }
-
-    		System.out.println("selecao finalizada");
-        }catch(Exception e) {
-        	e.printStackTrace();
-        }finally {
-    		t.getSelectionModel().setValueIsAdjusting(false);
-		}
-	}
-
-	public HashMap<String, TimeTableCumulativeXYDataset> createDataSetsFromCache(){
-		HashMap<String, TimeTableCumulativeXYDataset> result = new HashMap<String, TimeTableCumulativeXYDataset>();
-
-		try {
-	        sourceSearchResults = resultsProvider.getResults();
-
-	        LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
-
-	        Set<String> selectedBookmarks = guiProvider.getSelectedBookmarks();
-	        Set<String> selectedCategories = guiProvider.getSelectedCategories();
-			SortedSetDocValues categoriesValues = null;
-
-            HashSet<TimeTableCumulativeXYDataset> datasetsToIncludeItem = new HashSet<TimeTableCumulativeXYDataset>();
-            if(selectedBookmarks.size()>0 && chartPanel.getSplitByBookmark()) {
-            	for (Iterator<String> iterator = selectedBookmarks.iterator(); iterator.hasNext();) {
-					String bookmark = (String) iterator.next();
-					TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset();
-					result.put(bookmark, dataset);
-				}
-            }else if(selectedCategories.size()>0 && chartPanel.getSplitByCategory()) {
-            	categoriesValues = reader.getSortedSetDocValues(BasicProps.CATEGORY);
-            	
-            	for (Iterator<String> iterator = selectedCategories.iterator(); iterator.hasNext();) {
-					String category = (String) iterator.next();
-					TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset();
-					result.put(LocalizedProperties.getNonLocalizedField(category.toLowerCase()), dataset);
-				}
-            }else{
-            	TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset();
-            	result.put("Items", dataset);
-            	datasetsToIncludeItem.add(dataset);
-            }
-
-	        IMultiBookmarks multiBookmarks = resultsProvider.getIPEDSource().getMultiBookmarks();
-
-			if(sourceSearchResults.getLength()>0) {
-		        for (IItemId item : sourceSearchResults.getIterator()) {
-		            int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
-
-		            // locate all selected bookmarks corresponding datasets to include item 
-		            if(selectedBookmarks.size()>0 && chartPanel.getSplitByBookmark()) {
-			            datasetsToIncludeItem.clear();
-
-		            	List<String> itemBookmars = multiBookmarks.getBookmarkList(item);
-			            for (Iterator iterator = itemBookmars.iterator(); iterator.hasNext();) {
-							String bookmark = (String) iterator.next();
-							if(selectedBookmarks.contains(bookmark)) {
-								TimeTableCumulativeXYDataset dataset = result.get(bookmark);
-								datasetsToIncludeItem.add(dataset);
-							}
-						}
-		            }
-
-		            // locate all selected bookmarks corresponding datasets to include item 
-		            if(selectedCategories.size()>0 && chartPanel.getSplitByCategory()) {
-			            datasetsToIncludeItem.clear();
-
-			            categoriesValues.advanceExact(luceneId);
-			            String category = categoriesValues.lookupOrd(categoriesValues.nextOrd()).utf8ToString();
-			            
-			            TimeTableCumulativeXYDataset ds = result.get(LocalizedProperties.getNonLocalizedField(category.toLowerCase()));
-			            datasetsToIncludeItem.add(ds);
-		            }
-
-	           		if(item instanceof TimeItemId) {
-	           			//on timeline view
-	           			/*
-	           			TimeItemId timeItemId = (TimeItemId) item;
-	               		TimePeriod t = DateUtil.getDateOnConfiguredTimePeriod(timePeriodClass,ISO8601DATEFORMAT.parse(timeStampValues.lookupOrd(timeItemId.getTimeStampOrd()).utf8ToString()));
-	               		
-	               		String events = timeEventGroupValues.lookupOrd(timeItemId.getTimeEventOrd()).utf8ToString();
-	               		StringTokenizer st = new StringTokenizer(events, "|");
-	               		while(st.hasMoreTokens()) {
-	               			String event = st.nextToken().trim();
-	               			
-	            			for (Iterator iterator = datasetsToIncludeItem.iterator(); iterator.hasNext();) {
-								TimeTableCumulativeXYDataset dataset = (TimeTableCumulativeXYDataset) iterator.next();
-								dataset.add(t, 1, event, item, false);
-							}
-	               		}
-	               		*/	               		
-	           		}else {
-	           			int i=0;
-
-	           			List<ItemEvent> ies = timelineCache.getEvents(item);
-	           			for (ItemEvent ie : ies) {
-		               		TimePeriod t = DateUtil.getDateOnConfiguredTimePeriod(timePeriodClass, ie.date);
-		               		String eventstr=ie.getEventString();
-	            			for (Iterator iterator = datasetsToIncludeItem.iterator(); iterator.hasNext();) {
-								TimeTableCumulativeXYDataset dataset = (TimeTableCumulativeXYDataset) iterator.next();
-								dataset.add(t, 1, eventstr, item, false);
-							}
-						}
-	           		}
-		        }
-			}
-
-			return result;
-		}catch(Exception e) {
-			e.printStackTrace();
-			return null;			
-		}
-	}
-	
 	public HashMap<String, TimeTableCumulativeXYDataset> createDataSets(){
-		if(timelineCache.isDone()) {
-			//return createDataSetsFromCache();
-		}
-		
 		HashMap<String, TimeTableCumulativeXYDataset> result = new HashMap<String, TimeTableCumulativeXYDataset>();
+		
+		CaseSearcherFilter csf = new CaseSearcherFilter("");
+		IMultiSearchResult timelineSearchResults;
+		if(this.applyFilters) {
+			this.applyFilters=false; //do not apply local timeline filters on query used to plot the timeline
+			try {
+				csf.applyUIQueryFilters();
+				csf.execute();
+				timelineSearchResults = csf.get();
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+				return result;
+			}finally {
+				this.applyFilters=true;
+			}
+		}else {
+			timelineSearchResults = resultsProvider.getResults();
+		}
 
 		try {
-	        sourceSearchResults = resultsProvider.getResults();
-
 	        LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
 
 	        Set<String> selectedBookmarks = guiProvider.getSelectedBookmarks();
@@ -363,7 +209,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             if(selectedBookmarks.size()>0 && chartPanel.getSplitByBookmark()) {
             	for (Iterator<String> iterator = selectedBookmarks.iterator(); iterator.hasNext();) {
 					String bookmark = (String) iterator.next();
-					TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset();
+					TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset(timeZone, locale);
 					result.put(bookmark, dataset);
 				}
             }else if(selectedCategories.size()>0 && chartPanel.getSplitByCategory()) {
@@ -371,11 +217,11 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             	
             	for (Iterator<String> iterator = selectedCategories.iterator(); iterator.hasNext();) {
 					String category = (String) iterator.next();
-					TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset();
+					TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset(timeZone, locale);
 					result.put(LocalizedProperties.getNonLocalizedField(category.toLowerCase()), dataset);
 				}
             }else{
-            	TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset();
+            	TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset(timeZone, locale);
             	result.put("Items", dataset);
             	datasetsToIncludeItem.add(dataset);
             }
@@ -392,8 +238,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 			timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
 			BinaryDocValues eventsInDocOrdsValues = reader.getBinaryDocValues(ExtraProperties.TIME_EVENT_ORDS);
 			
-			if(sourceSearchResults.getLength()>0) {
-		        for (IItemId item : sourceSearchResults.getIterator()) {
+			if(timelineSearchResults.getLength()>0) {
+		        for (IItemId item : timelineSearchResults.getIterator()) {
 		            int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
 
 		            // locate all selected bookmarks corresponding datasets to include item 
@@ -416,18 +262,16 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 			            categoriesValues.advanceExact(luceneId);
 			            String category = categoriesValues.lookupOrd(categoriesValues.nextOrd()).utf8ToString();
-			            
+
 			            TimeTableCumulativeXYDataset ds = result.get(LocalizedProperties.getNonLocalizedField(category.toLowerCase()));
 			            datasetsToIncludeItem.add(ds);
 		            }
 
-		            
 		            String eventsInDocStr = DocValuesUtil.getVal(eventsInDocOrdsValues, luceneId);
 		            if (eventsInDocStr.isEmpty()) {
 		                continue;
 		            }
 		            loadOrdsFromString(eventsInDocStr, eventsInDocOrds);
-		            
 
 		            boolean tsvAdv = timeStampValues.advanceExact(luceneId);
 		            boolean tegvAdv = timeEventGroupValues.advanceExact(luceneId);
@@ -442,19 +286,19 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		                    eventOrd[k] = (int) ord;
 		                }
 		            }
-		            
+
 		            pos = 0;
 	           		if(item instanceof TimeItemId) {
 	           			//on timeline view
 	           			TimeItemId timeItemId = (TimeItemId) item;
-	               		TimePeriod t = DateUtil.getDateOnConfiguredTimePeriod(timePeriodClass,DateUtil.ISO8601DateParse(timeStampValues.lookupOrd(timeItemId.getTimeStampOrd()).utf8ToString()));
-	               		
+	               		TimePeriod t = domainAxis.getDateOnConfiguredTimePeriod(timePeriodClass,domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(timeItemId.getTimeStampOrd()).utf8ToString()));
+
 	               		if(t!=null) {
 		               		String events = timeEventGroupValues.lookupOrd(timeItemId.getTimeEventOrd()).utf8ToString();
 		               		StringTokenizer st = new StringTokenizer(events, "|");
 		               		while(st.hasMoreTokens()) {
 		               			String event = st.nextToken().trim();
-		               			
+
 		            			for (Iterator iterator = datasetsToIncludeItem.iterator(); iterator.hasNext();) {
 									TimeTableCumulativeXYDataset dataset = (TimeTableCumulativeXYDataset) iterator.next();
 									dataset.add(t, 1, event, item, false);
@@ -467,7 +311,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 			                    throw new RuntimeException("Integer overflow when converting timestamp ord to int");
 			                }
 
-		               		TimePeriod t = DateUtil.getDateOnConfiguredTimePeriod(timePeriodClass, DateUtil.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString()));
+		               		TimePeriod t = domainAxis.getDateOnConfiguredTimePeriod(timePeriodClass, domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString()));
 
 		               		if(t!=null) {
 			               		String events = timeEventGroupValues.lookupOrd(eventOrd[pos++]).utf8ToString();
@@ -655,7 +499,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     public XYItemRenderer getRenderer() {
 		renderer = new IpedStackedXYBarRenderer();
 		((IpedStackedXYBarRenderer)renderer).setBarPainter(new IpedXYBarPainter((XYBarRenderer)renderer));
-		((IpedStackedXYBarRenderer)renderer).setMargin(0.15);
+		((IpedStackedXYBarRenderer)renderer).setMargin(0.0);
 		renderer.setDefaultToolTipGenerator(toolTipGenerator);
 		renderer.setDefaultItemLabelsVisible(true);
 
@@ -663,7 +507,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     }
     
     private JFreeChart createChart(HashMap<String, TimeTableCumulativeXYDataset> datasets) {
-    	domainAxis.setLabel("Date ("+timePeriodString+")");
+    	domainAxis.setLabel("Date ("+timePeriodString+") ["+timeZone.getDisplayName()+" "+DateUtil.getTimezoneOffsetInformation(timeZone)+"]");
     	
     	combinedPlot.setSkipFireEventChange(true);
 
@@ -715,9 +559,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 						int i=0;
 						for (Date[] dates : chartPanel.definedFilters) {
 							timeFilter+="timeStamp:[";
-							timeFilter+=DateUtil.ISO8601DateFormat(dates[0]);
+							timeFilter+=domainAxis.ISO8601DateFormat(dates[0]);
 							timeFilter+=" TO ";
-							timeFilter+=DateUtil.ISO8601DateFormat(dates[1]);
+							timeFilter+=domainAxis.ISO8601DateFormat(dates[1]);
 							timeFilter+="]";
 							i++;
 							if(i!=chartPanel.definedFilters.size()) {
@@ -809,32 +653,28 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	
 
 	public void checkItems(List<IItemId> items) {
-        JTable t = resultsProvider.getResultsTable();
-
-		for (int i = 0; i < resultsProvider.getResults().getLength(); i++) {
-            IItemId item = resultsProvider.getResults().getItem(i);
-            if(items.contains(item)) {
-            	Boolean checked = (Boolean) t.getValueAt(t.convertRowIndexToView(i), t.convertColumnIndexToView(1));
-    	        t.setValueAt(!checked.booleanValue(), t.convertRowIndexToView(i), t.convertColumnIndexToView(1));
-            }
-        }
+		CheckWorker sw = new CheckWorker(resultsProvider, items);
+		sw.execute();
 	}
 	
-	public void selectItems(List<IItemId> items) {
-		JTable t = resultsProvider.getResultsTable();
-		t.getSelectionModel().setValueIsAdjusting(true);
+	public void selectItemsOnInterval(Date firstDate, Date endDate, boolean b) {
+		SelectWorker sw = new SelectWorker(domainAxis,resultsProvider, firstDate, endDate, b);
+		sw.execute();
+	}
 
-		try {
-	        for (int i = 0; i < resultsProvider.getResults().getLength(); i++) {
-	            IItemId item = resultsProvider.getResults().getItem(i);
-	            if(items.contains(item)) {
-	                int row = t.convertRowIndexToView(i);
-	                t.addRowSelectionInterval(row, row);
-	            }
-	        }
-		}finally{
-			t.getSelectionModel().setValueIsAdjusting(false);
-		}
+	public void selectItemsOnInterval(String seriesKey, Date time, Date time2, boolean b) {
+		SelectWorker sw = new SelectWorker(seriesKey, domainAxis,resultsProvider, time, time2, b);
+		sw.execute();
+	}
+
+	public void setTimeZone(TimeZone timezone) {
+		this.timeZone = timezone;
+		domainAxis.setTimeZone(timezone);
+		refreshChart();
+	}
+
+	public TimeZone getTimeZone() {
+		return timeZone;
 	}
 	
 }

@@ -17,6 +17,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
@@ -40,6 +41,7 @@ import iped.viewers.timelinegraph.popups.SeriesAxisPopupMenu;
 import iped.viewers.timelinegraph.popups.LegendItemPopupMenu;
 import iped.viewers.timelinegraph.popups.TimePeriodSelectionPopupMenu;
 import iped.viewers.timelinegraph.popups.TimelineFilterSelectionPopupMenu;
+import iped.viewers.timelinegraph.swingworkers.SelectWorker;
 
 public class IpedChartPanel extends ChartPanel implements KeyListener{
 	Rectangle2D filterIntervalRectangle;
@@ -174,8 +176,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
             setCursor(Cursor.getPredefinedCursor(
                     Cursor.E_RESIZE_CURSOR));
 		}else {
-			System.out.printf("move: %d - %d \n", lastMouseMoveX, x);
-			
             setCursor(Cursor.getDefaultCursor());
             Graphics2D g2 = (Graphics2D) getGraphics();
             if(lastMouseMoveX>=0) {
@@ -206,14 +206,13 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
             	
         		if (this.filterIntervalRectangle == null) {
         			startFilterDate = new Date((long) ipedChartsPanel.domainAxis.java2DToValue(e.getX(), this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge()));
-        			startFilterDate = DateUtil.removeFromDatePart(startFilterDate, Calendar.DAY_OF_MONTH);
+        			startFilterDate = removeFromDatePart(startFilterDate, Calendar.DAY_OF_MONTH);
         			
         			Date[] dates = findDefinedFilterDates(startFilterDate);
         			if(dates!=null) {
         				startFilterDate = dates[0];
         				removeFilter(dates);
 
-        				//dates[1]=new Date(dates[1].getTime()+1);
         				//already exists an interval continuos with this so edits him instead of creating a new one
         	            Graphics2D g2 = (Graphics2D) getGraphics();
 
@@ -261,7 +260,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
                     (int) this.filterIntervalPoint.getX(), (int) this.filterIntervalPoint.getY());
 
             endFilterDate = new Date((long) ipedChartsPanel.domainAxis.java2DToValue(e.getX(), this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge()));
-            endFilterDate = DateUtil.lastdateFromDatePart(endFilterDate, Calendar.DAY_OF_MONTH);
+            endFilterDate = lastdateFromDatePart(endFilterDate, Calendar.DAY_OF_MONTH);
             
 			Date[] dates = findDefinedFilterDates(endFilterDate);
 			if(dates!=null) {
@@ -379,8 +378,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
             g2.setFont(g2.getFont().deriveFont(affineTransform));//rotate text 90
             g2.drawLine((int) this.filterIntervalRectangle.getMaxX(),(int) this.filterIntervalRectangle.getMinY(),(int) this.filterIntervalRectangle.getMaxX(),(int) this.filterIntervalRectangle.getMaxY());
 
-            String strStartDate = iped.utils.DateUtil.dateToString(startFilterDate);
-            String strEndDate = iped.utils.DateUtil.dateToString(endFilterDate); 
+            String strStartDate = ipedChartsPanel.getDomainAxis().ISO8601DateFormat(startFilterDate);
+            String strEndDate = ipedChartsPanel.getDomainAxis().ISO8601DateFormat(endFilterDate); 
             g2.drawString(strStartDate, (int) this.filterIntervalRectangle.getMinX()+2, (int) this.filterIntervalRectangle.getMinY()+g2.getFontMetrics().getHeight()+2);
             g2.drawString(strEndDate, (int) this.filterIntervalRectangle.getMaxX()+2, (int) this.filterIntervalRectangle.getMinY()+g2.getFontMetrics().getHeight()+2);
             
@@ -391,6 +390,32 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         }
     }
 
+    public Date removeFromDatePart(Date date, int fromDatePart) {
+        Calendar cal = Calendar.getInstance(ipedChartsPanel.getTimeZone());
+        cal.setTime(date);
+        
+        if(fromDatePart==Calendar.DAY_OF_MONTH) {
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+        }
+        return cal.getTime();
+    }
+
+    public Date lastdateFromDatePart(Date date, int fromDatePart) {
+        Calendar cal = Calendar.getInstance(ipedChartsPanel.getTimeZone());
+        cal.setTime(date);
+        
+        if(fromDatePart==Calendar.DAY_OF_MONTH) {
+            cal.set(Calendar.HOUR_OF_DAY, 23);
+            cal.set(Calendar.MINUTE, 59);
+            cal.set(Calendar.SECOND, 59);
+            cal.set(Calendar.MILLISECOND, 999);
+        }
+        return cal.getTime();
+    }
+    
 
     /**
      * Draws zoom rectangle (if present).
@@ -420,14 +445,14 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
        if((x>minX)&&(x<maxX)) {
            double minY = screenDataArea.getMinY();
            double maxY = screenDataArea.getMaxY();
-           
+
            double h = screenDataArea.getHeight();
            g2.drawLine(x,(int)minY,x,(int)maxY);
 
            Date correspondingDate = new Date((long) ipedChartsPanel.domainAxis.java2DToValue(x, this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge()));
-           correspondingDate = DateUtil.removeFromDatePart(correspondingDate, Calendar.DAY_OF_MONTH);
+           correspondingDate = removeFromDatePart(correspondingDate, Calendar.DAY_OF_MONTH);
 
-           String strDate = iped.utils.DateUtil.dateToString(correspondingDate); 
+           String strDate = ipedChartsPanel.getDomainAxis().ISO8601DateFormat(correspondingDate); 
            g2.drawString(strDate, x+2, (int) minY+g2.getFontMetrics().getHeight()+2);
        }
 
@@ -638,7 +663,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	
 	public void removeFilter(Date[] removedDates) {
 		definedFilters.remove(removedDates);
-		ipedChartsPanel.unselectItemsOnInterval(removedDates[0],removedDates[1],false);
+		SelectWorker sw = new SelectWorker(ipedChartsPanel.getDomainAxis(),ipedChartsPanel.resultsProvider, removedDates[0], removedDates[1], false, false);
 		for (Date[] dates : definedFilters) {
 			ipedChartsPanel.selectItemsOnInterval(dates[0],dates[1],false);
 		}
@@ -646,7 +671,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 
 	public void removeAllFilters() {
 		for (Date[] removedDates : definedFilters) {
-			ipedChartsPanel.unselectItemsOnInterval(removedDates[0],removedDates[1],false);
+			SelectWorker sw = new SelectWorker(ipedChartsPanel.getDomainAxis(),ipedChartsPanel.resultsProvider, removedDates[0], removedDates[1], false, false);
 		}
 		definedFilters.clear();
 		this.repaint();
@@ -731,6 +756,5 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	public boolean hasNoFilter() {
 		return (definedFilters.size()==0)&&(excludedEvents.size()==0);
 	}
-
 
 }
