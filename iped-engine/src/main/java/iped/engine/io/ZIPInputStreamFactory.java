@@ -157,16 +157,15 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         if (zae == null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
         }
-        InputStream is;
-
-        // ZipFile.getInputStream(ze) isn't thread safe as of COMPRESS 1.21 if ZipFile
-        // 'ignoreLocalFileHeader' constructor flag is enabled. We must synchronize on
-        // SeekableByteChannel used in constructor (COMPRESS 1.21 specific!), otherwise
-        // this won't work with splitted archives with COMPRESS 1.21, see COMPRESS-618
-        synchronized (sbc) {
-            is = zip.getInputStream(zae);
-        }
+        InputStream is = null;
         try {
+            // ZipFile.getInputStream(ze) isn't thread safe as of COMPRESS 1.21 if ZipFile
+            // 'ignoreLocalFileHeader' constructor flag is enabled. We must synchronize on
+            // SeekableByteChannel used in constructor (COMPRESS 1.21 specific!), otherwise
+            // this won't work with splitted archives with COMPRESS 1.21, see COMPRESS-618
+            synchronized (sbc) {
+                is = zip.getInputStream(zae);
+            }
             if (zae.getSize() <= MAX_BYTES_CACHED) {
                 bytes = IOUtils.toByteArray(is);
                 synchronized (bytesCache) {
@@ -190,7 +189,9 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                 Files.delete(tmp);
             throw e;
         } finally {
-            is.close();
+            if (is != null) {
+                is.close();
+            }
         }
         if (bytes != null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
