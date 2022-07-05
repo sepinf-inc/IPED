@@ -19,7 +19,7 @@ import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.ResultSetViewer;
 
-public class MapaViewer implements ResultSetViewer, TableModelListener, ListSelectionListener {
+public class MapViewer implements ResultSetViewer, TableModelListener, ListSelectionListener {
 
     JTable resultsTable;
     IMultiSearchResultProvider resultsProvider;
@@ -31,7 +31,7 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
     public static volatile boolean desabilitaTemp = false;
     public static volatile boolean updatingCheckbox = false;
 
-    public MapaViewer() {
+    public MapViewer() {
     }
 
     @Override
