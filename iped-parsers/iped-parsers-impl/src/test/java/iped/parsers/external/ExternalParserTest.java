@@ -205,7 +205,6 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             assumeNotNull(recyclebinInfo2Parser);
             recyclebinInfo2Parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
-            System.out.println(hts);
 
             assertTrue(hts.contains("2008-10-28 15:53:42"));
             assertTrue(hts.contains("No"));
