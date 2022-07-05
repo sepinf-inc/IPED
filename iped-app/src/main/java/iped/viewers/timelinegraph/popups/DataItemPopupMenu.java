@@ -47,8 +47,6 @@ public class DataItemPopupMenu extends JPopupMenu implements ActionListener {
         checkPeriodItens = new JMenuItem(Messages.getString("TimeLineGraph.checkItensOnPeriod"));
         checkPeriodItens.addActionListener(this);
         add(checkPeriodItens); 
-
-
 	}	
 
 	public XYItemEntity getChartEntity() {

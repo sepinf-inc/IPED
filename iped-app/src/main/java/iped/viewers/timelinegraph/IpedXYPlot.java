@@ -198,6 +198,10 @@ public class IpedXYPlot extends XYPlot{
             if (yAxis == null) {
                 continue;
             }
+            if(yAxis instanceof IpedHourAxis) {
+            	//does not zoom on range axis of IpedHourAxis
+            	continue;
+            }
             if (useAnchor) {
                 // get the relevant source coordinate given the plot orientation
                 double sourceY = source.getY();

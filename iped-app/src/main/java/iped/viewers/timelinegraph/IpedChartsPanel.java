@@ -2,6 +2,8 @@ package iped.viewers.timelinegraph;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.geom.Ellipse2D;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -38,14 +40,15 @@ import org.jfree.chart.axis.DateTickMarkPosition;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.labels.XYToolTipGenerator;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.StackedXYBarRenderer;
 import org.jfree.chart.renderer.xy.XYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.ui.VerticalAlignment;
+import org.jfree.data.Range;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimePeriod;
+import org.jfree.data.xy.DefaultXYDataset;
 import org.jfree.data.xy.XYDataset;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
@@ -98,6 +101,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     JFreeChart chart = new JFreeChart(combinedPlot);
     IpedChartPanel chartPanel = null;
 	IpedStackedXYBarRenderer renderer = null;
+	XYLineAndShapeRenderer highlightsRenderer = new XYLineAndShapeRenderer();
 	XYToolTipGenerator toolTipGenerator = null;
 	
 	String metadataToBreakChart = null;
@@ -148,7 +152,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		((IpedStackedXYBarRenderer)renderer).setMargin(0);
 		renderer.setDefaultToolTipGenerator(toolTipGenerator);
 		renderer.setDefaultItemLabelsVisible(true);
-
+		
         resultsTable.getModel().addTableModelListener(this);
         resultsTable.getSelectionModel().addListSelectionListener(this);
 
@@ -176,6 +180,29 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		return domainAxis;
 	}
 
+	public HashMap<String, XYDataset> createAlertDataSets(){
+		HashMap<String, XYDataset> result = new HashMap<String, XYDataset>();
+		
+		DefaultXYDataset highlights = new DefaultXYDataset();
+
+		double[][] data = new double[2][2];
+		
+		Calendar cal = Calendar.getInstance(timeZone);
+		
+		cal.set(2019, 01, 23, 11, 30);
+		data[0][0]=cal.getTimeInMillis();
+		data[1][0]=11;
+		cal.set(2021, 02, 23, 11, 30);
+		data[0][1]=cal.getTimeInMillis();
+		data[1][1]=21;
+
+		highlights.addSeries("highlights", data);
+
+		result.put("highlights", (XYDataset) highlights);
+
+		return result;
+	}
+	
 	public HashMap<String, TimeTableCumulativeXYDataset> createDataSets(){
 		HashMap<String, TimeTableCumulativeXYDataset> result = new HashMap<String, TimeTableCumulativeXYDataset>();
 		
@@ -499,6 +526,26 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		return renderer;
     }
     
+    private void createNotableChart(XYPlot firstPlot) {
+    	XYDataset highlights = createAlertDataSets().get("highlights");
+    	if(firstPlot!=null) {
+    		highlightsRenderer.setDefaultLinesVisible(false);
+    		highlightsRenderer.setDrawSeriesLineAsPath(false);
+    		highlightsRenderer.setDrawSeriesLineAsPath(false);
+    		highlightsRenderer.setSeriesShape(0,new Ellipse2D.Float(1, 1, 10, 10));
+
+    		IpedHourAxis hours = new IpedHourAxis("Hours");
+    		hours.setAutoRange(false);
+    		hours.setRange(new Range(0, 24));
+    		firstPlot.setRangeAxis(1, hours);
+    		firstPlot.setRenderer(1, highlightsRenderer);
+    		firstPlot.setDataset(1, highlights);
+    		List<Integer> axisList = new ArrayList<Integer>();
+    		axisList.add(1);
+    		firstPlot.mapDatasetToRangeAxes(1, axisList);
+    	}
+    }
+
     private JFreeChart createChart(HashMap<String, TimeTableCumulativeXYDataset> datasets) {
     	domainAxis.setLabel("Date ("+timePeriodString+") ["+timeZone.getDisplayName()+" "+DateUtil.getTimezoneOffsetInformation(timeZone)+"]");
     	
@@ -517,7 +564,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         XYItemRenderer renderer = getRenderer();
         combinedPlot.setRenderer(renderer);
 
-        int ids = 0;    	
+        int ids = 0;
+        XYPlot firstPlot = null;
     	for (Iterator iterator = datasets.keySet().iterator(); iterator.hasNext();) {
 			String marcador = (String) iterator.next();			
 	    	NumberAxis rangeAxis = new NumberAxis(marcador);
@@ -526,6 +574,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 	        TimeTableCumulativeXYDataset dataset = (TimeTableCumulativeXYDataset)datasets.get(marcador);
 	        XYPlot plot = new IpedXYPlot(chartPanel, dataset, domainAxis, rangeAxis, renderer);
+	        if(firstPlot==null) {
+	        	firstPlot=plot;
+	        }
 	        combinedPlot.add(ids,plot,dataset);
 	        ids++;
 		}

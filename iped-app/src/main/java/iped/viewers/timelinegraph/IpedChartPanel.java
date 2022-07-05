@@ -2,11 +2,17 @@ package iped.viewers.timelinegraph;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.Stroke;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -17,6 +23,10 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
@@ -34,6 +44,8 @@ import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 
 import iped.app.ui.App;
+import iped.utils.IconUtil;
+import iped.viewers.timelinegraph.popups.ChartPanelPopupMenu;
 import iped.viewers.timelinegraph.popups.DataItemPopupMenu;
 import iped.viewers.timelinegraph.popups.PlotPopupMenu;
 import iped.viewers.timelinegraph.popups.SeriesAxisPopupMenu;
@@ -50,7 +62,9 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	int lastMouseMoveX=-1;
 
     IpedChartsPanel ipedChartsPanel = null;
-	
+
+    JButton apllyFilters;
+
     private int filterMask = InputEvent.SHIFT_DOWN_MASK;
 	
 	boolean useBuffer;
@@ -58,6 +72,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 
 	ArrayList<Date[]> definedFilters = new ArrayList<Date[]>();
 	ArrayList<String> excludedEvents = new ArrayList<String>();
+	private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
 	Date startFilterDate = null;
 	Date endFilterDate = null;
@@ -71,6 +86,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
     DataItemPopupMenu itemPopupMenu = null;
     TimePeriodSelectionPopupMenu timePeriodSelectionPopupMenu = null;
     SeriesAxisPopupMenu seriesAxisPopupMenu = null;
+    ChartPanelPopupMenu chartPanelPopupMenu = null;
+    
 	boolean splitByBookmark=true;
 	boolean splitByCategory=false;
 	
@@ -93,8 +110,22 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         itemPopupMenu = new DataItemPopupMenu(this);
     	timePeriodSelectionPopupMenu = new TimePeriodSelectionPopupMenu(ipedChartsPanel);
     	seriesAxisPopupMenu = new SeriesAxisPopupMenu(this);
+    	chartPanelPopupMenu = new ChartPanelPopupMenu(this);
         
         IpedChartPanel self = this;
+        
+        this.setLayout(new FlowLayout(FlowLayout.LEFT));
+        ImageIcon icon = new ImageIcon(IconUtil.class.getResource(resPath + "down.png"));
+        Image img = icon.getImage();
+        apllyFilters = new JButton(new ImageIcon(img.getScaledInstance(12, 12,  java.awt.Image.SCALE_SMOOTH)));
+        apllyFilters.setMaximumSize(new Dimension(16, 16));
+        apllyFilters.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				chartPanelPopupMenu.show(apllyFilters, apllyFilters.getX()-2,  apllyFilters.getY()+apllyFilters.getHeight()-8);
+			}
+		});
+        this.add(apllyFilters);
 	
         this.addChartMouseListener(new ChartMouseListener() {
 			@Override
@@ -109,24 +140,29 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 				int x = event.getTrigger().getX();
 				if(ce instanceof XYItemEntity) {
 					XYItemEntity ie = ((XYItemEntity) ce);
-					itemPopupMenu.setChartEntity(ie);
-					itemPopupMenu.show(event.getTrigger().getComponent(), x, event.getTrigger().getY());
 					
-					ArrayList<XYItemEntity> entityList = new ArrayList<XYItemEntity>();
-					EntityCollection entities = self.getChartRenderingInfo().getEntityCollection();		            
-		            if (entities != null) {
-		                int entityCount = entities.getEntityCount();
-		                for (int i = entityCount - 1; i >= 0; i--) {
-		                    ChartEntity entity = (ChartEntity) entities.getEntity(i);
-		                    if(entity instanceof XYItemEntity) {
-			                    if (entity.getArea().getBounds().getMaxX()>x && entity.getArea().getBounds().getMinX()<x) {
-			                    	entityList.add((XYItemEntity)entity);
+					if(ie.getDataset() instanceof TimeTableCumulativeXYDataset) {
+						itemPopupMenu.setChartEntity(ie);
+						
+						ArrayList<XYItemEntity> entityList = new ArrayList<XYItemEntity>();
+						EntityCollection entities = self.getChartRenderingInfo().getEntityCollection();
+			            if (entities != null) {
+			                int entityCount = entities.getEntityCount();
+			                for (int i = entityCount - 1; i >= 0; i--) {
+			                    ChartEntity entity = (ChartEntity) entities.getEntity(i);
+			                    if(entity instanceof XYItemEntity) {
+				                    if (entity.getArea().getBounds().getMaxX()>x && entity.getArea().getBounds().getMinX()<x) {
+				                    	entityList.add((XYItemEntity)entity);
+				                    }
 			                    }
-		                    }
-		                }
-		            }
-					itemPopupMenu.setChartEntityList(entityList);
-					
+			                }
+			            }
+						itemPopupMenu.setChartEntityList(entityList);
+
+						itemPopupMenu.show(event.getTrigger().getComponent(), x, event.getTrigger().getY());
+					}else {
+						
+					}
 				}
 
 				if(ce instanceof PlotEntity) {
@@ -611,6 +647,23 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 			SelectWorker sw = new SelectWorker(ipedChartsPanel.getDomainAxis(),ipedChartsPanel.resultsProvider, removedDates[0], removedDates[1], false, false);
 		}
 		definedFilters.clear();
+		while(excludedEvents.size()>0) {
+			excludedEvents.remove(excludedEvents.size()-1);
+		}
+		ipedChartsPanel.setApplyFilters(false);
+		filterSelection();
+		IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChart().getPlot());
+		List<XYPlot> xyPlots = rootPlot.getSubplots();
+
+		for (XYPlot xyPlot : xyPlots) {
+			for(int i=0; i<xyPlot.getDataset(0).getSeriesCount(); i++) {
+				String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
+				rootPlot.getRenderer().setSeriesVisible(i, true, true);
+			}
+		}
+		
+		App app = (App) ipedChartsPanel.getGUIProvider();
+		app.setDockablesColors();
 		this.repaint();
 	}
 
@@ -698,5 +751,4 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	public void zoom(Rectangle2D selection) {
 		super.zoom(selection);
 	}
-
 }
