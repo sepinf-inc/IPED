@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import org.jfree.chart.axis.DateAxis;
@@ -20,10 +21,12 @@ import org.jfree.chart.axis.DateTickUnit;
 import org.jfree.chart.axis.DateTickUnitType;
 import org.jfree.chart.axis.Tick;
 import org.jfree.chart.axis.TickType;
+import org.jfree.chart.event.AxisChangeEvent;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.TextAnchor;
 import org.jfree.chart.util.Args;
 import org.jfree.data.Range;
+import org.jfree.data.time.DateRange;
 import org.jfree.data.time.Month;
 import org.jfree.data.time.RegularTimePeriod;
 import org.jfree.data.time.TimePeriod;
@@ -32,9 +35,9 @@ import org.jfree.data.time.Year;
 public class IpedDateAxis extends DateAxis {
     static SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
 	HashMap<DateTickUnitType, DateFormat> dateFormaters = new HashMap<DateTickUnitType, DateFormat>();
-    
+
     public IpedDateAxis(String string) {
-		super(string);
+		super(string, TimeZone.getDefault(), Locale.getDefault());
 		dateFormaters.put(DateTickUnitType.YEAR, new SimpleDateFormat("yyyy"));
 		dateFormaters.put(DateTickUnitType.MONTH, new SimpleDateFormat("MMM-yyyy"));
 		dateFormaters.put(DateTickUnitType.DAY, new SimpleDateFormat("d-MMM'\n'yyyy"));
@@ -55,7 +58,6 @@ public class IpedDateAxis extends DateAxis {
      */
     protected List refreshTicksHorizontal(Graphics2D g2,
                 Rectangle2D dataArea, RectangleEdge edge) {
-
         List result = new java.util.ArrayList();
 
         Font tickLabelFont = getTickLabelFont();
@@ -287,5 +289,44 @@ public class IpedDateAxis extends DateAxis {
 	public String dateToString(Date date) {
 		return ISO8601DATEFORMAT.format(date);
 	}
+
+    /**
+     * Sets the range for the axis, if requested, sends an
+     * {@link AxisChangeEvent} to all registered listeners.  As a side-effect,
+     * the auto-range flag is set to {@code false} (optional).
+     *
+     * @param range  the range ({@code null} not permitted).
+     * @param turnOffAutoRange  a flag that controls whether or not the auto
+     *                          range is turned off.
+     * @param notify  a flag that controls whether or not listeners are
+     *                notified.
+     */
+    @Override
+    public void setRange(Range range, boolean turnOffAutoRange,
+                         boolean notify) {
+        Args.nullNotPermitted(range, "range");
+        // usually the range will be a DateRange, but if it isn't do a
+        // conversion...
+        if (!(range instanceof DateRange)) {
+            range = new DateRange(range);
+        }
+        
+        if(getTimeZone()!=null) {
+            Calendar cal = Calendar.getInstance(getTimeZone());
+            cal.set(1900, 0, 1,0,0,0);
+            if(((DateRange)range).getLowerMillis()<cal.getTimeInMillis()) {
+                range = new DateRange(cal.getTime(), ((DateRange)range).getUpperDate());
+            }
+            cal.set(9999, 11, 31,23,59,59);
+            if(((DateRange)range).getUpperMillis()>cal.getTimeInMillis()) {
+                range = new DateRange(((DateRange)range).getLowerDate(),cal.getTime());
+            }
+            
+            super.setRange(range, turnOffAutoRange, notify);
+        }else {
+            super.setRange(range, turnOffAutoRange, notify);
+        }
+    }
+	
 
 }
