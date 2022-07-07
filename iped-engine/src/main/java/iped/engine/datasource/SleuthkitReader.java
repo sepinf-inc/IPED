@@ -941,8 +941,11 @@ public class SleuthkitReader extends DataSourceReader {
         if (listOnly || fastmode || embeddedDisk) {
             itemCount++;
             caseData.incDiscoveredEvidences(1);
-            if (!embeddedDisk)
+            if (!embeddedDisk) {
                 caseData.incDiscoveredVolume(evidence.getLength());
+            } else {
+                evidence.setSumVolume(false);
+            }
             if (listOnly)
                 return null;
         }
