@@ -65,8 +65,8 @@ public class MinIOTask extends AbstractTask {
     private static final String SECRET_KEY = "secretkey";
     private static final String BUCKET_KEY = "bucket";
 
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
-    private static final int RETRIES = 1;
+    private static long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
+    private static int RETRIES = 1;
 
     private static String accessKey;
     private static String secretKey;
@@ -121,6 +121,9 @@ public class MinIOTask extends AbstractTask {
         if (!minIOConfig.isEnabled()) {
             return;
         }
+
+        TIMEOUT = TimeUnit.SECONDS.toMillis(minIOConfig.getTimeOut());
+        RETRIES = minIOConfig.getRetries();
 
         zipFilesMaxSize = minIOConfig.getZipFilesMaxSize();
 
