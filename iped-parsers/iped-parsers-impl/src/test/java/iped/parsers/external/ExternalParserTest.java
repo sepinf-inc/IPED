@@ -41,7 +41,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     private static File XMLFile;
     private static List<ExternalParser> parsers;
     private static ExternalParser superfetchParser, prefetchParser, recyclebinParser,
-        recyclebinInfo2Parser, EvtxLogParser, EvtLogParser, metadataExtractionParser;
+        recyclebinInfo2Parser, evtxLogParser, evtLogParser, metadataExtractionParser;
 
     private static ExternalParserConfigGenerator createExternalParserConfig(String name, String toolPath, String checkCmd, String cmd,
         String mimeType, int firstLinesToIgnore, String charset, String... matchPatterns) throws TikaException, TransformerException {
@@ -61,6 +61,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
 
         return parserConfigGenerator;
     }
+
 
     @BeforeClass
     public static void setUp() throws IOException, TikaException, TransformerException, ParserConfigurationException, SAXException {
@@ -113,18 +114,24 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         // append EvtxLogParser parser with metadata extraction
         String patt1 = "\\s*(\\w{3} \\d{2}, \\d{4} \\d{2}:\\d{2}:\\d{2}\\.\\d+ UTC).*";
         String patt2 = "\\s*(Event number\\s*:\\s*\\d{1,3}).*";
-        ExternalParserConfigGenerator evtxMetaConfigGenerator = createExternalParserConfig("EvtxLogParser", tmpPath + "evtxexport/",
+        ExternalParserConfigGenerator evtxMetaConfigGenerator = createExternalParserConfig("EvtxLogMetadataParser", tmpPath + "evtxexport/",
             "evtxexport -V", "evtxexport ${INPUT}", "x-elf-file", 0, "ISO-8859-1", patt1, patt2);
         evtxMetaConfigGenerator.writeDocumentToFile(XMLFile);
 
         parsers = ExternalParsersConfigReader.read(new FileInputStream(XMLFile));
-        superfetchParser = parsers.size() > 0 ? parsers.get(0) : null;
-        prefetchParser = parsers.size() > 1 ? parsers.get(1) : null;
-        recyclebinParser = parsers.size() > 2 ? parsers.get(2) : null;
-        recyclebinInfo2Parser = parsers.size() > 3 ? parsers.get(3) : null;
-        EvtxLogParser = parsers.size() > 4 ? parsers.get(4) : null;
-        EvtLogParser = parsers.size() > 5 ? parsers.get(5) : null;
-        metadataExtractionParser = parsers.size() > 6 ? parsers.get(6) : null;
+
+        // assign parsers
+        for (ExternalParser parser : parsers) {
+            String parserName = parser.getParserName();
+            if (parserName.equals("SuperFetchParser"))           superfetchParser = parser;
+            else if (parserName.equals("PrefetchParser"))        prefetchParser = parser;
+            else if (parserName.equals("RecycleBinParser"))      recyclebinParser = parser;
+            else if (parserName.equals("RecycleInfo2Parser"))    recyclebinInfo2Parser = parser;
+            else if (parserName.equals("EvtxLogParser"))         evtxLogParser = parser;
+            else if (parserName.equals("EvtLogParser"))          evtLogParser = parser;
+            else if (parserName.equals("EvtxLogMetadataParser")) metadataExtractionParser = parser;
+        }
+
     }
 
     @AfterClass
@@ -237,8 +244,8 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
 
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
-            assumeNotNull(EvtxLogParser);
-            EvtxLogParser.parse(stream, handler, metadata, context);
+            assumeNotNull(evtxLogParser);
+            evtxLogParser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
 
             assertTrue(hts.contains("Jun 29, 2022 15:11:27.519191500 UTC"));

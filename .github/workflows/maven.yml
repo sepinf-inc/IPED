@@ -31,6 +31,7 @@ jobs:
             git clone https://github.com/libyal/libagdb.git
             cd libagdb/ && sudo ./synclibs.sh && sudo ./autogen.sh
             sudo ./configure && sudo make && sudo make install
+            sudo ldconfig
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml
