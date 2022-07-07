@@ -103,6 +103,15 @@ public class ExternalParserConfigGenerator implements ExternalParsersConfigReade
         }
     }
 
+    public void addMatchPatterns(String... matchPatterns) {
+        for (int i = 0; i < matchPatterns.length; i++) {
+            Element match = document.createElement(METADATA_MATCH_TAG);
+            metadata.appendChild(match);
+            match.setAttribute("key", "pattern_"+i);
+            addTextContent(match, matchPatterns[i]);
+        }
+    }
+
     public void writeDocumentToFile(File file) throws TransformerException, ParserConfigurationException, SAXException, IOException {
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
         if (file.exists()) {
@@ -125,4 +134,5 @@ public class ExternalParserConfigGenerator implements ExternalParsersConfigReade
         StreamResult result = new StreamResult(file);
         transformer.transform(source, result);
     }
+
 }

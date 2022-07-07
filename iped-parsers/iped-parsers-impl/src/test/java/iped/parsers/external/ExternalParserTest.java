@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -21,15 +22,14 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.util.ExternalParserConfigGenerator;
 import iped.parsers.util.RepoToolDownloader;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 
 public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
@@ -41,22 +41,23 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     private static File XMLFile;
     private static List<ExternalParser> parsers;
     private static ExternalParser superfetchParser, prefetchParser, recyclebinParser,
-        recyclebinInfo2Parser, EvtxLogParser, EvtLogParser;
+        recyclebinInfo2Parser, EvtxLogParser, EvtLogParser, metadataExtractionParser;
 
-    private static ExternalParserConfigGenerator createExternalParserConfig(String name, String toolPath, String checkCommand,
-        String command, String mimeType, int firstLinesToIgnore, String charset) throws TikaException, TransformerException {
+    private static ExternalParserConfigGenerator createExternalParserConfig(String name, String toolPath, String checkCmd, String cmd,
+        String mimeType, int firstLinesToIgnore, String charset, String... matchPatterns) throws TikaException, TransformerException {
 
         ExternalParserConfigGenerator parserConfigGenerator = new ExternalParserConfigGenerator();
         parserConfigGenerator.setParserName(name);
         parserConfigGenerator.setWinToolPath(toolPath);
-        parserConfigGenerator.setCheckCommand(checkCommand);
+        parserConfigGenerator.setCheckCommand(checkCmd);
         parserConfigGenerator.setErrorCodes(1);
-        parserConfigGenerator.setCommand(command);
+        parserConfigGenerator.setCommand(cmd);
         HashSet<MediaType> mimeTypes = new HashSet<>();
         mimeTypes.add(MediaType.application(mimeType));
         parserConfigGenerator.addMimeTypes(mimeTypes);
         parserConfigGenerator.setFirstLinesToIgnore(firstLinesToIgnore);
         parserConfigGenerator.setOutputCharset(charset);
+        if (matchPatterns != null) parserConfigGenerator.addMatchPatterns(matchPatterns);
 
         return parserConfigGenerator;
     }
@@ -109,6 +110,13 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             "evtexport -V", "evtexport ${INPUT}", "x-elf-log", 0, "ISO-8859-1");
         evtLogConfigGenerator.writeDocumentToFile(XMLFile);
 
+        // append EvtxLogParser parser with metadata extraction
+        String patt1 = "\\s*(\\w{3} \\d{2}, \\d{4} \\d{2}:\\d{2}:\\d{2}\\.\\d+ UTC).*";
+        String patt2 = "\\s*(Event number\\s*:\\s*\\d{1,3}).*";
+        ExternalParserConfigGenerator evtxMetaConfigGenerator = createExternalParserConfig("EvtxLogParser", tmpPath + "evtxexport/",
+            "evtxexport -V", "evtxexport ${INPUT}", "x-elf-file", 0, "ISO-8859-1", patt1, patt2);
+        evtxMetaConfigGenerator.writeDocumentToFile(XMLFile);
+
         parsers = ExternalParsersConfigReader.read(new FileInputStream(XMLFile));
         superfetchParser = parsers.size() > 0 ? parsers.get(0) : null;
         prefetchParser = parsers.size() > 1 ? parsers.get(1) : null;
@@ -116,6 +124,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         recyclebinInfo2Parser = parsers.size() > 3 ? parsers.get(3) : null;
         EvtxLogParser = parsers.size() > 4 ? parsers.get(4) : null;
         EvtLogParser = parsers.size() > 5 ? parsers.get(5) : null;
+        metadataExtractionParser = parsers.size() > 6 ? parsers.get(6) : null;
     }
 
     @AfterClass
@@ -125,7 +134,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         }
         XMLFile.delete();
     }
-    
+
     @Test
     public void testSuperFetch() throws IOException, TikaException, SAXException, TransformerException {
 
@@ -241,6 +250,33 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             assertTrue(hts.contains("Microsoft-Windows-Subsystem-Linux"));
             assertTrue(hts.contains("Microsoft-Windows-Lxss-Optional"));
             assertTrue(hts.contains("0d (13)"));
+        }
+    }
+
+    @Test
+    public void testMetadataExtraction() throws IOException, TikaException, SAXException, TransformerException {
+
+        ContentHandler handler = new BodyContentHandler(1 << 25);
+        ParseContext context = new ParseContext();
+        Metadata metadata = new Metadata();
+        String fileName = "test_evtxLog.evtx";
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
+            assumeNotNull(metadataExtractionParser);
+            metadataExtractionParser.parse(stream, handler, metadata, context);
+            List<String> writtenTimes = Arrays.asList(metadata.getValues("pattern_0"));
+            List<String> eventNumbers = Arrays.asList(metadata.getValues("pattern_1"));
+
+            assertTrue(writtenTimes.contains("Jun 29, 2022 15:11:27.519191500 UTC"));
+            assertTrue(writtenTimes.contains("Apr 08, 2021 12:45:17.688286800 UTC"));
+            assertTrue(writtenTimes.contains("Aug 12, 2021 14:30:57.746026700 UTC"));
+            assertTrue(writtenTimes.contains("Jun 29, 2022 15:11:27.519191500 UTC"));
+
+            for (int i = 1; i <= 604; i++) {
+                assertTrue(eventNumbers.get(i-1).matches("Event number.*" + String.valueOf(i)));
+            }
+
         }
     }
 
