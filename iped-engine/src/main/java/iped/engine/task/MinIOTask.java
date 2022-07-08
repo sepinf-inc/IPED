@@ -327,9 +327,9 @@ public class MinIOTask extends AbstractTask {
             try {
                 is.reset();
                 minioClient.putObject(builder.stream(is, is.size(), -1).build());
-                return null;
+                return;
             } catch (Exception e) {
-                // if retries are not exhausted try again
+                // save the Exception to be throwed after all retries;
                 ex = e;
             }
         }
