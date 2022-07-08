@@ -323,7 +323,7 @@ public class MinIOTask extends AbstractTask {
 
     private Exception sendFile(Builder builder, SeekableInputStream is) throws Exception {
         Exception ex = null;
-        for (int i = 0; i < RETRIES; i++) {
+        for (int i = 0; i <= RETRIES; i++) {
             try {
                 is.reset();
                 minioClient.putObject(builder.stream(is, is.size(), -1).build());
