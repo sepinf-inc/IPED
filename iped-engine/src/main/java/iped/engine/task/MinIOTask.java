@@ -321,7 +321,7 @@ public class MinIOTask extends AbstractTask {
 
 
 
-    private Exception sendFile(Builder builder, SeekableInputStream is) throws Exception {
+    private void sendFile(Builder builder, SeekableInputStream is) throws Exception {
         Exception ex = null;
         for (int i = 0; i <= RETRIES; i++) {
             try {
