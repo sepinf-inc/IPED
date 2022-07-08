@@ -328,7 +328,7 @@ public class MinIOTask extends AbstractTask {
         try {
             minioClient.putObject(args);
         }catch (Exception e) {
-            // TODO: handle exception
+            // if retries are not exhausted try again
             if (retries > 0) {
                 sendFile(args, retries - 1);
                 logger.warn("Upload fails, retring {}", e.toString());
