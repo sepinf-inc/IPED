@@ -25,13 +25,14 @@ jobs:
             tesseract-ocr-por=1:4.00~git30-7274cfa-1 \
             imagemagick=8:6.9.10.23+dfsg-2.1ubuntu11.4 gsfonts
             sudo perl -MCPAN -e 'install Parse::Win32Registry'
-    - name: Install libagdb
+    - name: Install external parsers tools
       run: |
             sudo apt install git autoconf automake autopoint libtool pkg-config
             git clone https://github.com/libyal/libagdb.git
             cd libagdb/ && sudo ./synclibs.sh && sudo ./autogen.sh
             sudo ./configure && sudo make && sudo make install
             sudo ldconfig
+      run: sudo apt-get install libscca-utils rifiuti2 libevtx-utils
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml
