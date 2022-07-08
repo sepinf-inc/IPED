@@ -1,9 +1,7 @@
 package iped.engine.task;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +31,7 @@ import io.minio.GetObjectResponse;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.PutObjectArgs.Builder;
 import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
 import iped.configuration.Configurable;
@@ -273,10 +272,10 @@ public class MinIOTask extends AbstractTask {
         out.close();
 
         if (zipFiles > 0) {
-            try (InputStream fi = new BufferedInputStream(new FileInputStream(zipfile))) {
+            try (SeekableFileInputStream fi = new SeekableFileInputStream(zipfile)) {
+
                 sendFile(PutObjectArgs.builder().bucket(bucket).object("/zips/" + getZipName())
-                        .userMetadata(Collections.singletonMap("x-minio-extrac", "true"))
-                        .stream(fi, zipfile.length(), Math.max(zipfile.length(), 1024 * 1024 * 5)).build());
+                        .userMetadata(Collections.singletonMap("x-minio-extrac", "true")), fi);
 
             }
         }
@@ -319,31 +318,29 @@ public class MinIOTask extends AbstractTask {
         return exists;
     }
 
-    private void sendFile(PutObjectArgs args) throws Exception {
-        sendFile(args, RETRIES);
-    }
 
 
-    private void sendFile(PutObjectArgs args, int retries) throws Exception {
-        try {
-            minioClient.putObject(args);
-        }catch (Exception e) {
-            // if retries are not exhausted try again
-            if (retries > 0) {
-                sendFile(args, retries - 1);
-                logger.warn("Upload fails, retring {}", e.toString());
-            } else {
-                throw e;
+
+    private Exception sendFile(Builder builder, SeekableInputStream is) throws Exception {
+        Exception ex = null;
+        for (int i = 0; i < RETRIES; i++) {
+            try {
+                is.reset();
+                minioClient.putObject(builder.stream(is, is.size(), -1).build());
+                return null;
+            } catch (Exception e) {
+                // if retries are not exhausted try again
+                ex = e;
             }
         }
+        throw ex;
     }
 
-    private void insertItem(String hash, InputStream is, String mediatype, String bucketPath)
+    private void insertItem(String hash, SeekableInputStream is, String mediatype, String bucketPath)
             throws Exception {
 
         try {
-            sendFile(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, -1, 10 << 20)
-                    .contentType(mediatype).build());
+            sendFile(PutObjectArgs.builder().bucket(bucket).object(bucketPath).contentType(mediatype), is);
 
         } catch (Exception e) {
             throw new Exception("Error when uploading object ", e);
