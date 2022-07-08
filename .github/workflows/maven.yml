@@ -32,7 +32,8 @@ jobs:
             cd libagdb/ && sudo ./synclibs.sh && sudo ./autogen.sh
             sudo ./configure && sudo make && sudo make install
             sudo ldconfig
-      run: sudo apt-get install libscca-utils rifiuti2 libevtx-utils
+            cd ..
+            sudo apt-get install libscca-utils rifiuti2 libevtx-utils
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml
