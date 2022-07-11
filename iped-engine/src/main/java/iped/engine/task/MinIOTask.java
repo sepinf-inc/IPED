@@ -1,5 +1,6 @@
 package iped.engine.task;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -324,7 +325,7 @@ public class MinIOTask extends AbstractTask {
         for (int i = 0; i <= retries; i++) {
             try {
                 is.seek(0);
-                minioClient.putObject(builder.stream(is, size, partSize).build());
+                minioClient.putObject(builder.stream(new BufferedInputStream(is), size, partSize).build());
                 return;
             } catch (Exception e) {
                 // save the Exception to be throwed after all retries;
