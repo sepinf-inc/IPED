@@ -16,6 +16,10 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
     private static final String ZIP_FILES_MAX_SIZE = "zipFilesMaxSize";
     private static final String TIME_OUT = "timeOut";
     private static final String RETRIES = "retries";
+
+    private static final int DEFAULT_TIMEOUT = 30;
+    private static final int DEFAULT_RETRIES = 1;
+
     private String host;
     private String port;
     private long timeOut;
@@ -44,8 +48,8 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
 
         host = properties.getProperty(HOST_KEY).trim();
         port = properties.getProperty(PORT_KEY).trim();
-        timeOut = Long.parseLong(properties.getProperty(TIME_OUT).trim());
-        retries = Integer.parseInt(properties.getProperty(RETRIES).trim());
+        timeOut = Long.parseLong(properties.getProperty(TIME_OUT, Integer.toString(DEFAULT_TIMEOUT)).trim());
+        retries = Integer.parseInt(properties.getProperty(RETRIES, Integer.toString(DEFAULT_RETRIES)).trim());
         setZipFilesMaxSize(Long.parseLong(properties.getProperty(ZIP_FILES_MAX_SIZE)));
         updateRefsToMinIO = Boolean.valueOf(properties.getProperty(UPDATE_REFS_TO_MINIO, "false"));
     }

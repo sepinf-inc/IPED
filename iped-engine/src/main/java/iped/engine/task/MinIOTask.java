@@ -64,9 +64,6 @@ public class MinIOTask extends AbstractTask {
     private static final String SECRET_KEY = "secretkey";
     private static final String BUCKET_KEY = "bucket";
 
-    private static long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
-    private static int RETRIES = 1;
-
     private static String accessKey;
     private static String secretKey;
     private static String bucket = null;
@@ -80,12 +77,15 @@ public class MinIOTask extends AbstractTask {
     private static long zipFilesMaxSize = 0;
     private static final long zipMaxSize = 8 * 1024 * 1024;
     private static final long zipMaxFiles = 10000;
+
     private TemporaryResources tmp = null;
     private ZipArchiveOutputStream out = null;
     private CountingOutputStream cos = null;
     private File zipfile = null;
     private long zipLength = 0;
     private long zipFiles = 0;
+    private long timeout;
+    private int retries;
 
     private Map<Integer, QueueItem> queue = new TreeMap<>();
     private boolean sendQueue = false;
@@ -121,8 +121,8 @@ public class MinIOTask extends AbstractTask {
             return;
         }
 
-        TIMEOUT = TimeUnit.SECONDS.toMillis(minIOConfig.getTimeOut());
-        RETRIES = minIOConfig.getRetries();
+        timeout = TimeUnit.SECONDS.toMillis(minIOConfig.getTimeOut());
+        retries = minIOConfig.getRetries();
 
         zipFilesMaxSize = minIOConfig.getZipFilesMaxSize();
 
@@ -135,7 +135,7 @@ public class MinIOTask extends AbstractTask {
         loadCredentials(caseData);
 
         minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
-        minioClient.setTimeout(TIMEOUT, TIMEOUT, TIMEOUT);
+        minioClient.setTimeout(timeout, timeout, timeout);
         inputStreamFactory = new MinIOInputInputStreamFactory(URI.create(server));
 
         // Check if the bucket already exists.
@@ -323,7 +323,7 @@ public class MinIOTask extends AbstractTask {
 
     private void sendFile(Builder builder, SeekableInputStream is) throws Exception {
         Exception ex = null;
-        for (int i = 0; i <= RETRIES; i++) {
+        for (int i = 0; i <= retries; i++) {
             try {
                 is.seek(0);
                 minioClient.putObject(builder.stream(is, is.size(), -1).build());
