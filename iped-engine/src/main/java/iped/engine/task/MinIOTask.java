@@ -2,9 +2,7 @@ package iped.engine.task;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -33,6 +32,7 @@ import io.minio.GetObjectResponse;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.PutObjectArgs.Builder;
 import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
 import iped.configuration.Configurable;
@@ -78,12 +78,15 @@ public class MinIOTask extends AbstractTask {
     private static long zipFilesMaxSize = 0;
     private static final long zipMaxSize = 8 * 1024 * 1024;
     private static final long zipMaxFiles = 10000;
+
     private TemporaryResources tmp = null;
     private ZipArchiveOutputStream out = null;
     private CountingOutputStream cos = null;
     private File zipfile = null;
     private long zipLength = 0;
     private long zipFiles = 0;
+    private long timeout;
+    private int retries;
 
     private Map<Integer, QueueItem> queue = new TreeMap<>();
     private boolean sendQueue = false;
@@ -119,6 +122,9 @@ public class MinIOTask extends AbstractTask {
             return;
         }
 
+        timeout = TimeUnit.SECONDS.toMillis(minIOConfig.getTimeOut());
+        retries = minIOConfig.getRetries();
+
         zipFilesMaxSize = minIOConfig.getZipFilesMaxSize();
 
         String server = minIOConfig.getHost() + ":" + minIOConfig.getPort();
@@ -130,6 +136,7 @@ public class MinIOTask extends AbstractTask {
         loadCredentials(caseData);
 
         minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
+        minioClient.setTimeout(timeout, timeout, timeout);
         inputStreamFactory = new MinIOInputInputStreamFactory(URI.create(server));
 
         // Check if the bucket already exists.
@@ -266,10 +273,11 @@ public class MinIOTask extends AbstractTask {
         out.close();
 
         if (zipFiles > 0) {
-            try (InputStream fi = new BufferedInputStream(new FileInputStream(zipfile))) {
-                minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object("/zips/" + getZipName())
-                                .userMetadata(Collections.singletonMap("x-minio-extrac", "true"))
-                                .stream(fi, zipfile.length(), Math.max(zipfile.length(), 1024 * 1024 * 5)).build());
+            try (SeekableFileInputStream fi = new SeekableFileInputStream(zipfile)) {
+
+                sendFile(PutObjectArgs.builder().bucket(bucket).object("/zips/" + getZipName())
+                                .userMetadata(Collections.singletonMap("x-minio-extrac", "true")),
+                        fi, zipfile.length(), Math.max(zipfile.length(), 1024 * 1024 * 5));
 
             }
         }
@@ -312,19 +320,26 @@ public class MinIOTask extends AbstractTask {
         return exists;
     }
 
-    private void insertItem(String hash, InputStream is, String mediatype, String bucketPath)
+    private void sendFile(Builder builder, SeekableInputStream is, long size, long partSize) throws Exception {
+        Exception ex = null;
+        for (int i = 0; i <= retries; i++) {
+            try {
+                is.seek(0);
+                minioClient.putObject(builder.stream(new BufferedInputStream(is), size, partSize).build());
+                return;
+            } catch (Exception e) {
+                // save the Exception to be throwed after all retries;
+                ex = e;
+            }
+        }
+        throw ex;
+    }
+
+    private void insertItem(String hash, SeekableInputStream is, String mediatype, String bucketPath)
             throws Exception {
 
-        // create directory structure
-        if (FOLDER_LEVELS > 0) {
-            String folder = bucketPath.substring(0, FOLDER_LEVELS * 2);
-            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(folder)
-                    .stream(new ByteArrayInputStream(new byte[0]), 0, -1).build());
-        }
-
         try {
-            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, -1, 10 << 20)
-                    .contentType(mediatype).build());
+            sendFile(PutObjectArgs.builder().bucket(bucket).object(bucketPath).contentType(mediatype), is, -1, 10 << 20);
 
         } catch (Exception e) {
             throw new Exception("Error when uploading object ", e);
