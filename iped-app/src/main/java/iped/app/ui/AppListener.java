@@ -26,14 +26,18 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.JOptionPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.apache.lucene.search.Query;
 
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
+import iped.utils.IconUtil;
 
-public class AppListener implements ActionListener, MouseListener, ClearFilterListener {
+public class AppListener implements ActionListener, MouseListener, ClearFilterListener, ChangeListener {
 
     private String searchText = ""; //$NON-NLS-1$
     private boolean clearAllFilters = false;
@@ -152,6 +156,30 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
             App.get().getContextMenu().show(App.get(), App.get().optionsButton.getX(), App.get().optionsButton.getHeight());
         }
 
+        if (evt.getSource() == App.get().blurButton) {
+            App.get().toggleBlurFilter = !App.get().toggleBlurFilter;
+            Icon activeIcon = IconUtil.getToolbarIcon("blur", App.getResPath());
+            if (App.get().toggleBlurFilter)
+                activeIcon = IconUtil.getToolbarIcon("bluron", App.getResPath());
+            App.get().blurButton.setIcon(activeIcon);
+            App.get().galleryModel.clearAllThumbsInCache();
+            App.get().gallery.repaint();
+            App.get().viewerController.setToggleBlurFilter(App.get().toggleBlurFilter);
+            App.get().viewerController.reload();
+        }
+
+        if (evt.getSource() == App.get().grayButton) {
+            App.get().toggleGrayScaleFilter = !App.get().toggleGrayScaleFilter;
+            Icon activeIcon = IconUtil.getToolbarIcon("gray", App.getResPath());
+            if (App.get().toggleGrayScaleFilter)
+                activeIcon = IconUtil.getToolbarIcon("grayon", App.getResPath());    
+            App.get().grayButton.setIcon(activeIcon);
+            App.get().galleryModel.clearAllThumbsInCache();
+            App.get().gallery.repaint();
+            App.get().viewerController.setToggleGrayScaleFilter(App.get().toggleGrayScaleFilter);
+            App.get().viewerController.reload();
+        }
+        
         if (evt.getSource() == App.get().checkBox) {
             if (App.get().appCase.getMultiBookmarks().getTotalChecked() > 0) {
                 int result = JOptionPane.showConfirmDialog(App.get(), Messages.getString("AppListener.UncheckAll"), //$NON-NLS-1$
@@ -223,6 +251,20 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         if (App.get().filterDuplicates.isSelected())
             App.get().filterDuplicates.doClick();
         clearAllFilters = false;
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e){
+        if (e.getSource() == App.get().sliderBlur && !App.get().sliderBlur.getValueIsAdjusting()) {
+            int radius = App.get().sliderBlur.getValue();
+            App.get().galleryModel.setBlurRadius(radius/10);
+            App.get().viewerController.setBlurRadius(radius);
+            if (App.get().toggleBlurFilter){
+                App.get().galleryModel.clearAllThumbsInCache();
+                App.get().gallery.repaint();
+                App.get().viewerController.reload();
+            }
+        }
     }
 
 }

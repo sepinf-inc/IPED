@@ -43,6 +43,9 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jhlabs.image.BoxBlurFilter;
+import com.jhlabs.image.GrayscaleFilter;
+
 import iped.app.ui.controls.ErrorIcon;
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
@@ -85,6 +88,16 @@ public class GalleryModel extends AbstractTableModel {
     public static final ImageIcon unsupportedIcon = new ImageIcon();
     private ExecutorService executor;
     private ExternalImageConverter externalImageConverter;
+    private GrayscaleFilter grayFilter = new GrayscaleFilter();
+    private BoxBlurFilter blurFilter = new BoxBlurFilter(2,2,1);
+
+    public void setBlurRadius(float radius) {
+        blurFilter.setRadius(radius);
+    }
+
+    public void setBlurIterations(int iterations) {
+        blurFilter.setIterations(iterations);
+    }
 
     @Override
     public int getColumnCount() {
@@ -273,7 +286,17 @@ public class GalleryModel extends AbstractTableModel {
                     }
                 }
 
-                if (image != errorImg) {
+                if (image != errorImg) {     
+                    //LOGGER.info("INSIDE IF image"); //$NON-NLS-1$
+                    if (App.get().toggleGrayScaleFilter) {
+                        //LOGGER.info("INSIDE IF toggleGrayScaleFilter"); //$NON-NLS-1$
+                        image = grayFilter.filter(image, null);    
+                    }
+                    
+                    if (App.get().toggleBlurFilter) {
+                        //LOGGER.info("INSIDE IF toggleBlurFilter"); //$NON-NLS-1$
+                        image = blurFilter.filter(image, null);
+                    }
                     value.image = image;
                 }
 
@@ -310,6 +333,24 @@ public class GalleryModel extends AbstractTableModel {
                     Document doc = App.get().appCase.getSearcher().doc(docId);
                     String mediaType = doc.get(IndexItem.CONTENTTYPE);
                     if (isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType)) {
+                        it.remove();
+                    }
+                } catch (Exception e) {
+                }
+            }
+        }
+    }
+
+    public void clearAllThumbsInCache() {
+        synchronized (cache) {
+            Iterator<IItemId> it = cache.keySet().iterator();
+            while (it.hasNext()) {
+                IItemId id = it.next();
+                int docId = App.get().appCase.getLuceneId(id);
+                try {
+                    Document doc = App.get().appCase.getSearcher().doc(docId);
+                    String mediaType = doc.get(IndexItem.CONTENTTYPE);
+                    if (isSupportedVideo(mediaType) || isSupportedImage(mediaType) || isAnimationImage(doc, mediaType)) {
                         it.remove();
                     }
                 } catch (Exception e) {

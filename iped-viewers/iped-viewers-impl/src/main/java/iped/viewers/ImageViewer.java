@@ -32,6 +32,9 @@ import javax.swing.event.ChangeListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jhlabs.image.BoxBlurFilter;
+import com.jhlabs.image.GrayscaleFilter;
+
 import iped.data.IItemReader;
 import iped.io.IStreamSource;
 import iped.io.SeekableInputStream;
@@ -70,6 +73,9 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     volatile protected BufferedImage image;
     volatile protected int rotation;
 
+    private GrayscaleFilter grayFilter;
+    private BoxBlurFilter blurFilter;
+        
     public ImageViewer() {
         this(0);
     }
@@ -78,9 +84,23 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         super(new BorderLayout());
         isToolbarVisible = true;
         imagePanel = new ImageViewPanel(initialFitMode);
+        grayFilter = new GrayscaleFilter();
+        blurFilter = new BoxBlurFilter(20,20,1);
         createToolBar();
         getPanel().add(imagePanel, BorderLayout.CENTER);
         getPanel().add(toolBar, BorderLayout.NORTH);
+    }
+
+    @Override
+    public void setBlurRadius(float radius){
+        this.blurRadius = radius;
+        blurFilter.setRadius(radius);
+    }
+
+    @Override
+    public void setBlurIterations(int iterations){
+        this.blurIterations = iterations;
+        blurFilter.setIterations(iterations);
     }
 
     @Override
@@ -153,6 +173,19 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
             } finally {
                 IOUtil.closeQuietly(in);
+            }
+        }
+        if (image != null){
+            //LOGGER.info("ImageViewer INSIDE IF image not null"); //$NON-NLS-1$
+            
+            if (applyGrayScaleFilter) {
+                //LOGGER.info("ImageViewer INSIDE IF toggleGrayScaleFilter"); //$NON-NLS-1$
+                image = grayFilter.filter(image, null);    
+            }
+            
+            if (applyBlurFilter) {
+                //LOGGER.info("ImageViewer INSIDE IF toggleBlurFilter"); //$NON-NLS-1$
+                image = blurFilter.filter(image, null);
             }
         }
         toolBar.setVisible(image != null && isToolbarVisible());

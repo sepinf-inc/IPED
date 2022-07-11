@@ -42,22 +42,46 @@ public abstract class AbstractViewer {
 
     protected boolean isToolbarVisible;
 
+    protected boolean applyGrayScaleFilter;
+
+    protected boolean applyBlurFilter;
+
+    protected float blurRadius;
+
+    protected int blurIterations;
+
     public AbstractViewer() {
         panel = new JPanel();
+        this.applyGrayScaleFilter = false;
+        this.applyBlurFilter = false;
+        this.blurRadius = 1;
+        this.blurIterations = 1;
     }
 
     public AbstractViewer(LayoutManager layout) {
         panel = new JPanel(layout);
+        this.applyGrayScaleFilter = false;
+        this.applyBlurFilter = false;
+        this.blurRadius = 1;
+        this.blurIterations = 1;
     }
 
     public AbstractViewer(Window owner) {
         this.owner = owner; 
         panel = new JPanel();
+        this.applyGrayScaleFilter = false;
+        this.applyBlurFilter = false;
+        this.blurRadius = 1;
+        this.blurIterations = 1;
     }
 
     public AbstractViewer(Window owner, LayoutManager layout) {
         this.owner = owner; 
         panel = new JPanel(layout);
+        this.applyGrayScaleFilter = false;
+        this.applyBlurFilter = false;
+        this.blurRadius = 1;
+        this.blurIterations = 1;
     }
 
     public JPanel getPanel() {
@@ -68,6 +92,40 @@ public abstract class AbstractViewer {
     
     public Window getOwner() {
         return owner;
+    }
+
+    public void setApplyGrayScaleFilter(boolean gray) {
+        this.applyGrayScaleFilter = gray;
+        //LOGGER.info("AbstractViewer INSIDE setToggleGrayScaleFilter"); //$NON-NLS-1$
+    }
+
+    public boolean getApplyGrayScaleFilter() {
+        return applyGrayScaleFilter;
+    }
+
+    public void setApplyBlurFilter(boolean blur) {
+        this.applyBlurFilter = blur;
+        //LOGGER.info("AbstractViewer INSIDE setToggleBlurFilter"); //$NON-NLS-1$
+    }
+
+    public boolean getApplyBlurFilter() {
+        return applyBlurFilter;
+    }
+
+    public void setBlurRadius(float radius){
+        this.blurRadius = radius;
+    }
+
+    public float getBlurRadius() {
+        return blurRadius;
+    }
+
+    public void setBlurIterations(int iterations){
+        this.blurIterations = iterations;
+    }
+
+    public int getBlurIterations() {
+        return blurIterations;
     }
 
     /*

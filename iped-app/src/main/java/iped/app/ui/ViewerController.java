@@ -261,6 +261,26 @@ public class ViewerController {
         }
     }
 
+    public void setToggleGrayScaleFilter(boolean gray) {
+        for (AbstractViewer viewer : viewers)
+            viewer.setApplyGrayScaleFilter(gray);
+    }
+
+    public void setToggleBlurFilter(boolean blur) {
+        for (AbstractViewer viewer : viewers)
+            viewer.setApplyBlurFilter(blur);
+    }
+
+    public void setBlurRadius(float radius) {
+        for (AbstractViewer viewer : viewers)
+            viewer.setBlurRadius(radius);
+    }
+
+    public void setBlurIterations(int iterations){
+        for (AbstractViewer viewer : viewers)
+            viewer.setBlurIterations(iterations);
+    }
+
     private boolean isContainerVisibleTab(DefaultSingleCDockable dock) {
         Container cont = dock.getContentPane();
         if (cont != null) {

@@ -31,6 +31,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -60,6 +61,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTree;
@@ -67,6 +69,7 @@ import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
@@ -169,6 +172,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     JProgressBar progressBar;
     JComboBox<String> queryComboBox, filterComboBox;
     JButton searchButton, optionsButton, updateCaseData, helpButton, exportToZip;
+    //
+    JButton blurButton;
+    JSlider sliderBlur;
+    JButton grayButton;
+    //
     JCheckBox checkBox, recursiveTreeList, filterDuplicates;
     JTable resultsTable;
     GalleryTable gallery;
@@ -194,7 +202,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     DefaultSingleCDockable compositeViewerDock;
 
     private List<DefaultSingleCDockable> viewerDocks;
-    private ViewerController viewerController;
+    ViewerController viewerController;
     private CButton timelineButton;
     private CButton butSimSearch;
 
@@ -249,6 +257,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private ResultSetViewerConfiguration resultSetViewerConfiguration;
 
+    public boolean toggleBlurFilter = false;
+
+    public boolean toggleGrayScaleFilter = false;
+
     public boolean useVideoThumbsInGallery = false;
 
     private IPEDSource lastSelectedSource;
@@ -273,6 +285,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             app = new App();
         }
         return app;
+    }
+
+    public static final String getResPath(){
+        return resPath;
     }
 
     public void setLastSelectedDoc(int lastSelectedDoc) {
@@ -452,6 +468,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         queryComboBox.setMaximumRowCount(30);
 
         searchButton = new JButton(Messages.getString("App.Search")); //$NON-NLS-1$
+        //
+        blurButton = new JButton(Messages.getString("App.ToggleBlurFilter"), IconUtil.getToolbarIcon("blur", resPath));
+        blurButton.setMnemonic(KeyEvent.VK_B);
+        sliderBlur = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 50);
+        sliderBlur.setMaximumSize(new Dimension(5, 16));
+        sliderBlur.setMinimumSize(new Dimension(5, 16));
+        sliderBlur.setOpaque(false);
+        grayButton = new JButton(Messages.getString("App.ToggleGrayScaleFilter"), IconUtil.getToolbarIcon("gray", resPath));
+        grayButton.setMnemonic(KeyEvent.VK_G);
+        //
         optionsButton = new JButton(Messages.getString("App.Options")); //$NON-NLS-1$
         updateCaseData = new JButton(Messages.getString("App.Update")); //$NON-NLS-1$
         helpButton = new JButton(Messages.getString("App.Help")); //$NON-NLS-1$
@@ -488,6 +514,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         topPanel.add(similarFacesFilterPanel);
         topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
         topPanel.add(queryComboBox);
+        //
+        topPanel.add(blurButton);
+        topPanel.add(sliderBlur);
+        topPanel.add(grayButton);
+        //
         topPanel.add(optionsButton);
         if (processingManager != null)
             topPanel.add(updateCaseData);
@@ -746,6 +777,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterComboBox.addActionListener(appletListener);
         filterDuplicates.addActionListener(appletListener);
         searchButton.addActionListener(appletListener);
+        //
+        blurButton.addActionListener(appletListener);
+        sliderBlur.addChangeListener(appletListener);
+        grayButton.addActionListener(appletListener);
+        //
         optionsButton.addActionListener(appletListener);
         exportToZip.addActionListener(appletListener);
         updateCaseData.addActionListener(appletListener);
@@ -821,6 +857,49 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
 
         graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
+
+        /* CButton butToggleBlurFilter = new CButton(Messages.getString("App.ToggleBlurFilter"),
+                IconUtil.getToolbarIcon("blur", resPath));
+        galleryTabDock.addAction(butToggleBlurFilter);
+        butToggleBlurFilter.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                galleryModel.clearAllThumbsInCache();
+                toggleBlurFilter = !toggleBlurFilter;
+                Icon activeIcon = IconUtil.getToolbarIcon("blur", resPath);
+                if (toggleBlurFilter)
+                    activeIcon = IconUtil.getToolbarIcon("bluron", resPath);    
+                butToggleBlurFilter.setIcon(activeIcon);
+                if (gallery != null)
+                    gallery.repaint();
+                if (viewerController != null){
+                    //LOGGER.info("App INSIDE IF viewerController not null"); //$NON-NLS-1$
+                    viewerController.setToggleBlurFilter(toggleBlurFilter);
+                    viewerController.reload();
+                }
+            }
+        });
+
+        CButton butToggleGrayScaleFilter = new CButton(Messages.getString("App.ToggleGrayScaleFilter"),
+                IconUtil.getToolbarIcon("gray", resPath));
+        galleryTabDock.addAction(butToggleGrayScaleFilter);
+        galleryTabDock.addSeparator();
+        butToggleGrayScaleFilter.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                galleryModel.clearAllThumbsInCache();
+                toggleGrayScaleFilter = !toggleGrayScaleFilter;
+                Icon activeIcon = IconUtil.getToolbarIcon("gray", resPath);
+                if (toggleGrayScaleFilter)
+                    activeIcon = IconUtil.getToolbarIcon("grayon", resPath);    
+                butToggleGrayScaleFilter.setIcon(activeIcon);
+                if (gallery != null)
+                    gallery.repaint();
+                if (viewerController != null){
+                    //LOGGER.info("App INSIDE IF viewerController not null"); //$NON-NLS-1$
+                    viewerController.setToggleGrayScaleFilter(toggleGrayScaleFilter);
+                    viewerController.reload();
+                }
+            }
+        }); */
 
         CButton butToggleVideoFramesMode = new CButton(Messages.getString("Gallery.ToggleVideoFrames"),
                 IconUtil.getToolbarIcon("video", resPath));

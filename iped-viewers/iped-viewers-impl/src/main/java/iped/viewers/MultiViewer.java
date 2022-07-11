@@ -70,6 +70,30 @@ public class MultiViewer extends AbstractViewer {
     }
 
     @Override
+    public void setApplyGrayScaleFilter(boolean gray) {
+        for (AbstractViewer viewer : viewerList)
+            viewer.setApplyGrayScaleFilter(gray);
+    }
+
+    @Override
+    public void setApplyBlurFilter(boolean blur) {
+        for (AbstractViewer viewer : viewerList)
+            viewer.setApplyBlurFilter(blur);
+    }
+
+    @Override
+    public void setBlurRadius(float radius){
+        for (AbstractViewer viewer : viewerList)
+            viewer.setBlurRadius(radius);
+    }
+
+    @Override
+    public void setBlurIterations(int iterations){
+        for (AbstractViewer viewer : viewerList)
+            viewer.setBlurIterations(iterations);
+    }
+
+    @Override
     public void init() {
         for (AbstractViewer viewer : viewerList) {
             viewer.init();
