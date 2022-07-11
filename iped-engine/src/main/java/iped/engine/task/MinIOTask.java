@@ -325,7 +325,7 @@ public class MinIOTask extends AbstractTask {
         Exception ex = null;
         for (int i = 0; i <= RETRIES; i++) {
             try {
-                is.reset();
+                is.seek(0);
                 minioClient.putObject(builder.stream(is, is.size(), -1).build());
                 return;
             } catch (Exception e) {
