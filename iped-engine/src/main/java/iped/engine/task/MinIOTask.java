@@ -275,7 +275,8 @@ public class MinIOTask extends AbstractTask {
             try (SeekableFileInputStream fi = new SeekableFileInputStream(zipfile)) {
 
                 sendFile(PutObjectArgs.builder().bucket(bucket).object("/zips/" + getZipName())
-                        .userMetadata(Collections.singletonMap("x-minio-extrac", "true")), fi);
+                                .userMetadata(Collections.singletonMap("x-minio-extrac", "true")),
+                        fi, zipfile.length(), Math.max(zipfile.length(), 1024 * 1024 * 5));
 
             }
         }
@@ -318,15 +319,12 @@ public class MinIOTask extends AbstractTask {
         return exists;
     }
 
-
-
-
-    private void sendFile(Builder builder, SeekableInputStream is) throws Exception {
+    private void sendFile(Builder builder, SeekableInputStream is, long size, long partSize) throws Exception {
         Exception ex = null;
         for (int i = 0; i <= retries; i++) {
             try {
                 is.seek(0);
-                minioClient.putObject(builder.stream(is, is.size(), -1).build());
+                minioClient.putObject(builder.stream(is, size, partSize).build());
                 return;
             } catch (Exception e) {
                 // save the Exception to be throwed after all retries;
@@ -340,7 +338,7 @@ public class MinIOTask extends AbstractTask {
             throws Exception {
 
         try {
-            sendFile(PutObjectArgs.builder().bucket(bucket).object(bucketPath).contentType(mediatype), is);
+            sendFile(PutObjectArgs.builder().bucket(bucket).object(bucketPath).contentType(mediatype), is, -1, 10 << 20);
 
         } catch (Exception e) {
             throw new Exception("Error when uploading object ", e);
