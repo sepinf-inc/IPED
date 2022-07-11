@@ -4,12 +4,12 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -165,6 +166,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         if (zae == null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
         }
+        AtomicBoolean canceled = new AtomicBoolean(false);
         // see #1199: call in background to avoid closing the channel if interrupted
         Future<Pair<Path, byte[]>> future = executor.submit(new Callable<Pair<Path, byte[]>>() {
             @Override
@@ -189,7 +191,13 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                         }
                     } else {
                         tmp = Files.createTempFile("zip-stream", null);
-                        Files.copy(is, tmp, StandardCopyOption.REPLACE_EXISTING);
+                        try (OutputStream out = Files.newOutputStream(tmp)) {
+                            int read;
+                            byte[] buf = new byte[8192];
+                            while (!canceled.get() && (read = is.read(buf, 0, buf.length)) >= 0) {
+                                out.write(buf, 0, read);
+                            }
+                        }
                         synchronized (filesCache) {
                             filesCache.put(path, tmp);
                         }
@@ -217,6 +225,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         try {
             result = future.get();
         } catch (InterruptedException | ExecutionException e) {
+            canceled.set(true);
             throw new IOException(e);
         }
         bytes = result.getRight();
