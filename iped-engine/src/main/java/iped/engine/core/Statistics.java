@@ -267,6 +267,9 @@ public class Statistics {
         int indexed = (numDocs - getSplits() - previousIndexedFiles) / 2;
         LOGGER.info("Total Indexed: {}", indexed); //$NON-NLS-1$
 
+        LOGGER.info("Discovered volume: {} bytes", caseData.getDiscoveredVolume());
+        LOGGER.info("Processed  volume: {} bytes", getVolume());
+
         long processedVolume = getVolume() / (1024 * 1024);
 
         if (activeFiles != processed) {
