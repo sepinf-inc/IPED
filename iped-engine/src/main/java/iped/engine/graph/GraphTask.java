@@ -420,7 +420,7 @@ public class GraphTask extends AbstractTask {
         return nv;
     }
 
-    private NodeValues getNodeValues(String value, Metadata metadata) {
+    private NodeValues getNodeValues(String value, Metadata metadata, boolean detectPhones) {
         NodeValues nv1 = null;
         String accountType = metadata.get(ExtraProperties.USER_ACCOUNT_TYPE);
         if (SkypeParser.SKYPE.equals(accountType))
@@ -429,7 +429,7 @@ public class GraphTask extends AbstractTask {
             nv1 = getEmailNodeValues(value);
         if (nv1 == null)
             nv1 = getAccountNodeValues(value, metadata);
-        if (nv1 == null)
+        if (nv1 == null && detectPhones)
             nv1 = getPhoneNodeValues(value);
         if (nv1 == null)
             nv1 = getGenericNodeValues(value);
@@ -447,8 +447,10 @@ public class GraphTask extends AbstractTask {
             return;
         }
 
+        boolean detectPhones = isToDetectPhones(evidence);
+
         String relationType = getRelationType(evidence.getMediaType().toString());
-        NodeValues nv1 = getNodeValues(sender, evidence.getMetadata());
+        NodeValues nv1 = getNodeValues(sender, evidence.getMetadata(), detectPhones);
 
         graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
 
@@ -463,7 +465,7 @@ public class GraphTask extends AbstractTask {
         recipients.addAll(Arrays.asList(metadata.getValues(Message.MESSAGE_BCC)));
 
         for (String recipient : recipients) {
-            NodeValues nv2 = getNodeValues(recipient, evidence.getMetadata());
+            NodeValues nv2 = getNodeValues(recipient, evidence.getMetadata(), detectPhones);
             graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue, nv2.props);
             graphFileWriter.writeRelationship(nv1.label, nv1.propertyName, nv1.propertyValue, nv2.label,
                     nv2.propertyName, nv2.propertyValue, relationshipType, relProps);
@@ -489,6 +491,17 @@ public class GraphTask extends AbstractTask {
 
     }
 
+    private boolean isToDetectPhones(IItem item) {
+        String mime = item.getMediaType().toString();
+        if (configuration.getMimesToDetectPhones().contains(mime)) {
+            return true;
+        }
+        if (configuration.getMimesToDontDetectPhones().contains(mime)) {
+            return false;
+        }
+        return configuration.getDetectPhonesOnOtherMimes();
+    }
+
     private NodeValues writePersonNode(IItem item, SortedSet<String> msisdnPhones) throws IOException {
 
         SortedSet<String> possibleEmails = new TreeSet<>();// getEmails(itemText);
@@ -511,7 +524,8 @@ public class GraphTask extends AbstractTask {
             if (matcher.find())
                 possiblePhones.add(id);
         }
-        SortedSet<String> formattedPhones = getPhones(possiblePhones.toString());
+        SortedSet<String> formattedPhones = isToDetectPhones(item) ? getPhones(possiblePhones.toString())
+                : new TreeSet<>();
         if (msisdnPhones == null)
             msisdnPhones = Collections.emptySortedSet();
         formattedPhones.addAll(msisdnPhones);
