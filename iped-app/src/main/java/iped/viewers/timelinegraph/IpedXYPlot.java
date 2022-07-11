@@ -24,7 +24,10 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.RendererUtils;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYItemRendererState;
+import org.jfree.chart.util.Args;
+import org.jfree.data.DomainOrder;
 import org.jfree.data.general.DatasetUtils;
+import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.XYDataset;
 
 public class IpedXYPlot extends XYPlot{
@@ -35,7 +38,7 @@ public class IpedXYPlot extends XYPlot{
 	private AffineTransform affineTransform;
 	Color filterIntervalFillPaint;
 
-	public IpedXYPlot(IpedChartPanel ipedChartPanel, TimeTableCumulativeXYDataset timeTableCumulativeXYDataset, DateAxis domainAxis,
+	public IpedXYPlot(IpedChartPanel ipedChartPanel, AbstractIntervalXYDataset timeTableCumulativeXYDataset, DateAxis domainAxis,
 			NumberAxis rangeAxis, XYItemRenderer renderer) {		
 		super(timeTableCumulativeXYDataset, domainAxis, rangeAxis, renderer);
 		this.ipedChartPanel = ipedChartPanel;
@@ -254,4 +257,309 @@ public class IpedXYPlot extends XYPlot{
         }
     }
 
+    /**
+     * Draws a representation of the data within the dataArea region, using the
+     * current renderer.
+     * <P>
+     * The {@code info} and {@code crosshairState} arguments may be
+     * {@code null}.
+     *
+     * @param g2  the graphics device.
+     * @param dataArea  the region in which the data is to be drawn.
+     * @param index  the dataset index.
+     * @param info  an optional object for collection dimension information.
+     * @param crosshairState  collects crosshair information
+     *                        ({@code null} permitted).
+     *
+     * @return A flag that indicates whether any data was actually rendered.
+     */
+    public boolean render(Graphics2D g2, Rectangle2D dataArea, int index,
+            PlotRenderingInfo info, CrosshairState crosshairState) {
+
+        boolean foundData = false;
+        XYDataset dataset = getDataset(index);
+        if (!DatasetUtils.isEmptyOrNull(dataset)) {
+            foundData = true;
+            ValueAxis xAxis = getDomainAxisForDataset(index);
+            ValueAxis yAxis = getRangeAxisForDataset(index);
+            if (xAxis == null || yAxis == null) {
+                return foundData;  // can't render anything without axes
+            }
+            XYItemRenderer renderer = getRenderer(index);
+            if (renderer == null) {
+                renderer = getRenderer();
+                if (renderer == null) { // no default renderer available
+                    return foundData;
+                }
+            }
+
+            XYItemRendererState state = renderer.initialise(g2, dataArea, this,
+                    dataset, info);
+            int passCount = renderer.getPassCount();
+
+            SeriesRenderingOrder seriesOrder = getSeriesRenderingOrder();
+            if (seriesOrder == SeriesRenderingOrder.REVERSE) {
+                //render series in reverse order
+                for (int pass = 0; pass < passCount; pass++) {
+                    int seriesCount = dataset.getSeriesCount();
+                    for (int series = seriesCount - 1; series >= 0; series--) {
+                        int firstItem = 0;
+                        int lastItem = dataset.getItemCount(series) - 1;
+                        if (lastItem == -1) {
+                            continue;
+                        }
+                        if (state.getProcessVisibleItemsOnly()) {
+                            int[] itemBounds = findLiveItems(
+                                    dataset, series, xAxis.getLowerBound(),
+                                    xAxis.getUpperBound());
+                            firstItem = Math.max(itemBounds[0] - 1, 0);
+                            lastItem = Math.min(itemBounds[1] + 1, lastItem);
+                        }
+                        state.startSeriesPass(dataset, series, firstItem,
+                                lastItem, pass, passCount);
+                        for (int item = firstItem; item <= lastItem; item++) {
+                            renderer.drawItem(g2, state, dataArea, info,
+                                    this, xAxis, yAxis, dataset, series, item,
+                                    crosshairState, pass);
+                        }
+                        state.endSeriesPass(dataset, series, firstItem,
+                                lastItem, pass, passCount);
+                    }
+                }
+            }
+            else {
+                //render series in forward order
+                for (int pass = 0; pass < passCount; pass++) {
+                    int seriesCount = dataset.getSeriesCount();
+                    for (int series = 0; series < seriesCount; series++) {
+                        int firstItem = 0;
+                        int lastItem = dataset.getItemCount(series) - 1;
+                        if (state.getProcessVisibleItemsOnly()) {
+                            int[] itemBounds = findLiveItems(
+                                    dataset, series, xAxis.getLowerBound(),
+                                    xAxis.getUpperBound());
+                            firstItem = Math.max(itemBounds[0] - 1, 0);
+                            lastItem = Math.min(itemBounds[1] + 1, lastItem);
+                        }
+                        state.startSeriesPass(dataset, series, firstItem,
+                                lastItem, pass, passCount);
+                        for (int item = firstItem; item <= lastItem; item++) {
+                            renderer.drawItem(g2, state, dataArea, info,
+                                    this, xAxis, yAxis, dataset, series, item,
+                                    crosshairState, pass);
+                        }
+                        state.endSeriesPass(dataset, series, firstItem,
+                                lastItem, pass, passCount);
+                    }
+                }
+            }
+        }
+        return foundData;
+    }
+
+    /**
+     * Finds a range of item indices that is guaranteed to contain all the
+     * x-values from x0 to x1 (inclusive).
+     *
+     * @param dataset  the dataset ({@code null} not permitted).
+     * @param series  the series index.
+     * @param xLow  the lower bound of the x-value range.
+     * @param xHigh  the upper bound of the x-value range.
+     *
+     * @return The indices of the boundary items.
+     */
+    public static int[] findLiveItems(XYDataset dataset, int series,
+            double xLow, double xHigh) {
+        // here we could probably be a little faster by searching for both
+        // indices simultaneously, but I'll look at that later if it seems
+        // like it matters...
+        int i0 = findLiveItemsLowerBound(dataset, series, xLow, xHigh);
+        int i1 = findLiveItemsUpperBound(dataset, series, xLow, xHigh);
+        if (i0 > i1) {
+            i0 = i1;
+        }
+        return new int[] {i0, i1};
+    }
+    /**
+     * Finds the lower index of the range of live items in the specified data
+     * series.
+     *
+     * @param dataset  the dataset ({@code null} not permitted).
+     * @param series  the series index.
+     * @param xLow  the lowest x-value in the live range.
+     * @param xHigh  the highest x-value in the live range.
+     *
+     * @return The index of the required item.
+     *
+     * @see #findLiveItemsUpperBound(XYDataset, int, double, double)
+     */
+    public static int findLiveItemsLowerBound(XYDataset dataset, int series,
+            double xLow, double xHigh) {
+        Args.nullNotPermitted(dataset, "dataset");
+        if (xLow >= xHigh) {
+            throw new IllegalArgumentException("Requires xLow < xHigh.");
+        }
+        int itemCount = dataset.getItemCount(series);
+        if (itemCount <= 1) {
+            return 0;
+        }
+        if (dataset.getDomainOrder() == DomainOrder.ASCENDING) {
+            // for data in ascending order by x-value, we are (broadly) looking
+            // for the index of the highest x-value that is less than xLow
+            int low = 0;
+            int high = itemCount - 1;
+            double lowValue = dataset.getXValue(series, low);
+            if (lowValue >= xLow) {
+                // special case where the lowest x-value is >= xLow
+                return low;
+            }
+            double highValue = dataset.getXValue(series, high);
+            if (highValue < xLow) {
+                // special case where the highest x-value is < xLow
+                return high;
+            }
+            while (high - low > 1) {
+                int mid = (low + high) / 2;
+                double midV = dataset.getXValue(series, mid);
+                if (midV >= xLow) {
+                    high = mid;
+                }
+                else {
+                    low = mid;
+                }
+            }
+            return high;
+        }
+        else if (dataset.getDomainOrder() == DomainOrder.DESCENDING) {
+            // when the x-values are sorted in descending order, the lower
+            // bound is found by calculating relative to the xHigh value
+            int low = 0;
+            int high = itemCount - 1;
+            double lowValue = dataset.getXValue(series, low);
+            if (lowValue <= xHigh) {
+                return low;
+            }
+            double highValue = dataset.getXValue(series, high);
+            if (highValue > xHigh) {
+                return high;
+            }
+            while (high - low > 1) {
+                int mid = (low + high) / 2;
+                double midV = dataset.getXValue(series, mid);
+                if (midV > xHigh) {
+                    low = mid;
+                }
+                else {
+                    high = mid;
+                }
+            }
+            return high;
+        }
+        else {
+            // we don't know anything about the ordering of the x-values,
+            // but we can still skip any initial values that fall outside the
+            // range...
+            int index = 0;
+            // skip any items that don't need including...
+            double x = dataset.getXValue(series, index);
+            while (index < itemCount && x < xLow) {
+                index++;
+                if (index < itemCount) {
+                    x = dataset.getXValue(series, index);
+                }
+            }
+            return Math.min(Math.max(0, index), itemCount - 1);
+        }
+    }
+
+    /**
+     * Finds the upper index of the range of live items in the specified data
+     * series.
+     *
+     * @param dataset  the dataset ({@code null} not permitted).
+     * @param series  the series index.
+     * @param xLow  the lowest x-value in the live range.
+     * @param xHigh  the highest x-value in the live range.
+     *
+     * @return The index of the required item.
+     *
+     * @see #findLiveItemsLowerBound(XYDataset, int, double, double)
+     */
+    public static int findLiveItemsUpperBound(XYDataset dataset, int series,
+            double xLow, double xHigh) {
+        Args.nullNotPermitted(dataset, "dataset");
+        if (xLow >= xHigh) {
+            throw new IllegalArgumentException("Requires xLow < xHigh.");
+        }
+        int itemCount = dataset.getItemCount(series);
+        if (itemCount <= 1) {
+            return 0;
+        }
+        if (dataset.getDomainOrder() == DomainOrder.ASCENDING) {
+            int low = 0;
+            int high = itemCount - 1;
+            double lowValue = dataset.getXValue(series, low);
+            if (lowValue > xHigh) {
+                return low;
+            }
+            double highValue = dataset.getXValue(series, high);
+            if (highValue <= xHigh) {
+                return high;
+            }
+            int mid = (low + high) / 2;
+            while (high - low > 1) {
+                double midV = dataset.getXValue(series, mid);
+                if (midV <= xHigh) {
+                    low = mid;
+                }
+                else {
+                    high = mid;
+                }
+                mid = (low + high) / 2;
+            }
+            return mid;
+        }
+        else if (dataset.getDomainOrder() == DomainOrder.DESCENDING) {
+            // when the x-values are descending, the upper bound is found by
+            // comparing against xLow
+            int low = 0;
+            int high = itemCount - 1;
+            int mid = (low + high) / 2;
+            double lowValue = dataset.getXValue(series, low);
+            if (lowValue < xLow) {
+                return low;
+            }
+            double highValue = dataset.getXValue(series, high);
+            if (highValue >= xLow) {
+                return high;
+            }
+            while (high - low > 1) {
+                double midV = dataset.getXValue(series, mid);
+                if (midV >= xLow) {
+                    low = mid;
+                }
+                else {
+                    high = mid;
+                }
+                mid = (low + high) / 2;
+            }
+            return mid;
+        }
+        else {
+            // we don't know anything about the ordering of the x-values,
+            // but we can still skip any trailing values that fall outside the
+            // range...
+            int index = itemCount - 1;
+            // skip any items that don't need including...
+            double x = dataset.getXValue(series, index);
+            while (index >= 0 && x > xHigh) {
+                index--;
+                if (index >= 0) {
+                    x = dataset.getXValue(series, index);
+                }
+            }
+            return Math.max(index, 0);
+        }
+    }
+    
 }

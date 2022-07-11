@@ -1,19 +1,28 @@
-package iped.viewers.timelinegraph;
+package iped.viewers.timelinegraph.datasets;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.SortedSet;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.util.BytesRef;
 import org.jfree.chart.util.Args;
 import org.jfree.chart.util.PublicCloneable;
 import org.jfree.data.DefaultKeyedValues2D;
 import org.jfree.data.DomainInfo;
+import org.jfree.data.DomainOrder;
 import org.jfree.data.Range;
 import org.jfree.data.general.DatasetChangeEvent;
-import org.jfree.data.time.RegularTimePeriod;
 import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.TimePeriodAnchor;
 import org.jfree.data.time.TimeTableXYDataset;
@@ -21,21 +30,18 @@ import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.TableXYDataset;
 
+import iped.app.ui.CaseSearcherFilter;
 import iped.data.IItemId;
+import iped.properties.ExtraProperties;
+import iped.search.IMultiSearchResult;
+import iped.viewers.api.IMultiSearchResultProvider;
+import iped.viewers.timelinegraph.IpedChartsPanel;
 
-public class TimeTableCumulativeXYDataset extends AbstractIntervalXYDataset
-									implements Cloneable, PublicCloneable, IntervalXYDataset, DomainInfo,
+public class IpedTimelineDataset extends AbstractIntervalXYDataset
+									implements Cloneable, PublicCloneable, IntervalXYDataset, DomainInfo, TimelineDataset,
 									TableXYDataset {
-    /**
-     * The data structure to store the values.  Each column represents
-     * a series (elsewhere in JFreeChart rows are typically used for series,
-     * but it doesn't matter that much since this data structure is private
-     * and symmetrical anyway), each row contains values for the same
-     * {@link RegularTimePeriod} (the rows are sorted into ascending order).
-     */
-    private DefaultKeyedValues2D values;
-    HashMap<String, HashMap<String, List<IItemId>>> itemIdsMap = new HashMap<String, HashMap<String, List<IItemId>>>(); 
-
+    IMultiSearchResultProvider resultsProvider;    
+    CaseSearchFilterListenerFactory cacheFLFactory;
     /**
      * A flag that indicates that the domain is 'points in time'.  If this flag
      * is true, only the x-value (and not the x-interval) is used to determine
@@ -52,40 +58,128 @@ public class TimeTableCumulativeXYDataset extends AbstractIntervalXYDataset
 
     /** A working calendar (to recycle) */
     private Calendar workingCalendar;
+    
+    DefaultKeyedValues2D values;
 
-    /**
-     * Creates a new dataset.
-     */
-    public TimeTableCumulativeXYDataset() {
-        // defer argument checking
-        this(TimeZone.getDefault(), Locale.getDefault());
-    }
+    SortedSetDocValues timeEventGroupValues;
+    IpedChartsPanel ipedChartsPanel;
 
-    /**
-     * Creates a new dataset with the given time zone.
-     *
-     * @param zone  the time zone to use ({@code null} not permitted).
-     */
-    public TimeTableCumulativeXYDataset(TimeZone zone) {
-        // defer argument checking
-        this(zone, Locale.getDefault());
-    }
+    SortedSet<String> eventTypes = new TreeSet<String>();
+    String[] eventTypesArray;
+	LeafReader reader;
 
-    /**
-     * Creates a new dataset with the given time zone and locale.
-     *
-     * @param zone  the time zone to use ({@code null} not permitted).
-     * @param locale  the locale to use ({@code null} not permitted).
-     */
-    public TimeTableCumulativeXYDataset(TimeZone zone, Locale locale) {
-        Args.nullNotPermitted(zone, "zone");
-        Args.nullNotPermitted(locale, "locale");
+	class Count extends Number{
+		int value=0;
+
+		@Override
+		public String toString() {
+			return Integer.toString(value);
+		}
+
+		@Override
+		public int intValue() {
+			return value;
+		}
+
+		@Override
+		public long longValue() {
+			return value;
+		}
+
+		@Override
+		public float floatValue() {
+			return value;
+		}
+
+		@Override
+		public double doubleValue() {
+			return value;
+		}
+	}
+
+	Date first;
+	Date last;
+
+	int itemCount=0;
+
+	volatile int running=0;
+	volatile int seriesCount=0;
+	Object monitor = new Object();
+	private String splitValue;
+
+	public IpedTimelineDataset(IpedTimelineDatasetManager ipedTimelineDatasetManager, IMultiSearchResultProvider resultsProvider, CaseSearchFilterListenerFactory cacheFLFactory, String splitValue) throws IOException {
+		this.ipedChartsPanel = ipedTimelineDatasetManager.ipedChartsPanel;
+        Args.nullNotPermitted(ipedChartsPanel.getTimeZone(), "zone");
+        Args.nullNotPermitted(ipedChartsPanel.getLocale(), "locale");
+        this.workingCalendar = Calendar.getInstance(ipedChartsPanel.getTimeZone(), ipedChartsPanel.getLocale());
         this.values = new DefaultKeyedValues2D(true);
-        this.workingCalendar = Calendar.getInstance(zone, locale);
         this.xPosition = TimePeriodAnchor.START;
+		this.resultsProvider = resultsProvider;
+		this.cacheFLFactory = cacheFLFactory;
+		this.splitValue = splitValue;
+
+        reader = resultsProvider.getIPEDSource().getLeafReader();
+
+        timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
+
+		TermsEnum te = timeEventGroupValues.termsEnum();
+		BytesRef br = te.next();
+
+		List<CaseSearcherFilter> csfs = new ArrayList<CaseSearcherFilter>();
+		while(br!=null) {
+       		StringTokenizer st = new StringTokenizer(br.utf8ToString(), "|");
+       		while(st.hasMoreTokens()) {
+       			String eventType = st.nextToken().trim();
+       			if(eventTypes.add(eventType)) {
+    				//escape : char
+					String eventField = ipedChartsPanel.getTimeEventColumnName(eventType);
+					if(eventField==null) continue;
+
+					running++;
+    				String eventTypeEsc = eventField.replaceAll(":", "\\\\:");
+    				eventTypeEsc = eventTypeEsc.replaceAll("/", "\\\\/");
+    				eventTypeEsc = eventTypeEsc.replaceAll(" ", "\\\\ ");
+    				eventTypeEsc = eventTypeEsc.replaceAll("-", "\\\\-");
+    				
+    				String query = eventTypeEsc+":[\"\" TO *]";
+    				
+    				if(ipedChartsPanel.getChartPanel().getSplitByCategory() && splitValue!=null) {
+    					query+=" && category=\""+splitValue+"\"";
+    				}
+    				
+       				CaseSearcherFilter csf = new CaseSearcherFilter(query);
+       				csf.getSearcher().setNoScoring(true);
+       				csf.applyUIQueryFilters();
+       				
+       				IpedTimelineDataset self = this;
+
+       				csf.addCaseSearchFilterListener(cacheFLFactory.getCaseSearchFilterListener(eventType, csf, this, splitValue));
+
+       				IMultiSearchResult timelineSearchResults;
+					csf.applyUIQueryFilters();
+					csfs.add(csf);
+       			}
+       		}
+       		br = te.next();
+		}
+
+		eventTypesArray=new String[running];
+		
+		ExecutorService threadPool = Executors.newFixedThreadPool(1);
+		for(CaseSearcherFilter csf:csfs) {
+			threadPool.execute(csf);
+		}
+		
+		try {
+			synchronized (monitor) {
+				monitor.wait();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
     }
 
-    /**
+	/**
      * Returns a flag that controls whether the domain is treated as 'points in
      * time'.
      * <P>
@@ -143,134 +237,6 @@ public class TimeTableCumulativeXYDataset extends AbstractIntervalXYDataset
     }
 
     /**
-     * Adds a new data item to the dataset and sends a
-     * {@link DatasetChangeEvent} to all registered listeners.
-     *
-     * @param period  the time period.
-     * @param y  the value for this period.
-     * @param seriesName  the name of the series to add the value.
-     *
-     * @see #remove(TimePeriod, Comparable)
-     */
-    public void add(TimePeriod period, double y, Comparable seriesName, IItemId itemId) {
-        add(period, y, seriesName, itemId, true);
-    }
-
-
-    public List<IItemId> getItems(int item, int seriesId) {
-    	HashMap<String, List<IItemId>> series = this.itemIdsMap.get(this.values.getRowKey(item).toString());
-    	if(series!=null) {
-    		return series.get(this.getSeriesKey(seriesId));
-    	}
-    	return null;
-    }
-    
-    /**
-     * Adds a new data item to the dataset and, if requested, sends a
-     * {@link DatasetChangeEvent} to all registered listeners.
-     *
-     * @param period  the time period ({@code null} not permitted).
-     * @param y  the value for this period ({@code null} permitted).
-     * @param seriesName  the name of the series to add the value
-     *                    ({@code null} not permitted).
-     * @param notify  whether dataset listener are notified or not.
-     *
-     * @see #remove(TimePeriod, Comparable, boolean)
-     */
-    public void add(TimePeriod period, Number y, Comparable seriesName, IItemId itemId,
-                    boolean notify) {
-    	try {        	
-            if (period instanceof RegularTimePeriod) {
-                RegularTimePeriod p = (RegularTimePeriod) period;
-                p.peg(this.workingCalendar);
-            }
-            int currentValue=0;
-            try{
-            	currentValue = this.values.getValue(period, seriesName).intValue();
-            }catch (Exception e) {
-    			//ignore
-    		}
-            Integer newValue = y.intValue() + currentValue;
-            this.values.addValue(newValue, period, seriesName);
-
-            HashMap<String, List<IItemId>> seriesId = this.itemIdsMap.get(period.toString());
-            if(seriesId==null) {
-            	seriesId = new HashMap<String, List<IItemId>>();
-            	this.itemIdsMap.put(period.toString(), seriesId);
-            }
-            List<IItemId> list = seriesId.get(seriesName.toString());
-            if(list==null) {
-            	list = new ArrayList<IItemId>();
-            	seriesId.put(seriesName.toString(), list);
-            }
-            list.add(itemId);
-
-            if (notify) {
-                fireDatasetChanged();
-            }
-    	}catch(Exception e) {
-    		e.printStackTrace();
-    	}
-    }
-
-    /**
-     * Removes an existing data item from the dataset.
-     *
-     * @param period  the (existing!) time period of the value to remove
-     *                ({@code null} not permitted).
-     * @param seriesName  the (existing!) series name to remove the value
-     *                    ({@code null} not permitted).
-     *
-     * @see #add(TimePeriod, double, Comparable)
-     */
-    public void remove(TimePeriod period, Comparable seriesName) {
-        remove(period, seriesName, true);
-    }
-
-    /**
-     * Removes an existing data item from the dataset and, if requested,
-     * sends a {@link DatasetChangeEvent} to all registered listeners.
-     *
-     * @param period  the (existing!) time period of the value to remove
-     *                ({@code null} not permitted).
-     * @param seriesName  the (existing!) series name to remove the value
-     *                    ({@code null} not permitted).
-     * @param notify  whether dataset listener are notified or not.
-     *
-     * @see #add(TimePeriod, double, Comparable)
-     */
-    public void remove(TimePeriod period, Comparable seriesName,
-            boolean notify) {
-        this.values.removeValue(period, seriesName);
-        if (notify) {
-            fireDatasetChanged();
-        }
-    }
-
-    /**
-     * Removes all data items from the dataset and sends a
-     * {@link DatasetChangeEvent} to all registered listeners.
-     */
-    public void clear() {
-        if (this.values.getRowCount() > 0) {
-            this.values.clear();
-            fireDatasetChanged();
-        }
-    }
-
-    /**
-     * Returns the time period for the specified item.  Bear in mind that all
-     * series share the same set of time periods.
-     *
-     * @param item  the item index (0 &lt;= i &lt;= {@link #getItemCount()}).
-     *
-     * @return The time period.
-     */
-    public TimePeriod getTimePeriod(int item) {
-        return (TimePeriod) this.values.getRowKey(item);
-    }
-
-    /**
      * Returns the number of items in ALL series.
      *
      * @return The item count.
@@ -279,6 +245,12 @@ public class TimeTableCumulativeXYDataset extends AbstractIntervalXYDataset
     public int getItemCount() {
         return this.values.getRowCount();
     }
+    
+
+    @Override
+    public DomainOrder getDomainOrder() {
+    	return DomainOrder.ASCENDING;
+    }    
 
     /**
      * Returns the number of items in a series.  This is the same value
@@ -291,7 +263,7 @@ public class TimeTableCumulativeXYDataset extends AbstractIntervalXYDataset
      */
     @Override
     public int getItemCount(int series) {
-        return getItemCount();
+        return this.values.getRowCount();
     }
 
     /**
@@ -468,6 +440,7 @@ public class TimeTableCumulativeXYDataset extends AbstractIntervalXYDataset
         return result;
     }
 
+
     /**
      * Returns the minimum x-value in the dataset.
      *
@@ -503,6 +476,7 @@ public class TimeTableCumulativeXYDataset extends AbstractIntervalXYDataset
         }
         return result;
     }
+
 
     /**
      * Returns the range of the values in this dataset's domain.
@@ -546,7 +520,7 @@ public class TimeTableCumulativeXYDataset extends AbstractIntervalXYDataset
         if (!(obj instanceof TimeTableXYDataset)) {
             return false;
         }
-        TimeTableCumulativeXYDataset that = (TimeTableCumulativeXYDataset) obj;
+        IpedTimelineDataset that = (IpedTimelineDataset) obj;
         if (this.domainIsPointsInTime != that.domainIsPointsInTime) {
             return false;
         }
@@ -573,11 +547,32 @@ public class TimeTableCumulativeXYDataset extends AbstractIntervalXYDataset
      */
     @Override
     public Object clone() throws CloneNotSupportedException {
-    	TimeTableCumulativeXYDataset clone = (TimeTableCumulativeXYDataset) super.clone();
+    	IpedTimelineDataset clone = (IpedTimelineDataset) super.clone();
         clone.values = (DefaultKeyedValues2D) this.values.clone();
         clone.workingCalendar = (Calendar) this.workingCalendar.clone();
         return clone;
     }
+	
+    HashMap<String, HashMap<String, List<IItemId>>> itemIdsMap = new HashMap<String, HashMap<String, List<IItemId>>>(); 
 
+    public List<IItemId> getItems(int item, int seriesId) {
+    	HashMap<String, List<IItemId>> series = this.itemIdsMap.get(this.values.getRowKey(item).toString());
+    	if(series!=null) {
+    		return series.get(this.getSeriesKey(seriesId));
+    	}
+    	return null;
+    }
+
+	public void addValue(Count count, TimePeriod t, String eventField, ArrayList<IItemId> docIds) {
+		values.addValue(count, t, eventField);
+
+		HashMap<String, List<IItemId>> series = this.itemIdsMap.get(t.toString());
+		if(series==null) {
+			series = new HashMap<String, List<IItemId>>();
+			this.itemIdsMap.put(t.toString(), series);
+		}
+
+		series.put(eventField, docIds);
+	}
 }
 

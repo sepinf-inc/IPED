@@ -239,19 +239,17 @@ public class IpedDateAxis extends DateAxis {
 		        Calendar cal = ISO8601DATEFORMAT.getCalendar();
 		        cal.set(1900, 0, 1, 0, 0, 0);
 				if(date.before(cal.getTime())){
-					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime());
+					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime(), ISO8601DATEFORMAT.getCalendar());
 				}
 		        cal.set(9999, 12, 31, 23, 59, 59);
 				if(date.after(cal.getTime())){
-					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime());
+					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime(), ISO8601DATEFORMAT.getCalendar());
 				}
 				return t;
 			}catch(InvocationTargetException | InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e2) {
-				e2.printStackTrace();
 				return null;
 			}
 		}catch( InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e){
-			e.printStackTrace();
 			return null;
 		}
 	}
@@ -264,7 +262,7 @@ public class IpedDateAxis extends DateAxis {
 	public static Date ISO8601DateParse(String strDate) {
 		try {
 			return ISO8601DATEFORMAT.parse(strDate);
-		} catch (ParseException e) {
+		} catch (ParseException|NumberFormatException e) {
 			e.printStackTrace();
 			return null;
 		}

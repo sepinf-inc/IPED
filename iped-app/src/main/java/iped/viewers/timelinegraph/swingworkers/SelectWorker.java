@@ -47,7 +47,7 @@ public class SelectWorker extends CancelableWorker<Void, Void> {
 		this.select = select;
 	}
 
-	public SelectWorker(String eventType, IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider2, Date time, Date time2,
+	public SelectWorker(String eventType, IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, Date start, Date end,
 			boolean b) {
 		this.resultsProvider = resultsProvider;
 		this.start = start;
@@ -103,8 +103,6 @@ public class SelectWorker extends CancelableWorker<Void, Void> {
             timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
     		timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
     		BinaryDocValues eventsInDocOrdsValues = reader.getBinaryDocValues(ExtraProperties.TIME_EVENT_ORDS);
-    		
-    		System.out.println("selecao iniciando");
 
     		for (int i = 0; i < resultsProvider.getResults().getLength(); i++) {
                 IItemId item = resultsProvider.getResults().getItem(i);
@@ -121,13 +119,15 @@ public class SelectWorker extends CancelableWorker<Void, Void> {
     	                }
     	                
     	                Date d = domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString());
-    	                if(start.getTime()<=d.getTime() && end.getTime()>=d.getTime()) {
-    		                int row = t.convertRowIndexToView(i);
-    		                if(select) {
-        		                t.addRowSelectionInterval(row, row);
-    		                }else {
-    		                	t.removeRowSelectionInterval(row, row);
-    		                }
+    	                if(d!=null) {
+        	                if(start.getTime()<=d.getTime() && end.getTime()>=d.getTime()) {
+        		                int row = t.convertRowIndexToView(i);
+        		                if(select) {
+            		                t.addRowSelectionInterval(row, row);
+        		                }else {
+        		                	t.removeRowSelectionInterval(row, row);
+        		                }
+        	                }
     	                }
     	            }
                 }

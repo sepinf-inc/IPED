@@ -59,7 +59,7 @@ public class IpedLegendItemCollection implements LegendItemSource{
                         	item = createLegendItem(seriesKey);
                         }
                         
-                        item.setSeriesKey(dataset.getSeriesKey(i));
+                        item.setSeriesKey(seriesKey);
                         item.setSeriesIndex(i);
                         item.setDataset(dataset);
                         item.setDatasetIndex(datasetIndex);

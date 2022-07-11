@@ -44,6 +44,8 @@ import org.jfree.chart.plot.XYPlot;
 
 import iped.app.ui.App;
 import iped.utils.IconUtil;
+import iped.viewers.timelinegraph.datasets.TimeTableCumulativeXYDataset;
+import iped.viewers.timelinegraph.datasets.TimelineDataset;
 import iped.viewers.timelinegraph.popups.ChartPanelPopupMenu;
 import iped.viewers.timelinegraph.popups.DataItemPopupMenu;
 import iped.viewers.timelinegraph.popups.PlotPopupMenu;
@@ -140,7 +142,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 				if(ce instanceof XYItemEntity) {
 					XYItemEntity ie = ((XYItemEntity) ce);
 					
-					if(ie.getDataset() instanceof TimeTableCumulativeXYDataset) {
+					if(ie.getDataset() instanceof TimelineDataset) {
 						itemPopupMenu.setChartEntity(ie);
 						
 						ArrayList<XYItemEntity> entityList = new ArrayList<XYItemEntity>();

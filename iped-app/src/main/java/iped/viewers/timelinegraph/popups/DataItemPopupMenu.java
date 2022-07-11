@@ -15,7 +15,7 @@ import org.jfree.chart.entity.XYItemEntity;
 import iped.app.ui.Messages;
 import iped.data.IItemId;
 import iped.viewers.timelinegraph.IpedChartPanel;
-import iped.viewers.timelinegraph.TimeTableCumulativeXYDataset;
+import iped.viewers.timelinegraph.datasets.TimelineDataset;
 
 
 public class DataItemPopupMenu extends JPopupMenu implements ActionListener {
@@ -75,13 +75,13 @@ public class DataItemPopupMenu extends JPopupMenu implements ActionListener {
 			ipedChartPanel.getIpedChartsPanel().selectItemsOnInterval(c.getTime(), cEnd.getTime(), true);
 		}
 		if(e.getSource()==checkEventItens) {
-			List<IItemId> items = ((TimeTableCumulativeXYDataset) chartEntity.getDataset()).getItems(chartEntity.getItem(), chartEntity.getSeriesIndex());
+			List<IItemId> items = ((TimelineDataset) chartEntity.getDataset()).getItems(chartEntity.getItem(), chartEntity.getSeriesIndex());
 			ipedChartPanel.getIpedChartsPanel().checkItems(items);
 		}
 		if(e.getSource()==checkPeriodItens) {
 			ArrayList<IItemId> items = new ArrayList<IItemId>();
 			for (XYItemEntity xyItemEntity : entityList) {
-				items.addAll(((TimeTableCumulativeXYDataset) xyItemEntity.getDataset()).getItems(xyItemEntity.getItem(), xyItemEntity.getSeriesIndex()));
+				items.addAll(((TimelineDataset) xyItemEntity.getDataset()).getItems(xyItemEntity.getItem(), xyItemEntity.getSeriesIndex()));
 			}
 			ipedChartPanel.getIpedChartsPanel().checkItems(items);
 		}

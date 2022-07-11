@@ -163,6 +163,13 @@ public class IPEDSearcher implements IIPEDSearcher {
 
         return searchResult;
     }
+    
+    public boolean hasDocId(int docId) {
+    	if(collector!=null) {
+    		return collector.bits.get(docId);
+    	}
+    	return false;
+    }
 
     private Query getNonTreeQuery(Query query) {
         BooleanQuery.Builder result = new BooleanQuery.Builder();
