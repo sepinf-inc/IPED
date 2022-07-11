@@ -1,5 +1,6 @@
 package iped.engine.io;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +27,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.archivers.zip.ZipSplitReadOnlySeekableByteChannel;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import iped.io.SeekableInputStream;
@@ -183,7 +183,14 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                         is = zip.getInputStream(zae);
                     }
                     if (zae.getSize() <= MAX_BYTES_CACHED) {
-                        bytes = IOUtils.toByteArray(is);
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        int read;
+                        byte[] buf = new byte[8192];
+                        while (!canceled.get() && (read = is.read(buf, 0, buf.length)) >= 0) {
+                            baos.write(buf, 0, read);
+                        }
+                        bytes = baos.toByteArray();
+                        baos = null;
                         synchronized (bytesCache) {
                             bytesCache.put(path, bytes);
                             bytesCached += bytes.length;
