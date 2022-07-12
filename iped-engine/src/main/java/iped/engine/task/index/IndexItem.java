@@ -687,17 +687,28 @@ public class IndexItem extends BasicProps {
 
         if (type == null) {
             // try to guess unknown type
-            try {
-                oValue = Double.valueOf(value);
-                type = setAndGetType(key, Double.class);
-            } catch (NumberFormatException e) {
-                Date date = DateUtil.tryToParseDate(value);
-                if (date != null) {
-                    oValue = date;
-                    type = setAndGetType(key, Date.class);
+            // this must be synchronized, see issue #1007
+            synchronized (typesMap) {
+                type = typesMap.get(key);
+                if (type == null) {
+                    try {
+                        oValue = Double.valueOf(value);
+                        type = Double.class;
+                    } catch (NumberFormatException e) {
+                        Date date = DateUtil.tryToParseDate(value);
+                        if (date != null) {
+                            oValue = date;
+                            type = Date.class;
+                        } else {
+                            type = String.class;
+                        }
+                    }
+                    typesMap.put(key, type);
                 }
             }
-        } else {
+
+        }
+        if (type != null) {
             try {
                 if (type.equals(Double.class)) {
                     oValue = Double.valueOf(value);
@@ -717,20 +728,12 @@ public class IndexItem extends BasicProps {
             } catch (NumberFormatException | ParseException e) {
                 // value doesn't match built-in/guessed type, store value in other field as string
                 key += ":string";
-                type = null;
+                type = String.class;
+                typesMap.put(key, type);
             }
         }
 
-        if (type == null) {
-            type = setAndGetType(key, String.class);
-        }
-
         addExtraAttributeToDoc(doc, key, oValue, isMultiValued, timeEventSet);
-    }
-
-    private static Class<?> setAndGetType(String key, Class<?> type) {
-        typesMap.put(key, type);
-        return type;
     }
 
     public static IItem getItem(Document doc, IPEDSource iCase, boolean viewItem) {
