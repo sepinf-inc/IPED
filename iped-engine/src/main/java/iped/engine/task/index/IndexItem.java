@@ -39,7 +39,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.document.BinaryDocValuesField;
@@ -125,14 +124,10 @@ public class IndexItem extends BasicProps {
 
     static HashSet<String> ignoredMetadata = new HashSet<String>();
 
-    private static volatile boolean collectMetaTypes = false;
-
     private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new HashMap<>();
-    private static Map<File, File> localEvidenceMap = new ConcurrentHashMap<>();
 
     private static Map<String, Class<?>> typesMap = Collections
             .synchronizedMap(new TreeMap<String, Class<?>>(StringUtil.getIgnoreCaseComparator()));
-    private static Map<String, Class<?>> newtypesMap = new ConcurrentHashMap<String, Class<?>>();
 
     private static FieldType storedTokenizedNoNormsField = new FieldType();
     private static FieldType dateField = new FieldType();
@@ -439,10 +434,6 @@ public class IndexItem extends BasicProps {
             doc.add(new StoredField(OFFSET, Long.toString(off)));
         }
 
-        if (typesMap.size() == 0) {
-            collectMetaTypes = true;
-        }
-
         for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
             if (entry.getValue() instanceof Collection) {
                 for (Object val : (Collection<?>) entry.getValue()) {
@@ -457,11 +448,7 @@ public class IndexItem extends BasicProps {
 
         Metadata metadata = evidence.getMetadata();
         if (metadata != null) {
-            if (collectMetaTypes) {
-                collectMetadataTypes(evidence.getMetadata());
-            } else {
-                addMetadataToDoc(doc, evidence.getMetadata(), timeEventSet);
-            }
+            addMetadataToDoc(doc, evidence.getMetadata(), timeEventSet);
         }
 
         storeTimeStamps(doc, timeEventSet);
@@ -742,72 +729,8 @@ public class IndexItem extends BasicProps {
     }
 
     private static Class<?> setAndGetType(String key, Class<?> type) {
-        newtypesMap.put(key, type);
         typesMap.put(key, type);
         return type;
-    }
-
-    private static void collectMetadataTypes(Metadata metadata) {
-
-        for (String key : metadata.names()) {
-            if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) { //$NON-NLS-1$
-                continue;
-            }
-
-            String val = metadata.get(key);
-
-            if (typesMap.get(key) == null || !typesMap.get(key).equals(String.class)) {
-                int type = 0;
-                while (type <= 4) {
-                    try {
-                        switch (type) {
-                            case 0:
-                                if (typesMap.get(key) == null || typesMap.get(key).equals(Integer.class)) {
-                                    Integer.parseInt(val);
-                                    typesMap.put(key, Integer.class);
-                                    break;
-                                }
-                            case 1:
-                                if (typesMap.get(key) == null || typesMap.get(key).equals(Integer.class)
-                                        || typesMap.get(key).equals(Long.class)) {
-                                    Long.parseLong(val);
-                                    typesMap.put(key, Long.class);
-                                    break;
-                                }
-                            case 2:
-                                if (typesMap.get(key) == null || typesMap.get(key).equals(Float.class)) {
-                                    Float.parseFloat(val);
-                                    typesMap.put(key, Float.class);
-                                    break;
-                                }
-                            case 3:
-                                if (typesMap.get(key) == null || typesMap.get(key).equals(Float.class)
-                                        || typesMap.get(key).equals(Double.class)) {
-                                    Double.parseDouble(val);
-                                    typesMap.put(key, Double.class);
-                                    break;
-                                }
-                            case 4:
-                                if (typesMap.get(key) == null || typesMap.get(key).equals(Date.class)) {
-                                    Date date = DateUtil.tryToParseDate(val);
-                                    if (date != null) {
-                                        typesMap.put(key, Date.class);
-                                        break;
-                                    }
-                                }
-                            default:
-                                typesMap.put(key, String.class);
-                        }
-                        type = 100;
-
-                    } catch (NumberFormatException e) {
-                        type++;
-                    }
-                }
-            }
-
-        }
-
     }
 
     public static IItem getItem(Document doc, IPEDSource iCase, boolean viewItem) {
