@@ -164,8 +164,8 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
             App.get().blurButton.setIcon(activeIcon);
             App.get().galleryModel.clearAllThumbsInCache();
             App.get().gallery.repaint();
-            App.get().viewerController.setToggleBlurFilter(App.get().toggleBlurFilter);
-            App.get().viewerController.reload();
+            App.get().getViewerController().setToggleBlurFilter(App.get().toggleBlurFilter);
+            App.get().getViewerController().reload();
         }
 
         if (evt.getSource() == App.get().grayButton) {
@@ -176,8 +176,8 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
             App.get().grayButton.setIcon(activeIcon);
             App.get().galleryModel.clearAllThumbsInCache();
             App.get().gallery.repaint();
-            App.get().viewerController.setToggleGrayScaleFilter(App.get().toggleGrayScaleFilter);
-            App.get().viewerController.reload();
+            App.get().getViewerController().setToggleGrayScaleFilter(App.get().toggleGrayScaleFilter);
+            App.get().getViewerController().reload();
         }
         
         if (evt.getSource() == App.get().checkBox) {
@@ -257,12 +257,14 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
     public void stateChanged(ChangeEvent e){
         if (e.getSource() == App.get().sliderBlur && !App.get().sliderBlur.getValueIsAdjusting()) {
             int radius = App.get().sliderBlur.getValue();
-            App.get().galleryModel.setBlurRadius(radius/10);
-            App.get().viewerController.setBlurRadius(radius);
+            //App.get().galleryModel.setBlurIterations(radius);
+            //App.get().viewerController.setBlurIterations(radius);
+            App.get().galleryModel.setBlurRadius(radius);
+            App.get().getViewerController().setBlurRadius(radius);
             if (App.get().toggleBlurFilter){
                 App.get().galleryModel.clearAllThumbsInCache();
                 App.get().gallery.repaint();
-                App.get().viewerController.reload();
+                App.get().getViewerController().reload();
             }
         }
     }

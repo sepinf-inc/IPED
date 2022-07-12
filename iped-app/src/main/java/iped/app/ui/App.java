@@ -202,7 +202,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     DefaultSingleCDockable compositeViewerDock;
 
     private List<DefaultSingleCDockable> viewerDocks;
-    ViewerController viewerController;
+    private ViewerController viewerController;
     private CButton timelineButton;
     private CButton butSimSearch;
 
@@ -471,7 +471,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         //
         blurButton = new JButton(Messages.getString("App.ToggleBlurFilter"), IconUtil.getToolbarIcon("blur", resPath));
         blurButton.setMnemonic(KeyEvent.VK_B);
-        sliderBlur = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 50);
+        sliderBlur = new JSlider(SwingConstants.HORIZONTAL, 0, 20, 14);
         sliderBlur.setMaximumSize(new Dimension(5, 16));
         sliderBlur.setMinimumSize(new Dimension(5, 16));
         sliderBlur.setOpaque(false);

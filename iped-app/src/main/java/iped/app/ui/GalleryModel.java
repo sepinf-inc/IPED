@@ -89,7 +89,7 @@ public class GalleryModel extends AbstractTableModel {
     private ExecutorService executor;
     private ExternalImageConverter externalImageConverter;
     private GrayscaleFilter grayFilter = new GrayscaleFilter();
-    private BoxBlurFilter blurFilter = new BoxBlurFilter(2,2,1);
+    private BoxBlurFilter blurFilter = new BoxBlurFilter(14,14,1);
 
     public void setBlurRadius(float radius) {
         blurFilter.setRadius(radius);
