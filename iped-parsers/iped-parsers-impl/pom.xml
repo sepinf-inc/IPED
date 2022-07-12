@@ -31,7 +31,8 @@
 		<dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers-standard-package</artifactId>
-            <version>${tika.version}</version>
+            <!-- workaround while tika 2.4.2 is not released-->
+            <version>2.4.0-p1</version>
             <exclusions>
         		<exclusion>
           			<groupId>com.pff</groupId>
@@ -41,6 +42,11 @@
                     <groupId>xml-apis</groupId>
                     <artifactId>xml-apis</artifactId>
                 </exclusion>
+                <!-- workaround while tika 2.4.2 is not released-->
+                <exclusion>
+          			<groupId>org.apache.tika</groupId>
+    				<artifactId>tika-parser-image-module</artifactId>
+        		</exclusion>
         	</exclusions>
         </dependency>
 		<dependency>
