@@ -141,6 +141,7 @@ public class IndexItem extends BasicProps {
         dateField.setIndexOptions(IndexOptions.DOCS);
         dateField.setStored(true);
         dateField.setOmitNorms(true);
+        dateField.setTokenized(false);
         dateField.freeze();
 
         ignoredMetadata.add(Metadata.CONTENT_TYPE);
