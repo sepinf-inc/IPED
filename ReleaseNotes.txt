@@ -1,3 +1,19 @@
+XX/07/2022: IPED-4.0.0-final
+News:
+#1227: Support for NIST CAID - Child Abuse Image Database - hash dataset (Wladimir Leite, Luís Nassif)
+#1211: Retry the MinIO upload (João Hauck, Luís Nassif)
+#1213: Decrease IPED VOSK minWordScore parameter (Luís Nassif)
+Fixes:
+#1199: Iped-search-app stops to open files from UFDR after fast switching between them (Luís Nassif) [4.0-beta]
+#1217: Inconsistent timezone conversion of Exif dates (Luís Nassif) [3.18.x, 4.0-beta]
+#1203: Aborting OutOfMemoryError while running QRCode detection (João Hauck, Luís Nassif) [4.0-beta]
+#1209: False positives when detecting phone numbers in Graph module (Luís Nassif) [3.18.x, 4.0-beta] 
+#1221: Date range searches do not work with uppercase 'T' in timestamp values (Luís Nassif) [4.0-beta]
+#1194: Error when creating Bookmark named "Bookmark" (Luís Nassif) [3.18.x, 4.0-beta]
+#1200: FaceRecognition feature doesn't work on Linux with default installation steps (Felipe Costa) [4.0-beta]
+#1007: IllegalArgumentException: cannot change field "XXX" from index options=DOCS_AND_FREQS_AND_POSITIONS to inconsistent index options=NONE (Luís Nassif) [4.0-beta]
+#994:  Negative estimated time to finish processing (Luís Nassif) [4.0-beta]
+
 24/06/2022: IPED-4.0.0-beta
 News:
 #361:  Face recognition functionality (Luis Nassif & Rui Santana)
