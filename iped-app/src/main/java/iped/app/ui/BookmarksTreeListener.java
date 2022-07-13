@@ -3,6 +3,7 @@ package iped.app.ui;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -12,10 +13,23 @@ import javax.swing.tree.TreePath;
 
 public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansionListener, ClearFilterListener {
 
-    public HashSet<String> selection = new HashSet<String>();
+    private HashSet<Object> selection = new HashSet<>();
     private volatile boolean updatingSelection = false;
     private long collapsed = 0;
     private boolean clearing = false;
+
+    public Set<String> getSelectedBookmarkNames() {
+        return selection.stream().filter(b -> b != BookmarksTreeModel.ROOT && b != BookmarksTreeModel.NO_BOOKMARKS)
+                .map(b -> b.toString()).collect(Collectors.toSet());
+    }
+
+    public boolean isRootSelected() {
+        return selection.contains(BookmarksTreeModel.ROOT);
+    }
+
+    public boolean isNoBookmarksSelected() {
+        return selection.contains(BookmarksTreeModel.NO_BOOKMARKS);
+    }
 
     @Override
     public void valueChanged(TreeSelectionEvent evt) {
@@ -35,7 +49,7 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
             if (selection.contains(path.getLastPathComponent())) {
                 selection.remove(path.getLastPathComponent());
             } else {
-                selection.add((String) path.getLastPathComponent());
+                selection.add(path.getLastPathComponent());
             }
         }
 
@@ -57,21 +71,22 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
 
         if (bookmarkSet != null && !selection.isEmpty()) {
 
-            HashSet<String> tempSel = (HashSet<String>) selection.clone();
+            HashSet<Object> tempSel = new HashSet<>(selection);
             selection.clear();
+
             if (tempSel.contains(BookmarksTreeModel.NO_BOOKMARKS)) {
                 selection.add(BookmarksTreeModel.NO_BOOKMARKS);
             }
 
-            for (String path : tempSel) {
+            for (Object path : tempSel) {
                 if (App.get().appCase.getMultiBookmarks().getBookmarkSet().contains(path)) {
                     selection.add(path);
                 }
             }
 
             ArrayList<TreePath> selectedPaths = new ArrayList<TreePath>();
-            for (String name : selection) {
-                String[] path = { BookmarksTreeModel.ROOT, name };
+            for (Object name : selection) {
+                Object[] path = { BookmarksTreeModel.ROOT, name };
                 selectedPaths.add(new TreePath(path));
             }
 

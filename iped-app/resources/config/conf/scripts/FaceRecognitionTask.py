@@ -32,7 +32,7 @@ numCreatedProcsLock = threading.Lock()
 from java.lang import System
 ipedRoot = System.getProperty('iped.root')
 
-bin = 'python'
+bin = 'python' if platform.system().lower() == 'windows' else 'python3'
 
 detection_model = 'hog'
 max_size = 1024

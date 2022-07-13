@@ -31,12 +31,12 @@
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
-            <version>3.4.1</version>
+            <version>3.5.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
-            <version>3.4.1</version>
+            <version>3.5.0</version>
         </dependency>
         <dependency>
             <groupId>com.alphacephei</groupId>
@@ -170,7 +170,7 @@
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>8.3.8</version>
+            <version>8.4.2</version>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>

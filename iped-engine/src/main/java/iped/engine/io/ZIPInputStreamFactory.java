@@ -1,26 +1,33 @@
 package iped.engine.io;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.archivers.zip.ZipSplitReadOnlySeekableByteChannel;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import iped.io.SeekableInputStream;
 import iped.utils.SeekableFileInputStream;
@@ -39,6 +46,8 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     private int bytesCached = 0;
 
     private Map<String, byte[]> bytesCache = new LinkedHashMap<String, byte[]>(128, 0.75f, true);
+
+    private final ExecutorService executor = Executors.newCachedThreadPool();
 
     private void removeEldestBytes() {
         synchronized (bytesCache) {
@@ -157,44 +166,80 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         if (zae == null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
         }
-        InputStream is;
+        AtomicBoolean canceled = new AtomicBoolean(false);
+        // see #1199: call in background to avoid closing the channel if interrupted
+        Future<Pair<Path, byte[]>> future = executor.submit(new Callable<Pair<Path, byte[]>>() {
+            @Override
+            public Pair<Path, byte[]> call() throws Exception {
+                Path tmp = null;
+                byte[] bytes = null;
+                InputStream is = null;
+                try {
+                    // ZipFile.getInputStream(ze) isn't thread safe as of COMPRESS 1.21 if ZipFile
+                    // 'ignoreLocalFileHeader' constructor flag is enabled. We must synchronize on
+                    // SeekableByteChannel used in constructor (COMPRESS 1.21 specific!), otherwise
+                    // this won't work with splitted archives with COMPRESS 1.21, see COMPRESS-618
+                    synchronized (sbc) {
+                        is = zip.getInputStream(zae);
+                    }
+                    if (zae.getSize() <= MAX_BYTES_CACHED) {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        int read;
+                        byte[] buf = new byte[8192];
+                        while (!canceled.get() && (read = is.read(buf, 0, buf.length)) >= 0) {
+                            baos.write(buf, 0, read);
+                        }
+                        bytes = baos.toByteArray();
+                        baos = null;
+                        synchronized (bytesCache) {
+                            bytesCache.put(path, bytes);
+                            bytesCached += bytes.length;
+                            removeEldestBytes();
+                        }
+                    } else {
+                        tmp = Files.createTempFile("zip-stream", null);
+                        try (OutputStream out = Files.newOutputStream(tmp)) {
+                            int read;
+                            byte[] buf = new byte[8192];
+                            while (!canceled.get() && (read = is.read(buf, 0, buf.length)) >= 0) {
+                                out.write(buf, 0, read);
+                            }
+                        }
+                        synchronized (filesCache) {
+                            filesCache.put(path, tmp);
+                        }
+                    }
+                    return Pair.of(tmp, bytes);
 
-        // ZipFile.getInputStream(ze) isn't thread safe as of COMPRESS 1.21 if ZipFile
-        // 'ignoreLocalFileHeader' constructor flag is enabled. We must synchronize on
-        // SeekableByteChannel used in constructor (COMPRESS 1.21 specific!), otherwise
-        // this won't work with splitted archives with COMPRESS 1.21, see COMPRESS-618
-        synchronized (sbc) {
-            is = zip.getInputStream(zae);
-        }
+                } catch (ClosedChannelException e) {
+                    if (zip != null) {
+                        zip.close();
+                        zip = null;
+                    }
+                    if (tmp != null) {
+                        Files.delete(tmp);
+                    }
+                    throw e;
+                } finally {
+                    if (is != null) {
+                        is.close();
+                    }
+                }
+            }
+
+        });
+        Pair<Path, byte[]> result;
         try {
-            if (zae.getSize() <= MAX_BYTES_CACHED) {
-                bytes = IOUtils.toByteArray(is);
-                synchronized (bytesCache) {
-                    bytesCache.put(path, bytes);
-                    bytesCached += bytes.length;
-                    removeEldestBytes();
-                }
-            } else {
-                tmp = Files.createTempFile("zip-stream", null);
-                Files.copy(is, tmp, StandardCopyOption.REPLACE_EXISTING);
-                synchronized (filesCache) {
-                    filesCache.put(path, tmp);
-                }
-            }
-        } catch (ClosedChannelException e) {
-            if (zip != null) {
-                zip.close();
-                zip = null;
-            }
-            if (tmp != null)
-                Files.delete(tmp);
-            throw e;
-        } finally {
-            is.close();
+            result = future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            canceled.set(true);
+            throw new IOException(e);
         }
+        bytes = result.getRight();
         if (bytes != null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
         }
+        tmp = result.getLeft();
         return new SeekableFileInputStream(tmp.toFile());
     }
 
@@ -212,6 +257,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             paths = filesCache.values().toArray(new Path[0]);
             filesCache.clear();
         }
+        executor.shutdown();
         IOException exception = null;
         for (Path path : paths) {
             try {

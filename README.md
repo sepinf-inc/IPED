@@ -14,7 +14,7 @@ Since the beginning, the goal of the tool was efficient data processing and stab
 - Integrated and intuitive analysis interface
 - High multithread performance and support for large cases: up to 400GB/h processing speed using modern hardware and 135 million items in a (multi) case as of 12/12/2019
 
-Currently IPED uses the [Sleuthkit Library](https://github.com/sleuthkit/sleuthkit) only to decode disk images and file systems, so the same image formats are supported: RAW/DD, E01, EX01, ISO9660, AFF, VHD, VMDK. Also there is support for UDF(ISO), AD1 (AccessData) and UFDR (Cellebrite) formats. Recently support for APFS was added, thanks to BlackBag implementation for Sleuthkit.
+Currently IPED uses the [Sleuthkit Library](https://github.com/sleuthkit/sleuthkit) only to decode disk images and file systems, so the same image formats are supported: RAW/DD, E01, ISO9660, AFF, VHD, VMDK. There is also support for EX01, VHDX, UDF(ISO), AD1 (AccessData) and UFDR (Cellebrite) formats.
 
 If you are new to the tool, please refer to the [Beginner's Start Guide](https://github.com/lfcnassif/IPED/wiki/Beginner's-Start-Guide).
 
@@ -38,7 +38,7 @@ If you want to contribute to the project, refer to [Contributing](https://github
 
 Some of IPED several features are listed below:
 
-- Supported hashes: md5, sha-1, sha-256, sha-512 and edonkey. PhotoDNA is also available for law enforcement (please contact iped@dpf.gov.br)
+- Supported hashes: md5, sha-1, sha-256, sha-512 and edonkey. PhotoDNA is also available **for law enforcement** (please contact sepinf.inc.ditec@pf.gov.br)
 - Supported hash sets: NIST NSRL, ProjectVIC, Interpol ICSE, standard CSV format
 - Fast hash deduplication 
 - Signature analysis
@@ -51,7 +51,7 @@ Some of IPED several features are listed below:
 - Embedded hex, unicode text, metadata and native viewers
 - File content and metadata indexing and fast searching, including unknown files and unallocated space
 - Efficient data carving engine (takes < 10% processing time) that scans much more than unallocated, with support for +40 file formats, including videos, extensible by scripting
-- Optical Character Recognition powered by tesseract 4
+- Optical Character Recognition powered by tesseract 5
 - Encryption detection for known formats and using entropy test
 - Processing profiles: forensic, pedo (csam), triage, fastmode (preview) and blind (for automatic data extraction)
 - Detection for +70 languages
@@ -65,7 +65,7 @@ Some of IPED several features are listed below:
 - Support for multicases up to 135 million items
 - Extensible with javascript and python (including cpython extensions) scripts
 - External command line tools integration for file decoding
-- Browser history for Edge, Firefox, Chrome and Safari
+- Browser history for IE, Edge, Firefox, Chrome and Safari
 - Custom parsers for Emule, Shareaza, Ares, WhatsApp, Skype, Telegram, Bittorrent, ActivitiesCache, and more...
 - Fast nudity detection for images and videos using random forests algorithm (thanks to its author Wladimir Leite)
 - Nudity detection using Yahoo open-nsfw deeplearning model (needs keras and jep)

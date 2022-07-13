@@ -16,7 +16,7 @@ implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 #implementationClass = iped.engine.task.transcript.GoogleTranscriptTask
 
 # Minimum word score to include the word in transcription result. Applies just to Vosk implementation.
-minWordScore = 0.7
+minWordScore = 0.5
 
 # Specific for Microsoft service. Replace with your own subscription region identifier from here: https://aka.ms/speech/sdkregion
 serviceRegion = brazilsouth
