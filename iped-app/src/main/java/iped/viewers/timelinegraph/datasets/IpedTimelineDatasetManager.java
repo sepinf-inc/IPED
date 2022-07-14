@@ -71,7 +71,7 @@ public class IpedTimelineDatasetManager {
     }
 
 	public IpedTimelineDataset getBestDataset(Class<? extends TimePeriod> timePeriodClass, String splitValue){
-		try {
+		try {/*
 			if(timeStampCache.hasTimePeriodClassToCache(timePeriodClass)) {
 				selectedTimeStampCache=timeStampCache;
 				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), cacheFLFactory,splitValue);
@@ -91,8 +91,9 @@ public class IpedTimelineDatasetManager {
 			if(timeStampCache5.hasTimePeriodClassToCache(timePeriodClass)) {
 				selectedTimeStampCache=timeStampCache5;
 				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), cacheFLFactory,splitValue);
-			}
+			}*/
 			return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), luceneFLFactory,splitValue);
+			
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -100,6 +101,7 @@ public class IpedTimelineDatasetManager {
 	}
 
 	public void startBackgroundCaching(){
+		/*
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
@@ -110,7 +112,8 @@ public class IpedTimelineDatasetManager {
 		threadPool.execute(timeStampCacheThread2);//loads the other timeperiodCaches			
 		threadPool.execute(timeStampCacheThread3);//loads the other timeperiodCaches			
 		threadPool.execute(timeStampCacheThread4);//loads the other timeperiodCaches			
-		threadPool.execute(timeStampCacheThread5);//loads the other timeperiodCaches			
+		threadPool.execute(timeStampCacheThread5);//loads the other timeperiodCaches
+		*/			
 	}
 
 	public Map<TimePeriod, ArrayList<Integer>> getCachedEventTimeStamps(String eventType) {
