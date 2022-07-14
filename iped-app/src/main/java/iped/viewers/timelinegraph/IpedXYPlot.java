@@ -308,19 +308,10 @@ public class IpedXYPlot extends XYPlot{
                         if (lastItem == -1) {
                             continue;
                         }
-                        if (state.getProcessVisibleItemsOnly()) {
-                            int[] itemBounds = findLiveItems(
-                                    dataset, series, xAxis.getLowerBound(),
-                                    xAxis.getUpperBound());
-                            firstItem = Math.max(itemBounds[0] - 1, 0);
-                            lastItem = Math.min(itemBounds[1] + 1, lastItem);
-                        }
                         state.startSeriesPass(dataset, series, firstItem,
                                 lastItem, pass, passCount);
                         for (int item = firstItem; item <= lastItem; item++) {
-                            renderer.drawItem(g2, state, dataArea, info,
-                                    this, xAxis, yAxis, dataset, series, item,
-                                    crosshairState, pass);
+                            renderer.drawItem(g2, state, dataArea, info, this, xAxis, yAxis, dataset, series, item, crosshairState, pass);
                         }
                         state.endSeriesPass(dataset, series, firstItem,
                                 lastItem, pass, passCount);
