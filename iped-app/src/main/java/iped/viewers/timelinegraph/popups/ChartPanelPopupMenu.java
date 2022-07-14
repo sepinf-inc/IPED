@@ -33,9 +33,12 @@ public class ChartPanelPopupMenu extends JPopupMenu implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==applyFiltersMenu) {
-			ipedChartPanel.getIpedChartsPanel().setApplyFilters(applyFiltersMenu.isSelected());
-			App app = (App) ipedChartPanel.getIpedChartsPanel().getGUIProvider();
-			app.setDockablesColors();
+			if(!ipedChartPanel.hasNoFilter()) {
+				ipedChartPanel.getIpedChartsPanel().setApplyFilters(applyFiltersMenu.isSelected());
+				App app = (App) ipedChartPanel.getIpedChartsPanel().getGUIProvider();
+				ipedChartPanel.filterSelection();
+				app.setDockablesColors();
+			}
 		}
 		if(e.getSource()==clearAllFiltersMenu) {
 			ipedChartPanel.removeAllFilters();
