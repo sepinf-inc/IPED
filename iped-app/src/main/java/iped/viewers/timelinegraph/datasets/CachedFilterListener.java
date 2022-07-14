@@ -40,7 +40,6 @@ public class CachedFilterListener implements CaseSearchFilterListener{
 	
 	@Override
 	public void onStart() {
-		System.out.println("Searching:"+eventType);
 	}
 
 	@Override
@@ -48,7 +47,6 @@ public class CachedFilterListener implements CaseSearchFilterListener{
 		try {
 			IMultiSearchResult result = csf.get();
 			App app = App.get();
-	        Set<String> selectedBookmarks = App.get().getSelectedBookmarks();
 	        IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
 	        IPEDMultiSource appcase = (IPEDMultiSource) app.getIPEDSource();
 	        
