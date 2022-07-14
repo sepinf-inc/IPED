@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import javax.swing.JOptionPane;
 
@@ -59,7 +60,9 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
     private static SoftReference<MultiSearchResult> allItemsCache;
     private static IPEDSource ipedCase;
-
+    
+    private ExecutorService threadPool;
+    
     volatile int numFilters = 0;
 
     String queryText;
@@ -98,6 +101,19 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
             result = query;
             if (!(query instanceof MatchAllDocsQuery))
                 numFilters++;
+        }
+        
+        if(App.get().queryComboBox.getSelectedItem()!=null) {
+            String searchText = App.get().queryComboBox.getSelectedItem().toString();
+            if(searchText!=null) {
+            	if (!(searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP))) {
+                    BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+                    boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(searchText), Occur.MUST);
+                    boolQuery.add(result, Occur.MUST);
+                    result = boolQuery.build();
+                    numFilters++;
+            	}
+            }
         }
 
         if (App.get().filterComboBox.getSelectedIndex() > 1) {
@@ -179,7 +195,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 }
 
                 Query q = searcher.getQuery();
-                LOGGER.info("Searching for query " + (q != null ? q.toString() : queryText)); //$NON-NLS-1$
+                //LOGGER.info("Searching for query " + (q != null ? q.toString() : queryText)); //$NON-NLS-1$
 
                 if (q instanceof MatchAllDocsQuery && allItemsCache != null)
                     result = allItemsCache.get();
@@ -197,7 +213,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 if (filtro.equals(App.FILTRO_SELECTED)) {
                     result = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterChecked(result);
                     numFilters++;
-                    LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
+                    //LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
                 }
 
                 HashSet<String> bookmarkSelection = (HashSet<String>) App.get().bookmarksListener.selection.clone();
@@ -206,7 +222,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                     StringBuilder bookmarks = new StringBuilder();
                     for (String bookmark : bookmarkSelection)
                         bookmarks.append("\"" + bookmark + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
-                    LOGGER.info("Filtering for bookmarks " + bookmarks.toString()); //$NON-NLS-1$
+                    //LOGGER.info("Filtering for bookmarks " + bookmarks.toString()); //$NON-NLS-1$
 
                     if (bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)) {
                         if (bookmarkSelection.size() == 1)
@@ -247,36 +263,29 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 }
 
                 if (App.get().similarImagesQueryRefItem != null) {
-                    LOGGER.info("Starting similar image search...");
+                    //LOGGER.info("Starting similar image search...");
                     long t = System.currentTimeMillis();
                     new ImageSimilarityScorer(App.get().appCase, result, App.get().similarImagesQueryRefItem).score();
                     result = ImageSimilarityLowScoreFilter.filter(result);
                     t = System.currentTimeMillis() - t;
-                    LOGGER.info("Similar image search took {}ms to find {} images", t, result.getLength());
+                    //LOGGER.info("Similar image search took {}ms to find {} images", t, result.getLength());
                 }
 
                 if (App.get().similarFacesRefItem != null) {
-                    LOGGER.info("Starting similar face search...");
+                    //LOGGER.info("Starting similar face search...");
                     long t = System.currentTimeMillis();
                     SimilarFacesSearch sfs = new SimilarFacesSearch(App.get().appCase, App.get().similarFacesRefItem);
                     result = sfs.filter(result);
                     numFilters++;
                     t = System.currentTimeMillis() - t;
-                    LOGGER.info("Similar face search took {}ms to find {} faces", t, result.getLength());
-                }
-
-                if (App.get().timelineListener.isTimelineViewEnabled()) {
-                    long t = System.currentTimeMillis();
-                    result = new TimelineResults(App.get().appCase).expandTimestamps(result);
-                    numFilters++;
-                    LOGGER.info("Toggle table timeline took {}ms", (System.currentTimeMillis() - t));
+                    //LOGGER.info("Similar face search took {}ms to find {} faces", t, result.getLength());
                 }
 
                 if (App.get().metadataPanel.isFiltering()) {
                     long t = System.currentTimeMillis();
                     result = App.get().metadataPanel.getFilteredItemIds(result);
                     numFilters++;
-                    LOGGER.info("Metadata panel filtering took {}ms", (System.currentTimeMillis() - t));
+                    //LOGGER.info("Metadata panel filtering took {}ms", (System.currentTimeMillis() - t));
                 }
 
             } catch (Throwable e) {
@@ -332,5 +341,13 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
 	public void addCaseSearchFilterListener(CaseSearchFilterListener csfl) {
 		listeners.add(csfl);
+	}
+
+	public ExecutorService getThreadPool() {
+		return threadPool;
+	}
+
+	public void setThreadPool(ExecutorService threadPool) {
+		this.threadPool = threadPool;
 	}
 }
