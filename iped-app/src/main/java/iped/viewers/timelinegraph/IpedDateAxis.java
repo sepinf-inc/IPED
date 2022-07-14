@@ -27,17 +27,29 @@ import org.jfree.chart.ui.TextAnchor;
 import org.jfree.chart.util.Args;
 import org.jfree.data.Range;
 import org.jfree.data.time.DateRange;
+import org.jfree.data.time.Day;
+import org.jfree.data.time.Hour;
+import org.jfree.data.time.Millisecond;
+import org.jfree.data.time.Minute;
 import org.jfree.data.time.Month;
+import org.jfree.data.time.Quarter;
 import org.jfree.data.time.RegularTimePeriod;
+import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
+import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
 
 public class IpedDateAxis extends DateAxis {
-    static SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
-	HashMap<DateTickUnitType, DateFormat> dateFormaters = new HashMap<DateTickUnitType, DateFormat>();
+    volatile SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
 
-    public IpedDateAxis(String string) {
+	HashMap<DateTickUnitType, DateFormat> dateFormaters = new HashMap<DateTickUnitType, DateFormat>();
+	IpedChartsPanel ipedChartsPanel;
+
+    public IpedDateAxis(String string, IpedChartsPanel ipedChartsPanel) {
 		super(string, TimeZone.getDefault(), Locale.getDefault());
+
+		this.ipedChartsPanel = ipedChartsPanel;
+
 		dateFormaters.put(DateTickUnitType.YEAR, new SimpleDateFormat("yyyy"));
 		dateFormaters.put(DateTickUnitType.MONTH, new SimpleDateFormat("MMM-yyyy"));
 		dateFormaters.put(DateTickUnitType.DAY, new SimpleDateFormat("d-MMM'\n'yyyy"));
@@ -107,7 +119,7 @@ public class IpedDateAxis extends DateAxis {
                     tickLabel = formatter.format(tickDate);
                 }
                 else {
-    		        Calendar cal = ISO8601DATEFORMAT.getCalendar();
+    		        Calendar cal = Calendar.getInstance(getTimeZone());
     		        cal.setTime(tickDate);
     		        int upperTickUnitCalendarValue = cal.get(DateUtil.getUpperCalendarField(this.getTickUnit().getCalendarField()));
                 	if(lastUpperTickUnitCalendarValue!=upperTickUnitCalendarValue) {
@@ -226,42 +238,48 @@ public class IpedDateAxis extends DateAxis {
         return super.findMaximumTickLabelHeight(ticks, g2, drawArea, vertical)*2;//doubled as tick labels upper text are painted bellow main tick label
     }
 
-	static public TimePeriod getDateOnConfiguredTimePeriod(Class<? extends TimePeriod> timePeriodClass, Date date) {
+    public TimePeriod getDateOnConfiguredTimePeriod(Class<? extends TimePeriod> timePeriodClass, Date date) {
 		Class[] cArg = new Class[2];
         cArg[0] = Date.class;
         cArg[1] = Calendar.class;
+        Calendar cal = Calendar.getInstance(getTimeZone());
 		try {
-			TimePeriod t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(date, ISO8601DATEFORMAT.getCalendar());
+			TimePeriod t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(date, cal);
 			return t;
 		}catch(InvocationTargetException e) {
 			try {
 				TimePeriod t = null;
-		        Calendar cal = ISO8601DATEFORMAT.getCalendar();
 		        cal.set(1900, 0, 1, 0, 0, 0);
 				if(date.before(cal.getTime())){
-					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime(), ISO8601DATEFORMAT.getCalendar());
+					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime(), cal);
 				}
 		        cal.set(9999, 12, 31, 23, 59, 59);
 				if(date.after(cal.getTime())){
-					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime(), ISO8601DATEFORMAT.getCalendar());
+					t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime(), cal);
 				}
 				return t;
 			}catch(InvocationTargetException | InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e2) {
 				return null;
 			}
 		}catch( InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e){
+			System.out.println("ISO8601DateParse:"+date);
+			e.printStackTrace();
 			return null;
 		}
 	}
 
-	public static String ISO8601DateFormat(Date date) {
-		return ISO8601DATEFORMAT.format(date);
+    public String ISO8601DateFormat(Date date) {
+		synchronized(ISO8601DATEFORMAT) {
+			return ISO8601DATEFORMAT.format(date);
+		}
 	}
 
 
-	public static Date ISO8601DateParse(String strDate) {
+    public Date ISO8601DateParse(String strDate) {
 		try {
-			return ISO8601DATEFORMAT.parse(strDate);
+			synchronized(ISO8601DATEFORMAT) {
+				return ISO8601DATEFORMAT.parse(strDate);
+			}
 		} catch (ParseException|NumberFormatException e) {
 			e.printStackTrace();
 			return null;
@@ -270,10 +288,12 @@ public class IpedDateAxis extends DateAxis {
 
 	@Override
 	public void setTimeZone(TimeZone zone) {
-		ISO8601DATEFORMAT.setTimeZone(zone);
+		synchronized(ISO8601DATEFORMAT) {
+			ISO8601DATEFORMAT.setTimeZone(zone);
+		}
 		
 		for(DateFormat f: dateFormaters.values()) {
-			f.setCalendar(ISO8601DATEFORMAT.getCalendar());
+			f.setCalendar(Calendar.getInstance(zone));
 		}
 		
 		super.setTimeZone(zone);
@@ -285,7 +305,9 @@ public class IpedDateAxis extends DateAxis {
 	}
 
 	public String dateToString(Date date) {
-		return ISO8601DATEFORMAT.format(date);
+		synchronized(ISO8601DATEFORMAT) {
+			return ISO8601DATEFORMAT.format(date);
+		}
 	}
 
     /**
@@ -325,6 +347,43 @@ public class IpedDateAxis extends DateAxis {
             super.setRange(range, turnOffAutoRange, notify);
         }
     }
+    
+    public DateRange putMargin(DateRange range) {
+    	long margin = (range.getUpperMillis()-range.getLowerMillis())*2/100;
+    	
+    	return new DateRange(range.getLowerMillis()-margin,range.getUpperMillis()+margin);
+    }
+
+
+    /**
+     * Adjusts visible range to guarantee that the current minimum and maximum
+     * visible x values are visible with the minimum and maximum dates informed 
+     *
+     * @param min  the minimum date of the new range to guarantee visibility
+     * @param max  the maximum date of the new range to guarantee visibility
+     */
+	public void guaranteeShowRange(Date min, Date max) {
+		DateRange range = (DateRange) getRange();
+		DateRange newRange = null;
+		System.out.println(range.getLowerMillis());
+		if(range.getLowerMillis()>min.getTime()) {
+			if(range.getUpperMillis()<max.getTime()) {
+				newRange = new DateRange(min.getTime(),max.getTime());
+			}else {
+				newRange = new DateRange(min.getTime(),range.getUpperMillis());
+			}
+		}else {
+			if(range.getUpperMillis()<max.getTime()) {				
+				newRange = new DateRange(range.getLowerMillis(),max.getTime());
+			}else {
+				return;
+			}
+		}
+		
+		newRange = putMargin(newRange);
+
+		setRange(newRange);
+	}
 	
 
 }
