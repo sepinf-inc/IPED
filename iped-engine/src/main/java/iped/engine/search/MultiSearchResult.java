@@ -70,6 +70,14 @@ public class MultiSearchResult implements IMultiSearchResult {
         public void remove() {
             throw new UnsupportedOperationException("Remove not allowed"); //$NON-NLS-1$
         }
+
+		public int getPos() {
+			return pos;
+		}
+
+		public void setPos(int pos) {
+			this.pos = pos;
+		}
     }
 
     public static MultiSearchResult get(IPEDMultiSource iSource, LuceneSearchResult luceneResult) {
