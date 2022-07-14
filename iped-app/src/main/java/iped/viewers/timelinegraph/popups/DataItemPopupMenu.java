@@ -2,7 +2,6 @@ package iped.viewers.timelinegraph.popups;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -13,9 +12,7 @@ import javax.swing.JPopupMenu;
 import org.jfree.chart.entity.XYItemEntity;
 
 import iped.app.ui.Messages;
-import iped.data.IItemId;
 import iped.viewers.timelinegraph.IpedChartPanel;
-import iped.viewers.timelinegraph.datasets.TimelineDataset;
 
 
 public class DataItemPopupMenu extends JPopupMenu implements ActionListener {
@@ -75,15 +72,19 @@ public class DataItemPopupMenu extends JPopupMenu implements ActionListener {
 			ipedChartPanel.getIpedChartsPanel().selectItemsOnInterval(c.getTime(), cEnd.getTime(), true);
 		}
 		if(e.getSource()==checkEventItens) {
-			List<IItemId> items = ((TimelineDataset) chartEntity.getDataset()).getItems(chartEntity.getItem(), chartEntity.getSeriesIndex());
-			ipedChartPanel.getIpedChartsPanel().checkItems(items);
+			Calendar c = Calendar.getInstance(ipedChartPanel.getIpedChartsPanel().getTimeZone());
+			c.setTime(new Date((long)chartEntity.getDataset().getXValue(chartEntity.getSeriesIndex(), chartEntity.getItem())));
+			Calendar cEnd = (Calendar) c.clone();
+			cEnd.add(Calendar.DAY_OF_MONTH, 1);
+			
+			ipedChartPanel.getIpedChartsPanel().checkItemsOnInterval((String) chartEntity.getDataset().getSeriesKey(chartEntity.getSeriesIndex()), c.getTime(), cEnd.getTime(), true);
 		}
 		if(e.getSource()==checkPeriodItens) {
-			ArrayList<IItemId> items = new ArrayList<IItemId>();
-			for (XYItemEntity xyItemEntity : entityList) {
-				items.addAll(((TimelineDataset) xyItemEntity.getDataset()).getItems(xyItemEntity.getItem(), xyItemEntity.getSeriesIndex()));
-			}
-			ipedChartPanel.getIpedChartsPanel().checkItems(items);
+			Calendar c = Calendar.getInstance(ipedChartPanel.getIpedChartsPanel().getTimeZone());
+			c.setTime(new Date((long)chartEntity.getDataset().getXValue(chartEntity.getSeriesIndex(), chartEntity.getItem())));
+			Calendar cEnd = (Calendar) c.clone();
+			cEnd.add(Calendar.DAY_OF_MONTH, 1);
+			ipedChartPanel.getIpedChartsPanel().checkItemsOnInterval(c.getTime(), cEnd.getTime(), true);
 		}
 	}
 

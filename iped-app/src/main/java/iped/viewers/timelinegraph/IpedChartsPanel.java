@@ -22,6 +22,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 import javax.swing.ToolTipManager;
 import javax.swing.event.ListSelectionEvent;
@@ -81,10 +82,9 @@ import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
-import iped.viewers.timelinegraph.datasets.IpedTimelineDataset;
 import iped.viewers.timelinegraph.datasets.IpedTimelineDatasetManager;
 import iped.viewers.timelinegraph.datasets.TimeTableCumulativeXYDataset;
-import iped.viewers.timelinegraph.swingworkers.CheckWorker;
+import iped.viewers.timelinegraph.swingworkers.CheckWorker2;
 import iped.viewers.timelinegraph.swingworkers.SelectWorker;
 
 public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener {
@@ -94,6 +94,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	private DefaultSingleCDockable dockable;
 	CDockableLocationListener dockableLocationListener;
 	IpedTimelineDatasetManager ipedTimelineDatasetManager;
+	
+	boolean syncWithTableSelection = false;
 	
     LegendItemCollection legendItems = null;
     
@@ -108,7 +110,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
 
 	/* chart fields */
-    IpedDateAxis domainAxis = new IpedDateAxis("Date ("+timePeriodString+")");
+    IpedDateAxis domainAxis = new IpedDateAxis("Date ("+timePeriodString+")", this);
     IpedCombinedDomainXYPlot combinedPlot = new IpedCombinedDomainXYPlot(this);
     JFreeChart chart = new JFreeChart(combinedPlot);
     IpedChartPanel chartPanel = null;
@@ -125,6 +127,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	private boolean internalUpdate;
 	private TimeZone timeZone = TimeZone.getDefault();
 	private Locale locale = Locale.getDefault();
+	
+	SortedSetDocValues timeStampValues = null;
 	
 	private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 	
@@ -233,12 +237,11 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		HashMap<String, AbstractIntervalXYDataset> result = new HashMap<String, AbstractIntervalXYDataset>();
 		try {
 	        IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
-	        
+
 	        Set<String> selectedBookmarks = guiProvider.getSelectedBookmarks();
 	        Set<String> selectedCategories = guiProvider.getSelectedCategories();
 			SortedSetDocValues categoriesValues = null;
 
-	        
 	        if(selectedBookmarks.size()>0 && chartPanel.getSplitByBookmark()) {
 	        	for(String bookmark:selectedBookmarks) {
 					result.put(bookmark, ipedTimelineDatasetManager.getBestDataset(timePeriodClass, bookmark));
@@ -570,9 +573,48 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 	@Override
     public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting())
+        if (e.getValueIsAdjusting()) {
             return;
+        }else {
+        	if(syncWithTableSelection){
+            	try {
+            		Date min=null;
+            		Date max=null;
 
+                    LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
+            		timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
+                	
+                    ListSelectionModel lsm = (ListSelectionModel) e.getSource();
+                    for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
+                        boolean selected = lsm.isSelectedIndex(i);
+
+                        int rowModel = resultsTable.convertRowIndexToModel(i);
+                        IItemId item = resultsProvider.getResults().getItem(rowModel);
+
+                        int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
+                        boolean adv = timeStampValues.advanceExact(luceneId);
+
+                        long ord, prevOrd = -1;
+                        while (adv && (ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                            if (prevOrd != ord) {
+                        		Date d = domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString());
+                        		if(min==null || d.before(min)) {
+                        			min=d;
+                        		}
+                        		if(max==null || d.after(max)) {
+                        			max=d;
+                        		}
+                            }
+                            prevOrd = ord;
+                        }
+                    }
+                    
+                    domainAxis.guaranteeShowRange(min,max);
+            	}catch(Exception e1) {
+            		e1.printStackTrace();
+            	}
+        	}
+        }
     }
 
     Thread t = new Thread(new Runnable() {
@@ -808,11 +850,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		this.chartPanel = chartPanel;
 	}
 	
-
-	public void checkItems(List<IItemId> items) {
-		CheckWorker sw = new CheckWorker(resultsProvider, items);
-		sw.execute();
-	}
 	
 	public void selectItemsOnInterval(Date firstDate, Date endDate, boolean b) {
 		SelectWorker sw = new SelectWorker(domainAxis,resultsProvider, firstDate, endDate, b);
@@ -821,6 +858,16 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 	public void selectItemsOnInterval(String seriesKey, Date time, Date time2, boolean b) {
 		SelectWorker sw = new SelectWorker(seriesKey, domainAxis,resultsProvider, time, time2, b);
+		sw.execute();
+	}
+	
+	public void checkItemsOnInterval(Date firstDate, Date endDate, boolean b) {
+		CheckWorker2 sw = new CheckWorker2(domainAxis,resultsProvider, firstDate, endDate, b);
+		sw.execute();
+	}
+
+	public void checkItemsOnInterval(String seriesKey, Date time, Date time2, boolean b) {
+		CheckWorker2 sw = new CheckWorker2(seriesKey, domainAxis,resultsProvider, time, time2, b);
 		sw.execute();
 	}
 

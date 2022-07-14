@@ -17,12 +17,10 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.api.IMultiSearchResultProvider;
-import iped.viewers.timelinegraph.DateUtil;
-import iped.viewers.timelinegraph.IpedChartsPanel;
 import iped.viewers.timelinegraph.IpedDateAxis;
 import iped.viewers.util.ProgressDialog;
 
-public class SelectWorker extends CancelableWorker<Void, Void> {
+public class CheckWorker2 extends CancelableWorker<Void, Void> {
 	IMultiSearchResultProvider resultsProvider;
 	IpedDateAxis domainAxis;
 	Date start;
@@ -32,7 +30,7 @@ public class SelectWorker extends CancelableWorker<Void, Void> {
     boolean select = true;
     String eventType=null;
 
-	public SelectWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,Date start, Date end, boolean clearPreviousSelection) {
+	public CheckWorker2(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,Date start, Date end, boolean clearPreviousSelection) {
 		this.resultsProvider = resultsProvider;
 		this.start = start;
 		this.end = end;
@@ -40,7 +38,7 @@ public class SelectWorker extends CancelableWorker<Void, Void> {
 		this.domainAxis = domainAxis;
 	}
 
-	public SelectWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,Date start, Date end, boolean select, boolean clearPreviousSelection) {
+	public CheckWorker2(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,Date start, Date end, boolean select, boolean clearPreviousSelection) {
 		this.resultsProvider = resultsProvider;
 		this.start = start;
 		this.end = end;
@@ -49,7 +47,7 @@ public class SelectWorker extends CancelableWorker<Void, Void> {
 		this.domainAxis = domainAxis;
 	}
 
-	public SelectWorker(String eventType, IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, Date start, Date end,
+	public CheckWorker2(String eventType, IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, Date start, Date end,
 			boolean b) {
 		this.resultsProvider = resultsProvider;
 		this.start = start;
@@ -64,7 +62,7 @@ public class SelectWorker extends CancelableWorker<Void, Void> {
 	protected Void doInBackground() throws Exception {
         progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
         progressDialog.setNote(Messages.get("TimeLineGraph.highlightingItemsProgressLabel"));
-        selectItemsOnInterval(start, end, select, clearPreviousSelection);
+        selectItemsOnInterval(eventType, start, end, select, clearPreviousSelection);
 		return null;
 	}
 
@@ -85,11 +83,11 @@ public class SelectWorker extends CancelableWorker<Void, Void> {
             progressDialog.close();
 	}
 
-	public void selectItemsOnInterval(Date start, Date end, boolean clearPreviousSelection) {
-		selectItemsOnInterval(start, end, true, clearPreviousSelection);
+	public void selectItemsOnInterval(String eventType, Date start, Date end, boolean clearPreviousSelection) {
+		selectItemsOnInterval(eventType, start, end, true, clearPreviousSelection);
 	}
 
-	public void selectItemsOnInterval(Date start, Date end, boolean select, boolean clearPreviousSelection) {
+	public void selectItemsOnInterval(String eventType, Date start, Date end, boolean select, boolean clearPreviousSelection) {
 		JTable t = resultsProvider.getResultsTable();
 		t.getSelectionModel().setValueIsAdjusting(true);
 
@@ -100,12 +98,13 @@ public class SelectWorker extends CancelableWorker<Void, Void> {
         LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
 
         SortedSetDocValues timeStampValues;
-        SortedSetDocValues timeEventGroupValues;
+        SortedSetDocValues timeEventValues=null;
 
         try {
             timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
-    		timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-    		BinaryDocValues eventsInDocOrdsValues = reader.getBinaryDocValues(ExtraProperties.TIME_EVENT_ORDS);
+            if(eventType!=null) {
+            	timeEventValues = reader.getSortedSetDocValues(BasicProps.TIME_EVENT);
+            }
 
     		for (int i = 0; i < resultsProvider.getResults().getLength(); i++) {
                 IItemId item = resultsProvider.getResults().getItem(i);
@@ -113,23 +112,38 @@ public class SelectWorker extends CancelableWorker<Void, Void> {
                 int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
                 
                 boolean tsvAdv = timeStampValues.advanceExact(luceneId);
+                if(eventType!=null) {
+                	tsvAdv = tsvAdv && timeEventValues.advanceExact(luceneId);
+                }
                 
                 if(tsvAdv) {
                 	long ord;
     	            while ((ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+    	            	if(isCancelled()) return;
+
     	                if (ord > Integer.MAX_VALUE) {
     	                    throw new RuntimeException("Integer overflow when converting timestamp ord to int");
     	                }
     	                
     	                Date d = domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString());
+    	                
     	                if(d!=null) {
+        	                boolean eventFound=false;
+    	                	
         	                if(start.getTime()<=d.getTime() && end.getTime()>=d.getTime()) {
-        		                int row = t.convertRowIndexToView(i);
-        		                if(select) {
-            		                t.addRowSelectionInterval(row, row);
-        		                }else {
-        		                	t.removeRowSelectionInterval(row, row);
-        		                }
+            	                if(eventType!=null) {
+                    	            while (!eventFound && (ord = timeEventValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                    	            	if(eventType.equals(timeEventValues.lookupOrd(ord).utf8ToString())) {
+                    	            		eventFound=true;
+                    	            	}
+                    	            }
+            	                }else {
+            	                	eventFound=true;
+            	                }
+            	                if(eventFound) {
+                	                Boolean checked = (Boolean) t.getValueAt(t.convertRowIndexToView(i), t.convertColumnIndexToView(1));
+            	        	        t.setValueAt(!checked.booleanValue(), t.convertRowIndexToView(i), t.convertColumnIndexToView(1));
+            	                }
         	                }
     	                }
     	            }
