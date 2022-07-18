@@ -1,3 +1,7 @@
+18/07/2022: IPED-4.0.1
+Fix:
+#1223: Bookmark panel not being updated if [No Bookmarks]/Bookmarks root is selected (Luís Nassif, André Berenguel) [4.0.0-final]
+
 15/07/2022: IPED-4.0.0-final
 News:
 #1227: Support for NIST CAID - Child Abuse Image Database - hash dataset (Wladimir Leite, Luís Nassif)
