@@ -39,7 +39,7 @@ If you want to contribute to the project, refer to [Contributing](https://github
 Some of IPED several features are listed below:
 
 - Supported hashes: md5, sha-1, sha-256, sha-512 and edonkey. PhotoDNA is also available **for law enforcement** (please contact sepinf.inc.ditec@pf.gov.br)
-- Supported hash sets: NIST NSRL, ProjectVIC, Interpol ICSE, standard CSV format
+- Supported hash sets: NIST NSRL, NIST CAID, ProjectVIC, Interpol ICSE, standard CSV format
 - Fast hash deduplication 
 - Signature analysis
 - Categorization by file type and properties
