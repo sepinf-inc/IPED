@@ -74,19 +74,17 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
             HashSet<Object> tempSel = new HashSet<>(selection);
             selection.clear();
 
-            if (tempSel.contains(BookmarksTreeModel.NO_BOOKMARKS)) {
-                selection.add(BookmarksTreeModel.NO_BOOKMARKS);
-            }
-
             for (Object path : tempSel) {
-                if (App.get().appCase.getMultiBookmarks().getBookmarkSet().contains(path)) {
+                if (path == BookmarksTreeModel.ROOT || path == BookmarksTreeModel.NO_BOOKMARKS
+                        || App.get().appCase.getMultiBookmarks().getBookmarkSet().contains(path)) {
                     selection.add(path);
                 }
             }
 
             ArrayList<TreePath> selectedPaths = new ArrayList<TreePath>();
             for (Object name : selection) {
-                Object[] path = { BookmarksTreeModel.ROOT, name };
+                Object[] path = name == BookmarksTreeModel.ROOT ? new Object[] { BookmarksTreeModel.ROOT }
+                        : new Object[] { BookmarksTreeModel.ROOT, name };
                 selectedPaths.add(new TreePath(path));
             }
 
