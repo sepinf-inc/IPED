@@ -29,7 +29,7 @@ jobs:
       # libagdb (agdbinfo) needs to be built from source
       if: steps.libagdb.outputs.cache-hit != 'true'
       run: | 
-            sudo apt install git autoconf automake autopoint libtool pkg-config
+            sudo apt install build-essential git autoconf automake autopoint libtool pkg-config
             git clone https://github.com/libyal/libagdb.git
             cd libagdb/ && sudo ./synclibs.sh && sudo ./autogen.sh
             sudo ./configure
