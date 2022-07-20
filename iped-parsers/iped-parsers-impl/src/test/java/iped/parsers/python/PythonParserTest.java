@@ -1,5 +1,7 @@
 package iped.parsers.python;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,8 +24,7 @@ import iped.parsers.util.RepoToolDownloader;
 public class PythonParserTest {
     private static String testRoot = System.getProperty("user.dir") + "/src/test";
     private static String osName = System.getProperty("os.name").toLowerCase();
-    private static String PYTHON_PARSERS_FOLDER = System.getProperty("user.dir") + "/../../"
-        + "iped-app/resources/config/conf/parsers";
+    private static String PYTHON_PARSERS_FOLDER = testRoot + "/resources/test-files/python-parsers-test";
 
     @BeforeClass
     public static void setUpPython() throws IOException {
@@ -38,7 +39,8 @@ public class PythonParserTest {
     public static void tearDownPython() throws IOException {
         if (osName.startsWith("windows")) {
             File python_path = new File(System.clearProperty(IConfigurationDirectory.IPED_ROOT));
-            FileUtils.deleteDirectory(python_path.getParentFile());
+            // FileUtils.deleteDirectory(python_path);  // can't delete because library still loaded
+            // have to delete iped/iped-parsers/iped-parsers-impl/src/test/tmp_tools manually after
         }
     }
     
@@ -50,21 +52,21 @@ public class PythonParserTest {
         PythonParser parser = new PythonParser();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        
         Metadata metadata = new Metadata();
-        metadata.set(StandardParser.INDEXER_CONTENT_TYPE, "image/png");
+        metadata.set(StandardParser.INDEXER_CONTENT_TYPE, "text/plain");
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_utf8")) {
+            parser.parse(stream, handler, metadata, context);
 
-        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_lenaPng.png")) {
+            String hts = handler.toString();
+            String mts = metadata.toString();
 
-            // parser.parse(stream, handler, metadata, context);
-
-            // String hts = handler.toString();
-            // String mts = metadata.toString();
-
-            
-
+            assertTrue(hts.contains("issO é OUTR4 stRin8888 codificada em UTF8"));
+            assertTrue(hts.contains("Essa stRin8888G esta´ sendÖOO utilizada n0 P4RSER"));
+            assertTrue(hts.contains("do 1P3D para R4W STR1N85...!!111"));
+            assertTrue(mts.contains("propertyNameExample"));
+            assertTrue(mts.contains("propertyValueExample"));
+            assertTrue(mts.contains("UTF-8"));
         }
+    }
 
-
-    } 
 }

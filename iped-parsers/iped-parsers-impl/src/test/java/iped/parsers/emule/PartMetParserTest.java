@@ -65,4 +65,5 @@ public class PartMetParserTest extends BaseItemSearchContext {
             assertTrue(exception.getMessage().contains(versionNotSupported));
         }
     }
+
 }

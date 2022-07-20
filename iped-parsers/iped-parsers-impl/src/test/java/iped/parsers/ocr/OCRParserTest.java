@@ -272,4 +272,5 @@ public class OCRParserTest {
         }
         return true;
     }
+
 }

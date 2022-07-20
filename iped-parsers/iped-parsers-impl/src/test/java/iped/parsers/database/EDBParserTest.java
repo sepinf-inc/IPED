@@ -69,4 +69,5 @@ public class EDBParserTest {
             assertTrue(hts.contains("idxSeriesIdDateAddedReleaseDate"));
         }
     }
+
 }
