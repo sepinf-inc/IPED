@@ -1,6 +1,7 @@
 package iped.parsers.python;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
@@ -41,13 +42,13 @@ public class PythonParserTest {
 
     @Test
     public void testPythonParserExample() throws IOException, SAXException, TikaException {
-        assumeTrue(osName.startsWith("windows")); // temporary
-
         PythonParser parser = new PythonParser();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         Metadata metadata = new Metadata();
         metadata.set(StandardParser.INDEXER_CONTENT_TYPE, "text/plain");
+        assumeFalse(parser.getSupportedTypes(context).isEmpty());
+
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_utf8")) {
             parser.parse(stream, handler, metadata, context);
 
