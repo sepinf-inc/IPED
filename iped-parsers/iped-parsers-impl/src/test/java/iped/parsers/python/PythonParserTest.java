@@ -1,17 +1,16 @@
 package iped.parsers.python;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
@@ -19,35 +18,30 @@ import org.xml.sax.SAXException;
 
 import iped.configuration.IConfigurationDirectory;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.RepoToolDownloader;
 
 public class PythonParserTest {
-    private static String testRoot = System.getProperty("user.dir") + "/src/test";
+    private static String userDir = System.getProperty("user.dir");
     private static String osName = System.getProperty("os.name").toLowerCase();
-    private static String PYTHON_PARSERS_FOLDER = testRoot + "/resources/test-files/python-parsers-test";
+    private static String testRoot;
+    private static String PYTHON_PARSERS_FOLDER = userDir + "/src/test/resources/test-files/python-parsers-test";
 
     @BeforeClass
-    public static void setUpPython() throws IOException {
+    public static void setUpTestRoot() throws IOException {
         if (osName.startsWith("windows")) {
-            String repoPath = "org/python/python-jep-dlib/3.9.12-4.0.3-19.23.1/python-jep-dlib-3.9.12-4.0.3-19.23.1.zip";
-            RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
-            System.setProperty(IConfigurationDirectory.IPED_ROOT, testRoot + "/tmp_tools");
+            String targetReleasePath = userDir + "/../../target/release/";
+            String ipedName = new File(targetReleasePath).listFiles()[0].getName(); 
+            testRoot = targetReleasePath + ipedName;
+
+            System.setProperty(IConfigurationDirectory.IPED_ROOT, testRoot);
+            assumeTrue(new File(testRoot + "/python").exists());
         }
+        System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, PYTHON_PARSERS_FOLDER);
     }
 
-    @AfterClass
-    public static void tearDownPython() throws IOException {
-        if (osName.startsWith("windows")) {
-            File python_path = new File(System.clearProperty(IConfigurationDirectory.IPED_ROOT));
-            // FileUtils.deleteDirectory(python_path);  // can't delete because library still loaded
-            // have to delete iped/iped-parsers/iped-parsers-impl/src/test/tmp_tools manually after
-        }
-    }
-    
 
     @Test
     public void testPythonParserExample() throws IOException, SAXException, TikaException {
-        System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, PYTHON_PARSERS_FOLDER);
+        assumeTrue(osName.startsWith("windows")); // temporary
 
         PythonParser parser = new PythonParser();
         ContentHandler handler = new BodyContentHandler();
