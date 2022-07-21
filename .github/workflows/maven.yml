@@ -23,8 +23,10 @@ jobs:
             libesedb-utils=20181229-3.1 \
             tesseract-ocr=4.1.1-2build2 \
             tesseract-ocr-por=1:4.00~git30-7274cfa-1 \
-            imagemagick=8:6.9.10.23+dfsg-2.1ubuntu11.4 gsfonts
+            imagemagick=8:6.9.10.23+dfsg-2.1ubuntu11.4 gsfonts \
+            python3-pip
             sudo perl -MCPAN -e 'install Parse::Win32Registry'
+            pip install jep==4.0.3
     - name: Compile libagdb
       # libagdb (agdbinfo) needs to be built from source
       if: steps.libagdb.outputs.cache-hit != 'true'
@@ -72,8 +74,11 @@ jobs:
             libesedb-utils=20181229-3.1 \
             tesseract-ocr=4.1.1-2build2 \
             tesseract-ocr-por=1:4.00~git30-7274cfa-1 \
-            imagemagick=8:6.9.10.23+dfsg-2.1ubuntu11.4 gsfonts
+            imagemagick=8:6.9.10.23+dfsg-2.1ubuntu11.4 gsfonts \
+            python3-pip
             sudo perl -MCPAN -e 'install Parse::Win32Registry'
+            pip install jep==4.0.3
+
     - name: Compile libagdb
       # libagdb (agdbinfo) needs to be built from source
       if: steps.libagdb.outputs.cache-hit != 'true'
