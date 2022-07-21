@@ -30,6 +30,7 @@ public class PythonParserTest {
     public static void setUpTestRoot() throws IOException {
         if (osName.startsWith("windows")) {
             String targetReleasePath = userDir + "/../../target/release/";
+            assumeTrue(new File(targetReleasePath).exists());
             String ipedName = new File(targetReleasePath).listFiles()[0].getName(); 
             testRoot = targetReleasePath + ipedName;
 

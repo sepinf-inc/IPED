@@ -5,12 +5,10 @@ Save your parser in 'parsers' folder. The class name must be equal to the script
 For more info about general parser api, see https://github.com/sepinf-inc/IPED/wiki/Contributing
 '''
 
-from org.apache.tika.sax import XHTMLContentHandler
 from org.apache.tika.io import TemporaryResources
 from org.apache.tika.parser.csv import TextAndCSVParser
 from org.apache.tika.io import TikaInputStream
 
-from iped import *
 
 class PythonParserExample:
     '''
