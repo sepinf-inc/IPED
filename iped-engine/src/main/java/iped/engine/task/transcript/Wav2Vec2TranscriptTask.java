@@ -32,6 +32,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static final String TERMINATE = "terminate_process";
     private static final String PING = "ping";
 
+    private static final int MAX_TRANSCRIPTIONS = 1000;
     private static final byte[] NEW_LINE = "\n".getBytes();
 
     private static final int NUM_SERVERS = getNumProcessors();
@@ -43,6 +44,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static class Server {
         Process process;
         BufferedReader reader;
+        int transcriptionsDone = 0;
     }
 
     private static int getNumProcessors() {
@@ -165,7 +167,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
         Server server = deque.take();
         try {
-            if (!ping(server)) {
+            if (!ping(server) || server.transcriptionsDone >= MAX_TRANSCRIPTIONS) {
                 terminateServer(server);
                 server = startServer();
             }
@@ -186,6 +188,8 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             textAndScore = new TextAndScore();
             textAndScore.text = text;
             textAndScore.score = score;
+
+            server.transcriptionsDone++;
 
         } finally {
             deque.add(server);
