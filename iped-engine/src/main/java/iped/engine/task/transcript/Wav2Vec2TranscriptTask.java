@@ -12,6 +12,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.glassfish.grizzly.utils.Charsets;
 
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
@@ -64,37 +65,42 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             return;
         
         for (int i = 0; i < NUM_SERVERS; i++) {
-            ProcessBuilder pb = new ProcessBuilder();
-            String ipedRoot = Configuration.getInstance().appRoot;
-            String python = SystemUtils.IS_OS_WINDOWS ? ipedRoot + "/python/python.exe" : "python3";
-            String script = ipedRoot + SCRIPT_PATH;
-            String model = super.transcriptConfig.getHuggingFaceModel();
-            if (model == null) {
-                throw new IPEDException("You must configure '" + AudioTranscriptConfig.HUGGING_FACE_MODEL
-                        + "' in audio transcription config file.");
-            }
-
-            pb.command(python, script, model);
-
-            Process process = pb.start();
-
-            logInputStream(process.getErrorStream());
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-            String line;
-            while (!MODEL_LOADED.equals(line = reader.readLine().trim())) {
-                logger.error("Unexpected error initializing model: {}", line);
-            }
-
-            Server server = new Server();
-            server.process = process;
-            server.reader = reader;
-            deque.add(server);
+            deque.add(startServer());
         }
 
         logLevel = Level.DEBUG;
 
+    }
+
+    private Server startServer() throws IOException {
+        ProcessBuilder pb = new ProcessBuilder();
+        String ipedRoot = Configuration.getInstance().appRoot;
+        String python = SystemUtils.IS_OS_WINDOWS ? ipedRoot + "/python/python.exe" : "python3";
+        String script = ipedRoot + SCRIPT_PATH;
+        String model = super.transcriptConfig.getHuggingFaceModel();
+        if (model == null) {
+            throw new IPEDException("You must configure '" + AudioTranscriptConfig.HUGGING_FACE_MODEL
+                    + "' in audio transcription config file.");
+        }
+
+        pb.command(python, script, model);
+
+        Process process = pb.start();
+
+        logInputStream(process.getErrorStream());
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+        String line;
+        while (!MODEL_LOADED.equals(line = reader.readLine().trim())) {
+            logger.error("Unexpected error initializing model: {}", line);
+        }
+
+        Server server = new Server();
+        server.process = process;
+        server.reader = reader;
+
+        return server;
     }
 
     private void logInputStream(InputStream is) {
@@ -119,17 +125,27 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     public void finish() throws Exception {
         super.finish();
         for (Server server : deque) {
-            Process process = server.process;
-            process.getOutputStream().write(TERMINATE.getBytes("UTF-8"));
-            process.getOutputStream().write(NEW_LINE);
-            process.getOutputStream().flush();
-            process.waitFor(3, TimeUnit.SECONDS);
-            if (process.isAlive()) {
-                process.destroyForcibly();
-            }
-            process = null;
+            terminateServer(server);
         }
         deque.clear();
+    }
+
+    private void terminateServer(Server server) throws IOException, InterruptedException {
+        Process process = server.process;
+        process.getOutputStream().write(TERMINATE.getBytes(Charsets.UTF8_CHARSET));
+        process.getOutputStream().write(NEW_LINE);
+        process.getOutputStream().flush();
+        process.waitFor(3, TimeUnit.SECONDS);
+        if (process.isAlive()) {
+            process.destroyForcibly();
+        }
+    }
+
+    private boolean ping(Server server) throws IOException {
+        server.process.getOutputStream().write(PING.getBytes(Charsets.UTF8_CHARSET));
+        server.process.getOutputStream().write(NEW_LINE);
+        server.process.getOutputStream().flush();
+        return PING.equals(server.reader.readLine());
     }
 
     @Override
@@ -149,6 +165,11 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
         Server server = deque.take();
         try {
+            if (!ping(server)) {
+                terminateServer(server);
+                server = startServer();
+            }
+
             String filePath = tmpFile.getAbsolutePath().replace('\\', '/');
             server.process.getOutputStream().write(filePath.getBytes("UTF-8"));
             server.process.getOutputStream().write(NEW_LINE);
