@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
@@ -28,6 +29,7 @@ import com.google.cloud.speech.v1p1beta1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1p1beta1.SpeechRecognitionResult;
 import com.google.protobuf.ByteString;
 
+import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.exception.IPEDException;
 import iped.utils.IOUtil;
@@ -104,15 +106,25 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
     }
 
     protected TextAndScore transcribeWav(File tmpFile) throws Exception {
+        return transcribeWavBreaking(tmpFile, evidence, f -> {
+            try {
+                return transcribeWavPart(f);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
 
+    protected static TextAndScore transcribeWavBreaking(File tmpFile, IItem evidence,
+            Function<File, TextAndScore> transcribeWavPart) throws Exception {
         if (tmpFile.length() <= MAX_WAV_SIZE || !isFfmpegOk()) {
-            return transcribeWavPart(tmpFile);
+            return transcribeWavPart.apply(tmpFile);
         } else {
-            Collection<File> parts = getAudioSplits(tmpFile);
+            Collection<File> parts = getAudioSplits(tmpFile, evidence);
             StringBuilder sb = new StringBuilder();
             double score = 0;
             for (File part : parts) {
-                TextAndScore partResult = transcribeWavPart(part);
+                TextAndScore partResult = transcribeWavPart.apply(part);
                 if (partResult != null) {
                     if (score > 0)
                         sb.append(" ");
@@ -128,7 +140,8 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
         }
     }
 
-    private Collection<File> getAudioSplits(File tmpFile) throws InterruptedException, IOException {
+    protected static Collection<File> getAudioSplits(File tmpFile, IItem evidence)
+            throws InterruptedException, IOException {
         ProcessBuilder pb = new ProcessBuilder();
         File outFile = File.createTempFile("iped", "");
         outFile.delete();
@@ -151,7 +164,7 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
         }
     }
 
-    private class PrefixFilter implements FilenameFilter {
+    private static class PrefixFilter implements FilenameFilter {
 
         private String prefix;
 

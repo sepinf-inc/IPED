@@ -134,6 +134,16 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     @Override
     protected TextAndScore transcribeWav(File tmpFile) throws Exception {
+        return GoogleTranscriptTask.transcribeWavBreaking(tmpFile, evidence, f -> {
+            try {
+                return transcribeWavPart(f);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private TextAndScore transcribeWavPart(File tmpFile) throws Exception {
 
         TextAndScore textAndScore = null;
 

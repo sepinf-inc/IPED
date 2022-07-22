@@ -91,7 +91,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         return supported;
     }
 
-    protected boolean isFfmpegOk() {
+    protected static boolean isFfmpegOk() {
         if (!ffmpegTested) {
             try {
                 ProcessBuilder pb = new ProcessBuilder();
@@ -107,7 +107,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
                 e.printStackTrace();
             }
             if (!ffmpegDetected) {
-                LOGGER.error("Error testing ffmpeg, that could hurt transcription. Is it on path?");
+                LOGGER.error("Error testing ffmpeg, that could break transcription. Is it on path?");
             }
             ffmpegTested = true;
         }
