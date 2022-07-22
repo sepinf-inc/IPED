@@ -5,6 +5,13 @@
 # you should download it from https://alphacephei.com/vosk/models and put in 'models/vosk/[lang]' folder.
 implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 
+# Uses a local wav2vec2 implementation for transcription. Accuracy is much better than most Vosk models.
+# This is AT LEAST 1 order of magnitude slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
+# You must install 'huggingsound' library in iped internal python to enable this:
+# pip install huggingsound
+# In the first run, it will download the model defined in 'huggingFaceModel' param below, you must configure it.
+#implementationClass = iped.engine.task.transcript.Wav2Vec2TranscriptTask
+
 # If you want to use the Microsoft Azure service implementation, comment above and uncomment below.
 # You must pass your subscription key using command line parameter -XazureSubscriptionKey=XXXXXXXX
 # implementationClass = iped.engine.task.transcript.MicrosoftTranscriptTask
@@ -15,6 +22,20 @@ implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 # Finally you must set environment variable GOOGLE_APPLICATION_CREDENTIALS pointing to your credential file
 #implementationClass = iped.engine.task.transcript.GoogleTranscriptTask
 
+# HuggingFace model card to be used by Wav2Vec2TranscriptTask. You must uncomment one of them.
+# First and second models below are for pt-BR.
+# huggingFaceModel = lgris/bp_400h_xlsr2_300M
+# huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-portuguese
+# huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-english
+# huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-german
+# huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-italian
+# huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-spanish
+
+# Bigger model, better on tested data sets, but uses more RAM and is ~2x slower.
+# There are similar models for other languages in the same repo.
+# huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-portuguese
+
+
 # Minimum word score to include the word in transcription result. Applies just to Vosk implementation.
 minWordScore = 0.5
 
@@ -24,6 +45,7 @@ serviceRegion = brazilsouth
 # Language model(s) to use when processing audios. 'auto' uses the 'locale' set on LocalConfig.txt
 # You can specify one or two languages separated by ; if Microsoft or Google are used.
 # Vosk implementation accepts just one language for now.
+# Wav2Vec2 implementation doesn't use this, you must set 'huggingFaceModel' above
 # Setting more than 1 lang model can result in wrong language detection.
 language = auto
 
