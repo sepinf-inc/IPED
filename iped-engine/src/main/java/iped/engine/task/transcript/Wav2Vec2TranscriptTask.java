@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.SystemUtils;
@@ -16,6 +17,9 @@ import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.exception.IPEDException;
+import oshi.SystemInfo;
+import oshi.hardware.CentralProcessor;
+import oshi.hardware.HardwareAbstractionLayer;
 
 public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
@@ -27,12 +31,25 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static final String TERMINATE = "terminate_process";
     private static final String PING = "ping";
 
-    private static final Level CONSOLE = Level.getLevel("MSG");
     private static final byte[] NEW_LINE = "\n".getBytes();
 
-    private static volatile Level logLevel = CONSOLE;
-    private static Process process;
-    private static BufferedReader reader;
+    private static final int NUM_SERVERS = getNumProcessors();
+
+    private static LinkedBlockingDeque<Server> deque = new LinkedBlockingDeque<>();
+
+    private static volatile Level logLevel = Level.getLevel("MSG");
+
+    private static class Server {
+        Process process;
+        BufferedReader reader;
+    }
+
+    private static int getNumProcessors() {
+        SystemInfo si = new SystemInfo();
+        HardwareAbstractionLayer hal = si.getHardware();
+        CentralProcessor cpu = hal.getProcessor();
+        return cpu.getPhysicalPackageCount();
+    }
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
@@ -43,29 +60,37 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             return;
         }
         
-        if (process != null) return;
-
-        ProcessBuilder pb = new ProcessBuilder();
-        String ipedRoot = Configuration.getInstance().appRoot;
-        String python = SystemUtils.IS_OS_WINDOWS ? ipedRoot + "/python/python.exe" : "python3";
-        String script = ipedRoot + SCRIPT_PATH;
-        String model = super.transcriptConfig.getHuggingFaceModel();
-        if (model == null) {
-            throw new IPEDException("You must configure '" + AudioTranscriptConfig.HUGGING_FACE_MODEL
-                    + "' in audio transcription config file.");
-        }
+        if (!deque.isEmpty())
+            return;
         
-        pb.command(python, script, model);
+        for (int i = 0; i < NUM_SERVERS; i++) {
+            ProcessBuilder pb = new ProcessBuilder();
+            String ipedRoot = Configuration.getInstance().appRoot;
+            String python = SystemUtils.IS_OS_WINDOWS ? ipedRoot + "/python/python.exe" : "python3";
+            String script = ipedRoot + SCRIPT_PATH;
+            String model = super.transcriptConfig.getHuggingFaceModel();
+            if (model == null) {
+                throw new IPEDException("You must configure '" + AudioTranscriptConfig.HUGGING_FACE_MODEL
+                        + "' in audio transcription config file.");
+            }
 
-        process = pb.start();
+            pb.command(python, script, model);
 
-        logInputStream(process.getErrorStream());
+            Process process = pb.start();
 
-        reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        
-        String line;
-        while (!MODEL_LOADED.equals(line = reader.readLine().trim())) {
-            logger.error("Unexpected error initializing model: {}", line);
+            logInputStream(process.getErrorStream());
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            String line;
+            while (!MODEL_LOADED.equals(line = reader.readLine().trim())) {
+                logger.error("Unexpected error initializing model: {}", line);
+            }
+
+            Server server = new Server();
+            server.process = process;
+            server.reader = reader;
+            deque.add(server);
         }
 
         logLevel = Level.DEBUG;
@@ -93,7 +118,8 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     @Override
     public void finish() throws Exception {
         super.finish();
-        if (process != null) {
+        for (Server server : deque) {
+            Process process = server.process;
             process.getOutputStream().write(TERMINATE.getBytes("UTF-8"));
             process.getOutputStream().write(NEW_LINE);
             process.getOutputStream().flush();
@@ -103,6 +129,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             }
             process = null;
         }
+        deque.clear();
     }
 
     @Override
@@ -110,24 +137,27 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
         TextAndScore textAndScore = null;
 
-        synchronized (process) {
-
+        Server server = deque.take();
+        try {
             String filePath = tmpFile.getAbsolutePath().replace('\\', '/');
-            process.getOutputStream().write(filePath.getBytes("UTF-8"));
-            process.getOutputStream().write(NEW_LINE);
-            process.getOutputStream().flush();
+            server.process.getOutputStream().write(filePath.getBytes("UTF-8"));
+            server.process.getOutputStream().write(NEW_LINE);
+            server.process.getOutputStream().flush();
 
             String line;
-            while (!TRANSCRIPTION_FINISHED.equals(line = reader.readLine().trim())) {
+            while (!TRANSCRIPTION_FINISHED.equals(line = server.reader.readLine().trim())) {
                 logger.error("Unexpected error from transcription: {}", line);
             }
 
-            Double score = Double.valueOf(reader.readLine().trim());
-            String text = reader.readLine().trim();
+            Double score = Double.valueOf(server.reader.readLine().trim());
+            String text = server.reader.readLine().trim();
 
             textAndScore = new TextAndScore();
             textAndScore.text = text;
             textAndScore.score = score;
+
+        } finally {
+            deque.add(server);
         }
 
         return textAndScore;
