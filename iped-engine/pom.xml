@@ -165,12 +165,12 @@
         <dependency>
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-rest-high-level-client</artifactId>
-            <version>2.0.0</version>
+            <version>2.1.0</version>
         </dependency>
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>8.4.2</version>
+            <version>8.3.8</version>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>
