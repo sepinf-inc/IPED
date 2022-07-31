@@ -265,7 +265,7 @@ public class HashDBTool {
                         if (!currProperties.equals(otherProperties)) {
                             Map<Integer, Set<String>> propertiesToAdd = new HashMap<Integer, Set<String>>();
                             Set<Integer> propertiesToRemove = new HashSet<Integer>();
-                            mergeProperties(currProperties, otherProperties, ProcessMode.MERGE, propertiesToAdd,
+                            mergeProperties(otherProperties, currProperties, ProcessMode.MERGE, propertiesToAdd,
                                     propertiesToRemove);
                             if (propertiesToAdd.keySet().equals(propertiesToRemove)) {
                                 if (!updateHashProperties(prevHashId, propertiesToAdd))
