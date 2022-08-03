@@ -27,6 +27,7 @@ import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.FieldExistsQuery;
 import org.apache.lucene.search.FuzzyQuery;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PhraseQuery;
@@ -129,8 +130,9 @@ public class QueryBuilder {
                     MultiTermQuery mtq = (MultiTermQuery) query;
                     try {
                         TermsEnum terms = mtq.getTermsEnum(ipedCase.getLeafReader().terms(mtq.getField()));
+                        int maxTerms = IndexSearcher.getMaxClauseCount();
                         BytesRef br;
-                        while ((br = terms.next()) != null) {
+                        while (termSet.size() < maxTerms && (br = terms.next()) != null) {
                             termSet.add(new Term(mtq.getField(), br.utf8ToString()));
                         }
                     } catch (IOException e) {
