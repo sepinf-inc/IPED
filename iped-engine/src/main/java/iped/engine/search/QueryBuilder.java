@@ -5,8 +5,8 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -17,6 +17,7 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.BooleanClause;
@@ -26,6 +27,7 @@ import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.FieldExistsQuery;
 import org.apache.lucene.search.FuzzyQuery;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PhraseQuery;
@@ -39,6 +41,9 @@ import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.search.join.QueryBitSetProducer;
 import org.apache.lucene.search.join.ScoreMode;
 import org.apache.lucene.search.join.ToParentBlockJoinQuery;
+import org.apache.lucene.util.BytesRef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import iped.data.IIPEDSource;
 import iped.engine.config.ConfigurationManager;
@@ -53,6 +58,8 @@ import iped.properties.BasicProps;
 import iped.utils.LocalizedFormat;
 
 public class QueryBuilder {
+
+    private static Logger logger = LoggerFactory.getLogger(QueryBuilder.class);
 
     private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer();
 
@@ -84,8 +91,13 @@ public class QueryBuilder {
     }
 
     private Set<String> getQueryStrings(Query query) {
-        HashSet<String> result = new HashSet<String>();
-        if (query != null)
+        Set<String> result = new TreeSet<String>(new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                return o2.compareTo(o1);
+            }
+        });
+        if (query != null) {
             if (query instanceof BooleanQuery) {
                 for (BooleanClause clause : ((BooleanQuery) query).clauses()) {
                     if (!clause.isProhibited()) {
@@ -94,25 +106,46 @@ public class QueryBuilder {
                 }
             } else if (query instanceof BoostQuery) {
                 result.addAll(getQueryStrings(((BoostQuery) query).getQuery()));
+
+            } else if (query instanceof ConstantScoreQuery) {
+                result.addAll(getQueryStrings(((ConstantScoreQuery) query).getQuery()));
+
+            } else if (query instanceof ToParentBlockJoinQuery) {
+                result.addAll(getQueryStrings(((ToParentBlockJoinQuery) query).getChildQuery()));
+
             } else {
                 TreeSet<Term> termSet = new TreeSet<Term>();
-                if (query instanceof TermQuery)
+                if (query instanceof TermQuery) {
                     termSet.add(((TermQuery) query).getTerm());
+                }
                 if (query instanceof PhraseQuery) {
                     List<Term> terms = Arrays.asList(((PhraseQuery) query).getTerms());
                     if (((PhraseQuery) query).getSlop() == 0) {
                         result.add(terms.stream().map(t -> t.text().toLowerCase()).collect(Collectors.joining(" "))); //$NON-NLS-1$
-                    } else
+                    } else {
                         termSet.addAll(terms);
+                    }
                 }
-
-                for (Term term : termSet)
+                if (query instanceof MultiTermQuery) {
+                    MultiTermQuery mtq = (MultiTermQuery) query;
+                    try {
+                        TermsEnum terms = mtq.getTermsEnum(ipedCase.getLeafReader().terms(mtq.getField()));
+                        int maxTerms = IndexSearcher.getMaxClauseCount();
+                        BytesRef br;
+                        while (termSet.size() < maxTerms && (br = terms.next()) != null) {
+                            termSet.add(new Term(mtq.getField(), br.utf8ToString()));
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                for (Term term : termSet) {
                     if (term.field().equalsIgnoreCase(IndexItem.CONTENT)) {
                         result.add(term.text().toLowerCase());
-                        // System.out.println(term.text());
                     }
+                }
             }
-
+        }
         return result;
 
     }
@@ -269,25 +302,29 @@ public class QueryBuilder {
 
     public Set<String> getQueryStrings(String queryText) {
         Query query = null;
-        if (queryText != null)
+        if (queryText != null) {
             try {
-                query = getQuery(queryText, spaceAnalyzer).rewrite(ipedCase.getReader());
+                query = getQuery(queryText, spaceAnalyzer);
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
 
         Set<String> result = getQueryStrings(query);
 
-        if (queryText != null)
+        if (queryText != null) {
             try {
-                query = getQuery(queryText, ipedCase.getAnalyzer()).rewrite(ipedCase.getReader());
-
-                result.addAll(getQueryStrings(query));
+                query = getQuery(queryText, ipedCase.getAnalyzer());
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+
+        result.addAll(getQueryStrings(query));
+
+        logger.info("Expanded query terms: {}", result.toString());
 
         return result;
     }
