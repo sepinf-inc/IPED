@@ -186,7 +186,10 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         int read;
                         byte[] buf = new byte[8192];
-                        while (!canceled.get() && (read = is.read(buf, 0, buf.length)) >= 0) {
+                        while ((read = is.read(buf, 0, buf.length)) >= 0) {
+                            if (canceled.get()) {
+                                return null;
+                            }
                             baos.write(buf, 0, read);
                         }
                         bytes = baos.toByteArray();
@@ -203,6 +206,11 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                             byte[] buf = new byte[8192];
                             while (!canceled.get() && (read = is.read(buf, 0, buf.length)) >= 0) {
                                 out.write(buf, 0, read);
+                            }
+                        } finally {
+                            if (canceled.get()) {
+                                Files.delete(tmp);
+                                return null;
                             }
                         }
                         synchronized (filesCache) {
