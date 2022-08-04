@@ -7,8 +7,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
-import iped.localization.Messages;
-
 public class SelectImagePathWithDialog implements Runnable {
 
     private File origImage;
