@@ -10,6 +10,12 @@ import org.apache.tika.mime.MediaType;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
+import iped.parsers.browsers.chrome.ChromeSqliteParser;
+import iped.parsers.gdrive.GDriveCloudGraphParser;
+import iped.parsers.gdrive.GDriveMainParser;
+import iped.parsers.skype.SkypeParser;
+import iped.parsers.whatsapp.WhatsAppParser;
+import iped.parsers.winx.WinXTimelineParser;
 import junit.framework.TestCase;
 
 public class SQLiteContainerDetectorTest extends TestCase {
@@ -26,7 +32,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_global.db")) {
             TikaInputStream tis = TikaInputStream.get(stream);
             MediaType assertion = detector.detect(tis, metadata);
-            assertEquals(assertion.toString(), "application/x-gdrive-account-info");
+            assertEquals(assertion.toString(), GDriveMainParser.GDRIVE_ACCOUNT_INFO.toString());
 
         }
     }
@@ -39,7 +45,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_activitiesCache.db")) {
             TikaInputStream tis = TikaInputStream.get(stream);
             MediaType assertion = detector.detect(tis, metadata);
-            assertEquals(assertion.toString(), "application/x-win10-timeline");
+            assertEquals(assertion.toString(), WinXTimelineParser.WIN10_TIMELINE.toString());
 
         }
     }
@@ -53,7 +59,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
 
             TikaInputStream tis = TikaInputStream.get(stream);
             MediaType assertion = detector.detect(tis, metadata);
-            assertEquals(assertion.toString(), "application/sqlite-skype");
+            assertEquals(assertion.toString(), SkypeParser.SKYPE_MIME.toString());
 
         }
     }
@@ -67,7 +73,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
 
             TikaInputStream tis = TikaInputStream.get(stream);
             MediaType assertion = detector.detect(tis, metadata);
-            assertEquals(assertion.toString(), "application/sqlite-skype-v12");
+            assertEquals(assertion.toString(), SkypeParser.SKYPE_MIME_V12.toString());
 
         }
     }
@@ -80,7 +86,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_cloudGraph.db")) {
             TikaInputStream tis = TikaInputStream.get(stream);
             MediaType assertion = detector.detect(tis, metadata);
-            assertEquals(assertion.toString(), "application/x-gdrive-cloud-graph");
+            assertEquals(assertion.toString(), GDriveCloudGraphParser.GDRIVE_CLOUD_GRAPH.toString());
 
         }
     }
@@ -93,7 +99,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_historyChrome")) {
             TikaInputStream tis = TikaInputStream.get(stream);
             MediaType assertion = detector.detect(tis, metadata);
-            assertEquals(assertion.toString(), "application/x-chrome-sqlite");
+            assertEquals(assertion.toString(), ChromeSqliteParser.CHROME_SQLITE.toString());
 
         }
     }
@@ -106,7 +112,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_snapshot.db")) {
             TikaInputStream tis = TikaInputStream.get(stream);
             MediaType assertion = detector.detect(tis, metadata);
-            assertEquals(assertion.toString(), "application/x-gdrive-snapshot");
+            assertEquals(assertion.toString(), GDriveMainParser.GDRIVE_SNAPSHOT.toString());
         }
     }
 
@@ -118,7 +124,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_whatsAppMsgStore.db")) {
             TikaInputStream tis = TikaInputStream.get(stream);
             MediaType assertion = detector.detect(tis, metadata);
-            assertEquals(assertion.toString(), "application/x-whatsapp-db");
+            assertEquals(assertion.toString(), WhatsAppParser.MSG_STORE.toString());
         }
     }
 }

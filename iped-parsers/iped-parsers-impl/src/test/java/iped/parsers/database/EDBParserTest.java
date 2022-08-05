@@ -46,7 +46,7 @@ public class EDBParserTest {
     @Test
     public void testEDBParser() throws IOException, SAXException, TikaException {
         Metadata metadata = new Metadata();
-        metadata.set(Metadata.CONTENT_TYPE, "x-edb");
+        metadata.set(Metadata.CONTENT_TYPE, EDBParser.EDB.toString());
         ContentHandler handler = new BodyContentHandler(1 << 20);
         ParseContext context = new ParseContext();
         EDBParser parser = new EDBParser();
@@ -58,7 +58,7 @@ public class EDBParserTest {
             String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=x-edb"));
+            assertTrue(mts.contains("Content-Type=" + EDBParser.EDB.toString()));
             assertTrue(hts.contains("Sample Video"));
             assertTrue(hts.contains("Title of police video"));
             assertTrue(hts.contains("C:\\Users\\Felipe Costa\\Videos\\samples\\video.mp4"));

@@ -45,9 +45,9 @@ public class KeystoreParser extends AbstractParser {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private static final MediaType PKCS12_MIME = MediaType.application("x-pkcs12");
-    private static final MediaType JAVA_KEYSTORE = MediaType.application("x-java-keystore");
     private static Set<MediaType> SUPPORTED_TYPES = null;
+	public static final MediaType PKCS12_MIME = MediaType.application("x-pkcs12");
+    public static final MediaType JAVA_KEYSTORE = MediaType.application("x-java-keystore");
     public static final Property PRIVATEKEY = Property.internalText("certificate:privatekey"); //$NON-NLS-1$
 
     static String DEFAULT_JKS_KEYSTORE_PASSWORD = "changeit";

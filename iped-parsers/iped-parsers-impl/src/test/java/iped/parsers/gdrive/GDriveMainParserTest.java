@@ -5,7 +5,6 @@ import java.io.InputStream;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
@@ -29,7 +28,7 @@ public class GDriveMainParserTest extends TestCase {
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.setExtractEntries(true);
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-gdrive-cloud-graph").toString());
+        metadata.add(Metadata.CONTENT_TYPE, GDriveMainParser.GDRIVE_CLOUD_GRAPH.toString());
         try (InputStream stream = getStream("test-files/test_cloudGraph.db")) {
             parser.parse(stream, handler, metadata, context);
 
@@ -41,7 +40,7 @@ public class GDriveMainParserTest extends TestCase {
             assertTrue(hts.contains("testRFC822-multipart"));
             assertTrue(hts.contains("Md5Checker.exe"));
 
-            assertEquals("application/x-gdrive-cloud-graph", metadata.get(Metadata.CONTENT_TYPE));
+            assertEquals(GDriveMainParser.GDRIVE_CLOUD_GRAPH.toString(), metadata.get(Metadata.CONTENT_TYPE));
 
         }
 
@@ -54,7 +53,7 @@ public class GDriveMainParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler(100000000);
         ParseContext context = new ParseContext();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-gdrive-snapshot").toString());
+        metadata.add(Metadata.CONTENT_TYPE, GDriveMainParser.GDRIVE_SNAPSHOT.toString());
         parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_snapshot.db")) {
             parser.parse(stream, handler, metadata, context);
@@ -67,7 +66,7 @@ public class GDriveMainParserTest extends TestCase {
             assertTrue(hts.contains("mockrar5.rar"));
             assertTrue(hts.contains("a4tosticker9.png"));
 
-            assertEquals("application/x-gdrive-snapshot", metadata.get(Metadata.CONTENT_TYPE));
+            assertEquals(GDriveMainParser.GDRIVE_SNAPSHOT.toString(), metadata.get(Metadata.CONTENT_TYPE));
 
         }
 
@@ -80,7 +79,7 @@ public class GDriveMainParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler(100000000);
         ParseContext context = new ParseContext();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-gdrive-account-info").toString());
+        metadata.add(Metadata.CONTENT_TYPE, GDriveMainParser.GDRIVE_ACCOUNT_INFO.toString());
         parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_global.db")) {
             parser.parse(stream, handler, metadata, context);
@@ -95,7 +94,7 @@ public class GDriveMainParserTest extends TestCase {
             assertTrue(hts.contains("2"));
             assertTrue(hts.contains("3"));
             assertTrue(mts.contains("database:table_name=username_mapping database:table_name=global_preferences"));
-            assertTrue(mts.contains("Content-Type=application/x-gdrive-account-info"));
+            assertTrue(mts.contains("Content-Type=" + GDriveMainParser.GDRIVE_ACCOUNT_INFO.toString()));
 
         }
 
@@ -108,7 +107,7 @@ public class GDriveMainParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler(100000000);
         ParseContext context = new ParseContext();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-gdrive-account-info").toString());
+        metadata.add(Metadata.CONTENT_TYPE, GDriveMainParser.GDRIVE_ACCOUNT_INFO.toString());
         parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_syncConfig.db")) {
             parser.parse(stream, handler, metadata, context);
@@ -120,7 +119,7 @@ public class GDriveMainParserTest extends TestCase {
             assertTrue(hts.contains("3"));
             assertTrue(hts.contains("41"));
             assertTrue(mts.contains("database:table_name=data"));
-            assertTrue(mts.contains("Content-Type=application/x-gdrive-account-info"));
+            assertTrue(mts.contains("Content-Type=" + GDriveMainParser.GDRIVE_ACCOUNT_INFO.toString()));
 
         }
     }

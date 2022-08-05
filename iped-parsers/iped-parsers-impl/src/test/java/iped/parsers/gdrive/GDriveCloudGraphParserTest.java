@@ -5,7 +5,6 @@ import java.io.InputStream;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
@@ -25,7 +24,7 @@ public class GDriveCloudGraphParserTest extends TestCase {
 
         GDriveCloudGraphParser parser = new GDriveCloudGraphParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-gdrive-cloud-graph").toString());
+        metadata.add(Metadata.CONTENT_TYPE, GDriveCloudGraphParser.GDRIVE_CLOUD_GRAPH.toString());
         ContentHandler handler = new BodyContentHandler(10000000);
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);

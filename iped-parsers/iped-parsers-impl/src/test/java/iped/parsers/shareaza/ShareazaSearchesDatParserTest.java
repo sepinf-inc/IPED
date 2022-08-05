@@ -37,7 +37,7 @@ public class ShareazaSearchesDatParserTest extends TestCase {
             assertTrue(hts.contains("90401ec0241f9000edaf53da4ef1b542"));
             assertTrue(hts.contains("Symphony No. 5 In C Minor Opus 67. Bethoven - Paul Mauriat.mp3"));
             assertTrue(hts.contains("ed2kftp://7191240@91.208.184.143:4232/4d29a8f82cfca1f5f987de6f16714a61/4753906/"));
-            assertEquals("application/x-shareaza-searches-dat", metadata.get(Metadata.CONTENT_TYPE));
+            assertEquals(ShareazaSearchesDatParser.SEARCH_DAT_MIME_TYPE, metadata.get(Metadata.CONTENT_TYPE));
 
         }
 

@@ -63,8 +63,8 @@ public class PDFTextParserTest extends TestCase {
             assertEquals(
                     "Rethinking the Financial Network, Speech by Andrew G Haldane, Executive Director, Financial Stability delivered at the Financial Student Association, Amsterdam on 28 April 2009",
                     metadata.get(TikaCoreProperties.TITLE));
-            assertEquals("application/pdf", metadata.get(Metadata.CONTENT_TYPE));
-            assertTrue(mts.contains("Content-Type=application/pdf"));
+            assertEquals(PDFTextParser.PDF_TYPE.toString(), metadata.get(Metadata.CONTENT_TYPE));
+            assertTrue(mts.contains("Content-Type=" + PDFTextParser.PDF_TYPE.toString()));
         }
 
     }

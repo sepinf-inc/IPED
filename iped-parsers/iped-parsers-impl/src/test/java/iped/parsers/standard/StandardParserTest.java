@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.compress.SevenZipParser;
 import iped.properties.ExtraProperties;
 import junit.framework.TestCase;
 
@@ -226,12 +227,12 @@ public class StandardParserTest extends TestCase {
             assertTrue(hts.contains("mockdoc4.docx"));
             assertTrue(hts.contains("mockdoc5.docx"));
 
-            assertTrue(hts.contains("Indexer-Content-Type: application/x-rar-compressed; version=4"));
+            assertTrue(hts.contains("Indexer-Content-Type: " + SevenZipParser.RAR.toString() + "; version=4"));
             assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.pkg.RarParser"));
 
-            assertTrue(mts.contains("Indexer-Content-Type=application/x-rar-compressed; version=4"));
+            assertTrue(mts.contains("Indexer-Content-Type=" + SevenZipParser.RAR.toString() + "; version=4"));
             assertTrue(mts.contains(PARSED_BY + "=org.apache.tika.parser.pkg.RarParser"));
-            assertTrue(mts.contains("Content-Type=application/x-rar-compressed; version=4"));
+            assertTrue(mts.contains("Content-Type=" + SevenZipParser.RAR.toString() + "; version=4"));
 
         }
     }

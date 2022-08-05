@@ -5,7 +5,6 @@ import java.io.InputStream;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
@@ -24,7 +23,7 @@ public class SkypeParserTest extends BaseItemSearchContext {
         SkypeParser parser = new SkypeParser();
         ContentHandler handler = new BodyContentHandler();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("sqlite-skype-v12").toString());
+        metadata.add(Metadata.CONTENT_TYPE, SkypeParser.SKYPE_MIME_V12.toString());
         parser.getSupportedTypes(skypeContext);
         parser.setExtractMessages(true);
         try (InputStream stream = getStream(file)) {
@@ -52,7 +51,7 @@ public class SkypeParserTest extends BaseItemSearchContext {
             assertTrue(mts.contains("database:table_name=alertsv12"));
             assertTrue(mts.contains("database:table_name=popupcards"));
             assertTrue(mts.contains("database:table_name=conversationsv14"));
-            assertTrue(mts.contains("Content-Type=application/sqlite-skype-v12"));
+            assertTrue(mts.contains("Content-Type=" + SkypeParser.SKYPE_MIME_V12.toString()));
             assertTrue(mts.contains("database:table_name=profilecachev8_phoneNumbersIndex"));
             assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_segdir"));
             assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_segments"));
@@ -68,7 +67,7 @@ public class SkypeParserTest extends BaseItemSearchContext {
         ParseContext skypeContext = getContext(file);
         SkypeParser parser = new SkypeParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("sqlite-skype").toString());
+        metadata.add(Metadata.CONTENT_TYPE, SkypeParser.SKYPE_MIME.toString());
         ContentHandler handler = new BodyContentHandler();
         parser.getSupportedTypes(skypeContext);
         parser.setExtractMessages(true);
@@ -98,7 +97,7 @@ public class SkypeParserTest extends BaseItemSearchContext {
             assertTrue(mts.contains("database:table_name=Accounts"));
             assertTrue(mts.contains("database:table_name=Contacts"));
             assertTrue(mts.contains("database:table_name=Participants"));
-            assertTrue(mts.contains("Content-Type=application/sqlite-skype"));
+            assertTrue(mts.contains("Content-Type=" + SkypeParser.SKYPE_MIME.toString()));
 
         }
     }

@@ -5,7 +5,6 @@ import java.io.InputStream;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
@@ -24,7 +23,7 @@ public class SafariPlistParserTest extends AbstractPkgTest {
 
         SafariPlistParser parser = new SafariPlistParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-safari-plist").toString());
+        metadata.add(Metadata.CONTENT_TYPE, SafariPlistParser.SAFARI_PLIST.toString());
         ContentHandler handler = new BodyContentHandler();
         parser.getSupportedTypes(safariContext);
         parser.setExtractEntries(true);
@@ -39,7 +38,7 @@ public class SafariPlistParserTest extends AbstractPkgTest {
 
         SafariPlistParser parser = new SafariPlistParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-safari-history").toString());
+        metadata.add(Metadata.CONTENT_TYPE, SafariPlistParser.SAFARI_HISTORY.toString());
         ContentHandler handler = new BodyContentHandler();
         parser.getSupportedTypes(safariContexthst);
         parser.setExtractEntries(true);
@@ -83,7 +82,7 @@ public class SafariPlistParserTest extends AbstractPkgTest {
 
         SafariPlistParser parser = new SafariPlistParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-safari-plist").toString());
+        metadata.add(Metadata.CONTENT_TYPE, SafariPlistParser.SAFARI_PLIST.toString());
         ContentHandler handler = new BodyContentHandler();
         parser.setExtractEntries(true);
         try (InputStream stream = getStream("test-files/test_bookmarks.plist")) {
@@ -114,7 +113,7 @@ public class SafariPlistParserTest extends AbstractPkgTest {
 
         SafariPlistParser parser = new SafariPlistParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-safari-downloads").toString());
+        metadata.add(Metadata.CONTENT_TYPE, SafariPlistParser.SAFARI_DOWNLOADS.toString());
         ContentHandler handler = new BodyContentHandler();
         parser.setExtractEntries(true);
         try (InputStream stream = getStream("test-files/test_downloads.plist")) {

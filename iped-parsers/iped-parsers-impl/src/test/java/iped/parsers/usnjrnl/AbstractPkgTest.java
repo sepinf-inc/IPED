@@ -48,7 +48,7 @@ public abstract class AbstractPkgTest extends BaseItemSearchContext {
 
             if (contenttype.size() == 0)
                 contenttype.add(metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
-            if (!contenttype.contains("application/x-usnjournal-registry"))
+            if (!contenttype.contains(UsnJrnlParser.USNJRNL_REGISTRY.toString()))
                 contenttype.add(metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
 
             title.add(metadata.get(TikaCoreProperties.TITLE));
