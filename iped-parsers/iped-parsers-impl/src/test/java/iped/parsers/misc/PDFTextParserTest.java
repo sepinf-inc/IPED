@@ -53,8 +53,6 @@ public class PDFTextParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_pdfProtected.pdf")) {
             parser.parse(stream, handler, metadata, context);
 
-            String mts = metadata.toString();
-
             assertEquals("PScript5.dll Version 5.2", metadata.getValues(TikaCoreProperties.CREATOR)[1]);
             assertEquals("Acrobat Distiller 7.0.5 (Windows)", metadata.get(TikaCoreProperties.CREATOR_TOOL));
             assertEquals("Speeches by Andrew G Haldane", metadata.get(TikaCoreProperties.SUBJECT));
@@ -64,7 +62,7 @@ public class PDFTextParserTest extends TestCase {
                     "Rethinking the Financial Network, Speech by Andrew G Haldane, Executive Director, Financial Stability delivered at the Financial Student Association, Amsterdam on 28 April 2009",
                     metadata.get(TikaCoreProperties.TITLE));
             assertEquals(PDFTextParser.PDF_TYPE.toString(), metadata.get(Metadata.CONTENT_TYPE));
-            assertTrue(mts.contains("Content-Type=" + PDFTextParser.PDF_TYPE.toString()));
+            assertEquals(PDFTextParser.PDF_TYPE.toString(), metadata.get(Metadata.CONTENT_TYPE));
         }
 
     }

@@ -33,8 +33,8 @@ public class EmptyVideoParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_videoMp4.mp4")) {
             parser.parse(stream, handler, metadata, context);
 
-            assertEquals(metadata.get(Metadata.LATITUDE), "+48.8577");
-            assertEquals(metadata.get(Metadata.LONGITUDE), "+002.295");
+            assertEquals("+48.8577", metadata.get(Metadata.LATITUDE));
+            assertEquals("+002.295", metadata.get(Metadata.LONGITUDE));
         }
 
     }

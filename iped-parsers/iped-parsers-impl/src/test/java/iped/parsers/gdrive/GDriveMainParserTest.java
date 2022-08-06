@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Database;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
@@ -85,7 +86,6 @@ public class GDriveMainParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("username_mapping"));
             assertTrue(hts.contains("2"));
@@ -93,11 +93,11 @@ public class GDriveMainParserTest extends TestCase {
             assertTrue(hts.contains("global_preferences"));
             assertTrue(hts.contains("2"));
             assertTrue(hts.contains("3"));
-            assertTrue(mts.contains("database:table_name=username_mapping database:table_name=global_preferences"));
-            assertTrue(mts.contains("Content-Type=" + GDriveMainParser.GDRIVE_ACCOUNT_INFO.toString()));
+            assertEquals("username_mapping", metadata.getValues(Database.TABLE_NAME)[0]);
+            assertEquals("global_preferences", metadata.getValues(Database.TABLE_NAME)[1]);
+            assertEquals(GDriveMainParser.GDRIVE_ACCOUNT_INFO.toString(), metadata.get(Metadata.CONTENT_TYPE));
 
         }
-
     }
 
     @Test
@@ -113,13 +113,12 @@ public class GDriveMainParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("data"));
             assertTrue(hts.contains("3"));
             assertTrue(hts.contains("41"));
-            assertTrue(mts.contains("database:table_name=data"));
-            assertTrue(mts.contains("Content-Type=" + GDriveMainParser.GDRIVE_ACCOUNT_INFO.toString()));
+            assertEquals("data", metadata.get(Database.TABLE_NAME));
+            assertEquals(GDriveMainParser.GDRIVE_ACCOUNT_INFO.toString(), metadata.get(Metadata.CONTENT_TYPE));
 
         }
     }

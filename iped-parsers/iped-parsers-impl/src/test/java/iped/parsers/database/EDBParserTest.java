@@ -1,6 +1,7 @@
 package iped.parsers.database;
 
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
@@ -55,10 +56,9 @@ public class EDBParserTest {
 
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_EntClientDb.edb")) {
             parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=" + EDBParser.EDB.toString()));
+            assertEquals(EDBParser.EDB.toString(), metadata.get(Metadata.CONTENT_TYPE));
             assertTrue(hts.contains("Sample Video"));
             assertTrue(hts.contains("Title of police video"));
             assertTrue(hts.contains("C:\\Users\\Felipe Costa\\Videos\\samples\\video.mp4"));

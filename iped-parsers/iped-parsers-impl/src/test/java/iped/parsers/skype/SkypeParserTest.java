@@ -2,8 +2,11 @@ package iped.parsers.skype;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Database;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
@@ -29,7 +32,7 @@ public class SkypeParserTest extends BaseItemSearchContext {
         try (InputStream stream = getStream(file)) {
             parser.parse(stream, handler, metadata, skypeContext);
             String hts = handler.toString();
-            String mts = metadata.toString();
+
             assertTrue(hts.contains("conversationsv14"));
             assertTrue(hts.contains("5"));
             assertTrue(hts.contains("0"));
@@ -46,16 +49,18 @@ public class SkypeParserTest extends BaseItemSearchContext {
             assertTrue(hts.contains("2"));
             assertTrue(hts.contains("0"));
 
-            assertTrue(mts.contains("database:table_name=metadata"));
-            assertTrue(mts.contains("database:table_name=messagesv12"));
-            assertTrue(mts.contains("database:table_name=alertsv12"));
-            assertTrue(mts.contains("database:table_name=popupcards"));
-            assertTrue(mts.contains("database:table_name=conversationsv14"));
-            assertTrue(mts.contains("Content-Type=" + SkypeParser.SKYPE_MIME_V12.toString()));
-            assertTrue(mts.contains("database:table_name=profilecachev8_phoneNumbersIndex"));
-            assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_segdir"));
-            assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_segments"));
-            assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_content"));
+            List<String> databaseTableNames = Arrays.asList(metadata.getValues(Database.TABLE_NAME));
+
+            assertEquals(SkypeParser.SKYPE_MIME_V12.toString(), metadata.get(Metadata.CONTENT_TYPE));
+            assertTrue(databaseTableNames.contains("metadata"));
+            assertTrue(databaseTableNames.contains("messagesv12"));
+            assertTrue(databaseTableNames.contains("alertsv12"));
+            assertTrue(databaseTableNames.contains("popupcards"));
+            assertTrue(databaseTableNames.contains("conversationsv14"));
+            assertTrue(databaseTableNames.contains("profilecachev8_phoneNumbersIndex"));
+            assertTrue(databaseTableNames.contains("conversationsv14_searchTerms_segdir"));
+            assertTrue(databaseTableNames.contains("conversationsv14_searchTerms_segments"));
+            assertTrue(databaseTableNames.contains("conversationsv14_searchTerms_content"));
 
         }
     }
@@ -74,7 +79,7 @@ public class SkypeParserTest extends BaseItemSearchContext {
         try (InputStream stream = getStream(file)) {
             parser.parse(stream, handler, metadata, skypeContext);
             String hts = handler.toString();
-            String mts = metadata.toString();
+
             assertTrue(hts.contains("Videos"));
             assertTrue(hts.contains("21"));
             assertTrue(hts.contains("0"));
@@ -91,13 +96,15 @@ public class SkypeParserTest extends BaseItemSearchContext {
             assertTrue(hts.contains("30"));
             assertTrue(hts.contains("2"));
 
-            assertTrue(mts.contains("database:table_name=Videos"));
-            assertTrue(mts.contains("database:table_name=SMSes"));
-            assertTrue(mts.contains("database:table_name=ConversationViews"));
-            assertTrue(mts.contains("database:table_name=Accounts"));
-            assertTrue(mts.contains("database:table_name=Contacts"));
-            assertTrue(mts.contains("database:table_name=Participants"));
-            assertTrue(mts.contains("Content-Type=" + SkypeParser.SKYPE_MIME.toString()));
+            List<String> databaseTableNames = Arrays.asList(metadata.getValues(Database.TABLE_NAME));
+
+            assertEquals(SkypeParser.SKYPE_MIME.toString(), metadata.get(Metadata.CONTENT_TYPE));
+            assertTrue(databaseTableNames.contains("Videos"));
+            assertTrue(databaseTableNames.contains("SMSes"));
+            assertTrue(databaseTableNames.contains("ConversationViews"));
+            assertTrue(databaseTableNames.contains("Accounts"));
+            assertTrue(databaseTableNames.contains("Contacts"));
+            assertTrue(databaseTableNames.contains("Participants"));
 
         }
     }

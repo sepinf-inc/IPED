@@ -1,5 +1,6 @@
 package iped.parsers.python;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -54,14 +55,12 @@ public class PythonParserTest {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("issO é OUTR4 stRin8888 codificada em UTF8"));
             assertTrue(hts.contains("Essa stRin8888G esta´ sendÖOO utilizada n0 P4RSER"));
             assertTrue(hts.contains("do 1P3D para R4W STR1N85...!!111"));
-            assertTrue(mts.contains("propertyNameExample"));
-            assertTrue(mts.contains("propertyValueExample"));
-            assertTrue(mts.contains("UTF-8"));
+            assertEquals("propertyValueExample", metadata.get("propertyNameExample"));
+            assertEquals("text/plain; charset=UTF-8", metadata.get(Metadata.CONTENT_TYPE));
         }
     }
 

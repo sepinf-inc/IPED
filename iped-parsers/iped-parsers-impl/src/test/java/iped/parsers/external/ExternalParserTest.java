@@ -154,10 +154,8 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         try (InputStream stream = this.getClass().getResourceAsStream("/test-files/" + fileName)) {
             assumeNotNull(superfetchParser);
             superfetchParser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains(fileName));
             assertTrue(hts.contains("\\DEVICE\\HARDDISKVOLUME2"));
             assertTrue(hts.contains("Mar 25, 2015 11:08:36"));
             assertTrue(hts.contains("0xca0c7a4"));

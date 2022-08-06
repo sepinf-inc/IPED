@@ -83,10 +83,8 @@ public class OCRParserTest {
             assumeTrue(parser.isEnabled());
 
             parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=image/png"));
             assertTrue(hts.contains("57%"));
             assertTrue(hts.contains("10:04 am"));
             assertTrue(hts.contains("Oi, tudo bem?"));
@@ -113,10 +111,8 @@ public class OCRParserTest {
             assumeTrue(parser.isEnabled());
             
             parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=application/pdf"));
             assertTrue(hts.contains("RISC-V UNICICLO"));
             assertTrue(hts.contains("Instruction [31-0]"));
             assertTrue(hts.contains("MemtoReg"));
@@ -157,10 +153,8 @@ public class OCRParserTest {
             assumeTrue(parser.isEnabled());
 
             parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=image/tiff"));
             assertTrue(hts.contains("Literature must rest always on a principle"));
             assertTrue(hts.contains("times and places are one; the stuff he deals with"));
             assertTrue(hts.contains("extract from THE ENGLISH RENAISSANCE"));
@@ -202,10 +196,9 @@ public class OCRParserTest {
             assumeTrue(isImageMagickInstalled(magickDir));
 
             parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=image/vnd.adobe.photoshop"));
+            assertTrue(Integer.parseInt(metadata.get(OCRParser.OCR_CHAR_COUNT)) >= 60);
             assertTrue(hts.contains("Parsing non-standard file format"));
             assertTrue(hts.contains("SAMPLE TEXT"));
             assertTrue(hts.contains("Centered Text"));
@@ -233,10 +226,9 @@ public class OCRParserTest {
             assumeTrue(isImageMagickInstalled(magickDir));
 
             parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
             String hts = handler.toString();
 
-            assertTrue(mts.contains("Content-Type=image/svg+xml"));
+            assertTrue(Integer.parseInt(metadata.get(OCRParser.OCR_CHAR_COUNT)) >= 70);
             assertTrue(hts.contains("Transport"));
             assertTrue(hts.contains("Aa Ee Qq"));
             assertTrue(hts.contains("Rr Ss Tt"));
