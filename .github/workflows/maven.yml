@@ -29,6 +29,7 @@ jobs:
             pip install jep==4.0.3
     - name: Compile libagdb
       # libagdb (agdbinfo) needs to be built from source
+      id: libagdb
       if: steps.libagdb.outputs.cache-hit != 'true'
       run: | 
             sudo apt install git autoconf automake autopoint libtool pkg-config
@@ -80,6 +81,7 @@ jobs:
 
     - name: Compile libagdb
       # libagdb (agdbinfo) needs to be built from source
+      id: libagdb
       if: steps.libagdb.outputs.cache-hit != 'true'
       run: | 
             sudo apt install git autoconf automake autopoint libtool pkg-config
