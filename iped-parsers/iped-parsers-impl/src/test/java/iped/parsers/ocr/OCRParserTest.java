@@ -53,7 +53,7 @@ public class OCRParserTest {
             OCRParser.checkVersionInfo(tesseractPath, "-v");
             System.setProperty(OCRParser.ENABLE_PROP, "true");
         } catch (IOException | InterruptedException e) {
-            LOGGER.error("Error testing tesseract");
+            LOGGER.error("Skipping tesseract tests...");
         }
     }
 
@@ -259,7 +259,7 @@ public class OCRParserTest {
                 throw new IOException("Returned error code " + result);
             }
         } catch (IOException | InterruptedException e) {
-            LOGGER.error("Error testing imagemagick: " + e.toString());
+            LOGGER.error("Skipping imagemagick tests... " + e.toString());
             return false;
         }
         return true;
