@@ -1,17 +1,17 @@
 08/08/2022: IPED-4.0.2
 Fixes:
-#1262: Preview of device info, contacts and emails from UFDR evidences can be overridden with --append (Luís Nassif)
-#1246: Token normalization rules not being applied on wildcard/prefix/fuzzy/regex/range queries (Luís Nassif)
-#1250: New evidence location dialog stopped to be shown if it was moved (Luís Nassif)
-#1254: External file opening confirmation dialog not working (Luís Nassif)
-#1247: Hits panel not populated and hits not highlighted on Preview tab after a MultiTermQuery search (Luís Nassif)
-#1256: Some files from UFDR could not be opened temporarily when fast switching between them (Luís Nassif)
-#1255: Link files (application/x-lnk) are being parsed by RawStringParser instead of LNKShortcutParser (Luís Nassif)
-#1249: Audio transcription can fail depending on audio encoding (Luís Nassif)
-#1242: Error SQLITE_CONSTRAINT_PRIMARYKEY when importing hash sets that require a record merge (Wladimir Leite)
-#1248: Out of memory when parsing contacts of whatsapp (Luís Nassif, João Hauck)
-#1258: Report creation from cmd line can fail sometimes (Luís Nassif)
-#1244: Downgrade MinIO to version 8.3.8 (João Hauck)
+#1262: Preview of device info, contacts & emails from UFDR evidences can be overridden with --append - also affects 3.18.x (@lfcnassif)
+#1246: Token normalization rules not being applied on wildcard/prefix/fuzzy/regex/range queries (@lfcnassif)
+#1250: New evidence location dialog stopped to be shown if it was moved (@lfcnassif)
+#1254: External file opening confirmation dialog not working (@lfcnassif)
+#1247: Hits panel not populated and hits not highlighted on Preview tab after a MultiTermQuery search (@lfcnassif)
+#1256: Some files from UFDR could not be opened temporarily when fast switching between them (@lfcnassif)
+#1255: Link files (application/x-lnk) are being parsed by RawStringParser instead of LNKShortcutParser (@lfcnassif)
+#1249: Audio transcription can fail depending on audio encoding (@lfcnassif)
+#1242: Error SQLITE_CONSTRAINT_PRIMARYKEY when importing hash sets that require a record merge (@tc-wleite)
+#1248: Out of memory when parsing contacts of whatsapp (@lfcnassif, @hauck-jvsh)
+#1258: Report creation from cmd line can fail sometimes (@lfcnassif)
+#1244: Downgrade MinIO to version 8.3.8 (@hauck-jvsh)
 
 
 18/07/2022: IPED-4.0.1
