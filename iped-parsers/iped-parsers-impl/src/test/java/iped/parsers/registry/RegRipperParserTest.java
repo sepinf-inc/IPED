@@ -1,7 +1,6 @@
 package iped.parsers.registry;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +19,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.util.RepoToolDownloader;
-
 
 
 public class RegRipperParserTest {
@@ -51,7 +49,7 @@ public class RegRipperParserTest {
         ContentHandler handler = new BodyContentHandler(28000000);
         ParseContext context = new ParseContext();
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "software");
-        assumeFalse(parser.getSupportedTypes(context).isEmpty());
+        parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_software")) {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
@@ -70,7 +68,7 @@ public class RegRipperParserTest {
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "sam");
-        assumeFalse(parser.getSupportedTypes(context).isEmpty());
+        parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_sam")) {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
@@ -89,7 +87,7 @@ public class RegRipperParserTest {
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "security");
-        assumeFalse(parser.getSupportedTypes(context).isEmpty());
+        parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_security")) {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
@@ -108,7 +106,7 @@ public class RegRipperParserTest {
         ContentHandler handler = new BodyContentHandler(6000000);
         ParseContext context = new ParseContext();
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "system");
-        assumeFalse(parser.getSupportedTypes(context).isEmpty());
+        parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_system")) {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
