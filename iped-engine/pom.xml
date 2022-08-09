@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.0.1</version>
+        <version>4.0.2</version>
     </parent>
     
     <artifactId>iped-engine</artifactId>
@@ -170,7 +170,7 @@
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>8.4.2</version>
+            <version>8.3.8</version>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>

@@ -15,15 +15,11 @@ import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.ResourceBundle.Control;
 
-public abstract class Messages {
+public class Messages {
 
     public static final String LOCALE_SYS_PROP = "iped-locale";
     public static final String BUNDLES_FOLDER = "localization";
     public static final String BUNDLES_FOLDER_PREFIX = "iped-app/resources/";
-
-    private static final String BUNDLE_NAME = "iped-basicprops"; //$NON-NLS-1$
-
-    private static ResourceBundle RESOURCE_BUNDLE;
 
     private Messages() {
     }
@@ -50,15 +46,6 @@ public abstract class Messages {
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static String getString(String key) {
-        if (RESOURCE_BUNDLE == null) {
-            String localeStr = System.getProperty(LOCALE_SYS_PROP); // $NON-NLS-1$
-            Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
-            RESOURCE_BUNDLE = getExternalBundle(BUNDLE_NAME, locale);
-        }
-        return RESOURCE_BUNDLE.getString(key);
     }
 
     private static class UTF8Control extends Control {
