@@ -618,7 +618,7 @@ public class ImageUtil {
      * @param intensity A proportion between the blurring window and the image dimensions. 
      * Typical values are between 0.01 and 0.05.
      */
-    public BufferedImage blur(BufferedImage image, int maxSize, double intensity) {
+    public static BufferedImage blur(BufferedImage image, int maxSize, double intensity) {
         int w = image.getWidth();
         int h = image.getHeight();
         if (w > maxSize || h > maxSize) {
@@ -682,7 +682,7 @@ public class ImageUtil {
         return newImage;
     }
 
-    public BufferedImage grayscale(BufferedImage image) {
+    public static BufferedImage grayscale(BufferedImage image) {
         if (image == null || image.getType() == BufferedImage.TYPE_BYTE_GRAY || image.getType() == BufferedImage.TYPE_USHORT_GRAY) return image;
         if (image.getColorModel().hasAlpha()) {
             ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
