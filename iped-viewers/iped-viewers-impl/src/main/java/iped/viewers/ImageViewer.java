@@ -241,6 +241,9 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     @Override
     public void copyScreen(Component comp) {
         BufferedImage image = imagePanel.getImage();
+        if (image.getColorModel().hasAlpha()) {
+            image = ImageUtil.getOpaqueImage(image);
+        }
         TransferableImage trans = new TransferableImage(image);
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         clipboard.setContents(trans, trans);
