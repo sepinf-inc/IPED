@@ -26,6 +26,7 @@ import javax.swing.JSlider;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -64,11 +65,17 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     private static final String actionFitWidth = "fit-width";
     private static final String actionFitWindow = "fit-window";
     private static final String actionCopyImage = "copy-image";
+    private static final String actionGrayScale = "gray-scale";
+    private static final String actionBlur = "blur-image";
 
     private static final int maxDim = 2400;
+    private static final int maxBlurDim = 512;
+    private static final double blurIntensity = 0.02f;
     
     volatile protected BufferedImage image;
     volatile protected int rotation;
+    volatile protected boolean applyBlurFilter = false;
+    volatile protected boolean applyGrayScale = false;
 
     public ImageViewer() {
         this(0);
@@ -156,7 +163,14 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
             }
         }
         toolBar.setVisible(image != null && isToolbarVisible());
-        updatePanel(image);
+        BufferedImage img = image;
+        if (applyBlurFilter) {
+            img = applyBlur(img);
+        }
+        if (applyGrayScale) {
+            img = applyGrayScale(img);
+        }
+        updatePanel(img);
     }
 
     private double getZoom(IStreamSource content, BufferedImage img) throws IOException {
@@ -305,15 +319,26 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         butCopyImage.setToolTipText(Messages.getString("ImageViewer.Copy"));
 
         toolBar.add(new JLabel(iconSeparator));
+
+        createToolBarButton(actionGrayScale, true);
+        createToolBarButton(actionBlur, true);
     }
 
     protected JButton createToolBarButton(String action) {
+        return createToolBarButton(action, false);
+    }
+
+    protected JButton createToolBarButton(String action, boolean select) {
         JButton but = new JButton(IconUtil.getIcon(action, resPath, 24));
         but.setActionCommand(action);
         but.setOpaque(false);
         toolBar.add(but);
         but.setFocusPainted(false);
         but.setFocusable(false);
+        if (select) {
+            but.setBorder(BorderFactory.createSoftBevelBorder(BevelBorder.LOWERED));
+            but.setBorderPainted(false);
+        }
         but.addActionListener(this);
         return but;
     }
@@ -322,15 +347,16 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         if (image == null) {
             return;
         }
+        boolean update = false;
         String cmd = e.getActionCommand();
         if (cmd.equals(actionRotLeft)) {
             if (--rotation < 0)
                 rotation = 3;
-            updateRotation();
+            update = true;
         } else if (cmd.equals(actionRotRight)) {
             if (++rotation > 3)
                 rotation = 0;
-            updateRotation();
+            update = true;
         } else if (cmd.equals(actionZoomIn)) {
             imagePanel.changeZoom(1.2, null);
         } else if (cmd.equals(actionZoomOut)) {
@@ -341,14 +367,38 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
             imagePanel.fitToWidth();
         } else if (cmd.equals(actionCopyImage)) {
             copyScreen();
+        } else if (cmd.equals(actionGrayScale)) {
+            applyGrayScale = !applyGrayScale;
+            setButtonSelected((JButton) e.getSource(), applyGrayScale);
+            update = true;
+        } else if (cmd.equals(actionBlur)) {
+            applyBlurFilter = !applyBlurFilter;
+            setButtonSelected((JButton) e.getSource(), applyBlurFilter);
+            update = true;
+        }
+        if (update) {
+            BufferedImage img = image;
+            img = rotation != 0 ? ImageUtil.rotatePos(img, rotation) : img;
+            img = applyBlurFilter ? applyBlur(img) : img;
+            img = applyGrayScale ? applyGrayScale(img) : img;
+            updatePanel(img);
+            int factor = sliderBrightness.getValue();
+            if (factor != 0) {
+                updateBrightness(factor);
+            }
         }
     }
 
-    private void updateRotation() {
-        BufferedImage img = image;
-        updatePanel(ImageUtil.rotatePos(img, rotation));
-        int factor = sliderBrightness.getValue();
-        if (factor != 0)
-            updateBrightness(factor);
+    private void setButtonSelected(JButton button, boolean selected) {
+        button.setBorderPainted(selected);
     }
+
+    private BufferedImage applyBlur(BufferedImage image) {
+        return ImageUtil.blur(image, maxBlurDim, blurIntensity);
+    }
+
+    private BufferedImage applyGrayScale(BufferedImage image) {
+        return ImageUtil.grayscale(image);
+    }
+
 }
