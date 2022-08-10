@@ -1,7 +1,6 @@
 package iped.viewers.components;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -92,6 +91,7 @@ public class ImageViewPanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                 if (image != null) {
                     int w = (int) Math.ceil(image.getWidth() * zoomFactor);
                     int h = (int) Math.ceil(image.getHeight() * zoomFactor);
@@ -172,7 +172,7 @@ public class ImageViewPanel extends JPanel {
         orgImage = image = img;
         zoomFactor = 1;
         if (image != null) {
-            updateZoomFactor(1.5, initialFitMode == 0, true);
+            updateZoomFactor(2, initialFitMode == 0, true);
             scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         } else {
@@ -307,7 +307,7 @@ public class ImageViewPanel extends JPanel {
                 int type = orgImage.getType();
                 if (type == BufferedImage.TYPE_BYTE_INDEXED || type == BufferedImage.TYPE_CUSTOM
                         || type == BufferedImage.TYPE_INT_ARGB_PRE || type == BufferedImage.TYPE_4BYTE_ABGR_PRE)
-                    src = ImageUtil.getOpaqueImage(orgImage);
+                    src = ImageUtil.getImageFromType(orgImage, BufferedImage.TYPE_4BYTE_ABGR);
                 if (src.getColorModel().hasAlpha())
                     op = new RescaleOp(new float[] { scale, scale, scale, 1 },
                             new float[] { offset, offset, offset, 0 }, null);

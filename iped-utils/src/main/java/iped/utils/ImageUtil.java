@@ -321,6 +321,19 @@ public class ImageUtil {
         g2.dispose();
         return out;
     }
+    
+    public static BufferedImage getImageFromType(BufferedImage img, int type) {
+        if (img == null || img.getType() == type) {
+            return img;
+        }
+        int w = img.getWidth();
+        int h = img.getHeight();
+        BufferedImage out = new BufferedImage(w, h, type);
+        Graphics2D g2 = (Graphics2D) out.getGraphics();
+        g2.drawImage(img, 0, 0, null);
+        g2.dispose();
+        return out;
+    }
 
     private static final int red(int color) {
         return color & 0xff;
@@ -689,10 +702,6 @@ public class ImageUtil {
             ColorConvertOp op = new ColorConvertOp(cs, null);
             return op.filter(image, null);
         }
-        BufferedImage newImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
-        Graphics g = newImage.getGraphics();
-        g.drawImage(image, 0, 0, null);
-        g.dispose();
-        return newImage;
+        return getImageFromType(image, BufferedImage.TYPE_BYTE_GRAY);
     }
 }
