@@ -837,7 +837,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         CButton galleryGrayButton = new CButton(Messages.getString("Gallery.GalleryGrayFilter"),
                 IconUtil.getToolbarIcon("gray-scale", resPath));
         galleryTabDock.addAction(galleryGrayButton);
-        galleryTabDock.addSeparator();
         galleryGrayButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 galleryModel.toggleGrayFilter();
