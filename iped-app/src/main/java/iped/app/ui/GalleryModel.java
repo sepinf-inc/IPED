@@ -269,17 +269,16 @@ public class GalleryModel extends AbstractTableModel {
                         image = externalImageConverter.getImage(stream, thumbSize, false, size);
                     }
 
-                    if (image != null && blurFilter) {
-                        image = ImageUtil.blur(image, thumbSize, blurIntensity);
-                    }
-
-                    if (image != null && grayFilter) {
-                        image = ImageUtil.grayscale(image);
-                    }
-
                     if (image == null || image == errorImg) {
                         if (value.icon == null)
                             value.icon = errorIcon;
+                    } else {
+                        if (blurFilter) {
+                            image = ImageUtil.blur(image, thumbSize, blurIntensity);
+                        }
+                        if (grayFilter) {
+                            image = ImageUtil.grayscale(image);
+                        }
                     }
 
                 } catch (Exception e) {
