@@ -834,17 +834,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
 
-        CButton galleryBlurButton = new CButton(Messages.getString("Gallery.GalleryBlurFilter"),
-                IconUtil.getToolbarIcon("blur-image", resPath));
-        galleryTabDock.addAction(galleryBlurButton);
-        galleryTabDock.addSeparator();
-        galleryBlurButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                galleryModel.toggleBlurFilter();
-                gallery.repaint();
-            }
-        });
-
         CButton galleryGrayButton = new CButton(Messages.getString("Gallery.GalleryGrayFilter"),
                 IconUtil.getToolbarIcon("gray-scale", resPath));
         galleryTabDock.addAction(galleryGrayButton);
@@ -852,6 +841,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         galleryGrayButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 galleryModel.toggleGrayFilter();
+                gallery.repaint();
+            }
+        });
+
+        CButton galleryBlurButton = new CButton(Messages.getString("Gallery.GalleryBlurFilter"),
+                IconUtil.getToolbarIcon("blur-image", resPath));
+        galleryTabDock.addAction(galleryBlurButton);
+        galleryTabDock.addSeparator();
+        galleryBlurButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                galleryModel.toggleBlurFilter();
                 gallery.repaint();
             }
         });
