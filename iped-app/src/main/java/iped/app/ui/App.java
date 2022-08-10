@@ -200,6 +200,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private ViewerController viewerController;
     private CButton timelineButton;
     private CButton butSimSearch;
+    private CCheckBox galleryGrayButton;
+    private CCheckBox galleryBlurButton;
 
     Color defaultColor;
     Color defaultFocusedColor;
@@ -817,13 +819,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
     
     protected void toggleGlobalBlurFilter() {
-        galleryModel.toggleBlurFilter();
+        galleryModel.setBlurFilter(!galleryModel.getBlurFilter());
+        galleryBlurButton.setSelected(galleryModel.getBlurFilter());
         gallery.repaint();
         viewerController.getMultiViewer().toggleBlurFilter();
     }
 
     protected void toggleGlobalGrayScale() {
-        galleryModel.toggleGrayFilter();
+        galleryModel.setGrayFilter(!galleryModel.getGrayFilter());
+        galleryGrayButton.setSelected(galleryModel.getGrayFilter());
         gallery.repaint();
         viewerController.getMultiViewer().toggleGrayFilter();
     }
@@ -880,7 +884,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         galleryTabDock.addAction(butToggleVideoFramesMode);
         galleryTabDock.addSeparator();
 
-        CCheckBox galleryGrayButton = new CCheckBox(Messages.getString("Gallery.GalleryGrayFilter"),
+        galleryGrayButton = new CCheckBox(Messages.getString("Gallery.GalleryGrayFilter"),
                 IconUtil.getToolbarIcon("gray-scale", resPath)) {
             protected void changed() {
                 galleryModel.setGrayFilter(isSelected());
@@ -889,7 +893,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         };
         galleryTabDock.addAction(galleryGrayButton);
 
-        CCheckBox galleryBlurButton = new CCheckBox(Messages.getString("Gallery.GalleryBlurFilter"),
+        galleryBlurButton = new CCheckBox(Messages.getString("Gallery.GalleryBlurFilter"),
                 IconUtil.getToolbarIcon("blur-image", resPath)) {
             protected void changed() {
                 galleryModel.setBlurFilter(isSelected());
