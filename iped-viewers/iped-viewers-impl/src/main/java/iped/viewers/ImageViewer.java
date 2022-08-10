@@ -320,8 +320,11 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
         toolBar.add(new JLabel(iconSeparator));
 
-        createToolBarButton(actionGrayScale, true);
-        createToolBarButton(actionBlur, true);
+        JButton butGrayScale = createToolBarButton(actionGrayScale, true);
+        butGrayScale.setToolTipText(Messages.getString("ImageViewer.GrayScale"));
+        
+        JButton butBlur = createToolBarButton(actionBlur, true);
+        butBlur.setToolTipText(Messages.getString("ImageViewer.Blur"));
     }
 
     protected JButton createToolBarButton(String action) {
