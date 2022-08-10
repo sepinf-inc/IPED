@@ -91,13 +91,13 @@ public class GalleryModel extends AbstractTableModel {
     private volatile boolean blurFilter;
     private volatile boolean grayFilter;
 
-    public void toggleBlurFilter() {
-        blurFilter = !blurFilter;
+    public void setBlurFilter(boolean newBlurFilter) {
+        blurFilter = newBlurFilter;
         cache.clear();
     }
 
-    public void toggleGrayFilter() {
-        grayFilter = !grayFilter;
+    public void setGrayFilter(boolean newGrayFilter) {
+        grayFilter = newGrayFilter;
         cache.clear();
     }
 

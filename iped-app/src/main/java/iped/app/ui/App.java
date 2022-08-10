@@ -822,38 +822,35 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
 
-        CButton butToggleVideoFramesMode = new CButton(Messages.getString("Gallery.ToggleVideoFrames"),
-                IconUtil.getToolbarIcon("video", resPath));
+        CCheckBox butToggleVideoFramesMode = new CCheckBox(Messages.getString("Gallery.ToggleVideoFrames"),
+                IconUtil.getToolbarIcon("video", resPath)) {
+            protected void changed() {
+                galleryModel.clearVideoThumbsInCache();
+                useVideoThumbsInGallery = isSelected();
+                gallery.repaint();
+            }
+        };
         galleryTabDock.addAction(butToggleVideoFramesMode);
         galleryTabDock.addSeparator();
-        butToggleVideoFramesMode.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                galleryModel.clearVideoThumbsInCache();
-                useVideoThumbsInGallery = !useVideoThumbsInGallery;
+
+        CCheckBox galleryGrayButton = new CCheckBox(Messages.getString("Gallery.GalleryGrayFilter"),
+                IconUtil.getToolbarIcon("gray-scale", resPath)) {
+            protected void changed() {
+                galleryModel.setGrayFilter(isSelected());
                 gallery.repaint();
             }
-        });
-
-        CButton galleryGrayButton = new CButton(Messages.getString("Gallery.GalleryGrayFilter"),
-                IconUtil.getToolbarIcon("gray-scale", resPath));
+        };
         galleryTabDock.addAction(galleryGrayButton);
-        galleryGrayButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                galleryModel.toggleGrayFilter();
+
+        CCheckBox galleryBlurButton = new CCheckBox(Messages.getString("Gallery.GalleryBlurFilter"),
+                IconUtil.getToolbarIcon("blur-image", resPath)) {
+            protected void changed() {
+                galleryModel.setBlurFilter(isSelected());
                 gallery.repaint();
             }
-        });
-
-        CButton galleryBlurButton = new CButton(Messages.getString("Gallery.GalleryBlurFilter"),
-                IconUtil.getToolbarIcon("blur-image", resPath));
+        };
         galleryTabDock.addAction(galleryBlurButton);
         galleryTabDock.addSeparator();
-        galleryBlurButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                galleryModel.toggleBlurFilter();
-                gallery.repaint();
-            }
-        });
 
         butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
                 IconUtil.getToolbarIcon("find", resPath));
