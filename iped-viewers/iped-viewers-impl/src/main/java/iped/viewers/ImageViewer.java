@@ -164,10 +164,10 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         }
         toolBar.setVisible(image != null && isToolbarVisible());
         BufferedImage img = image;
-        if (applyBlurFilter) {
+        if (img != null && applyBlurFilter) {
             img = applyBlur(img);
         }
-        if (applyGrayScale) {
+        if (img != null && applyGrayScale) {
             img = applyGrayScale(img);
         }
         updatePanel(img);
