@@ -388,14 +388,18 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     }
 
     private void update() {
-        BufferedImage img = image;
-        img = rotation != 0 ? ImageUtil.rotatePos(img, rotation) : img;
-        img = applyBlurFilter ? applyBlur(img) : img;
-        img = applyGrayScale ? applyGrayScale(img) : img;
-        updatePanel(img);
-        int factor = sliderBrightness.getValue();
-        if (factor != 0) {
-            updateBrightness(factor);
+        if (image == null) {
+            updatePanel(null);
+        } else {
+            BufferedImage img = image;
+            img = rotation != 0 ? ImageUtil.rotatePos(img, rotation) : img;
+            img = applyBlurFilter ? applyBlur(img) : img;
+            img = applyGrayScale ? applyGrayScale(img) : img;
+            updatePanel(img);
+            int factor = sliderBrightness.getValue();
+            if (factor != 0) {
+                updateBrightness(factor);
+            }
         }
     }
 
