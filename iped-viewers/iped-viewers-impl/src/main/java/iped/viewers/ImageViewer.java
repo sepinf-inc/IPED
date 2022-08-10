@@ -77,6 +77,8 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     volatile protected boolean applyBlurFilter = false;
     volatile protected boolean applyGrayScale = false;
 
+    private JButton blurButton, grayButton;
+
     public ImageViewer() {
         this(0);
     }
@@ -320,8 +322,8 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
         toolBar.add(new JLabel(iconSeparator));
 
-        createToolBarButton(actionGrayScale, true);
-        createToolBarButton(actionBlur, true);
+        grayButton = createToolBarButton(actionGrayScale, true);
+        blurButton = createToolBarButton(actionBlur, true);
     }
 
     protected JButton createToolBarButton(String action) {
@@ -368,24 +370,26 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         } else if (cmd.equals(actionCopyImage)) {
             copyScreen();
         } else if (cmd.equals(actionGrayScale)) {
-            applyGrayScale = !applyGrayScale;
-            setButtonSelected((JButton) e.getSource(), applyGrayScale);
+            toggleGrayFilter();
             update = true;
         } else if (cmd.equals(actionBlur)) {
-            applyBlurFilter = !applyBlurFilter;
-            setButtonSelected((JButton) e.getSource(), applyBlurFilter);
+            toggleBlurFilter();
             update = true;
         }
         if (update) {
-            BufferedImage img = image;
-            img = rotation != 0 ? ImageUtil.rotatePos(img, rotation) : img;
-            img = applyBlurFilter ? applyBlur(img) : img;
-            img = applyGrayScale ? applyGrayScale(img) : img;
-            updatePanel(img);
-            int factor = sliderBrightness.getValue();
-            if (factor != 0) {
-                updateBrightness(factor);
-            }
+            update();
+        }
+    }
+
+    private void update() {
+        BufferedImage img = image;
+        img = rotation != 0 ? ImageUtil.rotatePos(img, rotation) : img;
+        img = applyBlurFilter ? applyBlur(img) : img;
+        img = applyGrayScale ? applyGrayScale(img) : img;
+        updatePanel(img);
+        int factor = sliderBrightness.getValue();
+        if (factor != 0) {
+            updateBrightness(factor);
         }
     }
 
@@ -399,6 +403,18 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
     private BufferedImage applyGrayScale(BufferedImage image) {
         return ImageUtil.grayscale(image);
+    }
+
+    public void toggleBlurFilter() {
+        applyBlurFilter = !applyBlurFilter;
+        setButtonSelected(blurButton, applyBlurFilter);
+        update();
+    }
+
+    public void toggleGrayFilter() {
+        applyGrayScale = !applyGrayScale;
+        setButtonSelected(grayButton, applyGrayScale);
+        update();
     }
 
 }

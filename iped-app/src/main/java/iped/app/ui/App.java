@@ -27,10 +27,13 @@ import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.Insets;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -779,8 +782,52 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // filterComboBox.addMouseListener(appletListener);
         // filterComboBox.getComponent(0).addMouseListener(appletListener);
         updateUI(false);
+
+        setupKeyboardShortcuts();
+    }
+
+    /**
+     * Setup application global keyboard shortcuts. TODO update existing keyboard
+     * shortcut handling code to use this.
+     */
+    private void setupKeyboardShortcuts() {
+        KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        kfm.addKeyEventDispatcher(new KeyEventDispatcher() {
+            @Override
+            public boolean dispatchKeyEvent(KeyEvent e) {
+                if (e.isControlDown()) {
+                    if (e.getKeyCode() == KeyEvent.VK_F) {
+                        if (e.getID() == KeyEvent.KEY_RELEASED) {
+                            toggleGlobalBlurFilter();
+                        }
+                        // avoid being used as different shortcut (e.g. bookmark key)
+                        return true;
+                    }
+                    if (e.getKeyCode() == KeyEvent.VK_G) {
+                        if (e.getID() == KeyEvent.KEY_RELEASED) {
+                            toggleGlobalGrayScale();
+                        }
+                        // avoid being used as different shortcut (e.g. bookmark key)
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
     }
     
+    protected void toggleGlobalBlurFilter() {
+        galleryModel.toggleBlurFilter();
+        gallery.repaint();
+        viewerController.getMultiViewer().toggleBlurFilter();
+    }
+
+    protected void toggleGlobalGrayScale() {
+        galleryModel.toggleGrayFilter();
+        gallery.repaint();
+        viewerController.getMultiViewer().toggleGrayFilter();
+    }
+
     public void updateUI(boolean refresh) {
         queryComboBox.getEditor().getEditorComponent().addMouseListener(appletListener);
         queryComboBox.getComponent(0).addMouseListener(appletListener);
