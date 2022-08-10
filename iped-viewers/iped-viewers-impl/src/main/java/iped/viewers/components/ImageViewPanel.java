@@ -95,10 +95,6 @@ public class ImageViewPanel extends JPanel {
                 if (image != null) {
                     int w = (int) Math.ceil(image.getWidth() * zoomFactor);
                     int h = (int) Math.ceil(image.getHeight() * zoomFactor);
-                    if (image.getColorModel().hasAlpha()) {
-                        g2.setColor(Color.white);
-                        g2.clearRect((getWidth() - w) / 2, (getHeight() - h) / 2, w, h);
-                    }
                     g2.drawImage(image, (getWidth() - w) / 2, (getHeight() - h) / 2, w, h, null);
                 }
             }
