@@ -308,7 +308,9 @@ public class ImageViewPanel extends JPanel {
                 float scale = 1 + factor * factor / 2000f;
                 float offset = factor / 1.5f;
                 BufferedImage src = orgImage;
-                if (orgImage.getType() == BufferedImage.TYPE_BYTE_INDEXED)
+                int type = orgImage.getType();
+                if (type == BufferedImage.TYPE_BYTE_INDEXED || type == BufferedImage.TYPE_CUSTOM
+                        || type == BufferedImage.TYPE_INT_ARGB_PRE || type == BufferedImage.TYPE_4BYTE_ABGR_PRE)
                     src = ImageUtil.getOpaqueImage(orgImage);
                 if (src.getColorModel().hasAlpha())
                     op = new RescaleOp(new float[] { scale, scale, scale, 1 },
