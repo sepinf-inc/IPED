@@ -172,7 +172,7 @@ public class ImageViewPanel extends JPanel {
         orgImage = image = img;
         zoomFactor = 1;
         if (image != null) {
-            updateZoomFactor(1.5, initialFitMode == 0, true);
+            updateZoomFactor(2, initialFitMode == 0, true);
             scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         } else {
