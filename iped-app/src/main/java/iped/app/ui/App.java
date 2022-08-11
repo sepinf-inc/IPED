@@ -819,17 +819,19 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
     
     protected void toggleGlobalBlurFilter() {
-        galleryModel.setBlurFilter(!galleryModel.getBlurFilter());
-        galleryBlurButton.setSelected(galleryModel.getBlurFilter());
+        boolean enableBlur = !galleryModel.getBlurFilter();
+        galleryModel.setBlurFilter(enableBlur);
+        galleryBlurButton.setSelected(enableBlur);
         gallery.repaint();
-        viewerController.getMultiViewer().toggleBlurFilter();
+        viewerController.getMultiViewer().setBlurFilter(enableBlur);
     }
 
     protected void toggleGlobalGrayScale() {
-        galleryModel.setGrayFilter(!galleryModel.getGrayFilter());
-        galleryGrayButton.setSelected(galleryModel.getGrayFilter());
+        boolean enableGray = !galleryModel.getGrayFilter();
+        galleryModel.setGrayFilter(enableGray);
+        galleryGrayButton.setSelected(enableGray);
         gallery.repaint();
-        viewerController.getMultiViewer().toggleGrayFilter();
+        viewerController.getMultiViewer().setGrayFilter(enableGray);
     }
 
     public void updateUI(boolean refresh) {

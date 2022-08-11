@@ -376,10 +376,10 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         } else if (cmd.equals(actionCopyImage)) {
             copyScreen();
         } else if (cmd.equals(actionGrayScale)) {
-            toggleGrayFilter();
+            setGrayFilter(!applyGrayScale);
             update = true;
         } else if (cmd.equals(actionBlur)) {
-            toggleBlurFilter();
+            setBlurFilter(!applyBlurFilter);
             update = true;
         }
         if (update) {
@@ -415,14 +415,14 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         return ImageUtil.grayscale(image);
     }
 
-    public void toggleBlurFilter() {
-        applyBlurFilter = !applyBlurFilter;
+    public void setBlurFilter(boolean enableBlur) {
+        applyBlurFilter = enableBlur;
         setButtonSelected(blurButton, applyBlurFilter);
         update();
     }
 
-    public void toggleGrayFilter() {
-        applyGrayScale = !applyGrayScale;
+    public void setGrayFilter(boolean enableGray) {
+        applyGrayScale = enableGray;
         setButtonSelected(grayButton, applyGrayScale);
         update();
     }
