@@ -164,6 +164,14 @@ public class Bookmarks implements IBookmarks {
         return bookmarkIds;
     }
 
+    public synchronized void addBookmark(int[] ids, int bookmark) {
+        List<Integer> list = new ArrayList<>();
+        for (int id : ids) {
+            list.add(id);
+        }
+        this.addBookmark(list, bookmark);
+    }
+
     public synchronized void addBookmark(List<Integer> ids, int bookmark) {
         int bookmarkOrder = bookmark / bookmarkBits;
         int bookmarkMod = bookmark % bookmarkBits;
