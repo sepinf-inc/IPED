@@ -41,7 +41,7 @@ import iped.engine.util.Util;
 import iped.search.SearchResult;
 import iped.utils.IOUtil;
 
-public class Bookmarks implements Serializable, IBookmarks {
+public class Bookmarks implements IBookmarks {
 
     /**
      * 
