@@ -21,7 +21,7 @@ class PythonScriptTask:
     # It is executed when application starts by each processing thread on its class instance.
     # @Params
     # configuration:    configuration manager by which configurables can be retrieved after populated.
-    def init(configuration):
+    def init(self, configuration):
         #print("init")
         return
     
