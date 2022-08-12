@@ -32,7 +32,7 @@ class PythonScriptTask:
     # TODO: document methods of those objects.
     def finish(self):
         
-        query = "tipo:doc"
+        query = "type:doc"
         
         #set query into searcher
         searcher.setQuery(query)
@@ -49,8 +49,8 @@ class PythonScriptTask:
         #add item ids to created bookmark
         ipedCase.getBookmarks().addBookmark(ids, bookmarkId)
         
-        #save changes
-        ipedCase.getBookmarks().saveState()
+        #save changes synchronously
+        ipedCase.getBookmarks().saveState(True)
     
     
     # Process an Item object. This method is executed on all case items.
