@@ -48,7 +48,7 @@ public class RegRipperParser extends AbstractParser {
     private static String[] cmd;
     private static String TOOL_NAME = "rip"; //$NON-NLS-1$
     private static boolean tested = false;
-    private static String[] regNames = { "sam", "software", "system", "security", "ntuser", "usrclass" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+    private static String[] regNames = { "sam", "software", "system", "security", "ntuser", "usrclass", "amcache" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
     private static Charset charset = Charset.forName("UTF-8"); //$NON-NLS-1$
 
     private RawStringParser rawParser = new RawStringParser();
@@ -106,12 +106,7 @@ public class RegRipperParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
-
-        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-        xhtml.startDocument();
-
+        
         TemporaryResources tmp = new TemporaryResources();
         try {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
@@ -122,62 +117,89 @@ public class RegRipperParser extends AbstractParser {
             for (String regName : regNames)
                 if (filename.toLowerCase().startsWith(regName)) {
                     tempFile = tis.getFile();
-                    String[] params = new String[] { "-f", regName, "-r", tempFile.getAbsolutePath() }; //$NON-NLS-1$ //$NON-NLS-2$
+                    File dir = new File(TOOL_PATH + "/plugins/" + regName);                   
+                    File[] directoryListing = dir.listFiles();
+                    
+                    
+                    if (directoryListing != null) {
+                    	for (File child : directoryListing) {
+                            
+                        	EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                                    new ParsingEmbeddedDocumentExtractor(context));
 
-                    finalCmd = new String[cmd.length + params.length];
-                    for (int i = 0; i < cmd.length; i++)
-                        finalCmd[i] = cmd[i];
-                    for (int i = 0; i < params.length; i++)
-                        finalCmd[cmd.length + i] = params[i];
+                            XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+                            xhtml.startDocument();
+
+
+                    		String[] params = new String[] { "-f", regName + "/" + child.getName(), "-r", tempFile.getAbsolutePath() }; //$NON-NLS-1$ //$NON-NLS-2$
+
+                            finalCmd = new String[cmd.length + params.length];
+                            for (int i = 0; i < cmd.length; i++)
+                                finalCmd[i] = cmd[i];
+                            for (int i = 0; i < params.length; i++)
+                                finalCmd[cmd.length + i] = params[i];
+                            
+                            if (finalCmd != null) {
+                                ProcessBuilder pb = new ProcessBuilder(finalCmd);
+                                if (!TOOL_PATH.isEmpty()) {
+                                    pb.directory(new File(TOOL_PATH));
+                                }
+                                Process p = pb.start();
+
+                                readStream(p.getErrorStream(), null, null);
+
+                                File outFile = tmp.createTemporaryFile();
+                                OutputStream os = new FileOutputStream(outFile);
+                                try {
+                                    ContainerVolatile msg = new ContainerVolatile();
+                                    Thread thread = readStream(p.getInputStream(), os, msg);
+                                    waitFor(p, xhtml, msg);
+                                    // p.waitFor();
+                                    thread.join();
+
+                                } catch (InterruptedException e) {
+                                    p.destroyForcibly();
+                                    throw new TikaException(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
+
+                                } finally {
+                                    os.close();
+                                }
+
+                                Metadata reportMetadata = new Metadata();
+                                
+                                 
+                                if (regName.equalsIgnoreCase(child.getName())) {
+                                	reportMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filename + "-Report"); //$NON-NLS-1$
+                                } else {
+                                	reportMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filename + "-" + child.getName() + "-Report"); //$NON-NLS-1$
+                                }
+                                
+                                reportMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
+                                reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+                                File htmlFile = getHtml(outFile, tmp);
+
+                                if (extractor.shouldParseEmbedded(reportMetadata))
+                                    try (InputStream is = new FileInputStream(htmlFile)) {
+                                        extractor.parseEmbedded(is, xhtml, reportMetadata, true);
+                                    }
+                            }
+                            
+                            xhtml.endDocument();
+                    		
+                    	}
+                    }
                 }
+                 
 
             // indexa strings brutas
             rawParser.parse(tis, handler, metadata, context);
-
-            if (finalCmd != null) {
-                ProcessBuilder pb = new ProcessBuilder(finalCmd);
-                if (!TOOL_PATH.isEmpty()) {
-                    pb.directory(new File(TOOL_PATH));
-                }
-                Process p = pb.start();
-
-                readStream(p.getErrorStream(), null, null);
-
-                File outFile = tmp.createTemporaryFile();
-                OutputStream os = new FileOutputStream(outFile);
-                try {
-                    ContainerVolatile msg = new ContainerVolatile();
-                    Thread thread = readStream(p.getInputStream(), os, msg);
-                    waitFor(p, xhtml, msg);
-                    // p.waitFor();
-                    thread.join();
-
-                } catch (InterruptedException e) {
-                    p.destroyForcibly();
-                    throw new TikaException(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
-
-                } finally {
-                    os.close();
-                }
-
-                Metadata reportMetadata = new Metadata();
-                reportMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filename + "-Report"); //$NON-NLS-1$
-                reportMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
-                reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-                File htmlFile = getHtml(outFile, tmp);
-
-                if (extractor.shouldParseEmbedded(reportMetadata))
-                    try (InputStream is = new FileInputStream(htmlFile)) {
-                        extractor.parseEmbedded(is, xhtml, reportMetadata, true);
-                    }
-            }
-
+            
         } finally {
             tmp.close();
         }
 
-        xhtml.endDocument();
+       
 
     }
 

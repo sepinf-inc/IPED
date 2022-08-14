@@ -402,6 +402,117 @@ function process(e){
 		}
 	}
 	
+	
+	
+	// Custom Regripper Report 
+	var categorias = e.getCategories().toLowerCase();
+	var length = e.getLength();
+	var nome = e.getName().toLowerCase();
+	var ext = e.getExt().toLowerCase();
+	var path = e.getPath().toLowerCase();
+	var tipo = e.getMediaType().toString().toLowerCase()
+	
+	if (
+	   (nome.equals("system-report") && tipo.equals("application/x-windows-registry-report")) ||
+	   (nome.equals("sam-report") && tipo.equals("application/x-windows-registry-report")) ||
+	   (nome.equals("software-report") && tipo.equals("application/x-windows-registry-report")) ||
+	   (nome.equals("security-report") && tipo.equals("application/x-windows-registry-report")) ||
+	   (nome.equals("ntuser.dat-report") && tipo.equals("application/x-windows-registry-report")) ||
+	   (nome.equals("usrclass.dat-report") && tipo.equals("application/x-windows-registry-report"))
+	   
+
+	)
+	{
+		e.addCategory("Registry Full Report")
+	}
+
+	if (tipo.equals("application/x-windows-registry-report")){
+		
+		if (nome.indexOf("-os") !== -1) {
+			e.addCategory("Operational System")
+		}
+
+		if (nome.indexOf("-installed_software") !== -1) {
+			e.addCategory("Installed Apps")
+		}
+
+		if (nome.indexOf("-network") !== -1) {
+			e.addCategory("Network")
+		}
+
+		if (nome.indexOf("-storage") !== -1) {
+			e.addCategory("Storage")
+		}
+
+		if (
+			nome.indexOf("-devices") !== -1 ||
+			nome.indexOf("usbdeview") !== -1
+		) {
+			e.addCategory("Devices")
+		}
+
+		if (nome.indexOf("-program_execution") !== -1) {
+			e.addCategory("Program Execution")
+		}
+
+		if (nome.indexOf("-autorun") !== -1) {
+			e.addCategory("Autorun")
+		}
+
+		if (nome.indexOf("-log") !== -1) {
+			e.addCategory("Log")
+		}
+
+		if (nome.indexOf("-malware") !== -1) {
+			e.addCategory("MALWARE")
+		}
+
+		if (nome.indexOf("-web") !== -1) {
+			e.addCategory("WEB")
+		}
+
+
+
+		if (
+			(nome.indexOf("-users") !== -1) ||
+			(nome.indexOf("-useraccinfo") !== -1)
+		){
+			e.addCategory("General Informations")
+		}
+
+		if 
+			(nome.indexOf("-user_activity") !== -1) 
+		{
+			e.addCategory("User Activity")
+		}
+		
+		if (nome.indexOf("-user_file") !== -1) {
+			e.addCategory("User Files")
+		}
+
+		if (nome.indexOf("-user_network") !== -1) 
+		{
+			e.addCategory("User Network Activity")
+		}
+
+		if (nome.indexOf("-user_config") !== -1) {
+
+			e.addCategory("User Config")
+		}
+
+		if (nome.indexOf("-user_virtual") !== -1) {
+			e.addCategory("User Virtualization")
+		}
+
+		if (nome.indexOf("-user_communications") !== -1) {
+			e.addCategory("User Communications")
+		}
+			
+
+	}
+
+	
+	
 }
 
 

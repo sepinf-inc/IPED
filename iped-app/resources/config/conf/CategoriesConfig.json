@@ -103,6 +103,30 @@
         {"name": "GRRF Files"}
       ]}
     ]},
+
+    {"name": "System Information", "categories":[
+      {"name": "MFT"},
+      {"name": "Operational System"},
+      {"name": "Installed Apps"},
+      {"name": "Network"},
+      {"name": "Storage"},
+      {"name": "Devices"},
+      {"name": "Program Execution"},
+      {"name": "Autorun"},
+      {"name": "Log"},
+      {"name": "MALWARE"},
+      {"name": "Registry Full Report"},
+      {"name": "WEB"},
+      {"name": "Users", "categories":[
+        {"name": "General Informations"},
+        {"name": "User Activity"},
+        {"name": "User Files"},
+        {"name": "User Network Activity"},
+        {"name": "User Config"},
+        {"name": "User Virtualization"},
+        {"name": "User Communications"}
+      ]}
+    ]},
     
     {"name": "Extraction Summary", "mimes": ["application/x-ufed-html-summary"]},
     {"name": "Calls", "mimes": ["application/x-ufed-html-calls", "application/x-ufed-call", "call/x-whatsapp-call", "call/x-telegram-call", "application/x-ios-calllog-db", "application/x-ios8-calllog-db"]},
