@@ -79,7 +79,7 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
   // Cached copy of FieldInfos to prevent it from being re-created on each
   // getFieldInfos call.  Most (if not all) other LeafReader implementations
   // also have a cached FieldInfos instance so this is consistent. SOLR-12878
-  private final FieldInfos fieldInfos;
+  private FieldInfos fieldInfos;
 
   final Map<String,Terms> cachedTerms = new ConcurrentHashMap<>();
 
@@ -119,8 +119,19 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
       }
       metaData = new LeafMetaData(reader.leaves().get(0).reader().getMetaData().getCreatedVersionMajor(), minVersion, null);
     }
-    fieldInfos = FieldInfos.getMergedFieldInfos(in);
-  }
+    try {
+        fieldInfos = FieldInfos.getMergedFieldInfos(in);
+    } catch (IllegalArgumentException e) {
+        // quick and dirty workaround for https://github.com/sepinf-inc/IPED/issues/661
+        String error = e.toString();
+        if (error.contains("cannot change field") && error.contains("to inconsistent index options")) {
+            e.printStackTrace();
+        } else {
+            throw e;
+        }
+    }
+
+}
 
   @Override
   public String toString() {
