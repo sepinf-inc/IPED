@@ -695,11 +695,13 @@ public class IndexItem extends BasicProps {
                     try {
                         oValue = Double.valueOf(value);
                         type = Double.class;
+                        key += ":number";
                     } catch (NumberFormatException e) {
                         Date date = DateUtil.tryToParseDate(value);
                         if (date != null) {
                             oValue = date;
                             type = Date.class;
+                            key += ":date";
                         } else {
                             type = String.class;
                         }
@@ -709,7 +711,7 @@ public class IndexItem extends BasicProps {
             }
 
         }
-        if (type != null) {
+        if (type != null && oValue == value) {
             try {
                 if (type.equals(Double.class)) {
                     oValue = Double.valueOf(value);
@@ -727,7 +729,7 @@ public class IndexItem extends BasicProps {
                         throw new ParseException("Not a date", 0);
                 }
             } catch (NumberFormatException | ParseException e) {
-                // value doesn't match built-in/guessed type, store value in other field as string
+                // value doesn't match built-in type, store value in other field as string
                 key += ":string";
                 type = String.class;
                 typesMap.put(key, type);
