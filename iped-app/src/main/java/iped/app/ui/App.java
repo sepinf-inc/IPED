@@ -798,14 +798,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             @Override
             public boolean dispatchKeyEvent(KeyEvent e) {
                 if (e.isControlDown()) {
-                    if (e.getKeyCode() == KeyEvent.VK_F) {
+                    if (e.getKeyCode() == KeyEvent.VK_Q) {
                         if (e.getID() == KeyEvent.KEY_RELEASED) {
                             toggleGlobalBlurFilter();
                         }
                         // avoid being used as different shortcut (e.g. bookmark key)
                         return true;
                     }
-                    if (e.getKeyCode() == KeyEvent.VK_G) {
+                    if (e.getKeyCode() == KeyEvent.VK_W) {
                         if (e.getID() == KeyEvent.KEY_RELEASED) {
                             toggleGlobalGrayScale();
                         }
