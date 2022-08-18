@@ -127,7 +127,7 @@ public class Extractor {
     protected ArrayList<Chat> extractChatList() throws Exception {
         ArrayList<Chat> l = new ArrayList<>();
         logger.debug("Extracting chat list Android");
-        try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL)) {
+        try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_V2)) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 long chatId = rs.getLong("chatId");
@@ -425,7 +425,10 @@ public class Extractor {
     }
 
     private String getQuery(String name, long size) {
-        String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"";
+        if (searcher != null) {
+            name = searcher.escapeQuery(name);
+        }
+        String query = BasicProps.NAME + ":\"" + name + "\"";
         query += size > 0 ? " && " + BasicProps.LENGTH + ":" + size : "";
         return query;
     }
@@ -522,16 +525,19 @@ public class Extractor {
     }
 
     protected void searchAvatarFileName(Contact contact, List<PhotoData> photos) throws IOException {
-        if (photos == null)
+        if (photos == null || searcher == null)
             return;
         List<IItemReader> result = null;
         String name = null;
         for (PhotoData photo : photos) {
             if (photo.getName() != null) {
                 name = photo.getName() + ".jpg";
-                String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"  -" + BasicProps.LENGTH
-                        + ":0";
-                result = iped.parsers.util.Util.getItems(query, searcher);
+
+                if (searcher != null) {
+                    String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"  -" + BasicProps.LENGTH
+                            + ":0";
+                    result = iped.parsers.util.Util.getItems(query, searcher);
+                }
                 if (result != null && !result.isEmpty()) {
                     break;
                 }
@@ -609,6 +615,12 @@ public class Extractor {
             + "c.name as groupName, c.data as groupData "
             + "from dialogs d LEFT join users u on u.uid=d.did LEFT join chats c on -c.uid=d.did "
             + "order by d.date desc";
+    private static final String CHATS_SQL_V2 = "SELECT -c.uid as chatId,null as chatName,null as chatData, c.name as groupName, c.data as groupData ,d.date"
+            + "            from chats c  LEFT join dialogs d on c.uid=-d.did "
+            + "            UNION "
+            + " SELECT d.did as chatId,u.name as chatName,u.data as chatData, null as groupName, null as groupData, d.date"
+            + "           from dialogs d LEFT join users u on u.uid=d.did "
+            + "            order by date desc";
 
     private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
 

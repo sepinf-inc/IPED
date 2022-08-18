@@ -31,7 +31,7 @@ public class TelegramParserTest extends AbstractPkgTest {
         try (InputStream stream = getStream("test-files/test_telegramCache4.db")) {
             parser.parse(stream, handler, metadata, telegramContext);
 
-            assertEquals(509, telegramtracker.title.size());
+            assertEquals(516, telegramtracker.title.size());
             assertEquals(257, telegramtracker.username.size());
             assertEquals(236, telegramtracker.userphone.size());
             assertEquals(261, telegramtracker.useraccount.size());

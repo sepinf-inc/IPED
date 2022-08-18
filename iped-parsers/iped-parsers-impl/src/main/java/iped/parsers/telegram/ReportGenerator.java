@@ -145,7 +145,8 @@ public class ReportGenerator {
 
         if (thumb == null && m.getMediaHash() != null) {
             List<IItemReader> result = null;
-            result = iped.parsers.util.Util.getItems("hash:" + m.getMediaHash(), searcher);
+            if (searcher != null)
+                result = iped.parsers.util.Util.getItems("hash:" + m.getMediaHash(), searcher);
             if (result != null && !result.isEmpty()) {
                 thumb = result.get(0).getThumb();
             }
