@@ -20,8 +20,9 @@ import org.jfree.data.time.TimePeriod;
 import iped.properties.ExtraProperties;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.timelinegraph.IpedChartsPanel;
+import iped.viewers.timelinegraph.datasets.TimeStampCache;
 
-public class TimeStampCache implements Runnable{
+public class IndexTimeStampCache implements Runnable, TimeStampCache{
     TreeMap<String, Map<String, Map<TimePeriod,ArrayList<Integer>>>> timePeriodClassTimeCacheTree;
     Map<String, Map<TimePeriod,ArrayList<Integer>>> timeStampCacheTree;
 	ArrayList<Class<? extends TimePeriod>> periodClassesToCache = new ArrayList<Class<? extends TimePeriod>>();
@@ -31,7 +32,7 @@ public class TimeStampCache implements Runnable{
 	IMultiSearchResultProvider resultsProvider;
 	IpedChartsPanel ipedChartsPanel;
 	
-	public TimeStampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider) {
+	public IndexTimeStampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider) {
 		this.resultsProvider = resultsProvider;		
 		this.ipedChartsPanel=ipedChartsPanel;
 		timePeriodClassTimeCacheTree = new TreeMap<String, Map<String, Map<TimePeriod,ArrayList<Integer>>>>();
@@ -79,7 +80,7 @@ public class TimeStampCache implements Runnable{
 				synchronized (monitor) {
 					monitor.wait();
 					Date d2 = new Date();
-					System.out.println("Tempo para montar o cache:"+(d2.getTime()-d1.getTime()));
+					System.out.println("Tempo para montar o cache de ["+periodClassesToCache.toString()+"]:"+(d2.getTime()-d1.getTime()));
 					timeStampCacheSemaphore.release();
 				}
 			} catch (InterruptedException e) {
