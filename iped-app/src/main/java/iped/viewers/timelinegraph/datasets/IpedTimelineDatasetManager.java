@@ -1,8 +1,6 @@
 package iped.viewers.timelinegraph.datasets;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,10 +14,11 @@ import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
+import org.jfree.data.xy.AbstractIntervalXYDataset;
 
-import iped.data.IItemId;
 import iped.viewers.timelinegraph.IpedChartsPanel;
-import iped.viewers.timelinegraph.cache.TimeStampCache;
+import iped.viewers.timelinegraph.cache.IndexTimeStampCache;
+import iped.viewers.timelinegraph.datasets.facets.IpedFacetTimelineCache;
 
 public class IpedTimelineDatasetManager {
 	IpedChartsPanel ipedChartsPanel;
@@ -39,6 +38,7 @@ public class IpedTimelineDatasetManager {
     
     CaseSearchFilterListenerFactory cacheFLFactory;
     CaseSearchFilterListenerFactory luceneFLFactory;
+
 	
 	public IpedTimelineDatasetManager(IpedChartsPanel ipedChartsPanel){
 		this.ipedChartsPanel = ipedChartsPanel;
@@ -46,32 +46,32 @@ public class IpedTimelineDatasetManager {
 		cacheFLFactory=new CaseSearchFilterListenerFactory(CachedFilterListener.class);
 		luceneFLFactory=new CaseSearchFilterListenerFactory(LuceneFilterListener.class);
 
-		timeStampCache = new TimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
+		timeStampCache = new IndexTimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
 		timeStampCache.addTimePeriodClassToCache(Day.class);
 		timeStampCacheThread = new Thread(timeStampCache);
 		
-		timeStampCache2 = new TimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
+		timeStampCache2 = new IndexTimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
 		timeStampCache2.addTimePeriodClassToCache(Hour.class);
 		timeStampCacheThread2 = new Thread(timeStampCache2);
 
-		timeStampCache3 = new TimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
+		timeStampCache3 = new IndexTimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
 		timeStampCache3.addTimePeriodClassToCache(Year.class);
 		timeStampCache3.addTimePeriodClassToCache(Quarter.class);
 		timeStampCache3.addTimePeriodClassToCache(Week.class);
 		timeStampCache3.addTimePeriodClassToCache(Month.class);
 		timeStampCacheThread3 = new Thread(timeStampCache3);
 
-		timeStampCache4 = new TimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
+		timeStampCache4 = new IndexTimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
 		timeStampCache4.addTimePeriodClassToCache(Minute.class);
 		timeStampCacheThread4 = new Thread(timeStampCache4);
 
-		timeStampCache5 = new TimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
+		timeStampCache5 = new IndexTimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
 		timeStampCache5.addTimePeriodClassToCache(Second.class);
 		timeStampCacheThread5 = new Thread(timeStampCache5);
     }
 
-	public IpedTimelineDataset getBestDataset(Class<? extends TimePeriod> timePeriodClass, String splitValue){
-		try {/*
+	public AbstractIntervalXYDataset getBestDataset(Class<? extends TimePeriod> timePeriodClass, String splitValue){
+		try {
 			if(timeStampCache.hasTimePeriodClassToCache(timePeriodClass)) {
 				selectedTimeStampCache=timeStampCache;
 				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), cacheFLFactory,splitValue);
@@ -91,9 +91,9 @@ public class IpedTimelineDatasetManager {
 			if(timeStampCache5.hasTimePeriodClassToCache(timePeriodClass)) {
 				selectedTimeStampCache=timeStampCache5;
 				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), cacheFLFactory,splitValue);
-			}*/
-			return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), luceneFLFactory,splitValue);
-			
+			}
+			AbstractIntervalXYDataset res = new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), luceneFLFactory,splitValue);
+			return res;			
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -101,7 +101,7 @@ public class IpedTimelineDatasetManager {
 	}
 
 	public void startBackgroundCaching(){
-		/*
+		
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
@@ -113,11 +113,15 @@ public class IpedTimelineDatasetManager {
 		threadPool.execute(timeStampCacheThread3);//loads the other timeperiodCaches			
 		threadPool.execute(timeStampCacheThread4);//loads the other timeperiodCaches			
 		threadPool.execute(timeStampCacheThread5);//loads the other timeperiodCaches
-		*/			
+					
 	}
 
 	public Map<TimePeriod, ArrayList<Integer>> getCachedEventTimeStamps(String eventType) {
 		return selectedTimeStampCache.getCachedEventTimeStamps(eventType);
+	}
+
+	public IpedChartsPanel getIpedChartsPanel() {
+		return ipedChartsPanel;
 	}
 	
 }
