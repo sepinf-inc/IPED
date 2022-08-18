@@ -120,6 +120,9 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
 		//state.setProcessVisibleItemsOnly(false);
 		return state;
 	}
+	
+	int lastItem = -1;
+	double lastY = 0;
 
     /**
      * Draws the visual representation of a single data item.
@@ -144,6 +147,11 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
             Rectangle2D dataArea, PlotRenderingInfo info, XYPlot plot,
             ValueAxis domainAxis, ValueAxis rangeAxis, XYDataset dataset,
             int series, int item, CrosshairState crosshairState, int pass) {
+    	
+    	if(item!=lastItem) {
+    		lastItem=item;
+    		lastY = 0;    		
+    	}
 
 		plot.getRenderer().setPlot(plot);
 		
@@ -187,33 +195,26 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
         double positiveBase = 0.0;
         double negativeBase = 0.0;
 
-        for (int i = 0; i < series; i++) {
-            double v = dataset.getYValue(i, item);
-            if (!Double.isNaN(v) && isSeriesVisible(i)) {
-                if (v > 0) {
-                    positiveBase = positiveBase + v;
-                }
-                else {
-                    negativeBase = negativeBase + v;
-                }
-            }
-        }
-
         double translatedBase;
         double translatedValue;
         RectangleEdge edgeR = plot.getRangeAxisEdge();
         if (value > 0.0) {
+            positiveBase = lastY;
             translatedBase = rangeAxis.valueToJava2D(positiveBase, dataArea,
                     edgeR);
             translatedValue = rangeAxis.valueToJava2D(positiveBase + value,
                     dataArea, edgeR);
+            lastY = positiveBase + value;
         }
         else {
+        	negativeBase = lastY;
             translatedBase = rangeAxis.valueToJava2D(negativeBase, dataArea,
                     edgeR);
             translatedValue = rangeAxis.valueToJava2D(negativeBase + value,
                     dataArea, edgeR);
+            lastY = negativeBase + value;
         }
+        
 
         double translatedHeight = Math.abs(translatedValue - translatedBase);
         if (getMargin() > 0.0) {

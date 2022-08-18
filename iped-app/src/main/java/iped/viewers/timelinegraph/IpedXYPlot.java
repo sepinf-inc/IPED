@@ -298,49 +298,13 @@ public class IpedXYPlot extends XYPlot{
             int passCount = renderer.getPassCount();
 
             SeriesRenderingOrder seriesOrder = getSeriesRenderingOrder();
-            if (seriesOrder == SeriesRenderingOrder.REVERSE) {
-                //render series in reverse order
-                for (int pass = 0; pass < passCount; pass++) {
-                    int seriesCount = dataset.getSeriesCount();
-                    for (int series = seriesCount - 1; series >= 0; series--) {
-                        int firstItem = 0;
-                        int lastItem = dataset.getItemCount(series) - 1;
-                        if (lastItem == -1) {
-                            continue;
-                        }
-                        state.startSeriesPass(dataset, series, firstItem,
-                                lastItem, pass, passCount);
-                        for (int item = firstItem; item <= lastItem; item++) {
-                            renderer.drawItem(g2, state, dataArea, info, this, xAxis, yAxis, dataset, series, item, crosshairState, pass);
-                        }
-                        state.endSeriesPass(dataset, series, firstItem,
-                                lastItem, pass, passCount);
-                    }
-                }
-            }
-            else {
-                //render series in forward order
-                for (int pass = 0; pass < passCount; pass++) {
-                    int seriesCount = dataset.getSeriesCount();
+            for (int pass = 0; pass < passCount; pass++) {
+                int seriesCount = dataset.getSeriesCount();
+                for (int item = 0; item < dataset.getItemCount(0); item++) {
                     for (int series = 0; series < seriesCount; series++) {
-                        int firstItem = 0;
-                        int lastItem = dataset.getItemCount(series) - 1;
-                        if (state.getProcessVisibleItemsOnly()) {
-                            int[] itemBounds = findLiveItems(
-                                    dataset, series, xAxis.getLowerBound(),
-                                    xAxis.getUpperBound());
-                            firstItem = Math.max(itemBounds[0] - 1, 0);
-                            lastItem = Math.min(itemBounds[1] + 1, lastItem);
-                        }
-                        state.startSeriesPass(dataset, series, firstItem,
-                                lastItem, pass, passCount);
-                        for (int item = firstItem; item <= lastItem; item++) {
-                            renderer.drawItem(g2, state, dataArea, info,
-                                    this, xAxis, yAxis, dataset, series, item,
-                                    crosshairState, pass);
-                        }
-                        state.endSeriesPass(dataset, series, firstItem,
-                                lastItem, pass, passCount);
+                        //state.startSeriesPass(dataset, series, firstItem, lastItem, pass, passCount);
+                        renderer.drawItem(g2, state, dataArea, info, this, xAxis, yAxis, dataset, series, item, crosshairState, pass);
+                        //state.endSeriesPass(dataset, series, firstItem, lastItem, pass, passCount);
                     }
                 }
             }
@@ -552,5 +516,11 @@ public class IpedXYPlot extends XYPlot{
             return Math.max(index, 0);
         }
     }
+
+	@Override
+	public SeriesRenderingOrder getSeriesRenderingOrder() {
+		// TODO Auto-generated method stub
+		return SeriesRenderingOrder.FORWARD;
+	}
     
 }
