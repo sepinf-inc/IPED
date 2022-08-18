@@ -18,7 +18,6 @@ import org.jfree.data.xy.AbstractIntervalXYDataset;
 
 import iped.viewers.timelinegraph.IpedChartsPanel;
 import iped.viewers.timelinegraph.cache.IndexTimeStampCache;
-import iped.viewers.timelinegraph.datasets.facets.IpedFacetTimelineCache;
 
 public class IpedTimelineDatasetManager {
 	IpedChartsPanel ipedChartsPanel;

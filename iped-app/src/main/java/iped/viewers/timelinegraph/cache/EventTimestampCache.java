@@ -22,10 +22,10 @@ class EventTimestampCache implements Runnable {
 	String eventType;
 
 	IMultiSearchResultProvider resultsProvider;
-	TimeStampCache timeStampCache;
+	IndexTimeStampCache timeStampCache;
 	IpedChartsPanel ipedChartsPanel;
 	
-	public EventTimestampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider, TimeStampCache timeStampCache, String eventType) {
+	public EventTimestampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider, IndexTimeStampCache timeStampCache, String eventType) {
 		this.eventType=eventType;
 		this.resultsProvider = resultsProvider;
 		this.timeStampCache = timeStampCache;
