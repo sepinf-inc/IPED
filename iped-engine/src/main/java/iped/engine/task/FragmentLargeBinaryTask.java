@@ -52,7 +52,10 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
 
         if (evidence.getLength() != null && evidence.getLength() >= splitConfig.getMinItemSizeToFragment()
                 && ((!ParsingTask.hasSpecificParser(autoParser, evidence)
-                        && !EmbeddedDiskProcessTask.isSupported(evidence)) || evidence.isTimedOut())
+                        && (!EmbeddedDiskProcessTask.isSupported(evidence)
+                                || !EmbeddedDiskProcessTask.isFirstOrUniqueImagePart(evidence)
+                                || Boolean.valueOf(evidence.getMetadata().get(StandardParser.PARSER_EXCEPTION))))
+                        || evidence.isTimedOut())
                 && evidence.getInputStreamFactory() != null
                 && !evidence.getInputStreamFactory().returnsEmptyInputStream()) {
 
