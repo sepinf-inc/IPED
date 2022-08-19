@@ -1,5 +1,6 @@
 package iped.viewers.timelinegraph;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -19,6 +20,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -44,7 +46,6 @@ import org.jfree.chart.plot.XYPlot;
 
 import iped.app.ui.App;
 import iped.utils.IconUtil;
-import iped.viewers.timelinegraph.datasets.TimeTableCumulativeXYDataset;
 import iped.viewers.timelinegraph.datasets.TimelineDataset;
 import iped.viewers.timelinegraph.popups.ChartPanelPopupMenu;
 import iped.viewers.timelinegraph.popups.DataItemPopupMenu;
@@ -93,8 +94,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	boolean splitByCategory=false;
 	
 	public IpedChartPanel(JFreeChart chart, IpedChartsPanel ipedChartsPanel) {
-		super(chart, false);
-		useBuffer = false;
+		super(chart, true);
+		useBuffer = true;
 
 		this.ipedChartsPanel = ipedChartsPanel;
 		this.setFocusable(true);
@@ -208,17 +209,19 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	@Override
 	public void mouseMoved(MouseEvent e) {
 		int mods = e.getModifiersEx();
-		int x=e.getX();
+		int x=e.getX();		
 		if ((mods & this.filterMask) == this.filterMask){
             setCursor(Cursor.getPredefinedCursor(
                     Cursor.E_RESIZE_CURSOR));
 		}else {
-            setCursor(Cursor.getDefaultCursor());
-            Graphics2D g2 = (Graphics2D) getGraphics();
-            if(lastMouseMoveX>=0) {
-                drawDateCursor(g2, lastMouseMoveX, true);
-            }
-            drawDateCursor(g2, x, true);
+			if(lastMouseMoveX!=x) {
+	            setCursor(Cursor.getDefaultCursor());
+	            Graphics2D g2 = (Graphics2D) getGraphics();
+	            if(lastMouseMoveX>=0) {
+	                drawDateCursor(g2, lastMouseMoveX, true);
+	            }
+	            drawDateCursor(g2, x, true);
+			}
 		}
 		super.mouseMoved(e);
 	}
@@ -404,26 +407,42 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
      */
     private void drawFilterIntervalRectangle(Graphics2D g2, boolean xor) {
         if (this.filterIntervalRectangle != null) {
-            if (xor) {
-                 // Set XOR mode to draw the zoom rectangle
-                g2.setXORMode(Color.GRAY);
-            }
-            g2.setPaint(this.filterIntervalFillPaint);
-            g2.fill(this.filterIntervalRectangle);
-            g2.setPaint(Color.BLACK);
-            g2.setStroke(this.filterLimitStroke);
-            g2.setFont(g2.getFont().deriveFont(affineTransform));//rotate text 90
-            g2.drawLine((int) this.filterIntervalRectangle.getMaxX(),(int) this.filterIntervalRectangle.getMinY(),(int) this.filterIntervalRectangle.getMaxX(),(int) this.filterIntervalRectangle.getMaxY());
-
             String strStartDate = ipedChartsPanel.getDomainAxis().ISO8601DateFormat(startFilterDate);
             String strEndDate = ipedChartsPanel.getDomainAxis().ISO8601DateFormat(endFilterDate); 
-            g2.drawString(strStartDate, (int) this.filterIntervalRectangle.getMinX()+2, (int) this.filterIntervalRectangle.getMinY()+g2.getFontMetrics().getHeight()+2);
-            g2.drawString(strEndDate, (int) this.filterIntervalRectangle.getMaxX()+2, (int) this.filterIntervalRectangle.getMinY()+g2.getFontMetrics().getHeight()+2);
+        	
+        	int w = (int) this.filterIntervalRectangle.getMaxX()-(int) this.filterIntervalRectangle.getMinX();
+            int h = (int) this.filterIntervalRectangle.getMaxY()-(int) this.filterIntervalRectangle.getMinY();
+            BufferedImage bimage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D bg2 = bimage.createGraphics();
+            bg2.setColor(Color.GRAY);
+            bg2.fillRect(0, 0, w, h);
             
+            bg2.setColor(Color.WHITE);
+            AffineTransform at = (AffineTransform ) affineTransform.clone();
+            at.scale(1/0.8, 1/0.8);
+            bg2.setFont(g2.getFont().deriveFont(at));//rotate text 90
+            bg2.setStroke(this.filterLimitStroke);
+            bg2.drawString(strStartDate, 0, 0);
+            bg2.setComposite(AlphaComposite.getInstance(AlphaComposite.DST_OVER));
+            
+            
+            bg2.dispose();
+            
+            if (xor) {
+                // Set XOR mode to draw the zoom rectangle
+               g2.setXORMode(Color.WHITE);
+           }
+            g2.drawImage(bimage, (int) this.filterIntervalRectangle.getMinX(),(int) this.filterIntervalRectangle.getMinY(),null);
+            g2.setPaint(Color.BLACK);
+            g2.setStroke(this.filterLimitStroke);
+            g2.setFont(g2.getFont().deriveFont(at));//rotate text 90
+            g2.drawLine((int) this.filterIntervalRectangle.getMaxX(),(int) this.filterIntervalRectangle.getMinY(),(int) this.filterIntervalRectangle.getMaxX(),(int) this.filterIntervalRectangle.getMaxY());
+            g2.drawString(strEndDate, (int) this.filterIntervalRectangle.getMaxX()+2, (int) this.filterIntervalRectangle.getMinY()+g2.getFontMetrics().getHeight()+2);
             if (xor) {
                 // Reset to the default 'overwrite' mode
                 g2.setPaintMode();
             }
+            
         }
     }
 
@@ -469,10 +488,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
             // Set XOR mode to draw the zoom rectangle
            g2.setXORMode(Color.GRAY);
        }
-       g2.setPaint(Color.BLACK);
-       g2.setStroke(this.filterLimitStroke);
-       g2.setFont(g2.getFont().deriveFont(affineTransform));//rotate text 90
-       
        Rectangle2D screenDataArea = getScreenDataArea(
                x,
                2);
@@ -480,17 +495,35 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
        double maxX = screenDataArea.getMaxX();
        double minX = screenDataArea.getMinX();
        if((x>minX)&&(x<maxX)) {
+    	   
            double minY = screenDataArea.getMinY();
            double maxY = screenDataArea.getMaxY();
 
            double h = screenDataArea.getHeight();
-           g2.drawLine(x,(int)minY,x,(int)maxY);
 
            Date correspondingDate = new Date((long) ipedChartsPanel.domainAxis.java2DToValue(x, this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge()));
            correspondingDate = removeFromDatePart(correspondingDate, Calendar.DAY_OF_MONTH);
 
            String strDate = ipedChartsPanel.getDomainAxis().ISO8601DateFormat(correspondingDate); 
-           g2.drawString(strDate, x+2, (int) minY+g2.getFontMetrics().getHeight()+2);
+           
+
+           int w = 50;
+
+           BufferedImage bimage = new BufferedImage(w, (int) h, BufferedImage.TYPE_INT_ARGB);
+           Graphics2D bg2 = bimage.createGraphics();
+           bg2.setColor(Color.BLACK);
+           AffineTransform at = (AffineTransform ) affineTransform.clone();
+           at.scale(1/0.8, 1/0.8);
+           bg2.setFont(g2.getFont().deriveFont(at));//rotate text 90
+           bg2.setStroke(this.filterLimitStroke);
+           bg2.drawString(strDate, 2, 2);
+           bg2.drawLine(0,0,0,(int)maxY-(int)minY);
+           bg2.setComposite(AlphaComposite.getInstance(AlphaComposite.DST_OVER));
+           
+           bg2.dispose();
+           
+           g2.drawImage(bimage, x, (int) minY,null);
+    	   
        }
 
        lastMouseMoveX=x;
@@ -686,6 +719,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         drawDateCursor(g2, lastMouseMoveX, true);
 		lastMouseMoveX=-1;
 		super.paint(g);
+
 	}
 
 	@Override
@@ -751,5 +785,11 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	@Override
 	public void zoom(Rectangle2D selection) {
 		super.zoom(selection);
+	}
+
+	@Override
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+        drawFilterIntervalRectangle((Graphics2D) g, true);
 	}
 }
