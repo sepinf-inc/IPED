@@ -7,17 +7,13 @@ import java.util.TimeZone;
 
 public class BrowserHistoryEntry {
     private String userSID;
+    private String correlationGuid;
     private Date timestamp;
-    private String locale;
-    private String producer;
-    private String tag;
-    private String fullEventName;
-    private String loggingBinaryName;
-    private String fullEventNameHash;
-    private String keywords;
-    private String groupGUID;
-    private String isCore;
-    private String compressedPayloadSize;
+    private String[] tagNames;
+    private String[] eventNames;
+    private String url;
+    private String[] pageTitles;
+
     private String JSONPayload;
 
     public String getUserSID() {
@@ -26,6 +22,14 @@ public class BrowserHistoryEntry {
 
     public void setUserSID(String userSID) {
         this.userSID = userSID;
+    }
+
+    public String getCorrelationGuid() {
+        return this.correlationGuid;
+    }
+
+    public void setCorrelationGuid(String correlationGuid) {
+        this.correlationGuid = correlationGuid;
     }
 
     public Date getTimestamp() {
@@ -42,84 +46,36 @@ public class BrowserHistoryEntry {
         setTimestamp(format.parse(timestamp));
     }
 
-    public String getLocale() {
-        return this.locale;
+    public void setEventNames(String[] fullEventNames) {
+        this.eventNames = fullEventNames;
     }
 
-    public void setLocale(String locale) {
-        this.locale = locale;
+    public String[] getEventNames() {
+        return this.eventNames;
     }
 
-    public String getProducer() {
-        return this.producer;
+    public void setTagNames(String[] tagNames) {
+        this.tagNames = tagNames;
     }
 
-    public void setProducer(String producer) {
-        this.producer = producer;
+    public String[] getTagNames() {
+        return this.tagNames;
     }
 
-    public String getTag() {
-        return this.tag;
+    public String getUrl() {
+        return this.url;
     }
 
-    public void setTag(String tag) {
-        this.tag = tag;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
-    public String getFullEventName() {
-        return this.fullEventName;
+    public String[] getPageTitles() {
+        return this.pageTitles;
     }
 
-    public void setFullEventName(String fullEventName) {
-        this.fullEventName = fullEventName;
-    }
-
-    public String getLoggingBinaryName() {
-        return this.loggingBinaryName;
-    }
-
-    public void setLoggingBinaryName(String loggingBinaryName) {
-        this.loggingBinaryName = loggingBinaryName;
-    }
-
-    public String getFullEventNameHash() {
-        return this.fullEventNameHash;
-    }
-
-    public void setFullEventNameHash(String fullEventNameHash) {
-        this.fullEventNameHash = fullEventNameHash;
-    }
-
-    public String getKeywords() {
-        return this.keywords;
-    }
-
-    public void setKeywords(String keywords) {
-        this.keywords = keywords;
-    }
-
-    public String getGroupGUID() {
-        return this.groupGUID;
-    }
-
-    public void setGroupGUID(String groupGUID) {
-        this.groupGUID = groupGUID;
-    }
-
-    public String getIsCore() {
-        return this.isCore;
-    }
-
-    public void setIsCore(String isCore) {
-        this.isCore = isCore;
-    }
-
-    public String getCompressedPayloadSize() {
-        return this.compressedPayloadSize;
-    }
-
-    public void setCompressedPayloadSize(String compressedPayloadSize) {
-        this.compressedPayloadSize = compressedPayloadSize;
+    public void setPageTitles(String[] pageTitles) {
+        this.pageTitles = pageTitles;
     }
 
     public String getJSONPayload() {
@@ -128,5 +84,11 @@ public class BrowserHistoryEntry {
 
     public void setJSONPayload(String JSONPayload) {
         this.JSONPayload = JSONPayload;
+        // JSONObject json = new JSONObject(JSONPayload);
+        // JSONObject data = json.getJSONObject("data");
+        // if (data.has("url") && !data.getString("url").isEmpty())
+        //     url = data.getString("url");
+        // correlationGuid = data.getString("CorrelationGuid");
     }
+
 }

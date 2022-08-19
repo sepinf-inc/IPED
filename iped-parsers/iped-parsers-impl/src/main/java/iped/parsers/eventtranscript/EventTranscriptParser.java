@@ -25,6 +25,7 @@ import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLite3Parser;
 
@@ -95,8 +96,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
             throws SQLException, TikaException {
 
         try (BrowserHistoryIterable historyEntriesIterable = new BrowserHistoryIterable(connection)) {
+            int i = 0;
             for (BrowserHistoryEntry historyEntry : historyEntriesIterable) {
-                // System.out.println(historyEntry.getTimestamp());
+                i++;
+                System.out.println("Entry " + i + " ('" + historyEntry.getPageTitles()[0] + "')" + ": " + historyEntry.getUrl());
             }
         } catch (IOException e) {
             throw new TikaException("SQLite EventTranscript parsing exception", e);
@@ -132,17 +135,13 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                     try {
                         historyEntry.setUserSID(rs.getString("UserSID"));
+                        historyEntry.setCorrelationGuid(rs.getString("CorrelationGuid"));
                         historyEntry.setTimestamp(rs.getString("Timestamp"));
-                        historyEntry.setLocale(rs.getString("LocaleName"));
-                        historyEntry.setProducer(rs.getString("ProducerIDText"));
-                        historyEntry.setTag(rs.getString("TagName"));
-                        historyEntry.setFullEventName(rs.getString("FullEventName"));
-                        historyEntry.setLoggingBinaryName(rs.getString("LoggingBinaryName"));
-                        historyEntry.setFullEventNameHash(rs.getString("FullEventNameHash"));
-                        historyEntry.setKeywords(rs.getString("Keywords"));
-                        historyEntry.setGroupGUID(rs.getString("GroupGUID"));
-                        historyEntry.setIsCore(rs.getString("IsCore"));
-                        historyEntry.setCompressedPayloadSize(rs.getString("CompressedPayloadSize"));
+                        historyEntry.setTagNames(rs.getString("TagNames").split(";"));
+                        historyEntry.setEventNames(rs.getString("EventNames").split(";"));
+                        historyEntry.setUrl(rs.getString("URL"));
+                        String pageTitlesStr = rs.getString("PageTitles");
+                        historyEntry.setPageTitles(pageTitlesStr != null ? pageTitlesStr.split(";") : new String[] {""});
                         historyEntry.setJSONPayload(rs.getString("JSONPayload"));
                     } catch (SQLException | ParseException e ) {
                         throw new RuntimeException(e);
@@ -168,38 +167,34 @@ public class EventTranscriptParser extends SQLite3DBParser {
         }
     }
 
-
-    /**
-     * SQLite query based on
-     * https://github.com/EricZimmerman/SQLECmd/blob/master/SQLMap/Maps/Windows_EventTranscriptDB_DataSampling.smap
-     */
-    private String HISTORY_QUERY = "SELECT events_persisted.sid AS UserSID,"
-            + " datetime((events_persisted.timestamp/10000000) - 11644473600, 'unixepoch') AS Timestamp,"
-            + " tag_descriptions.locale_name AS LocaleName,"
-            + " producers.producer_id_text AS ProducerIDText,"
-            + " tag_descriptions.tag_name AS TagName,"
-            + " events_persisted.full_event_name AS FullEventName,"
-            + " events_persisted.logging_binary_name AS LoggingBinaryName,"
-            + " events_persisted.friendly_logging_binary_name AS FriendlyLoggingBinaryName,"
-            + " events_persisted.full_event_name_hash AS FullEventNameHash,"
-            + " events_persisted.event_keywords AS Keywords,"
-            + " provider_groups.group_guid AS GroupGUID,"
-            + " CASE"
-            + " WHEN events_persisted.is_core = 0 THEN"
-            + " 'No'"
-            + " WHEN events_persisted.is_core = 1 THEN"
-            + " 'Yes' ELSE 'Unknown'"
-            + " END AS IsCore,"
-            + " events_persisted.compressed_payload_size AS CompressedPayloadSize,"
-            + " events_persisted.payload AS JSONPayload"
-            + " FROM"
-            + " events_persisted"
-            + " LEFT JOIN producers ON events_persisted.producer_id = producers.producer_id"
-            + " LEFT JOIN event_tags ON events_persisted.full_event_name_hash = event_tags.full_event_name_hash"
-            + " LEFT JOIN tag_descriptions ON event_tags.tag_id = tag_descriptions.tag_id"
-            + " LEFT JOIN provider_groups ON events_persisted.provider_group_id = provider_groups.group_id"
-            + " WHERE"
-            + " TagName = 'Browsing History'"
-            + " ORDER BY"
-            + " events_persisted.timestamp ASC;";
+    private String HISTORY_QUERY = "SELECT"
+        + " UserSID,"
+        + " json_extract(JSONPayload,'$.data.CorrelationGuid') AS CorrelationGuid,"
+        + " Timestamp,"
+        + " replace(group_concat(DISTINCT TagName), ',', ';') AS TagNames,"
+        + " replace(group_concat(DISTINCT EventName), ',', ';') AS EventNames,"
+        + " URL,"
+        + " replace(group_concat(DISTINCT nullif(PageTitle, '')), ',', ';') AS PageTitles,"
+        + " JSONPayload"
+        + " FROM ("
+        + " SELECT events_persisted.sid AS UserSID,"
+        + "     datetime((events_persisted.timestamp/10000000) - 11644473600, 'unixepoch') AS Timestamp,"
+        + "     tag_descriptions.tag_name AS TagName,"
+        + "     events_persisted.full_event_name AS FullEventName,"
+        + "     replace(replace(substr(distinct events_persisted.full_event_name,39),'Microsoft.',''),'WebBrowser.HistoryJournal.HJ_','') as 'EventName',"
+        + "     events_persisted.compressed_payload_size AS CompressedPayloadSize,"
+        + "     json_extract(events_persisted.payload,'$.data.navigationUrl') as URL,"
+        + "     json_extract(events_persisted.payload,'$.data.PageTitle') as PageTitle,"
+        + "     events_persisted.payload AS JSONPayload"
+        + " FROM"
+        + "     events_persisted"
+        + "     LEFT JOIN event_tags ON events_persisted.full_event_name_hash = event_tags.full_event_name_hash"
+        + "     LEFT JOIN tag_descriptions ON event_tags.tag_id = tag_descriptions.tag_id"
+        + "     INNER JOIN provider_groups ON events_persisted.provider_group_id = provider_groups.group_id"
+        + " WHERE"
+        + "     (tag_descriptions.tag_name='Browsing History' AND events_persisted.full_event_name LIKE '%HistoryAddUrl') OR"
+        + "     (tag_descriptions.tag_name='Product and Service Usage' AND events_persisted.full_event_name LIKE '%HistoryAddUrlEx')"
+        + " )"
+        + " GROUP BY CorrelationGuid"
+        + " ORDER BY Timestamp DESC";
 }
