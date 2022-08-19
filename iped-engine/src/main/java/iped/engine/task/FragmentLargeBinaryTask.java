@@ -49,13 +49,14 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
 
     @Override
     protected void process(IItem evidence) throws Exception {
+        
+        boolean hasSpecificParser = ParsingTask.hasSpecificParser(autoParser, evidence);
+        boolean hadParserException = Boolean.valueOf(evidence.getMetadata().get(StandardParser.PARSER_EXCEPTION));
 
         if (evidence.getLength() != null && evidence.getLength() >= splitConfig.getMinItemSizeToFragment()
-                && ((!ParsingTask.hasSpecificParser(autoParser, evidence)
-                        && (!EmbeddedDiskProcessTask.isSupported(evidence)
-                                || !EmbeddedDiskProcessTask.isFirstOrUniqueImagePart(evidence)
-                                || Boolean.valueOf(evidence.getMetadata().get(StandardParser.PARSER_EXCEPTION))))
-                        || evidence.isTimedOut())
+                && (evidence.isTimedOut() || (hasSpecificParser && hadParserException)
+                        || (!hasSpecificParser && (!EmbeddedDiskProcessTask.isSupported(evidence)
+                                || !EmbeddedDiskProcessTask.isFirstOrUniqueImagePart(evidence) || hadParserException)))
                 && evidence.getInputStreamFactory() != null
                 && !evidence.getInputStreamFactory().returnsEmptyInputStream()) {
 
