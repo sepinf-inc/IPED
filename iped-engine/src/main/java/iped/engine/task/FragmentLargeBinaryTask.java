@@ -12,6 +12,7 @@ import iped.engine.datasource.SleuthkitReader;
 import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.TextCache;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.MetadataUtil;
 
 /**
  * Breaks large binary files (indexed by strings) into smaller pieces to be
@@ -21,6 +22,9 @@ import iped.parsers.standard.StandardParser;
  *
  */
 public class FragmentLargeBinaryTask extends BaseCarveTask {
+
+    // workaround for https://github.com/sepinf-inc/IPED/issues/1281
+    private static final long MIN_SPLIT_SIZE_IF_XHTML_OR_ERROR = 1 << 30;
 
     private SplitLargeBinaryConfig splitConfig;
     private StandardParser autoParser;
@@ -47,6 +51,12 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
         return !caseData.isIpedReport();
     }
 
+    public static boolean isXHtmlToSplit(IItem evidence) {
+        return evidence.getLength() != null && evidence.getLength() >= MIN_SPLIT_SIZE_IF_XHTML_OR_ERROR
+                && (MetadataUtil.isHtmlMediaType(evidence.getMediaType())
+                        || MetadataUtil.isHtmlSubType(evidence.getMediaType()));
+    }
+
     @Override
     protected void process(IItem evidence) throws Exception {
         
@@ -54,7 +64,8 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
         boolean hadParserException = Boolean.valueOf(evidence.getMetadata().get(StandardParser.PARSER_EXCEPTION));
 
         if (evidence.getLength() != null && evidence.getLength() >= splitConfig.getMinItemSizeToFragment()
-                && (evidence.isTimedOut() || (hasSpecificParser && hadParserException)
+                && (evidence.isTimedOut() || isXHtmlToSplit(evidence)
+                        || (hasSpecificParser && hadParserException && evidence.getLength() >= MIN_SPLIT_SIZE_IF_XHTML_OR_ERROR)
                         || (!hasSpecificParser && (!EmbeddedDiskProcessTask.isSupported(evidence)
                                 || !EmbeddedDiskProcessTask.isFirstOrUniqueImagePart(evidence) || hadParserException)))
                 && evidence.getInputStreamFactory() != null
