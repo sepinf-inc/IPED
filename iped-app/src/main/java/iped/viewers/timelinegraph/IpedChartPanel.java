@@ -21,6 +21,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -43,6 +44,7 @@ import org.jfree.chart.entity.PlotEntity;
 import org.jfree.chart.entity.XYItemEntity;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.time.TimePeriod;
 
 import iped.app.ui.App;
 import iped.utils.IconUtil;
@@ -246,7 +248,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
             	
         		if (this.filterIntervalRectangle == null) {
         			startFilterDate = new Date((long) ipedChartsPanel.domainAxis.java2DToValue(e.getX(), this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge()));
-        			startFilterDate = removeFromDatePart(startFilterDate, Calendar.DAY_OF_MONTH);
+        			startFilterDate = removeFromDatePart(startFilterDate);
         			
         			Date[] dates = findDefinedFilterDates(startFilterDate);
         			if(dates!=null) {
@@ -300,7 +302,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
                     (int) this.filterIntervalPoint.getX(), (int) this.filterIntervalPoint.getY());
 
             endFilterDate = new Date((long) ipedChartsPanel.domainAxis.java2DToValue(e.getX(), this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge()));
-            endFilterDate = lastdateFromDatePart(endFilterDate, Calendar.DAY_OF_MONTH);
+            endFilterDate = lastdateFromDatePart(endFilterDate);
             
 			Date[] dates = findDefinedFilterDates(endFilterDate);
 			if(dates!=null) {
@@ -446,6 +448,18 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         }
     }
 
+    public Date removeFromDatePart(Date date) {
+    	TimePeriod t;
+		try {
+			t = ipedChartsPanel.getTimePeriodClass().getConstructor(Date.class).newInstance(date);
+	    	return t.getStart();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			e.printStackTrace();
+		}
+    	
+    	return new Date(1999,0,1);
+    }
+    
     public Date removeFromDatePart(Date date, int fromDatePart) {
         Calendar cal = Calendar.getInstance(ipedChartsPanel.getTimeZone());
         cal.setTime(date);
@@ -459,6 +473,18 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         return cal.getTime();
     }
 
+    public Date lastdateFromDatePart(Date date) {
+    	TimePeriod t;
+		try {
+			t = ipedChartsPanel.getTimePeriodClass().getConstructor(Date.class).newInstance(date);
+	    	return t.getEnd();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			e.printStackTrace();
+		}
+    	
+    	return new Date(1999,0,1);
+    }
+    
     public Date lastdateFromDatePart(Date date, int fromDatePart) {
         Calendar cal = Calendar.getInstance(ipedChartsPanel.getTimeZone());
         cal.setTime(date);
@@ -502,7 +528,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
            double h = screenDataArea.getHeight();
 
            Date correspondingDate = new Date((long) ipedChartsPanel.domainAxis.java2DToValue(x, this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge()));
-           correspondingDate = removeFromDatePart(correspondingDate, Calendar.DAY_OF_MONTH);
+           correspondingDate = removeFromDatePart(correspondingDate);
 
            String strDate = ipedChartsPanel.getDomainAxis().ISO8601DateFormat(correspondingDate); 
            
