@@ -303,7 +303,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 .findObject(SplitLargeBinaryConfig.class);
         if (((Item) evidence).getTextCache() == null
                 && ((evidence.getLength() == null || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
-                        || StandardParser.isSpecificParser(parser))) {
+                || (StandardParser.isSpecificParser(parser) && !FragmentLargeBinaryTask.isXHtmlToSplit(evidence)))) {
             try {
                 depth++;
                 ParsingTask task = new ParsingTask(worker, autoParser);

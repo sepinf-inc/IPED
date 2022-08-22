@@ -265,7 +265,7 @@ public class HashDBTool {
                         if (!currProperties.equals(otherProperties)) {
                             Map<Integer, Set<String>> propertiesToAdd = new HashMap<Integer, Set<String>>();
                             Set<Integer> propertiesToRemove = new HashSet<Integer>();
-                            mergeProperties(currProperties, otherProperties, ProcessMode.MERGE, propertiesToAdd,
+                            mergeProperties(otherProperties, currProperties, ProcessMode.MERGE, propertiesToAdd,
                                     propertiesToRemove);
                             if (propertiesToAdd.keySet().equals(propertiesToRemove)) {
                                 if (!updateHashProperties(prevHashId, propertiesToAdd))
@@ -1949,7 +1949,7 @@ public class HashDBTool {
         System.out.println("    delimiter is comma (,).");
         System.out.println();
         System.out.println("Optional parameters to modify columns and values when importing CSVs (not used");
-        System.out.println("for ProjectVIC, NSRL and ICSE. Can be used multiple times. Column names and");
+        System.out.println("for ProjectVIC, NSRL and ICSE). Can be used multiple times. Column names and");
         System.out.println("values used to find columns and lines are case insensitive.");
         System.out.println("  -skipCol <column name>");
         System.out.println("    Skip the specified column.");

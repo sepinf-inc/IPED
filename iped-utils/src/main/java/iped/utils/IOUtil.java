@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 
 import iped.data.IItem;
 import iped.data.IItemReader;
-import iped.localization.Messages;
 
 public class IOUtil {
 

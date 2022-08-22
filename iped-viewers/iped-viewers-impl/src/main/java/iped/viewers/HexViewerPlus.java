@@ -698,7 +698,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                                 new String(hexStringToByteArray(data), codeArea.getCharset()));
                         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
                     } catch (Exception ex) {
-                        ;
+                        ex.printStackTrace();
                     }
                 }
 
@@ -2439,10 +2439,11 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         JButton buttonOK = new JButton(Messages.getString("HexViewerPlus.ok"));
         JButton buttonCancel = new JButton(Messages.getString("HexViewerPlus.cancel"));
 
-        jtfTextoHex.addTextKeyListener(new KeyAdapter() {
+        jtfTextoHex.addActionListener(new ActionListener() {
             @Override
-            public void keyPressed(KeyEvent e) {
-                if ((e.getKeyCode() == KeyEvent.VK_ENTER)) {
+            public void actionPerformed(ActionEvent e) {
+                if (e.getActionCommand().equals("comboBoxEdited")
+                        && jtfTextoHex.getEditor().getEditorComponent().hasFocus()) {
                     buttonOK.doClick();
                 }
             }
@@ -2645,46 +2646,10 @@ class HVPComboField extends JComboBox<String> {
 	private static final long serialVersionUID = 1L;
 	private int base = 10;
     private boolean textAllowed = false;
-    JTextField textfield;
 
     public HVPComboField() {
         super();
         this.setEditable(true);
-        textfield = (JTextField) this.getEditor().getEditorComponent();
-
-        textfield.addKeyListener(new KeyAdapter() {
-
-            @Override
-            public void keyTyped(KeyEvent ev) {
-
-                if (textAllowed) {
-                    return;
-                } else {
-                    char c = ev.getKeyChar();
-                    int k = ev.getKeyCode();
-                    boolean copy = ((ev.getKeyCode() == KeyEvent.VK_C)
-                            && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
-                    boolean paste = ((ev.getKeyCode() == KeyEvent.VK_V)
-                            && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
-
-                    if (isDigitBase(c) || k == KeyEvent.VK_BACK_SPACE || k == KeyEvent.VK_DELETE
-                            || k == KeyEvent.VK_RIGHT || k == KeyEvent.VK_LEFT || k == KeyEvent.VK_ENTER
-                            || k == KeyEvent.VK_KP_LEFT || k == KeyEvent.VK_KP_RIGHT || k == KeyEvent.VK_END
-                            || k == KeyEvent.VK_ESCAPE || k == KeyEvent.VK_HOME || paste || copy) {
-                        return;
-                    } else {
-                        ev.consume();
-                    }
-                }
-
-                return;
-            }
-        });
-
-    }
-
-    public void addTextKeyListener(KeyAdapter ka) {
-        textfield.addKeyListener(ka);
     }
 
     public void setTextAllowed(boolean textAllowed) {
@@ -2712,15 +2677,12 @@ class HVPComboField extends JComboBox<String> {
     }
 
     public String getText() {
-        return textfield.getText();
+        Object o = this.getSelectedItem();
+        return o != null ? o.toString() : "";
     }
 
     public void setText(String text) {
-        textfield.setText(text);
-    }
-
-    public void setHorizontalAlignment(int h) {
-        textfield.setHorizontalAlignment(h);
+        this.setSelectedItem(text);
     }
 
     public boolean isValidNumber() {
