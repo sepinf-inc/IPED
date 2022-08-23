@@ -47,7 +47,6 @@ import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.engine.search.SimilarFacesSearch;
 import iped.engine.search.SimilarImagesSearch;
-import iped.engine.search.TimelineResults;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.viewers.api.CancelableWorker;
@@ -68,7 +67,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     String queryText;
     Query query;
     IPEDSearcher searcher;
-
+    
     public CaseSearcherFilter(String queryText) {
         this.queryText = queryText;
         searcher = new IPEDSearcher(App.get().appCase, queryText);
@@ -90,7 +89,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
         }
     }
 
-    private Query getQueryWithUIFilter() throws ParseException, QueryNodeException {
+    public Query getQueryWithUIFilter() throws ParseException, QueryNodeException {
         Query result;
         numFilters = 0;
         if (queryText != null) {
@@ -175,6 +174,12 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
         return result;
     }
 
+    MultiSearchResult result = null;
+    
+    public MultiSearchResult getDoneResult() {
+    	return this.result;
+    }
+    
     @Override
     public MultiSearchResult doInBackground() {
 
@@ -183,7 +188,6 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
             if (this.isCancelled())
                 return null;
 
-            MultiSearchResult result = null;
             try {
             	for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
             		caseSearchFilterListener.onStart();
@@ -205,7 +209,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                     if (q instanceof MatchAllDocsQuery && (allItemsCache == null || allItemsCache.get() == null))
                         allItemsCache = new SoftReference(result.clone());
                 }
-
+                
                 String filtro = ""; //$NON-NLS-1$
                 if (App.get().filterComboBox.getSelectedItem() != null)
                     filtro = App.get().filterComboBox.getSelectedItem().toString();
@@ -294,6 +298,13 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
             }
 
+        	for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
+        		if(isCancelled()) {
+        			break;
+        		}
+        		caseSearchFilterListener.onDone();
+    		}
+
             return result;
         }
 
@@ -301,13 +312,13 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
     @Override
     public void done() {
-    	for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
-    		caseSearchFilterListener.onDone();
-		}
+    	
     }
 
     @Override
     public boolean doCancel(boolean mayInterruptIfRunning) {
+    	searcher.cancel();
+    	
     	for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
     		caseSearchFilterListener.onCancel(mayInterruptIfRunning);
 		}
