@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -17,12 +16,19 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.ToolTipManager;
 import javax.swing.event.ListSelectionEvent;
@@ -56,6 +62,7 @@ import org.jfree.data.time.TimePeriod;
 import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.DefaultXYDataset;
 import org.jfree.data.xy.XYDataset;
+import org.neo4j.kernel.api.impl.fulltext.analyzer.providers.Finnish;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
@@ -82,6 +89,8 @@ import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
+import iped.viewers.timelinegraph.datasets.AsynchronousDataset;
+import iped.viewers.timelinegraph.datasets.IpedTimelineDataset;
 import iped.viewers.timelinegraph.datasets.IpedTimelineDatasetManager;
 import iped.viewers.timelinegraph.datasets.TimeTableCumulativeXYDataset;
 import iped.viewers.timelinegraph.swingworkers.CheckWorker2;
@@ -94,6 +103,10 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	private DefaultSingleCDockable dockable;
 	CDockableLocationListener dockableLocationListener;
 	IpedTimelineDatasetManager ipedTimelineDatasetManager;
+	
+	static ThreadPoolExecutor swExecutor = new ThreadPoolExecutor(1, 1,
+            20000, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<Runnable>());
 	
 	boolean syncWithTableSelection = false;
 	
@@ -129,6 +142,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	private Locale locale = Locale.getDefault();
 	
 	SortedSetDocValues timeStampValues = null;
+	private RunnableFuture<Void> swRefresh;
+	private HashMap<String, AbstractIntervalXYDataset> result;
 	
 	private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 	
@@ -230,11 +245,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	}
 
 	public HashMap<String, AbstractIntervalXYDataset> createDataSets(){
-		return createDataSetsNew();
-	}
-
-	public HashMap<String, AbstractIntervalXYDataset> createDataSetsNew(){
-		HashMap<String, AbstractIntervalXYDataset> result = new HashMap<String, AbstractIntervalXYDataset>();
+		result = new HashMap<String, AbstractIntervalXYDataset>();
 		try {
 	        IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
 
@@ -253,176 +264,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	        }else {
 				result.put("Items", ipedTimelineDatasetManager.getBestDataset(timePeriodClass, null));
 	        }
-			return result;
-		}catch(Exception e) {
-			e.printStackTrace();
-			return null;			
-		}
-		
-	}
-
-	public HashMap<String, AbstractIntervalXYDataset> createDataSetsOld(){
-		HashMap<String, AbstractIntervalXYDataset> result = new HashMap<String, AbstractIntervalXYDataset>();
-		
-		Date d1 = new Date();
-		CaseSearcherFilter csf = new CaseSearcherFilter("");
-		IMultiSearchResult timelineSearchResults;
-		if(this.applyFilters) {
-			this.applyFilters=false; //do not apply local timeline filters on query used to plot the timeline
-			try {
-   				csf.getSearcher().setNoScoring(true);
-				csf.applyUIQueryFilters();
-				csf.execute();
-				timelineSearchResults = csf.get();
-			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
-				return result;
-			}finally {
-				this.applyFilters=true;
-			}
-		}else {
-			timelineSearchResults = resultsProvider.getResults();
-		}
-		Date d2 = new Date();
-		System.out.println("Criação do resultset:"+(d2.getTime()-d1.getTime()));
-
-		try {
-	        LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
-
-	        Set<String> selectedBookmarks = guiProvider.getSelectedBookmarks();
-	        Set<String> selectedCategories = guiProvider.getSelectedCategories();
-			SortedSetDocValues categoriesValues = null;
-
-            HashSet<AbstractIntervalXYDataset> datasetsToIncludeItem = new HashSet<AbstractIntervalXYDataset>();
-            if(selectedBookmarks.size()>0 && chartPanel.getSplitByBookmark()) {
-            	for (Iterator<String> iterator = selectedBookmarks.iterator(); iterator.hasNext();) {
-					String bookmark = (String) iterator.next();
-					TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset(timeZone, locale);
-					result.put(bookmark, dataset);
-				}
-            }else if(selectedCategories.size()>0 && chartPanel.getSplitByCategory()) {
-            	categoriesValues = reader.getSortedSetDocValues(BasicProps.CATEGORY);
-            	
-            	for (Iterator<String> iterator = selectedCategories.iterator(); iterator.hasNext();) {
-					String category = (String) iterator.next();
-					TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset(timeZone, locale);
-					result.put(LocalizedProperties.getNonLocalizedField(category.toLowerCase()), dataset);
-				}
-            }else{
-            	TimeTableCumulativeXYDataset dataset = new TimeTableCumulativeXYDataset(timeZone, locale);
-            	result.put("Items", dataset);
-            	datasetsToIncludeItem.add(dataset);
-            }
-
-	        IMultiBookmarks multiBookmarks = resultsProvider.getIPEDSource().getMultiBookmarks();
-
-	        SortedSetDocValues timeStampValues;
-	        SortedSetDocValues timeEventGroupValues;
-
-	        int[] eventOrd = new int[Short.MAX_VALUE];
-	        int[][] eventsInDocOrds = new int[Short.MAX_VALUE][1 << 9];
-
-	        timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
-			timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-			BinaryDocValues eventsInDocOrdsValues = reader.getBinaryDocValues(ExtraProperties.TIME_EVENT_ORDS);
-			Date d3 = new Date();
-			System.out.println("Busca dos campos:"+(d3.getTime()-d2.getTime()));
-
-			if(timelineSearchResults.getLength()>0) {
-		        for (IItemId item : timelineSearchResults.getIterator()) {
-		            int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
-
-		            // locate all selected bookmarks corresponding datasets to include item 
-		            if(selectedBookmarks.size()>0 && chartPanel.getSplitByBookmark()) {
-			            datasetsToIncludeItem.clear();
-
-		            	List<String> itemBookmars = multiBookmarks.getBookmarkList(item);
-			            for (Iterator iterator = itemBookmars.iterator(); iterator.hasNext();) {
-							String bookmark = (String) iterator.next();
-							if(selectedBookmarks.contains(bookmark)) {
-								AbstractIntervalXYDataset dataset = result.get(bookmark);
-								datasetsToIncludeItem.add(dataset);
-							}
-						}
-		            }
-
-		            // locate all selected bookmarks corresponding datasets to include item 
-		            if(selectedCategories.size()>0 && chartPanel.getSplitByCategory()) {
-			            datasetsToIncludeItem.clear();
-
-			            categoriesValues.advanceExact(luceneId);
-			            String category = categoriesValues.lookupOrd(categoriesValues.nextOrd()).utf8ToString();
-
-			            AbstractIntervalXYDataset ds = result.get(LocalizedProperties.getNonLocalizedField(category.toLowerCase()));
-			            datasetsToIncludeItem.add(ds);
-		            }
-
-		            String eventsInDocStr = DocValuesUtil.getVal(eventsInDocOrdsValues, luceneId);
-		            if (eventsInDocStr.isEmpty()) {
-		                continue;
-		            }
-		            loadOrdsFromString(eventsInDocStr, eventsInDocOrds);
-
-		            boolean tsvAdv = timeStampValues.advanceExact(luceneId);
-		            boolean tegvAdv = timeEventGroupValues.advanceExact(luceneId);
-
-		            long ord;
-		            short pos = 0;
-		            while (tegvAdv && (ord = timeEventGroupValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-		                for (int k : eventsInDocOrds[pos++]) {
-		                    if (k == -1) {
-		                        break;
-		                    }
-		                    eventOrd[k] = (int) ord;
-		                }
-		            }
-
-		            pos = 0;
-	           		if(item instanceof TimeItemId) {
-	           			//on timeline view
-	           			TimeItemId timeItemId = (TimeItemId) item;
-	               		TimePeriod t = domainAxis.getDateOnConfiguredTimePeriod(timePeriodClass,domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(timeItemId.getTimeStampOrd()).utf8ToString()));
-
-	               		if(t!=null) {
-		               		String events = timeEventGroupValues.lookupOrd(timeItemId.getTimeEventOrd()).utf8ToString();
-		               		StringTokenizer st = new StringTokenizer(events, "|");
-		               		while(st.hasMoreTokens()) {
-		               			String event = st.nextToken().trim();
-
-		            			for (Iterator iterator = datasetsToIncludeItem.iterator(); iterator.hasNext();) {
-									TimeTableCumulativeXYDataset dataset = (TimeTableCumulativeXYDataset) iterator.next();
-									dataset.add(t, 1, event, item, false);
-								}
-		               		}	               		
-	               		}
-	           		}else {
-			            while (tsvAdv && (ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-			                if (ord > Integer.MAX_VALUE) {
-			                    throw new RuntimeException("Integer overflow when converting timestamp ord to int");
-			                }
-
-		               		TimePeriod t = domainAxis.getDateOnConfiguredTimePeriod(timePeriodClass, domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString()));
-
-		               		if(t!=null) {
-			               		String events = timeEventGroupValues.lookupOrd(eventOrd[pos++]).utf8ToString();
-			               		StringTokenizer st = new StringTokenizer(events, "|");
-			               		while(st.hasMoreTokens()) {
-			               			String event = st.nextToken().trim();
-			            			for (Iterator iterator = datasetsToIncludeItem.iterator(); iterator.hasNext();) {
-										TimeTableCumulativeXYDataset dataset = (TimeTableCumulativeXYDataset) iterator.next();
-										dataset.add(t, 1, event, item, false);
-									}
-			               		}
-		               		}else {
-		               			pos++;
-		               		}
-			            }
-	           		}
-		        }
-			}
-			Date d4 = new Date();
-			System.out.println("Preenchimento dos datasets:"+(d4.getTime()-d3.getTime()));
-
 			return result;
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -456,42 +297,102 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         } while (j < len);
         ret[k] = -1;
     }
-
+    
+    Semaphore resultSemaphore = new Semaphore(1);
+    
 	public void refreshChart() {
 		try {
 			IpedChartsPanel self = this;
-        	this.remove(chartPanel);
-            this.add(loadingLabel);
-			this.repaint();
-        	SwingWorker swRefresh = new SwingWorker<Void, Void>() {
+			
+			Runnable drawTicker = new Runnable() {
 				@Override
-				protected Void doInBackground() throws Exception {
-					try {
-						Date d1 = new Date();
-						HashMap<String, AbstractIntervalXYDataset> result = createDataSets();
-						Date d2 = new Date();
-						if(result!=null && result.size()>0) {
-							createChart(result);
-					        isUpdated=true;
-						}
-						Date d3 = new Date();
-		                self.remove(loadingLabel);
-		            	self.add(chartPanel);
-		    			self.repaint();
-						Date d4 = new Date();
-						System.out.println("Criação dos datasets:"+(d2.getTime()-d1.getTime()));
-						System.out.println("Criação do gráfico:"+(d3.getTime()-d2.getTime()));
-						System.out.println("Repintura:"+(d4.getTime()-d3.getTime()));
-						
-					}catch(Exception e) {
-						e.printStackTrace();						
-					}
-	    			
-	    			return null;
+				public void run() {
+					chartPanel.setVisible(false);
+		            self.add(loadingLabel);
 				}
 			};
-			swRefresh.execute();
+			
+			drawTicker.run();
 
+			if(swRefresh!=null) {
+				synchronized (swRefresh) {
+					swRefresh.cancel(true);
+				}
+			}
+
+			resultSemaphore.acquire();
+			if(result!=null) {
+				synchronized (result) {
+					for (AbstractIntervalXYDataset ds: result.values()) {
+						if(ds instanceof AsynchronousDataset) {
+							((AsynchronousDataset)ds).cancel();
+						}
+					}
+				}
+			}
+			resultSemaphore.release();
+
+			swRefresh = new RunnableFuture<Void>() {
+				boolean cancelled = false;
+				boolean isDone = false;
+				
+				@Override
+				public boolean cancel(boolean mayInterruptIfRunning) {
+					return cancelled = true;
+				}
+
+				@Override
+				public boolean isCancelled() {
+					return cancelled;
+				}
+
+				@Override
+				public boolean isDone() {
+					return isDone;
+				}
+				
+				@Override
+				public Void get() throws InterruptedException, ExecutionException {
+					return null;
+				}
+
+				@Override
+				public Void get(long timeout, TimeUnit unit)
+						throws InterruptedException, ExecutionException, TimeoutException {
+					return null;
+				}
+
+				@Override
+				public void run() {
+					try {
+						createDataSets();
+						resultSemaphore.release();
+						if(!isCancelled()) {
+							JFreeChart chart = null;
+							if(result!=null && result.size()>0) {
+								chart = createChart(result);
+						        isUpdated=true;
+							}
+							
+							if(chart!=null) {
+								SwingUtilities.invokeLater(new Runnable() {
+									public void run() {
+						                self.remove(loadingLabel);
+						            	self.add(chartPanel);
+										chartPanel.setVisible(true);
+									}
+								});
+							}
+						}
+					}catch(Exception e) {
+						e.printStackTrace();
+					}finally {
+					}
+				}
+			};
+			
+			resultSemaphore.acquire();
+			swExecutor.execute(swRefresh);
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -530,13 +431,17 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 			public void changed(CDockableLocationEvent dockableEvent) {
 				if(!isUpdated && dockableEvent.isShowingChanged()) {
 	    			self.refreshChart();
-	    			self.repaint();
 				}	
 			}
 		};
 		
         dockable.addCDockableLocationListener(dockableLocationListener);
-        
+	}
+	
+	public void cancel() {
+		if(swRefresh!=null) {
+			swRefresh.cancel(true);
+		}
 	}
 
 	@Override
@@ -713,7 +618,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     	combinedPlot.removeAllDataSets();
 
     	combinedPlot.setSkipFireEventChange(false);
+
     	combinedPlot.fireChangeEvent();
+
     	combinedPlot.setSkipFireEventChange(true);
 
         XYItemRenderer renderer = getRenderer();
@@ -728,6 +635,16 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	        rangeAxis.setUpperMargin(0.10);  // leave some space for item labels
 
 	        AbstractIntervalXYDataset dataset = (AbstractIntervalXYDataset)datasets.get(marcador);
+	        
+	        boolean canceled = false;
+	        if(dataset instanceof AsynchronousDataset) {
+	        	canceled = ((AsynchronousDataset) dataset).waitLoaded();	        	
+	        }
+	        if(canceled) {
+	        	combinedPlot.setSkipFireEventChange(false);
+		    	combinedPlot.fireChangeEvent();
+	        	return null;
+	        }
 	        XYPlot plot = new IpedXYPlot(chartPanel, dataset, domainAxis, rangeAxis, renderer);
 	        if(firstPlot==null) {
 	        	firstPlot=plot;
@@ -738,7 +655,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     	combinedPlot.setSkipFireEventChange(false);
     	combinedPlot.fireChangeEvent();
-
+    	
         return chart;
     }
 

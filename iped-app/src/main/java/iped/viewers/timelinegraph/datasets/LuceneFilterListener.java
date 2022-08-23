@@ -3,7 +3,11 @@ package iped.viewers.timelinegraph.datasets;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 import org.apache.lucene.index.LeafReader;
@@ -24,6 +28,7 @@ import iped.engine.search.MultiSearchResult.ItemIdIterator;
 import iped.engine.task.index.IndexItem;
 import iped.properties.ExtraProperties;
 import iped.search.IMultiSearchResult;
+import iped.viewers.api.CancelableWorker;
 import iped.viewers.timelinegraph.datasets.IpedTimelineDataset.Accumulator;
 
 public class LuceneFilterListener implements CaseSearchFilterListener{
@@ -51,8 +56,9 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 	
     SliceCounter[] scs=null;
     int slices;
+	private boolean cancelled;
     
-	public class SliceCounter implements Runnable{
+	public class SliceCounter extends CancelableWorker<Void, Void> {
 		int start;
 	    int valueCount[]=null;
 	    ArrayList<IItemId> docIds[];
@@ -65,22 +71,34 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 		}
 		
 		@Override
-		public void run() {
+		public Void doInBackground() {
 			try {
 				threadAccumulator = ipedTimelineDataset.new Accumulator();
 
 				IMultiSearchResult ipedResult = csf.get();
 				LeafReader reader = ipedTimelineDataset.reader;
 
+	        	if(isCancelled()) {
+	        		return null;
+	        	}
 				SortedSetDocValues docValuesSet = reader.getSortedSetDocValues(eventField);
+
+				if(isCancelled()) {
+	        		return null;
+	        	}
 				eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-	            SortedDocValues docValues=null;
+	            
+				SortedDocValues docValues=null;
 	            LookupOrd lo;
 				if(docValuesSet==null) {
+		        	if(isCancelled()) {
+		        		return null;
+		        	}
 					docValues = reader.getSortedDocValues(eventField);
+					
 					if(docValues==null) {
 						System.out.println("Evento não contabilizado:"+eventField);
-						return;
+						return null;
 					}
 					lo = new MetadataPanel.LookupOrdSDV(docValues);
 	            	valueCount=new int[(int)docValues.getValueCount()];
@@ -97,6 +115,9 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 				iterator.setPos(start);
 				int count=0;
 		        while(iterator.hasNext()) {
+		        	if(isCancelled()) {
+		        		return null;
+		        	}
 		        	if(count>=THREAD_SLICE_COUNT) {
 		        		break;
 		        	}
@@ -106,14 +127,17 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 		        	
 					if(bookmark!=null && ipedTimelineDataset.ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
 		            	if(multiBookmarks.hasBookmark(item, bookmark)) {
-		            		process(item, docValuesSet, docValues, valueCount, docIds);
+		            		processItem(item, docValuesSet, docValues, valueCount, docIds);
 		            	}
 					}else {
-	            		process(item, docValuesSet, docValues, valueCount, docIds);
+						processItem(item, docValuesSet, docValues, valueCount, docIds);
 					}
 		        }
 				
 				for(int i=0;i<valueCount.length;i++) {
+		        	if(isCancelled()) {
+		        		return null;
+		        	}
 					if(valueCount[i]>0) {
 						threadAccumulator.addValue(new ValueCount(lo, i, valueCount[i]), docIds[i], eventType);
 					}
@@ -126,10 +150,12 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 					scs.notify();
 				}
 			}
+			
+			return null;
 		}
 	}
 
-	public void process(IItemId item, SortedSetDocValues docValuesSet, SortedDocValues docValues, int[] valueCount, ArrayList<IItemId>[] docIds) {
+	public void processItem(IItemId item, SortedSetDocValues docValuesSet, SortedDocValues docValues, int[] valueCount, ArrayList<IItemId>[] docIds) {
         int doc = App.get().appCase.getLuceneId(item);
         try {
     		if(docValuesSet != null) {
@@ -180,86 +206,21 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
         return ords;
     }
 
-	public void onDone2() {
-		try {
-			IMultiSearchResult ipedResult = csf.get();
-			
-			eventField = ipedTimelineDataset.ipedChartsPanel.getTimeEventColumnName(eventType);
-
-			if(ipedResult.getLength()>0) {
-				
-				THREAD_SLICE_COUNT = 10000;
-				int countslices = (int) Math.ceil((double)ipedResult.getLength()/(double)THREAD_SLICE_COUNT);
-				slices = countslices;
-				scs = new SliceCounter[slices];
-				
-				for(int i=0; i<countslices; i++) {
-					scs[i] = new SliceCounter(i*THREAD_SLICE_COUNT);
-				}
-				
-				ExecutorService threadPool = csf.getThreadPool();
-
-				Thread consumer = new Thread(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							synchronized (scs) {
-								while(slices>0) {
-									scs.wait();
-
-									for(int i=0; i<countslices; i++) {
-										if(scs[i].finished && !scs[i].merged) {
-											ipedTimelineDataset.accumulator.merge(scs[i].threadAccumulator);
-											scs[i].merged=true;
-											slices--;//consumed countdown
-										}
-									}
-								}
-							}
-						}catch (Exception e) {
-							e.printStackTrace();
-						}finally {
-							ipedTimelineDataset.running--;
-							if(ipedTimelineDataset.running==0) {
-								synchronized (ipedTimelineDataset.monitor) {
-									ipedTimelineDataset.monitor.notifyAll(); 
-								}
-					        }
-						}
-					}
-				});
-				consumer.start();
-
-				for(int i=0; i<countslices; i++) {
-					threadPool.execute(scs[i]);//producers
-				}
-				
-			}else {
-				ipedTimelineDataset.running--;
-				if(ipedTimelineDataset.running==0) {
-					synchronized (ipedTimelineDataset.monitor) {
-						ipedTimelineDataset.monitor.notifyAll(); 
-					}
-		        }
-			}
-
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
 	public void onDone() {
 		try {
-			IMultiSearchResult ipedResult = csf.get();
+			IMultiSearchResult ipedResult = csf.getDoneResult();
 			
 			if(ipedResult.getLength()>0) {
+				
 				LeafReader reader = ipedTimelineDataset.reader;
 
 				this.eventField = ipedTimelineDataset.ipedChartsPanel.getTimeEventColumnName(this.eventType);
 	            int valueCount[]=null;
 	            ArrayList<IItemId> docIds[];
 
+	            if(isCancelled()) {
+	            	throw new InterruptedException();
+	            }
 				SortedSetDocValues docValuesSet = reader.getSortedSetDocValues(this.eventField);
 	            SortedDocValues docValues=null;
 	            LookupOrd lo;
@@ -281,16 +242,23 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 
 				MultiSearchResult.ItemIdIterator iterator = (ItemIdIterator) ipedResult.getIterator();
 		        for (IItemId item : iterator) {
+		            if(isCancelled()) {
+		            	throw new InterruptedException();
+		            }
+
 					if(bookmark!=null && ipedTimelineDataset.ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
 		            	if(multiBookmarks.hasBookmark(item, bookmark)) {
-		            		process(item, docValuesSet, docValues, valueCount, docIds);
+		            		processItem(item, docValuesSet, docValues, valueCount, docIds);
 		            	}
 					}else {
-	            		process(item, docValuesSet, docValues, valueCount, docIds);
+						processItem(item, docValuesSet, docValues, valueCount, docIds);
 					}
 		        }
 				
 				for(int i=0;i<valueCount.length;i++) {
+		            if(isCancelled()) {
+		            	throw new InterruptedException();
+		            }
 					if(valueCount[i]>0) {
 	    	        	ipedTimelineDataset.addValue(new ValueCount(lo, i, valueCount[i]), docIds[i], eventType);						
 					}
@@ -299,18 +267,13 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 			}
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			if(!(e instanceof InterruptedException)) {
+				e.printStackTrace();
+			}
 		}finally {
-			ipedTimelineDataset.running--;
-			if(ipedTimelineDataset.running==0) {
-				synchronized (ipedTimelineDataset.monitor) {
-					ipedTimelineDataset.monitor.notifyAll(); 
-				}
-	        }
+			ipedTimelineDataset.threadCountSem.release();
 		}
 	}
-		
 
 	private String getRealEventName(IMultiSearchResult result, String eventType) {
 		// TODO Auto-generated method stub
@@ -319,9 +282,22 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 
 	@Override
 	public void onCancel(boolean mayInterruptIfRunning) {
+		if(scs!=null) {
+			for (int i = 0; i < scs.length; i++) {
+				if(scs[i]!=null) {
+					scs[i].cancel(mayInterruptIfRunning);
+				}
+			}
+		}
+		cancelled = true;
+	}
+
+	public boolean isCancelled() {
+		return cancelled;
 	}
 
 	@Override
 	public void init() {
+		
 	}
 }

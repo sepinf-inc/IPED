@@ -10,6 +10,7 @@ import java.util.SortedSet;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -41,7 +42,7 @@ import iped.viewers.timelinegraph.IpedChartsPanel;
 
 public class IpedTimelineDataset extends AbstractIntervalXYDataset
 									implements Cloneable, PublicCloneable, IntervalXYDataset, DomainInfo, TimelineDataset,
-									TableXYDataset, XYDomainInfo {
+									TableXYDataset, XYDomainInfo, AsynchronousDataset {
     IMultiSearchResultProvider resultsProvider;    
     CaseSearchFilterListenerFactory cacheFLFactory;
     
@@ -117,6 +118,10 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 	volatile int seriesCount=0;
 	Object monitor = new Object();
 	private String splitValue;
+	private ArrayList<CaseSearcherFilter> csfs;
+	private boolean cancelled=false;
+	
+	Semaphore threadCountSem;
 
 	public IpedTimelineDataset(IpedTimelineDatasetManager ipedTimelineDatasetManager, IMultiSearchResultProvider resultsProvider, CaseSearchFilterListenerFactory cacheFLFactory, String splitValue) throws Exception {
 		this.ipedChartsPanel = ipedTimelineDatasetManager.ipedChartsPanel;
@@ -136,7 +141,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 		TermsEnum te = timeEventGroupValues.termsEnum();
 		BytesRef br = te.next();
 
-		List<CaseSearcherFilter> csfs = new ArrayList<CaseSearcherFilter>();
+		csfs = new ArrayList<CaseSearcherFilter>();
 		while(br!=null) {
        		StringTokenizer st = new StringTokenizer(br.utf8ToString(), "|");
        		while(st.hasMoreTokens()) {
@@ -174,21 +179,38 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
        		br = te.next();
 		}
 
-		eventTypesArray=new String[running];
+		threadCountSem = new Semaphore(running);
+		threadCountSem.acquire(running);
 		
 		for(CaseSearcherFilter csf:csfs) {
 			csf.setThreadPool(slicesThreadPool);
 			queriesThreadPool.execute(csf);
 		}
-		
+    }
+	
+	@Override
+	public boolean waitLoaded() {
 		try {
-			synchronized (monitor) {
-				monitor.wait();				
-			}
+			threadCountSem.acquire(running);
+			threadCountSem.release(running);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+			cancelled=true;
 		}
-    }
+		return cancelled;
+	}
+	
+	public void cancel() {
+		for(CaseSearcherFilter csf:csfs) {
+			csf.getSearcher().cancel();
+			csf.doCancel(true);
+		}
+		cancelled=true;
+		threadCountSem.release(running);
+		synchronized (monitor) {
+			monitor.notifyAll();
+		}
+	}
 
 	/**
      * Returns a flag that controls whether the domain is treated as 'points in
@@ -603,7 +625,10 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 	}
 
 	@Override
-	public Range getDomainBounds(List visibleSeriesKeys, boolean includeInterval) {		
+	public Range getDomainBounds(List visibleSeriesKeys, boolean includeInterval) {
+		if(accumulator.min==null) {
+			return new Range(0,0);
+		}
 		return new Range(accumulator.min.getStart().getTime(), accumulator.max.getEnd().getTime());
 	}
 	
