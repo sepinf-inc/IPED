@@ -122,7 +122,7 @@ public class CachedFilterListener implements CaseSearchFilterListener{
 
 	@Override
 	public void onCancel(boolean mayInterruptIfRunning) {
-		canceled = true;
+		cancelled = true;
 	}
 
 }
