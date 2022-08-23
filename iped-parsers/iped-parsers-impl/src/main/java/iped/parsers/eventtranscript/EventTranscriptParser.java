@@ -2,6 +2,8 @@ package iped.parsers.eventtranscript;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -20,14 +22,22 @@ import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLite3Parser;
+import iped.parsers.sqlite.detector.SQLiteContainerDetector;
+import iped.parsers.standard.StandardParser;
+import iped.parsers.util.ToXMLContentHandler;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
+import iped.utils.EmptyInputStream;
 
 /**
  * @author Felipe Farias da Costa <felipecostasdc@gmail.com>
@@ -43,7 +53,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(EVENT_TRANSCRIPT);
 
-    // Option to extract each history event registry as a subitem.
+    // extract each history entry as a subitem.
     private boolean extractEntries = true;
 
     // Fallback parser
@@ -74,10 +84,47 @@ public class EventTranscriptParser extends SQLite3DBParser {
         TikaInputStream tis = TikaInputStream.get(stream, tmp);
         File browserHistoryFile = tmp.createTemporaryFile();
 
-        try (Connection connection = getConnection(stream, metadata, context)) {
+        if (new SQLiteContainerDetector().detect(tis, metadata) != EVENT_TRANSCRIPT) {
+            sqliteParser.parse(stream, handler, metadata, context);
+            return;
+        }
 
-            historyEntries(connection, metadata, context);
+        try (Connection connection = getConnection(tis, metadata, context)) {
 
+            try (FileOutputStream tmpHistoryFile = new FileOutputStream(browserHistoryFile)) {
+
+                ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-16");
+
+                Metadata metadataHistory = new Metadata();
+                metadataHistory.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST.toString());
+                metadataHistory.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Browser History");
+                metadataHistory.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                metadataHistory.set(BasicProps.HASCHILD, "true");
+                metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+                try (BrowserHistoryIterable historyEntriesIterable = new BrowserHistoryIterable(connection)) {
+                    XHTMLContentHandler xHandler = startBrowserHistoryParsing(historyHandler, metadataHistory);
+
+                    int i = 0;
+                    for (BrowserHistoryEntry historyEntry : historyEntriesIterable) {
+                        emitHistoryEntry(xHandler, historyEntry, i++);
+
+                        System.out.println(i + ": " + historyEntry.getUrl());
+
+                        if (extractEntries) {
+                            Metadata metadataHistoryEntry = getHistoryEntryMetadata(historyEntry, i);
+                            extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistoryEntry, true);
+                        }
+                    }
+
+                    xHandler.endElement("table");
+                    xHandler.endDocument();
+
+                    try (FileInputStream fis = new FileInputStream(browserHistoryFile)) {
+                        extractor.parseEmbedded(fis, handler, metadataHistory, true);
+                    }
+                }
+            }
 
         } catch (Exception e) {
 
@@ -86,24 +133,83 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
         } finally {
             tmp.close();
-
-
         }
         
     }
 
-    protected void historyEntries(Connection connection, Metadata metadata, ParseContext context)
-            throws SQLException, TikaException {
+    private Metadata getHistoryEntryMetadata(BrowserHistoryEntry historyEntry, int i) throws ParseException {
+        Metadata metadataHistoryEntry = new Metadata();
 
-        try (BrowserHistoryIterable historyEntriesIterable = new BrowserHistoryIterable(connection)) {
-            int i = 0;
-            for (BrowserHistoryEntry historyEntry : historyEntriesIterable) {
-                i++;
-                System.out.println("Entry " + i + " ('" + historyEntry.getPageTitles()[0] + "')" + ": " + historyEntry.getUrl());
-            }
-        } catch (IOException e) {
-            throw new TikaException("SQLite EventTranscript parsing exception", e);
-        }
+        metadataHistoryEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST_REG.toString());
+        metadataHistoryEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Browser History Entry " + i);
+        metadataHistoryEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        metadataHistoryEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
+        metadataHistoryEntry.set(BasicProps.LENGTH, "");
+
+        metadataHistoryEntry.add(TikaCoreProperties.TITLE, String.join("; ", historyEntry.getPageTitles()));
+        metadataHistoryEntry.set(ExtraProperties.ACCESSED, historyEntry.getTimestamp());
+        metadataHistoryEntry.set(ExtraProperties.VISIT_DATE, historyEntry.getTimestamp());
+        metadataHistoryEntry.add(ExtraProperties.URL, historyEntry.getUrl());
+
+        return metadataHistoryEntry;
+    }
+
+    private XHTMLContentHandler startBrowserHistoryParsing(ContentHandler handler, Metadata metadata) throws SAXException {
+        XHTMLContentHandler xHandler = null;
+
+        xHandler = new XHTMLContentHandler(handler, metadata);
+        xHandler.startDocument();
+
+        xHandler.startElement("head");
+        xHandler.startElement("style");
+        xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}");
+        xHandler.endElement("style");
+        xHandler.endElement("head");
+
+        xHandler.startElement("h2 align=center");
+        xHandler.characters("Event Transcript Browser History");
+        xHandler.endElement("h2");
+        xHandler.startElement("br");
+        xHandler.startElement("br");
+
+        xHandler.startElement("table");
+        xHandler.startElement("tr");
+
+        xHandler.startElement("th");
+        xHandler.characters("");    // idx
+        xHandler.endElement("th");
+        xHandler.startElement("th");
+        xHandler.characters("Page Title(s)");
+        xHandler.endElement("th");
+        xHandler.startElement("th");
+        xHandler.characters("Visit Date (UTC)");
+        xHandler.endElement("th");
+        xHandler.startElement("th");
+        xHandler.characters("URL");
+        xHandler.endElement("th");
+
+        xHandler.endElement("tr");
+
+        return xHandler;
+    }
+
+    private void emitHistoryEntry(XHTMLContentHandler xHandler, BrowserHistoryEntry historyEntry, int idx) throws SQLException, TikaException, SAXException {
+        xHandler.startElement("tr");
+
+        xHandler.startElement("td");
+        xHandler.characters(String.valueOf(idx));
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(String.join("; ", historyEntry.getPageTitles()));
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(historyEntry.getTimestampStr());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(historyEntry.getUrl());
+        xHandler.endElement("td");
+
+        xHandler.endElement("tr");
     }
 
 

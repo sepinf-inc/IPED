@@ -9,6 +9,7 @@ public class BrowserHistoryEntry {
     private String userSID;
     private String correlationGuid;
     private Date timestamp;
+    private String timestampStr;
     private String[] tagNames;
     private String[] eventNames;
     private String url;
@@ -41,9 +42,14 @@ public class BrowserHistoryEntry {
     }
 
     public void setTimestamp(String timestamp) throws ParseException {
+        this.timestampStr = timestamp;
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         setTimestamp(format.parse(timestamp));
+    }
+
+    public String getTimestampStr() {
+        return this.timestampStr;
     }
 
     public void setEventNames(String[] fullEventNames) {
@@ -84,11 +90,6 @@ public class BrowserHistoryEntry {
 
     public void setJSONPayload(String JSONPayload) {
         this.JSONPayload = JSONPayload;
-        // JSONObject json = new JSONObject(JSONPayload);
-        // JSONObject data = json.getJSONObject("data");
-        // if (data.has("url") && !data.getString("url").isEmpty())
-        //     url = data.getString("url");
-        // correlationGuid = data.getString("CorrelationGuid");
     }
 
 }
