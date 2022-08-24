@@ -363,6 +363,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 					timelineSelectionPopupMenu.show(e.getComponent(), e.getX(), e.getY());
 
                     mouseOverDates=filterDates;
+                    this.setRefreshBuffer(true);
+                    repaint();
                 }
                 this.filterIntervalPoint = null;
                 this.filterIntervalRectangle = null;
