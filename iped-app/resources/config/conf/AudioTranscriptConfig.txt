@@ -5,12 +5,14 @@
 # you should download it from https://alphacephei.com/vosk/models and put in 'models/vosk/[lang]' folder.
 implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 
-# Uses a local wav2vec2 implementation for transcription. Accuracy is much better than most Vosk models.
-# This is AT LEAST 1 order of magnitude slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
-# You must install 'huggingsound' library in iped internal python to enable this:
-# pip install huggingsound
-# In the first run, it will download the model defined in 'huggingFaceModel' param below, you must configure it.
-#implementationClass = iped.engine.task.transcript.Wav2Vec2TranscriptTask
+# Uses a local/remote wav2vec2 implementation for transcription. Accuracy is much better than most Vosk models.
+# The local impl is AT LEAST 1 order of magnitude slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
+# The remote impl is useful if you have a central server/cluster with many GPUs to be shared among processing nodes.
+# For both the local or remote options, please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#wav2vec2).
+# If you use the remote implementation, you must set 'wav2vec2Service' param below.
+# If you use the local implementation, you must set 'huggingFaceModel' param below.
+# implementationClass = iped.engine.task.transcript.Wav2Vec2TranscriptTask
+# implementationClass = iped.engine.task.transcript.RemoteWav2Vec2TranscriptTask
 
 # If you want to use the Microsoft Azure service implementation, comment above and uncomment below.
 # You must pass your subscription key using command line parameter -XazureSubscriptionKey=XXXXXXXX
@@ -35,6 +37,8 @@ implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 # There are similar models for other languages in the same repo.
 # huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-portuguese
 
+# IP:PORT of the service/central node used by the RemoteWav2Vec2TranscriptTask implementation.
+# wav2vec2Service = 127.0.0.1:54321
 
 # Minimum word score to include the word in transcription result. Applies just to Vosk implementation.
 minWordScore = 0.5
