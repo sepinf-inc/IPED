@@ -32,6 +32,8 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     private static final int MAX_CONNECT_ERRORS = 60;
 
+    private static final int RETRY_INTERVAL_MILLIS = 100;
+
     private static List<Server> servers = new ArrayList<>();
 
     private static int currentServer = -1;
@@ -128,6 +130,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
         while (true) {
             Server server = getServer();
+            long requestTime = System.currentTimeMillis();
             try (Socket serverSocket = new Socket(server.ip, server.port);
                     InputStream is = serverSocket.getInputStream();
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -138,7 +141,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 String response = reader.readLine();
                 if (response == null || MESSAGES.BUSY.toString().equals(response)) {
                     logger.debug("Transcription server {} busy, trying another one.", server);
-                    Thread.sleep(100);
+                    sleepBeforeRetry(requestTime);
                     continue;
                 }
                 if (!MESSAGES.ACCEPTED.toString().equals(response)) {
@@ -182,13 +185,20 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                     if (numConnectErrors.get() / this.worker.manager.getNumWorkers() >= MAX_CONNECT_ERRORS) {
                         throw new IPEDException("Too many connection errors to transcription server, maybe it is down.");
                     }
-                    Thread.sleep(100);
+                    sleepBeforeRetry(requestTime);
                 } else {
                     e.printStackTrace();
                 }
             }
         }
 
+    }
+
+    private static void sleepBeforeRetry(long lastRequestTime) throws InterruptedException {
+        long sleep = RETRY_INTERVAL_MILLIS - (System.currentTimeMillis() - lastRequestTime);
+        if (sleep > 0) {
+            Thread.sleep(sleep);
+        }
     }
 
 }
