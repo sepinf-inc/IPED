@@ -21,9 +21,23 @@ public class RemoteWav2Vec2Discovery {
     private static Map<String, Long> servers = new ConcurrentHashMap<>();
     private static int port;
 
+    private static void printHelpAndExit() {
+        System.out.println("You must pass a free PORT number as parameter!");
+        System.exit(1);
+    }
+
     public static void main(String[] args) {
 
-        port = Integer.parseInt(args[0]);
+        if (args.length != 1) {
+            printHelpAndExit();
+        }
+
+        try {
+            port = Integer.parseInt(args[0]);
+
+        } catch (NumberFormatException e) {
+            printHelpAndExit();
+        }
 
         try (ServerSocket server = new ServerSocket(port)) {
 

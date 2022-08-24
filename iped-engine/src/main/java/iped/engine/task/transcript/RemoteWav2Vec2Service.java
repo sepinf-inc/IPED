@@ -44,7 +44,25 @@ public class RemoteWav2Vec2Service {
 
     private static Logger logger;
 
+    private static void printHelpAndExit() {
+        System.out.println("You must pass the IP:PORT address of the central node as parameter!");
+        System.exit(1);
+    }
+
     public static void main(String[] args) throws Exception {
+
+        if (args.length != 1 || !args[0].contains(":")) {
+            printHelpAndExit();
+        }
+
+        String[] discoveryAddr = args[0].split(":");
+        String discoveryIp = discoveryAddr[0];
+        int discoveryPort = 0;
+        try {
+            discoveryPort = Integer.parseInt(discoveryAddr[1]);
+        } catch (NumberFormatException e) {
+            printHelpAndExit();
+        }
 
         File jar = new File(RemoteWav2Vec2Service.class.getProtectionDomain().getCodeSource().getLocation().toURI());
         File root = jar.getParentFile().getParentFile();
@@ -60,10 +78,6 @@ public class RemoteWav2Vec2Service {
 
         Wav2Vec2TranscriptTask task = new Wav2Vec2TranscriptTask();
         task.init(cm);
-
-        String[] discoveryAddr = args[0].split(":");
-        String discoveryIp = discoveryAddr[0];
-        int discoveryPort = Integer.parseInt(discoveryAddr[1]);
 
         int numCPUs = Wav2Vec2TranscriptTask.getNumProcessors();
 
