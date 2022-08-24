@@ -39,7 +39,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     private static LinkedBlockingDeque<Server> deque = new LinkedBlockingDeque<>();
 
-    private static volatile Level logLevel = Level.getLevel("MSG");
+    private static volatile Level logLevel = Level.forName("MSG", 250);
 
     private static class Server {
         Process process;
@@ -47,7 +47,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         int transcriptionsDone = 0;
     }
 
-    private static int getNumProcessors() {
+    protected static int getNumProcessors() {
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
         CentralProcessor cpu = hal.getProcessor();
@@ -112,7 +112,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 int read = 0;
                 try {
                     while ((read = is.read(buf)) != -1) {
-                        logger.log(logLevel, new String(buf, 0, read));
+                        logger.log(logLevel, new String(buf, 0, read).trim());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -161,7 +161,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         });
     }
 
-    private TextAndScore transcribeWavPart(File tmpFile) throws Exception {
+    protected TextAndScore transcribeWavPart(File tmpFile) throws Exception {
 
         TextAndScore textAndScore = null;
 
