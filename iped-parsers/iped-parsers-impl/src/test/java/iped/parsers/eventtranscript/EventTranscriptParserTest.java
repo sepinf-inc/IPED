@@ -1,5 +1,7 @@
 package iped.parsers.eventtranscript;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -23,6 +25,9 @@ import iped.properties.ExtraProperties;
 
 
 public class EventTranscriptParserTest {
+    public List<String> pageTitles = new ArrayList<String>();
+    public List<String> urls = new ArrayList<String>();
+    public List<String> visitDates = new ArrayList<String>();
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
@@ -41,16 +46,15 @@ public class EventTranscriptParserTest {
 
         // try (InputStream stream = getStream("test-files/test_eventTranscript.db")) {
         //     parser.parse(stream, handler, metadata, historyContext);
-        //     String hts = handler.toString();
+
+        //     assertTrue(pageTitles.size() > 0);
+        //     assertTrue(urls.size() > 0);
+        //     assertTrue(visitDates.size() > 0);
         // }
     }
 
     @SuppressWarnings("serial")
-    public static class EmbeddedEventTranscriptHistoryParser extends AbstractParser {
-
-        public List<String> pageTitles = new ArrayList<String>();
-        public List<String> urls = new ArrayList<String>();
-        public List<String> visitDates = new ArrayList<String>();
+    public class EmbeddedEventTranscriptHistoryParser extends AbstractParser {
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);

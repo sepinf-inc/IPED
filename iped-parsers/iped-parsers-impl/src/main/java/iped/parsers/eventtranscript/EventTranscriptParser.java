@@ -97,7 +97,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                 Metadata metadataHistory = new Metadata();
                 metadataHistory.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST.toString());
-                metadataHistory.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Browser History");
+                metadataHistory.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript History");
                 metadataHistory.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                 metadataHistory.set(BasicProps.HASCHILD, "true");
                 metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
@@ -108,8 +108,6 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     for (BrowserHistoryEntry historyEntry : historyEntriesIterable) {
                         emitHistoryEntry(xHandler, historyEntry, i++);
-
-                        System.out.println(i + ": " + historyEntry.getUrl());
 
                         if (extractEntries) {
                             Metadata metadataHistoryEntry = getHistoryEntryMetadata(historyEntry, i);
@@ -129,7 +127,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         } catch (Exception e) {
 
             sqliteParser.parse(stream, handler, metadata, context);
-            throw new TikaException("SQLite Win10Timeline parsing exception", e);
+            throw new TikaException("SQLite EventTranscript parsing exception", e);
 
         } finally {
             tmp.close();
@@ -141,7 +139,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         Metadata metadataHistoryEntry = new Metadata();
 
         metadataHistoryEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST_REG.toString());
-        metadataHistoryEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Browser History Entry " + i);
+        metadataHistoryEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript History Entry " + i);
         metadataHistoryEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         metadataHistoryEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
         metadataHistoryEntry.set(BasicProps.LENGTH, "");
@@ -187,6 +185,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
         xHandler.startElement("th");
         xHandler.characters("URL");
         xHandler.endElement("th");
+        xHandler.startElement("th");
+        xHandler.characters("App");
+        xHandler.endElement("th");
 
         xHandler.endElement("tr");
 
@@ -207,6 +208,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
         xHandler.endElement("td");
         xHandler.startElement("td");
         xHandler.characters(historyEntry.getUrl());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(historyEntry.getAppName());
         xHandler.endElement("td");
 
         xHandler.endElement("tr");
@@ -248,6 +252,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                         historyEntry.setUrl(rs.getString("URL"));
                         String pageTitlesStr = rs.getString("PageTitles");
                         historyEntry.setPageTitles(pageTitlesStr != null ? pageTitlesStr.split(";") : new String[] {""});
+                        historyEntry.setAppName(rs.getString("App"));
                         historyEntry.setJSONPayload(rs.getString("JSONPayload"));
                     } catch (SQLException | ParseException e ) {
                         throw new RuntimeException(e);
@@ -280,14 +285,16 @@ public class EventTranscriptParser extends SQLite3DBParser {
         + " replace(group_concat(DISTINCT TagName), ',', ';') AS TagNames,"
         + " replace(group_concat(DISTINCT EventName), ',', ';') AS EventNames,"
         + " URL,"
+        + " App,"
         + " replace(group_concat(DISTINCT nullif(PageTitle, '')), ',', ';') AS PageTitles,"
         + " JSONPayload"
         + " FROM ("
         + " SELECT events_persisted.sid AS UserSID,"
-        + "     datetime((events_persisted.timestamp/10000000) - 11644473600, 'unixepoch') AS Timestamp,"
+        + "     datetime((events_persisted.timestamp/10000000) - 11644473600, 'unixepoch', 'UTC') AS Timestamp,"
         + "     tag_descriptions.tag_name AS TagName,"
         + "     events_persisted.full_event_name AS FullEventName,"
         + "     replace(replace(substr(distinct events_persisted.full_event_name,39),'Microsoft.',''),'WebBrowser.HistoryJournal.HJ_','') as 'EventName',"
+        + "     json_extract(events_persisted.payload,'$.ext.app.name') as App,"
         + "     events_persisted.compressed_payload_size AS CompressedPayloadSize,"
         + "     json_extract(events_persisted.payload,'$.data.navigationUrl') as URL,"
         + "     json_extract(events_persisted.payload,'$.data.PageTitle') as PageTitle,"

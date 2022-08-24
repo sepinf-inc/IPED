@@ -35,8 +35,7 @@
     {"name": "Windows 10", "categories":[
       {"name": "User Activities", "mimes": ["application/x-win10-timeline"]},
       {"name": "User Activities Entries", "mimes": ["application/x-win10-timeline-registry"]},
-      {"name": "Event Transcript", "mimes": ["application/x-event-transcript"]},
-      {"name": "Event Transcript History", "mimes": ["application/x-event-transcript-history"]},
+      {"name": "Event Transcript", "mimes": ["application/x-event-transcript", "application/x-event-transcript-history"]},
       {"name": "Event Transcript History Entries", "mimes": ["application/x-event-transcript-history-registry"]}
     ]},
     {"name": "Google Drive", "categories":[

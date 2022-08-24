@@ -14,7 +14,7 @@ public class BrowserHistoryEntry {
     private String[] eventNames;
     private String url;
     private String[] pageTitles;
-
+    private String appName;
     private String JSONPayload;
 
     public String getUserSID() {
@@ -83,6 +83,15 @@ public class BrowserHistoryEntry {
     public void setPageTitles(String[] pageTitles) {
         this.pageTitles = pageTitles;
     }
+
+    public String getAppName() {
+        return this.appName;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
+
 
     public String getJSONPayload() {
         return this.JSONPayload;

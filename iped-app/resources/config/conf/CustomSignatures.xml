@@ -1177,7 +1177,7 @@
     </mime-type>
 
     <mime-type type="application/x-event-transcript-history">     
-        <sub-class-of type="application/x-sqlite3"/>
+        <sub-class-of type="text/html"/>
     </mime-type>
 
     <mime-type type="application/x-event-transcript-history-registry">     
