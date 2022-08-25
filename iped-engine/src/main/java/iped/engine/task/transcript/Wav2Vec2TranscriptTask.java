@@ -106,6 +106,10 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             throw new IPEDException("Error loading '" + model + "' transcription model.");
         }
 
+        line = reader.readLine();
+
+        logger.info("Model loaded on device={}", line);
+
         Server server = new Server();
         server.process = process;
         server.reader = reader;

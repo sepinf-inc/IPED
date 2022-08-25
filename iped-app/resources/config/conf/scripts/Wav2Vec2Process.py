@@ -16,9 +16,15 @@ def main():
     
     print(huggingsound_loaded, file=stdout, flush=True)
     
-    model = SpeechRecognitionModel(modelName)
+    try:
+        deviceId = 'cuda'
+        model = SpeechRecognitionModel(modelName, device=deviceId)
+    except:
+        deviceId = 'cpu'
+        model = SpeechRecognitionModel(modelName, device=deviceId)
     
     print(model_loaded, file=stdout, flush=True)
+    print(deviceId, file=stdout, flush=True)
     
     while True:
         
