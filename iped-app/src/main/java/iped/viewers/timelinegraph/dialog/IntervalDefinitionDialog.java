@@ -8,13 +8,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -22,6 +19,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -51,6 +49,8 @@ import com.toedter.calendar.JTextFieldDateEditor;
 
 import iped.app.ui.App;
 import iped.app.ui.Messages;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.LocaleConfig;
 import iped.viewers.timelinegraph.IpedChartPanel;
 
 public class IntervalDefinitionDialog {
@@ -59,8 +59,11 @@ public class IntervalDefinitionDialog {
     JButton exit = new JButton();
     JPanel footer1;
     GridBagConstraints c = new GridBagConstraints();
-    SimpleDateFormat sdfHour = new SimpleDateFormat("HH:mm:ss");
-    SimpleDateFormat sdfDate = new SimpleDateFormat("dd/MM/yyyy");
+    SimpleDateFormat sdfHour;
+    SimpleDateFormat sdfDate;
+    
+    static final String DATES_CLIENT_PROPERTY = "dates";
+    static final String DATEINDEX_CLIENT_PROPERTY = "dateIndex";
     
     MaskFormatter maskData;
 
@@ -79,23 +82,15 @@ public class IntervalDefinitionDialog {
 		}
 	};
 
-    AbstractAction exitAction = new AbstractAction("Exit") {
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			dialog.setVisible(false);
-			ipedChartPanel.setRefreshBuffer(true);
-			ipedChartPanel.repaint();
-		}
-    	
-    };
+    AbstractAction exitAction;
     
     void saveDateFieldDate(JTextFieldDateEditor textField) throws ParseException {
 		Date d = textField.getDate();
 		if(d==null) {
 			throw new ParseException("", 1);
 		}
-		Date[] old=(Date[])textField.getClientProperty("dates");
-		int i = (Integer) textField.getClientProperty("datesIndex");
+		Date[] old=(Date[])textField.getClientProperty(DATES_CLIENT_PROPERTY);
+		int i = (Integer) textField.getClientProperty(DATEINDEX_CLIENT_PROPERTY);
 		cal.setTime(d);
 		Calendar oldCal = ((Calendar)cal.clone());
 		oldCal.setTime(old[i]);
@@ -106,8 +101,8 @@ public class IntervalDefinitionDialog {
     void saveTimeFieldDate(JTextField textField) throws ParseException {
 		String text = textField.getText();
 		Date d = sdfHour.parse(text);
-		Date[] old=(Date[])textField.getClientProperty("dates");
-		int i = (Integer) textField.getClientProperty("datesIndex");
+		Date[] old=(Date[])textField.getClientProperty(DATES_CLIENT_PROPERTY);
+		int i = (Integer) textField.getClientProperty(DATEINDEX_CLIENT_PROPERTY);
 		cal.setTime(d);
 		Calendar oldCal = ((Calendar)cal.clone());
 		oldCal.setTime(old[i]);
@@ -160,8 +155,8 @@ public class IntervalDefinitionDialog {
 		public void keyReleased(KeyEvent e) {
 			if(e.getKeyCode()==KeyEvent.VK_ESCAPE) {
 				JTextField timeField = (JTextField) e.getSource();
-				Date[] d=(Date[])timeField.getClientProperty("dates");
-				int i = (Integer) timeField.getClientProperty("datesIndex");
+				Date[] d=(Date[])timeField.getClientProperty(DATES_CLIENT_PROPERTY);
+				int i = (Integer) timeField.getClientProperty(DATEINDEX_CLIENT_PROPERTY);
 				if(timeField instanceof JTextFieldDateEditor) {
 					timeField.setText(sdfDate.format(d[i]));
 				}else {
@@ -218,6 +213,7 @@ public class IntervalDefinitionDialog {
 	private ArrayList<Date[]> definedFilters;
 	ArrayList<JComponent []> components = new ArrayList<JComponent []>();
 	private Calendar cal;
+	private Locale locale;
 	
 	static HashMap<Class<? extends TimePeriod>, String> dateFormaters = new HashMap<Class<? extends TimePeriod>, String>();
 	static {
@@ -249,8 +245,9 @@ public class IntervalDefinitionDialog {
 
 		c.gridx=count;
 		JTextFieldDateEditor textEditor = new JTextFieldDateEditor();
-		textEditor.putClientProperty("dates", dates);
-		textEditor.putClientProperty("datesIndex", 0);
+		textEditor.setLocale(locale);
+		textEditor.putClientProperty(DATES_CLIENT_PROPERTY, dates);
+		textEditor.putClientProperty(DATEINDEX_CLIENT_PROPERTY, 0);
 		JDateChooser dateField = new JDateChooser(textEditor);
 		textEditor.addKeyListener(timeFieldKeyListener);
 		dateField.setDateFormatString(dateFormat);
@@ -266,8 +263,8 @@ public class IntervalDefinitionDialog {
 		timeField.addFocusListener(timeFieldExitFocusAdapter);
 		timeField.addActionListener(timeFieldExitActionListener);
 		timeField.setText(sdfHour.format(dates[0]));
-		timeField.putClientProperty("dates", dates);
-		timeField.putClientProperty("datesIndex", 0);
+		timeField.putClientProperty(DATES_CLIENT_PROPERTY, dates);
+		timeField.putClientProperty(DATEINDEX_CLIENT_PROPERTY, 0);
 		timeField.addKeyListener(timeFieldKeyListener);
 		comps[count]=timeField;
         footer1.add(timeField,c);
@@ -275,8 +272,9 @@ public class IntervalDefinitionDialog {
 
 		c.gridx=count;
 		textEditor = new JTextFieldDateEditor();
-		textEditor.putClientProperty("dates", dates);
-		textEditor.putClientProperty("datesIndex", 1);
+		textEditor.setLocale(locale);
+		textEditor.putClientProperty(DATES_CLIENT_PROPERTY, dates);
+		textEditor.putClientProperty(DATEINDEX_CLIENT_PROPERTY, 1);
 		dateField = new JDateChooser(textEditor);
 		dateField.setDateFormatString(dateFormat);
 		textEditor.addKeyListener(timeFieldKeyListener);
@@ -295,15 +293,15 @@ public class IntervalDefinitionDialog {
 			e.printStackTrace();
 		}
 		timeField.setText(sdfHour.format(dates[1]));
-		timeField.putClientProperty("dates", dates);
-		timeField.putClientProperty("datesIndex", 1);
+		timeField.putClientProperty(DATES_CLIENT_PROPERTY, dates);
+		timeField.putClientProperty(DATEINDEX_CLIENT_PROPERTY, 1);
 		timeField.addFocusListener(timeFieldExitFocusAdapter);
 		timeField.addActionListener(timeFieldExitActionListener);
 		timeField.addKeyListener(timeFieldKeyListener);
 		comps[count]=timeField;
         footer1.add(timeField,c);
         count++;
-
+        
         c.gridx=count;
 		JButton b = new JButton(delete);
 		buttonToIntervalIndex.put(b, dates);
@@ -313,16 +311,32 @@ public class IntervalDefinitionDialog {
 
 	public IntervalDefinitionDialog(IpedChartPanel ipedChartPanel) {
     	this.ipedChartPanel = ipedChartPanel;
+    	
+        LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
+        locale = localeConfig.getLocale();
 
         dialog.setTitle(Messages.getString("IntervalDefinitionDialog.Title")); //$NON-NLS-1$
         dialog.setBounds(0, 0, 500, 500);
         dialog.setLocationRelativeTo(null);
 
         cal = Calendar.getInstance(ipedChartPanel.getIpedChartsPanel().getTimeZone());
+        
+        SimpleDateFormat sdfHour = new SimpleDateFormat(Messages.getString("IntervalDefinitionDialog.hourFormat","HH:mm:ss"));
+        SimpleDateFormat sdfDate = new SimpleDateFormat(Messages.getString("IntervalDefinitionDialog.dateFormat","dd/MM/yyyy"));
         sdfHour.setLenient(false);
         
+        exitAction = new AbstractAction(Messages.getString("IntervalDefinitionDialog.Exit")) {
+    		@Override
+    		public void actionPerformed(ActionEvent e) {
+    			dialog.setVisible(false);
+    			ipedChartPanel.setRefreshBuffer(true);
+    			ipedChartPanel.repaint();
+    		}
+        	
+        };
+        
         try {
-			maskData = new MaskFormatter("##:##:####");
+			maskData = new MaskFormatter("##:##:##");
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
