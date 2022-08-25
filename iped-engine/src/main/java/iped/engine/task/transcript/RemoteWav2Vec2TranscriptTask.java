@@ -63,11 +63,14 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
             return;
         }
 
-        String[] ipAndPort = super.transcriptConfig.getWav2vec2Service().split(":");
+        requestServers();
         
+    }
+
+    private static synchronized void requestServers(RemoteWav2Vec2TranscriptTask task) throws IOException {
+        String[] ipAndPort = task.transcriptConfig.getWav2vec2Service().split(":");
         String ip = ipAndPort[0];
         int port = Integer.parseInt(ipAndPort[1]);
-
         try (Socket client = new Socket(ip, port);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -77,6 +80,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
             writer.println(MESSAGES.DISCOVER);
 
             int numServers = Integer.parseInt(reader.readLine());
+            List<Server> servers = new ArrayList<>();
             for (int i = 0; i < numServers; i++) {
                 String[] ipPort = reader.readLine().split(":");
                 Server server = new Server();
@@ -85,10 +89,16 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 servers.add(server);
                 logger.info("Transcription server discovered: {}:{}", server.ip, server.port);
             }
+            if (!servers.isEmpty()) {
+                RemoteWav2Vec2TranscriptTask.servers = servers;
+            }
         } catch (ConnectException e) {
             throw new IPEDException("Transcription server refused connection, is it online?");
         }
+    }
 
+    private void requestServers() throws IOException {
+        requestServers(this);
     }
 
 
@@ -186,6 +196,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                         throw new IPEDException("Too many connection errors to transcription server, maybe it is down.");
                     }
                     sleepBeforeRetry(requestTime);
+                    requestServers();
                 } else {
                     e.printStackTrace();
                 }
