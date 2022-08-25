@@ -133,8 +133,8 @@ public class IpedXYPlot extends XYPlot{
            g2.setXORMode(Color.GRAY);
        }
 
-        String strStartDate = iped.utils.DateUtil.dateToString(dates[0]); 
-        String strEndDate = iped.utils.DateUtil.dateToString(dates[1]);
+        String strStartDate = ipedChartPanel.getIpedChartsPanel().getDomainAxis().ISO8601DateFormat(dates[0]);//iped.utils.DateUtil.dateToString(dates[0]); 
+        String strEndDate = ipedChartPanel.getIpedChartsPanel().getDomainAxis().ISO8601DateFormat(dates[1]);//iped.utils.DateUtil.dateToString(dates[1]);
         
         int xstart = (int) ipedChartPanel.ipedChartsPanel.domainAxis.dateToJava2D(dates[0],  area, ipedChartPanel.ipedChartsPanel.combinedPlot.getDomainAxisEdge());
         int xend = (int) ipedChartPanel.ipedChartsPanel.domainAxis.dateToJava2D(dates[1],  area, ipedChartPanel.ipedChartsPanel.combinedPlot.getDomainAxisEdge());
