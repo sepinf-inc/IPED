@@ -29,6 +29,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static final String SCRIPT_PATH = "/conf/scripts/Wav2Vec2Process.py";
     private static final String TRANSCRIPTION_FINISHED = "transcription_finished";
     private static final String MODEL_LOADED = "wav2vec2_model_loaded";
+    private static final String HUGGINGSOUND_LOADED = "huggingsound_loaded";
     private static final String TERMINATE = "terminate_process";
     private static final String PING = "ping";
 
@@ -93,9 +94,16 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-        String line;
-        while (!MODEL_LOADED.equals(line = reader.readLine().trim())) {
-            logger.error("Unexpected error initializing model: {}", line);
+        String line = reader.readLine();
+
+        if (!HUGGINGSOUND_LOADED.equals(line)) {
+            throw new IPEDException("'huggingsound' python lib not loaded correctly. Have you installed it?");
+        }
+
+        line = reader.readLine();
+
+        if (!MODEL_LOADED.equals(line)) {
+            throw new IPEDException("Error loading '" + model + "' transcription model.");
         }
 
         Server server = new Server();
