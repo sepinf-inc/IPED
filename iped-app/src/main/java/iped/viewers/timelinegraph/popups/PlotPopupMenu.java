@@ -13,6 +13,7 @@ import org.jfree.chart.entity.XYItemEntity;
 import iped.app.ui.Messages;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.timelinegraph.IpedChartPanel;
+import iped.viewers.timelinegraph.dialog.IntervalDefinitionDialog;
 
 public class PlotPopupMenu extends JPopupMenu implements ActionListener{
 	XYItemEntity chartEntity;
@@ -21,6 +22,7 @@ public class PlotPopupMenu extends JPopupMenu implements ActionListener{
 	SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/YYYY");
 	IpedChartPanel ipedChartPanel = null;
 
+	JMenuItem openIntervalsDialogMenu;
 	JMenuItem filterBeforeMenu;
 	JMenuItem filterAfterMenu;
 	JMenuItem selectBeforeMenu;
@@ -30,8 +32,11 @@ public class PlotPopupMenu extends JPopupMenu implements ActionListener{
 		this.ipedChartPanel = ipedChartPanel;
 		this.resultsProvider = resultsProvider;
 
-		
-		filterBeforeMenu = new JMenuItem(" ");
+		openIntervalsDialogMenu = new JMenuItem(Messages.getString("TimeLineGraph.openIntervalsDialogMenu"));
+		openIntervalsDialogMenu.addActionListener(this);
+        add(openIntervalsDialogMenu);
+
+        filterBeforeMenu = new JMenuItem(" ");
 		filterBeforeMenu.addActionListener(this);
         add(filterBeforeMenu);
 
@@ -50,9 +55,14 @@ public class PlotPopupMenu extends JPopupMenu implements ActionListener{
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		if(e.getSource()==openIntervalsDialogMenu) {
+			(new IntervalDefinitionDialog(ipedChartPanel)).setVisible();
+		}
+
 		if(e.getSource()==filterBeforeMenu) {
 			Date firstDate = new Date(0);
 			ipedChartPanel.addFilter(firstDate, date);
+			ipedChartPanel.setRefreshBuffer(true);
 			ipedChartPanel.repaint();
 			ipedChartPanel.getIpedChartsPanel().setApplyFilters(true);
 			ipedChartPanel.filterSelection();
@@ -60,6 +70,7 @@ public class PlotPopupMenu extends JPopupMenu implements ActionListener{
 		if(e.getSource()==filterAfterMenu) {
 			Date lastDate = new Date(Long.MAX_VALUE);
 			ipedChartPanel.addFilter(date, lastDate);
+			ipedChartPanel.setRefreshBuffer(true);
 			ipedChartPanel.repaint();
 			ipedChartPanel.getIpedChartsPanel().setApplyFilters(true);
 			ipedChartPanel.filterSelection();
