@@ -2,7 +2,7 @@ package iped.parsers.eventtranscript;
 
 public final class DBQueries {
 
-    public static final String HISTORY_QUERY = "SELECT"
+    public static final String HISTORY = "SELECT"
         + " UserSID,"
         + " json_extract(JSONPayload,'$.data.CorrelationGuid') AS CorrelationGuid,"
         + " Timestamp,"
@@ -35,10 +35,9 @@ public final class DBQueries {
         + " GROUP BY CorrelationGuid"
         + " ORDER BY Timestamp DESC";
 
-
-        public static final String INVENTORY_APPS_QUERY = "SELECT"
+        public static final String INVENTORY_APPS = "SELECT"
         + " datetime( ( events_persisted.timestamp / 10000000 ) - 11644473600, 'unixepoch' ) AS 'Timestamp',"
-        + " json_extract(events_persisted.payload,'$.ext.utc.seq') as 'seq', "
+        + " json_extract(events_persisted.payload,'$.ext.utc.seq') as 'seq'"
         + " tag_descriptions.tag_name AS TagName,"
         + " replace(events_persisted.full_event_name,'Microsoft.Windows.Inventory.Core.Inventory','') as 'EventName',"
         + " events_persisted.full_event_name as 'FullEventName',"
@@ -72,4 +71,50 @@ public final class DBQueries {
         + " events_persisted.full_event_name like 'Microsoft.Windows.Inventory.Core.Inventory%' and"
         + " TagName = 'Software Setup and Inventory'"
         + " order by cast(events_persisted.timestamp as integer) desc";
+
+    public static final String APP_INTERACTIVITY = "SELECT"
+    + " datetime( ( events_persisted.timestamp / 10000000 ) - 11644473600, 'unixepoch' ) AS 'Timestamp',"
+    + " json_extract(events_persisted.payload,'$.ext.utc.seq') as 'seq'"
+    + " tag_descriptions.tag_name as 'TagName',"
+    + " replace(events_persisted.full_event_name,'Win32kTraceLogging.','') as 'EventName',"
+    + " replace(substr(json_extract(events_persisted.payload,'$.data.AggregationStartTime'),1,19), 'T', ' ') as 'AggregationStartTime', "
+    + " json_extract(events_persisted.payload,'$.data.AggregationDurationMS') as 'AggregationDurationMS', "
+    + " case when substr(json_extract(events_persisted.payload,'$.data.AppId'),1,1) is 'W' "
+    + "      then substr(json_extract(events_persisted.payload,'$.data.AppId'),93)"
+    + "      when substr(json_extract(events_persisted.payload,'$.data.AppId'),1,1) is 'U' "
+    + "      then substr(json_extract(events_persisted.payload,'$.data.AppId'),3)"
+    + "      else json_extract(events_persisted.payload,'$.data.AppId') "
+    + "      end as 'AppId',"
+    + " case when substr(json_extract(events_persisted.payload,'$.data.AppId'),1,1) is 'W' "
+    + "     then substr(json_extract(events_persisted.payload,'$.data.AppVersion'),21,(instr(substr(json_extract(events_persisted.payload,'$.data.AppVersion'),21),'!')-1) )"
+    + "     end as 'PE Header CheckSum',	"
+    + " case substr(json_extract(events_persisted.payload,'$.data.AppId'),1,1) "
+    + "     when 'W' then 'Win' "
+    + "     when 'U' then 'UWP' "
+    + "     end as 'Type',	"
+    + " json_extract(events_persisted.payload,'$.data.WindowWidth')||'x'||json_extract(events_persisted.payload,'$.data.WindowHeight') as 'WindowSize(WxH)',	"
+    + " json_extract(events_persisted.payload,'$.data.MouseInputSec') as 'MouseInputSec', "
+    + " json_extract(events_persisted.payload,'$.data.InFocusDurationMS') as 'InFocusDurationMS', "
+    + " json_extract(events_persisted.payload,'$.data.UserActiveDurationMS') as 'UserActiveDurationMS', "
+    + " json_extract(events_persisted.payload,'$.data.SinceFirstInteractivityMS') as 'SinceFirstInteractivityMS', "
+    + " json_extract(events_persisted.payload,'$.data.UserOrDisplayActiveDurationMS') as 'UserOrDisplayActiveDurationMS', "
+    + " json_extract(events_persisted.payload,'$.data.FocusLostCount') as 'FocusLostCount',"
+    + " case when substr(json_extract(events_persisted.payload,'$.data.AppId'),1,1) is 'W'	"
+    + "     then upper(substr(json_extract(events_persisted.payload,'$.data.AppId'),52,40)) "
+    + "     end as 'SHA1',	"
+    + " case when substr(json_extract(events_persisted.payload,'$.data.AppId'),1,1) is 'W'	"
+    + "    then upper(substr(json_extract(events_persisted.payload,'$.data.AppId'),3,44)) "
+    + "    end as 'ProgramId'"
+    + " upper(json_extract(events_persisted.payload,'$.data.AppSessionId')) as 'AppSessionId',"
+    + " trim(json_extract(events_persisted.payload,'$.ext.user.localId'),'m:') as 'UserId',"
+    + " sid as 'User SID',"
+    + " logging_binary_name,"
+    + " events_persisted.payload AS JSONPayload"
+    + " from events_persisted "
+    + " join event_tags on events_persisted.full_event_name_hash = event_tags.full_event_name_hash"
+    + " join tag_descriptions on event_tags.tag_id = tag_descriptions.tag_id "
+    + " where "
+    + "  events_persisted.full_event_name in ('Win32kTraceLogging.AppInteractivity','Win32kTraceLogging.AppInteractivitySummary' )"
+    + " order by cast(events_persisted.timestamp as integer) desc";
+
 }

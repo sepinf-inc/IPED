@@ -39,6 +39,18 @@ import iped.properties.ExtraProperties;
 import iped.utils.EmptyInputStream;
 
 /**
+ * Parser for the EventTranscript.db file in Windows 10
+ * 
+ * Data collected:
+ * 
+ * Browser History through HJ_HistoryAddUrl and HJ_HistoryAddUrlEx events
+ * 
+ * Inventory Applications (Installed apps)
+ * https://docs.microsoft.com/en-us/windows/privacy/basic-level-windows-diagnostic-events-and-fields-1709#microsoftwindowsinventorycoreinventoryapplicationadd
+ * 
+ * App Interactivity
+ * https://docs.microsoft.com/en-us/windows/privacy/enhanced-diagnostic-data-windows-analytics-events-and-fields#win32ktraceloggingappinteractivitysummary * 
+ *
  * @author Felipe Farias da Costa <felipecostasdc@gmail.com>
  */
 public class EventTranscriptParser extends SQLite3DBParser {
@@ -108,7 +120,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 metadataHistory.set(BasicProps.HASCHILD, "true");
                 metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                try (HistoryIterable historyEntriesIterable = new HistoryIterable(connection, DBQueries.HISTORY_QUERY)) {
+                try (HistoryIterable historyEntriesIterable = new HistoryIterable(connection, DBQueries.HISTORY)) {
                     XHTMLContentHandler xHandler = emitHeader(historyHandler, metadataHistory, title, HISTORY_COLUMN_NAMES);
 
                     int i = 0;
@@ -143,7 +155,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 inventoryAppMeta.set(BasicProps.HASCHILD, "true");
                 inventoryAppMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                try (InventoryAppsIterable inventoryAppsIterable = new InventoryAppsIterable(connection, DBQueries.INVENTORY_APPS_QUERY)) {
+                try (InventoryAppsIterable inventoryAppsIterable = new InventoryAppsIterable(connection, DBQueries.INVENTORY_APPS)) {
                     XHTMLContentHandler xHandler = emitHeader(inventoryAppHandler, inventoryAppMeta,title, SW_INVENTORY_COLUMN_NAMES);
 
                     int i = 0;
