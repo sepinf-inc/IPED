@@ -35,9 +35,9 @@
     {"name": "Windows 10", "categories":[
       {"name": "User Activities", "mimes": ["application/x-win10-timeline"]},
       {"name": "User Activities Entries", "mimes": ["application/x-win10-timeline-registry"]},
-      {"name": "Event Transcript", "mimes": ["application/x-event-transcript", "application/x-event-transcript-history", "application/x-event-transcript-sw-inventory"]},
+      {"name": "Event Transcript", "mimes": ["application/x-event-transcript", "application/x-event-transcript-history", "application/x-event-transcript-inventory-app"]},
       {"name": "Event Transcript History Entries", "mimes": ["application/x-event-transcript-history-registry"]},
-      {"name": "Event Transcript Software Inventory Entries", "mimes": ["application/x-event-transcript-sw-inventory-registry"]}
+      {"name": "Event Transcript Inventory App Entries", "mimes": ["application/x-event-transcript-inventory-app-registry"]}
     ]},
     {"name": "Google Drive", "categories":[
       {"name": "GDrive Synced Files", "mimes": ["application/x-gdrive-cloud-graph", "application/x-gdrive-snapshot"]},

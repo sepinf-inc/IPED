@@ -1184,11 +1184,11 @@
         <sub-class-of type="application/x-browser-registry"/>
     </mime-type>
 
-    <mime-type type="application/x-event-transcript-sw-inventory">     
+    <mime-type type="application/x-event-transcript-inventory-app">     
         <sub-class-of type="text/html"/>
     </mime-type>
 
-    <mime-type type="application/x-event-transcript-sw-inventory-registry">     
+    <mime-type type="application/x-event-transcript-inventory-app-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
     

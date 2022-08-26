@@ -1,12 +1,15 @@
 package iped.parsers.eventtranscript;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.ParseException;
 import java.util.Collections;
 import java.util.Iterator;
@@ -25,7 +28,6 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLite3Parser;
@@ -48,10 +50,13 @@ public class EventTranscriptParser extends SQLite3DBParser {
     public static final MediaType EVENT_TRANSCRIPT_HIST = MediaType.application("x-event-transcript-history");
     public static final MediaType EVENT_TRANSCRIPT_HIST_REG = MediaType.application("x-event-transcript-history-registry");
 
-    public static final MediaType EVENT_TRANSCRIPT_SW_INVENTORY = MediaType.application("x-event-transcript-sw-inventory");
-    public static final MediaType EVENT_TRANSCRIPT_SW_INVENTORY_REG = MediaType.application("x-event-transcript-sw-inventory-registry");
+    public static final MediaType EVENT_TRANSCRIPT_INVENTORY_APP = MediaType.application("x-event-transcript-inventory-app");
+    public static final MediaType EVENT_TRANSCRIPT_INVENTORY_APP_REG = MediaType.application("x-event-transcript-inventory-app-registry");
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(EVENT_TRANSCRIPT);
+    
+    private static final String[] HISTORY_COLUMN_NAMES = new String[] {"Page Titles", "Visit Date (UTC)", "URL", "App"};
+    private static final String[] SW_INVENTORY_COLUMN_NAMES = new String[] {"Name", "Timestamp (UTC)", "Version", "Publisher", "Root Directory Path", "Install Date"};
 
     // extract each history entry as a subitem.
     private boolean extractEntries = true;
@@ -83,7 +88,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         TemporaryResources tmp = new TemporaryResources();
         TikaInputStream tis = TikaInputStream.get(stream, tmp);
         File browserHistoryFile = tmp.createTemporaryFile();
-        File softwareInventoryFile = tmp.createTemporaryFile();
+        File inventoryAppFile = tmp.createTemporaryFile();
 
         if (new SQLiteContainerDetector().detect(tis, metadata) != EVENT_TRANSCRIPT) {
             sqliteParser.parse(stream, handler, metadata, context);
@@ -93,23 +98,25 @@ public class EventTranscriptParser extends SQLite3DBParser {
         try (Connection connection = getConnection(tis, metadata, context)) {
 
             try (FileOutputStream tmpHistoryFile = new FileOutputStream(browserHistoryFile)) {
-
                 ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-16");
+                String title = "Event Transcript Browser History";
 
                 Metadata metadataHistory = new Metadata();
                 metadataHistory.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST.toString());
-                metadataHistory.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript History");
+                metadataHistory.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
                 metadataHistory.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                 metadataHistory.set(BasicProps.HASCHILD, "true");
                 metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                try (BrowserHistoryIterable historyEntriesIterable = new BrowserHistoryIterable(connection, HISTORY_QUERY)) {
-                    XHTMLContentHandler xHandler = startBrowserHistoryParsing(historyHandler, metadataHistory);
+                try (HistoryIterable historyEntriesIterable = new HistoryIterable(connection, DBQueries.HISTORY_QUERY)) {
+                    XHTMLContentHandler xHandler = emitHeader(historyHandler, metadataHistory, title, HISTORY_COLUMN_NAMES);
 
                     int i = 0;
                     for (BrowserHistoryEntry historyEntry : historyEntriesIterable) {
-                        emitHistoryEntry(xHandler, historyEntry, i++);
-
+                        String[] rowValues = new String[] { String.join("; ", historyEntry.getPageTitles()),
+                            historyEntry.getTimestampStr(), historyEntry.getUrl(), historyEntry.getAppName() };
+                        emitEntry(xHandler, ++i, rowValues);
+            
                         if (extractEntries) {
                             Metadata metadataHistoryEntry = getHistoryEntryMetadata(historyEntry, i);
                             extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistoryEntry, true);
@@ -125,51 +132,102 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 }
             }
 
-            try (FileOutputStream tmpSoftwareInventoryFile = new FileOutputStream(softwareInventoryFile)) {
+            try (FileOutputStream tmpInventoryAppFile = new FileOutputStream(inventoryAppFile)) {
+                ToXMLContentHandler inventoryAppHandler = new ToXMLContentHandler(tmpInventoryAppFile, "UTF-16");
+                String title = "Event Transcript Inventory Apps";
 
-                ToXMLContentHandler softwareInventoryHandler = new ToXMLContentHandler(tmpSoftwareInventoryFile, "UTF-16");
+                Metadata inventoryAppMeta = new Metadata();
+                inventoryAppMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_INVENTORY_APP.toString());
+                inventoryAppMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
+                inventoryAppMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                inventoryAppMeta.set(BasicProps.HASCHILD, "true");
+                inventoryAppMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                Metadata metadataSwSetup = new Metadata();
-                metadataSwSetup.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_SW_INVENTORY.toString());
-                metadataSwSetup.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Software Inventory");
-                metadataSwSetup.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
-                metadataSwSetup.set(BasicProps.HASCHILD, "true");
-                metadataSwSetup.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-                try (SoftwareInventoryIterable swInventoryEntriesIterable = new SoftwareInventoryIterable(connection, SOFTWARE_INVENTORY_QUERY)) {
-                    XHTMLContentHandler xHandler = startSoftwareInventoryParsing(softwareInventoryHandler, metadataSwSetup);
+                try (InventoryAppsIterable inventoryAppsIterable = new InventoryAppsIterable(connection, DBQueries.INVENTORY_APPS_QUERY)) {
+                    XHTMLContentHandler xHandler = emitHeader(inventoryAppHandler, inventoryAppMeta,title, SW_INVENTORY_COLUMN_NAMES);
 
                     int i = 0;
-                    for (SoftwareInventoryEntry inventoryEntry : swInventoryEntriesIterable) {
-                        emitSoftwareInventoryEntry(xHandler, inventoryEntry, i++);
+                    for (InventoryAppsEntry swInEntry : inventoryAppsIterable) {
+                        String[] values = new String[] { swInEntry.getName(), swInEntry.getTimestampStr(), swInEntry.getVersion(),
+                            swInEntry.getPublisher(), swInEntry.getRootDirPath(), swInEntry.getInstallDateStr() };
+                        emitEntry(xHandler, ++i, values);
 
                         if (extractEntries) {
-                            Metadata metadataInventoryEntry = getInventoryEntryMetadata(inventoryEntry, i);
+                            Metadata metadataInventoryEntry = getInventoryEntryMetadata(swInEntry, i);
                             extractor.parseEmbedded(new EmptyInputStream(), handler, metadataInventoryEntry, true);
                         }
                     }
-
                     xHandler.endElement("table");
                     xHandler.endDocument();
 
-                    try (FileInputStream fis = new FileInputStream(softwareInventoryFile)) {
-                        extractor.parseEmbedded(fis, handler, metadataSwSetup, true);
+                    try (FileInputStream fis = new FileInputStream(inventoryAppFile)) {
+                        extractor.parseEmbedded(fis, handler, inventoryAppMeta, true);
                     }
                 }
             }
 
         } catch (Exception e) {
-
             sqliteParser.parse(stream, handler, metadata, context);
             throw new TikaException("SQLite EventTranscript parsing exception", e);
 
         } finally {
             tmp.close();
         }
-        
     }
 
-    private Metadata getHistoryEntryMetadata(BrowserHistoryEntry historyEntry, int i) throws ParseException {
+    private XHTMLContentHandler emitHeader(ContentHandler handler, Metadata metadata, String title, String[] colnames)
+        throws SAXException {
+        XHTMLContentHandler xHandler = null;
+        
+        xHandler = new XHTMLContentHandler(handler, metadata);
+        xHandler.startDocument();
+
+        xHandler.startElement("head");
+        xHandler.startElement("style");
+        xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}");
+        xHandler.endElement("style");
+        xHandler.endElement("head");
+
+        xHandler.startElement("h2 align=center");
+        xHandler.characters(title);
+        xHandler.endElement("h2");
+        xHandler.startElement("br");
+        xHandler.startElement("br");
+
+        xHandler.startElement("table");
+        xHandler.startElement("tr");
+
+        xHandler.startElement("th");
+        xHandler.characters("");    // idx
+        xHandler.endElement("th");
+
+        for (String colname : colnames) {
+            xHandler.startElement("th");
+            xHandler.characters(colname);
+            xHandler.endElement("th");
+        }
+        xHandler.endElement("tr");
+
+        return xHandler;
+    }
+
+    private void emitEntry(XHTMLContentHandler xHandler, int idx, String[] values)
+        throws SQLException, TikaException, SAXException {
+        xHandler.startElement("tr");
+        xHandler.startElement("td");
+        xHandler.characters(String.valueOf(idx));
+        xHandler.endElement("td");  
+
+        for (String value : values) {
+            xHandler.startElement("td");
+            xHandler.characters(value);
+            xHandler.endElement("td");    
+        }
+        xHandler.endElement("tr");   
+    }
+
+    private Metadata getHistoryEntryMetadata(BrowserHistoryEntry historyEntry, int i)
+        throws ParseException {
         Metadata metadataHistoryEntry = new Metadata();
 
         metadataHistoryEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST_REG.toString());
@@ -182,80 +240,16 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataHistoryEntry.set(ExtraProperties.ACCESSED, historyEntry.getTimestamp());
         metadataHistoryEntry.set(ExtraProperties.VISIT_DATE, historyEntry.getTimestamp());
         metadataHistoryEntry.add(ExtraProperties.URL, historyEntry.getUrl());
-        // metadataHistoryEntry.add("originalPayload", historyEntry.getJSONPayload());
+        metadataHistoryEntry.add("originalPayload", historyEntry.getJSONPayload());
 
         return metadataHistoryEntry;
     }
 
-    private XHTMLContentHandler startBrowserHistoryParsing(ContentHandler handler, Metadata metadata) throws SAXException {
-        XHTMLContentHandler xHandler = null;
-
-        xHandler = new XHTMLContentHandler(handler, metadata);
-        xHandler.startDocument();
-
-        xHandler.startElement("head");
-        xHandler.startElement("style");
-        xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}");
-        xHandler.endElement("style");
-        xHandler.endElement("head");
-
-        xHandler.startElement("h2 align=center");
-        xHandler.characters("Event Transcript Browser History");
-        xHandler.endElement("h2");
-        xHandler.startElement("br");
-        xHandler.startElement("br");
-
-        xHandler.startElement("table");
-        xHandler.startElement("tr");
-
-        xHandler.startElement("th");
-        xHandler.characters("");    // idx
-        xHandler.endElement("th");
-        xHandler.startElement("th");
-        xHandler.characters("Page Title(s)");
-        xHandler.endElement("th");
-        xHandler.startElement("th");
-        xHandler.characters("Visit Date (UTC)");
-        xHandler.endElement("th");
-        xHandler.startElement("th");
-        xHandler.characters("URL");
-        xHandler.endElement("th");
-        xHandler.startElement("th");
-        xHandler.characters("App");
-        xHandler.endElement("th");
-
-        xHandler.endElement("tr");
-
-        return xHandler;
-    }
-
-    private void emitHistoryEntry(XHTMLContentHandler xHandler, BrowserHistoryEntry historyEntry, int idx) throws SQLException, TikaException, SAXException {
-        xHandler.startElement("tr");
-
-        xHandler.startElement("td");
-        xHandler.characters(String.valueOf(idx));
-        xHandler.endElement("td");
-        xHandler.startElement("td");
-        xHandler.characters(String.join("; ", historyEntry.getPageTitles()));
-        xHandler.endElement("td");
-        xHandler.startElement("td");
-        xHandler.characters(historyEntry.getTimestampStr());
-        xHandler.endElement("td");
-        xHandler.startElement("td");
-        xHandler.characters(historyEntry.getUrl());
-        xHandler.endElement("td");
-        xHandler.startElement("td");
-        xHandler.characters(historyEntry.getAppName());
-        xHandler.endElement("td");
-
-        xHandler.endElement("tr");
-    }
-
-    private Metadata getInventoryEntryMetadata(SoftwareInventoryEntry entry, int i) throws ParseException {
+    private Metadata getInventoryEntryMetadata(InventoryAppsEntry entry, int i) throws ParseException {
         Metadata metadataEntry = new Metadata();
 
-        metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_SW_INVENTORY_REG.toString());
-        metadataEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Software Inventory Entry " + i);
+        metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_INVENTORY_APP_REG.toString());
+        metadataEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Inventory App Entry " + i);
         metadataEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         metadataEntry.set(BasicProps.LENGTH, "");
 
@@ -263,92 +257,20 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add(TikaCoreProperties.TITLE, entry.getName());
         metadataEntry.set(ExtraProperties.DOWNLOAD_DATE, entry.getInstallDate());
         metadataEntry.set(TikaCoreProperties.SOURCE_PATH, entry.getRootDirPath());
-        // metadataHistoryEntry.add("originalPayload", entry.getJSONPayload());
+        metadataEntry.add("originalPayload", entry.getJSONPayload());
 
         return metadataEntry;
     }
 
-    private XHTMLContentHandler startSoftwareInventoryParsing(ContentHandler handler, Metadata metadata) throws SAXException {
-        XHTMLContentHandler xHandler = null;
+    // iterators
 
-        xHandler = new XHTMLContentHandler(handler, metadata);
-        xHandler.startDocument();
+    private class HistoryIterable implements Iterable<BrowserHistoryEntry>, Closeable {
+        ResultSet rs;
+        Statement statement;
 
-        xHandler.startElement("head");
-        xHandler.startElement("style");
-        xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}");
-        xHandler.endElement("style");
-        xHandler.endElement("head");
-
-        xHandler.startElement("h2 align=center");
-        xHandler.characters("Event Transcript Software Inventory");
-        xHandler.endElement("h2");
-        xHandler.startElement("br");
-        xHandler.startElement("br");
-
-        xHandler.startElement("table");
-        xHandler.startElement("tr");
-
-        xHandler.startElement("th");
-        xHandler.characters("");    // idx
-        xHandler.endElement("th");
-        xHandler.startElement("th");
-        xHandler.characters("Name");
-        xHandler.endElement("th");
-        xHandler.startElement("th");
-        xHandler.characters("Timestamp (UTC)");
-        xHandler.endElement("th");
-        xHandler.startElement("th");
-        xHandler.characters("Version");
-        xHandler.endElement("th");
-        xHandler.startElement("th");
-        xHandler.characters("Publisher");
-        xHandler.endElement("th");
-        xHandler.startElement("th");
-        xHandler.characters("Root Directory Path");
-        xHandler.endElement("th");
-        xHandler.startElement("th");
-        xHandler.characters("Install Date");
-        xHandler.endElement("th");
-
-        xHandler.endElement("tr");
-
-        return xHandler;
-    }
-
-    private void emitSoftwareInventoryEntry(XHTMLContentHandler xHandler, SoftwareInventoryEntry entry, int idx) throws SQLException, TikaException, SAXException {
-        xHandler.startElement("tr");
-
-        xHandler.startElement("td");
-        xHandler.characters(String.valueOf(idx));
-        xHandler.endElement("td");
-        xHandler.startElement("td");
-        xHandler.characters(entry.getName());
-        xHandler.endElement("td");
-        xHandler.startElement("td");
-        xHandler.characters(entry.getTimestampStr());
-        xHandler.endElement("td");
-        xHandler.startElement("td");
-        xHandler.characters(entry.getVersion());
-        xHandler.endElement("td");
-        xHandler.startElement("td");
-        xHandler.characters(entry.getPublisher());
-        xHandler.endElement("td");
-        xHandler.startElement("td");
-        xHandler.characters(entry.getRootDirPath());
-        xHandler.endElement("td");
-        xHandler.startElement("td");
-        xHandler.characters(entry.getInstallDateStr());
-        xHandler.endElement("td");
-
-        xHandler.endElement("tr");
-    }
-
-
-    private class BrowserHistoryIterable extends AbstractDBIterable<BrowserHistoryEntry> {
-
-        public BrowserHistoryIterable(Connection connection, String query) throws SQLException {
-            super(connection, query);
+        public HistoryIterable(Connection connection, String query) throws SQLException {
+            statement = connection.createStatement();
+            rs = statement.executeQuery(query);
         }
 
         @Override
@@ -367,7 +289,6 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 @Override
                 public BrowserHistoryEntry next() {
                     BrowserHistoryEntry historyEntry = new BrowserHistoryEntry();
-
                     try {
                         historyEntry.setUserSID(rs.getString("UserSID"));
                         historyEntry.setCorrelationGuid(rs.getString("CorrelationGuid"));
@@ -391,17 +312,30 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 }
             };
         }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                rs.close();
+                statement.close();
+            } catch (SQLException e) {
+                // swallow
+            }            
+        }
     }
 
-    private class SoftwareInventoryIterable extends AbstractDBIterable<SoftwareInventoryEntry> {
+    private class InventoryAppsIterable implements Iterable<InventoryAppsEntry>, Closeable {
+        ResultSet rs;
+        Statement statement;
 
-        public SoftwareInventoryIterable(Connection connection, String query) throws SQLException {
-            super(connection, query);
+        public InventoryAppsIterable(Connection connection, String query) throws SQLException {
+            statement = connection.createStatement();
+            rs = statement.executeQuery(query);
         }
 
         @Override
-        public Iterator<SoftwareInventoryEntry> iterator() {
-            return new Iterator<SoftwareInventoryEntry>() {
+        public Iterator<InventoryAppsEntry> iterator() {
+            return new Iterator<InventoryAppsEntry>() {
 
                 @Override
                 public boolean hasNext() {
@@ -413,30 +347,29 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 }
 
                 @Override
-                public SoftwareInventoryEntry next() {
-                    SoftwareInventoryEntry softwareInventoryEntry = new SoftwareInventoryEntry();
-
+                public InventoryAppsEntry next() {
+                    InventoryAppsEntry inventoryAppsEntry = new InventoryAppsEntry();
                     try {
-                        softwareInventoryEntry.setTimestamp(rs.getString("Timestamp"));
-                        softwareInventoryEntry.setTagName(rs.getString("TagName"));
-                        softwareInventoryEntry.setEventName(rs.getString("EventName"));
-                        softwareInventoryEntry.setType(rs.getString("Type"));
-                        softwareInventoryEntry.setName(rs.getString("Name"));
-                        softwareInventoryEntry.setPackageFullName(rs.getString("PackageFullName"));
-                        softwareInventoryEntry.setVersion(rs.getString("Version"));
-                        softwareInventoryEntry.setPublisher(rs.getString("Publisher"));
-                        softwareInventoryEntry.setRootDirPath(rs.getString("RootDirPath"));
-                        softwareInventoryEntry.setHidden(rs.getString("HiddenArp"));
-                        softwareInventoryEntry.setInstallDate(rs.getString("InstallDate"));
-                        softwareInventoryEntry.setSource(rs.getString("Source"));
-                        softwareInventoryEntry.setOSVersionAtInstallTime(rs.getString("OSVersionAtInstallTime"));
-                        softwareInventoryEntry.setUserSID(rs.getString("UserSID"));
-                        softwareInventoryEntry.setUserID(rs.getString("UserID"));
-                        softwareInventoryEntry.setJSONPayload(rs.getString("JSONPayload"));
+                        inventoryAppsEntry.setTimestamp(rs.getString("Timestamp"));
+                        inventoryAppsEntry.setTagName(rs.getString("TagName"));
+                        inventoryAppsEntry.setEventName(rs.getString("EventName"));
+                        inventoryAppsEntry.setType(rs.getString("Type"));
+                        inventoryAppsEntry.setName(rs.getString("Name"));
+                        inventoryAppsEntry.setPackageFullName(rs.getString("PackageFullName"));
+                        inventoryAppsEntry.setVersion(rs.getString("Version"));
+                        inventoryAppsEntry.setPublisher(rs.getString("Publisher"));
+                        inventoryAppsEntry.setRootDirPath(rs.getString("RootDirPath"));
+                        inventoryAppsEntry.setHidden(rs.getString("HiddenArp"));
+                        inventoryAppsEntry.setInstallDate(rs.getString("InstallDate"));
+                        inventoryAppsEntry.setSource(rs.getString("Source"));
+                        inventoryAppsEntry.setOSVersionAtInstallTime(rs.getString("OSVersionAtInstallTime"));
+                        inventoryAppsEntry.setUserSID(rs.getString("UserSID"));
+                        inventoryAppsEntry.setUserID(rs.getString("UserID"));
+                        inventoryAppsEntry.setJSONPayload(rs.getString("JSONPayload"));
                     } catch (SQLException | ParseException e ) {
                         throw new RuntimeException(e);
                     }
-                    return softwareInventoryEntry;
+                    return inventoryAppsEntry;
                 }
 
                 @Override
@@ -445,76 +378,15 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 }
             };
         }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                rs.close();
+                statement.close();
+            } catch (SQLException e) {
+                // swallow
+            }            
+        }
     }
-
-    private String HISTORY_QUERY = "SELECT"
-        + " UserSID,"
-        + " json_extract(JSONPayload,'$.data.CorrelationGuid') AS CorrelationGuid,"
-        + " Timestamp,"
-        + " replace(group_concat(DISTINCT TagName), ',', ';') AS TagNames,"
-        + " replace(group_concat(DISTINCT EventName), ',', ';') AS EventNames,"
-        + " URL,"
-        + " App,"
-        + " replace(group_concat(DISTINCT nullif(PageTitle, '')), ',', ';') AS PageTitles,"
-        + " JSONPayload"
-        + " FROM ("
-        + " SELECT events_persisted.sid AS UserSID,"
-        + "     datetime((events_persisted.timestamp/10000000) - 11644473600, 'unixepoch', 'UTC') AS Timestamp,"
-        + "     tag_descriptions.tag_name AS TagName,"
-        + "     events_persisted.full_event_name AS FullEventName,"
-        + "     replace(replace(substr(distinct events_persisted.full_event_name,39),'Microsoft.',''),'WebBrowser.HistoryJournal.HJ_','') AS 'EventName',"
-        + "     json_extract(events_persisted.payload,'$.ext.app.name') AS App,"
-        + "     events_persisted.compressed_payload_size AS CompressedPayloadSize,"
-        + "     json_extract(events_persisted.payload,'$.data.navigationUrl') AS URL,"
-        + "     json_extract(events_persisted.payload,'$.data.PageTitle') AS PageTitle,"
-        + "     events_persisted.payload AS JSONPayload"
-        + " FROM"
-        + "     events_persisted"
-        + "     LEFT JOIN event_tags ON events_persisted.full_event_name_hash = event_tags.full_event_name_hash"
-        + "     LEFT JOIN tag_descriptions ON event_tags.tag_id = tag_descriptions.tag_id"
-        + "     INNER JOIN provider_groups ON events_persisted.provider_group_id = provider_groups.group_id"
-        + " WHERE"
-        + "     (tag_descriptions.tag_name='Browsing History' AND events_persisted.full_event_name LIKE '%HistoryAddUrl') OR"
-        + "     (tag_descriptions.tag_name='Product and Service Usage' AND events_persisted.full_event_name LIKE '%HistoryAddUrlEx')"
-        + " )"
-        + " GROUP BY CorrelationGuid"
-        + " ORDER BY Timestamp DESC";
-
-
-        private String SOFTWARE_INVENTORY_QUERY = "SELECT"
-            + " datetime( ( events_persisted.timestamp / 10000000 ) - 11644473600, 'unixepoch' ) AS 'Timestamp',"
-            + " json_extract(events_persisted.payload,'$.ext.utc.seq') as 'seq', "
-            + " tag_descriptions.tag_name AS TagName,"
-            + " replace(events_persisted.full_event_name,'Microsoft.Windows.Inventory.Core.Inventory','') as 'EventName',"
-            + " events_persisted.full_event_name as 'FullEventName',"
-            + " json_extract(events_persisted.payload,'$.data.Type') as 'Type',"
-            + " json_extract(events_persisted.payload,'$.data.Name') as 'Name',"
-            + " json_extract(events_persisted.payload,'$.data.PackageFullName') as 'PackageFullName',"
-            + " json_extract(events_persisted.payload,'$.data.Version') as 'Version',"
-            + " json_extract(events_persisted.payload,'$.data.Publisher') as 'Publisher',"
-            + " json_extract(events_persisted.payload,'$.data.RootDirPath') as 'RootDirPath',"
-            + " json_extract(events_persisted.payload,'$.data.HiddenArp') as 'HiddenArp',"
-            + " json_extract(events_persisted.payload,'$.data.InstallDate') as 'InstallDate',"
-            + " json_extract(events_persisted.payload,'$.data.Source') as 'Source',"
-            + " json_extract(events_persisted.payload,'$.data.OSVersionAtInstallTime') as 'OSVersionAtInstallTime',"
-            + " json_extract(events_persisted.payload,'$.data.InstallDateMsi') as 'MsiInstallDate',"
-            + " json_extract(events_persisted.payload,'$.data.MsiPackageCode') as 'MsiPackageCode',"
-            + " json_extract(events_persisted.payload,'$.data.MsiProductCode') as 'MsiProductCode',"
-            + " case json_extract(events_persisted.payload,'$.data.baseData.action') "
-            + "     when 1 then 'Add'"
-            + "     when 2 then 'Remove'"
-            + "     else json_extract(events_persisted.payload,'$.data.baseData.action') "
-            + " end as 'action',"
-            + " json_extract(events_persisted.payload,'$.data.baseData.objectInstanceId') as 'InstanceId',"
-            + " trim(json_extract(events_persisted.payload,'$.ext.user.localId'),'m:') as 'UserId',"
-            + " sid as 'UserSID',"
-            + " events_persisted.payload AS JSONPayload"
-            + " FROM"
-            + "     events_persisted"
-            + "     LEFT JOIN event_tags ON events_persisted.full_event_name_hash = event_tags.full_event_name_hash"
-            + "     LEFT JOIN tag_descriptions ON event_tags.tag_id = tag_descriptions.tag_id"
-            + " WHERE"
-            + " events_persisted.full_event_name like 'Microsoft.Windows.Inventory.Core.Inventory%' and"
-            + " TagName = 'Software Setup and Inventory'"
-            + " order by cast(events_persisted.timestamp as integer) desc";
 }

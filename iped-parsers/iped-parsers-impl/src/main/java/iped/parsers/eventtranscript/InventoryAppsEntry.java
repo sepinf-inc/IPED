@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 // describes the installation, setup and update of software.
-public class SoftwareInventoryEntry {
+public class InventoryAppsEntry {
     private Date timestamp;
     private String timestampStr;
     private String tagName;
@@ -178,5 +178,4 @@ public class SoftwareInventoryEntry {
     public void setJSONPayload(String JSONPayload) {
         this.JSONPayload = JSONPayload;
     }
-
 }
