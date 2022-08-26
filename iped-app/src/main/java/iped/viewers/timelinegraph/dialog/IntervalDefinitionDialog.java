@@ -3,6 +3,7 @@ package iped.viewers.timelinegraph.dialog;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -24,12 +25,14 @@ import java.util.Locale;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.text.MaskFormatter;
 
@@ -255,6 +258,7 @@ public class IntervalDefinitionDialog {
 		textEditor.addFocusListener(dateFieldFocusAdapter);
 		comps[count]=dateField;
         footer1.add(dateField,c);
+        footer1.add(Box.createHorizontalStrut(130),c);
         count++;
 
 		c.gridx=count;
@@ -282,6 +286,7 @@ public class IntervalDefinitionDialog {
 		textEditor.addFocusListener(dateFieldFocusAdapter);
 		comps[count]=dateField;
         footer1.add(dateField,c);
+        footer1.add(Box.createHorizontalStrut(130),c);
         count++;
         
 		c.gridx=count;
@@ -311,7 +316,7 @@ public class IntervalDefinitionDialog {
 
 	public IntervalDefinitionDialog(IpedChartPanel ipedChartPanel) {
     	this.ipedChartPanel = ipedChartPanel;
-    	
+
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
         locale = localeConfig.getLocale();
 
@@ -320,11 +325,11 @@ public class IntervalDefinitionDialog {
         dialog.setLocationRelativeTo(null);
 
         cal = Calendar.getInstance(ipedChartPanel.getIpedChartsPanel().getTimeZone());
-        
-        SimpleDateFormat sdfHour = new SimpleDateFormat(Messages.getString("IntervalDefinitionDialog.hourFormat","HH:mm:ss"));
-        SimpleDateFormat sdfDate = new SimpleDateFormat(Messages.getString("IntervalDefinitionDialog.dateFormat","dd/MM/yyyy"));
+
+        sdfHour = new SimpleDateFormat(Messages.getString("IntervalDefinitionDialog.hourFormat","HH:mm:ss"));
+        sdfDate = new SimpleDateFormat(Messages.getString("IntervalDefinitionDialog.dateFormat","dd/MM/yyyy"));
         sdfHour.setLenient(false);
-        
+
         exitAction = new AbstractAction(Messages.getString("IntervalDefinitionDialog.Exit")) {
     		@Override
     		public void actionPerformed(ActionEvent e) {
@@ -348,7 +353,7 @@ public class IntervalDefinitionDialog {
         exit.setText("Sair");
         exit.setAction(exitAction);
 
-        Box footer = Box.createVerticalBox();
+        Box footer = Box.createVerticalBox();        
         footer1 = new JPanel(new GridBagLayout());
         footer1.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
@@ -358,23 +363,30 @@ public class IntervalDefinitionDialog {
 			createDateLine(dates, count);
 	        count++;
 		}
-        JPanel panelAdd = new JPanel(new GridBagLayout());
-		c.gridy=count;
-		c.gridx=2;
-		panelAdd.add(add,c);
+        JPanel panelAdd = new JPanel();
+        panelAdd.setLayout(new BorderLayout());
+        JPanel panelSubAdd = new JPanel();
+        panelSubAdd.setLayout(new BoxLayout(panelSubAdd, BoxLayout.X_AXIS));
+		//c.gridy=count;
+		//c.gridx=2;
+        add.setMaximumSize(new Dimension(100,20));
+        panelSubAdd.add(add, BorderLayout.CENTER);
+		panelAdd.add(panelSubAdd, BorderLayout.NORTH);
 
         for (Component comp : footer.getComponents())
             ((JComponent) comp).setAlignmentX(0);
 
-        panel.add(footer, BorderLayout.NORTH);
-        footer.add(footer1);
-        footer.add(panelAdd);
+        panel.add(footer, BorderLayout.CENTER);
+        JScrollPane sp = new JScrollPane(footer1);
+        footer.add(sp, BorderLayout.NORTH);
+        footer.add(panelAdd, BorderLayout.NORTH);
 
         JPanel footer2 = new JPanel(new FlowLayout());
         footer2.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         footer2.add(exit);
         panel.add(footer2,BorderLayout.SOUTH);
 
+        dialog.setMinimumSize(new Dimension(500,300));
         dialog.getContentPane().add(panel);
     }
 
