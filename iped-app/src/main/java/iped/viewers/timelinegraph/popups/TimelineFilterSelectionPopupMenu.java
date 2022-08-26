@@ -57,6 +57,7 @@ public class TimelineFilterSelectionPopupMenu extends JPopupMenu implements Acti
 				app.setDockablesColors();
 			}
 			ipedChartPanel.filterSelection();
+			ipedChartPanel.setRefreshBuffer(true);
 			ipedChartPanel.repaint();
 		}
 
