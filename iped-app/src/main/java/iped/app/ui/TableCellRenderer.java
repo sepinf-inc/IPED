@@ -61,9 +61,14 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                     result.setIcon(folderIcon);
                 } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
                     result.setIcon(diskIcon);
-                } else {
-                    result.setIcon(fileIcon);
-                }
+				} else {
+					String tipo = doc.get(IndexItem.TYPE);
+					if (tipo != null && !tipo.isEmpty() && FileTypeIconRenderer.extesionIconMap.containsKey(tipo.toLowerCase())){
+						result.setIcon(FileTypeIconRenderer.extesionIconMap.get(tipo.toLowerCase()));
+					}else {
+						result.setIcon(fileIcon);
+					}
+				}
 
             } catch (IOException e) {
                 result.setIcon(null);
