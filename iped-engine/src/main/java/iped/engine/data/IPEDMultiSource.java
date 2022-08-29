@@ -286,18 +286,18 @@ public class IPEDMultiSource extends IPEDSource {
     }
     
     @SuppressWarnings("resource")
-	@Override
+    @Override
     public IntStream getLuceneIdStream() {
-    	IntStream is = null;
-    	for (int i = 0; i < cases.size(); i++) {
-    		IntStream next = cases.get(i).getLuceneIdStream();
-    		if (is == null) {
-    			is = next;
-    		} else {
-    			is = IntStream.concat(is, next);
-    		}
-    	}
-    	return is;
+        IntStream is = null;
+        for (int i = 0; i < cases.size(); i++) {
+            IntStream next = cases.get(i).getLuceneIdStream();
+            if (is == null) {
+                is = next;
+            } else {
+                is = IntStream.concat(is, next);
+            }
+        }
+        return is;
     }
 
     @Override
