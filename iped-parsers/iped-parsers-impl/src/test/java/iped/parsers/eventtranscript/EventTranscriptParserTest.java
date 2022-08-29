@@ -44,13 +44,13 @@ public class EventTranscriptParserTest {
         ParseContext historyContext = new ParseContext();
         historyContext.set(Parser.class, new EmbeddedEventTranscriptHistoryParser());
 
-        // try (InputStream stream = getStream("test-files/test_eventTranscript.db")) {
-        //     parser.parse(stream, handler, metadata, historyContext);
+        try (InputStream stream = getStream("test-files/eventtranscript/test_eventTranscript.db")) {
+            parser.parse(stream, handler, metadata, new ParseContext());
 
-        //     assertTrue(pageTitles.size() > 0);
-        //     assertTrue(urls.size() > 0);
-        //     assertTrue(visitDates.size() > 0);
-        // }
+            // assertTrue(pageTitles.size() > 0);
+            // assertTrue(urls.size() > 0);
+            // assertTrue(visitDates.size() > 0);
+        }
     }
 
     @SuppressWarnings("serial")

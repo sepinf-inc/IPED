@@ -6,24 +6,27 @@ import java.util.Date;
 import java.util.TimeZone;
 
 public class AppInteractivityEntry {
+    private String app;
     private Date timestamp;
     private String timestampStr;
     private String tagName;
     private String eventName;
     private Date aggregationStartTime;
     private String aggregationStartTimeStr;
-    private String AggregationDurationMS;
-    private String appId;
+    private String aggregationDuration;
     private String appVersionDate;
     private String PEHeaderChecksum;
     private String type;
     private String windowSize;
     private String mouseInputSec;
-    private String inFocusDurationMS;
-    private String userActivityDurationMS;
+    private String inFocusDuration;
+    private String userActiveDuration;
     private String sinceFirstInteractivityMS;
     private String userOrDisplayActiveDuration;
     private String focusLostCount;
+    private String programID;
+    private String userID;
+    private String userSID;
     private String JSONPayload;
 
 
@@ -68,7 +71,7 @@ public class AppInteractivityEntry {
     public void setAggregationStartTime(String aggregationStartTime) throws ParseException {
         this.aggregationStartTimeStr = aggregationStartTime;
         if (!aggregationStartTime.isEmpty()) {
-            SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             format.setTimeZone(TimeZone.getTimeZone("UTC"));
             setAggregationStartTime(format.parse(aggregationStartTime));
         }
@@ -82,17 +85,21 @@ public class AppInteractivityEntry {
         return this.aggregationStartTimeStr;
     }
 
-    public String getAggregationDurationMS() {
-        return this.AggregationDurationMS;
+    public String getAggregationDuration() {
+        return this.aggregationDuration;
+    }
+
+    public void setAggregationDuration(String aggregationDuration) {
+        this.aggregationDuration = aggregationDuration;
     }
 
 
-    public String getAppId() {
-        return this.appId;
+    public String getApp() {
+        return this.app;
     }
 
-    public void setAppId(String appId) {
-        this.appId = appId;
+    public void setApp(String appId) {
+        this.app = appId;
     }
 
     public String getAppVersionDate() {
@@ -135,20 +142,20 @@ public class AppInteractivityEntry {
         this.mouseInputSec = mouseInputSec;
     }
 
-    public String getInFocusDurationMS() {
-        return this.inFocusDurationMS;
+    public String getInFocusDuration() {
+        return this.inFocusDuration;
     }
 
-    public void setInFocusDurationMS(String inFocusDurationMS) {
-        this.inFocusDurationMS = inFocusDurationMS;
+    public void setInFocusDuration(String inFocusDurationMS) {
+        this.inFocusDuration = inFocusDurationMS;
     }
 
-    public String getUserActivityDurationMS() {
-        return this.userActivityDurationMS;
+    public String getUserActiveDuration() {
+        return this.userActiveDuration;
     }
 
-    public void setUserActivityDurationMS(String userActivityDurationMS) {
-        this.userActivityDurationMS = userActivityDurationMS;
+    public void setUserActiveDuration(String userActiveDuration) {
+        this.userActiveDuration = userActiveDuration;
     }
 
     public String getSinceFirstInteractivityMS() {
@@ -175,6 +182,32 @@ public class AppInteractivityEntry {
         this.focusLostCount = focusLostCount;
     }
 
+
+    public String getProgramID() {
+        return this.programID;
+    }
+
+    public void setProgramID(String programID) {
+        this.programID = programID;
+    }
+
+    
+    public String getUserID() {
+        return this.userID;
+    }
+
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
+
+    public String getUserSID() {
+        return this.userSID;
+    }
+
+    public void setUserSID(String userSID) {
+        this.userSID = userSID;
+    }
+
     public String getJSONPayload() {
         return this.JSONPayload;
     }
@@ -182,5 +215,6 @@ public class AppInteractivityEntry {
     public void setJSONPayload(String JSONPayload) {
         this.JSONPayload = JSONPayload;
     }
+
 
 }

@@ -12,6 +12,7 @@ public class BrowserHistoryEntry {
     private String timestampStr;
     private String[] tagNames;
     private String[] eventNames;
+    private String referUrl;
     private String url;
     private String[] pageTitles;
     private String appName;
@@ -66,6 +67,14 @@ public class BrowserHistoryEntry {
 
     public String[] getTagNames() {
         return this.tagNames;
+    }
+
+    public String getReferUrl() {
+        return this.referUrl;
+    }
+
+    public void setReferUrl(String referUrl) {
+        this.referUrl = referUrl;
     }
 
     public String getUrl() {

@@ -65,10 +65,15 @@ public class EventTranscriptParser extends SQLite3DBParser {
     public static final MediaType EVENT_TRANSCRIPT_INVENTORY_APP = MediaType.application("x-event-transcript-inventory-app");
     public static final MediaType EVENT_TRANSCRIPT_INVENTORY_APP_REG = MediaType.application("x-event-transcript-inventory-app-registry");
 
+    public static final MediaType EVENT_TRANSCRIPT_APP_INTERACT = MediaType.application("x-event-transcript-app-interactivity");
+    public static final MediaType EVENT_TRANSCRIPT_APP_INTERACT_REG = MediaType.application("x-event-transcript-app-interactivity-registry");
+
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(EVENT_TRANSCRIPT);
     
-    private static final String[] HISTORY_COLUMN_NAMES = new String[] {"Page Titles", "Visit Date (UTC)", "URL", "App"};
-    private static final String[] SW_INVENTORY_COLUMN_NAMES = new String[] {"Name", "Timestamp (UTC)", "Version", "Publisher", "Root Directory Path", "Install Date"};
+    private static final String[] HISTORY_COLUMN_NAMES = new String[] {"Page Titles", "Visit Date (UTC)", "Referrer URL", "URL", "App"};
+    private static final String[] INVENTORY_APPS_COLUMN_NAMES = new String[] {"Name", "Timestamp (UTC)", "Version", "Publisher", "Root Directory Path", "Install Date"};
+    private static final String[] APP_INTERACT_COLUMN_NAMES = new String[] {"App", "Timestamp (UTC)", "Type", "Window size (WxH)", "MouseInput (sec)", "InFocusDuration (ms)",
+        "UserActiveDuration (ms)"};
 
     // extract each history entry as a subitem.
     private boolean extractEntries = true;
@@ -101,6 +106,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         TikaInputStream tis = TikaInputStream.get(stream, tmp);
         File browserHistoryFile = tmp.createTemporaryFile();
         File inventoryAppFile = tmp.createTemporaryFile();
+        File appInteractivityFile = tmp.createTemporaryFile();
 
         if (new SQLiteContainerDetector().detect(tis, metadata) != EVENT_TRANSCRIPT) {
             sqliteParser.parse(stream, handler, metadata, context);
@@ -126,7 +132,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     for (BrowserHistoryEntry historyEntry : historyEntriesIterable) {
                         String[] rowValues = new String[] { String.join("; ", historyEntry.getPageTitles()),
-                            historyEntry.getTimestampStr(), historyEntry.getUrl(), historyEntry.getAppName() };
+                            historyEntry.getTimestampStr(), historyEntry.getReferUrl(), historyEntry.getUrl(), historyEntry.getAppName() };
                         emitEntry(xHandler, ++i, rowValues);
             
                         if (extractEntries) {
@@ -156,16 +162,16 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 inventoryAppMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                 try (InventoryAppsIterable inventoryAppsIterable = new InventoryAppsIterable(connection, DBQueries.INVENTORY_APPS)) {
-                    XHTMLContentHandler xHandler = emitHeader(inventoryAppHandler, inventoryAppMeta,title, SW_INVENTORY_COLUMN_NAMES);
+                    XHTMLContentHandler xHandler = emitHeader(inventoryAppHandler, inventoryAppMeta, title, INVENTORY_APPS_COLUMN_NAMES);
 
                     int i = 0;
-                    for (InventoryAppsEntry swInEntry : inventoryAppsIterable) {
-                        String[] values = new String[] { swInEntry.getName(), swInEntry.getTimestampStr(), swInEntry.getVersion(),
-                            swInEntry.getPublisher(), swInEntry.getRootDirPath(), swInEntry.getInstallDateStr() };
+                    for (InventoryAppsEntry appInvEntry : inventoryAppsIterable) {
+                        String[] values = new String[] { appInvEntry.getName(), appInvEntry.getTimestampStr(), appInvEntry.getVersion(),
+                            appInvEntry.getPublisher(), appInvEntry.getRootDirPath(), appInvEntry.getInstallDateStr() };
                         emitEntry(xHandler, ++i, values);
 
                         if (extractEntries) {
-                            Metadata metadataInventoryEntry = getInventoryEntryMetadata(swInEntry, i);
+                            Metadata metadataInventoryEntry = getInventoryEntryMetadata(appInvEntry, i);
                             extractor.parseEmbedded(new EmptyInputStream(), handler, metadataInventoryEntry, true);
                         }
                     }
@@ -174,6 +180,40 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                     try (FileInputStream fis = new FileInputStream(inventoryAppFile)) {
                         extractor.parseEmbedded(fis, handler, inventoryAppMeta, true);
+                    }
+                }
+            }
+
+            try (FileOutputStream tmpAppInteractFile = new FileOutputStream(appInteractivityFile)) {
+                ToXMLContentHandler appInteractivityHandler = new ToXMLContentHandler(tmpAppInteractFile, "UTF-16");
+                String title = "Event Transcript App Interactivity";
+
+                Metadata appInteractMeta = new Metadata();
+                appInteractMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_APP_INTERACT.toString());
+                appInteractMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
+                appInteractMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                appInteractMeta.set(BasicProps.HASCHILD, "true");
+                appInteractMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+                try (AppInteractivityIterable appInteractivityIterable = new AppInteractivityIterable(connection, DBQueries.APP_INTERACTIVITY)) {
+                    XHTMLContentHandler xHandler = emitHeader(appInteractivityHandler, appInteractMeta, title, APP_INTERACT_COLUMN_NAMES);
+
+                    int i = 0;
+                    for (AppInteractivityEntry appIntEntry : appInteractivityIterable) {
+                        String[] values = new String[] { appIntEntry.getApp(), appIntEntry.getTimestampStr(), appIntEntry.getType(), appIntEntry.getWindowSize(),
+                            appIntEntry.getMouseInputSec(), appIntEntry.getInFocusDuration(), appIntEntry.getUserActiveDuration() };
+                        emitEntry(xHandler, ++i, values);
+
+                        if (extractEntries) {
+                            Metadata appInteractEntry = getAppInteractEntryMetadata(appIntEntry, i);
+                            extractor.parseEmbedded(new EmptyInputStream(), handler, appInteractEntry, true);
+                        }
+                    }
+                    xHandler.endElement("table");
+                    xHandler.endDocument();
+
+                    try (FileInputStream fis = new FileInputStream(inventoryAppFile)) {
+                        extractor.parseEmbedded(fis, handler, appInteractMeta, true);
                     }
                 }
             }
@@ -238,6 +278,8 @@ public class EventTranscriptParser extends SQLite3DBParser {
         xHandler.endElement("tr");   
     }
 
+    // subitems
+
     private Metadata getHistoryEntryMetadata(BrowserHistoryEntry historyEntry, int i)
         throws ParseException {
         Metadata metadataHistoryEntry = new Metadata();
@@ -252,6 +294,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataHistoryEntry.set(ExtraProperties.ACCESSED, historyEntry.getTimestamp());
         metadataHistoryEntry.set(ExtraProperties.VISIT_DATE, historyEntry.getTimestamp());
         metadataHistoryEntry.add(ExtraProperties.URL, historyEntry.getUrl());
+        metadataHistoryEntry.add("referUrl", historyEntry.getReferUrl());
         metadataHistoryEntry.add("originalPayload", historyEntry.getJSONPayload());
 
         return metadataHistoryEntry;
@@ -269,6 +312,27 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add(TikaCoreProperties.TITLE, entry.getName());
         metadataEntry.set(ExtraProperties.DOWNLOAD_DATE, entry.getInstallDate());
         metadataEntry.set(TikaCoreProperties.SOURCE_PATH, entry.getRootDirPath());
+        metadataEntry.add("originalPayload", entry.getJSONPayload());
+
+        return metadataEntry;
+    }
+
+    private Metadata getAppInteractEntryMetadata(AppInteractivityEntry entry, int i) throws ParseException {
+        Metadata metadataEntry = new Metadata();
+
+        metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_APP_INTERACT_REG.toString());
+        metadataEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript App Interaction " + i);
+        metadataEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        metadataEntry.set(BasicProps.LENGTH, "");
+
+        metadataEntry.set(TikaCoreProperties.CREATED, entry.getTimestamp());
+        metadataEntry.add(TikaCoreProperties.TITLE, entry.getApp());
+        metadataEntry.add("aggregationDuration", entry.getAggregationDuration());
+        metadataEntry.add("userActiveDuration", entry.getUserActiveDuration());
+        metadataEntry.add("userOrDisplayActiveDuration", entry.getUserOrDisplayActiveDuration());
+        metadataEntry.add("programID", entry.getProgramID());
+        metadataEntry.add("userID", entry.getUserID());
+        metadataEntry.add("userSID", entry.getUserSID());
         metadataEntry.add("originalPayload", entry.getJSONPayload());
 
         return metadataEntry;
@@ -307,6 +371,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                         historyEntry.setTimestamp(rs.getString("Timestamp"));
                         historyEntry.setTagNames(rs.getString("TagNames").split(";"));
                         historyEntry.setEventNames(rs.getString("EventNames").split(";"));
+                        historyEntry.setReferUrl(rs.getString("ReferURL"));
                         historyEntry.setUrl(rs.getString("URL"));
                         String pageTitlesStr = rs.getString("PageTitles");
                         historyEntry.setPageTitles(pageTitlesStr != null ? pageTitlesStr.split(";") : new String[] {""});
@@ -382,6 +447,73 @@ public class EventTranscriptParser extends SQLite3DBParser {
                         throw new RuntimeException(e);
                     }
                     return inventoryAppsEntry;
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            };
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                rs.close();
+                statement.close();
+            } catch (SQLException e) {
+                // swallow
+            }            
+        }
+    }
+
+    private class AppInteractivityIterable implements Iterable<AppInteractivityEntry>, Closeable {
+        ResultSet rs;
+        Statement statement;
+
+        public AppInteractivityIterable(Connection connection, String query) throws SQLException {
+            statement = connection.createStatement();
+            rs = statement.executeQuery(query);
+        }
+
+        @Override
+        public Iterator<AppInteractivityEntry> iterator() {
+            return new Iterator<AppInteractivityEntry>() {
+
+                @Override
+                public boolean hasNext() {
+                    try {
+                        return rs.next();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                @Override
+                public AppInteractivityEntry next() {
+                    AppInteractivityEntry pppInteractivityEntry = new AppInteractivityEntry();
+                    try {
+                        pppInteractivityEntry.setApp(rs.getString("AppID"));
+                        pppInteractivityEntry.setTimestamp(rs.getString("Timestamp"));
+                        pppInteractivityEntry.setTagName(rs.getString("TagName"));
+                        pppInteractivityEntry.setEventName(rs.getString("EventName"));
+                        pppInteractivityEntry.setType(rs.getString("Type"));
+                        pppInteractivityEntry.setAggregationStartTime(rs.getString("AggregationStartTime"));
+                        pppInteractivityEntry.setAggregationDuration(rs.getString("AggregationDurationMS"));
+                        pppInteractivityEntry.setWindowSize(rs.getString("WindowSize(WxH)"));
+                        pppInteractivityEntry.setMouseInputSec(rs.getString("MouseInputSec"));
+                        pppInteractivityEntry.setInFocusDuration(rs.getString("InFocusDurationMS"));
+                        pppInteractivityEntry.setUserActiveDuration(rs.getString("UserActiveDurationMS"));
+                        pppInteractivityEntry.setUserOrDisplayActiveDuration(rs.getString("UserOrDisplayActiveDurationMS"));
+                        pppInteractivityEntry.setFocusLostCount(rs.getString("FocusLostCount"));
+                        pppInteractivityEntry.setProgramID(rs.getString("ProgramID"));
+                        pppInteractivityEntry.setUserSID(rs.getString("UserSID"));
+                        pppInteractivityEntry.setUserID(rs.getString("UserID"));
+                        pppInteractivityEntry.setJSONPayload(rs.getString("JSONPayload"));
+                    } catch (SQLException | ParseException e ) {
+                        throw new RuntimeException(e);
+                    }
+                    return pppInteractivityEntry;
                 }
 
                 @Override
