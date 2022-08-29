@@ -30,6 +30,7 @@ import org.apache.lucene.document.Document;
 
 import iped.data.IItemId;
 import iped.engine.task.index.IndexItem;
+import iped.localization.LocalizedProperties;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 
@@ -51,8 +52,10 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
 
         int idx = table.convertRowIndexToModel(row);
         int col = table.convertColumnIndexToModel(column);
-
-        if (table.getModel().getColumnName(col).equalsIgnoreCase(IndexItem.NAME)) {
+		String columnNameLocalized = iped.localization.LocalizedProperties.getLocalizedField(IndexItem.NAME);
+		columnNameLocalized = columnNameLocalized != null ? columnNameLocalized : "";
+		
+        if (table.getModel().getColumnName(col).equalsIgnoreCase(columnNameLocalized)) {
             try {
                 IItemId item = ((SearchResultTableModel) table.getModel()).getSearchResult().getItem(idx);
                 int docId = App.get().appCase.getLuceneId(item);
@@ -62,9 +65,9 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                 } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
                     result.setIcon(diskIcon);
 				} else {
-					String tipo = doc.get(IndexItem.TYPE);
-					if (tipo != null && !tipo.isEmpty() && FileTypeIconRenderer.extesionIconMap.containsKey(tipo.toLowerCase())){
-						result.setIcon(FileTypeIconRenderer.extesionIconMap.get(tipo.toLowerCase()));
+					String type = doc.get(IndexItem.TYPE);
+					if (type != null && !type.isEmpty() && FileTypeIconRenderer.extesionIconMap.containsKey(type.toLowerCase())){
+						result.setIcon(FileTypeIconRenderer.extesionIconMap.get(type.toLowerCase()));
 					}else {
 						result.setIcon(fileIcon);
 					}
