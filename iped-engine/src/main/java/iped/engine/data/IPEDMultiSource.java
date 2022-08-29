@@ -291,6 +291,8 @@ public class IPEDMultiSource extends IPEDSource {
         IntStream is = null;
         for (int i = 0; i < cases.size(); i++) {
             IntStream next = cases.get(i).getLuceneIdStream();
+            int baseId = getBaseLuceneId(cases.get(i));
+            next = next.map(docId -> docId + baseId);
             if (is == null) {
                 is = next;
             } else {
