@@ -49,7 +49,7 @@ import iped.utils.EmptyInputStream;
  * https://docs.microsoft.com/en-us/windows/privacy/basic-level-windows-diagnostic-events-and-fields-1709#microsoftwindowsinventorycoreinventoryapplicationadd
  * 
  * App Interactivity
- * https://docs.microsoft.com/en-us/windows/privacy/enhanced-diagnostic-data-windows-analytics-events-and-fields#win32ktraceloggingappinteractivitysummary * 
+ * https://docs.microsoft.com/en-us/windows/privacy/enhanced-diagnostic-data-windows-analytics-events-and-fields#win32ktraceloggingappinteractivitysummary
  *
  * @author Felipe Farias da Costa <felipecostasdc@gmail.com>
  */
@@ -72,8 +72,8 @@ public class EventTranscriptParser extends SQLite3DBParser {
     
     private static final String[] HISTORY_COLUMN_NAMES = new String[] {"Page Titles", "Visit Date (UTC)", "Referrer URL", "URL", "App"};
     private static final String[] INVENTORY_APPS_COLUMN_NAMES = new String[] {"Name", "Timestamp (UTC)", "Version", "Publisher", "Root Directory Path", "Install Date"};
-    private static final String[] APP_INTERACT_COLUMN_NAMES = new String[] {"App", "Timestamp (UTC)", "Type", "Window size (WxH)", "MouseInput (sec)", "InFocusDuration (ms)",
-        "UserActiveDuration (ms)"};
+    private static final String[] APP_INTERACT_COLUMN_NAMES = new String[] {"App", "Timestamp (UTC)", "Type", "Window size (WxH)", "MouseInput (sec)",
+    "InFocusDuration (ms)", "UserActiveDuration (ms)"};
 
     // extract each history entry as a subitem.
     private boolean extractEntries = true;
@@ -491,29 +491,29 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                 @Override
                 public AppInteractivityEntry next() {
-                    AppInteractivityEntry pppInteractivityEntry = new AppInteractivityEntry();
+                    AppInteractivityEntry appInteractivityEntry = new AppInteractivityEntry();
                     try {
-                        pppInteractivityEntry.setApp(rs.getString("AppID"));
-                        pppInteractivityEntry.setTimestamp(rs.getString("Timestamp"));
-                        pppInteractivityEntry.setTagName(rs.getString("TagName"));
-                        pppInteractivityEntry.setEventName(rs.getString("EventName"));
-                        pppInteractivityEntry.setType(rs.getString("Type"));
-                        pppInteractivityEntry.setAggregationStartTime(rs.getString("AggregationStartTime"));
-                        pppInteractivityEntry.setAggregationDuration(rs.getString("AggregationDurationMS"));
-                        pppInteractivityEntry.setWindowSize(rs.getString("WindowSize(WxH)"));
-                        pppInteractivityEntry.setMouseInputSec(rs.getString("MouseInputSec"));
-                        pppInteractivityEntry.setInFocusDuration(rs.getString("InFocusDurationMS"));
-                        pppInteractivityEntry.setUserActiveDuration(rs.getString("UserActiveDurationMS"));
-                        pppInteractivityEntry.setUserOrDisplayActiveDuration(rs.getString("UserOrDisplayActiveDurationMS"));
-                        pppInteractivityEntry.setFocusLostCount(rs.getString("FocusLostCount"));
-                        pppInteractivityEntry.setProgramID(rs.getString("ProgramID"));
-                        pppInteractivityEntry.setUserSID(rs.getString("UserSID"));
-                        pppInteractivityEntry.setUserID(rs.getString("UserID"));
-                        pppInteractivityEntry.setJSONPayload(rs.getString("JSONPayload"));
+                        appInteractivityEntry.setApp(rs.getString("AppID"));
+                        appInteractivityEntry.setTimestamp(rs.getString("Timestamp"));
+                        appInteractivityEntry.setTagName(rs.getString("TagName"));
+                        appInteractivityEntry.setEventName(rs.getString("EventName"));
+                        appInteractivityEntry.setType(rs.getString("Type"));
+                        appInteractivityEntry.setAggregationStartTime(rs.getString("AggregationStartTime"));
+                        appInteractivityEntry.setAggregationDuration(rs.getString("AggregationDurationMS"));
+                        appInteractivityEntry.setWindowSize(rs.getString("WindowSize(WxH)"));
+                        appInteractivityEntry.setMouseInputSec(rs.getString("MouseInputSec"));
+                        appInteractivityEntry.setInFocusDuration(rs.getString("InFocusDurationMS"));
+                        appInteractivityEntry.setUserActiveDuration(rs.getString("UserActiveDurationMS"));
+                        appInteractivityEntry.setUserOrDisplayActiveDuration(rs.getString("UserOrDisplayActiveDurationMS"));
+                        appInteractivityEntry.setFocusLostCount(rs.getString("FocusLostCount"));
+                        appInteractivityEntry.setProgramID(rs.getString("ProgramID"));
+                        appInteractivityEntry.setUserSID(rs.getString("UserSID"));
+                        appInteractivityEntry.setUserID(rs.getString("UserID"));
+                        appInteractivityEntry.setJSONPayload(rs.getString("JSONPayload"));
                     } catch (SQLException | ParseException e ) {
                         throw new RuntimeException(e);
                     }
-                    return pppInteractivityEntry;
+                    return appInteractivityEntry;
                 }
 
                 @Override
