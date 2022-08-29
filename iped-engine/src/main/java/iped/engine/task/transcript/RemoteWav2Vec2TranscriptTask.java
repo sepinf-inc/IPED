@@ -34,11 +34,15 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     private static final int RETRY_INTERVAL_MILLIS = 100;
 
+    private static final int UPDATE_SERVERS_INTERVAL_MILLIS = 60000;
+
     private static List<Server> servers = new ArrayList<>();
 
     private static int currentServer = -1;
 
     private static AtomicInteger numConnectErrors = new AtomicInteger();
+
+    private static long lastUpdateServersTime = 0;
 
     private static class Server {
 
@@ -63,11 +67,14 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
             return;
         }
 
-        requestServers();
+        requestServers(true);
         
     }
 
-    private static synchronized void requestServers(RemoteWav2Vec2TranscriptTask task) throws IOException {
+    private static synchronized void requestServers(RemoteWav2Vec2TranscriptTask task, boolean now) throws IOException {
+        if (!now && System.currentTimeMillis() - lastUpdateServersTime < UPDATE_SERVERS_INTERVAL_MILLIS) {
+            return;
+        }
         String[] ipAndPort = task.transcriptConfig.getWav2vec2Service().split(":");
         String ip = ipAndPort[0];
         int port = Integer.parseInt(ipAndPort[1]);
@@ -91,14 +98,19 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
             }
             if (!servers.isEmpty()) {
                 RemoteWav2Vec2TranscriptTask.servers = servers;
+                lastUpdateServersTime = System.currentTimeMillis();
             }
         } catch (ConnectException e) {
-            throw new IPEDException("Transcription server refused connection, is it online?");
+            if (servers.isEmpty()) {
+                throw new IPEDException("Transcription server refused connection, is it online?");
+            } else {
+                logger.error("Transcription server refused connection, is it online?");
+            }
         }
     }
 
-    private void requestServers() throws IOException {
-        requestServers(this);
+    private void requestServers(boolean now) throws IOException {
+        requestServers(this, now);
     }
 
 
@@ -139,6 +151,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private TextAndScore transcribeWavPart(File tmpFile) throws Exception {
 
         while (true) {
+            requestServers(false);
             Server server = getServer();
             long requestTime = System.currentTimeMillis();
             try (Socket serverSocket = new Socket(server.ip, server.port);
@@ -196,7 +209,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                         throw new IPEDException("Too many connection errors to transcription server, maybe it is down.");
                     }
                     sleepBeforeRetry(requestTime);
-                    requestServers();
+                    requestServers(true);
                 } else {
                     e.printStackTrace();
                 }
