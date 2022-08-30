@@ -91,8 +91,9 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
         speechClient.close();
     }
 
-    protected TextAndScore transcribeWav(File tmpFile) throws Exception {
-        return transcribeWavBreaking(tmpFile, evidence, f -> {
+    @Override
+    protected TextAndScore transcribeAudio(File tmpFile) throws Exception {
+        return transcribeWavBreaking(tmpFile, evidence.getPath(), f -> {
             try {
                 return transcribeWavPart(f);
             } catch (Exception e) {

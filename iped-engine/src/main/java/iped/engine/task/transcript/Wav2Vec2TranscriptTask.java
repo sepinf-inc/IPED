@@ -163,8 +163,8 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     }
 
     @Override
-    protected TextAndScore transcribeWav(File tmpFile) throws Exception {
-        return GoogleTranscriptTask.transcribeWavBreaking(tmpFile, evidence, f -> {
+    protected TextAndScore transcribeAudio(File tmpFile) throws Exception {
+        return transcribeWavBreaking(tmpFile, evidence.getPath(), f -> {
             try {
                 return transcribeWavPart(f);
             } catch (Exception e) {
