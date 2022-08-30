@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tika.io.TemporaryResources;
 
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
@@ -138,7 +139,8 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
     }
 
     @Override
-    protected File getTempFileToTranscript(IItem evidence) throws IOException, InterruptedException {
+    protected File getTempFileToTranscript(IItem evidence, TemporaryResources tmp)
+            throws IOException, InterruptedException {
         return evidence.getTempFile();
     }
 

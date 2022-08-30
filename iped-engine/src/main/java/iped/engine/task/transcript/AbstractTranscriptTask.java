@@ -1,5 +1,6 @@
 package iped.engine.task.transcript;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -19,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
+import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.SystemUtils;
 import org.slf4j.Logger;
@@ -356,7 +358,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
     }
 
-    protected File getTempFileToTranscript(IItem evidence) throws IOException, InterruptedException {
+    protected File getTempFileToTranscript(IItem evidence, TemporaryResources tmp)
+            throws IOException, InterruptedException {
         long t = System.currentTimeMillis();
         File tempWav = null;
         try {
@@ -370,6 +373,13 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             wavFail.incrementAndGet();
         } else {
             wavSuccess.incrementAndGet();
+            File finalFile = tempWav;
+            tmp.addResource(new Closeable() {
+                @Override
+                public void close() throws IOException {
+                    finalFile.delete();
+                }
+            });
         }
         return tempWav;
     }
@@ -392,7 +402,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return;
         }
 
-        File tmpFile = getTempFileToTranscript(evidence);
+        TemporaryResources tmp = new TemporaryResources();
+        File tmpFile = getTempFileToTranscript(evidence, tmp);
         if (tmpFile == null) {
             return;
         }
@@ -415,9 +426,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
 
         } finally {
-            if (tmpFile != evidence.getTempFile()) {
-                tmpFile.delete();
-            }
+            tmp.close();
         }
 
     }
