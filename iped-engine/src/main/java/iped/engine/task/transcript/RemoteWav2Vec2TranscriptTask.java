@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.task.transcript.RemoteWav2Vec2Service.MESSAGES;
 import iped.exception.IPEDException;
@@ -119,18 +120,6 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         super.finish();
     }
 
-
-    @Override
-    protected TextAndScore transcribeWav(File tmpFile) throws Exception {
-        return transcribeWavBreaking(tmpFile, evidence, f -> {
-            try {
-                return transcribeWavPart(f);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
     /**
      * Returns a transcription server between the discovered ones using a simple
      * circular approach.
@@ -148,7 +137,13 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         return servers.get(currentServer);
     }
 
-    private TextAndScore transcribeWavPart(File tmpFile) throws Exception {
+    @Override
+    protected File getTempFileToTranscript(IItem evidence) throws IOException, InterruptedException {
+        return evidence.getTempFile();
+    }
+
+    @Override
+    protected TextAndScore transcribeAudio(File tmpFile) throws Exception {
 
         while (true) {
             requestServers(false);
