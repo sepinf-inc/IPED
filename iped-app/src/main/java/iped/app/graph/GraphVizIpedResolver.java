@@ -41,7 +41,7 @@ public class GraphVizIpedResolver implements GraphVizResolver {
         pb.command(cmd, "-V");
         try {
             Process p = pb.start();
-            IOUtil.loadInputStream(p.getInputStream());
+            IOUtil.ignoreInputStream(p.getInputStream());
             p.waitFor();
             if (p.exitValue() != 0)
                 throw new IOException();
