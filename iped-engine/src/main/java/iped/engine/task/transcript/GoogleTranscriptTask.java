@@ -153,7 +153,7 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
         pb.command(cmd);
         pb.redirectErrorStream(true);
         Process p = pb.start();
-        IOUtil.loadInputStream(p.getInputStream());
+        IOUtil.ignoreInputStream(p.getInputStream());
         int exit = p.waitFor();
         if (exit == 0) {
             File[] files = outFile.getParentFile().listFiles(new PrefixFilter(outFile.getName()));

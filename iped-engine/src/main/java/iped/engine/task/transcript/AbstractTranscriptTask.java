@@ -2,7 +2,6 @@ package iped.engine.task.transcript;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -46,6 +46,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     private static final String INSERT_DATA = "INSERT INTO transcriptions(id, text, score) VALUES(?,?,?) ON CONFLICT(id) DO NOTHING"; //$NON-NLS-1$
 
     private static final String SELECT_EXACT = "SELECT text, score FROM transcriptions WHERE id=?;"; //$NON-NLS-1$
+
+    private static final int TIMEOUT_PER_MB = 100;
 
     protected static final int MIN_TIMEOUT = 10;
 
@@ -98,7 +100,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
                 pb.command(TEST_FFMPEG.split(" "));
                 pb.redirectErrorStream(true);
                 Process p = pb.start();
-                IOUtil.loadInputStream(p.getInputStream());
+                IOUtil.ignoreInputStream(p.getInputStream());
                 int exit = p.waitFor();
                 if (exit == 0) {
                     ffmpegDetected = true;
@@ -214,14 +216,28 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
         pb.redirectErrorStream(true);
         Process p = pb.start();
-        byte[] out = IOUtil.loadInputStream(p.getInputStream());
-        int exit = p.waitFor();
+        IOUtil.ignoreInputStream(p.getInputStream());
+        long timeoutSecs = TIMEOUT_PER_MB * input.length() / (1 << 20);
+        boolean finished = p.waitFor(timeoutSecs, TimeUnit.SECONDS);
+        if (!finished) {
+            LOGGER.warn("Timeout after {}s converting to wav: {}", timeoutSecs, evidence.getPath());
+            evidence.setTimeOut(true);
+            stats.incTimeouts();
+            LOGGER.warn("Trying to kill mplayer process...");
+            p.destroy();
+            p.waitFor(3, TimeUnit.SECONDS);
+            if (p.isAlive()) {
+                LOGGER.warn("Trying to forcibly kill mplayer process...");
+                p.destroyForcibly();
+                p.waitFor(3, TimeUnit.SECONDS);
+            }
+        }
+        int exit = p.exitValue();
         if (exit != 0) {
             tmpFile.delete();
-            LOGGER.warn("Error converting to wav {} {}", evidence.getPath(), new String(out, StandardCharsets.UTF_8));
+            LOGGER.warn("Error converting to wav exitCode={} item={}", exit, evidence.getPath());
             return null;
         } else {
-            LOGGER.debug(new String(out, StandardCharsets.UTF_8));
             if (!tmpFile.exists()) {
                 LOGGER.warn("Conversion to wav failed, no wav generated: {} ", evidence.getPath());
                 return null;

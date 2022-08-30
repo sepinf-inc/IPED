@@ -492,16 +492,26 @@ public class VideoThumbsMaker {
                 if (verbose)
                     System.err.println("TIMEOUT!");
                 isTimeout = true;
-                process.destroyForcibly();
+                process.destroy();
+                process.waitFor(3, TimeUnit.SECONDS);
+            } else {
+                outputGobbler.join();
             }
-            outputGobbler.join();
             exitCode = process.exitValue();
-
             return new ExecResult(exitCode, sb.toString(), isTimeout);
+
         } catch (Exception e) {
             if (verbose) {
                 System.err.print("Error running program '"); //$NON-NLS-1$
                 e.printStackTrace();
+            }
+            if (!isTimeout && process != null && process.isAlive()) {
+                process.destroy();
+                try {
+                    process.waitFor(3, TimeUnit.SECONDS);
+                } catch (InterruptedException e1) {
+                    // ignore
+                }
             }
         } finally {
             if (process != null && process.isAlive())
@@ -579,11 +589,14 @@ public class VideoThumbsMaker {
                         System.err.println(line);
                     }
                     if (counter > maxLines) {
-                        process.destroyForcibly();
+                        process.destroy();
+                        if (!process.waitFor(3, TimeUnit.SECONDS)) {
+                            process.destroyForcibly();
+                        }
                         break;
                     }
                 }
-            } catch (IOException ioe) {
+            } catch (IOException | InterruptedException e) {
             } finally {
                 if (br != null) {
                     try {
