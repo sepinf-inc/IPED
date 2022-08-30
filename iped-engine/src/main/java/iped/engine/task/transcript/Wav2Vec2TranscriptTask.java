@@ -164,7 +164,8 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     @Override
     protected TextAndScore transcribeAudio(File tmpFile) throws Exception {
-        return transcribeWavBreaking(tmpFile, evidence.getPath(), f -> {
+        String path = evidence != null ? evidence.getPath() : tmpFile.getPath();
+        return transcribeWavBreaking(tmpFile, path, f -> {
             try {
                 return transcribeWavPart(f);
             } catch (Exception e) {

@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.LocalConfig;
 import iped.engine.task.transcript.AbstractTranscriptTask.TextAndScore;
 import iped.utils.IOUtil;
 
@@ -74,9 +75,12 @@ public class RemoteWav2Vec2Service {
 
         Configuration.getInstance().loadConfigurables(root.getAbsolutePath());
         ConfigurationManager cm = ConfigurationManager.get();
-        AudioTranscriptConfig config = new AudioTranscriptConfig();
-        cm.addObject(config);
-        cm.loadConfig(config);
+        AudioTranscriptConfig audioConfig = new AudioTranscriptConfig();
+        LocalConfig localConfig = new LocalConfig();
+        cm.addObject(audioConfig);
+        cm.addObject(localConfig);
+        cm.loadConfig(audioConfig);
+        cm.loadConfig(localConfig);
 
         Wav2Vec2TranscriptTask task = new Wav2Vec2TranscriptTask();
         task.init(cm);
@@ -136,6 +140,7 @@ public class RemoteWav2Vec2Service {
                     @Override
                     public void run() {
                         Path tmpFile = null;
+                        File wavFile = null;
                         try (BufferedInputStream bis = new BufferedInputStream(client.getInputStream());
                                 PrintWriter writer = new PrintWriter(new OutputStreamWriter(
                                         client.getOutputStream(), StandardCharsets.UTF_8), true)) {
@@ -178,7 +183,15 @@ public class RemoteWav2Vec2Service {
                                 logger.info(prefix + "Received " + size + " audio bytes to transcribe.");
                             }
 
-                            TextAndScore result = task.transcribeWavPart(tmpFile.toFile());
+                            wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+                            if (wavFile == null) {
+                                String errorMsg = "Failed to convert audio to wav.";
+                                writer.println(MESSAGES.ERROR);
+                                writer.println(errorMsg);
+                                throw new IOException(prefix + errorMsg);
+                            }
+
+                            TextAndScore result = task.transcribeAudio(wavFile);
 
                             logger.info(prefix + "Transcritpion done.");
 
@@ -195,6 +208,9 @@ public class RemoteWav2Vec2Service {
                             IOUtil.closeQuietly(client);
                             if (tmpFile != null) {
                                 tmpFile.toFile().delete();
+                            }
+                            if (wavFile != null) {
+                                wavFile.delete();
                             }
                         }
                     }
