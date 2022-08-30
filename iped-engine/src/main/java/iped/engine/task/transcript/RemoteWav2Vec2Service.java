@@ -36,9 +36,10 @@ public class RemoteWav2Vec2Service {
         AUDIO_SIZE,
         BUSY,
         DISCOVER,
+        DONE,
         ERROR,
         REGISTER,
-        DONE
+        WARN
     }
 
     private static final int MAX_CON_QUEUE = 5000;
@@ -183,12 +184,19 @@ public class RemoteWav2Vec2Service {
                                 logger.info(prefix + "Received " + size + " audio bytes to transcribe.");
                             }
 
-                            wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+                            String suffix = ".";
+                            try {
+                                wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+                            } catch (Exception e) {
+                                suffix = ": " + e.toString().replace('\n', ' ').replace('\r', ' ');
+                            }
                             if (wavFile == null) {
-                                String errorMsg = "Failed to convert audio to wav.";
-                                writer.println(MESSAGES.ERROR);
+                                String errorMsg = "Failed to convert audio to wav" + suffix;
+                                writer.println(MESSAGES.WARN);
                                 writer.println(errorMsg);
                                 throw new IOException(prefix + errorMsg);
+                            } else {
+                                logger.info(prefix + "Audio converted to wav.");
                             }
 
                             TextAndScore result = task.transcribeAudio(wavFile);

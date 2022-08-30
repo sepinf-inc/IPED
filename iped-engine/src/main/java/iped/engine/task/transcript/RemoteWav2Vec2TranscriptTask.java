@@ -25,6 +25,7 @@ import org.apache.tika.io.TemporaryResources;
 
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.io.TimeoutException;
 import iped.engine.task.transcript.RemoteWav2Vec2Service.MESSAGES;
 import iped.exception.IPEDException;
 
@@ -182,6 +183,15 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 bos.flush();
 
                 response = reader.readLine();
+                if (MESSAGES.WARN.toString().equals(response)) {
+                    String warn = reader.readLine();
+                    logger.warn("Fail to transcribe on server:{} audio:{} error:{}", server, evidence.getPath(), warn);
+                    if (warn.contains(TimeoutException.class.getName())) {
+                        evidence.setTimeOut(true);
+                        stats.incTimeouts();
+                    }
+                    return null;
+                }
                 if (MESSAGES.ERROR.toString().equals(response)) {
                     String error = reader.readLine();
                     logger.error("Error 1 in communication channel with {}: {}", server, error);
