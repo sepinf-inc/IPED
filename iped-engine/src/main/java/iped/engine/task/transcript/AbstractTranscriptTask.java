@@ -32,6 +32,7 @@ import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
+import iped.engine.io.TimeoutException;
 import iped.engine.task.AbstractTask;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
@@ -205,12 +206,12 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     }
 
-    protected static TextAndScore transcribeWavBreaking(File tmpFile, IItem evidence,
+    public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath,
             Function<File, TextAndScore> transcribeWavPart) throws Exception {
         if (tmpFile.length() <= MAX_WAV_SIZE || !isFfmpegOk()) {
             return transcribeWavPart.apply(tmpFile);
         } else {
-            Collection<File> parts = getAudioSplits(tmpFile, evidence);
+            Collection<File> parts = getAudioSplits(tmpFile, itemPath);
             StringBuilder sb = new StringBuilder();
             double score = 0;
             for (File part : parts) {
@@ -230,7 +231,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
     }
 
-    protected static Collection<File> getAudioSplits(File tmpFile, IItem evidence)
+    protected static Collection<File> getAudioSplits(File tmpFile, String itemPath)
             throws InterruptedException, IOException {
         ProcessBuilder pb = new ProcessBuilder();
         File outFile = File.createTempFile("iped", "");
@@ -249,7 +250,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             File[] files = outFile.getParentFile().listFiles(new PrefixFilter(outFile.getName()));
             return new TreeSet<>(Arrays.asList(files));
         } else {
-            LOGGER.error("Failed to split audio file " + evidence.getPath());
+            LOGGER.error("Failed to split audio file " + itemPath);
             return Collections.emptyList();
         }
     }
@@ -268,8 +269,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
     }
 
-    protected File getWavFile(IItem evidence) throws IOException, InterruptedException {
-        File input = evidence.getTempFile();
+    protected File getWavFile(File itemFile, String itemPath) throws IOException, InterruptedException {
+        File input = itemFile;
         File tmpFile = File.createTempFile("iped", ".wav");
         Files.delete(tmpFile.toPath());
         ProcessBuilder pb = new ProcessBuilder();
@@ -293,9 +294,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         long timeoutSecs = TIMEOUT_PER_MB * input.length() / (1 << 20);
         boolean finished = p.waitFor(timeoutSecs, TimeUnit.SECONDS);
         if (!finished) {
-            LOGGER.warn("Timeout after {}s converting to wav: {}", timeoutSecs, evidence.getPath());
-            evidence.setTimeOut(true);
-            stats.incTimeouts();
+            LOGGER.warn("Timeout after {}s converting to wav: {}", timeoutSecs, itemPath);
             LOGGER.warn("Trying to kill mplayer process...");
             p.destroy();
             p.waitFor(3, TimeUnit.SECONDS);
@@ -308,18 +307,21 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         int exit = p.exitValue();
         if (exit != 0) {
             tmpFile.delete();
-            LOGGER.warn("Error converting to wav exitCode={} item={}", exit, evidence.getPath());
-            return null;
+            LOGGER.warn("Error converting to wav exitCode={} item={}", exit, itemPath);
+            tmpFile = null;
         } else {
             if (!tmpFile.exists()) {
-                LOGGER.warn("Conversion to wav failed, no wav generated: {} ", evidence.getPath());
-                return null;
+                LOGGER.warn("Conversion to wav failed, no wav generated: {} ", itemPath);
+                tmpFile = null;
             }
             if (tmpFile.length() == 0) {
                 tmpFile.delete();
-                LOGGER.warn("Conversion to wav failed, empty wav generated: {} ", evidence.getPath());
-                return null;
+                LOGGER.warn("Conversion to wav failed, empty wav generated: {} ", itemPath);
+                tmpFile = null;
             }
+        }
+        if (!finished) {
+            throw new TimeoutException();
         }
         return tmpFile;
     }
@@ -354,6 +356,24 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
     }
 
+    protected File getTempFileToTranscript(IItem evidence) throws IOException, InterruptedException {
+        long t = System.currentTimeMillis();
+        File tempWav = null;
+        try {
+            tempWav = getWavFile(evidence.getTempFile(), evidence.getPath());
+        } catch (TimeoutException e) {
+            evidence.setTimeOut(true);
+            stats.incTimeouts();
+        }
+        wavTime.addAndGet(System.currentTimeMillis() - t);
+        if (tempWav == null) {
+            wavFail.incrementAndGet();
+        } else {
+            wavSuccess.incrementAndGet();
+        }
+        return tempWav;
+    }
+
     @Override
     protected void process(IItem evidence) throws Exception {
 
@@ -372,19 +392,15 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return;
         }
 
-        long t = System.currentTimeMillis();
-        File tempWav = getWavFile(evidence);
-        wavTime.addAndGet(System.currentTimeMillis() - t);
-        if (tempWav == null) {
-            wavFail.incrementAndGet();
+        File tmpFile = getTempFileToTranscript(evidence);
+        if (tmpFile == null) {
             return;
         }
-        wavSuccess.incrementAndGet();
 
         try {
             this.evidence = evidence;
-            t = System.currentTimeMillis();
-            TextAndScore result = transcribeWav(tempWav);
+            long t = System.currentTimeMillis();
+            TextAndScore result = transcribeAudio(tmpFile);
             transcriptionTime.addAndGet(System.currentTimeMillis() - t);
             if (result != null) {
                 evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(result.score));
@@ -399,13 +415,13 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
 
         } finally {
-            if (tempWav != null) {
-                tempWav.delete();
+            if (tmpFile != evidence.getTempFile()) {
+                tmpFile.delete();
             }
         }
 
     }
 
-    protected abstract TextAndScore transcribeWav(File tmpFile) throws Exception;
+    protected abstract TextAndScore transcribeAudio(File tmpFile) throws Exception;
 
 }
