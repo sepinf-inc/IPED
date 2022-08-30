@@ -122,7 +122,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     @Override
     protected TextAndScore transcribeWav(File tmpFile) throws Exception {
-        return GoogleTranscriptTask.transcribeWavBreaking(tmpFile, evidence, f -> {
+        return transcribeWavBreaking(tmpFile, evidence, f -> {
             try {
                 return transcribeWavPart(f);
             } catch (Exception e) {

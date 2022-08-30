@@ -1,17 +1,10 @@
 package iped.engine.task.transcript;
 
 import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
@@ -29,10 +22,8 @@ import com.google.cloud.speech.v1p1beta1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1p1beta1.SpeechRecognitionResult;
 import com.google.protobuf.ByteString;
 
-import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.exception.IPEDException;
-import iped.utils.IOUtil;
 
 public class GoogleTranscriptTask extends AbstractTranscriptTask {
 
@@ -49,11 +40,6 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
     public static final MediaType amr = MediaType.audio("amr");
     public static final MediaType aac = MediaType.audio("x-aac");
     public static final MediaType speex = MediaType.audio("speex");
-
-    private static final int MAX_WAV_TIME = 59;
-    private static final int MAX_WAV_SIZE = 16000 * 2 * MAX_WAV_TIME;
-    private static final String SPLIT_CMD = "ffmpeg -i $INPUT -f segment -segment_time " + MAX_WAV_TIME
-            + " -c copy $OUTPUT%03d.wav";
 
     private static Object lock = new Object();
     private static long lastTime = 0;
@@ -113,69 +99,6 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
                 throw new RuntimeException(e);
             }
         });
-    }
-
-    protected static TextAndScore transcribeWavBreaking(File tmpFile, IItem evidence,
-            Function<File, TextAndScore> transcribeWavPart) throws Exception {
-        if (tmpFile.length() <= MAX_WAV_SIZE || !isFfmpegOk()) {
-            return transcribeWavPart.apply(tmpFile);
-        } else {
-            Collection<File> parts = getAudioSplits(tmpFile, evidence);
-            StringBuilder sb = new StringBuilder();
-            double score = 0;
-            for (File part : parts) {
-                TextAndScore partResult = transcribeWavPart.apply(part);
-                if (partResult != null) {
-                    if (score > 0)
-                        sb.append(" ");
-                    sb.append(partResult.text);
-                    score += partResult.score;
-                }
-                part.delete();
-            }
-            TextAndScore result = new TextAndScore();
-            result.text = sb.toString();
-            result.score = score / parts.size();
-            return result;
-        }
-    }
-
-    protected static Collection<File> getAudioSplits(File tmpFile, IItem evidence)
-            throws InterruptedException, IOException {
-        ProcessBuilder pb = new ProcessBuilder();
-        File outFile = File.createTempFile("iped", "");
-        outFile.delete();
-        String cmd[] = SPLIT_CMD.split(" ");
-        for (int i = 0; i < cmd.length; i++) {
-            cmd[i] = cmd[i].replace("$INPUT", tmpFile.getAbsolutePath());
-            cmd[i] = cmd[i].replace("$OUTPUT", outFile.getAbsolutePath());
-        }
-        pb.command(cmd);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        IOUtil.ignoreInputStream(p.getInputStream());
-        int exit = p.waitFor();
-        if (exit == 0) {
-            File[] files = outFile.getParentFile().listFiles(new PrefixFilter(outFile.getName()));
-            return new TreeSet<>(Arrays.asList(files));
-        } else {
-            LOGGER.error("Failed to split audio file " + evidence.getPath());
-            return Collections.emptyList();
-        }
-    }
-
-    private static class PrefixFilter implements FilenameFilter {
-
-        private String prefix;
-
-        PrefixFilter(String prefix) {
-            this.prefix = prefix;
-        }
-
-        @Override
-        public boolean accept(File dir, String name) {
-            return name.startsWith(prefix);
-        }
     }
 
     protected TextAndScore transcribeWavPart(File tmpFile) throws Exception {
