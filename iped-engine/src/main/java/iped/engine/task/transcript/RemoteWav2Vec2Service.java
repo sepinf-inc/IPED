@@ -40,6 +40,8 @@ public class RemoteWav2Vec2Service {
         DONE
     }
 
+    private static final int MAX_CON_QUEUE = 5000;
+
     private static ExecutorService executor = Executors.newCachedThreadPool();
 
     private static Logger logger;
@@ -81,7 +83,7 @@ public class RemoteWav2Vec2Service {
 
         int numCPUs = Wav2Vec2TranscriptTask.getNumProcessors();
 
-        try (ServerSocket server = new ServerSocket(0)) {
+        try (ServerSocket server = new ServerSocket(0, MAX_CON_QUEUE)) {
 
             server.setSoTimeout(0);
             // server.setReceiveBufferSize((1 << 16) - 1);
