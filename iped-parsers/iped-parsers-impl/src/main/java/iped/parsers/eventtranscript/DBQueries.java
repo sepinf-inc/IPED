@@ -18,7 +18,7 @@ public final class DBQueries {
         + "     datetime((events_persisted.timestamp/10000000) - 11644473600, 'unixepoch', 'UTC') AS Timestamp,"
         + "     tag_descriptions.tag_name AS TagName,"
         + "     events_persisted.full_event_name AS FullEventName,"
-        + "     replace(replace(substr(distinct events_persisted.full_event_name,39),'Microsoft.',''),'WebBrowser.HistoryJournal.HJ_','') AS 'EventName',"
+        + "     replace(replace(substr(distinct events_persisted.full_event_name,39),'Microsoft.',''),'WebBrowser.HistoryJournal.','') AS 'EventName',"
         + "     json_extract(events_persisted.payload,'$.ext.app.name') AS App,"
         + "     events_persisted.compressed_payload_size AS CompressedPayloadSize,"
         + "     json_extract(events_persisted.payload,'$.data.navigationUrl') AS URL,"
@@ -70,9 +70,8 @@ public final class DBQueries {
         + "     LEFT JOIN event_tags ON events_persisted.full_event_name_hash = event_tags.full_event_name_hash"
         + "     LEFT JOIN tag_descriptions ON event_tags.tag_id = tag_descriptions.tag_id"
         + " WHERE"
-        + " events_persisted.full_event_name like 'Microsoft.Windows.Inventory.Core.Inventory%' and"
-        + " TagName = 'Software Setup and Inventory'"
-        + " order by cast(events_persisted.timestamp as integer) desc";
+        + " events_persisted.full_event_name like 'Microsoft.Windows.Inventory.Core.Inventory%'"
+        + " order by cast('InstallDate' as integer) desc";
 
     public static final String APP_INTERACTIVITY = "SELECT"
     + " datetime( ( events_persisted.timestamp / 10000000 ) - 11644473600, 'unixepoch' ) AS 'Timestamp',"

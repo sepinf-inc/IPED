@@ -295,6 +295,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataHistoryEntry.set(ExtraProperties.VISIT_DATE, historyEntry.getTimestamp());
         metadataHistoryEntry.add(ExtraProperties.URL, historyEntry.getUrl());
         metadataHistoryEntry.add("referUrl", historyEntry.getReferUrl());
+        metadataHistoryEntry.add("eventNames", String.join("; ", historyEntry.getEventNames()));
         metadataHistoryEntry.add("originalPayload", historyEntry.getJSONPayload());
 
         return metadataHistoryEntry;
@@ -312,6 +313,8 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add(TikaCoreProperties.TITLE, entry.getName());
         metadataEntry.set(ExtraProperties.DOWNLOAD_DATE, entry.getInstallDate());
         metadataEntry.set(TikaCoreProperties.SOURCE_PATH, entry.getRootDirPath());
+        metadataEntry.set("version", entry.getVersion());
+        metadataEntry.set("eventName", entry.getEventName());
         metadataEntry.add("originalPayload", entry.getJSONPayload());
 
         return metadataEntry;

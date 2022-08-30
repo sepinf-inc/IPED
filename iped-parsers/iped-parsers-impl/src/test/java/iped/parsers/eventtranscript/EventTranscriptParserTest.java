@@ -17,44 +17,77 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.standard.StandardParser;
 import iped.properties.ExtraProperties;
 
 
 public class EventTranscriptParserTest {
-    public List<String> pageTitles = new ArrayList<String>();
-    public List<String> urls = new ArrayList<String>();
-    public List<String> visitDates = new ArrayList<String>();
+
+    private static EventTranscriptParser parser;
+    private static Metadata metadata;
+    private static ContentHandler handler;
+    private static ParseContext context;
+    private static EmbeddedEventTranscriptParser tracker;
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
 
+    @BeforeClass
+    public static void parse() throws IOException, SAXException, TikaException {
+        parser = new EventTranscriptParser();
+        metadata = new Metadata();
+        handler = new BodyContentHandler(1 << 20);
+        tracker = new EmbeddedEventTranscriptParser();
+        context = new ParseContext();
+
+        parser.setExtractEntries(true);
+        context.set(Parser.class, tracker);
+
+        try (InputStream stream = getStream("test-files/eventtranscript/test_eventTranscript.db")) {
+            // parser.parse(stream, handler, metadata, context);
+        }
+    }
+
     @Test
     public void testEventranscriptHistoryParser() throws IOException, SAXException, TikaException {
 
-        EventTranscriptParser parser = new EventTranscriptParser();
-        Metadata metadata = new Metadata();
-        ContentHandler handler = new BodyContentHandler(1 << 20);
-        parser.setExtractEntries(true);
-
-        ParseContext historyContext = new ParseContext();
-        historyContext.set(Parser.class, new EmbeddedEventTranscriptHistoryParser());
-
-        // try (InputStream stream = getStream("test-files/eventtranscript/test_eventTranscript.db")) {
-        //     parser.parse(stream, handler, metadata, new ParseContext());
-
-        //     // assertTrue(pageTitles.size() > 0);
-        //     // assertTrue(urls.size() > 0);
-        //     // assertTrue(visitDates.size() > 0);
-        // }
+        // assertTrue(tracker.pageTitles.size() > 0);
+        // assertTrue(tracker.urls.size() > 0);
+        // assertTrue(tracker.visitDates.size() > 0);
+        // assertTrue(tracker.histEventNames.size() > 0);
     }
 
+    @Test
+    public void testEventTranscriptInventoryAppsParser() throws IOException, SAXException, TikaException {
+
+        // assertTrue(tracker.appNames.size() > 0);
+        // assertTrue(tracker.installDates.size() > 0);
+        // assertTrue(tracker.rootDirPaths.size() > 0);
+        // assertTrue(tracker.versions.size() > 0);
+        // assertTrue(tracker.invEventNames.size() > 0);
+    }
+
+
     @SuppressWarnings("serial")
-    public class EmbeddedEventTranscriptHistoryParser extends AbstractParser {
+    private static class EmbeddedEventTranscriptParser extends AbstractParser {
+
+        // history
+        public List<String> pageTitles = new ArrayList<String>();
+        public List<String> urls = new ArrayList<String>();
+        public List<String> visitDates = new ArrayList<String>();
+        public List<String> histEventNames = new ArrayList<String>();
+        // inventory applications
+        public List<String> appNames = new ArrayList<String>();
+        public List<String> installDates = new ArrayList<String>();
+        public List<String> rootDirPaths = new ArrayList<String>();
+        public List<String> versions = new ArrayList<String>();
+        public List<String> invEventNames = new ArrayList<String>();
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
@@ -63,14 +96,20 @@ public class EventTranscriptParserTest {
         public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
                 throws IOException, SAXException, TikaException {
 
-            if (metadata.get(TikaCoreProperties.TITLE) != null)
+            if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_HIST_REG.toString())) {
                 pageTitles.add(metadata.get(TikaCoreProperties.TITLE));
-
-            if (metadata.get(ExtraProperties.URL) != null)
                 urls.add(metadata.get(ExtraProperties.URL));
-
-            if (metadata.get(ExtraProperties.VISIT_DATE) != null)
                 visitDates.add(metadata.get(ExtraProperties.VISIT_DATE));
+                histEventNames.add(metadata.get("eventNames"));
+            }
+
+            if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_INVENTORY_APP_REG.toString())) {
+                appNames.add(metadata.get(TikaCoreProperties.TITLE));
+                rootDirPaths.add(metadata.get(TikaCoreProperties.SOURCE_PATH));
+                installDates.add(metadata.get(ExtraProperties.DOWNLOAD_DATE));
+                versions.add(metadata.get("version"));
+                invEventNames.add(metadata.get("eventName"));
+            }
 
         }
     }

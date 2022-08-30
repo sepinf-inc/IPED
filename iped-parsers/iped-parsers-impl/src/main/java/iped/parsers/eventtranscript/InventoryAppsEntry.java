@@ -130,7 +130,13 @@ public class InventoryAppsEntry {
         if (!installDate.isEmpty()) {
             SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
             format.setTimeZone(TimeZone.getTimeZone("UTC"));
-            setInstallDate(format.parse(installDate));
+            try {
+                setInstallDate(format.parse(installDate));
+            } catch (ParseException e) {
+                format = new SimpleDateFormat("MM-dd-yyyy");
+                format.setTimeZone(TimeZone.getTimeZone("UTC"));
+                setInstallDate(format.parse(installDate));
+            }
         }
     }
 
