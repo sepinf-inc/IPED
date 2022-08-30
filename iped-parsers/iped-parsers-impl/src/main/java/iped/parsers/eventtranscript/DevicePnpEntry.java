@@ -5,25 +5,24 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class InventoryAppsEntry {
+public class DevicePnpEntry {
     private Date timestamp;
     private String timestampStr;
+    private String model;
     private String tagName;
     private String eventName;
-    private String type;
-    private String name;
-    private String packageFullName;
-    private String version;
-    private String publisher;
-    private String rootDirPath;
-    private String hidden;
+    private String provider;
+    private String manufacturer;
+    private String enumerator;
+    private String instanceId;
     private Date installDate;
-    private String source;
     private String installDateStr;
-    private String OSVersionAtInstallTime;
+    private Date firstInstallDate;
+    private String firstInstallDateStr;
     private String userSID;
-    private String userID;
+    private String userId;
     private String JSONPayload;
+
 
     public Date getTimestamp() {
         return this.timestamp;
@@ -44,6 +43,14 @@ public class InventoryAppsEntry {
         return this.timestampStr;
     }
 
+    public String getModel() {
+        return this.model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
     public String getTagName() {
         return this.tagName;
     }
@@ -60,60 +67,36 @@ public class InventoryAppsEntry {
         this.eventName = eventName;
     }
 
-    public String getType() {
-        return this.type;
+    public String getProvider() {
+        return this.provider;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setProvider(String provider) {
+        this.provider = provider;
     }
 
-    public String getName() {
-        return this.name;
+    public String getManufacturer() {
+        return this.manufacturer;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setManufacturer(String manufacturer) {
+        this.manufacturer = manufacturer;
     }
 
-    public String getPackageFullName() {
-        return this.packageFullName;
+    public String getEnumerator() {
+        return this.enumerator;
     }
 
-    public void setPackageFullName(String packageFullName) {
-        this.packageFullName = packageFullName;
+    public void setEnumerator(String enumerator) {
+        this.enumerator = enumerator;
     }
 
-    public String getVersion() {
-        return this.version;
+    public String getInstanceId() {
+        return this.instanceId;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getPublisher() {
-        return this.publisher;
-    }
-
-    public void setPublisher(String publisher) {
-        this.publisher = publisher;
-    }
-
-    public String getRootDirPath() {
-        return this.rootDirPath;
-    }
-
-    public void setRootDirPath(String rootDirPath) {
-        this.rootDirPath = rootDirPath;
-    }
-
-    public String getHidden() {
-        return this.hidden;
-    }
-
-    public void setHidden(String hidden) {
-        this.hidden = hidden;
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
     }
 
     public Date getInstallDate() {
@@ -127,9 +110,9 @@ public class InventoryAppsEntry {
     public void setInstallDate(String installDate) throws ParseException {
         this.installDateStr = installDate;
         if (!installDate.isEmpty()) {
-            SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
             format.setTimeZone(TimeZone.getTimeZone("UTC"));
-            setInstallDate(format.parse(installDate));
+            setTimestamp(format.parse(installDate));
         }
     }
 
@@ -137,20 +120,25 @@ public class InventoryAppsEntry {
         return this.installDateStr;
     }
 
-    public String getSource() {
-        return this.source;
+    public Date getFirstInstallDate() {
+        return this.firstInstallDate;
+    }
+    
+    public String getFirstInstallDateStr() {
+        return this.firstInstallDateStr;
     }
 
-    public void setSource(String source) {
-        this.source = source;
+    public void setFirstInstallDate(Date firstInstallDate) {
+        this.firstInstallDate = firstInstallDate;
     }
-
-    public String getOSVersionAtInstallTime() {
-        return this.OSVersionAtInstallTime;
-    }
-
-    public void setOSVersionAtInstallTime(String OSVersionAtInstallTime) {
-        this.OSVersionAtInstallTime = OSVersionAtInstallTime;
+    
+    public void setFirstInstallDate(String firstInstallDate) throws ParseException {
+        this.firstInstallDateStr = firstInstallDate;
+        if (!firstInstallDate.isEmpty()) {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+            format.setTimeZone(TimeZone.getTimeZone("UTC"));
+            setTimestamp(format.parse(firstInstallDate));
+        }
     }
 
     public String getUserSID() {
@@ -161,12 +149,12 @@ public class InventoryAppsEntry {
         this.userSID = userSID;
     }
 
-    public String getUserID() {
-        return this.userID;
+    public String getUserId() {
+        return this.userId;
     }
 
-    public void setUserID(String userID) {
-        this.userID = userID;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getJSONPayload() {
@@ -176,4 +164,5 @@ public class InventoryAppsEntry {
     public void setJSONPayload(String JSONPayload) {
         this.JSONPayload = JSONPayload;
     }
+
 }

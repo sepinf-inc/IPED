@@ -1199,6 +1199,14 @@
     <mime-type type="application/x-event-transcript-app-interactivity-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
+
+    <mime-type type="application/x-event-transcript-device-pnp">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-device-pnp-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
     
     <mime-type type="application/x-gdrive-cloud-graph-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
