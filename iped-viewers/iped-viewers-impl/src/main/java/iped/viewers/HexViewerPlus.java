@@ -235,7 +235,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         codeArea.setPainter(painter);
 
         charsetComboBox = new FilterComboBox(new ArrayList<>(Charset.availableCharsets().keySet()));
-		charsetComboBox.updateMinSize();
+        charsetComboBox.updateMinSize();
         charsetComboBox.setSelectedItem(codeArea.getCharset().toString());
         charsetComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1730,11 +1730,11 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         ActionMap aMap = rootPane.getActionMap();
         aMap.put("escape", new AbstractAction() {
             /**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+             * 
+             */
+            private static final long serialVersionUID = 1L;
 
-			public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e) {
                 dialogOpcoes.setVisible(false);
             };
         });
@@ -1938,68 +1938,68 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         jrbHex.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-				try{
-					if (jtfEnd1.isValidNumber()) {
-						long aux = Long.parseLong(jtfEnd1.getText(), jtfEnd1.getBase());
-						jtfEnd1.setHexdecimalBase();
-						jtfEnd1.setText(Long.toHexString(aux).toUpperCase());
-					} else {
-						jtfEnd1.setText("");
-						jtfEnd1.setHexdecimalBase();
-					}
-					if (jtfEnd2.isValidNumber()) {
-						long aux = Long.parseLong(jtfEnd2.getText(), jtfEnd2.getBase());
-						jtfEnd2.setHexdecimalBase();
-						jtfEnd2.setText(Long.toHexString(aux).toUpperCase());
-					} else {
-						jtfEnd2.setText("");
-						jtfEnd2.setHexdecimalBase();
-					}
-				}catch (NumberFormatException nfe) {;}
+                try{
+                    if (jtfEnd1.isValidNumber()) {
+                        long aux = Long.parseLong(jtfEnd1.getText(), jtfEnd1.getBase());
+                        jtfEnd1.setHexdecimalBase();
+                        jtfEnd1.setText(Long.toHexString(aux).toUpperCase());
+                    } else {
+                        jtfEnd1.setText("");
+                        jtfEnd1.setHexdecimalBase();
+                    }
+                    if (jtfEnd2.isValidNumber()) {
+                        long aux = Long.parseLong(jtfEnd2.getText(), jtfEnd2.getBase());
+                        jtfEnd2.setHexdecimalBase();
+                        jtfEnd2.setText(Long.toHexString(aux).toUpperCase());
+                    } else {
+                        jtfEnd2.setText("");
+                        jtfEnd2.setHexdecimalBase();
+                    }
+                }catch (NumberFormatException nfe) {;}
             }
         });
         jrbDec.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-				try{
-					if (jtfEnd1.isValidNumber()) {
-						long aux = Long.parseLong(jtfEnd1.getText(), jtfEnd1.getBase());
-						jtfEnd1.setDecimalBase();
-						jtfEnd1.setText(Long.toString(aux));
-					} else {
-						jtfEnd1.setText("");
-						jtfEnd1.setDecimalBase();
-					}
-					if (jtfEnd2.isValidNumber()) {
-						long aux = Long.parseLong(jtfEnd2.getText(), jtfEnd2.getBase());
-						jtfEnd2.setDecimalBase();
-						jtfEnd2.setText(Long.toString(aux));
-					} else {
-						jtfEnd2.setText("");
-						jtfEnd2.setDecimalBase();
-					}
-				}catch (NumberFormatException nfe) {;}
+                try{
+                    if (jtfEnd1.isValidNumber()) {
+                        long aux = Long.parseLong(jtfEnd1.getText(), jtfEnd1.getBase());
+                        jtfEnd1.setDecimalBase();
+                        jtfEnd1.setText(Long.toString(aux));
+                    } else {
+                        jtfEnd1.setText("");
+                        jtfEnd1.setDecimalBase();
+                    }
+                    if (jtfEnd2.isValidNumber()) {
+                        long aux = Long.parseLong(jtfEnd2.getText(), jtfEnd2.getBase());
+                        jtfEnd2.setDecimalBase();
+                        jtfEnd2.setText(Long.toString(aux));
+                    } else {
+                        jtfEnd2.setText("");
+                        jtfEnd2.setDecimalBase();
+                    }
+                }catch (NumberFormatException nfe) {;}
             }
         });
         jrbOct.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-				try{
-					if (jtfEnd1.isValidNumber()) {
-						long aux = Long.parseLong(jtfEnd1.getText(), jtfEnd1.getBase());
-						jtfEnd1.setOctalBase();
-						jtfEnd1.setText(Long.toOctalString(aux));
-					} else {
-						jtfEnd1.setText("");
-						jtfEnd1.setOctalBase();
-					}
-					if (jtfEnd2.isValidNumber()) {
-						long aux = Long.parseLong(jtfEnd2.getText(), jtfEnd2.getBase());
-						jtfEnd2.setOctalBase();
-						jtfEnd2.setText(Long.toOctalString(aux));
-					} else {
-						jtfEnd2.setText("");
-						jtfEnd2.setOctalBase();
-					}
-				}catch (NumberFormatException nfe) {;}
+                try{
+                    if (jtfEnd1.isValidNumber()) {
+                        long aux = Long.parseLong(jtfEnd1.getText(), jtfEnd1.getBase());
+                        jtfEnd1.setOctalBase();
+                        jtfEnd1.setText(Long.toOctalString(aux));
+                    } else {
+                        jtfEnd1.setText("");
+                        jtfEnd1.setOctalBase();
+                    }
+                    if (jtfEnd2.isValidNumber()) {
+                        long aux = Long.parseLong(jtfEnd2.getText(), jtfEnd2.getBase());
+                        jtfEnd2.setOctalBase();
+                        jtfEnd2.setText(Long.toOctalString(aux));
+                    } else {
+                        jtfEnd2.setText("");
+                        jtfEnd2.setOctalBase();
+                    }
+                }catch (NumberFormatException nfe) {;}
             }
         });
         JButton buttonOK = new JButton(Messages.getString("HexViewerPlus.ok"));
@@ -2082,23 +2082,23 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 jtfEnd1.requestFocus();
 
                 int base = jtfEnd1.getBase();
-				long position1 = -1;
-				long position2 = -1;
+                long position1 = -1;
+                long position2 = -1;
 
-				try{
-					position1 = Long.parseLong(jtfEnd1.getText().toString().trim(), base);
-				} catch (NumberFormatException nfe) {
-						JOptionPane.showMessageDialog(dialogSelecionar,
+                try{
+                    position1 = Long.parseLong(jtfEnd1.getText().toString().trim(), base);
+                } catch (NumberFormatException nfe) {
+                        JOptionPane.showMessageDialog(dialogSelecionar,
                             Messages.getString("HexViewerPlus.invalidStartPosition"), appName,
                             JOptionPane.ERROR_MESSAGE);
                     jtfEnd1.requestFocus();
-						return;
-				}	
-				
-				try{
-					position2 = Long.parseLong(jtfEnd2.getText().toString().trim(), base);
-				} catch (NumberFormatException nfe) {
-					jtfEnd2.requestFocus();
+                        return;
+                }    
+
+                try{
+                    position2 = Long.parseLong(jtfEnd2.getText().toString().trim(), base);
+                } catch (NumberFormatException nfe) {
+                    jtfEnd2.requestFocus();
                     if (jrbTam.isSelected())
                         JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidSize"),
                                 appName, JOptionPane.ERROR_MESSAGE);
@@ -2106,18 +2106,18 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                         JOptionPane.showMessageDialog(dialogSelecionar,
                                 Messages.getString("HexViewerPlus.invalidEndPosition"), appName,
                                 JOptionPane.ERROR_MESSAGE);
-                    return;						
-				}
-				
-				if (position1 < 0) {
-						JOptionPane.showMessageDialog(dialogSelecionar,
+                    return;
+                }
+                
+                if (position1 < 0) {
+                        JOptionPane.showMessageDialog(dialogSelecionar,
                             Messages.getString("HexViewerPlus.invalidStartPosition"), appName,
                             JOptionPane.ERROR_MESSAGE);
                     jtfEnd1.requestFocus();
-						return;
-				}	
-				if (position2 < 0) {
-					jtfEnd2.requestFocus();
+                        return;
+                }    
+                if (position2 < 0) {
+                    jtfEnd2.requestFocus();
                     if (jrbTam.isSelected())
                         JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidSize"),
                                 appName, JOptionPane.ERROR_MESSAGE);
@@ -2125,8 +2125,8 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                         JOptionPane.showMessageDialog(dialogSelecionar,
                                 Messages.getString("HexViewerPlus.invalidEndPosition"), appName,
                                 JOptionPane.ERROR_MESSAGE);
-                    return;						
-				}				
+                    return;
+                }
 
                 if (jrbTam.isSelected())
                     position2 += position1;
@@ -2159,11 +2159,11 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         ActionMap aMap = rootPane.getActionMap();
         aMap.put("escape", new AbstractAction() {
             /**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+             * 
+             */
+            private static final long serialVersionUID = 1L;
 
-			public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e) {
                 dialogSelecionar.setVisible(false);
             };
         });
@@ -2218,13 +2218,13 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 int base = jtfTexto.getBase();
 
                 if (jtfTexto.isValidNumber()) {
-					try{
-						result = Integer.parseInt(jtfTexto.getText().toString().trim(), base);
-					} catch (NumberFormatException nfe) {
-						JOptionPane.showMessageDialog(dialogIrParaResultado,
+                    try{
+                        result = Integer.parseInt(jtfTexto.getText().toString().trim(), base);
+                    } catch (NumberFormatException nfe) {
+                        JOptionPane.showMessageDialog(dialogIrParaResultado,
                                 Messages.getString("HexViewerPlus.invalidHit"), appName, JOptionPane.ERROR_MESSAGE);
-						return;
-					}					
+                        return;
+                    }
                     if (result > hits.totalHits || result <= 0) {
                         JOptionPane.showMessageDialog(dialogIrParaResultado,
                                 Messages.getString("HexViewerPlus.invalidHit"), appName, JOptionPane.ERROR_MESSAGE);
@@ -2263,11 +2263,11 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         ActionMap aMap = rootPane.getActionMap();
         aMap.put("escape", new AbstractAction() {
             /**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+             * 
+             */
+            private static final long serialVersionUID = 1L;
 
-			public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e) {
                 dialogIrParaResultado.setVisible(false);
             };
         });
@@ -2298,44 +2298,44 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         jrbHex.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-				try {
-					if (jtfTexto.isValidNumber()) {
-						long aux = Long.parseLong(jtfTexto.getText(), jtfTexto.getBase());
-						jtfTexto.setHexdecimalBase();
-						jtfTexto.setText(Long.toHexString(aux).toUpperCase());
-					} else {
-						jtfTexto.setText("");
-						jtfTexto.setHexdecimalBase();
-					}
-				}catch (NumberFormatException nfe) {;}
+                try {
+                    if (jtfTexto.isValidNumber()) {
+                        long aux = Long.parseLong(jtfTexto.getText(), jtfTexto.getBase());
+                        jtfTexto.setHexdecimalBase();
+                        jtfTexto.setText(Long.toHexString(aux).toUpperCase());
+                    } else {
+                        jtfTexto.setText("");
+                        jtfTexto.setHexdecimalBase();
+                    }
+                }catch (NumberFormatException nfe) {;}
             }
         });
         jrbDec.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-				try{
-					if (jtfTexto.isValidNumber()) {
-						long aux = Long.parseLong(jtfTexto.getText(), jtfTexto.getBase());
-						jtfTexto.setDecimalBase();
-						jtfTexto.setText(Long.toString(aux));
-					} else {
-						jtfTexto.setText("");
-						jtfTexto.setDecimalBase();
-					}
-				}catch (NumberFormatException nfe) {;}
+                try{
+                    if (jtfTexto.isValidNumber()) {
+                        long aux = Long.parseLong(jtfTexto.getText(), jtfTexto.getBase());
+                        jtfTexto.setDecimalBase();
+                        jtfTexto.setText(Long.toString(aux));
+                    } else {
+                        jtfTexto.setText("");
+                        jtfTexto.setDecimalBase();
+                    }
+                }catch (NumberFormatException nfe) {;}
             }
         });
         jrbOct.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-				try{
-					if (jtfTexto.isValidNumber()) {
-						long aux = Long.parseLong(jtfTexto.getText(), jtfTexto.getBase());
-						jtfTexto.setOctalBase();
-						jtfTexto.setText(Long.toOctalString(aux));
-					} else {
-						jtfTexto.setText("");
-						jtfTexto.setOctalBase();
-					}
-				}catch (NumberFormatException nfe) {;}
+                try{
+                    if (jtfTexto.isValidNumber()) {
+                        long aux = Long.parseLong(jtfTexto.getText(), jtfTexto.getBase());
+                        jtfTexto.setOctalBase();
+                        jtfTexto.setText(Long.toOctalString(aux));
+                    } else {
+                        jtfTexto.setText("");
+                        jtfTexto.setOctalBase();
+                    }
+                }catch (NumberFormatException nfe) {;}
             }
         });
 
@@ -2407,30 +2407,30 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 }
 
                 int base = jtfTexto.getBase();
-				long position = -1;
+                long position = -1;
 
-				try{
-					position = Long.parseLong(jtfTexto.getText().toString().trim(), base);
-				} catch (NumberFormatException nfe) {
-					JOptionPane.showMessageDialog(dialogIrParaEndereco,
+                try{
+                    position = Long.parseLong(jtfTexto.getText().toString().trim(), base);
+                } catch (NumberFormatException nfe) {
+                    JOptionPane.showMessageDialog(dialogIrParaEndereco,
                             Messages.getString("HexViewerPlus.invalidPosition"), appName, JOptionPane.ERROR_MESSAGE);
-					return;
-				}				
-				
+                    return;
+                }
+                
                 if (position < 0){
                     JOptionPane.showMessageDialog(dialogIrParaEndereco,
                             Messages.getString("HexViewerPlus.invalidPosition"), appName, JOptionPane.ERROR_MESSAGE);
-					return;	
-				}					
+                    return;    
+                }
 
                 if (jrbCursor.isSelected())
-                    position += codeArea.getCaretPosition().getDataPosition();			
+                    position += codeArea.getCaretPosition().getDataPosition();
 
                 long size = codeArea.getDataSize();
-				
+
                 if (position > size){
                     position = size;
-				}				
+                }
 
                 codeArea.revealPosition(position, codeArea.getActiveSection());
                 codeArea.setCaretPosition(position);
@@ -2451,11 +2451,11 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         ActionMap aMap = rootPane.getActionMap();
         aMap.put("escape", new AbstractAction() {
             /**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+             * 
+             */
+            private static final long serialVersionUID = 1L;
 
-			public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e) {
                 dialogIrParaEndereco.setVisible(false);
             };
         });
@@ -2697,11 +2697,11 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         ActionMap aMap = rootPane.getActionMap();
         aMap.put("escape", new AbstractAction() {
             /**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+             * 
+             */
+            private static final long serialVersionUID = 1L;
 
-			public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e) {
                 dialogPesquisar.setVisible(false);
             };
         });
@@ -2718,58 +2718,58 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
 class MyComboBoxEditor implements ComboBoxEditor {
 
-	private JTextField txtField;
-	
-	public MyComboBoxEditor() {
-		txtField = new JTextField();
-	}
-	
-	@Override
-	public Component getEditorComponent() {
-		return txtField;
-	}
+    private JTextField txtField;
+    
+    public MyComboBoxEditor() {
+        txtField = new JTextField();
+    }
+    
+    @Override
+    public Component getEditorComponent() {
+        return txtField;
+    }
 
-	@Override
-	public void setItem(Object anObject) {
-		txtField.setText(anObject == null ? null : anObject.toString());
-	}
+    @Override
+    public void setItem(Object anObject) {
+        txtField.setText(anObject == null ? null : anObject.toString());
+    }
 
-	@Override
-	public Object getItem() {
-		return txtField.getText();
-	}
+    @Override
+    public Object getItem() {
+        return txtField.getText();
+    }
 
-	@Override
-	public void selectAll() {
-		txtField.selectAll();
-	}
+    @Override
+    public void selectAll() {
+        txtField.selectAll();
+    }
 
-	@Override
-	public void addActionListener(ActionListener l) {
-		txtField.addActionListener(l);
-	}
+    @Override
+    public void addActionListener(ActionListener l) {
+        txtField.addActionListener(l);
+    }
 
-	@Override
-	public void removeActionListener(ActionListener l) {
-		txtField.removeActionListener(l);
-	}
-	
+    @Override
+    public void removeActionListener(ActionListener l) {
+        txtField.removeActionListener(l);
+    }
+    
 }
 
 
 class HVPComboField extends JComboBox<String> {
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private int base = 10;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    private int base = 10;
     private boolean textAllowed = false;
     JTextField textfield;
 
     public HVPComboField() {
         super();
         this.setEditable(true);
-		this.setEditor(new MyComboBoxEditor());
+        this.setEditor(new MyComboBoxEditor());
         textfield = (JTextField) this.getEditor().getEditorComponent();
 
         textfield.addKeyListener(new KeyAdapter() {
@@ -2843,27 +2843,27 @@ class HVPComboField extends JComboBox<String> {
         textfield.setHorizontalAlignment(h);
     }
 
-	public boolean isValidNumber(){
-			
-		String value = getText();
-		if (value == null || value.isEmpty())
-			return false;
-			
-		try {
-			new BigInteger (value, getBase());
-		}
-		catch (NumberFormatException nfe){
-			return false;
-		}
-		
-		return true;
-	}
+    public boolean isValidNumber(){
+            
+        String value = getText();
+        if (value == null || value.isEmpty())
+            return false;
+            
+        try {
+            new BigInteger (value, getBase());
+        }
+        catch (NumberFormatException nfe){
+            return false;
+        }
+        
+        return true;
+    }
 
     public boolean isValidHexString() {
 
-		String value = getText();
-		if (value == null || value.isEmpty())
-			return false;
+        String value = getText();
+        if (value == null || value.isEmpty())
+            return false;
 
         char[] charArray = value.toCharArray();
         for (int i = 0; i < charArray.length; i++) {
@@ -2950,10 +2950,10 @@ class HVPComboField extends JComboBox<String> {
 
 class HVPTextField extends JTextField {
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private int base = 10;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    private int base = 10;
     private boolean textAllowed = false;
 
     @Override
@@ -3008,27 +3008,27 @@ class HVPTextField extends JTextField {
         this.base = 2;
     }
 
-	public boolean isValidNumber(){
-			
-		String value = getText();
-		if (value == null || value.isEmpty())
-			return false;
-			
-		try {
-			new BigInteger (value, getBase());
-		}
-		catch (NumberFormatException nfe){
-			return false;
-		}
-		
-		return true;
-	}
+    public boolean isValidNumber(){
+            
+        String value = getText();
+        if (value == null || value.isEmpty())
+            return false;
+            
+        try {
+            new BigInteger (value, getBase());
+        }
+        catch (NumberFormatException nfe){
+            return false;
+        }
+        
+        return true;
+    }
 
     public boolean isValidHexString() {
 
-		String value = getText();
-		if (value == null || value.isEmpty())
-			return false;
+        String value = getText();
+        if (value == null || value.isEmpty())
+            return false;
 
         char[] charArray = value.toCharArray();
         for (int i = 0; i < charArray.length; i++) {
@@ -3241,10 +3241,10 @@ class ByteArraySeekData extends ByteArrayEditableData {
 class FilterComboBox extends JComboBox<String> {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private List<String> entries;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    private List<String> entries;
 
     public List<String> getEntries() {
         return entries;
@@ -3254,7 +3254,7 @@ class FilterComboBox extends JComboBox<String> {
         super(entries.toArray(new String[0]));
         this.entries = entries;
         this.setEditable(true);
-		this.setEditor(new MyComboBoxEditor());
+        this.setEditor(new MyComboBoxEditor());
 
         final JTextField textfield = (JTextField) this.getEditor().getEditorComponent();
 
@@ -3290,30 +3290,30 @@ class FilterComboBox extends JComboBox<String> {
             this.hidePopup();
         }
     }
-	
-	public void updateMinSize(){
-		int size = this.getItemCount();
-		int larger = 0;
-		String big = "";
-		for (int i = 0; i < size; i++) {
-			String item = this.getItemAt(i);
-			if (item.length() > larger){
-				larger = item.length();
-				big = item;
-			}
-		}
-		this.setPrototypeDisplayValue(big);
-	}
+    
+    public void updateMinSize(){
+        int size = this.getItemCount();
+        int larger = 0;
+        String big = "";
+        for (int i = 0; i < size; i++) {
+            String item = this.getItemAt(i);
+            if (item.length() > larger){
+                larger = item.length();
+                big = item;
+            }
+        }
+        this.setPrototypeDisplayValue(big);
+    }
 }
 
 class HVPSettings implements Serializable {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
-	private static Logger LOGGER = LoggerFactory.getLogger(HVPSettings.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(HVPSettings.class);
 
     public int mode = 0;
     public int codeType = 3;
@@ -3505,10 +3505,10 @@ class customFileFilter extends javax.swing.filechooser.FileFilter {
 class RoundButton extends JButton {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	Shape shape;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    Shape shape;
     int radius = 12;
     Color buttonFocusColor = UIManager.getColor("Button.focus");
 
@@ -3598,10 +3598,10 @@ class RoundButton extends JButton {
 class CursorComponent extends JComponent {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	CodeArea codeArea;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    CodeArea codeArea;
     private Charset charMappingCharset = null;
     protected final char[] charMapping = new char[256];
     protected Map<Character, Character> unprintableCharactersMapping = null;
