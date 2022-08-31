@@ -53,81 +53,79 @@ import iped.utils.QualityIcon;
 
 public class FileTypeIconRenderer {
 
-  private static final long serialVersionUID = -1L;  
-  private static Logger LOGGER = LoggerFactory.getLogger(FileTypeIconRenderer.class);
-   
-  public  static Map<String,Icon> extesionIconMap = new HashMap<String,Icon>();	
-  
-  private static String ICON_PATH_JAR [] = {"cat","file"};
-  //private static String ICON_PATH_APP = Configuration.CONF_DIR+"/icon/";
-  private static String ICON_EXTENSION = ".png";
-   
-  static {
-	  
-	  loadIconsInJar(ICON_PATH_JAR, ICON_EXTENSION, extesionIconMap);
-	  //loadIconsInPath(ICON_PATH_APP, ICON_EXTENSION, extesionIconMap);	  
-	 
-  }
-  
-  private static void loadIconsInJar(String [] iconPathArray, String iconExtension, Map<String,Icon> map){
+    private static final long serialVersionUID = -1L;  
+    private static Logger LOGGER = LoggerFactory.getLogger(FileTypeIconRenderer.class);
 
-	if (map == null)
-		return;
-  
-	try {
-		String separator = "/";
-		CodeSource src = FileTypeIconRenderer.class.getProtectionDomain().getCodeSource();
-		if (src != null) {
-			URL jar = src.getLocation();
-			ZipInputStream zip = new ZipInputStream(jar.openStream());	  
-			while(true) {
-				ZipEntry e = zip.getNextEntry();
-				if (e == null)
-					break;
-				for (String iconPath: iconPathArray){
-					String path = FileTypeIconRenderer.class.getName().toString().replace(".",separator).replace(FileTypeIconRenderer.class.getSimpleName(),"")+iconPath+separator;
-					
-					String nameWithPath = e.getName();
-					String name = nameWithPath.replace(path,"");
-					if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(iconExtension)) {
-						map.put(name.replace(iconExtension,"").toLowerCase(),new QualityIcon(new ImageIcon(FileTypeIconRenderer.class.getResource(iconPath+separator+name))));		
-					}
-				}
-			}
-		} 				
-	}catch (Exception ex){
-		ex.printStackTrace();
-	}
-	  
-  }    
-  
-  private static void loadIconsInPath(String iconPath, String iconExtension, Map<String,Icon> map){
-	  	    	
-	File path = new File(iconPath);
-	
-	if (path == null || !path.exists() || map == null)
-		return;
-	
-	File[] files = path.listFiles(new FilenameFilter(){
-		@Override
-		public boolean accept(File dir, String name)
-		{
-			if(name.toLowerCase().endsWith(iconExtension))
-				return true;
-			return false;
-		}
+    public  static Map<String,Icon> extesionIconMap = new HashMap<String,Icon>();
 
-	});
-		
-	for (int i =0; i < files.length; i++){		
-		try {					
-			map.put(files[i].getName().replace(iconExtension,"").toLowerCase(),new ImageIcon(files[i].getAbsolutePath()));			
-		}catch (Exception e){
-			LOGGER.warn("Error loading icon. Error:{}", e.toString());
-		}		
-	}
-  
-  }
-  
-  
+    private static String ICON_PATH_JAR [] = {"cat","file"};
+    //private static String ICON_PATH_APP = Configuration.CONF_DIR+"/icon/";
+    private static String ICON_EXTENSION = ".png";
+
+    static {
+
+        loadIconsInJar(ICON_PATH_JAR, ICON_EXTENSION, extesionIconMap);
+        //loadIconsInPath(ICON_PATH_APP, ICON_EXTENSION, extesionIconMap);
+       
+    }
+
+    private static void loadIconsInJar(String [] iconPathArray, String iconExtension, Map<String,Icon> map){
+
+        if (map == null)
+            return;
+
+        try {
+            String separator = "/";
+            CodeSource src = FileTypeIconRenderer.class.getProtectionDomain().getCodeSource();
+            if (src != null) {
+                URL jar = src.getLocation();
+                ZipInputStream zip = new ZipInputStream(jar.openStream());
+                while(true) {
+                    ZipEntry e = zip.getNextEntry();
+                    if (e == null)
+                        break;
+                    for (String iconPath: iconPathArray){
+                        String path = FileTypeIconRenderer.class.getName().toString().replace(".",separator).replace(FileTypeIconRenderer.class.getSimpleName(),"")+iconPath+separator;
+
+                        String nameWithPath = e.getName();
+                        String name = nameWithPath.replace(path,"");
+                        if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(iconExtension)) {
+                            map.put(name.replace(iconExtension,"").toLowerCase(),new QualityIcon(new ImageIcon(FileTypeIconRenderer.class.getResource(iconPath+separator+name))));
+                        }
+                    }
+                }
+            }
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+   }
+
+    private static void loadIconsInPath(String iconPath, String iconExtension, Map<String,Icon> map){
+
+        File path = new File(iconPath);
+
+        if (path == null || !path.exists() || map == null)
+            return;
+
+        File[] files = path.listFiles(new FilenameFilter(){
+            @Override
+            public boolean accept(File dir, String name)
+            {
+                if(name.toLowerCase().endsWith(iconExtension))
+                    return true;
+                return false;
+            }
+
+        });
+
+        for (int i =0; i < files.length; i++){
+            try {
+                map.put(files[i].getName().replace(iconExtension,"").toLowerCase(),new ImageIcon(files[i].getAbsolutePath()));
+            }catch (Exception e){
+                LOGGER.warn("Error loading icon. Error:{}", e.toString());
+            }
+        }
+
+    }
+
 }

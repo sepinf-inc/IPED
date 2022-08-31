@@ -52,9 +52,9 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
 
         int idx = table.convertRowIndexToModel(row);
         int col = table.convertColumnIndexToModel(column);
-		String columnNameLocalized = iped.localization.LocalizedProperties.getLocalizedField(IndexItem.NAME);
-		columnNameLocalized = columnNameLocalized != null ? columnNameLocalized : "";
-		
+        String columnNameLocalized = iped.localization.LocalizedProperties.getLocalizedField(IndexItem.NAME);
+        columnNameLocalized = columnNameLocalized != null ? columnNameLocalized : "";
+
         if (table.getModel().getColumnName(col).equalsIgnoreCase(columnNameLocalized)) {
             try {
                 IItemId item = ((SearchResultTableModel) table.getModel()).getSearchResult().getItem(idx);
@@ -64,14 +64,14 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                     result.setIcon(folderIcon);
                 } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
                     result.setIcon(diskIcon);
-				} else {
-					String type = doc.get(IndexItem.TYPE);
-					if (type != null && !type.isEmpty() && FileTypeIconRenderer.extesionIconMap.containsKey(type.toLowerCase())){
-						result.setIcon(FileTypeIconRenderer.extesionIconMap.get(type.toLowerCase()));
-					}else {
-						result.setIcon(fileIcon);
-					}
-				}
+                } else {
+                    String type = doc.get(IndexItem.TYPE);
+                    if (type != null && !type.isEmpty() && FileTypeIconRenderer.extesionIconMap.containsKey(type.toLowerCase())){
+                        result.setIcon(FileTypeIconRenderer.extesionIconMap.get(type.toLowerCase()));
+                    }else {
+                        result.setIcon(fileIcon);
+                    }
+                }
 
             } catch (IOException e) {
                 result.setIcon(null);

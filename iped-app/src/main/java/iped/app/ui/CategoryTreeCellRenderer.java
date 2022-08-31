@@ -39,21 +39,21 @@ public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf,
             int row, boolean hasFocus) {
 
-		DefaultTreeCellRenderer result = (DefaultTreeCellRenderer) super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-		
-		String category = value != null ? value.toString() : "";
-		category = category.replaceAll("\\(\\d*\\)", "").trim();
-		category = getNonLocalizedCategory(category);
-		category = category != null ? category : "";		
-		
-		if (!category.isEmpty() && FileTypeIconRenderer.extesionIconMap.containsKey(category.toLowerCase())){
-			result.setIcon(FileTypeIconRenderer.extesionIconMap.get(category.toLowerCase()));
-		}
+        DefaultTreeCellRenderer result = (DefaultTreeCellRenderer) super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        
+        String category = value != null ? value.toString() : "";
+        category = category.replaceAll("\\(\\d*\\)", "").trim();
+        category = getNonLocalizedCategory(category);
+        category = category != null ? category : "";
+        
+        if (!category.isEmpty() && FileTypeIconRenderer.extesionIconMap.containsKey(category.toLowerCase())){
+            result.setIcon(FileTypeIconRenderer.extesionIconMap.get(category.toLowerCase()));
+        }
 
         return result;
     }
-	
-	private String getNonLocalizedCategory(String category) {
+
+    private String getNonLocalizedCategory(String category) {
         return CategoryLocalization.getInstance().getNonLocalizedCategory(category);
     }
 
