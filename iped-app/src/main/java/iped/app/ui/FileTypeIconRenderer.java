@@ -38,6 +38,7 @@ import java.security.CodeSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import iped.utils.QualityIcon;
 
 
 //import iped.engine.config.Configuration;
@@ -57,7 +58,7 @@ public class FileTypeIconRenderer {
    
   public  static Map<String,Icon> extesionIconMap = new HashMap<String,Icon>();	
   
-  private static String ICON_PATH_JAR = "file/";
+  private static String ICON_PATH_JAR [] = {"cat","file"};
   //private static String ICON_PATH_APP = Configuration.CONF_DIR+"/icon/";
   private static String ICON_EXTENSION = ".png";
    
@@ -68,31 +69,34 @@ public class FileTypeIconRenderer {
 	 
   }
   
-  private static void loadIconsInJar(String iconPath, String iconExtension, Map<String,Icon> map){
+  private static void loadIconsInJar(String [] iconPathArray, String iconExtension, Map<String,Icon> map){
 
 	if (map == null)
 		return;
   
 	try {
-
+		String separator = "/";
 		CodeSource src = FileTypeIconRenderer.class.getProtectionDomain().getCodeSource();
 		if (src != null) {
 			URL jar = src.getLocation();
-			ZipInputStream zip = new ZipInputStream(jar.openStream());
-			String path = FileTypeIconRenderer.class.getName().toString().replace(".","/").replace(FileTypeIconRenderer.class.getSimpleName(),"")+iconPath;		  
+			ZipInputStream zip = new ZipInputStream(jar.openStream());	  
 			while(true) {
 				ZipEntry e = zip.getNextEntry();
 				if (e == null)
 					break;
-				String nameWithPath = e.getName();
-				String name = nameWithPath.replace(path,"");
-				if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(iconExtension)) {
-					map.put(name.replace(iconExtension,"").toLowerCase(),new ImageIcon(FileTypeIconRenderer.class.getResource(iconPath+name)));		
+				for (String iconPath: iconPathArray){
+					String path = FileTypeIconRenderer.class.getName().toString().replace(".",separator).replace(FileTypeIconRenderer.class.getSimpleName(),"")+iconPath+separator;
+					
+					String nameWithPath = e.getName();
+					String name = nameWithPath.replace(path,"");
+					if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(iconExtension)) {
+						map.put(name.replace(iconExtension,"").toLowerCase(),new QualityIcon(new ImageIcon(FileTypeIconRenderer.class.getResource(iconPath+separator+name))));		
+					}
 				}
 			}
 		} 				
-	}catch (Exception e){
-		e.printStackTrace();
+	}catch (Exception ex){
+		ex.printStackTrace();
 	}
 	  
   }    
