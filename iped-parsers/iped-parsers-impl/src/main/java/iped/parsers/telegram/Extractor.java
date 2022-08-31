@@ -619,7 +619,7 @@ public class Extractor {
             + "            from chats c  LEFT join dialogs d on c.uid=-d.did "
             + "            UNION "
             + " SELECT d.did as chatId,u.name as chatName,u.data as chatData, null as groupName, null as groupData, d.date"
-            + "           from dialogs d LEFT join users u on u.uid=d.did "
+            + "           from dialogs d LEFT join users u on u.uid=d.did  WHERE d.did NOT IN(SELECT -uid FROM chats) "
             + "            order by date desc";
 
     private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
