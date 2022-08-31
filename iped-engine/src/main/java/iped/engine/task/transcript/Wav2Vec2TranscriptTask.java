@@ -155,11 +155,20 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         }
     }
 
-    private boolean ping(Server server) throws IOException {
-        server.process.getOutputStream().write(PING.getBytes(Charsets.UTF8_CHARSET));
-        server.process.getOutputStream().write(NEW_LINE);
-        server.process.getOutputStream().flush();
-        return PING.equals(server.reader.readLine());
+    private boolean ping(Server server) {
+        try {
+            server.process.getOutputStream().write(PING.getBytes(Charsets.UTF8_CHARSET));
+            server.process.getOutputStream().write(NEW_LINE);
+            server.process.getOutputStream().flush();
+            if (PING.equals(server.reader.readLine())) {
+                return true;
+            } else {
+                throw new IOException("ping not returned fine");
+            }
+        } catch (IOException e) {
+            logger.warn("Fail to ping transcription process pid={} exception={}", server.process.pid(), e.toString());
+        }
+        return false;
     }
 
     @Override
