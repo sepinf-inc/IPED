@@ -93,7 +93,7 @@ import iped.viewers.timelinegraph.datasets.AsynchronousDataset;
 import iped.viewers.timelinegraph.datasets.IpedTimelineDataset;
 import iped.viewers.timelinegraph.datasets.IpedTimelineDatasetManager;
 import iped.viewers.timelinegraph.datasets.TimeTableCumulativeXYDataset;
-import iped.viewers.timelinegraph.swingworkers.CheckWorker2;
+import iped.viewers.timelinegraph.swingworkers.CheckWorker;
 import iped.viewers.timelinegraph.swingworkers.SelectWorker;
 
 public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener {
@@ -321,16 +321,19 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 			}
 
 			resultSemaphore.acquire();
-			if(result!=null) {
-				synchronized (result) {
-					for (AbstractIntervalXYDataset ds: result.values()) {
-						if(ds instanceof AsynchronousDataset) {
-							((AsynchronousDataset)ds).cancel();
+			try {
+				if(result!=null) {
+					synchronized (result) {
+						for (AbstractIntervalXYDataset ds: result.values()) {
+							if(ds instanceof AsynchronousDataset) {
+								((AsynchronousDataset)ds).cancel();
+							}
 						}
 					}
 				}
+			}finally {
+				resultSemaphore.release();
 			}
-			resultSemaphore.release();
 
 			swRefresh = new RunnableFuture<Void>() {
 				boolean cancelled = false;
@@ -365,6 +368,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 				@Override
 				public void run() {
 					try {
+						Date d1 = new Date();
 						createDataSets();
 						resultSemaphore.release();
 						if(!isCancelled()) {
@@ -380,6 +384,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 						                self.remove(loadingLabel);
 						            	self.add(chartPanel);
 										chartPanel.setVisible(true);
+										Date d2 = new Date();
+										System.out.println("Criação do gráfico:"+(d2.getTime()-d1.getTime()));
 									}
 								});
 							}
@@ -772,19 +778,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		SelectWorker sw = new SelectWorker(domainAxis,resultsProvider, firstDate, endDate, b);
 		sw.execute();
 	}
-
-	public void selectItemsOnInterval(String seriesKey, Date time, Date time2, boolean b) {
-		SelectWorker sw = new SelectWorker(seriesKey, domainAxis,resultsProvider, time, time2, b);
-		sw.execute();
-	}
 	
 	public void checkItemsOnInterval(Date firstDate, Date endDate, boolean b) {
-		CheckWorker2 sw = new CheckWorker2(domainAxis,resultsProvider, firstDate, endDate, b);
-		sw.execute();
-	}
-
-	public void checkItemsOnInterval(String seriesKey, Date time, Date time2, boolean b) {
-		CheckWorker2 sw = new CheckWorker2(seriesKey, domainAxis,resultsProvider, time, time2, b);
+		CheckWorker sw = new CheckWorker(domainAxis,resultsProvider, firstDate, endDate, b);
 		sw.execute();
 	}
 
@@ -820,5 +816,13 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 	public void setIpedTimelineDatasetManager(IpedTimelineDatasetManager ipedTimelineDatasetManager) {
 		ipedTimelineDatasetManager = ipedTimelineDatasetManager;
+	}
+
+	public IpedCombinedDomainXYPlot getCombinedPlot() {
+		return combinedPlot;
+	}
+
+	public void setCombinedPlot(IpedCombinedDomainXYPlot combinedPlot) {
+		this.combinedPlot = combinedPlot;
 	}
 }

@@ -1,146 +1,79 @@
 package iped.viewers.timelinegraph.swingworkers;
 
-import java.awt.Dialog.ModalityType;
+import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
-import javax.swing.JTable;
 
-import org.apache.lucene.index.BinaryDocValues;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.SortedSetDocValues;
+import org.jfree.chart.entity.ChartEntity;
+import org.jfree.chart.entity.EntityCollection;
+import org.jfree.chart.entity.XYItemEntity;
 
-import iped.app.ui.App;
-import iped.app.ui.Messages;
+
 import iped.data.IItemId;
-import iped.properties.BasicProps;
-import iped.properties.ExtraProperties;
-import iped.viewers.api.CancelableWorker;
+import iped.engine.data.IPEDSource;
+import iped.engine.search.MultiSearchResult;
 import iped.viewers.api.IMultiSearchResultProvider;
-import iped.viewers.timelinegraph.DateUtil;
-import iped.viewers.timelinegraph.IpedChartsPanel;
 import iped.viewers.timelinegraph.IpedDateAxis;
-import iped.viewers.util.ProgressDialog;
+import iped.viewers.timelinegraph.datasets.IpedTimelineDataset;
 
-public class SelectWorker extends CancelableWorker<Void, Void> {
-	IMultiSearchResultProvider resultsProvider;
-	IpedDateAxis domainAxis;
+/*
+ *  Extends BitSetSelectWorker, so the bitset of docids is mounted based on date interval. This bitset is used internally to highlight the docids.
+ */
+public class SelectWorker extends BitSetSelectWorker {
 	Date start;
 	Date end;
-	boolean clearPreviousSelection;
-    ProgressDialog progressDialog;
-    boolean select = true;
-    String eventType=null;
 
 	public SelectWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,Date start, Date end, boolean clearPreviousSelection) {
-		this.resultsProvider = resultsProvider;
-		this.start = start;
-		this.end = end;
-		this.clearPreviousSelection=clearPreviousSelection;
-		this.domainAxis = domainAxis;
+		this(domainAxis, resultsProvider, start, end, true, clearPreviousSelection);
 	}
 
 	public SelectWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,Date start, Date end, boolean select, boolean clearPreviousSelection) {
-		this.resultsProvider = resultsProvider;
+		super(domainAxis, resultsProvider, null, true, clearPreviousSelection);
 		this.start = start;
 		this.end = end;
-		this.clearPreviousSelection=clearPreviousSelection;
-		this.select = select;
-		this.domainAxis = domainAxis;
-	}
-
-	public SelectWorker(String eventType, IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, Date start, Date end,
-			boolean b) {
-		this.resultsProvider = resultsProvider;
-		this.start = start;
-		this.end = end;
-		this.clearPreviousSelection=clearPreviousSelection;
-		this.select = select;
-		this.eventType = eventType;
-		this.domainAxis = domainAxis;
 	}
 
 	@Override
-	protected Void doInBackground() throws Exception {
-        progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
-        progressDialog.setNote(Messages.get("TimeLineGraph.highlightingItemsProgressLabel"));
+	protected void doSelect() {
         selectItemsOnInterval(start, end, select, clearPreviousSelection);
-		return null;
-	}
-
-	@Override
-	public boolean doCancel(boolean mayInterrupt) {
-        if (progressDialog != null)
-            progressDialog.close();
-
-        JTable t = resultsProvider.getResultsTable();
-		t.getSelectionModel().setValueIsAdjusting(false);
-
-        return cancel(mayInterrupt);
-	}
-
-	@Override
-	protected void done() {
-        if (progressDialog != null)
-            progressDialog.close();
-	}
-
-	public void selectItemsOnInterval(Date start, Date end, boolean clearPreviousSelection) {
-		selectItemsOnInterval(start, end, true, clearPreviousSelection);
 	}
 
 	public void selectItemsOnInterval(Date start, Date end, boolean select, boolean clearPreviousSelection) {
-		JTable t = resultsProvider.getResultsTable();
-		t.getSelectionModel().setValueIsAdjusting(true);
+		Date d1 = new Date();
 
-		if(clearPreviousSelection) {
-			t.clearSelection();
-		}
+		ArrayList<IItemId> l = new ArrayList<IItemId>();
+        BitSet bs = new BitSet(resultsProvider.getResults().getLength());
 
-        LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
+		progressDialog.setMaximum(resultsProvider.getResults().getLength());
+		MultiSearchResult msr = (MultiSearchResult) resultsProvider.getResults();
+		IPEDSource is= (IPEDSource)resultsProvider.getIPEDSource();
 
-        SortedSetDocValues timeStampValues;
-        SortedSetDocValues timeEventGroupValues;
+        EntityCollection ec = domainAxis.getIpedChartsPanel().getChartPanel().getChartRenderingInfo().getEntityCollection();
+        int entityCount = ec.getEntityCount();
+        for (int i = entityCount - 1; i >= 0; i--) {
+        	if(progressDialog.isCanceled()) {
+        		return;
+        	}
+            ChartEntity entity = ec.getEntity(i);
+        	if(entity instanceof XYItemEntity) {        		
+            	XYItemEntity xyItemEntity = (XYItemEntity) entity;
+            	IpedTimelineDataset ds = (IpedTimelineDataset) xyItemEntity.getDataset();
+            	long entStartTimeStamp = ds.getStartX(xyItemEntity.getSeriesIndex(), xyItemEntity.getItem()).longValue();
+            	if(entStartTimeStamp==start.getTime()) {
+        			List<IItemId> ids = ds.getItems(xyItemEntity.getItem(), xyItemEntity.getSeriesIndex());        			
+        			if(ids!=null) {
+        				for (Iterator iterator = ids.iterator(); iterator.hasNext();) {
+							IItemId iItemId = (IItemId) iterator.next();
+							bs.set(is.getLuceneId(iItemId));
+						}
+        			}
+            	}
+        	}
+        }
 
-        try {
-            timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
-    		timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-    		BinaryDocValues eventsInDocOrdsValues = reader.getBinaryDocValues(ExtraProperties.TIME_EVENT_ORDS);
-
-    		for (int i = 0; i < resultsProvider.getResults().getLength(); i++) {
-                IItemId item = resultsProvider.getResults().getItem(i);
-
-                int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
-                
-                boolean tsvAdv = timeStampValues.advanceExact(luceneId);
-                
-                if(tsvAdv) {
-                	long ord;
-    	            while ((ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-    	                if (ord > Integer.MAX_VALUE) {
-    	                    throw new RuntimeException("Integer overflow when converting timestamp ord to int");
-    	                }
-    	                
-    	                Date d = domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString());
-    	                if(d!=null) {
-        	                if(start.getTime()<=d.getTime() && end.getTime()>=d.getTime()) {
-        		                int row = t.convertRowIndexToView(i);
-        		                if(select) {
-            		                t.addRowSelectionInterval(row, row);
-        		                }else {
-        		                	t.removeRowSelectionInterval(row, row);
-        		                }
-        	                }
-    	                }
-    	            }
-                }
-            }
-
-    		System.out.println("selecao finalizada");
-        }catch(Exception e) {
-        	e.printStackTrace();
-        }finally {
-    		t.getSelectionModel().setValueIsAdjusting(false);
-		}
+        selectDocIdsParallel(bs, select, clearPreviousSelection);
 	}
 }
