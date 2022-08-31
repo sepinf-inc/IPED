@@ -78,6 +78,8 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
                 if (multiCaseGraphPath.exists())
                     IOUtil.deleteDirectory(multiCaseGraphPath, false);
                 File graphHomeTemp = new File(multiCaseGraphPath.getAbsolutePath() + "_temp");
+                // neo4j needs canonical path, see #1288
+                graphHomeTemp = graphHomeTemp.getCanonicalFile();
                 if (graphHomeTemp.exists())
                     IOUtil.deleteDirectory(graphHomeTemp, false);
                 ImportWorker importer = new ImportWorker(cases, graphHomeTemp);

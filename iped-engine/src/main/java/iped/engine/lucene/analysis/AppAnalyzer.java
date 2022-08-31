@@ -40,9 +40,9 @@ public class AppAnalyzer {
 
     public static Analyzer get() {
         Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
-        analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer(true));
+        analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer());
         analyzerPerField.put(LocalizedProperties.getLocalizedField(IndexItem.CATEGORY),
-                new StandardASCIIAnalyzer(true));
+                new StandardASCIIAnalyzer());
         analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
@@ -55,7 +55,7 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.TIMESTAMP, new KeywordAnalyzer());
 
         IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
-        StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(false);
+        StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer();
         hashAnalyzer.setMaxTokenLength(Integer.MAX_VALUE);
         hashAnalyzer.setConvertCharsToLower(true);
         analyzerPerField.put(HashTask.HASH.MD5.toString(), hashAnalyzer);
@@ -65,7 +65,7 @@ public class AppAnalyzer {
         analyzerPerField.put(HashTask.HASH.SHA512.toString(), hashAnalyzer);
         analyzerPerField.put(PhotoDNATask.PHOTO_DNA, hashAnalyzer);
 
-        StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(false);
+        StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer();
         defaultAnalyzer.setMaxTokenLength(indexConfig.getMaxTokenLength());
         defaultAnalyzer.setFilterNonLatinChars(indexConfig.isFilterNonLatinChars());
         defaultAnalyzer.setConvertCharsToAscii(indexConfig.isConvertCharsToAscii());

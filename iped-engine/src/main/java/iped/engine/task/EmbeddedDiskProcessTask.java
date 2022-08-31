@@ -78,7 +78,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 && item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) == null;
     }
 
-    private static boolean isFirstOrUniqueImagePart(IItem item) {
+    public static boolean isFirstOrUniqueImagePart(IItem item) {
         return MediaTypes.E01_IMAGE.equals(item.getMediaType())
                 || MediaTypes.EX01_IMAGE.equals(item.getMediaType())
                 || MediaTypes.RAW_IMAGE.equals(item.getMediaType())

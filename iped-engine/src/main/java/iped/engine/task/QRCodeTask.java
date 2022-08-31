@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
-import com.google.zxing.ReaderException;
 import com.google.zxing.Result;
 import com.google.zxing.ResultPoint;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
@@ -184,7 +183,7 @@ public class QRCodeTask extends AbstractTask {
                     totalQRCodesFound.addAndGet(results.length);
                 }
 
-            } catch (ReaderException e) {
+            } catch (Throwable e) {
                 logger.debug("Error searching for qrcodes in file {} ({} bytes): {}", evidence.getPath(),
                         evidence.getLength(), e.toString());
             }

@@ -1005,10 +1005,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             if (result.isEmpty()) {
                 if (contact.getId() != null && !contact.getId().isEmpty()) {
-                    result = searcher
-                            .search(BasicProps.NAME + ":(" + escape(searcher, contact.getId()) + " AND (jpg thumb))"); //$NON-NLS-1$ //$NON-NLS-2$
-                    result = filterAvatars(result, contact.getId());
-                    Collections.sort(result, new AvatarComparator());
+                    Iterable<IItemReader> resultIterable = searcher.searchIterable(
+                            BasicProps.NAME + ":(\"" + escape(searcher, contact.getId()) + "\" AND (jpg thumb))"); //$NON-NLS-1$ //$NON-NLS-2$
+                    IItemReader avatar = getNewerAvatar(resultIterable, contact.getId());
+                    if (avatar != null) {
+                        result.add(avatar);
+                    }
                 }
             }
 
@@ -1036,11 +1038,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             return string;
     }
 
-    private List<IItemReader> filterAvatars(List<IItemReader> avatars, String id) {
+    private IItemReader getNewerAvatar(Iterable<IItemReader> avatars, String id) {
         // WhatsApp initial release 2009-01-01
         long startTime = 1230768000;
         long endTime = System.currentTimeMillis() / 1000;
-        ArrayList<IItemReader> result = new ArrayList<IItemReader>();
+        IItemReader newerAvatar = null;
+        AvatarComparator comparator = new AvatarComparator();
         for (IItemReader item : avatars) {
             // filter group avatars and unrelated images
             if (item.getName().startsWith(id) && item.getName().split("-").length < 3) { //$NON-NLS-1$
@@ -1051,17 +1054,21 @@ public class WhatsAppParser extends SQLite3DBParser {
                     try {
                         Long time = Long.valueOf(t);
                         if (time > startTime && time < endTime) {
-                            result.add(item);
+                            if (newerAvatar == null || comparator.compare(item, newerAvatar) > 0) {
+                                newerAvatar = item;
+                            }
                         }
                     } catch (NumberFormatException e) {
                         // ignore
                     }
                 } else if (str.equals(".thumb") || str.equals(".jpg")) { //$NON-NLS-1$ //$NON-NLS-2$
-                    result.add(item);
+                    if (newerAvatar == null || comparator.compare(item, newerAvatar) > 0) {
+                        newerAvatar = item;
+                    }
                 }
             }
         }
-        return result;
+        return newerAvatar;
     }
 
     // sort newer avatar to be first
