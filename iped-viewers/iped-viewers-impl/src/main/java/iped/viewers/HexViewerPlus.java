@@ -2718,40 +2718,40 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
 class MyComboBoxEditor implements ComboBoxEditor {
 
-	private JTextField editorPane;
+	private JTextField txtField;
 	
 	public MyComboBoxEditor() {
-		editorPane = new JTextField();
+		txtField = new JTextField();
 	}
 	
 	@Override
 	public Component getEditorComponent() {
-		return editorPane;
+		return txtField;
 	}
 
 	@Override
 	public void setItem(Object anObject) {
-		editorPane.setText(anObject == null ? null : anObject.toString());
+		txtField.setText(anObject == null ? null : anObject.toString());
 	}
 
 	@Override
 	public Object getItem() {
-		return editorPane.getText();
+		return txtField.getText();
 	}
 
 	@Override
 	public void selectAll() {
-		editorPane.selectAll();
+		txtField.selectAll();
 	}
 
 	@Override
 	public void addActionListener(ActionListener l) {
-		editorPane.addActionListener(l);
+		txtField.addActionListener(l);
 	}
 
 	@Override
 	public void removeActionListener(ActionListener l) {
-		editorPane.removeActionListener(l);
+		txtField.removeActionListener(l);
 	}
 	
 }
