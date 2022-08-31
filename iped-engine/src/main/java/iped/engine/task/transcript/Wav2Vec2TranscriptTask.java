@@ -149,9 +149,11 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         process.getOutputStream().write(TERMINATE.getBytes(Charsets.UTF8_CHARSET));
         process.getOutputStream().write(NEW_LINE);
         process.getOutputStream().flush();
-        process.waitFor(3, TimeUnit.SECONDS);
-        if (process.isAlive()) {
-            process.destroyForcibly();
+        if (!process.waitFor(3, TimeUnit.SECONDS)) {
+            process.destroy();
+            if (!process.waitFor(3, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+            }
         }
     }
 
