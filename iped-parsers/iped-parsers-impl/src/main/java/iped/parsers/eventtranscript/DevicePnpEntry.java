@@ -112,7 +112,7 @@ public class DevicePnpEntry {
         if (!installDate.isEmpty()) {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
             format.setTimeZone(TimeZone.getTimeZone("UTC"));
-            setTimestamp(format.parse(installDate));
+            setInstallDate(format.parse(installDate));
         }
     }
 
@@ -137,7 +137,7 @@ public class DevicePnpEntry {
         if (!firstInstallDate.isEmpty()) {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
             format.setTimeZone(TimeZone.getTimeZone("UTC"));
-            setTimestamp(format.parse(firstInstallDate));
+            setFirstInstallDate(format.parse(firstInstallDate));
         }
     }
 
