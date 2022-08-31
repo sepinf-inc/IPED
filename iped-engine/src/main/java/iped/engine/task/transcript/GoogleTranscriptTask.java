@@ -75,9 +75,7 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
                     "To use Google transcription, you must specify environment variable " + CREDENTIAL_KEY);
         }
 
-        if (!super.isFfmpegOk()) {
-            LOGGER.error("FFmpeg not detected, audios longer than 1min will not be transcribed!");
-        }
+        checkFFmpeg();
 
         speechClient = SpeechClient.create();
     }

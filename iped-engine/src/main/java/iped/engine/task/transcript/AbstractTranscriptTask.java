@@ -66,9 +66,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     private static final String SPLIT_CMD = "ffmpeg -i $INPUT -f segment -segment_time " + MAX_WAV_TIME
             + " -c copy $OUTPUT%03d.wav";
 
-    private static boolean ffmpegTested = false;
-
-    private static boolean ffmpegDetected = false;
+    private static Boolean ffmpegDetected;
 
     protected AudioTranscriptConfig transcriptConfig;
     
@@ -106,8 +104,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         return supported;
     }
 
-    protected static boolean isFfmpegOk() {
-        if (!ffmpegTested) {
+    protected static synchronized boolean checkFFmpeg() {
+        if (ffmpegDetected == null) {
             try {
                 ProcessBuilder pb = new ProcessBuilder();
                 pb.command(TEST_FFMPEG.split(" "));
@@ -121,10 +119,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            if (!ffmpegDetected) {
-                LOGGER.error("Error testing ffmpeg, that could break transcription. Is it on path?");
+            if (ffmpegDetected == null) {
+                ffmpegDetected = false;
+                LOGGER.error("Error testing FFmpeg, is it on path? Audios longer than 1min need it to be transcribed.");
             }
-            ffmpegTested = true;
         }
         return ffmpegDetected;
     }
@@ -210,7 +208,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath,
             Function<File, TextAndScore> transcribeWavPart) throws Exception {
-        if (tmpFile.length() <= MAX_WAV_SIZE || !isFfmpegOk()) {
+        if (tmpFile.length() <= MAX_WAV_SIZE || !checkFFmpeg()) {
             return transcribeWavPart.apply(tmpFile);
         } else {
             Collection<File> parts = getAudioSplits(tmpFile, itemPath);

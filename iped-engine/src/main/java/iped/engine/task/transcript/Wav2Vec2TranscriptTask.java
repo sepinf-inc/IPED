@@ -67,6 +67,8 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         if (!deque.isEmpty())
             return;
         
+        checkFFmpeg();
+
         for (int i = 0; i < NUM_SERVERS; i++) {
             deque.add(startServer());
         }
