@@ -168,7 +168,7 @@ public class IPEDSearcher implements IIPEDSearcher {
     	if(collector!=null) {
     		return collector.bits.get(docId);
     	}
-    	return false;
+    	return true;
     }
 
     private Query getNonTreeQuery(Query query) {
