@@ -39,8 +39,8 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
 
         if (!ResultTableListener.syncingSelectedItems && !e.getValueIsAdjusting()) {
             ResultTableListener.syncingSelectedItems = true;
-            App.get().resultsTable.clearSelection();
             App.get().resultsTable.getSelectionModel().setValueIsAdjusting(true);
+            App.get().resultsTable.clearSelection();
             int[] selRows = App.get().gallery.getSelectedCells();
             int start = 0;
             while (start < selRows.length) {
