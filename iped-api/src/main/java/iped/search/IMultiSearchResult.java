@@ -20,5 +20,9 @@ public interface IMultiSearchResult {
     int getLength();
 
     float getScore(int i);
+    
+    /* returns true if the resultset includes the docid */
+    boolean hasDocId(int docId);
+
 
 }

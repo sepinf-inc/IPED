@@ -12,6 +12,7 @@ public class MultiSearchResult implements IMultiSearchResult {
 
     private IItemId[] ids;
     private float[] scores;
+    IPEDSearcher ipedSearcher;
 
     public MultiSearchResult() {
         this.ids = new ItemId[0];
@@ -157,4 +158,17 @@ public class MultiSearchResult implements IMultiSearchResult {
         result.scores = this.scores.clone();
         return result;
     }
+
+	@Override
+	public boolean hasDocId(int docId) {
+		return ipedSearcher.hasDocId(docId);
+	}
+
+	public IPEDSearcher getIpedSearcher() {
+		return ipedSearcher;
+	}
+
+	public void setIpedSearcher(IPEDSearcher ipedSearcher) {
+		this.ipedSearcher = ipedSearcher;
+	}
 }
