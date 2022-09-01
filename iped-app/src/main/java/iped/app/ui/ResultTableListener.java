@@ -89,8 +89,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             int galleyCol = resultTableLeadSelIdx % App.get().getGalleryColCount();
             App.get().gallery.scrollRectToVisible(App.get().gallery.getCellRect(galleryRow, galleyCol, false));
 
-            App.get().gallery.clearSelection();
             App.get().gallery.getSelectionModel().setValueIsAdjusting(true);
+            App.get().gallery.clearSelection();
             int[] selRows = App.get().resultsTable.getSelectedRows();
             int start = 0;
             while (start < selRows.length) {
