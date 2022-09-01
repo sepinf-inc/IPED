@@ -18,7 +18,7 @@ public class GalleryTable extends JTable {
     private static final long serialVersionUID = 1L;
 
     private int lastCell = 0;
-    private BitSet selectedCells = new BitSet();
+    private BitSet selectedCells;
 
     public GalleryTable(TableModel tableModel) {
         super(tableModel);
@@ -101,7 +101,11 @@ public class GalleryTable extends JTable {
 
     @Override
     public void clearSelection() {
-        selectedCells = new BitSet();
+        if (selectedCells == null) {
+            selectedCells = new BitSet();
+        } else {
+            selectedCells.clear();
+        }
         super.clearSelection();
     }
 
