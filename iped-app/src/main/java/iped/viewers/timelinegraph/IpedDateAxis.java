@@ -384,6 +384,9 @@ public class IpedDateAxis extends DateAxis {
 
 		setRange(newRange);
 	}
-	
+
+	public IpedChartsPanel getIpedChartsPanel() {
+		return ipedChartsPanel;
+	}
 
 }

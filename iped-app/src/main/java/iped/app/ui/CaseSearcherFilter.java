@@ -304,6 +304,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
         		}
         		caseSearchFilterListener.onDone();
     		}
+        	result.setIpedSearcher(searcher);
 
             return result;
         }
@@ -312,7 +313,6 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
     @Override
     public void done() {
-    	
     }
 
     @Override

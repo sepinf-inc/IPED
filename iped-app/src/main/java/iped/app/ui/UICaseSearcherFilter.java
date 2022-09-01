@@ -320,6 +320,7 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
 
         if (!this.isCancelled())
             try {
+            	this.get().setIpedSearcher(this.searcher);
                 App.get().ipedResult = this.get();
 
                 App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(LocalizedFormat.format(this.get().getLength()));

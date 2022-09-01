@@ -61,7 +61,8 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 	public class SliceCounter extends CancelableWorker<Void, Void> {
 		int start;
 	    int valueCount[]=null;
-	    ArrayList<IItemId> docIds[];
+	    ArrayList<Integer> docIds[];
+	    ArrayList<IItemId> itemIds[];
 	    Accumulator threadAccumulator;
 	    boolean finished=false;
 		protected boolean merged=false;
@@ -103,9 +104,11 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 					lo = new MetadataPanel.LookupOrdSDV(docValues);
 	            	valueCount=new int[(int)docValues.getValueCount()];
 					docIds=new ArrayList[(int)docValues.getValueCount()];
+					itemIds=new ArrayList[(int)docValues.getValueCount()];
 				}else{
 	            	valueCount=new int[(int)docValuesSet.getValueCount()];
 	            	docIds=new ArrayList[(int)docValuesSet.getValueCount()];
+					itemIds=new ArrayList[(int)docValuesSet.getValueCount()];
 					lo = new MetadataPanel.LookupOrdSSDV(docValuesSet);
 				}
 
@@ -127,10 +130,10 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 		        	
 					if(bookmark!=null && ipedTimelineDataset.ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
 		            	if(multiBookmarks.hasBookmark(item, bookmark)) {
-		            		processItem(item, docValuesSet, docValues, valueCount, docIds);
+		            		processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
 		            	}
 					}else {
-						processItem(item, docValuesSet, docValues, valueCount, docIds);
+						processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
 					}
 		        }
 				
@@ -139,7 +142,7 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 		        		return null;
 		        	}
 					if(valueCount[i]>0) {
-						threadAccumulator.addValue(new ValueCount(lo, i, valueCount[i]), docIds[i], eventType);
+						threadAccumulator.addValue(new ValueCount(lo, i, valueCount[i]),  docIds[i], itemIds[i], eventType);
 					}
 				}
 			} catch (Exception e) {
@@ -155,7 +158,7 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 		}
 	}
 
-	public void processItem(IItemId item, SortedSetDocValues docValuesSet, SortedDocValues docValues, int[] valueCount, ArrayList<IItemId>[] docIds) {
+	public void processItem(IItemId item, SortedSetDocValues docValuesSet, SortedDocValues docValues, int[] valueCount, ArrayList<Integer>[] docIds, ArrayList<IItemId>[] itemIds) {
         int doc = App.get().appCase.getLuceneId(item);
         try {
     		if(docValuesSet != null) {
@@ -165,10 +168,13 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
                     if (prevOrd != ord) {	                	
                         valueCount[(int) ord]++;
                         if(docIds[(int) ord]!=null) {
-                        	docIds[(int) ord].add(item);
+                        	itemIds[(int) ord].add(item);
+                        	docIds[(int) ord].add(doc);
                         }else {
-                        	docIds[(int) ord]=new ArrayList<IItemId>();
-                        	docIds[(int) ord].add(item);
+                        	itemIds[(int) ord]=new ArrayList<IItemId>();
+                        	itemIds[(int) ord].add(item);
+                        	docIds[(int) ord]=new ArrayList<Integer>();
+                        	docIds[(int) ord].add(doc);
                         }
                     }
                     prevOrd = ord;
@@ -178,10 +184,13 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
                 int ord = (int) docValues.ordValue();
                 valueCount[ord]++;
                 if(docIds[(int) ord]!=null) {
-                	docIds[(int) ord].add(item);
+                	itemIds[(int) ord].add(item);
+                	docIds[(int) ord].add(doc);
                 }else {
-                	docIds[(int) ord]=new ArrayList<IItemId>();
-                	docIds[(int) ord].add(item);
+                	itemIds[(int) ord]=new ArrayList<IItemId>();
+                	itemIds[(int) ord].add(item);
+                	docIds[(int) ord]=new ArrayList<Integer>();
+                	docIds[(int) ord].add(doc);
                 }
     		}
         	
@@ -216,7 +225,8 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 
 				this.eventField = ipedTimelineDataset.ipedChartsPanel.getTimeEventColumnName(this.eventType);
 	            int valueCount[]=null;
-	            ArrayList<IItemId> docIds[];
+	            ArrayList<Integer> docIds[];
+	            ArrayList<IItemId> itemIds[];
 
 	            if(isCancelled()) {
 	            	throw new InterruptedException();
@@ -233,9 +243,11 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 					lo = new MetadataPanel.LookupOrdSDV(docValues);
 					valueCount=new int[(int)docValues.getValueCount()];
 					docIds=new ArrayList[(int)docValues.getValueCount()];
+					itemIds=new ArrayList[(int)docValues.getValueCount()];
 				}else{
 					valueCount=new int[(int)docValuesSet.getValueCount()];
 					docIds=new ArrayList[(int)docValuesSet.getValueCount()];
+					itemIds=new ArrayList[(int)docValuesSet.getValueCount()];
 					lo = new MetadataPanel.LookupOrdSSDV(docValuesSet);
 				}
 		        IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
@@ -248,10 +260,10 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 
 					if(bookmark!=null && ipedTimelineDataset.ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
 		            	if(multiBookmarks.hasBookmark(item, bookmark)) {
-		            		processItem(item, docValuesSet, docValues, valueCount, docIds);
+		            		processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
 		            	}
 					}else {
-						processItem(item, docValuesSet, docValues, valueCount, docIds);
+						processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
 					}
 		        }
 				
@@ -260,7 +272,7 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 		            	throw new InterruptedException();
 		            }
 					if(valueCount[i]>0) {
-	    	        	ipedTimelineDataset.addValue(new ValueCount(lo, i, valueCount[i]), docIds[i], eventType);						
+	    	        	ipedTimelineDataset.addValue(new ValueCount(lo, i, valueCount[i]), docIds[i], itemIds[i], eventType);
 					}
 				}
 		            

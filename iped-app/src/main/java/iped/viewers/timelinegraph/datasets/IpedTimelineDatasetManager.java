@@ -1,7 +1,5 @@
 package iped.viewers.timelinegraph.datasets;
 
-import java.util.ArrayList;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -18,7 +16,13 @@ import org.jfree.data.xy.AbstractIntervalXYDataset;
 
 import iped.viewers.timelinegraph.IpedChartsPanel;
 import iped.viewers.timelinegraph.cache.IndexTimeStampCache;
+import iped.viewers.timelinegraph.cache.TimeStampCache;
 
+/*
+ * Implements the method to choose timeline dataset object that represents. 
+ * 
+ * Obs.: Currently it checks if there is an available cache. If not use a dataset with direct access to lucene resultset.
+ */
 public class IpedTimelineDatasetManager {
 	IpedChartsPanel ipedChartsPanel;
 
@@ -42,7 +46,6 @@ public class IpedTimelineDatasetManager {
 	public IpedTimelineDatasetManager(IpedChartsPanel ipedChartsPanel){
 		this.ipedChartsPanel = ipedChartsPanel;
 
-		cacheFLFactory=new CaseSearchFilterListenerFactory(CachedFilterListener.class);
 		luceneFLFactory=new CaseSearchFilterListenerFactory(LuceneFilterListener.class);
 
 		timeStampCache = new IndexTimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
@@ -73,23 +76,23 @@ public class IpedTimelineDatasetManager {
 		try {
 			if(timeStampCache.hasTimePeriodClassToCache(timePeriodClass)) {
 				selectedTimeStampCache=timeStampCache;
-				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), cacheFLFactory,splitValue);
+				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), null, splitValue);
 			}
 			if(timeStampCache2.hasTimePeriodClassToCache(timePeriodClass)) {
 				selectedTimeStampCache=timeStampCache2;
-				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), cacheFLFactory,splitValue);
+				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), null, splitValue);
 			}
 			if(timeStampCache3.hasTimePeriodClassToCache(timePeriodClass)) {
 				selectedTimeStampCache=timeStampCache3;
-				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), cacheFLFactory,splitValue);
+				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), null, splitValue);
 			}
 			if(timeStampCache4.hasTimePeriodClassToCache(timePeriodClass)) {
 				selectedTimeStampCache=timeStampCache4;
-				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), cacheFLFactory,splitValue);
+				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), null, splitValue);
 			}
 			if(timeStampCache5.hasTimePeriodClassToCache(timePeriodClass)) {
 				selectedTimeStampCache=timeStampCache5;
-				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), cacheFLFactory,splitValue);
+				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), null, splitValue);
 			}
 			AbstractIntervalXYDataset res = new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), luceneFLFactory,splitValue);
 			return res;			
@@ -99,8 +102,10 @@ public class IpedTimelineDatasetManager {
 		return null;
 	}
 
-	public void startBackgroundCaching(){
-		
+	/*
+	 * Start the creation of cache for timeline chart
+	 */
+	public void startBackgroundCacheCreation(){
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
@@ -111,12 +116,11 @@ public class IpedTimelineDatasetManager {
 		threadPool.execute(timeStampCacheThread2);//loads the other timeperiodCaches			
 		threadPool.execute(timeStampCacheThread3);//loads the other timeperiodCaches			
 		threadPool.execute(timeStampCacheThread4);//loads the other timeperiodCaches			
-		threadPool.execute(timeStampCacheThread5);//loads the other timeperiodCaches
-					
+		threadPool.execute(timeStampCacheThread5);//loads the other timeperiodCaches					
 	}
 
-	public Map<TimePeriod, ArrayList<Integer>> getCachedEventTimeStamps(String eventType) {
-		return selectedTimeStampCache.getCachedEventTimeStamps(eventType);
+	public TimeStampCache getCache() {
+		return selectedTimeStampCache;
 	}
 
 	public IpedChartsPanel getIpedChartsPanel() {

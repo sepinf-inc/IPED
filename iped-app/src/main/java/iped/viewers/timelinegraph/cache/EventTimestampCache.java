@@ -2,9 +2,6 @@ package iped.viewers.timelinegraph.cache;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
@@ -16,16 +13,17 @@ import org.apache.lucene.util.UnicodeUtil;
 import org.jfree.data.time.TimePeriod;
 
 import iped.viewers.api.IMultiSearchResultProvider;
+import iped.viewers.timelinegraph.DateUtil;
 import iped.viewers.timelinegraph.IpedChartsPanel;
 
 class EventTimestampCache implements Runnable {
 	String eventType;
 
 	IMultiSearchResultProvider resultsProvider;
-	IndexTimeStampCache timeStampCache;
+	TimeStampCache timeStampCache;
 	IpedChartsPanel ipedChartsPanel;
 	
-	public EventTimestampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider, IndexTimeStampCache timeStampCache, String eventType) {
+	public EventTimestampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider, TimeStampCache timeStampCache, String eventType) {
 		this.eventType=eventType;
 		this.resultsProvider = resultsProvider;
 		this.timeStampCache = timeStampCache;
@@ -34,22 +32,8 @@ class EventTimestampCache implements Runnable {
 
 	public void run() {
 		LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
-        
-		ArrayList< Map<TimePeriod,ArrayList<Integer>> > timeStampDocs = new ArrayList<Map<TimePeriod,ArrayList<Integer>>>(timeStampCache.periodClassesToCache.size());
-		synchronized (timeStampCache.timePeriodClassTimeCacheTree) {
-			int i=0;
-			for(Class<? extends TimePeriod> timePeriodClass:timeStampCache.periodClassesToCache) {
-				Map<String, Map<TimePeriod,ArrayList<Integer>>> timeCacheTree = timeStampCache.timePeriodClassTimeCacheTree.get(timePeriodClass.getSimpleName());
-				if(timeCacheTree==null) {
-					timeCacheTree = (Map<String, Map<TimePeriod,ArrayList<Integer>>>) Collections.synchronizedMap(new TreeMap<String, Map<TimePeriod,ArrayList<Integer>>>());
-					timeStampCache.timePeriodClassTimeCacheTree.put(timePeriodClass.getSimpleName(), timeCacheTree);
-				}
-				Map<TimePeriod,ArrayList<Integer>> timeStampDocsItem = (Map<TimePeriod,ArrayList<Integer>>) Collections.synchronizedMap(new TreeMap<TimePeriod,ArrayList<Integer>>()); 
-				timeStampDocs.add(timeStampDocsItem);
-				timeCacheTree.put(eventType, timeStampDocsItem);
-				i++;
-			}
-		}
+		
+		IndexTimeStampCache timeStampCache = (IndexTimeStampCache) this.timeStampCache; 
 
 		DocIdSetIterator timeStampValues;
 		try {
@@ -64,12 +48,12 @@ class EventTimestampCache implements Runnable {
 					while(timeStr!=null) {
 						if(!"".equals(timeStr)) {
 							int i=0;
-							for(Class<? extends TimePeriod> timePeriodClass:timeStampCache.periodClassesToCache) {
-								TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(timePeriodClass, ipedChartsPanel.getDomainAxis().ISO8601DateParse(timeStr));
+							for(Class<? extends TimePeriod> timePeriodClass:timeStampCache.getPeriodClassesToCache()) {
+								TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(timePeriodClass, DateUtil.ISO8601DateParse(timeStr));
 								if(t!=null) {
 									ArrayList<Integer> docs = new ArrayList<Integer>();
 									synchronized (timeStampCache) {
-										timeStampDocs.get(i).put(t, docs);
+										timeStampCache.add(timePeriodClass,t, eventType, docs);
 									}
 								}
 								i++;
@@ -84,19 +68,13 @@ class EventTimestampCache implements Runnable {
 							timeStr = cloneBr(values.lookupOrd(ord));
 							if(!"".equals(timeStr)) {
 								int i=0;
-								for(Class<? extends TimePeriod> timePeriodClass:timeStampCache.periodClassesToCache) {
-									TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(timePeriodClass, ipedChartsPanel.getDomainAxis().ISO8601DateParse(timeStr));
+								for(Class<? extends TimePeriod> timePeriodClass:timeStampCache.getPeriodClassesToCache()) {
+									TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(timePeriodClass, DateUtil.ISO8601DateParse(timeStr));
 									
 									if(t!=null) {
-										ArrayList<Integer> docs = timeStampDocs.get(i).get(t);
-										if(docs==null) {
-											docs = new ArrayList<Integer>();
-											synchronized (timeStampCache) {
-												timeStampDocs.get(i).put(t, docs);
-											}
-										}
-										synchronized (docs) {
-											docs.add(doc);
+										ArrayList<Integer> docs2 =timeStampCache.get(timePeriodClass,t, eventType);
+										synchronized (docs2) {
+											docs2.add(doc);
 										}
 									}
 									i++;
@@ -113,12 +91,12 @@ class EventTimestampCache implements Runnable {
 					while(timeStr!=null) {
 						if(!"".equals(timeStr)) {
 							int i=0;
-							for(Class<? extends TimePeriod> timePeriodClass:timeStampCache.periodClassesToCache) {
-								TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(timePeriodClass, ipedChartsPanel.getDomainAxis().ISO8601DateParse(timeStr));
+							for(Class<? extends TimePeriod> timePeriodClass:timeStampCache.getPeriodClassesToCache()) {
+								TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(timePeriodClass, DateUtil.ISO8601DateParse(timeStr));
 								if(t!=null) {
 									ArrayList<Integer> docs = new ArrayList<Integer>();
 									synchronized (timeStampCache) {
-										timeStampDocs.get(i).put(t, docs);
+										timeStampCache.add(timePeriodClass,t, eventType, docs);
 									}
 								}
 								i++;
@@ -131,20 +109,15 @@ class EventTimestampCache implements Runnable {
 						timeStr = cloneBr(values.lookupOrd(values.ordValue()));
 						if(!"".equals(timeStr)) {
 							int i=0;
-							for(Class<? extends TimePeriod> timePeriodClass:timeStampCache.periodClassesToCache) {
-								TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(timePeriodClass, ipedChartsPanel.getDomainAxis().ISO8601DateParse(timeStr));
+							for(Class<? extends TimePeriod> timePeriodClass:timeStampCache.getPeriodClassesToCache()) {
+								TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(timePeriodClass, DateUtil.ISO8601DateParse(timeStr));
 
 								if(t!=null) {
-									ArrayList<Integer> docs = timeStampDocs.get(i).get(t);
-									if(docs==null) {
-										docs = new ArrayList<Integer>();
-										synchronized (timeStampCache) {
-											timeStampDocs.get(i).put(t, docs);
-										}
+									ArrayList<Integer> docs2 =timeStampCache.get(timePeriodClass,t, eventType);
+									synchronized (docs2) {
+										docs2.add(doc);
 									}
-									synchronized (docs) {
-										docs.add(doc);
-									}
+
 								}
 								i++;
 							}

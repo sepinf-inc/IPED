@@ -62,37 +62,29 @@ import org.jfree.data.time.TimePeriod;
 import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.DefaultXYDataset;
 import org.jfree.data.xy.XYDataset;
-import org.neo4j.kernel.api.impl.fulltext.analyzer.providers.Finnish;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
 import iped.app.ui.App;
-import iped.app.ui.CaseSearcherFilter;
 import iped.app.ui.ClearFilterListener;
 import iped.app.ui.ColumnsManager;
 import iped.app.ui.events.RowSorterTableDataChange;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
-import iped.engine.lucene.DocValuesUtil;
 import iped.engine.search.QueryBuilder;
-import iped.engine.search.TimelineResults.TimeItemId;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
-import iped.localization.LocalizedProperties;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.search.IMultiSearchResult;
 import iped.utils.IconUtil;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
 import iped.viewers.timelinegraph.datasets.AsynchronousDataset;
-import iped.viewers.timelinegraph.datasets.IpedTimelineDataset;
 import iped.viewers.timelinegraph.datasets.IpedTimelineDatasetManager;
-import iped.viewers.timelinegraph.datasets.TimeTableCumulativeXYDataset;
 import iped.viewers.timelinegraph.swingworkers.CheckWorker;
 import iped.viewers.timelinegraph.swingworkers.SelectWorker;
 
@@ -569,7 +561,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		}
 		if(timeEventColumnNamesList.size()==0 && !t.isAlive()) {
 			t.start();
-			ipedTimelineDatasetManager.startBackgroundCaching();
+			ipedTimelineDatasetManager.startBackgroundCacheCreation();
 		}
 		
 		if(internalUpdate) {

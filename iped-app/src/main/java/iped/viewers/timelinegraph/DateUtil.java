@@ -1,6 +1,9 @@
 package iped.viewers.timelinegraph;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.TimeZone;
 
 public class DateUtil {
@@ -30,4 +33,18 @@ public class DateUtil {
 			return calendarField;
 		}
 	}
+	
+    volatile static SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+
+    static public Date ISO8601DateParse(String strDate) {
+		try {
+			synchronized(ISO8601DATEFORMAT) {
+				return ISO8601DATEFORMAT.parse(strDate);
+			}
+		} catch (ParseException|NumberFormatException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
 }
