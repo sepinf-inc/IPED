@@ -62,7 +62,7 @@ public class SelectWorker extends BitSetSelectWorker {
             	XYItemEntity xyItemEntity = (XYItemEntity) entity;
             	IpedTimelineDataset ds = (IpedTimelineDataset) xyItemEntity.getDataset();
             	long entStartTimeStamp = ds.getStartX(xyItemEntity.getSeriesIndex(), xyItemEntity.getItem()).longValue();
-            	if(entStartTimeStamp==start.getTime()) {
+            	if(entStartTimeStamp>=start.getTime() && entStartTimeStamp<=end.getTime()) {
         			List<IItemId> ids = ds.getItems(xyItemEntity.getItem(), xyItemEntity.getSeriesIndex());        			
         			if(ids!=null) {
         				for (Iterator iterator = ids.iterator(); iterator.hasNext();) {
