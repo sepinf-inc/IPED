@@ -146,11 +146,15 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         deque.clear();
     }
 
-    private void terminateServer(Server server) throws IOException, InterruptedException {
+    private void terminateServer(Server server) throws InterruptedException {
         Process process = server.process;
-        process.getOutputStream().write(TERMINATE.getBytes(Charsets.UTF8_CHARSET));
-        process.getOutputStream().write(NEW_LINE);
-        process.getOutputStream().flush();
+        try {
+            process.getOutputStream().write(TERMINATE.getBytes(Charsets.UTF8_CHARSET));
+            process.getOutputStream().write(NEW_LINE);
+            process.getOutputStream().flush();
+        } catch (IOException e) {
+            // ignore
+        }
         if (!process.waitFor(3, TimeUnit.SECONDS)) {
             process.destroy();
             if (!process.waitFor(3, TimeUnit.SECONDS)) {
