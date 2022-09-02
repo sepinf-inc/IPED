@@ -3,6 +3,7 @@ package iped.viewers.timelinegraph;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -42,8 +43,11 @@ import org.jfree.chart.entity.JFreeChartEntity;
 import org.jfree.chart.entity.LegendItemEntity;
 import org.jfree.chart.entity.PlotEntity;
 import org.jfree.chart.entity.XYItemEntity;
+import org.jfree.chart.plot.Plot;
+import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.plot.Zoomable;
 import org.jfree.data.time.TimePeriod;
 
 import iped.app.ui.App;
@@ -96,6 +100,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
     
 	boolean splitByBookmark=true;
 	boolean splitByCategory=false;
+
+	private boolean zoomingStart;
 	
 	public IpedChartPanel(JFreeChart chart, IpedChartsPanel ipedChartsPanel) {
 		super(chart, true);
@@ -276,6 +282,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
                     }
                 }
         		return;
+        	}else {
+        		zoomingStart=true;
         	}
         }
 
@@ -335,12 +343,22 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
     		return;
         }
 
-		super.mouseDragged(e);
+        if(zoomingStart) {
+        	//tricks the parent event handler with a new mouse event where the Y is the bottom of the chart ((int)scaledDataArea.getMaxY())
+            Rectangle2D scaledDataArea = getScreenDataArea(
+                    (int) e.getX(), (int) e.getY());
+            MouseEvent en = new MouseEvent((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(), (int)scaledDataArea.getMaxY(), e.getClickCount(), e.isPopupTrigger(), e.getButton());
+    		super.mouseDragged(en);	
+        }else {
+    		super.mouseDragged(e);	
+        }
+		
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		int mods = e.getModifiersEx();
+		zoomingStart=false;
 
         if ((mods & this.filterMask) != this.filterMask) {
     		super.mouseReleased(e);
@@ -814,7 +832,46 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 
 	@Override
 	public void zoom(Rectangle2D selection) {
-		super.zoom(selection);
+        // get the origin of the zoom selection in the Java2D space used for
+        // drawing the chart (that is, before any scaling to fit the panel)
+        Point2D selectOrigin = translateScreenToJava2D(new Point(
+                (int) Math.ceil(selection.getX()),
+                (int) Math.ceil(selection.getY())));
+        PlotRenderingInfo plotInfo = this.getChartRenderingInfo().getPlotInfo();
+        Rectangle2D scaledDataArea = getScreenDataArea(
+                (int) selection.getCenterX(), (int) selection.getCenterY());
+        if ((selection.getHeight() > 0) && (selection.getWidth() > 0)) {
+
+            double hLower = (selection.getMinX() - scaledDataArea.getMinX())
+                / scaledDataArea.getWidth();
+            double hUpper = (selection.getMaxX() - scaledDataArea.getMinX())
+                / scaledDataArea.getWidth();
+            double vLower = (scaledDataArea.getMaxY() - selection.getMaxY())
+                / scaledDataArea.getHeight();
+            double vUpper = (scaledDataArea.getMaxY() - selection.getMinY())
+                / scaledDataArea.getHeight();
+
+            Plot p = this.getChart().getPlot();
+            if (p instanceof Zoomable) {
+                // here we tweak the notify flag on the plot so that only
+                // one notification happens even though we update multiple
+                // axes...
+                boolean savedNotify = p.isNotify();
+                p.setNotify(false);
+                Zoomable z = (Zoomable) p;
+                if (z.getOrientation() == PlotOrientation.HORIZONTAL) {
+                    z.zoomDomainAxes(vLower, vUpper, plotInfo, selectOrigin);
+                    z.zoomRangeAxes(hLower, hUpper, plotInfo, selectOrigin);
+                }
+                else {
+                    z.zoomDomainAxes(hLower, hUpper, plotInfo, selectOrigin);
+                    z.zoomRangeAxes(vLower, vUpper, plotInfo, selectOrigin);
+                }
+                p.setNotify(savedNotify);
+            }
+
+        }
+//		super.zoom(selection);
 	}
 
 	@Override
