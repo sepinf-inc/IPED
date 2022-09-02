@@ -445,7 +445,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
     // iterators
 
-    private class HistoryIterator extends SQLIterator<BrowserHistoryEntry> {
+    private class HistoryIterator extends DBIterator<BrowserHistoryEntry> {
 
         public HistoryIterator(Connection connection, String query) throws SQLException {
             super(connection, query);
@@ -473,7 +473,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         }
     }
 
-    private class InventoryAppsIterator extends SQLIterator<InventoryAppsEntry> {
+    private class InventoryAppsIterator extends DBIterator<InventoryAppsEntry> {
         public InventoryAppsIterator(Connection connection, String query) throws SQLException {
             super(connection, query);
         }
@@ -506,7 +506,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
     }
 
-    private class AppInteractivityIterator extends SQLIterator<AppInteractivityEntry> {
+    private class AppInteractivityIterator extends DBIterator<AppInteractivityEntry> {
         public AppInteractivityIterator(Connection connection, String query) throws SQLException {
             super(connection, query);
         }
@@ -539,7 +539,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         }
     }
     
-    private class DevicePnpIterator extends SQLIterator<DevicePnpEntry> {
+    private class DevicePnpIterator extends DBIterator<DevicePnpEntry> {
 
         public DevicePnpIterator(Connection connection, String query) throws SQLException {
             super(connection, query);
@@ -568,7 +568,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         }
     }
 
-    private class CensusIterator extends SQLIterator<CensusEntry> {
+    private class CensusIterator extends DBIterator<CensusEntry> {
 
         public CensusIterator(Connection connection, String query) throws SQLException {
             super(connection, query);
