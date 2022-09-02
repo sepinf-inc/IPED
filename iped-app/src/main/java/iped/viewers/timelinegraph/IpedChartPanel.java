@@ -59,7 +59,9 @@ import iped.viewers.timelinegraph.popups.TimelineFilterSelectionPopupMenu;
 import iped.viewers.timelinegraph.swingworkers.HighlightWorker;
 
 public class IpedChartPanel extends ChartPanel implements KeyListener{
-	Rectangle2D filterIntervalRectangle;
+	
+	private Rectangle2D filterIntervalRectangle; //represents the filter selection rectangle while drawing/defining a interval
+	
 	Point2D filterIntervalPoint;
 	Color filterIntervalFillPaint;
 	
@@ -341,7 +343,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 		int mods = e.getModifiersEx();
 
         if ((mods & this.filterMask) != this.filterMask) {
-    		// TODO Auto-generated method stub
     		super.mouseReleased(e);
         }
 
@@ -351,7 +352,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 
             if (filterTrigger1) {
                 if ((e.getX() < this.filterIntervalPoint.getX())) {
-                    restoreAutoBounds();
+                	//do nothing (the firt date should be lower than the last)
+                    //restoreAutoBounds();
                 }
                 else {
                     Date[] filterDates = new Date[2];
@@ -363,11 +365,11 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 					timelineSelectionPopupMenu.show(e.getComponent(), e.getX(), e.getY());
 
                     mouseOverDates=filterDates;
-                    this.setRefreshBuffer(true);
-                    repaint();
                 }
                 this.filterIntervalPoint = null;
                 this.filterIntervalRectangle = null;
+                this.setRefreshBuffer(true);
+                repaint();
             }
             else {
                 // erase the zoom rectangle
