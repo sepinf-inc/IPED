@@ -208,12 +208,12 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             server.process.getOutputStream().flush();
 
             String line;
-            while (!TRANSCRIPTION_FINISHED.equals(line = server.reader.readLine().trim())) {
-                logger.error("Unexpected error from transcription: {}", line);
+            while (!TRANSCRIPTION_FINISHED.equals(line = server.reader.readLine())) {
+                throw new RuntimeException("Transcription failed, returned: " + line);
             }
 
-            Double score = Double.valueOf(server.reader.readLine().trim());
-            String text = server.reader.readLine().trim();
+            Double score = Double.valueOf(server.reader.readLine());
+            String text = server.reader.readLine();
 
             textAndScore = new TextAndScore();
             textAndScore.text = text;

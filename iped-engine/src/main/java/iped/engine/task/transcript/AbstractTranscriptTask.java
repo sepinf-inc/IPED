@@ -423,6 +423,9 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
                 transcriptionFail.incrementAndGet();
             }
 
+        } catch (Exception e) {
+            LOGGER.error("Unexpected exception while transcribing {}: {}", evidence.getPath(), e.toString());
+            e.printStackTrace();
         } finally {
             tmp.close();
         }
