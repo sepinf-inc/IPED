@@ -43,6 +43,10 @@ def main():
         text = text.replace('\n', ' ').replace('\r', ' ')
         probabilities = transcriptions[0].get('probabilities')
         
+        if text is None or probabilities is None or len(probabilities) == 0:
+            text = ''
+            probabilities = [0]
+        
         sum = 0
         for p in probabilities:
             sum += p
