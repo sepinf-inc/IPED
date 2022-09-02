@@ -424,8 +424,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
 
         } catch (Exception e) {
-            LOGGER.error("Unexpected exception while transcribing {}: {}", evidence.getPath(), e.toString());
-            e.printStackTrace();
+            LOGGER.warn("Unexpected exception while transcribing: " + evidence.getPath(), e);
         } finally {
             tmp.close();
         }
