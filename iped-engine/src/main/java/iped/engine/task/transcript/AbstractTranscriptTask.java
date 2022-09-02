@@ -291,7 +291,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         pb.redirectErrorStream(true);
         Process p = pb.start();
         IOUtil.ignoreInputStream(p.getInputStream());
-        long timeoutSecs = TIMEOUT_PER_MB * input.length() / (1 << 20);
+        long timeoutSecs = MIN_TIMEOUT + TIMEOUT_PER_MB * input.length() / (1 << 20);
         boolean finished = p.waitFor(timeoutSecs, TimeUnit.SECONDS);
         if (!finished) {
             LOGGER.warn("Timeout after {}s converting to wav: {}", timeoutSecs, itemPath);
