@@ -1,18 +1,14 @@
 package iped.parsers.eventtranscript;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.ParseException;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.tika.config.Field;
@@ -51,6 +47,9 @@ import iped.utils.EmptyInputStream;
  * App Interactivity
  * https://docs.microsoft.com/en-us/windows/privacy/enhanced-diagnostic-data-windows-analytics-events-and-fields#win32ktraceloggingappinteractivitysummary
  *
+ * Census
+ * https://docs.microsoft.com/en-us/windows/privacy/basic-level-windows-diagnostic-events-and-fields-1809#census-events
+ *
  * @author Felipe Farias da Costa <felipecostasdc@gmail.com>
  */
 public class EventTranscriptParser extends SQLite3DBParser {
@@ -71,6 +70,8 @@ public class EventTranscriptParser extends SQLite3DBParser {
     public static final MediaType EVENT_TRANSCRIPT_DEVICE_PNP = MediaType.application("x-event-transcript-device-pnp");
     public static final MediaType EVENT_TRANSCRIPT_DEVICE_PNP_REG = MediaType.application("x-event-transcript-device-pnp-registry");
 
+    public static final MediaType EVENT_TRANSCRIPT_CENSUS = MediaType.application("x-event-transcript-census");
+
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(EVENT_TRANSCRIPT);
     
     private static final String[] HISTORY_COLUMN_NAMES = new String[] { "Page Titles", "Visit Date (UTC)", "Referrer URL", "URL", "App" };
@@ -78,6 +79,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
     private static final String[] APP_INTERACT_COLUMN_NAMES = new String[] {"App", "Timestamp (UTC)", "Type", "Window size (WxH)", "MouseInput (sec)",
     "InFocusDuration (ms)", "UserActiveDuration (ms)"};
     private static final String[] DEVICE_PNP_COLUMN_NAMES = new String[] {"Model", "Timestamp (UTC)", "InstanceId", "Provider", "Manufacturer", "Install Date", "Enumerator" };
+    private static final String[] CENSUS_COLUMN_NAMES = new String[] {"Timestamp (UTC)", "Event", "State \\ Settings" };
 
     // extract each history entry as a subitem.
     private boolean extractEntries = true;
@@ -112,6 +114,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         File inventoryAppFile = tmp.createTemporaryFile();
         File appInteractivityFile = tmp.createTemporaryFile();
         File devicePnpFile = tmp.createTemporaryFile();
+        File censusFile = tmp.createTemporaryFile();
 
         if (new SQLiteContainerDetector().detect(tis, metadata) != EVENT_TRANSCRIPT) {
             sqliteParser.parse(stream, handler, metadata, context);
@@ -131,11 +134,12 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 metadataHistory.set(BasicProps.HASCHILD, "true");
                 metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                try (HistoryIterable historyEntriesIterable = new HistoryIterable(connection, DBQueries.HISTORY)) {
+                try (HistoryIterator historyEntriesIterator = new HistoryIterator(connection, DBQueries.HISTORY)) {
                     XHTMLContentHandler xHandler = emitHeader(historyHandler, metadataHistory, title, HISTORY_COLUMN_NAMES);
 
                     int i = 0;
-                    for (BrowserHistoryEntry historyEntry : historyEntriesIterable) {
+                    while(historyEntriesIterator.hasNext()) {
+                        BrowserHistoryEntry historyEntry = historyEntriesIterator.next();
                         String[] rowValues = new String[] { String.join("; ", historyEntry.getPageTitles()),
                             historyEntry.getTimestampStr(), historyEntry.getReferUrl(), historyEntry.getUrl(), historyEntry.getAppName() };
                         emitEntry(xHandler, ++i, rowValues);
@@ -166,11 +170,12 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 inventoryAppMeta.set(BasicProps.HASCHILD, "true");
                 inventoryAppMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                try (InventoryAppsIterable inventoryAppsIterable = new InventoryAppsIterable(connection, DBQueries.INVENTORY_APPS)) {
+                try (InventoryAppsIterator inventoryAppsIterator = new InventoryAppsIterator(connection, DBQueries.INVENTORY_APPS)) {
                     XHTMLContentHandler xHandler = emitHeader(inventoryAppHandler, inventoryAppMeta, title, INVENTORY_APPS_COLUMN_NAMES);
 
                     int i = 0;
-                    for (InventoryAppsEntry appInvEntry : inventoryAppsIterable) {
+                    while(inventoryAppsIterator.hasNext()) {
+                        InventoryAppsEntry appInvEntry = inventoryAppsIterator.next();
                         String[] values = new String[] { appInvEntry.getName(), appInvEntry.getTimestampStr(), appInvEntry.getVersion(),
                             appInvEntry.getPublisher(), appInvEntry.getRootDirPath(), appInvEntry.getInstallDateStr() };
                         emitEntry(xHandler, ++i, values);
@@ -200,11 +205,12 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 appInteractMeta.set(BasicProps.HASCHILD, "true");
                 appInteractMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                try (AppInteractivityIterable appInteractivityIterable = new AppInteractivityIterable(connection, DBQueries.APP_INTERACTIVITY)) {
+                try (AppInteractivityIterator appInteractivityIterator = new AppInteractivityIterator(connection, DBQueries.APP_INTERACTIVITY)) {
                     XHTMLContentHandler xHandler = emitHeader(appInteractivityHandler, appInteractMeta, title, APP_INTERACT_COLUMN_NAMES);
 
                     int i = 0;
-                    for (AppInteractivityEntry appIntEntry : appInteractivityIterable) {
+                    while(appInteractivityIterator.hasNext()) {
+                        AppInteractivityEntry appIntEntry = appInteractivityIterator.next();
                         String[] values = new String[] { appIntEntry.getApp(), appIntEntry.getTimestampStr(), appIntEntry.getType(), appIntEntry.getWindowSize(),
                             appIntEntry.getMouseInputSec(), appIntEntry.getInFocusDuration(), appIntEntry.getUserActiveDuration() };
                         emitEntry(xHandler, ++i, values);
@@ -234,11 +240,12 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 devicePnpMeta.set(BasicProps.HASCHILD, "true");
                 devicePnpMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                try (DevicePnpIterable devicePnpIterable = new DevicePnpIterable(connection, DBQueries.DEVICE_PNP)) {
+                try (DevicePnpIterator devicePnpIterator = new DevicePnpIterator(connection, DBQueries.DEVICE_PNP)) {
                     XHTMLContentHandler xHandler = emitHeader(devicePnpHandler, devicePnpMeta, title, DEVICE_PNP_COLUMN_NAMES);
 
                     int i = 0;
-                    for (DevicePnpEntry deviceEntry : devicePnpIterable) {
+                    while(devicePnpIterator.hasNext()) {
+                            DevicePnpEntry deviceEntry = devicePnpIterator.next();
                         String[] values = new String[] { deviceEntry.getModel(), deviceEntry.getTimestampStr(), deviceEntry.getInstanceId(),
                             deviceEntry.getProvider(), deviceEntry.getManufacturer(), deviceEntry.getInstallDateStr(), deviceEntry.getEnumerator() };
                         emitEntry(xHandler, ++i, values);
@@ -253,6 +260,36 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                     try (FileInputStream fis = new FileInputStream(devicePnpFile)) {
                         extractor.parseEmbedded(fis, handler, devicePnpMeta, true);
+                    }
+                }
+            }
+
+            try (FileOutputStream tmpCensusFile = new FileOutputStream(censusFile)) {
+                ToXMLContentHandler censusHandler = new ToXMLContentHandler(tmpCensusFile, "UTF-16");
+                String title = "Event Transcript Census";
+
+                Metadata censusMeta = new Metadata();
+                censusMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_CENSUS.toString());
+                censusMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
+                censusMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                censusMeta.set(BasicProps.HASCHILD, "true");
+                censusMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+                try (CensusIterator censusIterator = new CensusIterator(connection, DBQueries.CENSUS)) {
+                    XHTMLContentHandler xHandler = emitHeader(censusHandler, censusMeta, title, CENSUS_COLUMN_NAMES);
+
+                    int i = 0;
+                    // no entry extraction
+                    while(censusIterator.hasNext()) {
+                        CensusEntry censusEntry = censusIterator.next();
+                        String[] values = new String[] { censusEntry.getTimestampStr(), censusEntry.getEventName(), censusEntry.getDataJSON() };
+                        emitEntry(xHandler, ++i, values);
+                    }
+                    xHandler.endElement("table");
+                    xHandler.endDocument();
+
+                    try (FileInputStream fis = new FileInputStream(censusFile)) {
+                        extractor.parseEmbedded(fis, handler, censusMeta, true);
                     }
                 }
             }
@@ -275,7 +312,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
         xHandler.startElement("head");
         xHandler.startElement("style");
-        xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}");
+        xHandler.characters("table {border-collapse: collapse;}"
+            + " table, td, th {border: 1px solid black; max-width:500px; word-wrap: break-word;}"
+            + " th {white-space: nowrap; padding: 5px;}");
         xHandler.endElement("style");
         xHandler.endElement("head");
 
@@ -406,260 +445,150 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
     // iterators
 
-    private class HistoryIterable implements Iterable<BrowserHistoryEntry>, Closeable {
-        ResultSet rs;
-        Statement statement;
+    private class HistoryIterator extends SQLIterator<BrowserHistoryEntry> {
 
-        public HistoryIterable(Connection connection, String query) throws SQLException {
-            statement = connection.createStatement();
-            rs = statement.executeQuery(query);
+        public HistoryIterator(Connection connection, String query) throws SQLException {
+            super(connection, query);
         }
 
         @Override
-        public Iterator<BrowserHistoryEntry> iterator() {
-            return new Iterator<BrowserHistoryEntry>() {
-
-                @Override
-                public boolean hasNext() {
-                    try {
-                        return rs.next();
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                @Override
-                public BrowserHistoryEntry next() {
-                    BrowserHistoryEntry historyEntry = new BrowserHistoryEntry();
-                    try {
-                        historyEntry.setUserSID(rs.getString("UserSID"));
-                        historyEntry.setCorrelationGuid(rs.getString("CorrelationGuid"));
-                        historyEntry.setTimestamp(rs.getString("Timestamp"));
-                        historyEntry.setTagNames(rs.getString("TagNames").split(";"));
-                        historyEntry.setEventNames(rs.getString("EventNames").split(";"));
-                        historyEntry.setReferUrl(rs.getString("ReferURL"));
-                        historyEntry.setUrl(rs.getString("URL"));
-                        String pageTitlesStr = rs.getString("PageTitles");
-                        historyEntry.setPageTitles(pageTitlesStr != null ? pageTitlesStr.split(";") : new String[] {""});
-                        historyEntry.setAppName(rs.getString("App"));
-                        historyEntry.setJSONPayload(rs.getString("JSONPayload"));
-                    } catch (SQLException | ParseException e ) {
-                        throw new RuntimeException(e);
-                    }
-                    return historyEntry;
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
-            };
-        }
-
-        @Override
-        public void close() throws IOException {
+        public BrowserHistoryEntry next() {
+            BrowserHistoryEntry historyEntry = new BrowserHistoryEntry();
             try {
-                rs.close();
-                statement.close();
-            } catch (SQLException e) {
-                // swallow
-            }            
+                historyEntry.setUserSID(rs.getString("UserSID"));
+                historyEntry.setCorrelationGuid(rs.getString("CorrelationGuid"));
+                historyEntry.setTimestamp(rs.getString("Timestamp"));
+                historyEntry.setTagNames(rs.getString("TagNames").split(";"));
+                historyEntry.setEventNames(rs.getString("EventNames").split(";"));
+                historyEntry.setReferUrl(rs.getString("ReferURL"));
+                historyEntry.setUrl(rs.getString("URL"));
+                String pageTitlesStr = rs.getString("PageTitles");
+                historyEntry.setPageTitles(pageTitlesStr != null ? pageTitlesStr.split(";") : new String[] {""});
+                historyEntry.setAppName(rs.getString("App"));
+                historyEntry.setJSONPayload(rs.getString("JSONPayload"));
+            } catch (SQLException | ParseException e ) {
+                throw new RuntimeException(e);
+            }
+            return historyEntry;
         }
     }
 
-    private class InventoryAppsIterable implements Iterable<InventoryAppsEntry>, Closeable {
-        ResultSet rs;
-        Statement statement;
-
-        public InventoryAppsIterable(Connection connection, String query) throws SQLException {
-            statement = connection.createStatement();
-            rs = statement.executeQuery(query);
+    private class InventoryAppsIterator extends SQLIterator<InventoryAppsEntry> {
+        public InventoryAppsIterator(Connection connection, String query) throws SQLException {
+            super(connection, query);
         }
 
         @Override
-        public Iterator<InventoryAppsEntry> iterator() {
-            return new Iterator<InventoryAppsEntry>() {
-
-                @Override
-                public boolean hasNext() {
-                    try {
-                        return rs.next();
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                @Override
-                public InventoryAppsEntry next() {
-                    InventoryAppsEntry inventoryAppsEntry = new InventoryAppsEntry();
-                    try {
-                        inventoryAppsEntry.setTimestamp(rs.getString("Timestamp"));
-                        inventoryAppsEntry.setTagName(rs.getString("TagName"));
-                        inventoryAppsEntry.setEventName(rs.getString("EventName"));
-                        inventoryAppsEntry.setType(rs.getString("Type"));
-                        inventoryAppsEntry.setName(rs.getString("Name"));
-                        inventoryAppsEntry.setPackageFullName(rs.getString("PackageFullName"));
-                        inventoryAppsEntry.setVersion(rs.getString("Version"));
-                        inventoryAppsEntry.setPublisher(rs.getString("Publisher"));
-                        inventoryAppsEntry.setRootDirPath(rs.getString("RootDirPath"));
-                        inventoryAppsEntry.setHidden(rs.getString("HiddenArp"));
-                        inventoryAppsEntry.setInstallDate(rs.getString("InstallDate"));
-                        inventoryAppsEntry.setSource(rs.getString("Source"));
-                        inventoryAppsEntry.setOSVersionAtInstallTime(rs.getString("OSVersionAtInstallTime"));
-                        inventoryAppsEntry.setUserSID(rs.getString("UserSID"));
-                        inventoryAppsEntry.setUserID(rs.getString("UserID"));
-                        inventoryAppsEntry.setJSONPayload(rs.getString("JSONPayload"));
-                    } catch (SQLException | ParseException e ) {
-                        throw new RuntimeException(e);
-                    }
-                    return inventoryAppsEntry;
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
-            };
-        }
-
-        @Override
-        public void close() throws IOException {
+        public InventoryAppsEntry next() {
+            InventoryAppsEntry inventoryAppsEntry = new InventoryAppsEntry();
             try {
-                rs.close();
-                statement.close();
-            } catch (SQLException e) {
-                // swallow
-            }            
+                inventoryAppsEntry.setTimestamp(rs.getString("Timestamp"));
+                inventoryAppsEntry.setTagName(rs.getString("TagName"));
+                inventoryAppsEntry.setEventName(rs.getString("EventName"));
+                inventoryAppsEntry.setType(rs.getString("Type"));
+                inventoryAppsEntry.setName(rs.getString("Name"));
+                inventoryAppsEntry.setPackageFullName(rs.getString("PackageFullName"));
+                inventoryAppsEntry.setVersion(rs.getString("Version"));
+                inventoryAppsEntry.setPublisher(rs.getString("Publisher"));
+                inventoryAppsEntry.setRootDirPath(rs.getString("RootDirPath"));
+                inventoryAppsEntry.setHidden(rs.getString("HiddenArp"));
+                inventoryAppsEntry.setInstallDate(rs.getString("InstallDate"));
+                inventoryAppsEntry.setSource(rs.getString("Source"));
+                inventoryAppsEntry.setOSVersionAtInstallTime(rs.getString("OSVersionAtInstallTime"));
+                inventoryAppsEntry.setUserSID(rs.getString("UserSID"));
+                inventoryAppsEntry.setUserID(rs.getString("UserID"));
+                inventoryAppsEntry.setJSONPayload(rs.getString("JSONPayload"));
+            } catch (SQLException | ParseException e ) {
+                throw new RuntimeException(e);
+            }
+            return inventoryAppsEntry;
         }
+
     }
 
-    private class AppInteractivityIterable implements Iterable<AppInteractivityEntry>, Closeable {
-        ResultSet rs;
-        Statement statement;
-
-        public AppInteractivityIterable(Connection connection, String query) throws SQLException {
-            statement = connection.createStatement();
-            rs = statement.executeQuery(query);
+    private class AppInteractivityIterator extends SQLIterator<AppInteractivityEntry> {
+        public AppInteractivityIterator(Connection connection, String query) throws SQLException {
+            super(connection, query);
         }
 
         @Override
-        public Iterator<AppInteractivityEntry> iterator() {
-            return new Iterator<AppInteractivityEntry>() {
-
-                @Override
-                public boolean hasNext() {
-                    try {
-                        return rs.next();
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                @Override
-                public AppInteractivityEntry next() {
-                    AppInteractivityEntry appInteractivityEntry = new AppInteractivityEntry();
-                    try {
-                        appInteractivityEntry.setApp(rs.getString("AppID"));
-                        appInteractivityEntry.setTimestamp(rs.getString("Timestamp"));
-                        appInteractivityEntry.setTagName(rs.getString("TagName"));
-                        appInteractivityEntry.setEventName(rs.getString("EventName"));
-                        appInteractivityEntry.setType(rs.getString("Type"));
-                        appInteractivityEntry.setAggregationStartTime(rs.getString("AggregationStartTime"));
-                        appInteractivityEntry.setAggregationDuration(rs.getString("AggregationDurationMS"));
-                        appInteractivityEntry.setWindowSize(rs.getString("WindowSize(WxH)"));
-                        appInteractivityEntry.setMouseInputSec(rs.getString("MouseInputSec"));
-                        appInteractivityEntry.setInFocusDuration(rs.getString("InFocusDurationMS"));
-                        appInteractivityEntry.setUserActiveDuration(rs.getString("UserActiveDurationMS"));
-                        appInteractivityEntry.setUserOrDisplayActiveDuration(rs.getString("UserOrDisplayActiveDurationMS"));
-                        appInteractivityEntry.setFocusLostCount(rs.getString("FocusLostCount"));
-                        appInteractivityEntry.setProgramID(rs.getString("ProgramID"));
-                        appInteractivityEntry.setUserSID(rs.getString("UserSID"));
-                        appInteractivityEntry.setUserID(rs.getString("UserID"));
-                        appInteractivityEntry.setJSONPayload(rs.getString("JSONPayload"));
-                    } catch (SQLException | ParseException e ) {
-                        throw new RuntimeException(e);
-                    }
-                    return appInteractivityEntry;
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
-            };
-        }
-
-        @Override
-        public void close() throws IOException {
+        public AppInteractivityEntry next() {
+            AppInteractivityEntry appInteractivityEntry = new AppInteractivityEntry();
             try {
-                rs.close();
-                statement.close();
-            } catch (SQLException e) {
-                // swallow
-            }            
+                appInteractivityEntry.setApp(rs.getString("AppID"));
+                appInteractivityEntry.setTimestamp(rs.getString("Timestamp"));
+                appInteractivityEntry.setTagName(rs.getString("TagName"));
+                appInteractivityEntry.setEventName(rs.getString("EventName"));
+                appInteractivityEntry.setType(rs.getString("Type"));
+                appInteractivityEntry.setAggregationStartTime(rs.getString("AggregationStartTime"));
+                appInteractivityEntry.setAggregationDuration(rs.getString("AggregationDurationMS"));
+                appInteractivityEntry.setWindowSize(rs.getString("WindowSize(WxH)"));
+                appInteractivityEntry.setMouseInputSec(rs.getString("MouseInputSec"));
+                appInteractivityEntry.setInFocusDuration(rs.getString("InFocusDurationMS"));
+                appInteractivityEntry.setUserActiveDuration(rs.getString("UserActiveDurationMS"));
+                appInteractivityEntry.setUserOrDisplayActiveDuration(rs.getString("UserOrDisplayActiveDurationMS"));
+                appInteractivityEntry.setFocusLostCount(rs.getString("FocusLostCount"));
+                appInteractivityEntry.setProgramID(rs.getString("ProgramID"));
+                appInteractivityEntry.setUserSID(rs.getString("UserSID"));
+                appInteractivityEntry.setUserID(rs.getString("UserID"));
+                appInteractivityEntry.setJSONPayload(rs.getString("JSONPayload"));
+            } catch (SQLException | ParseException e ) {
+                throw new RuntimeException(e);
+            }
+            return appInteractivityEntry;
         }
     }
     
+    private class DevicePnpIterator extends SQLIterator<DevicePnpEntry> {
 
-    private class DevicePnpIterable implements Iterable<DevicePnpEntry>, Closeable {
-        ResultSet rs;
-        Statement statement;
-
-        public DevicePnpIterable(Connection connection, String query) throws SQLException {
-            statement = connection.createStatement();
-            rs = statement.executeQuery(query);
+        public DevicePnpIterator(Connection connection, String query) throws SQLException {
+            super(connection, query);
         }
 
         @Override
-        public Iterator<DevicePnpEntry> iterator() {
-            return new Iterator<DevicePnpEntry>() {
-
-                @Override
-                public boolean hasNext() {
-                    try {
-                        return rs.next();
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                @Override
-                public DevicePnpEntry next() {
-                    DevicePnpEntry devicePnpEntry = new DevicePnpEntry();
-                    try {
-                        devicePnpEntry.setModel(rs.getString("Model"));
-                        devicePnpEntry.setInstanceId(rs.getString("InstanceId"));
-                        devicePnpEntry.setTimestamp(rs.getString("Timestamp"));
-                        devicePnpEntry.setTagName(rs.getString("TagName"));
-                        devicePnpEntry.setEventName(rs.getString("EventName"));
-                        devicePnpEntry.setProvider(rs.getString("Provider"));
-                        devicePnpEntry.setManufacturer(rs.getString("Manufacturer"));
-                        devicePnpEntry.setEnumerator(rs.getString("Enumerator"));
-                        devicePnpEntry.setInstallDate(rs.getString("InstallDate"));
-                        devicePnpEntry.setFirstInstallDate(rs.getString("FirstInstallDate"));
-                        devicePnpEntry.setUserSID(rs.getString("UserSID"));
-                        devicePnpEntry.setJSONPayload(rs.getString("JSONPayload"));
-                    } catch (SQLException | ParseException e ) {
-                        throw new RuntimeException(e);
-                    }
-                    return devicePnpEntry;
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
-            };
-        }
-
-        @Override
-        public void close() throws IOException {
+        public DevicePnpEntry next() {
+            DevicePnpEntry devicePnpEntry = new DevicePnpEntry();
             try {
-                rs.close();
-                statement.close();
-            } catch (SQLException e) {
-                // swallow
-            }            
+                devicePnpEntry.setModel(rs.getString("Model"));
+                devicePnpEntry.setInstanceId(rs.getString("InstanceId"));
+                devicePnpEntry.setTimestamp(rs.getString("Timestamp"));
+                devicePnpEntry.setTagName(rs.getString("TagName"));
+                devicePnpEntry.setEventName(rs.getString("EventName"));
+                devicePnpEntry.setProvider(rs.getString("Provider"));
+                devicePnpEntry.setManufacturer(rs.getString("Manufacturer"));
+                devicePnpEntry.setEnumerator(rs.getString("Enumerator"));
+                devicePnpEntry.setInstallDate(rs.getString("InstallDate"));
+                devicePnpEntry.setFirstInstallDate(rs.getString("FirstInstallDate"));
+                devicePnpEntry.setUserSID(rs.getString("UserSID"));
+                devicePnpEntry.setJSONPayload(rs.getString("JSONPayload"));
+            } catch (SQLException | ParseException e ) {
+                throw new RuntimeException(e);
+            }
+            return devicePnpEntry;
+        }
+    }
+
+    private class CensusIterator extends SQLIterator<CensusEntry> {
+
+        public CensusIterator(Connection connection, String query) throws SQLException {
+            super(connection, query);
+        }
+
+        @Override
+        public CensusEntry next() {
+            CensusEntry censusEntry = new CensusEntry();
+            try {
+                censusEntry.setTimestamp(rs.getString("Timestamp"));
+                censusEntry.setTagName(rs.getString("TagName"));
+                censusEntry.setEventName(rs.getString("EventName"));
+                censusEntry.setDataJSON(rs.getString("State \\ Settings"));
+                censusEntry.setUserID(rs.getString("UserId"));
+                censusEntry.setUserSID(rs.getString("UserSID"));
+                censusEntry.setJSONPayload(rs.getString("JSONPayload"));
+            } catch (SQLException | ParseException e ) {
+                throw new RuntimeException(e);
+            }
+            return censusEntry;
         }
     }
 }
