@@ -21,37 +21,37 @@ import iped.viewers.util.ProgressDialog;
  * Worker that highlights list of docids setted in a bitset
  * Opens a modal progress dialog while executing.
  */
-public class BitSetSelectWorker extends CancelableWorker<Void, Void> {
+public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
 	IMultiSearchResultProvider resultsProvider;
 	IpedDateAxis domainAxis;
 	BitSet bs;
-	boolean clearPreviousSelection;
+	boolean clearPreviousItemsHighlighted;
     ProgressDialog progressDialog;
-    boolean select = true;
+    boolean highlight = true;
 	JTable t = null;
 
-	public BitSetSelectWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,BitSet bs, boolean select, boolean clearPreviousSelection) {
+	public BitSetHighlightWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,BitSet bs, boolean highlight, boolean clearPreviousSelection) {
 		this.resultsProvider = resultsProvider;
 		this.t = resultsProvider.getResultsTable();
-		this.clearPreviousSelection=clearPreviousSelection;
+		this.clearPreviousItemsHighlighted=clearPreviousSelection;
 		this.bs = bs;
-		this.select = select;
+		this.highlight = highlight;
 		this.domainAxis = domainAxis;
 	}
 
-	public BitSetSelectWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,BitSet bs, boolean clearPreviousSelection) {
+	public BitSetHighlightWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,BitSet bs, boolean clearPreviousSelection) {
 		this(domainAxis, resultsProvider, bs, true, clearPreviousSelection);
 	}
 	
-	protected void doSelect() {
-        selectDocIdsParallel(bs, select, clearPreviousSelection);
+	protected void doProcess() {
+        highlightDocIdsParallel(bs, highlight, clearPreviousItemsHighlighted);
 	}
 	
 	@Override
 	protected Void doInBackground() throws Exception {
         progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
         progressDialog.setNote(Messages.get("TimeLineGraph.highlightingItemsProgressLabel"));
-        doSelect();
+        doProcess();
 		return null;
 	}
 
@@ -124,8 +124,8 @@ public class BitSetSelectWorker extends CancelableWorker<Void, Void> {
 		t.clearSelection();
 	}
 
-	//selects docids on BitSet parameter in parallel	
-	public void selectDocIdsParallel(BitSet bs, boolean select, boolean clearPreviousSelection) {
+	//process docids on BitSet parameter in parallel	
+	public void highlightDocIdsParallel(BitSet bs, boolean highlight, boolean clearPreviousSelection) {
 		Date d1 = new Date();
 
 		ExecutorService executor = Executors.newFixedThreadPool(1);
@@ -157,8 +157,8 @@ public class BitSetSelectWorker extends CancelableWorker<Void, Void> {
 		}
 	}
 	
-	//selects docids on BitSet parameter sequentially	
-	public void selectDocIds(BitSet bs, boolean select, boolean clearPreviousSelection) {
+	//process docids on BitSet parameter sequentially	
+	public void highlightDocIds(BitSet bs, boolean highlight, boolean clearPreviousSelection) {
 		Date d1 = new Date();
 		
 		t.getSelectionModel().setValueIsAdjusting(true);
@@ -189,7 +189,7 @@ public class BitSetSelectWorker extends CancelableWorker<Void, Void> {
 
 	public void processResultsItem(JTable t, int i) {
         int row = t.convertRowIndexToView(i);
-        if(select) {
+        if(highlight) {
             t.addRowSelectionInterval(row, row);
         }else {
         	t.removeRowSelectionInterval(row, row);

@@ -20,28 +20,28 @@ import iped.viewers.timelinegraph.IpedDateAxis;
 import iped.viewers.timelinegraph.datasets.IpedTimelineDataset;
 
 /*
- *  Extends BitSetSelectWorker, so the bitset of docids is mounted based on date interval. This bitset is used internally to highlight the docids.
+ *  Extends BitSetHighlightWorker, so the bitset of docids is mounted based on date interval. This bitset is used internally to highlight the docids.
  */
-public class SelectWorker extends BitSetSelectWorker {
+public class HighlightWorker extends BitSetHighlightWorker {
 	Date start;
 	Date end;
 
-	public SelectWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,Date start, Date end, boolean clearPreviousSelection) {
-		this(domainAxis, resultsProvider, start, end, true, clearPreviousSelection);
+	public HighlightWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,Date start, Date end, boolean clearPreviousHighlighted) {
+		this(domainAxis, resultsProvider, start, end, true, clearPreviousHighlighted);
 	}
 
-	public SelectWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,Date start, Date end, boolean select, boolean clearPreviousSelection) {
-		super(domainAxis, resultsProvider, null, true, clearPreviousSelection);
+	public HighlightWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,Date start, Date end, boolean highlight, boolean clearPreviousHighlighted) {
+		super(domainAxis, resultsProvider, null, highlight, clearPreviousHighlighted);
 		this.start = start;
 		this.end = end;
 	}
 
 	@Override
-	protected void doSelect() {
-        selectItemsOnInterval(start, end, select, clearPreviousSelection);
+	protected void doProcess() {
+        highlightItemsOnInterval(start, end, highlight, clearPreviousItemsHighlighted);
 	}
 
-	public void selectItemsOnInterval(Date start, Date end, boolean select, boolean clearPreviousSelection) {
+	public void highlightItemsOnInterval(Date start, Date end, boolean select, boolean clearPreviousSelection) {
 		Date d1 = new Date();
 
 		ArrayList<IItemId> l = new ArrayList<IItemId>();
@@ -74,6 +74,6 @@ public class SelectWorker extends BitSetSelectWorker {
         	}
         }
 
-        selectDocIdsParallel(bs, select, clearPreviousSelection);
+        highlightDocIdsParallel(bs, select, clearPreviousSelection);
 	}
 }

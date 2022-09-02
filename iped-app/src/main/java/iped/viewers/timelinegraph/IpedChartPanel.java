@@ -56,7 +56,7 @@ import iped.viewers.timelinegraph.popups.SeriesAxisPopupMenu;
 import iped.viewers.timelinegraph.popups.LegendItemPopupMenu;
 import iped.viewers.timelinegraph.popups.TimePeriodSelectionPopupMenu;
 import iped.viewers.timelinegraph.popups.TimelineFilterSelectionPopupMenu;
-import iped.viewers.timelinegraph.swingworkers.SelectWorker;
+import iped.viewers.timelinegraph.swingworkers.HighlightWorker;
 
 public class IpedChartPanel extends ChartPanel implements KeyListener{
 	Rectangle2D filterIntervalRectangle;
@@ -698,15 +698,15 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	
 	public void removeFilter(Date[] removedDates) {
 		definedFilters.remove(removedDates);
-		SelectWorker sw = new SelectWorker(ipedChartsPanel.getDomainAxis(),ipedChartsPanel.resultsProvider, removedDates[0], removedDates[1], false, false);
+		HighlightWorker sw = new HighlightWorker(ipedChartsPanel.getDomainAxis(),ipedChartsPanel.resultsProvider, removedDates[0], removedDates[1], false, false);
 		for (Date[] dates : definedFilters) {
-			ipedChartsPanel.selectItemsOnInterval(dates[0],dates[1],false);
+			ipedChartsPanel.highlightItemsOnInterval(dates[0],dates[1],false);
 		}
 	}
 
 	public void removeAllFilters() {
 		for (Date[] removedDates : definedFilters) {
-			SelectWorker sw = new SelectWorker(ipedChartsPanel.getDomainAxis(),ipedChartsPanel.resultsProvider, removedDates[0], removedDates[1], false, false);
+			HighlightWorker sw = new HighlightWorker(ipedChartsPanel.getDomainAxis(),ipedChartsPanel.resultsProvider, removedDates[0], removedDates[1], false, false);
 		}
 		definedFilters.clear();
 		while(excludedEvents.size()>0) {

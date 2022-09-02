@@ -19,17 +19,16 @@ import iped.engine.data.IPEDSource;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.timelinegraph.IpedChartPanel;
 import iped.viewers.timelinegraph.datasets.IpedTimelineDataset;
-import iped.viewers.timelinegraph.swingworkers.BitSetSelectWorker;
+import iped.viewers.timelinegraph.swingworkers.BitSetHighlightWorker;
 import iped.viewers.timelinegraph.swingworkers.EventPeriodCheckWorker;
-import iped.viewers.timelinegraph.swingworkers.SelectWorker;
 
 
 public class DataItemPopupMenu extends JPopupMenu implements ActionListener {
 	XYItemEntity chartEntity;
 	IpedChartPanel ipedChartPanel;
 
-	JMenuItem selectEventItens;
-	JMenuItem selectPeriodItens;
+	JMenuItem highlightEventItens;
+	JMenuItem highlightPeriodItens;
 	JMenuItem checkEventItens;
 	JMenuItem checkPeriodItens;
 
@@ -38,13 +37,13 @@ public class DataItemPopupMenu extends JPopupMenu implements ActionListener {
 	public DataItemPopupMenu(IpedChartPanel ipedChartPanel) {
 		this.ipedChartPanel = ipedChartPanel;
 		
-		selectEventItens = new JMenuItem(Messages.getString("TimeLineGraph.selectEventItensOnPeriod"));
-		selectEventItens.addActionListener(this);
-        add(selectEventItens);
+		highlightEventItens = new JMenuItem(Messages.getString("TimeLineGraph.highlightEventItensOnPeriod"));
+		highlightEventItens.addActionListener(this);
+        add(highlightEventItens);
 
-		selectPeriodItens = new JMenuItem(Messages.getString("TimeLineGraph.selectItensOnPeriod"));
-        selectPeriodItens.addActionListener(this);
-        add(selectPeriodItens); 
+		highlightPeriodItens = new JMenuItem(Messages.getString("TimeLineGraph.highlightItensOnPeriod"));
+        highlightPeriodItens.addActionListener(this);
+        add(highlightPeriodItens); 
 
         checkEventItens = new JMenuItem(Messages.getString("TimeLineGraph.checkEventItensOnPeriod"));
         checkEventItens.addActionListener(this);
@@ -65,7 +64,7 @@ public class DataItemPopupMenu extends JPopupMenu implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if(e.getSource()==selectEventItens) {
+		if(e.getSource()==highlightEventItens) {
 			Calendar c = Calendar.getInstance(ipedChartPanel.getIpedChartsPanel().getTimeZone());
 			c.setTime(new Date((long)chartEntity.getDataset().getXValue(chartEntity.getSeriesIndex(), chartEntity.getItem())));
 			Calendar cEnd = (Calendar) c.clone();
@@ -84,16 +83,16 @@ public class DataItemPopupMenu extends JPopupMenu implements ActionListener {
 				}
 			}
 
-			BitSetSelectWorker bsSelect = new BitSetSelectWorker(ipedChartPanel.getIpedChartsPanel().getDomainAxis(), msrp, bs, true);
-			bsSelect.execute();
+			BitSetHighlightWorker bsHighlight = new BitSetHighlightWorker(ipedChartPanel.getIpedChartsPanel().getDomainAxis(), msrp, bs, true);
+			bsHighlight.execute();
 		}
 		
-		if(e.getSource()==selectPeriodItens) {
+		if(e.getSource()==highlightPeriodItens) {
 			Calendar c = Calendar.getInstance(ipedChartPanel.getIpedChartsPanel().getTimeZone());
 			c.setTime(new Date((long)chartEntity.getDataset().getXValue(chartEntity.getSeriesIndex(), chartEntity.getItem())));
 			Calendar cEnd = (Calendar) c.clone();
 			cEnd.add(Calendar.DAY_OF_MONTH, 1);
-			ipedChartPanel.getIpedChartsPanel().selectItemsOnInterval(c.getTime(), cEnd.getTime(), true);
+			ipedChartPanel.getIpedChartsPanel().highlightItemsOnInterval(c.getTime(), cEnd.getTime(), true);
 		}
 		if(e.getSource()==checkEventItens) {
 			Calendar c = Calendar.getInstance(ipedChartPanel.getIpedChartsPanel().getTimeZone());
@@ -114,8 +113,8 @@ public class DataItemPopupMenu extends JPopupMenu implements ActionListener {
 				}
 			}
 
-			EventPeriodCheckWorker bsSelect = new EventPeriodCheckWorker(ipedChartPanel.getIpedChartsPanel().getDomainAxis(), msrp, bs, true);
-			bsSelect.execute();
+			EventPeriodCheckWorker bsCheck = new EventPeriodCheckWorker(ipedChartPanel.getIpedChartsPanel().getDomainAxis(), msrp, bs, true);
+			bsCheck.execute();
 		}
 		if(e.getSource()==checkPeriodItens) {
 			long timestamp = (long)chartEntity.getDataset().getXValue(chartEntity.getSeriesIndex(), chartEntity.getItem());

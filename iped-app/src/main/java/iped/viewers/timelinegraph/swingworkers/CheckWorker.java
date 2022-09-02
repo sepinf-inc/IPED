@@ -12,11 +12,11 @@ import iped.viewers.timelinegraph.IpedDateAxis;
 /*
  *  Extends SelectWorker, so the bitset of docids is mounted based on date interval. This bitset is used internally to check the docids.
  */
-public class CheckWorker extends SelectWorker {
+public class CheckWorker extends HighlightWorker {
 
 	public CheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, Date start, Date end,
-			boolean select, boolean clearPreviousSelection) {
-		super(domainAxis, resultsProvider, start, end, select, clearPreviousSelection);
+			boolean highlight, boolean clearPreviousSelection) {
+		super(domainAxis, resultsProvider, start, end, highlight, clearPreviousSelection);
 	}
 
 	public CheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, Date start, Date end,
@@ -31,9 +31,9 @@ public class CheckWorker extends SelectWorker {
 	}
 
 	@Override
-	protected void doSelect() {
+	protected void doProcess() {
 		BookmarksController.get().setMultiSetting(true);
-		super.doSelect();
+		super.doProcess();
 	}
 
 	@Override

@@ -79,13 +79,13 @@ public class PlotPopupMenu extends JPopupMenu implements ActionListener{
 			Date firstDate = new Date(0);
 			ipedChartPanel.addFilter(firstDate, date);
 			ipedChartPanel.repaint();
-			ipedChartPanel.getIpedChartsPanel().selectItemsOnInterval(firstDate, date, false);
+			ipedChartPanel.getIpedChartsPanel().highlightItemsOnInterval(firstDate, date, false);
 		}
 		if(e.getSource()==selectAfterMenu) {
 			Date lastDate = new Date(Long.MAX_VALUE);
 			ipedChartPanel.addFilter(date, lastDate);
 			ipedChartPanel.repaint();
-			ipedChartPanel.getIpedChartsPanel().selectItemsOnInterval(date, lastDate, false);
+			ipedChartPanel.getIpedChartsPanel().highlightItemsOnInterval(date, lastDate, false);
 		}
 	}
 

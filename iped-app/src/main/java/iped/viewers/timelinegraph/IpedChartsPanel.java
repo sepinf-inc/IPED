@@ -86,7 +86,7 @@ import iped.viewers.api.ResultSetViewer;
 import iped.viewers.timelinegraph.datasets.AsynchronousDataset;
 import iped.viewers.timelinegraph.datasets.IpedTimelineDatasetManager;
 import iped.viewers.timelinegraph.swingworkers.CheckWorker;
-import iped.viewers.timelinegraph.swingworkers.SelectWorker;
+import iped.viewers.timelinegraph.swingworkers.HighlightWorker;
 
 public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener {
 	JTable resultsTable;
@@ -766,8 +766,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	}
 	
 	
-	public void selectItemsOnInterval(Date firstDate, Date endDate, boolean b) {
-		SelectWorker sw = new SelectWorker(domainAxis,resultsProvider, firstDate, endDate, b);
+	public void highlightItemsOnInterval(Date firstDate, Date endDate, boolean b) {
+		HighlightWorker sw = new HighlightWorker(domainAxis,resultsProvider, firstDate, endDate, b);
 		sw.execute();
 	}
 	

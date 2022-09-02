@@ -13,7 +13,7 @@ import iped.viewers.timelinegraph.IpedDateAxis;
 /*
  * Extends BitSetSelectWorker to check (instead of highlight) docids setted in bitset
  */
-public class EventPeriodCheckWorker extends BitSetSelectWorker {
+public class EventPeriodCheckWorker extends BitSetHighlightWorker {
 
 	public EventPeriodCheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, BitSet bs,
 			boolean clearPreviousSelection) {
@@ -23,13 +23,13 @@ public class EventPeriodCheckWorker extends BitSetSelectWorker {
 	@Override
 	public void processResultsItem(JTable t, int i) {
         Boolean checked = (Boolean) t.getModel().getValueAt(i, 1);
-        t.getModel().setValueAt(select, i, 1);
+        t.getModel().setValueAt(highlight, i, 1);
 	}
 
 	@Override
-	protected void doSelect() {
+	protected void doProcess() {
 		BookmarksController.get().setMultiSetting(true);
-		super.doSelect();
+		super.doProcess();
 	}
 
 	@Override
