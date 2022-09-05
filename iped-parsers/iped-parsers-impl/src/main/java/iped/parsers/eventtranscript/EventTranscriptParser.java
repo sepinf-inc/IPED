@@ -29,6 +29,7 @@ import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.sqlite.detector.SQLiteContainerDetector;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.IgnoreContentHandler;
 import iped.parsers.util.ToXMLContentHandler;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -152,7 +153,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
             
                         if (extractEntries) {
                             Metadata historySubitem = getHistoryEntryMetadata(historyEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), handler, historySubitem, true);
+                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  historySubitem, true);
                         }
                     }
 
@@ -188,7 +189,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                         if (extractEntries) {
                             Metadata inventorySubitem = getInventoryEntryMetadata(appInvEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), handler, inventorySubitem, true);
+                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  inventorySubitem, true);
                         }
                     }
                     xHandler.endElement("table");
@@ -223,7 +224,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                         if (extractEntries) {
                             Metadata appInteractSubitem = getAppInteractEntryMetadata(appIntEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), handler, appInteractSubitem, true);
+                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  appInteractSubitem, true);
                         }
                     }
                     xHandler.endElement("table");
@@ -258,7 +259,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                         if (extractEntries) {
                             Metadata deviceSubitem = getDevicePnpMetadata(deviceEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), handler, deviceSubitem, true);
+                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  deviceSubitem, true);
                         }
                     }
                     xHandler.endElement("table");
@@ -322,7 +323,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                         emitEntry(xHandler, ++i, values);
                         if (extractEntries) {
                             Metadata networkingSubitem = getNetworkingMetadata(netEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), handler, networkingSubitem, true);
+                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  networkingSubitem, true);
                         }
                     }
                     xHandler.endElement("table");
