@@ -36,14 +36,20 @@ def main():
             print(ping, file=stdout, flush=True)
             continue
 
-        paths = [line]        
-        transcriptions = model.transcribe(paths)
+        paths = [line]
+        try:
+            transcriptions = model.transcribe(paths)
+            
+        except Exception as e:
+            msg = repr(e).replace('\n', ' ').replace('\r', ' ')
+            print(msg, file=stdout, flush=True)
+            continue
         
         text = transcriptions[0].get('transcription')
         text = text.replace('\n', ' ').replace('\r', ' ')
         probabilities = transcriptions[0].get('probabilities')
         
-        if text is None or probabilities is None or len(probabilities) == 0:
+        if probabilities is None or len(probabilities) == 0:
             text = ''
             probabilities = [0]
         
