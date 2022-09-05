@@ -72,14 +72,19 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
     public static final MediaType EVENT_TRANSCRIPT_CENSUS = MediaType.application("x-event-transcript-census");
 
+    public static final MediaType EVENT_TRANSCRIPT_NETWORKING = MediaType.application("x-event-transcript-networking");
+    public static final MediaType EVENT_TRANSCRIPT_NETWORKING_REG = MediaType.application("x-event-transcript-networking-registry");
+
+
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(EVENT_TRANSCRIPT);
     
     private static final String[] HISTORY_COLUMN_NAMES = new String[] { "Page Titles", "Visit Date (UTC)", "Referrer URL", "URL", "App" };
     private static final String[] INVENTORY_APPS_COLUMN_NAMES = new String[] { "Name", "Timestamp (UTC)", "Version", "Publisher", "Root Directory Path", "Install Date" };
     private static final String[] APP_INTERACT_COLUMN_NAMES = new String[] {"App", "Timestamp (UTC)", "Type", "Window size (WxH)", "MouseInput (sec)",
     "InFocusDuration (ms)", "UserActiveDuration (ms)"};
-    private static final String[] DEVICE_PNP_COLUMN_NAMES = new String[] {"Model", "Timestamp (UTC)", "InstanceId", "Provider", "Manufacturer", "Install Date", "Enumerator" };
-    private static final String[] CENSUS_COLUMN_NAMES = new String[] {"Timestamp (UTC)", "Event", "State \\ Settings" };
+    private static final String[] DEVICE_PNP_COLUMN_NAMES = new String[] { "Model", "Timestamp (UTC)", "InstanceId", "Provider", "Manufacturer", "Install Date", "Enumerator" };
+    private static final String[] CENSUS_COLUMN_NAMES = new String[] { "Timestamp (UTC)", "Event", "State \\ Settings" };
+    private static final String[] NETWORK_COLUMN_NAMES = new String[] { "Timestamp (UTC)", "Local Time", "Timezone", "Event", "Event Source", "Event Reason", "JSON Data" };
 
     // extract each history entry as a subitem.
     private boolean extractEntries = true;
@@ -111,10 +116,11 @@ public class EventTranscriptParser extends SQLite3DBParser {
         TemporaryResources tmp = new TemporaryResources();
         TikaInputStream tis = TikaInputStream.get(stream, tmp);
         File browserHistoryFile = tmp.createTemporaryFile();
-        File inventoryAppFile = tmp.createTemporaryFile();
+        File inventoryAppsFile = tmp.createTemporaryFile();
         File appInteractivityFile = tmp.createTemporaryFile();
         File devicePnpFile = tmp.createTemporaryFile();
         File censusFile = tmp.createTemporaryFile();
+        File networkingFile = tmp.createTemporaryFile();
 
         if (new SQLiteContainerDetector().detect(tis, metadata) != EVENT_TRANSCRIPT) {
             sqliteParser.parse(stream, handler, metadata, context);
@@ -159,19 +165,19 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 }
             }
 
-            try (FileOutputStream tmpInventoryAppFile = new FileOutputStream(inventoryAppFile)) {
+            try (FileOutputStream tmpInventoryAppFile = new FileOutputStream(inventoryAppsFile)) {
                 ToXMLContentHandler inventoryAppHandler = new ToXMLContentHandler(tmpInventoryAppFile, "UTF-16");
                 String title = "Event Transcript Inventory Apps";
 
-                Metadata inventoryAppMeta = new Metadata();
-                inventoryAppMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_INVENTORY_APP.toString());
-                inventoryAppMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
-                inventoryAppMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
-                inventoryAppMeta.set(BasicProps.HASCHILD, "true");
-                inventoryAppMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                Metadata inventoryAppsMeta = new Metadata();
+                inventoryAppsMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_INVENTORY_APP.toString());
+                inventoryAppsMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
+                inventoryAppsMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                inventoryAppsMeta.set(BasicProps.HASCHILD, "true");
+                inventoryAppsMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                 try (InventoryAppsIterator inventoryAppsIterator = new InventoryAppsIterator(connection, DBQueries.INVENTORY_APPS)) {
-                    XHTMLContentHandler xHandler = emitHeader(inventoryAppHandler, inventoryAppMeta, title, INVENTORY_APPS_COLUMN_NAMES);
+                    XHTMLContentHandler xHandler = emitHeader(inventoryAppHandler, inventoryAppsMeta, title, INVENTORY_APPS_COLUMN_NAMES);
 
                     int i = 0;
                     while(inventoryAppsIterator.hasNext()) {
@@ -188,8 +194,8 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     xHandler.endElement("table");
                     xHandler.endDocument();
 
-                    try (FileInputStream fis = new FileInputStream(inventoryAppFile)) {
-                        extractor.parseEmbedded(fis, handler, inventoryAppMeta, true);
+                    try (FileInputStream fis = new FileInputStream(inventoryAppsFile)) {
+                        extractor.parseEmbedded(fis, handler, inventoryAppsMeta, true);
                     }
                 }
             }
@@ -223,7 +229,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     xHandler.endElement("table");
                     xHandler.endDocument();
 
-                    try (FileInputStream fis = new FileInputStream(inventoryAppFile)) {
+                    try (FileInputStream fis = new FileInputStream(appInteractivityFile)) {
                         extractor.parseEmbedded(fis, handler, appInteractMeta, true);
                     }
                 }
@@ -290,6 +296,40 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                     try (FileInputStream fis = new FileInputStream(censusFile)) {
                         extractor.parseEmbedded(fis, handler, censusMeta, true);
+                    }
+                }
+            }
+
+            try (FileOutputStream tmpNetworkingFile = new FileOutputStream(networkingFile)) {
+                ToXMLContentHandler networkingHandler = new ToXMLContentHandler(tmpNetworkingFile, "UTF-16");
+                String title = "Event Transcript Networking";
+
+                Metadata networkingMeta = new Metadata();
+                networkingMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_NETWORKING.toString());
+                networkingMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
+                networkingMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                networkingMeta.set(BasicProps.HASCHILD, "true");
+                networkingMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+                try (NetworkingIterator networkingIterator = new NetworkingIterator(connection, DBQueries.NETWORKING)) {
+                    XHTMLContentHandler xHandler = emitHeader(networkingHandler, networkingMeta, title, NETWORK_COLUMN_NAMES);
+
+                    int i = 0;
+                    while(networkingIterator.hasNext()) {
+                        NetworkingEntry netEntry = networkingIterator.next();
+                        String[] values = new String[] { netEntry.getUTCTimestampStr(), netEntry.getLocalTime(), netEntry.getTimezone(),
+                            netEntry.getEventName(), netEntry.getEventSource(), netEntry.getEventReason(), netEntry.getDataJSON() };
+                        emitEntry(xHandler, ++i, values);
+                        if (extractEntries) {
+                            Metadata networkingSubitem = getNetworkingMetadata(netEntry, i);
+                            extractor.parseEmbedded(new EmptyInputStream(), handler, networkingSubitem, true);
+                        }
+                    }
+                    xHandler.endElement("table");
+                    xHandler.endDocument();
+
+                    try (FileInputStream fis = new FileInputStream(networkingFile)) {
+                        extractor.parseEmbedded(fis, handler, networkingMeta, true);
                     }
                 }
             }
@@ -443,6 +483,26 @@ public class EventTranscriptParser extends SQLite3DBParser {
         return metadataEntry;
     }
 
+    private Metadata getNetworkingMetadata(NetworkingEntry entry, int i) throws ParseException {
+        Metadata metadataEntry = new Metadata();
+
+        metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_DEVICE_PNP_REG.toString());
+        metadataEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Networking Entry " + i);
+        metadataEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        metadataEntry.set(BasicProps.LENGTH, "");
+
+        metadataEntry.set(TikaCoreProperties.CREATED, entry.getUTCTimestamp());
+        metadataEntry.set("localTimestamp", entry.getLocalTime());
+        metadataEntry.set("Timezone", entry.getTimezone());
+        metadataEntry.set("seq", entry.getSeq());
+        metadataEntry.add("eventName", entry.getEventName());
+        metadataEntry.add("eventSource", entry.getEventSource());
+        metadataEntry.add("eventReason", entry.getEventReason());
+        metadataEntry.add("originalPayload", entry.getJSONPayload());
+
+        return metadataEntry;
+    }
+
     // iterators
 
     private class HistoryIterator extends DBIterator<BrowserHistoryEntry> {
@@ -589,6 +649,32 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 throw new RuntimeException(e);
             }
             return censusEntry;
+        }
+    }
+
+    private class NetworkingIterator extends DBIterator<NetworkingEntry> {
+
+        public NetworkingIterator(Connection connection, String query) throws SQLException {
+            super(connection, query);
+        }
+
+        @Override
+        public NetworkingEntry next() {
+            NetworkingEntry networkingEntry = new NetworkingEntry();
+            try {
+                networkingEntry.setUTCTimestamp(rs.getString("UTCTimestamp"));
+                networkingEntry.setLocalTime(rs.getString("LocalTimestamp"));
+                networkingEntry.setTimezone(rs.getString("Timezone"));
+                networkingEntry.setEventName(rs.getString("Event"));
+                networkingEntry.setEventSource(rs.getString("EventSource"));
+                networkingEntry.setEventReason(rs.getString("EventReason"));
+                networkingEntry.setSeq(rs.getString("seq"));
+                networkingEntry.setDataJSON(rs.getString("dataJSON"));
+                networkingEntry.setJSONPayload(rs.getString("JSONPayload"));
+            } catch (SQLException | ParseException e ) {
+                throw new RuntimeException(e);
+            }
+            return networkingEntry;
         }
     }
 }
