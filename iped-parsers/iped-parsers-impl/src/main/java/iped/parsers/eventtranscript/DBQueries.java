@@ -1,5 +1,9 @@
 package iped.parsers.eventtranscript;
 
+/**
+ * SQLite queries used to parse the EventTranscript database
+ * Mostly adapted from https://github.com/kacos2000/Queries#:~:text=Windows%2010/11%20diagnostics%20stuff
+*/
 public final class DBQueries {
 
     public static final String HISTORY = "SELECT"
