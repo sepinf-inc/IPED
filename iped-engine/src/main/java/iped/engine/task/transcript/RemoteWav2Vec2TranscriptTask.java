@@ -213,7 +213,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 if (e instanceof ConnectException) {
                     numConnectErrors.incrementAndGet();
                     if (numConnectErrors.get() / this.worker.manager.getNumWorkers() >= MAX_CONNECT_ERRORS) {
-                        throw new IPEDException("Too many connection errors to transcription server, maybe it is down.");
+                        throw new TooManyConnectException();
                     }
                     sleepBeforeRetry(requestTime);
                     requestServers(true);

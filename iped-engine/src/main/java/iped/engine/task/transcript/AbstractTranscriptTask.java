@@ -424,6 +424,9 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
 
         } catch (Exception e) {
+            if (e instanceof TooManyConnectException) {
+                throw e;
+            }
             LOGGER.warn("Unexpected exception while transcribing: " + evidence.getPath(), e);
         } finally {
             tmp.close();
