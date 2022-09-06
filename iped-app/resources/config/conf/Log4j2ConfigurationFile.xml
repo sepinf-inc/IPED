@@ -14,7 +14,7 @@
         </File>
     </Appenders>
     <Loggers>
-        <Logger name="org.elasticsearch" level="error"/>
+        <Logger name="org.elasticsearch" level="debug"/>
         <Root level="info">
             <AppenderRef ref="Console" level="MSG"/>
             <AppenderRef ref="LogFile" />

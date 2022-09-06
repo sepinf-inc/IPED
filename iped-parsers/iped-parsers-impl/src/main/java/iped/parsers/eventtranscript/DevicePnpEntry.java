@@ -126,8 +126,8 @@ public class DevicePnpEntry {
     }
     
     public void setInstallDate(String installDate) throws ParseException {
-        this.installDateStr = installDate;
-        if (!installDate.isEmpty()) {
+        this.installDateStr = installDate != null ? installDate : "";
+        if (!installDateStr.isEmpty()) {
             SimpleDateFormat format = new SimpleDateFormat("MM-dd-yyy");
             format.setTimeZone(TimeZone.getTimeZone("UTC"));
             setInstallDate(format.parse(installDate));
@@ -151,8 +151,8 @@ public class DevicePnpEntry {
     }
     
     public void setFirstInstallDate(String firstInstallDate) throws ParseException {
-        this.firstInstallDateStr = firstInstallDate;
-        if (!firstInstallDate.isEmpty()) {
+        this.firstInstallDateStr = firstInstallDate != null ? firstInstallDate : "";
+        if (!firstInstallDateStr.isEmpty()) {
             SimpleDateFormat format = new SimpleDateFormat("MM-dd-yyy");
             format.setTimeZone(TimeZone.getTimeZone("UTC"));
             setFirstInstallDate(format.parse(firstInstallDate));

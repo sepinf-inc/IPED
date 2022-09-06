@@ -143,8 +143,8 @@ public class InventoryAppsEntry {
     }
     
     public void setInstallDate(String installDate) throws ParseException {
-        this.installDateStr = installDate;
-        if (!installDate.isEmpty()) {
+        this.installDateStr = installDate != null ? installDate : "";
+        if (!installDateStr.isEmpty()) {
             SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
             format.setTimeZone(TimeZone.getTimeZone("UTC"));
             setInstallDate(format.parse(installDate));

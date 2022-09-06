@@ -87,7 +87,7 @@ public class AppInteractivityEntry {
     }
 
     public void setAggregationStartTime(String aggregationStartTime) throws ParseException {
-        this.aggregationStartTimeStr = aggregationStartTime;
+        this.aggregationStartTimeStr = aggregationStartTime != null ? aggregationStartTime : "";
         if (!aggregationStartTime.isEmpty()) {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             format.setTimeZone(TimeZone.getTimeZone("UTC"));

@@ -49,7 +49,7 @@ public class EventTranscriptParserTest {
         parser.setExtractEntries(true);
         context.set(Parser.class, tracker);
 
-        try (InputStream stream = getStream("test-files/eventtranscript/test_eventTranscript.db")) {
+        try (InputStream stream = getStream("test-files/eventtranscript/test_eventTranscript_big_big.db")) {
             // parser.parse(stream, handler, metadata, context);
         }
     }
