@@ -49,21 +49,29 @@ public class RemoteWav2Vec2Service {
     private static Logger logger;
 
     private static void printHelpAndExit() {
-        System.out.println("You must pass the IP:PORT address of the central node as parameter!");
+        System.out.println(
+                "Params: IP:Port [LocalPort]\n"
+                + "IP:Port    IP and port of the naming node.\n"
+                + "LocalPort  [optional] local port to listen for connections.\n"
+                + "           If not provided, a random port will be used.");
         System.exit(1);
     }
 
     public static void main(String[] args) throws Exception {
 
-        if (args.length != 1 || !args[0].contains(":")) {
+        if (args.length == 0 || args.length > 2 || !args[0].contains(":")) {
             printHelpAndExit();
         }
 
         String[] discoveryAddr = args[0].split(":");
         String discoveryIp = discoveryAddr[0];
         int discoveryPort = 0;
+        int localPort = 0;
         try {
             discoveryPort = Integer.parseInt(discoveryAddr[1]);
+            if (args.length == 2) {
+                localPort = Integer.parseInt(args[1]);
+            }
         } catch (NumberFormatException e) {
             printHelpAndExit();
         }
@@ -88,13 +96,13 @@ public class RemoteWav2Vec2Service {
 
         int numCPUs = Wav2Vec2TranscriptTask.getNumProcessors();
 
-        try (ServerSocket server = new ServerSocket(0, MAX_CON_QUEUE)) {
+        try (ServerSocket server = new ServerSocket(localPort, MAX_CON_QUEUE)) {
 
             server.setSoTimeout(0);
             // server.setReceiveBufferSize((1 << 16) - 1);
             // server.setPerformancePreferences(0, 1, 2);
 
-            int localPort = server.getLocalPort();
+            localPort = server.getLocalPort();
 
             registerThis(discoveryIp, discoveryPort, localPort);
 
