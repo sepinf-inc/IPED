@@ -55,7 +55,7 @@ public class RemoteWav2Vec2Discovery {
                                 new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
                     String cmd = reader.readLine();
                     if (MESSAGES.REGISTER.toString().equals(cmd)) {
-                        register(reader, writer);
+                        register(client, reader, writer);
                     }
                     if (MESSAGES.DISCOVER.toString().equals(cmd)) {
                         discover(writer);
@@ -69,8 +69,10 @@ public class RemoteWav2Vec2Discovery {
 
     }
 
-    private static void register(BufferedReader reader, PrintWriter writer) throws IOException {
-        String address = reader.readLine();
+    private static void register(Socket client, BufferedReader reader, PrintWriter writer) throws IOException {
+        String ip = client.getInetAddress().getHostAddress();
+        String port = reader.readLine();
+        String address = ip + ":" + port;
         writer.println(MESSAGES.DONE);
         if (servers.put(address, System.currentTimeMillis()) == null) {
             System.out.println("Server registered: " + address);

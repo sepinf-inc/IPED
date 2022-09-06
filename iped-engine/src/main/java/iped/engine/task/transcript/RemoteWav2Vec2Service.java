@@ -95,15 +95,13 @@ public class RemoteWav2Vec2Service {
             // server.setPerformancePreferences(0, 1, 2);
 
             int localPort = server.getLocalPort();
-            String localIp = server.getInetAddress().getHostAddress();
-            String localAddress = localIp + ":" + localPort;
 
-            registerThis(discoveryIp, discoveryPort, localAddress);
+            registerThis(discoveryIp, discoveryPort, localPort);
 
-            logger.info("Transcription server registered as: " + localAddress);
+            logger.info("Transcription server listening on port: " + localPort);
             logger.info("Ready to work!");
 
-            keepRegisteringThis(discoveryIp, discoveryPort, localAddress);
+            keepRegisteringThis(discoveryIp, discoveryPort, localPort);
 
             waitRequests(server, task, numCPUs, discoveryIp);
 
@@ -111,7 +109,7 @@ public class RemoteWav2Vec2Service {
 
     }
 
-    private static void registerThis(String discoveryIp, int discoveryPort, String localAddress) throws Exception {
+    private static void registerThis(String discoveryIp, int discoveryPort, int localPort) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -119,7 +117,7 @@ public class RemoteWav2Vec2Service {
                         new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
 
             writer.println(MESSAGES.REGISTER);
-            writer.println(localAddress);
+            writer.println(localPort);
 
             if (!MESSAGES.DONE.toString().equals(reader.readLine())) {
                 throw new Exception("Registration failed!");
@@ -230,14 +228,14 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void keepRegisteringThis(String ip, int port, String localAddress) {
+    private static void keepRegisteringThis(String ip, int port, int localPort) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 while (true) {
                     try {
                         Thread.sleep(1000);
-                        registerThis(ip, port, localAddress);
+                        registerThis(ip, port, localPort);
 
                     } catch (Exception e) {
                         e.printStackTrace();
