@@ -10,6 +10,8 @@ import com.github.openjson.JSONObject;
 public class CensusEntry {
     private Date timestamp;
     private String timestampStr;
+    private String localTime;
+    private String timezone;
     private String eventName;
     private String tagName;
     private String dataJSON;
@@ -34,6 +36,22 @@ public class CensusEntry {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         setTimestamp(format.parse(timestamp));
+    }
+
+    public String getLocalTime() {
+        return this.localTime;
+    }
+
+    public void setLocalTime(String localTime) {
+        this.localTime = localTime;
+    }
+
+    public String getTimezone() {
+        return this.timezone;
+    }
+
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
     }
 
     public String getEventName() {

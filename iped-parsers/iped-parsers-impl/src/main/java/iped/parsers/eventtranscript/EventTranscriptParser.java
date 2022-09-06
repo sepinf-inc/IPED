@@ -79,12 +79,12 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(EVENT_TRANSCRIPT);
     
-    private static final String[] HISTORY_COLUMN_NAMES = new String[] { "Page Titles", "Visit Date (UTC)", "Referrer URL", "URL", "App" };
-    private static final String[] INVENTORY_APPS_COLUMN_NAMES = new String[] { "Name", "Timestamp (UTC)", "Version", "Publisher", "Root Directory Path", "Install Date" };
-    private static final String[] APP_INTERACT_COLUMN_NAMES = new String[] {"App", "Timestamp (UTC)", "Type", "Window size (WxH)", "MouseInput (sec)",
+    private static final String[] HISTORY_COLUMN_NAMES = new String[] { "Page Titles", "Visit Date (UTC)", "Local Time", "Timezone", "Referrer URL", "URL", "App" };
+    private static final String[] INVENTORY_APPS_COLUMN_NAMES = new String[] { "Name", "Timestamp (UTC)", "Local Time", "Timezone", "Version", "Publisher", "Root Directory Path", "Install Date" };
+    private static final String[] APP_INTERACT_COLUMN_NAMES = new String[] {"App", "Timestamp (UTC)", "Local Time", "Timezone", "Type", "Window size (WxH)", "MouseInput (sec)",
     "InFocusDuration (ms)", "UserActiveDuration (ms)"};
-    private static final String[] DEVICE_PNP_COLUMN_NAMES = new String[] { "Model", "Timestamp (UTC)", "InstanceId", "Provider", "Manufacturer", "Install Date", "Enumerator" };
-    private static final String[] CENSUS_COLUMN_NAMES = new String[] { "Timestamp (UTC)", "Event", "State \\ Settings" };
+    private static final String[] DEVICE_PNP_COLUMN_NAMES = new String[] { "Model", "Timestamp (UTC)", "Local Time", "Timezone", "InstanceId", "Provider", "Manufacturer", "Install Date", "Enumerator" };
+    private static final String[] CENSUS_COLUMN_NAMES = new String[] { "Timestamp (UTC)", "Local Time", "Timezone", "Event", "State \\ Settings" };
     private static final String[] NETWORK_COLUMN_NAMES = new String[] { "Timestamp (UTC)", "Local Time", "Timezone", "Event", "Event Source", "Event Reason", "JSON Data" };
 
     // extract each history entry as a subitem.
@@ -147,10 +147,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     while(historyEntriesIterator.hasNext()) {
                         BrowserHistoryEntry historyEntry = historyEntriesIterator.next();
-                        String[] rowValues = new String[] { String.join("; ", historyEntry.getPageTitles()),
-                            historyEntry.getTimestampStr(), historyEntry.getReferUrl(), historyEntry.getUrl(), historyEntry.getAppName() };
+                        String[] rowValues = new String[] { String.join("; ", historyEntry.getPageTitles()), historyEntry.getTimestampStr(),
+                            historyEntry.getLocalTime(), historyEntry.getTimezone(), historyEntry.getReferUrl(), historyEntry.getUrl(), historyEntry.getAppName() };
                         emitEntry(xHandler, ++i, rowValues);
-            
+
                         if (extractEntries) {
                             Metadata historySubitem = getHistoryEntryMetadata(historyEntry, i);
                             extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  historySubitem, true);
@@ -183,8 +183,8 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     while(inventoryAppsIterator.hasNext()) {
                         InventoryAppsEntry appInvEntry = inventoryAppsIterator.next();
-                        String[] values = new String[] { appInvEntry.getName(), appInvEntry.getTimestampStr(), appInvEntry.getVersion(),
-                            appInvEntry.getPublisher(), appInvEntry.getRootDirPath(), appInvEntry.getInstallDateStr() };
+                        String[] values = new String[] { appInvEntry.getName(), appInvEntry.getTimestampStr(), appInvEntry.getLocalTime(), appInvEntry.getTimezone(),
+                            appInvEntry.getVersion(), appInvEntry.getPublisher(), appInvEntry.getRootDirPath(), appInvEntry.getInstallDateStr() };
                         emitEntry(xHandler, ++i, values);
 
                         if (extractEntries) {
@@ -218,8 +218,8 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     while(appInteractivityIterator.hasNext()) {
                         AppInteractivityEntry appIntEntry = appInteractivityIterator.next();
-                        String[] values = new String[] { appIntEntry.getApp(), appIntEntry.getTimestampStr(), appIntEntry.getType(), appIntEntry.getWindowSize(),
-                            appIntEntry.getMouseInputSec(), appIntEntry.getInFocusDuration(), appIntEntry.getUserActiveDuration() };
+                        String[] values = new String[] { appIntEntry.getApp(), appIntEntry.getTimestampStr(), appIntEntry.getLocalTime(), appIntEntry.getTimezone(), appIntEntry.getType(),
+                            appIntEntry.getWindowSize(), appIntEntry.getMouseInputSec(), appIntEntry.getInFocusDuration(), appIntEntry.getUserActiveDuration() };
                         emitEntry(xHandler, ++i, values);
 
                         if (extractEntries) {
@@ -253,8 +253,8 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     while(devicePnpIterator.hasNext()) {
                             DevicePnpEntry deviceEntry = devicePnpIterator.next();
-                        String[] values = new String[] { deviceEntry.getModel(), deviceEntry.getTimestampStr(), deviceEntry.getInstanceId(),
-                            deviceEntry.getProvider(), deviceEntry.getManufacturer(), deviceEntry.getInstallDateStr(), deviceEntry.getEnumerator() };
+                        String[] values = new String[] { deviceEntry.getModel(), deviceEntry.getTimestampStr(), deviceEntry.getLocalTime(), deviceEntry.getTimezone(), 
+                            deviceEntry.getInstanceId(), deviceEntry.getProvider(), deviceEntry.getManufacturer(), deviceEntry.getInstallDateStr(), deviceEntry.getEnumerator() };
                         emitEntry(xHandler, ++i, values);
 
                         if (extractEntries) {
@@ -289,7 +289,8 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     // no entry extraction
                     while(censusIterator.hasNext()) {
                         CensusEntry censusEntry = censusIterator.next();
-                        String[] values = new String[] { censusEntry.getTimestampStr(), censusEntry.getEventName(), censusEntry.getDataJSON() };
+                        String[] values = new String[] { censusEntry.getTimestampStr(), censusEntry.getLocalTime(), censusEntry.getTimezone(),
+                            censusEntry.getEventName(), censusEntry.getDataJSON() };
                         emitEntry(xHandler, ++i, values);
                     }
                     xHandler.endElement("table");
@@ -518,7 +519,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
             try {
                 historyEntry.setUserSID(rs.getString("UserSID"));
                 historyEntry.setCorrelationGuid(rs.getString("CorrelationGuid"));
-                historyEntry.setTimestamp(rs.getString("Timestamp"));
+                historyEntry.setTimestamp(rs.getString("UTCTimestamp"));
+                historyEntry.setLocalTime(rs.getString("LocalTimestamp"));
+                historyEntry.setTimezone(rs.getString("Timezone"));
                 historyEntry.setTagNames(rs.getString("TagNames").split(";"));
                 historyEntry.setEventNames(rs.getString("EventNames").split(";"));
                 historyEntry.setReferUrl(rs.getString("ReferURL"));
@@ -543,7 +546,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
         public InventoryAppsEntry next() {
             InventoryAppsEntry inventoryAppsEntry = new InventoryAppsEntry();
             try {
-                inventoryAppsEntry.setTimestamp(rs.getString("Timestamp"));
+                inventoryAppsEntry.setTimestamp(rs.getString("UTCTimestamp"));
+                inventoryAppsEntry.setLocalTime(rs.getString("LocalTimestamp"));
+                inventoryAppsEntry.setTimezone(rs.getString("Timezone"));
                 inventoryAppsEntry.setTagName(rs.getString("TagName"));
                 inventoryAppsEntry.setEventName(rs.getString("EventName"));
                 inventoryAppsEntry.setType(rs.getString("Type"));
@@ -577,7 +582,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
             AppInteractivityEntry appInteractivityEntry = new AppInteractivityEntry();
             try {
                 appInteractivityEntry.setApp(rs.getString("AppID"));
-                appInteractivityEntry.setTimestamp(rs.getString("Timestamp"));
+                appInteractivityEntry.setTimestamp(rs.getString("UTCTimestamp"));
+                appInteractivityEntry.setLocalTime(rs.getString("LocalTimestamp"));
+                appInteractivityEntry.setTimezone(rs.getString("Timezone"));
                 appInteractivityEntry.setTagName(rs.getString("TagName"));
                 appInteractivityEntry.setEventName(rs.getString("EventName"));
                 appInteractivityEntry.setType(rs.getString("Type"));
@@ -612,7 +619,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
             try {
                 devicePnpEntry.setModel(rs.getString("Model"));
                 devicePnpEntry.setInstanceId(rs.getString("InstanceId"));
-                devicePnpEntry.setTimestamp(rs.getString("Timestamp"));
+                devicePnpEntry.setTimestamp(rs.getString("UTCTimestamp"));
+                devicePnpEntry.setLocalTime(rs.getString("LocalTimestamp"));
+                devicePnpEntry.setTimezone(rs.getString("Timezone"));
                 devicePnpEntry.setTagName(rs.getString("TagName"));
                 devicePnpEntry.setEventName(rs.getString("EventName"));
                 devicePnpEntry.setProvider(rs.getString("Provider"));
@@ -639,7 +648,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
         public CensusEntry next() {
             CensusEntry censusEntry = new CensusEntry();
             try {
-                censusEntry.setTimestamp(rs.getString("Timestamp"));
+                censusEntry.setTimestamp(rs.getString("UTCTimestamp"));
+                censusEntry.setLocalTime(rs.getString("LocalTimestamp"));
+                censusEntry.setTimezone(rs.getString("Timezone"));
                 censusEntry.setTagName(rs.getString("TagName"));
                 censusEntry.setEventName(rs.getString("EventName"));
                 censusEntry.setDataJSON(rs.getString("State \\ Settings"));

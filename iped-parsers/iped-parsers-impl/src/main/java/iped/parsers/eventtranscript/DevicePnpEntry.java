@@ -8,6 +8,8 @@ import java.util.TimeZone;
 public class DevicePnpEntry {
     private Date timestamp;
     private String timestampStr;
+    private String localTime;
+    private String timezone;
     private String model;
     private String tagName;
     private String eventName;
@@ -41,6 +43,22 @@ public class DevicePnpEntry {
 
     public String getTimestampStr() {
         return this.timestampStr;
+    }
+
+    public String getLocalTime() {
+        return this.localTime;
+    }
+
+    public void setLocalTime(String localTime) {
+        this.localTime = localTime;
+    }
+
+    public String getTimezone() {
+        return this.timezone;
+    }
+
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
     }
 
     public String getModel() {

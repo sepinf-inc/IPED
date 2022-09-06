@@ -9,6 +9,8 @@ public class BrowserHistoryEntry {
     private String userSID;
     private String correlationGuid;
     private Date timestamp;
+    private String localTime;
+    private String timezone;
     private String timestampStr;
     private String[] tagNames;
     private String[] eventNames;
@@ -47,6 +49,22 @@ public class BrowserHistoryEntry {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         setTimestamp(format.parse(timestamp));
+    }
+ 
+    public String getLocalTime() {
+        return this.localTime;
+    }
+
+    public void setLocalTime(String localTime) {
+        this.localTime = localTime;
+    }
+
+    public String getTimezone() {
+        return this.timezone;
+    }
+
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
     }
 
     public String getTimestampStr() {

@@ -8,6 +8,8 @@ import java.util.TimeZone;
 public class InventoryAppsEntry {
     private Date timestamp;
     private String timestampStr;
+    private String localTime;
+    private String timezone;
     private String tagName;
     private String eventName;
     private String type;
@@ -42,6 +44,22 @@ public class InventoryAppsEntry {
 
     public String getTimestampStr() {
         return this.timestampStr;
+    }
+
+    public String getLocalTime() {
+        return this.localTime;
+    }
+
+    public void setLocalTime(String localTime) {
+        this.localTime = localTime;
+    }
+
+    public String getTimezone() {
+        return this.timezone;
+    }
+
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
     }
 
     public String getTagName() {
