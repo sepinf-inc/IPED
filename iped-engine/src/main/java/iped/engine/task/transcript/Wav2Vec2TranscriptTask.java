@@ -36,7 +36,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static final int MAX_TRANSCRIPTIONS = 1000;
     private static final byte[] NEW_LINE = "\n".getBytes();
 
-    private static final int NUM_SERVERS = getNumProcessors();
+    private static volatile Integer numProcesses;
 
     private static LinkedBlockingDeque<Server> deque = new LinkedBlockingDeque<>();
 
@@ -46,6 +46,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         Process process;
         BufferedReader reader;
         int transcriptionsDone = 0;
+        int device = 0;
     }
 
     protected static int getNumProcessors() {
@@ -69,15 +70,20 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         
         checkFFmpeg();
 
-        for (int i = 0; i < NUM_SERVERS; i++) {
-            deque.add(startServer());
+        Server server;
+        int device = 0;
+        while ((server = startServer(device++)) != null) {
+            deque.add(server);
         }
 
         logLevel = Level.DEBUG;
 
     }
 
-    private Server startServer() throws IOException {
+    private Server startServer(int device) throws IOException {
+        if (numProcesses != null && device == numProcesses) {
+            return null;
+        }
         ProcessBuilder pb = new ProcessBuilder();
         String ipedRoot = Configuration.getInstance().appRoot;
         String python = SystemUtils.IS_OS_WINDOWS ? ipedRoot + "/python/python.exe" : "python3";
@@ -88,7 +94,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
                     + "' in audio transcription config file.");
         }
 
-        pb.command(python, script, model);
+        pb.command(python, script, model, Integer.toString(device));
 
         Process process = pb.start();
 
@@ -100,6 +106,18 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
         if (!HUGGINGSOUND_LOADED.equals(line)) {
             throw new IPEDException("'huggingsound' python lib not loaded correctly. Have you installed it?");
+        }
+
+        int cudaCount = Integer.valueOf(reader.readLine());
+        if (numProcesses == null) {
+            int cpus = getNumProcessors();
+            logger.info("Number of CUDA devices detected: {}", cudaCount);
+            logger.info("Number of CPU devices detected: {}", cpus);
+            if (cudaCount > 0) {
+                numProcesses = cudaCount;
+            } else {
+                numProcesses = cpus;
+            }
         }
 
         line = reader.readLine();
@@ -115,6 +133,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         Server server = new Server();
         server.process = process;
         server.reader = reader;
+        server.device = device;
 
         return server;
     }
@@ -199,7 +218,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         try {
             if (!ping(server) || server.transcriptionsDone >= MAX_TRANSCRIPTIONS) {
                 terminateServer(server);
-                server = startServer();
+                server = startServer(server.device);
             }
 
             String filePath = tmpFile.getAbsolutePath().replace('\\', '/');

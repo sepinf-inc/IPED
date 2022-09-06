@@ -11,17 +11,31 @@ ping = 'ping'
 def main():
 
     modelName = sys.argv[1]
+    deviceNum = sys.argv[2]
 
     from huggingsound import SpeechRecognitionModel
     
     print(huggingsound_loaded, file=stdout, flush=True)
     
-    try:
-        deviceId = 'cuda'
-        model = SpeechRecognitionModel(modelName, device=deviceId)
-    except:
+    import torch
+    cudaCount = torch.cuda.device_count()
+
+    print(str(cudaCount), file=stdout, flush=True)
+
+    if cudaCount > 0:
+        deviceId = 'cuda:' + deviceNum
+    else:
         deviceId = 'cpu'
+    
+    try:
         model = SpeechRecognitionModel(modelName, device=deviceId)
+    except Exception as e:
+        if deviceId != 'cpu':
+            # loading on GPU failed (OOM?), try on CPU
+            deviceId = 'cpu'
+            model = SpeechRecognitionModel(modelName, device=deviceId)
+        else:
+            raise e
     
     print(model_loaded, file=stdout, flush=True)
     print(deviceId, file=stdout, flush=True)
