@@ -49,11 +49,18 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         int device = 0;
     }
 
-    protected static int getNumProcessors() {
+    private static int getNumProcessors() {
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
         CentralProcessor cpu = hal.getProcessor();
         return cpu.getPhysicalPackageCount();
+    }
+
+    protected static int getNumConcurrentTranscriptions() {
+        if (numProcesses == null) {
+            throw new RuntimeException("'numProcesses' variable still not initialized");
+        }
+        return numProcesses;
     }
 
     @Override

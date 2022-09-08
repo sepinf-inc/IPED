@@ -94,7 +94,7 @@ public class RemoteWav2Vec2Service {
         Wav2Vec2TranscriptTask task = new Wav2Vec2TranscriptTask();
         task.init(cm);
 
-        int numCPUs = Wav2Vec2TranscriptTask.getNumProcessors();
+        int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
 
         try (ServerSocket server = new ServerSocket(localPort, MAX_CON_QUEUE)) {
 
@@ -111,7 +111,7 @@ public class RemoteWav2Vec2Service {
 
             keepRegisteringThis(discoveryIp, discoveryPort, localPort);
 
-            waitRequests(server, task, numCPUs, discoveryIp);
+            waitRequests(server, task, numConcurrentTranscriptions, discoveryIp);
 
         }
 
@@ -133,12 +133,12 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void waitRequests(ServerSocket server, Wav2Vec2TranscriptTask task, int numCPUs, String discoveryIp) {
+    private static void waitRequests(ServerSocket server, Wav2Vec2TranscriptTask task, int numConcurrentTranscriptions, String discoveryIp) {
         AtomicInteger jobs = new AtomicInteger();
         while (true) {
             try {
                 Socket client = server.accept();
-                if (jobs.incrementAndGet() > numCPUs) {
+                if (jobs.incrementAndGet() > numConcurrentTranscriptions) {
                     jobs.decrementAndGet();
                     client.close();
                     continue;
