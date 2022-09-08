@@ -33,7 +33,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static final String TERMINATE = "terminate_process";
     private static final String PING = "ping";
 
-    private static final int MAX_TRANSCRIPTIONS = 1000;
+    private static final int MAX_TRANSCRIPTIONS = 100000;
     private static final byte[] NEW_LINE = "\n".getBytes();
 
     private static volatile Integer numProcesses;
