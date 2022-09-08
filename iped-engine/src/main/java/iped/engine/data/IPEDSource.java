@@ -29,6 +29,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
@@ -125,7 +127,7 @@ public class IPEDSource implements IIPEDSource {
 
     Set<String> extraAttributes = new HashSet<String>();
 
-    Set<String> evidenceUUIDs = new HashSet<String>();
+    Set<String> evidenceUUIDs = new TreeSet<String>();
 
     boolean isReport = false;
 

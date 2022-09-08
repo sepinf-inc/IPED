@@ -4,6 +4,7 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -12,8 +13,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 
+import javax.xml.bind.DatatypeConverter;
+
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.jfree.data.time.TimePeriod;
 
@@ -54,25 +59,27 @@ public class CachePersistance {
 			baseDir = new File(System.getProperty("user.home"),".iped");
 			baseDir = new File(baseDir,"timecache");
 			baseDir.mkdirs();
+			final File tempCasesDir = baseDir; 
 			
 			boolean found=false;
-			if(baseDir.listFiles()!=null) {
-				for(File f:baseDir.listFiles()) {
-					RandomAccessFile ras = new RandomAccessFile(new File(f,"case.txt"),"r");
-					String casePath = ras.readUTF();
-					ras.close();
-					if(casePath.equals(App.get().casesPathFile.getAbsolutePath())) {
-						baseDir = f;
-						found=true;
-						break;
-					}else {
-						pathsToCheck.put(casePath,f.getAbsolutePath());
-					}
-				}
+
+			Set<String> uuids = App.get().appCase.getEvidenceUUIDs();
+			MessageDigest md = DigestUtils.getMd5Digest();
+			for (Iterator iterator = uuids.iterator(); iterator.hasNext();) {
+				String string = (String) iterator.next();
+				md.update(string.getBytes());
 			}
+			
+			String uuid = DatatypeConverter.printHexBinary(md.digest());
+
+			File tempDirCase = new File(tempCasesDir, uuid);
+			if(tempDirCase.exists()) {
+				found=true;
+				baseDir = tempDirCase;
+			}
+
 			if(!found) {
-				String uuid = UUID.randomUUID().toString();
-				baseDir = new File(baseDir,uuid);
+				baseDir = new File(tempCasesDir,uuid);
 				baseDir.mkdirs();
 				RandomAccessFile ras = new RandomAccessFile(new File(baseDir,"case.txt"),"rw");
 				ras.writeUTF(App.get().casesPathFile.getAbsolutePath().toString());
@@ -80,18 +87,29 @@ public class CachePersistance {
 			}
 
 			//thread to clean caches with no correspondent original data
-			if(t!=null) {
+			if(t==null) {
 				//if it is null means it wasn't executed yet
 				t = new Thread(new Runnable() {
 					@Override
 					public void run() {
 						try {
-							for (Iterator iterator = pathsToCheck.keySet().iterator(); iterator.hasNext();) {
-								String path = (String) iterator.next();
-								File f = new File(path);
-								if(!f.exists()) {
-									f=new File(pathsToCheck.get(path));
-									FileUtils.forceDelete(f);
+							if(tempCasesDir.listFiles()!=null) {
+								for(File f:tempCasesDir.listFiles()) {
+									if(!f.getName().equals(uuid)) {
+										try {
+											RandomAccessFile ras = new RandomAccessFile(new File(f,"case.txt"),"r");
+											String casePath = ras.readUTF();
+											ras.close();
+
+											File caseDir = new File(casePath);
+											if(!caseDir.exists()) {
+												caseDir=new File(pathsToCheck.get(casePath));
+												FileUtils.forceDelete(caseDir);
+											}
+										}catch (Exception e) {
+											e.printStackTrace();
+										}
+									}
 								}
 							}
 						}catch(Exception e) {
