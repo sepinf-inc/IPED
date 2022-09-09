@@ -197,15 +197,10 @@ public class RemoteWav2Vec2Service {
                                 logger.info(prefix + "Received " + size + " audio bytes to transcribe.");
                             }
 
-                            String suffix = ".";
-                            try {
-                                wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
-                            } catch (Exception e) {
-                                suffix = ": " + e.toString().replace('\n', ' ').replace('\r', ' ');
-                            }
+                            wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+
                             if (wavFile == null) {
-                                String errorMsg = "Failed to convert audio to wav" + suffix;
-                                throw new IOException(errorMsg);
+                                throw new IOException("Failed to convert audio to wav");
                             } else {
                                 logger.info(prefix + "Audio converted to wav.");
                             }
@@ -225,7 +220,7 @@ public class RemoteWav2Vec2Service {
                             logger.warn(errorMsg, e);
                             if (writer != null) {
                                 writer.println(MESSAGES.WARN);
-                                writer.println(errorMsg + ": " + e.toString());
+                                writer.println(errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
                             }
                         } finally {
                             jobs.decrementAndGet();
