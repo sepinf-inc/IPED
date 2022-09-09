@@ -195,8 +195,8 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                     }
                     return null;
                 }
-                if (MESSAGES.ERROR.toString().equals(response)) {
-                    String error = reader.readLine();
+                if (MESSAGES.ERROR.toString().equals(response) || response == null) {
+                    String error = response != null ? reader.readLine() : "Remote server process possibly crashed!";
                     logger.error("Error 1 in communication channel with {}: {}", server, error);
                     throw new IOException(error);
                 }
