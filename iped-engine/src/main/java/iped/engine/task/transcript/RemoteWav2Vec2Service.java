@@ -153,6 +153,7 @@ public class RemoteWav2Vec2Service {
                         Path tmpFile = null;
                         File wavFile = null;
                         PrintWriter writer = null;
+                        boolean error = false;
                         try (BufferedInputStream bis = new BufferedInputStream(client.getInputStream())) {
 
                             client.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
@@ -169,10 +170,8 @@ public class RemoteWav2Vec2Service {
                             byte[] bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
                             String cmd = new String(bytes);
                             if (!MESSAGES.AUDIO_SIZE.toString().equals(cmd)) {
-                                String errorMsg = "Size msg not received!";
-                                writer.println(MESSAGES.ERROR);
-                                writer.println(errorMsg);
-                                throw new IOException(prefix + errorMsg);
+                                error = true;
+                                throw new IOException("Size msg not received!");
                             }
 
                             DataInputStream dis = new DataInputStream(bis);
@@ -189,10 +188,8 @@ public class RemoteWav2Vec2Service {
                             }
 
                             if (tmpFile.toFile().length() != size) {
-                                String errorMsg = "Received less audio bytes than expected";
-                                writer.println(MESSAGES.ERROR);
-                                writer.println(errorMsg);
-                                throw new IOException(prefix + errorMsg);
+                                error = true;
+                                throw new IOException("Received less audio bytes than expected");
                             } else {
                                 logger.info(prefix + "Received " + size + " audio bytes to transcribe.");
                             }
@@ -219,7 +216,7 @@ public class RemoteWav2Vec2Service {
                             String errorMsg = "Exception while transcribing";
                             logger.warn(errorMsg, e);
                             if (writer != null) {
-                                writer.println(MESSAGES.WARN);
+                                writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
                                 writer.println(errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
                             }
                         } finally {
