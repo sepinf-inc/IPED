@@ -148,10 +148,11 @@ public class RemoteWav2Vec2Service {
                     public void run() {
                         Path tmpFile = null;
                         File wavFile = null;
-                        try (BufferedInputStream bis = new BufferedInputStream(client.getInputStream());
-                                PrintWriter writer = new PrintWriter(new OutputStreamWriter(
-                                        client.getOutputStream(), StandardCharsets.UTF_8), true)) {
-                            
+                        PrintWriter writer = null;
+                        try (BufferedInputStream bis = new BufferedInputStream(client.getInputStream())) {
+
+                            writer = new PrintWriter(
+                                    new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);
                             writer.println(MESSAGES.ACCEPTED);
 
                             String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
@@ -198,9 +199,7 @@ public class RemoteWav2Vec2Service {
                             }
                             if (wavFile == null) {
                                 String errorMsg = "Failed to convert audio to wav" + suffix;
-                                writer.println(MESSAGES.WARN);
-                                writer.println(errorMsg);
-                                throw new IOException(prefix + errorMsg);
+                                throw new IOException(errorMsg);
                             } else {
                                 logger.info(prefix + "Audio converted to wav.");
                             }
@@ -216,9 +215,15 @@ public class RemoteWav2Vec2Service {
                             logger.info(prefix + "Transcritpion sent.");
 
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            String errorMsg = "Exception while transcribing";
+                            logger.warn(errorMsg, e);
+                            if (writer != null) {
+                                writer.println(MESSAGES.WARN);
+                                writer.println(errorMsg + ": " + e.toString());
+                            }
                         } finally {
                             jobs.decrementAndGet();
+                            IOUtil.closeQuietly(writer);
                             IOUtil.closeQuietly(client);
                             if (tmpFile != null) {
                                 tmpFile.toFile().delete();
