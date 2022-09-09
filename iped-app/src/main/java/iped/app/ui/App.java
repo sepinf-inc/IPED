@@ -27,10 +27,13 @@ import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.Insets;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -197,6 +200,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private ViewerController viewerController;
     private CButton timelineButton;
     private CButton butSimSearch;
+    private CCheckBox galleryGrayButton;
+    private CCheckBox galleryBlurButton;
 
     Color defaultColor;
     Color defaultFocusedColor;
@@ -779,8 +784,56 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // filterComboBox.addMouseListener(appletListener);
         // filterComboBox.getComponent(0).addMouseListener(appletListener);
         updateUI(false);
+
+        setupKeyboardShortcuts();
+    }
+
+    /**
+     * Setup application global keyboard shortcuts. TODO update existing keyboard
+     * shortcut handling code to use this.
+     */
+    private void setupKeyboardShortcuts() {
+        KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        kfm.addKeyEventDispatcher(new KeyEventDispatcher() {
+            @Override
+            public boolean dispatchKeyEvent(KeyEvent e) {
+                if (e.isControlDown()) {
+                    if (e.getKeyCode() == KeyEvent.VK_Q) {
+                        if (e.getID() == KeyEvent.KEY_RELEASED) {
+                            toggleGlobalBlurFilter();
+                        }
+                        // avoid being used as different shortcut (e.g. bookmark key)
+                        return true;
+                    }
+                    if (e.getKeyCode() == KeyEvent.VK_W) {
+                        if (e.getID() == KeyEvent.KEY_RELEASED) {
+                            toggleGlobalGrayScale();
+                        }
+                        // avoid being used as different shortcut (e.g. bookmark key)
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
     }
     
+    protected void toggleGlobalBlurFilter() {
+        boolean enableBlur = !galleryModel.getBlurFilter();
+        galleryModel.setBlurFilter(enableBlur);
+        galleryBlurButton.setSelected(enableBlur);
+        gallery.repaint();
+        viewerController.getMultiViewer().setBlurFilter(enableBlur);
+    }
+
+    protected void toggleGlobalGrayScale() {
+        boolean enableGray = !galleryModel.getGrayFilter();
+        galleryModel.setGrayFilter(enableGray);
+        galleryGrayButton.setSelected(enableGray);
+        gallery.repaint();
+        viewerController.getMultiViewer().setGrayFilter(enableGray);
+    }
+
     public void updateUI(boolean refresh) {
         queryComboBox.getEditor().getEditorComponent().addMouseListener(appletListener);
         queryComboBox.getComponent(0).addMouseListener(appletListener);
@@ -822,17 +875,35 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
 
-        CButton butToggleVideoFramesMode = new CButton(Messages.getString("Gallery.ToggleVideoFrames"),
-                IconUtil.getToolbarIcon("video", resPath));
-        galleryTabDock.addAction(butToggleVideoFramesMode);
-        galleryTabDock.addSeparator();
-        butToggleVideoFramesMode.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        CCheckBox butToggleVideoFramesMode = new CCheckBox(Messages.getString("Gallery.ToggleVideoFrames"),
+                IconUtil.getToolbarIcon("video", resPath)) {
+            protected void changed() {
                 galleryModel.clearVideoThumbsInCache();
-                useVideoThumbsInGallery = !useVideoThumbsInGallery;
+                useVideoThumbsInGallery = isSelected();
                 gallery.repaint();
             }
-        });
+        };
+        galleryTabDock.addAction(butToggleVideoFramesMode);
+        galleryTabDock.addSeparator();
+
+        galleryGrayButton = new CCheckBox(Messages.getString("Gallery.GalleryGrayFilter"),
+                IconUtil.getToolbarIcon("gray-scale", resPath)) {
+            protected void changed() {
+                galleryModel.setGrayFilter(isSelected());
+                gallery.repaint();
+            }
+        };
+        galleryTabDock.addAction(galleryGrayButton);
+
+        galleryBlurButton = new CCheckBox(Messages.getString("Gallery.GalleryBlurFilter"),
+                IconUtil.getToolbarIcon("blur-image", resPath)) {
+            protected void changed() {
+                galleryModel.setBlurFilter(isSelected());
+                gallery.repaint();
+            }
+        };
+        galleryTabDock.addAction(galleryBlurButton);
+        galleryTabDock.addSeparator();
 
         butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
                 IconUtil.getToolbarIcon("find", resPath));

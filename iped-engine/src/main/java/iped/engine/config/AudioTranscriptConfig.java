@@ -22,6 +22,8 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String REQUEST_INTERVAL_KEY = "requestIntervalMillis";
     private static final String MAX_REQUESTS_KEY = "maxConcurrentRequests";
     private static final String MIN_WORD_SCORE = "minWordScore";
+    public static final String HUGGING_FACE_MODEL = "huggingFaceModel";
+    public static final String WAV2VEC2_SERVICE = "wav2vec2Service";
 
     private static final String LANG_AUTO_VAL = "auto";
 
@@ -34,6 +36,8 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private int requestIntervalMillis = 0;
     private int maxConcurrentRequests;
     private float minWordScore = 0.7f;
+    private String huggingFaceModel;
+    private String wav2vec2Service;
 
     public String getServiceRegion() {
         return serviceRegion;
@@ -81,6 +85,14 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         return CONF_FILE;
     }
 
+    public String getHuggingFaceModel() {
+        return huggingFaceModel;
+    }
+
+    public String getWav2vec2Service() {
+        return wav2vec2Service;
+    }
+
     @Override
     public void processProperties(UTF8Properties properties) {
 
@@ -105,6 +117,14 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         requestIntervalMillis = Integer.valueOf(properties.getProperty(REQUEST_INTERVAL_KEY).trim());
         maxConcurrentRequests = Integer.valueOf(properties.getProperty(MAX_REQUESTS_KEY).trim());
         minWordScore = Float.valueOf(properties.getProperty(MIN_WORD_SCORE).trim());
+        huggingFaceModel = properties.getProperty(HUGGING_FACE_MODEL);
+        if (huggingFaceModel != null) {
+            huggingFaceModel = huggingFaceModel.trim();
+        }
+        wav2vec2Service = properties.getProperty(WAV2VEC2_SERVICE);
+        if (wav2vec2Service != null) {
+            wav2vec2Service = wav2vec2Service.trim();
+        }
 
     }
 
