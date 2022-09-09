@@ -44,6 +44,10 @@ public class RemoteWav2Vec2Service {
 
     private static final int MAX_CON_QUEUE = 5000;
 
+    // This timeout should not be too high, otherwise clients with connection issues
+    // would waste server time waiting for them while good clients are waiting.
+    private static final int CLIENT_TIMEOUT_MILLIS = 10000;
+
     private static ExecutorService executor = Executors.newCachedThreadPool();
 
     private static Logger logger;
@@ -150,6 +154,8 @@ public class RemoteWav2Vec2Service {
                         File wavFile = null;
                         PrintWriter writer = null;
                         try (BufferedInputStream bis = new BufferedInputStream(client.getInputStream())) {
+
+                            client.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
 
                             writer = new PrintWriter(
                                     new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);

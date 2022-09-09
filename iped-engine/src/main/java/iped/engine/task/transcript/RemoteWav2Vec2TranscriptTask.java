@@ -158,6 +158,9 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                     BufferedOutputStream bos = new BufferedOutputStream(serverSocket.getOutputStream())) {
 
                 numConnectErrors.set(0);
+                
+                int timeoutSecs = (int) (MIN_TIMEOUT + TIMEOUT_PER_MB * (tmpFile.length() / (1 << 20)));
+                serverSocket.setSoTimeout(1000 * timeoutSecs);
 
                 String response = reader.readLine();
                 if (response == null || MESSAGES.BUSY.toString().equals(response)) {

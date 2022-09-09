@@ -55,7 +55,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     private static final String SELECT_EXACT = "SELECT text, score FROM transcriptions WHERE id=?;"; //$NON-NLS-1$
 
-    private static final int TIMEOUT_PER_MB = 100;
+    protected static final int TIMEOUT_PER_MB = 100;
 
     protected static final int MIN_TIMEOUT = 10;
 
