@@ -153,13 +153,14 @@ public class RemoteWav2Vec2Service {
                         Path tmpFile = null;
                         File wavFile = null;
                         PrintWriter writer = null;
+                        BufferedInputStream bis = null;
                         boolean error = false;
-                        try (BufferedInputStream bis = new BufferedInputStream(client.getInputStream())) {
-
+                        try {
                             client.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
-
+                            bis = new BufferedInputStream(client.getInputStream());
                             writer = new PrintWriter(
                                     new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);
+
                             writer.println(MESSAGES.ACCEPTED);
 
                             String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
@@ -221,6 +222,7 @@ public class RemoteWav2Vec2Service {
                             }
                         } finally {
                             jobs.decrementAndGet();
+                            IOUtil.closeQuietly(bis);
                             IOUtil.closeQuietly(writer);
                             IOUtil.closeQuietly(client);
                             if (tmpFile != null) {
