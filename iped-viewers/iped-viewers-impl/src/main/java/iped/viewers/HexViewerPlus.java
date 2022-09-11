@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.ComboBoxEditor;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -113,8 +115,6 @@ import iped.utils.SeekableFileInputStream;
 import iped.utils.UiUtil;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
-import javax.swing.ComboBoxEditor;
-import java.math.BigInteger;
 
 /**
  *
@@ -1955,7 +1955,8 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                         jtfEnd2.setText("");
                         jtfEnd2.setHexdecimalBase();
                     }
-                }catch (NumberFormatException nfe) {;}
+                } catch (NumberFormatException nfe) {
+                }
             }
         });
         jrbDec.addActionListener(new ActionListener() {
@@ -1977,7 +1978,8 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                         jtfEnd2.setText("");
                         jtfEnd2.setDecimalBase();
                     }
-                }catch (NumberFormatException nfe) {;}
+                } catch (NumberFormatException nfe) {
+                }
             }
         });
         jrbOct.addActionListener(new ActionListener() {
@@ -1999,7 +2001,8 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                         jtfEnd2.setText("");
                         jtfEnd2.setOctalBase();
                     }
-                }catch (NumberFormatException nfe) {;}
+                } catch (NumberFormatException nfe) {
+                }
             }
         });
         JButton buttonOK = new JButton(Messages.getString("HexViewerPlus.ok"));
@@ -2307,7 +2310,8 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                         jtfTexto.setText("");
                         jtfTexto.setHexdecimalBase();
                     }
-                }catch (NumberFormatException nfe) {;}
+                } catch (NumberFormatException nfe) {
+                }
             }
         });
         jrbDec.addActionListener(new ActionListener() {
@@ -2321,7 +2325,8 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                         jtfTexto.setText("");
                         jtfTexto.setDecimalBase();
                     }
-                }catch (NumberFormatException nfe) {;}
+                } catch (NumberFormatException nfe) {
+                }
             }
         });
         jrbOct.addActionListener(new ActionListener() {
@@ -2335,7 +2340,8 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                         jtfTexto.setText("");
                         jtfTexto.setOctalBase();
                     }
-                }catch (NumberFormatException nfe) {;}
+                } catch (NumberFormatException nfe) {
+                }
             }
         });
 
