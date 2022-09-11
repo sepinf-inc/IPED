@@ -123,8 +123,7 @@ import iped.viewers.localization.Messages;
 
 public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseListener {
 
-    private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".iped"
-            + File.separator + "iped.hvp";
+    private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".iped" + File.separator + "iped.hvp";
 
     private CodeArea codeArea;
     private FilterComboBox charsetComboBox;
@@ -148,8 +147,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
     private HexSearcher hexSearcher;
 
     private JPopupMenu jPopupMenu;
-    private JMenuItem menuItemPesquisar, menuItemGo, menuItemSelecionar, menuItemOpcoes, menuItemCopyCode,
-            menuItemCopyText, menuItemGoResult, menuItemGoNextHit, menuItemGoPreviousHit, menuItemSelecionarTudo;
+    private JMenuItem menuItemPesquisar, menuItemGo, menuItemSelecionar, menuItemOpcoes, menuItemCopyCode, menuItemCopyText, menuItemGoResult, menuItemGoNextHit, menuItemGoPreviousHit, menuItemSelecionarTudo;
     private JDialog dialogPesquisar, dialogSelecionar, dialogOpcoes, dialogIrParaResultado, dialogIrParaEndereco;
     private JLabel lblTotal;
 
@@ -212,9 +210,8 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
     public interface HexSearcher {
 
-        abstract void doSearch(CodeArea codeArea, HighlightCodeAreaPainter painter, Hits hits, SeekableInputStream data,
-                Charset charset, Set<String> highlightTerms, long offset, boolean searchString,
-                boolean ignoreCaseSearch, JLabel resultSearch, int max_hits) throws Exception;
+        abstract void doSearch(CodeArea codeArea, HighlightCodeAreaPainter painter, Hits hits, SeekableInputStream data, Charset charset, Set<String> highlightTerms, long offset, boolean searchString, boolean ignoreCaseSearch,
+                JLabel resultSearch, int max_hits) throws Exception;
     }
 
     public HexViewerPlus(Window owner, HexSearcher hexSearcher) {
@@ -240,8 +237,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         charsetComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 String charset = (String) charsetComboBox.getSelectedItem();
-                if (charset != null && !charset.isEmpty() && Charset.isSupported(charset)
-                        && Charset.forName(charset).canEncode()) {
+                if (charset != null && !charset.isEmpty() && Charset.isSupported(charset) && Charset.forName(charset).canEncode()) {
                     codeArea.setCharset(Charset.forName(charset));
                     fcbCharset.setSelectedItem(charset);
                 }
@@ -252,8 +248,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
             @Override
             public void caretMoved(CaretPosition caretPosition, Section section) {
                 if (formatoNumero.equals("%s"))
-                    posicao.setText(String.format(formatoNumero, Long.toBinaryString(caretPosition.getDataPosition()))
-                            .toUpperCase());
+                    posicao.setText(String.format(formatoNumero, Long.toBinaryString(caretPosition.getDataPosition())).toUpperCase());
                 else
                     posicao.setText(String.format(formatoNumero, caretPosition.getDataPosition()).toUpperCase());
             }
@@ -264,17 +259,11 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
             public void selectionChanged(SelectionRange selection) {
                 if (selection != null) {
                     if (formatoNumero.equals("%s")) {
-                        selecao_inicial.setText(
-                                String.format(formatoNumero, Long.toBinaryString(codeArea.getSelection().getFirst()))
-                                        .toUpperCase());
-                        selecao_final.setText(
-                                String.format(formatoNumero, Long.toBinaryString(codeArea.getSelection().getLast()))
-                                        .toUpperCase());
+                        selecao_inicial.setText(String.format(formatoNumero, Long.toBinaryString(codeArea.getSelection().getFirst())).toUpperCase());
+                        selecao_final.setText(String.format(formatoNumero, Long.toBinaryString(codeArea.getSelection().getLast())).toUpperCase());
                     } else {
-                        selecao_inicial.setText(
-                                String.format(formatoNumero, codeArea.getSelection().getFirst()).toUpperCase());
-                        selecao_final
-                                .setText(String.format(formatoNumero, codeArea.getSelection().getLast()).toUpperCase());
+                        selecao_inicial.setText(String.format(formatoNumero, codeArea.getSelection().getFirst()).toUpperCase());
+                        selecao_final.setText(String.format(formatoNumero, codeArea.getSelection().getLast()).toUpperCase());
                     }
                 } else {
                     selecao_inicial.setText("");
@@ -309,8 +298,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 @Override
                 void fireReadError() {
                     try {
-                        this.setData(
-                                new SeekableFileInputStream(new SeekableInMemoryByteChannel("READ ERROR!".getBytes())));
+                        this.setData(new SeekableFileInputStream(new SeekableInMemoryByteChannel("READ ERROR!".getBytes())));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -343,8 +331,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         posicao.setPreferredSize(new Dimension(200, posicao.getMinimumSize().height));
         bottomPanelLeft.add(posicao);
 
-        bottomPanelLeft
-                .add(new JLabel(" " + Messages.getString("HexViewerPlus.to").toString().replaceAll(".", "  ") + "  "));
+        bottomPanelLeft.add(new JLabel(" " + Messages.getString("HexViewerPlus.to").toString().replaceAll(".", "  ") + "  "));
         bottomPanelLeft.add(new JLabel(Messages.getString("HexViewerPlus.charset") + " "));
         charsetComboBox.setMaximumSize(new Dimension(150, charsetComboBox.getMinimumSize().height));
         bottomPanelLeft.add(charsetComboBox);
@@ -427,7 +414,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         codeArea.repaint();
 
-        //Auxiliary label, just to capture updateUI()
+        // Auxiliary label, just to capture updateUI()
         bottomPanel2.add(new JLabel("") {
             private static final long serialVersionUID = -2163271443358544934L;
 
@@ -458,7 +445,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
             }
         });
     }
-    
+
     static class CustomTextField extends JTextField {
         private static final long serialVersionUID = 8242772209066411493L;
 
@@ -466,7 +453,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
             setHorizontalAlignment(SwingConstants.RIGHT);
             setEditable(false);
         }
-        
+
         @Override
         public void updateUI() {
             super.updateUI();
@@ -603,8 +590,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                     codeArea.requestFocus();
                 }
             }
-            resultSearch.setText(Messages.getString("HexViewerPlus.hit") + " " + (hits.currentHit + 1) + " "
-                    + Messages.getString("HexViewerPlus.of") + " " + hits.totalHits);
+            resultSearch.setText(Messages.getString("HexViewerPlus.hit") + " " + (hits.currentHit + 1) + " " + Messages.getString("HexViewerPlus.of") + " " + hits.totalHits);
         }
 
     }
@@ -695,10 +681,8 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 if (event.getSource() == menuItemCopyText) {
                     codeArea.copyAsCode();
                     try {
-                        String data = (String) Toolkit.getDefaultToolkit().getSystemClipboard()
-                                .getData(DataFlavor.stringFlavor);
-                        StringSelection selection = new StringSelection(
-                                new String(hexStringToByteArray(data), codeArea.getCharset()));
+                        String data = (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+                        StringSelection selection = new StringSelection(new String(hexStringToByteArray(data), codeArea.getCharset()));
                         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
                     } catch (Exception ex) {
                         ex.printStackTrace();
@@ -847,8 +831,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         showLineNumbersCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.showLines"), true);
         wrapLineModeCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.lineBreak"), true);
         showUnprintableCharactersCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.showAllCharacters"), false);
-        showLineNumberBackgroundCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.showLineNumberBackground"),
-                true);
+        showLineNumberBackgroundCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.showLineNumberBackground"), true);
         showPositionBarCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.showPositionBar"), true);
         showSelectionBarCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.showSelectionBar"), true);
 
@@ -867,8 +850,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         btnColorSelectionMainText = new RoundButton("", codeArea.getSelectionColors().getTextColor());
         btnColorSelectionMainBackground = new RoundButton("", codeArea.getSelectionColors().getBackgroundColor());
         btnColorSelectionMirrorText = new RoundButton("", codeArea.getMirrorSelectionColors().getTextColor());
-        btnColorSelectionMirrorBackground = new RoundButton("",
-                codeArea.getMirrorSelectionColors().getBackgroundColor());
+        btnColorSelectionMirrorBackground = new RoundButton("", codeArea.getMirrorSelectionColors().getBackgroundColor());
         btnColorFoundMatchBackground = new RoundButton("", painter.getFoundMatchesBackgroundColor());
         btnColorCurrentMatchBackground = new RoundButton("", painter.getCurrentMatchBackgroundColor());
         btnColorFoundMatchText = new RoundButton("", painter.getFoundMatchesTextColor());
@@ -881,8 +863,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         btnColorHeaderText = new RoundButton("", codeArea.getForeground());
         btnColorHeaderBackground = new RoundButton("", codeArea.getBackground());
 
-        List<String> fonts = Arrays
-                .asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
+        List<String> fonts = Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
         String[] cursors = new String[CursorShape.values().length];
         int i = 0;
         for (Enum<CursorShape> e : CursorShape.values()) {
@@ -890,8 +871,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         }
 
         // LISTENERS
-        modeComboBox.setModel(
-                new javax.swing.DefaultComboBoxModel<>(new String[] { "DUAL", "CODE_MATRIX", "TEXT_PREVIEW" }));
+        modeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "DUAL", "CODE_MATRIX", "TEXT_PREVIEW" }));
         modeComboBox.setSelectedIndex(0);
         modeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -899,8 +879,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
             }
         });
 
-        codeTypeComboBox.setModel(
-                new javax.swing.DefaultComboBoxModel<>(new String[] { "BINARY", "OCTAL", "DECIMAL", "HEXADECIMAL" }));
+        codeTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "BINARY", "OCTAL", "DECIMAL", "HEXADECIMAL" }));
         codeTypeComboBox.setSelectedIndex(3);
         codeTypeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -908,8 +887,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
             }
         });
 
-        positionCodeTypeComboBox
-                .setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "OCTAL", "DECIMAL", "HEXADECIMAL" }));
+        positionCodeTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "OCTAL", "DECIMAL", "HEXADECIMAL" }));
         positionCodeTypeComboBox.setSelectedIndex(2);
         positionCodeTypeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -917,8 +895,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
             }
         });
 
-        backGroundComboBox.setModel(
-                new javax.swing.DefaultComboBoxModel<>(new String[] { "NONE", "PLAIN", "STRIPPED", "GRIDDED" }));
+        backGroundComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "NONE", "PLAIN", "STRIPPED", "GRIDDED" }));
         backGroundComboBox.setSelectedIndex(2);
         backGroundComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -966,8 +943,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
             }
         });
 
-        formatoNumeroComboBox.setModel(
-                new javax.swing.DefaultComboBoxModel<>(new String[] { "BINARY", "OCTAL", "DECIMAL", "HEXADECIMAL" }));
+        formatoNumeroComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "BINARY", "OCTAL", "DECIMAL", "HEXADECIMAL" }));
         formatoNumeroComboBox.setSelectedIndex(3);
         formatoNumeroComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -975,23 +951,10 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                     case 0: {
                         formatoNumero = "%s";
                         if (!posicao.getText().isEmpty())
-                            posicao.setText(String
-                                    .format(formatoNumero,
-                                            Long.toBinaryString(Long.parseLong(posicao.getText(), ultimaBase)))
-                                    .toUpperCase());
+                            posicao.setText(String.format(formatoNumero, Long.toBinaryString(Long.parseLong(posicao.getText(), ultimaBase))).toUpperCase());
                         if (!selecao_inicial.getText().isEmpty()) {
-                            selecao_inicial
-                                    .setText(String
-                                            .format(formatoNumero,
-                                                    Long.toBinaryString(
-                                                            Long.parseLong(selecao_inicial.getText(), ultimaBase)))
-                                            .toUpperCase());
-                            selecao_final
-                                    .setText(String
-                                            .format(formatoNumero,
-                                                    Long.toBinaryString(
-                                                            Long.parseLong(selecao_final.getText(), ultimaBase)))
-                                            .toUpperCase());
+                            selecao_inicial.setText(String.format(formatoNumero, Long.toBinaryString(Long.parseLong(selecao_inicial.getText(), ultimaBase))).toUpperCase());
+                            selecao_final.setText(String.format(formatoNumero, Long.toBinaryString(Long.parseLong(selecao_final.getText(), ultimaBase))).toUpperCase());
                         }
                         ultimaBase = 2;
                         break;
@@ -999,15 +962,10 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                     case 1: {
                         formatoNumero = "%o";
                         if (!posicao.getText().isEmpty())
-                            posicao.setText(String.format(formatoNumero, Long.parseLong(posicao.getText(), ultimaBase))
-                                    .toUpperCase());
+                            posicao.setText(String.format(formatoNumero, Long.parseLong(posicao.getText(), ultimaBase)).toUpperCase());
                         if (!selecao_inicial.getText().isEmpty()) {
-                            selecao_inicial.setText(
-                                    String.format(formatoNumero, Long.parseLong(selecao_inicial.getText(), ultimaBase))
-                                            .toUpperCase());
-                            selecao_final.setText(
-                                    String.format(formatoNumero, Long.parseLong(selecao_final.getText(), ultimaBase))
-                                            .toUpperCase());
+                            selecao_inicial.setText(String.format(formatoNumero, Long.parseLong(selecao_inicial.getText(), ultimaBase)).toUpperCase());
+                            selecao_final.setText(String.format(formatoNumero, Long.parseLong(selecao_final.getText(), ultimaBase)).toUpperCase());
                         }
                         ultimaBase = 8;
                         break;
@@ -1015,15 +973,10 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                     case 2: {
                         formatoNumero = "%d";
                         if (!posicao.getText().isEmpty())
-                            posicao.setText(String.format(formatoNumero, Long.parseLong(posicao.getText(), ultimaBase))
-                                    .toUpperCase());
+                            posicao.setText(String.format(formatoNumero, Long.parseLong(posicao.getText(), ultimaBase)).toUpperCase());
                         if (!selecao_inicial.getText().isEmpty()) {
-                            selecao_inicial.setText(
-                                    String.format(formatoNumero, Long.parseLong(selecao_inicial.getText(), ultimaBase))
-                                            .toUpperCase());
-                            selecao_final.setText(
-                                    String.format(formatoNumero, Long.parseLong(selecao_final.getText(), ultimaBase))
-                                            .toUpperCase());
+                            selecao_inicial.setText(String.format(formatoNumero, Long.parseLong(selecao_inicial.getText(), ultimaBase)).toUpperCase());
+                            selecao_final.setText(String.format(formatoNumero, Long.parseLong(selecao_final.getText(), ultimaBase)).toUpperCase());
                         }
                         ultimaBase = 10;
                         break;
@@ -1031,15 +984,10 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                     case 3: {
                         formatoNumero = "%x";
                         if (!posicao.getText().isEmpty())
-                            posicao.setText(String.format(formatoNumero, Long.parseLong(posicao.getText(), ultimaBase))
-                                    .toUpperCase());
+                            posicao.setText(String.format(formatoNumero, Long.parseLong(posicao.getText(), ultimaBase)).toUpperCase());
                         if (!selecao_inicial.getText().isEmpty()) {
-                            selecao_inicial.setText(
-                                    String.format(formatoNumero, Long.parseLong(selecao_inicial.getText(), ultimaBase))
-                                            .toUpperCase());
-                            selecao_final.setText(
-                                    String.format(formatoNumero, Long.parseLong(selecao_final.getText(), ultimaBase))
-                                            .toUpperCase());
+                            selecao_inicial.setText(String.format(formatoNumero, Long.parseLong(selecao_inicial.getText(), ultimaBase)).toUpperCase());
+                            selecao_final.setText(String.format(formatoNumero, Long.parseLong(selecao_final.getText(), ultimaBase)).toUpperCase());
                         }
                         ultimaBase = 16;
                         break;
@@ -1104,8 +1052,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         btnColorFontMain.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText,
-                        codeArea.getMainColors().getTextColor());
+                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText, codeArea.getMainColors().getTextColor());
                 if (c != null) {
                     ColorsGroup cg = codeArea.getMainColors();
                     cg.setTextColor(c);
@@ -1118,8 +1065,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         btnColorFontAlt.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText,
-                        codeArea.getAlternateColors().getTextColor());
+                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText, codeArea.getAlternateColors().getTextColor());
                 if (c != null) {
                     ColorsGroup cg = codeArea.getAlternateColors();
                     cg.setTextColor(c);
@@ -1142,8 +1088,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         btnColorBackgroundMain.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText,
-                        codeArea.getMainColors().getBackgroundColor());
+                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText, codeArea.getMainColors().getBackgroundColor());
                 if (c != null) {
                     ColorsGroup cg = codeArea.getMainColors();
                     cg.setBackgroundColor(c);
@@ -1156,8 +1101,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         btnColorBackgroundAlt.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText,
-                        codeArea.getAlternateColors().getBackgroundColor());
+                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText, codeArea.getAlternateColors().getBackgroundColor());
                 if (c != null) {
                     ColorsGroup cg = codeArea.getAlternateColors();
                     cg.setBackgroundColor(c);
@@ -1190,8 +1134,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         btnColorSelectionMainBackground.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText,
-                        codeArea.getSelectionColors().getBackgroundColor());
+                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText, codeArea.getSelectionColors().getBackgroundColor());
                 if (c != null) {
                     ColorsGroup cg = codeArea.getSelectionColors();
                     cg.setBackgroundColor(c);
@@ -1204,8 +1147,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         btnColorSelectionMainText.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText,
-                        codeArea.getSelectionColors().getTextColor());
+                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText, codeArea.getSelectionColors().getTextColor());
                 if (c != null) {
                     ColorsGroup cg = codeArea.getSelectionColors();
                     cg.setTextColor(c);
@@ -1218,8 +1160,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         btnColorSelectionMirrorBackground.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText,
-                        codeArea.getMirrorSelectionColors().getBackgroundColor());
+                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText, codeArea.getMirrorSelectionColors().getBackgroundColor());
                 if (c != null) {
                     ColorsGroup cg = codeArea.getMirrorSelectionColors();
                     cg.setBackgroundColor(c);
@@ -1232,8 +1173,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         btnColorSelectionMirrorText.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText,
-                        codeArea.getMirrorSelectionColors().getTextColor());
+                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText, codeArea.getMirrorSelectionColors().getTextColor());
                 if (c != null) {
                     ColorsGroup cg = codeArea.getMirrorSelectionColors();
                     cg.setTextColor(c);
@@ -1258,8 +1198,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         btnColorFoundMatchBackground.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText,
-                        painter.getFoundMatchesBackgroundColor());
+                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText, painter.getFoundMatchesBackgroundColor());
                 if (c != null) {
                     painter.setFoundMatchesBackgroundColor(c);
                     painter.setFoundMatchesUnprintablesBackgroundColor(c);
@@ -1283,8 +1222,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         btnColorCurrentMatchBackground.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText,
-                        painter.getCurrentMatchBackgroundColor());
+                Color c = JColorChooser.showDialog(dialogOpcoes, selectColorText, painter.getCurrentMatchBackgroundColor());
                 if (c != null) {
                     painter.setCurrentMatchBackgroundColor(c);
                     painter.setCurrentMatchUnprintablesBackgroundColor(c);
@@ -1330,8 +1268,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                         loadSettings(objHVP);
                         codeArea.repaint();
                     } else {
-                        JOptionPane.showMessageDialog(dialogOpcoes, Messages.getString("HexViewerPlus.failOpenFile"),
-                                appName, JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogOpcoes, Messages.getString("HexViewerPlus.failOpenFile"), appName, JOptionPane.ERROR_MESSAGE);
                     }
 
                     objHVP = null;
@@ -1364,8 +1301,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                     HVPSettings objHVP = new HVPSettings();
                     saveSettings(objHVP);
                     if (!HVPSettings.saveObject(caminho, objHVP)) {
-                        JOptionPane.showMessageDialog(dialogOpcoes, Messages.getString("HexViewerPlus.failSaveFile"),
-                                appName, JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogOpcoes, Messages.getString("HexViewerPlus.failSaveFile"), appName, JOptionPane.ERROR_MESSAGE);
                     }
                     objHVP = null;
                     jfc = null;
@@ -1761,9 +1697,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         if (fileName != null && fileName.exists()) {
             fileName = null;
-            int n = JOptionPane.showOptionDialog(dialogOpcoes,
-                    "'" + arquivo + "' " + Messages.getString("HexViewerPlus.overWriteFile"), appName,
-                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
+            int n = JOptionPane.showOptionDialog(dialogOpcoes, "'" + arquivo + "' " + Messages.getString("HexViewerPlus.overWriteFile"), appName, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
             if (n == JOptionPane.NO_OPTION)
                 return true;
         }
@@ -1938,7 +1872,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
         jrbHex.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                try{
+                try {
                     if (jtfEnd1.isValidNumber()) {
                         long aux = Long.parseLong(jtfEnd1.getText(), jtfEnd1.getBase());
                         jtfEnd1.setHexdecimalBase();
@@ -1961,7 +1895,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         });
         jrbDec.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                try{
+                try {
                     if (jtfEnd1.isValidNumber()) {
                         long aux = Long.parseLong(jtfEnd1.getText(), jtfEnd1.getBase());
                         jtfEnd1.setDecimalBase();
@@ -1984,7 +1918,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         });
         jrbOct.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                try{
+                try {
                     if (jtfEnd1.isValidNumber()) {
                         long aux = Long.parseLong(jtfEnd1.getText(), jtfEnd1.getBase());
                         jtfEnd1.setOctalBase();
@@ -2064,21 +1998,16 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
             public void actionPerformed(ActionEvent e) {
 
                 if (!jtfEnd1.isValidNumber()) {
-                    JOptionPane.showMessageDialog(dialogSelecionar,
-                            Messages.getString("HexViewerPlus.invalidStartPosition"), appName,
-                            JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidStartPosition"), appName, JOptionPane.ERROR_MESSAGE);
                     jtfEnd1.requestFocus();
                     return;
                 }
                 if (!jtfEnd2.isValidNumber()) {
                     jtfEnd2.requestFocus();
                     if (jrbTam.isSelected())
-                        JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidSize"),
-                                appName, JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidSize"), appName, JOptionPane.ERROR_MESSAGE);
                     else
-                        JOptionPane.showMessageDialog(dialogSelecionar,
-                                Messages.getString("HexViewerPlus.invalidEndPosition"), appName,
-                                JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidEndPosition"), appName, JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -2088,46 +2017,36 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 long position1 = -1;
                 long position2 = -1;
 
-                try{
+                try {
                     position1 = Long.parseLong(jtfEnd1.getText().toString().trim(), base);
                 } catch (NumberFormatException nfe) {
-                        JOptionPane.showMessageDialog(dialogSelecionar,
-                            Messages.getString("HexViewerPlus.invalidStartPosition"), appName,
-                            JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidStartPosition"), appName, JOptionPane.ERROR_MESSAGE);
                     jtfEnd1.requestFocus();
-                        return;
-                }    
+                    return;
+                }
 
-                try{
+                try {
                     position2 = Long.parseLong(jtfEnd2.getText().toString().trim(), base);
                 } catch (NumberFormatException nfe) {
                     jtfEnd2.requestFocus();
                     if (jrbTam.isSelected())
-                        JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidSize"),
-                                appName, JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidSize"), appName, JOptionPane.ERROR_MESSAGE);
                     else
-                        JOptionPane.showMessageDialog(dialogSelecionar,
-                                Messages.getString("HexViewerPlus.invalidEndPosition"), appName,
-                                JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidEndPosition"), appName, JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                
+
                 if (position1 < 0) {
-                        JOptionPane.showMessageDialog(dialogSelecionar,
-                            Messages.getString("HexViewerPlus.invalidStartPosition"), appName,
-                            JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidStartPosition"), appName, JOptionPane.ERROR_MESSAGE);
                     jtfEnd1.requestFocus();
-                        return;
-                }    
+                    return;
+                }
                 if (position2 < 0) {
                     jtfEnd2.requestFocus();
                     if (jrbTam.isSelected())
-                        JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidSize"),
-                                appName, JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidSize"), appName, JOptionPane.ERROR_MESSAGE);
                     else
-                        JOptionPane.showMessageDialog(dialogSelecionar,
-                                Messages.getString("HexViewerPlus.invalidEndPosition"), appName,
-                                JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogSelecionar, Messages.getString("HexViewerPlus.invalidEndPosition"), appName, JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -2221,21 +2140,18 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 int base = jtfTexto.getBase();
 
                 if (jtfTexto.isValidNumber()) {
-                    try{
+                    try {
                         result = Integer.parseInt(jtfTexto.getText().toString().trim(), base);
                     } catch (NumberFormatException nfe) {
-                        JOptionPane.showMessageDialog(dialogIrParaResultado,
-                                Messages.getString("HexViewerPlus.invalidHit"), appName, JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogIrParaResultado, Messages.getString("HexViewerPlus.invalidHit"), appName, JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     if (result > hits.totalHits || result <= 0) {
-                        JOptionPane.showMessageDialog(dialogIrParaResultado,
-                                Messages.getString("HexViewerPlus.invalidHit"), appName, JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogIrParaResultado, Messages.getString("HexViewerPlus.invalidHit"), appName, JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } else {
-                    JOptionPane.showMessageDialog(dialogIrParaResultado, Messages.getString("HexViewerPlus.invalidHit"),
-                            appName, JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dialogIrParaResultado, Messages.getString("HexViewerPlus.invalidHit"), appName, JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -2248,8 +2164,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 codeArea.setCaretPosition(match.getPosition() + match.getLength());
                 codeArea.repaint();
 
-                resultSearch.setText(Messages.getString("HexViewerPlus.hit") + " " + (hits.currentHit + 1)
-                        + Messages.getString("HexViewerPlus.of") + hits.totalHits);
+                resultSearch.setText(Messages.getString("HexViewerPlus.hit") + " " + (hits.currentHit + 1) + Messages.getString("HexViewerPlus.of") + hits.totalHits);
 
                 dialogIrParaResultado.setVisible(false);
 
@@ -2316,7 +2231,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         });
         jrbDec.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                try{
+                try {
                     if (jtfTexto.isValidNumber()) {
                         long aux = Long.parseLong(jtfTexto.getText(), jtfTexto.getBase());
                         jtfTexto.setDecimalBase();
@@ -2331,7 +2246,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         });
         jrbOct.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                try{
+                try {
                     if (jtfTexto.isValidNumber()) {
                         long aux = Long.parseLong(jtfTexto.getText(), jtfTexto.getBase());
                         jtfTexto.setOctalBase();
@@ -2407,26 +2322,23 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                 jtfTexto.requestFocus();
 
                 if (!jtfTexto.isValidNumber()) {
-                    JOptionPane.showMessageDialog(dialogIrParaEndereco,
-                            Messages.getString("HexViewerPlus.invalidPosition"), appName, JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dialogIrParaEndereco, Messages.getString("HexViewerPlus.invalidPosition"), appName, JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 int base = jtfTexto.getBase();
                 long position = -1;
 
-                try{
+                try {
                     position = Long.parseLong(jtfTexto.getText().toString().trim(), base);
                 } catch (NumberFormatException nfe) {
-                    JOptionPane.showMessageDialog(dialogIrParaEndereco,
-                            Messages.getString("HexViewerPlus.invalidPosition"), appName, JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dialogIrParaEndereco, Messages.getString("HexViewerPlus.invalidPosition"), appName, JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                
-                if (position < 0){
-                    JOptionPane.showMessageDialog(dialogIrParaEndereco,
-                            Messages.getString("HexViewerPlus.invalidPosition"), appName, JOptionPane.ERROR_MESSAGE);
-                    return;    
+
+                if (position < 0) {
+                    JOptionPane.showMessageDialog(dialogIrParaEndereco, Messages.getString("HexViewerPlus.invalidPosition"), appName, JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
 
                 if (jrbCursor.isSelected())
@@ -2434,7 +2346,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
                 long size = codeArea.getDataSize();
 
-                if (position > size){
+                if (position > size) {
                     position = size;
                 }
 
@@ -2525,8 +2437,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
         jtfTextoHex.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (e.getActionCommand().equals("comboBoxEdited")
-                        && jtfTextoHex.getEditor().getEditorComponent().hasFocus()) {
+                if (e.getActionCommand().equals("comboBoxEdited") && jtfTextoHex.getEditor().getEditorComponent().hasFocus()) {
                     buttonOK.doClick();
                 }
             }
@@ -2610,17 +2521,13 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 
                 if (jrbTexto.isSelected()) {
                     if (jtfTextoHex.getText().toString().trim().isEmpty()) {
-                        JOptionPane.showMessageDialog(dialogPesquisar,
-                                Messages.getString("HexViewerPlus.invalidSearchText"), appName,
-                                JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.invalidSearchText"), appName, JOptionPane.ERROR_MESSAGE);
                         jtfTextoHex.requestFocus();
                         return;
                     }
                 } else if (jrbHex.isSelected()) {
                     if (!jtfTextoHex.isValidHexString()) {
-                        JOptionPane.showMessageDialog(dialogPesquisar,
-                                Messages.getString("HexViewerPlus.invalidHexadecimalText"), appName,
-                                JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.invalidHexadecimalText"), appName, JOptionPane.ERROR_MESSAGE);
                         jtfTextoHex.requestFocus();
                         return;
                     }
@@ -2637,22 +2544,17 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                     max_hits = max_terms;
                 } else {
                     if (!jtfMaxHits.isValidNumber()) {
-                        JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.invalidMax"),
-                                appName, JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.invalidMax"), appName, JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     try {
                         max_hits = Integer.parseInt(jtfMaxHits.getText().toString().trim());
                     } catch (NumberFormatException nfe) {
-                        JOptionPane.showMessageDialog(dialogPesquisar,
-                                Messages.getString("HexViewerPlus.invalidMaxLessThen") + max_terms, appName,
-                                JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.invalidMaxLessThen") + max_terms, appName, JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     if (max_hits > max_terms || max_hits <= 0) {
-                        JOptionPane.showMessageDialog(dialogPesquisar,
-                                Messages.getString("HexViewerPlus.invalidMaxLessThen") + max_terms, appName,
-                                JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.invalidMaxLessThen") + max_terms, appName, JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 
@@ -2667,10 +2569,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                     if (charSetString != null && !charSetString.isEmpty() && Charset.isSupported(charSetString)) {
                         charsetParam = Charset.forName(charSetString);
                     } else {
-                        JOptionPane.showMessageDialog(dialogPesquisar,
-                                Messages.getString("HexViewerPlus.charset") + " \"" + charSetString + "\" "
-                                        + Messages.getString("HexViewerPlus.invalid") + "!",
-                                appName, JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.charset") + " \"" + charSetString + "\" " + Messages.getString("HexViewerPlus.invalid") + "!", appName, JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 }
@@ -2681,8 +2580,7 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
                     try {
 
                         dialogPesquisar.setVisible(false);
-                        hexSearcher.doSearch(codeArea, painter, hits, contentAux.getSeekableInputStream(), charsetParam, palavras,
-                                off, jrbTexto.isSelected(), !jcbCase.isSelected(), resultSearch, max_hits);
+                        hexSearcher.doSearch(codeArea, painter, hits, contentAux.getSeekableInputStream(), charsetParam, palavras, off, jrbTexto.isSelected(), !jcbCase.isSelected(), resultSearch, max_hits);
 
                     } catch (Exception ex) {
                         ex.printStackTrace();
@@ -2725,11 +2623,11 @@ public class HexViewerPlus extends AbstractViewer implements KeyListener, MouseL
 class MyComboBoxEditor implements ComboBoxEditor {
 
     private JTextField txtField;
-    
+
     public MyComboBoxEditor() {
         txtField = new JTextField();
     }
-    
+
     @Override
     public Component getEditorComponent() {
         return txtField;
@@ -2759,9 +2657,8 @@ class MyComboBoxEditor implements ComboBoxEditor {
     public void removeActionListener(ActionListener l) {
         txtField.removeActionListener(l);
     }
-    
-}
 
+}
 
 class HVPComboField extends JComboBox<String> {
     /**
@@ -2788,15 +2685,11 @@ class HVPComboField extends JComboBox<String> {
                 } else {
                     char c = ev.getKeyChar();
                     int k = ev.getKeyCode();
-                    boolean copy = ((ev.getKeyCode() == KeyEvent.VK_C)
-                            && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
-                    boolean paste = ((ev.getKeyCode() == KeyEvent.VK_V)
-                            && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
+                    boolean copy = ((ev.getKeyCode() == KeyEvent.VK_C) && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
+                    boolean paste = ((ev.getKeyCode() == KeyEvent.VK_V) && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
 
-                    if (isDigitBase(c) || k == KeyEvent.VK_BACK_SPACE || k == KeyEvent.VK_DELETE
-                            || k == KeyEvent.VK_RIGHT || k == KeyEvent.VK_LEFT || k == KeyEvent.VK_ENTER
-                            || k == KeyEvent.VK_KP_LEFT || k == KeyEvent.VK_KP_RIGHT || k == KeyEvent.VK_END
-                            || k == KeyEvent.VK_ESCAPE || k == KeyEvent.VK_HOME || paste || copy) {
+                    if (isDigitBase(c) || k == KeyEvent.VK_BACK_SPACE || k == KeyEvent.VK_DELETE || k == KeyEvent.VK_RIGHT || k == KeyEvent.VK_LEFT || k == KeyEvent.VK_ENTER || k == KeyEvent.VK_KP_LEFT || k == KeyEvent.VK_KP_RIGHT
+                            || k == KeyEvent.VK_END || k == KeyEvent.VK_ESCAPE || k == KeyEvent.VK_HOME || paste || copy) {
                         return;
                     } else {
                         ev.consume();
@@ -2849,19 +2742,18 @@ class HVPComboField extends JComboBox<String> {
         textfield.setHorizontalAlignment(h);
     }
 
-    public boolean isValidNumber(){
-            
+    public boolean isValidNumber() {
+
         String value = getText();
         if (value == null || value.isEmpty())
             return false;
-            
+
         try {
-            new BigInteger (value, getBase());
-        }
-        catch (NumberFormatException nfe){
+            new BigInteger(value, getBase());
+        } catch (NumberFormatException nfe) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -2975,10 +2867,8 @@ class HVPTextField extends JTextField {
         boolean copy = ((ev.getKeyCode() == KeyEvent.VK_C) && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
         boolean paste = ((ev.getKeyCode() == KeyEvent.VK_V) && ((ev.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0));
 
-        if (isDigitBase(c) || k == KeyEvent.VK_BACK_SPACE || k == KeyEvent.VK_DELETE || k == KeyEvent.VK_RIGHT
-                || k == KeyEvent.VK_LEFT || k == KeyEvent.VK_ENTER || k == KeyEvent.VK_KP_LEFT
-                || k == KeyEvent.VK_KP_RIGHT || k == KeyEvent.VK_END || k == KeyEvent.VK_ESCAPE || k == KeyEvent.VK_HOME
-                || paste || copy) {
+        if (isDigitBase(c) || k == KeyEvent.VK_BACK_SPACE || k == KeyEvent.VK_DELETE || k == KeyEvent.VK_RIGHT || k == KeyEvent.VK_LEFT || k == KeyEvent.VK_ENTER || k == KeyEvent.VK_KP_LEFT || k == KeyEvent.VK_KP_RIGHT
+                || k == KeyEvent.VK_END || k == KeyEvent.VK_ESCAPE || k == KeyEvent.VK_HOME || paste || copy) {
             super.processKeyEvent(ev);
             return;
         }
@@ -3014,19 +2904,18 @@ class HVPTextField extends JTextField {
         this.base = 2;
     }
 
-    public boolean isValidNumber(){
-            
+    public boolean isValidNumber() {
+
         String value = getText();
         if (value == null || value.isEmpty())
             return false;
-            
+
         try {
-            new BigInteger (value, getBase());
-        }
-        catch (NumberFormatException nfe){
+            new BigInteger(value, getBase());
+        } catch (NumberFormatException nfe) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -3296,14 +3185,14 @@ class FilterComboBox extends JComboBox<String> {
             this.hidePopup();
         }
     }
-    
-    public void updateMinSize(){
+
+    public void updateMinSize() {
         int size = this.getItemCount();
         int larger = 0;
         String big = "";
         for (int i = 0; i < size; i++) {
             String item = this.getItemAt(i);
-            if (item.length() > larger){
+            if (item.length() > larger) {
                 larger = item.length();
                 big = item;
             }
@@ -3403,44 +3292,24 @@ class HVPSettings implements Serializable {
 
 class ImageFileView extends FileView {
 
-    static byte[] imageArray = { (byte) 0x89, (byte) 0x50, (byte) 0x4E, (byte) 0x47, (byte) 0x0D, (byte) 0x0A,
-            (byte) 0x1A, (byte) 0x0A, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x0D, (byte) 0x49, (byte) 0x48,
-            (byte) 0x44, (byte) 0x52, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x10, (byte) 0x00, (byte) 0x00,
-            (byte) 0x00, (byte) 0x10, (byte) 0x08, (byte) 0x02, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x90,
-            (byte) 0x91, (byte) 0x68, (byte) 0x36, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x09, (byte) 0x70,
-            (byte) 0x48, (byte) 0x59, (byte) 0x73, (byte) 0x00, (byte) 0x00, (byte) 0x0E, (byte) 0xC4, (byte) 0x00,
-            (byte) 0x00, (byte) 0x0E, (byte) 0xC4, (byte) 0x01, (byte) 0x95, (byte) 0x2B, (byte) 0x0E, (byte) 0x1B,
-            (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0xE0, (byte) 0x49, (byte) 0x44, (byte) 0x41, (byte) 0x54,
-            (byte) 0x78, (byte) 0xDA, (byte) 0x75, (byte) 0x92, (byte) 0xBD, (byte) 0x11, (byte) 0x83, (byte) 0x30,
-            (byte) 0x0C, (byte) 0x85, (byte) 0xDF, (byte) 0x71, (byte) 0x19, (byte) 0x05, (byte) 0x28, (byte) 0x72,
-            (byte) 0x4C, (byte) 0xA0, (byte) 0x0D, (byte) 0xB8, (byte) 0xF4, (byte) 0xB4, (byte) 0xE9, (byte) 0x9C,
-            (byte) 0x96, (byte) 0x01, (byte) 0x52, (byte) 0x66, (byte) 0x00, (byte) 0x53, (byte) 0x86, (byte) 0x29,
-            (byte) 0x52, (byte) 0x99, (byte) 0x0D, (byte) 0x3C, (byte) 0x41, (byte) 0x8E, (byte) 0x02, (byte) 0xB1,
-            (byte) 0x8B, (byte) 0x52, (byte) 0x04, (byte) 0xFC, (byte) 0x87, (byte) 0xF9, (byte) 0x2A, (byte) 0x23,
-            (byte) 0x78, (byte) 0xB2, (byte) 0x9E, (byte) 0x1E, (byte) 0x10, (byte) 0x11, (byte) 0x11, (byte) 0x31,
-            (byte) 0x0A, (byte) 0xA4, (byte) 0x59, (byte) 0x3C, (byte) 0x87, (byte) 0xC2, (byte) 0x4E, (byte) 0x01,
-            (byte) 0x00, (byte) 0xC0, (byte) 0xF2, (byte) 0x45, (byte) 0x53, (byte) 0x97, (byte) 0x70, (byte) 0x4C,
-            (byte) 0x9F, (byte) 0x91, (byte) 0xBA, (byte) 0x5B, (byte) 0x50, (byte) 0x70, (byte) 0x6C, (byte) 0x82,
-            (byte) 0xD9, (byte) 0xD2, (byte) 0xB5, (byte) 0xF2, (byte) 0xD5, (byte) 0x35, (byte) 0x6D, (byte) 0x90,
-            (byte) 0x08, (byte) 0xA6, (byte) 0xC7, (byte) 0x18, (byte) 0xBF, (byte) 0xE7, (byte) 0xA4, (byte) 0x41,
-            (byte) 0x88, (byte) 0x88, (byte) 0xB0, (byte) 0xA6, (byte) 0x63, (byte) 0x5D, (byte) 0x19, (byte) 0xC9,
-            (byte) 0x82, (byte) 0x8C, (byte) 0x41, (byte) 0xD6, (byte) 0x04, (byte) 0x92, (byte) 0x13, (byte) 0x8A,
-            (byte) 0x8C, (byte) 0x63, (byte) 0x9E, (byte) 0x2D, (byte) 0x75, (byte) 0x38, (byte) 0xC3, (byte) 0xF5,
-            (byte) 0x73, (byte) 0xF7, (byte) 0xB0, (byte) 0xA6, (byte) 0x6D, (byte) 0x20, (byte) 0x7F, (byte) 0xF2,
-            (byte) 0x5C, (byte) 0xC0, (byte) 0xB3, (byte) 0x45, (byte) 0x03, (byte) 0xA0, (byte) 0xBA, (byte) 0x92,
-            (byte) 0x9D, (byte) 0x19, (byte) 0x28, (byte) 0x9D, (byte) 0xE3, (byte) 0xE1, (byte) 0xDE, (byte) 0x43,
-            (byte) 0x73, (byte) 0x7B, (byte) 0x34, (byte) 0x9D, (byte) 0xCF, (byte) 0x2A, (byte) 0x7C, (byte) 0x0C,
-            (byte) 0xCE, (byte) 0x17, (byte) 0x2F, (byte) 0x75, (byte) 0x57, (byte) 0x00, (byte) 0xC0, (byte) 0x3A,
-            (byte) 0xBC, (byte) 0x46, (byte) 0xF5, (byte) 0x14, (byte) 0xEF, (byte) 0x6C, (byte) 0x77, (byte) 0x59,
-            (byte) 0x78, (byte) 0x41, (byte) 0x59, (byte) 0x37, (byte) 0xF8, (byte) 0x2E, (byte) 0xEB, (byte) 0xFF,
-            (byte) 0xF3, (byte) 0x7B, (byte) 0x0F, (byte) 0xFD, (byte) 0x6E, (byte) 0x83, (byte) 0x1C, (byte) 0x33,
-            (byte) 0x23, (byte) 0x79, (byte) 0x8F, (byte) 0x46, (byte) 0x81, (byte) 0xF2, (byte) 0xF9, (byte) 0x90,
-            (byte) 0x0E, (byte) 0x05, (byte) 0xDB, (byte) 0xA8, (byte) 0x46, (byte) 0x25, (byte) 0xB1, (byte) 0x45,
-            (byte) 0xCB, (byte) 0x8A, (byte) 0x04, (byte) 0xAC, (byte) 0x09, (byte) 0x44, (byte) 0xE9, (byte) 0x2A,
-            (byte) 0xE3, (byte) 0xE5, (byte) 0x46, (byte) 0x02, (byte) 0x31, (byte) 0x0A, (byte) 0x48, (byte) 0x7F,
-            (byte) 0xEB, (byte) 0x24, (byte) 0x8C, (byte) 0x1F, (byte) 0x75, (byte) 0x59, (byte) 0x74, (byte) 0x31,
-            (byte) 0xBC, (byte) 0xB2, (byte) 0x98, (byte) 0x40, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-            (byte) 0x49, (byte) 0x45, (byte) 0x4E, (byte) 0x44, (byte) 0xAE, (byte) 0x42, (byte) 0x60, (byte) 0x82 };
+    static byte[] imageArray = { (byte) 0x89, (byte) 0x50, (byte) 0x4E, (byte) 0x47, (byte) 0x0D, (byte) 0x0A, (byte) 0x1A, (byte) 0x0A, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x0D, (byte) 0x49, (byte) 0x48, (byte) 0x44, (byte) 0x52,
+            (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x10, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x10, (byte) 0x08, (byte) 0x02, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x90, (byte) 0x91, (byte) 0x68, (byte) 0x36,
+            (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x09, (byte) 0x70, (byte) 0x48, (byte) 0x59, (byte) 0x73, (byte) 0x00, (byte) 0x00, (byte) 0x0E, (byte) 0xC4, (byte) 0x00, (byte) 0x00, (byte) 0x0E, (byte) 0xC4, (byte) 0x01,
+            (byte) 0x95, (byte) 0x2B, (byte) 0x0E, (byte) 0x1B, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0xE0, (byte) 0x49, (byte) 0x44, (byte) 0x41, (byte) 0x54, (byte) 0x78, (byte) 0xDA, (byte) 0x75, (byte) 0x92, (byte) 0xBD,
+            (byte) 0x11, (byte) 0x83, (byte) 0x30, (byte) 0x0C, (byte) 0x85, (byte) 0xDF, (byte) 0x71, (byte) 0x19, (byte) 0x05, (byte) 0x28, (byte) 0x72, (byte) 0x4C, (byte) 0xA0, (byte) 0x0D, (byte) 0xB8, (byte) 0xF4, (byte) 0xB4,
+            (byte) 0xE9, (byte) 0x9C, (byte) 0x96, (byte) 0x01, (byte) 0x52, (byte) 0x66, (byte) 0x00, (byte) 0x53, (byte) 0x86, (byte) 0x29, (byte) 0x52, (byte) 0x99, (byte) 0x0D, (byte) 0x3C, (byte) 0x41, (byte) 0x8E, (byte) 0x02,
+            (byte) 0xB1, (byte) 0x8B, (byte) 0x52, (byte) 0x04, (byte) 0xFC, (byte) 0x87, (byte) 0xF9, (byte) 0x2A, (byte) 0x23, (byte) 0x78, (byte) 0xB2, (byte) 0x9E, (byte) 0x1E, (byte) 0x10, (byte) 0x11, (byte) 0x11, (byte) 0x31,
+            (byte) 0x0A, (byte) 0xA4, (byte) 0x59, (byte) 0x3C, (byte) 0x87, (byte) 0xC2, (byte) 0x4E, (byte) 0x01, (byte) 0x00, (byte) 0xC0, (byte) 0xF2, (byte) 0x45, (byte) 0x53, (byte) 0x97, (byte) 0x70, (byte) 0x4C, (byte) 0x9F,
+            (byte) 0x91, (byte) 0xBA, (byte) 0x5B, (byte) 0x50, (byte) 0x70, (byte) 0x6C, (byte) 0x82, (byte) 0xD9, (byte) 0xD2, (byte) 0xB5, (byte) 0xF2, (byte) 0xD5, (byte) 0x35, (byte) 0x6D, (byte) 0x90, (byte) 0x08, (byte) 0xA6,
+            (byte) 0xC7, (byte) 0x18, (byte) 0xBF, (byte) 0xE7, (byte) 0xA4, (byte) 0x41, (byte) 0x88, (byte) 0x88, (byte) 0xB0, (byte) 0xA6, (byte) 0x63, (byte) 0x5D, (byte) 0x19, (byte) 0xC9, (byte) 0x82, (byte) 0x8C, (byte) 0x41,
+            (byte) 0xD6, (byte) 0x04, (byte) 0x92, (byte) 0x13, (byte) 0x8A, (byte) 0x8C, (byte) 0x63, (byte) 0x9E, (byte) 0x2D, (byte) 0x75, (byte) 0x38, (byte) 0xC3, (byte) 0xF5, (byte) 0x73, (byte) 0xF7, (byte) 0xB0, (byte) 0xA6,
+            (byte) 0x6D, (byte) 0x20, (byte) 0x7F, (byte) 0xF2, (byte) 0x5C, (byte) 0xC0, (byte) 0xB3, (byte) 0x45, (byte) 0x03, (byte) 0xA0, (byte) 0xBA, (byte) 0x92, (byte) 0x9D, (byte) 0x19, (byte) 0x28, (byte) 0x9D, (byte) 0xE3,
+            (byte) 0xE1, (byte) 0xDE, (byte) 0x43, (byte) 0x73, (byte) 0x7B, (byte) 0x34, (byte) 0x9D, (byte) 0xCF, (byte) 0x2A, (byte) 0x7C, (byte) 0x0C, (byte) 0xCE, (byte) 0x17, (byte) 0x2F, (byte) 0x75, (byte) 0x57, (byte) 0x00,
+            (byte) 0xC0, (byte) 0x3A, (byte) 0xBC, (byte) 0x46, (byte) 0xF5, (byte) 0x14, (byte) 0xEF, (byte) 0x6C, (byte) 0x77, (byte) 0x59, (byte) 0x78, (byte) 0x41, (byte) 0x59, (byte) 0x37, (byte) 0xF8, (byte) 0x2E, (byte) 0xEB,
+            (byte) 0xFF, (byte) 0xF3, (byte) 0x7B, (byte) 0x0F, (byte) 0xFD, (byte) 0x6E, (byte) 0x83, (byte) 0x1C, (byte) 0x33, (byte) 0x23, (byte) 0x79, (byte) 0x8F, (byte) 0x46, (byte) 0x81, (byte) 0xF2, (byte) 0xF9, (byte) 0x90,
+            (byte) 0x0E, (byte) 0x05, (byte) 0xDB, (byte) 0xA8, (byte) 0x46, (byte) 0x25, (byte) 0xB1, (byte) 0x45, (byte) 0xCB, (byte) 0x8A, (byte) 0x04, (byte) 0xAC, (byte) 0x09, (byte) 0x44, (byte) 0xE9, (byte) 0x2A, (byte) 0xE3,
+            (byte) 0xE5, (byte) 0x46, (byte) 0x02, (byte) 0x31, (byte) 0x0A, (byte) 0x48, (byte) 0x7F, (byte) 0xEB, (byte) 0x24, (byte) 0x8C, (byte) 0x1F, (byte) 0x75, (byte) 0x59, (byte) 0x74, (byte) 0x31, (byte) 0xBC, (byte) 0xB2,
+            (byte) 0x98, (byte) 0x40, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x49, (byte) 0x45, (byte) 0x4E, (byte) 0x44, (byte) 0xAE, (byte) 0x42, (byte) 0x60, (byte) 0x82 };
 
     public static ImageIcon hvpIcon = new ImageIcon(imageArray);
     public final static String hvp = "hvp";
@@ -3674,18 +3543,15 @@ class CursorComponent extends JComponent {
         charMappingCharset = charset;
     }
 
-    protected void drawCenteredChar(Graphics g, char[] drawnChars, int charOffset, int charWidthSpace, int startX,
-            int positionY) {
+    protected void drawCenteredChar(Graphics g, char[] drawnChars, int charOffset, int charWidthSpace, int startX, int positionY) {
         FontMetrics fontMetrics = codeArea.getFontMetrics();
         if (charOffset >= 0) {
             int charWidth = fontMetrics.charWidth(drawnChars[charOffset]);
-            drawShiftedChar(g, drawnChars, charOffset, charWidthSpace, startX, positionY,
-                    (charWidthSpace + 1 - charWidth) >> 1);
+            drawShiftedChar(g, drawnChars, charOffset, charWidthSpace, startX, positionY, (charWidthSpace + 1 - charWidth) >> 1);
         }
     }
 
-    protected void drawShiftedChar(Graphics g, char[] drawnChars, int charOffset, int charWidthSpace, int startX,
-            int positionY, int shift) {
+    protected void drawShiftedChar(Graphics g, char[] drawnChars, int charOffset, int charWidthSpace, int startX, int positionY, int shift) {
         g.drawChars(drawnChars, charOffset, 1, startX + shift, positionY);
     }
 
@@ -3732,9 +3598,7 @@ class CursorComponent extends JComponent {
                 g.setXORMode(Color.WHITE);
             }
 
-            CodeAreaCaret.CursorShape cursorShape = codeArea.getEditationMode() == EditationMode.INSERT
-                    ? caret.getInsertCursorShape()
-                    : caret.getOverwriteCursorShape();
+            CodeAreaCaret.CursorShape cursorShape = codeArea.getEditationMode() == EditationMode.INSERT ? caret.getInsertCursorShape() : caret.getOverwriteCursorShape();
             int cursorThickness = 0;
             if (cursorShape.getWidth() != CodeAreaCaret.CursorShapeWidth.FULL) {
                 cursorThickness = caret.getCursorThickness(cursorShape, charWidth, lineHeight);
@@ -3751,8 +3615,7 @@ class CursorComponent extends JComponent {
                 case DOUBLE_BOTTOM:
                 case QUARTER_BOTTOM:
                 case HALF_BOTTOM: {
-                    paintCursorRect(g, cursorPoint.x, cursorPoint.y + lineHeight - cursorThickness, charWidth,
-                            cursorThickness, renderingMode);
+                    paintCursorRect(g, cursorPoint.x, cursorPoint.y + lineHeight - cursorThickness, charWidth, cursorThickness, renderingMode);
                     break;
                 }
                 case LINE_LEFT:
@@ -3766,8 +3629,7 @@ class CursorComponent extends JComponent {
                 case DOUBLE_RIGHT:
                 case QUARTER_RIGHT:
                 case HALF_RIGHT: {
-                    paintCursorRect(g, cursorPoint.x + charWidth - cursorThickness, cursorPoint.y, cursorThickness,
-                            lineHeight, renderingMode);
+                    paintCursorRect(g, cursorPoint.x + charWidth - cursorThickness, cursorPoint.y, cursorThickness, lineHeight, renderingMode);
                     break;
                 }
                 case BOX: {
@@ -3784,23 +3646,17 @@ class CursorComponent extends JComponent {
                     int quarterLine = lineHeight / 4;
                     if (cursorShape == CodeAreaCaret.CursorShape.CORNERS) {
                         g.drawLine(cursorPoint.x, cursorPoint.y, cursorPoint.x + quarterWidth, cursorPoint.y);
-                        g.drawLine(cursorPoint.x + charWidth - quarterWidth, cursorPoint.y, cursorPoint.x + charWidth,
-                                cursorPoint.y);
+                        g.drawLine(cursorPoint.x + charWidth - quarterWidth, cursorPoint.y, cursorPoint.x + charWidth, cursorPoint.y);
 
                         g.drawLine(cursorPoint.x, cursorPoint.y + 1, cursorPoint.x, cursorPoint.y + quarterLine);
-                        g.drawLine(cursorPoint.x + charWidth, cursorPoint.y + 1, cursorPoint.x + charWidth,
-                                cursorPoint.y + quarterLine);
+                        g.drawLine(cursorPoint.x + charWidth, cursorPoint.y + 1, cursorPoint.x + charWidth, cursorPoint.y + quarterLine);
                     }
 
-                    g.drawLine(cursorPoint.x, cursorPoint.y + lineHeight - quarterLine - 1, cursorPoint.x,
-                            cursorPoint.y + lineHeight - 2);
-                    g.drawLine(cursorPoint.x + charWidth, cursorPoint.y + lineHeight - quarterLine - 1,
-                            cursorPoint.x + charWidth, cursorPoint.y + lineHeight - 2);
+                    g.drawLine(cursorPoint.x, cursorPoint.y + lineHeight - quarterLine - 1, cursorPoint.x, cursorPoint.y + lineHeight - 2);
+                    g.drawLine(cursorPoint.x + charWidth, cursorPoint.y + lineHeight - quarterLine - 1, cursorPoint.x + charWidth, cursorPoint.y + lineHeight - 2);
 
-                    g.drawLine(cursorPoint.x, cursorPoint.y + lineHeight - 1, cursorPoint.x + quarterWidth,
-                            cursorPoint.y + lineHeight - 1);
-                    g.drawLine(cursorPoint.x + charWidth - quarterWidth, cursorPoint.y + lineHeight - 1,
-                            cursorPoint.x + charWidth, cursorPoint.y + lineHeight - 1);
+                    g.drawLine(cursorPoint.x, cursorPoint.y + lineHeight - 1, cursorPoint.x + quarterWidth, cursorPoint.y + lineHeight - 1);
+                    g.drawLine(cursorPoint.x + charWidth - quarterWidth, cursorPoint.y + lineHeight - 1, cursorPoint.x + charWidth, cursorPoint.y + lineHeight - 1);
                     break;
                 }
                 default: {
@@ -3814,8 +3670,7 @@ class CursorComponent extends JComponent {
         }
     }
 
-    private void paintCursorRect(Graphics g, int x, int y, int width, int height,
-            CodeAreaCaret.CursorRenderingMode renderingMode) {
+    private void paintCursorRect(Graphics g, int x, int y, int width, int height, CodeAreaCaret.CursorRenderingMode renderingMode) {
         switch (renderingMode) {
             case PAINT: {
                 g.fillRect(x, y, width, height);
@@ -3845,15 +3700,12 @@ class CursorComponent extends JComponent {
                 int charWidth = codeArea.getCharWidth();
                 int lineHeight = codeArea.getLineHeight();
                 int line = (y + scrollPosition.getScrollLineOffset() - codeRect.y) / lineHeight;
-                int scrolledX = x + scrollPosition.getScrollCharPosition() * charWidth
-                        + scrollPosition.getScrollCharOffset();
-                int posY = codeRect.y + (line + 1) * lineHeight - codeArea.getSubFontSpace()
-                        - scrollPosition.getScrollLineOffset();
+                int scrolledX = x + scrollPosition.getScrollCharPosition() * charWidth + scrollPosition.getScrollCharOffset();
+                int posY = codeRect.y + (line + 1) * lineHeight - codeArea.getSubFontSpace() - scrollPosition.getScrollLineOffset();
                 if (codeArea.getViewMode() != ViewMode.CODE_MATRIX && scrolledX >= previewX) {
                     int charPos = (scrolledX - previewX) / charWidth;
                     long dataSize = codeArea.getDataSize();
-                    long dataPosition = (line + scrollPosition.getScrollLinePosition()) * codeArea.getBytesPerLine()
-                            + charPos - scrollPosition.getLineByteShift();
+                    long dataPosition = (line + scrollPosition.getScrollLinePosition()) * codeArea.getBytesPerLine() + charPos - scrollPosition.getLineByteShift();
                     if (dataPosition >= dataSize) {
                         g.setClip(clip);
                         break;
@@ -3893,8 +3745,7 @@ class CursorComponent extends JComponent {
                             previewChars[0] = replacement;
                         }
                     }
-                    int posX = previewX + charPos * charWidth - scrollPosition.getScrollCharPosition() * charWidth
-                            - scrollPosition.getScrollCharOffset();
+                    int posX = previewX + charPos * charWidth - scrollPosition.getScrollCharPosition() * charWidth - scrollPosition.getScrollCharOffset();
                     if (codeArea.getCharRenderingMode() == CodeArea.CharRenderingMode.LINE_AT_ONCE) {
                         g.drawChars(previewChars, 0, 1, posX, posY);
                     } else {
@@ -3906,18 +3757,15 @@ class CursorComponent extends JComponent {
                     int codeCharPos = codeArea.computeByteCharPos(byteOffset);
                     char[] lineChars = new char[codeArea.getCodeType().getMaxDigits()];
                     long dataSize = codeArea.getDataSize();
-                    long dataPosition = (line + scrollPosition.getScrollLinePosition()) * codeArea.getBytesPerLine()
-                            + byteOffset - scrollPosition.getLineByteShift();
+                    long dataPosition = (line + scrollPosition.getScrollLinePosition()) * codeArea.getBytesPerLine() + byteOffset - scrollPosition.getLineByteShift();
                     if (dataPosition >= dataSize) {
                         g.setClip(clip);
                         break;
                     }
 
                     byte dataByte = codeArea.getData().getByte(dataPosition);
-                    CodeAreaUtils.byteToCharsCode(dataByte, codeArea.getCodeType(), lineChars, 0,
-                            codeArea.getHexCharactersCase());
-                    int posX = codeRect.x + codeCharPos * charWidth - scrollPosition.getScrollCharPosition() * charWidth
-                            - scrollPosition.getScrollCharOffset();
+                    CodeAreaUtils.byteToCharsCode(dataByte, codeArea.getCodeType(), lineChars, 0, codeArea.getHexCharactersCase());
+                    int posX = codeRect.x + codeCharPos * charWidth - scrollPosition.getScrollCharPosition() * charWidth - scrollPosition.getScrollCharOffset();
                     int charsOffset = charPos - codeCharPos;
                     if (codeArea.getCharRenderingMode() == CodeArea.CharRenderingMode.LINE_AT_ONCE) {
                         g.drawChars(lineChars, charsOffset, 1, posX + (charsOffset * charWidth), posY);
