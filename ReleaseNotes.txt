@@ -1,3 +1,15 @@
+25/08/2022: IPED-4.0.3
+Fixes:
+#661:  Fix dynamic metadata types detection divergences in multicases (@lfcnassif)
+#1281: Aborting ArrayIndexOutOfBoundsException while indexing embedded virtual disk segments or huge files (@lfcnassif)
+#1278: Processing rarely aborting by ArrayIndexOutOfBoundsException from QRCodeTask (@lfcnassif)
+#1277: Searching in Hex Viewer not working (@lfcnassif)
+#1274: Error creating bookmarks from python scripts (@lfcnassif)
+#1288: Error generating multicase graph depending on current directory (@lfcnassif)
+#1273: Fix PythonScriptTask.py example and ExampleScriptTask.js (@lfcnassif)
+#1276: Fix ending white spaces in some localization strings (@lfcnassif)
+
+
 08/08/2022: IPED-4.0.2
 Fixes:
 #1262: Preview of device info, contacts & emails from UFDR evidences can be overridden with --append - also affects 3.18.x (@lfcnassif)
