@@ -1,11 +1,15 @@
 package iped.app.ui;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.EventObject;
 
+import javax.swing.AbstractAction;
+import javax.swing.InputMap;
 import javax.swing.JTable;
+import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.table.TableModel;
 
@@ -14,10 +18,15 @@ public class GalleryTable extends JTable {
     private static final long serialVersionUID = 1L;
 
     private int lastCell = 0;
-    private BitSet selectedCells = new BitSet();
+    private BitSet selectedCells;
 
     public GalleryTable(TableModel tableModel) {
         super(tableModel);
+        InputMap inputMap = getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "Right");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "Left");
+        getActionMap().put("Right", new ArrowAction(1));
+        getActionMap().put("Left", new ArrowAction(-1));
     }
 
     @Override
@@ -92,7 +101,11 @@ public class GalleryTable extends JTable {
 
     @Override
     public void clearSelection() {
-        selectedCells = new BitSet();
+        if (selectedCells == null) {
+            selectedCells = new BitSet();
+        } else {
+            selectedCells.clear();
+        }
         super.clearSelection();
     }
 
@@ -110,4 +123,36 @@ public class GalleryTable extends JTable {
         return super.editCellAt(row, column, e);
     }
 
+}
+
+/**
+ * Auxiliary class to allow moving cell selection to the next/previous row when
+ * using right/left keys.
+ */
+class ArrowAction extends AbstractAction {
+    private static final long serialVersionUID = 1876354716105372284L;
+    private final int dir;
+
+    public ArrowAction(int dir) {
+        this.dir = dir;
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        JTable tab = (JTable) e.getSource();
+        int row = tab.getSelectedRow();
+        int col = tab.getSelectedColumn();
+        if (col + dir >= 0 && col + dir < tab.getColumnCount()) {
+            if (row * tab.getColumnCount() + col + dir < App.get().ipedResult.getLength()) {
+                tab.getSelectionModel().setValueIsAdjusting(true);
+                tab.clearSelection();
+                tab.changeSelection(row, col + dir, false, false);
+                tab.getSelectionModel().setValueIsAdjusting(false);
+            }
+        } else if (row + dir >= 0 && row + dir < tab.getRowCount()) {
+            tab.getSelectionModel().setValueIsAdjusting(true);
+            tab.clearSelection();
+            tab.changeSelection(row + dir, dir > 0 ? 0 : tab.getColumnCount() - 1, false, false);
+            tab.getSelectionModel().setValueIsAdjusting(false);
+        }
+    }
 }
