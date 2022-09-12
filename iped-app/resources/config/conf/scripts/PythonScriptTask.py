@@ -1,7 +1,7 @@
 ﻿# Python task script example. It must be installed in TaskInstaller.xml to be executed.
 # The script could access any item properties, extracted text, thumbs and raw bytes.
 # The script can set extra item properties/columns in process() method, ignore items or create bookmarks in finish().
-# You need to install jep (pip install jep) and include jep.dll(.so) in PATH or LD_LIBRARY_PATH (Linux)
+# On Linux, you need to install jep (pip install jep) and include jep.so in LD_LIBRARY_PATH.
 # see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 
@@ -21,7 +21,7 @@ class PythonScriptTask:
     # It is executed when application starts by each processing thread on its class instance.
     # @Params
     # configuration:    configuration manager by which configurables can be retrieved after populated.
-    def init(configuration):
+    def init(self, configuration):
         #print("init")
         return
     
@@ -32,7 +32,7 @@ class PythonScriptTask:
     # TODO: document methods of those objects.
     def finish(self):
         
-        query = "tipo:doc"
+        query = "type:doc"
         
         #set query into searcher
         searcher.setQuery(query)
@@ -49,8 +49,8 @@ class PythonScriptTask:
         #add item ids to created bookmark
         ipedCase.getBookmarks().addBookmark(ids, bookmarkId)
         
-        #save changes
-        ipedCase.getBookmarks().saveState()
+        #save changes synchronously
+        ipedCase.getBookmarks().saveState(True)
     
     
     # Process an Item object. This method is executed on all case items.

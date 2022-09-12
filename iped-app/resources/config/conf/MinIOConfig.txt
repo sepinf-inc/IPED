@@ -2,9 +2,6 @@
 # MinIO Task configuration
 #################################
 
-# Enable exporting files to MinIO object storage
-enableMinIO = false
-
 # Host name or ip address of MinIO
 host = http://HPW06
 
@@ -14,3 +11,13 @@ port = 9000
 # max size (bytes) of files to be included in the zip file
 zipFilesMaxSize = 32768
 
+# Update case item content internal references to MinIO server.
+# If true, the case will depend on MinIO to access file contents.
+# If false, the case won't depend on MinIO, even if files were exported to it.
+updateRefsToMinIO = false
+
+# Time out in seconds for the connection, read and write operations
+timeOut = 30
+
+# Number of times the upload will be retried
+retries = 1

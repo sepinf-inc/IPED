@@ -310,6 +310,10 @@
         <glob pattern="ChatStorage*.sqlite"/>
     </mime-type>
     
+    <mime-type type="application/x-whatsapp-chatstorage-f">
+        <sub-class-of type="application/x-whatsapp-chatstorage"/>
+    </mime-type>
+    
     <mime-type type="application/x-whatsapp-wadb">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="wa*.db"/>
@@ -1234,7 +1238,7 @@
 	<mime-type type="application/x-database-table">
     	<sub-class-of type="text/html"/>
     </mime-type>
-
+    
     <mime-type type="application/x-jabber-chat">
        <magic priority="50">
             <match value=".{0,114}Conversation with.{1,50}at.{21}on" type="regex" offset="86"/>
@@ -1289,6 +1293,9 @@
     <mime-type type="application/x-ios-locations-db">
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
+    
+    <mime-type type="application/x-tor-tc-fragment">
+	</mime-type>
     
     <mime-type type="application/x-chrome-cache-index">
         <_comment>Chrome Cache Index file </_comment>

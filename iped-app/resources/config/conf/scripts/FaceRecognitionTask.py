@@ -32,7 +32,7 @@ numCreatedProcsLock = threading.Lock()
 from java.lang import System
 ipedRoot = System.getProperty('iped.root')
 
-bin = 'python'
+bin = 'python' if platform.system().lower() == 'windows' else 'python3'
 
 detection_model = 'hog'
 max_size = 1024
@@ -93,12 +93,13 @@ def pingExternalProcess(proc):
 class FaceRecognitionTask:
 
     enabled = False
+    videoSubitems = False
     
     def isEnabled(self):
         return FaceRecognitionTask.enabled
     
     def getConfigurables(self):
-        from dpf.sp.gpinf.indexer.config import DefaultTaskPropertiesConfig
+        from iped.engine.config import DefaultTaskPropertiesConfig
         return [DefaultTaskPropertiesConfig(enableProp, configFile)]
     
     # This method is executed before starting the processing of items.
@@ -107,6 +108,10 @@ class FaceRecognitionTask:
         FaceRecognitionTask.enabled = taskConfig.isEnabled()
         if not FaceRecognitionTask.enabled:
             return
+        
+        from iped.engine.config import VideoThumbsConfig
+        videoConfig = configuration.findObject(VideoThumbsConfig);
+        FaceRecognitionTask.videoSubitems = videoConfig.getVideoThumbsSubitems();
         
         global fp, terminate, imgError, ping
         import FaceRecognitionProcess as fp
@@ -204,7 +209,7 @@ class FaceRecognitionTask:
         mediaType = item.getMediaType().toString()
         if mediaType.startswith('image'):
             img_path = item.getTempFile().getAbsolutePath()
-        elif mediaType.startswith('video'):
+        elif mediaType.startswith('video') and not FaceRecognitionTask.videoSubitems:
             img_path = item.getViewFile().getAbsolutePath()
             isVideo = True
         else:

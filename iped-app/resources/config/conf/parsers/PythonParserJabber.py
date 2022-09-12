@@ -13,12 +13,12 @@ from org.apache.tika.exception import TikaException
 from org.apache.tika.extractor import EmbeddedDocumentExtractor
 from org.apache.tika.sax import EmbeddedContentHandler
 from org.apache.tika.parser.html import HtmlParser
-from iped3.util import ExtraProperties
-from iped3.util import BasicProps
-from dpf.sp.gpinf.indexer.parsers import IndexerDefaultParser
-from dpf.sp.gpinf.indexer.util import EmptyInputStream
-from dpf.mg.udi.gpinf.whatsappextractor import Util
-from dpf.sp.gpinf.indexer.parsers.util import IndentityHtmlParser
+from iped.properties import ExtraProperties
+from iped.properties import BasicProps
+from iped.parsers.standard import StandardParser
+from iped.utils import EmptyInputStream
+from iped.parsers.whatsapp import Util
+from iped.parsers.util import IndentityHtmlParser
 from org.apache.commons.codec.binary import StringUtils
 from java.io import ByteArrayInputStream
 import os
@@ -238,7 +238,7 @@ class PythonParserJabber:
                 meta.set(Message.MESSAGE_TO, iped_receiver)
                 meta.set(ExtraProperties.MESSAGE_DATE,iped_date)
                 meta.set(ExtraProperties.MESSAGE_BODY,iped_text)
-                meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, self.instant_message_mime)
+                meta.set(StandardParser.INDEXER_CONTENT_TYPE, self.instant_message_mime)
                 extractor.parseEmbedded(EmptyInputStream(), handler, meta, False)
 
                 #new_messages_list.append({"sender":iped_sender, "receiver":iped_receiver, "date":iped_date, "msg":iped_text, "direction":iped_direction})
