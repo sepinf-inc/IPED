@@ -106,7 +106,7 @@ public class ReportGenerator {
                 title += " user:" + c.getC().getUsername();
         }
 
-        printMessageFileHeader(out, title, c.getId() + "", c.getC().getAvatar(), c.isDeleted());
+        printMessageFileHeader(out, title, c.getId() + "", c.getC().getAvatar(), c.isGroup() && c.isDeleted());
 
         if (currentMsg > 0)
             out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -389,7 +389,7 @@ public class ReportGenerator {
     }
 
     private static void printMessageFileHeader(PrintWriter out, String title, String id, byte[] avatar,
-            boolean isDeleted) {
+            boolean isDeletedGroup) {
         out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
                 + "<html>\n" //$NON-NLS-1$
                 + "<head>\n" //$NON-NLS-1$
@@ -421,9 +421,9 @@ public class ReportGenerator {
                 + "<br/><br/><br/>"); //$NON-NLS-1$
 
 
-        if (isDeleted) {
+        if (isDeletedGroup) {
             out.println("<div class=\"linha\"><div class=\"recoveredChat\">"
-                    + Messages.getString("WhatsAppReport.RecoveredChat") + "</div></div>");
+                    + Messages.getString("TelegramReport.RecoveredGroup") + "</div></div>");
         }
     }
 
