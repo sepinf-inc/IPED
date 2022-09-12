@@ -17,6 +17,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.opensearch.action.ActionListener;
@@ -55,6 +56,7 @@ import iped.engine.config.IndexTaskConfig;
 import iped.engine.io.FragmentingReader;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.MinIOTask.MinIODataRef;
+import iped.engine.util.SSLFix;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
@@ -152,7 +154,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
             clientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
                 @Override
                 public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-                    return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                    var custombuilder=httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                    // disable validation if configured
+                    if (!elasticConfig.getValidateSSL()) {
+                        custombuilder.setSSLContext(SSLFix.getUnsecureSSLContext()).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+                    }
+                    return custombuilder;
                 }
             });
         }

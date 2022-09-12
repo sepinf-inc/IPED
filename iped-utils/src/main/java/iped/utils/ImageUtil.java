@@ -2,10 +2,14 @@ package iped.utils;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorConvertOp;
+import java.awt.image.DataBufferByte;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -317,6 +321,19 @@ public class ImageUtil {
         g2.dispose();
         return out;
     }
+    
+    public static BufferedImage getImageFromType(BufferedImage img, int type) {
+        if (img == null || img.getType() == type) {
+            return img;
+        }
+        int w = img.getWidth();
+        int h = img.getHeight();
+        BufferedImage out = new BufferedImage(w, h, type);
+        Graphics2D g2 = (Graphics2D) out.getGraphics();
+        g2.drawImage(img, 0, 0, null);
+        g2.dispose();
+        return out;
+    }
 
     private static final int red(int color) {
         return color & 0xff;
@@ -608,5 +625,83 @@ public class ImageUtil {
             }
         }
         return true;
+    }
+
+    /**
+     * @param intensity A proportion between the blurring window and the image dimensions. 
+     * Typical values are between 0.01 and 0.05.
+     */
+    public static BufferedImage blur(BufferedImage image, int maxSize, double intensity) {
+        int w = image.getWidth();
+        int h = image.getHeight();
+        if (w > maxSize || h > maxSize) {
+            if (w > h) {
+                h = Math.max(1, h * maxSize / w);
+                w = maxSize;
+            } else {
+                w = Math.max(1, w * maxSize / h);
+                h = maxSize;
+            }
+        }
+        BufferedImage newImage = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
+        Graphics g = newImage.getGraphics();
+        g.drawImage(image, 0, 0, w, h, null);
+        g.dispose();
+        int radius = (int) Math.ceil(intensity * (newImage.getWidth() + newImage.getHeight()) / 2);
+        byte[] pixels = ((DataBufferByte) newImage.getRaster().getDataBuffer()).getData();
+        int[] len = {newImage.getWidth(),newImage.getHeight()};
+        int[] step = {1,newImage.getWidth()};
+        for (int pass = 0; pass <= 1; pass++) {
+            int len1 = len[pass];
+            int len2 = len[1 - pass];
+            int mult1 = step[pass];
+            int mult2 = step[1 - pass];
+            int[] update = new int[len2 << 2];
+            for (int i = 0; i < len1; i++) {
+                int pi = i * mult1;
+                for (int j = 0; j < len2; j++) {
+                    int cnt = 0;
+                    int sum0 = 0;
+                    int sum1 = 0;
+                    int sum2 = 0;
+                    int sum3 = 0;
+                    for (int d = -radius; d <= radius; d++) {
+                        int jd = j + d;
+                        if (jd >= 0 && jd < len2) {
+                            cnt++;
+                            int off = (pi + jd * mult2) << 2;
+                            sum0 += pixels[off] & 255;
+                            sum1 += pixels[off + 1] & 255;
+                            sum2 += pixels[off + 2] & 255;
+                            sum3 += pixels[off + 3] & 255;
+                        }
+                    }
+                    int off = j << 2;
+                    update[off] = sum0 / cnt;
+                    update[off + 1] = sum1 / cnt;
+                    update[off + 2] = sum2 / cnt;
+                    update[off + 3] = sum3 / cnt;
+                }
+                for (int j = 0; j < len2; j++) {
+                    int off1 = (pi + j * mult2) << 2;
+                    int off2 = j << 2;
+                    pixels[off1] = (byte) update[off2];
+                    pixels[off1 + 1] = (byte) update[off2 + 1];
+                    pixels[off1 + 2] = (byte) update[off2 + 2];
+                    pixels[off1 + 3] = (byte) update[off2 + 3];
+                }
+            }
+        }
+        return newImage;
+    }
+
+    public static BufferedImage grayscale(BufferedImage image) {
+        if (image == null || image.getType() == BufferedImage.TYPE_BYTE_GRAY || image.getType() == BufferedImage.TYPE_USHORT_GRAY) return image;
+        if (image.getColorModel().hasAlpha()) {
+            ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
+            ColorConvertOp op = new ColorConvertOp(cs, null);
+            return op.filter(image, null);
+        }
+        return getImageFromType(image, BufferedImage.TYPE_BYTE_GRAY);
     }
 }

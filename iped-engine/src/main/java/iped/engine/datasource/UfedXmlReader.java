@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeMap;
@@ -114,7 +115,7 @@ public class UfedXmlReader extends DataSourceReader {
     private final Set<String> supportedApps = new HashSet<String>(
             Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM));
 
-    private static AtomicInteger counter = new AtomicInteger();
+    private static Random random = new Random();
 
     File root, ufdrFile;
     UFDRInputStreamFactory uisf;
@@ -1282,9 +1283,19 @@ public class UfedXmlReader extends DataSourceReader {
             return previewFisf;
         }
 
+        private File getNewPreviewFile(String subdir) {
+            File baseDir = new File(output, "view/" + subdir);
+            baseDir.mkdirs();
+            File file;
+            do {
+                long suffix = Math.abs(random.nextLong());
+                file = new File(baseDir, "view-" + suffix + ".html");
+            } while (file.exists());
+            return file;
+        }
+
         private File createEmailPreview(Item email) {
-            File file = new File(output, "view/emails/view-" + counter.getAndIncrement() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
-            file.getParentFile().mkdirs();
+            File file = getNewPreviewFile("emails");
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) { //$NON-NLS-1$
                 bw.write("<!DOCTYPE html>\n" //$NON-NLS-1$
                         + "<html>\n" //$NON-NLS-1$
@@ -1365,8 +1376,7 @@ public class UfedXmlReader extends DataSourceReader {
                 updateName(contact, name);
             }
 
-            File file = new File(output, "view/contacts/view-" + counter.getAndIncrement() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
-            file.getParentFile().mkdirs();
+            File file = getNewPreviewFile("contacts");
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) { //$NON-NLS-1$
 
                 bw.write("<!DOCTYPE html>\n" //$NON-NLS-1$
@@ -1449,8 +1459,7 @@ public class UfedXmlReader extends DataSourceReader {
             }
             uniqueDeviceInfo.add(deviceInfoData.get(deviceInfoData.size() - 1));
 
-            File file = new File(output, "view/deviceInfo/view-" + counter.getAndIncrement() + ".html");
-            file.getParentFile().mkdirs();
+            File file = getNewPreviewFile("deviceInfo");
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
                 bw.write("<!DOCTYPE html>\n"
                         + "<html>\n"

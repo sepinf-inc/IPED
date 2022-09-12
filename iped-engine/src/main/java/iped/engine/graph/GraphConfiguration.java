@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,15 @@ public class GraphConfiguration implements Serializable {
 
     @JsonAlias("phone-region")
     private String phoneRegion;
+
+    @JsonAlias("mimes-to-detect-phones")
+    private List<String> mimesToDetectPhones = new ArrayList<>();
+
+    @JsonAlias("mimes-to-dont-detect-phones")
+    private List<String> mimesToDontDetectPhones = new ArrayList<>();
+
+    @JsonAlias("detect-phones-on-other-mimes")
+    private boolean detectPhonesOnOtherMimes = true;
 
     @JsonAlias("process-proximity-relationships")
     private boolean processProximityRelationships;
@@ -107,6 +117,18 @@ public class GraphConfiguration implements Serializable {
         includeCategoriesPattern = Pattern.compile(includeCategories);
         excludeCategoriesPattern = Pattern.compile(excludeCategories);
 
+    }
+
+    public List<String> getMimesToDetectPhones() {
+        return mimesToDetectPhones;
+    }
+
+    public List<String> getMimesToDontDetectPhones() {
+        return mimesToDontDetectPhones;
+    }
+
+    public boolean getDetectPhonesOnOtherMimes() {
+        return detectPhonesOnOtherMimes;
     }
 
     public String getDefaultEntity() {

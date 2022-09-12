@@ -45,3 +45,6 @@ index.mapping.total_fields.limit = 10000
 # Use a custom analyzer that tokenizes on non digits and non latin1 chars,
 # converts them to lowercase and uses asciifolding filter
 useCustomAnalyzer = true
+
+# Validate the SSL certificate, it is not recommended to disable this in production
+validateSSL = true
