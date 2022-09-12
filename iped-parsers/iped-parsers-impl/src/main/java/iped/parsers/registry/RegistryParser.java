@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -48,6 +49,7 @@ public class RegistryParser extends AbstractParser {
             throws IOException, SAXException, TikaException {
         /* filtra os itens a serem parseados */
         String nome = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).toUpperCase();
+        TemporaryResources tmp = new TemporaryResources();
         try {
             if (defaultRegistryKeyParser == null) {
                 defaultRegistryKeyParser = RegistryKeyParserManager.getRegistryKeyParserManager()
@@ -61,7 +63,7 @@ public class RegistryParser extends AbstractParser {
             if (!(caminho.contains("system32/config") || caminho.contains("users") || caminho.contains("settings")))
                 return;
 
-            File dbFile = TikaInputStream.get(stream).getFile();
+            File dbFile = TikaInputStream.get(stream, tmp).getFile();
 
             RegistryFile rf = new RegistryFile(dbFile);
 
@@ -73,6 +75,7 @@ public class RegistryParser extends AbstractParser {
         } catch (Exception e) {
             throw new TikaException("Erro ao decodificar arquivo de registro: " + nome, e);
         } finally {
+            tmp.close();
         }
     }
 

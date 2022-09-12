@@ -32,49 +32,48 @@ public class RegistryFile {
     }
 
     public void load() throws IOException {
-        FileInputStream fis = new FileInputStream(file);
-        int pos = 0;
+        try (FileInputStream fis = new FileInputStream(file)){
+            int pos = 0;
 
-        readCells = new HashMap<Integer, HiveCell>();
+            readCells = new HashMap<Integer, HiveCell>();
 
-        Registry reg = new Registry();
-        fis.read(reg.fileHeader);
+            Registry reg = new Registry();
+            fis.read(reg.fileHeader);
 
-        byte[] buffer = Arrays.copyOfRange(reg.fileHeader, 36, 40);
-        rootCellOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                | (buffer[3] & 0xFF) << 24;
-        buffer = null;
-
-        boolean hbexite = true;
-        while (hbexite) {
-            HiveBin hb = new HiveBin();
-            pos += fis.read(hb.header);// le o cabecalho do hivebean
-            String sig = new String(Arrays.copyOf(hb.header, 4));
-            if (!sig.equals("hbin")) {
-                hbexite = false; // fim do arquivo, e consequentemente do loop
-                continue;
-            }
-
-            buffer = Arrays.copyOfRange(hb.header, 4, 8);
-            hb.offset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                    | (buffer[3] & 0xFF) << 24;
-            buffer = null;
-            buffer = Arrays.copyOfRange(hb.header, 8, 12);
-            hb.size = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
+            byte[] buffer = Arrays.copyOfRange(reg.fileHeader, 36, 40);
+            rootCellOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
                     | (buffer[3] & 0xFF) << 24;
             buffer = null;
 
-            int hiveDataReadCount = 32; // inicia com o tamanho do cabecalho ja lido + offset
-            while (hiveDataReadCount < hb.size) {
-                HiveCell cell = readCell(fis);
-                readCells.put(pos, cell);
+            boolean hbexite = true;
+            while (hbexite) {
+                HiveBin hb = new HiveBin();
+                pos += fis.read(hb.header);// le o cabecalho do hivebean
+                String sig = new String(Arrays.copyOf(hb.header, 4));
+                if (!sig.equals("hbin")) {
+                    hbexite = false; // fim do arquivo, e consequentemente do loop
+                    continue;
+                }
 
-                hiveDataReadCount += cell.getSize();
-                pos += cell.getSize();
+                buffer = Arrays.copyOfRange(hb.header, 4, 8);
+                hb.offset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
+                        | (buffer[3] & 0xFF) << 24;
+                buffer = null;
+                buffer = Arrays.copyOfRange(hb.header, 8, 12);
+                hb.size = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
+                        | (buffer[3] & 0xFF) << 24;
+                buffer = null;
+
+                int hiveDataReadCount = 32; // inicia com o tamanho do cabecalho ja lido + offset
+                while (hiveDataReadCount < hb.size) {
+                    HiveCell cell = readCell(fis);
+                    readCells.put(pos, cell);
+
+                    hiveDataReadCount += cell.getSize();
+                    pos += cell.getSize();
+                }
             }
         }
-
-        fis.close();
     }
 
     public HiveCell readCell(InputStream fis) throws IOException {
