@@ -42,8 +42,11 @@ import iped.utils.EmptyInputStream;
  * 
  * Browser History through HJ_HistoryAddUrl and HJ_HistoryAddUrlEx events
  * 
- * Inventory Applications (Installed apps)
+ * Inventory Applications (Installed apps state)
  * https://docs.microsoft.com/en-us/windows/privacy/basic-level-windows-diagnostic-events-and-fields-1709#microsoftwindowsinventorycoreinventoryapplicationadd
+ * similarly:
+ * PNP Devices
+ * https://docs.microsoft.com/en-us/windows/privacy/basic-level-windows-diagnostic-events-and-fields-1709#microsoftwindowsinventorycoreinventorydevicepnpadd
  * 
  * App Interactivity
  * https://docs.microsoft.com/en-us/windows/privacy/enhanced-diagnostic-data-windows-analytics-events-and-fields#win32ktraceloggingappinteractivitysummary
@@ -454,6 +457,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add("aggregationDuration", entry.getAggregationDuration());
         metadataEntry.add("userActiveDuration", entry.getUserActiveDuration());
         metadataEntry.add("userOrDisplayActiveDuration", entry.getUserOrDisplayActiveDuration());
+        metadataEntry.add("inFocusDurationMS", entry.getInFocusDuration());
         metadataEntry.add("programID", entry.getProgramID());
         metadataEntry.add("userID", entry.getUserID());
         metadataEntry.add("userSID", entry.getUserSID());

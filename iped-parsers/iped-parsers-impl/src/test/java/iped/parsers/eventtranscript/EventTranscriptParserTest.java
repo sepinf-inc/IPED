@@ -83,11 +83,24 @@ public class EventTranscriptParserTest {
         public List<String> visitDates = new ArrayList<String>();
         public List<String> histEventNames = new ArrayList<String>();
         // inventory applications
-        public List<String> appNames = new ArrayList<String>();
+        public List<String> invAppNames = new ArrayList<String>();
         public List<String> installDates = new ArrayList<String>();
         public List<String> rootDirPaths = new ArrayList<String>();
         public List<String> versions = new ArrayList<String>();
         public List<String> invEventNames = new ArrayList<String>();
+        // device pnp
+        public List<String> models = new ArrayList<String>();
+        public List<String> pnpEventNames = new ArrayList<String>();
+        public List<String> pnpInstallDates = new ArrayList<String>();
+        public List<String> manufacturer = new ArrayList<String>();
+        // app interactions
+        public List<String> intAppNames = new ArrayList<String>();
+        public List<String> intTimestamps = new ArrayList<String>();
+        public List<String> inFocusDuration = new ArrayList<String>();
+        // networking
+        public List<String> netEventSources = new ArrayList<String>();
+        public List<String> netEventReasons = new ArrayList<String>();
+
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
@@ -102,15 +115,28 @@ public class EventTranscriptParserTest {
                 visitDates.add(metadata.get(ExtraProperties.VISIT_DATE));
                 histEventNames.add(metadata.get("eventNames"));
             }
-
             if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_INVENTORY_APP_REG.toString())) {
-                appNames.add(metadata.get(TikaCoreProperties.TITLE));
+                invAppNames.add(metadata.get(TikaCoreProperties.TITLE));
                 rootDirPaths.add(metadata.get(TikaCoreProperties.SOURCE_PATH));
                 installDates.add(metadata.get(ExtraProperties.DOWNLOAD_DATE));
                 versions.add(metadata.get("version"));
                 invEventNames.add(metadata.get("eventName"));
             }
-
+            if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_APP_INTERACT_REG.toString())) {
+                intAppNames.add(metadata.get(TikaCoreProperties.TITLE));
+                intTimestamps.add(metadata.get(TikaCoreProperties.CREATED));
+                inFocusDuration.add(metadata.get("inFocusDurationMS"));
+            }
+            if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_DEVICE_PNP_REG.toString())) {
+                models.add(metadata.get(TikaCoreProperties.TITLE));
+                pnpEventNames.add(metadata.get("eventName"));
+                manufacturer.add(metadata.get("manufacturer"));
+                pnpInstallDates.add(metadata.get(ExtraProperties.DOWNLOAD_DATE));
+            }
+            if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_NETWORKING_REG.toString())) {
+                netEventSources.add(metadata.get("eventSource"));
+                netEventReasons.add(metadata.get("eventReasons"));
+            }
         }
     }
 
