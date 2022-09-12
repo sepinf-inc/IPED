@@ -447,9 +447,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         }
 
         if (Boolean.valueOf(metadata.get(BasicProps.HASCHILD))) {
-            metadata.remove(BasicProps.HASCHILD);
             evidence.setHasChildren(true);
         }
+        metadata.remove(BasicProps.HASCHILD);
 
         String compressRatio = evidence.getMetadata().get(EntropyTask.COMPRESS_RATIO);
         if (compressRatio != null) {
@@ -585,10 +585,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
             // parsers should set this property to let created items be displayed in file
             // tree
-            if (metadata.get(BasicProps.HASCHILD) != null) {
-                metadata.remove(BasicProps.HASCHILD);
+            if (Boolean.valueOf(metadata.get(BasicProps.HASCHILD))) {
                 subItem.setHasChildren(true);
             }
+            metadata.remove(BasicProps.HASCHILD);
 
             subItem.setHash(metadata.get(BasicProps.HASH));
             metadata.remove(BasicProps.HASH);
@@ -600,10 +600,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             // indica se o conteiner tem subitens (mais específico que filhos genéricos)
             evidence.setExtraAttribute(HAS_SUBITEM, "true"); //$NON-NLS-1$
 
-            if (metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null) {
-                metadata.remove(ExtraProperties.EMBEDDED_FOLDER);
+            if (Boolean.valueOf(metadata.get(ExtraProperties.EMBEDDED_FOLDER))) {
                 subItem.setIsDir(true);
             }
+            metadata.remove(ExtraProperties.EMBEDDED_FOLDER);
 
             subItem.setCreationDate(metadata.getDate(TikaCoreProperties.CREATED));
             subItem.setModificationDate(metadata.getDate(TikaCoreProperties.MODIFIED));
@@ -614,15 +614,15 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             removeMetadataAndDuplicates(metadata, ExtraProperties.ACCESSED);
 
             subItem.setDeleted(parentInfo.isDeleted());
-            if (metadata.get(ExtraProperties.DELETED) != null) {
-                metadata.remove(ExtraProperties.DELETED);
+            if (Boolean.valueOf(metadata.get(ExtraProperties.DELETED))) {
                 subItem.setDeleted(true);
             }
+            metadata.remove(ExtraProperties.DELETED);
 
             if (Boolean.valueOf(metadata.get(ExtraProperties.DECODED_DATA))) {
                 subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
-                metadata.remove(ExtraProperties.DECODED_DATA);
             }
+            metadata.remove(ExtraProperties.DECODED_DATA);
 
             // causa problema de subitens corrompidos de zips carveados serem apagados,
             // mesmo sendo referenciados por outros subitens
