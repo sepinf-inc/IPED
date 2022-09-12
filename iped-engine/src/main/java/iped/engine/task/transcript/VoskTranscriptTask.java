@@ -85,7 +85,7 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
     }
 
     @Override
-    protected TextAndScore transcribeWav(File tmpFile) throws Exception {
+    protected TextAndScore transcribeAudio(File tmpFile) throws Exception {
 
         TextAndScore textAndScore = null;
         recognizer.reset();

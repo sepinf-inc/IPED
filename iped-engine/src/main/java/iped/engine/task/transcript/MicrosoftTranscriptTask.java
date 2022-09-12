@@ -71,7 +71,7 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
     }
 
     @Override
-    protected TextAndScore transcribeWav(File tmpFile) throws Exception {
+    protected TextAndScore transcribeAudio(File tmpFile) throws Exception {
 
         int tries = 0;
         AtomicBoolean ok = new AtomicBoolean();
