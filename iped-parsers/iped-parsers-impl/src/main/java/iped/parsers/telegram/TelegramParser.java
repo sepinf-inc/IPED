@@ -201,7 +201,7 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(TikaCoreProperties.TITLE, chatName);
             chatMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
-            chatMetadata.set(ExtraProperties.CHAT_RECOVERED, Boolean.toString(c.isDeleted()));
+            chatMetadata.set(ExtraProperties.DELETED, Boolean.toString(c.isDeleted()));
             chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
             if (c.isGroup()) {

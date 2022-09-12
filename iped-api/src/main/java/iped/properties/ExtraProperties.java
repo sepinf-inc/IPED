@@ -53,8 +53,6 @@ public class ExtraProperties {
 
     public static final String GROUP_ID = "GroupID";
 
-    public static final String CHAT_RECOVERED = "ChatRecovered";
-
     public static final String MESSAGE_BODY = MESSAGE_PREFIX + "Body"; //$NON-NLS-1$
 
     public static final String MESSAGE_IS_ATTACHMENT = Message.MESSAGE_PREFIX + "IsEmailAttachment"; //$NON-NLS-1$
