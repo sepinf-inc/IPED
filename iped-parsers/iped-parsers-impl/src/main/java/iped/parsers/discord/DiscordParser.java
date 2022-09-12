@@ -28,16 +28,16 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import iped.data.IItemReader;
 import iped.parsers.discord.cache.CacheEntry;
 import iped.parsers.discord.cache.Index;
 import iped.parsers.discord.json.DiscordAttachment;
 import iped.parsers.discord.json.DiscordRoot;
-import iped3.IItemBase;
-import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
+import iped.parsers.standard.StandardParser;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
+import iped.search.IItemSearcher;
+import iped.utils.EmptyInputStream;
 
 /***
  * 
@@ -71,7 +71,7 @@ public class DiscordParser extends AbstractParser {
 				new ParsingEmbeddedDocumentExtractor(context));
 
 		IItemSearcher searcher = context.get(IItemSearcher.class);
-		IItemBase item = context.get(IItemBase.class);
+        IItemReader item = context.get(IItemReader.class);
 
 		if (searcher != null && item != null) {
 
@@ -82,8 +82,8 @@ public class DiscordParser extends AbstractParser {
 					+ BasicProps.TYPE + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR
 					+ ":true";
 
-			List<IItemBase> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
-			List<IItemBase> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME
+            List<IItemReader> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
+            List<IItemReader> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME
 					+ ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\")");
 
 			Index index = new Index(indexFile, dataFiles, externalFiles);
@@ -117,7 +117,7 @@ public class DiscordParser extends AbstractParser {
 		                        		//Checking attachments image
 		                        		for (DiscordAttachment att : dr.getAttachments()) {
 			                        		if (ce2.getKey().contains(att.getFilename()) && !ce2.getName().contains("data")) {
-			                        			for (IItemBase ib : externalFiles) {
+                                                for (IItemReader ib : externalFiles) {
 			                        				if (ib.getName() != null && ib.getName().equals(ce2.getName())) {
 			                        					att.setContent_type(getAttExtension(att.getUrl()));
                                                         att.setUrl(Base64.getEncoder().encodeToString(
@@ -140,7 +140,7 @@ public class DiscordParser extends AbstractParser {
                         Metadata chatMeta = new Metadata();
 						chatMeta.set("URL", ce.getRequestURL());
 						chatMeta.set(TikaCoreProperties.TITLE, chatName);
-                        chatMeta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
+                        chatMeta.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
 
                         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, chatMeta);
                         byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml);
@@ -173,13 +173,13 @@ public class DiscordParser extends AbstractParser {
 		for (DiscordRoot d : discordRoot) {
 			Metadata meta = new Metadata();
 			meta.set(TikaCoreProperties.TITLE, chatName + "_message_" + msgCount++);
-			meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_MIME_TYPE);
+            meta.set(StandardParser.INDEXER_CONTENT_TYPE, MSG_MIME_TYPE);
 			meta.set(ExtraProperties.MESSAGE_DATE, d.getTimestamp());
 			meta.set(ExtraProperties.MESSAGE_BODY, d.getMessageContent());
 			meta.set(ExtraProperties.USER_NAME, d.getAuthor().getFullUsername());
 
 			if (d.getCall() != null) {
-				meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, d.getCall().toString());
+                meta.set(StandardParser.INDEXER_CONTENT_TYPE, d.getCall().toString());
 				meta.set("ended_timestamp", d.getCall().getEndedTimestamp().toString()); //$NON-NLS-1$
 			}
 

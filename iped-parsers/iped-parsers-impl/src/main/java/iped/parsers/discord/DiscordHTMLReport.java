@@ -13,11 +13,11 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.sax.XHTMLContentHandler;
 
-import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import iped.parsers.discord.json.DiscordAttachment;
 import iped.parsers.discord.json.DiscordMention;
 import iped.parsers.discord.json.DiscordReaction;
 import iped.parsers.discord.json.DiscordRoot;
+import iped.parsers.util.Messages;
 
 /***
  * 

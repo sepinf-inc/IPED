@@ -5,8 +5,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import iped.data.IItemReader;
 import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
-import iped3.IItemBase;
 
 /**
  * 
@@ -135,7 +135,7 @@ public class Index {
         this.lst = lst;
     }
 
-    public Index(InputStream is, List<IItemBase> dataFiles, List<IItemBase> externalFiles) throws IOException {
+    public Index(InputStream is, List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException {
 
         magicNumber = readUnsignedInt(is);
         version = readUnsignedInt(is);

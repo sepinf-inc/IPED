@@ -4,9 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 
-import iped3.IItemBase;
+import iped.data.IItemReader;
 
 /**
  * @author PCF Campanini
@@ -98,7 +99,7 @@ public class CacheAddr {
 		return fileType == 2 ? 256 : (fileType == 3 ? 1024 : 4096);
 	}
 	
-	public InputStream getInputStream(List<IItemBase> dataFiles, List<IItemBase> externalFiles) throws IOException {
+    public InputStream getInputStream(List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException {
 		if (!initialized) {
 			throw new InputStreamNotAvailable();
 		}
@@ -107,7 +108,7 @@ public class CacheAddr {
 		
 		switch (fileType) {
 		case 0:
-             for (IItemBase extFile : externalFiles)
+            for (IItemReader extFile : externalFiles)
  				if (extFile.getName().equals(fileNameStr)) {
                         raf = new RandomAccessFile(extFile.getTempFile(), "r");
  					return new RandomInputStream(raf, raf.getFilePointer());
@@ -116,7 +117,7 @@ public class CacheAddr {
 		case 2:
 		case 3:
 		case 4:
-			for (IItemBase dataFile : dataFiles)
+            for (IItemReader dataFile : dataFiles)
 				if (dataFile.getName().equals(("data_" + fileSelector))) {
                         raf = new RandomAccessFile(dataFile.getTempFile(), "r");
 					raf.seek(8192 + startBlock * getBlockSize());

@@ -9,7 +9,7 @@ import java.util.zip.ZipException;
 
 import org.apache.commons.io.IOUtils;
 
-import iped3.IItemBase;
+import iped.data.IItemReader;
 
 /**
  * @author PCF Campanini
@@ -32,8 +32,8 @@ public class CacheEntry {
     private int[] paddings;
     private long selfHash;
     private byte[] keyData;
-    private List<IItemBase> dataFiles;
-    private List<IItemBase> externalFiles;
+    private List<IItemReader> dataFiles;
+    private List<IItemReader> externalFiles;
 
     public long getHash() {
         return hash;
@@ -108,7 +108,7 @@ public class CacheEntry {
      * @param externalFiles
      * @throws IOException
      */
-    public CacheEntry(InputStream is, List<IItemBase> dataFiles, List<IItemBase> externalFiles) throws IOException {
+    public CacheEntry(InputStream is, List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException {
         this.dataFiles = dataFiles;
         this.externalFiles = externalFiles;
         hash = readUnsignedInt(is);
