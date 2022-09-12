@@ -17,7 +17,7 @@ public class GalleryTable extends JTable {
 
     private static final long serialVersionUID = 1L;
 
-    private int lastCell = 0;
+    protected int anchor = 0, lead = 0;
     private BitSet selectedCells;
 
     public GalleryTable(TableModel tableModel) {
@@ -25,8 +25,12 @@ public class GalleryTable extends JTable {
         InputMap inputMap = getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "Right");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "Left");
-        getActionMap().put("Right", new ArrowAction(1));
-        getActionMap().put("Left", new ArrowAction(-1));
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.SHIFT_DOWN_MASK), "ShiftRight");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.SHIFT_DOWN_MASK), "ShiftLeft");
+        getActionMap().put("Right", new ArrowAction(1, false));
+        getActionMap().put("Left", new ArrowAction(-1, false));
+        getActionMap().put("ShiftRight", new ArrowAction(1, true));
+        getActionMap().put("ShiftLeft", new ArrowAction(-1, true));
     }
 
     @Override
@@ -41,8 +45,8 @@ public class GalleryTable extends JTable {
         if (currentCell > App.get().ipedResult.getLength() - 1) {
             return;
         }
-        int minCell = Math.min(currentCell, lastCell);
-        int maxCell = Math.max(currentCell, lastCell);
+        int minCell = Math.min(currentCell, anchor);
+        int maxCell = Math.max(currentCell, anchor);
         if (toggle) {
             if (!extend) {
                 if (isCellSelected(rowIndex, columnIndex)) {
@@ -52,7 +56,7 @@ public class GalleryTable extends JTable {
                     selectedCells.set(currentCell);
                 }
             } else {
-                if (selectedCells.get(lastCell)) {
+                if (selectedCells.get(anchor)) {
                     selectedCells.set(minCell, maxCell + 1);
                 } else {
                     selectedCells.clear(minCell, maxCell + 1);
@@ -66,8 +70,10 @@ public class GalleryTable extends JTable {
                 selectedCells.set(minCell, maxCell + 1);
             }
         }
+
+        lead = currentCell;
         if (!extend) {
-            lastCell = rowIndex * this.getColumnCount() + columnIndex;
+            anchor = currentCell;
         }
 
         super.changeSelection(rowIndex, columnIndex, toggle, extend);
@@ -119,7 +125,6 @@ public class GalleryTable extends JTable {
         if (e instanceof KeyEvent) {
             return false;
         }
-
         return super.editCellAt(row, column, e);
     }
 
@@ -132,26 +137,26 @@ public class GalleryTable extends JTable {
 class ArrowAction extends AbstractAction {
     private static final long serialVersionUID = 1876354716105372284L;
     private final int dir;
+    private final boolean shiftDown;
 
-    public ArrowAction(int dir) {
+    public ArrowAction(int dir, boolean shiftDown) {
         this.dir = dir;
+        this.shiftDown = shiftDown;
     }
 
     public void actionPerformed(ActionEvent e) {
-        JTable tab = (JTable) e.getSource();
-        int row = tab.getSelectedRow();
-        int col = tab.getSelectedColumn();
+        GalleryTable tab = (GalleryTable) e.getSource();
+        int row = tab.lead / tab.getColumnCount();
+        int col = tab.lead % tab.getColumnCount();
         if (col + dir >= 0 && col + dir < tab.getColumnCount()) {
             if (row * tab.getColumnCount() + col + dir < App.get().ipedResult.getLength()) {
                 tab.getSelectionModel().setValueIsAdjusting(true);
-                tab.clearSelection();
-                tab.changeSelection(row, col + dir, false, false);
+                tab.changeSelection(row, col + dir, false, shiftDown);
                 tab.getSelectionModel().setValueIsAdjusting(false);
             }
         } else if (row + dir >= 0 && row + dir < tab.getRowCount()) {
             tab.getSelectionModel().setValueIsAdjusting(true);
-            tab.clearSelection();
-            tab.changeSelection(row + dir, dir > 0 ? 0 : tab.getColumnCount() - 1, false, false);
+            tab.changeSelection(row + dir, dir > 0 ? 0 : tab.getColumnCount() - 1, false, shiftDown);
             tab.getSelectionModel().setValueIsAdjusting(false);
         }
     }
