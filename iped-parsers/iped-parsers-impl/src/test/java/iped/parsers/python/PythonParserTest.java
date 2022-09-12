@@ -13,6 +13,7 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
@@ -20,6 +21,7 @@ import org.xml.sax.SAXException;
 
 import iped.configuration.IConfigurationDirectory;
 import iped.parsers.standard.StandardParser;
+import iped.utils.IOUtil;
 
 public class PythonParserTest {
     private static String userDir = System.getProperty("user.dir");
@@ -41,6 +43,11 @@ public class PythonParserTest {
         System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, PYTHON_PARSERS_FOLDER);
     }
 
+    @AfterClass
+    public static void cleanUp() {
+        File cacheDir = new File(PYTHON_PARSERS_FOLDER, "__pycache__");
+        IOUtil.deleteDirectory(cacheDir);
+    }
 
     @Test
     public void testPythonParserExample() throws IOException, SAXException, TikaException {
