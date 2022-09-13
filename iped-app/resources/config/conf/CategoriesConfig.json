@@ -35,11 +35,11 @@
     {"name": "Windows 10", "categories":[
       {"name": "User Activities", "mimes": ["application/x-win10-timeline"]},
       {"name": "User Activities Entries", "mimes": ["application/x-win10-timeline-registry"]},
-      {"name": "Event Transcript", "mimes": ["application/x-event-transcript", "application/x-event-transcript-history", "application/x-event-transcript-inventory-app", "application/x-event-transcript-app-interactivity", "application/x-event-transcript-device-pnp", "application/x-event-transcript-census", "application/x-event-transcript-networking"]},
+      {"name": "Event Transcript", "mimes": ["application/x-event-transcript", "application/x-event-transcript-history", "application/x-event-transcript-inventory-app", "application/x-event-transcript-app-interactivity", "application/x-event-transcript-devices", "application/x-event-transcript-census", "application/x-event-transcript-networking"]},
       {"name": "Event Transcript History Entries", "mimes": ["application/x-event-transcript-history-registry"]},
       {"name": "Event Transcript Inventory App Entries", "mimes": ["application/x-event-transcript-inventory-app-registry"]},
       {"name": "Event Transcript App Interactivity Entries", "mimes": ["application/x-event-transcript-app-interactivity-registry"]},
-      {"name": "Event Transcript Device Pnp Entries", "mimes": ["application/x-event-transcript-device-pnp-registry"]},
+      {"name": "Event Transcript Device Entries", "mimes": ["application/x-event-transcript-devices-registry"]},
       {"name": "Event Transcript Networking Entries", "mimes": ["application/x-event-transcript-networking-registry"]}
     ]},
     {"name": "Google Drive", "categories":[

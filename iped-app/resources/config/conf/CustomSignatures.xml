@@ -1200,11 +1200,11 @@
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
 
-    <mime-type type="application/x-event-transcript-device-pnp">     
+    <mime-type type="application/x-event-transcript-devices">     
         <sub-class-of type="text/html"/>
     </mime-type>
 
-    <mime-type type="application/x-event-transcript-device-pnp-registry">     
+    <mime-type type="application/x-event-transcript-devices-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
 
