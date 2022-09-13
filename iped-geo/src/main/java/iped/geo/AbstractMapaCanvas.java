@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 
+import iped.data.IItemId;
 import iped.geo.localization.Messages;
 
 abstract public class AbstractMapaCanvas extends Canvas {
@@ -25,6 +26,7 @@ abstract public class AbstractMapaCanvas extends Canvas {
     ActionListener onChangeTileServer = null;
 
     protected HashMap<String, Boolean> selectionMapToApply;
+    protected String leadSelectionToApply;
     protected Runnable saveRunnable;
 
     /* abstract methods */
@@ -116,4 +118,13 @@ abstract public class AbstractMapaCanvas extends Canvas {
                 IOUtils.toString(AbstractMapaCanvas.class.getResourceAsStream("toolbar.html"), "UTF-8"), "toolbar");
     }
 
+	public void sendLeadSelection(String gid) {
+		leadSelectionToApply = gid;
+	}
+
+	public String getLeadSelectionToApply() {
+		return leadSelectionToApply;
+	}
+	
+	
 }

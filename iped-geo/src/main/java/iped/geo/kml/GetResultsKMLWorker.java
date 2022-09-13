@@ -31,6 +31,8 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
     JProgressBar progress;
     int contSemCoordenadas = 0, itemsWithGPS = 0;
     Consumer<KMLResult> consumer;
+    IIPEDSearcher searcher;
+    IMultiSearchResult multiResult;
 
     public GetResultsKMLWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress,
             Consumer<KMLResult> consumer) {
@@ -97,8 +99,8 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
         String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
 
         /* nova query com apenas os itens que possuem georreferenciamento */
-        IIPEDSearcher searcher = app.createNewSearch(query);
-        IMultiSearchResult multiResult = searcher.multiSearch();
+        searcher = app.createNewSearch(query);
+        multiResult = searcher.multiSearch();
 
         Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
         for (IItemId item : multiResult.getIterator())
@@ -265,5 +267,13 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
         String alt = doc.get(ExtraProperties.COMMON_META_PREFIX + Metadata.ALTITUDE.getName());
         return alt;
     }
+
+	public IIPEDSearcher getSearcher() {
+		return searcher;
+	}
+
+	public IMultiSearchResult getMultiResult() {
+		return multiResult;
+	}
 
 }

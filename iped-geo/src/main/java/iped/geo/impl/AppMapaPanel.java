@@ -195,6 +195,7 @@ public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
             gpsProgressBar.setVisible(false);
         }
         browserCanvas.setKML(kmlResult.getKML());
+        this.kmlResult=kmlResult;
         mapaDesatualizado = false;
     }
 

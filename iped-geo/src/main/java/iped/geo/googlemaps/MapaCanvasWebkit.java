@@ -8,6 +8,8 @@ import java.util.HashMap;
 
 import org.apache.commons.io.IOUtils;
 
+import iped.data.IItem;
+import iped.data.IItemId;
 import iped.geo.AbstractMapaCanvas;
 import iped.geo.impl.JMapOptionsPane;
 import iped.geo.webkit.JSInterfaceFunctions;
@@ -61,15 +63,20 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
                 });
 
                 webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<State>() {
-
                     @Override
                     public void changed(ObservableValue<? extends State> observable, State oldState, State newState) {
                         if (newState == State.SUCCEEDED) {
                             JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
                             window.setMember("app", jsInterface); //$NON-NLS-1$
                             window.setMember("javalog", new LogBridge());
-                            // webEngine.executeScript("console.log = function(message) {
-                            // window.javalog.log(message); }");
+
+                            try {
+                            	if(leadSelectionToApply!=null) {
+                                    webEngine.executeScript("updateLeadMarker(\""+leadSelectionToApply.toString()+"\");");
+                            	}
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 });
@@ -150,6 +157,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
 
     private String replaceApiKey(String html) {
         googleApiKey = JMapOptionsPane.getGoogleAPIKey();
+        googleApiKey="";
         html = html.replace("{{GOOGLE_API_KEY}}", googleApiKey); //$NON-NLS-1$
         return html;
     }
@@ -171,7 +179,6 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
 
     @Override
     public void update() {
-
         if (this.selectionMapToApply != null) {
             // repinta selecoes alteradas
             final String[] marks = new String[this.selectionMapToApply.keySet().size()];
@@ -187,17 +194,33 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
                             marcadorselecionado = true;
                         }
                         try {
-                            webEngine.executeScript("gxml.seleciona(\"" + marks[i] + "\",'" + b + "');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            webEngine.executeScript("gxml.seleciona([\"" + marks[i] + "\"],'" + b + "');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
                     if (marcadorselecionado) {
-                        webEngine.executeScript("gxml.centralizaSelecao();");
+                        try {
+                            webEngine.executeScript("gxml.centralizaSelecao();");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             });
             this.selectionMapToApply = null;
+        }
+        if (this.leadSelectionToApply != null) {
+        	final String leadSelectionToApplyCopy = this.leadSelectionToApply;
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    try {
+                        webEngine.executeScript("updateLeadMarker(\""+leadSelectionToApplyCopy.toString()+"\");");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         }
     }
 
