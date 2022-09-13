@@ -128,7 +128,7 @@ public final class DBQueries {
         + "  events_persisted.full_event_name in ('Win32kTraceLogging.AppInteractivity','Win32kTraceLogging.AppInteractivitySummary' )"
         + " ORDER BY cast(Timestamp AS integer) DESC";
     
-    public static final String DEVICE_PNP = "SELECT"
+    public static final String DEVICES = "SELECT"
         + " replace(substr(json_extract(events_persisted.payload,'$.time'),1,19), 'T', ' ') as 'UTCTimeStamp',"
         + " datetime((timestamp - 116444736000000000)/10000000, 'unixepoch','localtime') AS 'LocalTimestamp',"
         + " json_extract(events_persisted.payload,'$.ext.loc.tz') AS 'Timezone',"
@@ -142,6 +142,7 @@ public final class DBQueries {
         + " json_extract(events_persisted.payload,'$.data.Provider') AS 'Provider',"
         + " json_extract(events_persisted.payload,'$.data.Manufacturer') AS 'Manufacturer',"
         + " json_extract(events_persisted.payload,'$.data.Model') AS 'Model',"
+        + " coalesce(json_extract(events_persisted.payload,'$.data.ModelName'), json_extract(events_persisted.payload,'$.data.Model'))  as 'Model',"
         + " json_extract(events_persisted.payload,'$.data.BusReportedDescription') AS 'BusDescription',"
         + " json_extract(events_persisted.payload,'$.data.Description') AS 'Description',"
         + " json_extract(events_persisted.payload,'$.data.Enumerator') AS 'Enumerator',"
@@ -154,7 +155,7 @@ public final class DBQueries {
         + " LEFT JOIN event_tags ON events_persisted.full_event_name_hash = event_tags.full_event_name_hash"
         + " LEFT JOIN tag_descriptions ON event_tags.tag_id = tag_descriptions.tag_id"
         + " WHERE "
-        + " FullEventName LIKE 'Microsoft.Windows.Inventory.Core.InventoryDevicePnp%'"
+        + " FullEventName LIKE 'Microsoft.Windows.Inventory.Core.InventoryDevice%'"
         + " ORDER BY cast(Timestamp AS integer) DESC;";
 
     public static final String CENSUS = "SELECT"

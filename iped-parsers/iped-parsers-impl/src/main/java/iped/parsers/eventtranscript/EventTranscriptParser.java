@@ -44,9 +44,10 @@ import iped.utils.EmptyInputStream;
  * 
  * Inventory Applications (Installed apps state)
  * https://docs.microsoft.com/en-us/windows/privacy/basic-level-windows-diagnostic-events-and-fields-1709#microsoftwindowsinventorycoreinventoryapplicationadd
- * similarly:
- * PNP Devices
+ *
+ * Devices (PNP and Container)
  * https://docs.microsoft.com/en-us/windows/privacy/basic-level-windows-diagnostic-events-and-fields-1709#microsoftwindowsinventorycoreinventorydevicepnpadd
+ * https://docs.microsoft.com/en-us/windows/privacy/basic-level-windows-diagnostic-events-and-fields-1709#microsoftwindowsinventorycoreinventorydevicecontaineradd
  * 
  * App Interactivity
  * https://docs.microsoft.com/en-us/windows/privacy/enhanced-diagnostic-data-windows-analytics-events-and-fields#win32ktraceloggingappinteractivitysummary
@@ -71,8 +72,8 @@ public class EventTranscriptParser extends SQLite3DBParser {
     public static final MediaType EVENT_TRANSCRIPT_APP_INTERACT = MediaType.application("x-event-transcript-app-interactivity");
     public static final MediaType EVENT_TRANSCRIPT_APP_INTERACT_REG = MediaType.application("x-event-transcript-app-interactivity-registry");
 
-    public static final MediaType EVENT_TRANSCRIPT_DEVICE_PNP = MediaType.application("x-event-transcript-device-pnp");
-    public static final MediaType EVENT_TRANSCRIPT_DEVICE_PNP_REG = MediaType.application("x-event-transcript-device-pnp-registry");
+    public static final MediaType EVENT_TRANSCRIPT_DEVICES = MediaType.application("x-event-transcript-devices");
+    public static final MediaType EVENT_TRANSCRIPT_DEVICES_REG = MediaType.application("x-event-transcript-devices-registry");
 
     public static final MediaType EVENT_TRANSCRIPT_CENSUS = MediaType.application("x-event-transcript-census");
 
@@ -86,7 +87,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
     private static final String[] INVENTORY_APPS_COLUMN_NAMES = new String[] { "Name", "Timestamp (UTC)", "Local Time", "Timezone", "Version", "Publisher", "Root Directory Path", "Install Date" };
     private static final String[] APP_INTERACT_COLUMN_NAMES = new String[] {"App", "Timestamp (UTC)", "Local Time", "Timezone", "Type", "Window size (WxH)", "MouseInput (sec)",
     "InFocusDuration (ms)", "UserActiveDuration (ms)"};
-    private static final String[] DEVICE_PNP_COLUMN_NAMES = new String[] { "Model", "Timestamp (UTC)", "Local Time", "Timezone", "InstanceId", "Provider", "Manufacturer", "Install Date", "Enumerator" };
+    private static final String[] DEVICES_COLUMN_NAMES = new String[] { "Model", "Timestamp (UTC)", "Local Time", "Timezone", "InstanceId", "Provider", "Manufacturer", "Install Date", "Enumerator" };
     private static final String[] CENSUS_COLUMN_NAMES = new String[] { "Timestamp (UTC)", "Local Time", "Timezone", "Event", "State \\ Settings" };
     private static final String[] NETWORK_COLUMN_NAMES = new String[] { "Timestamp (UTC)", "Local Time", "Timezone", "Event", "Event Source", "Event Reason", "JSON Data" };
 
@@ -122,7 +123,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         File browserHistoryFile = tmp.createTemporaryFile();
         File inventoryAppsFile = tmp.createTemporaryFile();
         File appInteractivityFile = tmp.createTemporaryFile();
-        File devicePnpFile = tmp.createTemporaryFile();
+        File devicesFile = tmp.createTemporaryFile();
         File censusFile = tmp.createTemporaryFile();
         File networkingFile = tmp.createTemporaryFile();
 
@@ -239,37 +240,39 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 }
             }
             
-            try (FileOutputStream tmpDevicePnpFile = new FileOutputStream(devicePnpFile)) {
-                ToXMLContentHandler devicePnpHandler = new ToXMLContentHandler(tmpDevicePnpFile, "UTF-16");
-                String title = "Event Transcript Device Pnp Inventory";
+            try (FileOutputStream tmpDevicesFile = new FileOutputStream(devicesFile)) {
+                ToXMLContentHandler devicesHandler = new ToXMLContentHandler(tmpDevicesFile, "UTF-16");
+                String title = "Event Transcript Devices Inventory";
 
-                Metadata devicePnpMeta = new Metadata();
-                devicePnpMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_DEVICE_PNP.toString());
-                devicePnpMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
-                devicePnpMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
-                devicePnpMeta.set(BasicProps.HASCHILD, "true");
-                devicePnpMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                Metadata devicesMeta = new Metadata();
+                devicesMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_DEVICES.toString());
+                devicesMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
+                devicesMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                devicesMeta.set(BasicProps.HASCHILD, "true");
+                devicesMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                try (DevicePnpIterator devicePnpIterator = new DevicePnpIterator(connection, DBQueries.DEVICE_PNP)) {
-                    XHTMLContentHandler xHandler = emitHeader(devicePnpHandler, devicePnpMeta, title, DEVICE_PNP_COLUMN_NAMES);
+                try (DevicesIterator devicesIterator = new DevicesIterator(connection, DBQueries.DEVICES)) {
+                    XHTMLContentHandler xHandler = emitHeader(devicesHandler, devicesMeta, title, DEVICES_COLUMN_NAMES);
 
                     int i = 0;
-                    while(devicePnpIterator.hasNext()) {
-                            DevicePnpEntry deviceEntry = devicePnpIterator.next();
+                    while(devicesIterator.hasNext()) {
+                            DevicesEntry deviceEntry = devicesIterator.next();
                         String[] values = new String[] { deviceEntry.getModel(), deviceEntry.getTimestampStr(), deviceEntry.getLocalTime(), deviceEntry.getTimezone(), 
                             deviceEntry.getInstanceId(), deviceEntry.getProvider(), deviceEntry.getManufacturer(), deviceEntry.getInstallDateStr(), deviceEntry.getEnumerator() };
                         emitEntry(xHandler, ++i, values);
 
+                        System.out.println(values[0]);
+
                         if (extractEntries) {
-                            Metadata deviceSubitem = getDevicePnpMetadata(deviceEntry, i);
+                            Metadata deviceSubitem = getDevicesMetadata(deviceEntry, i);
                             extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  deviceSubitem, true);
                         }
                     }
                     xHandler.endElement("table");
                     xHandler.endDocument();
 
-                    try (FileInputStream fis = new FileInputStream(devicePnpFile)) {
-                        extractor.parseEmbedded(fis, handler, devicePnpMeta, true);
+                    try (FileInputStream fis = new FileInputStream(devicesFile)) {
+                        extractor.parseEmbedded(fis, handler, devicesMeta, true);
                     }
                 }
             }
@@ -466,11 +469,11 @@ public class EventTranscriptParser extends SQLite3DBParser {
         return metadataEntry;
     }
 
-    private Metadata getDevicePnpMetadata(DevicePnpEntry entry, int i) throws ParseException {
+    private Metadata getDevicesMetadata(DevicesEntry entry, int i) throws ParseException {
         Metadata metadataEntry = new Metadata();
 
-        metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_DEVICE_PNP_REG.toString());
-        metadataEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Device Pnp Entry " + i);
+        metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_DEVICES_REG.toString());
+        metadataEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Devices Entry " + i);
         metadataEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         metadataEntry.set(BasicProps.LENGTH, "");
 
@@ -492,7 +495,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
     private Metadata getNetworkingMetadata(NetworkingEntry entry, int i) throws ParseException {
         Metadata metadataEntry = new Metadata();
 
-        metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_DEVICE_PNP_REG.toString());
+        metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_NETWORKING_REG.toString());
         metadataEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Networking Entry " + i);
         metadataEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         metadataEntry.set(BasicProps.LENGTH, "");
@@ -611,34 +614,34 @@ public class EventTranscriptParser extends SQLite3DBParser {
         }
     }
     
-    private class DevicePnpIterator extends DBIterator<DevicePnpEntry> {
+    private class DevicesIterator extends DBIterator<DevicesEntry> {
 
-        public DevicePnpIterator(Connection connection, String query) throws SQLException {
+        public DevicesIterator(Connection connection, String query) throws SQLException {
             super(connection, query);
         }
 
         @Override
-        public DevicePnpEntry next() {
-            DevicePnpEntry devicePnpEntry = new DevicePnpEntry();
+        public DevicesEntry next() {
+            DevicesEntry devicesEntry = new DevicesEntry();
             try {
-                devicePnpEntry.setModel(rs.getString("Model"));
-                devicePnpEntry.setInstanceId(rs.getString("InstanceId"));
-                devicePnpEntry.setTimestamp(rs.getString("UTCTimestamp"));
-                devicePnpEntry.setLocalTime(rs.getString("LocalTimestamp"));
-                devicePnpEntry.setTimezone(rs.getString("Timezone"));
-                devicePnpEntry.setTagName(rs.getString("TagName"));
-                devicePnpEntry.setEventName(rs.getString("EventName"));
-                devicePnpEntry.setProvider(rs.getString("Provider"));
-                devicePnpEntry.setManufacturer(rs.getString("Manufacturer"));
-                devicePnpEntry.setEnumerator(rs.getString("Enumerator"));
-                devicePnpEntry.setInstallDate(rs.getString("InstallDate"));
-                devicePnpEntry.setFirstInstallDate(rs.getString("FirstInstallDate"));
-                devicePnpEntry.setUserSID(rs.getString("UserSID"));
-                devicePnpEntry.setJSONPayload(rs.getString("JSONPayload"));
+                devicesEntry.setModel(rs.getString("Model"));
+                devicesEntry.setInstanceId(rs.getString("InstanceId"));
+                devicesEntry.setTimestamp(rs.getString("UTCTimestamp"));
+                devicesEntry.setLocalTime(rs.getString("LocalTimestamp"));
+                devicesEntry.setTimezone(rs.getString("Timezone"));
+                devicesEntry.setTagName(rs.getString("TagName"));
+                devicesEntry.setEventName(rs.getString("EventName"));
+                devicesEntry.setProvider(rs.getString("Provider"));
+                devicesEntry.setManufacturer(rs.getString("Manufacturer"));
+                devicesEntry.setEnumerator(rs.getString("Enumerator"));
+                devicesEntry.setInstallDate(rs.getString("InstallDate"));
+                devicesEntry.setFirstInstallDate(rs.getString("FirstInstallDate"));
+                devicesEntry.setUserSID(rs.getString("UserSID"));
+                devicesEntry.setJSONPayload(rs.getString("JSONPayload"));
             } catch (SQLException | ParseException e ) {
                 throw new RuntimeException(e);
             }
-            return devicePnpEntry;
+            return devicesEntry;
         }
     }
 

@@ -50,7 +50,7 @@ public class EventTranscriptParserTest {
         context.set(Parser.class, tracker);
 
         try (InputStream stream = getStream("test-files/eventtranscript/test_eventTranscript_big_big.db")) {
-            // parser.parse(stream, handler, metadata, context);
+            //parser.parse(stream, handler, metadata, context);
         }
     }
 
@@ -127,7 +127,7 @@ public class EventTranscriptParserTest {
                 intTimestamps.add(metadata.get(TikaCoreProperties.CREATED));
                 inFocusDuration.add(metadata.get("inFocusDurationMS"));
             }
-            if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_DEVICE_PNP_REG.toString())) {
+            if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_DEVICES_REG.toString())) {
                 models.add(metadata.get(TikaCoreProperties.TITLE));
                 pnpEventNames.add(metadata.get("eventName"));
                 manufacturer.add(metadata.get("manufacturer"));

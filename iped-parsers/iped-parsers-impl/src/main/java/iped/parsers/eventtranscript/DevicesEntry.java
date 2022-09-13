@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class DevicePnpEntry {
+public class DevicesEntry {
     private Date timestamp;
     private String timestampStr;
     private String localTime;
