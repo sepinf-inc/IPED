@@ -58,7 +58,6 @@ import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ExternalParsersConfig;
-import iped.engine.config.LocalConfig;
 import iped.engine.config.OCRConfig;
 import iped.engine.config.ParsersConfig;
 import iped.engine.config.ParsingTaskConfig;
@@ -800,10 +799,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             System.setProperty(IndexDatParser.TOOL_PATH_PROP, appRoot + "/tools/msiecfexport/"); //$NON-NLS-1$
         }
 
-        LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
-        if (localConfig.getRegRipperFolder() != null) {
-            System.setProperty(RegRipperParser.TOOL_PATH_PROP, appRoot + "/" + localConfig.getRegRipperFolder()); //$NON-NLS-1$
-        }
+        System.setProperty(RegRipperParser.TOOL_PATH_PROP, appRoot + "/tools/regripper/"); //$NON-NLS-1$
 
         setupOCROptions(configurationManager.findObject(OCRConfig.class));
 
