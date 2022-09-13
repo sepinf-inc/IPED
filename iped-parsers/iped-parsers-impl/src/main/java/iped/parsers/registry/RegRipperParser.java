@@ -30,7 +30,6 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.Messages;
 import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
 import iped.utils.SimpleHTMLEncoder;
@@ -192,7 +191,6 @@ public class RegRipperParser extends AbstractParser {
             writer.write("<pre>"); //$NON-NLS-1$
 
             String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
-            content = adjustDateFormat(content);
             writer.write(SimpleHTMLEncoder.htmlEncode(content.trim()));
 
             writer.write("</pre>"); //$NON-NLS-1$
@@ -201,83 +199,6 @@ public class RegRipperParser extends AbstractParser {
         }
 
         return html;
-    }
-
-    private static String adjustDateFormat(String content) {
-        final char[] dateFormat = "Aaa Aaa nN nN:NN:NN NNNN".toCharArray(); //$NON-NLS-1$
-        final String[] srcWDay = new String[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
-        final String[] tgtWDay = new String[] { Messages.getString("RegistryParser.Sun"), //$NON-NLS-1$
-                Messages.getString("RegistryParser.Mon"), Messages.getString("RegistryParser.Tue"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Wed"), Messages.getString("RegistryParser.Thu"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Fri"), Messages.getString("RegistryParser.Sat") }; //$NON-NLS-1$ //$NON-NLS-2$
-        final String[] srcMonth = new String[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
-                "Nov", "Dec" }; //$NON-NLS-1$ //$NON-NLS-2$
-        final String[] tgtMonth = new String[] { Messages.getString("RegistryParser.Jan"), //$NON-NLS-1$
-                Messages.getString("RegistryParser.Feb"), Messages.getString("RegistryParser.Mar"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Apr"), Messages.getString("RegistryParser.May"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Jun"), Messages.getString("RegistryParser.Jul"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Aug"), Messages.getString("RegistryParser.Sep"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Oct"), Messages.getString("RegistryParser.Nov"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Dec") }; //$NON-NLS-1$
-
-        char[] c = content.toCharArray();
-        boolean changed = false;
-        StringBuilder sb = new StringBuilder();
-        NEXT: for (int i = 0; i < c.length - dateFormat.length; i++) {
-            for (int j = 0; j < dateFormat.length; j++) {
-                char a = c[i + j];
-                char b = dateFormat[j];
-                if (b == 'A') {
-                    if (!Character.isUpperCase(a))
-                        continue NEXT;
-                } else if (b == 'a') {
-                    if (!Character.isLowerCase(a))
-                        continue NEXT;
-                } else if (b == 'N') {
-                    if (!Character.isDigit(a))
-                        continue NEXT;
-                } else if (b == 'n') {
-                    if (!Character.isDigit(a) && a != ' ')
-                        continue NEXT;
-                } else if (a != b) {
-                    continue NEXT;
-                }
-            }
-            String inWDay = new String(c, i, 3);
-            String outWDay = null;
-            for (int k = 0; k < srcWDay.length; k++) {
-                if (inWDay.equals(srcWDay[k])) {
-                    outWDay = tgtWDay[k];
-                    break;
-                }
-            }
-            if (outWDay == null)
-                continue NEXT;
-            String inMonth = new String(c, i + 4, 3);
-            String outMonth = null;
-            for (int k = 0; k < srcMonth.length; k++) {
-                if (inMonth.equals(srcMonth[k])) {
-                    outMonth = tgtMonth[k];
-                    break;
-                }
-            }
-            if (outMonth == null)
-                continue NEXT;
-            changed = true;
-            sb.delete(0, sb.length());
-            sb.append(outWDay).append(' ');
-            sb.append(c, i + 8, 2).append('/');
-            sb.append(outMonth).append('/');
-            sb.append(c, i + 20, 4).append(' ');
-            sb.append(c, i + 11, 8);
-            sb.getChars(0, sb.length(), c, i);
-            if (c[i + 4] == ' ')
-                c[i + 4] = '0';
-            if (c[i + 16] == ' ')
-                c[i + 16] = '0';
-            i += dateFormat.length - 1;
-        }
-        return changed ? new String(c) : content;
     }
 
     private Thread readStream(final InputStream stream, final OutputStream os, final ContainerVolatile msg) {
