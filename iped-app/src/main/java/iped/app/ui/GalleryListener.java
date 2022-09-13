@@ -51,6 +51,10 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
                 App.get().resultsTable.addRowSelectionInterval(selRows[start], selRows[i - 1]);
                 start = i;
             }
+            int leadIdx = App.get().gallery.getLeadSelectionIndex();
+            if (leadIdx != -1) {
+                App.get().resultsTable.addRowSelectionInterval(leadIdx, leadIdx);
+            }
             App.get().resultsTable.getSelectionModel().setValueIsAdjusting(false);
             ResultTableListener.syncingSelectedItems = false;
         }
