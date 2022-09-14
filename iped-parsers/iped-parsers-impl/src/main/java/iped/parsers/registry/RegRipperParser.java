@@ -108,6 +108,8 @@ public class RegRipperParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
         
         TemporaryResources tmp = new TemporaryResources();
         try {
@@ -126,9 +128,6 @@ public class RegRipperParser extends AbstractParser {
                 for (File child : directoryListing) {
                     
                     EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
-
-                    XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-                    xhtml.startDocument();
 
                     String[] params = new String[] { "-f", regType + "/" + child.getName(), "-r", tempFile.getAbsolutePath() }; //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -183,8 +182,6 @@ public class RegRipperParser extends AbstractParser {
                             }
                     }
 
-                    xhtml.endDocument();
-
                 }
             }
                  
@@ -193,6 +190,7 @@ public class RegRipperParser extends AbstractParser {
             rawParser.parse(tis, handler, metadata, context);
             
         } finally {
+            xhtml.endDocument();
             tmp.close();
         }
 
