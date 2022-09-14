@@ -9,6 +9,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
@@ -47,7 +49,6 @@ public class RegRipperParser extends AbstractParser {
     private static String[] cmd;
     private static String TOOL_NAME = "rip"; //$NON-NLS-1$
     private static boolean tested = false;
-    private static String[] regNames = { "sam", "software", "system", "security", "ntuser", "usrclass" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
     private static Charset charset = Charset.forName("UTF-8"); //$NON-NLS-1$
 
     private RawStringParser rawParser = new RawStringParser();
@@ -116,19 +117,11 @@ public class RegRipperParser extends AbstractParser {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
             String filename = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
-            File tempFile = null;
-            String[] finalCmd = null;
-            for (String regName : regNames)
-                if (filename.toLowerCase().startsWith(regName)) {
-                    tempFile = tis.getFile();
-                    String[] params = new String[] { "-f", regName, "-r", tempFile.getAbsolutePath() }; //$NON-NLS-1$ //$NON-NLS-2$
+            File tempFile = tis.getFile();
 
-                    finalCmd = new String[cmd.length + params.length];
-                    for (int i = 0; i < cmd.length; i++)
-                        finalCmd[i] = cmd[i];
-                    for (int i = 0; i < params.length; i++)
-                        finalCmd[cmd.length + i] = params[i];
-                }
+            ArrayList<String> finalCmd = new ArrayList<>();
+            finalCmd.addAll(Arrays.asList(cmd));
+            finalCmd.addAll(Arrays.asList("-a", "-r", tempFile.getAbsolutePath()));
 
             // indexa strings brutas
             rawParser.parse(tis, handler, metadata, context);
