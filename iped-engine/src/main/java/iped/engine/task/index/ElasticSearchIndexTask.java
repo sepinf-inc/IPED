@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -39,7 +40,6 @@ import org.opensearch.client.indices.CreateIndexRequest;
 import org.opensearch.client.indices.CreateIndexResponse;
 import org.opensearch.client.indices.GetIndexRequest;
 import org.opensearch.client.indices.PutMappingRequest;
-import org.opensearch.common.collect.Map;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.common.settings.Settings.Builder;
 import org.opensearch.common.unit.TimeValue;
@@ -266,7 +266,14 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
         properties.put(ExtraProperties.LOCATIONS, Collections.singletonMap("type", "geo_point"));
-        properties.put(BasicProps.CONTENT, Map.of("type", "text", "term_vector", "with_positions_offsets"));
+
+        Map<String, String> contentMapping = new HashMap<>(Map.of("type", "text"));
+
+        if(elasticConfig.isTermVector()) {
+            contentMapping.put("term_vector", "with_positions_offsets");
+        }
+
+        properties.put(BasicProps.CONTENT, contentMapping);
 
         // mapping the parent-child relation
         /*
