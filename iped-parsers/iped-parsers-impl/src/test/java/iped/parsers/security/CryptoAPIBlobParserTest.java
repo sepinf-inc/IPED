@@ -26,7 +26,7 @@ public class CryptoAPIBlobParserTest extends TestCase {
 
         CryptoAPIBlobParser parser = new CryptoAPIBlobParser();
         Metadata metadata = new Metadata();
-        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, MediaType.application("crypto-api-file").toString());
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, CryptoAPIBlobParser.CAPI_MIME.toString());
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);

@@ -39,8 +39,8 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
 
         if (!ResultTableListener.syncingSelectedItems && !e.getValueIsAdjusting()) {
             ResultTableListener.syncingSelectedItems = true;
-            App.get().resultsTable.clearSelection();
             App.get().resultsTable.getSelectionModel().setValueIsAdjusting(true);
+            App.get().resultsTable.clearSelection();
             int[] selRows = App.get().gallery.getSelectedCells();
             int start = 0;
             while (start < selRows.length) {
@@ -50,6 +50,10 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
                 }
                 App.get().resultsTable.addRowSelectionInterval(selRows[start], selRows[i - 1]);
                 start = i;
+            }
+            int leadIdx = App.get().gallery.getLeadSelectionIndex();
+            if (leadIdx != -1) {
+                App.get().resultsTable.addRowSelectionInterval(leadIdx, leadIdx);
             }
             App.get().resultsTable.getSelectionModel().setValueIsAdjusting(false);
             ResultTableListener.syncingSelectedItems = false;

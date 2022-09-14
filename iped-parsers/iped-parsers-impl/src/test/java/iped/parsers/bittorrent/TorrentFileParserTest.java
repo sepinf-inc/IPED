@@ -25,7 +25,7 @@ public class TorrentFileParserTest extends TestCase {
 
         TorrentFileParser parser = new TorrentFileParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-bittorrent").toString());
+        metadata.add(Metadata.CONTENT_TYPE, TorrentFileParser.TORRENT_FILE_MIME_TYPE.toString());
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
@@ -46,7 +46,7 @@ public class TorrentFileParserTest extends TestCase {
 
         TorrentFileParser parser = new TorrentFileParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-bittorrent").toString());
+        metadata.add(Metadata.CONTENT_TYPE, TorrentFileParser.TORRENT_FILE_MIME_TYPE.toString());
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);

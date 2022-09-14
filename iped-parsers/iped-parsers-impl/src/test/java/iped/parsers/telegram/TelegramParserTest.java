@@ -27,11 +27,11 @@ public class TelegramParserTest extends AbstractPkgTest {
         parser.setExtractMessages(true);
         parser.setEnabledForUfdr(true);
         parser.getSupportedTypes(telegramContext);
-        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "application/x-telegram-db");
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, TelegramParser.TELEGRAM_DB.toString());
         try (InputStream stream = getStream("test-files/test_telegramCache4.db")) {
             parser.parse(stream, handler, metadata, telegramContext);
 
-            assertEquals(509, telegramtracker.title.size());
+            assertEquals(516, telegramtracker.title.size());
             assertEquals(257, telegramtracker.username.size());
             assertEquals(236, telegramtracker.userphone.size());
             assertEquals(261, telegramtracker.useraccount.size());
@@ -100,7 +100,7 @@ public class TelegramParserTest extends AbstractPkgTest {
         parser.setExtractMessages(true);
         parser.setEnabledForUfdr(true);
         parser.getSupportedTypes(telegramUserContext);
-        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "application/x-telegram-user-conf");
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, TelegramParser.TELEGRAM_USER_CONF.toString());
         try (InputStream stream = getStream("test-files/test_telegramUserConfing.xml")) {
             parser.parseAndroidAccount(stream, handler, metadata, telegramUserContext);
 

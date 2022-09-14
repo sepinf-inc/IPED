@@ -3,7 +3,7 @@
   <parent>
     <groupId>iped</groupId>
     <artifactId>iped-viewers</artifactId>
-    <version>4.0.3</version>
+    <version>4.1-snapshot</version>
   </parent>
   
   <artifactId>iped-viewers-api</artifactId>
@@ -19,7 +19,6 @@
             <artifactId>iped-api</artifactId>
             <version>${project.version}</version>
         </dependency>
-       
 	</dependencies>
   
 </project>

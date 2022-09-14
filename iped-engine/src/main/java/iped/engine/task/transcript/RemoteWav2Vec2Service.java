@@ -44,6 +44,10 @@ public class RemoteWav2Vec2Service {
 
     private static final int MAX_CON_QUEUE = 5000;
 
+    // This timeout should not be too high, otherwise clients with connection issues
+    // would waste server time waiting for them while good clients are waiting.
+    private static final int CLIENT_TIMEOUT_MILLIS = 10000;
+
     private static ExecutorService executor = Executors.newCachedThreadPool();
 
     private static Logger logger;
@@ -148,10 +152,15 @@ public class RemoteWav2Vec2Service {
                     public void run() {
                         Path tmpFile = null;
                         File wavFile = null;
-                        try (BufferedInputStream bis = new BufferedInputStream(client.getInputStream());
-                                PrintWriter writer = new PrintWriter(new OutputStreamWriter(
-                                        client.getOutputStream(), StandardCharsets.UTF_8), true)) {
-                            
+                        PrintWriter writer = null;
+                        BufferedInputStream bis = null;
+                        boolean error = false;
+                        try {
+                            client.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
+                            bis = new BufferedInputStream(client.getInputStream());
+                            writer = new PrintWriter(
+                                    new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);
+
                             writer.println(MESSAGES.ACCEPTED);
 
                             String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
@@ -162,10 +171,8 @@ public class RemoteWav2Vec2Service {
                             byte[] bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
                             String cmd = new String(bytes);
                             if (!MESSAGES.AUDIO_SIZE.toString().equals(cmd)) {
-                                String errorMsg = "Size msg not received!";
-                                writer.println(MESSAGES.ERROR);
-                                writer.println(errorMsg);
-                                throw new IOException(prefix + errorMsg);
+                                error = true;
+                                throw new IOException("Size msg not received!");
                             }
 
                             DataInputStream dis = new DataInputStream(bis);
@@ -182,25 +189,16 @@ public class RemoteWav2Vec2Service {
                             }
 
                             if (tmpFile.toFile().length() != size) {
-                                String errorMsg = "Received less audio bytes than expected";
-                                writer.println(MESSAGES.ERROR);
-                                writer.println(errorMsg);
-                                throw new IOException(prefix + errorMsg);
+                                error = true;
+                                throw new IOException("Received less audio bytes than expected");
                             } else {
                                 logger.info(prefix + "Received " + size + " audio bytes to transcribe.");
                             }
 
-                            String suffix = ".";
-                            try {
-                                wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
-                            } catch (Exception e) {
-                                suffix = ": " + e.toString().replace('\n', ' ').replace('\r', ' ');
-                            }
+                            wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+
                             if (wavFile == null) {
-                                String errorMsg = "Failed to convert audio to wav" + suffix;
-                                writer.println(MESSAGES.WARN);
-                                writer.println(errorMsg);
-                                throw new IOException(prefix + errorMsg);
+                                throw new IOException("Failed to convert audio to wav");
                             } else {
                                 logger.info(prefix + "Audio converted to wav.");
                             }
@@ -216,9 +214,16 @@ public class RemoteWav2Vec2Service {
                             logger.info(prefix + "Transcritpion sent.");
 
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            String errorMsg = "Exception while transcribing";
+                            logger.warn(errorMsg, e);
+                            if (writer != null) {
+                                writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
+                                writer.println(errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
+                            }
                         } finally {
                             jobs.decrementAndGet();
+                            IOUtil.closeQuietly(bis);
+                            IOUtil.closeQuietly(writer);
                             IOUtil.closeQuietly(client);
                             if (tmpFile != null) {
                                 tmpFile.toFile().delete();

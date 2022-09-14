@@ -41,7 +41,6 @@ public class MultipleParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("Compressed by Petite (c)1999 Ian Luck."));
             assertTrue(hts.contains("ExitProcess"));
@@ -50,12 +49,12 @@ public class MultipleParserTest extends TestCase {
             assertTrue(hts.contains("C:\\ARJ\\ -m -b -x"));
             assertTrue(hts.contains("ARJ32 v 3.10/Win32"));
 
-            assertTrue(mts.contains(ExtraProperties.TIKA_PARSER_USED + "=org.apache.tika.parser.executable.ExecutableParser"));
-            assertTrue(mts.contains(ExtraProperties.TIKA_PARSER_USED + "=iped.parsers.standard.RawStringParser"));
-            assertTrue(mts.contains("machine:endian=Little"));
-            assertTrue(mts.contains("machine:platform=Windows"));
-            assertTrue(mts.contains("machine:architectureBits=32"));
-            assertTrue(mts.contains("Content-Type=application/x-msdownload"));
+            assertEquals(ExecutableParser.class.getName(), metadata.getValues(ExtraProperties.TIKA_PARSER_USED)[0]);
+            assertEquals(RawStringParser.class.getName(), metadata.getValues(ExtraProperties.TIKA_PARSER_USED)[1]);
+            assertEquals("Little", metadata.get("machine:endian"));
+            assertEquals("Windows", metadata.get("machine:platform"));
+            assertEquals("32", metadata.get("machine:architectureBits"));
+            assertEquals("application/x-msdownload", metadata.get(Metadata.CONTENT_TYPE));
 
         }
 

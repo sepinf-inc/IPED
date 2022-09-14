@@ -121,7 +121,12 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
                     transcriptConfig.getLanguages().size());
 
             Builder builder = RecognitionConfig.newBuilder().setLanguageCode(languageCode)
+                    .setUseEnhanced(true)
                     .addAllAlternativeLanguageCodes(alternativeLangs);
+
+            if (transcriptConfig.getGoogleModel() != null) {
+                builder.setModel(transcriptConfig.getGoogleModel());
+            }
 
             /*
              * // Sample rate in Hertz of the audio data sent int sampleRateHertz = 48000;

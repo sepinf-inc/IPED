@@ -49,7 +49,7 @@ public class CertificateParser extends AbstractParser {
 	public static final MediaType PEM_MIME = MediaType.application("x-pem-file");
     public static final MediaType DER_MIME = MediaType.application("pkix-cert");
     private static final MediaType PKCS7_MIME = MediaType.application("pkcs7-mime");
-    private static final MediaType PKCS7_SIGNATURE = MediaType.application("pkcs7-signature");
+    public static final MediaType PKCS7_SIGNATURE = MediaType.application("pkcs7-signature");
     private static Set<MediaType> SUPPORTED_TYPES = null;
 
     public static final Property NOTBEFORE = Property.internalDate("certificate:notbefore"); //$NON-NLS-1$

@@ -105,3 +105,8 @@ maxConcurrentRequests = 100
 
 # Depending on your subscription, Google limits your request rate (per minute or per second).
 requestIntervalMillis = 67
+
+# Set the Google transcription model to be used.
+# Some possible values: default, phone_call, video, latest_short, latest_long
+# For more information, see https://cloud.google.com/speech-to-text/docs/transcription-model
+googleModel = latest_long

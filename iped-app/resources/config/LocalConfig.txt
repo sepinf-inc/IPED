@@ -37,6 +37,3 @@ mplayerPath = ../mplayer/mplayer.exe
 # Plugin folder for optional libs not embedded because of license restrictions.
 # They will be dynamically loaded at runtime.
 pluginFolder = ../plugins/
-
-# Path for RegRipper folder.
-regripperFolder = ../regripper/
