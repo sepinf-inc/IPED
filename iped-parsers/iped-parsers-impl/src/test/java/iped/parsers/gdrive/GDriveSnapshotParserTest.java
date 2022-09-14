@@ -25,7 +25,7 @@ public class GDriveSnapshotParserTest extends TestCase {
 
         GDriveSnapshotParser parser = new GDriveSnapshotParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-gdrive-snapshot").toString());
+        metadata.add(Metadata.CONTENT_TYPE, GDriveSnapshotParser.GDRIVE_SNAPSHOT.toString());
         ContentHandler handler = new BodyContentHandler(100000000);
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);

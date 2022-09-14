@@ -78,6 +78,8 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
                 if (multiCaseGraphPath.exists())
                     IOUtil.deleteDirectory(multiCaseGraphPath, false);
                 File graphHomeTemp = new File(multiCaseGraphPath.getAbsolutePath() + "_temp");
+                // neo4j needs canonical path, see #1288
+                graphHomeTemp = graphHomeTemp.getCanonicalFile();
                 if (graphHomeTemp.exists())
                     IOUtil.deleteDirectory(graphHomeTemp, false);
                 ImportWorker importer = new ImportWorker(cases, graphHomeTemp);
@@ -148,6 +150,8 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
             if (!IOUtil.canWrite(dbDataDir)) {
                 neo4jHome = copyToTempFolder(dbDataDir);
             }
+            // neo4j needs canonical path, see #1288
+            neo4jHome = neo4jHome.getCanonicalFile();
             graphService.start(neo4jHome);
             return true;
         } catch (Throwable e) {

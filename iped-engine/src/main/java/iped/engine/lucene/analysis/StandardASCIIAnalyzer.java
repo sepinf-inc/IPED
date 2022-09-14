@@ -9,22 +9,15 @@ import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.miscellaneous.LengthFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
+import iped.engine.task.index.IndexItem;
+import iped.localization.LocalizedProperties;
+
 /*
  * Analisador de texto que utiliza o tokenizador LowerCaseLetterDigitTokenizer e
  * o filtro ASCIIFoldingFilter, o qual converte caracteres para seus equivalentes ascii,
  * removando acentos, cedilhas, etc.
  */
 public class StandardASCIIAnalyzer extends Analyzer {
-
-    // private Set<?> stopSet;
-
-    /**
-     * Specifies whether deprecated acronyms should be replaced with HOST type. See
-     * {@linkplain https://issues.apache.org/jira/browse/LUCENE-1068}
-     */
-    // private final boolean replaceInvalidAcronym,enableStopPositionIncrements;
-
-    private final boolean categoryTokenizer;
 
     /**
      * Default maximum allowed token length
@@ -40,16 +33,6 @@ public class StandardASCIIAnalyzer extends Analyzer {
     private boolean convertCharsToLowerCase = true;
 
     private int[] extraChars;
-
-    /**
-     * Builds an analyzer with the default stop words.
-     *
-     * @param matchVersion
-     *            Lucene version to match
-     */
-    public StandardASCIIAnalyzer(boolean categoryTokenizer) {
-        this.categoryTokenizer = categoryTokenizer;
-    }
 
     public void setFilterNonLatinChars(boolean filterNonLatinChars) {
         this.filterNonLatinChars = filterNonLatinChars;
@@ -83,23 +66,33 @@ public class StandardASCIIAnalyzer extends Analyzer {
         return maxTokenLength;
     }
 
+    private boolean isCategoryField(String fieldName) {
+        return IndexItem.CATEGORY.equals(fieldName)
+                || LocalizedProperties.getLocalizedField(IndexItem.CATEGORY).equals(fieldName);
+    }
+
     @Override
-    protected TokenStreamComponents createComponents(final String fieldName) {
-
-        Tokenizer tokenizer;
-        if (categoryTokenizer) {
-            tokenizer = new CategoryTokenizer();
-        } else {
-            tokenizer = new LetterDigitTokenizer(extraChars);
-        }
-
-        TokenStream tok = tokenizer;
-        if (convertCharsToLowerCase || categoryTokenizer) {
+    protected TokenStream normalize(String fieldName, TokenStream tok) {
+        if (convertCharsToLowerCase || isCategoryField(fieldName)) {
             tok = new LowerCaseFilter(tok);
         }
         if (convertCharsToAscii) {
             tok = new FastASCIIFoldingFilter(tok);
         }
+        return tok;
+    }
+
+    @Override
+    protected TokenStreamComponents createComponents(final String fieldName) {
+
+        Tokenizer tokenizer;
+        if (isCategoryField(fieldName)) {
+            tokenizer = new CategoryTokenizer();
+        } else {
+            tokenizer = new LetterDigitTokenizer(extraChars);
+        }
+
+        TokenStream tok = normalize(fieldName, tokenizer);
 
         /*
          * The following code removes tokens that exceed the maximum size or that
@@ -107,7 +100,7 @@ public class StandardASCIIAnalyzer extends Analyzer {
          * FastASCIIFoldingFilter). Nonetheless, the filters are not applied to the
          * Category's description, which is checked by the following "if"
          */
-        if (!(categoryTokenizer)) {
+        if (!isCategoryField(fieldName)) {
             tok = new LengthFilter(tok, 1, maxTokenLength);
             if (filterNonLatinChars)
                 tok = new Latin1CharacterFilter(tok);

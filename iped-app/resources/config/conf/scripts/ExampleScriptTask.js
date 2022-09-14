@@ -36,7 +36,7 @@ function init(configuration){
 function finish(){
     //Bookmark creation example
     /*
-	var query = "tipo:pdf";
+	var query = "type:pdf";
 	
 	//set query into searcher
     searcher.setQuery(query);
@@ -53,8 +53,8 @@ function finish(){
 	//add item ids to created bookmark
     ipedCase.getBookmarks().addBookmark(ids, bookmarkId);
     
-    //save changes
-	ipedCase.getBookmarks().saveState();
+    //save changes synchronously
+	ipedCase.getBookmarks().saveState(true);
 	*/ 
 }
 

@@ -687,29 +687,21 @@ public class IndexItem extends BasicProps {
             return;
 
         if (type == null) {
-            // try to guess unknown type
-            // this must be synchronized, see issue #1007
-            synchronized (typesMap) {
-                type = typesMap.get(key);
-                if (type == null) {
-                    try {
-                        oValue = Double.valueOf(value);
-                        type = Double.class;
-                    } catch (NumberFormatException e) {
-                        Date date = DateUtil.tryToParseDate(value);
-                        if (date != null) {
-                            oValue = date;
-                            type = Date.class;
-                        } else {
-                            type = String.class;
-                        }
-                    }
-                    typesMap.put(key, type);
+            try {
+                Double doubleVal = Double.valueOf(value);
+                String newKey = key + ":number";
+                typesMap.put(newKey, Double.class);
+                addExtraAttributeToDoc(doc, newKey, doubleVal, isMultiValued, timeEventSet);
+
+            } catch (NumberFormatException e) {
+                Date date = DateUtil.tryToParseDate(value);
+                if (date != null) {
+                    String newKey = key + ":date";
+                    typesMap.put(newKey, Date.class);
+                    addExtraAttributeToDoc(doc, newKey, date, isMultiValued, timeEventSet);
                 }
             }
-
-        }
-        if (type != null) {
+        } else {
             try {
                 if (type.equals(Double.class)) {
                     oValue = Double.valueOf(value);
@@ -727,10 +719,9 @@ public class IndexItem extends BasicProps {
                         throw new ParseException("Not a date", 0);
                 }
             } catch (NumberFormatException | ParseException e) {
-                // value doesn't match built-in/guessed type, store value in other field as string
+                // value doesn't match built-in type, store value in other field as string
                 key += ":string";
-                type = String.class;
-                typesMap.put(key, type);
+                typesMap.put(key, String.class);
             }
         }
 
