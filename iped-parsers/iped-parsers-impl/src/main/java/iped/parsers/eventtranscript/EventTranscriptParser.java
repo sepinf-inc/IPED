@@ -141,7 +141,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 Metadata metadataHistory = new Metadata();
                 metadataHistory.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST.toString());
                 metadataHistory.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
-                metadataHistory.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                metadataHistory.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
                 metadataHistory.set(BasicProps.HASCHILD, "true");
                 metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
@@ -212,7 +212,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 Metadata appInteractMeta = new Metadata();
                 appInteractMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_APP_INTERACT.toString());
                 appInteractMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
-                appInteractMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                appInteractMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(2));
                 appInteractMeta.set(BasicProps.HASCHILD, "true");
                 appInteractMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
@@ -247,7 +247,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 Metadata devicesMeta = new Metadata();
                 devicesMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_DEVICES.toString());
                 devicesMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
-                devicesMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                devicesMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(3));
                 devicesMeta.set(BasicProps.HASCHILD, "true");
                 devicesMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
@@ -284,7 +284,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 Metadata censusMeta = new Metadata();
                 censusMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_CENSUS.toString());
                 censusMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
-                censusMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                censusMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(4));
                 censusMeta.set(BasicProps.HASCHILD, "true");
                 censusMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
@@ -315,7 +315,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 Metadata networkingMeta = new Metadata();
                 networkingMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_NETWORKING.toString());
                 networkingMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
-                networkingMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+                networkingMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(5));
                 networkingMeta.set(BasicProps.HASCHILD, "true");
                 networkingMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
@@ -413,7 +413,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataHistoryEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST_REG.toString());
         metadataHistoryEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript History Entry " + i);
         metadataHistoryEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-        metadataHistoryEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
+        metadataHistoryEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
         metadataHistoryEntry.set(BasicProps.LENGTH, "");
 
         metadataHistoryEntry.add(TikaCoreProperties.TITLE, String.join("; ", historyEntry.getPageTitles()));
@@ -433,6 +433,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_INVENTORY_APP_REG.toString());
         metadataEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Inventory App Entry " + i);
         metadataEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        metadataEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
         metadataEntry.set(BasicProps.LENGTH, "");
 
         metadataEntry.set(TikaCoreProperties.CREATED, entry.getTimestamp());
@@ -453,6 +454,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_APP_INTERACT_REG.toString());
         metadataEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript App Interaction " + i);
         metadataEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        metadataEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(2));
         metadataEntry.set(BasicProps.LENGTH, "");
 
         metadataEntry.set(TikaCoreProperties.CREATED, entry.getTimestamp());
@@ -475,6 +477,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_DEVICES_REG.toString());
         metadataEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Devices Entry " + i);
         metadataEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        metadataEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(3));
         metadataEntry.set(BasicProps.LENGTH, "");
 
         metadataEntry.set(TikaCoreProperties.CREATED, entry.getTimestamp());
@@ -498,6 +501,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_NETWORKING_REG.toString());
         metadataEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Networking Entry " + i);
         metadataEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        metadataEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(5));
         metadataEntry.set(BasicProps.LENGTH, "");
 
         metadataEntry.set(TikaCoreProperties.CREATED, entry.getUTCTimestamp());
