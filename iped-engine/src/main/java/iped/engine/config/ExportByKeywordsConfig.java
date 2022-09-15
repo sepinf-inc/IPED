@@ -18,7 +18,7 @@ public class ExportByKeywordsConfig extends AbstractTaskConfig<List<String>> imp
      */
     private static final long serialVersionUID = 2L;
 
-    private static final String CONFIG_FILE = "KeywordsToExport.txt";
+    public static final String CONFIG_FILE = "KeywordsToExport.txt";
 
     private List<String> keywords = new ArrayList<>();
 
