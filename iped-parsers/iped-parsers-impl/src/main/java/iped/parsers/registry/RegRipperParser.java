@@ -183,13 +183,16 @@ public class RegRipperParser extends AbstractParser {
             os.close();
         }
 
-        Metadata reportMetadata = new Metadata();
+        File htmlFile = getHtml(outFile, tmp);
+        if (htmlFile == null) {
+            // ignores empty reports
+            return;
+        }
 
+        Metadata reportMetadata = new Metadata();
         reportMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, reportName);
         reportMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
         reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-        File htmlFile = getHtml(outFile, tmp);
 
         if (extractor.shouldParseEmbedded(reportMetadata)) {
             try (InputStream is = new FileInputStream(htmlFile)) {
@@ -209,6 +212,10 @@ public class RegRipperParser extends AbstractParser {
     }
 
     private File getHtml(File file, TemporaryResources tmp) throws IOException {
+        String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
+        if (content == null || content.isBlank()) {
+            return null;
+        }
         File html = tmp.createTemporaryFile();
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(html), charset);) {
             writer.write("<html>"); //$NON-NLS-1$
@@ -217,10 +224,7 @@ public class RegRipperParser extends AbstractParser {
             writer.write("</head>"); //$NON-NLS-1$
             writer.write("<body>"); //$NON-NLS-1$
             writer.write("<pre>"); //$NON-NLS-1$
-
-            String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
-            writer.write(SimpleHTMLEncoder.htmlEncode(content.trim()));
-
+            writer.write(SimpleHTMLEncoder.htmlEncode(content.strip()));
             writer.write("</pre>"); //$NON-NLS-1$
             writer.write("</body>"); //$NON-NLS-1$
             writer.write("</html>"); //$NON-NLS-1$
