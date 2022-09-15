@@ -1,0 +1,19 @@
+package iped.app.home.style;
+
+/*
+ * @created 15/09/2022
+ * @project IPED
+ * @author Thiago S. Figueiredo
+ */
+
+import java.awt.*;
+
+public class StyleManager {
+
+
+    public static Font getPageTitleFont(){
+        return new Font("Arial Bold", Font.PLAIN, 28);
+    }
+
+
+}
