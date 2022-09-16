@@ -205,10 +205,13 @@ public class RegRipperParser extends AbstractParser {
         ArrayList<String> detectCmd = new ArrayList<>(Arrays.asList(cmd));
         detectCmd.addAll(Arrays.asList("-g", "-r", file.getAbsolutePath()));
         ProcessBuilder pb = new ProcessBuilder(detectCmd);
+        if (!TOOL_PATH.isEmpty()) {
+            pb.directory(new File(TOOL_PATH));
+        }
         Process p = pb.start();
         IOUtil.ignoreInputStream(p.getErrorStream());
         byte[] bytes = IOUtil.loadInputStream(p.getInputStream());
-        return new String(bytes, StandardCharsets.ISO_8859_1);
+        return new String(bytes, StandardCharsets.ISO_8859_1).strip();
     }
 
     private File getHtml(File file, TemporaryResources tmp) throws IOException {
