@@ -138,7 +138,7 @@ public class RegRipperParser extends AbstractParser {
 
             // run specific profiles for each hive
             String regType = detectHive(tempFile);
-            String profiles = regType + "_profiles";
+            String profiles = "profiles/" + regType;
             File dir = new File(TOOL_PATH + "/plugins/" + profiles);
             File[] directoryListing = dir.listFiles();
             if (directoryListing != null) {

@@ -475,7 +475,7 @@ function process(e){
 
 		if (
 			(nome.indexOf("-users") !== -1) ||
-			(nome.indexOf("-useraccinfo") !== -1)
+			(nome.indexOf("-useraccountinfo") !== -1)
 		){
 			e.addCategory("General Informations")
 		}
