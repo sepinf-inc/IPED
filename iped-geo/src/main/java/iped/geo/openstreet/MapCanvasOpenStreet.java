@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import org.apache.commons.io.IOUtils;
 
@@ -23,7 +24,6 @@ import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
 public class MapCanvasOpenStreet extends AbstractMapCanvas {
-
     /**
 	 * 
 	 */
@@ -32,9 +32,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
     JSInterfaceFunctionsOpenStreet jsInterface = new JSInterfaceFunctionsOpenStreet(this);
-
+    
     boolean dragging = false;
     double dragStartX, dragStartY;
+    ChangeListener<State> onLoadChange;
 
     String url;
 
@@ -83,17 +84,28 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                     }
                 });
 
-                webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<State>() {
-
+                webEngine.loadContent(UiUtil.getUIEmptyHtml());
+                
+                onLoadChange = new ChangeListener<State>() {
                     @Override
                     public void changed(ObservableValue<? extends State> observable, State oldState, State newState) {
                         if (newState == State.SUCCEEDED) {
                             JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
                             window.setMember("app", jsInterface); //$NON-NLS-1$
+                            try {
+                            	if(onLoadRunnables.size()>0) {
+                            		for (Iterator iterator = onLoadRunnables.iterator(); iterator.hasNext();) {
+										Runnable runnable = (Runnable) iterator.next();
+										runnable.run();										
+									}
+                            		onLoadRunnables.clear();
+                            	}
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
-                });
-                webEngine.loadContent(UiUtil.getUIEmptyHtml());
+                };
             }
         });
     }
@@ -118,7 +130,9 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     @Override
     public void setText(final String html) {
         Platform.runLater(new Runnable() {
-            public void run() {
+            public void run() {            	
+                webEngine.getLoadWorker().stateProperty().removeListener(onLoadChange);
+                webEngine.getLoadWorker().stateProperty().addListener(onLoadChange);
                 webEngine.loadContent(html);
                 jfxPanel.invalidate();
             }
@@ -140,7 +154,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             String layers_img = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
                     .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("layers.png"))); //$NON-NLS-1$
 
-            html = html.replace("{{layers_img}}", layers_img);
+            html = html.replace("{{layers_img}}", layers_img);            
             html = html.replace("{{markerclusterjs}}", markerclusterjs);
             html = html.replace("{{tileServerUrl}}", url);
             html = html.replace("{{toolbar}}", getToolBarHtml());
@@ -207,11 +221,11 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
     @Override
     public void update() {
-
-        if (this.selectionMapToApply != null) {
+    	MapCanvasOpenStreet self = this;
+        if (self.selectionMapToApply != null) {
             // repinta selecoes alteradas
-            final String[] marks = new String[this.selectionMapToApply.keySet().size()];
-            this.selectionMapToApply.keySet().toArray(marks);
+            final String[] marks = new String[self.selectionMapToApply.keySet().size()];
+            self.selectionMapToApply.keySet().toArray(marks);
             final HashMap<String, Boolean> selecoesAfazerCopy = selectionMapToApply;
 
             Platform.runLater(new Runnable() {
@@ -237,7 +251,21 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                     }
                 }
             });
-            this.selectionMapToApply = null;
+            self.selectionMapToApply = null;
+        }
+        if (self.leadSelectionToApply != null) {
+        	final String leadSelectionToApplyCopy = self.leadSelectionToApply;
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    try {
+                        webEngine.executeScript("updateLeadMarker(\""+leadSelectionToApplyCopy.toString()+"\");");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                    	//nothing
+					}
+                }
+            });
         }
     }
 
@@ -253,5 +281,4 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             }
         });
     }
-
 }
