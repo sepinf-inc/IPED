@@ -4,22 +4,27 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TimeZone;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 
 import javax.swing.JProgressBar;
 import javax.swing.SortOrder;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.tika.metadata.Metadata;
 
 import iped.data.IItemId;
+import iped.engine.task.index.IndexItem;
 import iped.geo.localization.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.utils.DateUtil;
 import iped.utils.SimpleHTMLEncoder;
@@ -56,115 +61,147 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
 
     @Override
     protected KMLResult doInBackground() throws Exception {
+        KMLResult kmlResult = new KMLResult();
+    	try {
+            StringBuilder tourPlayList = new StringBuilder(""); //$NON-NLS-1$
+            StringBuilder kml = new StringBuilder(""); //$NON-NLS-1$
 
-        StringBuilder tourPlayList = new StringBuilder(""); //$NON-NLS-1$
-        StringBuilder kml = new StringBuilder(""); //$NON-NLS-1$
+            String coluna = null;
+            boolean descendingOrder = false;
+            try {
+                coluna = app.getSortColumn();
+                descendingOrder = app.getSortOrder().equals(SortOrder.DESCENDING);
+            } catch (Exception ex) {
+                coluna = BasicProps.ID;
+                descendingOrder = false;
+            }
 
-        String coluna = null;
-        boolean descendingOrder = false;
-        try {
-            coluna = app.getSortColumn();
-            descendingOrder = app.getSortOrder().equals(SortOrder.DESCENDING);
-        } catch (Exception ex) {
-            coluna = BasicProps.ID;
-            descendingOrder = false;
-        }
+            kml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"); //$NON-NLS-1$
+            kml.append("<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\" >"); //$NON-NLS-1$
+            kml.append("<Document>"); //$NON-NLS-1$
+            kml.append("<name>" + Messages.getString("KMLResult.SearchResults") + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            kml.append("<open>1</open>"); //$NON-NLS-1$
+            kml.append("<description>" + Messages.getString("KMLResult.SearchResultsDescription") + "</description>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            kml.append("<Style id=\"basico\"><BalloonStyle><![CDATA[" //$NON-NLS-1$
+                    + " $[name] <br/> $[description] <br/> " + Messages.getString("KMLResult.ShowInTree") //$NON-NLS-1$ //$NON-NLS-2$
+                    + "]]>" //$NON-NLS-1$
+                    + "</BalloonStyle></Style>"); //$NON-NLS-1$
 
-        kml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"); //$NON-NLS-1$
-        kml.append("<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\" >"); //$NON-NLS-1$
-        kml.append("<Document>"); //$NON-NLS-1$
-        kml.append("<name>" + Messages.getString("KMLResult.SearchResults") + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        kml.append("<open>1</open>"); //$NON-NLS-1$
-        kml.append("<description>" + Messages.getString("KMLResult.SearchResultsDescription") + "</description>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        kml.append("<Style id=\"basico\"><BalloonStyle><![CDATA[" //$NON-NLS-1$
-                + " $[name] <br/> $[description] <br/> " + Messages.getString("KMLResult.ShowInTree") //$NON-NLS-1$ //$NON-NLS-2$
-                + "]]>" //$NON-NLS-1$
-                + "</BalloonStyle></Style>"); //$NON-NLS-1$
+            kml.append("<Folder>"); //$NON-NLS-1$
+            kml.append("<name>" + Messages.getString("KMLResult.Results") + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-        kml.append("<Folder>"); //$NON-NLS-1$
-        kml.append("<name>" + Messages.getString("KMLResult.Results") + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            IMultiSearchResult results = app.getResults();
+            Document doc;
 
-        IMultiSearchResult results = app.getResults();
-        Document doc;
-
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"); //$NON-NLS-1$
-        df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
-
-        if (progress != null) {
-            progress.setMaximum(results.getLength());
-        }
-
-        String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
-
-        /* nova query com apenas os itens que possuem georreferenciamento */
-        IIPEDSearcher searcher = app.createNewSearch(query);
-        IMultiSearchResult multiResult = searcher.multiSearch();
-
-        Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
-        for (IItemId item : multiResult.getIterator())
-            gpsItems.put(item, null);
-
-        for (int row = 0; row < results.getLength(); row++) {
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"); //$NON-NLS-1$
+            df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
 
             if (progress != null) {
-                progress.setValue(row + 1);
+                progress.setMaximum(results.getLength());
             }
+            
+            LeafReader reader = app.getIPEDSource().getLeafReader();
+            SortedSetDocValues docValuesSet = reader.getSortedSetDocValues(IndexItem.GEO_SSDV_PREFIX+ExtraProperties.LOCATIONS);
+            
+            int cont=0;
+            Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
+            
+            class ItemIds{
+            	int luceneId;
+            	IItemId itemId;
+            	
+            	public ItemIds(int luceneId, IItemId itemId) {
+            		this.luceneId = luceneId;
+            		this.itemId = itemId;
+            	}
+            }
+            
+            TreeMap<Integer,ItemIds> sortedItems = new TreeMap<Integer,ItemIds>();
 
-            IItemId item = results.getItem(app.getResultsTable().convertRowIndexToModel(row));
+            for (int row = 0; row < results.getLength(); row++) {        	
+                if (progress != null) {
+                    progress.setValue(row + 1);
+                }
+                
+                IItemId item = results.getItem(row);
 
-            if (!gpsItems.containsKey(item))
-                continue;
+                int luceneId = app.getIPEDSource().getLuceneId(item);
+                
+                if(!docValuesSet.advanceExact(luceneId)) {
+                	continue;
+                }
 
-            int luceneId = app.getIPEDSource().getLuceneId(item);
-            doc = app.getIPEDSource().getSearcher().doc(luceneId);
-
-            String lat;
-            String longit;
-            String alt = resolveAltitude(doc);
-
-            String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
-
-            if (locations != null && locations.length == 1) {
-                String[] locs = locations[0].split(";"); //$NON-NLS-1$
-                lat = locs[0].trim();
-                longit = locs[1].trim();
-                generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, -1);
+                int tableRow = app.getResultsTable().convertRowIndexToView(row);
                 gpsItems.put(item, null);
+                sortedItems.put(tableRow, new ItemIds(luceneId,item));
+            }
+            
+            for (Iterator<Entry<Integer,ItemIds>> iterator = sortedItems.entrySet().iterator(); iterator.hasNext();) {
+            	Entry<Integer, ItemIds> e = iterator.next();
+            	ItemIds itemIds = e.getValue();
+				int luceneId = itemIds.luceneId;
+				IItemId item = itemIds.itemId;
+				int row = e.getKey();
 
-            } else if (locations != null && locations.length > 1) {
-                int subitem = -1;
-                List<Integer> subitems = new ArrayList<>();
-                gpsItems.put(item, subitems);
-                for (String location : locations) {
-                    String[] locs = location.split(";"); //$NON-NLS-1$
+                cont++;
+                //int luceneId = app.getIPEDSource().getLuceneId(item);
+                doc = app.getIPEDSource().getSearcher().doc(luceneId);
+
+                String lat;
+                String longit;
+                String alt = resolveAltitude(doc);
+
+                String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
+
+                if (locations != null && locations.length == 1) {
+                    String[] locs = locations[0].split(";"); //$NON-NLS-1$
                     lat = locs[0].trim();
                     longit = locs[1].trim();
-                    generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, ++subitem);
-                    subitems.add(subitem);
+                    generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, -1);
+                    gpsItems.put(item, null);
+
+                } else if (locations != null && locations.length > 1) {
+                    int subitem = -1;
+                    List<Integer> subitems = new ArrayList<>();
+                    gpsItems.put(item, subitems);
+                    for (String location : locations) {
+                        String[] locs = location.split(";"); //$NON-NLS-1$
+                        lat = locs[0].trim();
+                        longit = locs[1].trim();
+                        generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, ++subitem);
+                        subitems.add(subitem);
+                    }
+                } else {
+                    contSemCoordenadas++;
                 }
-            } else {
-                contSemCoordenadas++;
+
             }
+            System.out.println(cont);
+            kml.append("</Folder>"); //$NON-NLS-1$
 
-        }
-        kml.append("</Folder>"); //$NON-NLS-1$
+            kml.append("<gx:Tour>"); //$NON-NLS-1$
+            if (descendingOrder) {
+                kml.append("  <name>" + coluna + "-DESC</name>"); //$NON-NLS-1$ //$NON-NLS-2$
+            } else {
+                kml.append("  <name>" + coluna + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            kml.append("  <gx:Playlist>"); //$NON-NLS-1$
+            kml.append(tourPlayList);
+            kml.append("  </gx:Playlist>"); //$NON-NLS-1$
+            kml.append("</gx:Tour>"); //$NON-NLS-1$
 
-        kml.append("<gx:Tour>"); //$NON-NLS-1$
-        if (descendingOrder) {
-            kml.append("  <name>" + coluna + "-DESC</name>"); //$NON-NLS-1$ //$NON-NLS-2$
-        } else {
-            kml.append("  <name>" + coluna + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$
-        }
-        kml.append("  <gx:Playlist>"); //$NON-NLS-1$
-        kml.append(tourPlayList);
-        kml.append("  </gx:Playlist>"); //$NON-NLS-1$
-        kml.append("</gx:Tour>"); //$NON-NLS-1$
+            kml.append("</Document>"); //$NON-NLS-1$
+            kml.append("</kml>"); //$NON-NLS-1$
 
-        kml.append("</Document>"); //$NON-NLS-1$
-        kml.append("</kml>"); //$NON-NLS-1$
+            kmlResult.setResultKML(kml.toString(), itemsWithGPS, gpsItems);
+    		
+    	}catch(Exception e){
+    		e.printStackTrace();
+    	}finally {
+        	//Thread.currentThread().setContextClassLoader(oldCcl);
+		
+		}
 
-        KMLResult kmlResult = new KMLResult();
-        kmlResult.setResultKML(kml.toString(), itemsWithGPS, gpsItems);
         return kmlResult;
 
     }
@@ -265,5 +302,4 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
         String alt = doc.get(ExtraProperties.COMMON_META_PREFIX + Metadata.ALTITUDE.getName());
         return alt;
     }
-
 }
