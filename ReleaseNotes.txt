@@ -1,3 +1,15 @@
+16/09/2022: IPED-4.0.4
+Fixes:
+#1293: Errors in multicases: rendering chats with attachments, bookmarking duplicates and exporting file properties (@lfcnassif)
+#1321: Inconsistent behavior of enableAutomaticExportFiles and CategoriesToExport/KeywordsToExport (@lfcnassif)
+#1288: Error generating multicase graph depending on current directory (@lfcnassif)
+#1292: Processing can hang in AudioTranscriptTask (@lfcnassif)
+#1290: HexViewerPlus search for big hexadecimals not working (@gfd2020)
+#1324: Fix audio:transcriptConfidence type as double (@lfcnassif)
+#1299: Clicking on an item in the gallery, sometimes trigger multiple events (@tc-wleite)
+#1323: Rare mplayer processes left behind on Windows after processing finished (@lfcnassif)
+
+
 25/08/2022: IPED-4.0.3
 Fixes:
 #661:  Fix dynamic metadata types detection divergences in multicases (@lfcnassif)
