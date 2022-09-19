@@ -6,7 +6,7 @@ import iped.data.IItemReader;
  * Classe que representa um arquivo enviado via URL registrado no arquivo
  * main.db.
  *
- * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
+ * @author Patrick Dalla Bernardina patrick.pdb@pf.gov.br
  */
 
 public class SkypeMessageUrlFile {
