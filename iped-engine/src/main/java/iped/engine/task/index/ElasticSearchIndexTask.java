@@ -57,6 +57,7 @@ import iped.engine.config.IndexTaskConfig;
 import iped.engine.io.FragmentingReader;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.MinIOTask.MinIODataRef;
+import iped.engine.task.similarity.ImageSimilarity;
 import iped.engine.util.SSLFix;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
@@ -214,7 +215,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
         CreateIndexRequest request = new CreateIndexRequest(indexName);
         Builder builder = Settings.builder().put(MAX_FIELDS_KEY, elasticConfig.getMax_fields())
                 .put(INDEX_SHARDS_KEY, elasticConfig.getIndex_shards())
-                .put(INDEX_REPLICAS_KEY, elasticConfig.getIndex_replicas()).put(IGNORE_MALFORMED, true);
+                .put(INDEX_REPLICAS_KEY, elasticConfig.getIndex_replicas()).put(IGNORE_MALFORMED, true)
+                .put("index.knn", true);
 
         if (!elasticConfig.getIndex_policy().isEmpty()) {
             builder.put(INDEX_POLICY_KEY, elasticConfig.getIndex_policy());
@@ -266,6 +268,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
         properties.put(ExtraProperties.LOCATIONS, Collections.singletonMap("type", "geo_point"));
+        properties.put("extraAttributes.imageFeatures",
+                Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures));
 
         Map<String, String> contentMapping = new HashMap<>(Map.of("type", "text"));
 
@@ -507,8 +511,20 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.THUMB, item.getThumb()).field(BasicProps.TIMEOUT, item.isTimedOut())
                 .field(BasicProps.DELETED, item.isDeleted()).field(BasicProps.HASCHILD, item.hasChildren())
                 .field(BasicProps.ISDIR, item.isDir()).field(BasicProps.ISROOT, item.isRoot())
-                .field(BasicProps.CARVED, item.isCarved()).field(BasicProps.SUBITEM, item.isSubItem())
-                .field(BasicProps.OFFSET, item.getFileOffset()).field("extraAttributes", item.getExtraAttributeMap());
+                .field(BasicProps.CARVED, item.isCarved()).field(BasicProps.SUBITEM, item.isSubItem());
+        var extraAttributes = new HashMap<String, Object>();
+        extraAttributes.putAll(item.getExtraAttributeMap());
+        if (extraAttributes.containsKey("imageFeatures")) {
+            float v[] = new float[ImageSimilarity.numFeatures];
+            byte vet[] = (byte[]) extraAttributes.get("imageFeatures");
+            for (int i = 0; i < ImageSimilarity.numFeatures; i++) {
+                v[i] = vet[i];
+            }
+            extraAttributes.put("imageFeatures", v);
+
+
+        }
+        builder.field(BasicProps.OFFSET, item.getFileOffset()).field("extraAttributes", extraAttributes);
 
         ISeekableInputStreamFactory isisf = item.getInputStreamFactory();
         String idInSource = item.getIdInDataSource();
