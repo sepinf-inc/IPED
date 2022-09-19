@@ -58,6 +58,7 @@ import iped.engine.io.FragmentingReader;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.MinIOTask.MinIODataRef;
 import iped.engine.task.similarity.ImageSimilarity;
+import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.engine.util.SSLFix;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
@@ -268,13 +269,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
         properties.put(ExtraProperties.LOCATIONS, Collections.singletonMap("type", "geo_point"));
-        properties.put("extraAttributes.imageFeatures",
-                Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures, "method",
-                        Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+        properties.put("extraAttributes." + ImageSimilarityTask.IMAGE_FEATURES, Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures));
 
         Map<String, String> contentMapping = new HashMap<>(Map.of("type", "text"));
 
-        if(elasticConfig.isTermVector()) {
+        if (elasticConfig.isTermVector()) {
             contentMapping.put("term_vector", "with_positions_offsets");
         }
 
@@ -512,20 +511,20 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.THUMB, item.getThumb()).field(BasicProps.TIMEOUT, item.isTimedOut())
                 .field(BasicProps.DELETED, item.isDeleted()).field(BasicProps.HASCHILD, item.hasChildren())
                 .field(BasicProps.ISDIR, item.isDir()).field(BasicProps.ISROOT, item.isRoot())
-                .field(BasicProps.CARVED, item.isCarved()).field(BasicProps.SUBITEM, item.isSubItem());
+                .field(BasicProps.CARVED, item.isCarved()).field(BasicProps.SUBITEM, item.isSubItem())
+                .field(BasicProps.OFFSET, item.getFileOffset());
+
         var extraAttributes = new HashMap<String, Object>();
         extraAttributes.putAll(item.getExtraAttributeMap());
-        if (extraAttributes.containsKey("imageFeatures")) {
+        if (extraAttributes.containsKey(ImageSimilarityTask.IMAGE_FEATURES)) {
             float v[] = new float[ImageSimilarity.numFeatures];
-            byte vet[] = (byte[]) extraAttributes.get("imageFeatures");
-            for (int i = 0; i < vet.length; i++) {
+            byte vet[] = (byte[]) extraAttributes.get(ImageSimilarityTask.IMAGE_FEATURES);
+            for (int i = 0; i < ImageSimilarity.numFeatures; i++) {
                 v[i] = vet[i];
             }
-            extraAttributes.put("imageFeatures", v);
-
-
+            extraAttributes.put(ImageSimilarityTask.IMAGE_FEATURES, v);
         }
-        builder.field(BasicProps.OFFSET, item.getFileOffset()).field("extraAttributes", extraAttributes);
+        builder.field("extraAttributes", extraAttributes);
 
         ISeekableInputStreamFactory isisf = item.getInputStreamFactory();
         String idInSource = item.getIdInDataSource();
