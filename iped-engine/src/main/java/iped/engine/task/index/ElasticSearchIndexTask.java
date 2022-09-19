@@ -268,12 +268,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
         properties.put(ExtraProperties.LOCATIONS, Collections.singletonMap("type", "geo_point"));
-        properties.put("extraAttributes.imageFeatures",
-                Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures));
+        properties.put("extraAttributes.imageFeatures", Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures));
 
         Map<String, String> contentMapping = new HashMap<>(Map.of("type", "text"));
 
-        if(elasticConfig.isTermVector()) {
+        if (elasticConfig.isTermVector()) {
             contentMapping.put("term_vector", "with_positions_offsets");
         }
 
@@ -512,6 +511,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.DELETED, item.isDeleted()).field(BasicProps.HASCHILD, item.hasChildren())
                 .field(BasicProps.ISDIR, item.isDir()).field(BasicProps.ISROOT, item.isRoot())
                 .field(BasicProps.CARVED, item.isCarved()).field(BasicProps.SUBITEM, item.isSubItem());
+
         var extraAttributes = new HashMap<String, Object>();
         extraAttributes.putAll(item.getExtraAttributeMap());
         if (extraAttributes.containsKey("imageFeatures")) {
@@ -521,8 +521,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 v[i] = vet[i];
             }
             extraAttributes.put("imageFeatures", v);
-
-
         }
         builder.field(BasicProps.OFFSET, item.getFileOffset()).field("extraAttributes", extraAttributes);
 
