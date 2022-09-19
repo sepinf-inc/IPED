@@ -269,7 +269,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
         properties.put(ExtraProperties.LOCATIONS, Collections.singletonMap("type", "geo_point"));
         properties.put("extraAttributes.imageFeatures",
-                Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures));
+                Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures, "method",
+                        Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
 
         Map<String, String> contentMapping = new HashMap<>(Map.of("type", "text"));
 
@@ -517,7 +518,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         if (extraAttributes.containsKey("imageFeatures")) {
             float v[] = new float[ImageSimilarity.numFeatures];
             byte vet[] = (byte[]) extraAttributes.get("imageFeatures");
-            for (int i = 0; i < ImageSimilarity.numFeatures; i++) {
+            for (int i = 0; i < vet.length; i++) {
                 v[i] = vet[i];
             }
             extraAttributes.put("imageFeatures", v);
