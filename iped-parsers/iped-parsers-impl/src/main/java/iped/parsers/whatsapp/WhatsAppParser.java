@@ -85,7 +85,7 @@ import iped.utils.SimpleHTMLEncoder;
 /**
  * Parser para banco de dados do WhatsApp
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class WhatsAppParser extends SQLite3DBParser {
 

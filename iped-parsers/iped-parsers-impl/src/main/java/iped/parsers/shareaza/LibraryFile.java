@@ -34,7 +34,7 @@ import iped.parsers.util.ChildPornHashLookup;
 import iped.search.IItemSearcher;
 
 /**
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 class LibraryFile extends ShareazaEntity {
 
