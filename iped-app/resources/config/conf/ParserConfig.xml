@@ -29,6 +29,11 @@
         <parser class="org.apache.tika.parser.audio.MidiParser"></parser>
         <!--throws exception on most files
         <parser class="org.apache.tika.parser.crypto.Pkcs7Parser"></parser-->
+        <parser class="iped.parsers.evtx.EvtxGroupedParser">
+            <params>
+                <param name="groupBy" type="string">Event/System/EventID;Event/System/Computer</param>
+            </params>
+        </parser>
         <parser class="org.apache.tika.parser.crypto.TSDParser"></parser>
         <parser class="org.apache.tika.parser.csv.TextAndCSVParser"></parser>
         <parser class="org.apache.tika.parser.dwg.DWGParser"></parser>
