@@ -124,7 +124,10 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
         index_policy = index_policy == null ? "" : index_policy.trim();
         useCustomAnalyzer = Boolean.valueOf(props.getProperty(CUSTOM_ANALYZER_KEY).trim());
         validateSSL = Boolean.valueOf(props.getProperty(VALIDATE_SSL).trim());
-        termVector = Boolean.valueOf(props.getProperty(TERM_VECTOR).trim());
+        String value = props.getProperty(TERM_VECTOR);
+        if (value != null) {
+            termVector = Boolean.valueOf(value.trim());
+        }
     }
 
     public boolean getValidateSSL() {
