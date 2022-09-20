@@ -118,17 +118,16 @@ public class RegRipperParser extends AbstractParser {
         try {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
-            String filename = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
-
-            if (filename.matches(".*\\.LOG\\d?")) {
-                // skip parsing log files
-                return;
-            }
-
             File tempFile = tis.getFile();
 
             // index raw strings (important because not all keys/values are extracted by regripper)
             rawParser.parse(tis, handler, metadata, context);
+            
+            String filename = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
+            if (filename.matches(".*\\.LOG\\d?")) {
+                // skip parsing log files
+                return;
+            }
 
             // run all available plugins for this hive
             ArrayList<String> command = new ArrayList<>(Arrays.asList(cmd));
