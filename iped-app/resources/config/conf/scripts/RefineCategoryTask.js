@@ -25,6 +25,8 @@ function process(e){
 	var length = e.getLength();
 	var ext = e.getExt().toLowerCase();
 	var mime = e.getMediaType().toString();
+	var nome = e.getName().toLowerCase();
+	var path = e.getPath().toLowerCase();
 	
 	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk/i.test(e.getName())){
 	    e.setMediaTypeStr("application/x-vmdk-data");
@@ -92,9 +94,7 @@ function process(e){
 			e.setCategory("URL links");
 			
 		else if (ext.equals("plist")) {
-			var path = e.getPath().toLowerCase();
 			if (path.indexOf("/safari/") > -1) {
-				var nome = e.getName().toLowerCase();
 				if (nome.indexOf("history") > -1 || 
 	 			   nome.indexOf("downloads") > -1 ||
 	  			   nome.indexOf("lastsession") > -1 ||
@@ -103,7 +103,6 @@ function process(e){
 					e.setCategory("Internet History");
 			}
 		} else {
-			var nome = e.getName().toLowerCase();
 			if (e.getPath().toLowerCase().indexOf("/chrome/user data/") > -1) {
 				if (nome.indexOf(" session") > -1 || 
 	 			   nome.indexOf(" tabs") > -1 ||
@@ -128,11 +127,6 @@ function process(e){
 		else if(e.getName().equals("INFO2"))
 			e.setMediaTypeStr("application/x-info2");
 	}
-		
-		
-	var nome = e.getName().toLowerCase();
-	var path = e.getPath().toLowerCase();
-
 
 	//iPhone backup default folders
 	if ((path.indexOf("/application data/apple computer/mobilesync/backup") > -1)||
@@ -402,110 +396,80 @@ function process(e){
 		}
 	}
 	
-	
-	
-	// Custom Regripper Report 
-	var categorias = e.getCategories().toLowerCase();
-	var length = e.getLength();
-	var nome = e.getName().toLowerCase();
-	var ext = e.getExt().toLowerCase();
-	var path = e.getPath().toLowerCase();
-	var tipo = e.getMediaType().toString().toLowerCase()
-	
-	if (
-	   (nome.equals("system-report") && tipo.equals("application/x-windows-registry-report")) ||
-	   (nome.equals("sam-report") && tipo.equals("application/x-windows-registry-report")) ||
-	   (nome.equals("software-report") && tipo.equals("application/x-windows-registry-report")) ||
-	   (nome.equals("security-report") && tipo.equals("application/x-windows-registry-report")) ||
-	   (nome.equals("ntuser.dat-report") && tipo.equals("application/x-windows-registry-report")) ||
-	   (nome.equals("usrclass.dat-report") && tipo.equals("application/x-windows-registry-report"))
-	   
+	// Custom Regripper Reports
 
-	)
-	{
-		e.addCategory("Registry Full Report")
-	}
-
-	if (tipo.equals("application/x-windows-registry-report")){
+	if (mime.equals("application/x-windows-registry-report")){
 		
 		if (nome.indexOf("-os") !== -1) {
-			e.addCategory("Operational System")
+			e.setCategory("Operating System")
 		}
 
 		if (nome.indexOf("-installed_software") !== -1) {
-			e.addCategory("Installed Apps")
+			e.setCategory("Installed Apps")
 		}
 
 		if (nome.indexOf("-network") !== -1) {
-			e.addCategory("Network")
+			e.setCategory("Network Info")
 		}
 
 		if (nome.indexOf("-storage") !== -1) {
-			e.addCategory("Storage")
+			e.setCategory("Storage Info")
 		}
 
-		if (
-			nome.indexOf("-devices") !== -1 ||
-			nome.indexOf("usbdeview") !== -1
-		) {
-			e.addCategory("Devices")
+		if (nome.indexOf("-devices") !== -1 ||
+			nome.indexOf("usbdeview") !== -1)
+		{
+			e.setCategory("Device Info")
 		}
 
 		if (nome.indexOf("-program_execution") !== -1) {
-			e.addCategory("Program Execution")
+			e.setCategory("Program Execution")
 		}
 
 		if (nome.indexOf("-autorun") !== -1) {
-			e.addCategory("Autorun")
+			e.setCategory("AutoRun Info")
 		}
 
 		if (nome.indexOf("-log") !== -1) {
-			e.addCategory("Log")
+			e.setCategory("Log Information")
 		}
 
 		if (nome.indexOf("-malware") !== -1) {
-			e.addCategory("MALWARE")
+			e.setCategory("Malware Info")
 		}
 
 		if (nome.indexOf("-web") !== -1) {
-			e.addCategory("WEB")
+			e.setCategory("Web Information")
 		}
 
-
-
-		if (
-			(nome.indexOf("-users") !== -1) ||
-			(nome.indexOf("-useraccountinfo") !== -1)
-		){
-			e.addCategory("General Informations")
-		}
-
-		if 
-			(nome.indexOf("-user_activity") !== -1) 
+		if (nome.indexOf("-users") !== -1 ||
+			nome.indexOf("-useraccountinfo") !== -1)
 		{
-			e.addCategory("User Activity")
+			e.setCategory("User Information")
+		}
+
+		if (nome.indexOf("-user_activity") !== -1) {
+			e.setCategory("User Activity")
 		}
 		
 		if (nome.indexOf("-user_file") !== -1) {
-			e.addCategory("User Files")
+			e.setCategory("User Files")
 		}
 
-		if (nome.indexOf("-user_network") !== -1) 
-		{
-			e.addCategory("User Network Activity")
+		if (nome.indexOf("-user_network") !== -1) {
+			e.setCategory("User Network Activity")
 		}
 
 		if (nome.indexOf("-user_config") !== -1) {
-
-			e.addCategory("User Config")
+			e.setCategory("User Config")
 		}
 
 		if (nome.indexOf("-user_virtual") !== -1) {
-			e.addCategory("User Virtualization")
+			e.setCategory("User Virtualization")
 		}
 
 		if (nome.indexOf("-user_communications") !== -1) {
-			e.addCategory("User Communications")
+			e.setCategory("User Communication")
 		}
 			
 
