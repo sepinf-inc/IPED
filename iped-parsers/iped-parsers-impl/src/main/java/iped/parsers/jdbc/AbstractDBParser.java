@@ -55,17 +55,19 @@ public abstract class AbstractDBParser extends AbstractParser {
     public static final int HTML_MAX_ROWS = Integer.MAX_VALUE;
 
     private Connection connection;
+    int tableRowsPerItem = 100;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return null;
     }
-
-
+    
+    public void setTableRowsPerItem(int value) {
+    	this.tableRowsPerItem = value;
+    }
 
     private int parseTables(ContentHandler handler, ParseContext context, JDBCTableReader reader)
             throws SAXException, IOException, SQLException {
-
         TableReportGenerator trg = new TableReportGenerator(reader);
         int table_fragment = 0;
         TemporaryResources tmp = new TemporaryResources();
@@ -74,30 +76,29 @@ public abstract class AbstractDBParser extends AbstractParser {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
             Metadata tableM = new Metadata();
-            try (InputStream is = trg.createHtmlReport(HTML_MAX_ROWS, handler, context, tmp)) {
-                ++table_fragment;
-                hasNext = trg.hasNext();
-                String title = reader.getTableName();
-                if (hasNext || table_fragment > 1) {
-                    title += "_" + table_fragment;
-                }
-                tableM.set(TikaCoreProperties.TITLE, title);
-                tableM.set(StandardParser.INDEXER_CONTENT_TYPE, TABLE_REPORT.toString());
-                tableM.set(Database.TABLE_NAME, reader.getTableName());
-                tableM.set(Database.COLUMN_COUNT, Integer.toString(trg.getCols()));
-                tableM.set(Database.ROW_COUNT, Integer.toString(trg.getRows()));
-                tableM.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+            do {            	
+                try(InputStream is = trg.createHtmlReport(tableRowsPerItem, handler, context, tmp)) {
+                    ++table_fragment;
+                    hasNext = trg.hasNext();
+                    String title = reader.getTableName();
+                    if (hasNext || table_fragment > 1) {
+                        title += "_" + table_fragment;
+                    }
+                    tableM.set(TikaCoreProperties.TITLE, title);
+                    tableM.set(StandardParser.INDEXER_CONTENT_TYPE, TABLE_REPORT.toString());
+                    tableM.set(Database.TABLE_NAME, reader.getTableName());
+                    tableM.set(Database.COLUMN_COUNT, Integer.toString(trg.getCols()));
+                    tableM.set(Database.ROW_COUNT, Integer.toString(trg.getRows()));
+                    tableM.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                extractor.parseEmbedded(is, handler, tableM, false);
-            }
+                    extractor.parseEmbedded(is, handler, tableM, false);
+                }
+            }while(trg.hasNext());
 
         } while (hasNext);
 
         return trg.getTotRows();
-
     }
-
-
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)

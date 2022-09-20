@@ -90,6 +90,8 @@ public class TableReportGenerator {
 
             if (totRows == 0) {
                 next();
+            }else {
+            	hasNext=true;
             }
 
             if (hasNext) {
