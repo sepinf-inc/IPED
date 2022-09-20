@@ -67,9 +67,8 @@
         {"name": "AutoRun Info"},
         {"name": "Log Information"},
         {"name": "Malware Info"},
-        {"name": "Registry Full Report"},
         {"name": "Web Information"},
-        {"name": "Users", "categories":[
+        {"name": "Registry User Info", "categories":[
           {"name": "User Information"},
           {"name": "User Activity"},
           {"name": "User Files"},
