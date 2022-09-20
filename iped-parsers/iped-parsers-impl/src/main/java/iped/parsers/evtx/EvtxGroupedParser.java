@@ -23,7 +23,6 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -34,7 +33,6 @@ import iped.parsers.evtx.model.EvtxRecord;
 import iped.parsers.evtx.model.EvtxRecordConsumer;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
-import iped.properties.BasicProps;
 
 /*
  * Parser that extract event records grouped by EventID  
@@ -47,7 +45,10 @@ public class EvtxGroupedParser extends AbstractParser {
 
     public static final String EVTX_RECORD_MIME_TYPE = "application/x-elf-record"; //$NON-NLS-1$
 
-	private static final String EVTX_METADATA_PREFIX = "WinEvtID";
+	private static final String EVTX_METADATA_PREFIX = "WinEvtx";
+
+	private static final Property RECCOUNT_PROP = Property.internalInteger(EVTX_METADATA_PREFIX+":recordCount");
+	private static final Property RECID_PROP = Property.internalIntegerSequence(EVTX_METADATA_PREFIX+":eventRecordID");
 	static String timeCreated = EVTX_METADATA_PREFIX+":timeCreated";
     
 	private String[] groupBy;
@@ -79,6 +80,7 @@ public class EvtxGroupedParser extends AbstractParser {
         
         if (extractor.shouldParseEmbedded(metadata)) {
             EvtxFile evtxFile = new EvtxFile(tis);
+            evtxFile.setName(filePath);
             
             HashMap<String, ArrayList<EvtxRecord>> subItens = new HashMap<String, ArrayList<EvtxRecord>>();
             
@@ -108,10 +110,12 @@ public class EvtxGroupedParser extends AbstractParser {
     			}
     		};
 
-    		evtxFile.setEvtxRecordConsumer(co );
+    		evtxFile.setEvtxRecordConsumer(co);
             evtxFile.processFile();
 
             try {
+            	int totalRecordCount=0;
+            	int pageCount = subItens.size() / 32*1024;
                 for (Iterator<Entry<String,ArrayList<EvtxRecord>>> iterator = subItens.entrySet().iterator(); iterator.hasNext();) {
                 	Entry<String,ArrayList<EvtxRecord>> sub = (Entry<String,ArrayList<EvtxRecord>>) iterator.next();
 
@@ -122,14 +126,15 @@ public class EvtxGroupedParser extends AbstractParser {
                     recordMetadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
                     String name = sub.getKey();
                     recordMetadata.set(TikaCoreProperties.TITLE, name);//eventtype
-
+                    
                     StringBuffer content = new StringBuffer();
+                    int groupRecordCount=0;
                     for (Iterator iterator2 = recs.iterator(); iterator2.hasNext();) {
     					EvtxRecord evtxRecord = (EvtxRecord) iterator2.next();
     	                String date = evtxRecord.getEventDateTime();
     	                recordMetadata.add(timeCreated, date);
+    	                recordMetadata.add(RECID_PROP, (int) evtxRecord.getEventRecordId());
     	                content.append(evtxRecord.getBinXml().toString());
-    	                content.append("<br/>\n");
 
     	                HashMap<String, String> datas = evtxRecord.getEventData();
     	                if(datas!=null && datas.size()>0) {
@@ -141,9 +146,12 @@ public class EvtxGroupedParser extends AbstractParser {
     	                	}catch(Exception e) {
     	                		e.printStackTrace();
     	                	}
-    	                }    	                
+    	                }
+    	                groupRecordCount++;
     				}
                     
+                    recordMetadata.set(RECCOUNT_PROP, groupRecordCount);
+                    totalRecordCount+=groupRecordCount;
 
                     if (extractor.shouldParseEmbedded(recordMetadata)) {
                         try {
@@ -155,6 +163,8 @@ public class EvtxGroupedParser extends AbstractParser {
                     }
                 	
     			}
+
+                metadata.set(RECCOUNT_PROP, totalRecordCount);
             }catch (Exception e) {
             	System.out.println("Evtx File:"+filePath);
 				e.printStackTrace();

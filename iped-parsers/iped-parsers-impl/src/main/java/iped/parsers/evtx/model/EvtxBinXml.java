@@ -4,8 +4,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import iped.parsers.evtx.template.TemplateInstance;
-
 public class EvtxBinXml {
 	private EvtxFile evtxFile;
 	private ByteBuffer bb;
@@ -31,8 +29,9 @@ public class EvtxBinXml {
 				fragments.add(frag);
 				break;
 			default:
-				System.out.println();
-				break;
+				System.out.print("Unexpected token in file:"+evtxFile.getName());
+				System.out.println(b.type);
+				return;
 			}
 
 			b=new BinXmlToken(evtxFile, bb);

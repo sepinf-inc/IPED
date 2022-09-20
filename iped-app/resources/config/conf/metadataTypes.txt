@@ -4301,3 +4301,5 @@ x_Generator = java.lang.String
 x_x_Generator = java.lang.String
 xmpTPg:NPages = java.lang.Integer
 “format-detection” = java.lang.String
+WinEvtx:recordCount = java.lang.Integer
+WinEvtx:eventRecordID = java.lang.Integer

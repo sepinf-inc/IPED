@@ -1,11 +1,8 @@
 package iped.parsers.evtx;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,7 +31,6 @@ import iped.parsers.evtx.model.EvtxRecord;
 import iped.parsers.evtx.model.EvtxRecordConsumer;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
-import iped.properties.BasicProps;
 
 /*
  * Parser that extract event records   
@@ -57,7 +53,6 @@ public class EvtxRecordParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
         TemporaryResources tmp = new TemporaryResources();
@@ -68,7 +63,7 @@ public class EvtxRecordParser extends AbstractParser {
             filePath = itemInfo.getPath();
 
         final TikaInputStream tis = TikaInputStream.get(stream, tmp);
-        
+
     	if (extractor.shouldParseEmbedded(metadata)) {
             EvtxFile evtxFile = new EvtxFile(tis);
             EvtxRecordConsumer co = new EvtxRecordConsumer() {

@@ -27,7 +27,7 @@ public class EvtxChunk {
 		String sig = new String(ArrayUtil.copyOfSubArray(src, 0, 8));
 		
 		if(!sig.equals("ElfChnk\0")) {
-			throw new EvtxParseExeption("Invalid header signature");
+			throw new EvtxParseExeption("Invalid Chunk Header Signature");
 		}
 
 		ByteBuffer bb = ByteBuffer.wrap(src);
@@ -43,18 +43,16 @@ public class EvtxChunk {
 		bb.position(CHUNK_HEADER_SIZE);
 		
 		int curPos=CHUNK_HEADER_SIZE;
-		boolean eoc=false;
 
 		while(curPos<=lastEventRecordOffset) {
 			byte[] recSig = new byte[4];
 			bb.get(recSig);
 			if(!((recSig[0]==0x2a)&&(recSig[1]==0x2a)&&(recSig[2]==0x00)&&(recSig[3]==0x00))){
-				eoc=true;
 				break;
 			}
+			evtxFile.totalCount++;
 			EvtxRecord evtxRec = new EvtxRecord(evtxFile, bb);
 
-			evtxFile.totalCount++;
 			EvtxRecordConsumer c = evtxFile.getEvtxRecordConsumer();
 			if(c!=null) {
 				c.accept(evtxRec);
@@ -63,8 +61,6 @@ public class EvtxChunk {
 			curPos+=evtxRec.size;
 			bb.position(curPos);
 		}
-		
-		System.out.println("Acumulado:"+evtxFile.totalCount);
 	}
 
 }

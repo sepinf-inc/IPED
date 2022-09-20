@@ -1,5 +1,9 @@
 package iped.parsers.evtx.model;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,27 +65,8 @@ public class EvtxRecord {
 	}
 
 
-	public String getEventRecordId() {
-		ArrayList<EvtxElement> al = binXml.getElements();
-		for (Iterator iterator = al.iterator(); iterator.hasNext();) {
-			EvtxElement evtxElement = (EvtxElement) iterator.next();
-			if(evtxElement.getName().equals("Event")) {
-				ArrayList<EvtxElement> al2 = evtxElement.childElements;
-				for (Iterator iterator2 = al2.iterator(); iterator2.hasNext();) {
-					EvtxElement evtxElement2 = (EvtxElement) iterator2.next();
-					if(evtxElement2.getName().equals("System")) {
-						ArrayList<EvtxElement> al3 = evtxElement2.childElements;
-						for (Iterator iterator3 = al3.iterator(); iterator3.hasNext();) {
-							EvtxElement evtxElement3 = (EvtxElement) iterator3.next();
-							if(evtxElement3.getName().equals("EventRecordID")) {
-								return evtxElement3.children.toString();
-							}
-						}
-					}					
-				}
-			}
-		}
-		return "";
+	public long getEventRecordId() {
+		return id;
 	}
 
 	public String getEventDateTime() {

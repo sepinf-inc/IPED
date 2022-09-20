@@ -6,29 +6,27 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import org.apache.lucene.util.ArrayUtil;
 
 import iped.parsers.evtx.template.TemplateData;
-import iped.parsers.evtx.template.TemplateInstance;
 
 public class EvtxFile {
-	RandomAccessFile ras;
 	HashMap<Integer, TemplateData> templateDatas = new HashMap<Integer, TemplateData>();
 	HashMap<Integer, EvtxXmlFragment> templateXmls = new HashMap<Integer, EvtxXmlFragment>();
 
 	byte[] header = new byte[4096];
 	byte[] curChunk = new byte[64*1024];
 	int chunckCount=0;
+	String name;
 	
-	static long totalCount = 0;
+	boolean dirty = false;
+	
+	long totalCount = 0;
 	
 	ArrayList<Object> templateValues = new ArrayList<Object>();
 
@@ -57,19 +55,44 @@ public class EvtxFile {
 			if(!sig.equals("ElfFile\0")) {
 				throw new EvtxParseExeption("Invalid header signature");
 			}
-
-			chunckCount=bb.asShortBuffer().get(20);
+			long firstChunckNumber=bb.asLongBuffer().get(1);
+			long lastChunckNumber=bb.asLongBuffer().get(2);
+			long nextRecordIdentifier=bb.asLongBuffer().get(2);
+			int flags = bb.asIntBuffer().get(30);
 			chunckCount=bb.asShortBuffer().get(21);
-
-			for (int i = 0; i < chunckCount; i++) {
-				dis.read(curChunk);
-				EvtxChunk chunk = new EvtxChunk(this, curChunk);
-				chunk.processChunk();
-				templateXmls.clear();
+			if(flags == 0x0001) {
+				//isDirty (not commited) so try to parse another chunk
+				dirty = true;
+			}
+			
+			if(name.contains("TerminalServices")&&name.contains("Ope")) {
+				System.out.println();
+			}
+			
+			boolean available=true;
+			for (int i = 0; available; i++) {
+				try {
+					dis.read(curChunk);
+					EvtxChunk chunk = new EvtxChunk(this, curChunk);
+					chunk.processChunk();
+				}catch (EvtxParseExeption e) {
+					if(!dirty) {
+						e.printStackTrace();
+					}else {						
+						if(i<chunckCount) {
+							e.printStackTrace();
+						}
+						//if the file is dirty ignores parsing with no error because it is normal to occur
+					}
+				}finally {
+					if(i>=chunckCount) {
+						available = dis.available()>0;
+					}
+					templateXmls.clear();
+				}
 			}
 		}catch(Exception e) {
 			e.printStackTrace();
-			
 		}
 	}
 	
@@ -133,5 +156,21 @@ public class EvtxFile {
 				evtxfile.processFile();
 			}
 		}
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public long getRecordCount() {
+		return totalCount;
+	}
+
+	public boolean isDirty() {
+		return dirty;
 	}
 }
