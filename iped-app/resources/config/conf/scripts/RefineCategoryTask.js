@@ -400,82 +400,79 @@ function process(e){
 
 	if (mime.equals("application/x-windows-registry-report")){
 		
-		if (name.indexOf("-os") !== -1) {
+		if (name.indexOf("_os") !== -1) {
 			e.setCategory("Operating System")
 		}
 
-		if (name.indexOf("-installed_software") !== -1) {
+		if (name.indexOf("_installedsoftware") !== -1) {
 			e.setCategory("Installed Apps")
 		}
 
-		if (name.indexOf("-network") !== -1) {
+		if (name.indexOf("_network") !== -1) {
 			e.setCategory("Network Info")
 		}
 
-		if (name.indexOf("-storage") !== -1) {
+		if (name.indexOf("_storage") !== -1) {
 			e.setCategory("Storage Info")
 		}
 
-		if (name.indexOf("-devices") !== -1 ||
+		if (name.indexOf("_devices") !== -1 ||
 			name.indexOf("usbdeview") !== -1)
 		{
 			e.setCategory("Device Info")
 		}
 
-		if (name.indexOf("-program_execution") !== -1) {
+		if (name.indexOf("_programexecution") !== -1) {
 			e.setCategory("Program Execution")
 		}
 
-		if (name.indexOf("-autorun") !== -1) {
+		if (name.indexOf("_autorun") !== -1) {
 			e.setCategory("AutoRun Info")
 		}
 
-		if (name.indexOf("-log") !== -1) {
+		if (name.indexOf("_log") !== -1) {
 			e.setCategory("Log Information")
 		}
 
-		if (name.indexOf("-malware") !== -1) {
+		if (name.indexOf("_malware") !== -1) {
 			e.setCategory("Malware Info")
 		}
 
-		if (name.indexOf("-web") !== -1) {
+		if (name.indexOf("_web") !== -1) {
 			e.setCategory("Web Information")
 		}
 
-		if (name.indexOf("-users") !== -1 ||
-			name.indexOf("-useraccountinfo") !== -1)
+		if (name.indexOf("_users") !== -1 ||
+			name.indexOf("_useraccountinfo") !== -1)
 		{
 			e.setCategory("User Information")
 		}
 
-		if (name.indexOf("-user_activity") !== -1) {
+		if (name.indexOf("_useractivity") !== -1) {
 			e.setCategory("User Activity")
 		}
 		
-		if (name.indexOf("-user_file") !== -1) {
+		if (name.indexOf("_userfile") !== -1) {
 			e.setCategory("User Files")
 		}
 
-		if (name.indexOf("-user_network") !== -1) {
+		if (name.indexOf("_usernetwork") !== -1) {
 			e.setCategory("User Network Activity")
 		}
 
-		if (name.indexOf("-user_config") !== -1) {
+		if (name.indexOf("_userconfig") !== -1) {
 			e.setCategory("User Config")
 		}
 
-		if (name.indexOf("-user_virtual") !== -1) {
+		if (name.indexOf("_uservirtual") !== -1) {
 			e.setCategory("User Virtualization")
 		}
 
-		if (name.indexOf("-user_communications") !== -1) {
+		if (name.indexOf("_usercommunications") !== -1) {
 			e.setCategory("User Communication")
 		}
 			
-
 	}
-
-	
 	
 }
 

@@ -132,7 +132,7 @@ public class RegRipperParser extends AbstractParser {
             // run all available plugins for this hive
             ArrayList<String> command = new ArrayList<>(Arrays.asList(cmd));
             command.addAll(Arrays.asList("-a", "-r", tempFile.getAbsolutePath()));
-            String reportName = filename + "-Report";
+            String reportName = filename + "_Full_Report";
             runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp);
 
             // run specific profiles for each hive
@@ -144,7 +144,7 @@ public class RegRipperParser extends AbstractParser {
                 for (File child : directoryListing) {
                     command = new ArrayList<>(Arrays.asList(cmd));
                     command.addAll(Arrays.asList("-f", profiles + "/" + child.getName(), "-r", tempFile.getAbsolutePath()));
-                    reportName = filename + "-" + child.getName() + "-Report";
+                    reportName = filename + "_" + child.getName().replace("_", "") + "_Report";
                     runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp);
                 }
             }
