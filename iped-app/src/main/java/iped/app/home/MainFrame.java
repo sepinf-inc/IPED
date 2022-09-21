@@ -46,6 +46,7 @@ public class MainFrame extends JFrame {
             checkAppPreRequisites();
             setupLayout();
         } catch (Exception | UIException e) {
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
@@ -69,6 +70,11 @@ public class MainFrame extends JFrame {
         cardsContentPanel.setLayout(new CardLayout());
         this.add(cardsContentPanel, gbc);
 
+        //FIXME Remove hardcoded location and set properly path
+        Configuration.getInstance().loadConfigurables("C:/Users/xxxxx/Documents/projetos/IPED/target/release/iped-4.0.2", true);
+        // Set the locale used for docking frames, so texts and tool tips are localized (if available)
+        LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
+
         //Add panels to cardlayout
         cardsContentPanel.add(new HomePanel(this), MainFrameCardsNames.HOME.getName());
         cardsContentPanel.add(new ConfigPanel(this), MainFrameCardsNames.CONFIG.getName());
@@ -80,11 +86,7 @@ public class MainFrame extends JFrame {
         //set tooltip delay
         ToolTipManager.sharedInstance().setInitialDelay(10);
         ThemeManager.getInstance().setLookAndFeel();
-        //FIXME Remove hardcoded location and set properly path
-        Configuration.getInstance().loadConfigurables("C:/Users/xxx/Documents/projetos/IPED/target/release/iped-4.0.2", true);
 
-        // Set the locale used for docking frames, so texts and tool tips are localized (if available)
-        LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
         // Set the locale used by JFileChooser's
         JFileChooser.setDefaultLocale(localeConfig.getLocale());
     }
