@@ -327,7 +327,7 @@
                                     <version>6.2.0-r38109</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}/../</outputDirectory>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
