@@ -37,6 +37,7 @@ import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.jdbc.AbstractDBParser;
 import iped.parsers.jdbc.JDBCTableReader;
 import iped.parsers.util.Messages;
 import iped.utils.TimeConverter;
@@ -234,24 +235,27 @@ class SQLite3TableReader extends JDBCTableReader {
         // stored as a column of type Integer, but the columnTypeName is TIMESTAMP, and
         // the
         // value is a string representing a Long.
+		String datetext="";
         if (rsmd.getColumnTypeName(col).equals("TIMESTAMP")) { //$NON-NLS-1$
         	long longValue = rs.getLong(col);
         	if(rs.wasNull()) {
         		text = null;
         	}else {
                 if(dbparser.isAppleORM()) {
-                	//Apple ORM date format            	
-                    text = parseDateFromLong((longValue+ APPLEORM_EPOCH)*1000l);
+                	//Apple ORM date format
+                	datetext = parseDateFromLong((longValue+ APPLEORM_EPOCH)*1000l);
                 }else {
-                    text = parseDateFromLong(longValue);
+                	datetext = parseDateFromLong(longValue);
                 }            
+            	text=AbstractDBParser.DATETIME_MARKUP_START+datetext+"\">"+datetext+"</time>";
         	}
         } else {
             long val = rs.getLong(col);
             text = Long.toString(val);
 
             if (val > 0 && dateFormats[col] != 0) {
-                text += " (*" + df.format(decodeDate(val, dateFormats[col])) + ")";
+            	datetext = df.format(decodeDate(val, dateFormats[col]));
+                text += AbstractDBParser.DATETIME_MARKUP_START+datetext+"\"> (*" + datetext + ")</time>";
                 dateGuessed = true;
             }
         }
@@ -270,17 +274,19 @@ class SQLite3TableReader extends JDBCTableReader {
         // stored as a column of type Integer, but the columnTypeName is TIMESTAMP, and
         // the
         // value is a string representing a Long.
+		String datetext="";
         if (rsmd.getColumnTypeName(col).equals("TIMESTAMP")) { //$NON-NLS-1$
         	long longValue = rs.getLong(col);
         	if(rs.wasNull()) {
         		text = null;
         	}else {
-                if(dbparser.isAppleORM()){
-                	//Apple ORM date format            	
-                    text = parseDateFromLong((longValue+ APPLEORM_EPOCH)*1000l);
+                if(dbparser.isAppleORM()) {
+                	//Apple ORM date format
+                	datetext = parseDateFromLong((longValue+ APPLEORM_EPOCH)*1000l);
                 }else {
-                    text = parseDateFromLong(longValue);
+                	datetext = parseDateFromLong(longValue);
                 }            
+            	text=AbstractDBParser.DATETIME_MARKUP_START+datetext+"\">"+datetext+"</time>";
         	}
         } else {
         	super.handleFloat(rsmd, rs, col, handler);
