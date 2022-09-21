@@ -15,5 +15,13 @@ public class StyleManager {
         return new Font("Arial Bold", Font.PLAIN, 28);
     }
 
+    public static Font getHomeButtonFont(){
+        return new Font("Arial Bold", Font.PLAIN, 20);
+    }
+
+    public static Insets getDefaultPanelInsets(){
+        return new Insets(20, 20, 20, 20);
+    }
+
 
 }

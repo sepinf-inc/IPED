@@ -55,7 +55,6 @@ public class ConfigPanel extends DefaultPanel {
     private JPanel createFormPanel(){
         JPanel panelForm = new JPanel(new GridBagLayout());
         panelForm.setBackground(Color.white);
-        panelForm.setMaximumSize(new Dimension(1024, 500));
 
         int labelsWidth = 1;
         double labelsWeightx = 0;
@@ -113,7 +112,7 @@ public class ConfigPanel extends DefaultPanel {
         c.gridy = tableLineIndex;
         c.gridwidth = cellWidth;
         c.gridheight = 1;
-        c.insets = new Insets(2,10,2,10);
+        c.insets = new Insets(2, 0,2, 0);
         return c;
     }
 

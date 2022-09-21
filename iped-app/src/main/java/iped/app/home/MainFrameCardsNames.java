@@ -13,7 +13,8 @@ public enum MainFrameCardsNames {
 
     HOME(0, "HOME"),
     CONFIG(1, "CONFIG"),
-    NEW_CASE(2, "NEW_CASE");
+    NEW_CASE(2, "NEW_CASE"),
+    OPEN_CASE(3, "OPEN_CASE");
 
     private final int value;
     private final String name;

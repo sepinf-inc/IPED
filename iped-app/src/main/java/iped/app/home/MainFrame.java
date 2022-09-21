@@ -2,6 +2,8 @@ package iped.app.home;
 
 import iped.app.home.config.ConfigPanel;
 import iped.app.home.newcase.NewCaseContainerPanel;
+import iped.app.home.opencase.OpenCasePanel;
+import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
 import iped.app.ui.themes.ThemeManager;
 import iped.engine.Version;
@@ -60,7 +62,7 @@ public class MainFrame extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx=1.0;
         gbc.weighty=1.0;
-        gbc.insets = new Insets(30,30,30,30);
+        gbc.insets = StyleManager.getDefaultPanelInsets();
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.BOTH;
         cardsContentPanel.setBackground(Color.white);
@@ -71,6 +73,7 @@ public class MainFrame extends JFrame {
         cardsContentPanel.add(new HomePanel(this), MainFrameCardsNames.HOME.getName());
         cardsContentPanel.add(new ConfigPanel(this), MainFrameCardsNames.CONFIG.getName());
         cardsContentPanel.add(new NewCaseContainerPanel(this), MainFrameCardsNames.NEW_CASE.getName());
+        cardsContentPanel.add(new OpenCasePanel(this), MainFrameCardsNames.OPEN_CASE.getName());
 
         setHomeFrameSize();
         setFrameIcon();
