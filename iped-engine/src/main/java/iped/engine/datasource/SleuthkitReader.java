@@ -605,6 +605,65 @@ public class SleuthkitReader extends DataSourceReader {
         return null;
     }
 
+    private static HashMap<File, HashMap<Long, Content>> topItems = new HashMap<>();
+    private static HashMap<File, List<Long>> encryptedOffset = new HashMap<>();
+
+    private static long getVolumeSystemSectorOffset(VolumeSystem content) {
+        return ((VolumeSystem) content).getOffset() / ((VolumeSystem) content).getBlockSize();
+    }
+
+    private static synchronized void addContentToCheckEncryption(Content content) throws TskCoreException {
+        Long sectorOffset = null;
+        if (content instanceof Image) {
+            sectorOffset = 0L;
+        } else if (content instanceof VolumeSystem) {
+            sectorOffset = getVolumeSystemSectorOffset((VolumeSystem) content);
+        } else if (content instanceof Volume) {
+            long parentOffset = 0;
+            if (content.getParent() != null) {
+                parentOffset = getVolumeSystemSectorOffset((VolumeSystem) content.getParent());
+            }
+            sectorOffset = parentOffset + ((Volume) content).getStart();
+        } else if (content instanceof FileSystem) {
+            sectorOffset = ((FileSystem) content).getImageOffset() / ((FileSystem) content).getBlock_size();
+        }
+        if (sectorOffset != null) {
+            if (content.getDataSource() instanceof Image) {
+                File evidence = new File(((Image) content.getDataSource()).getPaths()[0]);
+                if (topItems.get(evidence) == null) {
+                    topItems.put(evidence, new HashMap<>());
+                }
+                topItems.get(evidence).put(sectorOffset, content);
+                LOGGER.debug("Added top item {}: {}", content.getClass().getName(), sectorOffset);
+                checkEncryptedOffsetSize(evidence);
+            }
+        }
+    }
+
+    private static synchronized void addOffsetToCheckEncryption(File evidence, String logMsg) throws TskCoreException {
+        String prefix = "Sector offset: ";
+        int start = logMsg.indexOf(prefix);
+        int end = logMsg.indexOf(",", start);
+        String offsetStr = logMsg.substring(start + prefix.length(), end);
+        long offset = Long.valueOf(offsetStr);
+        if (encryptedOffset.get(evidence) == null) {
+            encryptedOffset.put(evidence, new ArrayList<>());
+        }
+        encryptedOffset.get(evidence).add(offset);
+        checkEncryptedOffsetSize(evidence);
+    }
+
+    private static synchronized void checkEncryptedOffsetSize(File evidence) {
+        if (encryptedOffset.get(evidence) != null && topItems.get(evidence) != null) {
+            for (Long offset : encryptedOffset.get(evidence).toArray(new Long[0])) {
+                if (topItems.get(evidence).containsKey(offset)) {
+                    LOGGER.error("Possible Encrypted Partition at Offset {} Size: {}", offset, topItems.get(evidence).get(offset).getSize());
+                    encryptedOffset.get(evidence).remove(offset);
+                }
+            }
+        }
+    }
+
     private void addImageBlocking(AddImageProcess addImage, File image, int sectorSize)
             throws TskCoreException, TskDataException {
         try {
@@ -628,6 +687,9 @@ public class SleuthkitReader extends DataSourceReader {
                         LOGGER.warn(logMsg);
                     } else {
                         LOGGER.error(logMsg);
+                        if (logMsg.contains("Possible encryption detected")) {
+                            addOffsetToCheckEncryption(image, logMsg);
+                        }
                     }
                 }
             }
@@ -1059,8 +1121,10 @@ public class SleuthkitReader extends DataSourceReader {
         if (listOnly || fastmode || embeddedDisk) {
             itemCount++;
             caseData.incDiscoveredEvidences(1);
-            if (listOnly)
+            addContentToCheckEncryption(content);
+            if (listOnly) {
                 return null;
+            }
         }
 
         Item evidence = new Item();
