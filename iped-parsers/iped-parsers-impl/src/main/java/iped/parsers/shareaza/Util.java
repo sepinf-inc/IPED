@@ -27,7 +27,7 @@ import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Base64;
 
 /**
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 class Util {
 

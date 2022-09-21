@@ -23,7 +23,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         ParseContext whatsappContext = getContext(testFile);
         WhatsAppParser parser = new WhatsAppParser();
         Metadata metadata = new Metadata();
-        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-db");
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, WhatsAppParser.MSG_STORE.toString());
         metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "msgstore-d4");
         ContentHandler handler = new BodyContentHandler(1 << 20);
         parser.setExtractMessages(true);
@@ -95,7 +95,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         ParseContext whatsappContext = getContext(testFile);
         WhatsAppParser parser = new WhatsAppParser();
         Metadata metadata = new Metadata();
-        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-db");
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, WhatsAppParser.MSG_STORE.toString());
         metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "msgstore-d4");
         parser.setExtractMessages(true);
         parser.setMergeBackups(true);

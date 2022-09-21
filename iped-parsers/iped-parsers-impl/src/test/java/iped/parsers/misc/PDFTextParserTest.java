@@ -1,7 +1,11 @@
 package iped.parsers.misc;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Base64;
+
+import javax.imageio.ImageIO;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -13,6 +17,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import iped.parsers.util.ComputeThumb;
+import iped.properties.ExtraProperties;
 import junit.framework.TestCase;
 
 public class PDFTextParserTest extends TestCase {
@@ -47,8 +53,6 @@ public class PDFTextParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_pdfProtected.pdf")) {
             parser.parse(stream, handler, metadata, context);
 
-            String mts = metadata.toString();
-
             assertEquals("PScript5.dll Version 5.2", metadata.getValues(TikaCoreProperties.CREATOR)[1]);
             assertEquals("Acrobat Distiller 7.0.5 (Windows)", metadata.get(TikaCoreProperties.CREATOR_TOOL));
             assertEquals("Speeches by Andrew G Haldane", metadata.get(TikaCoreProperties.SUBJECT));
@@ -57,8 +61,8 @@ public class PDFTextParserTest extends TestCase {
             assertEquals(
                     "Rethinking the Financial Network, Speech by Andrew G Haldane, Executive Director, Financial Stability delivered at the Financial Student Association, Amsterdam on 28 April 2009",
                     metadata.get(TikaCoreProperties.TITLE));
-            assertEquals("application/pdf", metadata.get(Metadata.CONTENT_TYPE));
-            assertTrue(mts.contains("Content-Type=application/pdf"));
+            assertEquals(PDFTextParser.PDF_TYPE.toString(), metadata.get(Metadata.CONTENT_TYPE));
+            assertEquals(PDFTextParser.PDF_TYPE.toString(), metadata.get(Metadata.CONTENT_TYPE));
         }
 
     }
@@ -170,6 +174,8 @@ public class PDFTextParserTest extends TestCase {
     @Test
     public void testPDFOCRTextImagesEmbbedHandler() throws IOException, SAXException, TikaException {
 
+        System.setProperty(PDFTextParser.CREATE_THUMB, "true");
+        System.setProperty(PDFTextParser.THUMB_SIZE, "600");
         PDFTextParser parser = new PDFTextParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
@@ -182,6 +188,28 @@ public class PDFTextParserTest extends TestCase {
             assertTrue(hts.contains("finite polygon size (see Figure 1)."));
             assertTrue(hts.contains("William T. Freeman, Thouis R. Jones, and"));
             assertTrue(hts.contains("To generate our training set, we start from a collec"));
+        }
+    }
+
+
+    @Test
+    public void testPDFOCRTextThumbnail() throws IOException, SAXException, TikaException {
+
+        System.setProperty(PDFTextParser.CREATE_THUMB, "true");
+        System.setProperty(PDFTextParser.THUMB_SIZE, "600");
+        PDFTextParser parser = new PDFTextParser();
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        ParseContext context = new ParseContext();
+        context.set(ComputeThumb.class, new ComputeThumb());
+        try (InputStream stream = getStream("test-files/test_pdfImages.pdf")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String base64Thumb = metadata.get(ExtraProperties.THUMBNAIL_BASE64);
+            assertNotNull(base64Thumb);
+
+            byte[] thumbImage = Base64.getDecoder().decode(base64Thumb);
+            assertEquals(ImageIO.read(new ByteArrayInputStream(thumbImage)).getHeight(), 600);
         }
     }
 

@@ -45,6 +45,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.Deflater;
 
@@ -55,14 +56,15 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.util.BytesRef;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.Pragma;
 import org.sqlite.SQLiteConfig.SynchronousMode;
@@ -85,6 +87,7 @@ import iped.engine.localization.Messages;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
+import iped.exception.IPEDException;
 import iped.exception.ZipBombException;
 import iped.io.SeekableInputStream;
 import iped.parsers.util.ExportFolder;
@@ -103,7 +106,9 @@ public class ExportFileTask extends AbstractTask {
 
     private static final String ENABLE_PARAM = ExportByCategoriesConfig.ENABLE_PARAM;
 
-    private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
+    private static Logger LOGGER = LogManager.getLogger(ExportFileTask.class);
+    private final Level CONSOLE = Level.forName("MSG", 250);
+
     public static final String EXTRACT_DIR = Messages.getString("ExportFileTask.ExportFolder"); //$NON-NLS-1$
     private static final String SUBITEM_DIR = "subitens"; //$NON-NLS-1$
 
@@ -131,6 +136,8 @@ public class ExportFileTask extends AbstractTask {
 
     private static AtomicInteger counter = new AtomicInteger();
     
+    private static AtomicBoolean warned = new AtomicBoolean();
+
     private static ArrayList<IHashValue> noContentHashes = new ArrayList<>();
 
     public static int subDirCounter = 0, itensExtracted = 0;
@@ -268,7 +275,7 @@ public class ExportFileTask extends AbstractTask {
         // Exporta arquivo no caso de extração automatica ou no caso de relatório do
         // iped
         if ((caseData.isIpedReport() && evidence.isToAddToCase())
-                || (!evidence.isSubItem() && (isToBeExtracted(evidence) || evidence.isToExtract()))) {
+                || (!evidence.isSubItem() && isAutomaticExportEnabled() && (isToBeExtracted(evidence) || evidence.isToExtract()))) {
 
             evidence.setToExtract(true);
             if (doNotExport(evidence)) {
@@ -711,6 +718,13 @@ public class ExportFileTask extends AbstractTask {
         exportByCategories = configurationManager.findObject(ExportByCategoriesConfig.class);
         exportByKeywords = configurationManager.findObject(ExportByKeywordsConfig.class);
         categoryConfig = configurationManager.findObject(CategoryConfig.class);
+
+        if (automaticExportEnabled && !exportByCategories.hasCategoryToExport() && !exportByKeywords.isEnabled()) {
+            throw new IPEDException("Inconsistent configuration: " + ENABLE_PARAM + "=true but " + ExportByCategoriesConfig.CONFIG_FILE + "/" + ExportByKeywordsConfig.CONFIG_FILE + " not configured!");
+        }
+        if (!automaticExportEnabled && (exportByCategories.hasCategoryToExport() || exportByKeywords.isEnabled()) && !warned.getAndSet(true)) {
+            LOGGER.log(CONSOLE, ExportByCategoriesConfig.CONFIG_FILE + "/" + ExportByKeywordsConfig.CONFIG_FILE + " configured but {}=false, files won't be exported. Is your configuration OK?", ENABLE_PARAM);
+        }
 
         if (isAutomaticExportEnabled()) {
             caseData.setContainsReport(true);

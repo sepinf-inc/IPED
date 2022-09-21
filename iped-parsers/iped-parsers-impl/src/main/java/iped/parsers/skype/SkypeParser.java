@@ -42,7 +42,7 @@ import iped.utils.IOUtil;
 /**
  * Parser para banco de dados do Skype
  *
- * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
+ * @author Patrick Dalla Bernardina patrick.pdb@pf.gov.br
  */
 public class SkypeParser extends AbstractParser {
 
