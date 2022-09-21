@@ -53,6 +53,9 @@ public abstract class AbstractDBParser extends AbstractParser {
     public static final MediaType TABLE_REPORT = MediaType.application("x-database-table");
 
     public static final int HTML_MAX_ROWS = Integer.MAX_VALUE;
+    
+    public static final String DATETIME_MARKUP_START = "<time datetime=\"";
+    public static final String DATABASEDATECOLUMN_PREFIX = "DatabaseDate"+TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER;
 
     protected Connection connection;
     int tableRowsPerItem = 100;
@@ -68,6 +71,7 @@ public abstract class AbstractDBParser extends AbstractParser {
 
     private int parseTables(ContentHandler handler, ParseContext context, JDBCTableReader reader)
             throws SAXException, IOException, SQLException {
+
         TableReportGenerator trg = new TableReportGenerator(reader);
         int table_fragment = 0;
         TemporaryResources tmp = new TemporaryResources();
@@ -77,7 +81,7 @@ public abstract class AbstractDBParser extends AbstractParser {
                     new ParsingEmbeddedDocumentExtractor(context));
             Metadata tableM = new Metadata();
             do {            	
-                try(InputStream is = trg.createHtmlReport(tableRowsPerItem, handler, context, tmp)) {
+                try(InputStream is = trg.createHtmlReport(tableRowsPerItem, handler, context, tmp, tableM)) {
                     ++table_fragment;
                     hasNext = trg.hasNext();
                     String title = reader.getTableName();
