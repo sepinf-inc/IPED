@@ -53,7 +53,7 @@ public class Win10MailParserTest {
 
         try (InputStream stream = getStream("test-files/private_mail_sample/" + fileName)) {
 
-            parser.parse(stream, handler, metadata, edgeContext);
+            // parser.parse(stream, handler, metadata, edgeContext);
 
         }
 
@@ -62,29 +62,12 @@ public class Win10MailParserTest {
     @SuppressWarnings("serial")
     protected static class EmbeddedWin10MailParser extends AbstractParser {
 
-        protected List<String> bookmarktitle = new ArrayList<String>();
-        protected List<String> bookmarkmodified = new ArrayList<String>();
-        protected List<String> visitUrl = new ArrayList<>();
-        protected List<Date> visitDate = new ArrayList<>();
-
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
         }
 
         public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
                 throws IOException, SAXException, TikaException {
-
-            if (metadata.get(TikaCoreProperties.TITLE) != null)
-                bookmarktitle.add(metadata.get(TikaCoreProperties.TITLE));
-
-            if (metadata.get(TikaCoreProperties.MODIFIED) != null)
-                bookmarkmodified.add(metadata.get(TikaCoreProperties.MODIFIED));
-
-            if (metadata.get(ExtraProperties.URL) != null)
-                visitUrl.add(metadata.get(ExtraProperties.URL));
-
-            if (metadata.get(ExtraProperties.VISIT_DATE) != null)
-                visitDate.add(metadata.getDate(ExtraProperties.VISIT_DATE));
 
         }
     }

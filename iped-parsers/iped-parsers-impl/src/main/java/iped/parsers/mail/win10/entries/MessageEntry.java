@@ -1,4 +1,4 @@
-package iped.parsers.mail.win10;
+package iped.parsers.mail.win10.entries;
 
 public class MessageEntry {
     private long rowId;

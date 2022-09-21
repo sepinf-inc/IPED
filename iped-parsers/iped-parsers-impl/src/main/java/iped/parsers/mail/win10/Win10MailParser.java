@@ -1,15 +1,9 @@
 package iped.parsers.mail.win10;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.sql.SQLException;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -30,16 +24,16 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.Platform;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.ptr.PointerByReference;
 
-import iped.parsers.browsers.edge.EdgeWebCacheException;
-import iped.parsers.browsers.edge.EdgeWebCacheParser;
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.database.EDBParser;
+import iped.parsers.mail.win10.entries.MessageEntry;
+import iped.parsers.mail.win10.tables.AbstractTable;
+import iped.parsers.mail.win10.tables.MessageTable;
+import iped.parsers.util.EsedbManager;
 import iped.parsers.util.ItemInfo;
 
 /*
@@ -83,42 +77,12 @@ public class Win10MailParser extends AbstractParser {
     }
 
     static {
-        if (Platform.isWindows()) {
-            String osArch = System.getProperty("os.arch");
-            String arch = osArch.equals("amd64") || osArch.equals("x86_64") ? "x64" : "x86";
-
-            try (InputStream is = EdgeWebCacheParser.class
-                    .getResourceAsStream("/nativelibs/libesedb/" + arch + "/libesedb.dll")) {
-                File file = new File(System.getProperty("java.io.tmpdir") + "/libesedb.dll");
-                if (!file.exists())
-                    Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                System.load(file.getAbsolutePath());
-
-            } catch (Throwable e) {
-                LOGGER.error("Libesedb dll not loaded properly. " + Win10MailParser.class.getSimpleName()
-                        + " will be disabled.", e);
-                SUPPORTED_TYPES = Collections.EMPTY_SET;
-            }
+        esedbLibrary = EsedbManager.getEsedbLibrary();
+        if (EsedbManager.loadFailed()) {
+            SUPPORTED_TYPES = Collections.emptySet();
         }
-        if (!SUPPORTED_TYPES.isEmpty())
-            try {
-                esedbLibrary = (EsedbLibrary) Native.load("esedb", EsedbLibrary.class);
-                LOGGER.info("Libesedb library version: " + esedbLibrary.libesedb_get_version());
-
-            } catch (Throwable e) {
-                LOGGER.error("Libesedb JNA not loaded properly. " + EdgeWebCacheParser.class.getSimpleName()
-                        + " will be disabled.");
-                e.printStackTrace();
-                SUPPORTED_TYPES = Collections.EMPTY_SET;
-            }
     }
 
-    private void printError(String function, int result, PointerByReference errorPointer) {
-        LOGGER.warn("Error decoding " + itemInfo.getPath() + ": Function '" + function + "'. Function result number '"
-                + result + "' Error value: " + errorPointer.getValue().getString(0)); //$NON-NLS-1$
-        esedbLibrary.libesedb_error_free(errorPointer);
-    }
-    
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         return SUPPORTED_TYPES;
@@ -131,39 +95,35 @@ public class Win10MailParser extends AbstractParser {
         itemInfo = context.get(ItemInfo.class);
 
         TemporaryResources tmp = new TemporaryResources();
-        // File messagesFile = tmp.createTemporaryFile();
-        File evidenceFile = null;
-        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        // File tableFile = tmp.createTemporaryFile();
+        File storeVolFile = null;
+        TikaInputStream storeVolTis = TikaInputStream.get(stream, tmp);
         
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
 
         try {
-
             if (extractor.shouldParseEmbedded(metadata)) {
+                storeVolFile = storeVolTis.getFile();
 
-                evidenceFile = tis.getFile();
-
-                String filePath = evidenceFile.getAbsolutePath();
+                String storeVolPath = storeVolFile.getAbsolutePath();
 
                 PointerByReference filePointerReference = new PointerByReference();
-                List<AbstractTable> tables = getTables(filePath, filePointerReference);
+                List<AbstractTable> tables = getMailTables(storeVolPath, filePointerReference);
 
                 for (AbstractTable table : tables) {
 
                     if (table instanceof MessageTable) {
                         for (MessageEntry message : table) {
-                            System.out.println(message.getRowId());
+                            System.out.println(message.getRowId() + ": " + message.getMsgAbstract());
                         }
                     }
-
                     closeTablePointer(table.getTablePointer());
                 }
-
                 closeFilePointer(filePointerReference);
             }
         } catch (Exception e) {
-            genericParser.parse(tis, handler, metadata, context);
+            genericParser.parse(storeVolTis, handler, metadata, context);
             throw new TikaException(this.getClass().getSimpleName() + " exception", e); //$NON-NLS-1$
 
         } finally {
@@ -171,65 +131,62 @@ public class Win10MailParser extends AbstractParser {
         }
     }
 
-    protected List<AbstractTable> getTables(String filePath, PointerByReference filePointerReference)
-            throws EdgeWebCacheException {
+    
+    /** 
+     * Retrieves all important mail tables from the specified database
+     * @param filePath
+     * @param filePointerReference
+     * @return List of tables extracted from database
+     * @throws Win10MailException
+     */
+    protected List<AbstractTable> getMailTables(String filePath, PointerByReference filePointerReference)
+            throws Win10MailException {
         List<AbstractTable> tables = new LinkedList<AbstractTable>();
 
-        try {
-            /*
-             * Variables used by file functions
-             */
+        String dbPath = itemInfo.getPath();
 
-            // PointerByReference columnPointerReference = new PointerByReference();
+        try {
             PointerByReference errorPointer = new PointerByReference();
             IntByReference numberOfTables = new IntByReference();
-            // int numColumns;
             int numTables;
 
-            int accessFlags = 1;
-            int columnFlags = 1;
+            int accessFlags = 1;    // 1 - read, 2 - write
             int result = 0;
 
+            // initialize file and get general info about the tables
             synchronized (lock) {
-
                 result = esedbLibrary.libesedb_file_initialize(filePointerReference, errorPointer);
                 if (result < 0)
-                    printError("File Initialize", result, errorPointer);
+                    EsedbManager.printError("File Initialize", result, dbPath, errorPointer);
 
                 result = esedbLibrary.libesedb_check_file_signature(filePath, errorPointer);
                 if (result < 0)
-                    printError("Check File Signature", result, errorPointer);
-
-                if (result == 0) {
-                    throw new EdgeWebCacheException("File does not contains an ESEDB");
-                }
+                    EsedbManager.printError("Check File Signature", result, dbPath, errorPointer);
+                if (result == 0)
+                    throw new Win10MailException("File does not contain an ESEDB");
 
                 result = esedbLibrary.libesedb_file_open(filePointerReference.getValue(), filePath, accessFlags,
                         errorPointer);
                 if (result < 0)
-                    printError("File Open", result, errorPointer);
+                    EsedbManager.printError("File Open", result, dbPath, errorPointer);
 
                 result = esedbLibrary.libesedb_file_get_number_of_tables(filePointerReference.getValue(),
                         numberOfTables, errorPointer);
                 if (result < 0)
-                    printError("File Get Number of Tables", result, errorPointer);
+                    EsedbManager.printError("File Get Number of Tables", result, dbPath, errorPointer);
 
                 numTables = numberOfTables.getValue();
 
                 LOGGER.info(numTables + " tables found in " + itemInfo.getPath());
             }
 
+            // extract info from selected tables
             for (int tableIdx = 0; tableIdx < numTables; tableIdx++) {
 
-                /*
-                 * Variables used by table functions
-                 */
                 PointerByReference tablePointer = new PointerByReference();
-
                 Memory tableName = new Memory(256);
                 IntByReference tableNameSize = new IntByReference();
 
-                IntByReference numberOfColumns = new IntByReference();
                 LongByReference numberOfRecords = new LongByReference();
 
                 long numRecords;
@@ -237,33 +194,29 @@ public class Win10MailParser extends AbstractParser {
                 result = esedbLibrary.libesedb_file_get_table(filePointerReference.getValue(), tableIdx,
                         tablePointer, errorPointer);
                 if (result < 0)
-                    printError("File Get Table", result, errorPointer);
+                    EsedbManager.printError("File Get Table", result, dbPath, errorPointer);
 
                 result = esedbLibrary.libesedb_table_get_utf8_name_size(tablePointer.getValue(), tableNameSize,
                         errorPointer);
                 if (result < 0)
-                    printError("Table Get UTF8 Name Size", result, errorPointer);
+                    EsedbManager.printError("Table Get UTF8 Name Size", result, dbPath, errorPointer);
 
                 result = esedbLibrary.libesedb_table_get_utf8_name(tablePointer.getValue(), tableName,
                         tableNameSize.getValue(), errorPointer);
                 if (result < 0)
-                    printError("Table Get UTF8 Name", result, errorPointer);
-                String tableNameString = tableName.getString(0);
-
-                result = esedbLibrary.libesedb_table_get_number_of_columns(tablePointer.getValue(),
-                        numberOfColumns, columnFlags, errorPointer);
-                if (result < 0)
-                    printError("Table Get Number of Columns", result, errorPointer);
+                    EsedbManager.printError("Table Get UTF8 Name", result, dbPath, errorPointer);
+                
+                String tableNameStr = tableName.getString(0);
 
                 result = esedbLibrary.libesedb_table_get_number_of_records(tablePointer.getValue(),
                         numberOfRecords, errorPointer);
                 if (result < 0)
-                    printError("Table Get Number of Records", result, errorPointer);
+                    EsedbManager.printError("Table Get Number of Records", result, dbPath, errorPointer);
 
                 numRecords = numberOfRecords.getValue();
 
-                if (tableNameString.contains("Message")) {
-                    tables.add(new MessageTable(esedbLibrary, tableNameString, tablePointer, errorPointer, numRecords));
+                if (tableNameStr.contains("Message")) {
+                    tables.add(new MessageTable(esedbLibrary, itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords));
                 }
             }
 
@@ -277,17 +230,17 @@ public class Win10MailParser extends AbstractParser {
         PointerByReference errorPointer = new PointerByReference();
         int result = esedbLibrary.libesedb_table_free(tablePointer, errorPointer);
         if (result < 0)
-            printError("Table Free", result, errorPointer);
+            EsedbManager.printError("Table Free", result, itemInfo.getPath(), errorPointer);
     }
 
     private void closeFilePointer(PointerByReference filePointerReference) {
         PointerByReference errorPointer = new PointerByReference();
         int result = esedbLibrary.libesedb_file_close(filePointerReference.getValue(), errorPointer);
         if (result < 0)
-            printError("File Close", result, errorPointer);
+            EsedbManager.printError("File Close", result, itemInfo.getPath(), errorPointer);
 
         result = esedbLibrary.libesedb_file_free(filePointerReference, errorPointer);
         if (result < 0)
-            printError("File Free", result, errorPointer);
+            EsedbManager.printError("File Free", result, itemInfo.getPath(), errorPointer);
     }
 }
