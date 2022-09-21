@@ -60,7 +60,7 @@ import iped.utils.IOUtil;
 public class JDBCTableReader {
 
     private final static Attributes EMPTY_ATTRIBUTES = new AttributesImpl();
-    private final Connection connection;
+    protected final Connection connection;
     private final String tableName;
     int maxClobLength = 1000000;
     private ResultSet results = null;
@@ -124,7 +124,10 @@ public class JDBCTableReader {
             ParseContext context, int rows)
             throws SQLException, IOException, SAXException {
         String text = null;
-        switch (rsmd.getColumnType(i)) {
+
+        int ct = rsmd.getColumnType(i);
+
+        switch (ct) {
             case Types.BLOB:
                 text = handleBlob(tableName, rsmd.getColumnName(i), rows, results, i, handler, context);
                 break;
@@ -138,7 +141,7 @@ public class JDBCTableReader {
                 text = handleDate(results, i, handler);
                 break;
             case Types.TIMESTAMP:
-                text = handleTimeStamp(results, i, handler);
+                text = handleTimestamp(rsmd, results, i, handler);
                 break;
             case Types.INTEGER:
                 text = handleInteger(rsmd, results, i, handler);
@@ -146,7 +149,7 @@ public class JDBCTableReader {
             case Types.FLOAT:
                 // this is necessary to handle rounding issues in presentation
                 // Should we just use getString(i)?
-                text = Float.toString(results.getFloat(i));
+                text = handleFloat(rsmd, results, i, handler);
                 break;
             case Types.DOUBLE:
                 text = Double.toString(results.getDouble(i));
@@ -158,7 +161,15 @@ public class JDBCTableReader {
         return text;
     }
 
-    public List<String> getHeaders() throws IOException {
+    private String handleTimestamp(ResultSetMetaData rsmd, ResultSet results2, int i, ContentHandler handler) throws SQLException, SAXException {
+		return handleInteger(rsmd, results2, i, handler);
+	}
+
+	protected String handleFloat(ResultSetMetaData rsmd, ResultSet results, int i, ContentHandler handler) throws SQLException, SAXException {
+		return Float.toString(results.getFloat(i));
+	}
+
+	public List<String> getHeaders() throws IOException {
         List<String> headers = new LinkedList<String>();
         // lazy initialization
         if (results == null) {

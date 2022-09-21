@@ -54,7 +54,7 @@ public abstract class AbstractDBParser extends AbstractParser {
 
     public static final int HTML_MAX_ROWS = Integer.MAX_VALUE;
 
-    private Connection connection;
+    protected Connection connection;
     int tableRowsPerItem = 100;
 
     @Override
