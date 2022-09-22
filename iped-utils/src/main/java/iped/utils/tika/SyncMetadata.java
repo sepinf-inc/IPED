@@ -1,7 +1,9 @@
-package iped.engine.tika;
+package iped.utils.tika;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Properties;
 
 import org.apache.tika.metadata.Metadata;
@@ -202,5 +204,14 @@ public class SyncMetadata extends Metadata {
     public synchronized String toString() {
         return super.toString();
     }
-
+    
+	public void set(String arg0, ArrayList<String> list) {
+		String[] arr= new String[list.size()];
+		int i=0;
+		for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+			arr[i++]=(String) iterator.next();
+		}
+		
+		super.set(arg0, arr);
+	}
 }
