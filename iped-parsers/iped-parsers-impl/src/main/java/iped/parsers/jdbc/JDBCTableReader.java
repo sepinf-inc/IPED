@@ -69,6 +69,7 @@ public class JDBCTableReader {
     private Detector detector = null;
     private MimeTypes mimeTypes = null;
     private EmbeddedDocumentExtractor ex;
+	private Long rowCount;
     private static Logger LOGGER = LoggerFactory.getLogger(JDBCTableReader.class);
 
     public JDBCTableReader(Connection connection, String tableName, ParseContext context) {
@@ -81,7 +82,7 @@ public class JDBCTableReader {
     public boolean hasDateGuessed() {
         return false;
     }
-
+    
     public boolean nextRow(ContentHandler handler, ParseContext context) throws IOException, SAXException {
         // lazy initialization
         if (results == null) {
@@ -155,13 +156,18 @@ public class JDBCTableReader {
                 text = Double.toString(results.getDouble(i));
                 break;
             default:
-                text = results.getString(i);
+            	String value;
+                text = handleString(rsmd, results, i, handler);
                 break;
         }
         return text;
     }
 
-    private String handleTimestamp(ResultSetMetaData rsmd, ResultSet results2, int i, ContentHandler handler) throws SQLException, SAXException {
+    protected String handleString(ResultSetMetaData rsmd, ResultSet results2, int i, ContentHandler handler) throws SQLException, SAXException  {
+		return results2.getString(i);
+	}
+
+	protected String handleTimestamp(ResultSetMetaData rsmd, ResultSet results2, int i, ContentHandler handler) throws SQLException, SAXException {
 		return handleInteger(rsmd, results2, i, handler);
 	}
 
@@ -316,6 +322,21 @@ public class JDBCTableReader {
         }
         rows = 0;
         return results;
+    }
+
+    protected long getRowCount() {
+    	if(rowCount==null) {
+            String sql = "SELECT COUNT(*) from " + tableName; //$NON-NLS-1$
+            try(Statement st = connection.createStatement()) {                
+                try(ResultSet results = st.executeQuery(sql)){
+                    results.next();
+                    rowCount = results.getLong(1);
+                }
+            } catch (SQLException e) {
+            	rowCount=0l;
+			}
+    	}
+        return rowCount;
     }
 
     public void closeReader() throws SQLException {

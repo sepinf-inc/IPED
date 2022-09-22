@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
@@ -20,7 +21,9 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.util.Messages;
+import iped.properties.ExtraProperties;
 import iped.utils.SimpleHTMLEncoder;
+import iped.utils.tika.SyncMetadata;
 
 public class TableReportGenerator {
 
@@ -70,7 +73,7 @@ public class TableReportGenerator {
     }
 
     public InputStream createHtmlReport(int maxRows, ContentHandler handler,
-            ParseContext context, TemporaryResources tmp, Metadata metadata)
+            ParseContext context, TemporaryResources tmp, SyncMetadata metadata)
             throws IOException, SQLException, SAXException {
         rows = 0;
         Path path = tmp.createTempFile();
@@ -107,25 +110,50 @@ public class TableReportGenerator {
             }else {
             	hasNext=true;
             }
+            
+            ArrayList<String> locations = new ArrayList<String>();
+            ArrayList<String> lats = new ArrayList<String>();
+            ArrayList<String> longs = new ArrayList<String>();
+            
+            LngColumnExtractor lngExtractor = new LngColumnExtractor();
+            LatColumnExtractor latExtractor = new LatColumnExtractor();
 
             if (hasNext) {
                 do {
                     rows++;
                     out.print("<tr>");
                 	ResultSetMetaData rsmd = data.getMetaData();
+                	Boolean latExtracted = null;
+                	Boolean lngExtracted = null;
                     for (int i = 1; i <= cols; i++) {
                         String text = tableReader.handleCell(data, rsmd, i, handler, context, rows);
+                        
                         boolean isTime = false;
-                        try {
-                            int datePos = text.indexOf(AbstractDBParser.DATETIME_MARKUP_START);
-                            if(datePos!=-1) {
-                            	String datetext = text.substring(datePos+AbstractDBParser.DATETIME_MARKUP_START.length());
-                            	datetext = datetext.substring(0,datetext.indexOf("\">"));
-                            	metadata.add(AbstractDBParser.DATABASEDATECOLUMN_PREFIX+rsmd.getTableName(i)+rsmd.getColumnName(i), datetext);
-                            	isTime=true;
+                        if(text!=null) {
+                            try {
+                                int datePos = text.indexOf(AbstractDBParser.DATETIME_MARKUP_START);
+                                if(datePos!=-1) {
+                                	String datetext = text.substring(datePos+AbstractDBParser.DATETIME_MARKUP_START.length());
+                                	datetext = datetext.substring(0,datetext.indexOf("\">"));
+                                	metadata.add(AbstractDBParser.DATABASEDATECOLUMN_PREFIX+rsmd.getTableName(i)+":"+rsmd.getColumnName(i), datetext);
+                                	isTime=true;
+                                }
+                            }catch(Exception e) {
+                            	e.printStackTrace();
                             }
-                        }catch(Exception e) {
-                        	e.printStackTrace();
+                            
+                            if(latExtractor.extractMetadata(data, i)) {
+                            	latExtracted=true;
+                            }
+                            if(lngExtractor.extractMetadata(data, i)) {
+                            	lngExtracted=true;
+                            }
+                            
+                            if(latExtracted!=null && lngExtracted!=null) {
+                            	locations.add(latExtractor.getLastExtraction() + ";" + lngExtractor.getLastExtraction());
+                            	latExtracted=null;
+                            	lngExtracted=null;
+                            }
                         }
                         
                         if(isTime) {
@@ -135,7 +163,22 @@ public class TableReportGenerator {
                         }
                     }
                     out.print("</tr>");
+
+                    if(!(latExtracted!=null && lngExtracted!=null)) {
+                    	if(latExtracted!=null) {
+                    		latExtractor.cancelLastExtraction();
+                    	}
+                    	if(lngExtracted!=null) {
+                    		lngExtractor.cancelLastExtraction();
+                    	}
+                    }
+                    
                 } while (next() && rows < maxRows);
+            }
+            if(locations.size()>0) {
+            	latExtractor.applyExtractedMetadatas(metadata);
+            	lngExtractor.applyExtractedMetadatas(metadata);
+            	metadata.set(ExtraProperties.LOCATIONS, locations);
             }
 
             totRows += rows;

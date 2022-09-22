@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.TreeSet;
 
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -63,6 +64,7 @@ class SQLite3TableReader extends JDBCTableReader {
 	
 	private static final long APPLEORM_EPOCH = 978307200;
 	SQLite3DBParser dbparser;
+	TreeSet<Integer> notADate = new TreeSet<>();
 
 	DateFormat df = new SimpleDateFormat(Messages.getString("SQLite3TableReader.DateFormat"), Locale.ROOT); //$NON-NLS-1$
 
@@ -261,7 +263,6 @@ class SQLite3TableReader extends JDBCTableReader {
         }
 
         return text;
-
     }
 
     @Override
@@ -289,7 +290,7 @@ class SQLite3TableReader extends JDBCTableReader {
             	text=AbstractDBParser.DATETIME_MARKUP_START+datetext+"\">"+datetext+"</time>";
         	}
         } else {
-        	super.handleFloat(rsmd, rs, col, handler);
+        	return super.handleFloat(rsmd, rs, col, handler);
         }
 
         return text;

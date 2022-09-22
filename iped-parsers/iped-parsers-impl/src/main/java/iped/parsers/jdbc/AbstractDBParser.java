@@ -40,6 +40,7 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.standard.StandardParser;
 import iped.properties.ExtraProperties;
+import iped.utils.tika.SyncMetadata;
 
 /**
  * Abstract class that handles iterating through tables within a database.
@@ -79,7 +80,7 @@ public abstract class AbstractDBParser extends AbstractParser {
         do {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
-            Metadata tableM = new Metadata();
+            SyncMetadata tableM = new SyncMetadata();
             do {            	
                 try(InputStream is = trg.createHtmlReport(tableRowsPerItem, handler, context, tmp, tableM)) {
                     ++table_fragment;
@@ -148,6 +149,11 @@ public abstract class AbstractDBParser extends AbstractParser {
 
             for (String tableName : tableNames) {
                 JDBCTableReader reader = getTableReader(connection, tableName, context);
+                /*
+                long rowCount = reader.getRowCount();
+                metadata.set(Database.ROW_COUNT, rowCount);
+                */
+                
                 int row_count = parseTables(xHandler, context, reader);
                 xHandler.startElement("tr");
 
