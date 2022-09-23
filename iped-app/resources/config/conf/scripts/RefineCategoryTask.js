@@ -401,75 +401,75 @@ function process(e){
 	if (mime.equals("application/x-windows-registry-report")){
 		
 		if (name.indexOf("_os") !== -1) {
-			e.setCategory("Operating System")
+			e.setCategory("Registry OS Info")
 		}
 
 		if (name.indexOf("_installedsoftware") !== -1) {
-			e.setCategory("Installed Apps")
+			e.setCategory("Registry Installed Apps")
 		}
 
 		if (name.indexOf("_network") !== -1) {
-			e.setCategory("Network Info")
+			e.setCategory("Registry Network Info")
 		}
 
 		if (name.indexOf("_storage") !== -1) {
-			e.setCategory("Storage Info")
+			e.setCategory("Registry Storage Info")
 		}
 
 		if (name.indexOf("_devices") !== -1 ||
 			name.indexOf("usbdeview") !== -1)
 		{
-			e.setCategory("Device Info")
+			e.setCategory("Registry Device Info")
 		}
 
 		if (name.indexOf("_programexecution") !== -1) {
-			e.setCategory("Program Execution")
+			e.setCategory("Registry Program Run")
 		}
 
 		if (name.indexOf("_autorun") !== -1) {
-			e.setCategory("AutoRun Info")
+			e.setCategory("Registry Auto Run")
 		}
 
 		if (name.indexOf("_log") !== -1) {
-			e.setCategory("Log Information")
+			e.setCategory("Registry Log Info")
 		}
 
 		if (name.indexOf("_malware") !== -1) {
-			e.setCategory("Malware Info")
+			e.setCategory("Registry Malware Info")
 		}
 
 		if (name.indexOf("_web") !== -1) {
-			e.setCategory("Web Information")
+			e.setCategory("Registry Web Info")
 		}
 
 		if (name.indexOf("_users") !== -1 ||
 			name.indexOf("_useraccountinfo") !== -1)
 		{
-			e.setCategory("User Information")
+			e.setCategory("Registry User Accounts")
 		}
 
 		if (name.indexOf("_useractivity") !== -1) {
-			e.setCategory("User Activity")
+			e.setCategory("Registry User Activity")
 		}
 		
 		if (name.indexOf("_userfile") !== -1) {
-			e.setCategory("User Files")
+			e.setCategory("Registry User Files")
 		}
 
 		if (name.indexOf("_usernetwork") !== -1) {
-			e.setCategory("User Network Activity")
+			e.setCategory("Registry User Network Activity")
 		}
 
 		if (name.indexOf("_userconfig") !== -1) {
-			e.setCategory("User Config")
+			e.setCategory("Registry User Config")
 		}
 
 		if (name.indexOf("_uservirtual") !== -1) {
-			e.setCategory("User Virtualization")
+			e.setCategory("Registry User Virtualization")
 		}
 
 		if (name.indexOf("_usercommunications") !== -1) {
-			e.setCategory("User Communication")
+			e.setCategory("Registry User Communication")
 		}
 			
 	}
