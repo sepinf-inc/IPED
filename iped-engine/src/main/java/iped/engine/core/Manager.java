@@ -136,7 +136,7 @@ public class Manager {
     private IndexWriter writer;
 
     public Statistics stats;
-    public Exception exception;
+    public volatile Exception exception;
 
     private boolean isSearchAppOpen = false;
     private boolean isProcessingFinished = false;
@@ -328,7 +328,7 @@ public class Manager {
         }
     }
 
-    private void interruptProcessing() throws Exception {
+    private void interruptProcessing() {
         if (workers != null) {
             for (int k = 0; k < workers.length; k++) {
                 if (workers[k] != null) {
@@ -339,7 +339,11 @@ public class Manager {
         }
         ParsingReader.shutdownTasks();
         if (writer != null) {
-            writer.rollback();
+            try {
+                writer.rollback();
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
         }
 
         if (counter != null) {
@@ -635,7 +639,11 @@ public class Manager {
                     partialCommitsTime.addAndGet(end - start);
 
                 } catch (Exception e) {
-                    exception = e;
+                    if (exception == null) {
+                        exception = e;
+                    } else {
+                        e.printStackTrace();
+                    }
                     try {
                         LOGGER.error("Error commiting. Rollback commit started...");
                         writer.rollback();
