@@ -23,6 +23,7 @@ import org.xml.sax.SAXException;
 import iped.parsers.util.Messages;
 import iped.properties.ExtraProperties;
 import iped.utils.SimpleHTMLEncoder;
+import iped.utils.tika.IpedMetadata;
 import iped.utils.tika.SyncMetadata;
 
 public class TableReportGenerator {
@@ -73,7 +74,7 @@ public class TableReportGenerator {
     }
 
     public InputStream createHtmlReport(int maxRows, ContentHandler handler,
-            ParseContext context, TemporaryResources tmp, SyncMetadata metadata)
+            ParseContext context, TemporaryResources tmp, IpedMetadata tableM)
             throws IOException, SQLException, SAXException {
         rows = 0;
         Path path = tmp.createTempFile();
@@ -135,7 +136,7 @@ public class TableReportGenerator {
                                 if(datePos!=-1) {
                                 	String datetext = text.substring(datePos+AbstractDBParser.DATETIME_MARKUP_START.length());
                                 	datetext = datetext.substring(0,datetext.indexOf("\">"));
-                                	metadata.add(AbstractDBParser.DATABASEDATECOLUMN_PREFIX+rsmd.getTableName(i)+":"+rsmd.getColumnName(i), datetext);
+                                	tableM.add(AbstractDBParser.DATABASEDATECOLUMN_PREFIX+rsmd.getTableName(i)+":"+rsmd.getColumnName(i), datetext);
                                 	isTime=true;
                                 }
                             }catch(Exception e) {
@@ -175,10 +176,11 @@ public class TableReportGenerator {
                     
                 } while (next() && rows < maxRows);
             }
+
             if(locations.size()>0) {
-            	latExtractor.applyExtractedMetadatas(metadata);
-            	lngExtractor.applyExtractedMetadatas(metadata);
-            	metadata.set(ExtraProperties.LOCATIONS, locations);
+            	latExtractor.applyExtractedMetadatas(tableM);
+            	lngExtractor.applyExtractedMetadatas(tableM);
+            	tableM.set(ExtraProperties.LOCATIONS, locations);
             }
 
             totRows += rows;

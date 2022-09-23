@@ -16,7 +16,7 @@ import org.apache.tika.metadata.Property;
  * @author Nassif
  *
  */
-public class SyncMetadata extends Metadata {
+public class SyncMetadata extends IpedMetadata {
 
     /**
      * 
@@ -204,14 +204,4 @@ public class SyncMetadata extends Metadata {
     public synchronized String toString() {
         return super.toString();
     }
-    
-	public void set(String arg0, ArrayList<String> list) {
-		String[] arr= new String[list.size()];
-		int i=0;
-		for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-			arr[i++]=(String) iterator.next();
-		}
-		
-		super.set(arg0, arr);
-	}
 }

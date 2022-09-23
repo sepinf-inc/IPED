@@ -2,7 +2,7 @@ package iped.parsers.jdbc;
 
 import java.util.ArrayList;
 
-import iped.utils.tika.SyncMetadata;
+import iped.utils.tika.IpedMetadata;
 
 public abstract class AbstractMetadataColumnExtractor implements MetadataColumnExtractor {
 	ArrayList<String> extractedValues = new ArrayList<String>();
@@ -35,8 +35,8 @@ public abstract class AbstractMetadataColumnExtractor implements MetadataColumnE
 	}
 
 	@Override
-	public void applyExtractedMetadatas(SyncMetadata metadata) {
-		metadata.set(getMetadataName(), extractedValues);
+	public void applyExtractedMetadatas(IpedMetadata tableM) {
+		tableM.set(getMetadataName(), extractedValues);
 	}
 	
 	@Override
