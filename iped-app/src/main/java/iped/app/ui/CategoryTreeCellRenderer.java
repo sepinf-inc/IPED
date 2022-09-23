@@ -41,14 +41,18 @@ public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
 
         DefaultTreeCellRenderer result = (DefaultTreeCellRenderer) super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
         
+		String blankIconString = "blank";
+		
         String category = value != null ? value.toString() : "";
         category = category.replaceAll("\\(\\d*\\)", "").trim();
         category = getNonLocalizedCategory(category);
         category = category != null ? category : "";
         
-        if (!category.isEmpty() && FileTypeIconRenderer.extesionIconMap.containsKey(category.toLowerCase())){
-            result.setIcon(FileTypeIconRenderer.extesionIconMap.get(category.toLowerCase()));
-        }
+        if (!category.isEmpty() && IconLoader.extesionIconMap.containsKey(category.toLowerCase())){
+            result.setIcon(IconLoader.extesionIconMap.get(category.toLowerCase()));
+        }else {
+			result.setIcon(IconLoader.extesionIconMap.get(blankIconString.toLowerCase()));
+		}
 
         return result;
     }

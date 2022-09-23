@@ -66,8 +66,8 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                     result.setIcon(diskIcon);
                 } else {
                     String type = doc.get(IndexItem.TYPE);
-                    if (type != null && !type.isEmpty() && FileTypeIconRenderer.extesionIconMap.containsKey(type.toLowerCase())){
-                        result.setIcon(FileTypeIconRenderer.extesionIconMap.get(type.toLowerCase()));
+                    if (type != null && !type.isEmpty() && IconLoader.extesionIconMap.containsKey(type.toLowerCase())){
+                        result.setIcon(IconLoader.extesionIconMap.get(type.toLowerCase()));
                     }else {
                         result.setIcon(fileIcon);
                     }

@@ -51,10 +51,10 @@ import iped.utils.QualityIcon;
  *
  */
 
-public class FileTypeIconRenderer {
+public class IconLoader {
 
     private static final long serialVersionUID = -1L;  
-    private static Logger LOGGER = LoggerFactory.getLogger(FileTypeIconRenderer.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(IconLoader.class);
 
     public  static Map<String,Icon> extesionIconMap = new HashMap<String,Icon>();
 
@@ -76,7 +76,7 @@ public class FileTypeIconRenderer {
 
         try {
             String separator = "/";
-            CodeSource src = FileTypeIconRenderer.class.getProtectionDomain().getCodeSource();
+            CodeSource src = IconLoader.class.getProtectionDomain().getCodeSource();
             if (src != null) {
                 URL jar = src.getLocation();
                 ZipInputStream zip = new ZipInputStream(jar.openStream());
@@ -85,12 +85,12 @@ public class FileTypeIconRenderer {
                     if (e == null)
                         break;
                     for (String iconPath: iconPathArray){
-                        String path = FileTypeIconRenderer.class.getName().toString().replace(".",separator).replace(FileTypeIconRenderer.class.getSimpleName(),"")+iconPath+separator;
+                        String path = IconLoader.class.getName().toString().replace(".",separator).replace(IconLoader.class.getSimpleName(),"")+iconPath+separator;
 
                         String nameWithPath = e.getName();
                         String name = nameWithPath.replace(path,"");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(iconExtension)) {
-                            map.put(name.replace(iconExtension,"").toLowerCase(),new QualityIcon(new ImageIcon(FileTypeIconRenderer.class.getResource(iconPath+separator+name))));
+                            map.put(name.replace(iconExtension,"").toLowerCase(),new QualityIcon(new ImageIcon(IconLoader.class.getResource(iconPath+separator+name))));
                         }
                     }
                 }
