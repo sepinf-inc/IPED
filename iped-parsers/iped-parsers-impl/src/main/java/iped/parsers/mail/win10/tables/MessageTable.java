@@ -1,10 +1,16 @@
 package iped.parsers.mail.win10.tables;
 
+import java.util.Date;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang.StringUtils;
 
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.Memory;
 import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.LongByReference;
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.mail.win10.entries.MessageEntry;
 import iped.parsers.util.EsedbManager;
@@ -52,13 +58,15 @@ public class MessageTable extends AbstractTable {
         PointerByReference recordPointerReference = new PointerByReference();
         IntByReference recordNumberOfValues = new IntByReference();
 
-        IntByReference recordValueDataSize = new IntByReference();
-        IntByReference recordValueDataInt = new IntByReference();
-        Memory recordValueDataAbstract = new Memory(3072);
-
-        /* Table values */
-        long rowId = 0;
+        /* Message table values */
+        int rowId = 0;
+        int conversationId = 0;
         String msgAbstract = "";
+        String subject = "";
+        String senderName = "";
+        String senderEmail = "";
+        Date msgDeliveryTime;
+        Date lastModifiedTime;
 
         // get row (record)
         result = esedbLibrary.libesedb_table_get_record(tablePointerReference.getValue(), i, recordPointerReference,
@@ -71,30 +79,61 @@ public class MessageTable extends AbstractTable {
         if (result < 0)
             EsedbManager.printError("Record Get Number of Values", result, filePath, errorPointer);
 
-        /* get rowId (Integer 64bit signed) */
-        result = esedbLibrary.libesedb_record_get_value_32bit(recordPointerReference.getValue(), 0, recordValueDataInt,
-                errorPointer);
-        if (result < 0)
-            EsedbManager.printError("Record Get RowId Data", result, filePath, errorPointer);
-        rowId = recordValueDataInt.getValue();
-
-        // get msgAbstract (Unicode)
-        result = esedbLibrary.libesedb_record_get_value_utf16_string_size(recordPointerReference.getValue(), 142,
-                recordValueDataSize, errorPointer);
-        if (result < 0)
-            EsedbManager.printError("Record Get FileName UTF16 String Size", result, filePath, errorPointer);
-        if ((recordValueDataSize.getValue() > 0) && (result == 1)) {
-            result = esedbLibrary.libesedb_record_get_value_utf8_string(recordPointerReference.getValue(), 142,
-                    recordValueDataAbstract, recordValueDataSize.getValue(), errorPointer);
-            if (result < 0)
-                EsedbManager.printError("Record Get FileName UTF8 String", result, filePath, errorPointer);
-            msgAbstract = recordValueDataAbstract.getString(0);
-        }
+        rowId = getInt32Value(0, recordPointerReference);
+        conversationId = getInt32Value(21, recordPointerReference);
+        msgAbstract = getUnicodeValue(142, recordPointerReference);
+        subject = getUnicodeValue(160, recordPointerReference);
+        senderName = getUnicodeValue(152, recordPointerReference);
+        senderEmail = getUnicodeValue(153, recordPointerReference);
+        msgDeliveryTime = getFileTime(55, recordPointerReference);
+        lastModifiedTime = getFileTime(65, recordPointerReference);
 
         result = esedbLibrary.libesedb_record_free(recordPointerReference, errorPointer);
         if (result < 0)
             EsedbManager.printError("Record Free", result, filePath, errorPointer);
 
-        return new MessageEntry(rowId, msgAbstract != null ? msgAbstract : "");
+        return new MessageEntry(rowId, conversationId, msgAbstract, subject, senderName, senderEmail, msgDeliveryTime, lastModifiedTime);
+    }
+
+
+    int getInt32Value(int value_entry, PointerByReference recordPointerReference) {
+        IntByReference recordValueDataInt = new IntByReference();
+
+        int result = esedbLibrary.libesedb_record_get_value_32bit(recordPointerReference.getValue(), value_entry, recordValueDataInt,
+        errorPointer);
+        if (result < 0)
+            EsedbManager.printError("Record Get 32-Bit Data", result, filePath, errorPointer);
+        return  recordValueDataInt.getValue();
+    }
+
+    String getUnicodeValue(int value_entry, PointerByReference recordPointerReference) {
+        IntByReference recordValueDataInt = new IntByReference();
+        Memory recordValueData = new Memory(3072);
+
+        int result = esedbLibrary.libesedb_record_get_value_utf16_string_size(recordPointerReference.getValue(), value_entry,
+            recordValueDataInt, errorPointer);
+        if (result < 0)
+            EsedbManager.printError("Record Get UTF16 String Size", result, filePath, errorPointer);
+        if ((recordValueDataInt.getValue() > 0) && (result == 1)) {
+            result = esedbLibrary.libesedb_record_get_value_utf8_string(recordPointerReference.getValue(), value_entry,
+                    recordValueData, recordValueDataInt.getValue(), errorPointer);
+            if (result < 0)
+                EsedbManager.printError("Record Get UTF8 String at " + value_entry, result, filePath, errorPointer);
+            return recordValueData.getString(0);
+        }
+        return null;
+    }
+
+    Date getFileTime(int value_entry, PointerByReference recordPointerReference) {
+        LongByReference recordValueData = new LongByReference();
+
+        int result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), value_entry, recordValueData,
+                errorPointer);
+        if (result < 0)
+            EsedbManager.printError("Record Get FileTime Data", result, filePath, errorPointer);
+        
+        Date date = new Date((recordValueData.getValue() - 116444736000000000L)/10000);
+        
+        return date;
     }
 }

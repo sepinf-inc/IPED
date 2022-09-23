@@ -115,7 +115,7 @@ public class Win10MailParser extends AbstractParser {
 
                     if (table instanceof MessageTable) {
                         for (MessageEntry message : table) {
-                            System.out.println(message.getRowId() + ": " + message.getMsgAbstract());
+                            System.out.println(message.getRowId() + ": " + message.getSenderEmail());
                         }
                     }
                     closeTablePointer(table.getTablePointer());
@@ -147,13 +147,13 @@ public class Win10MailParser extends AbstractParser {
 
         try {
             PointerByReference errorPointer = new PointerByReference();
-            IntByReference numberOfTables = new IntByReference();
+            IntByReference numTablesRef = new IntByReference();
             int numTables;
 
             int accessFlags = 1;    // 1 - read, 2 - write
             int result = 0;
 
-            // initialize file and get general info about the tables
+            // initialize file and get general info from database
             synchronized (lock) {
                 result = esedbLibrary.libesedb_file_initialize(filePointerReference, errorPointer);
                 if (result < 0)
@@ -171,11 +171,11 @@ public class Win10MailParser extends AbstractParser {
                     EsedbManager.printError("File Open", result, dbPath, errorPointer);
 
                 result = esedbLibrary.libesedb_file_get_number_of_tables(filePointerReference.getValue(),
-                        numberOfTables, errorPointer);
+                        numTablesRef, errorPointer);
                 if (result < 0)
                     EsedbManager.printError("File Get Number of Tables", result, dbPath, errorPointer);
 
-                numTables = numberOfTables.getValue();
+                numTables = numTablesRef.getValue();
 
                 LOGGER.info(numTables + " tables found in " + itemInfo.getPath());
             }
@@ -184,8 +184,8 @@ public class Win10MailParser extends AbstractParser {
             for (int tableIdx = 0; tableIdx < numTables; tableIdx++) {
 
                 PointerByReference tablePointer = new PointerByReference();
-                Memory tableName = new Memory(256);
                 IntByReference tableNameSize = new IntByReference();
+                Memory tableName = new Memory(256);
 
                 LongByReference numberOfRecords = new LongByReference();
 
