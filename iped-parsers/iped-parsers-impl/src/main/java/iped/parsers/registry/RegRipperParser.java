@@ -8,10 +8,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -34,6 +36,7 @@ import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
+import iped.utils.IOUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 public class RegRipperParser extends AbstractParser {
@@ -106,74 +109,115 @@ public class RegRipperParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
-
+        
         TemporaryResources tmp = new TemporaryResources();
         try {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
-            String filename = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
             File tempFile = tis.getFile();
 
-            ArrayList<String> finalCmd = new ArrayList<>();
-            finalCmd.addAll(Arrays.asList(cmd));
-            finalCmd.addAll(Arrays.asList("-a", "-r", tempFile.getAbsolutePath()));
-
-            // indexa strings brutas
+            // index raw strings (important because not all keys/values are extracted by regripper)
             rawParser.parse(tis, handler, metadata, context);
-
-            if (finalCmd != null) {
-                ProcessBuilder pb = new ProcessBuilder(finalCmd);
-                if (!TOOL_PATH.isEmpty()) {
-                    pb.directory(new File(TOOL_PATH));
-                }
-                Process p = pb.start();
-
-                readStream(p.getErrorStream(), null, null);
-
-                File outFile = tmp.createTemporaryFile();
-                OutputStream os = new FileOutputStream(outFile);
-                try {
-                    ContainerVolatile msg = new ContainerVolatile();
-                    Thread thread = readStream(p.getInputStream(), os, msg);
-                    waitFor(p, xhtml, msg);
-                    // p.waitFor();
-                    thread.join();
-
-                } catch (InterruptedException e) {
-                    p.destroyForcibly();
-                    throw new TikaException(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
-
-                } finally {
-                    os.close();
-                }
-
-                Metadata reportMetadata = new Metadata();
-                reportMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filename + "-Report"); //$NON-NLS-1$
-                reportMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
-                reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-                File htmlFile = getHtml(outFile, tmp);
-
-                if (extractor.shouldParseEmbedded(reportMetadata))
-                    try (InputStream is = new FileInputStream(htmlFile)) {
-                        extractor.parseEmbedded(is, xhtml, reportMetadata, true);
-                    }
+            
+            String filename = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
+            if (filename.matches(".*\\.LOG\\d?")) {
+                // skip parsing log files
+                return;
             }
 
+            // run all available plugins for this hive
+            ArrayList<String> command = new ArrayList<>(Arrays.asList(cmd));
+            command.addAll(Arrays.asList("-a", "-r", tempFile.getAbsolutePath()));
+            String reportName = filename + "_Full_Report";
+            runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp);
+
+            // run specific profiles for each hive
+            String regType = detectHive(tempFile);
+            String profiles = "profiles/" + regType;
+            File dir = new File(TOOL_PATH + "/plugins/" + profiles);
+            File[] directoryListing = dir.listFiles();
+            if (directoryListing != null) {
+                for (File child : directoryListing) {
+                    command = new ArrayList<>(Arrays.asList(cmd));
+                    command.addAll(Arrays.asList("-f", profiles + "/" + child.getName(), "-r", tempFile.getAbsolutePath()));
+                    reportName = filename + "_" + child.getName().replace("_", "") + "_Report";
+                    runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp);
+                }
+            }
+            
         } finally {
+            xhtml.endDocument();
             tmp.close();
         }
 
-        xhtml.endDocument();
+    }
 
+    private void runCmdAndCreateReport(List<String> command, String reportName, ContentHandler handler, EmbeddedDocumentExtractor extractor, TemporaryResources tmp) throws IOException, TikaException, SAXException {
+        ProcessBuilder pb = new ProcessBuilder(command);
+        if (!TOOL_PATH.isEmpty()) {
+            pb.directory(new File(TOOL_PATH));
+        }
+        Process p = pb.start();
+
+        readStream(p.getErrorStream(), null, null);
+
+        File outFile = tmp.createTemporaryFile();
+        OutputStream os = new FileOutputStream(outFile);
+        try {
+            ContainerVolatile msg = new ContainerVolatile();
+            Thread thread = readStream(p.getInputStream(), os, msg);
+            waitFor(p, handler, msg);
+            // p.waitFor();
+            thread.join();
+
+        } catch (InterruptedException e) {
+            p.destroyForcibly();
+            throw new TikaException(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
+
+        } finally {
+            os.close();
+        }
+
+        File htmlFile = getHtml(outFile, tmp);
+        if (htmlFile == null) {
+            // ignores empty reports
+            return;
+        }
+
+        Metadata reportMetadata = new Metadata();
+        reportMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, reportName);
+        reportMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
+        reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+        if (extractor.shouldParseEmbedded(reportMetadata)) {
+            try (InputStream is = new FileInputStream(htmlFile)) {
+                extractor.parseEmbedded(is, handler, reportMetadata, true);
+            }
+        }
+    }
+
+    private String detectHive(File file) throws IOException {
+        ArrayList<String> detectCmd = new ArrayList<>(Arrays.asList(cmd));
+        detectCmd.addAll(Arrays.asList("-g", "-r", file.getAbsolutePath()));
+        ProcessBuilder pb = new ProcessBuilder(detectCmd);
+        if (!TOOL_PATH.isEmpty()) {
+            pb.directory(new File(TOOL_PATH));
+        }
+        Process p = pb.start();
+        IOUtil.ignoreInputStream(p.getErrorStream());
+        byte[] bytes = IOUtil.loadInputStream(p.getInputStream());
+        return new String(bytes, StandardCharsets.ISO_8859_1).strip();
     }
 
     private File getHtml(File file, TemporaryResources tmp) throws IOException {
+        String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
+        if (content == null || content.isBlank()) {
+            return null;
+        }
         File html = tmp.createTemporaryFile();
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(html), charset);) {
             writer.write("<html>"); //$NON-NLS-1$
@@ -182,10 +226,7 @@ public class RegRipperParser extends AbstractParser {
             writer.write("</head>"); //$NON-NLS-1$
             writer.write("<body>"); //$NON-NLS-1$
             writer.write("<pre>"); //$NON-NLS-1$
-
-            String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
-            writer.write(SimpleHTMLEncoder.htmlEncode(content.trim()));
-
+            writer.write(SimpleHTMLEncoder.htmlEncode(content.strip()));
             writer.write("</pre>"); //$NON-NLS-1$
             writer.write("</body>"); //$NON-NLS-1$
             writer.write("</html>"); //$NON-NLS-1$

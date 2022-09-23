@@ -25,6 +25,8 @@ function process(e){
 	var length = e.getLength();
 	var ext = e.getExt().toLowerCase();
 	var mime = e.getMediaType().toString();
+	var name = e.getName().toLowerCase();
+	var path = e.getPath().toLowerCase();
 	
 	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk/i.test(e.getName())){
 	    e.setMediaTypeStr("application/x-vmdk-data");
@@ -92,24 +94,21 @@ function process(e){
 			e.setCategory("URL links");
 			
 		else if (ext.equals("plist")) {
-			var path = e.getPath().toLowerCase();
 			if (path.indexOf("/safari/") > -1) {
-				var nome = e.getName().toLowerCase();
-				if (nome.indexOf("history") > -1 || 
-	 			   nome.indexOf("downloads") > -1 ||
-	  			   nome.indexOf("lastsession") > -1 ||
-	   			   nome.indexOf("topsites") > -1 || 
-				   nome.indexOf("bookmarks") > -1)
+				if (name.indexOf("history") > -1 || 
+	 			   name.indexOf("downloads") > -1 ||
+	  			   name.indexOf("lastsession") > -1 ||
+	   			   name.indexOf("topsites") > -1 || 
+				   name.indexOf("bookmarks") > -1)
 					e.setCategory("Internet History");
 			}
 		} else {
-			var nome = e.getName().toLowerCase();
 			if (e.getPath().toLowerCase().indexOf("/chrome/user data/") > -1) {
-				if (nome.indexOf(" session") > -1 || 
-	 			   nome.indexOf(" tabs") > -1 ||
-	  			   nome.indexOf("visited links") > -1 ||
-	   			   nome.indexOf("history") > -1 || 
-				   nome.indexOf("journal") > -1)
+				if (name.indexOf(" session") > -1 || 
+	 			   name.indexOf(" tabs") > -1 ||
+	  			   name.indexOf("visited links") > -1 ||
+	   			   name.indexOf("history") > -1 || 
+				   name.indexOf("journal") > -1)
 					e.setCategory("Internet History");
 			}
 		}
@@ -128,11 +127,6 @@ function process(e){
 		else if(e.getName().equals("INFO2"))
 			e.setMediaTypeStr("application/x-info2");
 	}
-		
-		
-	var nome = e.getName().toLowerCase();
-	var path = e.getPath().toLowerCase();
-
 
 	//iPhone backup default folders
 	if ((path.indexOf("/application data/apple computer/mobilesync/backup") > -1)||
@@ -170,10 +164,10 @@ function process(e){
 		
 	//Files related to Tor, TorBrowser e OperaTor
 	if ((path.indexOf("torbrowser/") !== -1)||
-		(nome.equals("tor.exe"))||
-		(nome.equals("operator.exe"))||
-		(nome.equals("start-tor-browser.desktop"))||
-		(nome.equals("tor-resolve.exe"))
+		(name.equals("tor.exe"))||
+		(name.equals("operator.exe"))||
+		(name.equals("start-tor-browser.desktop"))||
+		(name.equals("tor-resolve.exe"))
 		)
 		e.addCategory("Tor");
 	
@@ -198,36 +192,36 @@ function process(e){
 		(path.indexOf("\'s tresor/") !== -1)||
 		(path.indexOf("/library/application support/icloud/accounts/") !== -1)||
 		(path.indexOf("/library/preferences/mobilemeaccounts.plist") !== -1)||		
-		(nome.indexOf("dropbox.exe") !== -1)||
-		(nome.indexOf("megasync.exe") !== -1)||
-		(nome.indexOf("onedrive.exe") !== -1)||
-		(nome.indexOf("skydrive.exe") !== -1)||
-		(nome.indexOf("googledrivesync.exe") !== -1)||
-		(nome.indexOf("amazondrive.exe") !== -1)||
-		(nome.indexOf("amazonclouddrive.exe") !== -1)||
-		(nome.indexOf("boxsync.exe") !== -1)||
-		(nome.indexOf("mediafire desktop.exe") !== -1)||
-		(nome.indexOf("mf_watch.exe") !== -1)||
-		(nome.indexOf("resilio-sync.exe") !== -1)||
-		(nome.indexOf("resilio sync.exe") !== -1)||
-		(nome.indexOf("resiliosync.exe") !== -1)||
-		(nome.indexOf("resilio sync.app") !== -1)||
-		(nome.indexOf("resilio-sync_x64.exe") !== -1)||
-		(nome.indexOf("btsync.exe") !== -1)||
-		(nome.indexOf("tresorit.exe") !== -1))&&((path.indexOf("/appdata/local") == -1)&&(path.indexOf("/appdata/locallow") == -1)&&(path.indexOf("/appdata/roaming") == -1)&&(path.indexOf("/programdata/") == -1)&&(path.indexOf("/desktop.ini") == -1))
+		(name.indexOf("dropbox.exe") !== -1)||
+		(name.indexOf("megasync.exe") !== -1)||
+		(name.indexOf("onedrive.exe") !== -1)||
+		(name.indexOf("skydrive.exe") !== -1)||
+		(name.indexOf("googledrivesync.exe") !== -1)||
+		(name.indexOf("amazondrive.exe") !== -1)||
+		(name.indexOf("amazonclouddrive.exe") !== -1)||
+		(name.indexOf("boxsync.exe") !== -1)||
+		(name.indexOf("mediafire desktop.exe") !== -1)||
+		(name.indexOf("mf_watch.exe") !== -1)||
+		(name.indexOf("resilio-sync.exe") !== -1)||
+		(name.indexOf("resilio sync.exe") !== -1)||
+		(name.indexOf("resiliosync.exe") !== -1)||
+		(name.indexOf("resilio sync.app") !== -1)||
+		(name.indexOf("resilio-sync_x64.exe") !== -1)||
+		(name.indexOf("btsync.exe") !== -1)||
+		(name.indexOf("tresorit.exe") !== -1))&&((path.indexOf("/appdata/local") == -1)&&(path.indexOf("/appdata/locallow") == -1)&&(path.indexOf("/appdata/roaming") == -1)&&(path.indexOf("/programdata/") == -1)&&(path.indexOf("/desktop.ini") == -1))
 		)
 		e.addCategory("Cloud Drives");
 	
 
 	//Programas peer-to-peer
 	if ((path.indexOf("/Roaming/Shareaza/Data") !== -1)	||
-		(nome.indexOf("Shareaza.db3") !== -1)
+		(name.indexOf("Shareaza.db3") !== -1)
 		)
 		e.addCategory("Peer-to-peer");
 	
 		
 	//Telegram
-	if (nome.equals("translit.cache") === true){
+	if (name.equals("translit.cache") === true){
 		e.addCategory("Telegram");
 		e.addCategory("Contacts");
 	}
@@ -240,31 +234,31 @@ function process(e){
 	//Program Files of Federal Taxes Agency
 	if(e.getMediaType().toString().equals("application/irpf")){
 		
-		if (nome.indexOf("-irpf-") !== -1)
+		if (name.indexOf("-irpf-") !== -1)
 			e.addCategory("Tax Returns and Receipts IRPF");
 
-		else if (nome.indexOf("-dirf-") !== -1)
+		else if (name.indexOf("-dirf-") !== -1)
 			e.addCategory("Tax Returns and Receipts DIRF");
 
-		else if ((nome.indexOf("dirf") !== -1)&& (ext.equals("fdb")))
+		else if ((name.indexOf("dirf") !== -1)&& (ext.equals("fdb")))
 			e.addCategory("Tax Returns and Receipts DIRF");
 
-		else if (nome.indexOf("-dipj-") !== -1)
+		else if (name.indexOf("-dipj-") !== -1)
 			e.addCategory("Tax Returns and Receipts DIPJ");
 		
-		else if (nome.indexOf("-cnpj-") !== -1)
+		else if (name.indexOf("-cnpj-") !== -1)
 			e.addCategory("Tax Returns and Receipts CNPJ");
 		
-		else if (nome.indexOf("-dsimples-") !== -1)
+		else if (name.indexOf("-dsimples-") !== -1)
 			e.addCategory("Tax Returns and Receipts DSIMPLES");
 		
-		else if (nome.indexOf("-dctfs") !== -1)
+		else if (name.indexOf("-dctfs") !== -1)
 			e.addCategory("Tax Returns and Receipts DCTF");
 
-		else if (nome.indexOf("-dctfm") !== -1)
+		else if (name.indexOf("-dctfm") !== -1)
 			e.addCategory("Tax Returns and Receipts DCTF");
 
-		else if (nome.indexOf("-perdcomp") !== -1)
+		else if (name.indexOf("-perdcomp") !== -1)
 			e.addCategory("Tax Returns and Receipts PER DCOMP");
 		
 		else if (ext.equals("rec")||ext.equals("dec") ||ext.equals("bak")  ||ext.equals("dbk"))
@@ -274,59 +268,59 @@ function process(e){
 	
 	//Files related to "Conectividade Social da CAIXA", "Sistema Empresa de Recolhimento do FGTS", "Informações à Previdência Social" (SEFIP/GEFIP)
 	if(e.getMediaType().toString().equals("application/zip")){
-		if (ext.equals("sfp")||(ext.equals("bkp")&& nome.indexOf(".bkp")==16))
+		if (ext.equals("sfp")||(ext.equals("bkp")&& name.indexOf(".bkp")==16))
 			e.addCategory("SEFIP_GEFIP Files");	
 		if (ext.equals("cns"))
 			e.addCategory("Social Connectivity Program Files");
 	}
 	
-	if (nome.indexOf("sefip.re") !== -1 || nome.indexOf("sefipcr.re") !== -1)
+	if (name.indexOf("sefip.re") !== -1 || name.indexOf("sefipcr.re") !== -1)
 		e.addCategory("SEFIP_GEFIP Files");
 		
-	if (nome.indexOf("sfpdb001") !== -1)
+	if (name.indexOf("sfpdb001") !== -1)
 		e.addCategory("SEFIP Databases");
 		
-	if (nome.indexOf("sefip.exe") !== -1)
+	if (name.indexOf("sefip.exe") !== -1)
 		e.addCategory("SEFIP Executables");
 		
-	if (nome.indexOf("cnsini.exe") !== -1){
+	if (name.indexOf("cnsini.exe") !== -1){
 		e.addCategory("Social Connectivity Program Executables");
 		e.addCategory("Social Connectivity Program Files");
 	}
 	
 	//Must be tested for false positives...
-	/*if ((nome.endsWith(".re") === true)||(nome.equals("hash.txt") === true))
+	/*if ((name.endsWith(".re") === true)||(name.equals("hash.txt") === true))
 		e.addCategory("SEFIP Files");
 	
-	if (nome.equals("selo.xml") === true){
+	if (name.equals("selo.xml") === true){
 		e.addCategory("Social Connectivity Program Files");
 		e.addCategory("SEFIP Files");
 	}
 	*/
 	
 	//Files related to "Guia de Recolhimento Rescisório do FGTS da Caixa Econômica Federal"
-	if (nome.indexOf("grrf.re") !== -1 || nome.indexOf("grrf.fdb") !== -1)	
+	if (name.indexOf("grrf.re") !== -1 || name.indexOf("grrf.fdb") !== -1)	
 		e.addCategory("GRRF Files");	
 		
 		
 	//Specific PDF files with known name patterns created by some softwares
 	if(categorias.indexOf("PDF Documents") !== -1)
 	{
-		if (nome.indexOf("grf_") !== -1 || nome.indexOf("sefip_") !== -1 || nome.indexOf("gare ") !== -1 || (nome.indexOf("re_") !== -1 && nome.indexOf("re_") < 5))
+		if (name.indexOf("grf_") !== -1 || name.indexOf("sefip_") !== -1 || name.indexOf("gare ") !== -1 || (name.indexOf("re_") !== -1 && name.indexOf("re_") < 5))
 			e.addCategory("PDF Bills of Exchange");
-		if (nome.indexOf("-irpf-20") !== -1 || nome.indexOf("-irpf-19") !== -1)
+		if (name.indexOf("-irpf-20") !== -1 || name.indexOf("-irpf-19") !== -1)
 			e.addCategory("Tax Returns and Receipts IRPF");
-		if (nome.indexOf("-dirf-20") !== -1 || nome.indexOf("-dirf-19") !== -1)
+		if (name.indexOf("-dirf-20") !== -1 || name.indexOf("-dirf-19") !== -1)
 			e.addCategory("Tax Returns and Receipts DIRF");
-		if (nome.indexOf("-dipj-20") !== -1 || nome.indexOf("-dipj-19") !== -1)
+		if (name.indexOf("-dipj-20") !== -1 || name.indexOf("-dipj-19") !== -1)
 			e.addCategory("Tax Returns and Receipts DIPJ");
-		if (nome.indexOf("-cnpj-20") !== -1 || nome.indexOf("-cnpj-19") !== -1)
+		if (name.indexOf("-cnpj-20") !== -1 || name.indexOf("-cnpj-19") !== -1)
 			e.addCategory("Tax Returns and Receipts CNPJ");
-		if (nome.indexOf("-irpf-20") !== -1 || nome.indexOf("-irpf-19") !== -1)
+		if (name.indexOf("-irpf-20") !== -1 || name.indexOf("-irpf-19") !== -1)
 			e.addCategory("Tax Returns and Receipts IRPF");
-		if (nome.indexOf("-dsimples-20") !== -1 || nome.indexOf("-dsimples-19") !== -1)
+		if (name.indexOf("-dsimples-20") !== -1 || name.indexOf("-dsimples-19") !== -1)
 			e.addCategory("Tax Returns and Receipts DSIMPLES");
-		if (nome.indexOf("-dctfs1") !== -1 || nome.indexOf("-dctfs2") !== -1)
+		if (name.indexOf("-dctfs1") !== -1 || name.indexOf("-dctfs2") !== -1)
 			e.addCategory("Tax Returns and Receipts DCTF");
 	}
 	if (((path.indexOf("pdcomp") !== -1)||
@@ -339,8 +333,8 @@ function process(e){
 	
 	//SPED Program Files
 	if ((ext.equals("sped"))	||
-	((ext.equals("txt"))&&(nome.indexOf("sped-") !== -1))||
-	((ext.equals("txt"))&&(nome.indexOf("sped_") !== -1))||
+	((ext.equals("txt"))&&(name.indexOf("sped-") !== -1))||
+	((ext.equals("txt"))&&(name.indexOf("sped_") !== -1))||
 	(path.indexOf("sped/") !== -1)
 	)
 	{
@@ -400,6 +394,84 @@ function process(e){
 			e.setMediaTypeStr("application/x-emule-preferences-dat");
 			e.addCategory("Peer-to-peer");
 		}
+	}
+	
+	// Custom Regripper Reports
+
+	if (mime.equals("application/x-windows-registry-report")){
+		
+		if (name.indexOf("_os") !== -1) {
+			e.setCategory("Registry OS Info")
+		}
+
+		if (name.indexOf("_installedsoftware") !== -1) {
+			e.setCategory("Registry Installed Apps")
+		}
+
+		if (name.indexOf("_network") !== -1) {
+			e.setCategory("Registry Network Info")
+		}
+
+		if (name.indexOf("_storage") !== -1) {
+			e.setCategory("Registry Storage Info")
+		}
+
+		if (name.indexOf("_devices") !== -1 ||
+			name.indexOf("usbdeview") !== -1)
+		{
+			e.setCategory("Registry Device Info")
+		}
+
+		if (name.indexOf("_programexecution") !== -1) {
+			e.setCategory("Registry Program Run")
+		}
+
+		if (name.indexOf("_autorun") !== -1) {
+			e.setCategory("Registry Auto Run")
+		}
+
+		if (name.indexOf("_log") !== -1) {
+			e.setCategory("Registry Log Info")
+		}
+
+		if (name.indexOf("_malware") !== -1) {
+			e.setCategory("Registry Malware Info")
+		}
+
+		if (name.indexOf("_web") !== -1) {
+			e.setCategory("Registry Web Info")
+		}
+
+		if (name.indexOf("_users") !== -1 ||
+			name.indexOf("_useraccountinfo") !== -1)
+		{
+			e.setCategory("Registry User Accounts")
+		}
+
+		if (name.indexOf("_useractivity") !== -1) {
+			e.setCategory("Registry User Activity")
+		}
+		
+		if (name.indexOf("_userfile") !== -1) {
+			e.setCategory("Registry User Files")
+		}
+
+		if (name.indexOf("_usernetwork") !== -1) {
+			e.setCategory("Registry User Network Activity")
+		}
+
+		if (name.indexOf("_userconfig") !== -1) {
+			e.setCategory("Registry User Config")
+		}
+
+		if (name.indexOf("_uservirtual") !== -1) {
+			e.setCategory("Registry User Virtualization")
+		}
+
+		if (name.indexOf("_usercommunications") !== -1) {
+			e.setCategory("Registry User Communication")
+		}
+			
 	}
 	
 }
