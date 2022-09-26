@@ -12,6 +12,8 @@ import iped.app.home.MainFrameCardsNames;
 import iped.app.home.style.StyleManager;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
+import iped.engine.config.LocaleConfig;
+import iped.engine.config.PluginConfig;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,11 +26,17 @@ public class ConfigPanel extends DefaultPanel {
 
     private JTextField textFieldNumThreads;
     private JTextField textFieldIndexTemp;
+    private JCheckBox checkBoxSSD;
     private JTextField textFieldHashesDB;
     private JTextField textFieldTskJarPath;
     private JTextField textFieldMplayerPath;
     private JTextField textFieldPluginFolder;
     private JTextField textFieldRegripperFolder;
+    private JComboBox comboBoxLocale;
+
+    private LocaleConfig localeConfig;
+    private PluginConfig pluginConfig;
+    private LocalConfig localConfig;
 
     public ConfigPanel(MainFrame mainFrame) {
         super(mainFrame);
@@ -60,8 +68,14 @@ public class ConfigPanel extends DefaultPanel {
     }
 
     private void createFormComponentInstances(){
+        comboBoxLocale = new JComboBox();
+        comboBoxLocale.setModel( new DefaultComboBoxModel<Languages>( Languages.values() ) );
+        comboBoxLocale.setRenderer(new LanguageComboBoxCellRender());
+
         textFieldNumThreads = new JTextField();
         textFieldIndexTemp = new JTextField();
+        checkBoxSSD = new JCheckBox("É um SSD?");
+        checkBoxSSD.setBackground(Color.white);
         textFieldHashesDB = new JTextField();
         textFieldTskJarPath = new JTextField();
         textFieldMplayerPath = new JTextField();
@@ -79,46 +93,49 @@ public class ConfigPanel extends DefaultPanel {
 
         createFormComponentInstances();
 
-        int labelsWidth = 1;
+        int labelCellColumnWidth = 1;
+        int inputCellColumnWidth = 3;
         double labelsWeightx = 0;
         double inputsWeightx = 1.0;
         int linha = 0;
 
-        panelForm.add(new JLabel("Idioma:"), getGridBagConstraints(0, linha, labelsWidth, labelsWeightx));
-        panelForm.add(new JComboBox<>(), getGridBagConstraints(labelsWidth+1, linha, 2, inputsWeightx));
+        panelForm.add(new JLabel("Idioma:"), getGridBagConstraints(0, linha, 1, labelsWeightx));
+        panelForm.add(comboBoxLocale, getGridBagConstraints(1, linha, 1, inputsWeightx));
+
+        panelForm.add(new JLabel("N de Threads:"), getGridBagConstraints(2, linha, 1, labelsWeightx));
+        panelForm.add(textFieldNumThreads, getGridBagConstraints(3, linha, 1, 0));
 
         linha++;
-        panelForm.add(new JLabel("N de Threads:"), getGridBagConstraints(0, linha, labelsWidth, labelsWeightx));
-        panelForm.add(textFieldNumThreads, getGridBagConstraints(labelsWidth+1, linha, 2, inputsWeightx));
+        panelForm.add(new JLabel("Diretório para temporários:"), getGridBagConstraints(0, linha, 1, labelsWeightx));
+        panelForm.add(textFieldIndexTemp, getGridBagConstraints(1, linha, 2, 0.5));
+        GridBagConstraints c = getGridBagConstraints(3, linha, 1, 0);
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.LINE_END;
+        panelForm.add(checkBoxSSD, c);
 
         linha++;
-        panelForm.add(new JLabel("Diretório para temporários:"), getGridBagConstraints(0, linha, labelsWidth, labelsWeightx));
-        panelForm.add(textFieldIndexTemp, getGridBagConstraints(labelsWidth+1, linha, 2, inputsWeightx));
+        panelForm.add(new JLabel("Banco de dados de Hash:"), getGridBagConstraints(0, linha, labelCellColumnWidth, labelsWeightx));
+        panelForm.add(textFieldHashesDB, getGridBagConstraints(1, linha, inputCellColumnWidth, inputsWeightx));
+
+        if (System.getProperty("os.name").startsWith("Linux")) {
+            linha++;
+            panelForm.add(new JLabel("JAR do SleuthKit:"), getGridBagConstraints(0, linha, labelCellColumnWidth, labelsWeightx));
+            panelForm.add(textFieldTskJarPath, getGridBagConstraints(1, linha, inputCellColumnWidth, inputsWeightx));
+        }
 
         linha++;
-        panelForm.add(new JLabel("Banco de dados de Hash:"), getGridBagConstraints(0, linha, labelsWidth, labelsWeightx));
-        panelForm.add(textFieldHashesDB, getGridBagConstraints(labelsWidth+1, linha, 2, inputsWeightx));
+        panelForm.add(new JLabel("Executável do MPlayer:"), getGridBagConstraints(0, linha, labelCellColumnWidth, labelsWeightx));
+        panelForm.add(textFieldMplayerPath, getGridBagConstraints(1, linha, inputCellColumnWidth, inputsWeightx));
 
         linha++;
-        panelForm.add(new JLabel("JAR do SleuthKit:"), getGridBagConstraints(0, linha, labelsWidth, labelsWeightx));
-        panelForm.add(textFieldTskJarPath, getGridBagConstraints(labelsWidth+1, linha, 2, inputsWeightx));
+        panelForm.add(new JLabel("Diretório de Plugins opcionais:"), getGridBagConstraints(0, linha, labelCellColumnWidth, labelsWeightx));
+        panelForm.add(textFieldPluginFolder, getGridBagConstraints(1, linha, inputCellColumnWidth, inputsWeightx));
 
         linha++;
-        panelForm.add(new JLabel("Executável do MPlayer:"), getGridBagConstraints(0, linha, labelsWidth, labelsWeightx));
-        panelForm.add(textFieldMplayerPath, getGridBagConstraints(labelsWidth+1, linha, 2, inputsWeightx));
-
-        linha++;
-        panelForm.add(new JLabel("Diretório de Plugins opcionais:"), getGridBagConstraints(0, linha, labelsWidth, labelsWeightx));
-        panelForm.add(textFieldPluginFolder, getGridBagConstraints(labelsWidth+1, linha, 2, inputsWeightx));
-
-        linha++;
-        panelForm.add(new JLabel("Diretório do RegRipper:"), getGridBagConstraints(0, linha, labelsWidth, labelsWeightx));
-        panelForm.add(textFieldRegripperFolder, getGridBagConstraints(labelsWidth+1, linha, 2, inputsWeightx));
-
-
+        panelForm.add(new JLabel("Diretório do RegRipper:"), getGridBagConstraints(0, linha, labelCellColumnWidth, labelsWeightx));
+        panelForm.add(textFieldRegripperFolder, getGridBagConstraints(1, linha, inputCellColumnWidth, inputsWeightx));
 
         return panelForm;
-
     }
 
     /**
@@ -137,7 +154,7 @@ public class ConfigPanel extends DefaultPanel {
         c.gridy = tableLineIndex;
         c.gridwidth = cellWidth;
         c.gridheight = 1;
-        c.insets = new Insets(2, 0,2, 0);
+        c.insets = new Insets(2, 10,2, 10);
         return c;
     }
 
@@ -149,7 +166,7 @@ public class ConfigPanel extends DefaultPanel {
         JPanel panelButtons = new JPanel();
         panelButtons.setBackground(Color.white);
         JButton buttonSave = new JButton("Salvar");
-        buttonSave.addActionListener( e -> mainFrame.showPanel(MainFrameCardsNames.HOME));
+        buttonSave.addActionListener( e -> saveConfiguration());
         JButton buttonCancel = new JButton("Cancelar");
         buttonCancel.addActionListener( e -> mainFrame.showPanel(MainFrameCardsNames.HOME));
         panelButtons.add(buttonSave);
@@ -158,18 +175,33 @@ public class ConfigPanel extends DefaultPanel {
     }
 
     public void loadLocalConfigFile(){
-        //LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
-        //PluginConfig
+        //Load configs Files
+        localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
+        pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
+        localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
 
-        LocalConfig config = ConfigurationManager.get().findObject(LocalConfig.class);
-        textFieldNumThreads.setText( String.valueOf(config.getNumThreads()) );
-        textFieldIndexTemp.setText( (config.getIndexTemp() == null ) ? "Default" : config.getIndexTemp().getAbsolutePath());
-        textFieldHashesDB.setText( (config.getHashDbFile() == null )? "" : config.getHashDbFile().getAbsolutePath() );
-        //textFieldTskJarPath.setText( config.get );
-        textFieldMplayerPath.setText( config.getMplayerWinPath() );
-        //textFieldPluginFolder.setText( config.geto );
-        //textFieldRegripperFolder.setText();
+        //set values to input texts
+        String languageTag = (localeConfig.getLocale() != null )? localeConfig.getLocale().toLanguageTag() : "";
+        comboBoxLocale.setSelectedItem(Languages.getByLanguageTag(languageTag));
+        textFieldNumThreads.setText( String.valueOf(localConfig.getNumThreads()) );
+        textFieldIndexTemp.setText( (localConfig.getIndexTemp() == null ) ? "Default" : localConfig.getIndexTemp().getAbsolutePath());
+        checkBoxSSD.setSelected( localConfig.isIndexTempOnSSD() );
+        textFieldHashesDB.setText( (localConfig.getHashDbFile() == null ) ? "" : localConfig.getHashDbFile().getAbsolutePath() );
+        textFieldTskJarPath.setText( (pluginConfig.getTskJarFile() != null )? pluginConfig.getTskJarFile().getAbsolutePath() : "" );
+        textFieldPluginFolder.setText( (pluginConfig.getPluginFolder() != null )? pluginConfig.getPluginFolder().getPath() : "" );
+        //FIXME Waiting issue #1320
+        textFieldMplayerPath.setText( localConfig.getMplayerWinPath() );
+        //FIXME Waiting issue #331
+        textFieldRegripperFolder.setText( "" );
 
+    }
+
+    private void saveConfiguration(){
+
+        //TODO save properties on file
+
+
+        mainFrame.showPanel(MainFrameCardsNames.HOME);
     }
 
 }

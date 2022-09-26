@@ -96,7 +96,7 @@ public class HomePanel extends DefaultPanel {
         c.anchor = anchor;
         c.fill = GridBagConstraints.BOTH;
         //Don`t know why, but center cell (cell number 1) is not resized equally if used same weight
-        c.weightx = (gridx == 1 )? 0.4 : 0.3;
+        c.weightx = (gridx == 1 )? 0.5 : 0.3;
         c.weighty = 0.3;
         c.gridx = gridx;
         c.gridy = 1;

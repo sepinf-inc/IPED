@@ -45,7 +45,11 @@ public class MainFrame extends JFrame {
         try {
             checkAppPreRequisites();
             setupLayout();
-        } catch (Exception | UIException e) {
+        } catch( NullPointerException e){
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, e.toString(), "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }catch (Exception | UIException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
@@ -84,7 +88,7 @@ public class MainFrame extends JFrame {
         setHomeFrameSize();
         setFrameIcon();
         //set tooltip delay
-        ToolTipManager.sharedInstance().setInitialDelay(10);
+        ToolTipManager.sharedInstance().setInitialDelay(60000);
         ThemeManager.getInstance().setLookAndFeel();
 
         // Set the locale used by JFileChooser's
@@ -136,9 +140,14 @@ public class MainFrame extends JFrame {
      * Application Start point
      */
     public static void main(String[] args) {
-        MainFrame main = new MainFrame();
-        main.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        main.setVisible(true);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                MainFrame main = new MainFrame();
+                main.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                main.setVisible(true);
+            }
+        });
     }
 
 }

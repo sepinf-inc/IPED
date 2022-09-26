@@ -8,14 +8,27 @@ import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.style.StyleManager;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.LocalConfig;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
+import java.io.File;
 
 /**
  * Case info TAB
  */
 public class CaseInfoTab extends DefaultPanel {
+
+    private LocalConfig localConfig;
+
+    private JTextField textFieldCaseOutput;
+    private JCheckBox checkBoxOutputOnSSD;
+    private JButton buttonSelectCaseOutput;
+
+    private String OutpuOnSSDTooltip = "<html>Ative se a pasta de saída do caso estiver em um SSD.<br>Se ativado, o índice é criado diretamente na pasta do caso, não em indexTemp,  portanto, você precisará de menos espaço livre na pasta temp.</html>";
+
 
     public CaseInfoTab(MainFrame mainFrame) {
         super(mainFrame);
@@ -44,6 +57,26 @@ public class CaseInfoTab extends DefaultPanel {
         return panelTitle;
     }
 
+    private void createFormComponentInstances(){
+        localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
+
+        textFieldCaseOutput = new JTextField();
+        checkBoxOutputOnSSD = new JCheckBox("A pasta do caso esta em um SSD?");
+        checkBoxOutputOnSSD.setToolTipText(OutpuOnSSDTooltip);
+        checkBoxOutputOnSSD.setSelected(localConfig.isOutputOnSSD());
+        checkBoxOutputOnSSD.setOpaque(false);
+        buttonSelectCaseOutput = new JButton("...");
+        buttonSelectCaseOutput.addActionListener( e -> {
+            JFileChooser fileChooserDestino = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+            fileChooserDestino.setDialogTitle("Selecione a pasta de destino do caso");
+            fileChooserDestino.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            fileChooserDestino.setAcceptAllFileFilterUsed(false);
+            if( fileChooserDestino.showOpenDialog(this) == JFileChooser.APPROVE_OPTION){
+                textFieldCaseOutput.setText( fileChooserDestino.getSelectedFile().toString() );
+            }
+        } );
+    }
+
     /**
      * Create a new JPanel instance containing all inputs
      * @return JPanel - A JPanel containing all data input form itens
@@ -51,6 +84,7 @@ public class CaseInfoTab extends DefaultPanel {
     private JPanel createFormPanel(){
         JPanel panelForm = new JPanel(new GridBagLayout());
         panelForm.setBackground(Color.white);
+        createFormComponentInstances();
 
         int column1 = 0;
         int column2 = 1;
@@ -111,12 +145,12 @@ public class CaseInfoTab extends DefaultPanel {
         JPanel panelCaseFolder = new JPanel();
         panelCaseFolder.setLayout(new BoxLayout(panelCaseFolder, BoxLayout.LINE_AXIS));
         panelCaseFolder.setBackground(Color.white);
-        panelCaseFolder.add(new JTextField());
-        panelCaseFolder.add(new JButton("..."));
+        panelCaseFolder.add(textFieldCaseOutput);
+        panelCaseFolder.add(buttonSelectCaseOutput);
         panelForm.add(panelCaseFolder, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
 
         currentLine++;
-        panelForm.add(new Checkbox("A pasta do caso esta em um SSD?"), getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
+        panelForm.add(checkBoxOutputOnSSD, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
 
         return panelForm;
 
@@ -152,12 +186,26 @@ public class CaseInfoTab extends DefaultPanel {
         JButton buttoCancel = new JButton("Cancelar");
         buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goHome());
         JButton buttonNext = new JButton("Próximo");
-        buttonNext.addActionListener( e -> NewCaseContainerPanel.getInstance().goToNextTab() );
+        buttonNext.addActionListener( e -> navigateToNextTab() );
         panelButtons.add(buttoCancel);
         panelButtons.add(buttonNext);
         return panelButtons;
     }
 
-
+    private void navigateToNextTab(){
+        if( textFieldCaseOutput.getText() == null || textFieldCaseOutput.getText().trim().isEmpty()  ){
+            JOptionPane.showMessageDialog(this, "A pasta de destino do caso é obrigatório", "Pasta de destino do caso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        File caseOutput = new File(textFieldCaseOutput.getText());
+        if(! caseOutput.exists() ){
+            JOptionPane.showMessageDialog(this, "A pasta de destino não é valida", "Pasta de destino do caso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }else if(! caseOutput.canWrite() ){
+            JOptionPane.showMessageDialog(this, "A pasta de destino informada não tem permissão para escrita", "Pasta de destino do caso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        NewCaseContainerPanel.getInstance().goToNextTab();
+    }
 
 }
