@@ -2,13 +2,14 @@ package iped.parsers.mail.win10.tables;
 
 import com.sun.jna.ptr.PointerByReference;
 
-import iped.parsers.mail.win10.entries.MessageEntry;
+import iped.parsers.browsers.edge.EsedbLibrary;
 
-
-public abstract class AbstractTable implements Iterable<MessageEntry> {
+public abstract class AbstractTable {
     protected String tableName = "";
     protected long numRecords = 0;
     protected PointerByReference tablePointer;
+    protected PointerByReference errorPointer;
+    protected String filePath;
 
     public PointerByReference getTablePointer() {
         return this.tablePointer;
@@ -17,4 +18,6 @@ public abstract class AbstractTable implements Iterable<MessageEntry> {
     public String getTableName() {
         return this.tableName;
     }
+
+    abstract public void populateTable(EsedbLibrary esedbLibrary);
 }

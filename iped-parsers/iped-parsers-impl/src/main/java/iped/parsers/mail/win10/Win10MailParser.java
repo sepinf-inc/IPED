@@ -31,6 +31,8 @@ import com.sun.jna.ptr.PointerByReference;
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.database.EDBParser;
 import iped.parsers.mail.win10.entries.MessageEntry;
+import iped.parsers.mail.win10.entries.RecipientEntry;
+import iped.parsers.mail.win10.entries.RecipientTable;
 import iped.parsers.mail.win10.tables.AbstractTable;
 import iped.parsers.mail.win10.tables.MessageTable;
 import iped.parsers.util.EsedbManager;
@@ -109,13 +111,19 @@ public class Win10MailParser extends AbstractParser {
                 String storeVolPath = storeVolFile.getAbsolutePath();
 
                 PointerByReference filePointerReference = new PointerByReference();
+
                 List<AbstractTable> tables = getMailTables(storeVolPath, filePointerReference);
 
                 for (AbstractTable table : tables) {
 
                     if (table instanceof MessageTable) {
-                        for (MessageEntry message : table) {
-                            System.out.println(message.getRowId() + ": " + message.getSenderEmail());
+                        MessageTable msgTable = (MessageTable) table;
+                        for (MessageEntry message : msgTable.getMessages()) {
+                            String str = "";
+                            if (message.getRecipients() != null) {
+                                str = message.getRecipients().get(0).getDisplayName();
+                            }
+                            System.out.println(message.getRowId() + ": " + str);
                         }
                     }
                     closeTablePointer(table.getTablePointer());
@@ -216,7 +224,15 @@ public class Win10MailParser extends AbstractParser {
                 numRecords = numberOfRecords.getValue();
 
                 if (tableNameStr.contains("Message")) {
-                    tables.add(new MessageTable(esedbLibrary, itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords));
+                    MessageTable msgTable = new MessageTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    msgTable.populateTable(esedbLibrary);
+                    tables.add(msgTable);
+                }
+
+                if (tableNameStr.contains("Recipient")) {
+                    RecipientTable recipientTable = new RecipientTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    recipientTable.populateTable(esedbLibrary);
+                    tables.add(recipientTable);
                 }
             }
 

@@ -1,6 +1,7 @@
 package iped.parsers.mail.win10.entries;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -100,5 +101,9 @@ public class MessageEntry {
 
     public void setLastModifiedTime(Date lastModifiedTime) {
         this.lastModifiedTime = lastModifiedTime;
+    }
+
+    public ArrayList<RecipientEntry> getRecipients() {
+        return RecipientTable.getMessageRecipients(rowId);
     }
 }
