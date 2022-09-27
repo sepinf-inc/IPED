@@ -283,7 +283,7 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 				e.printStackTrace();
 			}
 		}finally {
-			ipedTimelineDataset.threadCountSem.release();
+			ipedTimelineDataset.visiblePopulSem.release();
 		}
 	}
 

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -51,7 +52,8 @@ import iped.viewers.timelinegraph.cache.TimeStampCache;
 public class IpedTimelineDataset extends AbstractIntervalXYDataset
 									implements Cloneable, PublicCloneable, IntervalXYDataset, DomainInfo, TimelineDataset,
 									TableXYDataset, XYDomainInfo, AsynchronousDataset {
-    IMultiSearchResultProvider resultsProvider;    
+    private static final int CTITEMS_PER_THREAD = 500;
+	IMultiSearchResultProvider resultsProvider;    
     CaseSearchFilterListenerFactory cacheFLFactory;
     
     /**
@@ -79,11 +81,11 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
     SortedSet<String> eventTypes = new TreeSet<String>();
     String[] eventTypesArray;
 	LeafReader reader;
-	
+
 	static ThreadPoolExecutor queriesThreadPool =  new ThreadPoolExecutor(5, 10,
             20000, TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<Runnable>());
-	
+
 	static ThreadPoolExecutor slicesThreadPool =  new ThreadPoolExecutor(10, 10,
             20000, TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<Runnable>());
@@ -129,7 +131,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 	private ArrayList<CaseSearcherFilter> csfs;
 	private boolean cancelled=false;
 	
-	Semaphore threadCountSem;
+	Semaphore visiblePopulSem;
 
 	public IpedTimelineDataset(IpedTimelineDatasetManager ipedTimelineDatasetManager, IMultiSearchResultProvider resultsProvider, CaseSearchFilterListenerFactory cacheFLFactory, String splitValue) throws Exception {
 		this.ipedChartsPanel = ipedTimelineDatasetManager.ipedChartsPanel;
@@ -198,8 +200,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
        		br = te.next();
 		}
 
-		threadCountSem = new Semaphore(running);
-		threadCountSem.acquire(running);
+		visiblePopulSem = new Semaphore(running);
+		visiblePopulSem.acquire(running);
 		
 		for(CaseSearcherFilter csf:csfs) {
 			csf.setThreadPool(slicesThreadPool);
@@ -222,17 +224,98 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}finally {
-					threadCountSem.release();
+					visiblePopulSem.release();
 				}
 			}
 		});
-		threadCountSem = new Semaphore(running);
-		threadCountSem.acquire(running);
+		visiblePopulSem = new Semaphore(running);
+		visiblePopulSem.acquire(running);
 		queriesThreadPool.execute(t);
+		
 	}
+
+	class PopulateDatasetTask implements Runnable {
+		int threadCtsEnd;
+		CacheTimePeriodEntry[] threadLocalCts;
+		Semaphore timeSem;
+		IMultiSearchResult result;
+		Semaphore addValueSem;//semaphore to control block for adding value to the dataset
+		
+		public PopulateDatasetTask(IMultiSearchResult result, CacheTimePeriodEntry[] threadLocalCts, int threadCtsEnd, Semaphore timeSem, Semaphore addValueSem) {
+			this.result = result;
+			this.threadLocalCts = threadLocalCts;
+			this.threadCtsEnd = threadCtsEnd;
+			this.timeSem = timeSem;
+			this.addValueSem = addValueSem;
+		}
+		
+		@Override
+		public void run() {
+			try {
+		        App app = App.get();
+		        IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
+		        IPEDMultiSource appcase = (IPEDMultiSource) app.getIPEDSource();
+		        
+				Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
+				Date startDate = new Date((long)dateRange.getLowerBound());
+				Date endDate = new Date((long)dateRange.getUpperBound());
+				
+				for (int i = 0; i < threadCtsEnd; i++) {
+					CacheTimePeriodEntry ct = threadLocalCts[i];
+					for(CacheEventEntry ce:ct.events) {
+						if(cancelled) {
+							return;
+						}
+						ArrayList<Integer> docs = ce.docIds;
+						if(docs!=null) {
+							ArrayList<IItemId> includedItems = new ArrayList<IItemId>();
+							ArrayList<Integer> includedDocs = new ArrayList<Integer>();
+							Count count=new Count();
+							for(Integer docId:docs) {
+								if(cancelled) {
+									throw new InterruptedException();
+								}
+
+								if(result.hasDocId(docId)) {
+				                    IIPEDSource atomicSource = appcase.getAtomicSource(docId);
+				                    int sourceId = atomicSource.getSourceId();
+				                    int baseDoc = appcase.getBaseLuceneId(atomicSource);
+				                    ItemId ii = new ItemId(sourceId, atomicSource.getId(docId - baseDoc));
+
+									if(splitValue!=null && !splitValue.equals("Bookmarks") && ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
+						            	if(multiBookmarks.hasBookmark(ii, splitValue)) {
+											count.value++;
+											includedDocs.add(docId);
+											includedItems.add(ii);
+					            	    }
+									}else {
+										count.value++;
+										includedDocs.add(docId);
+										includedItems.add(ii);
+									}
+								}
+							}
+							if(count.value>0) {
+								addValueSem.acquire();
+								TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ct.date);
+								addValue(count, t, ce.event, includedDocs, includedItems);
+								addValueSem.release();
+							}
+						}
+					}
+				}
+			}catch(Exception e) {
+				
+			}finally {
+				timeSem.release();
+			}
+		}
+	}
+	
 	
 	public void caseSearchFilterLoad() throws Exception {
 		IMultiSearchResult result;
+
 		if(splitValue==null) {
 			result  = resultsProvider.getResults();
 		}else {
@@ -252,84 +335,167 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
         App app = App.get();
         IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
         IPEDMultiSource appcase = (IPEDMultiSource) app.getIPEDSource();
-        
+
         Semaphore addValueSem = new Semaphore(1);
-        
+
 		if(result.getLength()>0) {
 			TimeStampCache cache = ipedChartsPanel.getIpedTimelineDatasetManager().getCache();
 			Map<String, List<CacheTimePeriodEntry>> a = cache.getNewCache();
-			
+
 			List<CacheTimePeriodEntry> newcache = a.get(ipedChartsPanel.getTimePeriodClass().getSimpleName());
-			
-			Semaphore timeSem = new Semaphore(newcache.size());
-			timeSem.acquire(newcache.size());
-			
-			for(CacheTimePeriodEntry ct:newcache) {				
-				Thread t = new Thread(new Runnable() {
+
+			List<CacheTimePeriodEntry> incache = new ArrayList<CacheTimePeriodEntry>();
+			LinkedList<CacheTimePeriodEntry> beforecache = new LinkedList<CacheTimePeriodEntry>();
+			List<CacheTimePeriodEntry> aftercache = new ArrayList<CacheTimePeriodEntry>();
+
+			Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
+			Date startDate = new Date((long)dateRange.getLowerBound());
+			Date endDate = new Date((long)dateRange.getUpperBound());
+
+			if(startDate.getTime()==0 && endDate.getTime()==1) {
+				incache=newcache;
+			}else {
+				for(CacheTimePeriodEntry ctpe:newcache) {
+					if(ctpe.date.before(startDate)) {
+						beforecache.addFirst(ctpe);
+					} else if(ctpe.date.after(endDate)) {
+						aftercache.add(ctpe);
+					}else {
+						incache.add(ctpe);
+					}
+				}
+			}
+
+			populatesWithList(result, incache, addValueSem);//creates first the visible range itens to be plotted
+
+			if(beforecache.size()>0 || aftercache.size()>0) {
+				Runnable r = new Runnable() {
 					@Override
 					public void run() {
-						try {
-							for(CacheEventEntry ce:ct.events) {
-								if(cancelled) {
-									return;
-								}
-								ArrayList<Integer> docs = ce.docIds;
-								if(docs!=null) {
-									ArrayList<IItemId> includedItems = new ArrayList<IItemId>();
-									ArrayList<Integer> includedDocs = new ArrayList<Integer>();
-									Count count=new Count();
-									for(Integer docId:docs) {
-										if(cancelled) {
-											throw new InterruptedException();								
-										}
+						populatesWithBeforeAndAfterList(result, beforecache, aftercache, addValueSem);
+					}
+				};
+				Thread t = new Thread(r);
+				t.start();//runs out of visibility asynchronously so to release GUI thread to the user.
+			}
 
-					                    IIPEDSource atomicSource = appcase.getAtomicSource(docId);
-					                    int sourceId = atomicSource.getSourceId();
-					                    int baseDoc = appcase.getBaseLuceneId(atomicSource);
-					                    ItemId ii = new ItemId(sourceId, atomicSource.getId(docId - baseDoc));
-										
-										if(result.hasDocId(docId)) {
-											if(splitValue!=null && !splitValue.equals("Bookmarks") && ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
-								            	if(multiBookmarks.hasBookmark(ii, splitValue)) {
-													count.value++;
-													includedDocs.add(docId);
-													includedItems.add(ii);
-							            	    }
-											}else {
-												count.value++;
-												includedDocs.add(docId);
-												includedItems.add(ii);
-											}
-										}
-									}
-									if(count.value>0) {
-										addValueSem.acquire();
-										TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ct.date);
-										addValue(count, t, ce.event, includedDocs, includedItems);
-										addValueSem.release();
-									}
-								}
-							}
-						}catch(Exception e) {
-							
-						}finally {
-							timeSem.release();
+		}
+	}
+
+	public void populatesWithBeforeAndAfterList(IMultiSearchResult result, List<CacheTimePeriodEntry> beforecache, List<CacheTimePeriodEntry> aftercache, Semaphore addValueSem) {
+		//if(true) return;
+		try {
+			int threadCount = (int) Math.ceil((double) (beforecache.size()+aftercache.size()) / (double)CTITEMS_PER_THREAD);
+			Semaphore timeSem = new Semaphore(threadCount);
+			timeSem.acquire(threadCount);
+			CacheTimePeriodEntry[] threadCts = new CacheTimePeriodEntry[CTITEMS_PER_THREAD];
+			int threadCtsCount=0;
+			int totalInCount = beforecache.size()+aftercache.size();
+
+			//populates dataset for inside visible range items
+			int beforeindex=0;
+			int afterindex=0;
+			CacheTimePeriodEntry ctpeBefore = beforecache.get(beforeindex);
+			CacheTimePeriodEntry ctpeAfter = beforecache.get(afterindex);
+			while(ctpeBefore!=null || ctpeAfter!=null) {
+				CacheTimePeriodEntry ctpe=null;
+				if(totalInCount%2 == 0) {//alternate between lists
+					ctpe=ctpeBefore;
+					if(ctpe==null) {
+						ctpe=ctpeAfter;
+						afterindex++;
+						if(afterindex<aftercache.size()) {
+							ctpeAfter = aftercache.get(afterindex);
+						}else {
+							ctpeAfter=null;
+						}
+					}else {
+						beforeindex++;
+						if(beforeindex<beforecache.size()) {
+							ctpeBefore = beforecache.get(beforeindex);
+						}else {
+							ctpeBefore=null;
 						}
 					}
-				});
-				queriesThreadPool.execute(t);
+				}else {
+					ctpe=ctpeAfter;
+					if(ctpe==null) {
+						ctpe=ctpeBefore;
+						beforeindex++;
+						if(beforeindex<beforecache.size()) {
+							ctpeBefore = beforecache.get(beforeindex);
+						}else {
+							ctpeBefore=null;
+						}
+					}else {
+						afterindex++;
+						if(afterindex<aftercache.size()) {
+							ctpeAfter = aftercache.get(afterindex);
+						}else {
+							ctpeAfter=null;
+						}
+					}
+					
+				}
+
+				threadCts[threadCtsCount++]=ctpe;
+				totalInCount--;
+				if(threadCtsCount>=CTITEMS_PER_THREAD || totalInCount<=0 ) {
+					int threadCtsEnd = threadCtsCount;
+					Runnable r = new PopulateDatasetTask(result, threadCts, threadCtsEnd, timeSem, addValueSem);
+					Thread t = new Thread(r);
+					queriesThreadPool.execute(t);
+					threadCts = new CacheTimePeriodEntry[CTITEMS_PER_THREAD]; 
+					threadCtsCount=0;
+				}
 			}
+			timeSem.acquire(threadCount);
+			timeSem.release(threadCount);
+			System.out.println("Finished ploting out of range");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void populatesWithList(IMultiSearchResult result, List<CacheTimePeriodEntry> cache, Semaphore addValueSem) {
+		try {
 			
-			timeSem.acquire(newcache.size());
-			timeSem.release(newcache.size());
+			
+			int threadCount = (int) Math.ceil((double) cache.size() / (double)CTITEMS_PER_THREAD);
+			Semaphore timeSem = new Semaphore(threadCount);
+			timeSem.acquire(threadCount);
+			CacheTimePeriodEntry[] threadCts = new CacheTimePeriodEntry[CTITEMS_PER_THREAD];
+			int threadCtsCount=0;
+			int totalInCount = cache.size();
+
+			//populates dataset for inside visible range items
+			for(CacheTimePeriodEntry ctpe:cache) {
+				threadCts[threadCtsCount++]=ctpe;
+				totalInCount--;
+				if(threadCtsCount>=CTITEMS_PER_THREAD || totalInCount<=0 ) {
+					int threadCtsEnd = threadCtsCount;
+					CacheTimePeriodEntry[] threadLocalCts = threadCts.clone();
+					threadCtsCount=0;
+					Runnable r = new PopulateDatasetTask(result, threadLocalCts, threadCtsEnd, timeSem, addValueSem);
+					Thread t = new Thread(r);
+					queriesThreadPool.execute(t);
+				}
+			}
+			timeSem.acquire(threadCount);
+			timeSem.release(threadCount);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}finally {
 		}
 	}
 	
 	@Override
 	public boolean waitLoaded() {
 		try {
-			threadCountSem.acquire(running);
-			threadCountSem.release(running);
+			if(visiblePopulSem!=null) {
+				visiblePopulSem.acquire(running);
+				visiblePopulSem.release(running);
+			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			cancelled=true;
@@ -345,7 +511,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 			}
 		}
 		cancelled=true;
-		threadCountSem.release(running);
+		visiblePopulSem.release(running);
 		synchronized (monitor) {
 			monitor.notifyAll();
 		}
