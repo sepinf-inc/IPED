@@ -5,7 +5,6 @@ import java.util.concurrent.Executors;
 
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
-import org.jfree.data.time.Minute;
 import org.jfree.data.time.Month;
 import org.jfree.data.time.Quarter;
 import org.jfree.data.time.Second;
@@ -17,6 +16,7 @@ import org.jfree.data.xy.AbstractIntervalXYDataset;
 import iped.viewers.timelinegraph.IpedChartsPanel;
 import iped.viewers.timelinegraph.cache.IndexTimeStampCache;
 import iped.viewers.timelinegraph.cache.TimeStampCache;
+import iped.viewers.timelinegraph.model.Minute;
 
 /*
  * Implements the method to choose timeline dataset object that represents. 

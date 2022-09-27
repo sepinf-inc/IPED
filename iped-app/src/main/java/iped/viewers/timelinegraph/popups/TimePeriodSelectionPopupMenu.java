@@ -14,7 +14,7 @@ import javax.swing.JPopupMenu;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Millisecond;
-import org.jfree.data.time.Minute;
+import iped.viewers.timelinegraph.model.Minute;
 import org.jfree.data.time.Month;
 import org.jfree.data.time.Quarter;
 import org.jfree.data.time.Second;
