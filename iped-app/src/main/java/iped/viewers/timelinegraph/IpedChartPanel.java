@@ -498,7 +498,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
     	RegularTimePeriod t;
 		try {
 			t = (RegularTimePeriod) ipedChartsPanel.getTimePeriodClass().getConstructor(Date.class).newInstance(date);
-	    	return t.next().getStart();
+	    	return new Date(t.getEnd().getTime()+1);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			e.printStackTrace();
 		}

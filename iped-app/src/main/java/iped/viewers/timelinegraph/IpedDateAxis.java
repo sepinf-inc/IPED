@@ -301,6 +301,34 @@ public class IpedDateAxis extends DateAxis {
 		}
 	}
 
+	
+
+	public void forceRange(Range range, boolean turnOffAutoRange,
+            boolean notify) {
+        Args.nullNotPermitted(range, "range");
+        // usually the range will be a DateRange, but if it isn't do a
+        // conversion...
+        if (!(range instanceof DateRange)) {
+            range = new DateRange(range);
+        }
+        
+        if(getTimeZone()!=null) {
+            Calendar cal = Calendar.getInstance(getTimeZone());
+            cal.set(1900, 0, 1,0,0,0);
+            if(((DateRange)range).getLowerMillis()<cal.getTimeInMillis()) {
+                range = new DateRange(cal.getTime(), ((DateRange)range).getUpperDate());
+            }
+            cal.set(9999, 11, 31,23,59,59);
+            if(((DateRange)range).getUpperMillis()>cal.getTimeInMillis()) {
+                range = new DateRange(((DateRange)range).getLowerDate(),cal.getTime());
+            }
+            
+            super.setRange(range, turnOffAutoRange, notify);
+        }else {
+            super.setRange(range, turnOffAutoRange, notify);
+        }
+	}
+	
     /**
      * Sets the range for the axis, if requested, sends an
      * {@link AxisChangeEvent} to all registered listeners.  As a side-effect,
@@ -344,29 +372,7 @@ public class IpedDateAxis extends DateAxis {
             	}
         	}
     	}
-    	
-        Args.nullNotPermitted(range, "range");
-        // usually the range will be a DateRange, but if it isn't do a
-        // conversion...
-        if (!(range instanceof DateRange)) {
-            range = new DateRange(range);
-        }
-        
-        if(getTimeZone()!=null) {
-            Calendar cal = Calendar.getInstance(getTimeZone());
-            cal.set(1900, 0, 1,0,0,0);
-            if(((DateRange)range).getLowerMillis()<cal.getTimeInMillis()) {
-                range = new DateRange(cal.getTime(), ((DateRange)range).getUpperDate());
-            }
-            cal.set(9999, 11, 31,23,59,59);
-            if(((DateRange)range).getUpperMillis()>cal.getTimeInMillis()) {
-                range = new DateRange(((DateRange)range).getLowerDate(),cal.getTime());
-            }
-            
-            super.setRange(range, turnOffAutoRange, notify);
-        }else {
-            super.setRange(range, turnOffAutoRange, notify);
-        }
+    	forceRange(range, turnOffAutoRange, notify);
     }
     
     public DateRange putMargin(DateRange range) {

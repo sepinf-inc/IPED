@@ -12,19 +12,19 @@ import org.jfree.data.time.Year;
 import iped.viewers.timelinegraph.model.Minute;
 
 public class ChartTimePeriodConstraint {
-	static double YEAR_UNIT_RANGE_SIZE = 365*24*60*60*1000;//a week
-	static double QUARTER_UNIT_RANGE_SIZE = 90*24*60*60*1000;//a week
-	static double MONTH_UNIT_RANGE_SIZE = 31*24*60*60*1000;//a week
-	static double WEEK_UNIT_RANGE_SIZE = 7*24*60*60*1000;//a week
-	static double DAY_UNIT_RANGE_SIZE = 24*60*60*1000;//a week
-	static double HOUR_UNIT_RANGE_SIZE = 60*60*1000;//a week
-	static double MINUTE_UNIT_RANGE_SIZE = 60*1000;//a week
+	static double YEAR_UNIT_RANGE_SIZE = 365l*24l*60l*60l*1000l;//a week
+	static double QUARTER_UNIT_RANGE_SIZE = 90l*24l*60l*60l*1000l;//a week
+	static double MONTH_UNIT_RANGE_SIZE = 31l*24l*60l*60l*1000l;//a week
+	static double WEEK_UNIT_RANGE_SIZE = 7l*24l*60l*60l*1000l;//a week
+	static double DAY_UNIT_RANGE_SIZE = 24l*60l*60l*1000l;//a week
+	static double HOUR_UNIT_RANGE_SIZE = 60l*60l*1000l;//a week
+	static double MINUTE_UNIT_RANGE_SIZE = 60l*1000l;//a week
 	static double SECOND_UNIT_RANGE_SIZE = 1000;//3 hours 
 	static double MILLISECOND_UNIT_RANGE_SIZE = 1;//ten minutes
 	
 	static double HOUR_MAX_RANGE_SIZE = 30l*24l*60l*60l*1000l;//a week
-	static double MINUTE_MAX_RANGE_SIZE = 24*60*60*1000;//a week
-	static double SECOND_MAX_RANGE_SIZE = 3*60*60*1000;//3 hours 
+	static double MINUTE_MAX_RANGE_SIZE = 24l*60l*60l*1000l;//a week
+	static double SECOND_MAX_RANGE_SIZE = 3l*60l*60l*1000l;//3 hours 
 	static double MILLISECOND_MAX_RANGE_SIZE = 60*1000;//ten minutes
 
 	static double HOUR_MIN_RANGE_SIZE = 3*HOUR_UNIT_RANGE_SIZE;//a week
@@ -35,8 +35,8 @@ public class ChartTimePeriodConstraint {
 	double maxZoomoutRangeSize;
 	double minZoominRangeSize;
 	public double minBarSizeInPixels=2;
-	
 	static private double minBarWidth = 5;
+
 	static public double getTimePeriodUnit(Class<? extends TimePeriod> t) {
 		if(t.equals(Year.class)) {
 			return YEAR_UNIT_RANGE_SIZE;
@@ -63,5 +63,13 @@ public class ChartTimePeriodConstraint {
 			return SECOND_UNIT_RANGE_SIZE;
 		}
 		return 5;
+	}
+
+	public double getMaxZoomoutRangeSize() {
+		return maxZoomoutRangeSize;
+	}
+
+	public double getMinZoominRangeSize() {
+		return minZoominRangeSize;
 	}
 }

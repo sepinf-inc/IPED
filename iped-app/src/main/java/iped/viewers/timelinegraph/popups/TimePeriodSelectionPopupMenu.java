@@ -4,13 +4,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.TimeZone;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 
+import org.jfree.chart.ui.RectangleEdge;
+import org.jfree.data.Range;
+import org.jfree.data.time.DateRange;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Millisecond;
@@ -23,11 +28,11 @@ import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
 
 import iped.app.ui.Messages;
+import iped.viewers.timelinegraph.ChartTimePeriodConstraint;
 import iped.viewers.timelinegraph.DateUtil;
 import iped.viewers.timelinegraph.IpedChartsPanel;
 
 public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionListener {
-
 	static HashMap<String, SimpleDateFormat> sdfMap = null;
 
 	IpedChartsPanel ipedChartsPanel;
@@ -41,7 +46,7 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 	JTimePeriodMenuItem minuteMenu;
 	JTimePeriodMenuItem secondMenu;
 	JTimePeriodMenuItem millisecondMenu;
-	
+
 	class JTimezoneMenuItem extends JMenuItem{
 		TimeZone tz;
 
@@ -88,7 +93,7 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 		add(periodGranularityMenu);
 		add(timezoneMenu);
 		timezoneMenu.setAutoscrolls(true);
-		
+
 		yearMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Year"), Year.class);
 		yearMenu.setActionCommand("Year");
 		yearMenu.addActionListener(this);
@@ -151,15 +156,50 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 			tzmi.addActionListener(this);
 			zoneSubMenu.add(tzmi);
 		}
-		
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() instanceof JTimePeriodMenuItem) {
-			ipedChartsPanel.setTimePeriodClass(((JTimePeriodMenuItem) e.getSource()).getTimePeriodClass());
-			ipedChartsPanel.setTimePeriodString(e.getActionCommand());
-			ipedChartsPanel.refreshChart();
+			Class<? extends TimePeriod> tpclass = ((JTimePeriodMenuItem) e.getSource()).getTimePeriodClass();
+			Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
+			Date startDate = new Date((long)dateRange.getLowerBound());
+			Date endDate = new Date((long)dateRange.getUpperBound());
+        	ChartTimePeriodConstraint c = ipedChartsPanel.getChartPanel().getTimePeriodConstraints(tpclass);
+        	long rangeSize = endDate.getTime()-startDate.getTime();
+        	int input = 0;
+
+        	double java2dlower = ipedChartsPanel.getDomainAxis().valueToJava2D(dateRange.getLowerBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
+        	double java2dupper = ipedChartsPanel.getDomainAxis().valueToJava2D(dateRange.getUpperBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
+        	double newbarsize = ((java2dupper - java2dlower)/(dateRange.getUpperBound()-dateRange.getLowerBound()))*ChartTimePeriodConstraint.getTimePeriodUnit(tpclass);//size in pixels
+
+			if(c!=null && rangeSize>c.getMaxZoomoutRangeSize()) {
+				Date centerDate = new Date(startDate.getTime() + rangeSize/2);
+				String msg = "The visible range is too great for the granularity "+tpclass.getName()+".\n Would you like to continue and zoom centered on date "+iped.utils.DateUtil.dateToString(centerDate)+"?";
+				input = JOptionPane.showConfirmDialog(null, msg, "", JOptionPane.OK_CANCEL_OPTION);
+				if(input==0) {
+					startDate = new Date((long)Math.floor(centerDate.getTime()-c.getMaxZoomoutRangeSize()/2));
+					endDate = new Date((long)Math.ceil(centerDate.getTime()+c.getMaxZoomoutRangeSize()/2));
+					ipedChartsPanel.getDomainAxis().forceRange(new DateRange(startDate, endDate),false,false);
+				}
+			}else if(c!=null && rangeSize<c.getMinZoominRangeSize()) {
+				Date centerDate = new Date(startDate.getTime() + rangeSize/2);
+				startDate = new Date((long)Math.floor(centerDate.getTime()-c.getMinZoominRangeSize()/2));
+				endDate = new Date((long)Math.ceil(centerDate.getTime()+c.getMinZoominRangeSize()/2));
+
+				ipedChartsPanel.getDomainAxis().forceRange(new DateRange(startDate, endDate),false,false);
+			}else if(newbarsize>(java2dupper - java2dlower)/3) {
+				Date centerDate = new Date(startDate.getTime() + rangeSize/2);
+				startDate = new Date((long)Math.floor(centerDate.getTime()-ChartTimePeriodConstraint.getTimePeriodUnit(tpclass)));
+				endDate = new Date((long)Math.ceil(centerDate.getTime()+ChartTimePeriodConstraint.getTimePeriodUnit(tpclass)));
+
+				ipedChartsPanel.getDomainAxis().forceRange(new DateRange(startDate, endDate),false,false);
+			}
+			if(input==0) {
+				ipedChartsPanel.setTimePeriodClass(tpclass);
+				ipedChartsPanel.setTimePeriodString(e.getActionCommand());
+				ipedChartsPanel.refreshChart();
+			}
 		}else {
 			ipedChartsPanel.setTimeZone(((JTimezoneMenuItem) e.getSource()).getTimezone());
 		}
