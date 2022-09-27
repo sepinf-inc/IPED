@@ -314,7 +314,7 @@ public class IpedDateAxis extends DateAxis {
      */
     @Override
     public void setRange(Range range, boolean turnOffAutoRange,
-                         boolean notify) {
+                         boolean notify){
     	if(ipedChartsPanel!=null) {
         	ChartTimePeriodConstraint c = ipedChartsPanel.getChartPanel().getTimePeriodConstraints();
         	if(c!=null) {
@@ -324,12 +324,22 @@ public class IpedDateAxis extends DateAxis {
             	double java2dlower = valueToJava2D(range.getLowerBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
             	double java2dupper = valueToJava2D(range.getUpperBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
             	
-            	double barsize = ((java2dupper - java2dlower)/(range.getUpperBound()-range.getLowerBound()))*c.getTimePeriodUnit(ipedChartsPanel.getTimePeriodClass());//size in pixels
+            	double barsize = ((java2dupper - java2dlower)/(range.getUpperBound()-range.getLowerBound()))*ChartTimePeriodConstraint.getTimePeriodUnit(ipedChartsPanel.getTimePeriodClass());//size in pixels
             	
             	if(curRangeSize<rangeSize && (rangeSize>c.maxZoomoutRangeSize || barsize<=c.minBarSizeInPixels)) {
             		return;//skips
             	}
-            	if(curRangeSize>rangeSize && rangeSize<c.minZoominRangeSize ) {
+            	if(curRangeSize>rangeSize && (rangeSize<c.minZoominRangeSize || barsize >= ((java2dupper - java2dlower)/3))) {
+            		return;//skips
+            	}
+        	}else {
+            	double curRangeSize = this.getRange().getUpperBound()-this.getRange().getLowerBound();
+            	double rangeSize = range.getUpperBound()-range.getLowerBound();
+            	double java2dlower = valueToJava2D(range.getLowerBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
+            	double java2dupper = valueToJava2D(range.getUpperBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
+            	
+            	double barsize = ((java2dupper - java2dlower)/(range.getUpperBound()-range.getLowerBound()))*ChartTimePeriodConstraint.getTimePeriodUnit(ipedChartsPanel.getTimePeriodClass());//size in pixels
+            	if(curRangeSize>rangeSize &&  barsize >= ((java2dupper - java2dlower)/3) ) {
             		return;//skips
             	}
         	}

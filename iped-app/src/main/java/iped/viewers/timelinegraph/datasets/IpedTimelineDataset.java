@@ -256,10 +256,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 		        IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
 		        IPEDMultiSource appcase = (IPEDMultiSource) app.getIPEDSource();
 		        
-				Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
-				Date startDate = new Date((long)dateRange.getLowerBound());
-				Date endDate = new Date((long)dateRange.getUpperBound());
-				
 				for (int i = 0; i < threadCtsEnd; i++) {
 					CacheTimePeriodEntry ct = threadLocalCts[i];
 					for(CacheEventEntry ce:ct.events) {
@@ -351,10 +347,13 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 			Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
 			Date startDate = new Date((long)dateRange.getLowerBound());
 			Date endDate = new Date((long)dateRange.getUpperBound());
+			
 
 			if(startDate.getTime()==0 && endDate.getTime()==1) {
 				incache=newcache;
 			}else {
+				startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
+				endDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime()-1);
 				for(CacheTimePeriodEntry ctpe:newcache) {
 					if(ctpe.date.before(startDate)) {
 						beforecache.addFirst(ctpe);
@@ -396,7 +395,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 			int beforeindex=0;
 			int afterindex=0;
 			CacheTimePeriodEntry ctpeBefore = beforecache.get(beforeindex);
-			CacheTimePeriodEntry ctpeAfter = beforecache.get(afterindex);
+			CacheTimePeriodEntry ctpeAfter = aftercache.get(afterindex);
 			while(ctpeBefore!=null || ctpeAfter!=null) {
 				CacheTimePeriodEntry ctpe=null;
 				if(totalInCount%2 == 0) {//alternate between lists

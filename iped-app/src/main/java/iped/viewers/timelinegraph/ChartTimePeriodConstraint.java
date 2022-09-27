@@ -1,12 +1,22 @@
 package iped.viewers.timelinegraph;
 
+import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
+import org.jfree.data.time.Month;
+import org.jfree.data.time.Quarter;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
+import org.jfree.data.time.Week;
+import org.jfree.data.time.Year;
 
 import iped.viewers.timelinegraph.model.Minute;
 
 public class ChartTimePeriodConstraint {
+	static double YEAR_UNIT_RANGE_SIZE = 365*24*60*60*1000;//a week
+	static double QUARTER_UNIT_RANGE_SIZE = 90*24*60*60*1000;//a week
+	static double MONTH_UNIT_RANGE_SIZE = 31*24*60*60*1000;//a week
+	static double WEEK_UNIT_RANGE_SIZE = 7*24*60*60*1000;//a week
+	static double DAY_UNIT_RANGE_SIZE = 24*60*60*1000;//a week
 	static double HOUR_UNIT_RANGE_SIZE = 60*60*1000;//a week
 	static double MINUTE_UNIT_RANGE_SIZE = 60*1000;//a week
 	static double SECOND_UNIT_RANGE_SIZE = 1000;//3 hours 
@@ -27,7 +37,22 @@ public class ChartTimePeriodConstraint {
 	public double minBarSizeInPixels=2;
 	
 	static private double minBarWidth = 5;
-	public double getTimePeriodUnit(Class<? extends TimePeriod> t) {
+	static public double getTimePeriodUnit(Class<? extends TimePeriod> t) {
+		if(t.equals(Year.class)) {
+			return YEAR_UNIT_RANGE_SIZE;
+		}
+		if(t.equals(Quarter.class)) {
+			return QUARTER_UNIT_RANGE_SIZE;
+		}
+		if(t.equals(Month.class)) {
+			return MONTH_UNIT_RANGE_SIZE;
+		}
+		if(t.equals(Week.class)) {
+			return WEEK_UNIT_RANGE_SIZE;
+		}
+		if(t.equals(Day.class)) {
+			return DAY_UNIT_RANGE_SIZE;
+		}
 		if(t.equals(Hour.class)) {
 			return HOUR_UNIT_RANGE_SIZE;
 		}

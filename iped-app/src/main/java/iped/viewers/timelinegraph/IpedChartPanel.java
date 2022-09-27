@@ -51,6 +51,7 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.plot.Zoomable;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Millisecond;
+import org.jfree.data.time.RegularTimePeriod;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
 
@@ -491,6 +492,18 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
             }
             
         }
+    }
+
+    public Date removeNextFromDatePart(Date date) {
+    	RegularTimePeriod t;
+		try {
+			t = (RegularTimePeriod) ipedChartsPanel.getTimePeriodClass().getConstructor(Date.class).newInstance(date);
+	    	return t.next().getStart();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			e.printStackTrace();
+		}
+    	
+    	return new Date(1999,0,1);
     }
 
     public Date removeFromDatePart(Date date) {
