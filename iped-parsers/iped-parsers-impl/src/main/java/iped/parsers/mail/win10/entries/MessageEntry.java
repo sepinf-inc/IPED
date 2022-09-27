@@ -5,8 +5,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class MessageEntry {
-    private int rowId;
+import iped.parsers.mail.win10.tables.AttachmentTable;
+
+public class MessageEntry extends AbstractEntry {
     private int conversationId;
     private int noOfAttachments;
     private String msgAbstract;
@@ -18,7 +19,7 @@ public class MessageEntry {
 
     public MessageEntry(int rowId, int conversationId, int noOfAttachments, String msgAbstract, String subject,
             String senderName, String senderAddress, Date msgDeliveryTime, Date lastModifiedTime) {
-        this.rowId = rowId;
+        super(rowId);
         this.conversationId = conversationId;
         this.noOfAttachments = noOfAttachments;
         this.msgAbstract = msgAbstract != null ? msgAbstract : "";
@@ -27,14 +28,6 @@ public class MessageEntry {
         this.senderEmail = senderAddress;
         this.msgDeliveryTime = msgDeliveryTime;
         this.lastModifiedTime = lastModifiedTime;
-    }
-
-    public int getRowId() {
-        return this.rowId;
-    }
-
-    public void setRowId(int rowId) {
-        this.rowId = rowId;
     }
 
     public int getConversationId() {
@@ -116,5 +109,9 @@ public class MessageEntry {
 
     public ArrayList<RecipientEntry> getRecipients() {
         return RecipientTable.getMessageRecipients(rowId);
+    }
+
+    public ArrayList<AttachmentEntry> getAttachments() {
+        return AttachmentTable.getMessageAttachments(rowId);
     }
 }

@@ -1,11 +1,12 @@
 package iped.parsers.mail.win10.entries;
 
-public class RecipientEntry {
+public class RecipientEntry extends AbstractEntry {
     private long messageId;
     private String displayName;
     private RecipientType type;
 
-    public RecipientEntry(long messageId, String displayName, RecipientType type) {
+    public RecipientEntry(int rowId, long messageId, String displayName, RecipientType type) {
+        super(rowId);
         this.messageId = messageId;
         this.displayName = displayName;
         this.type = type;

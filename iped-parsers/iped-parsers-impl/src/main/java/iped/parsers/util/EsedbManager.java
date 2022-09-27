@@ -15,6 +15,7 @@ import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.Memory;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
+import com.sun.jna.ptr.ShortByReference;
 
 import iped.parsers.browsers.edge.EdgeWebCacheParser;
 import iped.parsers.browsers.edge.EsedbLibrary;
@@ -103,7 +104,17 @@ public class EsedbManager {
                 printError("Record Get UTF8 String at " + value_entry, result, filePath, errorPointer);
             return recordValueData.getString(0);
         }
-        return null;
+        return "";
+    }
+
+    public static Boolean getBooleanValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
+        ShortByReference recordValueDataShort = new ShortByReference();
+
+        int result = esedbLibrary.libesedb_record_get_value_boolean(recordPointerReference.getValue(), value_entry, recordValueDataShort,
+            errorPointer);
+        if (result < 0)
+            printError("Record Get Boolean Data", result, filePath, errorPointer);
+        return recordValueDataShort.getValue() == 1;
     }
 
     public static Date getFileTime(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {

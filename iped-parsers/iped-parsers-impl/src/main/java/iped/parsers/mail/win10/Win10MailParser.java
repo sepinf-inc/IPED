@@ -30,10 +30,12 @@ import com.sun.jna.ptr.PointerByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.database.EDBParser;
+import iped.parsers.mail.win10.entries.AbstractEntry;
+import iped.parsers.mail.win10.entries.AttachmentEntry;
 import iped.parsers.mail.win10.entries.MessageEntry;
-import iped.parsers.mail.win10.entries.RecipientEntry;
 import iped.parsers.mail.win10.entries.RecipientTable;
 import iped.parsers.mail.win10.tables.AbstractTable;
+import iped.parsers.mail.win10.tables.AttachmentTable;
 import iped.parsers.mail.win10.tables.MessageTable;
 import iped.parsers.util.EsedbManager;
 import iped.parsers.util.ItemInfo;
@@ -120,10 +122,10 @@ public class Win10MailParser extends AbstractParser {
                         MessageTable msgTable = (MessageTable) table;
                         for (MessageEntry message : msgTable.getMessages()) {
                             String str = "";
-                            if (message.getRecipients() != null) {
-                                str = message.getRecipients().get(0).getDisplayName();
+                            if (message.getAttachments() != null && message.getAttachments().size() > 1) {
+                                str = message.getAttachments().get(1).getFileName();
                             }
-                            System.out.println(message.getRowId() + ": " + message.getNoOfAttachments());
+                            System.out.println(message.getRowId() + ": " + str);
                         }
                     }
                     closeTablePointer(table.getTablePointer());
@@ -234,6 +236,12 @@ public class Win10MailParser extends AbstractParser {
                     recipientTable.populateTable(esedbLibrary);
                     tables.add(recipientTable);
                 }
+                
+                if (tableNameStr.contains("Attachment")) {
+                    AttachmentTable attachmentTable = new AttachmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    attachmentTable.populateTable(esedbLibrary);
+                    tables.add(attachmentTable);
+                }
             }
 
         } finally {
@@ -241,6 +249,9 @@ public class Win10MailParser extends AbstractParser {
         }
         return tables;
     }
+
+
+
 
     private void closeTablePointer(PointerByReference tablePointer) {
         PointerByReference errorPointer = new PointerByReference();
