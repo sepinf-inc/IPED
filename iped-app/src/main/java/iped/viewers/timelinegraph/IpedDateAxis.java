@@ -315,6 +315,26 @@ public class IpedDateAxis extends DateAxis {
     @Override
     public void setRange(Range range, boolean turnOffAutoRange,
                          boolean notify) {
+    	if(ipedChartsPanel!=null) {
+        	ChartTimePeriodConstraint c = ipedChartsPanel.getChartPanel().getTimePeriodConstraints();
+        	if(c!=null) {
+            	double curRangeSize = this.getRange().getUpperBound()-this.getRange().getLowerBound();
+            	double rangeSize = range.getUpperBound()-range.getLowerBound();
+
+            	double java2dlower = valueToJava2D(range.getLowerBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
+            	double java2dupper = valueToJava2D(range.getUpperBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
+            	
+            	double barsize = ((java2dupper - java2dlower)/(range.getUpperBound()-range.getLowerBound()))*c.getTimePeriodUnit(ipedChartsPanel.getTimePeriodClass());//size in pixels
+            	
+            	if(curRangeSize<rangeSize && (rangeSize>c.maxZoomoutRangeSize || barsize<=c.minBarSizeInPixels)) {
+            		return;//skips
+            	}
+            	if(curRangeSize>rangeSize && rangeSize<c.minZoominRangeSize ) {
+            		return;//skips
+            	}
+        	}
+    	}
+    	
         Args.nullNotPermitted(range, "range");
         // usually the range will be a DateRange, but if it isn't do a
         // conversion...

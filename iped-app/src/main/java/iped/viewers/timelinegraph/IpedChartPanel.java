@@ -26,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.ImageIcon;
@@ -48,11 +49,15 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.plot.Zoomable;
+import org.jfree.data.time.Hour;
+import org.jfree.data.time.Millisecond;
+import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
 
 import iped.app.ui.App;
 import iped.utils.IconUtil;
 import iped.viewers.timelinegraph.datasets.TimelineDataset;
+import iped.viewers.timelinegraph.model.Minute;
 import iped.viewers.timelinegraph.popups.ChartPanelPopupMenu;
 import iped.viewers.timelinegraph.popups.DataItemPopupMenu;
 import iped.viewers.timelinegraph.popups.PlotPopupMenu;
@@ -63,15 +68,16 @@ import iped.viewers.timelinegraph.popups.TimelineFilterSelectionPopupMenu;
 import iped.viewers.timelinegraph.swingworkers.HighlightWorker;
 
 public class IpedChartPanel extends ChartPanel implements KeyListener{
-	
 	private Rectangle2D filterIntervalRectangle; //represents the filter selection rectangle while drawing/defining a interval
-	
+
 	Point2D filterIntervalPoint;
 	Color filterIntervalFillPaint;
-	
+
 	int lastMouseMoveX=-1;
 
     IpedChartsPanel ipedChartsPanel = null;
+
+    HashMap<Class<? extends TimePeriod>,ChartTimePeriodConstraint> timePeriodConstraints = new HashMap<Class<? extends TimePeriod>,ChartTimePeriodConstraint>();
 
     JButton apllyFilters;
 
@@ -115,6 +121,23 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	    this.affineTransform = new AffineTransform();
 	    this.affineTransform.rotate(Math.toRadians(90), 0, 0);
 	    this.affineTransform.scale(0.8, 0.8);
+	    
+	    ChartTimePeriodConstraint c = new ChartTimePeriodConstraint();
+	    c.maxZoomoutRangeSize=ChartTimePeriodConstraint.HOUR_MAX_RANGE_SIZE;
+	    c.minZoominRangeSize=ChartTimePeriodConstraint.HOUR_MIN_RANGE_SIZE;
+	    timePeriodConstraints.put(Hour.class, c);
+	    c = new ChartTimePeriodConstraint();
+	    c.maxZoomoutRangeSize=ChartTimePeriodConstraint.MINUTE_MAX_RANGE_SIZE;
+	    c.minZoominRangeSize=ChartTimePeriodConstraint.MINUTE_MIN_RANGE_SIZE;
+	    timePeriodConstraints.put(Minute.class, c);
+	    c = new ChartTimePeriodConstraint();
+	    c.maxZoomoutRangeSize=ChartTimePeriodConstraint.SECOND_MAX_RANGE_SIZE;
+	    c.minZoominRangeSize=ChartTimePeriodConstraint.SECOND_MIN_RANGE_SIZE;
+	    timePeriodConstraints.put(Second.class, c);
+	    c = new ChartTimePeriodConstraint();
+	    c.maxZoomoutRangeSize=ChartTimePeriodConstraint.MILLISECOND_MAX_RANGE_SIZE;
+	    c.minZoominRangeSize=ChartTimePeriodConstraint.MILLISECOND_MIN_RANGE_SIZE;
+	    timePeriodConstraints.put(Millisecond.class, c);
 	    
 		timelineSelectionPopupMenu = new TimelineFilterSelectionPopupMenu(this);
 		domainPopupMenu = new PlotPopupMenu(this, ipedChartsPanel.getResultsProvider());
@@ -878,5 +901,21 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
         drawFilterIntervalRectangle((Graphics2D) g, true);
+	}
+
+	public ChartTimePeriodConstraint getTimePeriodConstraints(Class<? extends TimePeriod> t) {
+		if(t!=null) {
+			return timePeriodConstraints.get(t);
+		}else {
+			return timePeriodConstraints.get(this.getIpedChartsPanel().getTimePeriodClass());
+		}
+	}
+
+	public void setTimePeriodConstraints(Class<? extends TimePeriod> t, ChartTimePeriodConstraint timePeriodConstraint) {
+		this.timePeriodConstraints.put(t, timePeriodConstraint);
+	}
+
+	public ChartTimePeriodConstraint getTimePeriodConstraints() {
+		return timePeriodConstraints.get(this.getIpedChartsPanel().getTimePeriodClass());
 	}
 }
