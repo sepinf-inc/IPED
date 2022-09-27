@@ -1,14 +1,10 @@
 package iped.parsers.ufed;
 
 import iped.parsers.whatsapp.Message;
-import iped.properties.ExtraProperties;
 
 public class UfedMessage extends Message {
 
     public static final String SYSTEM_MESSAGE = "System Message"; //$NON-NLS-1$
-
-    public static final String MESSAGE_TO = ExtraProperties.COMMUNICATION_TO;
-    public static final String MESSAGE_FROM = ExtraProperties.COMMUNICATION_FROM;
 
     private String transcription;
     private String transcriptConfidence;
