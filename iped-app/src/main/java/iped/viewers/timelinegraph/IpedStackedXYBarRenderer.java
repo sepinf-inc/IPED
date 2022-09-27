@@ -117,6 +117,7 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
 	public XYItemRendererState initialise(Graphics2D g2, Rectangle2D dataArea, XYPlot plot, XYDataset data,
 			PlotRenderingInfo info) {
 		XYItemRendererState state = super.initialise(g2, dataArea, plot, data, info);
+		lastY=0;
 		//state.setProcessVisibleItemsOnly(false);
 		return state;
 	}
