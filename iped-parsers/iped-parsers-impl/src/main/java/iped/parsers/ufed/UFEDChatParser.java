@@ -193,11 +193,11 @@ public class UFEDChatParser extends AbstractParser {
             m.setTimeStamp(date);
         }
         if (!m.isFromMe()) {
-            m.setRemoteResource(msg.getMetadata().get(UfedMessage.MESSAGE_FROM));
-            m.setLocalResource(msg.getMetadata().get(UfedMessage.MESSAGE_TO));
+            m.setRemoteResource(msg.getMetadata().get(ExtraProperties.COMMUNICATION_FROM));
+            m.setLocalResource(msg.getMetadata().get(ExtraProperties.COMMUNICATION_TO));
         } else {
-            m.setRemoteResource(msg.getMetadata().get(UfedMessage.MESSAGE_TO));
-            m.setLocalResource(msg.getMetadata().get(UfedMessage.MESSAGE_FROM));
+            m.setRemoteResource(msg.getMetadata().get(ExtraProperties.COMMUNICATION_TO));
+            m.setLocalResource(msg.getMetadata().get(ExtraProperties.COMMUNICATION_FROM));
         }
         if (attach != null) {
             if (attach.getLength() != null && attach.getLength() > 0) {
