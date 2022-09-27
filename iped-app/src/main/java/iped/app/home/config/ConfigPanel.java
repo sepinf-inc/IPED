@@ -46,7 +46,7 @@ public class ConfigPanel extends DefaultPanel {
      * Prepare everything to be displayed
      */
     protected void createAndShowGUI(){
-        this.setLayout( new BoxLayout( this, BoxLayout.Y_AXIS ) );
+        this.setLayout( new BoxLayout( this, BoxLayout.PAGE_AXIS ) );
         this.add(createTitlePanel());
         this.add(createFormPanel());
         this.add(Box.createVerticalGlue());

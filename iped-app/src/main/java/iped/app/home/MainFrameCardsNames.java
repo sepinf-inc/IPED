@@ -14,7 +14,8 @@ public enum MainFrameCardsNames {
     HOME(0, "HOME"),
     CONFIG(1, "CONFIG"),
     NEW_CASE(2, "NEW_CASE"),
-    OPEN_CASE(3, "OPEN_CASE");
+    OPEN_CASE(3, "OPEN_CASE"),
+    PROCESS_MANAGER(4, "PROCESS_MANAGER");
 
     private final int value;
     private final String name;

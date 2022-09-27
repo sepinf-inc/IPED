@@ -9,6 +9,7 @@ package iped.app.home.newcase;
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrameCardsNames;
 import iped.app.home.MainFrame;
+import iped.app.home.newcase.model.IPEDProcess;
 import iped.app.home.newcase.tabs.CaseInfoTab;
 import iped.app.home.newcase.tabs.evidence.EvidencesTab;
 import iped.app.home.newcase.tabs.process.ProcessOptionTab;
@@ -24,6 +25,7 @@ public class NewCaseContainerPanel extends DefaultPanel {
 
     private JTabbedPane tabbedPane;
     private static NewCaseContainerPanel instance;
+    private IPEDProcess ipedProcess;
 
     /**
      * Construc and save this instance reference to a static variable
@@ -31,13 +33,13 @@ public class NewCaseContainerPanel extends DefaultPanel {
      */
     public NewCaseContainerPanel(MainFrame mainFrame) {
         super(mainFrame);
-        instance = this;
     }
 
     /**
      * Prepare everything to be displayed
      */
     protected void createAndShowGUI(){
+        instance = this;
         this.setLayout( new BoxLayout( this, BoxLayout.PAGE_AXIS ) );
         this.add(setupTabbedPanel());
     }
@@ -91,4 +93,9 @@ public class NewCaseContainerPanel extends DefaultPanel {
         return instance;
     }
 
+    public IPEDProcess getIpedProcess() {
+        if( ipedProcess == null )
+            ipedProcess = new IPEDProcess();
+        return ipedProcess;
+    }
 }

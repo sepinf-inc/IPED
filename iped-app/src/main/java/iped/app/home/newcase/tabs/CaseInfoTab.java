@@ -6,6 +6,7 @@ package iped.app.home.newcase.tabs;/*
 
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
+import iped.app.home.newcase.model.CaseInfo;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.style.StyleManager;
 import iped.engine.config.ConfigurationManager;
@@ -26,6 +27,15 @@ public class CaseInfoTab extends DefaultPanel {
     private JTextField textFieldCaseOutput;
     private JCheckBox checkBoxOutputOnSSD;
     private JButton buttonSelectCaseOutput;
+    private JTextField textFieldCaseNumber;
+    private JTextField textFieldCaseName;
+    private JTextArea textAreaInvestigatedNames;
+    private JTextField textFieldRequestDate;
+    private JTextField textFieldDemandant;
+    private JTextField textFieldOrganization;
+    private JTextArea textAreaExaminerNames;
+    private JTextField textFieldContact;
+    private JTextArea textAreaCaseNotes;
 
     private String OutpuOnSSDTooltip = "<html>Ative se a pasta de saída do caso estiver em um SSD.<br>Se ativado, o índice é criado diretamente na pasta do caso, não em indexTemp,  portanto, você precisará de menos espaço livre na pasta temp.</html>";
 
@@ -60,6 +70,19 @@ public class CaseInfoTab extends DefaultPanel {
     private void createFormComponentInstances(){
         localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
 
+        textFieldCaseNumber = new JTextField();
+        textFieldCaseName = new JTextField();
+        textAreaInvestigatedNames = new JTextArea();
+        textAreaInvestigatedNames.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        textFieldRequestDate = new JTextField();
+        textFieldDemandant = new JTextField();
+        textFieldOrganization = new JTextField();
+        textAreaExaminerNames = new JTextArea();
+        textAreaExaminerNames.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        textFieldContact = new JTextField();
+        textAreaCaseNotes = new JTextArea();
+        textAreaCaseNotes.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        textAreaCaseNotes.setRows(5);
         textFieldCaseOutput = new JTextField();
         checkBoxOutputOnSSD = new JCheckBox("A pasta do caso esta em um SSD?");
         checkBoxOutputOnSSD.setToolTipText(OutpuOnSSDTooltip);
@@ -98,42 +121,40 @@ public class CaseInfoTab extends DefaultPanel {
         int currentLine = 0;
 
         panelForm.add(new JLabel("Número do caso:"), getGridBagConstraints(column1, currentLine, column1Width, noWeightx));
-        panelForm.add(new JTextField(), getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
+        panelForm.add(textFieldCaseNumber, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
 
         currentLine++;
         panelForm.add(new JLabel("Nome do caso:"), getGridBagConstraints(column1, currentLine, column1Width, noWeightx));
-        panelForm.add(new JTextField(), getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
+        panelForm.add(textFieldCaseName, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
 
         currentLine++;
         panelForm.add(new JLabel("Investigado(s):"), getGridBagConstraints(column1, currentLine, column1Width, noWeightx));
-        panelForm.add(new JTextField(), getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
+        panelForm.add(textAreaInvestigatedNames, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
 
         currentLine++;
         panelForm.add(new JLabel("Data da solicitação:"), getGridBagConstraints(column1, currentLine, column1Width, noWeightx));
-        panelForm.add(new JTextField(), getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
+        panelForm.add(textFieldRequestDate, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
 
         currentLine++;
         panelForm.add(new JLabel("Demandante:"), getGridBagConstraints(column1, currentLine, column1Width, noWeightx));
-        panelForm.add(new JTextField(), getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
+        panelForm.add(textFieldDemandant, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
 
         currentLine++;
         panelForm.add(new JLabel("Organização:"), getGridBagConstraints(column1, currentLine, column1Width, noWeightx));
-        panelForm.add(new JTextField(), getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
+        panelForm.add(textFieldOrganization, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
 
         currentLine++;
-        panelForm.add(new JLabel("Examinador:"), getGridBagConstraints(column1, currentLine, column1Width, noWeightx));
-        panelForm.add(new JTextField(), getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
+        panelForm.add(new JLabel("Examinador(es):"), getGridBagConstraints(column1, currentLine, column1Width, noWeightx));
+        panelForm.add(textAreaExaminerNames, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
 
         currentLine++;
         panelForm.add(new JLabel("Contato:"), getGridBagConstraints(column1, currentLine, column1Width, noWeightx));
-        panelForm.add(new JTextField(), getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
+        panelForm.add(textFieldContact, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
 
         currentLine++;
         panelForm.add(new JLabel("Notas:"), getGridBagConstraints(column1, currentLine, column1Width, noWeightx));
-        JTextArea textAreaNotas = new JTextArea();
-        textAreaNotas.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        textAreaNotas.setRows(5);
-        panelForm.add(textAreaNotas, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
+
+        panelForm.add(textAreaCaseNotes, getGridBagConstraints(column2, currentLine, column2width, fullWeightx));
 
         currentLine++;
         GridBagConstraints c = getGridBagConstraints(column1, currentLine, column1Width+column2width, fullWeightx);
@@ -205,7 +226,21 @@ public class CaseInfoTab extends DefaultPanel {
             JOptionPane.showMessageDialog(this, "A pasta de destino informada não tem permissão para escrita", "Pasta de destino do caso", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        populateCaseInfo();
         NewCaseContainerPanel.getInstance().goToNextTab();
+    }
+
+    private void populateCaseInfo(){
+        CaseInfo caseInfo = NewCaseContainerPanel.getInstance().getIpedProcess().getCaseInfo();
+        caseInfo.setCaseNumber(textFieldCaseNumber.getText());
+        caseInfo.setCaseName(textFieldCaseName.getText());
+        caseInfo.setInvestigatedNames(textAreaInvestigatedNames.getText());
+        caseInfo.setRequestDate(textFieldRequestDate.getText());
+        caseInfo.setDemandant(textFieldDemandant.getText());
+        caseInfo.setOrganization(textFieldOrganization.getText());
+        caseInfo.setExaminerNames(textAreaExaminerNames.getText());
+        caseInfo.setContact(textFieldContact.getText());
+        caseInfo.setCaseNotes(textAreaCaseNotes.getText());
     }
 
 }

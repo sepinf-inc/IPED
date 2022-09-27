@@ -6,6 +6,8 @@ package iped.app.home.newcase.tabs.evidence;
  * @author Thiago S. Figueiredo
  */
 
+import iped.app.home.newcase.model.Evidence;
+
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
@@ -15,9 +17,11 @@ public class EvidencesTableModel extends AbstractTableModel {
 
     private final String[] COLUMN_NAME = {"FILE NAME", "ALIAS", "PATH", "OPTIONS"};
     private final ArrayList<Evidence> evidencesList;
+    private EvidenceInfoDialog evidenceInfoDialog;
 
-    public EvidencesTableModel(ArrayList<Evidence> evidencesList) {
+    public EvidencesTableModel(ArrayList<Evidence> evidencesList, EvidenceInfoDialog evidenceInfoDialog) {
         this.evidencesList = evidencesList;
+        this.evidenceInfoDialog = evidenceInfoDialog;
     }
 
     @Override
@@ -49,7 +53,7 @@ public class EvidencesTableModel extends AbstractTableModel {
         panel.setLayout( new GridBagLayout() );
         GridBagConstraints gbc = new GridBagConstraints();
         JButton optionButton = new JButton("...");
-        optionButton.addActionListener( e -> JOptionPane.showMessageDialog(JOptionPane.getFrameForComponent(optionButton), "Abrir painel de edição dos detalhes da evidência..") );
+        optionButton.addActionListener( e -> evidenceInfoDialog.showDialog(evidencesList.get(rowIndex)) );
         panel.add(optionButton, gbc);
         JButton removeButton = new JButton("X");
         removeButton.setForeground(Color.RED);

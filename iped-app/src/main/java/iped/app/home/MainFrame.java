@@ -3,6 +3,7 @@ package iped.app.home;
 import iped.app.home.config.ConfigPanel;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.opencase.OpenCasePanel;
+import iped.app.home.processmanager.ProcessManager;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
 import iped.app.ui.themes.ThemeManager;
@@ -75,7 +76,7 @@ public class MainFrame extends JFrame {
         this.add(cardsContentPanel, gbc);
 
         //FIXME Remove hardcoded location and set properly path
-        Configuration.getInstance().loadConfigurables("C:/Users/xxxxx/Documents/projetos/IPED/target/release/iped-4.0.2", true);
+        Configuration.getInstance().loadConfigurables("C:/Users/tfigueiredo/Documents/projetos/IPED/target/release/iped-4.0.2", true);
         // Set the locale used for docking frames, so texts and tool tips are localized (if available)
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
 
@@ -84,6 +85,7 @@ public class MainFrame extends JFrame {
         cardsContentPanel.add(new ConfigPanel(this), MainFrameCardsNames.CONFIG.getName());
         cardsContentPanel.add(new NewCaseContainerPanel(this), MainFrameCardsNames.NEW_CASE.getName());
         cardsContentPanel.add(new OpenCasePanel(this), MainFrameCardsNames.OPEN_CASE.getName());
+        cardsContentPanel.add(new ProcessManager(this), MainFrameCardsNames.PROCESS_MANAGER.getName());
 
         setHomeFrameSize();
         setFrameIcon();

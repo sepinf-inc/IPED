@@ -1,4 +1,4 @@
-package iped.app.home.newcase.tabs.evidence;/*
+package iped.app.home.newcase.model;/*
  * @created 12/09/2022
  * @project IPED
  * @author Thiago S. Figueiredo
@@ -14,6 +14,7 @@ public class Evidence implements Cloneable {
     private String password;
     private String aditionalComands;
     private String evidenceDescription;
+    private String material;
 
     public String getFileName() {
         return fileName;
@@ -79,13 +80,11 @@ public class Evidence implements Cloneable {
         this.evidenceDescription = evidenceDescription;
     }
 
-    public Object clone()
-    {
-        try {
-            return super.clone();
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-        }
-        return null;
+    public String getMaterial() {
+        return material;
+    }
+
+    public void setMaterial(String material) {
+        this.material = material;
     }
 }

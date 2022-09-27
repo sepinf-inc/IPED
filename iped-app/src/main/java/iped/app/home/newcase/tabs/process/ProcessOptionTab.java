@@ -8,6 +8,7 @@ package iped.app.home.newcase.tabs.process;
 
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
+import iped.app.home.MainFrameCardsNames;
 import iped.app.home.newcase.NewCaseContainerPanel;
 
 import javax.swing.*;
@@ -111,8 +112,8 @@ public class ProcessOptionTab extends DefaultPanel {
         panelButtons.setBackground(Color.white);
         JButton buttoCancel = new JButton("Voltar");
         buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
-        JButton buttonNext = new JButton("Próximo");
-        buttonNext.addActionListener( e -> NewCaseContainerPanel.getInstance().goToNextTab());
+        JButton buttonNext = new JButton("Iniciar processamento");
+        buttonNext.addActionListener( e -> mainFrame.showPanel(MainFrameCardsNames.PROCESS_MANAGER) );
         panelButtons.add(buttoCancel);
         panelButtons.add(buttonNext);
         return panelButtons;

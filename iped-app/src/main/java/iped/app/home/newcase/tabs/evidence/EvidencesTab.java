@@ -9,20 +9,36 @@ package iped.app.home.newcase.tabs.evidence;
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.newcase.NewCaseContainerPanel;
+import iped.app.home.newcase.model.Evidence;
 import iped.app.home.style.StyleManager;
+import org.apache.commons.io.FileUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * A page to manage the evidences to be processed
  */
-public class EvidencesTab extends DefaultPanel {
+public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogListener {
 
+    private JButton buttonAddFolder = new JButton("Adicionar Pasta");
+    private JButton buttonAddFile = new JButton("Adicionar arquivo");
+    private JButton buttonAddImages = new JButton("Adicionar imagens recursivamente");
+    private JButton buttonAddPhysicalDrive = new JButton("Adicionar disco");
     private JTable jtableEvidences;
     private EvidencesTableModel evidencesTableModel;
+    private ArrayList<Evidence> evidencesList;
+    private final String[] extensoesDeImagensSuportadas = {"raw","RAW","udf","UDF","vhdx","VHDX","dd","DD","ex01","EX01","E01","e01","aff","AFF","iso","ISO","vhd","VHD","vmdk","VMDK","ad1","AD1","ufdr","UFDR"};
+
 
     public EvidencesTab(MainFrame mainFrame) {
         super(mainFrame);
@@ -34,6 +50,7 @@ public class EvidencesTab extends DefaultPanel {
     protected void createAndShowGUI() {
         this.setLayout( new BorderLayout() );
         setBorder(new EmptyBorder(10,10,10,10));
+        createFormComponentInstances();
         this.add(createTitlePanel(), BorderLayout.NORTH);
         this.add(createFormPanel(), BorderLayout.CENTER);
         this.add(createNavigationButtonsPanel(), BorderLayout.SOUTH);
@@ -66,6 +83,13 @@ public class EvidencesTab extends DefaultPanel {
         return panelForm;
     }
 
+    private void createFormComponentInstances(){
+        buttonAddFolder = new JButton("Adicionar Pasta");
+        buttonAddFile = new JButton("Adicionar arquivo");
+        buttonAddImages = new JButton("Adicionar imagens recursivamente");
+        buttonAddPhysicalDrive = new JButton("Adicionar disco");
+    }
+
     /**
      * Create and setup a JPanel containing all buttons to add Evidences to Table
      * @param panel - JPanel containing JButtons
@@ -74,10 +98,62 @@ public class EvidencesTab extends DefaultPanel {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout( buttonPanel, BoxLayout.LINE_AXIS ));
         buttonPanel.setBackground(Color.white);
-        buttonPanel.add( new JButton("Adicionar Pasta") );
-        buttonPanel.add( new JButton("Adicionar arquivo") );
-        buttonPanel.add( new JButton("Adicionar imagens recursivamente") );
-        buttonPanel.add( new JButton("Adicionar disco") );
+        buttonPanel.add( buttonAddFolder );
+        buttonAddFolder.addActionListener( e -> {
+            JFileChooser fileChooserDestino = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+            fileChooserDestino.setDialogTitle("Selecione a pasta");
+            fileChooserDestino.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            fileChooserDestino.setAcceptAllFileFilterUsed(false);
+            if( fileChooserDestino.showOpenDialog(this) == JFileChooser.APPROVE_OPTION){
+                Evidence evidence = new Evidence();
+                evidence.setFileName(fileChooserDestino.getSelectedFile().getName());
+                evidence.setPath(fileChooserDestino.getSelectedFile().getPath());
+                evidencesList.add( evidence );
+                evidencesTableModel.fireTableDataChanged();
+            }
+        } );
+        buttonPanel.add( buttonAddFile );
+        buttonAddFile.addActionListener( e -> {
+            JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+            fileChooser.setDialogTitle("Selecione o arquivo");
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            if (fileChooser.showDialog(this, "Adicionar arquivo") == JFileChooser.APPROVE_OPTION) {
+                Evidence evidence = new Evidence();
+                evidence.setFileName(fileChooser.getSelectedFile().getName());
+                evidence.setPath(fileChooser.getSelectedFile().getPath());
+                evidencesList.add(evidence);
+                evidencesTableModel.fireTableDataChanged();
+            }
+        } );
+        buttonPanel.add( buttonAddImages );
+        buttonAddImages.addActionListener(e -> {
+            JFileChooser fileChooserProcurarImagens = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+            fileChooserProcurarImagens.setDialogTitle("Selecione a pasta de origem da pesquisa");
+            fileChooserProcurarImagens.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            fileChooserProcurarImagens.setAcceptAllFileFilterUsed(false);
+            String pastaDeOrigem = null;
+            if( fileChooserProcurarImagens.showOpenDialog(this) == JFileChooser.APPROVE_OPTION){
+                pastaDeOrigem = fileChooserProcurarImagens.getSelectedFile().toString();
+            }
+            Path path = Paths.get(pastaDeOrigem);
+            try {
+                List<String> files = procurar(path, extensoesDeImagensSuportadas);
+                for( String arquivoAtual : files ){
+                    File file = new File(arquivoAtual);
+                    Evidence evidence = new Evidence();
+                    evidence.setFileName(file.getName());
+                    evidence.setPath(file.getPath());
+                    evidencesList.add(evidence);
+                }
+                evidencesTableModel.fireTableDataChanged();
+            }catch(Exception ex){
+                System.out.println("Erro na pesquisa de imagens");
+            }
+        });
+        buttonPanel.add( buttonAddPhysicalDrive );
+        buttonAddPhysicalDrive.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "TODO");
+        });
         panel.add(buttonPanel);
     }
 
@@ -86,22 +162,10 @@ public class EvidencesTab extends DefaultPanel {
      * @param panel - A JPanel to add JTable
      */
     private void setupEvidenceTables(JPanel panel){
-        ArrayList<Evidence> evidencesList = new ArrayList<>();
-        Evidence evidence = new Evidence();
-        evidence.setFileName("File1.txt");
-        evidence.setPath("/home/download");
-        evidencesList.add(evidence);
-        evidence = (Evidence) evidence.clone();
-        evidence.setFileName("File2.iso");
-        evidencesList.add(evidence);
-        evidence = (Evidence) evidence.clone();
-        evidence.setFileName("File3.iso");
-        evidencesList.add(evidence);
-        evidence = (Evidence) evidence.clone();
-        evidence.setFileName("File4.iso");
-        evidencesList.add(evidence);
-
-        evidencesTableModel = new EvidencesTableModel(evidencesList);
+        evidencesList = NewCaseContainerPanel.getInstance().getIpedProcess().getEvidenceList();
+        EvidenceInfoDialog infoDialog = new EvidenceInfoDialog(mainFrame);
+        infoDialog.addListener(this);
+        evidencesTableModel = new EvidencesTableModel(evidencesList, infoDialog);
         jtableEvidences = new JTable();
         setupTableLayout();
         panel.add( new JScrollPane(jtableEvidences));
@@ -135,4 +199,25 @@ public class EvidencesTab extends DefaultPanel {
         return panelButtons;
     }
 
+    public static List<String> procurar(Path path, String[] fileExtensions) {
+        if (!Files.isDirectory(path)) {
+            throw new IllegalArgumentException("Path must be a directory!");
+        }
+        File root = path.toFile();
+        List<String> result = new ArrayList<>();
+        try {
+            Collection<File> files = FileUtils.listFiles(root, fileExtensions, true);
+            for (File file : files) {
+                result.add( file.getAbsolutePath() );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    @Override
+    public void evidenceDataChange() {
+        evidencesTableModel.fireTableDataChanged();
+    }
 }
