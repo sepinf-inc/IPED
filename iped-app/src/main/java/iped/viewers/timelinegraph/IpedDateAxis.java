@@ -27,16 +27,9 @@ import org.jfree.chart.ui.TextAnchor;
 import org.jfree.chart.util.Args;
 import org.jfree.data.Range;
 import org.jfree.data.time.DateRange;
-import org.jfree.data.time.Day;
-import org.jfree.data.time.Hour;
-import org.jfree.data.time.Millisecond;
-import org.jfree.data.time.Minute;
 import org.jfree.data.time.Month;
-import org.jfree.data.time.Quarter;
 import org.jfree.data.time.RegularTimePeriod;
-import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
-import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
 
 public class IpedDateAxis extends DateAxis {
@@ -105,9 +98,7 @@ public class IpedDateAxis extends DateAxis {
                         * minorTick / minorTickSpaces;
                 if (minorTickTime > 0 && getRange().contains(minorTickTime)
                         && (!isHiddenValue(minorTickTime))) {
-                    result.add(new DateTick(TickType.MINOR,
-                            new Date(minorTickTime), "", TextAnchor.TOP_CENTER,
-                            TextAnchor.CENTER, 0.0));
+                    result.add(new DateTick(TickType.MINOR, new Date(minorTickTime), "", TextAnchor.TOP_CENTER, TextAnchor.CENTER, 0.0));
                 }
             }
 
@@ -379,7 +370,7 @@ public class IpedDateAxis extends DateAxis {
 				return;
 			}
 		}
-		
+
 		newRange = putMargin(newRange);
 
 		setRange(newRange);
