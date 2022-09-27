@@ -39,7 +39,6 @@ import javax.swing.text.MaskFormatter;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Millisecond;
-import org.jfree.data.time.Minute;
 import org.jfree.data.time.Month;
 import org.jfree.data.time.Quarter;
 import org.jfree.data.time.Second;
@@ -55,6 +54,7 @@ import iped.app.ui.Messages;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocaleConfig;
 import iped.viewers.timelinegraph.IpedChartPanel;
+import iped.viewers.timelinegraph.model.Minute;
 
 public class IntervalDefinitionDialog {
     JDialog dialog = new JDialog(App.get());
