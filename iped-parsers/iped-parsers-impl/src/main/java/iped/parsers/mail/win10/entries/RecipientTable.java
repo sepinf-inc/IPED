@@ -1,7 +1,6 @@
 package iped.parsers.mail.win10.entries;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +25,6 @@ public class RecipientTable extends AbstractTable {
         this.numRecords = numRecords;
         this.filePath = filePath;
     }
-
 
     public static ArrayList<RecipientEntry> getMessageRecipients(long messageId) {
         return recipients.get(messageId);

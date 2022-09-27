@@ -44,16 +44,6 @@ public class MessageTable extends AbstractTable {
         PointerByReference recordPointerReference = new PointerByReference();
         IntByReference recordNumberOfValues = new IntByReference();
 
-        /* Message table values */
-        int rowId = 0;
-        int conversationId = 0;
-        String msgAbstract = "";
-        String subject = "";
-        String senderName = "";
-        String senderEmail = "";
-        Date msgDeliveryTime;
-        Date lastModifiedTime;
-
         // get row (record)
         result = esedbLibrary.libesedb_table_get_record(tablePointerReference.getValue(), i, recordPointerReference,
                 errorPointer);
@@ -65,20 +55,21 @@ public class MessageTable extends AbstractTable {
         if (result < 0)
             EsedbManager.printError("Record Get Number of Values", result, filePath, errorPointer);
 
-        rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
-        conversationId = EsedbManager.getInt32Value(esedbLibrary, 21, recordPointerReference, filePath, errorPointer);
-        msgAbstract = EsedbManager.getUnicodeValue(esedbLibrary, 142, recordPointerReference, filePath, errorPointer);
-        subject = EsedbManager.getUnicodeValue(esedbLibrary, 160, recordPointerReference, filePath, errorPointer);
-        senderName = EsedbManager.getUnicodeValue(esedbLibrary, 152, recordPointerReference, filePath, errorPointer);
-        senderEmail = EsedbManager.getUnicodeValue(esedbLibrary, 153, recordPointerReference, filePath, errorPointer);
-        msgDeliveryTime = EsedbManager.getFileTime(esedbLibrary, 55, recordPointerReference, filePath, errorPointer);
-        lastModifiedTime = EsedbManager.getFileTime(esedbLibrary, 65, recordPointerReference, filePath, errorPointer);
+        int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
+        int conversationId = EsedbManager.getInt32Value(esedbLibrary, 21, recordPointerReference, filePath, errorPointer);
+        int noOfAttachments = EsedbManager.getInt16Value(esedbLibrary, 34, recordPointerReference, filePath, errorPointer);
+        String msgAbstract = EsedbManager.getUnicodeValue(esedbLibrary, 142, recordPointerReference, filePath, errorPointer);
+        String subject = EsedbManager.getUnicodeValue(esedbLibrary, 160, recordPointerReference, filePath, errorPointer);
+        String senderName = EsedbManager.getUnicodeValue(esedbLibrary, 152, recordPointerReference, filePath, errorPointer);
+        String senderEmail = EsedbManager.getUnicodeValue(esedbLibrary, 153, recordPointerReference, filePath, errorPointer);
+        Date msgDeliveryTime = EsedbManager.getFileTime(esedbLibrary, 55, recordPointerReference, filePath, errorPointer);
+        Date lastModifiedTime = EsedbManager.getFileTime(esedbLibrary, 65, recordPointerReference, filePath, errorPointer);
 
         result = esedbLibrary.libesedb_record_free(recordPointerReference, errorPointer);
         if (result < 0)
             EsedbManager.printError("Record Free", result, filePath, errorPointer);
 
-        return new MessageEntry(rowId, conversationId, msgAbstract, subject, senderName, senderEmail, msgDeliveryTime, lastModifiedTime);
+        return new MessageEntry(rowId, conversationId, noOfAttachments, msgAbstract, subject, senderName, senderEmail, msgDeliveryTime, lastModifiedTime);
     }
 
 }

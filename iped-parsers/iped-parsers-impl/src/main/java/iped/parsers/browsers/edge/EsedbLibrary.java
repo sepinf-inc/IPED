@@ -301,7 +301,17 @@ public interface EsedbLibrary extends Library {
     int libesedb_record_get_value_utf16_string(Pointer record, int value_entry, Memory utf16_string,
             int utf16_string_size, PointerByReference error);
 
+
     /*
+     * Retrieves the 16-bit value of a specific entry
+     * Returns 1 if successful, 0 if value is NULL or -1 on error
+     * libesedb_record_get_value_16bit(libesedb_record_t *record, int value_entry,
+     * uint16_t *value_16bit, libesedb_error_t **error);
+     */
+    int libesedb_record_get_value_16bit(Pointer record, int value_entry, IntByReference value_16bit,
+            PointerByReference error);
+
+/*
      * Retrieves the 32-bit value of a specific entry Returns 1 if successful, 0 if
      * value is NULL or -1 on error int
      * libesedb_record_get_value_32bit(libesedb_record_t *record, int value_entry,

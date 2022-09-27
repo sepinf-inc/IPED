@@ -8,6 +8,7 @@ import java.util.TimeZone;
 public class MessageEntry {
     private int rowId;
     private int conversationId;
+    private int noOfAttachments;
     private String msgAbstract;
     private String subject;
     private String senderName;
@@ -15,10 +16,11 @@ public class MessageEntry {
     private Date msgDeliveryTime;
     private Date lastModifiedTime;
 
-    public MessageEntry(int rowId, int conversationId, String msgAbstract, String subject, String senderName, String senderAddress,
-        Date msgDeliveryTime, Date lastModifiedTime) {
+    public MessageEntry(int rowId, int conversationId, int noOfAttachments, String msgAbstract, String subject,
+            String senderName, String senderAddress, Date msgDeliveryTime, Date lastModifiedTime) {
         this.rowId = rowId;
         this.conversationId = conversationId;
+        this.noOfAttachments = noOfAttachments;
         this.msgAbstract = msgAbstract != null ? msgAbstract : "";
         this.subject = subject;
         this.senderName = senderName;
@@ -41,6 +43,15 @@ public class MessageEntry {
 
     public void setConversationId(int conversationId) {
         this.conversationId = conversationId;
+    }
+
+
+    public int getNoOfAttachments() {
+        return this.noOfAttachments;
+    }
+
+    public void setNoOfAttachments(int noOfAttachments) {
+        this.noOfAttachments = noOfAttachments;
     }
 
     public String getMsgAbstract() {

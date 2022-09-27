@@ -78,6 +78,16 @@ public class EsedbManager {
         return  recordValueDataInt.getValue();
     }
 
+    public static int getInt16Value(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
+        IntByReference recordValueDataInt = new IntByReference();
+
+        int result = esedbLibrary.libesedb_record_get_value_16bit(recordPointerReference.getValue(), value_entry, recordValueDataInt,
+        errorPointer);
+        if (result < 0)
+            printError("Record Get 16-Bit Data", result, filePath, errorPointer);
+        return  recordValueDataInt.getValue();
+    }
+
     public static String getUnicodeValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
         IntByReference recordValueDataInt = new IntByReference();
         Memory recordValueData = new Memory(3072);

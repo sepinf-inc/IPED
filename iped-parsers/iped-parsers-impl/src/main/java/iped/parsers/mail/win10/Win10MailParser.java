@@ -123,7 +123,7 @@ public class Win10MailParser extends AbstractParser {
                             if (message.getRecipients() != null) {
                                 str = message.getRecipients().get(0).getDisplayName();
                             }
-                            System.out.println(message.getRowId() + ": " + str);
+                            System.out.println(message.getRowId() + ": " + message.getNoOfAttachments());
                         }
                     }
                     closeTablePointer(table.getTablePointer());
