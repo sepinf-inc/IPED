@@ -360,7 +360,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 				@Override
 				public void run() {
 					try {
-						Date d1 = new Date();
 						createDataSets();
 						resultSemaphore.release();
 						if(!isCancelled()) {
@@ -376,8 +375,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 						                self.remove(loadingLabel);
 						            	self.add(chartPanel);
 										chartPanel.setVisible(true);
-										Date d2 = new Date();
-										System.out.println("Criação do gráfico:"+(d2.getTime()-d1.getTime()));
 									}
 								});
 							}
