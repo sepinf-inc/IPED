@@ -27,6 +27,7 @@ import iped.utils.LocalizedFormat;
 import javax.swing.Icon;
 import javax.swing.UIManager;
 import iped.engine.localization.CategoryLocalization;
+import java.awt.Color;
 
 public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
 
@@ -40,21 +41,26 @@ public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
             int row, boolean hasFocus) {
 
         DefaultTreeCellRenderer result = (DefaultTreeCellRenderer) super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        
-		String blankIconString = "blank";
-		
+
+        String blankIconString = "blank";
+
         String category = value != null ? value.toString() : "";
-        category = category.replaceAll("\\(\\d*\\)", "").trim();
+        category = category.replaceAll("\\((\\d*,*)*(\\d*.*)*\\)", "").trim();
         category = getNonLocalizedCategory(category);
         category = category != null ? category : "";
         
         if (!category.isEmpty() && IconLoader.extesionIconMap.containsKey(category.toLowerCase())){
             result.setIcon(IconLoader.extesionIconMap.get(category.toLowerCase()));
         }else {
-			result.setIcon(IconLoader.extesionIconMap.get(blankIconString.toLowerCase()));
-		}
+            result.setIcon(IconLoader.extesionIconMap.get(blankIconString.toLowerCase()));
+        }
+
+        if (sel){
+            result.setForeground(Color.white);
+        }
 
         return result;
+
     }
 
     private String getNonLocalizedCategory(String category) {
