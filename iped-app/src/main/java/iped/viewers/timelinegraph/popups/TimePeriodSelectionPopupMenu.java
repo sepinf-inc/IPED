@@ -8,10 +8,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.TimeZone;
 
+import javax.swing.ButtonGroup;
+import javax.swing.ButtonModel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.data.Range;
@@ -34,9 +37,11 @@ import iped.viewers.timelinegraph.IpedChartsPanel;
 
 public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionListener {
 	static HashMap<String, SimpleDateFormat> sdfMap = null;
+	static HashMap<Class<? extends TimePeriod>, JTimePeriodMenuItem> miMap = new HashMap<Class<? extends TimePeriod>, JTimePeriodMenuItem>();
 
 	IpedChartsPanel ipedChartsPanel;
 
+	ButtonGroup timePeriodGroup = new ButtonGroup();
 	JTimePeriodMenuItem yearMenu;
 	JTimePeriodMenuItem quarterMenu;
 	JTimePeriodMenuItem monthMenu;
@@ -47,7 +52,7 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 	JTimePeriodMenuItem secondMenu;
 	JTimePeriodMenuItem millisecondMenu;
 
-	class JTimezoneMenuItem extends JMenuItem{
+	class JTimezoneMenuItem extends JRadioButtonMenuItem{
 		TimeZone tz;
 
 		public JTimezoneMenuItem(String value, TimeZone tz) {
@@ -60,7 +65,7 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 		}
 	}
 
-	class JTimePeriodMenuItem extends JMenuItem{
+	class JTimePeriodMenuItem extends JRadioButtonMenuItem{
 		Class<? extends TimePeriod> timePeriodClass;
 
 		public JTimePeriodMenuItem(Class<? extends TimePeriod> timePeriodClass) {
@@ -98,46 +103,67 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 		yearMenu.setActionCommand("Year");
 		yearMenu.addActionListener(this);
 		periodGranularityMenu.add(yearMenu);
+		timePeriodGroup.add(yearMenu);
 
 		quarterMenu = new JTimePeriodMenuItem(Quarter.class);
 		quarterMenu.setActionCommand("Quarter");
 		quarterMenu.addActionListener(this);
 		periodGranularityMenu.add(quarterMenu);
+		timePeriodGroup.add(quarterMenu);
 
 		monthMenu = new JTimePeriodMenuItem(Month.class);
 		monthMenu.setActionCommand("Month");
 		monthMenu.addActionListener(this);
 		periodGranularityMenu.add(monthMenu);
+		timePeriodGroup.add(monthMenu);
 
 		weekMenu = new JTimePeriodMenuItem(Week.class);
 		weekMenu.setActionCommand("Week");
 		weekMenu.addActionListener(this);
 		periodGranularityMenu.add(weekMenu);
+		timePeriodGroup.add(weekMenu);
 
 		dayMenu = new JTimePeriodMenuItem(Day.class);
 		dayMenu.setActionCommand("Day");
 		dayMenu.addActionListener(this);
 		periodGranularityMenu.add(dayMenu);
+		timePeriodGroup.add(dayMenu);
 
 		hourMenu = new JTimePeriodMenuItem(Hour.class);
 		hourMenu.setActionCommand("Hour");
 		hourMenu.addActionListener(this);
 		periodGranularityMenu.add(hourMenu);
+		timePeriodGroup.add(hourMenu);
 
 		minuteMenu = new JTimePeriodMenuItem(Minute.class);
 		minuteMenu.setActionCommand("Minute");
 		minuteMenu.addActionListener(this);
 		periodGranularityMenu.add(minuteMenu);
+		timePeriodGroup.add(minuteMenu);
 
 		secondMenu = new JTimePeriodMenuItem(Second.class);
 		secondMenu.setActionCommand("Second");
 		secondMenu.addActionListener(this);
 		periodGranularityMenu.add(secondMenu);
+		timePeriodGroup.add(secondMenu);
 
 		millisecondMenu = new JTimePeriodMenuItem(Millisecond.class);
 		millisecondMenu.setActionCommand("Millisecond");
 		millisecondMenu.addActionListener(this);
 		periodGranularityMenu.add(millisecondMenu);
+		timePeriodGroup.add(millisecondMenu);
+
+		miMap.put(Year.class,yearMenu);
+		miMap.put(Quarter.class,quarterMenu);
+		miMap.put(Month.class,monthMenu);
+		miMap.put(Week.class,weekMenu);
+		miMap.put(Day.class,dayMenu);
+		miMap.put(Hour.class,hourMenu);
+		miMap.put(Minute.class,minuteMenu);
+		miMap.put(Second.class,secondMenu);
+		miMap.put(Millisecond.class,millisecondMenu);
+		
+		timePeriodGroup.setSelected(dayMenu.getModel(), true);
 
 		HashMap<String, JMenu> zoneSubMenus = new HashMap<String, JMenu>();		
 		for(String timeZoneStr: ZoneId.getAvailableZoneIds()) {
@@ -205,6 +231,12 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 		}else {
 			ipedChartsPanel.setTimeZone(((JTimezoneMenuItem) e.getSource()).getTimezone());
 		}
+	}
+
+	@Override
+	public void setVisible(boolean b) {
+		timePeriodGroup.setSelected(miMap.get(ipedChartsPanel.getTimePeriodClass()).getModel(), true);		
+		super.setVisible(b);
 	}
 	
 }
