@@ -109,7 +109,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
     public boolean hasBookmark(IItemId item, Set<String> bookmarkNames) {
         IBookmarks m = map.get(item.getSourceId());
         int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
-        return m.hasBookmark(item.getId(), m.getBookmarkBits(bookmarkIds));
+        return bookmarkIds!=null && m.hasBookmark(item.getId(), m.getBookmarkBits(bookmarkIds));
     }
 
     public final boolean hasBookmark(ItemId item, String bookmarkName) {
