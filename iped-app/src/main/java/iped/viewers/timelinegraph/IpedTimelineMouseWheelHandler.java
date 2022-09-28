@@ -21,6 +21,7 @@ public class IpedTimelineMouseWheelHandler implements MouseWheelListener, Serial
 
     /** The zoom factor. */
     double zoomFactor;
+	private int zfMultiplier;
 
     /**
      * Creates a new instance for the specified chart panel.
@@ -109,7 +110,20 @@ public class IpedTimelineMouseWheelHandler implements MouseWheelListener, Serial
         boolean zoomDomain = ((modf & MouseWheelEvent.SHIFT_DOWN_MASK)==MouseWheelEvent.SHIFT_DOWN_MASK);
         boolean zoomRange = ((modf & MouseWheelEvent.CTRL_DOWN_MASK)==MouseWheelEvent.CTRL_DOWN_MASK);
         boolean zoomAll = (!zoomDomain && !zoomRange);
-        
+
+    	if(lastWhen!=e.getWhen() && e.getWhen()-lastWhen<1000) {
+    		zfMultiplier++;
+    		if(zfMultiplier>4) zfMultiplier=4;
+    		if(zf>1) {
+        		zf=1+(zf-1)*zfMultiplier;
+    		}else {
+        		zf=1-(1-zf)*zfMultiplier;
+    		}
+    		System.out.println(zfMultiplier);
+    	}else {
+    		zfMultiplier=0;
+    	}
+
         if (chartPanel.isDomainZoomable() && (zoomDomain || zoomAll)) {
             zoomable.zoomDomainAxes(zf, pinfo, p, true);
         }
