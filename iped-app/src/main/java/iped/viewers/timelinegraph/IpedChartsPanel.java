@@ -239,8 +239,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	public HashMap<String, AbstractIntervalXYDataset> createDataSets(){
 		result = new HashMap<String, AbstractIntervalXYDataset>();
 		try {
-	        IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
-
 	        Set<String> selectedBookmarks = guiProvider.getSelectedBookmarks();
 	        Set<String> selectedCategories = guiProvider.getSelectedCategories();
 			SortedSetDocValues categoriesValues = null;
