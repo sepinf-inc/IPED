@@ -136,7 +136,7 @@ public class Manager {
     private IndexWriter writer;
 
     public Statistics stats;
-    public Exception exception;
+    public volatile Exception exception;
 
     private boolean isSearchAppOpen = false;
     private boolean isProcessingFinished = false;
@@ -328,7 +328,7 @@ public class Manager {
         }
     }
 
-    private void interruptProcessing() throws Exception {
+    private void interruptProcessing() {
         if (workers != null) {
             for (int k = 0; k < workers.length; k++) {
                 if (workers[k] != null) {
@@ -339,7 +339,11 @@ public class Manager {
         }
         ParsingReader.shutdownTasks();
         if (writer != null) {
-            writer.rollback();
+            try {
+                writer.rollback();
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
         }
 
         if (counter != null) {
@@ -635,7 +639,11 @@ public class Manager {
                     partialCommitsTime.addAndGet(end - start);
 
                 } catch (Exception e) {
-                    exception = e;
+                    if (exception == null) {
+                        exception = e;
+                    } else {
+                        e.printStackTrace();
+                    }
                     try {
                         LOGGER.error("Error commiting. Rollback commit started...");
                         writer.rollback();
@@ -829,9 +837,21 @@ public class Manager {
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, iped.localization.Messages.BUNDLES_FOLDER),
                     new File(output, iped.localization.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
+
+            // Copy tools. For now, skip copying mplayer
+            File source = new File(Configuration.getInstance().appRoot, "tools");
+            for (File file : source.listFiles()) {
+                if (!file.getName().equals("mplayer")) {
+                    File dest = new File(output, "tools/" + file.getName());
+                    if (file.isDirectory()) {
+                        IOUtil.copyDirectory(file, dest); // $NON-NLS-1$ //$NON-NLS-2$
+                    } else {
+                        IOUtil.copyFile(file, dest);
+                    }
+                }
+            }
 
             if (!analysisConfig.isEmbedLibreOffice()) {
                 new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$

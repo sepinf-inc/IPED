@@ -76,6 +76,10 @@ public abstract class AbstractCarver implements Carver {
                 && !MediaTypes.UNALLOCATED.equals(parentEvidence.getMediaType())) {
             len = parentEvidence.getLength() - header.getOffset();
         }
+        // Workaround for https://github.com/sepinf-inc/IPED/issues/1327
+        if (len <= 0) {
+            return null;
+        }
         // verifica a validade dos bytes carveados
         if ((!ignoreCorrupted && !isSpecificIgnoreCorrupted()) || isValid(parentEvidence, header, len)) {
             IItem offsetFile = parentEvidence.createChildItem();

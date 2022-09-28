@@ -45,7 +45,6 @@ import iped.viewers.MsgViewer;
 import iped.viewers.MultiViewer;
 import iped.viewers.ReferencedFileViewer;
 import iped.viewers.TiffViewer;
-import iped.viewers.TikaHtmlViewer;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.components.HitsTable;
 import iped.viewers.util.LibreOfficeFinder;
@@ -101,7 +100,6 @@ public class ViewerController {
         viewersRepository.addViewer(new MsgViewer());
         linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
         viewersRepository.addViewer(linkViewer);
-        viewersRepository.addViewer(new TikaHtmlViewer());
         viewersRepository.addViewer(new IcePDFViewer());
         viewersRepository.addViewer(new TiffViewer());
         viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl()));
