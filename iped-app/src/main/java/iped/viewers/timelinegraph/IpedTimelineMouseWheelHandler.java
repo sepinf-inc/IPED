@@ -17,6 +17,7 @@ public class IpedTimelineMouseWheelHandler implements MouseWheelListener, Serial
 
     /** The chart panel. */
     private IpedChartPanel chartPanel;
+    long lastWhen = -1;
 
     /** The zoom factor. */
     double zoomFactor;
@@ -62,19 +63,22 @@ public class IpedTimelineMouseWheelHandler implements MouseWheelListener, Serial
      */
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        JFreeChart chart = this.chartPanel.getChart();
-        if (chart == null) {
-            return;
-        }
-        Plot plot = chart.getPlot();
-        if (plot instanceof Zoomable) {
-            Zoomable zoomable = (Zoomable) plot;
-            handleZoomable(zoomable, e);
-        }
-        else if (plot instanceof PiePlot) {
-            PiePlot pp = (PiePlot) plot;
-            pp.handleMouseWheelRotation(e.getWheelRotation());
-        }
+    	if(lastWhen!=e.getWhen()) {//avoid calling the event more then once
+            JFreeChart chart = this.chartPanel.getChart();
+            if (chart == null) {
+                return;
+            }
+            Plot plot = chart.getPlot();
+            if (plot instanceof Zoomable) {
+                Zoomable zoomable = (Zoomable) plot;
+                handleZoomable(zoomable, e);
+            }
+            else if (plot instanceof PiePlot) {
+                PiePlot pp = (PiePlot) plot;
+                pp.handleMouseWheelRotation(e.getWheelRotation());
+            }
+    	}
+    	lastWhen=e.getWhen();
     }
 
     /**
