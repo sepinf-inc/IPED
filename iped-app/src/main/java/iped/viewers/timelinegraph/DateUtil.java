@@ -6,6 +6,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import org.jfree.data.time.TimePeriod;
+
+import iped.app.ui.Messages;
+
 public class DateUtil {
 	static public String getTimezoneOffsetInformation(TimeZone tz) {
 		String timezoneofssetformat = String.format("%02d", (int)tz.getRawOffset()/(int)3600000);
@@ -46,5 +50,10 @@ public class DateUtil {
 			return null;
 		}
 	}
+
+	static public String getTimePeriodName(Class<? extends TimePeriod> tpclass) {
+		return Messages.getString("TimeLineGraph."+tpclass.getSimpleName());
+	}
+	
 	
 }

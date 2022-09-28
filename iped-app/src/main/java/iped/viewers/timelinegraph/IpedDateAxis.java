@@ -4,6 +4,7 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -13,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import javax.swing.JOptionPane;
 
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.DateTick;
@@ -27,16 +30,26 @@ import org.jfree.chart.ui.TextAnchor;
 import org.jfree.chart.util.Args;
 import org.jfree.data.Range;
 import org.jfree.data.time.DateRange;
+import org.jfree.data.time.Day;
+import org.jfree.data.time.Hour;
+import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.Month;
+import org.jfree.data.time.Quarter;
 import org.jfree.data.time.RegularTimePeriod;
+import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.Year;
+
+import iped.app.ui.Messages;
+import iped.viewers.timelinegraph.model.Minute;
 
 public class IpedDateAxis extends DateAxis {
     volatile SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
 
 	HashMap<DateTickUnitType, DateFormat> dateFormaters = new HashMap<DateTickUnitType, DateFormat>();
 	IpedChartsPanel ipedChartsPanel;
+
+	private boolean needTimePeriodClassUpdate;
 
     public IpedDateAxis(String string, IpedChartsPanel ipedChartsPanel) {
 		super(string, TimeZone.getDefault(), Locale.getDefault());
@@ -343,36 +356,13 @@ public class IpedDateAxis extends DateAxis {
     @Override
     public void setRange(Range range, boolean turnOffAutoRange,
                          boolean notify){
-    	if(ipedChartsPanel!=null) {
-        	ChartTimePeriodConstraint c = ipedChartsPanel.getChartPanel().getTimePeriodConstraints();
-        	if(c!=null) {
-            	double curRangeSize = this.getRange().getUpperBound()-this.getRange().getLowerBound();
-            	double rangeSize = range.getUpperBound()-range.getLowerBound();
-
-            	double java2dlower = valueToJava2D(range.getLowerBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
-            	double java2dupper = valueToJava2D(range.getUpperBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
-            	
-            	double barsize = ((java2dupper - java2dlower)/(range.getUpperBound()-range.getLowerBound()))*ChartTimePeriodConstraint.getTimePeriodUnit(ipedChartsPanel.getTimePeriodClass());//size in pixels
-            	
-            	if(curRangeSize<rangeSize && (rangeSize>c.maxZoomoutRangeSize || barsize<=c.minBarSizeInPixels)) {
-            		return;//skips
-            	}
-            	if(curRangeSize>rangeSize && (rangeSize<c.minZoominRangeSize || barsize >= ((java2dupper - java2dlower)/3))) {
-            		return;//skips
-            	}
-        	}else {
-            	double curRangeSize = this.getRange().getUpperBound()-this.getRange().getLowerBound();
-            	double rangeSize = range.getUpperBound()-range.getLowerBound();
-            	double java2dlower = valueToJava2D(range.getLowerBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
-            	double java2dupper = valueToJava2D(range.getUpperBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
-            	
-            	double barsize = ((java2dupper - java2dlower)/(range.getUpperBound()-range.getLowerBound()))*ChartTimePeriodConstraint.getTimePeriodUnit(ipedChartsPanel.getTimePeriodClass());//size in pixels
-            	if(curRangeSize>rangeSize &&  barsize >= ((java2dupper - java2dlower)/3) ) {
-            		return;//skips
-            	}
-        	}
+    	if(canZoom(range)) {
+        	forceRange(range, turnOffAutoRange, notify);
+    		if(needTimePeriodClassUpdate) {
+    			ipedChartsPanel.refreshChart();
+    			needTimePeriodClassUpdate=false;
+    		}
     	}
-    	forceRange(range, turnOffAutoRange, notify);
     }
     
     public DateRange putMargin(DateRange range) {
@@ -415,5 +405,101 @@ public class IpedDateAxis extends DateAxis {
 	public IpedChartsPanel getIpedChartsPanel() {
 		return ipedChartsPanel;
 	}
+
+    /**
+     * Determines if the axis can be zoomed to the range according to the contraint rules.
+     *
+     * @param range  the range to zoom in or out.
+     */
+	public boolean canZoom(Range range) {
+		boolean result = true;
+		
+    	if(ipedChartsPanel!=null) {
+        	ChartTimePeriodConstraint c = ipedChartsPanel.getChartPanel().getTimePeriodConstraints();
+        	
+    		Class<? extends TimePeriod> tpclass = ipedChartsPanel.getTimePeriodClass();
+        	double curRangeSize = this.getRange().getUpperBound()-this.getRange().getLowerBound();
+        	double rangeSize = range.getUpperBound()-range.getLowerBound();
+    		//uses the constraint rules applied
+        	double java2dlower = valueToJava2D(range.getLowerBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
+        	double java2dupper = valueToJava2D(range.getUpperBound(), ipedChartsPanel.getChartPanel().getScreenDataArea(), RectangleEdge.BOTTOM);
+        	double barsize = ((java2dupper - java2dlower)/(range.getUpperBound()-range.getLowerBound()))*ChartTimePeriodConstraint.getTimePeriodUnit(ipedChartsPanel.getTimePeriodClass());//size in pixels
+
+        	if(c!=null) {
+            	if(curRangeSize<rangeSize && (rangeSize>c.maxZoomoutRangeSize || barsize<=c.minBarSizeInPixels)) {
+            		result=false;
+            	}
+            	if(curRangeSize>rangeSize && (rangeSize<c.minZoominRangeSize || barsize >= ((java2dupper - java2dlower)/3))) {
+            		result=false;
+            	}
+        	}else {
+            	if(curRangeSize>rangeSize &&  barsize >= ((java2dupper - java2dlower)/3) ) {
+            		result=false;
+            	}
+        	}
+        	
+        	if(!result) {
+        		Method method;
+        		try {
+        			if(curRangeSize>rangeSize && tpclass!=Millisecond.class) {//zoomIn
+        				
+            			Class<? extends TimePeriod> downtpclass = downsizeToRange(tpclass);
+
+            			String tpClassName = DateUtil.getTimePeriodName(tpclass);
+            			String msg = String.format(Messages.get("TimeLineGraph.visibleZoominForGranularity"),tpClassName,DateUtil.getTimePeriodName(downtpclass));
+            			int input = JOptionPane.showConfirmDialog(null, msg, "", JOptionPane.OK_CANCEL_OPTION);
+            			if(input==0) {
+                    		result=true;
+            				ipedChartsPanel.setTimePeriodClass(downtpclass);
+            				ipedChartsPanel.setTimePeriodString(DateUtil.getTimePeriodName(downtpclass));
+            				needTimePeriodClassUpdate=true;
+            			}
+        			}
+        		} catch (Exception e) {
+        			// TODO Auto-generated catch block
+        			e.printStackTrace();
+        		}
+        	}
+        	
+    	}
+    	
+    	
+		return result;
+	}
+
+    /**
+     * Returns a subclass of {@link RegularTimePeriod} that is smaller than
+     * the specified class.
+     *
+     * @param c  a subclass of {@link RegularTimePeriod}.
+     *
+     * @return A class.
+     */
+    public static Class downsizeToRange(Class c) {
+        if (c.equals(Year.class)) {
+            return Quarter.class;
+        }
+        else if (c.equals(Quarter.class)) {
+            return Month.class;
+        }
+        else if (c.equals(Month.class)) {
+            return Day.class;
+        }
+        else if (c.equals(Day.class)) {
+            return Hour.class;
+        }
+        else if (c.equals(Hour.class)) {
+            return Minute.class;
+        }
+        else if (c.equals(Minute.class)) {
+            return Second.class;
+        }
+        else if (c.equals(Second.class)) {
+            return Millisecond.class;
+        }
+        else {
+            return Millisecond.class;
+        }
+    }
 
 }

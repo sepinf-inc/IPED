@@ -63,8 +63,8 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 	class JTimePeriodMenuItem extends JMenuItem{
 		Class<? extends TimePeriod> timePeriodClass;
 
-		public JTimePeriodMenuItem(String value, Class<? extends TimePeriod> timePeriodClass) {
-			super(value);
+		public JTimePeriodMenuItem(Class<? extends TimePeriod> timePeriodClass) {
+			super(DateUtil.getTimePeriodName(timePeriodClass));
 			this.timePeriodClass = timePeriodClass;
 		}
 
@@ -94,47 +94,47 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 		add(timezoneMenu);
 		timezoneMenu.setAutoscrolls(true);
 
-		yearMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Year"), Year.class);
+		yearMenu = new JTimePeriodMenuItem(Year.class);
 		yearMenu.setActionCommand("Year");
 		yearMenu.addActionListener(this);
 		periodGranularityMenu.add(yearMenu);
 
-		quarterMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Quarter"), Quarter.class);
+		quarterMenu = new JTimePeriodMenuItem(Quarter.class);
 		quarterMenu.setActionCommand("Quarter");
 		quarterMenu.addActionListener(this);
 		periodGranularityMenu.add(quarterMenu);
 
-		monthMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Month"), Month.class);
+		monthMenu = new JTimePeriodMenuItem(Month.class);
 		monthMenu.setActionCommand("Month");
 		monthMenu.addActionListener(this);
 		periodGranularityMenu.add(monthMenu);
 
-		weekMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Week"), Week.class);
+		weekMenu = new JTimePeriodMenuItem(Week.class);
 		weekMenu.setActionCommand("Week");
 		weekMenu.addActionListener(this);
 		periodGranularityMenu.add(weekMenu);
 
-		dayMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Day"), Day.class);
+		dayMenu = new JTimePeriodMenuItem(Day.class);
 		dayMenu.setActionCommand("Day");
 		dayMenu.addActionListener(this);
 		periodGranularityMenu.add(dayMenu);
 
-		hourMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Hour"), Hour.class);
+		hourMenu = new JTimePeriodMenuItem(Hour.class);
 		hourMenu.setActionCommand("Hour");
 		hourMenu.addActionListener(this);
 		periodGranularityMenu.add(hourMenu);
 
-		minuteMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Minute"), Minute.class);
+		minuteMenu = new JTimePeriodMenuItem(Minute.class);
 		minuteMenu.setActionCommand("Minute");
 		minuteMenu.addActionListener(this);
 		periodGranularityMenu.add(minuteMenu);
 
-		secondMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Second"), Second.class);
+		secondMenu = new JTimePeriodMenuItem(Second.class);
 		secondMenu.setActionCommand("Second");
 		secondMenu.addActionListener(this);
 		periodGranularityMenu.add(secondMenu);
 
-		millisecondMenu = new JTimePeriodMenuItem(Messages.getString("TimeLineGraph.Millisecond"), Millisecond.class);
+		millisecondMenu = new JTimePeriodMenuItem(Millisecond.class);
 		millisecondMenu.setActionCommand("Millisecond");
 		millisecondMenu.addActionListener(this);
 		periodGranularityMenu.add(millisecondMenu);
@@ -162,6 +162,7 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() instanceof JTimePeriodMenuItem) {
 			Class<? extends TimePeriod> tpclass = ((JTimePeriodMenuItem) e.getSource()).getTimePeriodClass();
+			String tpClassName = DateUtil.getTimePeriodName(tpclass);
 			Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
 			Date startDate = new Date((long)dateRange.getLowerBound());
 			Date endDate = new Date((long)dateRange.getUpperBound());
@@ -174,8 +175,8 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
         	double newbarsize = ((java2dupper - java2dlower)/(dateRange.getUpperBound()-dateRange.getLowerBound()))*ChartTimePeriodConstraint.getTimePeriodUnit(tpclass);//size in pixels
 
 			if(c!=null && rangeSize>c.getMaxZoomoutRangeSize()) {
-				Date centerDate = new Date(startDate.getTime() + rangeSize/2);
-				String msg = "The visible range is too great for the granularity "+tpclass.getName()+".\n Would you like to continue and zoom centered on date "+iped.utils.DateUtil.dateToString(centerDate)+"?";
+				Date centerDate = new Date(startDate.getTime() + rangeSize/2);				
+				String msg = String.format(Messages.get("TimeLineGraph.visibleRangeToGreat"),tpClassName,iped.utils.DateUtil.dateToString(centerDate));
 				input = JOptionPane.showConfirmDialog(null, msg, "", JOptionPane.OK_CANCEL_OPTION);
 				if(input==0) {
 					startDate = new Date((long)Math.floor(centerDate.getTime()-c.getMaxZoomoutRangeSize()/2));
@@ -188,7 +189,8 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 				endDate = new Date((long)Math.ceil(centerDate.getTime()+c.getMinZoominRangeSize()/2));
 
 				ipedChartsPanel.getDomainAxis().forceRange(new DateRange(startDate, endDate),false,false);
-			}else if(newbarsize>(java2dupper - java2dlower)/3) {
+			}else if(newbarsize>(java2dupper - java2dlower)/3) { //if the bar size of the new timeperiod granularity is greater than 1/3 of the total screen area
+				//zooms out to show at least 3 bars
 				Date centerDate = new Date(startDate.getTime() + rangeSize/2);
 				startDate = new Date((long)Math.floor(centerDate.getTime()-ChartTimePeriodConstraint.getTimePeriodUnit(tpclass)));
 				endDate = new Date((long)Math.ceil(centerDate.getTime()+ChartTimePeriodConstraint.getTimePeriodUnit(tpclass)));
@@ -204,4 +206,5 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
 			ipedChartsPanel.setTimeZone(((JTimezoneMenuItem) e.getSource()).getTimezone());
 		}
 	}
+	
 }
