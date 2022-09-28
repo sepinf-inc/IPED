@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
@@ -35,6 +36,7 @@ import org.jfree.data.xy.XYDomainInfo;
 
 import iped.app.ui.App;
 import iped.app.ui.CaseSearcherFilter;
+import iped.app.ui.Messages;
 import iped.app.ui.MetadataPanel.ValueCount;
 import iped.data.IIPEDSource;
 import iped.data.IItemId;
@@ -252,7 +254,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 		@Override
 		public void run() {
 			try {
-		        App app = App.get();
+		        App app = App.get();		        
+		        Set<String> selectedBookmarks = app.getSelectedBookmarks();
+		        String noBookmarksStr = Messages.get("BookmarksTreeModel.NoBookmarks");
 		        IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
 		        IPEDMultiSource appcase = (IPEDMultiSource) app.getIPEDSource();
 		        
@@ -278,17 +282,38 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 				                    int baseDoc = appcase.getBaseLuceneId(atomicSource);
 				                    ItemId ii = new ItemId(sourceId, atomicSource.getId(docId - baseDoc));
 
+									boolean include = false;
 									if(splitValue!=null && !splitValue.equals("Bookmarks") && ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
-						            	if(multiBookmarks.hasBookmark(ii, splitValue)) {
-											count.value++;
-											includedDocs.add(docId);
-											includedItems.add(ii);
-					            	    }
+										if(splitValue.equals(noBookmarksStr)) {
+							            	if(!multiBookmarks.hasBookmark(ii)) {
+					            				include=true;
+						            	    }
+										}else {
+							            	if(multiBookmarks.hasBookmark(ii, splitValue)) {
+					            				include=true;
+						            	    }
+										}
 									}else {
+										//not split by bookmark, so filter by selected bookmark
+						            	if(selectedBookmarks.size()>0) {
+						            		if(selectedBookmarks.contains("Bookmarks")) {
+						            			include = true;
+						            		}else if(multiBookmarks.hasBookmark(ii, selectedBookmarks)) {
+						            			include = true;
+						            		}else if(selectedBookmarks.contains(noBookmarksStr)) {
+						            			if(!multiBookmarks.hasBookmark(ii)) {
+						            				include=true;
+						            			}
+						            		}
+						            	}else{
+				            				include=true;//if no bookmark selected
+						            	}
+									}
+					            	if(include) {
 										count.value++;
 										includedDocs.add(docId);
 										includedItems.add(ii);
-									}
+					            	}
 								}
 							}
 							if(count.value>0) {
@@ -312,7 +337,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 	public void caseSearchFilterLoad() throws Exception {
 		IMultiSearchResult result;
 
-		if(splitValue==null) {
+		if(splitValue==null || splitValue.equals("Categories")) {
 			result  = resultsProvider.getResults();
 		}else {
 			String queryText="";
@@ -320,11 +345,11 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 				queryText +="category=\""+splitValue+"\"";
 			}
 
-				CaseSearcherFilter csf = new CaseSearcherFilter(queryText);
-				csf.getSearcher().setNoScoring(true);
-				csf.applyUIQueryFilters();
+			CaseSearcherFilter csf = new CaseSearcherFilter(queryText);
+			csf.getSearcher().setNoScoring(true);
+			csf.applyUIQueryFilters();
 
-				csf.execute();
+			csf.execute();
 			result  = csf.get();
 		}
 
