@@ -11,12 +11,15 @@ import javax.swing.JPopupMenu;
 import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.viewers.timelinegraph.IpedChartPanel;
+import iped.viewers.timelinegraph.dialog.IntervalDefinitionDialog;
 
 public class ChartPanelPopupMenu extends JPopupMenu implements ActionListener {
 	IpedChartPanel ipedChartPanel;
 
 	JCheckBoxMenuItem applyFiltersMenu;
 	JMenuItem clearAllFiltersMenu;
+
+	private JMenuItem openIntervalsDialogMenu;
 
 	public ChartPanelPopupMenu(IpedChartPanel ipedChartPanel) {
 		this.ipedChartPanel = ipedChartPanel;
@@ -28,10 +31,19 @@ public class ChartPanelPopupMenu extends JPopupMenu implements ActionListener {
          clearAllFiltersMenu = new JMenuItem(Messages.getString("TimeLineGraph.clearDefinedFilters"));
         clearAllFiltersMenu.addActionListener(this);
         add(clearAllFiltersMenu); 
+
+		openIntervalsDialogMenu = new JMenuItem(Messages.getString("TimeLineGraph.openIntervalsDialogMenu"));
+		openIntervalsDialogMenu.addActionListener(this);
+        add(openIntervalsDialogMenu);
+
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		if(e.getSource()==openIntervalsDialogMenu) {
+			(new IntervalDefinitionDialog(ipedChartPanel)).setVisible();
+		}
+
 		if(e.getSource()==applyFiltersMenu) {
 			if(!ipedChartPanel.hasNoFilter()) {
 				ipedChartPanel.getIpedChartsPanel().setApplyFilters(applyFiltersMenu.isSelected());
