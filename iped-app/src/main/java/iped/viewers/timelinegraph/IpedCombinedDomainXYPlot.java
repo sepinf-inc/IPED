@@ -157,4 +157,8 @@ public class IpedCombinedDomainXYPlot extends CombinedDomainXYPlot{
 	public void setIpedChartsPanel(IpedChartsPanel ipedChartsPanel) {
 		this.ipedChartsPanel = ipedChartsPanel;
 	}
+
+	public boolean isToSkipFireEvent() {
+		return skipFireEvent;
+	}
 }

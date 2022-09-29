@@ -723,8 +723,10 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     	domainAxis.setLabel("Date ("+timePeriodString+") ["+timeZone.getDisplayName()+" "+DateUtil.getTimezoneOffsetInformation(timeZone)+"]");
     	
     	combinedPlot.setSkipFireEventChange(true);
-
+    	
     	Object[] plots = combinedPlot.getSubplots().toArray();
+    	boolean firstExecution = plots!=null && plots.length<=0;
+    			
     	for (Object plot : plots) {
 	    	combinedPlot.remove((XYPlot) plot);
 		}
@@ -743,7 +745,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         XYPlot firstPlot = null;
     	for (Iterator iterator = datasets.keySet().iterator(); iterator.hasNext();) {
 			String marcador = (String) iterator.next();			
-	    	NumberAxis rangeAxis = new IpedNumberAxis(marcador);
+			IpedNumberAxis rangeAxis = new IpedNumberAxis(marcador);
 	        rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
 	        rangeAxis.setUpperMargin(0.10);  // leave some space for item labels
 
@@ -763,11 +765,16 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	        	firstPlot=plot;
 	        }
 	        combinedPlot.add(ids,plot,dataset);
+	        rangeAxis.autoAdjustRange();
 	        ids++;
 		}
 
     	combinedPlot.setSkipFireEventChange(false);
     	combinedPlot.fireChangeEvent();
+    	
+    	if(firstExecution) {
+        	domainAxis.autoAdjustRange();
+    	}
     	
         return chart;
     }

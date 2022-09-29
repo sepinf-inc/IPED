@@ -15,6 +15,7 @@ public class IpedNumberAxis extends NumberAxis implements MouseResponsiveChartEn
 
 	public IpedNumberAxis(String marcador) {
 		super(marcador);
+		setAutoRange(false);
 	}
 
 	@Override
@@ -37,6 +38,18 @@ public class IpedNumberAxis extends NumberAxis implements MouseResponsiveChartEn
 	public void setMouseOverPaint(Paint mouseOverPaint) {
 		this.mouseOverPaint = mouseOverPaint;
 		
+	}
+
+	@Override
+	public void configure() {
+		
+		super.configure();
+	}
+
+	@Override
+	public void autoAdjustRange() {
+		// TODO Auto-generated method stub
+		super.autoAdjustRange();
 	}
 
 }

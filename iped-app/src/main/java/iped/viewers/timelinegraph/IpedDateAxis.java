@@ -58,6 +58,9 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
 
     public IpedDateAxis(String string, IpedChartsPanel ipedChartsPanel) {
 		super(string, TimeZone.getDefault(), Locale.getDefault());
+		
+		setAutoRange(false);
+		configure();
 
 		this.ipedChartsPanel = ipedChartsPanel;
 
@@ -524,6 +527,17 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
 
 	public void setMouseOverPaint(Paint mouseOverPaint) {
 		this.mouseOverPaint = mouseOverPaint;
+	}
+
+	@Override
+	public void configure() {
+		super.configure();
+	}
+
+	@Override
+	public void autoAdjustRange() {
+		// TODO Auto-generated method stub
+		super.autoAdjustRange();
 	}
 
 }
