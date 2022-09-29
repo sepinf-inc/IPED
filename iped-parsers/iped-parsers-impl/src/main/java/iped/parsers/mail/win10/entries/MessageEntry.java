@@ -10,6 +10,7 @@ import iped.parsers.mail.win10.tables.AttachmentTable;
 public class MessageEntry extends AbstractEntry {
     private int conversationId;
     private int noOfAttachments;
+    private long messageSize;
     private String msgAbstract;
     private String subject;
     private String senderName;
@@ -17,11 +18,12 @@ public class MessageEntry extends AbstractEntry {
     private Date msgDeliveryTime;
     private Date lastModifiedTime;
 
-    public MessageEntry(int rowId, int conversationId, int noOfAttachments, String msgAbstract, String subject,
+    public MessageEntry(int rowId, int conversationId, int noOfAttachments, long messageSize, String msgAbstract, String subject,
             String senderName, String senderAddress, Date msgDeliveryTime, Date lastModifiedTime) {
         super(rowId);
         this.conversationId = conversationId;
         this.noOfAttachments = noOfAttachments;
+        this.messageSize = messageSize;
         this.msgAbstract = msgAbstract != null ? msgAbstract : "";
         this.subject = subject;
         this.senderName = senderName;
@@ -45,6 +47,14 @@ public class MessageEntry extends AbstractEntry {
 
     public void setNoOfAttachments(int noOfAttachments) {
         this.noOfAttachments = noOfAttachments;
+    }
+
+    public long getMessageSize() {
+        return this.messageSize;
+    }
+
+    public void setMessageSize(long messageSize) {
+        this.messageSize = messageSize;
     }
 
     public String getMsgAbstract() {

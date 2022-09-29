@@ -24,6 +24,7 @@ import org.apache.tika.parser.Parser;
 import org.xml.sax.SAXException;
 
 import iped.parsers.mail.win10.Win10MailParser;
+import iped.parsers.mail.win10.entries.AbstractEntry;
 import iped.parsers.util.ItemInfo;
 import iped.properties.ExtraProperties;
 
@@ -53,7 +54,8 @@ public class Win10MailParserTest {
 
         try (InputStream stream = getStream("test-files/private_mail_sample/" + fileName)) {
 
-            parser.parse(stream, handler, metadata, edgeContext);
+            //  parser.parse(stream, handler, metadata, edgeContext);
+            // Win10MailParser.getEntryLocation(518);
 
         }
 

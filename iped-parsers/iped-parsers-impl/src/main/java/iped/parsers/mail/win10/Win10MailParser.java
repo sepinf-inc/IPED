@@ -28,6 +28,7 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.ptr.PointerByReference;
 
+import iped.data.IItemReader;
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.database.EDBParser;
 import iped.parsers.mail.win10.entries.AbstractEntry;
@@ -39,6 +40,8 @@ import iped.parsers.mail.win10.tables.AttachmentTable;
 import iped.parsers.mail.win10.tables.MessageTable;
 import iped.parsers.util.EsedbManager;
 import iped.parsers.util.ItemInfo;
+import iped.properties.BasicProps;
+import iped.search.IItemSearcher;
 
 /*
  * Important tables to parse from store.vol:
@@ -97,6 +100,8 @@ public class Win10MailParser extends AbstractParser {
             throws IOException, SAXException, TikaException {
 
         itemInfo = context.get(ItemInfo.class);
+
+        IItemSearcher searcher = context.get(IItemSearcher.class);
 
         TemporaryResources tmp = new TemporaryResources();
         // File tableFile = tmp.createTemporaryFile();
@@ -249,8 +254,6 @@ public class Win10MailParser extends AbstractParser {
         }
         return tables;
     }
-
-
 
 
     private void closeTablePointer(PointerByReference tablePointer) {

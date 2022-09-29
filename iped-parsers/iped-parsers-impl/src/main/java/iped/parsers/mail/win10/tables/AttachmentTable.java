@@ -61,7 +61,8 @@ public class AttachmentTable extends AbstractTable {
 
         int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
         int messageId = EsedbManager.getInt32Value(esedbLibrary, 3, recordPointerReference, filePath, errorPointer);
-        int attachSize = EsedbManager.getInt32Value(esedbLibrary, 7, recordPointerReference, filePath, errorPointer);
+        long attachSize = EsedbManager.getInt32Value(esedbLibrary, 7, recordPointerReference, filePath, errorPointer);
+        long attachCID = EsedbManager.getInt32Value(esedbLibrary, 10, recordPointerReference, filePath, errorPointer);
         String fileName = EsedbManager.getUnicodeValue(esedbLibrary, 13, recordPointerReference, filePath, errorPointer);
         boolean received = EsedbManager.getBooleanValue(esedbLibrary, 20, recordPointerReference, filePath, errorPointer);
 
@@ -69,7 +70,7 @@ public class AttachmentTable extends AbstractTable {
         if (result < 0)
             EsedbManager.printError("Record Free", result, filePath, errorPointer);
 
-        return new AttachmentEntry(rowId, messageId, attachSize, fileName, null, received);
+        return new AttachmentEntry(rowId, messageId, attachSize, attachCID, fileName, null, received);
     }
     
 }

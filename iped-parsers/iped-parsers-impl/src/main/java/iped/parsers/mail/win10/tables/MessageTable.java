@@ -58,6 +58,7 @@ public class MessageTable extends AbstractTable {
         int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
         int conversationId = EsedbManager.getInt32Value(esedbLibrary, 21, recordPointerReference, filePath, errorPointer);
         int noOfAttachments = EsedbManager.getInt16Value(esedbLibrary, 34, recordPointerReference, filePath, errorPointer);
+        long messageSize = EsedbManager.getInt32Value(esedbLibrary, 58, recordPointerReference, filePath, errorPointer);
         String msgAbstract = EsedbManager.getUnicodeValue(esedbLibrary, 142, recordPointerReference, filePath, errorPointer);
         String subject = EsedbManager.getUnicodeValue(esedbLibrary, 160, recordPointerReference, filePath, errorPointer);
         String senderName = EsedbManager.getUnicodeValue(esedbLibrary, 152, recordPointerReference, filePath, errorPointer);
@@ -69,7 +70,8 @@ public class MessageTable extends AbstractTable {
         if (result < 0)
             EsedbManager.printError("Record Free", result, filePath, errorPointer);
 
-        return new MessageEntry(rowId, conversationId, noOfAttachments, msgAbstract, subject, senderName, senderEmail, msgDeliveryTime, lastModifiedTime);
+        return new MessageEntry(rowId, conversationId, noOfAttachments, messageSize, msgAbstract, subject,
+            senderName, senderEmail, msgDeliveryTime, lastModifiedTime);
     }
 
 }
