@@ -119,7 +119,6 @@ public class IpedTimelineMouseWheelHandler implements MouseWheelListener, Serial
     		}else {
         		zf=1-(1-zf)*zfMultiplier;
     		}
-    		System.out.println(zfMultiplier);
     	}else {
     		zfMultiplier=0;
     	}

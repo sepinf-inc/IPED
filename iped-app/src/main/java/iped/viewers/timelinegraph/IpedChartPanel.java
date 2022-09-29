@@ -35,8 +35,6 @@ import javax.swing.JButton;
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.Axis;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.entity.AxisEntity;
 import org.jfree.chart.entity.ChartEntity;
@@ -64,7 +62,6 @@ import iped.viewers.timelinegraph.popups.ChartPanelPopupMenu;
 import iped.viewers.timelinegraph.popups.DataItemPopupMenu;
 import iped.viewers.timelinegraph.popups.PlotPopupMenu;
 import iped.viewers.timelinegraph.popups.SeriesAxisPopupMenu;
-import iped.viewers.timelinegraph.popups.LegendItemPopupMenu;
 import iped.viewers.timelinegraph.popups.TimePeriodSelectionPopupMenu;
 import iped.viewers.timelinegraph.popups.TimelineFilterSelectionPopupMenu;
 import iped.viewers.timelinegraph.swingworkers.HighlightWorker;
@@ -101,7 +98,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 
     TimelineFilterSelectionPopupMenu timelineSelectionPopupMenu = null;
     PlotPopupMenu domainPopupMenu = null;
-    LegendItemPopupMenu legendItemPopupMenu = null;
     DataItemPopupMenu itemPopupMenu = null;
     TimePeriodSelectionPopupMenu timePeriodSelectionPopupMenu = null;
     SeriesAxisPopupMenu seriesAxisPopupMenu = null;
@@ -112,7 +108,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 
 	private boolean zoomingStart;
 	
-	public IpedChartPanel(JFreeChart chart, IpedChartsPanel ipedChartsPanel) {
+	public IpedChartPanel(IpedChart chart, IpedChartsPanel ipedChartsPanel) {
 		super(chart, true);
 		useBuffer = true;
 
@@ -144,7 +140,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	    
 		timelineSelectionPopupMenu = new TimelineFilterSelectionPopupMenu(this);
 		domainPopupMenu = new PlotPopupMenu(this, ipedChartsPanel.getResultsProvider());
-		legendItemPopupMenu = new LegendItemPopupMenu(this);
         itemPopupMenu = new DataItemPopupMenu(this);
     	timePeriodSelectionPopupMenu = new TimePeriodSelectionPopupMenu(ipedChartsPanel);
     	seriesAxisPopupMenu = new SeriesAxisPopupMenu(this);
@@ -167,7 +162,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         
 	
         this.addChartMouseListener(new ChartMouseListener() {
-
 			@Override
 			public void chartMouseMoved(ChartMouseEvent event) {
 				ChartEntity ce = event.getEntity();
@@ -273,12 +267,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 					}
 				}
 				
-				if(ce instanceof LegendItemEntity) {
-					LegendItemEntity le = (LegendItemEntity) ce;
-					
-					legendItemPopupMenu.setLegendItemEntity(le);
-					legendItemPopupMenu.show(event.getTrigger().getComponent(), event.getTrigger().getX(), event.getTrigger().getY());
-				}
 			}
 		});
         

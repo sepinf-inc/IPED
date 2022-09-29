@@ -2,7 +2,17 @@ package iped.viewers.timelinegraph;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.font.TextAttribute;
 import java.awt.geom.Ellipse2D;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -11,6 +21,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
@@ -23,20 +34,25 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.ToolTipManager;
+import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
@@ -49,12 +65,15 @@ import org.jfree.chart.LegendItem;
 import org.jfree.chart.LegendItemCollection;
 import org.jfree.chart.axis.DateTickMarkPosition;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.block.Block;
 import org.jfree.chart.labels.XYToolTipGenerator;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.title.LegendGraphic;
+import org.jfree.chart.title.LegendItemBlockContainer;
 import org.jfree.chart.ui.VerticalAlignment;
 import org.jfree.data.Range;
 import org.jfree.data.time.Day;
@@ -71,7 +90,6 @@ import iped.app.ui.ClearFilterListener;
 import iped.app.ui.ColumnsManager;
 import iped.app.ui.events.RowSorterTableDataChange;
 import iped.data.IItemId;
-import iped.data.IMultiBookmarks;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
@@ -85,6 +103,7 @@ import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
 import iped.viewers.timelinegraph.datasets.AsynchronousDataset;
 import iped.viewers.timelinegraph.datasets.IpedTimelineDatasetManager;
+import iped.viewers.timelinegraph.popups.LegendItemPopupMenu;
 import iped.viewers.timelinegraph.swingworkers.CheckWorker;
 import iped.viewers.timelinegraph.swingworkers.HighlightWorker;
 
@@ -113,12 +132,15 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	boolean isUpdated = false;
 
     String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
+    LegendItemPopupMenu legendItemPopupMenu = null;
 
 	/* chart fields */
     IpedDateAxis domainAxis = new IpedDateAxis("Date ("+timePeriodString+")", this);
     IpedCombinedDomainXYPlot combinedPlot = new IpedCombinedDomainXYPlot(this);
-    JFreeChart chart = new JFreeChart(combinedPlot);
+    IpedChart chart = new IpedChart(combinedPlot);
     IpedChartPanel chartPanel = null;
+    JList legendList = new JList();
+    JScrollPane listScroller = new JScrollPane(legendList);
 	IpedStackedXYBarRenderer renderer = null;
 	XYLineAndShapeRenderer highlightsRenderer = new XYLineAndShapeRenderer();
 	XYToolTipGenerator toolTipGenerator = null;
@@ -126,6 +148,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	String metadataToBreakChart = null;
 	ImageIcon loading = null;
 	JLabel loadingLabel;
+	
+	IpedSplitPane splitPane;
 
     boolean applyFilters = false;
 	private XYBarPainter barPainter;
@@ -136,6 +160,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	SortedSetDocValues timeStampValues = null;
 	private RunnableFuture<Void> swRefresh;
 	private HashMap<String, AbstractIntervalXYDataset> result;
+	private DefaultListModel<LegendItemBlockContainer> legendListModel;
 	
 	private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 	
@@ -162,6 +187,72 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 		this.setLayout(new BorderLayout());
 	}
+	
+	class LegendCellRenderer extends JLabel implements ListCellRenderer<LegendItemBlockContainer>{
+		public LegendCellRenderer() {
+			setOpaque(true);
+	        this.setInheritsPopupMenu(true);
+		}
+		
+		@Override
+		public Component getListCellRendererComponent(JList<? extends LegendItemBlockContainer> list, LegendItemBlockContainer value,
+				int index, boolean isSelected, boolean cellHasFocus) {
+			this.setText((String) value.getSeriesKey());
+			Color background;
+			Color foreground;
+			if(isSelected || cellHasFocus) {
+				background = Color.BLUE;
+				foreground = Color.WHITE;
+			}else {
+				background = Color.WHITE;
+				foreground = Color.BLACK;
+			}
+			this.setForeground(foreground);
+			this.setBackground(background);
+			
+			IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChartPanel().getChart().getPlot());
+			XYPlot xyPlot = (XYPlot) rootPlot.getSubplots().get(0);
+			
+	        Iterator<Block> iterator = value.getBlocks().iterator();
+	        while (iterator.hasNext()) {
+	        	Block b = iterator.next();
+	        	if(b instanceof LegendGraphic) {
+	        		LegendGraphic i = (LegendGraphic) b;
+	        		Rectangle r =i.getShape().getBounds();
+	        		Image image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_RGB);
+	        		Graphics2D gr = (Graphics2D)image.getGraphics();
+	        		gr.translate(-r.x, -r.y);
+	        		gr.setBackground((Color)i.getFillPaint());
+	        		gr.setPaint(i.getFillPaint());
+	        		gr.draw(i.getShape());
+	        		gr.fill(i.getShape());
+	        		gr.dispose();
+	        		this.setIcon(new ImageIcon(image));	        			        		
+	        	}
+	        }
+
+			for(int i=0; i<xyPlot.getDataset(0).getSeriesCount(); i++) {
+				String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
+				if(currSeries.equals(value.getSeriesKey())) {
+					if(!rootPlot.getRenderer().isSeriesVisible(i)) {
+						Font f = getFont();
+						Map attributes = f.getAttributes();
+						attributes.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
+						LegendCellRenderer clone;
+						clone = new LegendCellRenderer();
+						clone.setText(this.getText());
+						clone.setIcon(this.getIcon());
+						clone.setFont(f.deriveFont(attributes));
+						clone.setForeground(foreground);
+						clone.setBackground(background);
+						return clone;
+					}
+				}
+			}
+
+			return this;
+		}		
+	}
 
 	@Override
 	public void init(JTable resultsTable, IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
@@ -169,16 +260,43 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		this.resultsProvider = resultsProvider;
 		this.guiProvider = guiProvider;
 
+		splitPane = new IpedSplitPane();
+		splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+		this.add(splitPane);
+
 		chartPanel = new IpedChartPanel(chart, this);
-		
+		legendListModel = new DefaultListModel<LegendItemBlockContainer>();
+		legendList.setModel(legendListModel);
+		legendList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		legendList.setVisibleRowCount(-1);
+		legendList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+		legendList.setCellRenderer(new LegendCellRenderer());
+		chartPanel.setPreferredSize(new Dimension(Integer.MAX_VALUE,Integer.MAX_VALUE));
+		listScroller.setPreferredSize(new Dimension(Integer.MAX_VALUE,50));
+		listScroller.setMaximumSize(new Dimension(Integer.MAX_VALUE,50));
+		legendList.addMouseListener(new MouseAdapter() {
+			public void mousePressed(MouseEvent e)  {check(e);}
+			public void mouseReleased(MouseEvent e) {check(e);}
+			public void check(MouseEvent e) {
+			    if (e.isPopupTrigger()) { //if the event shows the menu
+			    	int selIndex = legendList.locationToIndex(e.getPoint());
+			    	legendList.addSelectionInterval(selIndex, selIndex); //select the item
+			        legendItemPopupMenu.show(legendList, e.getX(), e.getY()); //and show the menu
+			    }
+			}			
+		});
+		chart.setIpedChartPanel(chartPanel);		
+
 		renderer = new IpedStackedXYBarRenderer(this);
 		((IpedStackedXYBarRenderer)renderer).setBarPainter(new IpedXYBarPainter((XYBarRenderer)renderer));
 		((IpedStackedXYBarRenderer)renderer).setMargin(0);
 		renderer.setDefaultToolTipGenerator(toolTipGenerator);
 		renderer.setDefaultItemLabelsVisible(true);
-		
+
         resultsTable.getModel().addTableModelListener(this);
         resultsTable.getSelectionModel().addListSelectionListener(this);
+
+		legendItemPopupMenu = new LegendItemPopupMenu(chartPanel);
 
         chartPanel.setDomainZoomable(true);
         chartPanel.setRangeZoomable(true);
@@ -188,7 +306,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         ttm.setReshowDelay(0);
         ttm.setEnabled(true);
 
-        this.add(chartPanel, BorderLayout.CENTER);
+        splitPane.setTopComponent(chartPanel);
+        splitPane.setBottomComponent(listScroller);
         chartPanel.setPopupMenu(null);
 		
         domainAxis.setTickMarkPosition(DateTickMarkPosition.START);
@@ -370,8 +489,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 							if(chart!=null) {
 								SwingUtilities.invokeLater(new Runnable() {
 									public void run() {
-						                self.remove(loadingLabel);
-						            	self.add(chartPanel);
+										splitPane.remove(loadingLabel);
+						                splitPane.setTopComponent(chartPanel);
+						                splitPane.setBottomComponent(listScroller);
 										chartPanel.setVisible(true);
 									}
 								});
@@ -811,5 +931,21 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 	public void setCombinedPlot(IpedCombinedDomainXYPlot combinedPlot) {
 		this.combinedPlot = combinedPlot;
+	}
+
+	public DefaultListModel<LegendItemBlockContainer> getLegendListModel() {
+		return legendListModel;
+	}
+
+	public void setLegendListModel(DefaultListModel<LegendItemBlockContainer> legendListModel) {
+		this.legendListModel = legendListModel;
+	}
+
+	public JList getLegendList() {
+		return legendList;
+	}
+
+	public void setLegendList(JList legendList) {
+		this.legendList = legendList;
 	}
 }
