@@ -47,7 +47,7 @@ import iped.utils.EmptyInputStream;
  * https://developer.mozilla.org/en-US/docs/Mozilla/Tech/Places/Database
  * https://forensicswiki.org/wiki/Mozilla_Firefox
  * 
- * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
+ * @author Paulo César Herrmann Wanner <herrmann.pchw@pf.gov.br>
  */
 public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
 

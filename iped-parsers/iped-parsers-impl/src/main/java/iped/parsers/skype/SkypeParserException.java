@@ -3,7 +3,7 @@ package iped.parsers.skype;
 /**
  * Classe que representa erros de processamento do SkypeParser.
  *
- * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
+ * @author Patrick Dalla Bernardina patrick.pdb@pf.gov.br
  */
 
 public class SkypeParserException extends Exception {

@@ -26,7 +26,7 @@ import iped.utils.SimpleHTMLEncoder;
  * Classe responsável por gerar a representação HTML dos registros encontrados
  * pelo SkypeParser
  *
- * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
+ * @author Patrick Dalla Bernardina patrick.pdb@pf.gov.br
  */
 public class ReportGenerator {
 
