@@ -813,6 +813,23 @@
                             </resources>
                         </configuration>
                     </execution>
+                    <!-- COPY SCRIPTS -->
+                    <execution>
+                        <id>copy-scripts</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${release.dir}/scripts</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>false</filtering>
+                                    <directory>${resources.dir}/scripts</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

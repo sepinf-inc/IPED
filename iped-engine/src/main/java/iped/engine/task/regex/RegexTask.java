@@ -186,7 +186,7 @@ public class RegexTask extends AbstractTask {
                 logger.info("Regex cache saved to {}", cacheFile.getAbsolutePath());
             }
 
-            initValidators(new File(output, "conf"));
+            initValidators(new File(output, "scripts"));
         }
 
     }

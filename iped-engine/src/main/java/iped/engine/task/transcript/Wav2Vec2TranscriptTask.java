@@ -26,7 +26,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     private static Logger logger = LogManager.getLogger(Wav2Vec2TranscriptTask.class);
 
-    private static final String SCRIPT_PATH = "/conf/scripts/Wav2Vec2Process.py";
+    private static final String SCRIPT_PATH = "/scripts/tasks/Wav2Vec2Process.py";
     private static final String TRANSCRIPTION_FINISHED = "transcription_finished";
     private static final String MODEL_LOADED = "wav2vec2_model_loaded";
     private static final String HUGGINGSOUND_LOADED = "huggingsound_loaded";

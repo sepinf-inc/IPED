@@ -836,6 +836,7 @@ public class Manager {
 
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "scripts"), new File(output, "scripts"), true); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, iped.localization.Messages.BUNDLES_FOLDER),
                     new File(output, iped.localization.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
