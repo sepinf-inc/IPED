@@ -199,14 +199,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 
 				
 				if(lastMouseResponsiveChartEntity instanceof MouseResponsiveChartEntity && curMouseResponsiveChartEntity==null){
-		            setCursor(Cursor.getDefaultCursor());
-		            Graphics2D g2 = (Graphics2D) getGraphics();
-		            Color bk = getBackground();
-		            lastMouseResponsiveChartEntity.setMouseOverPaint(bk);
-		            repaint();
-		            g2.dispose();
-		            self.getChart().getPlot().setNotify(true);
-					lastMouseResponsiveChartEntity=null;
+					resetLastMouseResponsiveEntityBkColor();
 				}
 
 				if(curMouseResponsiveChartEntity!=lastMouseResponsiveChartEntity) {
@@ -290,6 +283,19 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 		});
         
         this.addMouseWheelListener(new IpedTimelineMouseWheelHandler(this));
+	}
+	
+	private void resetLastMouseResponsiveEntityBkColor() {
+		if(lastMouseResponsiveChartEntity!=null) {
+	        setCursor(Cursor.getDefaultCursor());
+	        Graphics2D g2 = (Graphics2D) getGraphics();
+	        Color bk = getBackground();
+	        lastMouseResponsiveChartEntity.setMouseOverPaint(bk);
+	        repaint();
+	        g2.dispose();
+	        this.getChart().getPlot().setNotify(true);
+			lastMouseResponsiveChartEntity=null;
+		}
 	}
 	
 	@Override
@@ -966,7 +972,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         Graphics2D g2 = (Graphics2D) getGraphics();
         drawDateCursor(g2, lastMouseMoveX, true);
 		lastMouseMoveX=-1;
-		lastMouseResponsiveChartEntity = null;
+		resetLastMouseResponsiveEntityBkColor();
 		super.mouseExited(e);
 	}
 }
