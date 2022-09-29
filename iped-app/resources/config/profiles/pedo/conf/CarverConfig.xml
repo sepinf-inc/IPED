@@ -1,3 +1,16 @@
 ﻿<carverconfig>
     <ignoreCorrupted>false</ignoreCorrupted>
+
+    <carverTypes>
+        <carverType>
+            <name>MFT-ENTRY</name>
+            <signatures>
+                <headerSignature>FILE</headerSignature>
+            </signatures>
+            <minLength>1024</minLength>
+            <maxLength>1024</maxLength>
+            <mediaType>application/x-mft-entry</mediaType>
+            <carverClass>iped.carvers.custom.MFTEntryCarver</carverClass>
+        </carverType>
+    </carverTypes>
 </carverconfig>
