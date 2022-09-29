@@ -35,7 +35,7 @@ public class TaskInstallerConfig implements Configurable<String> {
      */
     private static final long serialVersionUID = 1L;
     private static final String CONFIG_XML = "TaskInstaller.xml"; //$NON-NLS-1$
-    public static final String SCRIPT_BASE = "conf/scripts"; //$NON-NLS-1$
+    public static final String SCRIPT_BASE = "scripts/tasks"; //$NON-NLS-1$
 
     private String xml;
 

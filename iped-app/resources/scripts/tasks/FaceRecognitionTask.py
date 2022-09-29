@@ -65,7 +65,7 @@ def createExternalProcess():
     proc = None
     for i in range(3):
         if proc is None or proc.poll() is not None:
-            proc = subprocess.Popen([bin, os.path.join(ipedRoot, 'conf', 'scripts', processScript), str(max_size), detection_model, str(up_sampling)], 
+            proc = subprocess.Popen([bin, os.path.join(ipedRoot, 'scripts', 'tasks', processScript), str(max_size), detection_model, str(up_sampling)], 
                                     stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         
         if pingExternalProcess(proc):
