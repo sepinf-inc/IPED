@@ -62,7 +62,7 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
     @Override
     protected KMLResult doInBackground() throws Exception {
         KMLResult kmlResult = new KMLResult();
-    	try {
+        try {
             StringBuilder tourPlayList = new StringBuilder(""); //$NON-NLS-1$
             StringBuilder kml = new StringBuilder(""); //$NON-NLS-1$
 
@@ -99,49 +99,49 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
             if (progress != null) {
                 progress.setMaximum(results.getLength());
             }
-            
+
             LeafReader reader = app.getIPEDSource().getLeafReader();
             SortedSetDocValues docValuesSet = reader.getSortedSetDocValues(IndexItem.GEO_SSDV_PREFIX+ExtraProperties.LOCATIONS);
-            
+
             int cont=0;
             Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
-            
+
             class ItemIds{
-            	int luceneId;
-            	IItemId itemId;
-            	
-            	public ItemIds(int luceneId, IItemId itemId) {
-            		this.luceneId = luceneId;
-            		this.itemId = itemId;
-            	}
+                int luceneId;
+                IItemId itemId;
+
+                public ItemIds(int luceneId, IItemId itemId) {
+                    this.luceneId = luceneId;
+                    this.itemId = itemId;
+                }
             }
-            
+
             TreeMap<Integer,ItemIds> sortedItems = new TreeMap<Integer,ItemIds>();
 
             for (int row = 0; row < results.getLength(); row++) {        	
                 if (progress != null) {
                     progress.setValue(row + 1);
                 }
-                
+
                 IItemId item = results.getItem(row);
 
                 int luceneId = app.getIPEDSource().getLuceneId(item);
-                
+
                 if(!docValuesSet.advanceExact(luceneId)) {
-                	continue;
+                    continue;
                 }
 
                 int tableRow = app.getResultsTable().convertRowIndexToView(row);
                 gpsItems.put(item, null);
                 sortedItems.put(tableRow, new ItemIds(luceneId,item));
             }
-            
+
             for (Iterator<Entry<Integer,ItemIds>> iterator = sortedItems.entrySet().iterator(); iterator.hasNext();) {
-            	Entry<Integer, ItemIds> e = iterator.next();
-            	ItemIds itemIds = e.getValue();
-				int luceneId = itemIds.luceneId;
-				IItemId item = itemIds.itemId;
-				int row = e.getKey();
+                Entry<Integer, ItemIds> e = iterator.next();
+                ItemIds itemIds = e.getValue();
+                int luceneId = itemIds.luceneId;
+                IItemId item = itemIds.itemId;
+                int row = e.getKey();
 
                 cont++;
                 //int luceneId = app.getIPEDSource().getLuceneId(item);
@@ -194,13 +194,13 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
             kml.append("</kml>"); //$NON-NLS-1$
 
             kmlResult.setResultKML(kml.toString(), itemsWithGPS, gpsItems);
-    		
-    	}catch(Exception e){
-    		e.printStackTrace();
-    	}finally {
-        	//Thread.currentThread().setContextClassLoader(oldCcl);
-		
-		}
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // Thread.currentThread().setContextClassLoader(oldCcl);
+
+        }
 
         return kmlResult;
 

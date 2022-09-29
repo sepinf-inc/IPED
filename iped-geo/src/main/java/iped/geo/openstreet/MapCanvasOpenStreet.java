@@ -25,14 +25,14 @@ import netscape.javascript.JSObject;
 
 public class MapCanvasOpenStreet extends AbstractMapCanvas {
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	WebView browser;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    WebView browser;
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
     JSInterfaceFunctionsOpenStreet jsInterface = new JSInterfaceFunctionsOpenStreet(this);
-    
+
     boolean dragging = false;
     double dragStartX, dragStartY;
     ChangeListener<State> onLoadChange;
@@ -85,7 +85,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                 });
 
                 webEngine.loadContent(UiUtil.getUIEmptyHtml());
-                
+
                 onLoadChange = new ChangeListener<State>() {
                     @Override
                     public void changed(ObservableValue<? extends State> observable, State oldState, State newState) {
@@ -93,13 +93,13 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                             JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
                             window.setMember("app", jsInterface); //$NON-NLS-1$
                             try {
-                            	if(onLoadRunnables.size()>0) {
-                            		for (Iterator iterator = onLoadRunnables.iterator(); iterator.hasNext();) {
-										Runnable runnable = (Runnable) iterator.next();
-										runnable.run();										
-									}
-                            		onLoadRunnables.clear();
-                            	}
+                                if (onLoadRunnables.size() > 0) {
+                                    for (Iterator iterator = onLoadRunnables.iterator(); iterator.hasNext();) {
+                                        Runnable runnable = (Runnable) iterator.next();
+                                        runnable.run();
+                                    }
+                                    onLoadRunnables.clear();
+                                }
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -221,7 +221,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
     @Override
     public void update() {
-    	MapCanvasOpenStreet self = this;
+        MapCanvasOpenStreet self = this;
         if (self.selectionMapToApply != null) {
             // repinta selecoes alteradas
             final String[] marks = new String[self.selectionMapToApply.keySet().size()];
@@ -254,7 +254,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             self.selectionMapToApply = null;
         }
         if (self.leadSelectionToApply != null) {
-        	final String leadSelectionToApplyCopy = self.leadSelectionToApply;
+            final String leadSelectionToApplyCopy = self.leadSelectionToApply;
             Platform.runLater(new Runnable() {
                 public void run() {
                     try {
@@ -262,8 +262,8 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {
-                    	//nothing
-					}
+                        // nothing
+                    }
                 }
             });
         }
