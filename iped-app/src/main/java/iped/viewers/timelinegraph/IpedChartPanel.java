@@ -36,6 +36,7 @@ import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.Axis;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.entity.AxisEntity;
 import org.jfree.chart.entity.ChartEntity;
@@ -75,6 +76,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	Color filterIntervalFillPaint;
 
 	int lastMouseMoveX=-1;
+	MouseResponsiveChartEntity lastMouseResponsiveChartEntity = null;
 
     IpedChartsPanel ipedChartsPanel = null;
 
@@ -162,12 +164,62 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 			}
 		});
         this.add(apllyFilters);
+        
 	
         this.addChartMouseListener(new ChartMouseListener() {
+
 			@Override
 			public void chartMouseMoved(ChartMouseEvent event) {
-				// TODO Auto-generated method stub
+				ChartEntity ce = event.getEntity();
 				
+				int mods = event.getTrigger().getModifiersEx();
+				int x=event.getTrigger().getX();
+				
+				if(ce instanceof PlotEntity) {
+					if ((mods & self.filterMask) == self.filterMask){
+			            setCursor(Cursor.getPredefinedCursor(
+			                    Cursor.E_RESIZE_CURSOR));
+					}else {
+			            setCursor(Cursor.getDefaultCursor());					
+					}
+					if(lastMouseMoveX!=x) {
+			            Graphics2D g2 = (Graphics2D) getGraphics();
+			            if(lastMouseMoveX>=0) {
+			                drawDateCursor(g2, lastMouseMoveX, true);
+			            }
+			            drawDateCursor(g2, x, true);
+					}
+				}
+				
+				MouseResponsiveChartEntity curMouseResponsiveChartEntity=null;
+				
+				if(ce instanceof AxisEntity) {
+					curMouseResponsiveChartEntity = (MouseResponsiveChartEntity)((AxisEntity) ce).getAxis();
+				}
+
+				
+				if(lastMouseResponsiveChartEntity instanceof MouseResponsiveChartEntity && curMouseResponsiveChartEntity==null){
+		            setCursor(Cursor.getDefaultCursor());
+		            Graphics2D g2 = (Graphics2D) getGraphics();
+		            Color bk = getBackground();
+		            lastMouseResponsiveChartEntity.setMouseOverPaint(bk);
+		            repaint();
+		            g2.dispose();
+		            self.getChart().getPlot().setNotify(true);
+					lastMouseResponsiveChartEntity=null;
+				}
+
+				if(curMouseResponsiveChartEntity!=lastMouseResponsiveChartEntity) {
+		            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		            Graphics2D g2 = (Graphics2D) getGraphics();
+		            Color bk = getBackground();
+		            Color bklight = new Color(bk.getRed()+20, bk.getGreen()+20, bk.getBlue()+20);
+		            curMouseResponsiveChartEntity.setMouseOverPaint(bklight);
+		            repaint();
+		            g2.dispose();
+		            self.getChart().getPlot().setNotify(true);
+					lastMouseResponsiveChartEntity=curMouseResponsiveChartEntity;
+				}
 			}
 
 			@Override
@@ -242,21 +294,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		int mods = e.getModifiersEx();
-		int x=e.getX();		
-		if ((mods & this.filterMask) == this.filterMask){
-            setCursor(Cursor.getPredefinedCursor(
-                    Cursor.E_RESIZE_CURSOR));
-		}else {
-			if(lastMouseMoveX!=x) {
-	            setCursor(Cursor.getDefaultCursor());
-	            Graphics2D g2 = (Graphics2D) getGraphics();
-	            if(lastMouseMoveX>=0) {
-	                drawDateCursor(g2, lastMouseMoveX, true);
-	            }
-	            drawDateCursor(g2, x, true);
-			}
-		}
 		super.mouseMoved(e);
 	}
 
@@ -790,14 +827,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	}
 
 	@Override
-	public void mouseExited(MouseEvent e) {
-        Graphics2D g2 = (Graphics2D) getGraphics();
-        drawDateCursor(g2, lastMouseMoveX, true);
-		lastMouseMoveX=-1;
-		super.mouseExited(e);
-	}
-
-	@Override
 	public void paint(Graphics g) {
         Graphics2D g2 = (Graphics2D) getGraphics();
         drawDateCursor(g2, lastMouseMoveX, true);
@@ -930,5 +959,14 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 
 	public ChartTimePeriodConstraint getTimePeriodConstraints() {
 		return timePeriodConstraints.get(this.getIpedChartsPanel().getTimePeriodClass());
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+        Graphics2D g2 = (Graphics2D) getGraphics();
+        drawDateCursor(g2, lastMouseMoveX, true);
+		lastMouseMoveX=-1;
+		lastMouseResponsiveChartEntity = null;
+		super.mouseExited(e);
 	}
 }

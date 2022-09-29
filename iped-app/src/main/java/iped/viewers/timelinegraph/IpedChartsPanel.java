@@ -623,7 +623,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         XYPlot firstPlot = null;
     	for (Iterator iterator = datasets.keySet().iterator(); iterator.hasNext();) {
 			String marcador = (String) iterator.next();			
-	    	NumberAxis rangeAxis = new NumberAxis(marcador);
+	    	NumberAxis rangeAxis = new IpedNumberAxis(marcador);
 	        rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
 	        rangeAxis.setUpperMargin(0.10);  // leave some space for item labels
 

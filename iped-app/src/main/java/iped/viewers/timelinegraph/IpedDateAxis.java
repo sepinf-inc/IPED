@@ -2,6 +2,7 @@ package iped.viewers.timelinegraph;
 
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Paint;
 import java.awt.geom.Rectangle2D;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,6 +18,7 @@ import java.util.TimeZone;
 
 import javax.swing.JOptionPane;
 
+import org.jfree.chart.axis.AxisState;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.DateTick;
 import org.jfree.chart.axis.DateTickMarkPosition;
@@ -25,6 +27,7 @@ import org.jfree.chart.axis.DateTickUnitType;
 import org.jfree.chart.axis.Tick;
 import org.jfree.chart.axis.TickType;
 import org.jfree.chart.event.AxisChangeEvent;
+import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.TextAnchor;
 import org.jfree.chart.util.Args;
@@ -43,13 +46,15 @@ import org.jfree.data.time.Year;
 import iped.app.ui.Messages;
 import iped.viewers.timelinegraph.model.Minute;
 
-public class IpedDateAxis extends DateAxis {
+public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity {
     volatile SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
 
 	HashMap<DateTickUnitType, DateFormat> dateFormaters = new HashMap<DateTickUnitType, DateFormat>();
 	IpedChartsPanel ipedChartsPanel;
 
 	private boolean needTimePeriodClassUpdate;
+
+	private Paint mouseOverPaint;
 
     public IpedDateAxis(String string, IpedChartsPanel ipedChartsPanel) {
 		super(string, TimeZone.getDefault(), Locale.getDefault());
@@ -501,5 +506,24 @@ public class IpedDateAxis extends DateAxis {
             return Millisecond.class;
         }
     }
+
+	@Override
+	public AxisState draw(Graphics2D g2, double cursor, Rectangle2D plotArea, Rectangle2D dataArea, RectangleEdge edge,
+			PlotRenderingInfo plotState) {
+		if(mouseOverPaint!=null) {
+			g2.setPaint(mouseOverPaint);
+			g2.fillRect((int)dataArea.getMinX(), (int)dataArea.getMaxY(), (int)plotArea.getMaxX()-(int)dataArea.getMinX(), (int)plotArea.getMaxY()-(int)dataArea.getMaxY());
+		}
+		AxisState result = super.draw(g2, cursor, plotArea, dataArea, edge, plotState);
+		return result;
+	}
+
+	public Paint getMouseOverPaint() {
+		return mouseOverPaint;
+	}
+
+	public void setMouseOverPaint(Paint mouseOverPaint) {
+		this.mouseOverPaint = mouseOverPaint;
+	}
 
 }
