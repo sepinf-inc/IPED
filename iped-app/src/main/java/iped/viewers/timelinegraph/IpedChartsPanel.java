@@ -8,6 +8,8 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.font.TextAttribute;
@@ -107,7 +109,7 @@ import iped.viewers.timelinegraph.popups.LegendItemPopupMenu;
 import iped.viewers.timelinegraph.swingworkers.CheckWorker;
 import iped.viewers.timelinegraph.swingworkers.HighlightWorker;
 
-public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener {
+public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener, ComponentListener {
 	JTable resultsTable;
 	IMultiSearchResultProvider resultsProvider;
 	GUIProvider guiProvider;
@@ -180,6 +182,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 				return "<html>"+dataset.getSeriesKey(series)+":"+dataset.getYValue(series, item)+"</html>";
 			}
 		};
+		
+		this.addComponentListener(this);
 	}
 	
 	public IpedChartsPanel(boolean b) {
@@ -262,7 +266,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 		splitPane = new IpedSplitPane();
 		splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		this.add(splitPane);
+		this.add(splitPane, BorderLayout.CENTER);
 
 		chartPanel = new IpedChartPanel(chart, this);
 		legendListModel = new DefaultListModel<LegendItemBlockContainer>();
@@ -272,8 +276,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		legendList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
 		legendList.setCellRenderer(new LegendCellRenderer());
 		chartPanel.setPreferredSize(new Dimension(Integer.MAX_VALUE,Integer.MAX_VALUE));
-		listScroller.setPreferredSize(new Dimension(Integer.MAX_VALUE,50));
-		listScroller.setMaximumSize(new Dimension(Integer.MAX_VALUE,50));
+		listScroller.setPreferredSize(new Dimension(Integer.MAX_VALUE,80));
 		legendList.addMouseListener(new MouseAdapter() {
 			public void mousePressed(MouseEvent e)  {check(e);}
 			public void mouseReleased(MouseEvent e) {check(e);}
@@ -954,5 +957,29 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 	public void setLegendList(JList legendList) {
 		this.legendList = legendList;
+	}
+
+	@Override
+	public void componentResized(ComponentEvent e) {
+		this.remove(loadingLabel);
+		this.remove(splitPane);
+		this.add(splitPane);
+	}
+
+	@Override
+	public void componentMoved(ComponentEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void componentShown(ComponentEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void componentHidden(ComponentEvent e) {
+		
 	}
 }
