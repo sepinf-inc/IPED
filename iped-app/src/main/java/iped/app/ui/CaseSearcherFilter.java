@@ -220,20 +220,20 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                     //LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
                 }
 
-                HashSet<String> bookmarkSelection = (HashSet<String>) App.get().bookmarksListener.selection.clone();
-                if (!bookmarkSelection.isEmpty() && !bookmarkSelection.contains(BookmarksTreeModel.ROOT)) {
+                Set<String> bookmarkSelection = App.get().bookmarksListener.getSelectedBookmarkNames();
+                if ((!bookmarkSelection.isEmpty() || App.get().bookmarksListener.isNoBookmarksSelected())
+                        && !App.get().bookmarksListener.isRootSelected()) {
                     numFilters++;
                     StringBuilder bookmarks = new StringBuilder();
                     for (String bookmark : bookmarkSelection)
                         bookmarks.append("\"" + bookmark + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
                     //LOGGER.info("Filtering for bookmarks " + bookmarks.toString()); //$NON-NLS-1$
 
-                    if (bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)) {
-                        if (bookmarkSelection.size() == 1)
+                    if (App.get().bookmarksListener.isNoBookmarksSelected()) {
+                        if (bookmarkSelection.isEmpty()) {
                             result = (MultiSearchResult) App.get().appCase.getMultiBookmarks()
                                     .filterNoBookmarks(result);
-                        else {
-                            bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
+                        } else {
                             result = (MultiSearchResult) App.get().appCase.getMultiBookmarks()
                                     .filterBookmarksOrNoBookmarks(result, bookmarkSelection);
                         }
