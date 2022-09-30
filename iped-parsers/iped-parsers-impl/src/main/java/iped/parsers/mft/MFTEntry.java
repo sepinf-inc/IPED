@@ -66,11 +66,10 @@ public class MFTEntry {
         } else if (attr.getType() == 0x80) {
             // Data
             if (attr.isResident()) {
-                int start = offset + attr.getDataOffset();
-                int end = start + attr.getDataSize();
-                if (start < length && end <= length && start < end) {
-                    entry.fileSize = end - start;
-                    entry.residentFileStart = start;
+                int end = offset + attr.getDataSize();
+                if (offset < length && end <= length && offset < end) {
+                    entry.fileSize = end - offset;
+                    entry.residentFileStart = offset;
                 }
             } else {
                 // TODO: Handle non resident data
