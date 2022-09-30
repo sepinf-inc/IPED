@@ -18,7 +18,7 @@ public class MFTEntryCarver extends AbstractCarver {
         carverTypes = new CarverType[1];
         carverTypes[0] = new CarverType();
         carverTypes[0].addHeader("FILE0");
-        carverTypes[0].setMimeType(MediaType.parse("application/x-mft-entry"));
+        carverTypes[0].setMimeType(MediaType.parse(MFTEntry.MFT_ENTRY_MIME_TYPE));
         carverTypes[0].setMaxLength(MFTEntry.length);
         carverTypes[0].setMinLength(MFTEntry.length);
         carverTypes[0].setName("MFT-ENTRY");
