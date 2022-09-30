@@ -107,7 +107,7 @@ enableAudioTranscription = false
 
 # Enables carving. "addUnallocated" must be enabled to unallocated area be searched.
 # By default carving runs on almost every item in the case. 
-# File types to be searched and retrieved can be set in file "conf/CarvingConfig.txt"
+# File types to be searched and retrieved can be set in file "conf/CarverConfig.xml".
 enableCarving = false
 
 # Enables carving that retrieves known files from the LED base, based on the beginning (64K) of the file.
