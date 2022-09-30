@@ -4,27 +4,22 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TimeZone;
-import java.util.TreeMap;
 import java.util.function.Consumer;
 
 import javax.swing.JProgressBar;
 import javax.swing.SortOrder;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.tika.metadata.Metadata;
 
 import iped.data.IItemId;
-import iped.engine.task.index.IndexItem;
 import iped.geo.localization.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
+import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.utils.DateUtil;
 import iped.utils.SimpleHTMLEncoder;
@@ -100,51 +95,29 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
                 progress.setMaximum(results.getLength());
             }
 
-            LeafReader reader = app.getIPEDSource().getLeafReader();
-            SortedSetDocValues docValuesSet = reader.getSortedSetDocValues(IndexItem.GEO_SSDV_PREFIX+ExtraProperties.LOCATIONS);
+            String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
 
-            int cont=0;
+            IIPEDSearcher searcher = app.createNewSearch(query);
+            IMultiSearchResult multiResult = searcher.multiSearch();
+
             Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
-
-            class ItemIds{
-                int luceneId;
-                IItemId itemId;
-
-                public ItemIds(int luceneId, IItemId itemId) {
-                    this.luceneId = luceneId;
-                    this.itemId = itemId;
-                }
+            for (IItemId item : multiResult.getIterator()) {
+                gpsItems.put(item, null);
             }
 
-            TreeMap<Integer,ItemIds> sortedItems = new TreeMap<Integer,ItemIds>();
+            for (int row = 0; row < results.getLength(); row++) {
 
-            for (int row = 0; row < results.getLength(); row++) {        	
                 if (progress != null) {
                     progress.setValue(row + 1);
                 }
 
-                IItemId item = results.getItem(row);
+                IItemId item = results.getItem(app.getResultsTable().convertRowIndexToModel(row));
 
-                int luceneId = app.getIPEDSource().getLuceneId(item);
-
-                if(!docValuesSet.advanceExact(luceneId)) {
+                if (!gpsItems.containsKey(item)) {
                     continue;
                 }
 
-                int tableRow = app.getResultsTable().convertRowIndexToView(row);
-                gpsItems.put(item, null);
-                sortedItems.put(tableRow, new ItemIds(luceneId,item));
-            }
-
-            for (Iterator<Entry<Integer,ItemIds>> iterator = sortedItems.entrySet().iterator(); iterator.hasNext();) {
-                Entry<Integer, ItemIds> e = iterator.next();
-                ItemIds itemIds = e.getValue();
-                int luceneId = itemIds.luceneId;
-                IItemId item = itemIds.itemId;
-                int row = e.getKey();
-
-                cont++;
-                //int luceneId = app.getIPEDSource().getLuceneId(item);
+                int luceneId = app.getIPEDSource().getLuceneId(item);
                 doc = app.getIPEDSource().getSearcher().doc(luceneId);
 
                 String lat;
@@ -176,7 +149,6 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
                 }
 
             }
-            System.out.println(cont);
             kml.append("</Folder>"); //$NON-NLS-1$
 
             kml.append("<gx:Tour>"); //$NON-NLS-1$
