@@ -1450,7 +1450,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
 	@Override
 	public Set<String> getSelectedBookmarks() {
-        return bookmarksListener.selection;
+        return bookmarksListener.getSelectedBookmarkNames();
 	}
 
 	@Override
