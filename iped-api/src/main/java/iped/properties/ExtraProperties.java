@@ -19,6 +19,8 @@ public class ExtraProperties {
 
     public static final String TIKA_PARSER_USED = TikaCoreProperties.TIKA_PARSED_BY.getName();
 
+    public static final String TIKA_PARSER_USED_FULL_SET = TikaCoreProperties.TIKA_PARSED_BY_FULL_SET.getName();
+
     public static final String DATASOURCE_READER = "X-Reader"; //$NON-NLS-1$
 
     public static final String EMBEDDED_FOLDER = "IpedEmbeddeFolder"; //$NON-NLS-1$
