@@ -72,6 +72,7 @@ import iped.engine.data.Item;
 import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.ParsingReader;
 import iped.engine.search.ItemSearcher;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.task.carver.CarverTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.tika.SyncMetadata;
@@ -617,6 +618,11 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 subItem.setDeleted(true);
             }
             metadata.remove(ExtraProperties.DELETED);
+            if (Boolean.valueOf(metadata.get(ExtraProperties.CARVED))) {
+                subItem.setCarved(true);
+                subItem.setExtraAttribute(BaseCarveTask.CARVED_ID, 0);
+            }
+            metadata.remove(ExtraProperties.CARVED);
 
             if (Boolean.valueOf(metadata.get(ExtraProperties.DECODED_DATA))) {
                 subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
