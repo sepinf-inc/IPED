@@ -45,11 +45,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListCellRenderer;
-import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -58,16 +56,15 @@ import javax.swing.event.TableModelListener;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.util.BytesRef;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.LegendItem;
 import org.jfree.chart.LegendItemCollection;
 import org.jfree.chart.axis.DateTickMarkPosition;
 import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.block.Block;
 import org.jfree.chart.labels.XYToolTipGenerator;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYBarPainter;
@@ -76,8 +73,6 @@ import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.title.LegendGraphic;
 import org.jfree.chart.title.LegendItemBlockContainer;
-import org.jfree.chart.ui.VerticalAlignment;
-import org.jfree.data.Range;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimePeriod;
 import org.jfree.data.xy.AbstractIntervalXYDataset;
@@ -982,4 +977,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	public void componentHidden(ComponentEvent e) {
 		
 	}
+
+    @Override
+    public void checkAll(boolean value) {
+        // TODO Auto-generated method stub
+    }
 }
