@@ -1,6 +1,8 @@
 package iped.parsers.mail.win10;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -15,9 +17,12 @@ import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.sax.ToXMLContentHandler;
+import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -38,9 +43,12 @@ import iped.parsers.mail.win10.entries.RecipientTable;
 import iped.parsers.mail.win10.tables.AbstractTable;
 import iped.parsers.mail.win10.tables.AttachmentTable;
 import iped.parsers.mail.win10.tables.MessageTable;
+import iped.parsers.standard.StandardParser;
 import iped.parsers.util.EsedbManager;
+import iped.parsers.util.IgnoreContentHandler;
 import iped.parsers.util.ItemInfo;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 
 /*
@@ -64,7 +72,10 @@ import iped.search.IItemSearcher;
 public class Win10MailParser extends AbstractParser {
 
     public static final MediaType WIN10_MAIL_DB = MediaType.application("x-win10-mail-db");
+    public static final MediaType WIN10_MAIL_MSG_REG = MediaType.application("x-win10-mail-msg-registry");
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(WIN10_MAIL_DB);
+
+    private static final char MESSAGE_CATEGORY = '3';
 
     private static Logger LOGGER = LoggerFactory.getLogger(Win10MailParser.class);
 
@@ -77,6 +88,8 @@ public class Win10MailParser extends AbstractParser {
     protected boolean extractEntries = true;
 
     private ItemInfo itemInfo;
+
+    private static IItemSearcher searcher;
 
     @Field
     public void setExtractEntries(boolean extractEntries) {
@@ -100,8 +113,7 @@ public class Win10MailParser extends AbstractParser {
             throws IOException, SAXException, TikaException {
 
         itemInfo = context.get(ItemInfo.class);
-
-        IItemSearcher searcher = context.get(IItemSearcher.class);
+        searcher = context.get(IItemSearcher.class);
 
         TemporaryResources tmp = new TemporaryResources();
         // File tableFile = tmp.createTemporaryFile();
@@ -120,8 +132,32 @@ public class Win10MailParser extends AbstractParser {
                 PointerByReference filePointerReference = new PointerByReference();
 
                 List<AbstractTable> tables = getMailTables(storeVolPath, filePointerReference);
+                
+                File tableFile = tmp.createTemporaryFile();
 
                 for (AbstractTable table : tables) {
+
+                    try (FileOutputStream tmpTableFile = new FileOutputStream(tableFile)) {
+
+                        ToXMLContentHandler tableHandler = new ToXMLContentHandler(tmpTableFile, "UTF-8");
+                        Metadata tableMetadata = new Metadata();
+                        tableMetadata.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_DB.toString());
+                        tableMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Mail Table " + table.getTableName()); // $NON-NLS-1$
+                        tableMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
+                        tableMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                        tableMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+                        XHTMLContentHandler xHandler = new XHTMLContentHandler(tableHandler, metadata);
+                        xHandler.startDocument();
+                        xHandler.startElement("p");
+                        xHandler.characters("aasdasd");
+                        xHandler.endElement("p");
+                        xHandler.endDocument();
+
+                        try (FileInputStream fis = new FileInputStream(tableFile)) {
+                            extractor.parseEmbedded(fis, handler, tableMetadata, true);
+                        }
+                    }
 
                     if (table instanceof MessageTable) {
                         MessageTable msgTable = (MessageTable) table;
@@ -131,6 +167,23 @@ public class Win10MailParser extends AbstractParser {
                                 str = message.getAttachments().get(1).getFileName();
                             }
                             System.out.println(message.getRowId() + ": " + str);
+
+                            String contentPath = Win10MailParser.getEntryLocation(message, MESSAGE_CATEGORY);
+                            IItemReader item = Win10MailParser.searchItemInCase(contentPath, message.getMessageSize());
+                            
+                            if (item != null) {
+                                InputStream is = item.getBufferedInputStream();
+                                Metadata metadataMessage = new Metadata();
+
+                                metadataMessage.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Mail rowId: " + message.getRowId());
+                                metadataMessage.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG_REG.toString());
+                                metadataMessage.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                                metadataMessage.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
+
+                                if (is != null) {
+                                    extractor.parseEmbedded(is, new IgnoreContentHandler(), metadataMessage, true);
+                                }
+                            }
                         }
                     }
                     closeTablePointer(table.getTablePointer());
@@ -255,6 +308,45 @@ public class Win10MailParser extends AbstractParser {
         return tables;
     }
 
+    public static String getEntryLocation(AbstractEntry entry, char category) {
+        String entryPath = "";
+
+        String contentType = "1013";
+
+        String hexRowId = Integer.toHexString(entry.getRowId());
+        while (hexRowId.length() < 8) hexRowId = "0" + hexRowId;
+
+        entryPath += "/" + "abcdefghijklmnopqrstuvwxyz".charAt(Integer.parseInt("" + hexRowId.charAt(hexRowId.length()-1), 16)) + "/";
+        entryPath += hexRowId.charAt(hexRowId.length()-2);
+        entryPath += hexRowId.substring(1, 6) + "0";
+        entryPath += hexRowId.charAt(hexRowId.length()-1);
+        entryPath += "0000000";
+        entryPath += category;
+        entryPath += contentType;
+        entryPath += ".dat";
+
+        return entryPath;
+    }
+
+    public static IItemReader searchItemInCase(String path, long size) {
+        if (searcher == null) {
+            return null;
+        }
+
+        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\"" + " && " + BasicProps.LENGTH + ":" + size;
+
+        List<IItemReader> items = searcher.search(query);
+        if (items == null || items.isEmpty()) {
+            // search without size restriction
+            query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\"";
+            items = searcher.search(query);
+
+            if (items == null || items.isEmpty())
+                return null;
+        }
+
+        return items.get(0);
+    }
 
     private void closeTablePointer(PointerByReference tablePointer) {
         PointerByReference errorPointer = new PointerByReference();

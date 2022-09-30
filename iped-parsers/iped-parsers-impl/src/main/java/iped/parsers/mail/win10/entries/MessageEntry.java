@@ -8,9 +8,10 @@ import java.util.TimeZone;
 import iped.parsers.mail.win10.tables.AttachmentTable;
 
 public class MessageEntry extends AbstractEntry {
-    private int conversationId;
-    private int noOfAttachments;
+    private long conversationId;
+    private long parentFolderId;
     private long messageSize;
+    private int noOfAttachments;
     private String msgAbstract;
     private String subject;
     private String senderName;
@@ -18,26 +19,27 @@ public class MessageEntry extends AbstractEntry {
     private Date msgDeliveryTime;
     private Date lastModifiedTime;
 
-    public MessageEntry(int rowId, int conversationId, int noOfAttachments, long messageSize, String msgAbstract, String subject,
-            String senderName, String senderAddress, Date msgDeliveryTime, Date lastModifiedTime) {
+    private String contentHtml;
+    public final char categoryNumber = '3';
+
+    public MessageEntry(int rowId) {
         super(rowId);
-        this.conversationId = conversationId;
-        this.noOfAttachments = noOfAttachments;
-        this.messageSize = messageSize;
-        this.msgAbstract = msgAbstract != null ? msgAbstract : "";
-        this.subject = subject;
-        this.senderName = senderName;
-        this.senderEmail = senderAddress;
-        this.msgDeliveryTime = msgDeliveryTime;
-        this.lastModifiedTime = lastModifiedTime;
     }
 
-    public int getConversationId() {
+    public long getConversationId() {
         return this.conversationId;
     }
 
-    public void setConversationId(int conversationId) {
+    public void setConversationId(long conversationId) {
         this.conversationId = conversationId;
+    }
+
+    public long getParentFolderId() {
+        return this.parentFolderId;
+    }
+
+    public void setParentFolderId(long parentFolderId) {
+        this.parentFolderId = parentFolderId;
     }
 
 
@@ -123,5 +125,13 @@ public class MessageEntry extends AbstractEntry {
 
     public ArrayList<AttachmentEntry> getAttachments() {
         return AttachmentTable.getMessageAttachments(rowId);
+    }
+    
+    public String getContentHtml() {
+        return this.contentHtml;
+    }
+
+    public void setContentHtml(String contentHtml) {
+        this.contentHtml = contentHtml;
     }
 }
