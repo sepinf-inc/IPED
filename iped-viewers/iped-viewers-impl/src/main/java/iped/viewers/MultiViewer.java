@@ -168,4 +168,20 @@ public class MultiViewer extends AbstractViewer {
     public AbstractViewer getCurrentViewer() {
         return currentViewer;
     }
+
+    public void setBlurFilter(boolean enableBlur) {
+        for (AbstractViewer viewer : viewerList) {
+            if (viewer instanceof ImageViewer) {
+                ((ImageViewer) viewer).setBlurFilter(enableBlur);
+            }
+        }
+    }
+
+    public void setGrayFilter(boolean enableGray) {
+        for (AbstractViewer viewer : viewerList) {
+            if (viewer instanceof ImageViewer) {
+                ((ImageViewer) viewer).setGrayFilter(enableGray);
+            }
+        }
+    }
 }

@@ -26,13 +26,13 @@ import iped.parsers.util.Messages;
 /**
  * Parser for Torrent Files
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class TorrentFileParser extends AbstractParser {
 
     private static final long serialVersionUID = 3238363426940179831L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-bittorrent")); //$NON-NLS-1$
-    private static final String TORRENT_FILE_MIME_TYPE = "application/x-bittorrent"; //$NON-NLS-1$
+    public static final String TORRENT_FILE_MIME_TYPE = "application/x-bittorrent"; //$NON-NLS-1$
     private static final String[] header = { Messages.getString("TorrentFileDatParser.FullPath"), //$NON-NLS-1$
             Messages.getString("TorrentFileDatParser.FileSize"), //$NON-NLS-1$
             Messages.getString("TorrentFileDatParser.MD5"), //$NON-NLS-1$

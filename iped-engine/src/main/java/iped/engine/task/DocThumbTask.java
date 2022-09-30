@@ -37,6 +37,7 @@ import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.DocThumbTaskConfig;
 import iped.engine.config.ParsingTaskConfig;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.parsers.misc.PDFTextParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.PDFToThumb;

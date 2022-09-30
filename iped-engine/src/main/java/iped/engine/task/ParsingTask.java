@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -59,12 +58,12 @@ import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ExternalParsersConfig;
-import iped.engine.config.LocalConfig;
 import iped.engine.config.OCRConfig;
 import iped.engine.config.ParsersConfig;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.config.PluginConfig;
 import iped.engine.config.SplitLargeBinaryConfig;
+import iped.engine.core.Statistics;
 import iped.engine.core.Worker;
 import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.CaseData;
@@ -142,7 +141,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private static final int MAX_SUBITEM_DEPTH = 100;
     private static final String SUBITEM_DEPTH = "subitemDepth"; //$NON-NLS-1$
 
-    public static AtomicInteger subitensDiscovered = new AtomicInteger();
     public static AtomicLong totalText = new AtomicLong();
     public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
 
@@ -276,10 +274,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType());
     }
 
-    public static int getSubitensDiscovered() {
-        return subitensDiscovered.get();
-    }
-
     @SuppressWarnings("resource")
     private void setEmptyTextCache(IItem evidence) {
         ((Item) evidence).setParsedTextCache(new TextCache());
@@ -308,7 +302,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 .findObject(SplitLargeBinaryConfig.class);
         if (((Item) evidence).getTextCache() == null
                 && ((evidence.getLength() == null || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
-                        || StandardParser.isSpecificParser(parser))) {
+                || (StandardParser.isSpecificParser(parser) && !FragmentLargeBinaryTask.isXHtmlToSplit(evidence)))) {
             try {
                 depth++;
                 ParsingTask task = new ParsingTask(worker, autoParser);
@@ -452,9 +446,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         }
 
         if (Boolean.valueOf(metadata.get(BasicProps.HASCHILD))) {
-            metadata.remove(BasicProps.HASCHILD);
             evidence.setHasChildren(true);
         }
+        metadata.remove(BasicProps.HASCHILD);
 
         String compressRatio = evidence.getMetadata().get(EntropyTask.COMPRESS_RATIO);
         if (compressRatio != null) {
@@ -590,10 +584,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
             // parsers should set this property to let created items be displayed in file
             // tree
-            if (metadata.get(BasicProps.HASCHILD) != null) {
-                metadata.remove(BasicProps.HASCHILD);
+            if (Boolean.valueOf(metadata.get(BasicProps.HASCHILD))) {
                 subItem.setHasChildren(true);
             }
+            metadata.remove(BasicProps.HASCHILD);
 
             subItem.setHash(metadata.get(BasicProps.HASH));
             metadata.remove(BasicProps.HASH);
@@ -605,10 +599,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             // indica se o conteiner tem subitens (mais específico que filhos genéricos)
             evidence.setExtraAttribute(HAS_SUBITEM, "true"); //$NON-NLS-1$
 
-            if (metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null) {
-                metadata.remove(ExtraProperties.EMBEDDED_FOLDER);
+            if (Boolean.valueOf(metadata.get(ExtraProperties.EMBEDDED_FOLDER))) {
                 subItem.setIsDir(true);
             }
+            metadata.remove(ExtraProperties.EMBEDDED_FOLDER);
 
             subItem.setCreationDate(metadata.getDate(TikaCoreProperties.CREATED));
             subItem.setModificationDate(metadata.getDate(TikaCoreProperties.MODIFIED));
@@ -619,15 +613,15 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             removeMetadataAndDuplicates(metadata, ExtraProperties.ACCESSED);
 
             subItem.setDeleted(parentInfo.isDeleted());
-            if (metadata.get(ExtraProperties.DELETED) != null) {
-                metadata.remove(ExtraProperties.DELETED);
+            if (Boolean.valueOf(metadata.get(ExtraProperties.DELETED))) {
                 subItem.setDeleted(true);
             }
+            metadata.remove(ExtraProperties.DELETED);
 
             if (Boolean.valueOf(metadata.get(ExtraProperties.DECODED_DATA))) {
                 subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
-                metadata.remove(ExtraProperties.DECODED_DATA);
             }
+            metadata.remove(ExtraProperties.DECODED_DATA);
 
             // causa problema de subitens corrompidos de zips carveados serem apagados,
             // mesmo sendo referenciados por outros subitens
@@ -672,7 +666,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                     // subitems)
                     ProcessTime time = ProcessTime.LATER;
                     worker.processNewItem(subItem, time);
-                    subitensDiscovered.incrementAndGet();
+                    Statistics.get().incSubitemsDiscovered();
                     numSubitems++;
 
                     long diff = (System.nanoTime() / 1000) - start;
@@ -796,7 +790,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         System.setProperty(PDFTextParser.SORT_PDF_CHARS, String.valueOf(parsingConfig.isSortPDFChars()));
         System.setProperty(PDFTextParser.PROCESS_INLINE_IMAGES, String.valueOf(parsingConfig.isProcessImagesInPDFs()));
         System.setProperty(RawStringParser.MIN_STRING_SIZE, String.valueOf(parsingConfig.getMinRawStringSize()));
-        System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/conf/parsers");
+        System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/scripts/parsers");
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
             System.setProperty(OCRParser.TOOL_PATH_PROP, appRoot + "/tools/tesseract"); //$NON-NLS-1$
@@ -805,10 +799,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             System.setProperty(IndexDatParser.TOOL_PATH_PROP, appRoot + "/tools/msiecfexport/"); //$NON-NLS-1$
         }
 
-        LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
-        if (localConfig.getRegRipperFolder() != null) {
-            System.setProperty(RegRipperParser.TOOL_PATH_PROP, appRoot + "/" + localConfig.getRegRipperFolder()); //$NON-NLS-1$
-        }
+        System.setProperty(RegRipperParser.TOOL_PATH_PROP, appRoot + "/tools/regripper/"); //$NON-NLS-1$
 
         setupOCROptions(configurationManager.findObject(OCRConfig.class));
 

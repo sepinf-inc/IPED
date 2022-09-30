@@ -27,8 +27,7 @@ public class SevenZipParserTest extends AbstractPkgTest {
         SevenZipParser parser = new SevenZipParser();
         ContentHandler handler = new BodyContentHandler();
         Metadata mockedMetadata = spy(new Metadata());
-        String mimetype = "application/x-rar-compressed";
-        when(mockedMetadata.get(Metadata.CONTENT_TYPE)).thenReturn(mimetype);
+        when(mockedMetadata.get(Metadata.CONTENT_TYPE)).thenReturn(SevenZipParser.RAR.toString());
         parser.getSupportedTypes(recursingContext);
         try (InputStream stream = getStream("test-files/test_mockRar5.rar")) {
             parser.parse(stream, handler, mockedMetadata, recursingContext);
@@ -96,8 +95,7 @@ public class SevenZipParserTest extends AbstractPkgTest {
         SevenZipParser parser = new SevenZipParser();
         ContentHandler handler = new BodyContentHandler();
         Metadata mockedMetadata = spy(new Metadata());
-        String mimetype = "application/x-rar-compressed";
-        when(mockedMetadata.get(Metadata.CONTENT_TYPE)).thenReturn(mimetype);
+        when(mockedMetadata.get(Metadata.CONTENT_TYPE)).thenReturn(SevenZipParser.RAR.toString());
         try (InputStream stream = getStream("test-files/test_mockRar5.rar")) {
             parser.parse(stream, handler, mockedMetadata, trackingContext);
             DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");

@@ -19,7 +19,12 @@
 package iped.engine.task.video;
 
 import java.awt.Dimension;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,7 +33,7 @@ import java.util.Map;
  *
  * @author Wladimir Leite
  */
-public class VideoProcessResult {
+public class VideoProcessResult implements Closeable {
 
     private String videoStream;
     private long videoDuration;
@@ -38,9 +43,14 @@ public class VideoProcessResult {
     private long bitRate;
     private String videoFormat, videoCodec;
     private Map<String, String> clipInfos = new HashMap<String, String>();
-
+    private List<File> frames = new ArrayList<>();
     private boolean success, timeout;
     private long processingTime;
+    private File subTmp;
+
+    public VideoProcessResult(File subTmp) {
+        this.subTmp = subTmp;
+    }
 
     public long getVideoDuration() {
         return videoDuration;
@@ -96,6 +106,14 @@ public class VideoProcessResult {
 
     public Map<String, String> getClipInfos() {
         return this.clipInfos;
+    }
+
+    public void setFrames(List<File> frames) {
+        this.frames = frames;
+    }
+
+    public List<File> getFrames() {
+        return this.frames;
     }
 
     public void setVideoInfo(String info) throws Exception {
@@ -288,6 +306,17 @@ public class VideoProcessResult {
 
     public void setVideoFormat(String videoFormat) {
         this.videoFormat = videoFormat;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (subTmp != null) {
+            File[] files = subTmp.listFiles();
+            for (File file : files) {
+                file.delete();
+            }
+            subTmp.delete();
+        }
     }
 
 }

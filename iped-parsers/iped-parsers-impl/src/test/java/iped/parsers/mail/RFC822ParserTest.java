@@ -128,8 +128,8 @@ public class RFC822ParserTest extends TestCase {
             parser.parse(stream, handler, metadata, new ParseContext());
             // tests correct decoding of base64 text, including ISO-8859-1 bytes into
             // Unicode
-            String mts = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
-            assertTrue(mts.contains("Here is some text, with international characters, voil\u00E0!"));
+            String metadataMsgBody = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
+            assertTrue(metadataMsgBody.contains("Here is some text, with international characters, voil\u00E0!"));
         }
 
     }

@@ -43,7 +43,7 @@ import iped.search.IItemSearcher;
 /**
  * Parser para arquivo Library{1,2}.dat do Shareaza
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class ShareazaLibraryDatParser extends AbstractParser {
 

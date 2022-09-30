@@ -17,12 +17,11 @@ import org.slf4j.LoggerFactory;
 
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
-import com.google.zxing.ReaderException;
 import com.google.zxing.Result;
 import com.google.zxing.ResultPoint;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
-import com.google.zxing.multi.qrcode.QRCodeMultiReader;
+import com.google.zxing.qrcode.QRCodeReader;
 
 import iped.configuration.Configurable;
 import iped.data.IItem;
@@ -140,8 +139,8 @@ public class QRCodeTask extends AbstractTask {
 
                 BinaryBitmap binaryBitmap = new BinaryBitmap(
                         new HybridBinarizer(new BufferedImageLuminanceSource(img)));
-                QRCodeMultiReader reader = new QRCodeMultiReader();
-                Result[] results = reader.decodeMultiple(binaryBitmap, hints);
+                QRCodeReader reader = new QRCodeReader();
+                Result[] results = { reader.decode(binaryBitmap) };
                 List<String> texts = new ArrayList<>(), types = new ArrayList<>(), rawBytes = new ArrayList<>(),
                         points = new ArrayList<>();
                 for (Result rs : results) {
@@ -184,7 +183,7 @@ public class QRCodeTask extends AbstractTask {
                     totalQRCodesFound.addAndGet(results.length);
                 }
 
-            } catch (ReaderException e) {
+            } catch (Throwable e) {
                 logger.debug("Error searching for qrcodes in file {} ({} bytes): {}", evidence.getPath(),
                         evidence.getLength(), e.toString());
             }

@@ -10,7 +10,7 @@
 # prefix:     (optional) number of prefix chars which will be removed from matches (default 0)
 # suffix:     (optional) number of suffix chars which will be removed from matches (default 0)
 #
-# The following escapes are allowed: \b \s \S \d \D \w \W \n \r \t \f
+# The following escapes are allowed: \b \s \S \d \D \w \W \n \r \t \f (currently \b is allowed just at the beginning or at the end of the regex)
 #
 ##################################################################################################################
 

@@ -24,7 +24,7 @@ import java.io.InputStream;
 import org.apache.poi.util.LittleEndianInputStream;
 
 /**
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 class MFCParser {
 

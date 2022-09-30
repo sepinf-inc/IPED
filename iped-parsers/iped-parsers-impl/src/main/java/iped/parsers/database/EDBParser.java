@@ -45,8 +45,11 @@ public class EDBParser extends AbstractParser {
      * 
      */
     private static final long serialVersionUID = 1938967091470933178L;
+
+    public static final MediaType EDB = MediaType.application("x-edb");
+
     private static Logger LOGGER = LoggerFactory.getLogger(EDBParser.class);
-    private static Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-edb")); //$NON-NLS-1$
+    private static Set<MediaType> SUPPORTED_TYPES = Collections.singleton(EDB); //$NON-NLS-1$
     private static String TOOL_NAME = "esedbexport"; //$NON-NLS-1$
     private static String OUT_SUFFIX = ".export"; //$NON-NLS-1$
     private static boolean tested = false;

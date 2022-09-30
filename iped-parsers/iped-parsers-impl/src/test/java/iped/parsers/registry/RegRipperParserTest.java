@@ -1,32 +1,44 @@
 package iped.parsers.registry;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.util.RepoToolDownloader;
+
+
 public class RegRipperParserTest {
+    private static String testRoot = System.getProperty("user.dir") + "/src/test";
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
 
     @BeforeClass
-    public static void beforeAll() {
-        RegRipperParser parser = new RegRipperParser();
-        ParseContext context = new ParseContext();
-        assumeFalse(parser.getSupportedTypes(context).isEmpty());
+    public static void setUpTool() throws IOException {
+        String repoPath = "keydet89/regripper/2.8_20180406_p01/regripper-2.8_20180406_p01.zip";
+        RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
+        System.setProperty(RegRipperParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/regripper/");
+    }
+
+    @AfterClass
+    public static void tearDownTool() throws IOException {
+        File tool_path = new File(System.clearProperty(RegRipperParser.TOOL_PATH_PROP));
+        FileUtils.deleteDirectory(tool_path.getParentFile());
     }
 
     @Test
@@ -46,7 +58,6 @@ public class RegRipperParserTest {
             assertTrue(hts.contains("Culture=neutral"));
             assertTrue(hts.contains("PublicKeyToken=b03f5f7f11d50a3a"));
         }
-
     }
 
     @Test
@@ -56,8 +67,8 @@ public class RegRipperParserTest {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        parser.getSupportedTypes(context);
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "sam");
+        parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_sam")) {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
@@ -66,7 +77,6 @@ public class RegRipperParserTest {
             assertTrue(hts.contains("guilh"));
             assertTrue(hts.contains("ServerDomainUpdates"));
         }
-
     }
 
     @Test
@@ -86,7 +96,6 @@ public class RegRipperParserTest {
             assertTrue(hts.contains("MINWINPC"));
             assertTrue(hts.contains("WORKGROUP"));
         }
-
     }
 
     @Test

@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,6 +18,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.opensearch.action.ActionListener;
@@ -55,6 +57,9 @@ import iped.engine.config.IndexTaskConfig;
 import iped.engine.io.FragmentingReader;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.MinIOTask.MinIODataRef;
+import iped.engine.task.similarity.ImageSimilarity;
+import iped.engine.task.similarity.ImageSimilarityTask;
+import iped.engine.util.SSLFix;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
@@ -152,7 +157,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
             clientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
                 @Override
                 public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-                    return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                    var custombuilder=httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                    // disable validation if configured
+                    if (!elasticConfig.getValidateSSL()) {
+                        custombuilder.setSSLContext(SSLFix.getUnsecureSSLContext()).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+                    }
+                    return custombuilder;
                 }
             });
         }
@@ -206,7 +216,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
         CreateIndexRequest request = new CreateIndexRequest(indexName);
         Builder builder = Settings.builder().put(MAX_FIELDS_KEY, elasticConfig.getMax_fields())
                 .put(INDEX_SHARDS_KEY, elasticConfig.getIndex_shards())
-                .put(INDEX_REPLICAS_KEY, elasticConfig.getIndex_replicas()).put(IGNORE_MALFORMED, true);
+                .put(INDEX_REPLICAS_KEY, elasticConfig.getIndex_replicas()).put(IGNORE_MALFORMED, true)
+                .put("index.knn", true);
 
         if (!elasticConfig.getIndex_policy().isEmpty()) {
             builder.put(INDEX_POLICY_KEY, elasticConfig.getIndex_policy());
@@ -258,6 +269,17 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
         properties.put(ExtraProperties.LOCATIONS, Collections.singletonMap("type", "geo_point"));
+        properties.put("extraAttributes." + ImageSimilarityTask.IMAGE_FEATURES,
+                Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures, "method",
+                        Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+
+        Map<String, String> contentMapping = new HashMap<>(Map.of("type", "text"));
+
+        if (elasticConfig.isTermVector()) {
+            contentMapping.put("term_vector", "with_positions_offsets");
+        }
+
+        properties.put(BasicProps.CONTENT, contentMapping);
 
         // mapping the parent-child relation
         /*
@@ -492,7 +514,19 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.DELETED, item.isDeleted()).field(BasicProps.HASCHILD, item.hasChildren())
                 .field(BasicProps.ISDIR, item.isDir()).field(BasicProps.ISROOT, item.isRoot())
                 .field(BasicProps.CARVED, item.isCarved()).field(BasicProps.SUBITEM, item.isSubItem())
-                .field(BasicProps.OFFSET, item.getFileOffset()).field("extraAttributes", item.getExtraAttributeMap());
+                .field(BasicProps.OFFSET, item.getFileOffset());
+
+        var extraAttributes = new HashMap<String, Object>();
+        extraAttributes.putAll(item.getExtraAttributeMap());
+        if (extraAttributes.containsKey(ImageSimilarityTask.IMAGE_FEATURES)) {
+            float v[] = new float[ImageSimilarity.numFeatures];
+            byte vet[] = (byte[]) extraAttributes.get(ImageSimilarityTask.IMAGE_FEATURES);
+            for (int i = 0; i < ImageSimilarity.numFeatures; i++) {
+                v[i] = vet[i];
+            }
+            extraAttributes.put(ImageSimilarityTask.IMAGE_FEATURES, v);
+        }
+        builder.field("extraAttributes", extraAttributes);
 
         ISeekableInputStreamFactory isisf = item.getInputStreamFactory();
         String idInSource = item.getIdInDataSource();

@@ -27,7 +27,6 @@ import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FileSystemConfig;
 import iped.engine.data.Item;
-import iped.engine.task.BaseCarveTask;
 import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
 

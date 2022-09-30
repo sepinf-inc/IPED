@@ -29,7 +29,7 @@ import org.xml.sax.SAXException;
 import iped.search.IItemSearcher;
 
 /**
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 class AlbumFolder extends ShareazaEntity {
 

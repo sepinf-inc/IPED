@@ -23,6 +23,7 @@ import iped.engine.config.EnableTaskProperty;
 import iped.engine.data.Item;
 import iped.engine.datasource.SleuthkitReader;
 import iped.engine.search.ItemSearcher;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.TextCache;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
@@ -77,7 +78,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 && item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) == null;
     }
 
-    private static boolean isFirstOrUniqueImagePart(IItem item) {
+    public static boolean isFirstOrUniqueImagePart(IItem item) {
         return MediaTypes.E01_IMAGE.equals(item.getMediaType())
                 || MediaTypes.EX01_IMAGE.equals(item.getMediaType())
                 || MediaTypes.RAW_IMAGE.equals(item.getMediaType())
@@ -134,6 +135,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             }
             if (reader.hasDecodingError()) {
                 item.getMetadata().set(StandardParser.PARSER_EXCEPTION, Boolean.TRUE.toString());
+                StandardParser.incParsingErrors();
             } else {
                 ((Item) item).setParsedTextCache(new TextCache());
             }

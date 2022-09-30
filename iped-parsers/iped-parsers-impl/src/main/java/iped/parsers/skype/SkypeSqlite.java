@@ -26,7 +26,7 @@ import iped.search.IItemSearcher;
  * Classe de persistência (apenas leitura) para acesso aos dados no banco de
  * dados SQLLite main.db.
  *
- * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
+ * @author Patrick Dalla Bernardina patrick.pdb@pf.gov.br
  */
 
 public class SkypeSqlite implements SkypeStorage {

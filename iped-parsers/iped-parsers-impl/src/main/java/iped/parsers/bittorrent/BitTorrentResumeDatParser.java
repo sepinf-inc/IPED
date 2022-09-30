@@ -24,14 +24,14 @@ import iped.parsers.util.Messages;
 /**
  * Parser for BitTorrent Client Artifacts
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class BitTorrentResumeDatParser extends AbstractParser {
 
     private static final long serialVersionUID = -203319828888512196L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections
             .singleton(MediaType.application("x-bittorrent-resume-dat")); //$NON-NLS-1$
-    private static final String RESUME_DAT_MIME_TYPE = "application/x-bittorrent-resume-dat"; //$NON-NLS-1$
+    public static final String RESUME_DAT_MIME_TYPE = "application/x-bittorrent-resume-dat"; //$NON-NLS-1$
     private static final String[] header = new String[] { Messages.getString("BitTorrentResumeDatParser.TorrentFile"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.RootDir"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.Path"), //$NON-NLS-1$

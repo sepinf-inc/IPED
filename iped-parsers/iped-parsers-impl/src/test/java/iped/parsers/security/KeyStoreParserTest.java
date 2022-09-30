@@ -6,7 +6,6 @@ import java.io.InputStream;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.ToTextContentHandler;
 import org.junit.Test;
@@ -27,13 +26,13 @@ public class KeyStoreParserTest extends TestCase {
 
         KeystoreParser parser = new KeystoreParser();
         Metadata metadata = new Metadata();
-        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, MediaType.application("x-java-keystore").toString());
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, KeystoreParser.JAVA_KEYSTORE.toString());
         ContentHandler handler = new ToTextContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_serverMyRelease.keystore")) {
             parser.parse(stream, handler, metadata, context);
-            assertEquals("application/x-java-keystore", metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
+            assertEquals(KeystoreParser.JAVA_KEYSTORE.toString(), metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
             assertEquals("changeit", metadata.get(KeystoreParser.PASSWORD));
 
         }
@@ -45,7 +44,7 @@ public class KeyStoreParserTest extends TestCase {
 
         KeystoreParser parser = new KeystoreParser();
         Metadata metadata = new Metadata();
-        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, MediaType.application("x-pkcs12").toString());
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, KeystoreParser.PKCS12_MIME.toString());
         ContentHandler handler = new ToTextContentHandler();
         ParseContext context = new ParseContext();
         String alias = "server certificate";
@@ -53,7 +52,7 @@ public class KeyStoreParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_server.pfx")) {
             parser.parseCertificate(alias, stream, handler, metadata, context);
             assertEquals("server certificate", metadata.get(TikaCoreProperties.TITLE));
-            assertEquals("application/pkix-cert", metadata.get(Metadata.CONTENT_TYPE));
+            assertEquals(CertificateParser.DER_MIME.toString(), metadata.get(Metadata.CONTENT_TYPE));
 
         }
     }

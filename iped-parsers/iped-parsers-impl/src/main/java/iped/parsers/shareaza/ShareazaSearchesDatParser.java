@@ -37,14 +37,14 @@ import org.xml.sax.SAXException;
 /**
  * Parser para arquivo Searches.dat do Shareaza
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class ShareazaSearchesDatParser extends AbstractParser {
 
     private static final long serialVersionUID = -6775874100144141162L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections
             .singleton(MediaType.application("x-shareaza-searches-dat")); //$NON-NLS-1$
-    private static final String SEARCH_DAT_MIME_TYPE = "application/x-shareaza-searches-dat"; //$NON-NLS-1$
+    public static final String SEARCH_DAT_MIME_TYPE = "application/x-shareaza-searches-dat"; //$NON-NLS-1$
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
