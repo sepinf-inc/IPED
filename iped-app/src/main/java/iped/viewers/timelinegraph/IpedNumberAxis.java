@@ -8,6 +8,7 @@ import org.jfree.chart.axis.AxisState;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.ui.RectangleEdge;
+import org.jfree.data.Range;
 
 public class IpedNumberAxis extends NumberAxis implements MouseResponsiveChartEntity{
 
@@ -16,6 +17,7 @@ public class IpedNumberAxis extends NumberAxis implements MouseResponsiveChartEn
 	public IpedNumberAxis(String marcador) {
 		super(marcador);
 		setAutoRange(false);
+		setAutoRangeMinimumSize(1.3);
 	}
 
 	@Override
@@ -42,14 +44,21 @@ public class IpedNumberAxis extends NumberAxis implements MouseResponsiveChartEn
 
 	@Override
 	public void configure() {
-		
 		super.configure();
 	}
 
 	@Override
 	public void autoAdjustRange() {
-		// TODO Auto-generated method stub
 		super.autoAdjustRange();
+	}
+
+	@Override
+	public void setRange(Range range, boolean turnOffAutoRange, boolean notify) {
+		if(range.getLowerBound()<0) {
+			super.setRange(new Range(0, range.getUpperBound()), turnOffAutoRange, notify);
+		}else {
+			super.setRange(range, turnOffAutoRange, notify);
+		}
 	}
 
 }
