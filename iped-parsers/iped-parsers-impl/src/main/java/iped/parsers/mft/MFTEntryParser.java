@@ -1,5 +1,6 @@
 package iped.parsers.mft;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
@@ -9,6 +10,8 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -20,6 +23,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.util.Messages;
+import iped.properties.ExtraProperties;
 import iped.utils.LocalizedFormat;
 
 public class MFTEntryParser extends AbstractParser {
@@ -60,12 +64,18 @@ public class MFTEntryParser extends AbstractParser {
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
 
+        if (entry.getFlags() >= 0 && entry.hasResidentContent() && (entry.getFlags() & 2) == 0) {
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                    new ParsingEmbeddedDocumentExtractor(context));
+            createResidentSubitem(handler, extractor, entry, bytes, metadata);
+        }
+
         xhtml.startElement("style");
         xhtml.characters(
                 ".tab {border-collapse: collapse; font-family: Arial, sans-serif; margin-right: 32px; margin-bottom: 32px; } "
                         + ".prop { border: solid; border-width: thin; padding: 3px; text-align: left; background-color:#EEEEEE; vertical-align: middle; } "
                         + ".val { border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; } ");
-        xhtml.endElement("style"); //$NON-NLS-1$
+        xhtml.endElement("style");
         xhtml.newline();
         xhtml.startElement("table", "class", "tab");
         if (entry.getFileName() != null) {
@@ -105,5 +115,25 @@ public class MFTEntryParser extends AbstractParser {
         xhtml.endElement("td");
         xhtml.endElement("tr");
         xhtml.newline();
+    }
+
+    private void createResidentSubitem(ContentHandler handler, EmbeddedDocumentExtractor extractor, MFTEntry entry,
+            byte[] bytes, Metadata parentMetadata) throws SAXException, IOException {
+        Metadata metadata = new Metadata();
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, entry.getFileName());
+        metadata.set(TikaCoreProperties.CREATED, entry.getCreationDate());
+        metadata.set(TikaCoreProperties.MODIFIED, entry.getLastModificationDate());
+        metadata.set(ExtraProperties.ACCESSED, entry.getLastAccessDate());
+        if ((entry.getFlags() & 1) == 0) {
+            metadata.set(ExtraProperties.DELETED, "true");
+        }
+        String parentCarvedBy = parentMetadata.get(ExtraProperties.CARVEDBY_METADATA_NAME);
+        if (parentCarvedBy != null) {
+            metadata.set(ExtraProperties.CARVED, "true");
+            metadata.set(ExtraProperties.CARVEDBY_METADATA_NAME, parentCarvedBy);
+        }
+        byte[] content = entry.getResidentContent(bytes);
+        ByteArrayInputStream bais = new ByteArrayInputStream(content);
+        extractor.parseEmbedded(bais, handler, metadata, false);
     }
 }
