@@ -17,6 +17,7 @@ import iped.geo.localization.Messages;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.ResultSetViewer;
+import javafx.application.Platform;
 
 public class MapViewer implements ResultSetViewer, TableModelListener, ListSelectionListener {
 
@@ -62,6 +63,20 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
     @Override
     public void redraw() {
         mapaPanel.updateMap();
+    }
+
+    @Override
+    public void checkAll(boolean value) {
+        updatingCheckbox = true;
+        for (IItemId itemId : resultsProvider.getResults().getIterator()) {
+            mapaPanel.selectCheckbox(itemId, value);
+        }
+        updatingCheckbox = false;
+        Platform.runLater(new Runnable() {
+            public void run() {
+                mapaPanel.update();
+            }
+        });
     }
 
     @Override

@@ -25,6 +25,8 @@ public interface ResultSetViewer {
 
     public void updateSelection();
 
+    public void checkAll(boolean value);
+
     public GUIProvider getGUIProvider();
 
 }

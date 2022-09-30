@@ -1027,6 +1027,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         setGalleryColCount(getGalleryColCount() + inc);
     }
 
+    public void sendCheckAllToResultSetViewers(boolean checked) {
+        for (ResultSetViewer setViewer : resultSetViewerConfiguration.getResultSetViewers()) {
+            setViewer.checkAll(checked);
+        }
+    }
+
     private ResultSetViewerConfiguration getResultSetViewerConfiguration() {
         try {
             if (resultSetViewerConfiguration == null) {
