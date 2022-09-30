@@ -5,11 +5,14 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -173,16 +176,32 @@ public class Win10MailParser extends AbstractParser {
                             
                             if (item != null) {
                                 InputStream is = item.getBufferedInputStream();
-                                Metadata metadataMessage = new Metadata();
+                                InputStreamReader utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
 
+                                // convert text from utf-16 to utf-8
+                                byte[] bom = new byte[2];   // byte-order mark
+                                is.mark(2);
+                                if ((is.read(bom)) != -1) {
+                                    is.reset();
+                                    if (bom[0] == (byte) 0xFE && bom[1] == (byte) 0xFF) {
+                                        utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16BE);
+                                    }
+                                }
+                                ReaderInputStream utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
+
+                                Metadata metadataMessage = new Metadata();
                                 metadataMessage.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Mail rowId: " + message.getRowId());
                                 metadataMessage.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG_REG.toString());
                                 metadataMessage.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                                 metadataMessage.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
+                                metadataMessage.add(TikaCoreProperties.ORIGINAL_RESOURCE_NAME, contentPath);
 
-                                if (is != null) {
-                                    extractor.parseEmbedded(is, new IgnoreContentHandler(), metadataMessage, true);
+                                if (utf8IS != null) {
+                                    extractor.parseEmbedded(utf8IS, new IgnoreContentHandler(), metadataMessage, true);
                                 }
+
+                                utf8IS.close();
+                                utf16Reader.close();
                             }
                         }
                     }
