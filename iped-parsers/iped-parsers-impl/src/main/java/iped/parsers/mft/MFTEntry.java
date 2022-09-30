@@ -4,7 +4,9 @@ import java.nio.charset.Charset;
 import java.util.Date;
 
 public class MFTEntry {
+    public static final String MFT_ENTRY_MIME_TYPE = "application/x-mft-entry";
     public static final int length = 1024;
+    
     private static final Charset charset = Charset.forName("UTF-16LE");
 
     private long logFileSequenceNumber = -1, baseRecordFileRef = -1, fileSize = -1;
