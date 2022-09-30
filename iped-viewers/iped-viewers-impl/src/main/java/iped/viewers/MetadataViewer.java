@@ -305,6 +305,9 @@ public abstract class MetadataViewer extends AbstractViewer {
             fillProp(sb, key, item.getExtraAttributeMap().get(key));
         }
         fillProp(sb, ExtraProperties.TIKA_PARSER_USED, item.getMetadata().get(ExtraProperties.TIKA_PARSER_USED));
+        fillProp(sb, ExtraProperties.TIKA_PARSER_USED_FULL_SET, item.getMetadata().get(ExtraProperties.TIKA_PARSER_USED_FULL_SET));
+        fillProp(sb, ExtraProperties.CARVEDBY_METADATA_NAME, item.getMetadata().get(ExtraProperties.CARVEDBY_METADATA_NAME));
+        fillProp(sb, ExtraProperties.CARVEDOFFSET_METADATA_NAME.getName(), item.getMetadata().get(ExtraProperties.CARVEDOFFSET_METADATA_NAME));
         sb.append("</table>"); //$NON-NLS-1$
     }
 

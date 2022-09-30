@@ -171,6 +171,9 @@ public class MetadataUtil {
         ignorePreviewMetas.add(Metadata.CONTENT_TYPE);
         ignorePreviewMetas.add(StandardParser.INDEXER_CONTENT_TYPE);
         ignorePreviewMetas.add(ExtraProperties.TIKA_PARSER_USED);
+        ignorePreviewMetas.add(ExtraProperties.TIKA_PARSER_USED_FULL_SET);
+        ignorePreviewMetas.add(ExtraProperties.CARVEDBY_METADATA_NAME);
+        ignorePreviewMetas.add(ExtraProperties.CARVEDOFFSET_METADATA_NAME.getName());
         ignorePreviewMetas.add(UFEDChatParser.CHILD_MSG_IDS);
         return ignorePreviewMetas;
     }
@@ -190,6 +193,7 @@ public class MetadataUtil {
         generalKeys.add(StandardParser.PARSER_EXCEPTION);
         generalKeys.add(StandardParser.INDEXER_TIMEOUT);
         generalKeys.add(ExtraProperties.DELETED);
+        generalKeys.add(ExtraProperties.CARVED);
         generalKeys.add(ExtraProperties.EMBEDDED_FOLDER);
         generalKeys.add(ExtraProperties.ACCESSED.getName());
         generalKeys.add(ExtraProperties.P2P_REGISTRY_COUNT);
