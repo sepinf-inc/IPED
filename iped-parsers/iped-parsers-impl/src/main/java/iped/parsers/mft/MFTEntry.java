@@ -9,14 +9,13 @@ public class MFTEntry {
 
     private long logFileSequenceNumber = -1, baseRecordFileRef = -1, fileSize = -1;
     private int fixUpOffset = -1, fixUpSize = -1, sequence = -1, linkCount = -1, attrOffset = -1, flags = -1,
-            firstAttrId = -1, usedSize = -1, totalSize = -1;
+            firstAttrId = -1, usedSize = -1, totalSize = -1, residentFileStart = -1;
     private String fileName;
     private Date creationDate, lastModificationDate, lastAccessDate, lastEntryModificationDate;
-    private byte[] content;
 
     private MFTEntry() {
     }
-    
+
     public static MFTEntry parse(byte[] in) {
         if (in == null || in.length != length) {
             return null;
@@ -68,13 +67,11 @@ public class MFTEntry {
                 int start = offset + attr.getDataOffset();
                 int end = start + attr.getDataSize();
                 if (start < length && end <= length && start < end) {
-                    int len = end - start;
-                    entry.fileSize = len;
-                    entry.content = new byte[len];
-                    System.arraycopy(in, start, entry.content, 0, len);
+                    entry.fileSize = end - start;
+                    entry.residentFileStart = start;
                 }
             } else {
-                //TODO: Handle non resident data
+                // TODO: Handle non resident data
             }
         }
     }
@@ -221,7 +218,12 @@ public class MFTEntry {
         return lastEntryModificationDate;
     }
 
-    public byte[] getContent() {
-        return content;
+    public byte[] getResidentContent(byte[] in) {
+        if (fileSize > 0 && residentFileStart > 0) {
+            byte[] content = new byte[(int) fileSize];
+            System.arraycopy(in, residentFileStart, content, 0, content.length);
+            return content;
+        }
+        return null;
     }
 }
