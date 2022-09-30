@@ -228,4 +228,8 @@ public class MFTEntry {
         }
         return null;
     }
+
+    public boolean hasResidentContent() {
+        return fileSize > 0 && residentFileStart > 0;
+    }
 }
