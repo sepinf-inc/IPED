@@ -187,6 +187,26 @@ public class MFTEntry {
         return flags;
     }
 
+    public boolean isFile() {
+        if (flags < 0) return false;
+        return (flags & 2) == 0;
+    }
+
+    public boolean isFolder() {
+        if (flags < 0) return false;
+        return (flags & 2) != 0;
+    }
+
+    public boolean isActive() {
+        if (flags < 0) return false;
+        return (flags & 1) != 0;
+    }
+
+    public boolean isInactive() {
+        if (flags < 0) return false;
+        return (flags & 1) == 0;
+    }
+
     public int getFirstAttrId() {
         return firstAttrId;
     }

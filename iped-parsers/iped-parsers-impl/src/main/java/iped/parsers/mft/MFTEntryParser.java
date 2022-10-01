@@ -72,8 +72,7 @@ public class MFTEntryParser extends AbstractParser {
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
 
-        if (extractResidentFiles && entry.hasResidentContent() && entry.getFlags() >= 0
-                && (entry.getFlags() & 2) == 0) {
+        if (extractResidentFiles && entry.hasResidentContent() && entry.isFile()) {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
             createResidentSubitem(handler, extractor, entry, bytes, metadata);
@@ -105,9 +104,15 @@ public class MFTEntryParser extends AbstractParser {
         if (entry.getLastEntryModificationDate() != null) {
             add(xhtml, "MFT Entry Modification Date", df.format(entry.getLastEntryModificationDate()));
         }
-        if (entry.getFlags() >= 0) {
-            add(xhtml, "Active", (entry.getFlags() & 1) != 0 ? "Yes" : "No");
-            add(xhtml, "Type", (entry.getFlags() & 2) != 0 ? "Folder" : "File");
+        if (entry.isActive()) {
+            add(xhtml, "Active", "Yes");
+        } else if (entry.isInactive()) {
+            add(xhtml, "Active", "No");
+        }
+        if (entry.isFile()) {
+            add(xhtml, "Type", "File");
+        } else if (entry.isFolder()) {
+            add(xhtml, "Type", "Folder");
         }
         add(xhtml, "Resident Content", entry.hasResidentContent() ? "Yes" : "No");
         xhtml.endElement("table");
@@ -133,7 +138,7 @@ public class MFTEntryParser extends AbstractParser {
         metadata.set(TikaCoreProperties.CREATED, entry.getCreationDate());
         metadata.set(TikaCoreProperties.MODIFIED, entry.getLastModificationDate());
         metadata.set(ExtraProperties.ACCESSED, entry.getLastAccessDate());
-        if ((entry.getFlags() & 1) == 0) {
+        if (entry.isInactive()) {
             metadata.set(ExtraProperties.DELETED, "true");
         }
         String parentCarvedBy = parentMetadata.get(ExtraProperties.CARVEDBY_METADATA_NAME);
