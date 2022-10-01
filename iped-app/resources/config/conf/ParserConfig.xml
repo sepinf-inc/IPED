@@ -325,7 +325,11 @@
         <parser class="iped.parsers.winx.WinXTimelineParser"></parser>
         <parser class="iped.parsers.gdrive.GDriveMainParser"></parser>
         <parser class="iped.parsers.browsers.firefox.FirefoxSavedSessionParser"></parser>
-        <parser class="iped.parsers.mft.MFTEntryParser"></parser>
+        <parser class="iped.parsers.mft.MFTEntryParser">
+            <params>
+                <param name="extractResidentFiles" type="bool">true</param>
+            </params>
+        </parser>
         
         <parser class="iped.parsers.python.PythonParser"></parser>
     </parsers>

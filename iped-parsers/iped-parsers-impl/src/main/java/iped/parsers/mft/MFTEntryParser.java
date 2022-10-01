@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -29,6 +30,13 @@ import iped.utils.LocalizedFormat;
 public class MFTEntryParser extends AbstractParser {
     private static final long serialVersionUID = -9207387811762742286L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(MFTEntry.MIME_TYPE));
+
+    private boolean extractResidentFiles = false;
+
+    @Field
+    public void setExtractResidentFiles(boolean extractResidentFiles) {
+        this.extractResidentFiles = extractResidentFiles;
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -64,7 +72,8 @@ public class MFTEntryParser extends AbstractParser {
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
 
-        if (entry.getFlags() >= 0 && entry.hasResidentContent() && (entry.getFlags() & 2) == 0) {
+        if (extractResidentFiles && entry.hasResidentContent() && entry.getFlags() >= 0
+                && (entry.getFlags() & 2) == 0) {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
             createResidentSubitem(handler, extractor, entry, bytes, metadata);
