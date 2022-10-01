@@ -127,8 +127,12 @@ public class ExtraProperties {
 
     public static final String PARENT_VIEW_POSITION = "parentViewPosition"; //$NON-NLS-1$
 
+    //TODO: Maybe we could use "carvedBy" (initial lower case) as other properties starting with "carved"
+    //TODO: Maybe the constant could be renamed to "CARVEDBY" without the "_METADATA_NAME" suffix
     public static final String CARVEDBY_METADATA_NAME = "CarvedBy"; //$NON-NLS-1$
 
+    //TODO: Same as above, use "carvedOffset" (initial lower case)
+    //TODO: Same as above, use "CARVEDOFFSET" only
     public static final Property CARVEDOFFSET_METADATA_NAME = Property.internalInteger("CarvedOffset"); //$NON-NLS-1$
 
     public static final String TRANSCRIPT_ATTR = AUDIO_META_PREFIX + "transcription";
