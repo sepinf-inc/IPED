@@ -19,14 +19,14 @@ public class MFTEntryCarver extends AbstractCarver {
         carverTypes[0] = new CarverType();
         carverTypes[0].addHeader("FILE0");
         carverTypes[0].setMimeType(MediaType.parse(MFTEntry.MIME_TYPE));
-        carverTypes[0].setMaxLength(MFTEntry.length);
-        carverTypes[0].setMinLength(MFTEntry.length);
+        carverTypes[0].setMaxLength(MFTEntry.entryLength);
+        carverTypes[0].setMinLength(MFTEntry.entryLength);
         carverTypes[0].setName("MFT-ENTRY");
     }
 
     @Override
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
-        long length = MFTEntry.length;
+        long length = MFTEntry.entryLength;
         long evidenceLen = parentEvidence.getLength();
         if (header.getOffset() + length > evidenceLen) {
             length = evidenceLen - header.getOffset();
@@ -42,7 +42,7 @@ public class MFTEntryCarver extends AbstractCarver {
     @Override
     public void validateCarvedObject(IItem parentEvidence, Hit headerOffset, long length)
             throws InvalidCarvedObjectException {
-        if (length != MFTEntry.length) {
+        if (length != MFTEntry.entryLength) {
             throw new InvalidCarvedObjectException("Invalid MFT entry length: " + length);
         }
         String name = parentEvidence.getName();
@@ -50,16 +50,16 @@ public class MFTEntryCarver extends AbstractCarver {
             throw new InvalidCarvedObjectException("MFT entries are not be carved from " + name);
         }
         try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
-            byte[] bytes = new byte[MFTEntry.length];
+            byte[] bytes = new byte[MFTEntry.entryLength];
             int read = 0;
-            while (read < MFTEntry.length) {
-                int r = is.read(bytes, read, MFTEntry.length - read);
+            while (read < MFTEntry.entryLength) {
+                int r = is.read(bytes, read, MFTEntry.entryLength - read);
                 if (r == -1) {
                     break;
                 }
                 read += r;
             }
-            if (length != MFTEntry.length) {
+            if (length != MFTEntry.entryLength) {
                 throw new InvalidCarvedObjectException("Incorrect number of bytes read from MFT entry: " + read);
             }
             MFTEntry entry = MFTEntry.parse(bytes);
@@ -81,7 +81,7 @@ public class MFTEntryCarver extends AbstractCarver {
             if (entry.getTotalSize() != length) {
                 throw new InvalidCarvedObjectException("Invalid MFT entry total size: " + entry.getTotalSize());
             }
-            if (entry.getFileName() == null) {
+            if (entry.getName() == null) {
                 throw new InvalidCarvedObjectException("Invalid MFT entry file name.");
             }
             if (entry.getCreationDate() == null && entry.getLastModificationDate() == null

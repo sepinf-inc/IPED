@@ -52,16 +52,16 @@ public class MFTEntryParser extends AbstractParser {
         metadata.set(HttpHeaders.CONTENT_TYPE, MFTEntry.MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
-        byte[] bytes = new byte[MFTEntry.length];
+        byte[] bytes = new byte[MFTEntry.entryLength];
         int read = 0;
-        while (read < MFTEntry.length) {
-            int r = is.read(bytes, read, MFTEntry.length - read);
+        while (read < MFTEntry.entryLength) {
+            int r = is.read(bytes, read, MFTEntry.entryLength - read);
             if (r == -1) {
                 break;
             }
             read += r;
         }
-        if (read != MFTEntry.length) {
+        if (read != MFTEntry.entryLength) {
             throw new TikaException("Incorrect number of bytes read from MFT entry: " + read);
         }
         MFTEntry entry = MFTEntry.parse(bytes);
@@ -86,35 +86,39 @@ public class MFTEntryParser extends AbstractParser {
         xhtml.endElement("style");
         xhtml.newline();
         xhtml.startElement("table", "class", "tab");
-        if (entry.getFileName() != null) {
-            add(xhtml, "File Name", entry.getFileName());
+        if (entry.getName() != null) {
+            add(xhtml, Messages.getString("MFTEntryParser.Name"), entry.getName());
         }
-        if (entry.getFileSize() >= 0) {
-            add(xhtml, "File Size", LocalizedFormat.format(entry.getFileSize()));
+        if (entry.getLength() >= 0) {
+            add(xhtml, Messages.getString("MFTEntryParser.Length"), LocalizedFormat.format(entry.getLength()));
         }
         if (entry.getCreationDate() != null) {
-            add(xhtml, "Creation Date", df.format(entry.getCreationDate()));
+            add(xhtml, Messages.getString("MFTEntryParser.CreationDate"), df.format(entry.getCreationDate()));
         }
         if (entry.getLastModificationDate() != null) {
-            add(xhtml, "Modification Date", df.format(entry.getLastModificationDate()));
+            add(xhtml, Messages.getString("MFTEntryParser.ModificationDate"),
+                    df.format(entry.getLastModificationDate()));
         }
         if (entry.getLastAccessDate() != null) {
-            add(xhtml, "Access Date", df.format(entry.getLastAccessDate()));
+            add(xhtml, Messages.getString("MFTEntryParser.AccessDate"), df.format(entry.getLastAccessDate()));
         }
         if (entry.getLastEntryModificationDate() != null) {
-            add(xhtml, "MFT Entry Modification Date", df.format(entry.getLastEntryModificationDate()));
+            add(xhtml, Messages.getString("MFTEntryParser.EntryModificationDate"),
+                    df.format(entry.getLastEntryModificationDate()));
         }
         if (entry.isActive()) {
-            add(xhtml, "Active", "Yes");
+            add(xhtml, Messages.getString("MFTEntryParser.Active"), Messages.getString("MFTEntryParser.Yes"));
         } else if (entry.isInactive()) {
-            add(xhtml, "Active", "No");
+            add(xhtml, Messages.getString("MFTEntryParser.Active"), Messages.getString("MFTEntryParser.Yes"));
         }
         if (entry.isFile()) {
-            add(xhtml, "Type", "File");
+            add(xhtml, Messages.getString("MFTEntryParser.Type"), Messages.getString("MFTEntryParser.File"));
         } else if (entry.isFolder()) {
-            add(xhtml, "Type", "Folder");
+            add(xhtml, Messages.getString("MFTEntryParser.Type"), Messages.getString("MFTEntryParser.Folder"));
         }
-        add(xhtml, "Resident Content", entry.hasResidentContent() ? "Yes" : "No");
+        add(xhtml, Messages.getString("MFTEntryParser.ResidentContent"),
+                entry.hasResidentContent() ? Messages.getString("MFTEntryParser.Yes")
+                        : Messages.getString("MFTEntryParser.No"));
         xhtml.endElement("table");
         xhtml.endDocument();
     }
@@ -134,7 +138,7 @@ public class MFTEntryParser extends AbstractParser {
     private void createResidentSubitem(ContentHandler handler, EmbeddedDocumentExtractor extractor, MFTEntry entry,
             byte[] bytes, Metadata parentMetadata) throws SAXException, IOException {
         Metadata metadata = new Metadata();
-        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, entry.getFileName());
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, entry.getName());
         metadata.set(TikaCoreProperties.CREATED, entry.getCreationDate());
         metadata.set(TikaCoreProperties.MODIFIED, entry.getLastModificationDate());
         metadata.set(ExtraProperties.ACCESSED, entry.getLastAccessDate());

@@ -5,21 +5,21 @@ import java.util.Date;
 
 public class MFTEntry {
     public static final String MIME_TYPE = "application/x-mft-entry";
-    public static final int length = 1024;
+    public static final int entryLength = 1024;
 
     private static final Charset charset = Charset.forName("UTF-16LE");
 
-    private long logFileSequenceNumber = -1, baseRecordFileRef = -1, fileSize = -1;
+    private long logFileSequenceNumber = -1, baseRecordFileRef = -1, length = -1;
     private int fixUpOffset = -1, fixUpSize = -1, sequence = -1, linkCount = -1, attrOffset = -1, flags = -1,
             firstAttrId = -1, usedSize = -1, totalSize = -1, residentFileStart = -1;
-    private String fileName;
+    private String name;
     private Date creationDate, lastModificationDate, lastAccessDate, lastEntryModificationDate;
 
     private MFTEntry() {
     }
 
     public static MFTEntry parse(byte[] in) {
-        if (in == null || in.length != length) {
+        if (in == null || in.length != entryLength) {
             return null;
         }
 
@@ -28,7 +28,7 @@ public class MFTEntry {
 
         // Attributes
         int pos = entry.attrOffset;
-        while (pos < length) {
+        while (pos < entryLength) {
             MFTAttribute attr = parseAttributeHeader(in, pos);
             if (attr == null || attr.getLen() <= 0)
                 break;
@@ -41,18 +41,18 @@ public class MFTEntry {
 
     private static void parseAttribute(MFTEntry entry, MFTAttribute attr, byte[] in, int offset) {
         offset += attr.getDataOffset();
-        if (offset + attr.getDataSize() > length)
+        if (offset + attr.getDataSize() > entryLength)
             return;
         if (attr.getType() == 0x30) {
             // File name
             int namespace = toInt1(in, offset + 65);
-            if (namespace == 1 || (namespace == 3 && entry.fileName == null)) {
+            if (namespace == 1 || (namespace == 3 && entry.name == null)) {
                 int start = offset + 66;
                 int len = toInt1(in, offset + 64);
                 int end = start + len * 2;
-                if (start < length && end <= length && start < end && end <= offset + attr.getDataSize()) {
+                if (start < entryLength && end <= entryLength && start < end && end <= offset + attr.getDataSize()) {
                     try {
-                        entry.fileName = new String(in, start, len * 2, charset);
+                        entry.name = new String(in, start, len * 2, charset);
                     } catch (Exception e) {
                     }
                 }
@@ -67,8 +67,8 @@ public class MFTEntry {
             // Data
             if (attr.isResident()) {
                 int end = offset + attr.getDataSize();
-                if (offset < length && end <= length && offset < end) {
-                    entry.fileSize = end - offset;
+                if (offset < entryLength && end <= entryLength && offset < end) {
+                    entry.length = end - offset;
                     entry.residentFileStart = offset;
                 }
             } else {
@@ -159,8 +159,8 @@ public class MFTEntry {
         return baseRecordFileRef;
     }
 
-    public long getFileSize() {
-        return fileSize;
+    public long getLength() {
+        return length;
     }
 
     public int getFixUpOffset() {
@@ -188,22 +188,26 @@ public class MFTEntry {
     }
 
     public boolean isFile() {
-        if (flags < 0) return false;
+        if (flags < 0)
+            return false;
         return (flags & 2) == 0;
     }
 
     public boolean isFolder() {
-        if (flags < 0) return false;
+        if (flags < 0)
+            return false;
         return (flags & 2) != 0;
     }
 
     public boolean isActive() {
-        if (flags < 0) return false;
+        if (flags < 0)
+            return false;
         return (flags & 1) != 0;
     }
 
     public boolean isInactive() {
-        if (flags < 0) return false;
+        if (flags < 0)
+            return false;
         return (flags & 1) == 0;
     }
 
@@ -219,8 +223,8 @@ public class MFTEntry {
         return totalSize;
     }
 
-    public String getFileName() {
-        return fileName;
+    public String getName() {
+        return name;
     }
 
     public Date getCreationDate() {
@@ -240,8 +244,8 @@ public class MFTEntry {
     }
 
     public byte[] getResidentContent(byte[] in) {
-        if (fileSize > 0 && residentFileStart > 0) {
-            byte[] content = new byte[(int) fileSize];
+        if (length > 0 && residentFileStart > 0) {
+            byte[] content = new byte[(int) length];
             System.arraycopy(in, residentFileStart, content, 0, content.length);
             return content;
         }
@@ -249,6 +253,6 @@ public class MFTEntry {
     }
 
     public boolean hasResidentContent() {
-        return fileSize > 0 && residentFileStart > 0;
+        return length > 0 && residentFileStart > 0;
     }
 }
