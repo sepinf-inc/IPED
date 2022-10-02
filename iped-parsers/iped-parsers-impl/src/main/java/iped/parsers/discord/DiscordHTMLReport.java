@@ -18,6 +18,7 @@ import iped.parsers.discord.json.DiscordMention;
 import iped.parsers.discord.json.DiscordReaction;
 import iped.parsers.discord.json.DiscordRoot;
 import iped.parsers.util.Messages;
+import iped.utils.SimpleHTMLEncoder;
 
 /***
  * 
@@ -63,16 +64,16 @@ public class DiscordHTMLReport {
 
         out.println("<TABLE>");
 
-        // Usado para saber quando mudou de user ID
+        // Used to know when user ID changed
         String userID = "";
         String colorClass = "black";
         for (DiscordRoot dr : drl) {
 
             if (dr.isPinned()) {
-                // TODO regra para quando a mensagem é pinada
+                // TODO rule for when message is pinned
             }
 
-            // TODO verificar mentions ROLES
+            // TODO check mentions roles
             if (!dr.getAuthor().getId().equals(userID)) {
 
                 userID = dr.getAuthor().getId();
@@ -83,17 +84,18 @@ public class DiscordHTMLReport {
                 out.println("		<TABLE class='title'>");
                 out.println("			<TR>");
                 out.println("				<TD>");
-                if (dr.getAuthor().avatarURL == null) {
-                	out.println("					<img src='https://cdn.discordapp.com/avatars/" + dr.getAuthor().id + "/"
-                        + dr.getAuthor().avatar + ".png' alt='' width='50' height='50'>");
+                if (dr.getAuthor().getURLAvatar() == null) {
+                    out.println("					<img src='https://cdn.discordapp.com/avatars/" + dr.getAuthor().getId()
+                            + "/" + dr.getAuthor().getAvatar() + ".png' alt='' width='50' height='50'>");
                 } else {
-                	out.println("					<img src='data:image/png;base64, " + dr.getAuthor().avatarURL + "' alt='' width='50' height='50'>");
+                    out.println("					<img src='data:image/png;base64, " + dr.getAuthor().getURLAvatar()
+                            + "' alt='' width='50' height='50'>");
                 }
-                
+
                 out.println("				</TD>");
                 out.println("				<TD>");
                 out.println("					<span title='Channel ID=" + dr.getChannel_id() + ", UserID="
-                        + dr.getAuthor().id + "'>" + dr.getAuthor().getName() + "<b>" + dr.getAuthor().getFullUsername()
+                        + dr.getAuthor().getId() + "'>" + dr.getAuthor().getName() + "<b>" + dr.getAuthor().getFullUsername()
                         + "</b></span>");
                 out.println("				</TD>");
                 out.println("				<TD>");
@@ -106,11 +108,11 @@ public class DiscordHTMLReport {
 
             }
 
-            if (dr.messageContent != null && !dr.messageContent.equals("")) {
+            if (dr.getMessageContent() != null && !dr.getMessageContent().equals("")) {
 
                 out.println("<TR class='" + colorClass + "'>");
 
-                // Horário de envio da mensagem
+                // message sending time
                 out.println("	<TD class='td-timestamp'>");
                 out.println("<P>" + (dr.getTimestamp() == null ? "" : formatDate(dr.getTimestamp())) + "</P>");
                 out.println("<P>" + (dr.getEditedTimestamp() == null ? ""
@@ -119,13 +121,13 @@ public class DiscordHTMLReport {
                         + "</P>");
                 out.println("	</TD>");
 
-                // Corpo da mensagem
+                // message body
                 out.println("	<TD>");
 
-                // Usado para debug
+                // used for debug
                 // out.println("<TABLE><TR><TD>" + dr.toString() + "</TD></TR></TABLE>");
 
-                // Regra para ligações (calls)
+                // rule for calls
                 if (dr.getCall() != null) {
                     out.println("<TABLE>");
                     out.println("	<TR>");
@@ -148,13 +150,13 @@ public class DiscordHTMLReport {
                     out.println("</TABLE>");
                 }
 
-                // Regra para reações
+                // rule for reactions
                 if (dr.getReactions() != null) {
 
                     List<String> reactions = new ArrayList<String>();
 
                     for (DiscordReaction reaction : dr.getReactions()) {
-                        reactions.add(reaction.emoji.name);
+                        reactions.add(reaction.getEmoji().getName());
                     }
 
                     out.println("<TABLE>");
@@ -165,7 +167,7 @@ public class DiscordHTMLReport {
                     out.println("</TABLE>");
                 }
 
-                // Regra para anexos
+                // rule for attachments
                 if (dr.getAttachments() != null && dr.getAttachments().size() > 0) {
 
                     out.println("<TABLE>");
@@ -173,22 +175,30 @@ public class DiscordHTMLReport {
                     out.println("		<TD colspan='2'>" + Messages.getString("DiscordParser.Attachments") + "</TD>");
                     out.println("	</TR>");
 
-                    for (DiscordAttachment attachments : dr.getAttachments()) {
+                    for (DiscordAttachment att : dr.getAttachments()) {
                         out.println("<TR>");
                         out.println("	<TD>");
-                        if (attachments.getContent_type() != null && (attachments.getContent_type().equals("video/mp4") || attachments.getContent_type().equals("video/webm"))) {
-                        	out.println("	<video controls>");
-                        	out.println("		<source type=\""+ attachments.getContent_type() +"\" src='data:" + attachments.getContent_type() + ";base64," + attachments.getUrl() + "' alt='" + attachments.getFilename()
-                            + "' width='400px' height=''>");
-                        	out.println("	</video controls>");	
+                        printCheckbox(out, att.getMediaHash());
+                        if (att.getContent_type() != null && (att.getContent_type().equals("video/mp4")
+                                || att.getContent_type().equals("video/webm"))) {
+                            out.println("	<video controls>");
+                            out.println("		<source type=\"" + att.getContent_type() + "\" src='data:"
+                                    + att.getContent_type() + ";base64," + att.getUrl() + "' alt='" + att.getFilename()
+                                    + "' width='400px' height=''>");
+                            out.println("	</video controls>");
                         } else {
-                        	out.println("		<img src='data:" + attachments.getContent_type() + ";base64," + attachments.getUrl() + "' alt='" + attachments.getFilename()
-                            + "' width='400px' height=''>");
+                            out.println("		<img onclick\"app.open('hash:" + att.getMediaHash() + "'"
+                                    + " src=\"data:" + att.getContent_type() + ";base64," + att.getUrl() + "\" alt=\""
+                                    + att.getFilename() + "\" width=\"400px\" height=\"\">");
                         }
-                        
+
                         out.println("		<BR/>");
-                        out.println(
-                                "		<a href='" + attachments.getUrl() + "'>" + attachments.getFilename() + "</a>");
+                        out.println("		<a href='" + att.getUrl() + "'>" + att.getFilename() + "</a>");
+                        out.println("		<BR/>");
+                        if (!att.getChildPornSets().isEmpty()) {
+                            out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
+                                    + format(att.getChildPornSets().toString()) + "</i></p>");
+                        }
                         out.println("	</TD>");
                         out.println("</TR>");
                     }
@@ -197,7 +207,7 @@ public class DiscordHTMLReport {
 
                 String message = dr.getMessageContent();
 
-                // Regra para citações
+                // rule for mentions
                 if (dr.getMentions() != null && dr.getMentions().size() > 0)
                     for (DiscordMention dm : dr.getMentions())
                         message = StringUtils.replace(message, "<@" + dm.getId() + ">",
@@ -228,4 +238,18 @@ public class DiscordHTMLReport {
         return "<P>" + df1.format(date) + "<BR/>(" + df2.format(date) + ")</P>";
 
     }
+
+    private void printCheckbox(PrintWriter out, String hash) {
+        out.println("<input class=\"check\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
+                + "', this.checked)\" name=\"" + hash + "\" />");
+    }
+
+    private static final String format(String s) {
+        if (s == null || s.trim().isEmpty())
+            return "-"; //$NON-NLS-1$
+        else
+            return SimpleHTMLEncoder.htmlEncode(s.trim());
+
+    }
+
 }
