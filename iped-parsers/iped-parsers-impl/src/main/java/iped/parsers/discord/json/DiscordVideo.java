@@ -10,16 +10,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class DiscordVideo {
 
     @JsonProperty("url")
-    public String url;
+    private String url;
 
     @JsonProperty("width")
-    public int width;
+    private int width;
 
     @JsonProperty("height")
-    public int height;
+    private int height;
 
     @JsonProperty("proxy_url")
-    public String proxy_url;
+    private String proxy_url;
 
     public String getProxy_url() {
         return proxy_url;

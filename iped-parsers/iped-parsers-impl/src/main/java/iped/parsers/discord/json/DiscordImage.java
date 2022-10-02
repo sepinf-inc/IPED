@@ -9,16 +9,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class DiscordImage {
     @JsonProperty("url")
-    public String url;
+    private String url;
 
     @JsonProperty("proxy_url")
-    public String proxy_url;
+    private String proxy_url;
 
     @JsonProperty("width")
-    public int width;
+    private int width;
 
     @JsonProperty("height")
-    public int height;
+    private int height;
 
     public String getUrl() {
         return url;

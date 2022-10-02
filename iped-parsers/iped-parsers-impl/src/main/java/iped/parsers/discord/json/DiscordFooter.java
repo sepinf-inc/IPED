@@ -10,13 +10,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class DiscordFooter {
 
     @JsonProperty("text")
-    public String text;
+    private String text;
 
     @JsonProperty("proxy_icon_url")
-    public String proxyIconURL;
+    private String proxyIconURL;
 
     @JsonProperty("icon_url")
-    public String iconURL;
+    private String iconURL;
 
     public String getText() {
         return text;

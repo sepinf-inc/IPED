@@ -10,13 +10,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class DiscordEmoji {
 
     @JsonProperty("animated")
-    public boolean animated;
+    private boolean animated;
 
     @JsonProperty("id")
-    public long id;
+    private long id;
 
     @JsonProperty("name")
-    public String name;
+    private String name;
 
     public boolean isAnimated() {
         return animated;

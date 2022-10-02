@@ -9,37 +9,36 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class DiscordAuthor {
     @JsonProperty("id")
-    public String id;
+    private String id;
 
     @JsonProperty("username")
-    public String username;
+    private String username;
 
     @JsonProperty("avatar")
-    public String avatar;
-    
-    @JsonProperty("avatar")
-    public String avatarURL;
+    private String avatar;
+
+    private String URLAvatar;
 
     @JsonProperty("discriminator")
-    public String discriminator;
+    private String discriminator;
 
     @JsonProperty("public_flags")
-    public int public_flags;
+    private int public_flags;
 
     @JsonProperty("bot")
-    public boolean bot;
+    private boolean bot;
 
     @JsonProperty("name")
-    public String name;
+    private String name;
 
     @JsonProperty("url")
-    public String url;
+    private String url;
 
     @JsonProperty("icon_url")
-    public String icon_url;
+    private String icon_url;
 
     @JsonProperty("proxy_icon_url")
-    public String proxy_icon_url;
+    private String proxy_icon_url;
 
     public String getId() {
         return id;
@@ -67,6 +66,14 @@ public class DiscordAuthor {
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+    }
+
+    public String getURLAvatar() {
+        return URLAvatar;
+    }
+
+    public void setURLAvatar(String URLAvatar) {
+        this.URLAvatar = URLAvatar;
     }
 
     public String getDiscriminator() {

@@ -12,40 +12,40 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class DiscordEmbed {
     @JsonProperty("type")
-    public String type;
+    private String type;
 
     @JsonProperty("description")
-    public String description;
+    private String description;
 
     @JsonProperty("fields")
-    public List<DiscordField> fields;
+    private List<DiscordField> fields;
 
     @JsonProperty("author")
-    public DiscordAuthor author;
+    private DiscordAuthor author;
 
     @JsonProperty("thumbnail")
-    public DiscordThumbnail thumbnail;
+    private DiscordThumbnail thumbnail;
 
     @JsonProperty("footer")
-    public DiscordFooter footer;
+    private DiscordFooter footer;
 
     @JsonProperty("url")
-    public String url;
+    private String url;
 
     @JsonProperty("title")
-    public String title;
+    private String title;
 
     @JsonProperty("color")
-    public int color;
+    private int color;
 
     @JsonProperty("provider")
-    public DiscordProvider provider;
+    private DiscordProvider provider;
 
     @JsonProperty("video")
-    public DiscordVideo video;
+    private DiscordVideo video;
 
     @JsonProperty("image")
-    public DiscordImage image;
+    private DiscordImage image;
 
     @JsonProperty("timestamp")
     private Date timestamp;

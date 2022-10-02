@@ -10,13 +10,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class DiscordField {
 
     @JsonProperty("name")
-    public String name;
+    private String name;
 
     @JsonProperty("value")
-    public String value;
+    private String value;
 
     @JsonProperty("inline")
-    public boolean inline;
+    private boolean inline;
 
     public String getName() {
         return name;

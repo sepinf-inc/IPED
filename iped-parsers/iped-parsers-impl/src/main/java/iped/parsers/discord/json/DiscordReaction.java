@@ -10,13 +10,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class DiscordReaction {
 
     @JsonProperty("emoji")
-    public DiscordEmoji emoji;
+    private DiscordEmoji emoji;
 
     @JsonProperty("count")
-    public int count;
+    private int count;
 
     @JsonProperty("me")
-    public boolean me;
+    private boolean me;
 
     public DiscordEmoji getEmoji() {
         return emoji;

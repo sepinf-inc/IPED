@@ -8,10 +8,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  */
 public class DiscordProvider {
+
     @JsonProperty("name")
-    public String name;
+    private String name;
+
     @JsonProperty("url")
-    public String url;
+    private String url;
 
     public String getName() {
         return name;
