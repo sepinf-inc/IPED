@@ -134,6 +134,13 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 	private boolean cancelled=false;
 	
 	Semaphore visiblePopulSem;
+	
+	/*
+	 * This semaphore is used to avoid multiple thread of dataset loading, as some events like mouse wheel zooming or chart panning can call
+	 * many times. As the cache already has a windows of items larger than the visible range, this window prevents some possible unloaded info 
+	 * from not being ploted.  
+	 */
+	Semaphore memoryCacheReloadSem = new Semaphore(1);
 
 	public IpedTimelineDataset(IpedTimelineDatasetManager ipedTimelineDatasetManager, IMultiSearchResultProvider resultsProvider, CaseSearchFilterListenerFactory cacheFLFactory, String splitValue) throws Exception {
 		this.ipedChartsPanel = ipedTimelineDatasetManager.ipedChartsPanel;
@@ -157,6 +164,11 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 	 * is gotten from the configured in ipedCharts. The threads are split by eventType.
 	 */	
 	public void startCaseSearchFilterLoadByEvent() throws Exception {
+		if(memoryCacheReloadSem.availablePermits()==0) {
+			return;
+		}
+		memoryCacheReloadSem.acquire();
+		
         reader = resultsProvider.getIPEDSource().getLeafReader();
 
         timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
@@ -201,9 +213,11 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
        		}
        		br = te.next();
 		}
+		
 
 		visiblePopulSem = new Semaphore(running);
 		visiblePopulSem.acquire(running);
+		memoryCacheReloadSem.acquire();
 		
 		for(CaseSearcherFilter csf:csfs) {
 			csf.setThreadPool(slicesThreadPool);
@@ -216,6 +230,10 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 	 * is gotten from the configured in ipedCharts. 
 	 */	
 	public void startCaseSearchFilterLoad() throws Exception {
+		if(memoryCacheReloadSem.availablePermits()==0) {
+			return;
+		}
+		memoryCacheReloadSem.acquire();
 		running=1;
 		Thread t = new Thread(new Runnable() {
 			@Override
@@ -227,6 +245,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 					e.printStackTrace();
 				}finally {
 					visiblePopulSem.release();
+					memoryCacheReloadSem.release();
 				}
 			}
 		});
@@ -333,10 +352,12 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 		}
 	}
 	
+	int MEMORY_WINDOW_CACHE_PROPORTION = 2;//how many times the visible range the memory window will load, forward and backward.
+	List<CacheTimePeriodEntry> memoryWindowCache = new ArrayList<CacheTimePeriodEntry>();
 	
 	public void caseSearchFilterLoad() throws Exception {
 		IMultiSearchResult result;
-
+		
 		if(splitValue==null || splitValue.equals("Categories")) {
 			result  = resultsProvider.getResults();
 		}else {
@@ -357,50 +378,81 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
         IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
         IPEDMultiSource appcase = (IPEDMultiSource) app.getIPEDSource();
 
-        Semaphore addValueSem = new Semaphore(1);
-
 		if(result.getLength()>0) {
 			TimeStampCache cache = ipedChartsPanel.getIpedTimelineDatasetManager().getCache();
 			Map<String, List<CacheTimePeriodEntry>> a = cache.getNewCache();
 
 			List<CacheTimePeriodEntry> newcache = a.get(ipedChartsPanel.getTimePeriodClass().getSimpleName());
+			if(newcache!=null) {
 
-			List<CacheTimePeriodEntry> incache = new ArrayList<CacheTimePeriodEntry>();
-			LinkedList<CacheTimePeriodEntry> beforecache = new LinkedList<CacheTimePeriodEntry>();
-			List<CacheTimePeriodEntry> aftercache = new ArrayList<CacheTimePeriodEntry>();
 
-			Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
-			Date startDate = new Date((long)dateRange.getLowerBound());
-			Date endDate = new Date((long)dateRange.getUpperBound());
-			
+		        Semaphore addValueSem = new Semaphore(1);
 
-			if(startDate.getTime()==0 && endDate.getTime()==1) {
-				incache=newcache;
-			}else {
-				startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
-				endDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime()-1);
-				for(CacheTimePeriodEntry ctpe:newcache) {
-					if(ctpe.date.before(startDate)) {
-						beforecache.addFirst(ctpe);
-					} else if(ctpe.date.after(endDate)) {
-						aftercache.add(ctpe);
-					}else {
-						incache.add(ctpe);
+				List<CacheTimePeriodEntry> visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
+				LinkedList<CacheTimePeriodEntry> beforecache = new LinkedList<CacheTimePeriodEntry>();
+				List<CacheTimePeriodEntry> aftercache = new ArrayList<CacheTimePeriodEntry>();
+
+				Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
+				Date startDate = new Date((long)dateRange.getLowerBound());
+				Date endDate = new Date((long)dateRange.getUpperBound());
+				
+				long visibleRangeLength = endDate.getTime()-startDate.getTime();
+				if(startDate.getTime()==0 && endDate.getTime()==1) {
+					visibleIntervalCache=newcache;
+				}else {
+					startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
+					endDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime()-1);
+					for(CacheTimePeriodEntry ctpe:newcache) {
+						boolean remove = false;
+						if(ctpe.date.before(startDate)) {
+							if(ctpe.date.getTime()>endDate.getTime()-visibleRangeLength*MEMORY_WINDOW_CACHE_PROPORTION) {
+								if(!memoryWindowCache.contains(ctpe)) {
+									beforecache.addFirst(ctpe);
+									memoryWindowCache.add(ctpe);
+								}
+								remove=false;
+							}else {
+								//remains out of memoryCacheWindow
+								remove=true;
+							}
+						} else if(ctpe.date.after(endDate)) {
+							if(ctpe.date.getTime()<startDate.getTime()+visibleRangeLength*MEMORY_WINDOW_CACHE_PROPORTION) {
+								if(!memoryWindowCache.contains(ctpe)) {
+									aftercache.add(ctpe);
+									memoryWindowCache.add(ctpe);
+								}
+								remove=false;
+							}else {
+								//remains out of memoryCacheWindow
+								remove=true;
+							}
+						}else {
+							if(!memoryWindowCache.contains(ctpe)) {
+								visibleIntervalCache.add(ctpe);
+								memoryWindowCache.add(ctpe);
+							}
+							remove=false;
+						}
+						if(remove) {
+							TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ctpe.date);
+							accumulator.remove(t);
+							memoryWindowCache.remove(ctpe);
+						}
 					}
 				}
-			}
 
-			populatesWithList(result, incache, addValueSem);//creates first the visible range itens to be plotted
+				populatesWithList(result, visibleIntervalCache, addValueSem);//creates first the visible interval itens to be plotted
 
-			if(beforecache.size()>0 || aftercache.size()>0) {
-				Runnable r = new Runnable() {
-					@Override
-					public void run() {
-						populatesWithBeforeAndAfterList(result, beforecache, aftercache, addValueSem);
-					}
-				};
-				Thread t = new Thread(r);
-				t.start();//runs out of visibility asynchronously so to release GUI thread to the user.
+				if(beforecache.size()>0 || aftercache.size()>0) {
+					Runnable r = new Runnable() {
+						@Override
+						public void run() {
+							populatesWithBeforeAndAfterList(result, beforecache, aftercache, addValueSem);
+						}
+					};
+					Thread t = new Thread(r);
+					t.start();//runs out of visibility asynchronously so to release GUI thread to the user.
+				}
 			}
 
 		}
@@ -419,8 +471,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 			//populates dataset for inside visible range items
 			int beforeindex=0;
 			int afterindex=0;
-			CacheTimePeriodEntry ctpeBefore = beforecache.get(beforeindex);
-			CacheTimePeriodEntry ctpeAfter = aftercache.get(afterindex);
+			CacheTimePeriodEntry ctpeBefore = beforecache.size()>0 ? beforecache.get(beforeindex) : null;
+			CacheTimePeriodEntry ctpeAfter = aftercache.size()>0 ? aftercache.get(afterindex):null;
 			while(ctpeBefore!=null || ctpeAfter!=null) {
 				CacheTimePeriodEntry ctpe=null;
 				if(totalInCount%2 == 0) {//alternate between lists
@@ -475,7 +527,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 			}
 			timeSem.acquire(threadCount);
 			timeSem.release(threadCount);
-			System.out.println("Finished ploting out of range");
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -483,8 +534,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 
 	public void populatesWithList(IMultiSearchResult result, List<CacheTimePeriodEntry> cache, Semaphore addValueSem) {
 		try {
-			
-			
 			int threadCount = (int) Math.ceil((double) cache.size() / (double)CTITEMS_PER_THREAD);
 			Semaphore timeSem = new Semaphore(threadCount);
 			timeSem.acquire(threadCount);
@@ -536,6 +585,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 		}
 		cancelled=true;
 		visiblePopulSem.release(running);
+		memoryCacheReloadSem.release();
 		synchronized (monitor) {
 			monitor.notifyAll();
 		}
@@ -749,7 +799,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
      */
     @Override
     public Number getY(int series, int item) {
-    	HashMap<Integer, Count> hc = accumulator.counts.get(item);    	
+    	HashMap<Integer, Count> hc = accumulator.counts.get(item);
         return hc.get(series);
     }
 
@@ -1098,6 +1148,14 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
     		}
     	}
     	
+    	void remove(TimePeriod t) {
+    		int row = rowTimestamps.indexOf(t);
+    		if(row!=-1) {
+    			rowTimestamps.remove(row);
+    			counts.remove(row);
+    		}
+    	}
+    	
     	synchronized void merge(Accumulator acc) {
     		if(acc.colEvents.size()>0) {
         		int col = this.colEvents.indexOf(acc.colEvents.get(0));
@@ -1134,6 +1192,19 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
     		}
     	}
     }
+
+	@Override
+	public void notifyVisibleRange(double lowerBound, double upperBound) {
+		try {
+			if(cacheFLFactory==null) {
+				startCaseSearchFilterLoad();
+			}else {
+				startCaseSearchFilterLoadByEvent();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 }
 

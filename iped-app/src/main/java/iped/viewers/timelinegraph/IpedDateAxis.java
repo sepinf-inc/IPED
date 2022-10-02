@@ -9,9 +9,11 @@ import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -28,6 +30,7 @@ import org.jfree.chart.axis.Tick;
 import org.jfree.chart.axis.TickType;
 import org.jfree.chart.event.AxisChangeEvent;
 import org.jfree.chart.plot.PlotRenderingInfo;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.TextAnchor;
 import org.jfree.chart.util.Args;
@@ -42,8 +45,10 @@ import org.jfree.data.time.RegularTimePeriod;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.Year;
+import org.jfree.data.xy.XYDataset;
 
 import iped.app.ui.Messages;
+import iped.viewers.timelinegraph.datasets.AsynchronousDataset;
 import iped.viewers.timelinegraph.model.Minute;
 
 public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity {
@@ -333,6 +338,8 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
             range = new DateRange(range);
         }
         
+        this.notifyListeners(null);
+        
         if(getTimeZone()!=null) {
             Calendar cal = Calendar.getInstance(getTimeZone());
             cal.set(1900, 0, 1,0,0,0);
@@ -347,6 +354,23 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
             super.setRange(range, turnOffAutoRange, notify);
         }else {
             super.setRange(range, turnOffAutoRange, notify);
+        }
+        List<XYPlot> plots = new ArrayList<XYPlot>();
+        XYPlot cplot = ((XYPlot) getPlot());
+        if(cplot!=null) {
+        	cplot = (XYPlot) cplot.getRootPlot();
+        	if(cplot instanceof IpedCombinedDomainXYPlot) {
+                plots.addAll(((IpedCombinedDomainXYPlot)cplot).getSubplots());
+        	}else if (cplot instanceof IpedXYPlot) {
+        		plots.add(cplot);
+        	}
+            for (Iterator<XYPlot> iterator = plots.iterator(); iterator.hasNext();) {
+    			XYPlot plot =  iterator.next();
+    			XYDataset ds = plot.getDataset();
+    	        if(ds instanceof AsynchronousDataset) {
+    	        	((AsynchronousDataset) ds).notifyVisibleRange(range.getLowerBound(), range.getUpperBound());
+    	        }
+    		}
         }
 	}
 	

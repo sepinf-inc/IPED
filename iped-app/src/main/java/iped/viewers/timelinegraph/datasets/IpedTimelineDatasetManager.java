@@ -5,6 +5,7 @@ import java.util.concurrent.Executors;
 
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
+import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.Month;
 import org.jfree.data.time.Quarter;
 import org.jfree.data.time.Second;
@@ -36,6 +37,8 @@ public class IpedTimelineDatasetManager {
     TimeStampCache timeStampCache4;
     Thread timeStampCacheThread5;
     TimeStampCache timeStampCache5;
+    Thread timeStampCacheThread6;
+    TimeStampCache timeStampCache6;
         
     TimeStampCache selectedTimeStampCache;
     
@@ -70,6 +73,10 @@ public class IpedTimelineDatasetManager {
 		timeStampCache5 = new IndexTimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
 		timeStampCache5.addTimePeriodClassToCache(Second.class);
 		timeStampCacheThread5 = new Thread(timeStampCache5);
+
+		timeStampCache6 = new IndexTimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
+		timeStampCache6.addTimePeriodClassToCache(Millisecond.class);
+		timeStampCacheThread6 = new Thread(timeStampCache6);
     }
 
 	public AbstractIntervalXYDataset getBestDataset(Class<? extends TimePeriod> timePeriodClass, String splitValue){
@@ -92,6 +99,10 @@ public class IpedTimelineDatasetManager {
 			}
 			if(timeStampCache5.hasTimePeriodClassToCache(timePeriodClass)) {
 				selectedTimeStampCache=timeStampCache5;
+				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), null, splitValue);
+			}
+			if(timeStampCache6.hasTimePeriodClassToCache(timePeriodClass)) {
+				selectedTimeStampCache=timeStampCache6;
 				return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), null, splitValue);
 			}
 			AbstractIntervalXYDataset res = new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), luceneFLFactory,splitValue);
@@ -117,6 +128,7 @@ public class IpedTimelineDatasetManager {
 		threadPool.execute(timeStampCacheThread3);//loads the other timeperiodCaches			
 		threadPool.execute(timeStampCacheThread4);//loads the other timeperiodCaches			
 		threadPool.execute(timeStampCacheThread5);//loads the other timeperiodCaches					
+		threadPool.execute(timeStampCacheThread6);//loads the other timeperiodCaches					
 	}
 
 	public TimeStampCache getCache() {

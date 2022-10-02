@@ -284,6 +284,7 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
 			}
 		}finally {
 			ipedTimelineDataset.visiblePopulSem.release();
+			ipedTimelineDataset.memoryCacheReloadSem.release();
 		}
 	}
 
