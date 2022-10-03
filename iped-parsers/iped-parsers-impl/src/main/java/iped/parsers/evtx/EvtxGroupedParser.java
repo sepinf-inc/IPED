@@ -132,7 +132,7 @@ public class EvtxGroupedParser extends AbstractParser {
                     for (Iterator iterator2 = recs.iterator(); iterator2.hasNext();) {
     					EvtxRecord evtxRecord = (EvtxRecord) iterator2.next();
     	                String date = evtxRecord.getEventDateTime();
-    	                recordMetadata.add(timeCreated, date);
+    	                recordMetadata.add("WinEvtID:"+evtxRecord.getEventId(), date);
     	                recordMetadata.add(RECID_PROP, (int) evtxRecord.getEventRecordId());
     	                content.append(evtxRecord.getBinXml().toString());
 
@@ -144,6 +144,7 @@ public class EvtxGroupedParser extends AbstractParser {
             						recordMetadata.add(EVTX_METADATA_PREFIX+":"+data.getKey(), data.getValue());
             					}
     	                	}catch(Exception e) {
+    	                    	System.out.println("Evtx File Parser error:"+filePath);
     	                		e.printStackTrace();
     	                	}
     	                }
@@ -165,8 +166,11 @@ public class EvtxGroupedParser extends AbstractParser {
     			}
 
                 metadata.set(RECCOUNT_PROP, totalRecordCount);
+                
+            	System.out.println("Evtx File Parsed Successfully:"+filePath);
+
             }catch (Exception e) {
-            	System.out.println("Evtx File:"+filePath);
+            	System.out.println("Evtx File Parser error:"+filePath);
 				e.printStackTrace();
 			}
             
