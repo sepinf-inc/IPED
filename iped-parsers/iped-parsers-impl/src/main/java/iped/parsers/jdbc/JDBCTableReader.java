@@ -324,6 +324,24 @@ public class JDBCTableReader {
         return results;
     }
 
+    public ResultSet getSequentialGaps(String columnName) {
+        ResultSet results;
+        String sql = "select "+columnName+"+1 as start, (select MIN(\"+columnName+\")-1 from "+tableName+" t2\n"
+        		+ "				where t2.\"+columnName+\" > t1.\"+columnName+\") as end from \"+tableName+\" t1\n"
+        		+ "where not exists (select 1 from \"+tableName+\" t2\n"
+        		+ "				where t1.\"+columnName+\" == t2.\"+columnName+\" - 1)"; //$NON-NLS-1$
+        try {
+            Statement st = connection.createStatement();
+            results = st.executeQuery(sql);
+
+        } catch (SQLException e) {
+            results = null;
+            // throw new IOException(e);
+        }
+        rows = 0;
+        return results;
+    }
+
     protected long getRowCount() {
     	if(rowCount==null) {
             String sql = "SELECT COUNT(*) from " + tableName; //$NON-NLS-1$

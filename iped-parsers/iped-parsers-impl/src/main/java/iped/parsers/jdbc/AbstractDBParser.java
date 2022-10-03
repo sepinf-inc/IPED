@@ -19,7 +19,9 @@ package iped.parsers.jdbc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
@@ -146,10 +148,13 @@ public abstract class AbstractDBParser extends AbstractParser {
             xHandler.endElement("tr");
 
             xHandler.endElement("theader");
+            
+            StringBuffer sbfim = new StringBuffer(); 
 
+            boolean first = true;
             for (String tableName : tableNames) {
                 JDBCTableReader reader = getTableReader(connection, tableName, context);
-                
+
                 int row_count = parseTables(xHandler, context, reader);
                 xHandler.startElement("tr");
 
@@ -166,7 +171,42 @@ public abstract class AbstractDBParser extends AbstractParser {
                 xHandler.endElement("td");
 
                 xHandler.endElement("tr");
+                
+                try {
+                    StringBuffer sb = new StringBuffer(); 
+                    DatabaseMetaData dbmd = connection.getMetaData();
+                    ResultSet rs = dbmd.getColumns(null, null, tableName, "");
+                    while(rs.next()) {
+                    	String isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
+                    	if(isAutoIncrement!=null && isAutoIncrement.equals("YES")) {
+                    		String columnName = rs.getString("COLUMN_NAME");
+                    		ResultSet rsGaps = reader.getSequentialGaps(columnName);
+                    		if(rs.next()) {
+                    			if(first) {
+                    				first=false;
+                            		sb.append("<h1>Tabelas com vãos em campos autoincrementais</h1>");                		
+                    			}
+                        		sb.append("<table>");                		
+                        		sb.append("<tr><th colspan=\"2\">Tabela:"+tableName+"</th></tr>");
+                        		sb.append("<tr><th colspan=\"2\">Coluna:"+columnName+"</th></tr>");
+                        		sb.append("<tr><th>Inicio</th><th>Fim</th></tr>");
+                    			do {
+                            		sb.append("<tr><td>"+rs.getString("start")+"</td><td>"+rs.getString("end")+"</td></tr>");
+                            		
+                    			}while(rs.next());
+                        		sb.append("</table>");                		
+                    		}
+                    	}
+                    }
+                    sbfim.append(sb.toString());
+                }catch (Exception e) {
+					// ignores
+				}
+
+
                 reader.closeReader();
+                
+                xHandler.characters(sbfim.toString());
             }
         } catch (SQLException e) {
             throw new TikaException("SQLite parsing exception", e); //$NON-NLS-1$
