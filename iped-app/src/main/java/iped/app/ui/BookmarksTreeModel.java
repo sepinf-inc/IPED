@@ -2,7 +2,6 @@ package iped.app.ui;
 
 import java.text.Collator;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -12,31 +11,23 @@ import javax.swing.tree.TreePath;
 
 public class BookmarksTreeModel implements TreeModel {
 
-    public static String ROOT = Messages.getString("BookmarksTreeModel.RootName"); //$NON-NLS-1$
-    public static String NO_BOOKMARKS = Messages.getString("BookmarksTreeModel.NoBookmarks"); //$NON-NLS-1$
+    public static final String ROOT_NAME = Messages.getString("BookmarksTreeModel.RootName"); //$NON-NLS-1$
+    public static final String NO_BOOKMARKS_NAME = Messages.getString("BookmarksTreeModel.NoBookmarks"); //$NON-NLS-1$
+
+    public static final BookmarkRoot ROOT = new BookmarkRoot();
+    public static final NoBookmarks NO_BOOKMARKS = new NoBookmarks();
+
     public Set<String> bookmarks;
 
-    static class Bookmark implements Comparator<Bookmark> {
-
-        int id;
-        String name;
-
-        public Bookmark(int id, String name) {
-            this.id = id;
-            this.name = name;
-        }
-
+    private static class BookmarkRoot {
         public String toString() {
-            return name;
+            return ROOT_NAME;
         }
+    }
 
-        public boolean equals(Bookmark b) {
-            return this.id == b.id;
-        }
-
-        @Override
-        final public int compare(Bookmark a, Bookmark b) {
-            return a.name.compareTo(b.name);
+    private static class NoBookmarks {
+        public String toString() {
+            return NO_BOOKMARKS_NAME;
         }
     }
 
@@ -97,7 +88,6 @@ public class BookmarksTreeModel implements TreeModel {
 
     @Override
     public int getIndexOfChild(Object parent, Object child) {
-        System.out.println("get index of child"); //$NON-NLS-1$
         return 0;
     }
 

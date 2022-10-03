@@ -23,7 +23,6 @@ import javax.imageio.ImageIO;
 import iped.utils.ImageUtil;
 
 
-
 /**
  * Classe principal de geração de imagens com cenas extraídas de vídeos. Utiliza
  * o MPlayer para realização da extração de frames e na sequência monta uma
@@ -75,7 +74,6 @@ public class VideoThumbsMaker {
     public VideoProcessResult createThumbs(File inOrg, File tmp, List<VideoThumbsOutputConfig> outs, int numFrames) throws Exception {
 
         long start = System.currentTimeMillis();
-        VideoProcessResult result = new VideoProcessResult();
 
         File in = inOrg;
         List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] { mplayer, "-demuxer", "lavf", "-nosound", "-noautosub", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
@@ -84,6 +82,8 @@ public class VideoThumbsMaker {
         File subTmp = new File(tmp, prefix + Thread.currentThread().getId() + "_" + System.currentTimeMillis()); //$NON-NLS-1$
         subTmp.mkdir();
         subTmp.deleteOnExit();
+
+        VideoProcessResult result = new VideoProcessResult(subTmp);
 
         boolean fixed = false;
         File lnk = null;
@@ -143,7 +143,6 @@ public class VideoThumbsMaker {
 
         if (result.getVideoDuration() == 0 || result.getDimension() == null || result.getDimension().width == 0
                 || result.getDimension().height == 0) {
-            cleanTemp(subTmp);
             return result;
         }
 
@@ -328,7 +327,6 @@ public class VideoThumbsMaker {
             lnk.delete();
         }
         if (images.size() == 0) {
-            cleanTemp(subTmp);
             return result;
         }
         if (transposed) {
@@ -336,8 +334,8 @@ public class VideoThumbsMaker {
         }
         for (VideoThumbsOutputConfig config : outs) {
             generateGridImage(config, images, result.getDimension());
+            result.setFrames(images);
         }
-        cleanTemp(subTmp);
 
         result.setTimeout(false);
         result.setSuccess(true);
@@ -427,13 +425,9 @@ public class VideoThumbsMaker {
         double rate = images.size() * 0.999 / (config.getRows() * config.getColumns());
         int border = config.getBorder();
         int w, h;
-        if (videoThumbsOriginalDimension) {
-            w = dimension.width;
-            h = dimension.height;
-        } else {
-            w = config.getThumbWidth();
-            h = dimension.height * w / dimension.width;
-        }
+        // setting dimension for gallery thumbs
+        w = config.getThumbWidth();
+        h = dimension.height * w / dimension.width;
         if (w > maxDimensionSize) {
             w = maxDimensionSize;
         }
@@ -445,6 +439,8 @@ public class VideoThumbsMaker {
                 2 + config.getRows() * (h + border) + border, BufferedImage.TYPE_INT_BGR);
         Graphics2D g2 = (Graphics2D) img.getGraphics();
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         g2.setColor(new Color(222, 222, 222));
         g2.fillRect(0, 0, img.getWidth(), img.getHeight());
@@ -464,14 +460,6 @@ public class VideoThumbsMaker {
         g2.dispose();
         ImageUtil.saveJpegWithMetadata(img, config.getOutFile(),
                 "Frames=" + config.getRows() + "x" + config.getColumns()); //$NON-NLS-1$ //$NON-NLS-2$
-    }
-
-    public void cleanTemp(File subTmp) {
-        File[] files = subTmp.listFiles();
-        for (File file : files) {
-            file.delete();
-        }
-        subTmp.delete();
     }
 
     private final ExecResult run(String[] cmds, int timeout, File currDir) {
@@ -504,16 +492,26 @@ public class VideoThumbsMaker {
                 if (verbose)
                     System.err.println("TIMEOUT!");
                 isTimeout = true;
-                process.destroyForcibly();
+                process.destroy();
+                process.waitFor(3, TimeUnit.SECONDS);
+            } else {
+                outputGobbler.join();
             }
-            outputGobbler.join();
             exitCode = process.exitValue();
-
             return new ExecResult(exitCode, sb.toString(), isTimeout);
+
         } catch (Exception e) {
             if (verbose) {
                 System.err.print("Error running program '"); //$NON-NLS-1$
                 e.printStackTrace();
+            }
+            if (!isTimeout && process != null && process.isAlive()) {
+                process.destroy();
+                try {
+                    process.waitFor(3, TimeUnit.SECONDS);
+                } catch (InterruptedException e1) {
+                    // ignore
+                }
             }
         } finally {
             if (process != null && process.isAlive())
@@ -591,11 +589,14 @@ public class VideoThumbsMaker {
                         System.err.println(line);
                     }
                     if (counter > maxLines) {
-                        process.destroyForcibly();
+                        process.destroy();
+                        if (!process.waitFor(3, TimeUnit.SECONDS)) {
+                            process.destroyForcibly();
+                        }
                         break;
                     }
                 }
-            } catch (IOException ioe) {
+            } catch (IOException | InterruptedException e) {
             } finally {
                 if (br != null) {
                     try {

@@ -8,6 +8,7 @@ import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.parsers.standard.RawStringParser;
 import iped.utils.RandomFilterInputStream;
 

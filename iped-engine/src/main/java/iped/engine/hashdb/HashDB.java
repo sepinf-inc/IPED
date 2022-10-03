@@ -12,14 +12,15 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
 public class HashDB {
-    public static final String[] hashTypes = new String[] {"MD5","SHA1","SHA256","SHA512","EDONKEY"};
-    public static final int[] hashBytesLen = new int[] {16,20,32,64,16};
+    public static final String[] hashTypes = new String[] { "MD5", "SHA1", "SHA256", "SHA512", "EDONKEY" };
+    public static final int[] hashBytesLen = new int[] { 16, 20, 32, 64, 16 };
     public static final byte[][] zeroLengthHash = new byte[hashTypes.length][];
     static {
         zeroLengthHash[0] = hashStrToBytes("d41d8cd98f00b204e9800998ecf8427e");
         zeroLengthHash[1] = hashStrToBytes("da39a3ee5e6b4b0d3255bfef95601890afd80709");
         zeroLengthHash[2] = hashStrToBytes("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
-        zeroLengthHash[3] = hashStrToBytes("cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e");
+        zeroLengthHash[3] = hashStrToBytes(
+                "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e");
         zeroLengthHash[4] = hashStrToBytes("31d6cfe0d16ae931b73c59d7e0c089c0");
     }
 
@@ -28,7 +29,8 @@ public class HashDB {
         for (int i = 0; i < s.length(); i += 2) {
             int a = val(s.charAt(i));
             int b = val(s.charAt(i + 1));
-            if (a < 0) throw new RuntimeException("Invalid hash value: " + s);
+            if (a < 0)
+                throw new RuntimeException("Invalid hash value: " + s);
             ret[i >>> 1] = (byte) ((a << 4) | b);
         }
         return ret;
@@ -57,16 +59,21 @@ public class HashDB {
     }
 
     private static final int val(char c) {
-        if (c >= '0' && c <= '9') return c - '0';
-        if (c >= 'A' && c <= 'Z') return c - 'A' + 10;
-        if (c >= 'a' && c <= 'z') return c - 'a' + 10;
+        if (c >= '0' && c <= '9')
+            return c - '0';
+        if (c >= 'A' && c <= 'Z')
+            return c - 'A' + 10;
+        if (c >= 'a' && c <= 'z')
+            return c - 'a' + 10;
         return -1;
     }
 
     public static int hashType(String col) {
-        if (col.indexOf("-") > 0) col = col.replace("-", "");
+        if (col.indexOf("-") > 0)
+            col = col.replace("-", "");
         for (int i = 0; i < hashTypes.length; i++) {
-            if (col.equalsIgnoreCase(hashTypes[i])) return i;
+            if (col.equalsIgnoreCase(hashTypes[i]))
+                return i;
         }
         return -1;
     }
@@ -80,7 +87,8 @@ public class HashDB {
         Arrays.sort(c);
         StringBuilder sb = new StringBuilder();
         for (String a : c) {
-            if (sb.length() > 0) sb.append("|");
+            if (sb.length() > 0)
+                sb.append("|");
             sb.append(a);
         }
         return sb.toString();
@@ -106,10 +114,12 @@ public class HashDB {
     }
 
     public static boolean containsIgnoreCase(String propertyValue, String find) {
-        if (propertyValue.equalsIgnoreCase(find)) return true;
+        if (propertyValue.equalsIgnoreCase(find))
+            return true;
         String[] c = propertyValue.split("\\|");
         for (String a : c) {
-            if (a.equalsIgnoreCase(find)) return true;
+            if (a.equalsIgnoreCase(find))
+                return true;
         }
         return false;
     }
@@ -117,13 +127,15 @@ public class HashDB {
     public static boolean containsIgnoreCase(String propertyValue, Set<String> find) {
         String[] c = propertyValue.split("\\|");
         for (String a : c) {
-            if (find.contains(a.toLowerCase())) return true;
+            if (find.contains(a.toLowerCase()))
+                return true;
         }
         return false;
     }
 
     public static String mergeProperties(String a, String b) {
-        if (a.equals(b)) return a;
+        if (a.equals(b))
+            return a;
         Set<String> all = toSet(a);
         all.addAll(toSet(b));
         return toStr(all);

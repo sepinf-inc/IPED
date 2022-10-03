@@ -25,7 +25,7 @@ public class BitTorrentResumeDatParserTest extends TestCase {
 
         BitTorrentResumeDatParser parser = new BitTorrentResumeDatParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-bittorrent-resume-dat").toString());
+        metadata.add(Metadata.CONTENT_TYPE, BitTorrentResumeDatParser.RESUME_DAT_MIME_TYPE.toString());
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);

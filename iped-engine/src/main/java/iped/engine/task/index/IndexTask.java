@@ -33,9 +33,9 @@ import iped.engine.io.CloseFilterReader;
 import iped.engine.io.FragmentingReader;
 import iped.engine.io.ParsingReader;
 import iped.engine.task.AbstractTask;
-import iped.engine.task.BaseCarveTask;
 import iped.engine.task.ParsingTask;
 import iped.engine.task.SkipCommitedTask;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.parsers.standard.StandardParser;
@@ -254,7 +254,11 @@ public class IndexTask extends AbstractTask {
             }
         }
 
-        IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
+        // Don't load default types if generating report, they will be loaded later.
+        // See https://github.com/sepinf-inc/IPED/issues/1258
+        if (!caseData.isIpedReport()) {
+            IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
+        }
         loadExtraAttributes();
 
         this.autoParser = new StandardParser();

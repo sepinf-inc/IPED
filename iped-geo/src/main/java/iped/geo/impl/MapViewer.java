@@ -18,13 +18,14 @@ import iped.geo.localization.Messages;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.ResultSetViewer;
+import javafx.application.Platform;
 
 public class MapViewer implements ResultSetViewer, TableModelListener, ListSelectionListener {
 
     JTable resultsTable;
     IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
-    AppMapaPanel mapaPanel;
+    AppMapPanel mapaPanel;
     JScrollPane mapsScroll;
     DefaultSingleCDockable dockable; // dockable where the viewer is installed
 
@@ -39,7 +40,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
         this.resultsTable = resultsTable;
         this.resultsProvider = resultsProvider;
         this.guiProvider = guiProvider;
-        mapaPanel = new AppMapaPanel(resultsProvider, guiProvider);
+        mapaPanel = new AppMapPanel(resultsProvider, guiProvider);
         mapsScroll = new JScrollPane(mapaPanel);
         resultsTable.getModel().addTableModelListener(this);
         resultsTable.getSelectionModel().addListSelectionListener(this);
@@ -65,8 +66,28 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
         mapaPanel.updateMap();
     }
 
+    boolean internaltableChanged = false;
+
+    @Override
+    public void checkAll(boolean value) {
+        updatingCheckbox = true;
+        for (IItemId itemId : resultsProvider.getResults().getIterator()) {
+            mapaPanel.selectCheckbox(itemId, value);
+        }
+        updatingCheckbox = false;
+        Platform.runLater(new Runnable() {
+            public void run() {
+                mapaPanel.update();
+            }
+        });
+    }
+
     @Override
     public void tableChanged(TableModelEvent e) {
+        if (e.getFirstRow() == -1 && e.getLastRow() == -1) {
+            /**/
+            return;
+        }
         /*
          * if(e.getColumn()==-1) { if((e.getFirstRow()==0)) { return; } }
          */
@@ -79,15 +100,17 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
             mapaPanel.selectCheckbox(item, b.booleanValue());
         }
 
-        /* Se a alteração foi feita no próprio mapa, ela não precisa ser refeita. */
+        /* Se a alteração foi feita no próprio mapa
+         * ou a operação é de ordenação
+         * , ela não precisa ser refeita. */
         if (!desabilitaTemp) {
             mapaPanel.setMapOutDated(true);
 
             /* somente chamado se o tab de mapas estiver sendo exibido */
             if (dockable != null && dockable.isShowing()) {
-                if (!updatingCheckbox)
+                if (!updatingCheckbox) {
                     mapaPanel.updateMap();
-                else {
+                } else {
                     mapaPanel.update();
                 }
 
@@ -99,39 +122,66 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
         }
     }
 
+    public void updateMapLeadCursor() {
+        // update internal map item cursor with lead selection
+        int resultTableLeadSelIdx = resultsTable.getSelectionModel().getLeadSelectionIndex();
+        try {
+            if(resultTableLeadSelIdx != -1) {
+                int rowModel = resultsTable.convertRowIndexToModel(resultTableLeadSelIdx);
+                IItemId item = resultsProvider.getResults().getItem(rowModel);
+                String gid = "marker_" + item.getSourceId() + "_" + item.getId();
+                mapaPanel.browserCanvas.sendLeadSelection(gid);
+            }
+        }catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     @Override
     public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting())
+        if (e.getValueIsAdjusting() || resultsTable.getRowSorter()==null)
             return;
 
-        if ((!mapaPanel.mapaDesatualizado)) {
-            ListSelectionModel lsm = (ListSelectionModel) e.getSource();
-            HashMap<String, Boolean> selecoes = new HashMap<String, Boolean>();
-            for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
-                boolean selected = lsm.isSelectedIndex(i);
+        Runnable run = new Runnable() {
+            @Override
+            public void run() {
+                ListSelectionModel lsm = (ListSelectionModel) e.getSource();
+                HashMap<String, Boolean> selecoes = new HashMap<String, Boolean>();
+                for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
+                    boolean selected = lsm.isSelectedIndex(i);
 
-                int rowModel = resultsTable.convertRowIndexToModel(i);
-                IItemId item = resultsProvider.getResults().getItem(rowModel);
+                    try {
+                        int rowModel = resultsTable.convertRowIndexToModel(i);
+                        IItemId item = resultsProvider.getResults().getItem(rowModel);
 
-                if (mapaPanel.kmlResult != null && mapaPanel.kmlResult.getGPSItems().containsKey(item)) {
-                    List<Integer> subitems = mapaPanel.kmlResult.getGPSItems().get(item);
-                    if (subitems == null) {
-                        String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-                        selecoes.put(gid, selected);
-                    } else {
-                        for (Integer subitem : subitems) {
-                            String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$
-                            selecoes.put(gid, selected);
+                        if (mapaPanel.kmlResult != null && mapaPanel.kmlResult.getGPSItems().containsKey(item)) {
+                            List<Integer> subitems = mapaPanel.kmlResult.getGPSItems().get(item);
+                            if (subitems == null) {
+                                String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                                selecoes.put(gid, selected);
+                            } else {
+                                for (Integer subitem : subitems) {
+                                    String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$
+                                    selecoes.put(gid, selected);
+                                }
+                            }
                         }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
+
+                }
+                mapaPanel.browserCanvas.sendSelection(selecoes);
+
+                updateMapLeadCursor();
+
+                if (dockable.isShowing()) {
+                    mapaPanel.browserCanvas.update();
                 }
             }
-            mapaPanel.browserCanvas.sendSelection(selecoes);
+        };
 
-            if (dockable.isShowing()) {
-                mapaPanel.browserCanvas.update();
-            }
-        }
+        mapaPanel.runAfterLoad(run);
     }
 
     @Override

@@ -72,6 +72,8 @@ public class GalleryModel extends AbstractTableModel {
 
     public static final int defaultColCount = 10;
     
+    private static final double blurIntensity = 0.02d;
+
     private int colCount = defaultColCount;
     private int thumbSize = 160;
     private int galleryThreads = 1;
@@ -85,6 +87,27 @@ public class GalleryModel extends AbstractTableModel {
     public static final ImageIcon unsupportedIcon = new ImageIcon();
     private ExecutorService executor;
     private ExternalImageConverter externalImageConverter;
+
+    private volatile boolean blurFilter;
+    private volatile boolean grayFilter;
+
+    public boolean getBlurFilter() {
+        return blurFilter;
+    }
+
+    public boolean getGrayFilter() {
+        return grayFilter;
+    }
+
+    public void setBlurFilter(boolean newBlurFilter) {
+        blurFilter = newBlurFilter;
+        cache.clear();
+    }
+
+    public void setGrayFilter(boolean newGrayFilter) {
+        grayFilter = newGrayFilter;
+        cache.clear();
+    }
 
     @Override
     public int getColumnCount() {
@@ -257,6 +280,13 @@ public class GalleryModel extends AbstractTableModel {
                     if (image == null || image == errorImg) {
                         if (value.icon == null)
                             value.icon = errorIcon;
+                    } else {
+                        if (blurFilter) {
+                            image = ImageUtil.blur(image, thumbSize, blurIntensity);
+                        }
+                        if (grayFilter) {
+                            image = ImageUtil.grayscale(image);
+                        }
                     }
 
                 } catch (Exception e) {

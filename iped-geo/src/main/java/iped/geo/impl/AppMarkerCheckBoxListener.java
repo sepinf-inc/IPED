@@ -8,9 +8,9 @@ import iped.geo.kml.GetResultsKMLWorker;
 import iped.search.IMultiSearchResult;
 
 public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
-    AppMapaPanel mapaPanel;
+    AppMapPanel mapaPanel;
 
-    public AppMarkerCheckBoxListener(AppMapaPanel mapaPanel) {
+    public AppMarkerCheckBoxListener(AppMapPanel mapaPanel) {
         this.mapaPanel = mapaPanel;
     }
 

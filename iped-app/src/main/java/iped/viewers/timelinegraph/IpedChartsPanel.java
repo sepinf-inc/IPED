@@ -45,11 +45,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListCellRenderer;
-import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -58,9 +56,9 @@ import javax.swing.event.TableModelListener;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.util.BytesRef;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.LegendItem;
@@ -984,4 +982,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	public void componentHidden(ComponentEvent e) {
 		
 	}
+
+    @Override
+    public void checkAll(boolean value) {
+        // TODO Auto-generated method stub
+    }
 }

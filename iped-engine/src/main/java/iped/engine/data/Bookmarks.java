@@ -41,7 +41,7 @@ import iped.engine.util.Util;
 import iped.search.SearchResult;
 import iped.utils.IOUtil;
 
-public class Bookmarks implements Serializable, IBookmarks {
+public class Bookmarks implements IBookmarks {
 
     /**
      * 
@@ -162,6 +162,14 @@ public class Bookmarks implements Serializable, IBookmarks {
             }
 
         return bookmarkIds;
+    }
+
+    public synchronized void addBookmark(int[] ids, int bookmark) {
+        List<Integer> list = new ArrayList<>();
+        for (int id : ids) {
+            list.add(id);
+        }
+        this.addBookmark(list, bookmark);
     }
 
     public synchronized void addBookmark(List<Integer> ids, int bookmark) {

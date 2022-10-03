@@ -12,13 +12,13 @@ import netscape.javascript.JSObject;
 
 public class JSGoogleInterfaceFunctions implements JSInterfaceFunctions {
 
-    MapaCanvasWebkit map;
+    MapCanvasWebkit map;
 
-    public JSGoogleInterfaceFunctions(MapaCanvasWebkit map) {
+    public JSGoogleInterfaceFunctions(MapCanvasWebkit map) {
         this.map = map;
     }
 
-    public MapaCanvasWebkit getMap() {
+    public MapCanvasWebkit getMap() {
         return map;
     }
 

@@ -2,9 +2,6 @@
 # ElasticSearch Task configuration
 #################################
 
-# Enable indexing to ElasticSearch cluster
-enableIndexToElasticSearch = false
-
 # Host name or ip address of Elastic cluster
 host = Sepinf-hpw03
 
@@ -48,3 +45,10 @@ index.mapping.total_fields.limit = 10000
 # Use a custom analyzer that tokenizes on non digits and non latin1 chars,
 # converts them to lowercase and uses asciifolding filter
 useCustomAnalyzer = true
+
+# Validate the SSL certificate, it is not recommended to disable this in production
+validateSSL = true
+
+# index the extracted text using term vectors. This improves the highlight speed, but increases the index size by around 30%. 
+useTermVector = false
+

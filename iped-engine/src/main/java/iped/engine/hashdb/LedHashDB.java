@@ -28,14 +28,17 @@ public class LedHashDB {
     }
 
     public boolean containsMD5_512(byte[] bytes) {
-        if (bytes.length != 16) return false;
+        if (bytes.length != 16)
+            return false;
         return binarySearch(md5_512, bytes) >= 0;
     }
 
     public int hashIdFromMD5_64K(byte[] bytes) {
-        if (bytes.length != 16) return -1;
+        if (bytes.length != 16)
+            return -1;
         int pos = binarySearch(md5_64k, bytes);
-        if (pos < 0) return -1;
+        if (pos < 0)
+            return -1;
         return hashIds[pos];
     }
 
@@ -49,9 +52,12 @@ public class LedHashDB {
             for (int i = 0; i < 16 && cmp == 0; i++) {
                 cmp = Integer.compare(arr[off + i] & 255, bytes[i] & 255);
             }
-            if (cmp == 0) return mid;
-            if (cmp < 0) low = mid + 1;
-            else high = mid - 1;
+            if (cmp == 0)
+                return mid;
+            if (cmp < 0)
+                low = mid + 1;
+            else
+                high = mid - 1;
         }
         return -(low + 1);
     }

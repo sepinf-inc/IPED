@@ -90,6 +90,14 @@ enableSplitLargeBinary = true
 # Indexes files contents. If disabled, indexes only the properties of files.
 indexFileContents = true
 
+# Enables indexing to an ElasticSearch/OpenSearch cluster.
+# You must configure at least host/port options in conf/ElasticSearchConfig.txt
+enableIndexToElasticSearch = false
+
+# Enable exporting files to MinIO object storage cluster.
+# You must configure at least host/port options in conf/MinIOConfig.txt
+enableMinIO = false
+
 # Enable audio transcription.
 # Default implementation uses VOSK transcription [EXPERIMENTAL] on local CPU (slow and medium quality).
 # We include Vosk portable models for 'en' and 'pt-BR', the lang model is taken from 'locale' in LocalConfig.txt
@@ -117,7 +125,7 @@ enableImageThumbs = true
 # for visually similar images. "enableImageThumbs" must be enabled.
 enableImageSimilarity = false
 
-# [Experimental] Enables face recognition feature.
+# Enables face recognition feature.
 # You may install python and some dependencies, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
 # Advanced configuration options can be found in conf/FaceRecognitionConfig.txt.
 # If enabled, you can search for faces from the analysis interface, check the options menu.

@@ -33,6 +33,7 @@ import iped.engine.localization.Messages;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.TaskInstaller;
 import iped.engine.util.UIPropertyListenerProvider;
+import iped.engine.util.Util;
 import iped.exception.IPEDException;
 
 /**
@@ -220,6 +221,8 @@ public class Worker extends Thread {
                 incItemsBeingProcessed();
             }
             long t = System.nanoTime() / 1000;
+
+            Util.calctrackIDAndUpdateID(caseData, evidence);
 
             process(evidence);
 

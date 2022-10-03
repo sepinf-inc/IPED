@@ -18,7 +18,7 @@ import iped.parsers.util.Util;
 /**
  * Helper class for decoding bencoded streams
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class BencodedDict {
 

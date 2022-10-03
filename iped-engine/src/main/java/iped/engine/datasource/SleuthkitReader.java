@@ -21,9 +21,6 @@ package iped.engine.datasource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -36,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -85,7 +83,7 @@ import iped.engine.data.Item;
 import iped.engine.localization.Messages;
 import iped.engine.sleuthkit.SleuthkitClient;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
-import iped.engine.task.BaseCarveTask;
+import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
@@ -362,6 +360,8 @@ public class SleuthkitReader extends DataSourceReader {
 
         if (listOnly || embeddedDisk) {
 
+            Properties sysProps = System.getProperties();
+
             if (sleuthCase == null) {
                 synchronized (this.getClass()) {
                     if (sleuthCase == null) {
@@ -378,6 +378,13 @@ public class SleuthkitReader extends DataSourceReader {
                     }
                 }
             }
+
+            // workaround for https://github.com/sepinf-inc/IPED/issues/1176
+            for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
+                sysProps.setProperty(entry.getKey().toString(), entry.getValue().toString());
+            }
+            System.setProperties(sysProps);
+
 
             Manager.getInstance().initSleuthkitServers();
 
@@ -616,7 +623,12 @@ public class SleuthkitReader extends DataSourceReader {
                 if (idx1 != -1 && idx2 != -1) {
                     LOGGER.warn(logMsg);
                 } else {
-                    LOGGER.error(logMsg);
+                    this.decodingError = true;
+                    if (this.embeddedDisk) {
+                        LOGGER.warn(logMsg);
+                    } else {
+                        LOGGER.error(logMsg);
+                    }
                 }
             }
         }
@@ -929,8 +941,11 @@ public class SleuthkitReader extends DataSourceReader {
         if (listOnly || fastmode || embeddedDisk) {
             itemCount++;
             caseData.incDiscoveredEvidences(1);
-            if (!embeddedDisk)
+            if (!embeddedDisk) {
                 caseData.incDiscoveredVolume(evidence.getLength());
+            } else {
+                evidence.setSumVolume(false);
+            }
             if (listOnly)
                 return null;
         }
@@ -1180,41 +1195,6 @@ public class SleuthkitReader extends DataSourceReader {
             }
         }
         return false;
-    }
-
-    private void logStream(final InputStream stream, final String image) {
-        new Thread() {
-            @Override
-            public void run() {
-                Reader reader = new InputStreamReader(stream);
-                StringBuilder out = new StringBuilder();
-                char[] buffer = new char[1024];
-                try {
-                    for (int n = reader.read(buffer); n != -1; n = reader.read(buffer)) {
-                        out.append(buffer, 0, n);
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-
-                } finally {
-                    IOUtil.closeQuietly(stream);
-                    String msg = out.toString().trim();
-                    for (String line : msg.split("\n")) { //$NON-NLS-1$
-                        if (!line.trim().isEmpty()) {
-                            if (line.toLowerCase().contains("error") //$NON-NLS-1$
-                                    && !line.toLowerCase().contains("microsoft reserved partition")) { //$NON-NLS-1$
-                                LOGGER.error("Sleuthkit error processing {}: {}", image, line.trim()); //$NON-NLS-1$
-                                decodingError = true;
-                            } else {
-                                LOGGER.info("Sleuthkit: " + line.trim()); //$NON-NLS-1$
-                            }
-                        }
-                    }
-                }
-                return;
-            }
-        }.start();
     }
 
 }

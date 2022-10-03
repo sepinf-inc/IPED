@@ -42,9 +42,9 @@
     <task script="FaceRecognitionTask.py"></task>
     
     <!--Carving must be installed before IndexTask because it sets hasChildren property in parent items-->
-    <task class="iped.engine.task.LedCarveTask"></task>
+    <task class="iped.engine.task.carver.LedCarveTask"></task>
     <task class="iped.engine.task.carver.CarverTask"></task>
-    <task class="iped.engine.task.KnownMetCarveTask"></task>
+    <task class="iped.engine.task.carver.KnownMetCarveTask"></task>
     
     <task class="iped.engine.task.FragmentLargeBinaryTask"></task>
     <task class="iped.engine.task.EntropyTask"></task>

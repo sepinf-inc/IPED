@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Database;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
@@ -30,7 +31,6 @@ public class SQLite3ParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("Name"));
             assertTrue(hts.contains("Cols"));
@@ -42,8 +42,8 @@ public class SQLite3ParserTest extends TestCase {
             assertTrue(hts.contains("2"));
             assertTrue(hts.contains("3"));
 
-            assertTrue(mts.contains("database:table_name=username_mapping"));
-            assertTrue(mts.contains("database:table_name=global_preferences"));
+            assertEquals(metadata.getValues(Database.TABLE_NAME)[0], "username_mapping");
+            assertEquals(metadata.getValues(Database.TABLE_NAME)[1], "global_preferences");
         }
     }
 
@@ -58,7 +58,6 @@ public class SQLite3ParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
             SQLite3Parser.getConnectionProperties();
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("Name"));
             assertTrue(hts.contains("Cols"));
@@ -69,8 +68,8 @@ public class SQLite3ParserTest extends TestCase {
             assertTrue(hts.contains("2"));
             assertTrue(hts.contains("6699"));
 
-            assertTrue(mts.contains("database:table_name=Activity"));
-            assertTrue(mts.contains("database:table_name=ActivityOperation"));
+            assertEquals(metadata.getValues(Database.TABLE_NAME)[0], "Activity");
+            assertEquals(metadata.getValues(Database.TABLE_NAME)[1], "ActivityOperation");
 
         }
     }

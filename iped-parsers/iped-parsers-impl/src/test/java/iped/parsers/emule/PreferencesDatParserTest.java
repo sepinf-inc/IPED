@@ -36,18 +36,4 @@ public class PreferencesDatParserTest extends TestCase {
 
     }
 
-    @Test
-    public void testKnownMetEmbedded() throws IOException, SAXException, TikaException {
-
-        PreferencesDatParser parser = new PreferencesDatParser();
-        Metadata metadata = new Metadata();
-        ContentHandler handler = new BodyContentHandler();
-        ParseContext context = new ParseContext();
-        try (InputStream stream = getStream("test-files/test_preferences.dat")) {
-            parser.parse(stream, handler, metadata, context);
-            String mts = metadata.toString();
-            System.out.println(mts);
-        }
-
-    }
 }
