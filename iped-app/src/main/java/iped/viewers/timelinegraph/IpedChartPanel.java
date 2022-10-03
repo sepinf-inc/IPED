@@ -879,7 +879,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         drawDateCursor(g2, lastMouseMoveX, true);
 		lastMouseMoveX=-1;
 		super.paint(g);
-		System.out.println("paint");
 	}
 
 	@Override
