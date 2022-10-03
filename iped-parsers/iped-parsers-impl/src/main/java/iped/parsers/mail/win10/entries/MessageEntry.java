@@ -15,7 +15,7 @@ public class MessageEntry extends AbstractEntry {
     private String msgAbstract;
     private String subject;
     private String senderName;
-    private String senderEmail;
+    private String senderEmailAddress;
     private Date msgDeliveryTime;
     private Date lastModifiedTime;
 
@@ -83,12 +83,12 @@ public class MessageEntry extends AbstractEntry {
         this.senderName = senderName;
     }
 
-    public String getSenderEmail() {
-        return this.senderEmail;
+    public String getSenderEmailAddress() {
+        return this.senderEmailAddress;
     }
 
-    public void setSenderEmail(String senderAddress) {
-        this.senderEmail = senderAddress;
+    public void setSenderEmailAddress(String senderAddress) {
+        this.senderEmailAddress = senderAddress;
     }
     
     public Date getMsgDeliveryTime() {

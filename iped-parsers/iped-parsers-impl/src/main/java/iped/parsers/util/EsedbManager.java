@@ -93,10 +93,10 @@ public class EsedbManager {
         IntByReference recordValueDataInt = new IntByReference();
         Memory recordValueData = new Memory(3072);
 
-        int result = esedbLibrary.libesedb_record_get_value_utf16_string_size(recordPointerReference.getValue(), value_entry,
+        int result = esedbLibrary.libesedb_record_get_value_utf8_string_size(recordPointerReference.getValue(), value_entry,
             recordValueDataInt, errorPointer);
         if (result < 0)
-            printError("Record Get UTF16 String Size", result, filePath, errorPointer);
+            printError("Record Get UTF8 String Size", result, filePath, errorPointer);
         if ((recordValueDataInt.getValue() > 0) && (result == 1)) {
             result = esedbLibrary.libesedb_record_get_value_utf8_string(recordPointerReference.getValue(), value_entry,
                     recordValueData, recordValueDataInt.getValue(), errorPointer);

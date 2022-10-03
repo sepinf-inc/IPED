@@ -1,17 +1,20 @@
 package iped.parsers.mail.win10;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -19,6 +22,7 @@ import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -39,6 +43,7 @@ import com.sun.jna.ptr.PointerByReference;
 import iped.data.IItemReader;
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.database.EDBParser;
+import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.mail.win10.entries.AbstractEntry;
 import iped.parsers.mail.win10.entries.AttachmentEntry;
 import iped.parsers.mail.win10.entries.MessageEntry;
@@ -47,12 +52,15 @@ import iped.parsers.mail.win10.tables.AbstractTable;
 import iped.parsers.mail.win10.tables.AttachmentTable;
 import iped.parsers.mail.win10.tables.MessageTable;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.Util;
 import iped.parsers.util.EsedbManager;
 import iped.parsers.util.IgnoreContentHandler;
 import iped.parsers.util.ItemInfo;
+import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
+import iped.utils.SimpleHTMLEncoder;
 
 /*
  * Important tables to parse from store.vol:
@@ -87,6 +95,9 @@ public class Win10MailParser extends AbstractParser {
     private static EsedbLibrary esedbLibrary;
 
     private EDBParser genericParser = new EDBParser();
+
+    private EmbeddedDocumentExtractor extractor;
+    private XHTMLContentHandler xhtml;
 
     protected boolean extractEntries = true;
 
@@ -123,7 +134,7 @@ public class Win10MailParser extends AbstractParser {
         File storeVolFile = null;
         TikaInputStream storeVolTis = TikaInputStream.get(stream, tmp);
         
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+        extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
 
         try {
@@ -147,15 +158,10 @@ public class Win10MailParser extends AbstractParser {
                         tableMetadata.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_DB.toString());
                         tableMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Mail Table " + table.getTableName()); // $NON-NLS-1$
                         tableMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
-                        tableMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                        tableMetadata.set(BasicProps.HASCHILD, "true");
                         tableMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                        XHTMLContentHandler xHandler = new XHTMLContentHandler(tableHandler, metadata);
-                        xHandler.startDocument();
-                        xHandler.startElement("p");
-                        xHandler.characters("aasdasd");
-                        xHandler.endElement("p");
-                        xHandler.endDocument();
+                        xhtml = new XHTMLContentHandler(tableHandler, metadata);
 
                         try (FileInputStream fis = new FileInputStream(tableFile)) {
                             extractor.parseEmbedded(fis, handler, tableMetadata, true);
@@ -171,9 +177,11 @@ public class Win10MailParser extends AbstractParser {
                             }
                             System.out.println(message.getRowId() + ": " + str);
 
+                            
                             String contentPath = Win10MailParser.getEntryLocation(message, MESSAGE_CATEGORY);
                             IItemReader item = Win10MailParser.searchItemInCase(contentPath, message.getMessageSize());
-                            
+
+
                             if (item != null) {
                                 InputStream is = item.getBufferedInputStream();
                                 InputStreamReader utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
@@ -189,15 +197,9 @@ public class Win10MailParser extends AbstractParser {
                                 }
                                 ReaderInputStream utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
 
-                                Metadata metadataMessage = new Metadata();
-                                metadataMessage.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Mail rowId: " + message.getRowId());
-                                metadataMessage.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG_REG.toString());
-                                metadataMessage.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-                                metadataMessage.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
-                                metadataMessage.add(TikaCoreProperties.ORIGINAL_RESOURCE_NAME, contentPath);
-
                                 if (utf8IS != null) {
-                                    extractor.parseEmbedded(utf8IS, new IgnoreContentHandler(), metadataMessage, true);
+                                    message.setContentHtml(IOUtils.toString(utf8IS, StandardCharsets.UTF_8));
+                                    processMail(message, storeVolPath);
                                 }
 
                                 utf8IS.close();
@@ -211,7 +213,7 @@ public class Win10MailParser extends AbstractParser {
             }
         } catch (Exception e) {
             genericParser.parse(storeVolTis, handler, metadata, context);
-            throw new TikaException(this.getClass().getSimpleName() + " exception", e); //$NON-NLS-1$
+            throw new TikaException(this.getClass().getSimpleName() + " exception", e);
 
         } finally {
             tmp.close();
@@ -325,6 +327,66 @@ public class Win10MailParser extends AbstractParser {
 
         }
         return tables;
+    }
+
+    private void processMail(MessageEntry email, String path) {
+        Metadata metadata = new Metadata();
+
+        try {
+            String subject = email.getSubject();
+            if (subject == null || subject.trim().isEmpty())
+                subject = Messages.getString("OutlookPSTParser.NoSubject");
+
+            metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
+            metadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG_REG.toString());
+            metadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+            // metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, "0");
+            // metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, "0");
+
+            Charset charset = Charset.forName("UTF-8"); 
+            StringBuilder preview = new StringBuilder();
+            preview.append("<html>");
+            preview.append("<head>");
+            preview.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charset + "\" />");
+            preview.append("</head>");
+            preview.append(
+                    "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">");
+
+            preview.append("<div class=\"ipedtheme\">");
+            preview.append("<b>" + Messages.getString("OutlookPSTParser.Subject") + ": "
+                    + SimpleHTMLEncoder.htmlEncode(subject) + "</b><br>");
+
+            String from = OutlookPSTParser.formatNameAndAddress(email.getSenderName(), email.getSenderEmailAddress());
+            if (!from.isEmpty()) {
+                metadata.set(Message.MESSAGE_FROM, from);
+                preview.append("<b>" + Messages.getString("OutlookPSTParser.From") + ":</b> "
+                        + SimpleHTMLEncoder.htmlEncode(from) + "<br>");
+            }
+
+            preview.append("</div>\n");
+            String bodyHtml = email.getContentHtml();
+            if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
+                preview.append(bodyHtml);
+                metadata.set(ExtraProperties.MESSAGE_BODY,
+                        Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
+            }
+
+            preview.append("</body>");
+            preview.append("</html>");
+
+            ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset));
+            preview = null;
+
+            if (extractor.shouldParseEmbedded(metadata))
+                extractor.parseEmbedded(stream, xhtml, metadata, true);
+
+            stream.close();
+
+        } catch (Exception e) {
+            LOGGER.warn("Exception extracting email: {}>>{}\t{}", path, email.getSubject(), e.toString()); //$NON-NLS-1$
+            // e.printStackTrace();
+        }
+
     }
 
     public static String getEntryLocation(AbstractEntry entry, char category) {

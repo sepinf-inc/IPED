@@ -80,7 +80,7 @@ public class MessageTable extends AbstractTable {
         message.setMsgAbstract(msgAbstract);
         message.setSubject(subject);
         message.setSenderName(senderName);
-        message.setSenderEmail(senderEmail);
+        message.setSenderEmailAddress(senderEmail);
         message.setMsgDeliveryTime(msgDeliveryTime);
         message.setLastModifiedTime(lastModifiedTime);
 
