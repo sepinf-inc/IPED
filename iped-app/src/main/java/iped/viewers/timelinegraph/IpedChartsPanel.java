@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RunnableFuture;
@@ -45,9 +46,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListCellRenderer;
+import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
+import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -56,9 +59,9 @@ import javax.swing.event.TableModelListener;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.util.BytesRef;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.LegendItem;
@@ -119,7 +122,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             20000, TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<Runnable>());
 	
-	boolean syncWithTableSelection = false;
+	boolean syncViewWithTableSelection = false;
 	
     LegendItemCollection legendItems = null;
     
@@ -591,49 +594,65 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		// TODO Auto-generated method stub
 		return this.guiProvider;
 	}
+	
+	public void showSelection() {
+    	try {
+    		Date min=null;
+    		Date max=null;
+
+            LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
+    		timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
+    		TreeSet<Integer> luceneIds = new TreeSet<Integer>();
+        	
+    		int[] selected = resultsTable.getSelectedRows();
+			for (int i = 0; i < selected.length; i++) {
+                int rowModel = resultsTable.convertRowIndexToModel(selected[i]);
+                IItemId item = resultsProvider.getResults().getItem(rowModel);
+
+                int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
+                luceneIds.add(luceneId);
+    		}
+        	
+    		SortedSetDocValues timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
+    		
+    		for (Iterator iterator = luceneIds.iterator(); iterator.hasNext();) {
+				Integer docId = (Integer) iterator.next();
+                boolean adv = false;
+                try {
+                    adv = timeStampValues.advanceExact(docId);
+                }catch (IllegalArgumentException e) {
+                    adv = timeStampValues.advanceExact(docId);
+				}
+
+                long ord, prevOrd = -1;
+                while (adv && (ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                    if (prevOrd != ord) {
+                		Date d = domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString());
+                		if(min==null || d.before(min)) {
+                			min=d;
+                		}
+                		if(max==null || d.after(max)) {
+                			max=d;
+                		}
+                    }
+                    prevOrd = ord;
+                }
+				
+			}
+            
+            domainAxis.guaranteeShowRange(min,max);
+    	}catch(Exception e1) {
+    		e1.printStackTrace();
+    	}
+	}
 
 	@Override
     public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) {
             return;
         }else {
-        	if(syncWithTableSelection){
-            	try {
-            		Date min=null;
-            		Date max=null;
-
-                    LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
-            		timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
-                	
-                    ListSelectionModel lsm = (ListSelectionModel) e.getSource();
-                    for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
-                        boolean selected = lsm.isSelectedIndex(i);
-
-                        int rowModel = resultsTable.convertRowIndexToModel(i);
-                        IItemId item = resultsProvider.getResults().getItem(rowModel);
-
-                        int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
-                        boolean adv = timeStampValues.advanceExact(luceneId);
-
-                        long ord, prevOrd = -1;
-                        while (adv && (ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-                            if (prevOrd != ord) {
-                        		Date d = domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString());
-                        		if(min==null || d.before(min)) {
-                        			min=d;
-                        		}
-                        		if(max==null || d.after(max)) {
-                        			max=d;
-                        		}
-                            }
-                            prevOrd = ord;
-                        }
-                    }
-                    
-                    domainAxis.guaranteeShowRange(min,max);
-            	}catch(Exception e1) {
-            		e1.printStackTrace();
-            	}
+        	if(syncViewWithTableSelection){
+        		showSelection();
         	}
         }
     }
@@ -983,8 +1002,17 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		
 	}
 
-    @Override
-    public void checkAll(boolean value) {
-        // TODO Auto-generated method stub
-    }
+	public boolean isSyncViewWithTableSelection() {
+		return syncViewWithTableSelection;
+	}
+
+	public void setSyncViewWithTableSelection(boolean syncViewWithTableSelection) {
+		this.syncViewWithTableSelection = syncViewWithTableSelection;
+	}
+
+	@Override
+	public void checkAll(boolean value) {
+		// TODO Auto-generated method stub
+		
+	}
 }

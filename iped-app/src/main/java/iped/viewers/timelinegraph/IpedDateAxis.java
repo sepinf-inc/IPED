@@ -403,6 +403,17 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
     	return new DateRange(range.getLowerMillis()-margin,range.getUpperMillis()+margin);
     }
 
+	public Class<? extends TimePeriod> bestGranularityForRange(Date min, Date max) {
+		Class<? extends TimePeriod> result = ipedChartsPanel.getTimePeriodClass();
+    	ChartTimePeriodConstraint c = ipedChartsPanel.getChartPanel().getTimePeriodConstraints(result);
+    	if(c==null) return result;
+    	long rangeSize=max.getTime()-min.getTime();
+    	while(c!=null && c.getMaxZoomoutRangeSize() < rangeSize) {
+    		result = upsize(result);
+    		c = ipedChartsPanel.getChartPanel().getTimePeriodConstraints(result);
+    	}
+    	return result;
+	}
 
     /**
      * Adjusts visible range to guarantee that the current minimum and maximum
@@ -430,7 +441,14 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
 		}
 
 		newRange = putMargin(newRange);
-
+		
+		Class<? extends TimePeriod> tpclass = bestGranularityForRange(newRange.getLowerDate(), newRange.getUpperDate());
+		if(!tpclass.equals(ipedChartsPanel.getTimePeriodClass())) {
+			ipedChartsPanel.setTimePeriodClass(tpclass);
+			ipedChartsPanel.setTimePeriodString(tpclass.getSimpleName());
+			ipedChartsPanel.refreshChart();
+		}
+		needTimePeriodClassUpdate=true;
 		setRange(newRange);
 	}
 
@@ -475,7 +493,7 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
         		try {
         			if(curRangeSize>rangeSize && tpclass!=Millisecond.class) {//zoomIn
         				
-            			Class<? extends TimePeriod> downtpclass = downsizeToRange(tpclass);
+            			Class<? extends TimePeriod> downtpclass = downsize(tpclass);
 
             			String tpClassName = DateUtil.getTimePeriodName(tpclass);
             			String msg = String.format(Messages.get("TimeLineGraph.visibleZoominForGranularity"),tpClassName,DateUtil.getTimePeriodName(downtpclass));
@@ -507,7 +525,7 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
      *
      * @return A class.
      */
-    public static Class downsizeToRange(Class c) {
+    public static Class downsize(Class c) {
         if (c.equals(Year.class)) {
             return Quarter.class;
         }
@@ -531,6 +549,41 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
         }
         else {
             return Millisecond.class;
+        }
+    }
+
+    /**
+     * Returns a subclass of {@link RegularTimePeriod} that is smaller than
+     * the specified class.
+     *
+     * @param c  a subclass of {@link RegularTimePeriod}.
+     *
+     * @return A class.
+     */
+    public static Class upsize(Class c) {
+        if (c.equals(Quarter.class)) {
+            return Year.class;
+        }
+        else if (c.equals(Month.class)) {
+            return Quarter.class;
+        }
+        else if (c.equals(Day.class)) {
+            return Month.class;
+        }
+        else if (c.equals(Hour.class)) {
+            return Day.class;
+        }
+        else if (c.equals(Minute.class)) {
+            return Hour.class;
+        }
+        else if (c.equals(Second.class)) {
+            return Minute.class;
+        }
+        else if (c.equals(Millisecond.class)) {
+            return Second.class;
+        }
+        else {
+            return Year.class;
         }
     }
 

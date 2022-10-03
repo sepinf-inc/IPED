@@ -27,11 +27,17 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JTable;
 
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
@@ -55,7 +61,10 @@ import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
 
 import iped.app.ui.App;
+import iped.data.IItemId;
+import iped.properties.BasicProps;
 import iped.utils.IconUtil;
+import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.timelinegraph.datasets.TimelineDataset;
 import iped.viewers.timelinegraph.model.Minute;
 import iped.viewers.timelinegraph.popups.ChartPanelPopupMenu;
@@ -474,6 +483,54 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         definedFilters.add(filterDates);
 	}
 
+    private void drawHighlightedTickers(Graphics g2) {
+    	/* slow if too many highlighted
+    	try {
+        	JTable resultsTable = ipedChartsPanel.getResultsProvider().getResultsTable();
+        	IMultiSearchResultProvider resultsProvider = ipedChartsPanel.getResultsProvider();
+            LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
+    		
+    		TreeSet<Integer> luceneIds = new TreeSet<Integer>();
+    		
+    		int[] selected = resultsTable.getSelectedRows();
+        	for (int i = 0; i < selected.length; i++) {
+                int rowModel = resultsTable.convertRowIndexToModel(selected[i]);
+                IItemId item = resultsProvider.getResults().getItem(rowModel);
+
+                int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
+                luceneIds.add(luceneId);
+    		}
+        	
+    		SortedSetDocValues timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
+    		
+    		for (Iterator iterator = luceneIds.iterator(); iterator.hasNext();) {
+				Integer docId = (Integer) iterator.next();
+                boolean adv = false;
+                try {
+                    adv = timeStampValues.advanceExact(docId);
+                }catch (IllegalArgumentException e) {
+                    adv = timeStampValues.advanceExact(docId);
+				}
+
+                long ord, prevOrd = -1;
+                while (adv && (ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                    if (prevOrd != ord) {
+                		Date d = ipedChartsPanel.getDomainAxis().ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString());
+                		double x = ipedChartsPanel.domainAxis.valueToJava2D(d.getTime(), this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge());
+                		double y = this.getScreenDataArea().getMinY();
+                        g2.drawLine((int)x,(int)y,(int)x,(int)y-4);
+                    }
+                    prevOrd = ord;
+                }
+				
+			}
+    	}catch(Exception e) {
+    		e.printStackTrace();
+    	}
+    	*/
+    }
+	
+	
     /**
      * Draws zoom rectangle (if present).
      * The drawing is performed in XOR mode, therefore
@@ -589,11 +646,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
     
 
     /**
-     * Draws zoom rectangle (if present).
-     * The drawing is performed in XOR mode, therefore
-     * when this method is called twice in a row,
-     * the second call will completely restore the state
-     * of the canvas.
+     * Draws date cursor line.
      *
      * @param g2 the graphics device.
      * @param xor  use XOR for drawing?
@@ -649,6 +702,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
        }
     }
     
+
     
 	private void drawDefinedFiltersDates(Date[] dates, Graphics2D g2, boolean xor) {
         if (xor) {
@@ -826,7 +880,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
         drawDateCursor(g2, lastMouseMoveX, true);
 		lastMouseMoveX=-1;
 		super.paint(g);
-
+		System.out.println("paint");
 	}
 
 	@Override
@@ -937,6 +991,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
         drawFilterIntervalRectangle((Graphics2D) g, true);
+        drawHighlightedTickers(g);
 	}
 
 	public ChartTimePeriodConstraint getTimePeriodConstraints(Class<? extends TimePeriod> t) {
