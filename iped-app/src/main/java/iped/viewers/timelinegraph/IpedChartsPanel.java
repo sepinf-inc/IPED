@@ -46,11 +46,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListCellRenderer;
-import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -144,6 +141,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     IpedChartPanel chartPanel = null;
     JList legendList = new JList();
     JScrollPane listScroller = new JScrollPane(legendList);
+    
 	IpedStackedXYBarRenderer renderer = null;
 	XYLineAndShapeRenderer highlightsRenderer = new XYLineAndShapeRenderer();
 	XYToolTipGenerator toolTipGenerator = null;
@@ -183,8 +181,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 				return "<html>"+dataset.getSeriesKey(series)+":"+dataset.getYValue(series, item)+"</html>";
 			}
 		};
-		
-		this.addComponentListener(this);
 	}
 	
 	public IpedChartsPanel(boolean b) {
@@ -278,7 +274,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 		splitPane = new IpedSplitPane();
 		splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		this.add(splitPane, BorderLayout.CENTER);
+		
 
 		chartPanel = new IpedChartPanel(chart, this);
 		legendListModel = new DefaultListModel<LegendItemBlockContainer>();
@@ -323,7 +319,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
         splitPane.setTopComponent(chartPanel);
         splitPane.setBottomComponent(listScroller);
+		this.add(splitPane, BorderLayout.CENTER);
         chartPanel.setPopupMenu(null);
+		this.addComponentListener(this);
 		
         domainAxis.setTickMarkPosition(DateTickMarkPosition.START);
         domainAxis.setLowerMargin(0.01);
@@ -331,8 +329,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         combinedPlot.setDomainAxis(domainAxis);
         
         loading = (ImageIcon) new ImageIcon(IconUtil.class.getResource(resPath + "loading.gif"));
-        loadingLabel = new JLabel("", loading, JLabel.CENTER);
-        
+        loadingLabel = new JLabel("", loading, JLabel.CENTER);        
         
         ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
 	}
@@ -428,15 +425,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		try {
 			IpedChartsPanel self = this;
 			
-			Runnable drawTicker = new Runnable() {
-				@Override
-				public void run() {
-					chartPanel.setVisible(false);
-		            self.add(loadingLabel);
-				}
-			};
-			
-			drawTicker.run();
+			splitPane.setVisible(false);
+            self.add(loadingLabel);
 
 			if(swRefresh!=null) {
 				synchronized (swRefresh) {
@@ -502,14 +492,10 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 							}
 							
 							if(chart!=null) {
-								SwingUtilities.invokeLater(new Runnable() {
-									public void run() {
-										splitPane.remove(loadingLabel);
-						                splitPane.setTopComponent(chartPanel);
-						                splitPane.setBottomComponent(listScroller);
-										chartPanel.setVisible(true);
-									}
-								});
+								self.remove(loadingLabel);
+				                splitPane.setTopComponent(chartPanel);
+				                splitPane.setBottomComponent(listScroller);
+				                splitPane.setVisible(true);
 							}
 						}
 					}catch(Exception e) {
