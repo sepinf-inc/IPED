@@ -237,23 +237,19 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		        	}
 		        }
 
-				for(int i=0; i<xyPlot.getDataset(0).getSeriesCount(); i++) {
-					String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
-					if(currSeries.equals(value.getSeriesKey())) {
-						if(!rootPlot.getRenderer().isSeriesVisible(i)) {
-							Font f = getFont();
-							Map attributes = f.getAttributes();
-							attributes.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
-							JLabel clone;
-							clone = new JLabel();
-							clone.setText(result.getText());
-							clone.setIcon(result.getIcon());
-							clone.setFont(f.deriveFont(attributes));
-							clone.setForeground(foreground);
-							clone.setBackground(background);
-							return clone;
-						}
-					}
+				if(chartPanel.getExcludedEvents().contains((String) value.getSeriesKey())) {
+					Font f = getFont();
+					Map attributes = f.getAttributes();
+					attributes.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
+					JLabel clone;
+					clone = new JLabel();
+					clone.setOpaque(true);
+					clone.setText(result.getText());
+					clone.setIcon(result.getIcon());
+					clone.setFont(f.deriveFont(attributes));
+					clone.setForeground(foreground);
+					clone.setBackground(background);
+					return clone;
 				}
 			}
 
@@ -293,7 +289,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		});
 		chart.setIpedChartPanel(chartPanel);		
 
-		renderer = new IpedStackedXYBarRenderer(this);
+		if(renderer==null) {
+			renderer = new IpedStackedXYBarRenderer(this);
+		}
 		((IpedStackedXYBarRenderer)renderer).setBarPainter(new IpedXYBarPainter((XYBarRenderer)renderer));
 		((IpedStackedXYBarRenderer)renderer).setMargin(0);
 		renderer.setDefaultToolTipGenerator(toolTipGenerator);
@@ -491,6 +489,18 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 				                splitPane.setTopComponent(chartPanel);
 				                splitPane.setBottomComponent(listScroller);
 				                splitPane.setVisible(true);
+
+				                //hide excluded events
+				                IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChartPanel().getChart().getPlot());
+				    			if(rootPlot!=null && rootPlot.getSubplots().size()>0) {
+				    				XYPlot xyPlot = (XYPlot) rootPlot.getSubplots().get(0);
+									for(int i=0; i<xyPlot.getDataset(0).getSeriesCount(); i++) {
+										String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
+										if(chartPanel.getExcludedEvents().contains(currSeries)) {
+											rootPlot.getRenderer().setSeriesVisible(i, false);
+										}
+									}
+				    			}
 							}
 						}
 					}catch(Exception e) {
