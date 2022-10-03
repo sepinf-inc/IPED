@@ -193,71 +193,80 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 		this.setLayout(new BorderLayout());
 	}
 	
-	class LegendCellRenderer extends JLabel implements ListCellRenderer<LegendItemBlockContainer>{
+	class LegendCellRenderer implements ListCellRenderer<LegendItemBlockContainer>{
+		
+		HashMap<String, JLabel> labels = new HashMap<String, JLabel>();
+		
 		public LegendCellRenderer() {
 			setOpaque(true);
-	        this.setInheritsPopupMenu(true);
 		}
 		
 		@Override
 		public Component getListCellRendererComponent(JList<? extends LegendItemBlockContainer> list, LegendItemBlockContainer value,
 				int index, boolean isSelected, boolean cellHasFocus) {
-			this.setText((String) value.getSeriesKey());
-			Color background;
-			Color foreground;
-			if(isSelected || cellHasFocus) {
-				background = Color.BLUE;
-				foreground = Color.WHITE;
-			}else {
-				background = Color.WHITE;
-				foreground = Color.BLACK;
-			}
-			this.setForeground(foreground);
-			this.setBackground(background);
 			
-			IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChartPanel().getChart().getPlot());
-			if(rootPlot!=null && rootPlot.getSubplots().size()>0) {
-				XYPlot xyPlot = (XYPlot) rootPlot.getSubplots().get(0);
+			JLabel result = labels.get((String)value.getSeriesKey());
+			if(result == null) {
+				result = new JLabel();
+				labels.put((String)value.getSeriesKey(), result);
+				result.setInheritsPopupMenu(true);
+				result.setText((String) value.getSeriesKey());
+				Color background;
+				Color foreground;
+				if(isSelected || cellHasFocus) {
+					background = Color.BLUE;
+					foreground = Color.WHITE;
+				}else {
+					background = Color.WHITE;
+					foreground = Color.BLACK;
+				}
+				result.setForeground(foreground);
+				result.setBackground(background);
 				
-		        Iterator<Block> iterator = value.getBlocks().iterator();
-		        while (iterator.hasNext()) {
-		        	Block b = iterator.next();
-		        	if(b instanceof LegendGraphic) {
-		        		LegendGraphic i = (LegendGraphic) b;
-		        		Rectangle r =i.getShape().getBounds();
-		        		Image image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_RGB);
-		        		Graphics2D gr = (Graphics2D)image.getGraphics();
-		        		gr.translate(-r.x, -r.y);
-		        		gr.setBackground((Color)i.getFillPaint());
-		        		gr.setPaint(i.getFillPaint());
-		        		gr.draw(i.getShape());
-		        		gr.fill(i.getShape());
-		        		gr.dispose();
-		        		this.setIcon(new ImageIcon(image));	        			        		
-		        	}
-		        }
+				IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChartPanel().getChart().getPlot());
+				if(rootPlot!=null && rootPlot.getSubplots().size()>0) {
+					XYPlot xyPlot = (XYPlot) rootPlot.getSubplots().get(0);
+					
+			        Iterator<Block> iterator = value.getBlocks().iterator();
+			        while (iterator.hasNext()) {
+			        	Block b = iterator.next();
+			        	if(b instanceof LegendGraphic) {
+			        		LegendGraphic i = (LegendGraphic) b;
+			        		Rectangle r =i.getShape().getBounds();
+			        		Image image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_RGB);
+			        		Graphics2D gr = (Graphics2D)image.getGraphics();
+			        		gr.translate(-r.x, -r.y);
+			        		gr.setBackground((Color)i.getFillPaint());
+			        		gr.setPaint(i.getFillPaint());
+			        		gr.draw(i.getShape());
+			        		gr.fill(i.getShape());
+			        		gr.dispose();
+			        		result.setIcon(new ImageIcon(image));	        			        		
+			        	}
+			        }
 
-				for(int i=0; i<xyPlot.getDataset(0).getSeriesCount(); i++) {
-					String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
-					if(currSeries.equals(value.getSeriesKey())) {
-						if(!rootPlot.getRenderer().isSeriesVisible(i)) {
-							Font f = getFont();
-							Map attributes = f.getAttributes();
-							attributes.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
-							LegendCellRenderer clone;
-							clone = new LegendCellRenderer();
-							clone.setText(this.getText());
-							clone.setIcon(this.getIcon());
-							clone.setFont(f.deriveFont(attributes));
-							clone.setForeground(foreground);
-							clone.setBackground(background);
-							return clone;
+					for(int i=0; i<xyPlot.getDataset(0).getSeriesCount(); i++) {
+						String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
+						if(currSeries.equals(value.getSeriesKey())) {
+							if(!rootPlot.getRenderer().isSeriesVisible(i)) {
+								Font f = getFont();
+								Map attributes = f.getAttributes();
+								attributes.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
+								JLabel clone;
+								clone = new JLabel();
+								clone.setText(result.getText());
+								clone.setIcon(result.getIcon());
+								clone.setFont(f.deriveFont(attributes));
+								clone.setForeground(foreground);
+								clone.setBackground(background);
+								return clone;
+							}
 						}
 					}
 				}
-			}
+			}			
 
-			return this;
+			return result;
 		}		
 	}
 
