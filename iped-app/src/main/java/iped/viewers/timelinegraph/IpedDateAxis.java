@@ -291,6 +291,17 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
 		}
 	}
 
+    public String ISO8601DateFormatUTC(Date date) {
+		String result;
+		synchronized(ISO8601DATEFORMAT) {
+			TimeZone tz =  ISO8601DATEFORMAT.getTimeZone();
+			ISO8601DATEFORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+			result = ISO8601DATEFORMAT.format(date);
+			ISO8601DATEFORMAT.setTimeZone(tz);
+		}
+		return result;
+	}
+
 
     public Date ISO8601DateParse(String strDate) {
 		try {

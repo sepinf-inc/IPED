@@ -826,9 +826,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 						int i=0;
 						for (Date[] dates : chartPanel.definedFilters) {
 							timeFilter+="timeStamp:[";
-							timeFilter+=domainAxis.ISO8601DateFormat(dates[0]);
+							timeFilter+=domainAxis.ISO8601DateFormatUTC(dates[0]);
 							timeFilter+=" TO ";
-							timeFilter+=domainAxis.ISO8601DateFormat(dates[1]);
+							timeFilter+=domainAxis.ISO8601DateFormatUTC(dates[1]);
 							timeFilter+="]";
 							i++;
 							if(i!=chartPanel.definedFilters.size()) {
