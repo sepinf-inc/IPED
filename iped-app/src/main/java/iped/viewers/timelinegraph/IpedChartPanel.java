@@ -49,6 +49,7 @@ import org.jfree.chart.entity.JFreeChartEntity;
 import org.jfree.chart.entity.LegendItemEntity;
 import org.jfree.chart.entity.PlotEntity;
 import org.jfree.chart.entity.XYItemEntity;
+import org.jfree.chart.event.PlotChangeEvent;
 import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.PlotRenderingInfo;
@@ -211,9 +212,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 		            Color bk = getBackground();
 		            Color bklight = new Color(bk.getRed()+20, bk.getGreen()+20, bk.getBlue()+20);
 		            curMouseResponsiveChartEntity.setMouseOverPaint(bklight);
-		            repaint();
 		            g2.dispose();
-		            self.getChart().getPlot().setNotify(true);
+		            self.getChart().getPlot().notifyListeners(new PlotChangeEvent(self.getChart().getPlot()));
 					lastMouseResponsiveChartEntity=curMouseResponsiveChartEntity;
 				}
 			}
@@ -288,9 +288,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	        Graphics2D g2 = (Graphics2D) getGraphics();
 	        Color bk = getBackground();
 	        lastMouseResponsiveChartEntity.setMouseOverPaint(bk);
-	        repaint();
 	        g2.dispose();
-	        this.getChart().getPlot().setNotify(true);
+	        getChart().getPlot().notifyListeners(new PlotChangeEvent(getChart().getPlot()));
 			lastMouseResponsiveChartEntity=null;
 		}
 	}
