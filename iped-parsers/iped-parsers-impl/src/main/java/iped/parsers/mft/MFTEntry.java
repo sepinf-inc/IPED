@@ -41,8 +41,6 @@ public class MFTEntry {
 
     private static void parseAttribute(MFTEntry entry, MFTAttribute attr, byte[] in, int offset) {
         offset += attr.getDataOffset();
-        if (offset + attr.getDataSize() > entryLength)
-            return;
         if (attr.getType() == 0x30) {
             // File name
             int namespace = toInt1(in, offset + 65);
@@ -50,7 +48,7 @@ public class MFTEntry {
                 int start = offset + 66;
                 int len = toInt1(in, offset + 64);
                 int end = start + len * 2;
-                if (start < entryLength && end <= entryLength && start < end && end <= offset + attr.getDataSize()) {
+                if (start < entryLength && end <= entryLength && start < end) {
                     try {
                         entry.name = new String(in, start, len * 2, charset);
                     } catch (Exception e) {
@@ -66,7 +64,7 @@ public class MFTEntry {
         } else if (attr.getType() == 0x80) {
             // Data
             if (attr.isResident()) {
-                int end = offset + attr.getDataSize();
+                int end = offset + (int) attr.getDataLength();
                 if (offset < entryLength && end <= entryLength && offset < end) {
                     entry.length = end - offset;
                     entry.residentFileStart = offset;
@@ -79,8 +77,9 @@ public class MFTEntry {
 
     private static MFTAttribute parseAttributeHeader(byte[] in, int offset) {
         int type = toInt(in, offset);
-        if (type == 0xFFFFFFFF)
+        if (type == 0xFFFFFFFF) {
             return null;
+        }
         MFTAttribute attr = new MFTAttribute();
         attr.setType(type);
         attr.setLen(toInt(in, offset + 4));
@@ -90,7 +89,7 @@ public class MFTEntry {
         attr.setDataFlags(toInt2(in, offset + 12));
         attr.setId(toInt2(in, offset + 14));
         if (attr.isResident()) {
-            attr.setDataSize(toInt(in, offset + 16));
+            attr.setDataLength(toInt(in, offset + 16));
             attr.setDataOffset(toInt2(in, offset + 20));
         } else {
             // TODO: Store non resident data header information

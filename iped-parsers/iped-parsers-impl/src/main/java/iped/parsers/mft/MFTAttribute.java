@@ -1,7 +1,8 @@
 package iped.parsers.mft;
 
 public class MFTAttribute {
-    private int type, len, nameLen, nameOffset, dataFlags, id, dataSize, dataOffset;
+    private int type, len, nameLen, nameOffset, dataFlags, id, dataOffset;
+    private long dataLength;
     private boolean isResident;
     private String name;
 
@@ -53,12 +54,12 @@ public class MFTAttribute {
         this.id = id;
     }
 
-    public int getDataSize() {
-        return dataSize;
+    public long getDataLength() {
+        return dataLength;
     }
 
-    public void setDataSize(int dataSize) {
-        this.dataSize = dataSize;
+    public void setDataLength(long dataLength) {
+        this.dataLength = dataLength;
     }
 
     public int getDataOffset() {
