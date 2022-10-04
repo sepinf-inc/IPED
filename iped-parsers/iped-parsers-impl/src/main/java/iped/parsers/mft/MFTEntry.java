@@ -1,7 +1,9 @@
 package iped.parsers.mft;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class MFTEntry {
     public static final String MIME_TYPE = "application/x-mft-entry";
@@ -92,7 +94,53 @@ public class MFTEntry {
             attr.setDataLength(toInt(in, offset + 16));
             attr.setDataOffset(toInt2(in, offset + 20));
         } else {
-            // TODO: Store non resident data header information
+            attr.setDataLength(toLong(in, offset + 48));
+            if (attr.getDataFlags() == 0) {
+                int dataRunsOffset = toInt2(in, offset + 32);
+                if (dataRunsOffset >= 64) {
+                    offset += dataRunsOffset;
+                    List<Long> dataruns = new ArrayList<Long>();
+                    boolean finished = false;
+                    long prevPos = 0;
+                    while (offset < entryLength) {
+                        int b = toInt1(in, offset);
+                        if (b == 0) {
+                            finished = true;
+                            break;
+                        }
+                        int lenLen = b & 0xF;
+                        if (lenLen == 0 || lenLen > 8) {
+                            break;
+                        }
+                        int posLen = b >>> 4;
+                        if (posLen == 0 || posLen > 8) {
+                            break;
+                        }
+                        if (++offset + lenLen > entryLength) {
+                            break;
+                        }
+                        long len = toLong(in, offset, lenLen);
+                        if (len == 0) {
+                            break;
+                        }
+                        if ((offset += lenLen) + posLen > entryLength) {
+                            break;
+                        }
+                        long pos = toSignedLong(in, offset, posLen);
+                        offset += posLen;
+                        pos += prevPos;
+                        if (pos <= 0) {
+                            break;
+                        }
+                        dataruns.add(len);
+                        dataruns.add(pos);
+                        prevPos = pos;
+                    }
+                    if (finished && !dataruns.isEmpty()) {
+                        attr.setDataruns(dataruns);
+                    }
+                }
+            }
         }
         return attr;
     }
@@ -124,6 +172,25 @@ public class MFTEntry {
         return (bytes[pos] & 255L) | ((bytes[pos + 1] & 255L) << 8) | ((bytes[pos + 2] & 255L) << 16)
                 | ((bytes[pos + 3] & 255L) << 24) | ((bytes[pos + 4] & 255L) << 32) | ((bytes[pos + 5] & 255L) << 40)
                 | ((bytes[pos + 6] & 255L) << 48) | ((bytes[pos + 7] & 255L) << 56);
+    }
+
+    private static long toLong(byte[] bytes, int pos, int len) {
+        long v = 0;
+        for (int i = 0; i < len; i++) {
+            v |= (bytes[pos + i] & 255) << (i << 3);
+        }
+        return v;
+    }
+
+    private static long toSignedLong(byte[] bytes, int pos, int len) {
+        if ((bytes[pos + len - 1] & 128) == 0) {
+            return toLong(bytes, pos, len);
+        }
+        long v = 0;
+        for (int i = 0; i < len; i++) {
+            v |= ((bytes[pos + i] & 255) ^ 255) << (i << 3);
+        }
+        return -(v + 1);
     }
 
     private static long toLong4(byte[] bytes, int pos) {
