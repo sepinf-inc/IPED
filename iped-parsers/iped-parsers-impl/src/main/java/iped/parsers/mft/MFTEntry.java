@@ -72,7 +72,9 @@ public class MFTEntry {
                     entry.residentFileStart = offset;
                 }
             } else {
-                // TODO: Handle non resident data
+                if (attr.getDataLength() >= 0) {
+                    entry.length = attr.getDataLength();
+                }
             }
         }
     }
