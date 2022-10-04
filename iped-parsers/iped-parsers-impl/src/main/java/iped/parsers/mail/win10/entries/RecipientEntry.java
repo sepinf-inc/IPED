@@ -3,12 +3,14 @@ package iped.parsers.mail.win10.entries;
 public class RecipientEntry extends AbstractEntry {
     private long messageId;
     private String displayName;
+    private String emailAddress;
     private RecipientType type;
 
-    public RecipientEntry(int rowId, long messageId, String displayName, RecipientType type) {
+    public RecipientEntry(int rowId, long messageId, String displayName, String emailAddress, RecipientType type) {
         super(rowId);
         this.messageId = messageId;
         this.displayName = displayName;
+        this.emailAddress = emailAddress;
         this.type = type;
     }
 
@@ -27,6 +29,14 @@ public class RecipientEntry extends AbstractEntry {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public String getEmailAddress() {
+        return this.emailAddress;
+    }
+
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
     }
 
     public RecipientType getType() {

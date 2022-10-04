@@ -63,12 +63,13 @@ public class RecipientTable extends AbstractTable {
         int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
         int messageId = EsedbManager.getInt32Value(esedbLibrary, 3, recordPointerReference, filePath, errorPointer);
         String displayName = EsedbManager.getUnicodeValue(esedbLibrary, 12, recordPointerReference, filePath, errorPointer);
+        String emailAddress = EsedbManager.getUnicodeValue(esedbLibrary, 13, recordPointerReference, filePath, errorPointer);
         int recipientType = EsedbManager.getInt32Value(esedbLibrary, 4, recordPointerReference, filePath, errorPointer);
 
         result = esedbLibrary.libesedb_record_free(recordPointerReference, errorPointer);
         if (result < 0)
             EsedbManager.printError("Record Free", result, filePath, errorPointer);
 
-        return new RecipientEntry(rowId, messageId, displayName, RecipientType.values()[recipientType]);
+        return new RecipientEntry(rowId, messageId, displayName, emailAddress, RecipientType.values()[recipientType]);
     }
 }
