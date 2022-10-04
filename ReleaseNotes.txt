@@ -1,14 +1,15 @@
-03/10/2022: IPED-4.0.5
+04/10/2022: IPED-4.0.5
 Fixes:
 #1350: Several folders and files missed by TSK-4.11.1 when processing an evidence with files owned by IIS default account (@lfcnassif)
 #1338: UFED chat messages with unknown sender (@hauck-jvsh, @lfcnassif)
 #1349: Timeouts while transcribing small audios - 4.0.4 regression (@lfcnassif)
 #1328: IgnoreFilesByPathTask.js not being executed by triage profile (@lfcnassif)
 #1327: Aborting IndexOutOfBoundsException caused by carved file with negative size (@lfcnassif)
-#1332: Databases classified in categories other than 'Databases' are showing all table content on HTMLViewer - also affects 3.18.x (@lfcnassif, @patrickdalla)
-#1348: Check/Uncheck all items action not propagated to Map tab - also affects 3.18.x (@lfcnassif)
-#697:  Map previous/next buttons first click after sorting change are considering previous sorting order - also affects 3.18.x (@patrickdalla, @lfcnassif)
-#1352: If processing aborts, sometimes a different exception than the cause is printed in the Console - also affects 3.18.x (@lfcnassif)
+#1332: Databases classified in categories other than 'Databases' are showing all table content on HTMLViewer - affects 3.18.x (@lfcnassif, @patrickdalla)
+#1353: Table column parallel sorting may not be visible to other threads - affects 3.18.x (@lfcnassif, @patrickdalla)
+#1348: Check/Uncheck all items action not propagated to Map tab - affects 3.18.x (@lfcnassif)
+#697:  Map previous/next buttons first click after sorting change are considering previous sorting order - affects 3.18.x (@patrickdalla, @lfcnassif)
+#1352: If processing aborts, sometimes a different exception than the cause is printed in the Console - affects 3.18.x (@lfcnassif)
 
 
 16/09/2022: IPED-4.0.4
