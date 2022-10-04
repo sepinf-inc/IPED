@@ -102,7 +102,7 @@ public class EsedbManager {
                     recordValueData, recordValueDataInt.getValue(), errorPointer);
             if (result < 0)
                 printError("Record Get UTF8 String at " + value_entry, result, filePath, errorPointer);
-            return recordValueData.getString(0);
+            return recordValueData.getString(0, "UTF-8");
         }
         return "";
     }
