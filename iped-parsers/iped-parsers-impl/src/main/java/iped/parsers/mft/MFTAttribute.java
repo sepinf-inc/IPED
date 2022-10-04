@@ -1,10 +1,13 @@
 package iped.parsers.mft;
 
+import java.util.List;
+
 public class MFTAttribute {
     private int type, len, nameLen, nameOffset, dataFlags, id, dataOffset;
     private long dataLength;
     private boolean isResident;
     private String name;
+    private List<Long> dataruns;
 
     public int getType() {
         return type;
@@ -84,5 +87,13 @@ public class MFTAttribute {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setDataruns(List<Long> dataruns) {
+        this.dataruns = dataruns;
+    }
+
+    public List<Long> getDataruns() {
+        return dataruns;
     }
 }
