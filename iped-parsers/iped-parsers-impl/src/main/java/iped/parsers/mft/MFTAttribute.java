@@ -4,7 +4,7 @@ import java.util.List;
 
 public class MFTAttribute {
     private int type, len, nameLen, nameOffset, dataFlags, id, dataOffset;
-    private long dataLength;
+    private long dataLength = -1;
     private boolean isResident;
     private String name;
     private List<Long> dataruns;
