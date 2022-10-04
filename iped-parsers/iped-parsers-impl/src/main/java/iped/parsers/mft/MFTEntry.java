@@ -16,6 +16,7 @@ public class MFTEntry {
             firstAttrId = -1, usedSize = -1, totalSize = -1, residentFileStart = -1;
     private String name;
     private Date creationDate, lastModificationDate, lastAccessDate, lastEntryModificationDate;
+    private List<Long> dataruns;
 
     private MFTEntry() {
     }
@@ -74,6 +75,9 @@ public class MFTEntry {
             } else {
                 if (attr.getDataLength() >= 0) {
                     entry.length = attr.getDataLength();
+                    if (attr.getDataruns() != null) {
+                        entry.dataruns = attr.getDataruns();
+                    }
                 }
             }
         }
@@ -329,5 +333,9 @@ public class MFTEntry {
 
     public boolean hasResidentContent() {
         return length > 0 && residentFileStart > 0;
+    }
+
+    public List<Long> getDataruns() {
+        return dataruns;
     }
 }
