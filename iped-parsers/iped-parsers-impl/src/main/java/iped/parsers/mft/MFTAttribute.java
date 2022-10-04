@@ -3,7 +3,7 @@ package iped.parsers.mft;
 public class MFTAttribute {
     private int type, len, nameLen, nameOffset, dataFlags, id, dataSize, dataOffset;
     private boolean isResident;
-    private String name, fileName;
+    private String name;
 
     public int getType() {
         return type;
@@ -83,13 +83,5 @@ public class MFTAttribute {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
     }
 }
