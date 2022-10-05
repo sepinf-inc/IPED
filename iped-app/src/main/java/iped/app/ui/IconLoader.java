@@ -18,8 +18,6 @@
  */
 package iped.app.ui;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.net.URL;
 import java.security.CodeSource;
 import java.util.HashMap;
@@ -35,8 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import iped.utils.QualityIcon;
 
-//import iped.engine.config.Configuration;
-
 /**
  * Load icons to memory
  * 
@@ -46,7 +42,6 @@ import iped.utils.QualityIcon;
 
 public class IconLoader {
 
-    private static final long serialVersionUID = -1L;
     private static Logger LOGGER = LoggerFactory.getLogger(IconLoader.class);
 
     public static Map<String, Icon> extesionIconMap = new HashMap<String, Icon>();
@@ -56,10 +51,7 @@ public class IconLoader {
     private static String ICON_EXTENSION = ".png";
 
     static {
-
         loadIconsInJar(ICON_PATH_JAR, ICON_EXTENSION, extesionIconMap);
-        // loadIconsInPath(ICON_PATH_APP, ICON_EXTENSION, extesionIconMap);
-
     }
 
     private static void loadIconsInJar(String[] iconPathArray, String iconExtension, Map<String, Icon> map) {
@@ -91,33 +83,6 @@ public class IconLoader {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
-
-    private static void loadIconsInPath(String iconPath, String iconExtension, Map<String, Icon> map) {
-
-        File path = new File(iconPath);
-
-        if (path == null || !path.exists() || map == null)
-            return;
-
-        File[] files = path.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                if (name.toLowerCase().endsWith(iconExtension))
-                    return true;
-                return false;
-            }
-
-        });
-
-        for (int i = 0; i < files.length; i++) {
-            try {
-                map.put(files[i].getName().replace(iconExtension, "").toLowerCase(), new ImageIcon(files[i].getAbsolutePath()));
-            } catch (Exception e) {
-                LOGGER.warn("Error loading icon. Error:{}", e.toString());
-            }
-        }
-
     }
 
 }
