@@ -18,31 +18,24 @@
  */
 package iped.app.ui;
 
-import java.awt.Component;
-import java.io.IOException;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.net.URL;
+import java.security.CodeSource;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.swing.Icon;
-
-
 import javax.swing.ImageIcon;
-
-import java.util.List;
-import java.util.Arrays;
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.jar.*;
-
-import java.util.zip.*;
-import java.security.CodeSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import iped.utils.QualityIcon;
 
-
 //import iped.engine.config.Configuration;
-
 
 /**
  * Load icons to memory
@@ -53,23 +46,23 @@ import iped.utils.QualityIcon;
 
 public class IconLoader {
 
-    private static final long serialVersionUID = -1L;  
+    private static final long serialVersionUID = -1L;
     private static Logger LOGGER = LoggerFactory.getLogger(IconLoader.class);
 
-    public  static Map<String,Icon> extesionIconMap = new HashMap<String,Icon>();
+    public static Map<String, Icon> extesionIconMap = new HashMap<String, Icon>();
 
-    private static String ICON_PATH_JAR [] = {"cat","file"};
-    //private static String ICON_PATH_APP = Configuration.CONF_DIR+"/icon/";
+    private static String ICON_PATH_JAR[] = { "cat", "file" };
+    // private static String ICON_PATH_APP = Configuration.CONF_DIR+"/icon/";
     private static String ICON_EXTENSION = ".png";
 
     static {
 
         loadIconsInJar(ICON_PATH_JAR, ICON_EXTENSION, extesionIconMap);
-        //loadIconsInPath(ICON_PATH_APP, ICON_EXTENSION, extesionIconMap);
-       
+        // loadIconsInPath(ICON_PATH_APP, ICON_EXTENSION, extesionIconMap);
+
     }
 
-    private static void loadIconsInJar(String [] iconPathArray, String iconExtension, Map<String,Icon> map){
+    private static void loadIconsInJar(String[] iconPathArray, String iconExtension, Map<String, Icon> map) {
 
         if (map == null)
             return;
@@ -80,48 +73,47 @@ public class IconLoader {
             if (src != null) {
                 URL jar = src.getLocation();
                 ZipInputStream zip = new ZipInputStream(jar.openStream());
-                while(true) {
+                while (true) {
                     ZipEntry e = zip.getNextEntry();
                     if (e == null)
                         break;
-                    for (String iconPath: iconPathArray){
-                        String path = IconLoader.class.getName().toString().replace(".",separator).replace(IconLoader.class.getSimpleName(),"")+iconPath+separator;
+                    for (String iconPath : iconPathArray) {
+                        String path = IconLoader.class.getName().toString().replace(".", separator).replace(IconLoader.class.getSimpleName(), "") + iconPath + separator;
 
                         String nameWithPath = e.getName();
-                        String name = nameWithPath.replace(path,"");
+                        String name = nameWithPath.replace(path, "");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(iconExtension)) {
-                            map.put(name.replace(iconExtension,"").toLowerCase(),new QualityIcon(new ImageIcon(IconLoader.class.getResource(iconPath+separator+name))));
+                            map.put(name.replace(iconExtension, "").toLowerCase(), new QualityIcon(new ImageIcon(IconLoader.class.getResource(iconPath + separator + name))));
                         }
                     }
                 }
             }
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
-   }
+    }
 
-    private static void loadIconsInPath(String iconPath, String iconExtension, Map<String,Icon> map){
+    private static void loadIconsInPath(String iconPath, String iconExtension, Map<String, Icon> map) {
 
         File path = new File(iconPath);
 
         if (path == null || !path.exists() || map == null)
             return;
 
-        File[] files = path.listFiles(new FilenameFilter(){
+        File[] files = path.listFiles(new FilenameFilter() {
             @Override
-            public boolean accept(File dir, String name)
-            {
-                if(name.toLowerCase().endsWith(iconExtension))
+            public boolean accept(File dir, String name) {
+                if (name.toLowerCase().endsWith(iconExtension))
                     return true;
                 return false;
             }
 
         });
 
-        for (int i =0; i < files.length; i++){
+        for (int i = 0; i < files.length; i++) {
             try {
-                map.put(files[i].getName().replace(iconExtension,"").toLowerCase(),new ImageIcon(files[i].getAbsolutePath()));
-            }catch (Exception e){
+                map.put(files[i].getName().replace(iconExtension, "").toLowerCase(), new ImageIcon(files[i].getAbsolutePath()));
+            } catch (Exception e) {
                 LOGGER.warn("Error loading icon. Error:{}", e.toString());
             }
         }

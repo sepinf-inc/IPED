@@ -30,7 +30,6 @@ import org.apache.lucene.document.Document;
 
 import iped.data.IItemId;
 import iped.engine.task.index.IndexItem;
-import iped.localization.LocalizedProperties;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 
@@ -44,11 +43,9 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
     private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-            int row, int column) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 
-        DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value,
-                isSelected, hasFocus, row, column);
+        DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
         int idx = table.convertRowIndexToModel(row);
         int col = table.convertColumnIndexToModel(column);
@@ -66,9 +63,9 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                     result.setIcon(diskIcon);
                 } else {
                     String type = doc.get(IndexItem.TYPE);
-                    if (type != null && !type.isEmpty() && IconLoader.extesionIconMap.containsKey(type.toLowerCase())){
+                    if (type != null && !type.isEmpty() && IconLoader.extesionIconMap.containsKey(type.toLowerCase())) {
                         result.setIcon(IconLoader.extesionIconMap.get(type.toLowerCase()));
-                    }else {
+                    } else {
                         result.setIcon(fileIcon);
                     }
                 }

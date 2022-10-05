@@ -18,16 +18,13 @@
  */
 package iped.app.ui;
 
+import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-import iped.utils.LocalizedFormat;
-import javax.swing.Icon;
-import javax.swing.UIManager;
 import iped.engine.localization.CategoryLocalization;
-import java.awt.Color;
 
 public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
 
@@ -37,8 +34,7 @@ public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf,
-            int row, boolean hasFocus) {
+    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 
         DefaultTreeCellRenderer result = (DefaultTreeCellRenderer) super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
 
@@ -48,14 +44,14 @@ public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
         category = category.replaceAll("\\((\\d*,*)*(\\d*.*)*\\)", "").trim();
         category = getNonLocalizedCategory(category);
         category = category != null ? category : "";
-        
-        if (!category.isEmpty() && IconLoader.extesionIconMap.containsKey(category.toLowerCase())){
+
+        if (!category.isEmpty() && IconLoader.extesionIconMap.containsKey(category.toLowerCase())) {
             result.setIcon(IconLoader.extesionIconMap.get(category.toLowerCase()));
-        }else {
+        } else {
             result.setIcon(IconLoader.extesionIconMap.get(blankIconString.toLowerCase()));
         }
 
-        if (sel){
+        if (sel) {
             result.setForeground(Color.white);
         }
 
