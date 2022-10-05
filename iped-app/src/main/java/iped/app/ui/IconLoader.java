@@ -64,18 +64,19 @@ public class IconLoader {
             CodeSource src = IconLoader.class.getProtectionDomain().getCodeSource();
             if (src != null) {
                 URL jar = src.getLocation();
-                ZipInputStream zip = new ZipInputStream(jar.openStream());
-                while (true) {
-                    ZipEntry e = zip.getNextEntry();
-                    if (e == null)
-                        break;
-                    for (String iconPath : iconPathArray) {
-                        String path = IconLoader.class.getName().toString().replace(".", separator).replace(IconLoader.class.getSimpleName(), "") + iconPath + separator;
+                try (ZipInputStream zip = new ZipInputStream(jar.openStream())) {
+                    while (true) {
+                        ZipEntry e = zip.getNextEntry();
+                        if (e == null)
+                            break;
+                        for (String iconPath : iconPathArray) {
+                            String path = IconLoader.class.getName().toString().replace(".", separator).replace(IconLoader.class.getSimpleName(), "") + iconPath + separator;
 
-                        String nameWithPath = e.getName();
-                        String name = nameWithPath.replace(path, "");
-                        if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(iconExtension)) {
-                            map.put(name.replace(iconExtension, "").toLowerCase(), new QualityIcon(new ImageIcon(IconLoader.class.getResource(iconPath + separator + name))));
+                            String nameWithPath = e.getName();
+                            String name = nameWithPath.replace(path, "");
+                            if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(iconExtension)) {
+                                map.put(name.replace(iconExtension, "").toLowerCase(), new QualityIcon(new ImageIcon(IconLoader.class.getResource(iconPath + separator + name))));
+                            }
                         }
                     }
                 }
