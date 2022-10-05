@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -28,8 +29,13 @@ public class ParsingHtmlViewer extends HtmlViewer {
 
     @Override
     public boolean isSupportedType(String contentType) {
-        this.contentType = contentType;
         return contentType.equals(MFTEntry.MIME_TYPE);
+    }
+    
+    @Override
+    public void loadFile(IStreamSource content, String contentType, Set<String> highlightTerms) {
+        this.contentType = contentType;
+        super.loadFile(content, contentType, highlightTerms);
     }
 
     @Override
