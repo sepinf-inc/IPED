@@ -328,6 +328,8 @@
         <parser class="iped.parsers.mft.MFTEntryParser">
             <params>
                 <param name="extractResidentFiles" type="bool">true</param>
+                <param name="extractNonResidentFiles" type="bool">true</param>
+                <param name="nonResidentFilesMaxLength" type="long">100000000</param>
             </params>
         </parser>
         

@@ -32,10 +32,22 @@ public class MFTEntryParser extends AbstractParser {
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(MFTEntry.MIME_TYPE));
 
     private boolean extractResidentFiles = false;
+    private boolean extractNonResidentFiles = false;
+    private long nonResidentFilesMaxLength = -1;
 
     @Field
     public void setExtractResidentFiles(boolean extractResidentFiles) {
         this.extractResidentFiles = extractResidentFiles;
+    }
+
+    @Field
+    public void setExtractNonResidentFiles(boolean extractNonResidentFiles) {
+        this.extractNonResidentFiles = extractNonResidentFiles;
+    }
+
+    @Field
+    public void setNonResidentFilesMaxLength(long nonResidentFilesMaxLength) {
+        this.nonResidentFilesMaxLength = nonResidentFilesMaxLength;
     }
 
     @Override
@@ -119,6 +131,10 @@ public class MFTEntryParser extends AbstractParser {
         add(xhtml, Messages.getString("MFTEntryParser.ResidentContent"),
                 entry.hasResidentContent() ? Messages.getString("MFTEntryParser.Yes")
                         : Messages.getString("MFTEntryParser.No"));
+        //TODO: For now, just output raw data runs values
+        if (entry.getDataruns() != null) {
+            add(xhtml, "Dataruns", entry.getDataruns().toString());
+        }
         xhtml.endElement("table");
         xhtml.endDocument();
     }
