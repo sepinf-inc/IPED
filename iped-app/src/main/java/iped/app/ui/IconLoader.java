@@ -27,6 +27,7 @@ import java.util.zip.ZipInputStream;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.UIManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,21 +45,17 @@ public class IconLoader {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IconLoader.class);
 
-    public static Map<String, Icon> extesionIconMap = new HashMap<String, Icon>();
+    private static final String ICON_EXTENSION = ".png";
 
-    private static String ICON_PATH_JAR[] = { "cat", "file" };
-    // private static String ICON_PATH_APP = Configuration.CONF_DIR+"/icon/";
-    private static String ICON_EXTENSION = ".png";
+    private static final Map<String, Icon> extIconMap = loadIconsFromJar("file");
+    private static final Map<String, Icon> catIconMap = loadIconsFromJar("cat");
 
-    static {
-        loadIconsInJar(ICON_PATH_JAR, ICON_EXTENSION, extesionIconMap);
-    }
+    private static final Icon DEFAULT_FILE_ICON = UIManager.getIcon("FileView.fileIcon"); //$NON-NLS-1$
+    private static final Icon DEFAULT_CATEGORY_ICON = catIconMap.get("blank"); //$NON-NLS-1$
 
-    private static void loadIconsInJar(String[] iconPathArray, String iconExtension, Map<String, Icon> map) {
+    private static Map<String, Icon> loadIconsFromJar(String iconPath) {
 
-        if (map == null)
-            return;
-
+        Map<String, Icon> map = new HashMap<>();
         try {
             String separator = "/";
             CodeSource src = IconLoader.class.getProtectionDomain().getCodeSource();
@@ -67,16 +64,14 @@ public class IconLoader {
                 try (ZipInputStream zip = new ZipInputStream(jar.openStream())) {
                     while (true) {
                         ZipEntry e = zip.getNextEntry();
-                        if (e == null)
+                        if (e == null) {
                             break;
-                        for (String iconPath : iconPathArray) {
-                            String path = IconLoader.class.getName().toString().replace(".", separator).replace(IconLoader.class.getSimpleName(), "") + iconPath + separator;
-
-                            String nameWithPath = e.getName();
-                            String name = nameWithPath.replace(path, "");
-                            if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(iconExtension)) {
-                                map.put(name.replace(iconExtension, "").toLowerCase(), new QualityIcon(new ImageIcon(IconLoader.class.getResource(iconPath + separator + name))));
-                            }
+                        }
+                        String path = IconLoader.class.getName().toString().replace(".", separator).replace(IconLoader.class.getSimpleName(), "") + iconPath + separator;
+                        String nameWithPath = e.getName();
+                        String name = nameWithPath.replace(path, "");
+                        if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
+                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), new QualityIcon(new ImageIcon(IconLoader.class.getResource(iconPath + separator + name))));
                         }
                     }
                 }
@@ -84,6 +79,21 @@ public class IconLoader {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+        return map;
+    }
+
+    public static Icon getFileIcon(String extension) {
+        if (extension != null && !extension.isBlank()) {
+            return extIconMap.getOrDefault(extension.strip(), DEFAULT_FILE_ICON);
+        }
+        return DEFAULT_FILE_ICON;
+    }
+
+    public static Icon getCategoryIcon(String category) {
+        if (category != null && !category.isBlank()) {
+            return catIconMap.getOrDefault(category.strip(), DEFAULT_CATEGORY_ICON);
+        }
+        return DEFAULT_CATEGORY_ICON;
     }
 
 }

@@ -21,6 +21,7 @@ package iped.app.ui;
 import java.awt.Color;
 import java.awt.Component;
 
+import javax.swing.Icon;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
@@ -38,18 +39,13 @@ public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
 
         DefaultTreeCellRenderer result = (DefaultTreeCellRenderer) super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
 
-        String blankIconString = "blank";
-
         String category = value != null ? value.toString() : "";
         category = category.replaceAll("\\((\\d*,*)*(\\d*.*)*\\)", "").trim();
         category = getNonLocalizedCategory(category);
         category = category != null ? category : "";
 
-        if (!category.isEmpty() && IconLoader.extesionIconMap.containsKey(category.toLowerCase())) {
-            result.setIcon(IconLoader.extesionIconMap.get(category.toLowerCase()));
-        } else {
-            result.setIcon(IconLoader.extesionIconMap.get(blankIconString.toLowerCase()));
-        }
+        Icon icon = IconLoader.getCategoryIcon(category.toLowerCase());
+        result.setIcon(icon);
 
         if (sel) {
             result.setForeground(Color.white);
