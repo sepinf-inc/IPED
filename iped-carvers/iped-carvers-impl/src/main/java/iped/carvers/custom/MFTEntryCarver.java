@@ -81,7 +81,7 @@ public class MFTEntryCarver extends AbstractCarver {
             if (entry.getTotalSize() != length) {
                 throw new InvalidCarvedObjectException("Invalid MFT entry total size: " + entry.getTotalSize());
             }
-            if (entry.getName() == null) {
+            if (entry.getName() == null || entry.getName().isEmpty()) {
                 throw new InvalidCarvedObjectException("Invalid MFT entry file name.");
             }
             if (entry.getCreationDate() == null && entry.getLastModificationDate() == null
