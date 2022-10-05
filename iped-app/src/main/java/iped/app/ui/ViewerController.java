@@ -43,6 +43,7 @@ import iped.viewers.LibreOfficeViewer.NotSupported32BitPlatformExcepion;
 import iped.viewers.MetadataViewer;
 import iped.viewers.MsgViewer;
 import iped.viewers.MultiViewer;
+import iped.viewers.ParsingHtmlViewer;
 import iped.viewers.ReferencedFileViewer;
 import iped.viewers.TiffViewer;
 import iped.viewers.api.AbstractViewer;
@@ -103,6 +104,7 @@ public class ViewerController {
         viewersRepository.addViewer(new IcePDFViewer());
         viewersRepository.addViewer(new TiffViewer());
         viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl()));
+        viewersRepository.addViewer(new ParsingHtmlViewer());
 
         new Thread() {
             public void run() {

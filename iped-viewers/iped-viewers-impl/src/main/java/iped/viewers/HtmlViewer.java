@@ -125,21 +125,23 @@ public class HtmlViewer extends AbstractViewer {
                 if (content != null) {
                     try {
                         tmpFile = getTempFile(content);
-                        if (content instanceof IItem) {
-                            fileName = ((IItem) content).getName();
-                        } else {
-                            fileName = tmpFile.getName();
-                        }
-                        highlightTerms = terms;
-
-                        if (tmpFile.length() <= getMaxHtmlSize()) {
-                            webEngine.setJavaScriptEnabled(enableJavascript);
-                            webEngine.setUserStyleSheetLocation(UiUtil.getUIHtmlStyle());
-                            webEngine.load(tmpFile.toURI().toURL().toString());
-
-                        } else {
-                            webEngine.setJavaScriptEnabled(true);
-                            webEngine.loadContent(LARGE_FILE_MSG);
+                        if (tmpFile != null) {
+                            if (content instanceof IItem) {
+                                fileName = ((IItem) content).getName();
+                            } else {
+                                fileName = tmpFile.getName();
+                            }
+                            highlightTerms = terms;
+    
+                            if (tmpFile.length() <= getMaxHtmlSize()) {
+                                webEngine.setJavaScriptEnabled(enableJavascript);
+                                webEngine.setUserStyleSheetLocation(UiUtil.getUIHtmlStyle());
+                                webEngine.load(tmpFile.toURI().toURL().toString());
+    
+                            } else {
+                                webEngine.setJavaScriptEnabled(true);
+                                webEngine.loadContent(LARGE_FILE_MSG);
+                            }
                         }
 
                     } catch (MalformedURLException e) {
@@ -150,7 +152,7 @@ public class HtmlViewer extends AbstractViewer {
         });
     }
 
-    private File getTempFile(IStreamSource content) {
+    protected File getTempFile(IStreamSource content) {
         try (InputStream in = content.getSeekableInputStream()) {
             File tmpFile = File.createTempFile("iped", ".html");
             Files.copy(in, tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
