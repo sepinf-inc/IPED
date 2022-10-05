@@ -169,7 +169,6 @@ public class Win10MailParser extends AbstractParser {
                 
                 File tableFile = tmp.createTemporaryFile();
 
-                int i = 0;
                 for (AbstractTable table : tables) {
 
                     try (FileOutputStream tmpTableFile = new FileOutputStream(tableFile)) {
@@ -199,7 +198,6 @@ public class Win10MailParser extends AbstractParser {
                                 }
 
                                 if (item != null) {
-                                    i++;
                                     InputStream is = item.getBufferedInputStream();
                                     InputStreamReader utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
 
@@ -220,11 +218,7 @@ public class Win10MailParser extends AbstractParser {
                                     utf8IS.close();
                                     utf16Reader.close();
                                     is.close();
-                                } else {
-                                    Boolean falhou = true;
                                 }
-
-                                LOGGER.error(" " + i);
                             }
                         }
                         try (FileInputStream fis = new FileInputStream(tableFile)) {
