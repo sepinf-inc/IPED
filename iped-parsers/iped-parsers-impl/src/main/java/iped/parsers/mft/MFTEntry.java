@@ -335,6 +335,10 @@ public class MFTEntry {
         return length > 0 && residentFileStart > 0;
     }
 
+    public boolean hasNonResidentContent() {
+        return length > 0 && dataruns != null;
+    }
+    
     public List<Long> getDataruns() {
         return dataruns;
     }
