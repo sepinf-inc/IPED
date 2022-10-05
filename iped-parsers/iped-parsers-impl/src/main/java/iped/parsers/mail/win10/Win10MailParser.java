@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
@@ -151,6 +152,7 @@ public class Win10MailParser extends AbstractParser {
 
         itemInfo = context.get(ItemInfo.class);
         searcher = context.get(IItemSearcher.class);
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         TemporaryResources tmp = new TemporaryResources();
         // File tableFile = tmp.createTemporaryFile();
@@ -414,6 +416,27 @@ public class Win10MailParser extends AbstractParser {
                 }
             }
 
+            // Sent:
+            Date sent = email.getMsgDeliveryTime();
+            if (sent != null) {
+                emailMetadata.set(ExtraProperties.MESSAGE_DATE, sent);
+                preview.append("<b>" + Messages.getString("OutlookPSTParser.Sent") + ":</b> " + df.format(sent) + " (UTC) <br>");
+            }
+
+            // Attachments
+            if (email.getNoOfAttachments() > 0) {
+                List<String> attachNames = email.getAttachments().stream().map(attach -> attach.getFileName()).collect(Collectors.toList());
+                if (!attachNames.isEmpty()) {
+                    preview.append("<b>" + Messages.getString("OutlookPSTParser.Attachments") + " (" + attachNames.size()
+                            + "):</b><br>"); //$NON-NLS-1$
+                    for (String attach : attachNames) {
+                        preview.append(SimpleHTMLEncoder.htmlEncode(attach) + "<br>"); //$NON-NLS-1$
+                    }
+                }
+                emailMetadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, email.getNoOfAttachments());
+            }
+
+            // Body
             preview.append("</div>\n");
             String bodyHtml = email.getContentHtml();
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
@@ -421,14 +444,6 @@ public class Win10MailParser extends AbstractParser {
                 emailMetadata.set(ExtraProperties.MESSAGE_BODY,
                         Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
             }
-
-            // Sent:
-            Date sent = email.getMsgDeliveryTime();
-            if (sent != null) {
-                emailMetadata.set(ExtraProperties.MESSAGE_DATE, sent);
-                preview.append("<b>" + Messages.getString("OutlookPSTParser.Sent") + ":</b> " + df.format(sent) + "<br>");
-            }
-
 
             preview.append("</body>");
             preview.append("</html>");
