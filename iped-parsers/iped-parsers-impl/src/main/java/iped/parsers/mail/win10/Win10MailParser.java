@@ -9,8 +9,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -124,6 +126,7 @@ public class Win10MailParser extends AbstractParser {
     private ItemInfo itemInfo;
 
     private static IItemSearcher searcher;
+    private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("OutlookPSTParser.DateFormat")); //$NON-NLS-1$
 
     @Field
     public void setExtractEntries(boolean extractEntries) {
@@ -349,16 +352,16 @@ public class Win10MailParser extends AbstractParser {
     }
 
     private void processEmail(MessageEntry email, String path) {
-        Metadata metadata = new Metadata();
+        Metadata emailMetadata = new Metadata();
 
         try {
             String subject = email.getSubject();
             if (subject == null || subject.trim().isEmpty())
                 subject = Messages.getString("OutlookPSTParser.NoSubject");
 
-            metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
-            metadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG_REG.toString());
-            metadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+            emailMetadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
+            emailMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG_REG.toString());
+            emailMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
             // metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, "0");
             // metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, "0");
 
@@ -380,7 +383,7 @@ public class Win10MailParser extends AbstractParser {
             // From:
             String from = OutlookPSTParser.formatNameAndAddress(email.getSenderName(), email.getSenderEmailAddress());
             if (!from.isEmpty()) {
-                metadata.set(Message.MESSAGE_FROM, from);
+                emailMetadata.set(Message.MESSAGE_FROM, from);
                 preview.append("<b>" + Messages.getString("OutlookPSTParser.From") + ":</b> "
                         + SimpleHTMLEncoder.htmlEncode(from) + "<br>");
             }
@@ -388,7 +391,7 @@ public class Win10MailParser extends AbstractParser {
             // To, BCC, CC
             Object[][] recipTypes = { { RecipientEntry.RecipientType.TO, Messages.getString("OutlookPSTParser.To") },
                 { RecipientEntry.RecipientType.CC, "CC:" }, { RecipientEntry.RecipientType.BCC, "BCC:" } };
-            String[] metaRecips = { Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC };
+            String[] recipMeta = { Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC };
 
             for (int k = 0; k < recipTypes.length; k++) {
                 List<String> recipientNames = new ArrayList<>();
@@ -399,12 +402,12 @@ public class Win10MailParser extends AbstractParser {
                         if (!recipName.isEmpty()) {
                             recipientNames.add(recipName);
                         }
-                        MetadataUtil.fillRecipientAddress(metadata, recipient.getEmailAddress());
+                        MetadataUtil.fillRecipientAddress(emailMetadata, recipient.getEmailAddress());
                     }
                 }
                 if (recipientNames.size() > 0) {
-                    String key = metaRecips[k];
-                    recipientNames.stream().forEach(r -> metadata.add(key, r));
+                    String key = recipMeta[k];
+                    recipientNames.stream().forEach(r -> emailMetadata.add(key, r));
                     preview.append("<b>" + recipTypes[k][1] + "</b> "
                             + SimpleHTMLEncoder.htmlEncode(recipientNames.stream().collect(Collectors.joining("; ")))
                             + "<br>");
@@ -415,9 +418,17 @@ public class Win10MailParser extends AbstractParser {
             String bodyHtml = email.getContentHtml();
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
                 preview.append(bodyHtml);
-                metadata.set(ExtraProperties.MESSAGE_BODY,
+                emailMetadata.set(ExtraProperties.MESSAGE_BODY,
                         Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
             }
+
+            // Sent:
+            Date sent = email.getMsgDeliveryTime();
+            if (sent != null) {
+                emailMetadata.set(ExtraProperties.MESSAGE_DATE, sent);
+                preview.append("<b>" + Messages.getString("OutlookPSTParser.Sent") + ":</b> " + df.format(sent) + "<br>");
+            }
+
 
             preview.append("</body>");
             preview.append("</html>");
@@ -425,8 +436,8 @@ public class Win10MailParser extends AbstractParser {
             ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset));
             preview = null;
 
-            if (extractor.shouldParseEmbedded(metadata))
-                extractor.parseEmbedded(stream, xhtml, metadata, true);
+            if (extractor.shouldParseEmbedded(emailMetadata))
+                extractor.parseEmbedded(stream, xhtml, emailMetadata, true);
 
             stream.close();
 

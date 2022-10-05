@@ -101,8 +101,8 @@ public class MessageEntry extends AbstractEntry {
         return format.format(msgDeliveryTime);
     }
 
-    public void setMsgDeliveryTime(Date lastModifiedTime) {
-        this.lastModifiedTime = lastModifiedTime;
+    public void setMsgDeliveryTime(Date msgDeliveryTime) {
+        this.msgDeliveryTime = msgDeliveryTime;
     }
 
     public Date getLastModifiedTime() {
