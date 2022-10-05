@@ -53,7 +53,7 @@ public class MFTEntry {
                 int end = start + len * 2;
                 if (start < entryLength && end <= entryLength && start < end) {
                     try {
-                        entry.name = new String(in, start, len * 2, charset);
+                        entry.name = new String(in, start, len * 2, charset).trim();
                     } catch (Exception e) {
                     }
                 }
