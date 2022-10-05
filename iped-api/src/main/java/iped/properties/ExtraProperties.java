@@ -135,6 +135,8 @@ public class ExtraProperties {
     //TODO: Same as above, use "CARVEDOFFSET" only
     public static final Property CARVEDOFFSET_METADATA_NAME = Property.internalInteger("CarvedOffset"); //$NON-NLS-1$
 
+    public static final String FS_BLOCK_SIZE = "fsBlockSize"; 
+    
     public static final String TRANSCRIPT_ATTR = AUDIO_META_PREFIX + "transcription";
 
     public static final String CONFIDENCE_ATTR = AUDIO_META_PREFIX + "transcriptConfidence";

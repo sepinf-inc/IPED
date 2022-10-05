@@ -89,6 +89,7 @@ import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
 import iped.utils.UTF8Properties;
@@ -1077,6 +1078,7 @@ public class SleuthkitReader extends DataSourceReader {
                 String fsName = ((FileSystem) content).getFsType().name();
                 fsName = fsName.replace("TSK_FS_TYPE_", ""); //$NON-NLS-1$ //$NON-NLS-2$
                 evidence.setName(fsName);
+                evidence.setExtraAttribute(ExtraProperties.FS_BLOCK_SIZE, ((FileSystem) content).getBlock_size());
             }
 
         } else {
