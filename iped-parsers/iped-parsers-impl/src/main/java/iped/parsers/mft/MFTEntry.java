@@ -13,7 +13,7 @@ public class MFTEntry {
 
     private long logFileSequenceNumber = -1, baseRecordFileRef = -1, length = -1;
     private int fixUpOffset = -1, fixUpSize = -1, sequence = -1, linkCount = -1, attrOffset = -1, flags = -1,
-            firstAttrId = -1, usedSize = -1, totalSize = -1, residentFileStart = -1;
+            firstAttrId = -1, usedSize = -1, totalSize = -1, residentFileStart = -1, clusterLength = -1;
     private String name;
     private Date creationDate, lastModificationDate, lastAccessDate, lastEntryModificationDate;
     private List<Long> dataruns;
@@ -78,6 +78,9 @@ public class MFTEntry {
                     if (attr.getDataruns() != null) {
                         entry.dataruns = attr.getDataruns();
                     }
+                    if (attr.getClusterLength() > 0) {
+                        entry.clusterLength = attr.getClusterLength();
+                    }
                 }
             }
         }
@@ -100,50 +103,61 @@ public class MFTEntry {
             attr.setDataLength(toInt(in, offset + 16));
             attr.setDataOffset(toInt2(in, offset + 20));
         } else {
-            attr.setDataLength(toLong(in, offset + 48));
-            if (attr.getDataFlags() == 0) {
+            long dataLength = toLong(in, offset + 48);
+            attr.setDataLength(dataLength);
+            if (attr.getDataFlags() == 0 && dataLength > 0) {
                 int dataRunsOffset = toInt2(in, offset + 32);
                 if (dataRunsOffset >= 64) {
-                    offset += dataRunsOffset;
-                    List<Long> dataruns = new ArrayList<Long>();
-                    boolean finished = false;
-                    long prevPos = 0;
-                    while (offset < entryLength) {
-                        int b = toInt1(in, offset);
-                        if (b == 0) {
-                            finished = true;
-                            break;
+                    long firstVcn = toLong(in, offset + 16);
+                    long lastVcn = toLong(in, offset + 24);
+                    long allocated = toLong(in, offset + 40);
+                    if (allocated >= dataLength && lastVcn >= firstVcn) {
+                        int clusterLength = (int) (allocated / (lastVcn - firstVcn));
+                        if (clusterLength >= 1 << 8 && clusterLength <= 1 << 21
+                                && Integer.bitCount(clusterLength) == 1) {
+                            attr.setClusterLength(clusterLength);
+                            offset += dataRunsOffset;
+                            List<Long> dataruns = new ArrayList<Long>();
+                            boolean finished = false;
+                            long prevPos = 0;
+                            while (offset < entryLength) {
+                                int b = toInt1(in, offset);
+                                if (b == 0) {
+                                    finished = true;
+                                    break;
+                                }
+                                int lenLen = b & 0xF;
+                                if (lenLen == 0 || lenLen > 8) {
+                                    break;
+                                }
+                                int posLen = b >>> 4;
+                                if (posLen == 0 || posLen > 8) {
+                                    break;
+                                }
+                                if (++offset + lenLen > entryLength) {
+                                    break;
+                                }
+                                long len = toLong(in, offset, lenLen);
+                                if (len == 0) {
+                                    break;
+                                }
+                                if ((offset += lenLen) + posLen > entryLength) {
+                                    break;
+                                }
+                                long pos = toSignedLong(in, offset, posLen);
+                                offset += posLen;
+                                pos += prevPos;
+                                if (pos <= 0) {
+                                    break;
+                                }
+                                dataruns.add(len);
+                                dataruns.add(pos);
+                                prevPos = pos;
+                            }
+                            if (finished && !dataruns.isEmpty()) {
+                                attr.setDataruns(dataruns);
+                            }
                         }
-                        int lenLen = b & 0xF;
-                        if (lenLen == 0 || lenLen > 8) {
-                            break;
-                        }
-                        int posLen = b >>> 4;
-                        if (posLen == 0 || posLen > 8) {
-                            break;
-                        }
-                        if (++offset + lenLen > entryLength) {
-                            break;
-                        }
-                        long len = toLong(in, offset, lenLen);
-                        if (len == 0) {
-                            break;
-                        }
-                        if ((offset += lenLen) + posLen > entryLength) {
-                            break;
-                        }
-                        long pos = toSignedLong(in, offset, posLen);
-                        offset += posLen;
-                        pos += prevPos;
-                        if (pos <= 0) {
-                            break;
-                        }
-                        dataruns.add(len);
-                        dataruns.add(pos);
-                        prevPos = pos;
-                    }
-                    if (finished && !dataruns.isEmpty()) {
-                        attr.setDataruns(dataruns);
                     }
                 }
             }
@@ -338,8 +352,12 @@ public class MFTEntry {
     public boolean hasNonResidentContent() {
         return length > 0 && dataruns != null;
     }
-    
+
     public List<Long> getDataruns() {
         return dataruns;
+    }
+
+    public int getClusterLength() {
+        return clusterLength;
     }
 }

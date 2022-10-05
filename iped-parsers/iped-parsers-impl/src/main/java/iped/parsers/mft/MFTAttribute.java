@@ -3,7 +3,7 @@ package iped.parsers.mft;
 import java.util.List;
 
 public class MFTAttribute {
-    private int type, len, nameLen, nameOffset, dataFlags, id, dataOffset;
+    private int type, len, nameLen, nameOffset, dataFlags, id, dataOffset, clusterLength;
     private long dataLength = -1;
     private boolean isResident;
     private String name;
@@ -95,5 +95,13 @@ public class MFTAttribute {
 
     public List<Long> getDataruns() {
         return dataruns;
+    }
+
+    public int getClusterLength() {
+        return clusterLength;
+    }
+
+    public void setClusterLength(int clusterLength) {
+        this.clusterLength = clusterLength;
     }
 }
