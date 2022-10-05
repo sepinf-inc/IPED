@@ -106,7 +106,7 @@ public class ReportGenerator {
                 title += " user:" + c.getC().getUsername();
         }
 
-        printMessageFileHeader(out, title, c.getId() + "", c.getC().getAvatar());
+        printMessageFileHeader(out, title, c.getId() + "", c.getC().getAvatar(), c.isGroup() && c.isDeleted());
 
         if (currentMsg > 0)
             out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -145,7 +145,8 @@ public class ReportGenerator {
 
         if (thumb == null && m.getMediaHash() != null) {
             List<IItemReader> result = null;
-            result = iped.parsers.util.Util.getItems("hash:" + m.getMediaHash(), searcher);
+            if (searcher != null)
+                result = iped.parsers.util.Util.getItems("hash:" + m.getMediaHash(), searcher);
             if (result != null && !result.isEmpty()) {
                 thumb = result.get(0).getThumb();
             }
@@ -387,7 +388,8 @@ public class ReportGenerator {
 
     }
 
-    private static void printMessageFileHeader(PrintWriter out, String title, String id, byte[] avatar) {
+    private static void printMessageFileHeader(PrintWriter out, String title, String id, byte[] avatar,
+            boolean isDeletedGroup) {
         out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
                 + "<html>\n" //$NON-NLS-1$
                 + "<head>\n" //$NON-NLS-1$
@@ -417,6 +419,12 @@ public class ReportGenerator {
                 + "</div>\n" //$NON-NLS-1$
                 + "<div id=\"conversation\">\n" //$NON-NLS-1$
                 + "<br/><br/><br/>"); //$NON-NLS-1$
+
+
+        if (isDeletedGroup) {
+            out.println("<div class=\"linha\"><div class=\"recoveredChat\">"
+                    + Messages.getString("TelegramReport.RecoveredGroup") + "</div></div>");
+        }
     }
 
     private static void printMessageFileFooter(PrintWriter out) {

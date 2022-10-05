@@ -150,6 +150,8 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
             if (!IOUtil.canWrite(dbDataDir)) {
                 neo4jHome = copyToTempFolder(dbDataDir);
             }
+            // neo4j needs canonical path, see #1288
+            neo4jHome = neo4jHome.getCanonicalFile();
             graphService.start(neo4jHome);
             return true;
         } catch (Throwable e) {

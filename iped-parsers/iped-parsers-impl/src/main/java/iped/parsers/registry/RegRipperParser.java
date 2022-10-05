@@ -8,8 +8,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -30,9 +34,9 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.Messages;
 import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
+import iped.utils.IOUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 public class RegRipperParser extends AbstractParser {
@@ -48,7 +52,6 @@ public class RegRipperParser extends AbstractParser {
     private static String[] cmd;
     private static String TOOL_NAME = "rip"; //$NON-NLS-1$
     private static boolean tested = false;
-    private static String[] regNames = { "sam", "software", "system", "security", "ntuser", "usrclass" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
     private static Charset charset = Charset.forName("UTF-8"); //$NON-NLS-1$
 
     private RawStringParser rawParser = new RawStringParser();
@@ -106,82 +109,115 @@ public class RegRipperParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
-
+        
         TemporaryResources tmp = new TemporaryResources();
         try {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
-            String filename = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
-            File tempFile = null;
-            String[] finalCmd = null;
-            for (String regName : regNames)
-                if (filename.toLowerCase().startsWith(regName)) {
-                    tempFile = tis.getFile();
-                    String[] params = new String[] { "-f", regName, "-r", tempFile.getAbsolutePath() }; //$NON-NLS-1$ //$NON-NLS-2$
+            File tempFile = tis.getFile();
 
-                    finalCmd = new String[cmd.length + params.length];
-                    for (int i = 0; i < cmd.length; i++)
-                        finalCmd[i] = cmd[i];
-                    for (int i = 0; i < params.length; i++)
-                        finalCmd[cmd.length + i] = params[i];
-                }
-
-            // indexa strings brutas
+            // index raw strings (important because not all keys/values are extracted by regripper)
             rawParser.parse(tis, handler, metadata, context);
-
-            if (finalCmd != null) {
-                ProcessBuilder pb = new ProcessBuilder(finalCmd);
-                if (!TOOL_PATH.isEmpty()) {
-                    pb.directory(new File(TOOL_PATH));
-                }
-                Process p = pb.start();
-
-                readStream(p.getErrorStream(), null, null);
-
-                File outFile = tmp.createTemporaryFile();
-                OutputStream os = new FileOutputStream(outFile);
-                try {
-                    ContainerVolatile msg = new ContainerVolatile();
-                    Thread thread = readStream(p.getInputStream(), os, msg);
-                    waitFor(p, xhtml, msg);
-                    // p.waitFor();
-                    thread.join();
-
-                } catch (InterruptedException e) {
-                    p.destroyForcibly();
-                    throw new TikaException(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
-
-                } finally {
-                    os.close();
-                }
-
-                Metadata reportMetadata = new Metadata();
-                reportMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filename + "-Report"); //$NON-NLS-1$
-                reportMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
-                reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-                File htmlFile = getHtml(outFile, tmp);
-
-                if (extractor.shouldParseEmbedded(reportMetadata))
-                    try (InputStream is = new FileInputStream(htmlFile)) {
-                        extractor.parseEmbedded(is, xhtml, reportMetadata, true);
-                    }
+            
+            String filename = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
+            if (filename.matches(".*\\.LOG\\d?")) {
+                // skip parsing log files
+                return;
             }
 
+            // run all available plugins for this hive
+            ArrayList<String> command = new ArrayList<>(Arrays.asList(cmd));
+            command.addAll(Arrays.asList("-a", "-r", tempFile.getAbsolutePath()));
+            String reportName = filename + "_Full_Report";
+            runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp);
+
+            // run specific profiles for each hive
+            String regType = detectHive(tempFile);
+            String profiles = "profiles/" + regType;
+            File dir = new File(TOOL_PATH + "/plugins/" + profiles);
+            File[] directoryListing = dir.listFiles();
+            if (directoryListing != null) {
+                for (File child : directoryListing) {
+                    command = new ArrayList<>(Arrays.asList(cmd));
+                    command.addAll(Arrays.asList("-f", profiles + "/" + child.getName(), "-r", tempFile.getAbsolutePath()));
+                    reportName = filename + "_" + child.getName().replace("_", "") + "_Report";
+                    runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp);
+                }
+            }
+            
         } finally {
+            xhtml.endDocument();
             tmp.close();
         }
 
-        xhtml.endDocument();
+    }
 
+    private void runCmdAndCreateReport(List<String> command, String reportName, ContentHandler handler, EmbeddedDocumentExtractor extractor, TemporaryResources tmp) throws IOException, TikaException, SAXException {
+        ProcessBuilder pb = new ProcessBuilder(command);
+        if (!TOOL_PATH.isEmpty()) {
+            pb.directory(new File(TOOL_PATH));
+        }
+        Process p = pb.start();
+
+        readStream(p.getErrorStream(), null, null);
+
+        File outFile = tmp.createTemporaryFile();
+        OutputStream os = new FileOutputStream(outFile);
+        try {
+            ContainerVolatile msg = new ContainerVolatile();
+            Thread thread = readStream(p.getInputStream(), os, msg);
+            waitFor(p, handler, msg);
+            // p.waitFor();
+            thread.join();
+
+        } catch (InterruptedException e) {
+            p.destroyForcibly();
+            throw new TikaException(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
+
+        } finally {
+            os.close();
+        }
+
+        File htmlFile = getHtml(outFile, tmp);
+        if (htmlFile == null) {
+            // ignores empty reports
+            return;
+        }
+
+        Metadata reportMetadata = new Metadata();
+        reportMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, reportName);
+        reportMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
+        reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+        if (extractor.shouldParseEmbedded(reportMetadata)) {
+            try (InputStream is = new FileInputStream(htmlFile)) {
+                extractor.parseEmbedded(is, handler, reportMetadata, true);
+            }
+        }
+    }
+
+    private String detectHive(File file) throws IOException {
+        ArrayList<String> detectCmd = new ArrayList<>(Arrays.asList(cmd));
+        detectCmd.addAll(Arrays.asList("-g", "-r", file.getAbsolutePath()));
+        ProcessBuilder pb = new ProcessBuilder(detectCmd);
+        if (!TOOL_PATH.isEmpty()) {
+            pb.directory(new File(TOOL_PATH));
+        }
+        Process p = pb.start();
+        IOUtil.ignoreInputStream(p.getErrorStream());
+        byte[] bytes = IOUtil.loadInputStream(p.getInputStream());
+        return new String(bytes, StandardCharsets.ISO_8859_1).strip();
     }
 
     private File getHtml(File file, TemporaryResources tmp) throws IOException {
+        String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
+        if (content == null || content.isBlank()) {
+            return null;
+        }
         File html = tmp.createTemporaryFile();
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(html), charset);) {
             writer.write("<html>"); //$NON-NLS-1$
@@ -190,94 +226,13 @@ public class RegRipperParser extends AbstractParser {
             writer.write("</head>"); //$NON-NLS-1$
             writer.write("<body>"); //$NON-NLS-1$
             writer.write("<pre>"); //$NON-NLS-1$
-
-            String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
-            content = adjustDateFormat(content);
-            writer.write(SimpleHTMLEncoder.htmlEncode(content.trim()));
-
+            writer.write(SimpleHTMLEncoder.htmlEncode(content.strip()));
             writer.write("</pre>"); //$NON-NLS-1$
             writer.write("</body>"); //$NON-NLS-1$
             writer.write("</html>"); //$NON-NLS-1$
         }
 
         return html;
-    }
-
-    private static String adjustDateFormat(String content) {
-        final char[] dateFormat = "Aaa Aaa nN nN:NN:NN NNNN".toCharArray(); //$NON-NLS-1$
-        final String[] srcWDay = new String[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
-        final String[] tgtWDay = new String[] { Messages.getString("RegistryParser.Sun"), //$NON-NLS-1$
-                Messages.getString("RegistryParser.Mon"), Messages.getString("RegistryParser.Tue"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Wed"), Messages.getString("RegistryParser.Thu"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Fri"), Messages.getString("RegistryParser.Sat") }; //$NON-NLS-1$ //$NON-NLS-2$
-        final String[] srcMonth = new String[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
-                "Nov", "Dec" }; //$NON-NLS-1$ //$NON-NLS-2$
-        final String[] tgtMonth = new String[] { Messages.getString("RegistryParser.Jan"), //$NON-NLS-1$
-                Messages.getString("RegistryParser.Feb"), Messages.getString("RegistryParser.Mar"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Apr"), Messages.getString("RegistryParser.May"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Jun"), Messages.getString("RegistryParser.Jul"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Aug"), Messages.getString("RegistryParser.Sep"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Oct"), Messages.getString("RegistryParser.Nov"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("RegistryParser.Dec") }; //$NON-NLS-1$
-
-        char[] c = content.toCharArray();
-        boolean changed = false;
-        StringBuilder sb = new StringBuilder();
-        NEXT: for (int i = 0; i < c.length - dateFormat.length; i++) {
-            for (int j = 0; j < dateFormat.length; j++) {
-                char a = c[i + j];
-                char b = dateFormat[j];
-                if (b == 'A') {
-                    if (!Character.isUpperCase(a))
-                        continue NEXT;
-                } else if (b == 'a') {
-                    if (!Character.isLowerCase(a))
-                        continue NEXT;
-                } else if (b == 'N') {
-                    if (!Character.isDigit(a))
-                        continue NEXT;
-                } else if (b == 'n') {
-                    if (!Character.isDigit(a) && a != ' ')
-                        continue NEXT;
-                } else if (a != b) {
-                    continue NEXT;
-                }
-            }
-            String inWDay = new String(c, i, 3);
-            String outWDay = null;
-            for (int k = 0; k < srcWDay.length; k++) {
-                if (inWDay.equals(srcWDay[k])) {
-                    outWDay = tgtWDay[k];
-                    break;
-                }
-            }
-            if (outWDay == null)
-                continue NEXT;
-            String inMonth = new String(c, i + 4, 3);
-            String outMonth = null;
-            for (int k = 0; k < srcMonth.length; k++) {
-                if (inMonth.equals(srcMonth[k])) {
-                    outMonth = tgtMonth[k];
-                    break;
-                }
-            }
-            if (outMonth == null)
-                continue NEXT;
-            changed = true;
-            sb.delete(0, sb.length());
-            sb.append(outWDay).append(' ');
-            sb.append(c, i + 8, 2).append('/');
-            sb.append(outMonth).append('/');
-            sb.append(c, i + 20, 4).append(' ');
-            sb.append(c, i + 11, 8);
-            sb.getChars(0, sb.length(), c, i);
-            if (c[i + 4] == ' ')
-                c[i + 4] = '0';
-            if (c[i + 16] == ' ')
-                c[i + 16] = '0';
-            i += dateFormat.length - 1;
-        }
-        return changed ? new String(c) : content;
     }
 
     private Thread readStream(final InputStream stream, final OutputStream os, final ContainerVolatile msg) {

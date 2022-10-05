@@ -158,9 +158,11 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
                         Messages.getString("AppListener.UncheckAll.Title"), JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
                 if (result == JOptionPane.YES_OPTION) {
                     App.get().appCase.getMultiBookmarks().clearChecked();
+                    App.get().sendCheckAllToResultSetViewers(false);
                 }
             } else {
                 App.get().appCase.getMultiBookmarks().checkAll();
+                App.get().sendCheckAllToResultSetViewers(true);
             }
 
             App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();

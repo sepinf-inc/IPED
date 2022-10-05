@@ -36,8 +36,6 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
     private File ipedTemp, indexTemp;
     private int numThreads;
     private File hashDbFile;
-    private String regripperFolder;
-    private String mplayerWinPath;
 
     @Override
     public Filter<Path> getResourceLookupFilter() {
@@ -123,24 +121,6 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
             setHashDbFile(new File(value.trim()));
         }
 
-        value = properties.getProperty("regripperFolder"); //$NON-NLS-1$
-        if (value != null) {
-            regripperFolder = value.trim();
-        }
-
-        value = properties.getProperty("mplayerPath"); //$NON-NLS-1$
-        if (value != null) {
-            mplayerWinPath = value.trim();
-        }
-
-    }
-
-    public String getMplayerWinPath() {
-        return mplayerWinPath;
-    }
-
-    public String getRegRipperFolder() {
-        return regripperFolder;
     }
 
     public void setIndexerTemp(File temp) {

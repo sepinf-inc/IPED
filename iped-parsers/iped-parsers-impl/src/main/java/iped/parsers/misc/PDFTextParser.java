@@ -88,7 +88,9 @@ public class PDFTextParser extends PDFParser {
     private int maxMainMemoryBytes = 100000000;
 
     private static final long serialVersionUID = 1L;
-    private static MediaType PDF_TYPE = MediaType.application("pdf"); //$NON-NLS-1$
+
+    public static final MediaType PDF_TYPE = MediaType.application("pdf"); //$NON-NLS-1$
+
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(PDF_TYPE);
     private PDFParser SortedPDFParser, PDFParser;
     private OCRParser ocrParser = new OCRParser();

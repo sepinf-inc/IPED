@@ -74,8 +74,19 @@
 		map.fitBounds(bounds);
     }
 
+    function updateLeadMarker(marker){
+		var i=0;
+       	for (var ind in track.markers){
+       		if(track.markers[ind]==track.markers[marker]){
+    			mpos=i;
+       		}
+       		i++;
+       	}
+       	return mpos;
+    }
+    
 	mpos=0;
-    function navega(pos){
+    function moveToMarkerPos(pos){
     	if(pos<0){
     		alert('The navigation already is on the first item.');
     	}
@@ -94,6 +105,14 @@
        		i++;
        	}
     	return false;
+    }
+    
+    function moveToLastMarker(){
+    	moveToMarkerPos(track.markersCount()-1);
+    }
+    
+    function zoomOut(){
+    	track.viewAll();
     }
     
 	</script>

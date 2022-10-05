@@ -44,7 +44,7 @@ public class CertificateParserTest extends TestCase {
 
         CertificateParser parser = new CertificateParser();
         Metadata metadata = new Metadata();
-        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, MediaType.application("pkix-cert").toString());
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, CertificateParser.DER_MIME.toString());
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
@@ -80,7 +80,7 @@ public class CertificateParserTest extends TestCase {
             assertEquals(
                     "Certificado:1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
                     metadata.get(TikaCoreProperties.TITLE));
-            assertEquals("application/pkix-cert", metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
+            assertEquals(CertificateParser.DER_MIME.toString(), metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
             assertEquals("true", metadata.get(CertificateParser.ISSUBJECTAUTHORITY));
             assertEquals(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
@@ -97,7 +97,7 @@ public class CertificateParserTest extends TestCase {
 
         CertificateParser parser = new CertificateParser();
         Metadata metadata = new Metadata();
-        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, MediaType.application("x-pem-file").toString());
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, CertificateParser.PEM_MIME.toString().toString());
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
@@ -134,7 +134,7 @@ public class CertificateParserTest extends TestCase {
             assertEquals(
                     "Certificado:1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
                     metadata.get(TikaCoreProperties.TITLE));
-            assertEquals("application/x-pem-file", metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
+            assertEquals(CertificateParser.PEM_MIME.toString(), metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
             assertEquals("true", metadata.get(CertificateParser.ISSUBJECTAUTHORITY));
             assertEquals(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
@@ -151,7 +151,7 @@ public class CertificateParserTest extends TestCase {
 
         CertificateParser parser = new CertificateParser();
         Metadata metadata = new Metadata();
-        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, MediaType.application("pkcs7-signature").toString());
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, CertificateParser.PKCS7_SIGNATURE.toString());
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
@@ -188,7 +188,7 @@ public class CertificateParserTest extends TestCase {
             assertEquals(
                     "Certificado:1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
                     metadata.get(TikaCoreProperties.TITLE));
-            assertEquals("application/pkcs7-signature", metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
+            assertEquals(CertificateParser.PKCS7_SIGNATURE.toString(), metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
             assertEquals("true", metadata.get(CertificateParser.ISSUBJECTAUTHORITY));
             assertEquals(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
