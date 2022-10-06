@@ -2,10 +2,6 @@ package iped.carvers.custom;
 
 import java.io.IOException;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.tika.mime.MediaType;
-
-import iped.carvers.api.CarverType;
 import iped.carvers.api.Hit;
 import iped.carvers.api.InvalidCarvedObjectException;
 import iped.carvers.standard.AbstractCarver;
@@ -14,16 +10,6 @@ import iped.io.SeekableInputStream;
 import iped.parsers.mft.MFTEntry;
 
 public class MFTEntryCarver extends AbstractCarver {
-    public MFTEntryCarver() throws DecoderException {
-        carverTypes = new CarverType[1];
-        carverTypes[0] = new CarverType();
-        carverTypes[0].addHeader("FILE0");
-        carverTypes[0].setMimeType(MediaType.parse(MFTEntry.MIME_TYPE));
-        carverTypes[0].setMaxLength(MFTEntry.entryLength);
-        carverTypes[0].setMinLength(MFTEntry.entryLength);
-        carverTypes[0].setName("MFT-ENTRY");
-    }
-
     @Override
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         long length = MFTEntry.entryLength;
