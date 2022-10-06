@@ -611,6 +611,7 @@ public class SleuthkitReader extends DataSourceReader {
            addImage.run(UUID.randomUUID().toString(), new String[] { image.getAbsolutePath() }, sectorSize);
 
         } catch (Throwable e) {
+            e.printStackTrace();
             String ignore = "org.sleuthkit.datamodel.TskDataException: Errors occurred while ingesting image";
             for (String error : e.toString().split("\\n")) {
                 error = error.trim();
