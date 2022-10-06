@@ -48,9 +48,6 @@ public class IconLoader {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IconLoader.class);
 
-    public static final Icon FOLDER_ICON = UIManager.getIcon("FileView.directoryIcon"); //$NON-NLS-1$
-    public static final Icon DISK_ICON = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
-
     private static final String ICON_EXTENSION = ".png";
 
     private static final Map<String, Icon> extIconMap = loadIconsFromJar("file", null);

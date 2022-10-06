@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import javax.swing.Icon;
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import org.apache.lucene.document.Document;
@@ -36,6 +37,9 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
      *
      */
     private static final long serialVersionUID = 1L;
+
+    private static Icon folderIcon = UIManager.getIcon("FileView.directoryIcon"); //$NON-NLS-1$
+    private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -53,9 +57,9 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                 int docId = App.get().appCase.getLuceneId(item);
                 Document doc = App.get().appCase.getSearcher().doc(docId);
                 if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
-                    result.setIcon(IconLoader.FOLDER_ICON);
+                    result.setIcon(folderIcon);
                 } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
-                    result.setIcon(IconLoader.DISK_ICON);
+                    result.setIcon(diskIcon);
                 } else {
                     String type = doc.get(IndexItem.TYPE);
                     Icon icon = IconLoader.getFileIcon(type);
