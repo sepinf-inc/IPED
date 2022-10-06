@@ -79,7 +79,8 @@ public class HtmlViewer extends AbstractViewer {
         return contentType.equals("text/html") //$NON-NLS-1$
                 || contentType.equals("application/xhtml+xml") //$NON-NLS-1$
                 || contentType.equals("text/asp") //$NON-NLS-1$
-                || contentType.equals("text/aspdotnet"); //$NON-NLS-1$
+                || contentType.equals("text/aspdotnet") //$NON-NLS-1$
+                || contentType.equals("application/x-discord-chat"); //$NON-NLS-1$
 
     }
 

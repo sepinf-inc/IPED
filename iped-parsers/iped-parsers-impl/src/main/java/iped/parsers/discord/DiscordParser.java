@@ -8,6 +8,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -95,10 +97,14 @@ public class DiscordParser extends AbstractParser {
 
             for (CacheEntry ce : index.getLst()) {
                 if (ce.getKey() != null && ce.getKey().contains(seq)) {
-                    try (InputStream is = ce.getResponseDataStream()) {
+                	
+                	Map<String, String> httpResponse = ce.getHttpResponse();
+                	
+                	try (InputStream is = ce.getResponseDataStream(httpResponse.get("content-encoding"))) {
 
                         ObjectMapper mapper = new ObjectMapper();
                         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                        
                         List<DiscordRoot> discordRoot = mapper.readValue(is, new TypeReference<List<DiscordRoot>>() {
                         });
 
@@ -117,7 +123,7 @@ public class DiscordParser extends AbstractParser {
                                                 && ce2.getKey().contains(dr.getAuthor().getAvatar())
                                                 && !ce2.getName().contains("data")) {
                                             dr.getAuthor().setURLAvatar(Base64.getEncoder()
-                                                    .encodeToString(IOUtils.toByteArray(ce2.getResponseDataStream())));
+                                                    .encodeToString(IOUtils.toByteArray(ce2.getResponseDataStream(""))));
                                             break;
                                         }
 
@@ -149,6 +155,9 @@ public class DiscordParser extends AbstractParser {
                         chatMeta.set("URL", ce.getRequestURL());
                         chatMeta.set(TikaCoreProperties.TITLE, chatName);
                         chatMeta.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
+                        for (Map.Entry<String,String> entry : httpResponse.entrySet()) {
+                        	chatMeta.set(entry.getKey(), entry.getValue());
+                        }
 
                         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, chatMeta);
                         byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml);
@@ -158,7 +167,11 @@ public class DiscordParser extends AbstractParser {
 
                         extractMessages(chatName, discordRoot, handler, extractor);
 
-                    } catch (Exception ex) {
+                    } catch(JsonProcessingException e){
+                    	LOGGER.error("JSON is invalid, go to next JSON. " + ce.toString());
+                    	continue;
+                    }
+                    catch (Exception ex) {
                         ex.printStackTrace();
                         if (exception == null) {
                             exception = new TikaException("DiscordParser parsing error.");
