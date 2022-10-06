@@ -1093,6 +1093,7 @@ public class SleuthkitReader extends DataSourceReader {
                 }
 
                 evidence.setName(content.getName() + " [" + ((Volume) content).getDescription() + "] (" + lenStr + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                evidence.setMediaType(MediaTypes.DISK_VOLUME);
             } else {
                 evidence.setName(content.getName());
             }
@@ -1113,7 +1114,7 @@ public class SleuthkitReader extends DataSourceReader {
         if (content instanceof Image) {
             evidence.setRoot(true);
             evidence.setMediaType(getMediaType(evidence.getExt()));
-        } else if (!(content instanceof VolumeSystem) && !(content instanceof FileSystem)) {
+        } else if (!(content instanceof VolumeSystem) && !(content instanceof FileSystem) && !(content instanceof Volume)) {
             evidence.setIsDir(true);
         }
 

@@ -22,6 +22,7 @@ public class MediaTypes {
     public static final MediaType JBIG2 = MediaType.image("x-jbig2");
     public static final MediaType OUTLOOK_MSG = MediaType.application("vnd.ms-outlook");
     public static final MediaType FILE_SYSTEM = MediaType.application("x-file-system"); //$NON-NLS-1$
+    public static final MediaType DISK_VOLUME = MediaType.application("x-disk-volume"); //$NON-NLS-1$
     public static final MediaType DISK_PARTITION = MediaType.application("x-disk-partition"); //$NON-NLS-1$
     public static final MediaType DISK_IMAGE = MediaType.application("x-disk-image"); //$NON-NLS-1$
     public static final MediaType RAW_IMAGE = MediaType.application("x-raw-image"); //$NON-NLS-1$
