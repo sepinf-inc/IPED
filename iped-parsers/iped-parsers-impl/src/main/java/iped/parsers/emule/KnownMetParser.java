@@ -46,6 +46,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import iped.data.IItemReader;
+import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.ExportFolder;
 import iped.parsers.util.Messages;
@@ -66,9 +67,11 @@ public class KnownMetParser extends AbstractParser {
     public static final String EDONKEY = "edonkey";
 
     public static final String EMULE_MIME_TYPE = "application/x-emule"; //$NON-NLS-1$
+    public static final String KNOWNMET_ENTRY_MIME_TYPE = "application/x-emule-knowmet-entry"; //$NON-NLS-1$
+    
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(EMULE_MIME_TYPE));
 
-    private static final String[] header = new String[] { Messages.getString("KnownMetParser.Seq"), //$NON-NLS-1$
+    public static final String[] header = new String[] { Messages.getString("KnownMetParser.Seq"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.Name"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.Hash"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.LastModDate"), //$NON-NLS-1$
@@ -82,7 +85,7 @@ public class KnownMetParser extends AbstractParser {
             Messages.getString("KnownMetParser.FoundInPedoHashDB"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.FoundInCase")}; //$NON-NLS-1$
 
-    private static final String strYes = Messages.getString("KnownMetParser.Yes"); //$NON-NLS-1$
+    public static final String strYes = Messages.getString("KnownMetParser.Yes"); //$NON-NLS-1$
     
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -95,6 +98,8 @@ public class KnownMetParser extends AbstractParser {
         final DecimalFormat nf = LocalizedFormat.getDecimalInstance("#,##0"); //$NON-NLS-1$
         final DateFormat df = new SimpleDateFormat(Messages.getString("KnownMetParser.DataFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
+        
+        BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", KNOWNMET_ENTRY_MIME_TYPE);
 
         metadata.set(HttpHeaders.CONTENT_TYPE, EMULE_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
@@ -203,6 +208,8 @@ public class KnownMetParser extends AbstractParser {
                 totReq += toSum(e.getTotalRequests());
                 accReq += toSum(e.getAcceptedRequests());
                 bytTrf += toSum(e.getBytesTransfered());
+                
+                bme.extractEmbedded(i, context, metadata, handler, e);
             }
 
             AttributesImpl attributes = new AttributesImpl();

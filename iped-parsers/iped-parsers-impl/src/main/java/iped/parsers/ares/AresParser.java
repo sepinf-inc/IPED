@@ -44,6 +44,7 @@ import org.xml.sax.helpers.AttributesImpl;
 
 import iped.data.IItemReader;
 import iped.parsers.emule.KnownMetParser;
+import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.properties.ExtraProperties;
@@ -60,7 +61,9 @@ public class AresParser extends AbstractParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-ares-galaxy")); //$NON-NLS-1$
     public static final String ARES_MIME_TYPE = "application/x-ares-galaxy"; //$NON-NLS-1$
-    private static final String[] header = new String[] { Messages.getString("AresParser.Seq"), //$NON-NLS-1$
+    public static final String ARES_ENTRY_MIME_TYPE = "application/x-ares-galaxy-entry"; //$NON-NLS-1$
+    
+    public static final String[] header = new String[] { Messages.getString("AresParser.Seq"), //$NON-NLS-1$
             Messages.getString("AresParser.Title"), Messages.getString("AresParser.Path"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.HashSha1"), Messages.getString("AresParser.FileDate"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.Size"), Messages.getString("AresParser.Shared"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -69,8 +72,8 @@ public class AresParser extends AbstractParser {
             Messages.getString("AresParser.URL"), Messages.getString("AresParser.Comments"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.FoundInPedoHashDB"), Messages.getString("AresParser.FoundInCase")}; //$NON-NLS-1$ //$NON-NLS-2$
 
-    private static final String strYes = Messages.getString("AresParser.Yes"); //$NON-NLS-1$
-    private static final String strNo = Messages.getString("AresParser.No"); //$NON-NLS-1$
+    public static final String strYes = Messages.getString("AresParser.Yes"); //$NON-NLS-1$
+    public static final String strNo = Messages.getString("AresParser.No"); //$NON-NLS-1$
     
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -84,6 +87,9 @@ public class AresParser extends AbstractParser {
         final DateFormat df = new SimpleDateFormat(Messages.getString("AresParser.DateFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
 
+        BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", ARES_ENTRY_MIME_TYPE);
+        bme.setNameProperty("title");
+        
         metadata.set(HttpHeaders.CONTENT_TYPE, ARES_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
@@ -199,11 +205,13 @@ public class AresParser extends AbstractParser {
                 cells.add(e.getComment());
                 cells.add(!hashSets.isEmpty() ? hashSets.toString() : ""); // $NON-NLS-1$
                 cells.add(" "); //$NON-NLS-1$
-
                 colClass[1] = colClass[2] = "b"; //$NON-NLS-1$
                 colClass[3] = "e";
                 colClass[5] = "c";
                 Arrays.fill(colClass, 8, 13, "z");
+
+				bme.extractEmbedded(i, context, metadata, handler, e);
+                //AresEntryMetadataExtractor.extractEmbedded(i, context, metadata, handler, e, hashSets);
             }
 
             AttributesImpl attributes = new AttributesImpl();
@@ -239,6 +247,7 @@ public class AresParser extends AbstractParser {
             }
             xhtml.endElement("tr"); //$NON-NLS-1$
             xhtml.newline();
+            
         }
 
         if (hashAlertHits > 0)
