@@ -48,10 +48,10 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
 
         int idx = table.convertRowIndexToModel(row);
         int col = table.convertColumnIndexToModel(column);
-        String columnNameLocalized = iped.localization.LocalizedProperties.getLocalizedField(IndexItem.NAME);
-        columnNameLocalized = columnNameLocalized != null ? columnNameLocalized : "";
+        String localizedNameProp = iped.localization.LocalizedProperties.getLocalizedField(IndexItem.NAME);
+        String colName = table.getModel().getColumnName(col);
 
-        if (table.getModel().getColumnName(col).equalsIgnoreCase(columnNameLocalized)) {
+        if (table.getModel() instanceof SearchResultTableModel && (colName.equalsIgnoreCase(IndexItem.NAME) || colName.equalsIgnoreCase(localizedNameProp))) {
             try {
                 IItemId item = ((SearchResultTableModel) table.getModel()).getSearchResult().getItem(idx);
                 int docId = App.get().appCase.getLuceneId(item);
