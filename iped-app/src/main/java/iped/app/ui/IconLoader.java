@@ -18,6 +18,7 @@
  */
 package iped.app.ui;
 
+import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.security.CodeSource;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.UIManager;
@@ -32,6 +34,7 @@ import javax.swing.UIManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.utils.ImageUtil;
 import iped.utils.QualityIcon;
 
 /**
@@ -47,13 +50,13 @@ public class IconLoader {
 
     private static final String ICON_EXTENSION = ".png";
 
-    private static final Map<String, Icon> extIconMap = loadIconsFromJar("file");
-    private static final Map<String, Icon> catIconMap = loadIconsFromJar("cat");
+    private static final Map<String, Icon> extIconMap = loadIconsFromJar("file", null);
+    private static final Map<String, Icon> catIconMap = loadIconsFromJar("cat", 16);
 
     private static final Icon DEFAULT_FILE_ICON = UIManager.getIcon("FileView.fileIcon"); //$NON-NLS-1$
     private static final Icon DEFAULT_CATEGORY_ICON = catIconMap.get("blank"); //$NON-NLS-1$
 
-    private static Map<String, Icon> loadIconsFromJar(String iconPath) {
+    private static Map<String, Icon> loadIconsFromJar(String iconPath, Integer maxSize) {
 
         Map<String, Icon> map = new HashMap<>();
         try {
@@ -71,7 +74,11 @@ public class IconLoader {
                         String nameWithPath = e.getName();
                         String name = nameWithPath.replace(path, "");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
-                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), new QualityIcon(new ImageIcon(IconLoader.class.getResource(iconPath + separator + name))));
+                            BufferedImage img = ImageIO.read(IconLoader.class.getResource(iconPath + separator + name));
+                            if (maxSize != null) {
+                                img = ImageUtil.resizeImage(img, maxSize, maxSize);
+                            }
+                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), new QualityIcon(new ImageIcon(img)));
                         }
                     }
                 }
