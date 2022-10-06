@@ -111,8 +111,8 @@ public class MFTEntry {
                     long firstVcn = toLong(in, offset + 16);
                     long lastVcn = toLong(in, offset + 24);
                     long allocated = toLong(in, offset + 40);
-                    if (allocated >= dataLength && lastVcn >= firstVcn) {
-                        int clusterLength = (int) (allocated / (lastVcn - firstVcn));
+                    if (allocated >= dataLength && lastVcn >= firstVcn && firstVcn >= 0 && lastVcn >= 0) {
+                        int clusterLength = (int) (allocated / (lastVcn - firstVcn + 1));
                         if (clusterLength >= 1 << 8 && clusterLength <= 1 << 21
                                 && Integer.bitCount(clusterLength) == 1) {
                             attr.setClusterLength(clusterLength);
