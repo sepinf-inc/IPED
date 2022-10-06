@@ -240,7 +240,9 @@ public class GalleryModel extends AbstractTableModel {
 
                     if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
                         image = errorImg;
-                        value.icon = unsupportedIcon;
+                        value.unsupportedType = true;
+                        String type = doc.get(IndexItem.TYPE);
+                        value.icon = IconLoader.getFileIcon(type);
                     }
 
                     if (image == null && stream == null && isSupportedImage(mediaType)) {
