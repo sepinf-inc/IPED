@@ -89,7 +89,6 @@ import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.properties.BasicProps;
-import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
 import iped.utils.UTF8Properties;
@@ -1073,11 +1072,13 @@ public class SleuthkitReader extends DataSourceReader {
         if (content.getName().isEmpty()) {
             if (content instanceof VolumeSystem) {
                 evidence.setName(((VolumeSystem) content).getType().getName() + "_Partition_Table"); //$NON-NLS-1$
+                evidence.setMediaType(MediaTypes.DISK_PARTITION);
 
             } else if (content instanceof FileSystem) {
                 String fsName = ((FileSystem) content).getFsType().name();
                 fsName = fsName.replace("TSK_FS_TYPE_", ""); //$NON-NLS-1$ //$NON-NLS-2$
                 evidence.setName(fsName);
+                evidence.setMediaType(MediaTypes.FILE_SYSTEM);
             }
 
         } else {
@@ -1111,7 +1112,7 @@ public class SleuthkitReader extends DataSourceReader {
         if (content instanceof Image) {
             evidence.setRoot(true);
             evidence.setMediaType(getMediaType(evidence.getExt()));
-        } else {
+        } else if (!(content instanceof VolumeSystem) && !(content instanceof FileSystem)) {
             evidence.setIsDir(true);
         }
 
