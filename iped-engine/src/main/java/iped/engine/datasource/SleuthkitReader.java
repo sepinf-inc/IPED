@@ -1078,7 +1078,6 @@ public class SleuthkitReader extends DataSourceReader {
                 String fsName = ((FileSystem) content).getFsType().name();
                 fsName = fsName.replace("TSK_FS_TYPE_", ""); //$NON-NLS-1$ //$NON-NLS-2$
                 evidence.setName(fsName);
-                evidence.setExtraAttribute(ExtraProperties.FS_BLOCK_SIZE, ((FileSystem) content).getBlock_size());
             }
 
         } else {
