@@ -1,21 +1,15 @@
 package iped.parsers.mail.win10.entries;
 
 public class AttachmentEntry extends AbstractEntry {
-    private int rowId;
     private long messageId;
     private long attachSize;
     private long attachCID;
     private String fileName;
-    private String attachFilePath;
+	private String mimeTag;
     private Boolean received;
 
-    public AttachmentEntry(int rowId, int messageId, long attachSize, long attachCID, String fileName, String filePath, Boolean received) {
-        super(rowId);
-        this.messageId = messageId;
-        this.attachSize = attachSize;
-        this.fileName = fileName;
-        this.attachFilePath = filePath;
-        this.received = received;
+    public AttachmentEntry(int rowId) {
+		super(rowId);
     }
 
 	public int getRowId() {
@@ -58,12 +52,12 @@ public class AttachmentEntry extends AbstractEntry {
 		this.fileName = fileName;
 	}
 	
-    public String getAttachFilePath() {
-		return this.attachFilePath;
+	public String getMimeTag() {
+		return this.mimeTag;
 	}
 
-	public void setAttachFilePath(String filePath) {
-		this.attachFilePath = filePath;
+	public void setMimeTag(String mimeTag) {
+		this.mimeTag = mimeTag;
 	}
 
 	public void setReceived(Boolean received) {

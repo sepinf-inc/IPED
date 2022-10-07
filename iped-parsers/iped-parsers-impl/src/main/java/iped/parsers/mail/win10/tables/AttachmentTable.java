@@ -9,15 +9,13 @@ import com.sun.jna.ptr.PointerByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.mail.win10.entries.AttachmentEntry;
+import iped.parsers.mail.win10.entries.MessageEntry;
 import iped.parsers.util.EsedbManager;
 
 public class AttachmentTable extends AbstractTable {
 
-    private static Map<Long, ArrayList<AttachmentEntry>> attachments = new HashMap<>();
-
-    public static void addAttachment(AttachmentEntry attachment) {
-        attachments.computeIfAbsent(attachment.getMessageId(), k -> new ArrayList<AttachmentEntry>()).add(attachment);
-    }
+    private static Map<Long, ArrayList<AttachmentEntry>> msgToAttachmentsMap = new HashMap<>();
+    private static ArrayList<AttachmentEntry> attachmentList = new ArrayList<>();
 
     public AttachmentTable(String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
@@ -34,11 +32,27 @@ public class AttachmentTable extends AbstractTable {
         for (int i = 0; i < numRecords; i++) {
             AttachmentEntry attachment = getAttachment(esedbLibrary, i, errorPointer, tablePointer);
             addAttachment(attachment);
+            attachmentList.add(attachment);
         }
     }
 
+    public static void addAttachment(AttachmentEntry attachment) {
+        ArrayList<AttachmentEntry> messageAttachments = msgToAttachmentsMap.computeIfAbsent(attachment.getMessageId(), k -> new ArrayList<AttachmentEntry>());
+        if (!messageAttachments.stream().map(m -> m.getRowId()).anyMatch(id -> id == attachment.getRowId())) {
+            messageAttachments.add(attachment);
+        }
+    }
+    
+    public ArrayList<AttachmentEntry> getAttachments() {
+        return attachmentList;
+    }
+
     public static ArrayList<AttachmentEntry> getMessageAttachments(long messageId) {
-        return attachments.get(messageId);
+        ArrayList<AttachmentEntry> messageAttachments = msgToAttachmentsMap.get(messageId);
+        if (messageAttachments == null) {
+            return new ArrayList<AttachmentEntry>();
+        }
+        return messageAttachments;
     }
 
     private AttachmentEntry getAttachment(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
@@ -64,13 +78,22 @@ public class AttachmentTable extends AbstractTable {
         long attachSize = EsedbManager.getInt32Value(esedbLibrary, 7, recordPointerReference, filePath, errorPointer);
         long attachCID = EsedbManager.getInt32Value(esedbLibrary, 10, recordPointerReference, filePath, errorPointer);
         String fileName = EsedbManager.getUnicodeValue(esedbLibrary, 13, recordPointerReference, filePath, errorPointer);
+        String mimeTag = EsedbManager.getUnicodeValue(esedbLibrary, 14, recordPointerReference, filePath, errorPointer);
         boolean received = EsedbManager.getBooleanValue(esedbLibrary, 20, recordPointerReference, filePath, errorPointer);
 
         result = esedbLibrary.libesedb_record_free(recordPointerReference, errorPointer);
         if (result < 0)
             EsedbManager.printError("Record Free", result, filePath, errorPointer);
 
-        return new AttachmentEntry(rowId, messageId, attachSize, attachCID, fileName, null, received);
+        AttachmentEntry attachment = new AttachmentEntry(rowId);
+        attachment.setMessageId(messageId);
+        attachment.setAttachSize(attachSize);
+        attachment.setAttachCID(attachCID);
+        attachment.setFileName(fileName);
+        attachment.setMimeTag(mimeTag);
+        attachment.setReceived(received);
+
+        return attachment;
     }
     
 }

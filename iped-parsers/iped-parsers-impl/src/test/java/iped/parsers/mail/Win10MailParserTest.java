@@ -54,7 +54,7 @@ public class Win10MailParserTest {
 
         try (InputStream stream = getStream("test-files/private_mail_sample/" + fileName)) {
 
-            //parser.parse(stream, handler, metadata, edgeContext);
+            // parser.parse(stream, handler, metadata, edgeContext);
 
         }
 

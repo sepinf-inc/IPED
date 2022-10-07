@@ -1,8 +1,11 @@
 package iped.parsers.mail.win10.tables;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.ptr.IntByReference;
@@ -14,6 +17,7 @@ import iped.parsers.util.EsedbManager;
 public class MessageTable extends AbstractTable {
 
     private List<MessageEntry> messages = new ArrayList<>();
+    private static Map<Long, ArrayList<MessageEntry>> folderToMsgsMap = new HashMap<>();
 
     public MessageTable(String filePath, String tableName, PointerByReference tablePointer,
             PointerByReference errorPointer, long numRecords) {
@@ -28,12 +32,28 @@ public class MessageTable extends AbstractTable {
     @Override
     public void populateTable(EsedbLibrary esedbLibrary) {
         for (int i = 0; i < numRecords; i++) {
+            MessageEntry message = getMessage(esedbLibrary, i, errorPointer, tablePointer);
             messages.add(getMessage(esedbLibrary, i, errorPointer, tablePointer));
+            addFolderMessages(message);
         }
     }
 
     public List<MessageEntry> getMessages() {
         return messages;
+    }
+
+    public static void addFolderMessages(MessageEntry message) {
+        ArrayList<MessageEntry> folderMsgs = folderToMsgsMap.computeIfAbsent(message.getParentFolderId(), k -> new ArrayList<MessageEntry>());
+        folderMsgs.add(message);
+    }
+
+    public static ArrayList<MessageEntry> getFolderChildMessages(long parentFolderId) {
+        ArrayList<MessageEntry> childMessages = folderToMsgsMap.get(parentFolderId);
+        
+        if (childMessages == null) {
+            return new ArrayList<MessageEntry>();
+        }
+        return childMessages;
     }
 
 
@@ -57,7 +77,7 @@ public class MessageTable extends AbstractTable {
 
         int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
         long conversationId = EsedbManager.getInt32Value(esedbLibrary, 21, recordPointerReference, filePath, errorPointer);
-        long parentFolderId = EsedbManager.getInt32Value(esedbLibrary, 21, recordPointerReference, filePath, errorPointer);
+        long parentFolderId = EsedbManager.getInt32Value(esedbLibrary, 75, recordPointerReference, filePath, errorPointer);
         long messageSize = EsedbManager.getInt32Value(esedbLibrary, 58, recordPointerReference, filePath, errorPointer);
         int noOfAttachments = EsedbManager.getInt16Value(esedbLibrary, 34, recordPointerReference, filePath, errorPointer);
         String msgAbstract = EsedbManager.getUnicodeValue(esedbLibrary, 142, recordPointerReference, filePath, errorPointer);

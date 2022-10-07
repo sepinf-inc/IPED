@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -51,23 +52,27 @@ import iped.parsers.database.EDBParser;
 import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.mail.win10.entries.AbstractEntry;
 import iped.parsers.mail.win10.entries.AttachmentEntry;
+import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.mail.win10.entries.MessageEntry;
 import iped.parsers.mail.win10.entries.RecipientEntry;
 import iped.parsers.mail.win10.entries.RecipientTable;
 import iped.parsers.mail.win10.tables.AbstractTable;
 import iped.parsers.mail.win10.tables.AttachmentTable;
+import iped.parsers.mail.win10.tables.FolderTable;
 import iped.parsers.mail.win10.tables.MessageTable;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.Util;
 import iped.parsers.util.EsedbManager;
-import iped.parsers.util.IgnoreContentHandler;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
+import iped.utils.EmptyInputStream;
 import iped.utils.SimpleHTMLEncoder;
+
+// attachment files are duplicated for now (first parsed in the first round, then here with the correct metadata)
 
 /*
  * Important tables to parse from store.vol:
@@ -81,10 +86,10 @@ import iped.utils.SimpleHTMLEncoder;
  * Unistore\data\7; email attachments
  * 
  * checkboxes:
- * | | extract properties from store.vol into lists of new objects (representing the important tables)
- * | | search for the matching .dat files and add more properties to the objects
+ * |-| extract properties from store.vol into lists of new objects (representing the important tables)
+ * |-| search for the matching .dat files and add more properties to the objects
  * | | extract each instance as subitems in their respective categories
- * 
+ * | | create folder hierarchy
  */
 
 public class Win10MailParser extends AbstractParser {
@@ -94,6 +99,7 @@ public class Win10MailParser extends AbstractParser {
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(WIN10_MAIL_DB);
 
     private static final char MESSAGE_CATEGORY = '3';
+    private static final char ATTACH_CATEGORY = '7';
 
     private enum FileTag {
         UNICODE("001e"), CONTACT_JPEG_1("00ff"), CONTACT_JPEG_2("00ff"), CONTACT_JPEG_3("01b5"),
@@ -189,43 +195,37 @@ public class Win10MailParser extends AbstractParser {
                         xhtml = new XHTMLContentHandler(tableHandler, metadata);
                         xhtml.startDocument();
 
+                        if (table instanceof FolderTable) {
+                            FolderTable folderTable = (FolderTable) table;
 
-                        if (table instanceof MessageTable) {
-                            MessageTable msgTable = (MessageTable) table;
-                            for (MessageEntry message : msgTable.getMessages()) {
-
-                                FileTag[] messageTags = new FileTag[] { FileTag.ASCII, FileTag.MESSAGE_UNICODE };
-                                IItemReader item = null;
-                                for (FileTag messageTag : messageTags) {
-                                    String contentPath = Win10MailParser.getEntryLocation(message, MESSAGE_CATEGORY, messageTag);
-                                    item = Win10MailParser.searchItemInCase(contentPath, message.getMessageSize());
-                                    if (item != null) break;
-                                }
-
-                                if (item != null) {
-                                    InputStream is = item.getBufferedInputStream();
-                                    InputStreamReader utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
-
-                                    // convert text from utf-16 to utf-8
-                                    byte[] byteOrderMark = new byte[2];
-                                    is.mark(2);
-                                    if ((is.read(byteOrderMark)) != -1) {
-                                        is.reset();
-                                        if (byteOrderMark[0] == (byte) 0xFE && byteOrderMark[1] == (byte) 0xFF) {
-                                            utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16BE);
-                                        }
+                            String path = "";
+                            for (FolderEntry folder : folderTable.getFolders()) {
+                                processFolder(folder, folder.getParentFolderId());
+                                ArrayList<MessageEntry> childEmails = MessageTable.getFolderChildMessages(folder.getRowId());
+                                if (!childEmails.isEmpty()) {
+                                    for (MessageEntry childEmail : childEmails) {
+                                        childEmail.setContentHtml(getMessageBody(childEmail));
+                                        processEmail(childEmail, path, folder.getRowId());
                                     }
-                                    ReaderInputStream utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
-
-                                    message.setContentHtml(IOUtils.toString(utf8IS, StandardCharsets.UTF_8));
-                                    processEmail(message, storeVolPath);
-
-                                    utf8IS.close();
-                                    utf16Reader.close();
-                                    is.close();
                                 }
                             }
                         }
+
+                        // if (table instanceof AttachmentTable) {
+                        //     AttachmentTable attachTable = (AttachmentTable) table;
+                        //     IItemReader item = null;
+
+                        //     for (AttachmentEntry attach : attachTable.getAttachments()) {
+                        //         String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
+                        //         item = Win10MailParser.searchItemInCase(contentPath, attach.getAttachSize());
+                        //         if (item != null) {
+                        //             InputStream attachStream = item.getBufferedInputStream();
+                        //             processAttachment(attach, attachStream, storeVolPath);
+                        //             attachStream.close();
+                        //         }
+                        //     }
+                        // }
+
                         try (FileInputStream fis = new FileInputStream(tableFile)) {
                             extractor.parseEmbedded(fis, handler, tableMetadata, true);
                         }
@@ -236,6 +236,7 @@ public class Win10MailParser extends AbstractParser {
                 closeFilePointer(filePointerReference);
             }
         } catch (Exception e) {
+            LOGGER.error("Exception parsing Win10 Mail app email, using generic parser");
             genericParser.parse(storeVolTis, handler, metadata, context);
             throw new TikaException(this.getClass().getSimpleName() + " exception", e);
 
@@ -244,7 +245,7 @@ public class Win10MailParser extends AbstractParser {
         }
     }
 
-    
+
     /** 
      * Retrieves all important mail tables from the specified database
      * @param filePath
@@ -345,6 +346,12 @@ public class Win10MailParser extends AbstractParser {
                     attachmentTable.populateTable(esedbLibrary);
                     tables.add(attachmentTable);
                 }
+                
+                if (tableNameStr.contains("Folders")) {
+                    FolderTable folderTable = new FolderTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    folderTable.populateTable(esedbLibrary);
+                    tables.add(folderTable);
+                }
             }
 
         } finally {
@@ -353,7 +360,53 @@ public class Win10MailParser extends AbstractParser {
         return tables;
     }
 
-    private void processEmail(MessageEntry email, String path) {
+    private void processFolder(FolderEntry folder, long parentId) throws SAXException, IOException {
+        Metadata entrydata = new Metadata();
+        entrydata.set(TikaCoreProperties.TITLE, folder.getDisplayName());
+        entrydata.set(TikaCoreProperties.CREATED, folder.getCreateTime());
+        entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
+        entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, "folder-" + folder.getRowId());
+        if (parentId != -1)
+            entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, "folder-" + parentId);
+        extractor.parseEmbedded(new EmptyInputStream(), xhtml, entrydata, true);
+    }
+
+    private String getMessageBody(MessageEntry email) throws IOException {
+        FileTag[] messageTags = new FileTag[] { FileTag.ASCII, FileTag.MESSAGE_UNICODE };
+        IItemReader item = null;
+        for (FileTag messageTag : messageTags) {
+            String contentPath = Win10MailParser.getEntryLocation(email, MESSAGE_CATEGORY, messageTag);
+            item = Win10MailParser.searchItemInCase(contentPath, email.getMessageSize());
+            if (item != null) break;
+        }
+
+        if (item != null) {
+            InputStream is = item.getBufferedInputStream();
+            InputStreamReader utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
+
+            // convert text from utf-16 to utf-8
+            byte[] byteOrderMark = new byte[2];
+            is.mark(2);
+            if ((is.read(byteOrderMark)) != -1) {
+                is.reset();
+                if (byteOrderMark[0] == (byte) 0xFE && byteOrderMark[1] == (byte) 0xFF) {
+                    utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16BE);
+                }
+            }
+            ReaderInputStream utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
+
+            String messageBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
+
+            utf8IS.close();
+            utf16Reader.close();
+            is.close();
+
+            return messageBody;
+        }
+        return "";
+    }
+
+    private void processEmail(MessageEntry email, String path, long parentId) {
         Metadata emailMetadata = new Metadata();
 
         try {
@@ -361,11 +414,13 @@ public class Win10MailParser extends AbstractParser {
             if (subject == null || subject.trim().isEmpty())
                 subject = Messages.getString("OutlookPSTParser.NoSubject");
 
+            String virtualId = "winAppMail-" + email.getRowId();
+
             emailMetadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
             emailMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG_REG.toString());
             emailMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-            // metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, "0");
-            // metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, "0");
+            emailMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
+            emailMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, "folder-" + parentId);
 
             Charset charset = Charset.forName("UTF-8");
             StringBuilder preview = new StringBuilder();
@@ -390,24 +445,27 @@ public class Win10MailParser extends AbstractParser {
                         + SimpleHTMLEncoder.htmlEncode(from) + "<br>");
             }
 
-            // To, BCC, CC
+            // To, BCC, CC:
             Object[][] recipTypes = { { RecipientEntry.RecipientType.TO, Messages.getString("OutlookPSTParser.To") },
                 { RecipientEntry.RecipientType.CC, "CC:" }, { RecipientEntry.RecipientType.BCC, "BCC:" } };
             String[] recipMeta = { Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC };
 
             for (int k = 0; k < recipTypes.length; k++) {
                 List<String> recipientNames = new ArrayList<>();
-                for (int i = 0; i < email.getRecipients().size(); i++) {
-                    RecipientEntry recipient = email.getRecipients().get(i);
-                    if (recipTypes[k][0] == recipient.getType()) {
-                        String recipName = OutlookPSTParser.formatNameAndAddress(recipient.getDisplayName(), recipient.getEmailAddress());
-                        if (!recipName.isEmpty()) {
-                            recipientNames.add(recipName);
+                List<RecipientEntry> recipients = email.getRecipients();
+                if (recipients != null) {
+                    for (int i = 0; i < recipients.size(); i++) {
+                        RecipientEntry recipient = recipients.get(i);
+                        if (recipTypes[k][0] == recipient.getType()) {
+                            String recipName = OutlookPSTParser.formatNameAndAddress(recipient.getDisplayName(), recipient.getEmailAddress());
+                            if (!recipName.isEmpty()) {
+                                recipientNames.add(recipName);
+                            }
+                            MetadataUtil.fillRecipientAddress(emailMetadata, recipient.getEmailAddress());
                         }
-                        MetadataUtil.fillRecipientAddress(emailMetadata, recipient.getEmailAddress());
                     }
                 }
-                if (recipientNames.size() > 0) {
+                if (!recipientNames.isEmpty()) {
                     String key = recipMeta[k];
                     recipientNames.stream().forEach(r -> emailMetadata.add(key, r));
                     preview.append("<b>" + recipTypes[k][1] + "</b> "
@@ -416,14 +474,14 @@ public class Win10MailParser extends AbstractParser {
                 }
             }
 
-            // Sent:
+            // Sent time:
             Date sent = email.getMsgDeliveryTime();
             if (sent != null) {
                 emailMetadata.set(ExtraProperties.MESSAGE_DATE, sent);
                 preview.append("<b>" + Messages.getString("OutlookPSTParser.Sent") + ":</b> " + df.format(sent) + " (UTC) <br>");
             }
 
-            // Attachments
+            // Attachments:
             if (email.getNoOfAttachments() > 0) {
                 List<String> attachNames = email.getAttachments().stream().map(attach -> attach.getFileName()).collect(Collectors.toList());
                 if (!attachNames.isEmpty()) {
@@ -436,7 +494,7 @@ public class Win10MailParser extends AbstractParser {
                 emailMetadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, email.getNoOfAttachments());
             }
 
-            // Body
+            // Body:
             preview.append("</div>\n");
             String bodyHtml = email.getContentHtml();
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
@@ -444,23 +502,36 @@ public class Win10MailParser extends AbstractParser {
                 emailMetadata.set(ExtraProperties.MESSAGE_BODY,
                         Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
             }
-
             preview.append("</body>");
+
             preview.append("</html>");
 
-            ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset));
-            preview = null;
-
-            if (extractor.shouldParseEmbedded(emailMetadata))
-                extractor.parseEmbedded(stream, xhtml, emailMetadata, true);
-
-            stream.close();
+            try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
+                if (extractor.shouldParseEmbedded(emailMetadata))
+                    extractor.parseEmbedded(stream, xhtml, emailMetadata, true);
+            }
 
         } catch (Exception e) {
-            LOGGER.warn("Exception extracting email: {}>>{}\t{}", path, email.getSubject(), e.toString()); //$NON-NLS-1$
+            LOGGER.error("Exception extracting email: {}>>{}\t{}", path, email.getSubject(), e.toString()); //$NON-NLS-1$
             // e.printStackTrace();
         }
 
+    }
+
+    private void processAttachment(AttachmentEntry attachment, InputStream attachStream, String path) {
+        String parentId = "winAppMail-" + attachment.getMessageId();
+        String filename = attachment.getFileName();
+        long rowId = attachment.getRowId();
+        try {
+            Metadata attachMetadata = new Metadata();
+
+            if (extractor.shouldParseEmbedded(attachMetadata))
+                extractor.parseEmbedded(attachStream, xhtml, attachMetadata, true);
+
+        } catch (Exception e) {
+            LOGGER.error("Exception extracting attachment '{}': {}\t{}", rowId, filename, e.toString()); //$NON-NLS-1$
+            // e.printStackTrace();
+        }
     }
 
     public static String getEntryLocation(AbstractEntry entry, char category, FileTag fileTag) {
