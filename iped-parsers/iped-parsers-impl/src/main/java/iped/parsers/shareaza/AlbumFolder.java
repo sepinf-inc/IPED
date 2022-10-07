@@ -29,9 +29,9 @@ import org.xml.sax.SAXException;
 import iped.search.IItemSearcher;
 
 /**
- * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
-class AlbumFolder extends ShareazaEntity {
+public class AlbumFolder extends ShareazaEntity {
 
     private final XMLElement xml = new XMLElement();
     private final List<AlbumFolder> albumFolders = new ArrayList<>();
@@ -140,5 +140,13 @@ class AlbumFolder extends ShareazaEntity {
         }
         
     }
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
 
 }

@@ -34,9 +34,9 @@ import iped.parsers.util.ChildPornHashLookup;
 import iped.search.IItemSearcher;
 
 /**
- * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
-class LibraryFile extends ShareazaEntity {
+public class LibraryFile extends ShareazaEntity {
 
     private final XMLElement metadata = new XMLElement();
     private final List<SharedSource> sharedSources = new ArrayList<>();
@@ -291,5 +291,101 @@ class LibraryFile extends ShareazaEntity {
     public int getIndex() {
         return index;
     }
+
+	public List<SharedSource> getSharedSources() {
+		return sharedSources;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getTime() {
+		return time;
+	}
+
+	public String getShared() {
+		return shared;
+	}
+
+	public long getVirtualSize() {
+		return virtualSize;
+	}
+
+	public long getVirtualBase() {
+		return virtualBase;
+	}
+
+	public String getTiger() {
+		return tiger;
+	}
+
+	public String getEd2k() {
+		return ed2k;
+	}
+
+	public String getBth() {
+		return bth;
+	}
+
+	public String getVerify() {
+		return verify;
+	}
+
+	public String getUri() {
+		return uri;
+	}
+
+	public boolean isMetadataAuto() {
+		return metadataAuto;
+	}
+
+	public String getMetadataTime() {
+		return metadataTime;
+	}
+
+	public int getRating() {
+		return rating;
+	}
+
+	public String getComments() {
+		return comments;
+	}
+
+	public String getShareTags() {
+		return shareTags;
+	}
+
+	public boolean isMetadataModified() {
+		return metadataModified;
+	}
+
+	public long getHitsTotal() {
+		return hitsTotal;
+	}
+
+	public long getUploadsTotal() {
+		return uploadsTotal;
+	}
+
+	public boolean isCachedPreview() {
+		return cachedPreview;
+	}
+
+	public boolean isBogus() {
+		return bogus;
+	}
+
+	public LibraryFolder getParentFolder() {
+		return parentFolder;
+	}
+
+	public HashSet<String> getHashSetHits() {
+		return hashSetHits;
+	}
+
+	public void setIndex(int index) {
+		this.index = index;
+	}
 
 }

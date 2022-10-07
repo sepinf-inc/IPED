@@ -36,19 +36,22 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.Messages;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 
 /**
  * Parser para arquivo Library{1,2}.dat do Shareaza
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
 public class ShareazaLibraryDatParser extends AbstractParser {
 
     private static final long serialVersionUID = -207806473837042332L;
     public static final String LIBRARY_DAT_MIME_TYPE = "application/x-shareaza-library-dat"; //$NON-NLS-1$
+    public static final String LIBRARY_DAT_ITEM_MIME_TYPE = "application/x-shareaza-library-dat-item"; //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(LIBRARY_DAT_MIME_TYPE));
 
     @Override
@@ -108,6 +111,16 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         xhtml.endElement("tr"); //$NON-NLS-1$
 
         library.printTable(xhtml, searcher);
+        
+        metadata.set(BasicProps.HASCHILD, "true");
+        metadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
+        BeanMetadataExtraction bem = new BeanMetadataExtraction("p2p", LIBRARY_DAT_ITEM_MIME_TYPE);
+        bem.addPropertyExclusion(LibraryFolder.class, "indexToFile");
+        bem.addPropertyExclusion(LibraryFolder.class, "parentFolder");
+        bem.addPropertyExclusion(LibraryFile.class, "parentFolder");
+        bem.registerClassNameProperty(LibraryFolder.class, "path");
+        bem.registerClassNameProperty(AlbumFolder.class, "name");
+        bem.extractEmbedded(0, context, metadata, handler, library.getLibraryFolders());
 
         xhtml.endElement("table"); //$NON-NLS-1$
         /*

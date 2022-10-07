@@ -24,7 +24,6 @@
     {"name": "Multimedia", "categories":[
       {"name": "Audios", "mimes": ["audio"]},
       {"name": "Videos", "mimes": ["video", "application/vnd.rn-realmedia", "application/x-shockwave-flash"]},
-      {"name": "Video Thumbnails"},
       {"name": "Images", "mimes": ["image", "application/coreldraw", "application/x-vnd.corel.zcf.draw.document+zip", "application/vnd.oasis.opendocument.graphics", "application/vnd.oasis.opendocument.graphics-template", "application/vnd.oasis.opendocument.image", "application/vnd.oasis.opendocument.image-template", "application/vnd.sun.xml.draw", "application/vnd.sun.xml.draw.template", "application/vnd.stardivision.draw"], "categories":[
         {"name": "Temporary Internet Images"},
         {"name": "Images in System Folders"},
@@ -53,32 +52,7 @@
 		{"name":"Instagram","mimes":["application/x-ufed-chat-preview-instagram"]},
 		{"name":"Others Chats","mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
 	]},
-    {"name": "Windows Registry", "categories":[
-      {"name": "Main Registry Files", "mimes": ["application/x-windows-registry-main"]},
-      {"name": "Other Registry Files", "mimes": ["application/x-windows-registry"]},
-      {"name": "Registry Full Reports", "mimes": ["application/x-windows-registry-report"]},
-      {"name": "Registry Custom Reports", "categories":[
-        {"name": "Registry OS Info"},
-        {"name": "Registry Installed Apps"},
-        {"name": "Registry Network Info"},
-        {"name": "Registry Storage Info"},
-        {"name": "Registry Device Info"},
-        {"name": "Registry Program Run"},
-        {"name": "Registry Auto Run"},
-        {"name": "Registry Log Info"},
-        {"name": "Registry Malware Info"},
-        {"name": "Registry Web Info"},
-        {"name": "Registry User Info", "categories":[
-          {"name": "Registry User Accounts"},
-          {"name": "Registry User Activity"},
-          {"name": "Registry User Files"},
-          {"name": "Registry User Network Activity"},
-          {"name": "Registry User Config"},
-          {"name": "Registry User Virtualization"},
-          {"name": "Registry User Communication"}
-        ]}
-      ]}
-    ]},
+    {"name": "Windows Registry", "mimes": ["application/x-windows-registry", "application/x-windows-registry-report"]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
     {"name": "Programs and Libraries", "mimes": ["application/x-superfetch", "application/x-elf-log", "application/x-elf-file", "application/x-prefetch", "application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"]},
     {"name": "Unallocated", "mimes": ["application/x-unallocated"]},
@@ -92,6 +66,7 @@
     {"name": "Peer-to-peer", "categories":[        
         {"name":"Ares", "mimes": ["application/x-ares-galaxy","application/x-ares-galaxy-entry"]},
         {"name":"Emule", "mimes": ["application/x-emule","application/x-emule-knowmet-entry"]},
+        {"name":"Shareaza", "mimes":["application/x-shareaza-library-dat", "application/x-shareaza-library-dat-item"]},
         {"name":"Others", "mimes": ["application/x-p2p"]}
     ]},
     {"name": "Browser Artifacts", "categories":[
@@ -132,6 +107,7 @@
         {"name": "GRRF Files"}
       ]}
     ]},
+    
     {"name": "Extraction Summary", "mimes": ["application/x-ufed-html-summary"]},
     {"name": "Calls", "mimes": ["application/x-ufed-html-calls", "application/x-ufed-call", "call/x-whatsapp-call", "call/x-telegram-call", "application/x-ios-calllog-db", "application/x-ios8-calllog-db"]},
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},
