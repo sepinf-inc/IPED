@@ -47,7 +47,7 @@ public class MFTEntry {
         if (attr.getType() == 0x30) {
             // File name
             int namespace = toInt1(in, offset + 65);
-            if (namespace == 1 || (namespace == 3 && entry.name == null)) {
+            if (namespace == 0 || namespace == 1 || (namespace == 3 && entry.name == null)) {
                 int start = offset + 66;
                 int len = toInt1(in, offset + 64);
                 int end = start + len * 2;
