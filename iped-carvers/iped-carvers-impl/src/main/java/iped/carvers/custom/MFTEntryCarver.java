@@ -41,6 +41,7 @@ public class MFTEntryCarver extends AbstractCarver {
             throw new InvalidCarvedObjectException("MFT entries are not be carved from " + name);
         }
         try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
+            is.seek(headerOffset.getOffset());
             byte[] bytes = new byte[MFTEntry.entryLength];
             int read = 0;
             while (read < MFTEntry.entryLength) {
