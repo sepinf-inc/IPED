@@ -622,6 +622,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencesScroll = new JScrollPane(referencesTable);
 
         categoryTree = new JTree(new Object[0]);
+        categoryTree.setCellRenderer(new CategoryTreeCellRenderer());
         categoryTree.setRootVisible(true);
         categoryTree.setExpandsSelectedPaths(false);
         categoryListener = new CategoryTreeListener();
