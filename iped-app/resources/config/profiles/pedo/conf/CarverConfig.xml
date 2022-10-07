@@ -5,7 +5,7 @@
         <carverType>
             <name>MFT-ENTRY</name>
             <signatures>
-                <headerSignature>FILE0</headerSignature>
+                <headerSignature>FILE\30\00\03\00</headerSignature>
             </signatures>
             <minLength>1024</minLength>
             <maxLength>1024</maxLength>
