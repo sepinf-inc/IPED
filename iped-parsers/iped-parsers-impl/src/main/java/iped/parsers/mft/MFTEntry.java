@@ -178,11 +178,11 @@ public class MFTEntry {
         entry.totalSize = toInt(in, 28);
         entry.baseRecordFileRef = toLong(in, 32);
         entry.firstAttrId = toInt2(in, 40);
-        if (entry.fixUpOffset != 42) {
-            int seqNumber = toInt2(in, 48);
+        if (entry.fixUpSize == 3 && entry.fixUpOffset >= 42 && entry.fixUpOffset <= 48) {
+            int seqNumber = toInt2(in, entry.fixUpOffset);
             if (seqNumber == toInt2(in, 510) && seqNumber == toInt2(in, 1022)) {
-                System.arraycopy(in, 50, in, 510, 2);
-                System.arraycopy(in, 52, in, 1022, 2);
+                System.arraycopy(in, entry.fixUpOffset + 2, in, 510, 2);
+                System.arraycopy(in, entry.fixUpOffset + 4, in, 1022, 2);
             }
         }
         return entry;
