@@ -171,6 +171,7 @@ public class BeanMetadataExtraction {
                  }
                  
                  if(children.size()>0) {
+                     //entryMetadata.set(BasicProps.HASCHILD, "true");
                      entryMetadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
                  }
 
@@ -193,6 +194,8 @@ public class BeanMetadataExtraction {
                  }
                  if(children.size()>0 && count<=0) {//real number of children added                	 
                 	 IItem item = (IItem)addedItem.getObj();
+                	 //entryMetadata = item.getMetadata();
+                     //entryMetadata.set(BasicProps.HASCHILD, "false");
                      item.setIsDir(false);
                  }
 
