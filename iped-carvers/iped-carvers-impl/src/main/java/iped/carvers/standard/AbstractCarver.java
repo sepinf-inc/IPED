@@ -16,7 +16,6 @@ import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 
 public abstract class AbstractCarver implements Carver {
-    protected static String carvedNamePrefix = "Carved-";// esta propriedade não foi declarada estatica para permitir
     protected CarverType[] carverTypes = null;
 
     protected ArrayDeque<Hit> headersWaitingFooters = new ArrayDeque<>();
@@ -27,6 +26,11 @@ public abstract class AbstractCarver implements Carver {
 
     Hit lastEscapeFooter;
     boolean ignoreCorrupted;
+
+    // Uses a method the get the prefix, so it can be overridden by subclasses.
+    protected String getCarvedNamePrefix() {
+        return "Carved-";
+    }
 
     // carveia do cabeçalho a partir da informação de tamanho retornada pelo método
     // getLengthFromHit
@@ -84,7 +88,7 @@ public abstract class AbstractCarver implements Carver {
         if ((!ignoreCorrupted && !isSpecificIgnoreCorrupted()) || isValid(parentEvidence, header, len)) {
             IItem offsetFile = parentEvidence.createChildItem();
 
-            String name = carvedNamePrefix + header.getOffset();
+            String name = getCarvedNamePrefix() + header.getOffset();
             offsetFile.setName(name);
             offsetFile.setPath(parentEvidence.getPath() + ">>" + name);
 

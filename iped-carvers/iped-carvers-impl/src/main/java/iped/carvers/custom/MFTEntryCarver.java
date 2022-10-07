@@ -11,6 +11,11 @@ import iped.parsers.mft.MFTEntry;
 
 public class MFTEntryCarver extends AbstractCarver {
     @Override
+    protected String getCarvedNamePrefix() {
+        return "Carved-MFT-Entry-";
+    }    
+    
+    @Override
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         long length = MFTEntry.entryLength;
         long evidenceLen = parentEvidence.getLength();
