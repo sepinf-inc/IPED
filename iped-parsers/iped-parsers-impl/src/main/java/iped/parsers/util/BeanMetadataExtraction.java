@@ -1,9 +1,18 @@
 package iped.parsers.util;
 
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -14,6 +23,7 @@ import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 
 import iped.parsers.standard.StandardParser;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.utils.DateUtil;
 import iped.utils.EmptyInputStream;
@@ -22,14 +32,49 @@ public class BeanMetadataExtraction {
 	String prefix;
 	String mimeType;
 	String nameProperty;
+	int expandChildBeansLevel = 0;
 	
+    HashMap<Object, EmbeddedItem> parentMap = new HashMap<Object, EmbeddedItem>();
+	
+	ArrayList<Class> beanClassesToExtract=new ArrayList<Class>();
+	HashMap<Class, List<String>> excludeProperties=new HashMap<Class, List<String>>();
+	HashMap<Class, String> nameProperties=new HashMap<Class, String>();
+	private int level;
+
 	public BeanMetadataExtraction(String prefix, String mimeType) {
 		this.prefix = prefix;
 		this.mimeType = mimeType;
 		this.nameProperty="name";
 	}
 
+	public void addPropertyExclusion(Class c, String propName) {
+		List<String> props = excludeProperties.get(c);
+		if(props==null) {
+			props = new ArrayList<String>();
+			excludeProperties.put(c, props);
+		}
+		props.add(propName);
+	}
+
+	public void registerClassNameProperty(Class c, String propName) {
+		nameProperties.put(c, propName);
+	}
+
     public void extractEmbedded(int seq, ParseContext context, Metadata metadata, ContentHandler handler, Object bean) throws IOException {
+    	extractEmbedded(seq, context, metadata, null, handler, bean, -1);    	
+    }
+    
+    class ChildParams{
+    	Object value;
+    	PropertyDescriptor pd;
+    	
+    	public ChildParams(Object value, PropertyDescriptor pd) {
+    		this.value = value;
+    		this.pd = pd;
+    	}
+    }
+    
+    protected void extractEmbedded(int seq, ParseContext context, Metadata metadata, PropertyDescriptor parentPd, ContentHandler handler, Object bean, int parentSeq) throws IOException {
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
         if (extractor.shouldParseEmbedded(metadata)) {
@@ -38,33 +83,127 @@ public class BeanMetadataExtraction {
                  entryMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, mimeType);
                  entryMetadata.set(HttpHeaders.CONTENT_TYPE, mimeType);
                  entryMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                 entryMetadata.set("bean:className", bean.getClass().getCanonicalName());
+                 
+                 ArrayList<ChildParams> children = new ArrayList<ChildParams>();
+                 
+                 Object[] colObj = null;
+                 if(bean instanceof Collection) {
+                	 colObj = ((Collection) bean).toArray();
+                 }
+                 if(bean.getClass().isArray()) {
+                	 colObj = (Object[]) bean;
+                 }
+                 if(bean instanceof Map) {
+                	 colObj = ((Map) bean).entrySet().toArray();
+                 }
+                 
+                 if(colObj == null) {
+             		String resolvedNameProp = nameProperties.get(bean.getClass());
+             		if(resolvedNameProp==null) {
+             			resolvedNameProp = nameProperty;
+             		}
+                	 
+                     for (PropertyDescriptor pd : Introspector.getBeanInfo(bean.getClass()).getPropertyDescriptors()) {
+                    	 List<String> exclProps = excludeProperties.get(bean.getClass());
+                    	 if(exclProps!=null && exclProps.contains(pd.getName())) {
+                    		 continue;
+                    	 }
+                      	  if (pd.getReadMethod() != null && !"class".equals(pd.getName())) {
+                        		Object value = null;
+                        		try {
+                               	    value = pd.getReadMethod().invoke(bean);
+                        		}catch (Exception e) {
+                        			e.printStackTrace();
+      								continue;                        		
+                        		}
+                        		
+                           	    if(pd.getDisplayName().equals(resolvedNameProp)) {
+                           	    	entryMetadata.add(TikaCoreProperties.TITLE, value.toString());//adds the name property without prefix
+                           	    	entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, value.toString());
+                          		}
+                           	    if(value!=null) {
+                           	    	String metadataName = pd.getDisplayName();
+                           	    	if(prefix!=null && prefix.length()>0) {
+                           	    		metadataName = prefix+":"+metadataName;    		                       	 	                       	  		
+                           	    	}
 
-                 for (PropertyDescriptor pd : Introspector.getBeanInfo(bean.getClass()).getPropertyDescriptors()) {                	 
-                  	  if (pd.getReadMethod() != null && !"class".equals(pd.getName())) {
-                       	    Object value = pd.getReadMethod().invoke(bean);
-                       	    if(pd.getDisplayName().equals(nameProperty)) {
-                       	    	entryMetadata.add(TikaCoreProperties.TITLE, value.toString());//adds the name property without prefix
-                       	    	entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, value.toString());
-                      		}
-                       	    if(value!=null) {
-                       	    	String metadataName = pd.getDisplayName();
-                       	    	if(prefix!=null && prefix.length()>0) {
-                       	    		metadataName = prefix+":"+metadataName;                       	    		                       	 	                       	  		
-                       	    	}
-    							if(value instanceof Date) {
-    								entryMetadata.add(metadataName , DateUtil.dateToString((Date)value));
-                       	    	}else {
-                       	    		entryMetadata.add(metadataName, value.toString());
-                      	    	}
-                      	    }
-                 	  }
+                           	    	if(isBean(value)) {
+                                		children.add(new ChildParams(value, pd));
+        								//this.extractEmbedded(seq, context, entryMetadata, pd, handler, value);
+        							}else {
+                               	    	if(value instanceof Date) {
+            								entryMetadata.add(metadataName , DateUtil.dateToString((Date)value));
+                               	    	}else {
+                               	    		entryMetadata.add(metadataName, value.toString());
+                              	    	}
+        							}
+                          	    }
+                     	  }
+                     }
+                     
+                 }else {
+                	 if(colObj.length<=0) {
+                		 return;
+                	 }
+            	     String metadataName = parentPd.getDisplayName();
+            	     if(prefix!=null && prefix.length()>0) {
+           	    		metadataName = prefix+":"+metadataName;    		                       	 	                       	  		
+           	    	 }
+           	    	 entryMetadata.add(TikaCoreProperties.TITLE, metadataName);//adds the name property without prefix
+           	    	 entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, metadataName);
+
+                     for (int i = 0; i < colObj.length; i++) {
+            			Object value = colObj[i];
+                		if(isBean(value)) {
+                    		children.add(new ChildParams(value, parentPd));
+    						//this.extractEmbedded(seq, context, entryMetadata, parentPd, handler, colObj[i]);
+                		} else {
+                   	    	if(value instanceof Date) {
+                   	    		entryMetadata.add(metadataName , DateUtil.dateToString((Date)value));
+                   	    	}else {
+                   	    		entryMetadata.add(metadataName, value.toString());
+                  	    	}
+                		}
+					 }                	 
                  }
 
+                 if(children.size()>0) {
+                     entryMetadata.set(BasicProps.HASCHILD, "true");
+                     entryMetadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
+                 }
+                 entryMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentSeq));
+                 entryMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(seq));
                  extractor.parseEmbedded(new EmptyInputStream(), handler, entryMetadata, true);
+                 
+                 int childSeq = seq;
+                 if(children.size()>0) {
+                	 for (Iterator<ChildParams> iterator = children.iterator(); iterator.hasNext();) {
+                    	ChildParams cp = iterator.next();
+                    	childSeq++;
+     					this.extractEmbedded(childSeq, context, entryMetadata, cp.pd, handler, cp.value, seq);
+     				}
+                 }
+
              }catch (Exception e) {
 				e.printStackTrace();
              }             
         }
+    }
+    
+    public boolean isBean(Object value) {
+   	    BeanInfo beanInfo;
+		try {
+			beanInfo = Introspector.getBeanInfo(value.getClass());
+	   	    if(beanInfo.getPropertyDescriptors().length>1 
+	   	    		&& !(value instanceof String)
+	   	    		&& !(value instanceof Date)) {
+	   	    	return true;
+	   	    }
+		} catch (IntrospectionException e) {
+			return false;
+		}
+   	    return false;
     }
 
 	public String getNameProperty() {
