@@ -43,7 +43,7 @@ public class SignatureTask extends AbstractTask {
 
     public void process(IItem evidence) {
 
-        if (evidence.isDir()) {
+        if (evidence.isDir() && !isDiskComponentType(evidence)) {
             evidence.setMediaType(MediaType.OCTET_STREAM);
         }
 
@@ -154,4 +154,9 @@ public class SignatureTask extends AbstractTask {
 
     }
 
+    private boolean isDiskComponentType(IItem item) {
+        MediaType type = item.getMediaType();
+        return type != null && (type.equals(MediaTypes.DISK_VOLUME) || type.equals(MediaTypes.DISK_PARTITION)
+                || type.equals(MediaTypes.FILE_SYSTEM));
+    }
 }
