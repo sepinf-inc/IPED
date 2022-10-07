@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -22,6 +21,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 
+import iped.data.IItem;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -33,12 +33,13 @@ public class BeanMetadataExtraction {
 	String mimeType;
 	String nameProperty;
 	int expandChildBeansLevel = 0;
-	
+
     HashMap<Object, EmbeddedItem> parentMap = new HashMap<Object, EmbeddedItem>();
-	
+
 	ArrayList<Class> beanClassesToExtract=new ArrayList<Class>();
 	HashMap<Class, List<String>> excludeProperties=new HashMap<Class, List<String>>();
 	HashMap<Class, String> nameProperties=new HashMap<Class, String>();
+
 	private int level;
 
 	public BeanMetadataExtraction(String prefix, String mimeType) {
@@ -74,7 +75,7 @@ public class BeanMetadataExtraction {
     	}
     }
     
-    protected void extractEmbedded(int seq, ParseContext context, Metadata metadata, PropertyDescriptor parentPd, ContentHandler handler, Object bean, int parentSeq) throws IOException {
+    protected boolean extractEmbedded(int seq, ParseContext context, Metadata metadata, PropertyDescriptor parentPd, ContentHandler handler, Object bean, int parentSeq) throws IOException {
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
         if (extractor.shouldParseEmbedded(metadata)) {
@@ -119,8 +120,9 @@ public class BeanMetadataExtraction {
                         		}
                         		
                            	    if(pd.getDisplayName().equals(resolvedNameProp)) {
-                           	    	entryMetadata.add(TikaCoreProperties.TITLE, value.toString());//adds the name property without prefix
-                           	    	entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, value.toString());
+                           	    	String name = value.toString().replace("/", "_");
+                           	    	entryMetadata.add(TikaCoreProperties.TITLE, name);//adds the name property without prefix
+                           	    	entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, name);
                           		}
                            	    if(value!=null) {
                            	    	String metadataName = pd.getDisplayName();
@@ -141,17 +143,17 @@ public class BeanMetadataExtraction {
                           	    }
                      	  }
                      }
-                     
-                 }else {
+                 } else {
                 	 if(colObj.length<=0) {
-                		 return;
+                		 return false;
                 	 }
             	     String metadataName = parentPd.getDisplayName();
             	     if(prefix!=null && prefix.length()>0) {
            	    		metadataName = prefix+":"+metadataName;    		                       	 	                       	  		
            	    	 }
-           	    	 entryMetadata.add(TikaCoreProperties.TITLE, metadataName);//adds the name property without prefix
-           	    	 entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, metadataName);
+           	    	 String name = metadataName.replace("/", "_");
+           	    	 entryMetadata.add(TikaCoreProperties.TITLE, name);//adds the name property without prefix
+           	    	 entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, name);
 
                      for (int i = 0; i < colObj.length; i++) {
             			Object value = colObj[i];
@@ -167,27 +169,39 @@ public class BeanMetadataExtraction {
                 		}
 					 }                	 
                  }
-
+                 
                  if(children.size()>0) {
-                     entryMetadata.set(BasicProps.HASCHILD, "true");
                      entryMetadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
                  }
+
                  entryMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentSeq));
                  entryMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(seq));
                  extractor.parseEmbedded(new EmptyInputStream(), handler, entryMetadata, true);
-                 
+                 EmbeddedItem addedItem = context.get(EmbeddedItem.class);
+
+
                  int childSeq = seq;
+                 int count=0;
                  if(children.size()>0) {
                 	 for (Iterator<ChildParams> iterator = children.iterator(); iterator.hasNext();) {
                     	ChildParams cp = iterator.next();
                     	childSeq++;
-     					this.extractEmbedded(childSeq, context, entryMetadata, cp.pd, handler, cp.value, seq);
+     					if(this.extractEmbedded(childSeq, context, entryMetadata, cp.pd, handler, cp.value, seq)) {
+     						count++;
+     					}
      				}
+                 }
+                 if(children.size()>0 && count<=0) {//real number of children added                	 
+                	 IItem item = (IItem)addedItem.getObj();
+                     item.setIsDir(false);
                  }
 
              }catch (Exception e) {
 				e.printStackTrace();
-             }             
+             }
+    		 return true;
+        }else {
+   		 return false;
         }
     }
     
