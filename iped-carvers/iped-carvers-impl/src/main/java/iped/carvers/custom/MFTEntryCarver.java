@@ -13,8 +13,8 @@ public class MFTEntryCarver extends AbstractCarver {
     @Override
     protected String getCarvedNamePrefix() {
         return "Carved-MFT-Entry-";
-    }    
-    
+    }
+
     @Override
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         long length = MFTEntry.entryLength;
