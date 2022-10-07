@@ -1114,7 +1114,7 @@ public class SleuthkitReader extends DataSourceReader {
         if (content instanceof Image) {
             evidence.setRoot(true);
             evidence.setMediaType(getMediaType(evidence.getExt()));
-        } else if (!(content instanceof VolumeSystem) && !(content instanceof FileSystem) && !(content instanceof Volume)) {
+        } else {
             evidence.setIsDir(true);
         }
 
