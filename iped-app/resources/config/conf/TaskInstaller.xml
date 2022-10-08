@@ -45,6 +45,7 @@
     <task class="iped.engine.task.carver.LedCarveTask"></task>
     <task class="iped.engine.task.carver.CarverTask"></task>
     <task class="iped.engine.task.carver.KnownMetCarveTask"></task>
+    <task class="iped.engine.task.carver.MFTCarverTask"></task>
     
     <task class="iped.engine.task.FragmentLargeBinaryTask"></task>
     <task class="iped.engine.task.EntropyTask"></task>
