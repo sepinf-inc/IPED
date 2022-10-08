@@ -68,7 +68,7 @@ public class MFTEntry {
             // Data
             if (attr.isResident()) {
                 int end = offset + (int) attr.getDataLength();
-                if (offset < entryLength && end <= entryLength && offset < end) {
+                if (offset < entryLength && end <= entryLength && offset < end && entry.dataruns == null) {
                     entry.length = end - offset;
                     entry.residentFileStart = offset;
                 }
