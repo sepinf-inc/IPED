@@ -75,6 +75,7 @@ public class MFTEntry {
             } else {
                 if (attr.getDataLength() >= 0) {
                     entry.length = attr.getDataLength();
+                    entry.residentFileStart = -1;
                     if (attr.getDataruns() != null) {
                         entry.dataruns = attr.getDataruns();
                     }
