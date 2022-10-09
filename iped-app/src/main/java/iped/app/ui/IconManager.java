@@ -40,7 +40,7 @@ import iped.utils.QualityIcon;
  * @author guilherme.dutra
  *
  */
-public class IconLoader {
+public class IconManager {
 
     public static final Icon FOLDER_ICON = UIManager.getIcon("FileView.directoryIcon"); //$NON-NLS-1$
     public static final Icon DISK_ICON = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
@@ -60,7 +60,7 @@ public class IconLoader {
         Map<String, Icon> map = new HashMap<>();
         try {
             String separator = "/";
-            CodeSource src = IconLoader.class.getProtectionDomain().getCodeSource();
+            CodeSource src = IconManager.class.getProtectionDomain().getCodeSource();
             if (src != null) {
                 URL jar = src.getLocation();
                 try (ZipInputStream zip = new ZipInputStream(jar.openStream())) {
@@ -69,12 +69,12 @@ public class IconLoader {
                         if (e == null) {
                             break;
                         }
-                        String path = IconLoader.class.getName().toString().replace(".", separator)
-                                .replace(IconLoader.class.getSimpleName(), "") + iconPath + separator;
+                        String path = IconManager.class.getName().toString().replace(".", separator)
+                                .replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
                         String nameWithPath = e.getName();
                         String name = nameWithPath.replace(path, "");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
-                            BufferedImage img = ImageIO.read(IconLoader.class.getResource(iconPath + separator + name));
+                            BufferedImage img = ImageIO.read(IconManager.class.getResource(iconPath + separator + name));
                             map.put(name.replace(ICON_EXTENSION, "").toLowerCase(),
                                     new QualityIcon(new ImageIcon(img), size));
                         }

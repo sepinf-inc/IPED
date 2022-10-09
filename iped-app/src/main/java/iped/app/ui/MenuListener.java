@@ -434,7 +434,7 @@ public class MenuListener implements ActionListener {
             spinner.addChangeListener(new ChangeListener() {
                 public void stateChanged(ChangeEvent e) {
                     int size = (int) spinner.getValue();
-                    IconLoader.setCategoryIconSize(size);
+                    IconManager.setCategoryIconSize(size);
                     App.get().categoryTree.updateUI();
                     UiIconSize.saveUserSetting(size);
                 }

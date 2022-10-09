@@ -6,7 +6,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
-import iped.app.ui.IconLoader;
+import iped.app.ui.IconManager;
 import iped.utils.UTF8Properties;
 
 public class UiIconSize {
@@ -16,7 +16,7 @@ public class UiIconSize {
     public static int loadUserSetting() {
         try {
             if (!file.exists()) {
-                saveUserSetting(IconLoader.defaultSize);
+                saveUserSetting(IconManager.defaultSize);
             } else {
                 UTF8Properties prop = new UTF8Properties();
                 prop.load(file);
@@ -29,7 +29,7 @@ public class UiIconSize {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return IconLoader.defaultSize;
+        return IconManager.defaultSize;
     }
 
     public static void saveUserSetting(int size) {

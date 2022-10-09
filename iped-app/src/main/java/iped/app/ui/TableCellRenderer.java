@@ -53,13 +53,13 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                 int docId = App.get().appCase.getLuceneId(item);
                 Document doc = App.get().appCase.getSearcher().doc(docId);
                 if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
-                    result.setIcon(IconLoader.FOLDER_ICON);
+                    result.setIcon(IconManager.FOLDER_ICON);
                 } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
-                    result.setIcon(IconLoader.DISK_ICON);
+                    result.setIcon(IconManager.DISK_ICON);
                 } else {
                     String type = doc.get(IndexItem.TYPE);
                     String contentType = doc.get(IndexItem.CONTENTTYPE);
-                    Icon icon = IconLoader.getFileIcon(contentType, type);
+                    Icon icon = IconManager.getFileIcon(contentType, type);
                     result.setIcon(icon);
                 }
 
