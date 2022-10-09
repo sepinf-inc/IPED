@@ -58,7 +58,8 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                     result.setIcon(IconLoader.DISK_ICON);
                 } else {
                     String type = doc.get(IndexItem.TYPE);
-                    Icon icon = IconLoader.getFileIcon(type);
+                    String contentType = doc.get(IndexItem.CONTENTTYPE);
+                    Icon icon = IconLoader.getFileIcon(contentType, type);
                     result.setIcon(icon);
                 }
 

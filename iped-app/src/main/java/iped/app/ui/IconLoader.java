@@ -31,10 +31,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import iped.utils.ImageUtil;
+import iped.app.ui.utils.UiIconSize;
 import iped.utils.QualityIcon;
 
 /**
@@ -43,24 +40,23 @@ import iped.utils.QualityIcon;
  * @author guilherme.dutra
  *
  */
-
 public class IconLoader {
-
-    private static Logger LOGGER = LoggerFactory.getLogger(IconLoader.class);
 
     public static final Icon FOLDER_ICON = UIManager.getIcon("FileView.directoryIcon"); //$NON-NLS-1$
     public static final Icon DISK_ICON = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
 
+    public static final int defaultSize = 16;
+    
     private static final String ICON_EXTENSION = ".png";
 
-    private static final Map<String, Icon> extIconMap = loadIconsFromJar("file", null);
-    private static final Map<String, Icon> catIconMap = loadIconsFromJar("cat", 16);
+    private static final Map<String, Icon> extIconMap = loadIconsFromJar("file", defaultSize);
+    private static final Map<String, Icon> catIconMap = loadIconsFromJar("cat", UiIconSize.loadUserSetting());
+    private static final Map<String, Icon> mimeIconMap = initMimeToIconMap();
 
     private static final Icon DEFAULT_FILE_ICON = UIManager.getIcon("FileView.fileIcon"); //$NON-NLS-1$
     private static final Icon DEFAULT_CATEGORY_ICON = catIconMap.get("blank"); //$NON-NLS-1$
 
-    private static Map<String, Icon> loadIconsFromJar(String iconPath, Integer maxSize) {
-
+    private static Map<String, Icon> loadIconsFromJar(String iconPath, int size) {
         Map<String, Icon> map = new HashMap<>();
         try {
             String separator = "/";
@@ -73,15 +69,14 @@ public class IconLoader {
                         if (e == null) {
                             break;
                         }
-                        String path = IconLoader.class.getName().toString().replace(".", separator).replace(IconLoader.class.getSimpleName(), "") + iconPath + separator;
+                        String path = IconLoader.class.getName().toString().replace(".", separator)
+                                .replace(IconLoader.class.getSimpleName(), "") + iconPath + separator;
                         String nameWithPath = e.getName();
                         String name = nameWithPath.replace(path, "");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
                             BufferedImage img = ImageIO.read(IconLoader.class.getResource(iconPath + separator + name));
-                            if (maxSize != null) {
-                                img = ImageUtil.resizeImage(img, maxSize, maxSize);
-                            }
-                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), new QualityIcon(new ImageIcon(img)));
+                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(),
+                                    new QualityIcon(new ImageIcon(img), size));
                         }
                     }
                 }
@@ -92,7 +87,13 @@ public class IconLoader {
         return map;
     }
 
-    public static Icon getFileIcon(String extension) {
+    public static Icon getFileIcon(String mimeType, String extension) {
+        if (mimeType != null && !mimeType.isBlank()) {
+            Icon icon = mimeIconMap.get(mimeType);
+            if (icon != null) {
+                return icon;
+            }
+        }
         if (extension != null && !extension.isBlank()) {
             return extIconMap.getOrDefault(extension.strip(), DEFAULT_FILE_ICON);
         }
@@ -106,4 +107,88 @@ public class IconLoader {
         return DEFAULT_CATEGORY_ICON;
     }
 
+    /**
+     * Icons associated to one or more mime types should be added here.
+     */
+    private static Map<String, Icon> initMimeToIconMap() {
+        Map<String, Icon> availableIconsMap = loadIconsFromJar("mime", defaultSize);
+        Map<String, Icon> mimeIconMap = new HashMap<String, Icon>();
+
+        Icon icon = availableIconsMap.get("emule");
+        if (icon != null) {
+            mimeIconMap.put("application/x-emule", icon);
+            mimeIconMap.put("application/x-emule-part-met", icon);
+            mimeIconMap.put("application/x-emule-emule-searches", icon);
+            mimeIconMap.put("application/x-emule-emule-preferences-ini", icon);
+        }
+
+        icon = availableIconsMap.get("ares");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ares-galaxy", icon);
+        }
+
+        icon = availableIconsMap.get("shareaza");
+        if (icon != null) {
+            mimeIconMap.put("application/x-shareaza-searches-dat", icon);
+            mimeIconMap.put("application/x-shareaza-library-dat", icon);
+        }
+
+        icon = availableIconsMap.get("torrent");
+        if (icon != null) {
+            mimeIconMap.put("application/x-bittorrent-resume-dat", icon);
+            mimeIconMap.put("application/x-bittorrent", icon);
+        }
+
+        icon = availableIconsMap.get("registry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-windows-registry", icon);
+            mimeIconMap.put("application/x-windows-registry-main", icon);
+            mimeIconMap.put("application/x-windows-registry-sam", icon);
+            mimeIconMap.put("application/x-windows-registry-software", icon);
+            mimeIconMap.put("application/x-windows-registry-system", icon);
+            mimeIconMap.put("application/x-windows-registry-security", icon);
+            mimeIconMap.put("application/x-windows-registry-ntuser", icon);
+            mimeIconMap.put("application/x-windows-registry-usrclass", icon);
+            mimeIconMap.put("application/x-windows-registry-amcache", icon);
+        }
+
+        icon = availableIconsMap.get("reg-report");
+        if (icon != null) {
+            mimeIconMap.put("application/x-windows-registry-report", icon);
+        }
+
+        icon = availableIconsMap.get("whatsapp");
+        if (icon != null) {
+            mimeIconMap.put("application/x-whatsapp-db", icon);
+            mimeIconMap.put("application/x-whatsapp-chatstorage", icon);
+            mimeIconMap.put("application/x-whatsapp-chat", icon);
+            mimeIconMap.put("application/x-ufed-chat-whatsapp", icon);
+            mimeIconMap.put("application/x-ufed-chat-preview-whatsapp", icon);
+        }
+
+        icon = availableIconsMap.get("skype");
+        if (icon != null) {
+            mimeIconMap.put("application/sqlite-skype", icon);
+            mimeIconMap.put("application/skype", icon);
+            mimeIconMap.put("application/x-skype-conversation", icon);
+            mimeIconMap.put("application/x-ufed-chat-preview-skype", icon);
+        }
+
+        icon = availableIconsMap.get("telegram");
+        if (icon != null) {
+            mimeIconMap.put("application/x-telegram-chat", icon);
+            mimeIconMap.put("application/x-ufed-chat-telegram", icon);
+            mimeIconMap.put("application/x-ufed-chat-preview-telegram", icon);
+        }
+
+        return mimeIconMap;
+    }
+
+    public static void setCategoryIconSize(int size) {
+        for (Icon icon : catIconMap.values()) {
+            if (icon instanceof QualityIcon) {
+                ((QualityIcon) icon).setSize(size);
+            }
+        }
+    }
 }
