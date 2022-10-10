@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -19,6 +20,10 @@ import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.xml.sax.ContentHandler;
 
 import iped.data.IItem;
@@ -33,19 +38,26 @@ public class BeanMetadataExtraction {
 	String mimeType;
 	String nameProperty;
 	int expandChildBeansLevel = 0;
+	
+	ExpressionParser elparser;
 
     HashMap<Object, EmbeddedItem> parentMap = new HashMap<Object, EmbeddedItem>();
 
 	ArrayList<Class> beanClassesToExtract=new ArrayList<Class>();
 	HashMap<Class, List<String>> excludeProperties=new HashMap<Class, List<String>>();
 	HashMap<Class, String> nameProperties=new HashMap<Class, String>();
+	HashMap<Class, String> referencedQuery=new HashMap<Class, String>();
 
+	HashMap<Object[], String> propertyNameMapping=new HashMap<Object[], String>();//the object is an array of dimension 2 with the class as the first element and the propery name String as the second
+	HashMap<Class, ArrayList<String[]>> transformationMapping=new HashMap<Class, ArrayList<String[]>>();//the object is an array of dimension 2 with the class as the first element and the metadata name String as the second
+	
 	private int level;
 
 	public BeanMetadataExtraction(String prefix, String mimeType) {
 		this.prefix = prefix;
 		this.mimeType = mimeType;
 		this.nameProperty="name";
+		elparser = new SpelExpressionParser();
 	}
 
 	public void addPropertyExclusion(Class c, String propName) {
@@ -59,6 +71,10 @@ public class BeanMetadataExtraction {
 
 	public void registerClassNameProperty(Class c, String propName) {
 		nameProperties.put(c, propName);
+	}
+
+	public void registerClassNameReferencedQuery(Class c, String propName) {
+		referencedQuery.put(c, propName);
 	}
 
     public void extractEmbedded(int seq, ParseContext context, Metadata metadata, ContentHandler handler, Object bean) throws IOException {
@@ -104,6 +120,18 @@ public class BeanMetadataExtraction {
              		if(resolvedNameProp==null) {
              			resolvedNameProp = nameProperty;
              		}
+             		String resolvedReferencedQuery = referencedQuery.get(bean.getClass());
+               	    if(resolvedReferencedQuery!=null) {
+               			entryMetadata.add(ExtraProperties.LINKED_ITEMS, parseQuery(resolvedReferencedQuery, bean));
+               	    }
+               	    
+               	    List<String[]> transformations = getTransformationMapping(bean.getClass());
+               	    if(transformations!=null) {
+                   	    for (Iterator iterator = transformations.iterator(); iterator.hasNext();) {
+    						String[] strings = (String[]) iterator.next();
+    						entryMetadata.add(strings[0], parseQuery(strings[1], bean));
+    					}
+               	    }
                 	 
                      for (PropertyDescriptor pd : Introspector.getBeanInfo(bean.getClass()).getPropertyDescriptors()) {
                     	 List<String> exclProps = excludeProperties.get(bean.getClass());
@@ -124,10 +152,14 @@ public class BeanMetadataExtraction {
                            	    	entryMetadata.add(TikaCoreProperties.TITLE, name);//adds the name property without prefix
                            	    	entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, name);
                           		}
+
                            	    if(value!=null) {
-                           	    	String metadataName = pd.getDisplayName();
-                           	    	if(prefix!=null && prefix.length()>0) {
-                           	    		metadataName = prefix+":"+metadataName;    		                       	 	                       	  		
+                           	    	String metadataName = getPropertyNameMapping(bean.getClass(), pd.getDisplayName());
+                           	    	if(metadataName==null) {
+                               	    	metadataName = pd.getDisplayName();
+                               	    	if(prefix!=null && prefix.length()>0) {
+                               	    		metadataName = prefix+":"+metadataName;    		                       	 	                       	  		
+                               	    	}
                            	    	}
 
                            	    	if(isBean(value)) {
@@ -208,7 +240,28 @@ public class BeanMetadataExtraction {
         }
     }
     
-    public boolean isBean(Object value) {
+    private String parseQuery(String resolvedReferencedQuery, Object value) {
+    	ArrayList<String> variables = new ArrayList<>();
+    	EvaluationContext context = new StandardEvaluationContext(value);
+    	
+    	String result = resolvedReferencedQuery;
+    	int i = result.indexOf("${");
+    	while(i>0) {
+    		int end = result.indexOf("}",i+2);
+    		String varString = result.substring(i+2,end);
+    		variables.add(varString);
+    		i = result.indexOf("${",i+2);
+    	}
+    	
+    	for (Iterator iterator = variables.iterator(); iterator.hasNext();) {
+			String var = (String) iterator.next();
+			result = result.replace("${"+var+"}", elparser.parseExpression(var).getValue(context).toString());
+		}
+		
+		return result;
+	}
+
+	public boolean isBean(Object value) {
    	    BeanInfo beanInfo;
 		try {
 			beanInfo = Introspector.getBeanInfo(value.getClass());
@@ -230,5 +283,35 @@ public class BeanMetadataExtraction {
 	public void setNameProperty(String nameProperty) {
 		this.nameProperty = nameProperty;
 	}
+	
+	public void registerPropertyNameMapping(Class beanClass, String propertyName, String metadataPropName) {
+		Object[] key = new Object[2];
+		key[0]=beanClass;
+		key[1]=propertyName;
+		propertyNameMapping.put(key, metadataPropName);
+	}
 
+	public String getPropertyNameMapping(Class beanClass, String propertyName) {
+		Object[] key = new Object[2];
+		key[0]=beanClass;
+		key[1]=propertyName;
+		return propertyNameMapping.get(key);		
+	}
+
+	public void registerTransformationMapping(Class beanClass, String metadataPropName, String transformationExpression) {
+		String[] value = new String[2];
+		value[0]=metadataPropName;
+		value[1]=transformationExpression;
+		
+		ArrayList<String[]> l = transformationMapping.get(value);
+		if(l==null) {
+			l=new ArrayList<String[]>();
+			transformationMapping.put(beanClass, l);
+		}
+		l.add(value);
+	}
+
+	public List<String[]> getTransformationMapping(Class beanClass) {
+		return transformationMapping.get(beanClass);		
+	}
 }
