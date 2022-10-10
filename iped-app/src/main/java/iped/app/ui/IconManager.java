@@ -46,7 +46,7 @@ public class IconManager {
     public static final Icon DISK_ICON = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
 
     public static final int defaultSize = 16;
-    
+
     private static final String ICON_EXTENSION = ".png";
 
     private static final Map<String, Icon> extIconMap = loadIconsFromJar("file", defaultSize);
@@ -74,7 +74,8 @@ public class IconManager {
                         String nameWithPath = e.getName();
                         String name = nameWithPath.replace(path, "");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
-                            BufferedImage img = ImageIO.read(IconManager.class.getResource(iconPath + separator + name));
+                            BufferedImage img = ImageIO
+                                    .read(IconManager.class.getResource(iconPath + separator + name));
                             map.put(name.replace(ICON_EXTENSION, "").toLowerCase(),
                                     new QualityIcon(new ImageIcon(img), size));
                         }
@@ -160,6 +161,7 @@ public class IconManager {
         icon = availableIconsMap.get("whatsapp");
         if (icon != null) {
             mimeIconMap.put("application/x-whatsapp-db", icon);
+            mimeIconMap.put("application/x-whatsapp-db-f", icon);
             mimeIconMap.put("application/x-whatsapp-chatstorage", icon);
             mimeIconMap.put("application/x-whatsapp-chat", icon);
             mimeIconMap.put("application/x-ufed-chat-whatsapp", icon);
@@ -177,8 +179,79 @@ public class IconManager {
         icon = availableIconsMap.get("telegram");
         if (icon != null) {
             mimeIconMap.put("application/x-telegram-chat", icon);
+            mimeIconMap.put("application/x-telegram-db", icon);
             mimeIconMap.put("application/x-ufed-chat-telegram", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-telegram", icon);
+        }
+
+        icon = availableIconsMap.get("deviceinfo");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-deviceinfo", icon);
+        }
+
+        icon = availableIconsMap.get("location");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-location", icon);
+        }
+
+        icon = availableIconsMap.get("password");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-password", icon);
+        }
+
+        icon = availableIconsMap.get("user");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-useraccount", icon);
+            mimeIconMap.put("application/x-ufed-user", icon);
+            mimeIconMap.put("application/x-gdrive-account-info", icon);
+            mimeIconMap.put("application/x-ufed-contact", icon);
+        }
+
+        icon = availableIconsMap.get("user-telegram");
+        if (icon != null) {
+            mimeIconMap.put("application/x-telegram-account", icon);
+            mimeIconMap.put("application/x-telegram-user-conf", icon);
+            mimeIconMap.put("contact/x-telegram-contact", icon);
+        }
+
+        icon = availableIconsMap.get("user-whatsapp");
+        if (icon != null) {
+            mimeIconMap.put("application/x-whatsapp-account", icon);
+            mimeIconMap.put("application/x-whatsapp-wadb", icon);
+            mimeIconMap.put("application/x-whatsapp-user-xml", icon);
+            mimeIconMap.put("contact/x-whatsapp-contact", icon);
+        }
+
+        icon = availableIconsMap.get("calendar");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-calendarentry", icon);
+        }
+
+        icon = availableIconsMap.get("call");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-call", icon);
+        }
+
+        icon = availableIconsMap.get("web");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-webbookmark", icon);
+            mimeIconMap.put("application/x-ufed-visitedpage", icon);
+        }
+
+        icon = availableIconsMap.get("chrome");
+        if (icon != null) {
+            mimeIconMap.put("application/x-chrome-history-registry", icon);
+            mimeIconMap.put("application/x-chrome-downloads-registry", icon);
+            mimeIconMap.put("application/x-chrome-downloads", icon);
+            mimeIconMap.put("application/x-chrome-history", icon);
+            mimeIconMap.put("application/x-chrome-searches", icon);
+            mimeIconMap.put("application/x-chrome-sqlite", icon);
+        }
+
+        icon = availableIconsMap.get("package");
+        if (icon != null) {
+            mimeIconMap.put("application/vnd.android.package-archive", icon);
+            mimeIconMap.put("application/x-ufed-installedapplication", icon);
         }
 
         return mimeIconMap;
