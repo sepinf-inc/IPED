@@ -120,6 +120,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         bem.addPropertyExclusion(LibraryFile.class, "parentFolder");
         bem.registerClassNameProperty(LibraryFolder.class, "path");
         bem.registerClassNameProperty(AlbumFolder.class, "name");
+        bem.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
         bem.extractEmbedded(0, context, metadata, handler, library.getLibraryFolders());
 
         xhtml.endElement("table"); //$NON-NLS-1$
@@ -243,5 +244,4 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             html.endElement("th"); //$NON-NLS-1$
         }
     }
-
 }

@@ -62,7 +62,6 @@ public class AresParser extends AbstractParser {
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-ares-galaxy")); //$NON-NLS-1$
     public static final String ARES_MIME_TYPE = "application/x-ares-galaxy"; //$NON-NLS-1$
     public static final String ARES_ENTRY_MIME_TYPE = "application/x-ares-galaxy-entry"; //$NON-NLS-1$
-    
     public static final String[] header = new String[] { Messages.getString("AresParser.Seq"), //$NON-NLS-1$
             Messages.getString("AresParser.Title"), Messages.getString("AresParser.Path"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.HashSha1"), Messages.getString("AresParser.FileDate"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -74,7 +73,7 @@ public class AresParser extends AbstractParser {
 
     public static final String strYes = Messages.getString("AresParser.Yes"); //$NON-NLS-1$
     public static final String strNo = Messages.getString("AresParser.No"); //$NON-NLS-1$
-    
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -89,6 +88,7 @@ public class AresParser extends AbstractParser {
 
         BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", ARES_ENTRY_MIME_TYPE);
         bme.setNameProperty("title");
+        bme.registerTransformationMapping(AresEntry.class, ExtraProperties.LINKED_ITEMS, "sha1:${hash}");
         
         metadata.set(HttpHeaders.CONTENT_TYPE, ARES_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
