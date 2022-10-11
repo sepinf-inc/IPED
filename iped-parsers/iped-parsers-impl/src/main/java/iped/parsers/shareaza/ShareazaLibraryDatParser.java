@@ -36,6 +36,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.ares.AresEntry;
 import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
@@ -114,14 +115,15 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         
         metadata.set(BasicProps.HASCHILD, "true");
         metadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
-        BeanMetadataExtraction bem = new BeanMetadataExtraction("p2p", LIBRARY_DAT_ITEM_MIME_TYPE);
-        bem.addPropertyExclusion(LibraryFolder.class, "indexToFile");
-        bem.addPropertyExclusion(LibraryFolder.class, "parentFolder");
-        bem.addPropertyExclusion(LibraryFile.class, "parentFolder");
-        bem.registerClassNameProperty(LibraryFolder.class, "path");
-        bem.registerClassNameProperty(AlbumFolder.class, "name");
-        bem.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
-        bem.extractEmbedded(0, context, metadata, handler, library.getLibraryFolders());
+        BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", LIBRARY_DAT_ITEM_MIME_TYPE);
+        bme.addPropertyExclusion(LibraryFolder.class, "indexToFile");
+        bme.addPropertyExclusion(LibraryFolder.class, "parentFolder");
+        bme.addPropertyExclusion(LibraryFile.class, "parentFolder");
+        bme.registerClassNameProperty(LibraryFolder.class, "path");
+        bme.registerClassNameProperty(AlbumFolder.class, "name");
+        bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
+        bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${sha1}");
+        bme.extractEmbedded(0, context, metadata, handler, library.getLibraryFolders());
 
         xhtml.endElement("table"); //$NON-NLS-1$
         /*
