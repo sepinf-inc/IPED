@@ -281,6 +281,16 @@ public class IconManager {
             mimeIconMap.put("message/x-telegram-message", icon);
             mimeIconMap.put("message/x-telegram-attachment", icon);
         }
+        
+        icon = availableIconsMap.get("database");
+        if (icon != null) {
+            mimeIconMap.put("application/x-database-table", icon);
+        }
+        
+        icon = availableIconsMap.get("search");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-searcheditem", icon);
+        }
 
         return mimeIconMap;
     }
