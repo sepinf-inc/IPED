@@ -253,7 +253,7 @@ public class IconManager {
             mimeIconMap.put("application/vnd.android.package-archive", icon);
             mimeIconMap.put("application/x-ufed-installedapplication", icon);
         }
-        
+
         icon = availableIconsMap.get("network");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-networkusage", icon);
@@ -263,7 +263,25 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-appsusagelog", icon);
         }
-        
+
+        icon = availableIconsMap.get("message");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-instantmessage", icon);
+            mimeIconMap.put("message/x-ufed-attachment", icon);
+        }
+
+        icon = availableIconsMap.get("message-whatsapp");
+        if (icon != null) {
+            mimeIconMap.put("message/x-whatsapp-message", icon);
+            mimeIconMap.put("message/x-whatsapp-attachment", icon);
+        }
+
+        icon = availableIconsMap.get("message-telegram");
+        if (icon != null) {
+            mimeIconMap.put("message/x-telegram-message", icon);
+            mimeIconMap.put("message/x-telegram-attachment", icon);
+        }
+
         return mimeIconMap;
     }
 
