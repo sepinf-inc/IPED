@@ -192,13 +192,17 @@ public class ReferencesTableModel extends AbstractTableModel
         String edonkey = doc.get(HashTask.HASH.EDONKEY.toString());
         String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(a -> a != null)
                 .collect(Collectors.joining(" "));
+        String linked = doc.get(ExtraProperties.LINKED_ITEMS.toString());
         
         if (hashes.isEmpty()) {
             results = new LuceneSearchResult(0);
             refDoc = null;
         } else {
             String textQuery = ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") ";
-            textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
+            textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ") ";
+            if(linked!=null) {
+                textQuery += linked;
+            }
     
             try {
                 IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
