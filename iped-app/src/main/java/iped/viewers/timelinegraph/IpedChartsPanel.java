@@ -1,11 +1,11 @@
 package iped.viewers.timelinegraph;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.event.ComponentEvent;
@@ -129,7 +129,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     TreeMap<String, String> timeEventColumnNamesList = new TreeMap<String, String>();
 	private Boolean timeEventColumnNamesListDone=false;
 
-	boolean isUpdated = false;
+	boolean isUpdated = true;
 
     String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
     LegendItemPopupMenu legendItemPopupMenu = null;
@@ -186,7 +186,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	public IpedChartsPanel(boolean b) {
 		super(b);
 
-		this.setLayout(new BorderLayout());
+		this.setLayout(new GridLayout());
 	}
 	
 	class LegendCellRenderer extends JLabel implements ListCellRenderer<LegendItemBlockContainer>{
@@ -312,17 +312,19 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
         splitPane.setTopComponent(chartPanel);
         splitPane.setBottomComponent(listScroller);
-		this.add(splitPane, BorderLayout.CENTER);
+        splitPane.setVisible(false);
+
         chartPanel.setPopupMenu(null);
 		this.addComponentListener(this);
+
+        loading = (ImageIcon) new ImageIcon(IconUtil.class.getResource(resPath + "loading.gif"));
+        loadingLabel = new JLabel("", loading, JLabel.CENTER);
+        this.add(loadingLabel);
 		
         domainAxis.setTickMarkPosition(DateTickMarkPosition.START);
         domainAxis.setLowerMargin(0.01);
         domainAxis.setUpperMargin(0.01);
         combinedPlot.setDomainAxis(domainAxis);
-        
-        loading = (ImageIcon) new ImageIcon(IconUtil.class.getResource(resPath + "loading.gif"));
-        loadingLabel = new JLabel("", loading, JLabel.CENTER);        
         
         ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
 	}
@@ -417,10 +419,10 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	public void refreshChart() {
 		try {
 			IpedChartsPanel self = this;
-			
-			splitPane.setVisible(false);
-            self.add(loadingLabel);
 
+			self.remove(splitPane);//.setVisible(false);
+            self.add(loadingLabel);
+			
 			if(swRefresh!=null) {
 				synchronized (swRefresh) {
 					swRefresh.cancel(true);
@@ -428,6 +430,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 			}
 
 			resultSemaphore.acquire();
+			
 			try {
 				if(result!=null) {
 					synchronized (result) {
@@ -486,6 +489,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 							
 							if(chart!=null) {
 								self.remove(loadingLabel);
+								self.add(splitPane);
 				                splitPane.setTopComponent(chartPanel);
 				                splitPane.setBottomComponent(listScroller);
 				                splitPane.setVisible(true);
@@ -550,7 +554,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 			public void changed(CDockableLocationEvent dockableEvent) {
 				if(!isUpdated && dockableEvent.isShowingChanged()) {
 	    			self.refreshChart();
-				}	
+				}
 			}
 		};
 		
@@ -775,7 +779,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	        
 	        boolean canceled = false;
 	        if(dataset instanceof AsynchronousDataset) {
-	        	canceled = ((AsynchronousDataset) dataset).waitLoaded();	        	
+	        	canceled = ((AsynchronousDataset) dataset).waitLoaded();
 	        }
 	        if(canceled) {
 	        	combinedPlot.setSkipFireEventChange(false);
@@ -987,19 +991,14 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
 	@Override
 	public void componentMoved(ComponentEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void componentShown(ComponentEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void componentHidden(ComponentEvent e) {
-		
 	}
 
 	public boolean isSyncViewWithTableSelection() {
