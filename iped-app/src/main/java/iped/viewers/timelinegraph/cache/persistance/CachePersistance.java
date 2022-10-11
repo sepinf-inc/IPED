@@ -100,11 +100,11 @@ public class CachePersistance {
 											RandomAccessFile ras = new RandomAccessFile(new File(f,"case.txt"),"r");
 											String casePath = ras.readUTF();
 											ras.close();
-
-											File caseDir = new File(casePath);
-											if(!caseDir.exists()) {
-												caseDir=new File(pathsToCheck.get(casePath));
-												FileUtils.forceDelete(caseDir);
+											if(casePath!=null) {
+												File caseDir = new File(casePath);
+												if(!caseDir.exists()) {
+													FileUtils.forceDelete(f);
+												}
 											}
 										}catch (Exception e) {
 											e.printStackTrace();
