@@ -246,7 +246,7 @@ public class BeanMetadataExtraction {
     	
     	String result = resolvedReferencedQuery;
     	int i = result.indexOf("${");
-    	while(i>0) {
+    	while(i>=0) {
     		int end = result.indexOf("}",i+2);
     		String varString = result.substring(i+2,end);
     		variables.add(varString);
@@ -303,7 +303,7 @@ public class BeanMetadataExtraction {
 		value[0]=metadataPropName;
 		value[1]=transformationExpression;
 		
-		ArrayList<String[]> l = transformationMapping.get(value);
+		ArrayList<String[]> l = transformationMapping.get(beanClass);
 		if(l==null) {
 			l=new ArrayList<String[]>();
 			transformationMapping.put(beanClass, l);
