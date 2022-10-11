@@ -129,7 +129,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     TreeMap<String, String> timeEventColumnNamesList = new TreeMap<String, String>();
 	private Boolean timeEventColumnNamesListDone=false;
 
-	boolean isUpdated = false;
+	boolean isUpdated = true;
 
     String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
     LegendItemPopupMenu legendItemPopupMenu = null;
@@ -775,7 +775,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 	        
 	        boolean canceled = false;
 	        if(dataset instanceof AsynchronousDataset) {
-	        	canceled = ((AsynchronousDataset) dataset).waitLoaded();	        	
+	        	canceled = ((AsynchronousDataset) dataset).waitLoaded();
 	        }
 	        if(canceled) {
 	        	combinedPlot.setSkipFireEventChange(false);
