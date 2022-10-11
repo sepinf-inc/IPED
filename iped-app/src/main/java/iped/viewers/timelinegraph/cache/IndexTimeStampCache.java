@@ -42,6 +42,10 @@ public class IndexTimeStampCache implements TimeStampCache{
 		this.resultsProvider = resultsProvider;		
 		this.ipedChartsPanel=ipedChartsPanel;
 		this.timezone = ipedChartsPanel.getTimeZone();
+		try {
+			timeStampCacheSemaphore.acquire();
+		} catch (InterruptedException e) {
+		}
 	}
 
     SortedSet<String> eventTypes = new TreeSet<String>();
@@ -50,7 +54,6 @@ public class IndexTimeStampCache implements TimeStampCache{
 	@Override
 	public void run() {
 		try {
-			timeStampCacheSemaphore.acquire();
 			
 			if(newCache.size()>0) {
 				return;
@@ -141,11 +144,12 @@ public class IndexTimeStampCache implements TimeStampCache{
 	}
 	
 	public boolean hasTimePeriodClassToCache(Class<? extends TimePeriod> timePeriodClass) {
-		if(timeStampCacheSemaphore.availablePermits()>0) {
-			return periodClassesToCache.contains(timePeriodClass);
-		}else {
-			return false;
+		try {
+			timeStampCacheSemaphore.acquire();//pause until cache is populated
+			timeStampCacheSemaphore.release();
+		} catch (InterruptedException e) {
 		}
+		return periodClassesToCache.contains(timePeriodClass);
 	}
 
 	@Override
