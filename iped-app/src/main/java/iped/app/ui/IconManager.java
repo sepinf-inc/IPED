@@ -253,7 +253,17 @@ public class IconManager {
             mimeIconMap.put("application/vnd.android.package-archive", icon);
             mimeIconMap.put("application/x-ufed-installedapplication", icon);
         }
+        
+        icon = availableIconsMap.get("network");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-networkusage", icon);
+        }
 
+        icon = availableIconsMap.get("app-usage");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-appsusagelog", icon);
+        }
+        
         return mimeIconMap;
     }
 
