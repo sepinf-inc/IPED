@@ -46,6 +46,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import iped.data.IItemReader;
+import iped.parsers.shareaza.LibraryFile;
 import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.ExportFolder;
@@ -85,7 +86,6 @@ public class KnownMetParser extends AbstractParser {
             Messages.getString("KnownMetParser.FoundInCase")}; //$NON-NLS-1$
 
     public static final String strYes = Messages.getString("KnownMetParser.Yes"); //$NON-NLS-1$
-
     
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -101,6 +101,7 @@ public class KnownMetParser extends AbstractParser {
         
         BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", KNOWNMET_ENTRY_MIME_TYPE);
         bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "sha1:${hash}");
+        bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${hash}");
 
         metadata.set(HttpHeaders.CONTENT_TYPE, EMULE_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
