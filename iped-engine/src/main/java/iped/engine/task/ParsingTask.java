@@ -655,17 +655,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             if (reader.setTimeoutPaused(true)) {
                 try {
                     long start = System.nanoTime() / 1000;
-                    // If external parsing is on, items are sent to queue to avoid deadlock
-                    // ProcessTime time = ForkParser2.enabled ? ProcessTime.LATER :
-                    // ProcessTime.AUTO;
 
-                    // Unfortunatelly AUTO value causes issues with JEP (python lib) too,
-                    // because items could be processed by Workers in a different thread (parsing
-                    // thread), instead of Worker default thread. So we are using LATER, which sends
-                    // items to queue and is a bit slower when expanding lots of containers at the
-                    // same time (causes a lot of IO instead mixing IO with CPU used to process
-                    // subitems)
-                    ProcessTime time = ProcessTime.LATER;
+                    // If external parsing is on, items are sent to queue to avoid deadlock
+                    ProcessTime time = ForkParser.isEnabled() ? ProcessTime.LATER : ProcessTime.AUTO;
+
                     worker.processNewItem(subItem, time);
                     Statistics.get().incSubitemsDiscovered();
                     numSubitems++;
