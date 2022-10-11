@@ -53,7 +53,6 @@ import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.config.LocalConfig;
 import iped.engine.config.VideoThumbsConfig;
 import iped.engine.core.Statistics;
 import iped.engine.core.Worker.ProcessTime;
@@ -89,7 +88,7 @@ public class VideoThumbTask extends ThumbTask {
     /**
      * Caminho relativo para o MPlayer distribuído para Windows
      */
-    private static String mplayerWin = "../mplayer/mplayer.exe"; //$NON-NLS-1$
+    public static final String MPLAYER_WIN_PATH = "tools/mplayer/mplayer.exe"; //$NON-NLS-1$
 
     /**
      * Property to flag frames extracted as subitems from videos.
@@ -241,9 +240,7 @@ public class VideoThumbTask extends ThumbTask {
                 }
 
                 if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
-                    LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
-                    mplayerWin = localConfig.getMplayerWinPath();
-                    mplayer = Configuration.getInstance().appRoot + "/" + mplayerWin; //$NON-NLS-1$
+                    mplayer = Configuration.getInstance().appRoot + "/" + MPLAYER_WIN_PATH; // $NON-NLS-1$
                 }
                 videoThumbsMaker.setMPlayer(mplayer);
 

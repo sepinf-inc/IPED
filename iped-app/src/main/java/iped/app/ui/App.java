@@ -617,6 +617,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencesScroll = new JScrollPane(referencesTable);
 
         categoryTree = new JTree(new Object[0]);
+        categoryTree.setCellRenderer(new CategoryTreeCellRenderer());
         categoryTree.setRootVisible(true);
         categoryTree.setExpandsSelectedPaths(false);
         categoryListener = new CategoryTreeListener();
@@ -1096,6 +1097,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     
     private void updateGalleryColCount(int inc) {
         setGalleryColCount(getGalleryColCount() + inc);
+    }
+
+    public void sendCheckAllToResultSetViewers(boolean checked) {
+        for (ResultSetViewer setViewer : resultSetViewerConfiguration.getResultSetViewers()) {
+            setViewer.checkAll(checked);
+        }
     }
 
     private ResultSetViewerConfiguration getResultSetViewerConfiguration() {

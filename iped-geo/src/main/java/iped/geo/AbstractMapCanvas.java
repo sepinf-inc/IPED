@@ -5,6 +5,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -15,16 +16,19 @@ import iped.geo.localization.Messages;
 
 abstract public class AbstractMapCanvas extends Canvas {
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	MapSelectionListener mapSelectionListener = null;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    MapSelectionListener mapSelectionListener = null;
     MarkerEventListener markerEventListener = null;
     MarkerCheckBoxListener markerCheckBoxListener = null;
 
     ActionListener onChangeTileServer = null;
 
+    protected ArrayList<Runnable> onLoadRunnables = new ArrayList<Runnable>();
+
     protected HashMap<String, Boolean> selectionMapToApply;
+    protected String leadSelectionToApply;
     protected Runnable saveRunnable;
 
     /* abstract methods */
@@ -114,6 +118,22 @@ abstract public class AbstractMapCanvas extends Canvas {
     public String getToolBarHtml() throws IOException {
         return replaceLocalizedMarks(
                 IOUtils.toString(AbstractMapCanvas.class.getResourceAsStream("toolbar.html"), "UTF-8"), "toolbar");
+    }
+
+    public void sendLeadSelection(String gid) {
+        leadSelectionToApply = gid;
+    }
+
+    public String getLeadSelectionToApply() {
+        return leadSelectionToApply;
+    }
+
+    public void setLeadSelectionToApply(String leadSelectionToApply) {
+        this.leadSelectionToApply = leadSelectionToApply;
+    }
+
+    public void runAfterLoad(Runnable run) {
+        onLoadRunnables.add(run);
     }
 
 }

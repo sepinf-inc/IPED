@@ -27,6 +27,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 
 import iped.app.ui.TreeViewModel.Node;
 import iped.engine.task.index.IndexItem;
+import iped.properties.BasicProps;
 
 public class TreeCellRenderer extends DefaultTreeCellRenderer {
 
@@ -44,6 +45,10 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
 
         if (notDir && Boolean.valueOf(node.getDoc().get(IndexItem.ISROOT))) {
             result.setIcon(diskIcon);
+        } else if (notDir) {
+            String type = node.getDoc().get(BasicProps.TYPE);
+            Icon icon = IconLoader.getFileIcon(type);
+            result.setIcon(icon);
         }
 
         return result;

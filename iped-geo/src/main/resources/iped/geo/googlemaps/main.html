@@ -68,20 +68,39 @@
     	  });
     }
 
-    function navega(mpos){
-    	if(mpos<0){
+    
+    mpos=0;
+    function updateLeadMarker(marker){
+		var i=0;
+       	for (var ind in gxml.overlayman.markers){
+       		if(gxml.overlayman.markers[ind].extendedData.id==marker){
+    			mpos=i;
+       			break;
+       		}
+       		i++;
+       	}
+       	return mpos;
+    }
+
+    function moveToMarkerPos(pos){
+    	if(pos<0){
     		alert('The navigation already is on the first item.');
     		return false;
     	}
-    	if(mpos>=gxml.overlayman.markers.length){
+    	if(pos>=gxml.overlayman.markers.length){
     		alert('The navigation already is on the last item.')
     		return false;
     	}
+		mpos=pos;
     	google.maps.event.trigger(gxml.overlayman.markers[mpos],"click");
     	map.setCenter(gxml.overlayman.markers[mpos].getPosition());
     	gxml.navigationPos = mpos;
     	return false;
     }
+    
+    function moveToLastMarker(){
+    	moveToMarkerPos(gxml.overlayman.markers.length-1);
+    }    
     
     function zoomOut(){
     	var markers = gxml.overlayman.markers;

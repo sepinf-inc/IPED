@@ -51,6 +51,30 @@
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>3.0.0</version>
             </plugin>
+			<plugin>
+				<groupId>com.googlecode.maven-download-plugin</groupId>
+				<artifactId>download-maven-plugin</artifactId>
+				<version>1.6.8</version>
+				<executions>
+					<execution>
+						<id>download-regripper</id>
+						<goals>
+							<goal>wget</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<url>https://github.com/sepinf-inc/RegRipper3.0/archive/refs/tags/3.0-p3.zip</url>
+					<unpack>true</unpack>
+					<fileMappers>
+                      <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                        <pattern>RegRipper[^/]+/</pattern>
+                        <replacement>./</replacement>
+                      </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                    </fileMappers>
+					<outputDirectory>${tools.dir}/regripper</outputDirectory>
+				</configuration>
+			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -252,25 +276,6 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>unpack-regripper</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>keydet89</groupId>
-                                    <artifactId>regripper</artifactId>
-                                    <version>2.8_20180406_p01</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}/../</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>unpack-imagemagick</id>
                         <phase>package</phase>
                         <goals>
@@ -322,7 +327,7 @@
                                     <version>6.2.0-r38109</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}/../</outputDirectory>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -338,7 +343,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>sleuthkit-dlls</artifactId>
-                                    <version>${sleuthkit.version}</version>
+                                    <version>4.11.1-p3</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -804,6 +809,23 @@
                                 <resource>
                                     <filtering>false</filtering>
                                     <directory>${plugin.rsc}</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <!-- COPY SCRIPTS -->
+                    <execution>
+                        <id>copy-scripts</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${release.dir}/scripts</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>false</filtering>
+                                    <directory>${resources.dir}/scripts</directory>
                                 </resource>
                             </resources>
                         </configuration>

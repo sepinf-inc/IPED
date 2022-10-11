@@ -53,7 +53,32 @@
 		{"name":"Instagram","mimes":["application/x-ufed-chat-preview-instagram"]},
 		{"name":"Others Chats","mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
 	]},
-    {"name": "Windows Registry", "mimes": ["application/x-windows-registry", "application/x-windows-registry-report"]},
+    {"name": "Windows Registry", "categories":[
+      {"name": "Main Registry Files", "mimes": ["application/x-windows-registry-main"]},
+      {"name": "Other Registry Files", "mimes": ["application/x-windows-registry"]},
+      {"name": "Registry Full Reports", "mimes": ["application/x-windows-registry-report"]},
+      {"name": "Registry Custom Reports", "categories":[
+        {"name": "Registry OS Info"},
+        {"name": "Registry Installed Apps"},
+        {"name": "Registry Network Info"},
+        {"name": "Registry Storage Info"},
+        {"name": "Registry Device Info"},
+        {"name": "Registry Program Run"},
+        {"name": "Registry Auto Run"},
+        {"name": "Registry Log Info"},
+        {"name": "Registry Malware Info"},
+        {"name": "Registry Web Info"},
+        {"name": "Registry User Info", "categories":[
+          {"name": "Registry User Accounts"},
+          {"name": "Registry User Activity"},
+          {"name": "Registry User Files"},
+          {"name": "Registry User Network Activity"},
+          {"name": "Registry User Config"},
+          {"name": "Registry User Virtualization"},
+          {"name": "Registry User Communication"}
+        ]}
+      ]}
+    ]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
     {"name": "Windows 10 Mail Database", "mimes": ["application/x-win10-mail-db"]},
     {"name": "Windows 10 Mail Messages", "mimes": ["application/x-win10-mail-msg-registry"]},
@@ -105,7 +130,6 @@
         {"name": "GRRF Files"}
       ]}
     ]},
-    
     {"name": "Extraction Summary", "mimes": ["application/x-ufed-html-summary"]},
     {"name": "Calls", "mimes": ["application/x-ufed-html-calls", "application/x-ufed-call", "call/x-whatsapp-call", "call/x-telegram-call", "application/x-ios-calllog-db", "application/x-ios8-calllog-db"]},
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},

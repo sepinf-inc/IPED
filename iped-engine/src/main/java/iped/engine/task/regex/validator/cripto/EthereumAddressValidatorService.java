@@ -14,7 +14,7 @@ import iped.engine.task.regex.BasicAbstractRegexValidatorService;
 /**
  * Validate Ethereum address encoded as in EIP-55
  * 
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  *
  */
 public class EthereumAddressValidatorService extends BasicAbstractRegexValidatorService {

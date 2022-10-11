@@ -58,7 +58,6 @@ import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ExternalParsersConfig;
-import iped.engine.config.LocalConfig;
 import iped.engine.config.OCRConfig;
 import iped.engine.config.ParsersConfig;
 import iped.engine.config.ParsingTaskConfig;
@@ -355,7 +354,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         }
 
         context = getTikaContext();
-        if (evidence.getHashValue() != null) {
+        if (evidence.getHashValue() != null && evidence.getLength() != null && evidence.getLength() > 0) {
             try {
                 File thumbFile = getThumbFile(evidence);
                 if (!hasThumb(evidence, thumbFile)) {
@@ -791,7 +790,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         System.setProperty(PDFTextParser.SORT_PDF_CHARS, String.valueOf(parsingConfig.isSortPDFChars()));
         System.setProperty(PDFTextParser.PROCESS_INLINE_IMAGES, String.valueOf(parsingConfig.isProcessImagesInPDFs()));
         System.setProperty(RawStringParser.MIN_STRING_SIZE, String.valueOf(parsingConfig.getMinRawStringSize()));
-        System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/conf/parsers");
+        System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/scripts/parsers");
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
             System.setProperty(OCRParser.TOOL_PATH_PROP, appRoot + "/tools/tesseract"); //$NON-NLS-1$
@@ -800,10 +799,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             System.setProperty(IndexDatParser.TOOL_PATH_PROP, appRoot + "/tools/msiecfexport/"); //$NON-NLS-1$
         }
 
-        LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
-        if (localConfig.getRegRipperFolder() != null) {
-            System.setProperty(RegRipperParser.TOOL_PATH_PROP, appRoot + "/" + localConfig.getRegRipperFolder()); //$NON-NLS-1$
-        }
+        System.setProperty(RegRipperParser.TOOL_PATH_PROP, appRoot + "/tools/regripper/"); //$NON-NLS-1$
 
         setupOCROptions(configurationManager.findObject(OCRConfig.class));
 

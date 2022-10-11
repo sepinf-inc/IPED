@@ -536,6 +536,45 @@
         </magic> 
     </mime-type>
     
+    <mime-type type="application/x-windows-registry-main">
+        <sub-class-of type="application/x-windows-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-sam">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SAM"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-software">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SOFTWARE"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-system">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SYSTEM"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-security">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SECURITY"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-ntuser">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="NTUSER.DAT"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-usrclass">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="UsrClass.dat"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-amcache">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="Amcache.hve"/>
+    </mime-type>
+    
     <mime-type type="application/x-incredimail">
         <sub-class-of type="message/rfc822"/>
         <glob pattern="*.imm"/>

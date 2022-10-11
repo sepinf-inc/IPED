@@ -28,12 +28,12 @@
    	 		<div style="background-color:#666666; color:white; border:1px solid #000000;">{{toolbar.Sorting}}:</div>
    	 		<div style="width:100px; font-size:80%; min-height:20px" id="ordem_descr"></div>
    	 		<div style="background-color:#666666; color:white; border:1px solid #000000;">{{toolbar.Navigation}}:</div>
-   			<input type="button" name="primeiro" value="{{toolbar.First}}" onclick="navega(0);" style="width:100%"/>
-   			<input type="button" name="anterior" value="{{toolbar.Previous}}" onclick="if(isOSM()) navega(mpos-1); else navega(gxml.navigationPos-1);" style="width:100%"/>
-   			<input type="button" name="proximo" value="{{toolbar.Next}}" onclick="if(isOSM()) navega(mpos+1); else navega(gxml.navigationPos+1);" style="width:100%"/>
-   			<input type="button" name="ultimo" value="{{toolbar.Last}}" onclick="if(isOSM()) navega(track.markersCount()-1); else navega(gxml.overlayman.markers.length-1);" style="width:100%"/>
+   			<input type="button" name="primeiro" value="{{toolbar.First}}" onclick="moveToMarkerPos(0);" style="width:100%"/>
+   			<input type="button" name="anterior" value="{{toolbar.Previous}}" onclick="moveToMarkerPos(mpos-1);" style="width:100%"/>
+   			<input type="button" name="proximo" value="{{toolbar.Next}}" onclick="moveToMarkerPos(mpos+1);" style="width:100%"/>
+   			<input type="button" name="ultimo" value="{{toolbar.Last}}" onclick="moveToLastMarker();" style="width:100%"/>
    	 		<br/><br/>
-   			<input type="button" name="zoomout" value="{{toolbar.DisplayAll}}" onclick="if(isOSM()) track.viewAll(); else zoomOut();" style="width:100%"/>
+   			<input type="button" name="zoomout" value="{{toolbar.DisplayAll}}" onclick="zoomOut();" style="width:100%"/>
    			<input type="button" name="export" value="{{toolbar.ExportKML}}" onclick="exportarKml();" style="width:100%"/>
    			<input type="button" name="server" value="{{toolbar.ChangeTileServer}}" onclick="window.app.getMap().fireChangeTileServer()" style="width:100%"/>
 
