@@ -168,6 +168,16 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-chat-preview-whatsapp", icon);
         }
 
+        icon = availableIconsMap.get("facebook");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview-facebook", icon);
+        }
+
+        icon = availableIconsMap.get("instagram");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview-instagram", icon);
+        }
+
         icon = availableIconsMap.get("skype");
         if (icon != null) {
             mimeIconMap.put("application/sqlite-skype", icon);
@@ -187,16 +197,22 @@ public class IconManager {
         icon = availableIconsMap.get("deviceinfo");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-deviceinfo", icon);
+            mimeIconMap.put("application/x-ufed-simdata", icon);
+            mimeIconMap.put("application/x-ufed-html-simdata", icon);
+            mimeIconMap.put("application/x-ufed-html-summary", icon);
         }
 
         icon = availableIconsMap.get("location");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-location", icon);
+            mimeIconMap.put("application/x-ios-locations-db", icon);
+            mimeIconMap.put("application/x-ufed-html-locations", icon);
         }
 
         icon = availableIconsMap.get("password");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-password", icon);
+            mimeIconMap.put("application/x-ufed-html-passwords", icon);
         }
 
         icon = availableIconsMap.get("user");
@@ -205,6 +221,7 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-user", icon);
             mimeIconMap.put("application/x-gdrive-account-info", icon);
             mimeIconMap.put("application/x-ufed-contact", icon);
+            mimeIconMap.put("application/x-ios-addressbook-db", icon);
         }
 
         icon = availableIconsMap.get("user-telegram");
@@ -220,22 +237,33 @@ public class IconManager {
             mimeIconMap.put("application/x-whatsapp-wadb", icon);
             mimeIconMap.put("application/x-whatsapp-user-xml", icon);
             mimeIconMap.put("contact/x-whatsapp-contact", icon);
+            mimeIconMap.put("application/x-whatsapp-contactsv2", icon);
         }
 
         icon = availableIconsMap.get("calendar");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-calendarentry", icon);
+            mimeIconMap.put("application/x-ios-calendar-db", icon);
+            mimeIconMap.put("application/x-ufed-html-calendar", icon);
         }
 
         icon = availableIconsMap.get("call");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-call", icon);
+            mimeIconMap.put("call/x-whatsapp-call", icon);
+            mimeIconMap.put("call/x-telegram-call", icon);
+            mimeIconMap.put("application/x-ios-calllog-db", icon);
+            mimeIconMap.put("application/x-ios8-calllog-db", icon);
         }
 
         icon = availableIconsMap.get("web");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-webbookmark", icon);
             mimeIconMap.put("application/x-ufed-visitedpage", icon);
+            mimeIconMap.put("application/x-ufed-webaddress", icon);
+            mimeIconMap.put("application/x-safari-history-registry", icon);
+            mimeIconMap.put("application/x-safari-history", icon);
+            mimeIconMap.put("application/x-safari-sqlite", icon);
         }
 
         icon = availableIconsMap.get("chrome");
@@ -262,12 +290,15 @@ public class IconManager {
         icon = availableIconsMap.get("app-usage");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-appsusagelog", icon);
+            mimeIconMap.put("application/x-ufed-applicationusage", icon);
         }
 
         icon = availableIconsMap.get("message");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-instantmessage", icon);
             mimeIconMap.put("message/x-ufed-attachment", icon);
+            mimeIconMap.put("application/x-ufed-chat-preview", icon);
+            mimeIconMap.put("message/x-chat-message", icon);
         }
 
         icon = availableIconsMap.get("message-whatsapp");
@@ -281,17 +312,140 @@ public class IconManager {
             mimeIconMap.put("message/x-telegram-message", icon);
             mimeIconMap.put("message/x-telegram-attachment", icon);
         }
-        
+
+        icon = availableIconsMap.get("message-skype"); // TODO
+        if (icon != null) {
+            mimeIconMap.put("message/x-skype-message", icon);
+            mimeIconMap.put("message/x-skype-filetransfer", icon);
+        }
+
         icon = availableIconsMap.get("database");
         if (icon != null) {
             mimeIconMap.put("application/x-database-table", icon);
         }
-        
+
         icon = availableIconsMap.get("search");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-searcheditem", icon);
+            mimeIconMap.put("application/x-ufed-html-searches", icon);
         }
 
+        icon = availableIconsMap.get("note");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-html-notes", icon);
+            mimeIconMap.put("application/x-ufed-note", icon);
+            mimeIconMap.put("application/x-ios-notes-db", icon);
+            mimeIconMap.put("application/x-ios-oldnotes-db", icon);
+        }
+
+        icon = availableIconsMap.get("activity-sensor");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-activitysensordata", icon);
+            mimeIconMap.put("application/x-ufed-activitysensordatameasurement", icon);
+            mimeIconMap.put("application/x-ufed-activitysensordatasample", icon);
+        }
+
+        icon = availableIconsMap.get("autofill");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-autofill", icon);
+            mimeIconMap.put("application/x-ufed-html-autofill", icon);
+        }
+
+        icon = availableIconsMap.get("email");
+        if (icon != null) {
+            mimeIconMap.put("multipart/related", icon);
+            mimeIconMap.put("message/x-ufed-email", icon);
+        }
+
+        icon = availableIconsMap.get("chat-activity"); // TODO
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chatactivity", icon);
+        }
+
+        icon = availableIconsMap.get("cookie");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-cookie", icon);
+            mimeIconMap.put("application/x-ufed-html-cookies", icon);
+        }
+
+        icon = availableIconsMap.get("creditcard");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-creditcard", icon);
+        }
+
+        icon = availableIconsMap.get("device-connectivity");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-deviceconnectivity", icon);
+            mimeIconMap.put("application/x-ufed-recognizeddevice", icon);
+        }
+
+        icon = availableIconsMap.get("device-event"); // TODO
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-deviceevent", icon);
+        }
+
+        icon = availableIconsMap.get("download");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-filedownload", icon);
+        }
+
+        icon = availableIconsMap.get("key-value"); // TODO
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-keyvaluemodel", icon);
+        }
+
+        icon = availableIconsMap.get("log");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-logentry", icon);
+            mimeIconMap.put("application/x-ufed-html-logs", icon);
+        }
+
+        icon = availableIconsMap.get("sms");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-html-sms", icon);
+            mimeIconMap.put("application/x-ufed-sms", icon);
+            mimeIconMap.put("application/x-ios-sms-db", icon);
+        }
+
+        icon = availableIconsMap.get("profile");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-profilepicture", icon);
+        }
+
+        icon = availableIconsMap.get("wireless");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-wirelessnetwork", icon);
+            mimeIconMap.put("application/x-ufed-html-wifi", icon);
+        }
+
+        icon = availableIconsMap.get("social");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-socialmediaactivity", icon);
+        }
+        
+        icon = availableIconsMap.get("tower");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-html-celltowers", icon);
+            mimeIconMap.put("application/x-ufed-celltower", icon);
+        }
+
+        icon = availableIconsMap.get("bluetooth");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-html-bluetooth", icon);
+            mimeIconMap.put("application/x-ufed-bluetoothdevice", icon);
+        }
+        
+        icon = availableIconsMap.get("video");
+        if (icon != null) {
+            mimeIconMap.put("video/quicktime", icon);
+            mimeIconMap.put("video/ts", icon);
+            mimeIconMap.put("video/webm", icon);
+            mimeIconMap.put("video/3gpp", icon);
+            mimeIconMap.put("video/mpeg", icon);
+            mimeIconMap.put("video/x-m4v", icon);
+        }
+
+        // zlib, aspx, asp
         return mimeIconMap;
     }
 
