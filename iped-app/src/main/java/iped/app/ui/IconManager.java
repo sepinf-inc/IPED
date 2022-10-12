@@ -291,6 +291,7 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-appsusagelog", icon);
             mimeIconMap.put("application/x-ufed-applicationusage", icon);
+            mimeIconMap.put("application/x-ufed-deviceevent", icon);
         }
 
         icon = availableIconsMap.get("message");
@@ -313,7 +314,7 @@ public class IconManager {
             mimeIconMap.put("message/x-telegram-attachment", icon);
         }
 
-        icon = availableIconsMap.get("message-skype"); // TODO
+        icon = availableIconsMap.get("message-skype");
         if (icon != null) {
             mimeIconMap.put("message/x-skype-message", icon);
             mimeIconMap.put("message/x-skype-filetransfer", icon);
@@ -357,7 +358,7 @@ public class IconManager {
             mimeIconMap.put("message/x-ufed-email", icon);
         }
 
-        icon = availableIconsMap.get("chat-activity"); // TODO
+        icon = availableIconsMap.get("chat-activity");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chatactivity", icon);
         }
@@ -379,17 +380,12 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-recognizeddevice", icon);
         }
 
-        icon = availableIconsMap.get("device-event"); // TODO
-        if (icon != null) {
-            mimeIconMap.put("application/x-ufed-deviceevent", icon);
-        }
-
         icon = availableIconsMap.get("download");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-filedownload", icon);
         }
 
-        icon = availableIconsMap.get("key-value"); // TODO
+        icon = availableIconsMap.get("key-value");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-keyvaluemodel", icon);
         }
@@ -422,7 +418,7 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-socialmediaactivity", icon);
         }
-        
+
         icon = availableIconsMap.get("tower");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-html-celltowers", icon);
@@ -434,7 +430,7 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-html-bluetooth", icon);
             mimeIconMap.put("application/x-ufed-bluetoothdevice", icon);
         }
-        
+
         icon = availableIconsMap.get("video");
         if (icon != null) {
             mimeIconMap.put("video/quicktime", icon);
@@ -445,7 +441,6 @@ public class IconManager {
             mimeIconMap.put("video/x-m4v", icon);
         }
 
-        // zlib, aspx, asp
         return mimeIconMap;
     }
 
