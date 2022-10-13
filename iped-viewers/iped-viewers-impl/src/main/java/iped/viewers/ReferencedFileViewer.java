@@ -12,6 +12,7 @@ import iped.data.IItem;
 import iped.io.IStreamSource;
 import iped.parsers.ares.AresParser;
 import iped.parsers.emule.KnownMetParser;
+import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -54,6 +55,7 @@ public class ReferencedFileViewer extends AbstractViewer {
                 || SkypeParser.ATTACHMENT_MIME_TYPE.equals(contentType)
                 || KnownMetParser.KNOWNMET_ENTRY_MIME_TYPE.equals(contentType)
                 || AresParser.ARES_ENTRY_MIME_TYPE.equals(contentType)
+                || ShareazaLibraryDatParser.LIBRARY_DAT_ITEM_MIME_TYPE.equals(contentType)
                 || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType);
     }
 
