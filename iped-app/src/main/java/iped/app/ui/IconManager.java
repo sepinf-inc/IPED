@@ -354,8 +354,11 @@ public class IconManager {
 
         icon = availableIconsMap.get("email");
         if (icon != null) {
+            mimeIconMap.put("application/x-ufed-html-mails", icon);
             mimeIconMap.put("multipart/related", icon);
             mimeIconMap.put("message/x-ufed-email", icon);
+            mimeIconMap.put("message/outlook-pst", icon);
+            mimeIconMap.put("message/x-emlx", icon);
         }
 
         icon = availableIconsMap.get("chat-activity");
