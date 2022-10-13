@@ -25,6 +25,8 @@ import javax.swing.JTree;
 import javax.swing.UIManager;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
+import org.apache.lucene.document.Document;
+
 import iped.app.ui.TreeViewModel.Node;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
@@ -46,8 +48,10 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
         if (notDir && Boolean.valueOf(node.getDoc().get(IndexItem.ISROOT))) {
             result.setIcon(diskIcon);
         } else if (notDir) {
-            String type = node.getDoc().get(BasicProps.TYPE);
-            Icon icon = IconLoader.getFileIcon(type);
+            Document doc = node.getDoc();
+            String type = doc.get(BasicProps.TYPE);
+            String contentType = doc.get(BasicProps.CONTENTTYPE);
+            Icon icon = IconManager.getFileIcon(contentType, type);
             result.setIcon(icon);
         }
 

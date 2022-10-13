@@ -24,6 +24,7 @@
     {"name": "Multimedia", "categories":[
       {"name": "Audios", "mimes": ["audio"]},
       {"name": "Videos", "mimes": ["video", "application/vnd.rn-realmedia", "application/x-shockwave-flash"]},
+      {"name": "Video Thumbnails"},
       {"name": "Images", "mimes": ["image", "application/coreldraw", "application/x-vnd.corel.zcf.draw.document+zip", "application/vnd.oasis.opendocument.graphics", "application/vnd.oasis.opendocument.graphics-template", "application/vnd.oasis.opendocument.image", "application/vnd.oasis.opendocument.image-template", "application/vnd.sun.xml.draw", "application/vnd.sun.xml.draw.template", "application/vnd.stardivision.draw"], "categories":[
         {"name": "Temporary Internet Images"},
         {"name": "Images in System Folders"},
@@ -52,7 +53,32 @@
 		{"name":"Instagram","mimes":["application/x-ufed-chat-preview-instagram"]},
 		{"name":"Others Chats","mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
 	]},
-    {"name": "Windows Registry", "mimes": ["application/x-windows-registry", "application/x-windows-registry-report"]},
+    {"name": "Windows Registry", "categories":[
+      {"name": "Main Registry Files", "mimes": ["application/x-windows-registry-main"]},
+      {"name": "Other Registry Files", "mimes": ["application/x-windows-registry"]},
+      {"name": "Registry Full Reports", "mimes": ["application/x-windows-registry-report"]},
+      {"name": "Registry Custom Reports", "categories":[
+        {"name": "Registry OS Info"},
+        {"name": "Registry Installed Apps"},
+        {"name": "Registry Network Info"},
+        {"name": "Registry Storage Info"},
+        {"name": "Registry Device Info"},
+        {"name": "Registry Program Run"},
+        {"name": "Registry Auto Run"},
+        {"name": "Registry Log Info"},
+        {"name": "Registry Malware Info"},
+        {"name": "Registry Web Info"},
+        {"name": "Registry User Info", "categories":[
+          {"name": "Registry User Accounts"},
+          {"name": "Registry User Activity"},
+          {"name": "Registry User Files"},
+          {"name": "Registry User Network Activity"},
+          {"name": "Registry User Config"},
+          {"name": "Registry User Virtualization"},
+          {"name": "Registry User Communication"}
+        ]}
+      ]}
+    ]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
     {"name": "Programs and Libraries", "mimes": ["application/x-superfetch", "application/x-elf-log", "application/x-elf-file", "application/x-prefetch", "application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"]},
     {"name": "Unallocated", "mimes": ["application/x-unallocated"]},
@@ -63,11 +89,12 @@
       {"name": "Other Texts"}
     ]},
     {"name": "Other files", "mimes": ["application/octet-stream", "application/x-nls"]},
-    {"name": "Peer-to-peer", "categories":[        
-        {"name":"Ares", "mimes": ["application/x-ares-galaxy","application/x-ares-galaxy-entry"]},
-        {"name":"Emule", "mimes": ["application/x-emule","application/x-emule-knowmet-entry"]},
-        {"name":"Shareaza", "mimes":["application/x-shareaza-library-dat", "application/x-shareaza-library-dat-item"]},
-        {"name":"Others", "mimes": ["application/x-p2p"]}
+    {"name": "Peer-to-peer", "categories":[
+      {"name": "Ares Galaxy", "mimes": ["application/x-shareaza-searches-dat", "application/x-shareaza-library-dat"]},
+      {"name": "E-Mule", "mimes": ["application/x-emule", "application/x-emule-part-met", "application/x-emule-searches", "application/x-emule-preferences-ini", "application/x-emule-preferences-dat"]},
+      {"name": "Shareaza", "mimes": ["application/x-ares-galaxy"]},
+      {"name": "Torrent", "mimes": ["application/x-bittorrent-resume-dat", "application/x-bittorrent"]},
+      {"name": "Other Peer-to-peer", "mimes": ["application/x-p2p"]}
     ]},
     {"name": "Browser Artifacts", "categories":[
       {"name": "Internet History", "mimes": ["application/x-msie-cache", "application/x-webcache", "application/x-webcache-table", "application/x-ufed-html-webhistory", "application/x-firefox-places", "application/x-firefox-history", "application/x-firefox-downloads", "application/x-chrome-sqlite", "application/x-chrome-history", "application/x-chrome-downloads", "application/x-chrome-searches", "application/x-edge-web-cache", "application/x-edge-history", "application/x-safari-sqlite", "application/x-safari-history", "application/x-safari-plist", "application/x-safari-downloads"]},
@@ -107,7 +134,6 @@
         {"name": "GRRF Files"}
       ]}
     ]},
-    
     {"name": "Extraction Summary", "mimes": ["application/x-ufed-html-summary"]},
     {"name": "Calls", "mimes": ["application/x-ufed-html-calls", "application/x-ufed-call", "call/x-whatsapp-call", "call/x-telegram-call", "application/x-ios-calllog-db", "application/x-ios8-calllog-db"]},
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},
