@@ -74,6 +74,7 @@ Windows Registry
 #Recordings
 #Mobile Cards
 #Applications Usage
+#Device Information
 #Activities Sensor Data
 #Chat Activities
 #Credit Cards
