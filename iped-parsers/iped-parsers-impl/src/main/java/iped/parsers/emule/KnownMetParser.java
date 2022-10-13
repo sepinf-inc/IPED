@@ -68,7 +68,7 @@ public class KnownMetParser extends AbstractParser {
     public static final String EDONKEY = "edonkey";
 
     public static final String EMULE_MIME_TYPE = "application/x-emule"; //$NON-NLS-1$
-	private static final String KNOWNMET_ENTRY_MIME_TYPE = "application/x-emule-knowmet-entry";
+    public static final String KNOWNMET_ENTRY_MIME_TYPE = "application/x-emule-knowmet-entry"; //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(EMULE_MIME_TYPE));
 
     public static final String[] header = new String[] { Messages.getString("KnownMetParser.Seq"), //$NON-NLS-1$
@@ -100,7 +100,7 @@ public class KnownMetParser extends AbstractParser {
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
         
         BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", KNOWNMET_ENTRY_MIME_TYPE);
-        bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "sha1:${hash}");
+        bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
         bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${hash}");
 
         metadata.set(HttpHeaders.CONTENT_TYPE, EMULE_MIME_TYPE);
