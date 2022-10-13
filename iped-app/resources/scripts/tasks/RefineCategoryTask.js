@@ -214,8 +214,8 @@ function process(e){
 	
 
 	//Programas peer-to-peer
-	if ((path.indexOf("/Roaming/Shareaza/Data") !== -1)	||
-		(name.indexOf("Shareaza.db3") !== -1)
+	if ((path.indexOf("/roaming/shareaza/data") !== -1)	||
+		(name.indexOf("shareaza.db3") !== -1)
 		)
 		e.addCategory("Shareaza");
 	
