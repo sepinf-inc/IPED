@@ -248,7 +248,7 @@ public class BeanMetadataExtraction {
      					}
      				}
                  }
-                 if(children.size()>0 && count<=0) {//real number of children added                	 
+                 if(children.size()>0 && count<=0 && addedItem!=null) {//real number of children added                	 
                 	 IItem item = (IItem)addedItem.getObj();
                 	 if(item!=null) {
                          item.setIsDir(false);
