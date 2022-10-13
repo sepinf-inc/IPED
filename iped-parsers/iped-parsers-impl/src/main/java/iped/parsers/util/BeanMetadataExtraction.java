@@ -6,12 +6,14 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.Map.Entry;
 
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -26,9 +28,9 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.xml.sax.ContentHandler;
 
+import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.parsers.standard.StandardParser;
-import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.utils.DateUtil;
 import iped.utils.EmptyInputStream;
@@ -38,10 +40,10 @@ public class BeanMetadataExtraction {
 	String mimeType;
 	String nameProperty;
 	int expandChildBeansLevel = 0;
+	boolean isLocalTime = false;
+	TimeZone identifiedTimeZone = null;
 	
 	ExpressionParser elparser;
-
-    HashMap<Object, EmbeddedItem> parentMap = new HashMap<Object, EmbeddedItem>();
 
 	ArrayList<Class> beanClassesToExtract=new ArrayList<Class>();
 	HashMap<Class, List<String>> excludeProperties=new HashMap<Class, List<String>>();
@@ -52,14 +54,21 @@ public class BeanMetadataExtraction {
 	HashMap<Class, ArrayList<String[]>> transformationMapping=new HashMap<Class, ArrayList<String[]>>();//the object is an array of dimension 2 with the class as the first element and the metadata name String as the second
 	
 	private int level;
+	private ParseContext parseContext;
+	private Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
+	public BeanMetadataExtraction(String prefix, String mimeType, ParseContext parseContext) {
+		this(prefix, mimeType);
+		this.parseContext = parseContext;
+	}
+	
 	public BeanMetadataExtraction(String prefix, String mimeType) {
 		this.prefix = prefix;
 		this.mimeType = mimeType;
 		this.nameProperty="name";
 		elparser = new SpelExpressionParser();
 	}
-
+	
 	public void addPropertyExclusion(Class c, String propName) {
 		List<String> props = excludeProperties.get(c);
 		if(props==null) {
@@ -90,8 +99,13 @@ public class BeanMetadataExtraction {
     		this.pd = pd;
     	}
     }
-    
+
     protected boolean extractEmbedded(int seq, ParseContext context, Metadata metadata, PropertyDescriptor parentPd, ContentHandler handler, Object bean, int parentSeq) throws IOException {
+    	if(parseContext!=context){
+    		parseContext = context;
+    		configureIdentifiedTimezone(context);
+    	}
+    	    
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
         if (extractor.shouldParseEmbedded(metadata)) {
@@ -167,6 +181,10 @@ public class BeanMetadataExtraction {
         								//this.extractEmbedded(seq, context, entryMetadata, pd, handler, value);
         							}else {
                                	    	if(value instanceof Date) {
+                               	    		if(isLocalTime) {
+                               	    			calendar.setTimeInMillis(((Date)value).getTime()+identifiedTimeZone.getRawOffset());
+                               	    			value = calendar.getTime();
+                               	    		}
             								entryMetadata.add(metadataName , DateUtil.dateToString((Date)value));
                                	    	}else {
                                	    		entryMetadata.add(metadataName, value.toString());
@@ -194,6 +212,10 @@ public class BeanMetadataExtraction {
     						//this.extractEmbedded(seq, context, entryMetadata, parentPd, handler, colObj[i]);
                 		} else {
                    	    	if(value instanceof Date) {
+                   	    		if(isLocalTime) {
+                             	    calendar.setTimeInMillis(((Date)value).getTime()+identifiedTimeZone.getRawOffset());
+                   	    			value = calendar.getTime();
+                   	    		}
                    	    		entryMetadata.add(metadataName , DateUtil.dateToString((Date)value));
                    	    	}else {
                    	    		entryMetadata.add(metadataName, value.toString());
@@ -313,5 +335,45 @@ public class BeanMetadataExtraction {
 
 	public List<String[]> getTransformationMapping(Class beanClass) {
 		return transformationMapping.get(beanClass);		
+	}
+
+	public boolean isLocalTime() {
+		return isLocalTime;
+	}
+
+	public void setLocalTime(boolean isLocalTime) {
+		this.isLocalTime = isLocalTime;
+		if(this.isLocalTime && parseContext!=null) {
+			configureIdentifiedTimezone(parseContext);
+		}
+	}
+
+	private void configureIdentifiedTimezone(ParseContext context) {
+        ItemInfo itemInfo = context.get(ItemInfo.class);
+        String caminho = itemInfo.getPath().toLowerCase().replace("\\", "/");
+		ICaseData caseData = context.get(ICaseData.class);
+		if(caseData!=null){
+			HashMap<String, TimeZone> tzs = (HashMap<String, TimeZone>) caseData.getCaseObject("TimeZones");
+			if(tzs!=null) {
+				if(tzs.size()==-1) {
+					identifiedTimeZone=tzs.values().iterator().next();
+				}else {
+					int i = caminho.lastIndexOf("/");
+					boolean found=false;
+					while(!found && i>0) {
+						caminho = caminho.substring(0,i);
+						for(Entry<String, TimeZone> entry:tzs.entrySet()) {
+							if(entry.getKey().startsWith(caminho)) {
+								found=true;
+								identifiedTimeZone=entry.getValue();
+								break;
+							}
+						}
+						i = caminho.lastIndexOf("/");
+					}
+									
+				}
+			}
+		}
 	}
 }
