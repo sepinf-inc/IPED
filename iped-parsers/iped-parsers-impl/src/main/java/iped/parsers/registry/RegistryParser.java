@@ -6,8 +6,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.TimeZone;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -18,10 +21,13 @@ import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.ICaseData;
 import iped.parsers.registry.keys.RegistryKeyParser;
 import iped.parsers.registry.keys.RegistryKeyParserManager;
 import iped.parsers.registry.model.KeyNode;
+import iped.parsers.registry.model.KeyValue;
 import iped.parsers.registry.model.RegistryFile;
+import iped.parsers.registry.model.RegistryFileException;
 import iped.parsers.util.EmbeddedItem;
 import iped.parsers.util.EmbeddedParent;
 import iped.parsers.util.ItemInfo;
@@ -38,9 +44,16 @@ public class RegistryParser extends AbstractParser {
 
     RegistryKeyParser defaultRegistryKeyParser = null;
 
+	private boolean extractItems = false;
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         return SUPPORTED_TYPES;
+    }
+    
+    @Field
+    public void setExtractItems(boolean extractItems) {
+        this.extractItems = extractItems; 
     }
 
     @Override
@@ -62,20 +75,80 @@ public class RegistryParser extends AbstractParser {
                 return;
 
             File dbFile = TikaInputStream.get(stream).getFile();
-
+            
             RegistryFile rf = new RegistryFile(dbFile);
-
             rf.load();
+            
+            extractCaseData(nome, caminho, rf, context);
 
-            KeyNode kf = rf.findKeyNode("/");
-
-            recursiveKeyParser(kf, "ROOT", "", handler, metadata, context);
+            if(extractItems) {
+                KeyNode kf = rf.findKeyNode("/");
+                recursiveKeyParser(kf, "ROOT", "", handler, metadata, context);
+            }
         } catch (Exception e) {
             throw new TikaException("Erro ao decodificar arquivo de registro: " + nome, e);
         } finally {
         }
     }
 
+    public void extractCaseData(String nome, String caminho, RegistryFile rf, ParseContext context) throws RegistryFileException {
+        TimeZone tz = null;
+        if(nome.equals("SYSTEM")) {
+            KeyNode kn = rf.findKeyNode("/Select");
+            KeyValue v = kn.getValue("LastKnownGood");
+            int controlSetIndex = v.getValueDataAsInt();
+            String controlSet = Integer.toString(controlSetIndex);
+            if(controlSet.length()<3) {
+            	controlSet = "/ControlSet"+"0".repeat(3-controlSet.length())+controlSet;
+            }
+            kn = rf.findKeyNode(controlSet+"/Control/TimeZoneInformation");
+            v = kn.getValue("ActiveTimeBias");
+            int timeBias = v.getValueDataAsInt();
+            String[] tzs = TimeZone.getAvailableIDs(timeBias*60*1000);
+            if(tzs!=null && tzs.length>0) {
+            	tz=TimeZone.getTimeZone(tzs[0]);
+            }
+        }
+
+        ICaseData caseData = context.get(ICaseData.class);
+        if(caseData!=null) {
+            synchronized (caseData) {
+                SystemRegistries sr = (SystemRegistries) caseData.getCaseObject("SystemRegistries");
+                if(sr==null) {
+                	sr = new SystemRegistries();
+                	caseData.addCaseObject("SystemRegistries", sr);
+                }
+                if(nome.equals("SYSTEM")) {
+                	sr.addSystem(caminho, rf);
+                }
+                if(nome.equals("SOFTWARE")) {
+                	sr.addSoftware(caminho, rf);
+                }
+                if(nome.equals("SAM")) {
+                	sr.addSam(caminho, rf);
+                }
+                if(nome.equals("SECURITY")) {
+                	sr.addSecurity(caminho, rf);
+                }
+                if(nome.equals("NTUSER.DAT")) {
+                	sr.addNtUserDat(caminho, rf);
+                }
+
+            	if(nome.equals("SYSTEM")) {
+                	if(tz!=null) {
+                		HashMap<String, TimeZone> tzs = (HashMap<String, TimeZone>) caseData.getCaseObject("TimeZones");
+                		if(tzs==null) {
+                			tzs = new HashMap<String, TimeZone>();
+                			caseData.addCaseObject("TimeZones", tzs);
+                		}
+            			tzs.put(caminho, tz);
+                	}
+                }
+    		}
+        }
+    }
+    
+    
     private void keyParser(KeyNode kn, boolean hasChildren, String keyPath, String parentPath, ContentHandler handler,
             Metadata metadata, ParseContext context) throws TikaException {
         RegistryKeyParser parser = RegistryKeyParserManager.getRegistryKeyParserManager().getRegistryKeyParser(keyPath);

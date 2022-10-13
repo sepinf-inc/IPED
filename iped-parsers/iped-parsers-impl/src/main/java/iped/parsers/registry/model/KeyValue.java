@@ -84,6 +84,21 @@ public class KeyValue extends CellContent {
 
     }
 
+    public int getValueDataAsInt() throws RegistryFileException {
+    	try {
+            byte[] buffer = getValueData();
+            if (buffer.length >= 4) {
+                int t = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
+                        | (buffer[3] & 0xFF) << 24;
+                return t;
+            }else {
+    			throw new RegistryFileException("Value not of int type");
+            }
+    	}catch (Exception e) {
+			throw new RegistryFileException(e);
+		}
+    }
+
     public Date getValueDataAsDate() throws RegistryFileException {
         int type = getValueDatatype();
         if (type != REG_BINARY) {
