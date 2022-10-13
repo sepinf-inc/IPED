@@ -107,7 +107,7 @@ public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListe
             g2.drawImage(img, x, y, w, h, null);
             g2.setClip(clip);
 
-            g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2.setStroke(new BasicStroke(3.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             g2.setColor(Color.red);
             g2.draw(rc);
 
