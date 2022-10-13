@@ -222,6 +222,9 @@ public class IconManager {
             mimeIconMap.put("application/x-gdrive-account-info", icon);
             mimeIconMap.put("application/x-ufed-contact", icon);
             mimeIconMap.put("application/x-ios-addressbook-db", icon);
+            mimeIconMap.put("application/windows-adress-book", icon);
+            mimeIconMap.put("application/outlook-contact", icon);
+            mimeIconMap.put("contact/x-skype-account", icon);
         }
 
         icon = availableIconsMap.get("user-telegram");
