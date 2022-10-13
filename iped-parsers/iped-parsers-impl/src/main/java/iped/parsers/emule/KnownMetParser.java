@@ -46,7 +46,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import iped.data.IItemReader;
-import iped.parsers.shareaza.LibraryFile;
 import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.ExportFolder;
@@ -99,13 +98,14 @@ public class KnownMetParser extends AbstractParser {
         final DateFormat df = new SimpleDateFormat(Messages.getString("KnownMetParser.DataFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
         
-        BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", KNOWNMET_ENTRY_MIME_TYPE);
-        bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
-        bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${hash}");
-
         metadata.set(HttpHeaders.CONTENT_TYPE, EMULE_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
+        BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", KNOWNMET_ENTRY_MIME_TYPE, context);
+        bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
+        bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+        bme.setLocalTime(true);
+        
         List<KnownMetEntry> l = iped.parsers.emule.KnownMetDecoder.parseToList(stream);
         if (l == null)
             return;
