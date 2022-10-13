@@ -90,7 +90,7 @@ public class IconManager {
 
     public static Icon getFileIcon(String mimeType, String extension) {
         if (mimeType != null && !mimeType.isBlank()) {
-            Icon icon = mimeIconMap.get(mimeType);
+            Icon icon = mimeIconMap.get(mimeType.strip());
             if (icon != null) {
                 return icon;
             }
