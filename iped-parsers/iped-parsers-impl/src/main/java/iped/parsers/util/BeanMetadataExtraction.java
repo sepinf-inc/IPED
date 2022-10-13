@@ -132,9 +132,14 @@ public class BeanMetadataExtraction {
                  }
                  
                  if(colObj == null) {
-             		String resolvedNameProp = nameProperties.get(bean.getClass());
-             		if(resolvedNameProp==null) {
-             			resolvedNameProp = nameProperty;
+             		String resolvedNameProp = null;
+             		if(bean instanceof Entry) {
+             			resolvedNameProp = "key";
+             		}else {
+             			resolvedNameProp = nameProperties.get(bean.getClass());
+                 		if(resolvedNameProp==null) {
+                 			resolvedNameProp = nameProperty;
+                 		}
              		}
              		String resolvedReferencedQuery = referencedQuery.get(bean.getClass());
                	    if(resolvedReferencedQuery!=null) {
@@ -211,7 +216,6 @@ public class BeanMetadataExtraction {
             			Object value = colObj[i];
                 		if(isBean(value)) {
                     		children.add(new ChildParams(value, parentPd));
-    						//this.extractEmbedded(seq, context, entryMetadata, parentPd, handler, colObj[i]);
                 		} else {
                    	    	if(value instanceof Date) {
                    	    		if(isLocalTime) {
@@ -234,8 +238,6 @@ public class BeanMetadataExtraction {
                  entryMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentSeq));
                  entryMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(seq));
                  extractor.parseEmbedded(new EmptyInputStream(), handler, entryMetadata, true);
-                 EmbeddedItem addedItem = context.get(EmbeddedItem.class);
-
 
                  int childSeq = seq;
                  int count=0;
@@ -248,13 +250,7 @@ public class BeanMetadataExtraction {
      					}
      				}
                  }
-                 if(children.size()>0 && count<=0 && addedItem!=null) {//real number of children added                	 
-                	 IItem item = (IItem)addedItem.getObj();
-                	 if(item!=null) {
-                         item.setIsDir(false);
-                	 }
-                 }
-
+                 
              }catch (Exception e) {
 				e.printStackTrace();
              }
@@ -288,12 +284,28 @@ public class BeanMetadataExtraction {
 	public boolean isBean(Object value) {
    	    BeanInfo beanInfo;
 		try {
+            if(value instanceof Collection) {
+             	if(((Collection)value).size()<=0){
+             		return false;//considers empty collections as non bean objects
+             	}
+            }
+            if(value.getClass().isArray()) {
+             	if(((Object[]) value).length<=0) {
+             		return false;//considers empty arrays as non bean objects
+             	}
+            }
+            if(value instanceof Map) {
+             	if(((Map)value).size()<=0){
+             		return false;//considers empty maps as non bean object
+             	}
+            }
 			beanInfo = Introspector.getBeanInfo(value.getClass());
 	   	    if(beanInfo.getPropertyDescriptors().length>1 
 	   	    		&& !(value instanceof String)
 	   	    		&& !(value instanceof Date)) {
 	   	    	return true;
 	   	    }
+	   	    
 		} catch (IntrospectionException e) {
 			return false;
 		}
@@ -351,7 +363,7 @@ public class BeanMetadataExtraction {
 	}
 
 	private void configureIdentifiedTimezone(ParseContext context) {
-        ItemInfo itemInfo = context.get(ItemInfo.class);        
+        ItemInfo itemInfo = context.get(ItemInfo.class);
         String caminho = itemInfo.getPath().toLowerCase().replace("\\", "/");
 		ICaseData caseData = context.get(ICaseData.class);
 		if(caseData!=null){
