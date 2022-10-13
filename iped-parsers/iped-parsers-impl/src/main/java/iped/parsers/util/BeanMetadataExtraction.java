@@ -103,7 +103,9 @@ public class BeanMetadataExtraction {
     protected boolean extractEmbedded(int seq, ParseContext context, Metadata metadata, PropertyDescriptor parentPd, ContentHandler handler, Object bean, int parentSeq) throws IOException {
     	if(parseContext!=context){
     		parseContext = context;
-    		configureIdentifiedTimezone(context);
+    		if(this.isLocalTime && this.parseContext!=null) {
+        		configureIdentifiedTimezone(this.parseContext);
+    		}
     	}
     	    
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
@@ -349,7 +351,7 @@ public class BeanMetadataExtraction {
 	}
 
 	private void configureIdentifiedTimezone(ParseContext context) {
-        ItemInfo itemInfo = context.get(ItemInfo.class);
+        ItemInfo itemInfo = context.get(ItemInfo.class);        
         String caminho = itemInfo.getPath().toLowerCase().replace("\\", "/");
 		ICaseData caseData = context.get(ICaseData.class);
 		if(caseData!=null){
