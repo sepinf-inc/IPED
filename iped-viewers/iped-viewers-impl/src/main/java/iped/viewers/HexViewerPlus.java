@@ -3227,7 +3227,7 @@ class HVPSettings implements Serializable {
     public boolean showSelectionBar = true;
     public boolean showPositionBar = true;
 
-    public int fontSize = 14;
+    public int fontSize = 13;
     public int cursorBlink = 450;
     public int lineSize = 16;
 
