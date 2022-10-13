@@ -441,6 +441,16 @@ public class IconManager {
             mimeIconMap.put("video/x-m4v", icon);
         }
 
+        icon = availableIconsMap.get("label");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-messagelabel", icon);
+        }
+
+        icon = availableIconsMap.get("journey");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-journey", icon);
+        }
+
         return mimeIconMap;
     }
 
