@@ -21,6 +21,16 @@ public interface ICaseData extends Serializable {
      */
     Object getCaseObject(String key);
 
+    /**
+     * Adiciona um objeto no caso.
+     *
+     * @param key
+     *            Nome do objeto
+     * @param data 
+     * 			  O objeto armazenado no caso
+     */
+    Object addCaseObject(String key, Object data);
+
     int getDiscoveredEvidences();
 
     /**
