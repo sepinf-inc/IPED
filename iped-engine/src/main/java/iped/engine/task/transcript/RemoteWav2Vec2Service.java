@@ -96,6 +96,7 @@ public class RemoteWav2Vec2Service {
         cm.loadConfig(localConfig);
 
         Wav2Vec2TranscriptTask task = new Wav2Vec2TranscriptTask();
+        audioConfig.setEnabled(true);
         task.init(cm);
 
         int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
