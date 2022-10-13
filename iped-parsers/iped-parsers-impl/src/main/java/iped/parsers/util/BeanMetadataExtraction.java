@@ -250,9 +250,9 @@ public class BeanMetadataExtraction {
                  }
                  if(children.size()>0 && count<=0) {//real number of children added                	 
                 	 IItem item = (IItem)addedItem.getObj();
-                	 //entryMetadata = item.getMetadata();
-                     //entryMetadata.set(BasicProps.HASCHILD, "false");
-                     item.setIsDir(false);
+                	 if(item!=null) {
+                         item.setIsDir(false);
+                	 }
                  }
 
              }catch (Exception e) {
