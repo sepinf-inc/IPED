@@ -30,6 +30,7 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
@@ -41,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.TreeViewModel.Node;
+import iped.app.ui.utils.UiIconSize;
 import iped.app.ui.utils.UiScale;
 import iped.data.IIPEDSource;
 import iped.data.IItem;
@@ -424,6 +426,20 @@ public class MenuListener implements ActionListener {
             if (UiScale.AUTO.equals(value) || factor > 0) {
                 UiScale.saveUserSetting(value);
             }
+        } else if (e.getSource() == menu.catIconSize) {
+            int size = UiIconSize.loadUserSetting();
+            SpinnerNumberModel sModel = new SpinnerNumberModel(size, 16, 32, 2);
+            JSpinner spinner = new JSpinner(sModel);
+            spinner.setEditor(new JSpinner.DefaultEditor(spinner));
+            spinner.addChangeListener(new ChangeListener() {
+                public void stateChanged(ChangeEvent e) {
+                    int size = (int) spinner.getValue();
+                    IconManager.setCategoryIconSize(size);
+                    App.get().categoryTree.updateUI();
+                    UiIconSize.saveUserSetting(size);
+                }
+            });
+            JOptionPane.showMessageDialog(App.get(), spinner, menu.catIconSize.getText(), JOptionPane.QUESTION_MESSAGE);
         }
     }
 
