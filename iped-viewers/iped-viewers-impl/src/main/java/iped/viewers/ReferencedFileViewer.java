@@ -10,6 +10,8 @@ import org.apache.tika.Tika;
 
 import iped.data.IItem;
 import iped.io.IStreamSource;
+import iped.parsers.ares.AresParser;
+import iped.parsers.emule.KnownMetParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -50,6 +52,8 @@ public class ReferencedFileViewer extends AbstractViewer {
         return WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(contentType)
                 || TelegramParser.TELEGRAM_ATTACHMENT.toString().equals(contentType)
                 || SkypeParser.ATTACHMENT_MIME_TYPE.equals(contentType)
+                || KnownMetParser.KNOWNMET_ENTRY_MIME_TYPE.equals(contentType)
+                || AresParser.ARES_ENTRY_MIME_TYPE.equals(contentType)
                 || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType);
     }
 
