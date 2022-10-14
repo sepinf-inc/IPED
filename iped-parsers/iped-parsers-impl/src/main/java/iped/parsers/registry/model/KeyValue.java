@@ -3,6 +3,7 @@ package iped.parsers.registry.model;
 import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -40,6 +41,24 @@ public class KeyValue extends CellContent {
         return (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
     }
 
+    @Override
+    public ArrayList<Integer> getSubCellsOffsets() {
+    	ArrayList<Integer> result = new ArrayList<Integer>();
+        byte buffer[] = Arrays.copyOfRange(data, 4, 8);
+        int dataLength = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
+                | (buffer[3] & 0xFF) << 24;
+
+        if (dataLength < 0) {// when most significant bit is set to 1 the data is less than 4 bytes in length
+        	return result;
+        }else {
+            buffer = Arrays.copyOfRange(data, 8, 12);
+            this.dataOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
+                    | (buffer[3] & 0xFF) << 24;
+            result.add(this.dataOffset);
+        }
+    	return result;    		
+    }
+    
     public byte[] getValueData() {
         byte buffer[] = Arrays.copyOfRange(data, 4, 8);
         int dataLength = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16

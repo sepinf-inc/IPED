@@ -21,7 +21,7 @@ import org.w3c.dom.NodeList;
 
 import iped.configuration.IConfigurationDirectory;
 
-public class RegistryKeyParserManager {
+public class RegistryKeyParserManager implements RegistryKeyParserFilter{
 
     private static final String BASE_FOLDER = "iped.parsers.registry.RegistryParser";
 

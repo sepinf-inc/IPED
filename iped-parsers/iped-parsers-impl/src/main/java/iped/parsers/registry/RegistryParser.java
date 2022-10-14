@@ -81,10 +81,10 @@ public class RegistryParser extends AbstractParser {
                 return;
 
             File dbFile = TikaInputStream.get(stream).getFile();
-            
+
             RegistryFile rf = new RegistryFile(dbFile);
-            rf.load();
-            
+            rf.load(RegistryKeyParserManager.getRegistryKeyParserManager());
+
             extractCaseData(nome, caminho, rf, context);
 
             if(extractItems) {
@@ -101,18 +101,29 @@ public class RegistryParser extends AbstractParser {
         TimeZone tz = null;
         if(nome.equals("SYSTEM")) {
             KeyNode kn = rf.findKeyNode("/Select");
-            KeyValue v = kn.getValue("LastKnownGood");
-            int controlSetIndex = v.getValueDataAsInt();
-            String controlSet = Integer.toString(controlSetIndex);
-            if(controlSet.length()<3) {
-            	controlSet = "/ControlSet"+"0".repeat(3-controlSet.length())+controlSet;
-            }
-            kn = rf.findKeyNode(controlSet+"/Control/TimeZoneInformation");
-            v = kn.getValue("ActiveTimeBias");
-            int timeBias = v.getValueDataAsInt();
-            String[] tzs = TimeZone.getAvailableIDs(timeBias*60*1000);
-            if(tzs!=null && tzs.length>0) {
-            	tz=TimeZone.getTimeZone(tzs[0]);
+            if(kn!=null) {
+                KeyValue v = kn.getValue("LastKnownGood");
+                if(v!=null) {
+                	v = kn.getValue("Current");
+                }
+                if(v!=null) {
+                    int controlSetIndex = v.getValueDataAsInt();
+                    String controlSet = Integer.toString(controlSetIndex);
+                    if(controlSet.length()<3) {
+                    	controlSet = "/ControlSet"+"0".repeat(3-controlSet.length())+controlSet;
+                    }
+                    kn = rf.findKeyNode(controlSet+"/Control/TimeZoneInformation");
+                    if(kn!=null) {
+                        v = kn.getValue("ActiveTimeBias");
+                        if(v!=null) {
+                            int timeBias = v.getValueDataAsInt();
+                            String[] tzs = TimeZone.getAvailableIDs(timeBias*60*1000);
+                            if(tzs!=null && tzs.length>0) {
+                            	tz=TimeZone.getTimeZone(tzs[0]);
+                            }
+                        }
+                    }
+                }
             }
         }
 
