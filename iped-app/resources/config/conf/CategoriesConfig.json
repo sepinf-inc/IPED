@@ -90,9 +90,9 @@
     ]},
     {"name": "Other files", "mimes": ["application/octet-stream", "application/x-nls"]},
     {"name": "Peer-to-peer", "categories":[
-      {"name": "Ares Galaxy", "mimes": ["application/x-shareaza-searches-dat", "application/x-shareaza-library-dat"]},
+      {"name": "Ares Galaxy", "mimes": ["application/x-ares-galaxy"]},
       {"name": "E-Mule", "mimes": ["application/x-emule", "application/x-emule-part-met", "application/x-emule-searches", "application/x-emule-preferences-ini", "application/x-emule-preferences-dat"]},
-      {"name": "Shareaza", "mimes": ["application/x-ares-galaxy"]},
+      {"name": "Shareaza", "mimes": ["application/x-shareaza-searches-dat", "application/x-shareaza-library-dat"]},
       {"name": "Torrent", "mimes": ["application/x-bittorrent-resume-dat", "application/x-bittorrent"]},
       {"name": "Other Peer-to-peer", "mimes": ["application/x-p2p"]}
     ]},
