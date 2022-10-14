@@ -84,6 +84,5 @@ Windows Registry
 #Journeys
 #Messages Labels
 #Networks Usage
-#Profile Pictures
 #Recognized Devices
 #Social Media Activities

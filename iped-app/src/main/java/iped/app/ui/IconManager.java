@@ -403,11 +403,6 @@ public class IconManager {
             mimeIconMap.put("application/x-ios-sms-db", icon);
         }
 
-        icon = availableIconsMap.get("profile");
-        if (icon != null) {
-            mimeIconMap.put("application/x-ufed-profilepicture", icon);
-        }
-
         icon = availableIconsMap.get("wireless");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-wirelessnetwork", icon);

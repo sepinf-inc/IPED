@@ -170,7 +170,6 @@
     {"name": "Journeys", "mimes": ["application/x-ufed-journey"]},
     {"name": "Messages Labels", "mimes": ["application/x-ufed-messagelabel"]},
     {"name": "Networks Usage", "mimes": ["application/x-ufed-networkusage"]},
-    {"name": "Profile Pictures", "mimes": ["application/x-ufed-profilepicture"]},
     {"name": "Recognized Devices", "mimes": ["application/x-ufed-recognizeddevice"]},
     {"name": "Social Media Activities", "mimes": ["application/x-ufed-socialmediaactivity"]}
   ]
