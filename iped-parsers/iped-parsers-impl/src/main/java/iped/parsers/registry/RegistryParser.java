@@ -45,6 +45,7 @@ public class RegistryParser extends AbstractParser {
     RegistryKeyParser defaultRegistryKeyParser = null;
 
 	private boolean extractItems = false;
+	private boolean keepInCaseData = false;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -54,6 +55,11 @@ public class RegistryParser extends AbstractParser {
     @Field
     public void setExtractItems(boolean extractItems) {
         this.extractItems = extractItems; 
+    }
+    
+    @Field
+    public void setKeepInCaseData(boolean keepInCaseData) {
+        this.keepInCaseData  = keepInCaseData; 
     }
 
     @Override
@@ -113,26 +119,28 @@ public class RegistryParser extends AbstractParser {
         ICaseData caseData = context.get(ICaseData.class);
         if(caseData!=null) {
             synchronized (caseData) {
-                SystemRegistries sr = (SystemRegistries) caseData.getCaseObject("SystemRegistries");
-                if(sr==null) {
-                	sr = new SystemRegistries();
-                	caseData.addCaseObject("SystemRegistries", sr);
-                }
-                if(nome.equals("SYSTEM")) {
-                	sr.addSystem(caminho, rf);
-                }
-                if(nome.equals("SOFTWARE")) {
-                	sr.addSoftware(caminho, rf);
-                }
-                if(nome.equals("SAM")) {
-                	sr.addSam(caminho, rf);
-                }
-                if(nome.equals("SECURITY")) {
-                	sr.addSecurity(caminho, rf);
-                }
-                if(nome.equals("NTUSER.DAT")) {
-                	sr.addNtUserDat(caminho, rf);
-                }
+            	if(keepInCaseData) {
+                    SystemRegistries sr = (SystemRegistries) caseData.getCaseObject("SystemRegistries");
+                    if(sr==null) {
+                    	sr = new SystemRegistries();
+                    	caseData.addCaseObject("SystemRegistries", sr);
+                    }
+                    if(nome.equals("SYSTEM")) {
+                    	sr.addSystem(caminho, rf);
+                    }
+                    if(nome.equals("SOFTWARE")) {
+                    	sr.addSoftware(caminho, rf);
+                    }
+                    if(nome.equals("SAM")) {
+                    	sr.addSam(caminho, rf);
+                    }
+                    if(nome.equals("SECURITY")) {
+                    	sr.addSecurity(caminho, rf);
+                    }
+                    if(nome.equals("NTUSER.DAT")) {
+                    	sr.addNtUserDat(caminho, rf);
+                    }
+            	}
 
             	if(nome.equals("SYSTEM")) {
                 	if(tz!=null) {
