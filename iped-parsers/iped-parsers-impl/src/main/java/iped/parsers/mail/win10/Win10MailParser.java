@@ -53,15 +53,17 @@ import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.database.EDBParser;
 import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.mail.win10.entries.AbstractEntry;
+import iped.parsers.mail.win10.entries.AppointmentEntry;
 import iped.parsers.mail.win10.entries.AttachmentEntry;
 import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.mail.win10.entries.MessageEntry;
 import iped.parsers.mail.win10.entries.RecipientEntry;
-import iped.parsers.mail.win10.entries.RecipientTable;
 import iped.parsers.mail.win10.tables.AbstractTable;
+import iped.parsers.mail.win10.tables.AppointmentTable;
 import iped.parsers.mail.win10.tables.AttachmentTable;
 import iped.parsers.mail.win10.tables.FolderTable;
 import iped.parsers.mail.win10.tables.MessageTable;
+import iped.parsers.mail.win10.tables.RecipientTable;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.Util;
 import iped.parsers.util.EsedbManager;
@@ -88,10 +90,10 @@ import iped.utils.SimpleHTMLEncoder;
  * Unistore\data\7; email attachments
  * 
  * checkboxes:
- * |-| extract properties from store.vol into lists of new objects (representing the important tables)
- * |-| search for the matching .dat files and add more properties to the objects
+ * |x| extract properties from store.vol into lists of new objects (representing the important tables)
+ * |x| search for the matching .dat files and add more properties to the objects
  * | | extract each instance as subitems in their respective categories
- * | | create folder hierarchy
+ * |-| create folder hierarchy
  */
 
 public class Win10MailParser extends AbstractParser {
@@ -101,6 +103,7 @@ public class Win10MailParser extends AbstractParser {
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(WIN10_MAIL_DB);
 
     private static final char MESSAGE_CATEGORY = '3';
+    private static final char APPOINTMENT_CATEGORY = '5';
     private static final char ATTACH_CATEGORY = '7';
 
     private enum FileTag {
@@ -209,23 +212,15 @@ public class Win10MailParser extends AbstractParser {
                                         processEmail(childEmail, path, folder.getRowId());
                                     }
                                 }
+                                ArrayList<AppointmentEntry> childAppointments = AppointmentTable.getFolderChildAppointments(folder.getRowId());
+                                if (!childAppointments.isEmpty()) {
+                                    for (AppointmentEntry childAppointment : childAppointments) {
+                                        childAppointment.setBody(getAppointmentBody(childAppointment));
+                                        processAppointment(childAppointment, path, folder.getRowId());
+                                    }
+                                }
                             }
                         }
-
-                        // if (table instanceof AttachmentTable) {
-                        //     AttachmentTable attachTable = (AttachmentTable) table;
-                        //     IItemReader item = null;
-
-                        //     for (AttachmentEntry attach : attachTable.getAttachments()) {
-                        //         String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
-                        //         item = Win10MailParser.searchItemInCase(contentPath, attach.getAttachSize());
-                        //         if (item != null) {
-                        //             InputStream attachStream = item.getBufferedInputStream();
-                        //             processAttachment(attach, attachStream, storeVolPath);
-                        //             attachStream.close();
-                        //         }
-                        //     }
-                        // }
 
                         // try (FileInputStream fis = new FileInputStream(tableFile)) {
                         //     extractor.parseEmbedded(fis, handler, tableMetadata, true);
@@ -353,6 +348,12 @@ public class Win10MailParser extends AbstractParser {
                     folderTable.populateTable(esedbLibrary);
                     tables.add(folderTable);
                 }
+                
+                if (tableNameStr.contains("Appointment")) {
+                    AppointmentTable appointmentTable = new AppointmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    appointmentTable.populateTable(esedbLibrary);
+                    tables.add(appointmentTable);
+                }
             }
 
         } finally {
@@ -360,6 +361,7 @@ public class Win10MailParser extends AbstractParser {
         }
         return tables;
     }
+    
 
     private void processFolder(FolderEntry folder, long parentId) throws SAXException, IOException {
         Metadata entrydata = new Metadata();
@@ -371,6 +373,81 @@ public class Win10MailParser extends AbstractParser {
             entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, "folder-" + parentId);
         extractor.parseEmbedded(new EmptyInputStream(), xhtml, entrydata, true);
     }
+
+    private void processAppointment(AppointmentEntry appointment, String path, long parentId) throws SAXException, IOException {
+        Metadata appointMetadata = new Metadata();
+
+        String body = appointment.getBody();
+
+
+        appointMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        appointMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, "appointment-" + appointment.getRowId());
+        appointMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, appointment.getEventName());
+        appointMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG_REG.toString());
+        appointMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, "folder-" + parentId);
+        appointMetadata.set(ExtraProperties.MESSAGE_BODY, body);
+
+        Charset charset = Charset.forName("UTF-8");
+        StringBuilder preview = new StringBuilder();
+
+        preview.append("All day: " + appointment.getAllDay() + "<br>");
+        preview.append("Event: " + appointment.getEventName() + "<br>");
+        preview.append("Location: " + appointment.getLocation() + "<br>");
+        preview.append("Organizer: " + appointment.getOrganizer() + "<br>");
+        preview.append("Account: " + appointment.getAccount() + "<br>");
+        preview.append("Link: " + "<a href=\"" + appointment.getLink() + "\">" + appointment.getLink() + "</a>" + "<br>");
+        preview.append("Duration: " + appointment.getDurationMin() + " minutes" + "<br>");
+        preview.append("Start Time: " + df.format(appointment.getStartTime()) + "<br>");
+        preview.append("Reminder Time: " + appointment.getReminderTimeMin() + " minutes" + "<br>");
+        preview.append("Repeat: " + appointment.getRepeat() + "<br>");
+        preview.append("Response: " + appointment.getResponse() + "<br>");
+        preview.append("Additional People: " + appointment.getAdditionalPeople() + "<br>");
+
+        preview.append(body);
+        try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
+            if (extractor.shouldParseEmbedded(appointMetadata))
+                extractor.parseEmbedded(stream, xhtml, appointMetadata, true);
+        }
+    }
+
+    private String getAppointmentBody(AppointmentEntry appointment) throws IOException {
+        FileTag[] messageTags = new FileTag[] { FileTag.UNICODE, FileTag.ASCII_PAIRS };
+        IItemReader item = null;
+        String appointmentBody = "";
+        String contentPath = "";
+
+        for (FileTag messageTag : messageTags) {
+            contentPath = Win10MailParser.getEntryLocation(appointment, APPOINTMENT_CATEGORY, messageTag);
+            Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, 0);
+            if (itemQueryPair.getLeft() != null) {
+                item = itemQueryPair.getLeft();
+                break;
+            }
+        }
+
+        if (item != null) {
+            InputStream is = item.getBufferedInputStream();
+            InputStreamReader utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
+            ReaderInputStream utf8IS = null;
+            // convert text from utf-16 to utf-8
+            is.mark(0);
+            utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16BE);
+            utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
+            appointmentBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
+            if (contentPath.contains("001e.dat") && !appointmentBody.toLowerCase().contains("html")) { // file byte order mark is probably inverted (it happens here)
+                is.reset();
+                utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
+                utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
+                appointmentBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
+            }
+
+            utf8IS.close();
+            utf16Reader.close();
+            is.close();
+        }
+        return appointmentBody;
+    }
+
 
     private String getMessageBody(MessageEntry email) throws IOException {
         FileTag[] messageTags = new FileTag[] { FileTag.ASCII, FileTag.MESSAGE_UNICODE };
@@ -550,22 +627,22 @@ public class Win10MailParser extends AbstractParser {
     }
 
     public static String getEntryLocation(AbstractEntry entry, char category, FileTag fileTag) {
-        String entryPath = "";
+        StringBuilder entryPath = new StringBuilder();
 
         String hexRowId = Integer.toHexString(entry.getRowId());
         while (hexRowId.length() < 8) hexRowId = "0" + hexRowId;
 
-        entryPath += "/" + category;
-        entryPath += "/" + "abcdefghijklmnopqrstuvwxyz".charAt(Integer.parseInt("" + hexRowId.charAt(hexRowId.length()-1), 16)) + "/";
-        entryPath += hexRowId.charAt(hexRowId.length()-2);
-        entryPath += hexRowId.substring(1, 6) + "0";
-        entryPath += hexRowId.charAt(hexRowId.length()-1);
-        entryPath += "0000000";
-        entryPath += category;
-        entryPath += fileTag.toString();
-        entryPath += ".dat";
+        entryPath.append("/" + category);
+        entryPath.append("/" + "abcdefghijklmnopqrstuvwxyz".charAt(Integer.parseInt("" + hexRowId.charAt(hexRowId.length()-1), 16)) + "/");
+        entryPath.append(hexRowId.charAt(hexRowId.length()-2));
+        entryPath.append(hexRowId.substring(1, 6) + "0");
+        entryPath.append(hexRowId.charAt(hexRowId.length()-1));
+        entryPath.append("0000000");
+        entryPath.append(category);
+        entryPath.append(fileTag.toString());
+        entryPath.append(".dat");
 
-        return entryPath;
+        return entryPath.toString();
     }
 
     public static ImmutablePair<IItemReader, String> searchItemInCase(String path, long size) {

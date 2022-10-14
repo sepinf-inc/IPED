@@ -1,4 +1,4 @@
-package iped.parsers.mail.win10.entries;
+package iped.parsers.mail.win10.tables;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,8 +8,8 @@ import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.ptr.IntByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
+import iped.parsers.mail.win10.entries.RecipientEntry;
 import iped.parsers.mail.win10.entries.RecipientEntry.RecipientType;
-import iped.parsers.mail.win10.tables.AbstractTable;
 import iped.parsers.util.EsedbManager;
 
 public class RecipientTable extends AbstractTable {

@@ -107,6 +107,25 @@ public class EsedbManager {
         return "";
     }
 
+    public static String getBinaryValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
+        IntByReference recordValueDataInt = new IntByReference();
+        Memory recordValueData = new Memory(3072);
+
+        int result = esedbLibrary.libesedb_record_get_value_binary_data_size(recordPointerReference.getValue(), value_entry,
+            recordValueDataInt, errorPointer);
+        if (result < 0)
+            printError("Record Get Binary Data Size", result, filePath, errorPointer);
+        if ((recordValueDataInt.getValue() > 0) && (result == 1)) {
+            result = esedbLibrary.libesedb_record_get_value_binary_data(recordPointerReference.getValue(), value_entry,
+                    recordValueData, recordValueDataInt.getValue(), errorPointer);
+            if (result < 0)
+                printError("Record Get Binary Data at " + value_entry, result, filePath, errorPointer);
+            return String.valueOf(recordValueData.getCharArray(0, recordValueDataInt.getValue()));
+            
+        }
+        return "";
+    }
+
     public static Boolean getBooleanValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
         ShortByReference recordValueDataShort = new ShortByReference();
 
@@ -116,6 +135,7 @@ public class EsedbManager {
             printError("Record Get Boolean Data", result, filePath, errorPointer);
         return recordValueDataShort.getValue() == 1;
     }
+
 
     public static Date getFileTime(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
         LongByReference recordValueData = new LongByReference();

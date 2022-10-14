@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import iped.parsers.mail.win10.tables.AttachmentTable;
+import iped.parsers.mail.win10.tables.RecipientTable;
 
 public class MessageEntry extends AbstractEntry {
     private long conversationId;

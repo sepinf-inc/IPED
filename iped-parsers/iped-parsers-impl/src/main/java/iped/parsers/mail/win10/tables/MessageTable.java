@@ -33,7 +33,7 @@ public class MessageTable extends AbstractTable {
     public void populateTable(EsedbLibrary esedbLibrary) {
         for (int i = 0; i < numRecords; i++) {
             MessageEntry message = getMessage(esedbLibrary, i, errorPointer, tablePointer);
-            messages.add(getMessage(esedbLibrary, i, errorPointer, tablePointer));
+            messages.add(message);
             addFolderMessages(message);
         }
     }
