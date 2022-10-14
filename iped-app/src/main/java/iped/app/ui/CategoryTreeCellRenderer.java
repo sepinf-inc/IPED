@@ -44,7 +44,7 @@ public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
         category = getNonLocalizedCategory(category);
         category = category != null ? category : "";
 
-        Icon icon = IconLoader.getCategoryIcon(category.toLowerCase());
+        Icon icon = IconManager.getCategoryIcon(category.toLowerCase());
         result.setIcon(icon);
 
         if (sel) {

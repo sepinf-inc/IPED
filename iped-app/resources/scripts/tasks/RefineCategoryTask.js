@@ -214,10 +214,10 @@ function process(e){
 	
 
 	//Programas peer-to-peer
-	if ((path.indexOf("/Roaming/Shareaza/Data") !== -1)	||
-		(name.indexOf("Shareaza.db3") !== -1)
+	if ((path.indexOf("/roaming/shareaza/data") !== -1)	||
+		(name.indexOf("shareaza.db3") !== -1)
 		)
-		e.addCategory("Peer-to-peer");
+		e.addCategory("Shareaza");
 	
 		
 	//Telegram
@@ -383,16 +383,16 @@ function process(e){
 	//emule files
 	if(mime.equals("application/x-emule-searches")){
 		e.addCategory("Searches");
-		e.addCategory("Peer-to-peer");
+		e.addCategory("E-Mule");
 	}
 	if(e.getPath().toLowerCase().contains("mule")){
 		if(e.getName().equals("preferences.ini")){
 			e.setMediaTypeStr("application/x-emule-preferences-ini");
-			e.addCategory("Peer-to-peer");
+			e.addCategory("E-Mule");
 		}
 		if(e.getName().equals("preferences.dat")){
 			e.setMediaTypeStr("application/x-emule-preferences-dat");
-			e.addCategory("Peer-to-peer");
+			e.addCategory("E-Mule");
 		}
 	}
 	
