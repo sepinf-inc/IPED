@@ -263,7 +263,6 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-webbookmark", icon);
             mimeIconMap.put("application/x-ufed-visitedpage", icon);
-            mimeIconMap.put("application/x-ufed-webaddress", icon);
             mimeIconMap.put("application/x-safari-history-registry", icon);
             mimeIconMap.put("application/x-safari-history", icon);
             mimeIconMap.put("application/x-safari-sqlite", icon);

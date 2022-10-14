@@ -87,4 +87,3 @@ Windows Registry
 #Profile Pictures
 #Recognized Devices
 #Social Media Activities
-#Web Addresses
