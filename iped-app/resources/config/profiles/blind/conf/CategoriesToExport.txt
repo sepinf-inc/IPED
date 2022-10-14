@@ -82,7 +82,6 @@ Windows Registry
 #Device Events
 #File Downloads
 #Journeys
-#Key Value Model
 #Messages Labels
 #Networks Usage
 #Profile Pictures

@@ -409,7 +409,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "ContactPhoto", //$NON-NLS-1$
                 "ForwardedMessageData", //$NON-NLS-1$
                 "ReplyMessageData", //$NON-NLS-1$
-                "StreetAddress" //$NON-NLS-1$
+                "StreetAddress", //$NON-NLS-1$
+                "KeyValueModel" //$NON-NLS-1$
         ));
 
         @Override
@@ -942,6 +943,14 @@ public class UfedXmlReader extends DataSourceReader {
                             String[] vals = item.getMetadata().getValues(meta);
                             for (String val : vals) {
                                 parentItem.getMetadata().add(meta, val);
+                            }
+                        }
+                    } else if ("KeyValueModel".equals(type)) {
+                        String key = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Key");
+                        if (key != null) {
+                            String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Value");
+                            if (value != null) {
+                                parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + key, value);
                             }
                         }
                     }

@@ -169,7 +169,6 @@
     {"name": "File Downloads", "mimes": ["application/x-ufed-filedownload"]},
     {"name": "Journeys", "mimes": ["application/x-ufed-journey"]},
     {"name": "Messages Labels", "mimes": ["application/x-ufed-messagelabel"]},
-    {"name": "Key Value Model", "mimes": ["application/x-ufed-keyvaluemodel"]},
     {"name": "Networks Usage", "mimes": ["application/x-ufed-networkusage"]},
     {"name": "Profile Pictures", "mimes": ["application/x-ufed-profilepicture"]},
     {"name": "Recognized Devices", "mimes": ["application/x-ufed-recognizeddevice"]},
