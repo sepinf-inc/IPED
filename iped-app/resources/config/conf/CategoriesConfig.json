@@ -51,6 +51,7 @@
 		{"name":"Jabber","mimes":["application/x-jabber-chat"]},
 		{"name":"Facebook","mimes":["application/x-ufed-chat-preview-facebook"]},
 		{"name":"Instagram","mimes":["application/x-ufed-chat-preview-instagram"]},
+	    {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
 		{"name":"Others Chats","mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
 	]},
     {"name": "Windows Registry", "categories":[
@@ -162,7 +163,6 @@
     {"name": "Applications Usage", "mimes": ["application/x-ufed-appsusagelog", "application/x-ufed-applicationusage"]},
     {"name": "Device Information", "mimes": ["application/x-ufed-deviceinfo"]},
     {"name": "Activities Sensor", "mimes": ["application/x-ufed-activitysensordata", "application/x-ufed-activitysensordatameasurement", "application/x-ufed-activitysensordatasample"]},
-    {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
     {"name": "Credit Cards", "mimes": ["application/x-ufed-creditcard"]},
     {"name": "Device Connectivity", "mimes": ["application/x-ufed-deviceconnectivity"]},
     {"name": "Device Events", "mimes": ["application/x-ufed-deviceevent"]},

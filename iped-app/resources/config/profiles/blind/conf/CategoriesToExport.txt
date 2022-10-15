@@ -76,7 +76,6 @@ Windows Registry
 #Applications Usage
 #Device Information
 #Activities Sensor
-#Chat Activities
 #Credit Cards
 #Device Connectivity
 #Device Events
