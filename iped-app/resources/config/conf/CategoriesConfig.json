@@ -168,7 +168,6 @@
     {"name": "Device Events", "mimes": ["application/x-ufed-deviceevent"]},
     {"name": "File Downloads", "mimes": ["application/x-ufed-filedownload"]},
     {"name": "Journeys", "mimes": ["application/x-ufed-journey"]},
-    {"name": "Messages Labels", "mimes": ["application/x-ufed-messagelabel"]},
     {"name": "Networks Usage", "mimes": ["application/x-ufed-networkusage"]},
     {"name": "Recognized Devices", "mimes": ["application/x-ufed-recognizeddevice"]},
     {"name": "Social Media Activities", "mimes": ["application/x-ufed-socialmediaactivity"]}

@@ -81,7 +81,6 @@ Windows Registry
 #Device Events
 #File Downloads
 #Journeys
-#Messages Labels
 #Networks Usage
 #Recognized Devices
 #Social Media Activities
