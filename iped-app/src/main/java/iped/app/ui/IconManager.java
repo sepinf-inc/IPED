@@ -441,6 +441,16 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-journey", icon);
         }
 
+        icon = availableIconsMap.get("power");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-poweringevent", icon);
+        }
+        
+        icon = availableIconsMap.get("dictionary");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-dictionaryword", icon);
+        }
+
         return mimeIconMap;
     }
 
