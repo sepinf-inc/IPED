@@ -160,16 +160,19 @@ public class ImageUtil {
             
             // For sources that contains multiple images (e.g. ICO), get the largest one
             int idx = 0;
-            int n = reader.getNumImages(false);
-            if (n > 1) {
-                int max = -1;
-                for (int i = 0; i < n; i++) {
-                    int wi = reader.getWidth(i);
-                    if (wi > max) {
-                        max = wi;
-                        idx = i;
+            try {
+                int n = reader.getNumImages(false);
+                if (n > 1) {
+                    int max = -1;
+                    for (int i = 0; i < n; i++) {
+                        int wi = reader.getWidth(i);
+                        if (wi > max) {
+                            max = wi;
+                            idx = i;
+                        }
                     }
                 }
+            } catch (Exception e) {
             }
 
             int w0 = reader.getWidth(idx);
