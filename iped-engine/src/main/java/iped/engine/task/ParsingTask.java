@@ -81,6 +81,7 @@ import iped.engine.util.ItemInfoFactory;
 import iped.engine.util.ParentInfo;
 import iped.engine.util.TextCache;
 import iped.engine.util.Util;
+import iped.exception.IPEDException;
 import iped.exception.ZipBombException;
 import iped.io.IStreamSource;
 import iped.parsers.browsers.ie.IndexDatParser;
@@ -793,11 +794,15 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             ForkParser.setPluginDir(pluginConfig.getPluginFolder().getAbsolutePath());
             ForkParser.setPoolSize(parsingConfig.getNumExternalParsers());
             max_expanding_containers = parsingConfig.getNumExternalParsers() / 2;
+            if (max_expanding_containers == 0) {
+                // Abort. We must have at least 2 external parsing processes, 1 causes deadlock.
+                throw new IPEDException("You must have a minimum of 2 external parsing processes! Adjust the '" + ParsingTaskConfig.NUM_EXTERNAL_PARSERS + "' option.");
+            }
             ForkParser.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
             // do not open extra processes for OCR if ForkParser is enabled
             System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
         } else {
-            max_expanding_containers = Manager.getInstance().getNumWorkers() / 2;
+            max_expanding_containers = Math.max(Manager.getInstance().getNumWorkers() / 2, 1);
         }
 
         String appRoot = Configuration.getInstance().appRoot;
