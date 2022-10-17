@@ -151,8 +151,8 @@ public class MFTEntry {
                                 if (pos <= 0) {
                                     break;
                                 }
-                                dataruns.add(len);
                                 dataruns.add(pos);
+                                dataruns.add(len);
                                 prevPos = pos;
                             }
                             if (finished && !dataruns.isEmpty()) {
