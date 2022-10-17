@@ -99,11 +99,15 @@ public class Win10MailParser extends AbstractParser {
     public static final MediaType WIN10_MAIL_DB = MediaType.application("x-win10-mail-db");
     public static final MediaType WIN10_MAIL_MSG = MediaType.parse("message/x-win10-mail-msg");
     public static final MediaType WIN10_MAIL_APPT = MediaType.parse("message/x-win10-mail-appt");
+    public static final MediaType WIN10_MAIL_ATTACH = MediaType.parse("message/x-win10-mail-attach");
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(WIN10_MAIL_DB);
 
     private static final char MESSAGE_CATEGORY = '3';
     private static final char APPOINTMENT_CATEGORY = '5';
     private static final char ATTACH_CATEGORY = '7';
+    
+    private static final String EMAIL_VIRTUAL_ID_PREFIX = "winAppMail-";
+    private static final String FOLDER_VIRTUAL_ID_PREFIX = "folder-";
 
     private enum FileTag {
         UNICODE("001e"), CONTACT_JPEG_1("00ff"), CONTACT_JPEG_2("00ff"), CONTACT_JPEG_3("01b5"),
@@ -367,9 +371,9 @@ public class Win10MailParser extends AbstractParser {
         entrydata.set(TikaCoreProperties.TITLE, folder.getDisplayName());
         entrydata.set(TikaCoreProperties.CREATED, folder.getCreateTime());
         entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
-        entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, "folder-" + folder.getRowId());
+        entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + folder.getRowId());
         if (parentId != -1)
-            entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, "folder-" + parentId);
+            entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
         extractor.parseEmbedded(new EmptyInputStream(), xhtml, entrydata, true);
     }
 
@@ -381,8 +385,8 @@ public class Win10MailParser extends AbstractParser {
         appointMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         appointMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, "appointment-" + appointment.getRowId());
         appointMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, appointment.getEventName());
-        appointMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG.toString());
-        appointMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, "folder-" + parentId);
+        appointMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_APPT.toString());
+        appointMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
         appointMetadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(body, MediaType.TEXT_HTML.toString()));
 
         Charset charset = Charset.forName("UTF-8");
@@ -483,33 +487,22 @@ public class Win10MailParser extends AbstractParser {
         return "";
     }
 
-    private void processEmail(MessageEntry email, String path, long parentId) throws IOException {
+    private void processEmail(MessageEntry email, String path, long parentId) {
         Metadata emailMetadata = new Metadata();
-        String successfulQuery = null;
 
-        for (AttachmentEntry attach : email.getAttachments()) {
-            String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
-            Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, attach.getAttachSize());
-            if (itemQueryPair != null) {
-                successfulQuery = itemQueryPair.getRight();
-                emailMetadata.add(ExtraProperties.LINKED_ITEMS, successfulQuery);
-                // processAttachment(attach, sucessfulQuery, path);
-            }
-        }
+        String subject = email.getSubject();
+        if (subject == null || subject.trim().isEmpty())
+            subject = Messages.getString("OutlookPSTParser.NoSubject");
+
+        String virtualId = EMAIL_VIRTUAL_ID_PREFIX + email.getRowId();
+
+        emailMetadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
+        emailMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG.toString());
+        emailMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        emailMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
+        emailMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
 
         try {
-            String subject = email.getSubject();
-            if (subject == null || subject.trim().isEmpty())
-                subject = Messages.getString("OutlookPSTParser.NoSubject");
-
-            String virtualId = "winAppMail-" + email.getRowId();
-
-            emailMetadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
-            emailMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG.toString());
-            emailMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-            emailMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
-            emailMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, "folder-" + parentId);
-
             Charset charset = Charset.forName("UTF-8");
             StringBuilder preview = new StringBuilder();
             preview.append("<html>");
@@ -604,14 +597,33 @@ public class Win10MailParser extends AbstractParser {
             // e.printStackTrace();
         }
 
+        String successfulQuery = null;
+        for (AttachmentEntry attach : email.getAttachments()) {
+            String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
+            Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, attach.getAttachSize());
+            if (itemQueryPair != null) {
+                successfulQuery = itemQueryPair.getRight();
+                emailMetadata.add(ExtraProperties.LINKED_ITEMS, successfulQuery);
+                processAttachment(attach, successfulQuery, path);
+            }
+        }
+
     }
 
     private void processAttachment(AttachmentEntry attachment, String query, String path) {
-        String parentId = "winAppMail-" + attachment.getMessageId();
+        String parentId = EMAIL_VIRTUAL_ID_PREFIX + attachment.getMessageId();
         String filename = attachment.getFileName();
         long rowId = attachment.getRowId();
         try {
             Metadata attachMetadata = new Metadata();
+
+            attachMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, attachment.getFileName());
+            attachMetadata.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_ATTACH.toString());
+            attachMetadata.set(Metadata.CONTENT_TYPE, attachment.getMimeTag());
+            attachMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, "winAppAttach-" + rowId);
+            attachMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, parentId);
+            attachMetadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
+            attachMetadata.set(ExtraProperties.LINKED_ITEMS, query);
 
             if (extractor.shouldParseEmbedded(attachMetadata))
                 extractor.parseEmbedded(new EmptyInputStream(), xhtml, attachMetadata, true);

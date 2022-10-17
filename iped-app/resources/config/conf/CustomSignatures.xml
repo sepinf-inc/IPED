@@ -1346,5 +1346,8 @@
         <sub-class-of type="text/html"/>
     </mime-type>
 
+    <mime-type type="application/x-win10-mail-attach">
+        <sub-class-of type="message/x-win10-mail-msg"/>
+    </mime-type>
     
 </mime-info>
