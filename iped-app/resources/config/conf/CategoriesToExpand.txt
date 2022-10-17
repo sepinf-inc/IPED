@@ -7,12 +7,12 @@
 Mailboxes
 Compressed Archives
 Emails
+Win10 Mail App Emails
 Databases
 Chats
 Contacts
 ISO disks
 Internet History
-Windows 10 Mail Database
 User Activities
 GDrive Synced Files
 OLE files

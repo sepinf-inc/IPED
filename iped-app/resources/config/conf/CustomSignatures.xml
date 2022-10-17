@@ -1342,7 +1342,7 @@
         <glob pattern="store*.vol"/>
     </mime-type>
 
-    <mime-type type="application/x-win10-mail-msg-registry">
+    <mime-type type="message/x-win10-mail-msg">
         <sub-class-of type="text/html"/>
     </mime-type>
 

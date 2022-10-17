@@ -2,7 +2,6 @@ package iped.parsers.mail.win10;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,7 +14,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -99,7 +97,8 @@ import iped.utils.SimpleHTMLEncoder;
 public class Win10MailParser extends AbstractParser {
 
     public static final MediaType WIN10_MAIL_DB = MediaType.application("x-win10-mail-db");
-    public static final MediaType WIN10_MAIL_MSG_REG = MediaType.application("x-win10-mail-msg-registry");
+    public static final MediaType WIN10_MAIL_MSG = MediaType.parse("message/x-win10-mail-msg");
+    public static final MediaType WIN10_MAIL_APPT = MediaType.parse("message/x-win10-mail-appt");
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(WIN10_MAIL_DB);
 
     private static final char MESSAGE_CATEGORY = '3';
@@ -212,11 +211,11 @@ public class Win10MailParser extends AbstractParser {
                                         processEmail(childEmail, path, folder.getRowId());
                                     }
                                 }
-                                ArrayList<AppointmentEntry> childAppointments = AppointmentTable.getFolderChildAppointments(folder.getRowId());
-                                if (!childAppointments.isEmpty()) {
-                                    for (AppointmentEntry childAppointment : childAppointments) {
-                                        childAppointment.setBody(getAppointmentBody(childAppointment));
-                                        processAppointment(childAppointment, path, folder.getRowId());
+                                ArrayList<AppointmentEntry> childAppts = AppointmentTable.getFolderChildAppointments(folder.getRowId());
+                                if (!childAppts.isEmpty()) {
+                                    for (AppointmentEntry childAppt : childAppts) {
+                                        childAppt.setBody(getAppointmentBody(childAppt));
+                                        processAppointment(childAppt, path, folder.getRowId());
                                     }
                                 }
                             }
@@ -379,13 +378,12 @@ public class Win10MailParser extends AbstractParser {
 
         String body = appointment.getBody();
 
-
         appointMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         appointMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, "appointment-" + appointment.getRowId());
         appointMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, appointment.getEventName());
-        appointMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG_REG.toString());
+        appointMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG.toString());
         appointMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, "folder-" + parentId);
-        appointMetadata.set(ExtraProperties.MESSAGE_BODY, body);
+        appointMetadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(body, MediaType.TEXT_HTML.toString()));
 
         Charset charset = Charset.forName("UTF-8");
         StringBuilder preview = new StringBuilder();
@@ -413,7 +411,7 @@ public class Win10MailParser extends AbstractParser {
     private String getAppointmentBody(AppointmentEntry appointment) throws IOException {
         FileTag[] messageTags = new FileTag[] { FileTag.UNICODE, FileTag.ASCII_PAIRS };
         IItemReader item = null;
-        String appointmentBody = "";
+        String apptBody = "";
         String contentPath = "";
 
         for (FileTag messageTag : messageTags) {
@@ -427,25 +425,23 @@ public class Win10MailParser extends AbstractParser {
 
         if (item != null) {
             InputStream is = item.getBufferedInputStream();
-            InputStreamReader utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
-            ReaderInputStream utf8IS = null;
+            InputStreamReader utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16BE);
             // convert text from utf-16 to utf-8
             is.mark(0);
-            utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16BE);
-            utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
-            appointmentBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
-            if (contentPath.contains("001e.dat") && !appointmentBody.toLowerCase().contains("html")) { // file byte order mark is probably inverted (it happens here)
+            ReaderInputStream utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
+            apptBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
+            if (contentPath.contains(FileTag.UNICODE + ".dat") && !apptBody.toLowerCase().contains("html")) { // file byte order mark is probably inverted (it happens here)
                 is.reset();
                 utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
                 utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
-                appointmentBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
+                apptBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
             }
 
             utf8IS.close();
             utf16Reader.close();
             is.close();
         }
-        return appointmentBody;
+        return apptBody;
     }
 
 
@@ -509,7 +505,7 @@ public class Win10MailParser extends AbstractParser {
             String virtualId = "winAppMail-" + email.getRowId();
 
             emailMetadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
-            emailMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG_REG.toString());
+            emailMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG.toString());
             emailMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
             emailMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
             emailMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, "folder-" + parentId);
