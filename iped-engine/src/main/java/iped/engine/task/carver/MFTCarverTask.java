@@ -236,28 +236,29 @@ public class MFTCarverTask extends BaseCarveTask {
             }
         }
 
-        ItemSearcher searcher = new ItemSearcher(output.getParentFile(), Manager.getInstance().getIndexWriter());
-        StringBuilder sb = new StringBuilder();
-        sb.append(BasicProps.ID).append(":(");
-        for (int id : ids) {
-            sb.append(id).append(" ");
-        }
-        sb.append(") && ");
-        sb.append(BasicProps.CONTENTTYPE);
-        sb.append(":\"");
-        sb.append(QueryParserUtil.escape(MediaTypes.DISK_VOLUME.toString()));
-        sb.append("\"");
-        List<IItemReader> volumes = searcher.search(sb.toString());
-        if (!volumes.isEmpty()) {
-            IItemReader volume = volumes.get(0);
-            synchronized (volumesMap) {
-                if (volumesMap.put(volume.getId(), volume) == null) {
-                    logger.info("Volume found: ID=" + volume.getId() + ", Path=" + volume.getPath());
-                }
+        try (ItemSearcher searcher = new ItemSearcher(output.getParentFile(), Manager.getInstance().getIndexWriter())) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(BasicProps.ID).append(":(");
+            for (int id : ids) {
+                sb.append(id).append(" ");
             }
-            return volume;
+            sb.append(") && ");
+            sb.append(BasicProps.CONTENTTYPE);
+            sb.append(":\"");
+            sb.append(QueryParserUtil.escape(MediaTypes.DISK_VOLUME.toString()));
+            sb.append("\"");
+            List<IItemReader> volumes = searcher.search(sb.toString());
+            if (!volumes.isEmpty()) {
+                IItemReader volume = volumes.get(0);
+                synchronized (volumesMap) {
+                    if (volumesMap.put(volume.getId(), volume) == null) {
+                        logger.info("Volume found: ID=" + volume.getId() + ", Path=" + volume.getPath());
+                    }
+                }
+                return volume;
+            }
+            logger.info("No volume found for parentIds: " + ids);
         }
-        logger.info("No volume found for parentIds: " + ids);
         return null;
     }
 }
