@@ -212,8 +212,7 @@ public class Worker extends Thread {
         caseData.incDiscoveredEvidences(1);
         // Se a fila está pequena, enfileira
         if (time == ProcessTime.LATER
-                || (time == ProcessTime.AUTO
-                        && manager.getProcessingQueues().getCurrentQueueSize() < 10 * manager.getWorkers().length)) {
+                || (time == ProcessTime.AUTO && manager.getProcessingQueues().getCurrentQueueSize() < 100 * manager.getNumWorkers())) {
             manager.getProcessingQueues().addItemFirstNonBlocking(evidence);
         } // caso contrário processa o item no worker atual
         else {
