@@ -59,12 +59,12 @@ import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ExternalParsersConfig;
+import iped.engine.config.LocalConfig;
 import iped.engine.config.OCRConfig;
 import iped.engine.config.ParsersConfig;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.config.PluginConfig;
 import iped.engine.config.SplitLargeBinaryConfig;
-import iped.engine.core.Manager;
 import iped.engine.core.Statistics;
 import iped.engine.core.Worker;
 import iped.engine.core.Worker.ProcessTime;
@@ -802,7 +802,8 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             // do not open extra processes for OCR if ForkParser is enabled
             System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
         } else {
-            max_expanding_containers = Math.max(Manager.getInstance().getNumWorkers() / 2, 1);
+            LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
+            max_expanding_containers = Math.max(localConfig.getNumThreads() / 2, 1);
         }
 
         String appRoot = Configuration.getInstance().appRoot;
