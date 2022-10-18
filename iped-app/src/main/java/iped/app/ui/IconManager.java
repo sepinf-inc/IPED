@@ -450,6 +450,11 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-dictionaryword", icon);
         }
+        
+        icon = availableIconsMap.get("mft");
+        if (icon != null) {
+            mimeIconMap.put("application/x-mft-entry", icon);
+        }
 
         return mimeIconMap;
     }
