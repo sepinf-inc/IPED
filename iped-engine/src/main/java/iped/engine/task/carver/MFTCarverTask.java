@@ -116,64 +116,64 @@ public class MFTCarverTask extends BaseCarveTask {
     }
 
     private void extract(IItem parent, MFTEntry entry, byte[] bytes) throws Exception {
-        File tmpFile = null;
-        SeekableInputStream vis = null;
-        FileOutputStream os = null;
-        InputStream is = null;
-        try {
+        IItem item = parent.createChildItem();
 
-            IItem item = parent.createChildItem();
+        item.setName(entry.getName());
+        item.setPath(parent.getPath() + ">>" + entry.getName());
 
-            item.setName(entry.getName());
-            item.setPath(parent.getPath() + ">>" + entry.getName());
+        item.setDeleted(!entry.isActive());
+        item.setCreationDate(entry.getCreationDate());
+        item.setModificationDate(entry.getLastModificationDate());
+        item.setChangeDate(entry.getLastEntryModificationDate());
+        item.setAccessDate(entry.getLastAccessDate());
+        item.setLength(entry.getLength());
 
-            item.setDeleted(!entry.isActive());
-            item.setCreationDate(entry.getCreationDate());
-            item.setModificationDate(entry.getLastModificationDate());
-            item.setChangeDate(entry.getLastEntryModificationDate());
-            item.setAccessDate(entry.getLastAccessDate());
-            item.setLength(entry.getLength());
+        item.setExtraAttribute(CARVED_ID, 0);
+        item.setSumVolume(false);
+        item.setCarved(true);
 
-            item.setExtraAttribute(CARVED_ID, 0);
-            item.setSumVolume(false);
-            item.setCarved(true);
+        item.getMetadata().add(ExtraProperties.CARVEDBY_METADATA_NAME, getClass().getName());
+        parent.setExtraAttribute(NUM_CARVED, 1);
+        parent.setExtraAttribute(NUM_CARVED_AND_FRAGS, 1);
+        parent.setHasChildren(true);
 
-            item.getMetadata().add(ExtraProperties.CARVEDBY_METADATA_NAME, getClass().getName());
-            parent.setExtraAttribute(NUM_CARVED, 1);
-            parent.setExtraAttribute(NUM_CARVED_AND_FRAGS, 1);
-            parent.setHasChildren(true);
+        if (entry.hasResidentContent()) {
+            byte[] content = entry.getResidentContent(bytes);
+            InputStream is = new ByteArrayInputStream(content);
 
-            if (entry.hasResidentContent()) {
-                byte[] content = entry.getResidentContent(bytes);
-                is = new ByteArrayInputStream(content);
+            ExportFileTask extractor = new ExportFileTask();
+            extractor.setWorker(worker);
+            extractor.extractFile(is, item, parent.getLength());
+        
+            numResidentContent.incrementAndGet();
+            totLengthResidentContent.accumulateAndGet(entry.getLength(), null);
 
-                ExportFileTask extractor = new ExportFileTask();
-                extractor.setWorker(worker);
-                extractor.extractFile(is, item, parent.getLength());
+        } else {
+            IItemReader volume = findVolume(parent);
+            if (volume == null) {
+                return;
+            }
+            Long volumeLen = volume.getLength();
+            if (volumeLen == null) {
+                return;
+            }
 
-                numResidentContent.incrementAndGet();
-            } else {
-                IItemReader volume = findVolume(parent);
-                if (volume == null) {
+            // Check if data runs are inside the volume
+            int cluster = entry.getClusterLength();
+            List<Long> dataruns = entry.getDataruns();
+            for (int i = 0; i < dataruns.size(); i += 2) {
+                long pos = dataruns.get(i) * cluster;
+                long len = dataruns.get(i + 1) * cluster;
+                if (pos + len > volumeLen) {
                     return;
                 }
-                Long volumeLen = volume.getLength();
-                if (volumeLen == null) {
-                    return;
-                }
+            }
 
-                // Check if data runs are inside the volume
-                int cluster = entry.getClusterLength();
-                List<Long> dataruns = entry.getDataruns();
-                for (int i = 0; i < dataruns.size(); i += 2) {
-                    long pos = dataruns.get(i) * cluster;
-                    long len = dataruns.get(i + 1) * cluster;
-                    if (pos + len > volumeLen) {
-                        return;
-                    }
-                }
-
-                // Write data runs to a temporary file
+            // Write data runs to a temporary file
+            File tmpFile = null;
+            SeekableInputStream vis = null;
+            FileOutputStream os = null;
+            try {
                 vis = volume.getSeekableInputStream();
                 tmpFile = Files.createTempFile("mftcarved", ".tmp").toFile();
                 os = new FileOutputStream(tmpFile);
@@ -196,32 +196,30 @@ public class MFTCarverTask extends BaseCarveTask {
                     }
                 }
 
+            } finally {
+                IOUtil.closeQuietly(os);
+                IOUtil.closeQuietly(vis);
+            }
+            InputStream is = null;
+            try {
                 is = new FileInputStream(tmpFile);
                 ExportFileTask extractor = new ExportFileTask();
                 extractor.setWorker(worker);
                 extractor.extractFile(is, item, parent.getLength());
-
-                // if (dataruns.size() == 2) {
-                // A single pair {position, length}, i.e. a continuous (non-fragmented) file
-                // }
-                numNonResidentContent.incrementAndGet();
+            } finally {
+                IOUtil.closeQuietly(is);
             }
+            //TODO: When the temporary file can be deleted?
 
-            numCarvedItems.incrementAndGet();
-            worker.processNewItem(item);
-
-        } catch (Exception e) {
-            throw e;
-        } finally {
-            IOUtil.closeQuietly(os);
-            IOUtil.closeQuietly(vis);
-            try {
-                if (tmpFile != null && tmpFile.exists()) {
-                    tmpFile.delete();
-                }
-            } catch (Exception e) {
-            }
+            // if (dataruns.size() == 2) {
+            // A single pair {position, length}, i.e. a continuous (non-fragmented) file
+            // }
+            numNonResidentContent.incrementAndGet();
+            totLengthNonResidentContent.accumulateAndGet(entry.getLength(), null);
         }
+
+        numCarvedItems.incrementAndGet();
+        worker.processNewItem(item);
     }
 
     private IItemReader findVolume(IItem parent) throws Exception {
