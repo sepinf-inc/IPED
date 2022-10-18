@@ -361,4 +361,8 @@ public class MFTEntry {
     public int getClusterLength() {
         return clusterLength;
     }
+
+    public boolean isFragmented() {
+        return dataruns != null && dataruns.size() > 2;
+    }
 }

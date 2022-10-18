@@ -101,9 +101,8 @@ public class MFTEntryParser extends AbstractParser {
         add(xhtml, Messages.getString("MFTEntryParser.ResidentContent"),
                 entry.hasResidentContent() ? Messages.getString("MFTEntryParser.Yes")
                         : Messages.getString("MFTEntryParser.No"));
-        // TODO: For now, just output raw data runs values
-        if (entry.getDataruns() != null) {
-            add(xhtml, "Dataruns", entry.getDataruns().toString());
+        if (entry.isFragmented()) {
+            add(xhtml, Messages.getString("MFTEntryParser.Fragmented"), Messages.getString("MFTEntryParser.Yes"));
         }
         xhtml.endElement("table");
         xhtml.endDocument();
