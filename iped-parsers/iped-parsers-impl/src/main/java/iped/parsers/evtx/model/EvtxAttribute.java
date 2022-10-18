@@ -58,4 +58,16 @@ public class EvtxAttribute {
 		return name.value;
 	}
 
+	public Object getValue() {
+		return value;
+	}
+
+	public String getValueAsString() {
+		return value.toString();
+	}
+
+	public void setValue(Object value) {
+		this.value = value;
+	}
+
 }

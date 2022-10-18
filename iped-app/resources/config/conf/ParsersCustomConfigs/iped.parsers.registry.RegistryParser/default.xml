@@ -73,7 +73,11 @@
 		<key name="ROOT/ControlSet001/Control/ComputerName/ComputerName"/>
 		<key name="ROOT/ControlSet001/Services/lanmanserver/Shares/Security"/>
 		<key name="ROOT/MountedDevices/*"/>
-		
+
+		<!-- Event Log related -->
+		<key name="ROOT/ControlSet001/Services/EventLog/*/*"/>
+        <key name="ROOT/Microsoft/Windows/CurrentVersion/WINEVT/Publishers/*/*/*"/>
+				
 		<key name="ROOT/Domains/Account/Users/*"/>
 		
 	</registryKeyParser>

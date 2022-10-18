@@ -41,6 +41,7 @@ public class EvtxRecordParser extends AbstractParser {
 	private static final long serialVersionUID = 9091294620647570196L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-elf-file")); //$NON-NLS-1$
 
+    public static final MediaType EVTX_MIME_TYPE = MediaType.application("x-elf-file"); //$NON-NLS-1$
     public static final String EVTX_RECORD_MIME_TYPE = "application/x-elf-record"; //$NON-NLS-1$
     
     HashMap<String, ArrayList<EvtxRecord>> subItens = new HashMap<String, ArrayList<EvtxRecord>>();

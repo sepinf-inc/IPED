@@ -53,8 +53,39 @@ public class EvtxRecord {
 						ArrayList<EvtxElement> al3 = evtxElement2.childElements;
 						for (Iterator iterator3 = al3.iterator(); iterator3.hasNext();) {
 							EvtxElement evtxElement3 = (EvtxElement) iterator3.next();
-							if(evtxElement3.getName().equals("EventID")) {
-								return evtxElement3.children.toString();
+							if(evtxElement3.getName().equals("EventID") && evtxElement3.children.size()>0) {
+								return evtxElement3.children.get(0).toString();
+							}
+						}
+					}					
+				}
+			}
+		}
+		return "";
+	}
+
+	public String getEventProviderName() {
+		ArrayList<EvtxElement> al = binXml.getElements();
+		for (Iterator iterator = al.iterator(); iterator.hasNext();) {
+			EvtxElement evtxElement = (EvtxElement) iterator.next();
+			if(evtxElement.getName().equals("Event")) {
+				ArrayList<EvtxElement> al2 = evtxElement.childElements;
+				for (Iterator iterator2 = al2.iterator(); iterator2.hasNext();) {
+					EvtxElement evtxElement2 = (EvtxElement) iterator2.next();
+					if(evtxElement2.getName().equals("System")) {
+						ArrayList<EvtxElement> al3 = evtxElement2.childElements;
+						for (Iterator iterator3 = al3.iterator(); iterator3.hasNext();) {
+							EvtxElement evtxElement3 = (EvtxElement) iterator3.next();
+							if(evtxElement3.getName().equals("Provider")) {
+								ArrayList<EvtxAttribute> attrs = evtxElement3.getAttributes();
+								if(attrs!=null) {
+									for (Iterator iterator4 = attrs.iterator(); iterator4.hasNext();) {
+										EvtxAttribute evtxAttribute = (EvtxAttribute) iterator4.next();
+										if(evtxAttribute.getName().equals("Name")) {
+											return evtxAttribute.getValueAsString();
+										}
+									}
+								}
 							}
 						}
 					}					
@@ -202,6 +233,22 @@ public class EvtxRecord {
 		}
 		
 		return "";
+	}
+	
+	public EvtxElement getElement(String path) {
+		if(path.startsWith("Event/")) {
+			path = path.substring("Event/".length());
+		}
+		ArrayList<EvtxElement> al = binXml.getElements();
+		for (Iterator iterator = al.iterator(); iterator.hasNext();) {
+			EvtxElement evtxElement = (EvtxElement) iterator.next();
+			if(evtxElement.getName().equals("Event")) {
+				EvtxElement evtxElement2 = getElement(evtxElement, path);
+				return evtxElement2;
+			}
+		}
+		
+		return null;
 	}
 	
 }

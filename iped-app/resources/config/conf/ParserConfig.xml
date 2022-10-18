@@ -31,7 +31,7 @@
         <parser class="org.apache.tika.parser.crypto.Pkcs7Parser"></parser-->
         <parser class="iped.parsers.evtx.EvtxGroupedParser">
             <params>
-                <param name="groupBy" type="string">Event/System/EventID;Event/System/Computer</param>
+                <param name="groupBy" type="string">Event/System/Provider@Name;Event/System/EventID;Event/System/Computer</param>
             </params>
         </parser>
         <parser class="org.apache.tika.parser.crypto.TSDParser"></parser>
@@ -260,7 +260,7 @@
         <parser class="iped.parsers.browsers.safari.SafariPlistParser"></parser>
         
            <parser class="iped.parsers.database.EDBParser"></parser>
-        <parser class="iped.parsers.registry.RegRipperParser"></parser>
+        <parser class="iped.parsers.registry.RegistryParser"></parser>
         <parser class="iped.parsers.browsers.ie.IndexDatParser"></parser>
         <parser class="iped.parsers.compress.PackageParser"></parser>    
         <parser class="iped.parsers.compress.SevenZipParser"></parser>

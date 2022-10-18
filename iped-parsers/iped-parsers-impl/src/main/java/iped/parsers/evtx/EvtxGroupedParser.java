@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.evtx.model.EvtxElement;
 import iped.parsers.evtx.model.EvtxFile;
 import iped.parsers.evtx.model.EvtxRecord;
 import iped.parsers.evtx.model.EvtxRecordConsumer;
@@ -73,6 +74,7 @@ public class EvtxGroupedParser extends AbstractParser {
 
         String filePath = ""; //$NON-NLS-1$
         ItemInfo itemInfo = context.get(ItemInfo.class);
+
         if (itemInfo != null)
             filePath = itemInfo.getPath();
 
@@ -81,9 +83,9 @@ public class EvtxGroupedParser extends AbstractParser {
         if (extractor.shouldParseEmbedded(metadata)) {
             EvtxFile evtxFile = new EvtxFile(tis);
             evtxFile.setName(filePath);
-            
+
             HashMap<String, ArrayList<EvtxRecord>> subItens = new HashMap<String, ArrayList<EvtxRecord>>();
-            
+
             EvtxRecordConsumer co = new EvtxRecordConsumer() {
     			@Override
     			public void accept(EvtxRecord evtxRecord) {
@@ -91,7 +93,13 @@ public class EvtxGroupedParser extends AbstractParser {
         				String groupValue = "";
         				if(groupBy!=null) {
             				for(int i=0; i < groupBy.length; i++) {
-            					groupValue += groupBy[i]+":"+evtxRecord.getElementValue(groupBy[i]);
+            					if(groupBy[i].contains("@")) {
+            						String[] terms = groupBy[i].split("@");
+            						EvtxElement el = evtxRecord.getElement(terms[0]);
+            						groupValue += groupBy[i]+":"+el.getAttributeByName(terms[1]);
+            					}else {
+                					groupValue += groupBy[i]+":"+evtxRecord.getElementValue(groupBy[i]);
+            					}
             					if(i < groupBy.length-1) {
             						groupValue += ";";
             					}
@@ -115,26 +123,27 @@ public class EvtxGroupedParser extends AbstractParser {
 
             try {
             	int totalRecordCount=0;
-            	int pageCount = subItens.size() / 32*1024;
-                for (Iterator<Entry<String,ArrayList<EvtxRecord>>> iterator = subItens.entrySet().iterator(); iterator.hasNext();) {
-                	Entry<String,ArrayList<EvtxRecord>> sub = (Entry<String,ArrayList<EvtxRecord>>) iterator.next();
+                for (Iterator<String> iterator = subItens.keySet().iterator(); iterator.hasNext();) {
+                	String subKey = (String) iterator.next();
 
-                	ArrayList<EvtxRecord> recs = sub.getValue();
+                	ArrayList<EvtxRecord> recs = subItens.get(subKey);
 
                 	Metadata recordMetadata = new Metadata();
                     recordMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, EVTX_RECORD_MIME_TYPE);
                     recordMetadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
-                    String name = sub.getKey();
+                    String name = subKey;
                     recordMetadata.set(TikaCoreProperties.TITLE, name);//eventtype
-                    
+
                     StringBuffer content = new StringBuffer();
                     int groupRecordCount=0;
                     for (Iterator iterator2 = recs.iterator(); iterator2.hasNext();) {
     					EvtxRecord evtxRecord = (EvtxRecord) iterator2.next();
+    					String recContent = evtxRecord.getBinXml().toString();
     	                String date = evtxRecord.getEventDateTime();
-    	                recordMetadata.add("WinEvtID:"+evtxRecord.getEventId(), date);
+
+    	                recordMetadata.add("WinEvt:"+ evtxRecord.getEventProviderName()+":" + evtxRecord.getEventId(), date);
     	                recordMetadata.add(RECID_PROP, (int) evtxRecord.getEventRecordId());
-    	                content.append(evtxRecord.getBinXml().toString());
+    	                content.append(recContent);
 
     	                HashMap<String, String> datas = evtxRecord.getEventData();
     	                if(datas!=null && datas.size()>0) {
@@ -150,7 +159,7 @@ public class EvtxGroupedParser extends AbstractParser {
     	                }
     	                groupRecordCount++;
     				}
-                    
+
                     recordMetadata.set(RECCOUNT_PROP, groupRecordCount);
                     totalRecordCount+=groupRecordCount;
 
@@ -162,19 +171,15 @@ public class EvtxGroupedParser extends AbstractParser {
                         	e.printStackTrace();
                         }
                     }
-                	
     			}
 
                 metadata.set(RECCOUNT_PROP, totalRecordCount);
-                
-            	System.out.println("Evtx File Parsed Successfully:"+filePath);
 
+            	System.out.println("Evtx File Parsed Successfully:"+filePath);
             }catch (Exception e) {
             	System.out.println("Evtx File Parser error:"+filePath);
 				e.printStackTrace();
 			}
-            
         }
-
     }
 }
