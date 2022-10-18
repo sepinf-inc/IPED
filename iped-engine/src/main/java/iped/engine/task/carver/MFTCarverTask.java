@@ -12,8 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.slf4j.Logger;
@@ -45,11 +43,12 @@ public class MFTCarverTask extends BaseCarveTask {
     private static final long maxNonResidentLenToExtract = 1_000_000_000; // TODO: Parameter
     private static final AtomicBoolean init = new AtomicBoolean(false);
     private static final AtomicBoolean finished = new AtomicBoolean(false);
-    private static final AtomicInteger numCarvedItems = new AtomicInteger();
-    private static final AtomicInteger numResidentContent = new AtomicInteger();
-    private static final AtomicInteger numNonResidentContent = new AtomicInteger();
-    private static final AtomicLong totLengthResidentContent = new AtomicLong();
-    private static final AtomicLong totLengthNonResidentContent = new AtomicLong();
+    private static int numCarvedItems;
+    private static int numResidentContent;
+    private static int numNonResidentContent;
+    private static long totLengthResidentContent;
+    private static long totLengthNonResidentContent;
+    private static final Object statsLock = new Object();
     private static final Map<Integer, IItemReader> volumesMap = new HashMap<Integer, IItemReader>();
 
     @Override
@@ -83,11 +82,11 @@ public class MFTCarverTask extends BaseCarveTask {
             if (taskEnabled && !finished.get()) {
                 finished.set(true);
                 DecimalFormat df = new DecimalFormat("#,##0");
-                logger.info("Carved Items: " + df.format(numCarvedItems.get()));
-                logger.info("Resident Content: " + df.format(numResidentContent.get()) + " ("
-                        + df.format(totLengthResidentContent.get()) + " bytes)");
-                logger.info("Non Resident Content: " + df.format(numNonResidentContent.get()) + " ("
-                        + df.format(totLengthNonResidentContent.get()) + " bytes)");
+                logger.info("Carved Items: " + df.format(numCarvedItems));
+                logger.info("Resident Content: " + df.format(numResidentContent) + " ("
+                        + df.format(totLengthResidentContent) + " bytes)");
+                logger.info("Non Resident Content: " + df.format(numNonResidentContent) + " ("
+                        + df.format(totLengthNonResidentContent) + " bytes)");
             }
         }
     }
@@ -144,10 +143,12 @@ public class MFTCarverTask extends BaseCarveTask {
             ExportFileTask extractor = new ExportFileTask();
             extractor.setWorker(worker);
             extractor.extractFile(is, item, parent.getLength());
-        
-            numResidentContent.incrementAndGet();
-            totLengthResidentContent.accumulateAndGet(entry.getLength(), null);
 
+            synchronized (statsLock) {
+                numCarvedItems++;
+                numResidentContent++;
+                totLengthResidentContent += entry.getLength();
+            }
         } else {
             IItemReader volume = findVolume(parent);
             if (volume == null) {
@@ -209,16 +210,18 @@ public class MFTCarverTask extends BaseCarveTask {
             } finally {
                 IOUtil.closeQuietly(is);
             }
-            //TODO: When the temporary file can be deleted?
+            // TODO: When the temporary file can be deleted?
 
             // if (dataruns.size() == 2) {
             // A single pair {position, length}, i.e. a continuous (non-fragmented) file
             // }
-            numNonResidentContent.incrementAndGet();
-            totLengthNonResidentContent.accumulateAndGet(entry.getLength(), null);
+            synchronized (statsLock) {
+                numCarvedItems++;
+                numNonResidentContent++;
+                totLengthNonResidentContent += entry.getLength();
+            }
         }
 
-        numCarvedItems.incrementAndGet();
         worker.processNewItem(item);
     }
 
