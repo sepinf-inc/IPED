@@ -12,8 +12,10 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
     public static final String ENABLE_PARAM = "enableFileParsing";
     private static final String CONF_FILE = "ParsingTaskConfig.txt";
 
+    public static final String NUM_EXTERNAL_PARSERS = "numExternalParsers";
+
     private boolean enableExternalParsing = false;
-    private int numExternalParsers;;
+    private int numExternalParsers;
     private String externalParsingMaxMem = "512";
     private boolean parseCorruptedFiles = true;
     private boolean parseUnknownFiles = true;
@@ -53,7 +55,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
             enableExternalParsing = Boolean.valueOf(value.trim());
         }
 
-        value = properties.getProperty("numExternalParsers"); //$NON-NLS-1$
+        value = properties.getProperty(NUM_EXTERNAL_PARSERS); // $NON-NLS-1$
         if (value != null && !value.trim().equalsIgnoreCase("auto")) { //$NON-NLS-1$
             numExternalParsers = Integer.valueOf(value.trim());
         } else {
@@ -63,7 +65,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
                         + this.getClass().getSimpleName());
             }
             int div = ocrconfig.isOCREnabled() ? 1 : 2;
-            numExternalParsers = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / div);
+            numExternalParsers = Math.max((int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / div), 2);
         }
 
         value = properties.getProperty("externalParsingMaxMem"); //$NON-NLS-1$
