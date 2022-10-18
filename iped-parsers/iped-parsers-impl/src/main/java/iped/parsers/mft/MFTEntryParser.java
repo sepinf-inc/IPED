@@ -98,6 +98,9 @@ public class MFTEntryParser extends AbstractParser {
         } else if (entry.isFolder()) {
             add(xhtml, Messages.getString("MFTEntryParser.Type"), Messages.getString("MFTEntryParser.Folder"));
         }
+        if (entry.getDosAttributes() != null) {
+            add(xhtml, Messages.getString("MFTEntryParser.Attributes"), entry.getDosAttributes());
+        }
         add(xhtml, Messages.getString("MFTEntryParser.ResidentContent"),
                 entry.hasResidentContent() ? Messages.getString("MFTEntryParser.Yes")
                         : Messages.getString("MFTEntryParser.No"));

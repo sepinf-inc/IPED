@@ -14,7 +14,7 @@ public class MFTEntry {
     private long logFileSequenceNumber = -1, baseRecordFileRef = -1, length = -1;
     private int fixUpOffset = -1, fixUpSize = -1, sequence = -1, linkCount = -1, attrOffset = -1, flags = -1,
             firstAttrId = -1, usedSize = -1, totalSize = -1, residentFileStart = -1, clusterLength = -1;
-    private String name;
+    private String name, dosAttributes;
     private Date creationDate, lastModificationDate, lastAccessDate, lastEntryModificationDate;
     private List<Long> dataruns;
 
@@ -64,6 +64,10 @@ public class MFTEntry {
             entry.lastModificationDate = toDate(in, offset + 8);
             entry.lastEntryModificationDate = toDate(in, offset + 16);
             entry.lastAccessDate = toDate(in, offset + 24);
+            int dosAttributes = toInt(in, offset + 32);
+            if (dosAttributes > 0) {
+                entry.dosAttributes = formatDosAttributes(dosAttributes);
+            }
         } else if (attr.getType() == 0x80) {
             // Data
             if (attr.isResident()) {
@@ -321,6 +325,10 @@ public class MFTEntry {
         return name;
     }
 
+    public String getDosAttributes() {
+        return dosAttributes;
+    }
+
     public Date getCreationDate() {
         return creationDate;
     }
@@ -364,5 +372,58 @@ public class MFTEntry {
 
     public boolean isFragmented() {
         return dataruns != null && dataruns.size() > 2;
+    }
+
+    private static String formatDosAttributes(int a) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("0x");
+        sb.append(String.format("%04x", a));
+        sb.append(" (");
+        if ((a & 0x0001) != 0) {
+            sb.append("Read-Only, ");
+        }
+        if ((a & 0x0002) != 0) {
+            sb.append("Hidden, ");
+        }
+        if ((a & 0x0004) != 0) {
+            sb.append("System, ");
+        }
+        if ((a & 0x0020) != 0) {
+            sb.append("Archive, ");
+        }
+        if ((a & 0x0040) != 0) {
+            sb.append("Device, ");
+        }
+        if ((a & 0x0080) != 0) {
+            sb.append("Normal, ");
+        }
+        if ((a & 0x0100) != 0) {
+            sb.append("Temporary, ");
+        }
+        if ((a & 0x0200) != 0) {
+            sb.append("Sparse File, ");
+        }
+        if ((a & 0x0400) != 0) {
+            sb.append("Reparse Point, ");
+        }
+        if ((a & 0x0800) != 0) {
+            sb.append("Compressed, ");
+        }
+        if ((a & 0x1000) != 0) {
+            sb.append("Offline, ");
+        }
+        if ((a & 0x2000) != 0) {
+            sb.append("Not Content Indexed, ");
+        }
+        if ((a & 0x4000) != 0) {
+            sb.append("Encrypted, ");
+        }
+        if (sb.charAt(sb.length() - 1) == '(') {
+            sb.delete(sb.length() - 2, sb.length());
+        } else if (sb.charAt(sb.length() - 1) == ' ') {
+            sb.delete(sb.length() - 1, sb.length());
+            sb.setCharAt(sb.length() - 1, ')');
+        }
+        return sb.toString();
     }
 }
