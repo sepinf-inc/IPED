@@ -22,6 +22,8 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
     public static final String SYS_PROP_APPEND = "iped.appending"; //$NON-NLS-1$
 
+    public static final String NUM_THREADS = "numThreads";
+
     private static final String HASH_DB = "hashesDB";
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
@@ -87,7 +89,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
             ipedTemp.mkdirs();
         }
 
-        value = properties.getProperty("numThreads"); //$NON-NLS-1$
+        value = properties.getProperty(NUM_THREADS); // $NON-NLS-1$
         if (value != null) {
             value = value.trim();
         }
