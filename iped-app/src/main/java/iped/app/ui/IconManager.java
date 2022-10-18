@@ -263,7 +263,6 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-webbookmark", icon);
             mimeIconMap.put("application/x-ufed-visitedpage", icon);
-            mimeIconMap.put("application/x-ufed-webaddress", icon);
             mimeIconMap.put("application/x-safari-history-registry", icon);
             mimeIconMap.put("application/x-safari-history", icon);
             mimeIconMap.put("application/x-safari-sqlite", icon);
@@ -391,11 +390,6 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-filedownload", icon);
         }
 
-        icon = availableIconsMap.get("key-value");
-        if (icon != null) {
-            mimeIconMap.put("application/x-ufed-keyvaluemodel", icon);
-        }
-
         icon = availableIconsMap.get("log");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-logentry", icon);
@@ -407,11 +401,6 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-html-sms", icon);
             mimeIconMap.put("application/x-ufed-sms", icon);
             mimeIconMap.put("application/x-ios-sms-db", icon);
-        }
-
-        icon = availableIconsMap.get("profile");
-        if (icon != null) {
-            mimeIconMap.put("application/x-ufed-profilepicture", icon);
         }
 
         icon = availableIconsMap.get("wireless");
@@ -447,14 +436,19 @@ public class IconManager {
             mimeIconMap.put("video/x-m4v", icon);
         }
 
-        icon = availableIconsMap.get("label");
-        if (icon != null) {
-            mimeIconMap.put("application/x-ufed-messagelabel", icon);
-        }
-
         icon = availableIconsMap.get("journey");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-journey", icon);
+        }
+
+        icon = availableIconsMap.get("power");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-poweringevent", icon);
+        }
+        
+        icon = availableIconsMap.get("dictionary");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-dictionaryword", icon);
         }
 
         return mimeIconMap;
