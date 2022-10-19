@@ -1,3 +1,16 @@
+19/10/2022: IPED-4.0.6
+Fixes:
+#1374: Vulnerability in WhatsAppParser caused by Apache Commons Text 1.8 dependency [affects 3.18.1 to 4.0.5] (@lfcnassif)
+#1379: DBX parser not working [4.0 regression] (@lfcnassif)
+#1358: OutOfMemoryError caused by processing queue growing too much (@lfcnassif)
+#1368: User interface scaling is not working in some environments (@tc-wleite)
+#1357: Any zero sized file rendered as X icon in gallery (@lfcnassif)
+#1387: Unneeded network dependency slowing down application start up (@lfcnassif, @tc-wleite)
+#1381: Sometimes autocomplete (TAB) does not find certain properties (@tc-wleite)
+#1365: Minor UI glitch in similar image search panel (@tc-wleite)
+#471:  Log Console Error (@tc-wleite)
+
+
 04/10/2022: IPED-4.0.5
 Fixes:
 #1350: Several folders and files missed by TSK-4.11.1 when processing an evidence with files owned by IIS default account (@lfcnassif)
