@@ -19,6 +19,10 @@ public class EvtxOptionalSubstitution {
 	public Object getValue() {
 		try {
 			Object o = evtxElement.getTemplateInstance().getValue(template_value_index);
+			if(o instanceof TemplateInstance) {
+				((TemplateInstance) o).getFragment().setTemplateInstance(((TemplateInstance) o));
+				return ((TemplateInstance) o).getFragment().getElement();
+			}
 			return o;
 		}catch(Exception e) {
 			return "Index "+template_value_index+" not found";

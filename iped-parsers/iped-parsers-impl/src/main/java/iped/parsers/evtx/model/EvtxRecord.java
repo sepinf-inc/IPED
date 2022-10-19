@@ -1,16 +1,11 @@
 package iped.parsers.evtx.model;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import iped.parsers.evtx.template.TemplateInstance;
 import iped.utils.DateUtil;
 
 public class EvtxRecord {
@@ -164,10 +159,7 @@ public class EvtxRecord {
 						evtxElement2 = (EvtxElement) o;
 					}
 					if(o instanceof EvtxOptionalSubstitution) {
-						Object ovalue = ((EvtxOptionalSubstitution) o).getValue();
-						if(ovalue instanceof TemplateInstance) {
-							evtxElement2 = ((TemplateInstance)ovalue).getFragment().getElement();
-						}
+						evtxElement2 = (EvtxElement)((EvtxOptionalSubstitution) o).getValue();
 					}
 					if(evtxElement2!=null && evtxElement2.getName().equals("EventData")) {
 						ArrayList<EvtxElement> al3 = evtxElement2.childElements;
