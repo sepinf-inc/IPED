@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -30,10 +31,13 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.evtx.model.EvtxElement;
 import iped.parsers.evtx.model.EvtxFile;
+import iped.parsers.evtx.model.EvtxParseExeption;
 import iped.parsers.evtx.model.EvtxRecord;
 import iped.parsers.evtx.model.EvtxRecordConsumer;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
+import iped.properties.ExtraProperties;
+import iped.utils.EmptyInputStream;
 
 /*
  * Parser that extract event records grouped by EventID  
@@ -61,7 +65,10 @@ public class EvtxGroupedParser extends AbstractParser {
     
     @Field
     public void setGroupBy(String value) {
-        groupBy = value.split(";");
+    	if(value.trim()!="") {
+    		value=";"+value;
+    	}
+        groupBy = ("Event/System/Provider@Name"+value).split(";");//always groups by Provider@Name
     }    
 
     @Override
@@ -84,7 +91,7 @@ public class EvtxGroupedParser extends AbstractParser {
             EvtxFile evtxFile = new EvtxFile(tis);
             evtxFile.setName(filePath);
 
-            HashMap<String, ArrayList<EvtxRecord>> subItens = new HashMap<String, ArrayList<EvtxRecord>>();
+            TreeMap<String, ArrayList<EvtxRecord>> subItens = new TreeMap<String, ArrayList<EvtxRecord>>();
 
             EvtxRecordConsumer co = new EvtxRecordConsumer() {
     			@Override
@@ -123,16 +130,35 @@ public class EvtxGroupedParser extends AbstractParser {
 
             try {
             	int totalRecordCount=0;
+            	String lastProvider = "";
+            	int providerVid = 0;
                 for (Iterator<String> iterator = subItens.keySet().iterator(); iterator.hasNext();) {
                 	String subKey = (String) iterator.next();
 
                 	ArrayList<EvtxRecord> recs = subItens.get(subKey);
+                	String currentProvider = subKey.substring(0,subKey.indexOf(";"));
+                	if(!currentProvider.equals(lastProvider)) {
+                		lastProvider=currentProvider;
+                		Metadata providerMetadata = new Metadata();
+                		providerMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, EVTX_RECORD_MIME_TYPE);
+                		providerMetadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
+                        providerMetadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
+                        providerMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(-1));                        
+                        providerMetadata.set(TikaCoreProperties.TITLE, currentProvider.substring(currentProvider.lastIndexOf(":")+1));//eventtype
+                        providerVid++;
+                        providerMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(providerVid));
+                        if(currentProvider.contains("BTHUSB")) {
+                        	System.out.print(1);
+                        }
+                        extractor.parseEmbedded(new EmptyInputStream(), handler, providerMetadata, false);
+                	}
 
                 	Metadata recordMetadata = new Metadata();
                     recordMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, EVTX_RECORD_MIME_TYPE);
                     recordMetadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
+                    recordMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(providerVid));
                     String name = subKey;
-                    recordMetadata.set(TikaCoreProperties.TITLE, name);//eventtype
+                    recordMetadata.set(TikaCoreProperties.TITLE, name.substring(currentProvider.length()+1));//eventtype
 
                     StringBuffer content = new StringBuffer();
                     int groupRecordCount=0;
@@ -153,6 +179,7 @@ public class EvtxGroupedParser extends AbstractParser {
             						recordMetadata.add(EVTX_METADATA_PREFIX+":"+data.getKey(), data.getValue());
             					}
     	                	}catch(Exception e) {
+    	                		//logs an error but continue
     	                    	System.out.println("Evtx File Parser error:"+filePath);
     	                		e.printStackTrace();
     	                	}
@@ -174,8 +201,6 @@ public class EvtxGroupedParser extends AbstractParser {
     			}
 
                 metadata.set(RECCOUNT_PROP, totalRecordCount);
-
-            	System.out.println("Evtx File Parsed Successfully:"+filePath);
             }catch (Exception e) {
             	System.out.println("Evtx File Parser error:"+filePath);
 				e.printStackTrace();
