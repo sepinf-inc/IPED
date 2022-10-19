@@ -23,6 +23,9 @@ public class EvtxOptionalSubstitution {
 				((TemplateInstance) o).getFragment().setTemplateInstance(((TemplateInstance) o));
 				return ((TemplateInstance) o).getFragment().getElement();
 			}
+			if(o instanceof EvtxXmlFragment) {
+				return ((EvtxXmlFragment) o).getElement();
+			}
 			return o;
 		}catch(Exception e) {
 			return "Index "+template_value_index+" not found";
