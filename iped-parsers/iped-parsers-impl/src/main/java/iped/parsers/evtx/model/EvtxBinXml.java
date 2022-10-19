@@ -4,6 +4,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import iped.parsers.evtx.template.TemplateInstance;
+
 public class EvtxBinXml {
 	private EvtxFile evtxFile;
 	private ByteBuffer bb;
@@ -21,12 +23,23 @@ public class EvtxBinXml {
 		
 		BinXmlToken b = new BinXmlToken(evtxFile, bb); 
 		while(curOffset < 64*1024) {
+			String tstr;
 			switch (b.type & 0xbf) {
 			case BinXmlToken.LIBFWEVT_XML_TOKEN_END_OF_FILE:				
 				return;
 			case BinXmlToken.LIBFWEVT_XML_TOKEN_FRAGMENT_HEADER:
 				EvtxXmlFragment frag = new EvtxXmlFragment(evtxFile, this, bb);
 				fragments.add(frag);
+				break;
+			case BinXmlToken.LIBFWEVT_XML_TOKEN_TEMPLATE_INSTANCE:
+				TemplateInstance templateInstance = new TemplateInstance(evtxFile, bb);
+				tstr=templateInstance.toString();
+				if(tstr.startsWith("<RenderingInfo")) {
+					//rendering info. does not contains adittional data
+				}else {
+					System.out.println("Unexpected token template instance:");
+					System.out.println(tstr);					
+				}
 				break;
 			default:
 				System.out.print("Unexpected token in file:"+evtxFile.getName());
