@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.apache.lucene.util.ArrayUtil;
@@ -71,24 +72,33 @@ public class EvtxFile {
 			
 			boolean available=true;
 			for (int i = 0; available; i++) {
-				try {
-					dis.read(curChunk);
-					EvtxChunk chunk = new EvtxChunk(this, curChunk);
-					chunk.processChunk();
-				}catch (EvtxParseExeption e) {
-					if(!dirty) {
-						e.printStackTrace();
-					}else {						
-						if(i<chunckCount) {
+				int read = dis.read(curChunk);
+				if(read>0) {
+					try {
+						EvtxChunk chunk = new EvtxChunk(this, curChunk);
+						chunk.processChunk();
+					}catch (EvtxParseExeption e) {
+						if(e instanceof EvtxInvalidChunkHeaderException) {
+							if(i<chunckCount) {
+								if(!dirty) {
+									System.out.println("Invalid chunk header found on non dirty evtx file:"+((EvtxInvalidChunkHeaderException)e).getHeader());
+								}else {						
+									System.out.println("Invalid chunk header found before end of chunckcount on evtx file:"+((EvtxInvalidChunkHeaderException)e).getHeader());
+								}
+							}
+							//if the file is dirty ignores parsing with no error because it can be normal to occur
+						}else {
 							e.printStackTrace();
 						}
-						//if the file is dirty ignores parsing with no error because it is normal to occur
+					}finally {
+						if(i>=chunckCount) {
+							available = dis.available()>0;
+						}
+						templateXmls.clear();
 					}
-				}finally {
-					if(i>=chunckCount) {
-						available = dis.available()>0;
-					}
-					templateXmls.clear();
+				}else {
+					//eof
+					available=false;
 				}
 			}
 		}catch(Exception e) {

@@ -25,9 +25,9 @@ public class EvtxChunk {
 
 	public void processChunk() throws EvtxParseExeption {
 		String sig = new String(ArrayUtil.copyOfSubArray(src, 0, 8));
-		
+
 		if(!sig.equals("ElfChnk\0")) {
-			throw new EvtxParseExeption("Invalid Chunk Header Signature");
+			throw new EvtxInvalidChunkHeaderException(sig);
 		}
 
 		ByteBuffer bb = ByteBuffer.wrap(src);
