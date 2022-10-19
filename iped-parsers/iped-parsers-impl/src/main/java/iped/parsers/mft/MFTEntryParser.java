@@ -107,6 +107,13 @@ public class MFTEntryParser extends AbstractParser {
         if (entry.isFragmented()) {
             add(xhtml, Messages.getString("MFTEntryParser.Fragmented"), Messages.getString("MFTEntryParser.Yes"));
         }
+        if (entry.getParentRecordNumber() >= 0) {
+            add(xhtml, Messages.getString("MFTEntryParser.ParentRecordNumber"),
+                    String.valueOf(entry.getParentRecordNumber()));
+        }
+        if (entry.getRecordNumber() >= 0) {
+            add(xhtml, Messages.getString("MFTEntryParser.RecordNumber"), String.valueOf(entry.getRecordNumber()));
+        }
         xhtml.endElement("table");
         xhtml.endDocument();
     }

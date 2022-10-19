@@ -11,7 +11,8 @@ public class MFTEntry {
 
     private static final Charset charset = Charset.forName("UTF-16LE");
 
-    private long logFileSequenceNumber = -1, baseRecordFileRef = -1, length = -1;
+    private long logFileSequenceNumber = -1, baseRecordFileRef = -1, length = -1, recordNumber = -1,
+            parentRecordNumber = -1;
     private int fixUpOffset = -1, fixUpSize = -1, sequence = -1, linkCount = -1, attrOffset = -1, flags = -1,
             firstAttrId = -1, usedSize = -1, totalSize = -1, residentFileStart = -1, clusterLength = -1;
     private String name, dosAttributes;
@@ -57,6 +58,10 @@ public class MFTEntry {
                     } catch (Exception e) {
                     }
                 }
+            }
+            long parent = toLong(in, offset, 6);
+            if (parent > 0 && parent < 1L << 32) {
+                entry.parentRecordNumber = parent;
             }
         } else if (attr.getType() == 0x10) {
             // Standard Attributes (including file dates)
@@ -183,6 +188,9 @@ public class MFTEntry {
         entry.totalSize = toInt(in, 28);
         entry.baseRecordFileRef = toLong(in, 32);
         entry.firstAttrId = toInt2(in, 40);
+        if (entry.fixUpOffset >= 48) {
+            entry.recordNumber = toLong(in, 44, 4);
+        }
         if (entry.fixUpSize == 3 && entry.fixUpOffset >= 42 && entry.fixUpOffset <= 48) {
             int seqNumber = toInt2(in, entry.fixUpOffset);
             if (seqNumber == toInt2(in, 510) && seqNumber == toInt2(in, 1022)) {
@@ -259,6 +267,14 @@ public class MFTEntry {
 
     public long getLength() {
         return length;
+    }
+
+    public long getRecordNumber() {
+        return recordNumber;
+    }
+
+    public long getParentRecordNumber() {
+        return parentRecordNumber;
     }
 
     public int getFixUpOffset() {
