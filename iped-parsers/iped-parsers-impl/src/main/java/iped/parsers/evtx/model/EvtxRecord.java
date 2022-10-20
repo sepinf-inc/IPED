@@ -242,5 +242,36 @@ public class EvtxRecord {
 		
 		return null;
 	}
+
+	public String getEventProviderGUID() {
+		ArrayList<EvtxElement> al = binXml.getElements();
+		for (Iterator iterator = al.iterator(); iterator.hasNext();) {
+			EvtxElement evtxElement = (EvtxElement) iterator.next();
+			if(evtxElement.getName().equals("Event")) {
+				ArrayList<EvtxElement> al2 = evtxElement.childElements;
+				for (Iterator iterator2 = al2.iterator(); iterator2.hasNext();) {
+					EvtxElement evtxElement2 = (EvtxElement) iterator2.next();
+					if(evtxElement2.getName().equals("System")) {
+						ArrayList<EvtxElement> al3 = evtxElement2.childElements;
+						for (Iterator iterator3 = al3.iterator(); iterator3.hasNext();) {
+							EvtxElement evtxElement3 = (EvtxElement) iterator3.next();
+							if(evtxElement3.getName().equals("Provider")) {
+								ArrayList<EvtxAttribute> attrs = evtxElement3.getAttributes();
+								if(attrs!=null) {
+									for (Iterator iterator4 = attrs.iterator(); iterator4.hasNext();) {
+										EvtxAttribute evtxAttribute = (EvtxAttribute) iterator4.next();
+										if(evtxAttribute.getName().toUpperCase().equals("GUID")) {
+											return evtxAttribute.getValueAsString();
+										}
+									}
+								}
+							}
+						}
+					}					
+				}
+			}
+		}
+		return "";
+	}
 	
 }
