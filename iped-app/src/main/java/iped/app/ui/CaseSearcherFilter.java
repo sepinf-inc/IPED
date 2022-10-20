@@ -79,8 +79,12 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     }
 
     public void applyUIQueryFilters() {
+    	applyUIQueryFilters(null);//no exceptions
+    }
+
+    public void applyUIQueryFilters(Set<IQueryFilterer> exceptions) {
         try {
-            searcher.setQuery(getQueryWithUIFilter());
+            searcher.setQuery(getQueryWithUIFilter(exceptions));
 
         } catch (ParseException | QueryNodeException e) {
             JOptionPane.showMessageDialog(App.get(), Messages.getString("UISearcher.Error.Msg") + e.getMessage(), //$NON-NLS-1$
@@ -88,8 +92,8 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
             // e.printStackTrace();
         }
     }
-
-    public Query getQueryWithUIFilter() throws ParseException, QueryNodeException {
+    
+    public Query getQueryWithUIFilter(Set<IQueryFilterer> exceptions) throws ParseException, QueryNodeException {
         Query result;
         numFilters = 0;
         if (queryText != null) {
@@ -147,14 +151,16 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
         for (Iterator<ResultSetViewer> iterator = list.iterator(); iterator.hasNext();) {
 			ResultSetViewer resultSetViewer = iterator.next();
 			if(resultSetViewer instanceof IQueryFilterer) {
-		        Query resultSetViewerQuery = ((IQueryFilterer) resultSetViewer).getQuery();
-		        if (resultSetViewerQuery != null) {
-		            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-		            boolQuery.add(resultSetViewerQuery, Occur.MUST);
-		            boolQuery.add(result, Occur.MUST);
-		            result = boolQuery.build();
-		            numFilters++;
-		        }
+				if(exceptions==null || !exceptions.contains(resultSetViewer)) {
+			        Query resultSetViewerQuery = ((IQueryFilterer) resultSetViewer).getQuery();
+			        if (resultSetViewerQuery != null) {
+			            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+			            boolQuery.add(resultSetViewerQuery, Occur.MUST);
+			            boolQuery.add(result, Occur.MUST);
+			            result = boolQuery.build();
+			            numFilters++;
+			        }
+				}
 			}
 		}        
 

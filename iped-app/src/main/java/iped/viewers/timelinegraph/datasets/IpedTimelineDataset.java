@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,7 @@ import iped.engine.data.ItemId;
 import iped.properties.ExtraProperties;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IMultiSearchResultProvider;
+import iped.viewers.api.IQueryFilterer;
 import iped.viewers.timelinegraph.IpedChartsPanel;
 import iped.viewers.timelinegraph.cache.CacheEventEntry;
 import iped.viewers.timelinegraph.cache.CacheTimePeriodEntry;
@@ -57,6 +59,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
     private static final int CTITEMS_PER_THREAD = 500;
 	IMultiSearchResultProvider resultsProvider;    
     CaseSearchFilterListenerFactory cacheFLFactory;
+	private Set<IQueryFilterer> exceptThis=new HashSet<IQueryFilterer>();
     
     /**
      * A flag that indicates that the domain is 'points in time'.  If this flag
@@ -144,6 +147,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 
 	public IpedTimelineDataset(IpedTimelineDatasetManager ipedTimelineDatasetManager, IMultiSearchResultProvider resultsProvider, CaseSearchFilterListenerFactory cacheFLFactory, String splitValue) throws Exception {
 		this.ipedChartsPanel = ipedTimelineDatasetManager.ipedChartsPanel;
+		exceptThis.add(ipedChartsPanel);
         Args.nullNotPermitted(ipedChartsPanel.getTimeZone(), "zone");
         Args.nullNotPermitted(ipedChartsPanel.getLocale(), "locale");
         this.workingCalendar = Calendar.getInstance(ipedChartsPanel.getTimeZone(), ipedChartsPanel.getLocale());
@@ -358,21 +362,18 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 	public void caseSearchFilterLoad() throws Exception {
 		IMultiSearchResult result;
 		
-		if(splitValue==null || splitValue.equals("Categories")) {
-			result  = resultsProvider.getResults();
-		}else {
-			String queryText="";
-			if(ipedChartsPanel.getChartPanel().getSplitByCategory() && splitValue!=null) {
-				queryText +="category=\""+splitValue+"\"";
-			}
-
-			CaseSearcherFilter csf = new CaseSearcherFilter(queryText);
-			csf.getSearcher().setNoScoring(true);
-			csf.applyUIQueryFilters();
-
-			csf.execute();
-			result  = csf.get();
+		String queryText="";
+		
+		if(ipedChartsPanel.getChartPanel().getSplitByCategory() && splitValue!=null && ! splitValue.equals("Categories")) {
+			queryText +="category=\""+splitValue+"\"";
 		}
+
+		CaseSearcherFilter csf = new CaseSearcherFilter(queryText);
+		csf.getSearcher().setNoScoring(true);
+		csf.applyUIQueryFilters(exceptThis);//apply all filters from others UI objects except the chart defined interval filters
+
+		csf.execute();
+		result  = csf.get();
 
         App app = App.get();
         IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
@@ -568,6 +569,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 			if(visiblePopulSem!=null) {
 				visiblePopulSem.acquire(running);
 				visiblePopulSem.release(running);
+				memoryCacheReloadSem.acquire();
+				memoryCacheReloadSem.release();
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
