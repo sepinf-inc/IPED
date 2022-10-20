@@ -55,7 +55,7 @@ public class EvtxGroupedParser extends AbstractParser {
 	private static final Property RECCOUNT_PROP = Property.internalInteger(EVTX_METADATA_PREFIX+":recordCount");
 	private static final Property RECID_PROP = Property.internalIntegerSequence(EVTX_METADATA_PREFIX+":eventRecordID");
 
-	protected static final int MAX_EVTXRECORD_PER_ITEM = 50;
+	protected int maxEventPerItem = 50;
 	static String timeCreated = EVTX_METADATA_PREFIX+":timeCreated";
     
 	private String[] groupBy;
@@ -66,13 +66,18 @@ public class EvtxGroupedParser extends AbstractParser {
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
     }
-    
+
     @Field
     public void setGroupBy(String value) {
     	if(value.trim()!="") {
     		value=";"+value;
     	}
         groupBy = ("Event/System/Provider@Name"+value).split(";");//always groups by Provider@Name
+    }
+
+    @Field
+    public void setMaxEventPerItem(Integer value) {
+    	this.maxEventPerItem = value;
     }
     
     class ProviderIDMap extends HashMap<String, String>{ 	
@@ -238,7 +243,7 @@ public class EvtxGroupedParser extends AbstractParser {
                         }
                         recs.add(evtxRecord);
                         
-                        if(recs.size()>=MAX_EVTXRECORD_PER_ITEM) {
+                        if(recs.size()>=maxEventPerItem) {
                         	EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(groupValue, recs, context, handler);
                         	ex.run();
                         	subItens.put(groupValue, new ArrayList<>());//empty

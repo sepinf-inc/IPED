@@ -32,6 +32,7 @@
         <parser class="iped.parsers.evtx.EvtxGroupedParser">
             <params>
                 <param name="groupBy" type="string">Event/System/EventID;Event/System/Computer</param>
+                <param name="maxEventPerItem" type="int">100</param>
             </params>
         </parser>
         <parser class="org.apache.tika.parser.crypto.TSDParser"></parser>
