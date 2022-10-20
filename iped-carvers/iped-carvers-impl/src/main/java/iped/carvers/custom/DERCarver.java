@@ -33,6 +33,11 @@ public class DERCarver extends AbstractCarver {
     }
 
     @Override
+    public boolean isSpecificIgnoreCorrupted() {
+        return true;
+    }
+
+    @Override
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             is.seek(header.getOffset() + 1);
