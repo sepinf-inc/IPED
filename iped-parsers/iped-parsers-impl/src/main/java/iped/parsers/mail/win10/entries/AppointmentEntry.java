@@ -3,7 +3,7 @@ package iped.parsers.mail.win10.entries;
 import java.util.Date;
 
 public class AppointmentEntry extends AbstractEntry {
-    private long parentFolderId;
+    private int parentFolderId;
     private String body;
     private String eventName;
     private String location;
@@ -33,11 +33,11 @@ public class AppointmentEntry extends AbstractEntry {
         return this.body;
     }
 
-    public long getParentFolderId() {
+    public int getParentFolderId() {
         return this.parentFolderId;
     }
 
-    public void setParentFolderId(long parentFolderId) {
+    public void setParentFolderId(int parentFolderId) {
         this.parentFolderId = parentFolderId;
     }
 

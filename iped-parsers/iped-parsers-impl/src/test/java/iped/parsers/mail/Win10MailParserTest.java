@@ -50,7 +50,6 @@ public class Win10MailParserTest {
         String fileName = "test_store.vol";
         ItemInfo itemInfo = new ItemInfo(0, "", null, null, fileName, false);
         edgeContext.set(ItemInfo.class, itemInfo);
-        parser.setExtractEntries(true);
 
         try (InputStream stream = getStream("test-files/private_mail_sample/" + fileName)) {
 

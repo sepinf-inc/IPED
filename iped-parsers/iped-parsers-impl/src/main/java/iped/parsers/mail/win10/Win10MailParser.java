@@ -52,12 +52,14 @@ import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.mail.win10.entries.AbstractEntry;
 import iped.parsers.mail.win10.entries.AppointmentEntry;
 import iped.parsers.mail.win10.entries.AttachmentEntry;
+import iped.parsers.mail.win10.entries.ContactEntry;
 import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.mail.win10.entries.MessageEntry;
 import iped.parsers.mail.win10.entries.RecipientEntry;
 import iped.parsers.mail.win10.tables.AbstractTable;
 import iped.parsers.mail.win10.tables.AppointmentTable;
 import iped.parsers.mail.win10.tables.AttachmentTable;
+import iped.parsers.mail.win10.tables.ContactTable;
 import iped.parsers.mail.win10.tables.FolderTable;
 import iped.parsers.mail.win10.tables.MessageTable;
 import iped.parsers.mail.win10.tables.RecipientTable;
@@ -104,6 +106,7 @@ public class Win10MailParser extends AbstractParser {
     public static final MediaType WIN10_MAIL_MSG = MediaType.parse("message/x-win10-mail-msg");
     public static final MediaType WIN10_MAIL_APPT = MediaType.parse("message/x-win10-mail-appt");
     public static final MediaType WIN10_MAIL_ATTACH = MediaType.parse("message/x-win10-mail-attach");
+    public static final MediaType WIN10_MAIL_CONTACT = MediaType.parse("message/x-win10-mail-contact");
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(WIN10_MAIL_DB);
 
     private static final char MESSAGE_CATEGORY = '3';
@@ -223,6 +226,13 @@ public class Win10MailParser extends AbstractParser {
                                         processAppointment(childAppt, folder.getRowId(), path);
                                     }
                                 }
+
+                                ArrayList<ContactEntry> childContacts = ContactTable.getFolderChildContacts(folder.getRowId());
+                                if (!childContacts.isEmpty()) {
+                                    for (ContactEntry childContact : childContacts) {
+                                        processContact(childContact, folder.getRowId(), path);
+                                    }
+                                }
                             }
                         }
 
@@ -335,10 +345,12 @@ public class Win10MailParser extends AbstractParser {
                     table = new RecipientTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
                 } else if (tableNameStr.contains("Attachment")) {
                     table = new AttachmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
-                } else if (tableNameStr.contains("Folder")) {
+                } else if (tableNameStr.contains("Folders")) {
                     table = new FolderTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
                 } else if (tableNameStr.contains("Appointment")) {
                     table = new AppointmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                } else if (tableNameStr.contains("Contact")) {
+                    table = new ContactTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
                 }
 
                 if (table != null) {
@@ -395,24 +407,63 @@ public class Win10MailParser extends AbstractParser {
         Charset charset = Charset.forName("UTF-8");
         StringBuilder preview = new StringBuilder();
 
-        preview.append("All day: " + appointment.getAllDay() + "<br>");
-        preview.append("Event: " + appointment.getEventName() + "<br>");
-        preview.append("Location: " + appointment.getLocation() + "<br>");
-        preview.append("Organizer: " + appointment.getOrganizer() + "<br>");
-        preview.append("Account: " + appointment.getAccount() + "<br>");
-        preview.append("Link: " + "<a href=\"" + appointment.getLink() + "\">" + appointment.getLink() + "</a>" + "<br>");
-        preview.append("Duration: " + appointment.getDurationMin() + " minutes" + "<br>");
-        preview.append("Start Time: " + df.format(appointment.getStartTime()) + "<br>");
-        preview.append("Reminder Time: " + appointment.getReminderTimeMin() + " minutes" + "<br>");
-        preview.append("Repeat: " + appointment.getRepeat() + "<br>");
-        preview.append("Response: " + appointment.getResponse() + "<br>");
-        preview.append("Additional People: " + appointment.getAdditionalPeople() + "<br>");
+        preview.append(htmlPairLine("All day", "" + appointment.getAllDay()));
+        preview.append(htmlPairLine("Event", appointment.getEventName()));
+        preview.append(htmlPairLine("Location", appointment.getLocation()));
+        preview.append(htmlPairLine("Organizer", appointment.getOrganizer()));
+        preview.append(htmlPairLine("Account", appointment.getAccount()));
+        preview.append(htmlPairLine("Link", "<a href=\"" + appointment.getLink() + "\">" + appointment.getLink() + "</a>"));
+        preview.append(htmlPairLine("Duration", appointment.getDurationMin() + " minutes"));
+        preview.append(htmlPairLine("Start Time", df.format(appointment.getStartTime())));
+        preview.append(htmlPairLine("Reminder Time", appointment.getReminderTimeMin() + " minutes"));
+        preview.append(htmlPairLine("Repeat", "" + appointment.getRepeat()));
+        preview.append(htmlPairLine("Response", "" + appointment.getResponse()));
+        preview.append(htmlPairLine("Additional People", appointment.getAdditionalPeople()));
 
         preview.append(body);
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
             if (extractor.shouldParseEmbedded(appointMetadata))
                 extractor.parseEmbedded(stream, xhtml, appointMetadata, true);
         }
+    }
+
+    /** Extract a contact as a subitem
+     * @param contact to be processed
+     * @param parentId used to link to parent folder
+     * @param path
+     * @throws SAXException
+     * @throws IOException
+     */
+    private void processContact(ContactEntry contact, long parentId, String path) throws SAXException, IOException {
+        Metadata contactMetadata = new Metadata();
+
+        contactMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        contactMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, APPT_VIRTUAL_ID_PREFIX + contact.getRowId());
+        contactMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, contact.getDisplayName());
+        contactMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_CONTACT.toString());
+        contactMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
+
+        Charset charset = Charset.forName("UTF-8");
+        StringBuilder preview = new StringBuilder();
+
+        preview.append(htmlPairLine("First Name", contact.getFirstName()));
+        preview.append(htmlPairLine("Last Name", contact.getLastName()));
+        preview.append(htmlPairLine("Email", contact.getEmail()));
+        preview.append(htmlPairLine("Work Email", contact.getEmailWork()));
+        preview.append(htmlPairLine("Phone", contact.getPhone()));
+        preview.append(htmlPairLine("Work Phone", contact.getWorkPhone()));
+        preview.append(htmlPairLine("Address", contact.getAddress()));
+
+        try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
+            if (extractor.shouldParseEmbedded(contactMetadata))
+                extractor.parseEmbedded(stream, xhtml, contactMetadata, true);
+        }
+    }
+
+    private String htmlPairLine(String key, String value) {
+        if (value != null && !value.isEmpty())
+            return key + ": " + value + "<br>";
+        return "";
     }
 
 
