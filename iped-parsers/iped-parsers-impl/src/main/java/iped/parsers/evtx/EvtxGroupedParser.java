@@ -31,7 +31,6 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.evtx.model.EvtxElement;
 import iped.parsers.evtx.model.EvtxFile;
-import iped.parsers.evtx.model.EvtxParseExeption;
 import iped.parsers.evtx.model.EvtxRecord;
 import iped.parsers.evtx.model.EvtxRecordConsumer;
 import iped.parsers.standard.StandardParser;
@@ -50,7 +49,7 @@ public class EvtxGroupedParser extends AbstractParser {
 
     public static final String EVTX_RECORD_MIME_TYPE = "application/x-elf-record"; //$NON-NLS-1$
 
-	private static final String EVTX_METADATA_PREFIX = "WinEvtx";
+	private static final String EVTX_METADATA_PREFIX = "WinEvt";
 
 	private static final Property RECCOUNT_PROP = Property.internalInteger(EVTX_METADATA_PREFIX+":recordCount");
 	private static final Property RECID_PROP = Property.internalIntegerSequence(EVTX_METADATA_PREFIX+":eventRecordID");
@@ -80,14 +79,14 @@ public class EvtxGroupedParser extends AbstractParser {
     	this.maxEventPerItem = value;
     }
     
-    class ProviderIDMap extends HashMap<String, String>{ 	
+    class ProviderIDMap extends HashMap<String, String>{
     }
     
     class GroupPageCountMap extends HashMap<String,Integer>{
     }
     
     class EvtxRecordGroupExtractor{
-    	String subKey;
+		String subKey;
     	ArrayList<EvtxRecord> recs;
     	ParseContext context;
 		private ContentHandler handler;
@@ -100,6 +99,9 @@ public class EvtxGroupedParser extends AbstractParser {
     	}
     	
     	public void run() {
+    		if(recs.size()<=0) {
+    			return;
+    		}
     		try {
     	        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
     	                new ParsingEmbeddedDocumentExtractor(context));
@@ -117,6 +119,7 @@ public class EvtxGroupedParser extends AbstractParser {
     	        
     			String currentProvider = subKey.substring(0,subKey.indexOf(";"));
                 String providerVid = providerIDMap.get(currentProvider);
+            	String providerGUID = recs.get(0).getEventProviderGUID();
                 if(providerVid==null) {
                 	maxProviderId++;
                 	providerVid=Integer.toString(maxProviderId);
@@ -129,6 +132,7 @@ public class EvtxGroupedParser extends AbstractParser {
                     providerMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(-1));                        
                     providerMetadata.set(TikaCoreProperties.TITLE, currentProvider.substring(currentProvider.lastIndexOf(":")+1));//eventtype
                     providerMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, providerVid);
+                    providerMetadata.set(EVTX_METADATA_PREFIX+":ProviderGUID", providerGUID);
                     extractor.parseEmbedded(new EmptyInputStream(), handler, providerMetadata, false);
                 }
                 
@@ -156,8 +160,9 @@ public class EvtxGroupedParser extends AbstractParser {
     				String recContent = evtxRecord.getBinXml().toString();
                     String date = evtxRecord.getEventDateTime();
 
-                    recordMetadata.add("WinEvt:"+ evtxRecord.getEventProviderName()+":" + evtxRecord.getEventId(), date);
+                    recordMetadata.add(EVTX_METADATA_PREFIX+":"+evtxRecord.getEventProviderName()+":" + evtxRecord.getEventId(), date);
                     recordMetadata.add(RECID_PROP, (int) evtxRecord.getEventRecordId());
+                    recordMetadata.add(EVTX_METADATA_PREFIX+":ProviderGUID", providerGUID);
                     content.append(recContent);
 
                     HashMap<String, String> datas = evtxRecord.getEventData();
