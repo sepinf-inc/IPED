@@ -354,7 +354,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         }
 
         context = getTikaContext();
-        if (evidence.getHashValue() != null) {
+        if (evidence.getHashValue() != null && evidence.getLength() != null && evidence.getLength() > 0) {
             try {
                 File thumbFile = getThumbFile(evidence);
                 if (!hasThumb(evidence, thumbFile)) {

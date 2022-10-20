@@ -238,12 +238,17 @@ public class GalleryModel extends AbstractTableModel {
                         }
                     }
 
-                    if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
-                        image = errorImg;
-                        value.icon = unsupportedIcon;
+                    if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
+                        value.unsupportedType = true;
+                        value.icon = IconLoader.FOLDER_ICON;
+
+                    } else if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
+                        value.unsupportedType = true;
+                        String type = doc.get(IndexItem.TYPE);
+                        value.icon = IconLoader.getFileIcon(type);
                     }
 
-                    if (image == null && stream == null && isSupportedImage(mediaType)) {
+                    if (image == null && value.icon == null && stream == null && isSupportedImage(mediaType)) {
                         stream = App.get().appCase.getItemByLuceneID(docId).getBufferedInputStream();
                     }
 
