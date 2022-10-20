@@ -22,7 +22,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -91,8 +90,14 @@ import iped.utils.SimpleHTMLEncoder;
  * |x| extract each instance as subitems in their respective categories
  * |x| create folder hierarchy
  * |x| merge duplicate folders
+ * */
+ /**
+   * Parses Windows Mail App store.vol edb file. Extracts folders, emails, attachments, and appointments from the database.
+   * Searches for additional information (e.g. attachment files and body of the emails) in the case.
+   * Generates a subitem in the case for each table entry.
+   * 
+   * @author Felipe Farias da Costa
  */
-
 public class Win10MailParser extends AbstractParser {
 
     public static final MediaType WIN10_MAIL_DB = MediaType.application("x-win10-mail-db");
@@ -106,7 +111,9 @@ public class Win10MailParser extends AbstractParser {
     private static final char ATTACH_CATEGORY = '7';
     
     private static final String EMAIL_VIRTUAL_ID_PREFIX = "winAppMail-";
-    private static final String FOLDER_VIRTUAL_ID_PREFIX = "folder-";
+    private static final String FOLDER_VIRTUAL_ID_PREFIX = "winAppFolder-";
+    private static final String ATTACH_VIRTUAL_ID_PREFIX = "winAppAttach-";
+    private static final String APPT_VIRTUAL_ID_PREFIX = "winAppAppt-";
 
     private enum FileTag {
         UNICODE("001e"), CONTACT_JPEG_1("00ff"), CONTACT_JPEG_2("00ff"), CONTACT_JPEG_3("01b5"),
@@ -135,18 +142,10 @@ public class Win10MailParser extends AbstractParser {
     private EmbeddedDocumentExtractor extractor;
     private XHTMLContentHandler xhtml;
 
-    protected boolean extractEntries = true;
-
     private ItemInfo itemInfo;
 
     private static IItemSearcher searcher;
     private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("OutlookPSTParser.DateFormat"));
-
-
-    @Field
-    public void setExtractEntries(boolean extractEntries) {
-        this.extractEntries = extractEntries;
-    }
 
     static {
         esedbLibrary = EsedbManager.getEsedbLibrary();
@@ -159,6 +158,7 @@ public class Win10MailParser extends AbstractParser {
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         return SUPPORTED_TYPES;
     }
+
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
@@ -213,14 +213,14 @@ public class Win10MailParser extends AbstractParser {
                                 if (!childEmails.isEmpty()) {
                                     for (MessageEntry childEmail : childEmails) {
                                         childEmail.setContentHtml(getMessageBody(childEmail));
-                                        processEmail(childEmail, path, folder.getRowId());
+                                        processEmail(childEmail, folder.getRowId(), path);
                                     }
                                 }
                                 ArrayList<AppointmentEntry> childAppts = AppointmentTable.getFolderChildAppointments(folder.getRowId());
                                 if (!childAppts.isEmpty()) {
                                     for (AppointmentEntry childAppt : childAppts) {
                                         childAppt.setBody(getAppointmentBody(childAppt));
-                                        processAppointment(childAppt, path, folder.getRowId());
+                                        processAppointment(childAppt, folder.getRowId(), path);
                                     }
                                 }
                             }
@@ -354,6 +354,13 @@ public class Win10MailParser extends AbstractParser {
     }
     
 
+    
+    /** Extract folder preserving hierarchy
+     * @param folder to be processed
+     * @param parentId parent folder id
+     * @throws SAXException
+     * @throws IOException
+     */
     private void processFolder(FolderEntry folder, long parentId) throws SAXException, IOException {
         Metadata entrydata = new Metadata();
         entrydata.set(TikaCoreProperties.TITLE, folder.getDisplayName());
@@ -365,13 +372,21 @@ public class Win10MailParser extends AbstractParser {
         extractor.parseEmbedded(new EmptyInputStream(), xhtml, entrydata, true);
     }
 
-    private void processAppointment(AppointmentEntry appointment, String path, long parentId) throws SAXException, IOException {
+    
+    /** Extract an appointment as a subitem with all information of the event
+     * @param appointment to be processed
+     * @param parentId used to link to parent folder
+     * @param path
+     * @throws SAXException
+     * @throws IOException
+     */
+    private void processAppointment(AppointmentEntry appointment, long parentId, String path) throws SAXException, IOException {
         Metadata appointMetadata = new Metadata();
 
         String body = appointment.getBody();
 
         appointMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-        appointMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, "appointment-" + appointment.getRowId());
+        appointMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, APPT_VIRTUAL_ID_PREFIX + appointment.getRowId());
         appointMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, appointment.getEventName());
         appointMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_APPT.toString());
         appointMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
@@ -400,6 +415,12 @@ public class Win10MailParser extends AbstractParser {
         }
     }
 
+
+    /** Search through the case for a .dat file containing the appointment body 
+     * @param appointment from which the body is requested
+     * @return appointment body
+     * @throws IOException
+     */
     private String getAppointmentBody(AppointmentEntry appointment) throws IOException {
         FileTag[] messageTags = new FileTag[] { FileTag.UNICODE, FileTag.ASCII_PAIRS };
         IItemReader item = null;
@@ -422,7 +443,8 @@ public class Win10MailParser extends AbstractParser {
             is.mark(0);
             ReaderInputStream utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
             apptBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
-            if (contentPath.contains(FileTag.UNICODE + ".dat") && !apptBody.toLowerCase().contains("html")) { // file byte order mark is probably inverted (it happens here)
+            // the BOM of the file seems to be reversed, we do this workaroud for now
+            if (contentPath.contains(FileTag.UNICODE + ".dat") && !apptBody.toLowerCase().contains("html")) {
                 is.reset();
                 utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
                 utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
@@ -436,7 +458,12 @@ public class Win10MailParser extends AbstractParser {
         return apptBody;
     }
 
-
+    
+    /** Search through the case for a .dat file containing the email body, probably in html format
+     * @param email that we want to search for the body 
+     * @return message body
+     * @throws IOException
+     */
     private String getMessageBody(MessageEntry email) throws IOException {
         FileTag[] messageTags = new FileTag[] { FileTag.ASCII, FileTag.MESSAGE_UNICODE };
         IItemReader item = null;
@@ -475,7 +502,14 @@ public class Win10MailParser extends AbstractParser {
         return "";
     }
 
-    private void processEmail(MessageEntry email, String path, long parentId) {
+    
+    /** 
+     * Extracts the email with recipients, attachments and html body. Ready to be previewed
+     * @param email to be processed
+     * @param parentId used to link to parent folder
+     * @param path
+     */
+    private void processEmail(MessageEntry email, long parentId, String path) {
         Metadata emailMetadata = new Metadata();
 
         String subject = email.getSubject();
@@ -598,6 +632,11 @@ public class Win10MailParser extends AbstractParser {
 
     }
 
+    /** Extract attachment with the correct file name, linked to the original .dat attachment file
+     * @param attachment entry to be processed
+     * @param query to link to the original .dat file
+     * @param path
+     */
     private void processAttachment(AttachmentEntry attachment, String query, String path) {
         String parentId = EMAIL_VIRTUAL_ID_PREFIX + attachment.getMessageId();
         String filename = attachment.getFileName();
@@ -608,7 +647,7 @@ public class Win10MailParser extends AbstractParser {
             attachMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, attachment.getFileName());
             attachMetadata.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_ATTACH.toString());
             attachMetadata.set(Metadata.CONTENT_TYPE, attachment.getMimeTag());
-            attachMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, "winAppAttach-" + rowId);
+            attachMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, ATTACH_VIRTUAL_ID_PREFIX + rowId);
             attachMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, parentId);
             attachMetadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
             attachMetadata.set(ExtraProperties.LINKED_ITEMS, query);
@@ -617,12 +656,21 @@ public class Win10MailParser extends AbstractParser {
                 extractor.parseEmbedded(new EmptyInputStream(), xhtml, attachMetadata, true);
 
         } catch (Exception e) {
-            LOGGER.error("Exception extracting attachment '{}': {}\t{}", rowId, filename, e.toString());
+            LOGGER.error("Exception extracting attachment {}>>{}\t{}", path, filename, e.toString());
             // e.printStackTrace();
         }
     }
 
-    public static String getEntryLocation(AbstractEntry entry, char category, FileTag fileTag) {
+    
+    /**
+     * Encodes the file path in the same way microsoft does
+     * in order to generate the file location of the .dat file in the case
+     * @param entry (row) of table
+     * @param category number of entry (message, attachment, etc)
+     * @param fileTag that describes the type of file (unicode, ascii, etc)
+     * @return path of .dat file
+     */
+    private static String getEntryLocation(AbstractEntry entry, char category, FileTag fileTag) {
         StringBuilder entryPath = new StringBuilder();
 
         String hexRowId = Integer.toHexString(entry.getRowId());
@@ -641,6 +689,13 @@ public class Win10MailParser extends AbstractParser {
         return entryPath.toString();
     }
 
+    
+    /** 
+     * Tries to find file from path and size, if doesn't succeed tries without the size parameters
+     * @param path
+     * @param size
+     * @return ImmutablePair<IItemReader, String> of (Item, QueryUsed)
+     */
     public static ImmutablePair<IItemReader, String> searchItemInCase(String path, long size) {
         if (searcher == null) {
             return null;
@@ -661,13 +716,14 @@ public class Win10MailParser extends AbstractParser {
         return new ImmutablePair<>(items.get(0), query);
     }
 
+
     private void closeTablePointer(PointerByReference tablePointer) {
         PointerByReference errorPointer = new PointerByReference();
         int result = esedbLibrary.libesedb_table_free(tablePointer, errorPointer);
         if (result < 0)
             EsedbManager.printError("Table Free", result, itemInfo.getPath(), errorPointer);
     }
-
+    
     private void closeFilePointer(PointerByReference filePointerReference) {
         PointerByReference errorPointer = new PointerByReference();
         int result = esedbLibrary.libesedb_file_close(filePointerReference.getValue(), errorPointer);
