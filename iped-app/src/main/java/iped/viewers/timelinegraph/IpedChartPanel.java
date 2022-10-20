@@ -419,6 +419,11 @@ public class IpedChartPanel extends ChartPanel implements KeyListener{
 	}
 
 	@Override
+	public void restoreAutoBounds() {
+		//skips, avoiding mouse command implemented on parent class
+	}
+
+	@Override
 	public void mouseReleased(MouseEvent e) {
 		int mods = e.getModifiersEx();
 		zoomingStart=false;
