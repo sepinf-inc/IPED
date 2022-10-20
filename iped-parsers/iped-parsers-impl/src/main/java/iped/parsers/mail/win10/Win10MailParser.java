@@ -188,7 +188,6 @@ public class Win10MailParser extends AbstractParser {
                     File tableFile = tmp.createTemporaryFile();
 
                     try (FileOutputStream tmpTableFile = new FileOutputStream(tableFile)) {
-
                         ToXMLContentHandler tableHandler = new ToXMLContentHandler(tmpTableFile, "UTF-8");
                         Metadata tableMetadata = new Metadata();
                         tableMetadata.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_DB.toString());
@@ -231,7 +230,6 @@ public class Win10MailParser extends AbstractParser {
                         //     extractor.parseEmbedded(fis, handler, tableMetadata, true);
                         // }
                     }
-                    
                     closeTablePointer(table.getTablePointer());
                 }
                 closeFilePointer(filePointerReference);
@@ -330,34 +328,22 @@ public class Win10MailParser extends AbstractParser {
 
                 numRecords = numberOfRecords.getValue();
 
+                AbstractTable table = null;
                 if (tableNameStr.contains("Message")) {
-                    MessageTable msgTable = new MessageTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
-                    msgTable.populateTable(esedbLibrary);
-                    tables.add(msgTable);
+                    table = new MessageTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                } else if (tableNameStr.contains("Recipient")) {
+                    table = new RecipientTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                } else if (tableNameStr.contains("Attachment")) {
+                    table = new AttachmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                } else if (tableNameStr.contains("Folder")) {
+                    table = new FolderTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                } else if (tableNameStr.contains("Appointment")) {
+                    table = new AppointmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
                 }
 
-                if (tableNameStr.contains("Recipient")) {
-                    RecipientTable recipientTable = new RecipientTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
-                    recipientTable.populateTable(esedbLibrary);
-                    tables.add(recipientTable);
-                }
-                
-                if (tableNameStr.contains("Attachment")) {
-                    AttachmentTable attachmentTable = new AttachmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
-                    attachmentTable.populateTable(esedbLibrary);
-                    tables.add(attachmentTable);
-                }
-                
-                if (tableNameStr.contains("Folders")) {
-                    FolderTable folderTable = new FolderTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
-                    folderTable.populateTable(esedbLibrary);
-                    tables.add(folderTable);
-                }
-                
-                if (tableNameStr.contains("Appointment")) {
-                    AppointmentTable appointmentTable = new AppointmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
-                    appointmentTable.populateTable(esedbLibrary);
-                    tables.add(appointmentTable);
+                if (table != null) {
+                    table.populateTable(esedbLibrary);
+                    tables.add(table);
                 }
             }
 
