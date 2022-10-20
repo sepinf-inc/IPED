@@ -9,7 +9,7 @@ import iped.parsers.mail.win10.tables.FolderTable;
 import iped.parsers.mail.win10.tables.MessageTable;
 
 public class FolderEntry extends AbstractEntry {
-    private long parentFolderID;
+    private int parentFolderID;
     private String displayName;
     private Date createTime;
 
@@ -17,11 +17,11 @@ public class FolderEntry extends AbstractEntry {
         super(rowId);
     }
 
-    public long getParentFolderId() {
+    public int getParentFolderId() {
         return this.parentFolderID;
     }
 
-    public void setParentFolderID(long parentFolderID) {
+    public void setParentFolderID(int parentFolderID) {
         this.parentFolderID = parentFolderID;
     }
 

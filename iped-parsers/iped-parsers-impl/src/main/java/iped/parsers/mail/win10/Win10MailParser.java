@@ -74,8 +74,6 @@ import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
 import iped.utils.SimpleHTMLEncoder;
 
-// attachment files are duplicated for now (first parsed in the first round, then here with the correct metadata)
-
 /*
  * Important tables to parse from store.vol:
  *  Message, Contact, Appointment, Attachment, Recipient, Folders, Store
@@ -90,8 +88,9 @@ import iped.utils.SimpleHTMLEncoder;
  * checkboxes:
  * |x| extract properties from store.vol into lists of new objects (representing the important tables)
  * |x| search for the matching .dat files and add more properties to the objects
- * | | extract each instance as subitems in their respective categories
- * |-| create folder hierarchy
+ * |x| extract each instance as subitems in their respective categories
+ * |x| create folder hierarchy
+ * |x| merge duplicate folders
  */
 
 public class Win10MailParser extends AbstractParser {
@@ -143,6 +142,7 @@ public class Win10MailParser extends AbstractParser {
     private static IItemSearcher searcher;
     private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("OutlookPSTParser.DateFormat"));
 
+
     @Field
     public void setExtractEntries(boolean extractEntries) {
         this.extractEntries = extractEntries;
@@ -181,9 +181,7 @@ public class Win10MailParser extends AbstractParser {
                 storeVolFile = storeVolTis.getFile();
 
                 String storeVolPath = storeVolFile.getAbsolutePath();
-
                 PointerByReference filePointerReference = new PointerByReference();
-
                 List<AbstractTable> tables = getMailTables(storeVolPath, filePointerReference);
 
                 for (AbstractTable table : tables) {
@@ -207,7 +205,11 @@ public class Win10MailParser extends AbstractParser {
 
                             String path = "";
                             for (FolderEntry folder : folderTable.getFolders()) {
-                                processFolder(folder, folder.getParentFolderId());
+                                // process folder considering the unique parent folder, since it may be duplicate
+                                FolderEntry uniqueParentFolder = FolderTable.uniqueFoldersMap.get(folder.getParentFolderId());
+                                int parentFolderId = uniqueParentFolder != null ? uniqueParentFolder.getRowId() : folder.getParentFolderId();
+                                processFolder(folder, parentFolderId);
+
                                 ArrayList<MessageEntry> childEmails = MessageTable.getFolderChildMessages(folder.getRowId());
                                 if (!childEmails.isEmpty()) {
                                     for (MessageEntry childEmail : childEmails) {
@@ -419,8 +421,8 @@ public class Win10MailParser extends AbstractParser {
         String contentPath = "";
 
         for (FileTag messageTag : messageTags) {
-            contentPath = Win10MailParser.getEntryLocation(appointment, APPOINTMENT_CATEGORY, messageTag);
-            Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, 0);
+            contentPath = getEntryLocation(appointment, APPOINTMENT_CATEGORY, messageTag);
+            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, 0);
             if (itemQueryPair.getLeft() != null) {
                 item = itemQueryPair.getLeft();
                 break;
@@ -453,8 +455,8 @@ public class Win10MailParser extends AbstractParser {
         FileTag[] messageTags = new FileTag[] { FileTag.ASCII, FileTag.MESSAGE_UNICODE };
         IItemReader item = null;
         for (FileTag messageTag : messageTags) {
-            String contentPath = Win10MailParser.getEntryLocation(email, MESSAGE_CATEGORY, messageTag);
-            Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, email.getMessageSize());
+            String contentPath = getEntryLocation(email, MESSAGE_CATEGORY, messageTag);
+            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, email.getMessageSize());
             if (itemQueryPair != null) {
                 item = itemQueryPair.getLeft();
                 break;
@@ -599,8 +601,8 @@ public class Win10MailParser extends AbstractParser {
 
         String successfulQuery = null;
         for (AttachmentEntry attach : email.getAttachments()) {
-            String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
-            Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, attach.getAttachSize());
+            String contentPath = getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
+            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, attach.getAttachSize());
             if (itemQueryPair != null) {
                 successfulQuery = itemQueryPair.getRight();
                 emailMetadata.add(ExtraProperties.LINKED_ITEMS, successfulQuery);

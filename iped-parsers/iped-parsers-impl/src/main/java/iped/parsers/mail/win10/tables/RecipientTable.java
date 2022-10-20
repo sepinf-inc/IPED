@@ -14,7 +14,7 @@ import iped.parsers.util.EsedbManager;
 
 public class RecipientTable extends AbstractTable {
 
-    private static Map<Long, ArrayList<RecipientEntry>> recipients = new HashMap<>();
+    private static Map<Long, ArrayList<RecipientEntry>> parentMsgToRecipientsMap = new HashMap<>();
 
     public RecipientTable(String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
@@ -27,7 +27,7 @@ public class RecipientTable extends AbstractTable {
     }
 
     public static void addRecipient(Long messageId, RecipientEntry recipient) {
-        recipients.computeIfAbsent(messageId, k -> new ArrayList<RecipientEntry>()).add(recipient);
+        parentMsgToRecipientsMap.computeIfAbsent(messageId, k -> new ArrayList<RecipientEntry>()).add(recipient);
     }
 
     @Override
@@ -39,7 +39,7 @@ public class RecipientTable extends AbstractTable {
     }
 
     public static ArrayList<RecipientEntry> getMessageRecipients(long messageId) {
-        return recipients.get(messageId);
+        return parentMsgToRecipientsMap.get(messageId);
     }
 
     private RecipientEntry getRecipient(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {

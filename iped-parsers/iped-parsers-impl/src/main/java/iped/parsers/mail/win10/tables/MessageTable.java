@@ -1,7 +1,6 @@
 package iped.parsers.mail.win10.tables;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +16,7 @@ import iped.parsers.util.EsedbManager;
 public class MessageTable extends AbstractTable {
 
     private List<MessageEntry> messages = new ArrayList<>();
-    private static Map<Long, ArrayList<MessageEntry>> folderToMsgsMap = new HashMap<>();
+    private static Map<Integer, ArrayList<MessageEntry>> folderToMsgsMap = new HashMap<>();
 
     public MessageTable(String filePath, String tableName, PointerByReference tablePointer,
             PointerByReference errorPointer, long numRecords) {
@@ -34,7 +33,8 @@ public class MessageTable extends AbstractTable {
         for (int i = 0; i < numRecords; i++) {
             MessageEntry message = getMessage(esedbLibrary, i, errorPointer, tablePointer);
             messages.add(message);
-            addFolderMessages(message);
+            int uniqueMsgParentFolderId = FolderTable.uniqueFoldersMap.get(message.getParentFolderId()).getRowId();
+            addMessageToParentFolder(message, uniqueMsgParentFolderId);
         }
     }
 
@@ -42,12 +42,12 @@ public class MessageTable extends AbstractTable {
         return messages;
     }
 
-    public static void addFolderMessages(MessageEntry message) {
-        ArrayList<MessageEntry> folderMsgs = folderToMsgsMap.computeIfAbsent(message.getParentFolderId(), k -> new ArrayList<MessageEntry>());
+    public static void addMessageToParentFolder(MessageEntry message, int parentId) {
+        ArrayList<MessageEntry> folderMsgs = folderToMsgsMap.computeIfAbsent(parentId, k -> new ArrayList<MessageEntry>());
         folderMsgs.add(message);
     }
 
-    public static ArrayList<MessageEntry> getFolderChildMessages(long parentFolderId) {
+    public static ArrayList<MessageEntry> getFolderChildMessages(int parentFolderId) {
         ArrayList<MessageEntry> childMessages = folderToMsgsMap.get(parentFolderId);
         
         if (childMessages == null) {
@@ -76,8 +76,8 @@ public class MessageTable extends AbstractTable {
             EsedbManager.printError("Record Get Number of Values", result, filePath, errorPointer);
 
         int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
+        int parentFolderId = EsedbManager.getInt32Value(esedbLibrary, 75, recordPointerReference, filePath, errorPointer);
         long conversationId = EsedbManager.getInt32Value(esedbLibrary, 21, recordPointerReference, filePath, errorPointer);
-        long parentFolderId = EsedbManager.getInt32Value(esedbLibrary, 75, recordPointerReference, filePath, errorPointer);
         long messageSize = EsedbManager.getInt32Value(esedbLibrary, 58, recordPointerReference, filePath, errorPointer);
         int noOfAttachments = EsedbManager.getInt16Value(esedbLibrary, 34, recordPointerReference, filePath, errorPointer);
         String msgAbstract = EsedbManager.getUnicodeValue(esedbLibrary, 142, recordPointerReference, filePath, errorPointer);

@@ -9,7 +9,6 @@ import com.sun.jna.ptr.PointerByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.mail.win10.entries.AttachmentEntry;
-import iped.parsers.mail.win10.entries.MessageEntry;
 import iped.parsers.util.EsedbManager;
 
 public class AttachmentTable extends AbstractTable {

@@ -3,7 +3,9 @@ package iped.parsers.mail.win10.tables;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
@@ -14,8 +16,13 @@ import iped.parsers.util.EsedbManager;
 
 public class FolderTable extends AbstractTable {
 
-    private static ArrayList<FolderEntry> folderList = new ArrayList<>();
-    private static Map<Long, ArrayList<FolderEntry>> parentFolderToSubfoldersMap = new HashMap<>();
+    // multiple ids may point to the same folder
+    public static Map<Integer, FolderEntry> uniqueFoldersMap = new HashMap<>();
+
+    private static Map<Integer, ArrayList<FolderEntry>> parentFolderToSubfoldersMap = new HashMap<>();
+    // auxiliary hashmaps for handling duplicate folders
+    private static Map<String, FolderEntry> nameFolderMap = new HashMap<>();
+    private static Map<Integer, FolderEntry> idFolderMap = new HashMap<>();
 
     public FolderTable(String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
@@ -31,16 +38,31 @@ public class FolderTable extends AbstractTable {
     public void populateTable(EsedbLibrary esedbLibrary) {
         for (int i = 0; i < numRecords; i++) {
             FolderEntry folderEntry = getFolder(esedbLibrary, i, errorPointer, tablePointer);
-            folderList.add(folderEntry);
-            addSubfolder(folderEntry);
+            idFolderMap.put(folderEntry.getRowId(), folderEntry);
+
+            // Some folders are the same but have different ids, we don't add duplicates do uniqueFolders
+            FolderEntry sameNameFolder = nameFolderMap.get(folderEntry.getDisplayName());
+            boolean duplicate = false;
+            if (sameNameFolder == null) {   // no duplicates
+                nameFolderMap.put(folderEntry.getDisplayName(), folderEntry);
+                uniqueFoldersMap.put(folderEntry.getRowId(), folderEntry);
+            } else
+                duplicate = areFoldersTheSame(folderEntry, sameNameFolder);
+
+            if (duplicate == true) {
+                uniqueFoldersMap.put(folderEntry.getRowId(), sameNameFolder);
+            } else {
+                addToParentSubfolder(folderEntry);
+            }
         }
     }
 
     public ArrayList<FolderEntry> getFolders() {
-        return folderList;
+        Set<FolderEntry> uniqueFoldersSet = new LinkedHashSet<FolderEntry>(uniqueFoldersMap.values());
+        return new ArrayList<FolderEntry>(uniqueFoldersSet);
     }
 
-    public static void addSubfolder(FolderEntry subfolder) {
+    public static void addToParentSubfolder(FolderEntry subfolder) {
         ArrayList<FolderEntry> parentFolderSubfolders = parentFolderToSubfoldersMap
             .computeIfAbsent(subfolder.getParentFolderId(), k -> new ArrayList<FolderEntry>());
 
@@ -50,7 +72,7 @@ public class FolderTable extends AbstractTable {
         }
     }
 
-    public static ArrayList<FolderEntry> getSubfolders(long parentFolderId) {
+    public static ArrayList<FolderEntry> getSubfolders(int parentFolderId) {
         ArrayList<FolderEntry> subfolders = parentFolderToSubfoldersMap.get(parentFolderId);
         if (subfolders == null) {
             return new ArrayList<FolderEntry>();
@@ -78,7 +100,7 @@ public class FolderTable extends AbstractTable {
 
         int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
         String displayName = EsedbManager.getUnicodeValue(esedbLibrary, 34, recordPointerReference, filePath, errorPointer);
-        long parentFolderId = EsedbManager.getInt32Value(esedbLibrary, 2, recordPointerReference, filePath, errorPointer);
+        int parentFolderId = EsedbManager.getInt32Value(esedbLibrary, 2, recordPointerReference, filePath, errorPointer);
         Date createTime = EsedbManager.getFileTime(esedbLibrary, 37, recordPointerReference, filePath, errorPointer);
 
         result = esedbLibrary.libesedb_record_free(recordPointerReference, errorPointer);
@@ -91,5 +113,26 @@ public class FolderTable extends AbstractTable {
         folder.setParentFolderID(parentFolderId);
 
         return folder;
+    }
+
+    private boolean areFoldersTheSame(FolderEntry folder1, FolderEntry folder2) {
+        boolean duplicate = true;
+        FolderEntry parentFolder1 = idFolderMap.get(folder1.getParentFolderId());
+        FolderEntry parentFolder2 = idFolderMap.get(folder2.getParentFolderId());
+        while (true) {
+            if (parentFolder1 == null && parentFolder2 == null) break;
+            if (parentFolder1 == null || parentFolder2 == null) {
+                duplicate = false;
+                break;
+            }
+            if (parentFolder1.getDisplayName().equals(parentFolder2.getDisplayName())) {
+                parentFolder1 = idFolderMap.get(parentFolder1.getParentFolderId()); // parent of parent1
+                parentFolder2 = idFolderMap.get(parentFolder2.getParentFolderId());
+            } else {
+                duplicate = false;
+                break;
+            }
+        }
+        return duplicate;
     }
 }

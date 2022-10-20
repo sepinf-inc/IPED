@@ -10,7 +10,7 @@ import iped.parsers.mail.win10.tables.RecipientTable;
 
 public class MessageEntry extends AbstractEntry {
     private long conversationId;
-    private long parentFolderId;
+    private int parentFolderId;
     private long messageSize;
     private int noOfAttachments;
     private String msgAbstract;
@@ -35,11 +35,11 @@ public class MessageEntry extends AbstractEntry {
         this.conversationId = conversationId;
     }
 
-    public long getParentFolderId() {
+    public int getParentFolderId() {
         return this.parentFolderId;
     }
 
-    public void setParentFolderId(long parentFolderId) {
+    public void setParentFolderId(int parentFolderId) {
         this.parentFolderId = parentFolderId;
     }
 
