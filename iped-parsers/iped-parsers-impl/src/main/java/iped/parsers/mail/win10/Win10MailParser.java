@@ -636,12 +636,17 @@ public class Win10MailParser extends AbstractParser {
 
             // Attachments:
             if (email.getNoOfAttachments() > 0) {
-                List<String> attachNames = email.getAttachments().stream().map(attach -> attach.getFileName()).collect(Collectors.toList());
-                if (!attachNames.isEmpty()) {
-                    preview.append("<b>" + Messages.getString("OutlookPSTParser.Attachments") + " (" + attachNames.size()
-                            + "):</b><br>");
-                    for (String attach : attachNames) {
-                        preview.append(SimpleHTMLEncoder.htmlEncode(attach) + "<br>");
+                preview.append("<b>" + Messages.getString("OutlookPSTParser.Attachments") + " (" + email.getNoOfAttachments()
+                + "):</b><br>");
+                for (AttachmentEntry attach : email.getAttachments()) {
+                    String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
+                    Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, attach.getAttachSize());
+                    if (itemQueryPair.getRight() != null) {
+                        String successfulQuery = itemQueryPair.getRight();
+                        attach.setCaseQuery(successfulQuery);
+                        preview.append("<a href=\"\" onclick=app.open('" + attach.getCaseQuery() + "')>" + attach.getFileName() + "</a><br>");
+                    } else {
+                        preview.append(SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + "<br>");
                     }
                 }
                 emailMetadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, email.getNoOfAttachments());
@@ -700,7 +705,7 @@ public class Win10MailParser extends AbstractParser {
             attachMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, ATTACH_VIRTUAL_ID_PREFIX + rowId);
             attachMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, parentId);
             attachMetadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
-            attachMetadata.set(ExtraProperties.LINKED_ITEMS, query);
+            attachMetadata.set(ExtraProperties.LINKED_ITEMS, attachment.getCaseQuery());
 
             if (extractor.shouldParseEmbedded(attachMetadata))
                 extractor.parseEmbedded(new EmptyInputStream(), xhtml, attachMetadata, true);

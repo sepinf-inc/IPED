@@ -7,6 +7,7 @@ public class AttachmentEntry extends AbstractEntry {
     private String fileName;
 	private String mimeTag;
     private Boolean received;
+	private String caseQuery;
 
     public AttachmentEntry(int rowId) {
 		super(rowId);
@@ -67,4 +68,13 @@ public class AttachmentEntry extends AbstractEntry {
     public Boolean isReceived() {
         return this.received;
     }
+
+	public String getCaseQuery() {
+		return this.caseQuery;
+	}
+
+	public void setCaseQuery(String caseQuery) {
+		this.caseQuery = caseQuery;
+	}
+
 }
