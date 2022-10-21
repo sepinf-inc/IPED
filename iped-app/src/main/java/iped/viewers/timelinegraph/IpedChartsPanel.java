@@ -510,6 +510,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 					}catch(Exception e) {
 						e.printStackTrace();
 					}finally {
+						resultSemaphore.release();
 					}
 				}
 			};
@@ -644,7 +645,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 				
 			}
             
-            domainAxis.guaranteeShowRange(min,max);
+            domainAxis.garanteeShowRange(min,max);
     	}catch(Exception e1) {
     		e1.printStackTrace();
     	}
