@@ -297,6 +297,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                     numFilters++;
                     //LOGGER.info("Metadata panel filtering took {}ms", (System.currentTimeMillis() - t));
                 }
+                
 
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -311,6 +312,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
         		caseSearchFilterListener.onDone();
     		}
         	result.setIpedSearcher(searcher);
+        	result.setIPEDSource(ipedCase);
 
             return result;
         }
