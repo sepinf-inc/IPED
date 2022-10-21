@@ -327,6 +327,7 @@ public class Statistics {
 
         RuntimeMXBean bean = ManagementFactory.getRuntimeMXBean();
         for (String arg : bean.getInputArguments()) {
+            arg = arg.replace("\r", "\\r").replace("\n", "\\n");
             LOGGER.info("JVM Argument: {}", arg);
         }
 
