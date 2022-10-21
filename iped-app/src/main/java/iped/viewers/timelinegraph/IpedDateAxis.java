@@ -378,7 +378,7 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
             for (Iterator<XYPlot> iterator = plots.iterator(); iterator.hasNext();) {
     			XYPlot plot =  iterator.next();
     			XYDataset ds = plot.getDataset();
-    	        if(ds instanceof AsynchronousDataset) {
+    	        if(ds instanceof AsynchronousDataset && notify) {
     	        	((AsynchronousDataset) ds).notifyVisibleRange(range.getLowerBound(), range.getUpperBound());
     	        }
     		}

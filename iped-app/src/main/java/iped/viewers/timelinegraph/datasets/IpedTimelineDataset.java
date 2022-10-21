@@ -361,9 +361,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 	
 	public void caseSearchFilterLoad() throws Exception {
 		IMultiSearchResult result;
-		
+
 		String queryText="";
-		
+
 		if(ipedChartsPanel.getChartPanel().getSplitByCategory() && splitValue!=null && ! splitValue.equals("Categories")) {
 			queryText +="category=\""+splitValue+"\"";
 		}
@@ -389,7 +389,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 
 		        Semaphore addValueSem = new Semaphore(1);
 
-				List<CacheTimePeriodEntry> visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
+				List<CacheTimePeriodEntry> visibleIntervalCache;
 				LinkedList<CacheTimePeriodEntry> beforecache = new LinkedList<CacheTimePeriodEntry>();
 				List<CacheTimePeriodEntry> aftercache = new ArrayList<CacheTimePeriodEntry>();
 
@@ -400,7 +400,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 				long visibleRangeLength = endDate.getTime()-startDate.getTime();
 				if(startDate.getTime()==0 && endDate.getTime()==1) {
 					visibleIntervalCache=newcache;
+					memoryWindowCache=newcache;
 				}else {
+					visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
 					startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
 					endDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime()-1);
 					for(CacheTimePeriodEntry ctpe:newcache) {
