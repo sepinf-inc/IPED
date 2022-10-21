@@ -10,7 +10,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.JOptionPane;
@@ -20,14 +19,18 @@ import org.apache.lucene.index.IndexReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.configuration.Configurable;
 import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.EnableTaskProperty;
 import iped.engine.config.ExportByCategoriesConfig;
 import iped.engine.config.ExportByKeywordsConfig;
 import iped.engine.config.LocalConfig;
+import iped.engine.config.LocaleConfig;
+import iped.engine.config.PluginConfig;
 import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
 import iped.engine.task.ExportFileTask;
@@ -331,14 +334,24 @@ public class Statistics {
             LOGGER.info("JVM Argument: {}", arg);
         }
 
-        LOGGER.info("Java Command: {}", System.getProperty("sun.java.command"));
-
-        StringBuilder options = new StringBuilder();
-        options.append("Config Options: "); //$NON-NLS-1$
-        for (Entry<Object, Object> entry : Configuration.getInstance().properties.entrySet()) {
-            options.append(entry.getKey() + "=" + entry.getValue() + " | "); //$NON-NLS-1$ //$NON-NLS-2$
+        EnableTaskProperty enabledTasks = null;
+        for (Configurable<?> config : ConfigurationManager.get().getObjects()) {
+            if (config instanceof LocaleConfig || config instanceof PluginConfig) {
+                // params already present in LocalConfig
+                continue;
+            }
+            if (config instanceof EnableTaskProperty) {
+                enabledTasks = (EnableTaskProperty) config;
+                continue;
+            }
+            String configString = config.getConfiguration().toString().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ');
+            LOGGER.info(config.getClass().getSimpleName() + ": " + configString);
         }
-        LOGGER.info(options.toString());
+
+        String configString = enabledTasks.getConfiguration().toString();
+        LOGGER.info(Configuration.CONFIG_FILE + ": " + configString);
+
+        LOGGER.info("Java Command: {}", System.getProperty("sun.java.command"));
 
         int minMemPerThread = 200;
         if (maxMemory / localConfig.getNumThreads() < minMemPerThread) {
