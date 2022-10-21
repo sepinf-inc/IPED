@@ -491,12 +491,11 @@ public class Win10MailParser extends AbstractParser {
             InputStream is = item.getBufferedInputStream();
             InputStreamReader utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16BE);
             // convert text from utf-16 to utf-8
-            is.mark(0);
             ReaderInputStream utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
             apptBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
             // the BOM of the file seems to be reversed, we do this workaroud for now
             if (contentPath.contains(FileTag.UNICODE + ".dat") && !apptBody.toLowerCase().contains("html")) {
-                is.reset();
+                is = item.getBufferedInputStream();
                 utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
                 utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
                 apptBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
@@ -519,9 +518,9 @@ public class Win10MailParser extends AbstractParser {
         FileTag[] messageTags = new FileTag[] { FileTag.ASCII, FileTag.MESSAGE_UNICODE };
         IItemReader item = null;
         for (FileTag messageTag : messageTags) {
-            String contentPath = getEntryLocation(email, MESSAGE_CATEGORY, messageTag);
-            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, email.getMessageSize());
-            if (itemQueryPair != null) {
+            String contentPath = Win10MailParser.getEntryLocation(email, MESSAGE_CATEGORY, messageTag);
+            Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, email.getMessageSize());
+            if (itemQueryPair.getLeft() != null) {
                 item = itemQueryPair.getLeft();
                 break;
             }
