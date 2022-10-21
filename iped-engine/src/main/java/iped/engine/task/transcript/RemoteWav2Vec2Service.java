@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ public class RemoteWav2Vec2Service {
         DONE,
         ERROR,
         REGISTER,
+        STATS,
         WARN
     }
 
@@ -49,6 +51,13 @@ public class RemoteWav2Vec2Service {
     private static final int CLIENT_TIMEOUT_MILLIS = 10000;
 
     private static ExecutorService executor = Executors.newCachedThreadPool();
+
+    private static final AtomicLong audiosTranscripted = new AtomicLong();
+    private static final AtomicLong audiosDuration = new AtomicLong();
+    private static final AtomicLong conversionTime = new AtomicLong();
+    private static final AtomicLong transcriptionTime = new AtomicLong();
+    private static final AtomicLong requestsReceived = new AtomicLong();
+    private static final AtomicLong requestsAccepted = new AtomicLong();
 
     private static Logger logger;
 
@@ -138,11 +147,33 @@ public class RemoteWav2Vec2Service {
         }
     }
 
+    private static void sendStats(String discoveryIp, int discoveryPort, int localPort) throws Exception {
+        try (Socket client = new Socket(discoveryIp, discoveryPort);
+                InputStream is = client.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+                PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
+
+            writer.println(MESSAGES.STATS);
+            writer.println(localPort);
+            writer.println(audiosTranscripted.getAndSet(0));
+            writer.println(audiosDuration.getAndSet(0));
+            writer.println(conversionTime.getAndSet(0));
+            writer.println(transcriptionTime.getAndSet(0));
+            writer.println(requestsReceived.getAndSet(0));
+            writer.println(requestsAccepted.getAndSet(0));
+
+            if (!MESSAGES.DONE.toString().equals(reader.readLine())) {
+                throw new Exception("Sending stats failed!");
+            }
+        }
+    }
+
     private static void waitRequests(ServerSocket server, Wav2Vec2TranscriptTask task, int numConcurrentTranscriptions, String discoveryIp) {
         AtomicInteger jobs = new AtomicInteger();
         while (true) {
             try {
                 Socket client = server.accept();
+                requestsReceived.incrementAndGet();
                 if (jobs.incrementAndGet() > numConcurrentTranscriptions) {
                     jobs.decrementAndGet();
                     client.close();
@@ -163,6 +194,7 @@ public class RemoteWav2Vec2Service {
                                     new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);
 
                             writer.println(MESSAGES.ACCEPTED);
+                            requestsAccepted.incrementAndGet();
 
                             String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
                             logger.info("Accepted connection from " + clientName);
@@ -196,16 +228,26 @@ public class RemoteWav2Vec2Service {
                                 logger.info(prefix + "Received " + size + " audio bytes to transcribe.");
                             }
 
+                            long t0 = System.currentTimeMillis();
+
                             wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+
+                            long t1 = System.currentTimeMillis();
 
                             if (wavFile == null) {
                                 throw new IOException("Failed to convert audio to wav");
                             } else {
                                 logger.info(prefix + "Audio converted to wav.");
                             }
+                            long durationMillis = 1000 * wavFile.length() / (16000 * 2);
 
                             TextAndScore result = task.transcribeAudio(wavFile);
+                            long t2 = System.currentTimeMillis();
 
+                            audiosTranscripted.incrementAndGet();
+                            audiosDuration.addAndGet(durationMillis);
+                            conversionTime.addAndGet(t1 - t0);
+                            transcriptionTime.addAndGet(t2 - t1);
                             logger.info(prefix + "Transcritpion done.");
 
                             writer.println(Double.toString(result.score));
@@ -249,7 +291,7 @@ public class RemoteWav2Vec2Service {
                 while (true) {
                     try {
                         Thread.sleep(1000);
-                        registerThis(ip, port, localPort);
+                        sendStats(ip, port, localPort);
 
                     } catch (Exception e) {
                         e.printStackTrace();
