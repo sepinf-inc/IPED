@@ -433,7 +433,7 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
      * @param min  the minimum date of the new range to guarantee visibility
      * @param max  the maximum date of the new range to guarantee visibility
      */
-	public void guaranteeShowRange(Date min, Date max) {
+	public void garanteeShowRange(Date min, Date max) {
 		DateRange range = (DateRange) getRange();
 		DateRange newRange = null;
 		System.out.println(range.getLowerMillis());
