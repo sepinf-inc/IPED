@@ -401,7 +401,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 				long visibleRangeLength = endDate.getTime()-startDate.getTime();
 				if(startDate.getTime()==0 && endDate.getTime()==1) {
 					visibleIntervalCache=newcache;
-					memoryWindowCache=newcache;
+					memoryWindowCache.addAll(newcache);
 				}else {
 					visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
 					startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
