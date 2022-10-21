@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -405,41 +406,53 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset
 					visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
 					startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
 					endDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime()-1);
-					for(CacheTimePeriodEntry ctpe:newcache) {
+
+					Iterator<CacheTimePeriodEntry> it= newcache.iterator();
+					CacheTimePeriodEntry ctpe=null;
+					while(it.hasNext()) {
+						ctpe=it.next();
 						boolean remove = false;
 						if(ctpe.date.before(startDate)) {
-							if(ctpe.date.getTime()>endDate.getTime()-visibleRangeLength*MEMORY_WINDOW_CACHE_PROPORTION) {
-								if(!memoryWindowCache.contains(ctpe)) {
-									beforecache.addFirst(ctpe);
-									memoryWindowCache.add(ctpe);
+							if(memoryWindowCache!=newcache) {//if window cache were not the complete cache itself
+								if(ctpe.date.getTime()>endDate.getTime()-visibleRangeLength*MEMORY_WINDOW_CACHE_PROPORTION) {
+									if(!memoryWindowCache.contains(ctpe)) {
+										beforecache.addFirst(ctpe);
+										memoryWindowCache.add(ctpe);
+									}
+									remove=false;
+								}else {
+									//remove from memoryCacheWindow
+									remove=true;
 								}
-								remove=false;
-							}else {
-								//remains out of memoryCacheWindow
-								remove=true;
 							}
 						} else if(ctpe.date.after(endDate)) {
-							if(ctpe.date.getTime()<startDate.getTime()+visibleRangeLength*MEMORY_WINDOW_CACHE_PROPORTION) {
-								if(!memoryWindowCache.contains(ctpe)) {
-									aftercache.add(ctpe);
-									memoryWindowCache.add(ctpe);
+							if(memoryWindowCache!=newcache) {//if window cache were not the complete cache itself
+								if(ctpe.date.getTime()<startDate.getTime()+visibleRangeLength*MEMORY_WINDOW_CACHE_PROPORTION) {
+									if(!memoryWindowCache.contains(ctpe)) {
+										aftercache.add(ctpe);
+										memoryWindowCache.add(ctpe);
+									}
+									remove=false;
+								}else {
+									//remove from memoryCacheWindow
+									remove=true;
 								}
-								remove=false;
-							}else {
-								//remains out of memoryCacheWindow
-								remove=true;
 							}
 						}else {
 							if(!memoryWindowCache.contains(ctpe)) {
 								visibleIntervalCache.add(ctpe);
-								memoryWindowCache.add(ctpe);
+								if(memoryWindowCache!=newcache) {//if window cache were not the complete cache itself
+									memoryWindowCache.add(ctpe);
+								}
 							}
 							remove=false;
 						}
 						if(remove) {
 							TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ctpe.date);
 							accumulator.remove(t);
-							memoryWindowCache.remove(ctpe);
+							if(memoryWindowCache!=newcache) {//if window cache were not the complete cache itself
+								memoryWindowCache.remove(ctpe);
+							}
 						}
 					}
 				}
