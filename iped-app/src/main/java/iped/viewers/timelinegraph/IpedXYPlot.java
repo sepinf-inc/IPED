@@ -297,9 +297,9 @@ public class IpedXYPlot extends XYPlot{
                 int seriesCount = dataset.getSeriesCount();
                 for (int item = 0; item < dataset.getItemCount(0); item++) {
                     for (int series = 0; series < seriesCount; series++) {
-                        //state.startSeriesPass(dataset, series, firstItem, lastItem, pass, passCount);
-                        renderer.drawItem(g2, state, dataArea, info, this, xAxis, yAxis, dataset, series, item, crosshairState, pass);
-                        //state.endSeriesPass(dataset, series, firstItem, lastItem, pass, passCount);
+                    	if(item<dataset.getItemCount(series)) {
+                            renderer.drawItem(g2, state, dataArea, info, this, xAxis, yAxis, dataset, series, item, crosshairState, pass);
+                    	}
                     }
                 }
             }
