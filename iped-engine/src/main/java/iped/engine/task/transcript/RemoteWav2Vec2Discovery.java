@@ -1,6 +1,7 @@
 package iped.engine.task.transcript;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -9,8 +10,11 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -18,6 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import iped.engine.task.transcript.RemoteWav2Vec2Service.MESSAGES;
 
 public class RemoteWav2Vec2Discovery {
+
+    private static final File statsFile = new File(System.getProperty("user.home"), "transcription.stats");
 
     private static final int PING_TIMEOUT = 10;
     private static Map<String, Long> servers = new ConcurrentHashMap<>();
@@ -57,6 +63,8 @@ public class RemoteWav2Vec2Discovery {
 
             System.out.println("Service discovery running on " + server.getInetAddress().getHostAddress() + ":" + port);
             startTime = System.currentTimeMillis();
+
+            loadStats();
 
             monitorServers();
 
@@ -126,6 +134,46 @@ public class RemoteWav2Vec2Discovery {
         transcriptionTimeReal.addAndGet(transcriptTime / servers.size());
     }
 
+    private static void loadStats() throws IOException {
+        if (!statsFile.exists()) {
+            return;
+        }
+        List<String> lines = Files.readAllLines(statsFile.toPath());
+        String value = lines.get(0).split("=")[1];
+        audiosTranscripted.set(Long.valueOf(value));
+        value = lines.get(0).split("=")[1];
+        audiosDuration.set(Long.valueOf(value));
+        value = lines.get(1).split("=")[1];
+        conversionTimeCpu.set(Long.valueOf(value));
+        value = lines.get(2).split("=")[1];
+        conversionTimeReal.set(Long.valueOf(value));
+        value = lines.get(3).split("=")[1];
+        transcriptionTimeCpu.set(Long.valueOf(value));
+        value = lines.get(4).split("=")[1];
+        transcriptionTimeReal.set(Long.valueOf(value));
+        value = lines.get(5).split("=")[1];
+        requestsReceived.set(Long.valueOf(value));
+        value = lines.get(6).split("=")[1];
+        requestsAccepted.set(Long.valueOf(value));
+    }
+
+    private static void saveStats() {
+        ArrayList<String> lines = new ArrayList<String>();
+        lines.add("audiosTranscripted=" + Long.toString(audiosTranscripted.get()));
+        lines.add("audiosDuration=" + Long.toString(audiosDuration.get()));
+        lines.add("conversionTimeCpu=" + Long.toString(conversionTimeCpu.get()));
+        lines.add("conversionTimeReal=" + Long.toString(conversionTimeReal.get()));
+        lines.add("transcriptionTimeCpu=" + Long.toString(transcriptionTimeCpu.get()));
+        lines.add("transcriptionTimeReal=" + Long.toString(transcriptionTimeReal.get()));
+        lines.add("requestsReceived=" + Long.toString(requestsReceived.get()));
+        lines.add("requestsAccepted=" + Long.toString(requestsAccepted.get()));
+        try {
+            Files.write(statsFile.toPath(), lines);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void monitorServers() {
         new Thread() {
             @Override
@@ -153,6 +201,7 @@ public class RemoteWav2Vec2Discovery {
                         System.out.println("Received Requets: " + df.format(requestsReceived));
                         System.out.println("Accepted Requests: " + df.format(requestsAccepted));
                         System.out.println("-------------------------------------------------------");
+                        saveStats();
                     }
 
                     Iterator<String> it = servers.keySet().iterator();
