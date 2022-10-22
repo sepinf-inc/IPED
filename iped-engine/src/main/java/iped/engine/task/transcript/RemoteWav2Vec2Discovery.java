@@ -141,25 +141,25 @@ public class RemoteWav2Vec2Discovery {
         List<String> lines = Files.readAllLines(statsFile.toPath());
         String value = lines.get(0).split("=")[1];
         audiosTranscripted.set(Long.valueOf(value));
-        value = lines.get(0).split("=")[1];
-        audiosDuration.set(Long.valueOf(value));
         value = lines.get(1).split("=")[1];
-        conversionTimeCpu.set(Long.valueOf(value));
+        audiosDuration.set(Long.valueOf(value));
         value = lines.get(2).split("=")[1];
-        conversionTimeReal.set(Long.valueOf(value));
+        conversionTimeCpu.set(Long.valueOf(value));
         value = lines.get(3).split("=")[1];
-        transcriptionTimeCpu.set(Long.valueOf(value));
+        conversionTimeReal.set(Long.valueOf(value));
         value = lines.get(4).split("=")[1];
-        transcriptionTimeReal.set(Long.valueOf(value));
+        transcriptionTimeCpu.set(Long.valueOf(value));
         value = lines.get(5).split("=")[1];
-        requestsReceived.set(Long.valueOf(value));
+        transcriptionTimeReal.set(Long.valueOf(value));
         value = lines.get(6).split("=")[1];
+        requestsReceived.set(Long.valueOf(value));
+        value = lines.get(7).split("=")[1];
         requestsAccepted.set(Long.valueOf(value));
     }
 
     private static void saveStats() {
         ArrayList<String> lines = new ArrayList<String>();
-        lines.add("audiosTranscripted=" + Long.toString(audiosTranscripted.get()));
+        lines.add("audiosTranscribed=" + Long.toString(audiosTranscripted.get()));
         lines.add("audiosDuration=" + Long.toString(audiosDuration.get()));
         lines.add("conversionTimeCpu=" + Long.toString(conversionTimeCpu.get()));
         lines.add("conversionTimeReal=" + Long.toString(conversionTimeReal.get()));
