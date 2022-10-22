@@ -22,11 +22,14 @@ public class RemoteWav2Vec2Discovery {
     private static final int PING_TIMEOUT = 10;
     private static Map<String, Long> servers = new ConcurrentHashMap<>();
     private static int port;
+    private static long startTime = 0;
 
     private static final AtomicLong audiosTranscripted = new AtomicLong();
-    private static final AtomicLong conversionTime = new AtomicLong();
-    private static final AtomicLong transcriptionTime = new AtomicLong();
     private static final AtomicLong audiosDuration = new AtomicLong();
+    private static final AtomicLong conversionTimeCpu = new AtomicLong();
+    private static final AtomicLong conversionTimeReal = new AtomicLong();
+    private static final AtomicLong transcriptionTimeCpu = new AtomicLong();
+    private static final AtomicLong transcriptionTimeReal = new AtomicLong();
     private static final AtomicLong requestsReceived = new AtomicLong();
     private static final AtomicLong requestsAccepted = new AtomicLong();
 
@@ -53,6 +56,7 @@ public class RemoteWav2Vec2Discovery {
             server.setSoTimeout(0);
 
             System.out.println("Service discovery running on " + server.getInetAddress().getHostAddress() + ":" + port);
+            startTime = System.currentTimeMillis();
 
             monitorServers();
 
@@ -105,8 +109,10 @@ public class RemoteWav2Vec2Discovery {
 
         audiosTranscripted.addAndGet(Long.parseLong(reader.readLine()));
         audiosDuration.addAndGet(Long.parseLong(reader.readLine()));
-        conversionTime.addAndGet(Long.parseLong(reader.readLine()));
-        transcriptionTime.addAndGet(Long.parseLong(reader.readLine()));
+        long convTime = Long.parseLong(reader.readLine());
+        conversionTimeCpu.addAndGet(convTime);
+        long transcriptTime = Long.parseLong(reader.readLine());
+        transcriptionTimeCpu.addAndGet(transcriptTime);
         requestsReceived.addAndGet(Long.parseLong(reader.readLine()));
         requestsAccepted.addAndGet(Long.parseLong(reader.readLine()));
 
@@ -115,6 +121,9 @@ public class RemoteWav2Vec2Discovery {
         if (servers.put(address, System.currentTimeMillis()) == null) {
             System.out.println("Server registered: " + address);
         }
+
+        conversionTimeReal.addAndGet(convTime / servers.size());
+        transcriptionTimeReal.addAndGet(transcriptTime / servers.size());
     }
 
     private static void monitorServers() {
@@ -129,15 +138,18 @@ public class RemoteWav2Vec2Discovery {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    if (seconds == 10) {
+                    if (seconds == 30) {
                         seconds = 0;
                         DecimalFormat df = new DecimalFormat();
                         System.out.println("Statistics:");
                         System.out.println("Online Nodes: " + servers.size());
+                        System.out.println("Online Time: " + df.format((System.currentTimeMillis() - startTime) / 1000) + "s");
                         System.out.println("Transcribed Audios: " + df.format(audiosTranscripted));
                         System.out.println("Transcribed Audios Duration: " + df.format(audiosDuration.get() / 1000) + "s");
-                        System.out.println("Transcription Time: " + df.format(transcriptionTime.get() / 1000) + "s");
-                        System.out.println("Wav Conversion Time: " + df.format(conversionTime.get() / 1000) + "s");
+                        System.out.println("Transcription Time (cpu): " + df.format(transcriptionTimeCpu.get() / 1000) + "s");
+                        System.out.println("Transcription Time (real): " + df.format(transcriptionTimeReal.get() / 1000) + "s");
+                        System.out.println("Wav Conversion Time (cpu): " + df.format(conversionTimeCpu.get() / 1000) + "s");
+                        System.out.println("Wav Conversion Time (real): " + df.format(conversionTimeReal.get() / 1000) + "s");
                         System.out.println("Received Requets: " + df.format(requestsReceived));
                         System.out.println("Accepted Requests: " + df.format(requestsAccepted));
                         System.out.println("-------------------------------------------------------");
