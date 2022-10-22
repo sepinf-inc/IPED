@@ -123,7 +123,7 @@ public class RemoteWav2Vec2Service {
             logger.info("Transcription server listening on port: " + localPort);
             logger.info("Ready to work!");
 
-            keepRegisteringThis(discoveryIp, discoveryPort, localPort);
+            startSendStatsThread(discoveryIp, discoveryPort, localPort);
 
             waitRequests(server, task, numConcurrentTranscriptions, discoveryIp);
 
@@ -284,7 +284,7 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void keepRegisteringThis(String ip, int port, int localPort) {
+    private static void startSendStatsThread(String ip, int port, int localPort) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
