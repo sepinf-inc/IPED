@@ -118,12 +118,12 @@ public class RemoteWav2Vec2Service {
 
             localPort = server.getLocalPort();
 
-            registerThis(discoveryIp, discoveryPort, localPort);
+            registerThis(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions);
 
             logger.info("Transcription server listening on port: " + localPort);
             logger.info("Ready to work!");
 
-            startSendStatsThread(discoveryIp, discoveryPort, localPort);
+            startSendStatsThread(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions);
 
             waitRequests(server, task, numConcurrentTranscriptions, discoveryIp);
 
@@ -131,7 +131,7 @@ public class RemoteWav2Vec2Service {
 
     }
 
-    private static void registerThis(String discoveryIp, int discoveryPort, int localPort) throws Exception {
+    private static void registerThis(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -140,6 +140,7 @@ public class RemoteWav2Vec2Service {
 
             writer.println(MESSAGES.REGISTER);
             writer.println(localPort);
+            writer.println(concurrentJobs);
 
             if (!MESSAGES.DONE.toString().equals(reader.readLine())) {
                 throw new Exception("Registration failed!");
@@ -147,7 +148,7 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void sendStats(String discoveryIp, int discoveryPort, int localPort) throws Exception {
+    private static void sendStats(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -155,6 +156,7 @@ public class RemoteWav2Vec2Service {
 
             writer.println(MESSAGES.STATS);
             writer.println(localPort);
+            writer.println(concurrentJobs);
             writer.println(audiosTranscripted.getAndSet(0));
             writer.println(audiosDuration.getAndSet(0));
             writer.println(conversionTime.getAndSet(0));
@@ -284,14 +286,14 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void startSendStatsThread(String ip, int port, int localPort) {
+    private static void startSendStatsThread(String ip, int port, int localPort, int concurrentJobs) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 while (true) {
                     try {
                         Thread.sleep(1000);
-                        sendStats(ip, port, localPort);
+                        sendStats(ip, port, localPort, concurrentJobs);
 
                     } catch (Exception e) {
                         e.printStackTrace();

@@ -27,6 +27,7 @@ public class RemoteWav2Vec2Discovery {
 
     private static final int PING_TIMEOUT = 10;
     private static Map<String, Long> servers = new ConcurrentHashMap<>();
+    private static Map<String, Integer> concurrentJobs = new ConcurrentHashMap<>();
     private static int port;
     private static long startTime = 0;
 
@@ -97,9 +98,11 @@ public class RemoteWav2Vec2Discovery {
         String ip = client.getInetAddress().getHostAddress();
         String port = reader.readLine();
         String address = ip + ":" + port;
+        String nodeJobs = reader.readLine();
         writer.println(MESSAGES.DONE);
         if (servers.put(address, System.currentTimeMillis()) == null) {
             System.out.println("Server registered: " + address);
+            concurrentJobs.put(address, Integer.valueOf(nodeJobs));
         }
     }
 
@@ -114,6 +117,7 @@ public class RemoteWav2Vec2Discovery {
         String ip = client.getInetAddress().getHostAddress();
         String port = reader.readLine();
         String address = ip + ":" + port;
+        String nodeJobs = reader.readLine();
 
         audiosTranscripted.addAndGet(Long.parseLong(reader.readLine()));
         audiosDuration.addAndGet(Long.parseLong(reader.readLine()));
@@ -128,10 +132,13 @@ public class RemoteWav2Vec2Discovery {
 
         if (servers.put(address, System.currentTimeMillis()) == null) {
             System.out.println("Server registered: " + address);
+            concurrentJobs.put(address, Integer.valueOf(nodeJobs));
         }
 
-        conversionTimeReal.addAndGet(convTime / servers.size());
-        transcriptionTimeReal.addAndGet(transcriptTime / servers.size());
+        int totalJobs = concurrentJobs.values().stream().reduce(0, Integer::sum);
+
+        conversionTimeReal.addAndGet(convTime / totalJobs);
+        transcriptionTimeReal.addAndGet(transcriptTime / totalJobs);
     }
 
     private static void loadStats() throws IOException {
@@ -211,6 +218,7 @@ public class RemoteWav2Vec2Discovery {
                             System.out.println("No PING received for the last " + PING_TIMEOUT
                                     + "s, removing server from list: " + server);
                             it.remove();
+                            concurrentJobs.remove(server);
                         }
                     }
                 }
