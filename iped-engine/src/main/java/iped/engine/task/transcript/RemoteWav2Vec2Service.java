@@ -185,7 +185,6 @@ public class RemoteWav2Vec2Service {
                     @Override
                     public void run() {
                         Path tmpFile = null;
-                        File wavFile = null;
                         PrintWriter writer = null;
                         BufferedInputStream bis = null;
                         boolean error = false;
@@ -232,7 +231,10 @@ public class RemoteWav2Vec2Service {
 
                             long t0 = System.currentTimeMillis();
 
-                            wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+                            // see https://github.com/sepinf-inc/IPED/issues/1400
+                            // now audios are already received as WAV 16Khz 16 bits LE per sample
+                            // wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+                            File wavFile = tmpFile.toFile();
 
                             long t1 = System.currentTimeMillis();
 
@@ -272,9 +274,6 @@ public class RemoteWav2Vec2Service {
                             IOUtil.closeQuietly(client);
                             if (tmpFile != null) {
                                 tmpFile.toFile().delete();
-                            }
-                            if (wavFile != null) {
-                                wavFile.delete();
                             }
                         }
                     }
