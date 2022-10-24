@@ -1,9 +1,13 @@
 package iped.viewers.timelinegraph.cache.persistance;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -201,31 +204,31 @@ public class CachePersistance {
 
         Collections.sort(entry);
 
-        try {
-            eventFile.createNewFile();
-            RandomAccessFile ras = new RandomAccessFile(eventFile, "rw");
-
-            ras.writeShort(0);
-            ras.writeUTF(timeStampCache.getCacheTimeZone().getID());
+        try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(eventFile.toPath())))) {
+            dos.writeShort(0);
+            dos.writeUTF(timeStampCache.getCacheTimeZone().getID());
 
             for (int i = 0; i < entry.size(); i++) {
                 CacheTimePeriodEntry ct = entry.get(i);
-                ras.writeLong(ct.date.getTime());
+                dos.writeLong(ct.date.getTime());
                 for (int j = 0; j < ct.events.size(); j++) {
                     CacheEventEntry ce = ct.events.get(j);
-                    ras.writeUTF(ce.event);
+                    dos.writeUTF(ce.event);
                     for (int k = 0; k < ce.docIds.size(); k++) {
-                        ras.writeInt(ce.docIds.get(k));
+                        dos.writeInt(ce.docIds.get(k));
                     }
-                    ras.writeInt(-1);
+                    dos.writeInt(-1);
                 }
-                ras.writeUTF("!!");
+                dos.writeUTF("!!");
             }
-
-            ras.seek(0);
-            ras.writeShort(1);
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(eventFile.toPath(), StandardOpenOption.WRITE))) {
+                dos.writeShort(1);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
