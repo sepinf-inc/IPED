@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -158,8 +157,8 @@ public class CachePersistance {
                 return false;
             }
             String timezoneID = dis.readUTF();
-
-            while (true) {
+            int entries = dis.readInt();
+            while (times.size() < entries) {
                 Date d = new Date(dis.readLong());
                 CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
                 ct.events = new ArrayList<CacheEventEntry>();
@@ -179,13 +178,10 @@ public class CachePersistance {
                 }
                 times.add(ct);
             }
-        } catch (EOFException e) {
             return true;
+
         } catch (IOException e) {
-            if (!(e instanceof EOFException)) {
-                e.printStackTrace();
-                return false;
-            }
+            e.printStackTrace();
         }
         return false;
     }
@@ -204,10 +200,11 @@ public class CachePersistance {
 
         Collections.sort(entry);
 
+        boolean commit = false;
         try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(eventFile.toPath())))) {
             dos.writeShort(0);
             dos.writeUTF(timeStampCache.getCacheTimeZone().getID());
-
+            dos.writeInt(entry.size());
             for (int i = 0; i < entry.size(); i++) {
                 CacheTimePeriodEntry ct = entry.get(i);
                 dos.writeLong(ct.date.getTime());
@@ -221,9 +218,11 @@ public class CachePersistance {
                 }
                 dos.writeUTF("!!");
             }
+            commit = true;
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
+        }
+        if (commit) {
             try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(eventFile.toPath(), StandardOpenOption.WRITE))) {
                 dos.writeShort(1);
             } catch (IOException e) {
