@@ -32,7 +32,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -56,9 +55,9 @@ import javax.swing.event.TableModelListener;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.util.BytesRef;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.LegendItem;
@@ -415,8 +414,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         ret[k] = -1;
     }
 
-    Semaphore resultSemaphore = new Semaphore(1);
-
     public void refreshChart() {
         try {
             IpedChartsPanel self = this;
@@ -428,22 +425,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 synchronized (swRefresh) {
                     swRefresh.cancel(true);
                 }
-            }
-
-            resultSemaphore.acquire();
-
-            try {
-                if (result != null) {
-                    synchronized (result) {
-                        for (AbstractIntervalXYDataset ds : result.values()) {
-                            if (ds instanceof AsynchronousDataset) {
-                                ((AsynchronousDataset) ds).cancel();
-                            }
-                        }
-                    }
-                }
-            } finally {
-                resultSemaphore.release();
             }
 
             swRefresh = new RunnableFuture<Void>() {
@@ -478,8 +459,19 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 @Override
                 public void run() {
                     try {
+                        if (result != null) {
+                            synchronized (result) {
+                                for (AbstractIntervalXYDataset ds : result.values()) {
+                                    if (ds instanceof AsynchronousDataset) {
+                                        ((AsynchronousDataset) ds).cancel();
+                                    }
+                                }
+                            }
+                        }
+                        if (isCancelled()) {
+                            return;
+                        }
                         createDataSets();
-                        resultSemaphore.release();
                         if (!isCancelled()) {
                             JFreeChart chart = null;
                             if (result != null && result.size() > 0) {
@@ -509,13 +501,10 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
-                    } finally {
-                        resultSemaphore.release();
                     }
                 }
             };
 
-            resultSemaphore.acquire();
             swExecutor.execute(swRefresh);
 
         } catch (Exception e) {
