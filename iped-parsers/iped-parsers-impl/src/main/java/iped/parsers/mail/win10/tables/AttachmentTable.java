@@ -75,7 +75,7 @@ public class AttachmentTable extends AbstractTable {
         int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
         int messageId = EsedbManager.getInt32Value(esedbLibrary, 3, recordPointerReference, filePath, errorPointer);
         long attachSize = EsedbManager.getInt32Value(esedbLibrary, 7, recordPointerReference, filePath, errorPointer);
-        long attachCID = EsedbManager.getInt32Value(esedbLibrary, 10, recordPointerReference, filePath, errorPointer);
+        String attachCID = EsedbManager.getUnicodeValue(esedbLibrary, 10, recordPointerReference, filePath, errorPointer);
         String fileName = EsedbManager.getUnicodeValue(esedbLibrary, 13, recordPointerReference, filePath, errorPointer);
         String mimeTag = EsedbManager.getUnicodeValue(esedbLibrary, 14, recordPointerReference, filePath, errorPointer);
         boolean received = EsedbManager.getBooleanValue(esedbLibrary, 20, recordPointerReference, filePath, errorPointer);

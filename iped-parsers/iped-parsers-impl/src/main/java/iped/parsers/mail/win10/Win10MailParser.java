@@ -520,10 +520,10 @@ public class Win10MailParser extends AbstractParser {
         IItemReader item = null;
         for (FileTag messageTag : messageTags) {
             String contentPath = Win10MailParser.getEntryLocation(email, MESSAGE_CATEGORY, messageTag);
-            email.setBodyOriginalPath(contentPath);
             Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, email.getMessageSize());
             if (itemQueryPair.getLeft() != null) {
                 item = itemQueryPair.getLeft();
+                email.setBodyOriginalPath(item.getPath());
                 break;
             }
         }
@@ -643,10 +643,13 @@ public class Win10MailParser extends AbstractParser {
                 + "):</b><br>");
                 for (AttachmentEntry attach : email.getAttachments()) {
                     String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
+                    attach.setOriginalFileName(StringUtils.substringAfterLast(contentPath, "/"));
                     Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, attach.getAttachSize());
                     if (itemQueryPair.getRight() != null) {
                         String successfulQuery = itemQueryPair.getRight();
                         attach.setCaseQuery(successfulQuery);
+                        IItemReader item = itemQueryPair.getLeft();
+                        attach.setFilePath(item != null ? item.getTempFile().toURI().toString() : "");
                         preview.append("<a href=\"\" onclick=app.open('" + attach.getCaseQuery() + "')>" + attach.getFileName() + "</a><br>");
                     } else {
                         preview.append(SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + "<br>");
@@ -659,6 +662,7 @@ public class Win10MailParser extends AbstractParser {
             preview.append("</div>\n");
             String bodyHtml = email.getBody();
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
+                bodyHtml = handleInlineImages(email, bodyHtml);
                 preview.append(bodyHtml);
                 emailMetadata.set(ExtraProperties.MESSAGE_BODY,
                         Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
@@ -677,26 +681,17 @@ public class Win10MailParser extends AbstractParser {
             // e.printStackTrace();
         }
 
-        String successfulQuery = null;
         for (AttachmentEntry attach : email.getAttachments()) {
-            String contentPath = getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
-            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, attach.getAttachSize());
-            attach.setOriginalFileName(StringUtils.substringAfterLast(contentPath, "/"));
-            if (itemQueryPair != null) {
-                successfulQuery = itemQueryPair.getRight();
-                emailMetadata.add(ExtraProperties.LINKED_ITEMS, successfulQuery);
-                processAttachment(attach, successfulQuery, path);
-            }
+            processAttachment(attach, path);
         }
 
     }
 
     /** Extract attachment with the correct file name, linked to the original .dat attachment file
      * @param attachment entry to be processed
-     * @param query to link to the original .dat file
      * @param path
      */
-    private void processAttachment(AttachmentEntry attachment, String query, String path) {
+    private void processAttachment(AttachmentEntry attachment, String path) {
         String parentId = EMAIL_VIRTUAL_ID_PREFIX + attachment.getMessageId();
         String filename = attachment.getFileName();
         long rowId = attachment.getRowId();
@@ -774,6 +769,19 @@ public class Win10MailParser extends AbstractParser {
         }
 
         return new ImmutablePair<>(items.get(0), query);
+    }
+
+    private String handleInlineImages(MessageEntry email, String body) {
+        String bodyTmp = body;
+        if (bodyTmp.contains("cid:")) {
+            for (AttachmentEntry attachment : email.getAttachments()) {
+                if (attachment.getAttachCID() != null && attachment.getFilePath() != null) {
+                    String attachCid = attachment.getAttachCID().replaceAll("^<|>$", "");
+                    bodyTmp = body.replace("cid:" + attachCid, attachment.getFilePath());
+                }
+            }
+        }
+        return bodyTmp;
     }
 
 

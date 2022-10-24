@@ -3,9 +3,10 @@ package iped.parsers.mail.win10.entries;
 public class AttachmentEntry extends AbstractEntry {
     private long messageId;
     private long attachSize;
-    private long attachCID;
+    private String attachCID;
     private String fileName;
     private String originalFileName;
+	private String filePath;
 	private String mimeTag;
     private Boolean received;
 	private String caseQuery;
@@ -38,11 +39,11 @@ public class AttachmentEntry extends AbstractEntry {
 		this.attachSize = attachSize;
 	}
 
-	public long getAttachCID() {
+	public String getAttachCID() {
 		return this.attachCID;
 	}
 
-	public void setAttachCID(long attachCID) {
+	public void setAttachCID(String attachCID) {
 		this.attachCID = attachCID;
 	}
 
@@ -60,6 +61,14 @@ public class AttachmentEntry extends AbstractEntry {
 
 	public void setOriginalFileName(String originalFileName) {
 		this.originalFileName = originalFileName;
+	}
+
+	public String getFilePath() {
+		return this.filePath;
+	}
+
+	public void setFilePath(String filePath) {
+		this.filePath = filePath;
 	}
 	
 	public String getMimeTag() {
