@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tika.exception.TikaException;
@@ -215,7 +216,7 @@ public class Win10MailParser extends AbstractParser {
                                 ArrayList<MessageEntry> childEmails = MessageTable.getFolderChildMessages(folder.getRowId());
                                 if (!childEmails.isEmpty()) {
                                     for (MessageEntry childEmail : childEmails) {
-                                        childEmail.setContentHtml(getMessageBody(childEmail));
+                                        childEmail.setBody(getMessageBody(childEmail));
                                         processEmail(childEmail, folder.getRowId(), path);
                                     }
                                 }
@@ -519,6 +520,7 @@ public class Win10MailParser extends AbstractParser {
         IItemReader item = null;
         for (FileTag messageTag : messageTags) {
             String contentPath = Win10MailParser.getEntryLocation(email, MESSAGE_CATEGORY, messageTag);
+            email.setBodyOriginalPath(contentPath);
             Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, email.getMessageSize());
             if (itemQueryPair.getLeft() != null) {
                 item = itemQueryPair.getLeft();
@@ -569,6 +571,7 @@ public class Win10MailParser extends AbstractParser {
         String virtualId = EMAIL_VIRTUAL_ID_PREFIX + email.getRowId();
 
         emailMetadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
+        emailMetadata.set("originalBodyPath", email.getBodyOriginalPath());
         emailMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG.toString());
         emailMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         emailMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
@@ -654,7 +657,7 @@ public class Win10MailParser extends AbstractParser {
 
             // Body:
             preview.append("</div>\n");
-            String bodyHtml = email.getContentHtml();
+            String bodyHtml = email.getBody();
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
                 preview.append(bodyHtml);
                 emailMetadata.set(ExtraProperties.MESSAGE_BODY,
@@ -678,6 +681,7 @@ public class Win10MailParser extends AbstractParser {
         for (AttachmentEntry attach : email.getAttachments()) {
             String contentPath = getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
             Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, attach.getAttachSize());
+            attach.setOriginalFileName(StringUtils.substringAfterLast(contentPath, "/"));
             if (itemQueryPair != null) {
                 successfulQuery = itemQueryPair.getRight();
                 emailMetadata.add(ExtraProperties.LINKED_ITEMS, successfulQuery);
@@ -700,6 +704,7 @@ public class Win10MailParser extends AbstractParser {
             Metadata attachMetadata = new Metadata();
 
             attachMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, attachment.getFileName());
+            attachMetadata.set(TikaCoreProperties.ORIGINAL_RESOURCE_NAME, attachment.getOriginalFileName());
             attachMetadata.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_ATTACH.toString());
             attachMetadata.set(Metadata.CONTENT_TYPE, attachment.getMimeTag());
             attachMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, ATTACH_VIRTUAL_ID_PREFIX + rowId);
@@ -753,7 +758,7 @@ public class Win10MailParser extends AbstractParser {
      */
     public static ImmutablePair<IItemReader, String> searchItemInCase(String path, long size) {
         if (searcher == null) {
-            return null;
+            return new ImmutablePair<>(null, null);
         }
 
         String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\"" + " && " + BasicProps.LENGTH + ":" + size;
@@ -765,7 +770,7 @@ public class Win10MailParser extends AbstractParser {
             items = searcher.search(query);
 
             if (items == null || items.isEmpty())
-                return new ImmutablePair<>(null, null);;
+                return new ImmutablePair<>(null, null);
         }
 
         return new ImmutablePair<>(items.get(0), query);

@@ -5,6 +5,7 @@ public class AttachmentEntry extends AbstractEntry {
     private long attachSize;
     private long attachCID;
     private String fileName;
+    private String originalFileName;
 	private String mimeTag;
     private Boolean received;
 	private String caseQuery;
@@ -51,6 +52,14 @@ public class AttachmentEntry extends AbstractEntry {
 
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
+	}
+
+	public String getOriginalFileName() {
+		return this.originalFileName;
+	}
+
+	public void setOriginalFileName(String originalFileName) {
+		this.originalFileName = originalFileName;
 	}
 	
 	public String getMimeTag() {

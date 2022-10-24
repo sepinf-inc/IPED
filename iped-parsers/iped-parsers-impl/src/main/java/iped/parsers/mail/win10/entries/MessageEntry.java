@@ -19,8 +19,10 @@ public class MessageEntry extends AbstractEntry {
     private String senderEmailAddress;
     private Date msgDeliveryTime;
     private Date lastModifiedTime;
+    private String body;
+    private String bodyOriginalPath;
 
-    private String contentHtml;
+
     public final char categoryNumber = '3';
 
     public MessageEntry(int rowId) {
@@ -128,11 +130,20 @@ public class MessageEntry extends AbstractEntry {
         return AttachmentTable.getMessageAttachments(rowId);
     }
     
-    public String getContentHtml() {
-        return this.contentHtml;
+    public String getBody() {
+        return this.body;
     }
 
-    public void setContentHtml(String contentHtml) {
-        this.contentHtml = contentHtml;
+    public void setBody(String body) {
+        this.body = body;
     }
+
+    public String getBodyOriginalPath() {
+        return this.bodyOriginalPath;
+    }
+
+    public void setBodyOriginalPath(String bodyOriginalPath) {
+        this.bodyOriginalPath = bodyOriginalPath;
+    }
+
 }
