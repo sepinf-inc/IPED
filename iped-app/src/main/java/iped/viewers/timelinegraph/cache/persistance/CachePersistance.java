@@ -27,6 +27,7 @@ import org.apache.commons.io.FileUtils;
 import org.jfree.data.time.TimePeriod;
 
 import iped.app.ui.App;
+import iped.utils.IOUtil;
 import iped.viewers.timelinegraph.cache.CacheEventEntry;
 import iped.viewers.timelinegraph.cache.CacheTimePeriodEntry;
 import iped.viewers.timelinegraph.cache.TimeStampCache;
@@ -46,14 +47,9 @@ public class CachePersistance {
         baseDir = new File(App.get().casesPathFile, "iped");
         baseDir = new File(baseDir, "data");
         baseDir = new File(baseDir, "timecache");
-        try {
-            // try to use case own folder
-            if (!baseDir.mkdirs()) {
-                // if not possible for security reasons, use user home folder
-                getTempBaseDir();
-            }
-        } catch (SecurityException e) {
-            // if not possible for security reasons, use user home folder
+        baseDir.mkdirs();
+        // if case cache folder is not writable, use user.home for caches
+        if (!IOUtil.canWrite(baseDir)) {
             getTempBaseDir();
         }
     }
