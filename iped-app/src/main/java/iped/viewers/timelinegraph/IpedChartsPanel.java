@@ -108,199 +108,200 @@ import iped.viewers.timelinegraph.swingworkers.CheckWorker;
 import iped.viewers.timelinegraph.swingworkers.HighlightWorker;
 
 public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener, ComponentListener {
-	JTable resultsTable;
-	IMultiSearchResultProvider resultsProvider;
-	GUIProvider guiProvider;
-	private DefaultSingleCDockable dockable;
-	CDockableLocationListener dockableLocationListener;
-	IpedTimelineDatasetManager ipedTimelineDatasetManager;
-	
-	static ThreadPoolExecutor swExecutor = new ThreadPoolExecutor(1, 1,
-            20000, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<Runnable>());
-	
-	boolean syncViewWithTableSelection = false;
-	
+    JTable resultsTable;
+    IMultiSearchResultProvider resultsProvider;
+    GUIProvider guiProvider;
+    private DefaultSingleCDockable dockable;
+    CDockableLocationListener dockableLocationListener;
+    IpedTimelineDatasetManager ipedTimelineDatasetManager;
+
+    static ThreadPoolExecutor swExecutor = new ThreadPoolExecutor(1, 1, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+
+    boolean syncViewWithTableSelection = false;
+
     LegendItemCollection legendItems = null;
-    
+
     Class<? extends TimePeriod> timePeriodClass = Day.class;
     String timePeriodString = "Day";
-    
-    TreeMap<String, String> timeEventColumnNamesList = new TreeMap<String, String>();
-	private Boolean timeEventColumnNamesListDone=false;
 
-	boolean isUpdated = true;
+    TreeMap<String, String> timeEventColumnNamesList = new TreeMap<String, String>();
+    private Boolean timeEventColumnNamesListDone = false;
+
+    boolean isUpdated = true;
 
     String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
     LegendItemPopupMenu legendItemPopupMenu = null;
 
-	/* chart fields */
-    IpedDateAxis domainAxis = new IpedDateAxis("Date ("+timePeriodString+")", this);
+    /* chart fields */
+    IpedDateAxis domainAxis = new IpedDateAxis("Date (" + timePeriodString + ")", this);
     IpedCombinedDomainXYPlot combinedPlot = new IpedCombinedDomainXYPlot(this);
     IpedChart chart = new IpedChart(combinedPlot);
     IpedChartPanel chartPanel = null;
     JList legendList = new JList();
     JScrollPane listScroller = new JScrollPane(legendList);
-    
-	IpedStackedXYBarRenderer renderer = null;
-	XYLineAndShapeRenderer highlightsRenderer = new XYLineAndShapeRenderer();
-	XYToolTipGenerator toolTipGenerator = null;
-	
-	String metadataToBreakChart = null;
-	ImageIcon loading = null;
-	JLabel loadingLabel;
-	
-	IpedSplitPane splitPane;
+
+    IpedStackedXYBarRenderer renderer = null;
+    XYLineAndShapeRenderer highlightsRenderer = new XYLineAndShapeRenderer();
+    XYToolTipGenerator toolTipGenerator = null;
+
+    String metadataToBreakChart = null;
+    ImageIcon loading = null;
+    JLabel loadingLabel;
+
+    IpedSplitPane splitPane;
 
     boolean applyFilters = false;
-	private XYBarPainter barPainter;
-	private boolean internalUpdate;
-	private TimeZone timeZone = TimeZone.getDefault();
-	private Locale locale = Locale.getDefault();
-	
-	SortedSetDocValues timeStampValues = null;
-	private RunnableFuture<Void> swRefresh;
-	private HashMap<String, AbstractIntervalXYDataset> result;
-	private DefaultListModel<LegendItemBlockContainer> legendListModel;
-	
-	private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
-	
-	
-	public IpedChartsPanel() {
-		this(true);
-		if(chart.getTitle()!=null) {
-    		chart.getTitle().setVerticalAlignment(VerticalAlignment.CENTER);
-		}
-		combinedPlot.setDomainPannable(true);
+    private XYBarPainter barPainter;
+    private boolean internalUpdate;
+    private TimeZone timeZone = TimeZone.getDefault();
+    private Locale locale = Locale.getDefault();
 
-		toolTipGenerator=new  XYToolTipGenerator() {
-			@Override
-			public String generateToolTip(XYDataset dataset, int series, int item) {
-				String html;
+    SortedSetDocValues timeStampValues = null;
+    private RunnableFuture<Void> swRefresh;
+    private HashMap<String, AbstractIntervalXYDataset> result;
+    private DefaultListModel<LegendItemBlockContainer> legendListModel;
 
-				return "<html>"+dataset.getSeriesKey(series)+":"+dataset.getYValue(series, item)+"</html>";
-			}
-		};
-	}
-	
-	public IpedChartsPanel(boolean b) {
-		super(b);
+    private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
-		this.setLayout(new GridLayout());
-	}
-	
-	class LegendCellRenderer extends JLabel implements ListCellRenderer<LegendItemBlockContainer>{
-		
-		public LegendCellRenderer() {
-			setOpaque(true);
-		}
-		
-		@Override
-		public Component getListCellRendererComponent(JList<? extends LegendItemBlockContainer> list, LegendItemBlockContainer value,
-				int index, boolean isSelected, boolean cellHasFocus) {
-			
-			JLabel result = this;
-			
-			result.setInheritsPopupMenu(true);
-			result.setText((String) value.getSeriesKey());
-			Color background;
-			Color foreground;
-			if(isSelected || cellHasFocus) {
-				background = Color.BLUE;
-				foreground = Color.WHITE;
-			}else {
-				background = Color.WHITE;
-				foreground = Color.BLACK;
-			}
-			result.setForeground(foreground);
-			result.setBackground(background);
-			
-			IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChartPanel().getChart().getPlot());
-			if(rootPlot!=null && rootPlot.getSubplots().size()>0) {
-				XYPlot xyPlot = (XYPlot) rootPlot.getSubplots().get(0);
-				
-		        Iterator<Block> iterator = value.getBlocks().iterator();
-		        while (iterator.hasNext()) {
-		        	Block b = iterator.next();
-		        	if(b instanceof LegendGraphic) {
-		        		LegendGraphic i = (LegendGraphic) b;
-		        		Rectangle r =i.getShape().getBounds();
-		        		Image image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_RGB);
-		        		Graphics2D gr = (Graphics2D)image.getGraphics();
-		        		gr.translate(-r.x, -r.y);
-		        		gr.setBackground((Color)i.getFillPaint());
-		        		gr.setPaint(i.getFillPaint());
-		        		gr.draw(i.getShape());
-		        		gr.fill(i.getShape());
-		        		gr.dispose();
-		        		result.setIcon(new ImageIcon(image));	        			        		
-		        	}
-		        }
+    public IpedChartsPanel() {
+        this(true);
+        if (chart.getTitle() != null) {
+            chart.getTitle().setVerticalAlignment(VerticalAlignment.CENTER);
+        }
+        combinedPlot.setDomainPannable(true);
 
-				if(chartPanel.getExcludedEvents().contains((String) value.getSeriesKey())) {
-					Font f = getFont();
-					Map attributes = f.getAttributes();
-					attributes.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
-					JLabel clone;
-					clone = new JLabel();
-					clone.setOpaque(true);
-					clone.setText(result.getText());
-					clone.setIcon(result.getIcon());
-					clone.setFont(f.deriveFont(attributes));
-					clone.setForeground(foreground);
-					clone.setBackground(background);
-					return clone;
-				}
-			}
+        toolTipGenerator = new XYToolTipGenerator() {
+            @Override
+            public String generateToolTip(XYDataset dataset, int series, int item) {
+                String html;
 
-			return result;
-		}		
-	}
+                return "<html>" + dataset.getSeriesKey(series) + ":" + dataset.getYValue(series, item) + "</html>";
+            }
+        };
+    }
 
-	@Override
-	public void init(JTable resultsTable, IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
-		this.resultsTable = resultsTable;
-		this.resultsProvider = resultsProvider;
-		this.guiProvider = guiProvider;
+    public IpedChartsPanel(boolean b) {
+        super(b);
 
-		splitPane = new IpedSplitPane();
-		splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		
+        this.setLayout(new GridLayout());
+    }
 
-		chartPanel = new IpedChartPanel(chart, this);
-		legendListModel = new DefaultListModel<LegendItemBlockContainer>();
-		legendList.setModel(legendListModel);
-		legendList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		legendList.setVisibleRowCount(-1);
-		legendList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
-		legendList.setCellRenderer(new LegendCellRenderer());
-		chartPanel.setPreferredSize(new Dimension(Integer.MAX_VALUE,Integer.MAX_VALUE));
-		listScroller.setPreferredSize(new Dimension(Integer.MAX_VALUE,80));
-		legendList.addMouseListener(new MouseAdapter() {
-			public void mousePressed(MouseEvent e)  {check(e);}
-			public void mouseReleased(MouseEvent e) {check(e);}
-			public void check(MouseEvent e) {
-			    if (e.isPopupTrigger()) { //if the event shows the menu
-			    	int selIndex = legendList.locationToIndex(e.getPoint());
-			    	legendList.addSelectionInterval(selIndex, selIndex); //select the item
-			        legendItemPopupMenu.show(legendList, e.getX(), e.getY()); //and show the menu
-			    }
-			}			
-		});
-		chart.setIpedChartPanel(chartPanel);		
+    class LegendCellRenderer extends JLabel implements ListCellRenderer<LegendItemBlockContainer> {
 
-		if(renderer==null) {
-			renderer = new IpedStackedXYBarRenderer(this);
-		}
-		((IpedStackedXYBarRenderer)renderer).setBarPainter(new IpedXYBarPainter((XYBarRenderer)renderer));
-		((IpedStackedXYBarRenderer)renderer).setMargin(0);
-		renderer.setDefaultToolTipGenerator(toolTipGenerator);
-		renderer.setDefaultItemLabelsVisible(true);
+        public LegendCellRenderer() {
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList<? extends LegendItemBlockContainer> list, LegendItemBlockContainer value, int index, boolean isSelected, boolean cellHasFocus) {
+
+            JLabel result = this;
+
+            result.setInheritsPopupMenu(true);
+            result.setText((String) value.getSeriesKey());
+            Color background;
+            Color foreground;
+            if (isSelected || cellHasFocus) {
+                background = Color.BLUE;
+                foreground = Color.WHITE;
+            } else {
+                background = Color.WHITE;
+                foreground = Color.BLACK;
+            }
+            result.setForeground(foreground);
+            result.setBackground(background);
+
+            IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChartPanel().getChart().getPlot());
+            if (rootPlot != null && rootPlot.getSubplots().size() > 0) {
+                XYPlot xyPlot = (XYPlot) rootPlot.getSubplots().get(0);
+
+                Iterator<Block> iterator = value.getBlocks().iterator();
+                while (iterator.hasNext()) {
+                    Block b = iterator.next();
+                    if (b instanceof LegendGraphic) {
+                        LegendGraphic i = (LegendGraphic) b;
+                        Rectangle r = i.getShape().getBounds();
+                        Image image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_RGB);
+                        Graphics2D gr = (Graphics2D) image.getGraphics();
+                        gr.translate(-r.x, -r.y);
+                        gr.setBackground((Color) i.getFillPaint());
+                        gr.setPaint(i.getFillPaint());
+                        gr.draw(i.getShape());
+                        gr.fill(i.getShape());
+                        gr.dispose();
+                        result.setIcon(new ImageIcon(image));
+                    }
+                }
+
+                if (chartPanel.getExcludedEvents().contains((String) value.getSeriesKey())) {
+                    Font f = getFont();
+                    Map attributes = f.getAttributes();
+                    attributes.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
+                    JLabel clone;
+                    clone = new JLabel();
+                    clone.setOpaque(true);
+                    clone.setText(result.getText());
+                    clone.setIcon(result.getIcon());
+                    clone.setFont(f.deriveFont(attributes));
+                    clone.setForeground(foreground);
+                    clone.setBackground(background);
+                    return clone;
+                }
+            }
+
+            return result;
+        }
+    }
+
+    @Override
+    public void init(JTable resultsTable, IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
+        this.resultsTable = resultsTable;
+        this.resultsProvider = resultsProvider;
+        this.guiProvider = guiProvider;
+
+        splitPane = new IpedSplitPane();
+        splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+
+        chartPanel = new IpedChartPanel(chart, this);
+        legendListModel = new DefaultListModel<LegendItemBlockContainer>();
+        legendList.setModel(legendListModel);
+        legendList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        legendList.setVisibleRowCount(-1);
+        legendList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+        legendList.setCellRenderer(new LegendCellRenderer());
+        chartPanel.setPreferredSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        listScroller.setPreferredSize(new Dimension(Integer.MAX_VALUE, 80));
+        legendList.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                check(e);
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                check(e);
+            }
+
+            public void check(MouseEvent e) {
+                if (e.isPopupTrigger()) { // if the event shows the menu
+                    int selIndex = legendList.locationToIndex(e.getPoint());
+                    legendList.addSelectionInterval(selIndex, selIndex); // select the item
+                    legendItemPopupMenu.show(legendList, e.getX(), e.getY()); // and show the menu
+                }
+            }
+        });
+        chart.setIpedChartPanel(chartPanel);
+
+        if (renderer == null) {
+            renderer = new IpedStackedXYBarRenderer(this);
+        }
+        ((IpedStackedXYBarRenderer) renderer).setBarPainter(new IpedXYBarPainter((XYBarRenderer) renderer));
+        ((IpedStackedXYBarRenderer) renderer).setMargin(0);
+        renderer.setDefaultToolTipGenerator(toolTipGenerator);
+        renderer.setDefaultItemLabelsVisible(true);
 
         resultsTable.getModel().addTableModelListener(this);
         resultsTable.getSelectionModel().addListSelectionListener(this);
 
-		legendItemPopupMenu = new LegendItemPopupMenu(chartPanel);
+        legendItemPopupMenu = new LegendItemPopupMenu(chartPanel);
 
         chartPanel.setDomainZoomable(true);
         chartPanel.setRangeZoomable(true);
@@ -315,78 +316,78 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         splitPane.setVisible(false);
 
         chartPanel.setPopupMenu(null);
-		this.addComponentListener(this);
+        this.addComponentListener(this);
 
         loading = (ImageIcon) new ImageIcon(IconUtil.class.getResource(resPath + "loading.gif"));
         loadingLabel = new JLabel("", loading, JLabel.CENTER);
         this.add(loadingLabel);
-		
+
         domainAxis.setTickMarkPosition(DateTickMarkPosition.START);
         domainAxis.setLowerMargin(0.01);
         domainAxis.setUpperMargin(0.01);
         combinedPlot.setDomainAxis(domainAxis);
-        
+
         ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
-	}
-	
-	public String getTimeEventColumnName(String timeEvent) {
-		synchronized (timeEventColumnNamesList) {
-			return timeEventColumnNamesList.get(timeEvent);
-		}
-	}
+    }
 
-	public IpedDateAxis getDomainAxis() {
-		return domainAxis;
-	}
+    public String getTimeEventColumnName(String timeEvent) {
+        synchronized (timeEventColumnNamesList) {
+            return timeEventColumnNamesList.get(timeEvent);
+        }
+    }
 
-	public HashMap<String, XYDataset> createAlertDataSets(){
-		HashMap<String, XYDataset> result = new HashMap<String, XYDataset>();
-		
-		DefaultXYDataset highlights = new DefaultXYDataset();
+    public IpedDateAxis getDomainAxis() {
+        return domainAxis;
+    }
 
-		double[][] data = new double[2][2];
-		
-		Calendar cal = Calendar.getInstance(timeZone);
-		
-		cal.set(2019, 01, 23, 11, 30);
-		data[0][0]=cal.getTimeInMillis();
-		data[1][0]=11;
-		cal.set(2021, 02, 23, 11, 30);
-		data[0][1]=cal.getTimeInMillis();
-		data[1][1]=21;
+    public HashMap<String, XYDataset> createAlertDataSets() {
+        HashMap<String, XYDataset> result = new HashMap<String, XYDataset>();
 
-		highlights.addSeries("highlights", data);
+        DefaultXYDataset highlights = new DefaultXYDataset();
 
-		result.put("highlights", (XYDataset) highlights);
+        double[][] data = new double[2][2];
 
-		return result;
-	}
+        Calendar cal = Calendar.getInstance(timeZone);
 
-	public HashMap<String, AbstractIntervalXYDataset> createDataSets(){
-		result = new HashMap<String, AbstractIntervalXYDataset>();
-		try {
-	        Set<String> selectedBookmarks = guiProvider.getSelectedBookmarks();
-	        Set<String> selectedCategories = guiProvider.getSelectedCategories();
-			SortedSetDocValues categoriesValues = null;
+        cal.set(2019, 01, 23, 11, 30);
+        data[0][0] = cal.getTimeInMillis();
+        data[1][0] = 11;
+        cal.set(2021, 02, 23, 11, 30);
+        data[0][1] = cal.getTimeInMillis();
+        data[1][1] = 21;
 
-	        if(selectedBookmarks.size()>0 && chartPanel.getSplitByBookmark()) {
-	        	for(String bookmark:selectedBookmarks) {
-					result.put(bookmark, ipedTimelineDatasetManager.getBestDataset(timePeriodClass, bookmark));
-	        	}
-	        }else if(selectedCategories.size()>0 && chartPanel.getSplitByCategory()) {
-	        	for(String category:selectedCategories) {
-					result.put(category, ipedTimelineDatasetManager.getBestDataset(timePeriodClass, category));
-	        	}
-	        }else {
-				result.put("Items", ipedTimelineDatasetManager.getBestDataset(timePeriodClass, null));
-	        }
-			return result;
-		}catch(Exception e) {
-			e.printStackTrace();
-			return null;			
-		}
-		
-	}
+        highlights.addSeries("highlights", data);
+
+        result.put("highlights", (XYDataset) highlights);
+
+        return result;
+    }
+
+    public HashMap<String, AbstractIntervalXYDataset> createDataSets() {
+        result = new HashMap<String, AbstractIntervalXYDataset>();
+        try {
+            Set<String> selectedBookmarks = guiProvider.getSelectedBookmarks();
+            Set<String> selectedCategories = guiProvider.getSelectedCategories();
+            SortedSetDocValues categoriesValues = null;
+
+            if (selectedBookmarks.size() > 0 && chartPanel.getSplitByBookmark()) {
+                for (String bookmark : selectedBookmarks) {
+                    result.put(bookmark, ipedTimelineDatasetManager.getBestDataset(timePeriodClass, bookmark));
+                }
+            } else if (selectedCategories.size() > 0 && chartPanel.getSplitByCategory()) {
+                for (String category : selectedCategories) {
+                    result.put(category, ipedTimelineDatasetManager.getBestDataset(timePeriodClass, category));
+                }
+            } else {
+                result.put("Items", ipedTimelineDatasetManager.getBestDataset(timePeriodClass, null));
+            }
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
 
     private static final void loadOrdsFromString(String string, int[][] ret) {
         int len = string.length();
@@ -413,606 +414,604 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         } while (j < len);
         ret[k] = -1;
     }
-    
+
     Semaphore resultSemaphore = new Semaphore(1);
-    
-	public void refreshChart() {
-		try {
-			IpedChartsPanel self = this;
 
-			self.remove(splitPane);//.setVisible(false);
+    public void refreshChart() {
+        try {
+            IpedChartsPanel self = this;
+
+            self.remove(splitPane);// .setVisible(false);
             self.add(loadingLabel);
-			
-			if(swRefresh!=null) {
-				synchronized (swRefresh) {
-					swRefresh.cancel(true);
-				}
-			}
 
-			resultSemaphore.acquire();
-			
-			try {
-				if(result!=null) {
-					synchronized (result) {
-						for (AbstractIntervalXYDataset ds: result.values()) {
-							if(ds instanceof AsynchronousDataset) {
-								((AsynchronousDataset)ds).cancel();
-							}
-						}
-					}
-				}
-			}finally {
-				resultSemaphore.release();
-			}
+            if (swRefresh != null) {
+                synchronized (swRefresh) {
+                    swRefresh.cancel(true);
+                }
+            }
 
-			swRefresh = new RunnableFuture<Void>() {
-				boolean cancelled = false;
-				boolean isDone = false;
-				
-				@Override
-				public boolean cancel(boolean mayInterruptIfRunning) {
-					return cancelled = true;
-				}
+            resultSemaphore.acquire();
 
-				@Override
-				public boolean isCancelled() {
-					return cancelled;
-				}
+            try {
+                if (result != null) {
+                    synchronized (result) {
+                        for (AbstractIntervalXYDataset ds : result.values()) {
+                            if (ds instanceof AsynchronousDataset) {
+                                ((AsynchronousDataset) ds).cancel();
+                            }
+                        }
+                    }
+                }
+            } finally {
+                resultSemaphore.release();
+            }
 
-				@Override
-				public boolean isDone() {
-					return isDone;
-				}
-				
-				@Override
-				public Void get() throws InterruptedException, ExecutionException {
-					return null;
-				}
+            swRefresh = new RunnableFuture<Void>() {
+                boolean cancelled = false;
+                boolean isDone = false;
 
-				@Override
-				public Void get(long timeout, TimeUnit unit)
-						throws InterruptedException, ExecutionException, TimeoutException {
-					return null;
-				}
+                @Override
+                public boolean cancel(boolean mayInterruptIfRunning) {
+                    return cancelled = true;
+                }
 
-				@Override
-				public void run() {
-					try {
-						createDataSets();
-						resultSemaphore.release();
-						if(!isCancelled()) {
-							JFreeChart chart = null;
-							if(result!=null && result.size()>0) {
-								chart = createChart(result);
-						        isUpdated=true;
-							}
-							
-							if(chart!=null) {
-								self.remove(loadingLabel);
-								self.add(splitPane);
-				                splitPane.setTopComponent(chartPanel);
-				                splitPane.setBottomComponent(listScroller);
-				                splitPane.setVisible(true);
+                @Override
+                public boolean isCancelled() {
+                    return cancelled;
+                }
 
-				                //hide excluded events
-				                IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChartPanel().getChart().getPlot());
-				    			if(rootPlot!=null && rootPlot.getSubplots().size()>0) {
-				    				XYPlot xyPlot = (XYPlot) rootPlot.getSubplots().get(0);
-									for(int i=0; i<xyPlot.getDataset(0).getSeriesCount(); i++) {
-										String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
-										if(chartPanel.getExcludedEvents().contains(currSeries)) {
-											rootPlot.getRenderer().setSeriesVisible(i, false);
-										}
-									}
-				    			}
-							}
-						}
-					}catch(Exception e) {
-						e.printStackTrace();
-					}finally {
-						resultSemaphore.release();
-					}
-				}
-			};
-			
-			resultSemaphore.acquire();
-			swExecutor.execute(swRefresh);
-			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	public void setTimePeriodClass(Class<? extends TimePeriod> timePeriodClass) {
-		this.timePeriodClass = timePeriodClass;
-	}
+                @Override
+                public boolean isDone() {
+                    return isDone;
+                }
 
-	
-	public void addEventLegent(String event) {
-		Iterator<LegendItem> it = legendItems.iterator();
-		for (Iterator iterator = legendItems.iterator(); iterator.hasNext();) {
-			LegendItem legendItem = (LegendItem) iterator.next();
-			if(event.equals(legendItem.getLabel())) {
-				return;
-			}
-		}
+                @Override
+                public Void get() throws InterruptedException, ExecutionException {
+                    return null;
+                }
+
+                @Override
+                public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                    return null;
+                }
+
+                @Override
+                public void run() {
+                    try {
+                        createDataSets();
+                        resultSemaphore.release();
+                        if (!isCancelled()) {
+                            JFreeChart chart = null;
+                            if (result != null && result.size() > 0) {
+                                chart = createChart(result);
+                                isUpdated = true;
+                            }
+
+                            if (chart != null) {
+                                self.remove(loadingLabel);
+                                self.add(splitPane);
+                                splitPane.setTopComponent(chartPanel);
+                                splitPane.setBottomComponent(listScroller);
+                                splitPane.setVisible(true);
+
+                                // hide excluded events
+                                IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChartPanel().getChart().getPlot());
+                                if (rootPlot != null && rootPlot.getSubplots().size() > 0) {
+                                    XYPlot xyPlot = (XYPlot) rootPlot.getSubplots().get(0);
+                                    for (int i = 0; i < xyPlot.getDataset(0).getSeriesCount(); i++) {
+                                        String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
+                                        if (chartPanel.getExcludedEvents().contains(currSeries)) {
+                                            rootPlot.getRenderer().setSeriesVisible(i, false);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        resultSemaphore.release();
+                    }
+                }
+            };
+
+            resultSemaphore.acquire();
+            swExecutor.execute(swRefresh);
+
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public void setTimePeriodClass(Class<? extends TimePeriod> timePeriodClass) {
+        this.timePeriodClass = timePeriodClass;
+    }
+
+    public void addEventLegent(String event) {
+        Iterator<LegendItem> it = legendItems.iterator();
+        for (Iterator iterator = legendItems.iterator(); iterator.hasNext();) {
+            LegendItem legendItem = (LegendItem) iterator.next();
+            if (event.equals(legendItem.getLabel())) {
+                return;
+            }
+        }
         LegendItem item1 = new LegendItem(event, new Color(0x22, 0x22, 0xFF));
 
         legendItems.add(item1);
-	}
+    }
 
-	@Override
-	public void setDockableContainer(DefaultSingleCDockable dockable) {
-		if(this.dockable!=null) {
-			this.dockable.removeCDockableLocationListener(dockableLocationListener);
-		}
+    @Override
+    public void setDockableContainer(DefaultSingleCDockable dockable) {
+        if (this.dockable != null) {
+            this.dockable.removeCDockableLocationListener(dockableLocationListener);
+        }
 
         this.dockable = dockable;
         final IpedChartsPanel self = this;
 
         dockableLocationListener = new CDockableLocationListener() {
-			@Override
-			public void changed(CDockableLocationEvent dockableEvent) {
-				if(!isUpdated && dockableEvent.isShowingChanged()) {
-	    			self.refreshChart();
-				}
-			}
-		};
-		
+            @Override
+            public void changed(CDockableLocationEvent dockableEvent) {
+                if (!isUpdated && dockableEvent.isShowingChanged()) {
+                    self.refreshChart();
+                }
+            }
+        };
+
         dockable.addCDockableLocationListener(dockableLocationListener);
-	}
-	
-	public void cancel() {
-		if(swRefresh!=null) {
-			swRefresh.cancel(true);
-		}
-	}
+    }
 
-	@Override
-	public String getTitle() {
+    public void cancel() {
+        if (swRefresh != null) {
+            swRefresh.cancel(true);
+        }
+    }
+
+    @Override
+    public String getTitle() {
         return "Timeline";
-	}
+    }
 
-	@Override
-	public String getID() {
-		// TODO Auto-generated method stub
-		return "timelinetab";
-	}
+    @Override
+    public String getID() {
+        // TODO Auto-generated method stub
+        return "timelinetab";
+    }
 
-	@Override
-	public JPanel getPanel() {
-		return this;
-	}
+    @Override
+    public JPanel getPanel() {
+        return this;
+    }
 
-	@Override
-	public void redraw() {
-		// TODO Auto-generated method stub
-	}
+    @Override
+    public void redraw() {
+        // TODO Auto-generated method stub
+    }
 
-	@Override
-	public void updateSelection() {
-		// TODO Auto-generated method stub
-	}
+    @Override
+    public void updateSelection() {
+        // TODO Auto-generated method stub
+    }
 
-	@Override
-	public GUIProvider getGUIProvider() {
-		// TODO Auto-generated method stub
-		return this.guiProvider;
-	}
-	
-	public void showSelection() {
-    	try {
-    		Date min=null;
-    		Date max=null;
+    @Override
+    public GUIProvider getGUIProvider() {
+        // TODO Auto-generated method stub
+        return this.guiProvider;
+    }
+
+    public void showSelection() {
+        try {
+            Date min = null;
+            Date max = null;
 
             LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
-    		timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
-    		TreeSet<Integer> luceneIds = new TreeSet<Integer>();
-        	
-    		int[] selected = resultsTable.getSelectedRows();
-			for (int i = 0; i < selected.length; i++) {
+            timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
+            TreeSet<Integer> luceneIds = new TreeSet<Integer>();
+
+            int[] selected = resultsTable.getSelectedRows();
+            for (int i = 0; i < selected.length; i++) {
                 int rowModel = resultsTable.convertRowIndexToModel(selected[i]);
                 IItemId item = resultsProvider.getResults().getItem(rowModel);
 
                 int luceneId = resultsProvider.getIPEDSource().getLuceneId(item);
                 luceneIds.add(luceneId);
-    		}
-        	
-    		SortedSetDocValues timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
-    		
-    		for (Iterator iterator = luceneIds.iterator(); iterator.hasNext();) {
-				Integer docId = (Integer) iterator.next();
+            }
+
+            SortedSetDocValues timeStampValues = reader.getSortedSetDocValues(BasicProps.TIMESTAMP);
+
+            for (Iterator iterator = luceneIds.iterator(); iterator.hasNext();) {
+                Integer docId = (Integer) iterator.next();
                 boolean adv = false;
                 try {
                     adv = timeStampValues.advanceExact(docId);
-                }catch (IllegalArgumentException e) {
+                } catch (IllegalArgumentException e) {
                     adv = timeStampValues.advanceExact(docId);
-				}
+                }
 
                 long ord, prevOrd = -1;
                 while (adv && (ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
                     if (prevOrd != ord) {
-                		Date d = domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString());
-                		if(min==null || d.before(min)) {
-                			min=d;
-                		}
-                		if(max==null || d.after(max)) {
-                			max=d;
-                		}
+                        Date d = domainAxis.ISO8601DateParse(timeStampValues.lookupOrd(ord).utf8ToString());
+                        if (min == null || d.before(min)) {
+                            min = d;
+                        }
+                        if (max == null || d.after(max)) {
+                            max = d;
+                        }
                     }
                     prevOrd = ord;
                 }
-				
-			}
-            
-            domainAxis.garanteeShowRange(min,max);
-    	}catch(Exception e1) {
-    		e1.printStackTrace();
-    	}
-	}
 
-	@Override
+            }
+
+            domainAxis.garanteeShowRange(min, max);
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+    }
+
+    @Override
     public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) {
             return;
-        }else {
-        	if(syncViewWithTableSelection){
-        		showSelection();
-        	}
+        } else {
+            if (syncViewWithTableSelection) {
+                showSelection();
+            }
         }
     }
 
     Thread t = new Thread(new Runnable() {
-		//populates list with timeevent column names with uppercase letters
-		@Override
-		public void run() {
-			ColumnsManager cm = (ColumnsManager)((App)resultsProvider).getColumnsManager();
-			String[] columnsArray=cm.fieldGroups[cm.fieldGroups.length - 1];
-			synchronized (timeEventColumnNamesList) {
-				LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
-				try {
-					SortedSetDocValues timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-					TermsEnum te = timeEventGroupValues.termsEnum();
-					BytesRef br = te.next();
-					while(br!=null) {
-						String eventTypes = br.utf8ToString();
-						StringTokenizer st = new StringTokenizer(eventTypes, "|");
-						while(st.hasMoreTokens()) {
-							String eventType = st.nextToken().trim();
-							for(int i=0; i<columnsArray.length; i++) {
-								if(columnsArray[i].toLowerCase().equals(eventType)) {
-									timeEventColumnNamesList.put(eventType, columnsArray[i]);
-								}
-							}							
-						}
-						br = te.next();
-					}
-					timeEventColumnNamesListDone=true;
-					timeEventColumnNamesList.notify();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-	});
-    
-	@Override
-	public void tableChanged(TableModelEvent e) {
-		if((e instanceof RowSorterTableDataChange)) {
-			return;
-		}
-		if(timeEventColumnNamesList.size()==0 && !t.isAlive()) {
-			t.start();
-			ipedTimelineDatasetManager.startBackgroundCacheCreation();
-		}
-		
-		if(internalUpdate) {
-			internalUpdate=false;
-			return;
-		}
-		//all data changed
-		if(e.getFirstRow()==0 && e.getLastRow()==Integer.MAX_VALUE) {
+        // populates list with timeevent column names with uppercase letters
+        @Override
+        public void run() {
+            ColumnsManager cm = (ColumnsManager) ((App) resultsProvider).getColumnsManager();
+            String[] columnsArray = cm.fieldGroups[cm.fieldGroups.length - 1];
+            synchronized (timeEventColumnNamesList) {
+                LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
+                try {
+                    SortedSetDocValues timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
+                    TermsEnum te = timeEventGroupValues.termsEnum();
+                    BytesRef br = te.next();
+                    while (br != null) {
+                        String eventTypes = br.utf8ToString();
+                        StringTokenizer st = new StringTokenizer(eventTypes, "|");
+                        while (st.hasMoreTokens()) {
+                            String eventType = st.nextToken().trim();
+                            for (int i = 0; i < columnsArray.length; i++) {
+                                if (columnsArray[i].toLowerCase().equals(eventType)) {
+                                    timeEventColumnNamesList.put(eventType, columnsArray[i]);
+                                }
+                            }
+                        }
+                        br = te.next();
+                    }
+                    timeEventColumnNamesListDone = true;
+                    timeEventColumnNamesList.notify();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    });
+
+    @Override
+    public void tableChanged(TableModelEvent e) {
+        if ((e instanceof RowSorterTableDataChange)) {
+            return;
+        }
+        if (timeEventColumnNamesList.size() == 0 && !t.isAlive()) {
+            t.start();
+            ipedTimelineDatasetManager.startBackgroundCacheCreation();
+        }
+
+        if (internalUpdate) {
+            internalUpdate = false;
+            return;
+        }
+        // all data changed
+        if (e.getFirstRow() == 0 && e.getLastRow() == Integer.MAX_VALUE) {
             /* somente chamado se o tab estiver sendo exibido */
             if (dockable != null && dockable.isShowing()) {
-    			refreshChart();
-			}else {
-				isUpdated = false;
-			}
-		}
-		// TODO Auto-generated method stub
-	}
+                refreshChart();
+            } else {
+                isUpdated = false;
+            }
+        }
+        // TODO Auto-generated method stub
+    }
 
     public IpedStackedXYBarRenderer getRenderer() {
-		return renderer;
+        return renderer;
     }
-    
-    private void createNotableChart(XYPlot firstPlot) {
-    	XYDataset highlights = createAlertDataSets().get("highlights");
-    	if(firstPlot!=null) {
-    		highlightsRenderer.setDefaultLinesVisible(false);
-    		highlightsRenderer.setDrawSeriesLineAsPath(false);
-    		highlightsRenderer.setDrawSeriesLineAsPath(false);
-    		highlightsRenderer.setSeriesShape(0,new Ellipse2D.Float(1, 1, 10, 10));
 
-    		IpedHourAxis hours = new IpedHourAxis("Hours");
-    		hours.setAutoRange(false);
-    		hours.setRange(new Range(0, 24));
-    		firstPlot.setRangeAxis(1, hours);
-    		firstPlot.setRenderer(1, highlightsRenderer);
-    		firstPlot.setDataset(1, highlights);
-    		List<Integer> axisList = new ArrayList<Integer>();
-    		axisList.add(1);
-    		firstPlot.mapDatasetToRangeAxes(1, axisList);
-    	}
+    private void createNotableChart(XYPlot firstPlot) {
+        XYDataset highlights = createAlertDataSets().get("highlights");
+        if (firstPlot != null) {
+            highlightsRenderer.setDefaultLinesVisible(false);
+            highlightsRenderer.setDrawSeriesLineAsPath(false);
+            highlightsRenderer.setDrawSeriesLineAsPath(false);
+            highlightsRenderer.setSeriesShape(0, new Ellipse2D.Float(1, 1, 10, 10));
+
+            IpedHourAxis hours = new IpedHourAxis("Hours");
+            hours.setAutoRange(false);
+            hours.setRange(new Range(0, 24));
+            firstPlot.setRangeAxis(1, hours);
+            firstPlot.setRenderer(1, highlightsRenderer);
+            firstPlot.setDataset(1, highlights);
+            List<Integer> axisList = new ArrayList<Integer>();
+            axisList.add(1);
+            firstPlot.mapDatasetToRangeAxes(1, axisList);
+        }
     }
 
     private JFreeChart createChart(HashMap<String, AbstractIntervalXYDataset> datasets) {
-    	domainAxis.setLabel("Date ("+timePeriodString+") ["+timeZone.getDisplayName()+" "+DateUtil.getTimezoneOffsetInformation(timeZone)+"]");
-    	
-    	combinedPlot.setSkipFireEventChange(true);
-    	
-    	Object[] plots = combinedPlot.getSubplots().toArray();
-    	boolean firstExecution = plots!=null && plots.length<=0;
-    			
-    	for (Object plot : plots) {
-	    	combinedPlot.remove((XYPlot) plot);
-		}
-    	combinedPlot.removeAllDataSets();
+        domainAxis.setLabel("Date (" + timePeriodString + ") [" + timeZone.getDisplayName() + " " + DateUtil.getTimezoneOffsetInformation(timeZone) + "]");
 
-    	combinedPlot.setSkipFireEventChange(false);
+        combinedPlot.setSkipFireEventChange(true);
 
-    	combinedPlot.fireChangeEvent();
+        Object[] plots = combinedPlot.getSubplots().toArray();
+        boolean firstExecution = plots != null && plots.length <= 0;
 
-    	combinedPlot.setSkipFireEventChange(true);
+        for (Object plot : plots) {
+            combinedPlot.remove((XYPlot) plot);
+        }
+        combinedPlot.removeAllDataSets();
+
+        combinedPlot.setSkipFireEventChange(false);
+
+        combinedPlot.fireChangeEvent();
+
+        combinedPlot.setSkipFireEventChange(true);
 
         XYItemRenderer renderer = getRenderer();
         combinedPlot.setRenderer(renderer);
 
         int ids = 0;
         XYPlot firstPlot = null;
-    	for (Iterator iterator = datasets.keySet().iterator(); iterator.hasNext();) {
-			String marcador = (String) iterator.next();			
-			IpedNumberAxis rangeAxis = new IpedNumberAxis(marcador);
-	        rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
-	        rangeAxis.setUpperMargin(0.10);  // leave some space for item labels
+        for (Iterator iterator = datasets.keySet().iterator(); iterator.hasNext();) {
+            String marcador = (String) iterator.next();
+            IpedNumberAxis rangeAxis = new IpedNumberAxis(marcador);
+            rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+            rangeAxis.setUpperMargin(0.10); // leave some space for item labels
 
-	        AbstractIntervalXYDataset dataset = (AbstractIntervalXYDataset)datasets.get(marcador);
-	        
-	        boolean canceled = false;
-	        if(dataset instanceof AsynchronousDataset) {
-	        	canceled = ((AsynchronousDataset) dataset).waitLoaded();
-	        }
-	        if(canceled) {
-	        	combinedPlot.setSkipFireEventChange(false);
-		    	combinedPlot.fireChangeEvent();
-	        	return null;
-	        }
-	        XYPlot plot = new IpedXYPlot(chartPanel, dataset, domainAxis, rangeAxis, renderer);
-	        if(firstPlot==null) {
-	        	firstPlot=plot;
-	        }
-	        combinedPlot.add(ids,plot,dataset);
-	        rangeAxis.autoAdjustRange();
-	        ids++;
-		}
+            AbstractIntervalXYDataset dataset = (AbstractIntervalXYDataset) datasets.get(marcador);
 
-    	combinedPlot.setSkipFireEventChange(false);
-    	combinedPlot.fireChangeEvent();
-    	
-    	if(firstExecution) {
-        	domainAxis.autoAdjustRange();
-    	}
-    	
+            boolean canceled = false;
+            if (dataset instanceof AsynchronousDataset) {
+                canceled = ((AsynchronousDataset) dataset).waitLoaded();
+            }
+            if (canceled) {
+                combinedPlot.setSkipFireEventChange(false);
+                combinedPlot.fireChangeEvent();
+                return null;
+            }
+            XYPlot plot = new IpedXYPlot(chartPanel, dataset, domainAxis, rangeAxis, renderer);
+            if (firstPlot == null) {
+                firstPlot = plot;
+            }
+            combinedPlot.add(ids, plot, dataset);
+            rangeAxis.autoAdjustRange();
+            ids++;
+        }
+
+        combinedPlot.setSkipFireEventChange(false);
+        combinedPlot.fireChangeEvent();
+
+        if (firstExecution) {
+            domainAxis.autoAdjustRange();
+        }
+
         return chart;
     }
 
-	@Override
-	public Query getQuery() {
-		try {
-			if(applyFilters) {
-				if(chartPanel!=null) {
-					if(chartPanel.hasNoFilter()) {
-						return null;
-					}
+    @Override
+    public Query getQuery() {
+        try {
+            if (applyFilters) {
+                if (chartPanel != null) {
+                    if (chartPanel.hasNoFilter()) {
+                        return null;
+                    }
 
-					Query result = new QueryBuilder(App.get().appCase).getQuery("");
+                    Query result = new QueryBuilder(App.get().appCase).getQuery("");
 
-		            if(chartPanel.definedFilters.size()>0) {
-						String timeFilter = "(";
-						int i=0;
-						for (Date[] dates : chartPanel.definedFilters) {
-							timeFilter+="timeStamp:[";
-							timeFilter+=domainAxis.ISO8601DateFormatUTC(dates[0]);
-							timeFilter+=" TO ";
-							timeFilter+=domainAxis.ISO8601DateFormatUTC(dates[1]);
-							timeFilter+="]";
-							i++;
-							if(i!=chartPanel.definedFilters.size()) {
-								timeFilter+=" || ";
-							}
-						}
-						timeFilter += ")";
+                    if (chartPanel.definedFilters.size() > 0) {
+                        String timeFilter = "(";
+                        int i = 0;
+                        for (Date[] dates : chartPanel.definedFilters) {
+                            timeFilter += "timeStamp:[";
+                            timeFilter += domainAxis.ISO8601DateFormatUTC(dates[0]);
+                            timeFilter += " TO ";
+                            timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
+                            timeFilter += "]";
+                            i++;
+                            if (i != chartPanel.definedFilters.size()) {
+                                timeFilter += " || ";
+                            }
+                        }
+                        timeFilter += ")";
 
-			            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-			            boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(timeFilter), Occur.MUST);
-			            boolQuery.add(result, Occur.MUST);
-			            result = boolQuery.build();
-					}
+                        BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+                        boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(timeFilter), Occur.MUST);
+                        boolQuery.add(result, Occur.MUST);
+                        result = boolQuery.build();
+                    }
 
-					if(chartPanel.getExcludedEvents().size()>0) {
-						String eventsFilter = "-(";
-						int i=0;
-						for (String event: chartPanel.getExcludedEvents()) {
-							eventsFilter+="timeEvent:\"";
-							eventsFilter+=event;
-							eventsFilter+="\"";
-							i++;
-							if(i!=chartPanel.getExcludedEvents().size()) {
-								eventsFilter+=" || ";
-							}
-						}
-						eventsFilter += ")";
+                    if (chartPanel.getExcludedEvents().size() > 0) {
+                        String eventsFilter = "-(";
+                        int i = 0;
+                        for (String event : chartPanel.getExcludedEvents()) {
+                            eventsFilter += "timeEvent:\"";
+                            eventsFilter += event;
+                            eventsFilter += "\"";
+                            i++;
+                            if (i != chartPanel.getExcludedEvents().size()) {
+                                eventsFilter += " || ";
+                            }
+                        }
+                        eventsFilter += ")";
 
-			            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-			            boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(eventsFilter), Occur.MUST);
-			            boolQuery.add(result, Occur.MUST);
-			            result = boolQuery.build();
-					}
+                        BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+                        boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(eventsFilter), Occur.MUST);
+                        boolQuery.add(result, Occur.MUST);
+                        result = boolQuery.build();
+                    }
 
-					return result;
-				}else {
-					return null;
-				}
-			}else {
-				return null;
-			}
-		}catch(QueryNodeException | ParseException qne) {
-			qne.printStackTrace();
-			return null;
-		}
-	}
+                    return result;
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        } catch (QueryNodeException | ParseException qne) {
+            qne.printStackTrace();
+            return null;
+        }
+    }
 
-	public IMultiSearchResultProvider getResultsProvider() {
-		return this.resultsProvider;
-	}
-    
+    public IMultiSearchResultProvider getResultsProvider() {
+        return this.resultsProvider;
+    }
+
     public void setTimePeriodString(String timePeriodString) {
-		this.timePeriodString = timePeriodString;
-	}
+        this.timePeriodString = timePeriodString;
+    }
 
-	public void setApplyFilters(boolean applyFilters) {
-		this.applyFilters = applyFilters;
-	}
+    public void setApplyFilters(boolean applyFilters) {
+        this.applyFilters = applyFilters;
+    }
 
-	public String getMetadataToBreakChart() {
-		return metadataToBreakChart;
-	}
+    public String getMetadataToBreakChart() {
+        return metadataToBreakChart;
+    }
 
-	public void setMetadataToBreakChart(String metadataToBreakChart) {
-		this.metadataToBreakChart = metadataToBreakChart;
-	}
+    public void setMetadataToBreakChart(String metadataToBreakChart) {
+        this.metadataToBreakChart = metadataToBreakChart;
+    }
 
-	@Override
-	public void clearFilter() {
-		chartPanel.removeAllFilters();
-	}
+    @Override
+    public void clearFilter() {
+        chartPanel.removeAllFilters();
+    }
 
-	@Override
-	public boolean hasFiltersApplied() {
-		return applyFilters;
-	}
+    @Override
+    public boolean hasFiltersApplied() {
+        return applyFilters;
+    }
 
-	public void setInternalUpdate(boolean b) {
-		internalUpdate = b;
-	}
+    public void setInternalUpdate(boolean b) {
+        internalUpdate = b;
+    }
 
-	public IpedChartPanel getChartPanel() {
-		return chartPanel;
-	}
+    public IpedChartPanel getChartPanel() {
+        return chartPanel;
+    }
 
-	public void setChartPanel(IpedChartPanel chartPanel) {
-		this.chartPanel = chartPanel;
-	}
-	
-	
-	public void highlightItemsOnInterval(Date firstDate, Date endDate, boolean b) {
-		HighlightWorker sw = new HighlightWorker(domainAxis,resultsProvider, firstDate, endDate, b);
-		sw.execute();
-	}
-	
-	public void checkItemsOnInterval(Date firstDate, Date endDate, boolean b) {
-		CheckWorker sw = new CheckWorker(domainAxis,resultsProvider, firstDate, endDate, b);
-		sw.execute();
-	}
+    public void setChartPanel(IpedChartPanel chartPanel) {
+        this.chartPanel = chartPanel;
+    }
 
-	public void setTimeZone(TimeZone timezone) {
-		this.timeZone = timezone;
-		domainAxis.setTimeZone(timezone);
-		refreshChart();
-	}
+    public void highlightItemsOnInterval(Date firstDate, Date endDate, boolean b) {
+        HighlightWorker sw = new HighlightWorker(domainAxis, resultsProvider, firstDate, endDate, b);
+        sw.execute();
+    }
 
-	public TimeZone getTimeZone() {
-		return timeZone;
-	}
+    public void checkItemsOnInterval(Date firstDate, Date endDate, boolean b) {
+        CheckWorker sw = new CheckWorker(domainAxis, resultsProvider, firstDate, endDate, b);
+        sw.execute();
+    }
 
-	public double getTimePeriodLength() {
-		Class[] cArg = new Class[1];
+    public void setTimeZone(TimeZone timezone) {
+        this.timeZone = timezone;
+        domainAxis.setTimeZone(timezone);
+        refreshChart();
+    }
+
+    public TimeZone getTimeZone() {
+        return timeZone;
+    }
+
+    public double getTimePeriodLength() {
+        Class[] cArg = new Class[1];
         cArg[0] = Date.class;
-		try {
-			TimePeriod t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(new Date());
-			return t.getEnd().getTime()-t.getStart().getTime();
-		}catch (Exception e) {
-		}
+        try {
+            TimePeriod t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(new Date());
+            return t.getEnd().getTime() - t.getStart().getTime();
+        } catch (Exception e) {
+        }
 
-		return 0;
-	}
+        return 0;
+    }
 
-	public Class<? extends TimePeriod> getTimePeriodClass() {
-		return timePeriodClass;
-	}
+    public Class<? extends TimePeriod> getTimePeriodClass() {
+        return timePeriodClass;
+    }
 
-	public IpedTimelineDatasetManager getIpedTimelineDatasetManager() {
-		return ipedTimelineDatasetManager;
-	}
+    public IpedTimelineDatasetManager getIpedTimelineDatasetManager() {
+        return ipedTimelineDatasetManager;
+    }
 
-	public void setIpedTimelineDatasetManager(IpedTimelineDatasetManager ipedTimelineDatasetManager) {
-		ipedTimelineDatasetManager = ipedTimelineDatasetManager;
-	}
+    public void setIpedTimelineDatasetManager(IpedTimelineDatasetManager ipedTimelineDatasetManager) {
+        ipedTimelineDatasetManager = ipedTimelineDatasetManager;
+    }
 
-	public IpedCombinedDomainXYPlot getCombinedPlot() {
-		return combinedPlot;
-	}
+    public IpedCombinedDomainXYPlot getCombinedPlot() {
+        return combinedPlot;
+    }
 
-	public void setCombinedPlot(IpedCombinedDomainXYPlot combinedPlot) {
-		this.combinedPlot = combinedPlot;
-	}
+    public void setCombinedPlot(IpedCombinedDomainXYPlot combinedPlot) {
+        this.combinedPlot = combinedPlot;
+    }
 
-	public DefaultListModel<LegendItemBlockContainer> getLegendListModel() {
-		return legendListModel;
-	}
+    public DefaultListModel<LegendItemBlockContainer> getLegendListModel() {
+        return legendListModel;
+    }
 
-	public void setLegendListModel(DefaultListModel<LegendItemBlockContainer> legendListModel) {
-		this.legendListModel = legendListModel;
-	}
+    public void setLegendListModel(DefaultListModel<LegendItemBlockContainer> legendListModel) {
+        this.legendListModel = legendListModel;
+    }
 
-	public JList getLegendList() {
-		return legendList;
-	}
+    public JList getLegendList() {
+        return legendList;
+    }
 
-	public void setLegendList(JList legendList) {
-		this.legendList = legendList;
-	}
+    public void setLegendList(JList legendList) {
+        this.legendList = legendList;
+    }
 
-	@Override
-	public void componentResized(ComponentEvent e) {
-		this.remove(loadingLabel);
-		this.remove(splitPane);
-		this.add(splitPane);
-	}
+    @Override
+    public void componentResized(ComponentEvent e) {
+        this.remove(loadingLabel);
+        this.remove(splitPane);
+        this.add(splitPane);
+    }
 
-	@Override
-	public void componentMoved(ComponentEvent e) {
-	}
+    @Override
+    public void componentMoved(ComponentEvent e) {
+    }
 
-	@Override
-	public void componentShown(ComponentEvent e) {
-	}
+    @Override
+    public void componentShown(ComponentEvent e) {
+    }
 
-	@Override
-	public void componentHidden(ComponentEvent e) {
-	}
+    @Override
+    public void componentHidden(ComponentEvent e) {
+    }
 
-	public boolean isSyncViewWithTableSelection() {
-		return syncViewWithTableSelection;
-	}
+    public boolean isSyncViewWithTableSelection() {
+        return syncViewWithTableSelection;
+    }
 
-	public void setSyncViewWithTableSelection(boolean syncViewWithTableSelection) {
-		this.syncViewWithTableSelection = syncViewWithTableSelection;
-	}
+    public void setSyncViewWithTableSelection(boolean syncViewWithTableSelection) {
+        this.syncViewWithTableSelection = syncViewWithTableSelection;
+    }
 
-	@Override
-	public void checkAll(boolean value) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public void checkAll(boolean value) {
+        // TODO Auto-generated method stub
+
+    }
 }

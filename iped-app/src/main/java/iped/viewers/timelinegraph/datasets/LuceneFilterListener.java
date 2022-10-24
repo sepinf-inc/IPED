@@ -31,174 +31,174 @@ import iped.search.IMultiSearchResult;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.timelinegraph.datasets.IpedTimelineDataset.Accumulator;
 
-public class LuceneFilterListener implements CaseSearchFilterListener{
-	IpedTimelineDataset ipedTimelineDataset;
-	String eventType;
-	CaseSearcherFilter csf;
-	String eventField;
-	String bookmark;
-	private SortedSetDocValues eventDocValuesSet;
+public class LuceneFilterListener implements CaseSearchFilterListener {
+    IpedTimelineDataset ipedTimelineDataset;
+    String eventType;
+    CaseSearcherFilter csf;
+    String eventField;
+    String bookmark;
+    private SortedSetDocValues eventDocValuesSet;
     volatile HashMap<String, long[]> eventSetToOrdsCache = new HashMap<>();
-	
-	public LuceneFilterListener(String eventType, CaseSearcherFilter csf, IpedTimelineDataset ipedTimelineDataset, String bookmark) {
-		this.ipedTimelineDataset = ipedTimelineDataset;
-		this.eventType = eventType;
-		this.eventField = ipedTimelineDataset.ipedChartsPanel.getTimeEventColumnName(eventType);
-		this.bookmark=bookmark;
-		this.csf = csf;
-	}
-	
-	@Override
-	public void onStart() {
-	}
 
-	int THREAD_SLICE_COUNT = 20000;
-	
-    SliceCounter[] scs=null;
+    public LuceneFilterListener(String eventType, CaseSearcherFilter csf, IpedTimelineDataset ipedTimelineDataset, String bookmark) {
+        this.ipedTimelineDataset = ipedTimelineDataset;
+        this.eventType = eventType;
+        this.eventField = ipedTimelineDataset.ipedChartsPanel.getTimeEventColumnName(eventType);
+        this.bookmark = bookmark;
+        this.csf = csf;
+    }
+
+    @Override
+    public void onStart() {
+    }
+
+    int THREAD_SLICE_COUNT = 20000;
+
+    SliceCounter[] scs = null;
     int slices;
-	private boolean cancelled;
-    
-	public class SliceCounter extends CancelableWorker<Void, Void> {
-		int start;
-	    int valueCount[]=null;
-	    ArrayList<Integer> docIds[];
-	    ArrayList<IItemId> itemIds[];
-	    Accumulator threadAccumulator;
-	    boolean finished=false;
-		protected boolean merged=false;
-		
-		public SliceCounter(int start) {
-			this.start = start;
-		}
-		
-		@Override
-		public Void doInBackground() {
-			try {
-				threadAccumulator = ipedTimelineDataset.new Accumulator();
+    private boolean cancelled;
 
-				IMultiSearchResult ipedResult = csf.get();
-				LeafReader reader = ipedTimelineDataset.reader;
+    public class SliceCounter extends CancelableWorker<Void, Void> {
+        int start;
+        int valueCount[] = null;
+        ArrayList<Integer> docIds[];
+        ArrayList<IItemId> itemIds[];
+        Accumulator threadAccumulator;
+        boolean finished = false;
+        protected boolean merged = false;
 
-	        	if(isCancelled()) {
-	        		return null;
-	        	}
-				SortedSetDocValues docValuesSet = reader.getSortedSetDocValues(eventField);
+        public SliceCounter(int start) {
+            this.start = start;
+        }
 
-				if(isCancelled()) {
-	        		return null;
-	        	}
-				eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-	            
-				SortedDocValues docValues=null;
-	            LookupOrd lo;
-				if(docValuesSet==null) {
-		        	if(isCancelled()) {
-		        		return null;
-		        	}
-					docValues = reader.getSortedDocValues(eventField);
-					
-					if(docValues==null) {
-						System.out.println("Evento não contabilizado:"+eventField);
-						return null;
-					}
-					lo = new MetadataPanel.LookupOrdSDV(docValues);
-	            	valueCount=new int[(int)docValues.getValueCount()];
-					docIds=new ArrayList[(int)docValues.getValueCount()];
-					itemIds=new ArrayList[(int)docValues.getValueCount()];
-				}else{
-	            	valueCount=new int[(int)docValuesSet.getValueCount()];
-	            	docIds=new ArrayList[(int)docValuesSet.getValueCount()];
-					itemIds=new ArrayList[(int)docValuesSet.getValueCount()];
-					lo = new MetadataPanel.LookupOrdSSDV(docValuesSet);
-				}
+        @Override
+        public Void doInBackground() {
+            try {
+                threadAccumulator = ipedTimelineDataset.new Accumulator();
 
-		        IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
+                IMultiSearchResult ipedResult = csf.get();
+                LeafReader reader = ipedTimelineDataset.reader;
 
-				MultiSearchResult.ItemIdIterator iterator = (ItemIdIterator) ipedResult.getIterator();
-				iterator.setPos(start);
-				int count=0;
-		        while(iterator.hasNext()) {
-		        	if(isCancelled()) {
-		        		return null;
-		        	}
-		        	if(count>=THREAD_SLICE_COUNT) {
-		        		break;
-		        	}
-		        	count++;
-		        	
-		        	IItemId item = iterator.next();
-		        	
-					if(bookmark!=null && ipedTimelineDataset.ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
-		            	if(multiBookmarks.hasBookmark(item, bookmark)) {
-		            		processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
-		            	}
-					}else {
-						processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
-					}
-		        }
-				
-				for(int i=0;i<valueCount.length;i++) {
-		        	if(isCancelled()) {
-		        		return null;
-		        	}
-					if(valueCount[i]>0) {
-						threadAccumulator.addValue(new ValueCount(lo, i, valueCount[i]),  docIds[i], itemIds[i], eventType);
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally {
-				synchronized (scs) {
-					finished=true;
-					scs.notify();
-				}
-			}
-			
-			return null;
-		}
-	}
+                if (isCancelled()) {
+                    return null;
+                }
+                SortedSetDocValues docValuesSet = reader.getSortedSetDocValues(eventField);
 
-	public void processItem(IItemId item, SortedSetDocValues docValuesSet, SortedDocValues docValues, int[] valueCount, ArrayList<Integer>[] docIds, ArrayList<IItemId>[] itemIds) {
+                if (isCancelled()) {
+                    return null;
+                }
+                eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
+
+                SortedDocValues docValues = null;
+                LookupOrd lo;
+                if (docValuesSet == null) {
+                    if (isCancelled()) {
+                        return null;
+                    }
+                    docValues = reader.getSortedDocValues(eventField);
+
+                    if (docValues == null) {
+                        System.out.println("Evento não contabilizado:" + eventField);
+                        return null;
+                    }
+                    lo = new MetadataPanel.LookupOrdSDV(docValues);
+                    valueCount = new int[(int) docValues.getValueCount()];
+                    docIds = new ArrayList[(int) docValues.getValueCount()];
+                    itemIds = new ArrayList[(int) docValues.getValueCount()];
+                } else {
+                    valueCount = new int[(int) docValuesSet.getValueCount()];
+                    docIds = new ArrayList[(int) docValuesSet.getValueCount()];
+                    itemIds = new ArrayList[(int) docValuesSet.getValueCount()];
+                    lo = new MetadataPanel.LookupOrdSSDV(docValuesSet);
+                }
+
+                IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
+
+                MultiSearchResult.ItemIdIterator iterator = (ItemIdIterator) ipedResult.getIterator();
+                iterator.setPos(start);
+                int count = 0;
+                while (iterator.hasNext()) {
+                    if (isCancelled()) {
+                        return null;
+                    }
+                    if (count >= THREAD_SLICE_COUNT) {
+                        break;
+                    }
+                    count++;
+
+                    IItemId item = iterator.next();
+
+                    if (bookmark != null && ipedTimelineDataset.ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
+                        if (multiBookmarks.hasBookmark(item, bookmark)) {
+                            processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
+                        }
+                    } else {
+                        processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
+                    }
+                }
+
+                for (int i = 0; i < valueCount.length; i++) {
+                    if (isCancelled()) {
+                        return null;
+                    }
+                    if (valueCount[i] > 0) {
+                        threadAccumulator.addValue(new ValueCount(lo, i, valueCount[i]), docIds[i], itemIds[i], eventType);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                synchronized (scs) {
+                    finished = true;
+                    scs.notify();
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public void processItem(IItemId item, SortedSetDocValues docValuesSet, SortedDocValues docValues, int[] valueCount, ArrayList<Integer>[] docIds, ArrayList<IItemId>[] itemIds) {
         int doc = App.get().appCase.getLuceneId(item);
         try {
-    		if(docValuesSet != null) {
+            if (docValuesSet != null) {
                 boolean adv = docValuesSet.advanceExact(doc);
                 long ord, prevOrd = -1;
                 while (adv && (ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-                    if (prevOrd != ord) {	                	
+                    if (prevOrd != ord) {
                         valueCount[(int) ord]++;
-                        if(docIds[(int) ord]!=null) {
-                        	itemIds[(int) ord].add(item);
-                        	docIds[(int) ord].add(doc);
-                        }else {
-                        	itemIds[(int) ord]=new ArrayList<IItemId>();
-                        	itemIds[(int) ord].add(item);
-                        	docIds[(int) ord]=new ArrayList<Integer>();
-                        	docIds[(int) ord].add(doc);
+                        if (docIds[(int) ord] != null) {
+                            itemIds[(int) ord].add(item);
+                            docIds[(int) ord].add(doc);
+                        } else {
+                            itemIds[(int) ord] = new ArrayList<IItemId>();
+                            itemIds[(int) ord].add(item);
+                            docIds[(int) ord] = new ArrayList<Integer>();
+                            docIds[(int) ord].add(doc);
                         }
                     }
                     prevOrd = ord;
                 }
-    		}else {
+            } else {
                 boolean adv = docValues.advanceExact(doc);
                 int ord = (int) docValues.ordValue();
                 valueCount[ord]++;
-                if(docIds[(int) ord]!=null) {
-                	itemIds[(int) ord].add(item);
-                	docIds[(int) ord].add(doc);
-                }else {
-                	itemIds[(int) ord]=new ArrayList<IItemId>();
-                	itemIds[(int) ord].add(item);
-                	docIds[(int) ord]=new ArrayList<Integer>();
-                	docIds[(int) ord].add(doc);
+                if (docIds[(int) ord] != null) {
+                    itemIds[(int) ord].add(item);
+                    docIds[(int) ord].add(doc);
+                } else {
+                    itemIds[(int) ord] = new ArrayList<IItemId>();
+                    itemIds[(int) ord].add(item);
+                    docIds[(int) ord] = new ArrayList<Integer>();
+                    docIds[(int) ord].add(doc);
                 }
-    		}
-        	
-        }catch(Exception e) {
-        	e.printStackTrace();        	
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        
-	}
+
+    }
 
     private long[] getEventOrdsFromEventSet(SortedSetDocValues eventDocValues, String eventSet) throws IOException {
         long[] ords = eventSetToOrdsCache.get(eventSet);
@@ -215,102 +215,102 @@ public class LuceneFilterListener implements CaseSearchFilterListener{
         return ords;
     }
 
-	public void onDone() {
-		try {
-			IMultiSearchResult ipedResult = csf.getDoneResult();
-			
-			if(ipedResult.getLength()>0) {
-				
-				LeafReader reader = ipedTimelineDataset.reader;
+    public void onDone() {
+        try {
+            IMultiSearchResult ipedResult = csf.getDoneResult();
 
-				this.eventField = ipedTimelineDataset.ipedChartsPanel.getTimeEventColumnName(this.eventType);
-	            int valueCount[]=null;
-	            ArrayList<Integer> docIds[];
-	            ArrayList<IItemId> itemIds[];
+            if (ipedResult.getLength() > 0) {
 
-	            if(isCancelled()) {
-	            	throw new InterruptedException();
-	            }
-				SortedSetDocValues docValuesSet = reader.getSortedSetDocValues(this.eventField);
-	            SortedDocValues docValues=null;
-	            LookupOrd lo;
-				if(docValuesSet==null) {
-					docValues = reader.getSortedDocValues(this.eventField);
-					if(docValues==null) {
-						System.out.println("Evento não contabilizado:"+eventField);
-						return;
-					}
-					lo = new MetadataPanel.LookupOrdSDV(docValues);
-					valueCount=new int[(int)docValues.getValueCount()];
-					docIds=new ArrayList[(int)docValues.getValueCount()];
-					itemIds=new ArrayList[(int)docValues.getValueCount()];
-				}else{
-					valueCount=new int[(int)docValuesSet.getValueCount()];
-					docIds=new ArrayList[(int)docValuesSet.getValueCount()];
-					itemIds=new ArrayList[(int)docValuesSet.getValueCount()];
-					lo = new MetadataPanel.LookupOrdSSDV(docValuesSet);
-				}
-		        IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
+                LeafReader reader = ipedTimelineDataset.reader;
 
-				MultiSearchResult.ItemIdIterator iterator = (ItemIdIterator) ipedResult.getIterator();
-		        for (IItemId item : iterator) {
-		            if(isCancelled()) {
-		            	throw new InterruptedException();
-		            }
+                this.eventField = ipedTimelineDataset.ipedChartsPanel.getTimeEventColumnName(this.eventType);
+                int valueCount[] = null;
+                ArrayList<Integer> docIds[];
+                ArrayList<IItemId> itemIds[];
 
-					if(bookmark!=null && ipedTimelineDataset.ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
-		            	if(multiBookmarks.hasBookmark(item, bookmark)) {
-		            		processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
-		            	}
-					}else {
-						processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
-					}
-		        }
-				
-				for(int i=0;i<valueCount.length;i++) {
-		            if(isCancelled()) {
-		            	throw new InterruptedException();
-		            }
-					if(valueCount[i]>0) {
-	    	        	ipedTimelineDataset.addValue(new ValueCount(lo, i, valueCount[i]), docIds[i], itemIds[i], eventType);
-					}
-				}
-		            
-			}
+                if (isCancelled()) {
+                    throw new InterruptedException();
+                }
+                SortedSetDocValues docValuesSet = reader.getSortedSetDocValues(this.eventField);
+                SortedDocValues docValues = null;
+                LookupOrd lo;
+                if (docValuesSet == null) {
+                    docValues = reader.getSortedDocValues(this.eventField);
+                    if (docValues == null) {
+                        System.out.println("Evento não contabilizado:" + eventField);
+                        return;
+                    }
+                    lo = new MetadataPanel.LookupOrdSDV(docValues);
+                    valueCount = new int[(int) docValues.getValueCount()];
+                    docIds = new ArrayList[(int) docValues.getValueCount()];
+                    itemIds = new ArrayList[(int) docValues.getValueCount()];
+                } else {
+                    valueCount = new int[(int) docValuesSet.getValueCount()];
+                    docIds = new ArrayList[(int) docValuesSet.getValueCount()];
+                    itemIds = new ArrayList[(int) docValuesSet.getValueCount()];
+                    lo = new MetadataPanel.LookupOrdSSDV(docValuesSet);
+                }
+                IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
 
-		} catch (Exception e) {
-			if(!(e instanceof InterruptedException)) {
-				e.printStackTrace();
-			}
-		}finally {
-			ipedTimelineDataset.visiblePopulSem.release();
-			ipedTimelineDataset.memoryCacheReloadSem.release();
-		}
-	}
+                MultiSearchResult.ItemIdIterator iterator = (ItemIdIterator) ipedResult.getIterator();
+                for (IItemId item : iterator) {
+                    if (isCancelled()) {
+                        throw new InterruptedException();
+                    }
 
-	private String getRealEventName(IMultiSearchResult result, String eventType) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+                    if (bookmark != null && ipedTimelineDataset.ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
+                        if (multiBookmarks.hasBookmark(item, bookmark)) {
+                            processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
+                        }
+                    } else {
+                        processItem(item, docValuesSet, docValues, valueCount, docIds, itemIds);
+                    }
+                }
 
-	@Override
-	public void onCancel(boolean mayInterruptIfRunning) {
-		if(scs!=null) {
-			for (int i = 0; i < scs.length; i++) {
-				if(scs[i]!=null) {
-					scs[i].cancel(mayInterruptIfRunning);
-				}
-			}
-		}
-		cancelled = true;
-	}
+                for (int i = 0; i < valueCount.length; i++) {
+                    if (isCancelled()) {
+                        throw new InterruptedException();
+                    }
+                    if (valueCount[i] > 0) {
+                        ipedTimelineDataset.addValue(new ValueCount(lo, i, valueCount[i]), docIds[i], itemIds[i], eventType);
+                    }
+                }
 
-	public boolean isCancelled() {
-		return cancelled;
-	}
+            }
 
-	@Override
-	public void init() {
-		
-	}
+        } catch (Exception e) {
+            if (!(e instanceof InterruptedException)) {
+                e.printStackTrace();
+            }
+        } finally {
+            ipedTimelineDataset.visiblePopulSem.release();
+            ipedTimelineDataset.memoryCacheReloadSem.release();
+        }
+    }
+
+    private String getRealEventName(IMultiSearchResult result, String eventType) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void onCancel(boolean mayInterruptIfRunning) {
+        if (scs != null) {
+            for (int i = 0; i < scs.length; i++) {
+                if (scs[i] != null) {
+                    scs[i].cancel(mayInterruptIfRunning);
+                }
+            }
+        }
+        cancelled = true;
+    }
+
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
+    @Override
+    public void init() {
+
+    }
 }

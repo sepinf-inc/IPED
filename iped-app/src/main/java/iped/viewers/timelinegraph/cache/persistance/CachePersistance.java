@@ -32,200 +32,201 @@ import iped.viewers.timelinegraph.cache.TimeStampCache;
  */
 
 public class CachePersistance {
-	File baseDir;
-	
-	HashMap<String,String> pathsToCheck = new HashMap<String,String>();
-	
-	static Thread t;
+    File baseDir;
 
-	public CachePersistance() {
-		baseDir = new File(App.get().casesPathFile,"iped");
-		baseDir = new File(baseDir,"data");
-		baseDir = new File(baseDir,"timecache");
-		try {
-			//try to use case own folder
-			if(!baseDir.mkdirs()) {
-				//if not possible for security reasons, use user home folder
-				getTempBaseDir();
-			}
-		}catch(SecurityException e) {
-			//if not possible for security reasons, use user home folder
-			getTempBaseDir();
-		}
-	}
-	
-	public void getTempBaseDir() {
-		try {
-			baseDir = new File(System.getProperty("user.home"),".iped");
-			baseDir = new File(baseDir,"timecache");
-			baseDir.mkdirs();
-			final File tempCasesDir = baseDir; 
-			
-			boolean found=false;
+    HashMap<String, String> pathsToCheck = new HashMap<String, String>();
 
-			Set<String> uuids = App.get().appCase.getEvidenceUUIDs();
-			MessageDigest md = DigestUtils.getMd5Digest();
-			for (Iterator iterator = uuids.iterator(); iterator.hasNext();) {
-				String string = (String) iterator.next();
-				md.update(string.getBytes());
-			}
-			
-			String uuid = DatatypeConverter.printHexBinary(md.digest());
+    static Thread t;
 
-			File tempDirCase = new File(tempCasesDir, uuid);
-			if(tempDirCase.exists()) {
-				found=true;
-				baseDir = tempDirCase;
-			}
+    public CachePersistance() {
+        baseDir = new File(App.get().casesPathFile, "iped");
+        baseDir = new File(baseDir, "data");
+        baseDir = new File(baseDir, "timecache");
+        try {
+            // try to use case own folder
+            if (!baseDir.mkdirs()) {
+                // if not possible for security reasons, use user home folder
+                getTempBaseDir();
+            }
+        } catch (SecurityException e) {
+            // if not possible for security reasons, use user home folder
+            getTempBaseDir();
+        }
+    }
 
-			if(!found) {
-				baseDir = new File(tempCasesDir,uuid);
-				baseDir.mkdirs();
-				RandomAccessFile ras = new RandomAccessFile(new File(baseDir,"case.txt"),"rw");
-				ras.writeUTF(App.get().casesPathFile.getAbsolutePath().toString());
-				ras.close();
-			}
+    public void getTempBaseDir() {
+        try {
+            baseDir = new File(System.getProperty("user.home"), ".iped");
+            baseDir = new File(baseDir, "timecache");
+            baseDir.mkdirs();
+            final File tempCasesDir = baseDir;
 
-			//thread to clean caches with no correspondent original data
-			if(t==null) {
-				//if it is null means it wasn't executed yet
-				t = new Thread(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							if(tempCasesDir.listFiles()!=null) {
-								for(File f:tempCasesDir.listFiles()) {
-									if(!f.getName().equals(uuid)) {
-										try {
-											RandomAccessFile ras = new RandomAccessFile(new File(f,"case.txt"),"r");
-											String casePath = ras.readUTF();
-											ras.close();
-											if(casePath!=null) {
-												File caseDir = new File(casePath);
-												if(!caseDir.exists()) {
-													FileUtils.forceDelete(f);
-												}
-											}
-										}catch (Exception e) {
-											e.printStackTrace();
-										}
-									}
-								}
-							}
-						}catch(Exception e) {
-							e.printStackTrace();
-						}
-					}
-				});
-				t.setPriority(Thread.MIN_PRIORITY);
-				t.start();
-			}
-			
-		}catch(Exception e2) {
-			e2.printStackTrace();				
-		}
-	}
+            boolean found = false;
 
-	public Map<String, List<CacheTimePeriodEntry>> loadNewCache(Class<? extends TimePeriod> className) throws IOException {
-		Map<String, List<CacheTimePeriodEntry>> newCache = new HashMap<String, List<CacheTimePeriodEntry>>();
-		
-		for(File f : baseDir.listFiles()) {
-			if(f.getName().equals(className.getSimpleName())) {
-				ArrayList<CacheTimePeriodEntry> times = new ArrayList<CacheTimePeriodEntry>(); 
-				newCache.put(f.getName(), times);
-				if(!loadEventNewCache(times, f)) {
-					throw new IOException("File not committed:"+f.getName());
-				}
-			}
-		}
-		
-		return newCache;
-	}
+            Set<String> uuids = App.get().appCase.getEvidenceUUIDs();
+            MessageDigest md = DigestUtils.getMd5Digest();
+            for (Iterator iterator = uuids.iterator(); iterator.hasNext();) {
+                String string = (String) iterator.next();
+                md.update(string.getBytes());
+            }
 
-	private boolean loadEventNewCache(ArrayList<CacheTimePeriodEntry> times, File f) {
-		try {
-			RandomAccessFile dis;
-			if(f.length()>0) {
-				dis = new RandomAccessFile(new File(f,"0"),"r");
-				
-				int committed = dis.readShort(); 
-				if (committed!=1) return false;
-				
-				String timezoneID = dis.readUTF();
+            String uuid = DatatypeConverter.printHexBinary(md.digest());
 
-				while(true) {
-					Date d = new Date(dis.readLong());
-					CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
-					ct.events = new ArrayList<CacheEventEntry>();
-					ct.date = d;
-					String eventName = dis.readUTF();
-					while(!eventName.equals("!!")) {
-						CacheEventEntry ce = new CacheEventEntry();
-						ce.event = eventName;
-						ce.docIds = new ArrayList<Integer>();
-						int docId = dis.readInt();
-						while(docId!=-1) {
-							ce.docIds.add(docId);
-							docId = dis.readInt();
-						}
-						ct.events.add(ce);
-						eventName = dis.readUTF();
-					}
-					times.add(ct);
-				}
-			}
-			return true;
-		} catch (EOFException e) {
-			return true;
-		}catch (IOException e) {
-			if(!(e instanceof EOFException)) {
-				e.printStackTrace();
-				return false;
-			}
-		}
-		return true;
-	}
+            File tempDirCase = new File(tempCasesDir, uuid);
+            if (tempDirCase.exists()) {
+                found = true;
+                baseDir = tempDirCase;
+            }
 
-	public void saveNewCache(TimeStampCache timeStampCache) {
-		Map<String, List<CacheTimePeriodEntry>> newCache = timeStampCache.getNewCache();
-		
-		for (Entry<String, List<CacheTimePeriodEntry>> entry: newCache.entrySet()) {
-			savePeriodNewCache(timeStampCache, entry.getValue(), new File(baseDir, entry.getKey()));
-		}
-	}
+            if (!found) {
+                baseDir = new File(tempCasesDir, uuid);
+                baseDir.mkdirs();
+                RandomAccessFile ras = new RandomAccessFile(new File(baseDir, "case.txt"), "rw");
+                ras.writeUTF(App.get().casesPathFile.getAbsolutePath().toString());
+                ras.close();
+            }
 
-	private void savePeriodNewCache(TimeStampCache timeStampCache, List<CacheTimePeriodEntry> entry, File file) {
-		file.mkdirs();
-		File eventFile = new File(file, "0");
-		
-		Collections.sort(entry);
-		
-		try {
-			eventFile.createNewFile();
-			RandomAccessFile ras = new RandomAccessFile(eventFile, "rw");
+            // thread to clean caches with no correspondent original data
+            if (t == null) {
+                // if it is null means it wasn't executed yet
+                t = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            if (tempCasesDir.listFiles() != null) {
+                                for (File f : tempCasesDir.listFiles()) {
+                                    if (!f.getName().equals(uuid)) {
+                                        try {
+                                            RandomAccessFile ras = new RandomAccessFile(new File(f, "case.txt"), "r");
+                                            String casePath = ras.readUTF();
+                                            ras.close();
+                                            if (casePath != null) {
+                                                File caseDir = new File(casePath);
+                                                if (!caseDir.exists()) {
+                                                    FileUtils.forceDelete(f);
+                                                }
+                                            }
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                t.setPriority(Thread.MIN_PRIORITY);
+                t.start();
+            }
 
-			ras.writeShort(0);
-			ras.writeUTF(timeStampCache.getCacheTimeZone().getID());
-			
-			for(int i=0; i<entry.size();i++) {
-				CacheTimePeriodEntry ct = entry.get(i);
-				ras.writeLong(ct.date.getTime());
-				for(int j=0; j<ct.events.size(); j++) {
-					CacheEventEntry ce = ct.events.get(j);
-					ras.writeUTF(ce.event);
-					for(int k=0; k<ce.docIds.size();k++) {
-						ras.writeInt(ce.docIds.get(k));
-					}
-					ras.writeInt(-1);
-				}
-				ras.writeUTF("!!");
-			}
+        } catch (Exception e2) {
+            e2.printStackTrace();
+        }
+    }
 
-			ras.seek(0);
-			ras.writeShort(1);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+    public Map<String, List<CacheTimePeriodEntry>> loadNewCache(Class<? extends TimePeriod> className) throws IOException {
+        Map<String, List<CacheTimePeriodEntry>> newCache = new HashMap<String, List<CacheTimePeriodEntry>>();
+
+        for (File f : baseDir.listFiles()) {
+            if (f.getName().equals(className.getSimpleName())) {
+                ArrayList<CacheTimePeriodEntry> times = new ArrayList<CacheTimePeriodEntry>();
+                newCache.put(f.getName(), times);
+                if (!loadEventNewCache(times, f)) {
+                    throw new IOException("File not committed:" + f.getName());
+                }
+            }
+        }
+
+        return newCache;
+    }
+
+    private boolean loadEventNewCache(ArrayList<CacheTimePeriodEntry> times, File f) {
+        try {
+            RandomAccessFile dis;
+            if (f.length() > 0) {
+                dis = new RandomAccessFile(new File(f, "0"), "r");
+
+                int committed = dis.readShort();
+                if (committed != 1)
+                    return false;
+
+                String timezoneID = dis.readUTF();
+
+                while (true) {
+                    Date d = new Date(dis.readLong());
+                    CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
+                    ct.events = new ArrayList<CacheEventEntry>();
+                    ct.date = d;
+                    String eventName = dis.readUTF();
+                    while (!eventName.equals("!!")) {
+                        CacheEventEntry ce = new CacheEventEntry();
+                        ce.event = eventName;
+                        ce.docIds = new ArrayList<Integer>();
+                        int docId = dis.readInt();
+                        while (docId != -1) {
+                            ce.docIds.add(docId);
+                            docId = dis.readInt();
+                        }
+                        ct.events.add(ce);
+                        eventName = dis.readUTF();
+                    }
+                    times.add(ct);
+                }
+            }
+            return true;
+        } catch (EOFException e) {
+            return true;
+        } catch (IOException e) {
+            if (!(e instanceof EOFException)) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void saveNewCache(TimeStampCache timeStampCache) {
+        Map<String, List<CacheTimePeriodEntry>> newCache = timeStampCache.getNewCache();
+
+        for (Entry<String, List<CacheTimePeriodEntry>> entry : newCache.entrySet()) {
+            savePeriodNewCache(timeStampCache, entry.getValue(), new File(baseDir, entry.getKey()));
+        }
+    }
+
+    private void savePeriodNewCache(TimeStampCache timeStampCache, List<CacheTimePeriodEntry> entry, File file) {
+        file.mkdirs();
+        File eventFile = new File(file, "0");
+
+        Collections.sort(entry);
+
+        try {
+            eventFile.createNewFile();
+            RandomAccessFile ras = new RandomAccessFile(eventFile, "rw");
+
+            ras.writeShort(0);
+            ras.writeUTF(timeStampCache.getCacheTimeZone().getID());
+
+            for (int i = 0; i < entry.size(); i++) {
+                CacheTimePeriodEntry ct = entry.get(i);
+                ras.writeLong(ct.date.getTime());
+                for (int j = 0; j < ct.events.size(); j++) {
+                    CacheEventEntry ce = ct.events.get(j);
+                    ras.writeUTF(ce.event);
+                    for (int k = 0; k < ce.docIds.size(); k++) {
+                        ras.writeInt(ce.docIds.get(k));
+                    }
+                    ras.writeInt(-1);
+                }
+                ras.writeUTF("!!");
+            }
+
+            ras.seek(0);
+            ras.writeShort(1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

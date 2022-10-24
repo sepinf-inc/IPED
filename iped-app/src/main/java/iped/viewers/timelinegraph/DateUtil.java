@@ -11,49 +11,48 @@ import org.jfree.data.time.TimePeriod;
 import iped.app.ui.Messages;
 
 public class DateUtil {
-	static public String getTimezoneOffsetInformation(TimeZone tz) {
-		String timezoneofssetformat = String.format("%02d", (int)tz.getRawOffset()/(int)3600000);
-		timezoneofssetformat+=":";
-		timezoneofssetformat+=String.format("%02d", (tz.getRawOffset()%3600000)/60000);
-		return timezoneofssetformat;
-	}
+    static public String getTimezoneOffsetInformation(TimeZone tz) {
+        String timezoneofssetformat = String.format("%02d", (int) tz.getRawOffset() / (int) 3600000);
+        timezoneofssetformat += ":";
+        timezoneofssetformat += String.format("%02d", (tz.getRawOffset() % 3600000) / 60000);
+        return timezoneofssetformat;
+    }
 
-	static public int getUpperCalendarField(int calendarField) {
-		switch (calendarField) {
-		case Calendar.DAY_OF_MONTH:
-			return Calendar.MONTH;
-		case Calendar.HOUR:
-		case Calendar.HOUR_OF_DAY:
-			return Calendar.DAY_OF_MONTH;
-		case Calendar.MINUTE:
-			return Calendar.HOUR;
-		case Calendar.SECOND:
-			return Calendar.MINUTE;
-		case Calendar.MILLISECOND:
-			return Calendar.SECOND;
-		case Calendar.MONTH:
-			return Calendar.YEAR;
-		default:
-			return calendarField;
-		}
-	}
-	
+    static public int getUpperCalendarField(int calendarField) {
+        switch (calendarField) {
+            case Calendar.DAY_OF_MONTH:
+                return Calendar.MONTH;
+            case Calendar.HOUR:
+            case Calendar.HOUR_OF_DAY:
+                return Calendar.DAY_OF_MONTH;
+            case Calendar.MINUTE:
+                return Calendar.HOUR;
+            case Calendar.SECOND:
+                return Calendar.MINUTE;
+            case Calendar.MILLISECOND:
+                return Calendar.SECOND;
+            case Calendar.MONTH:
+                return Calendar.YEAR;
+            default:
+                return calendarField;
+        }
+    }
+
     volatile static SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
 
     static public Date ISO8601DateParse(String strDate) {
-		try {
-			synchronized(ISO8601DATEFORMAT) {
-				return ISO8601DATEFORMAT.parse(strDate);
-			}
-		} catch (ParseException|NumberFormatException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
+        try {
+            synchronized (ISO8601DATEFORMAT) {
+                return ISO8601DATEFORMAT.parse(strDate);
+            }
+        } catch (ParseException | NumberFormatException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
-	static public String getTimePeriodName(Class<? extends TimePeriod> tpclass) {
-		return Messages.getString("TimeLineGraph."+tpclass.getSimpleName());
-	}
-	
-	
+    static public String getTimePeriodName(Class<? extends TimePeriod> tpclass) {
+        return Messages.getString("TimeLineGraph." + tpclass.getSimpleName());
+    }
+
 }

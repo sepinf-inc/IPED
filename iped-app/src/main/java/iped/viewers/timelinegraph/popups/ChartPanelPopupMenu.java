@@ -20,64 +20,64 @@ import iped.viewers.timelinegraph.IpedChartPanel;
 import iped.viewers.timelinegraph.dialog.IntervalDefinitionDialog;
 
 public class ChartPanelPopupMenu extends JPopupMenu implements ActionListener {
-	IpedChartPanel ipedChartPanel;
+    IpedChartPanel ipedChartPanel;
 
-	JCheckBoxMenuItem applyFiltersMenu;
-	JCheckBoxMenuItem syncSelectionMenu;
-	JMenuItem clearAllFiltersMenu;
+    JCheckBoxMenuItem applyFiltersMenu;
+    JCheckBoxMenuItem syncSelectionMenu;
+    JMenuItem clearAllFiltersMenu;
 
-	private JMenuItem openIntervalsDialogMenu;
+    private JMenuItem openIntervalsDialogMenu;
 
-	public ChartPanelPopupMenu(IpedChartPanel ipedChartPanel) {
-		this.ipedChartPanel = ipedChartPanel;
-		
-		applyFiltersMenu = new JCheckBoxMenuItem(Messages.getString("TimeLineGraph.applyDefinedFilters"));
-		applyFiltersMenu.addActionListener(this);
+    public ChartPanelPopupMenu(IpedChartPanel ipedChartPanel) {
+        this.ipedChartPanel = ipedChartPanel;
+
+        applyFiltersMenu = new JCheckBoxMenuItem(Messages.getString("TimeLineGraph.applyDefinedFilters"));
+        applyFiltersMenu.addActionListener(this);
         add(applyFiltersMenu);
 
-         clearAllFiltersMenu = new JMenuItem(Messages.getString("TimeLineGraph.clearDefinedFilters"));
+        clearAllFiltersMenu = new JMenuItem(Messages.getString("TimeLineGraph.clearDefinedFilters"));
         clearAllFiltersMenu.addActionListener(this);
-        add(clearAllFiltersMenu); 
+        add(clearAllFiltersMenu);
 
-		openIntervalsDialogMenu = new JMenuItem(Messages.getString("TimeLineGraph.openIntervalsDialogMenu"));
-		openIntervalsDialogMenu.addActionListener(this);
+        openIntervalsDialogMenu = new JMenuItem(Messages.getString("TimeLineGraph.openIntervalsDialogMenu"));
+        openIntervalsDialogMenu.addActionListener(this);
         add(openIntervalsDialogMenu);
 
-		syncSelectionMenu = new JCheckBoxMenuItem(Messages.getString("TimeLineGraph.syncTableSelectionInChartView"));
-		syncSelectionMenu.addActionListener(this);
+        syncSelectionMenu = new JCheckBoxMenuItem(Messages.getString("TimeLineGraph.syncTableSelectionInChartView"));
+        syncSelectionMenu.addActionListener(this);
         add(syncSelectionMenu);
 
-	}
+    }
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		if(e.getSource()==openIntervalsDialogMenu) {
-			(new IntervalDefinitionDialog(ipedChartPanel)).setVisible();
-		}
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == openIntervalsDialogMenu) {
+            (new IntervalDefinitionDialog(ipedChartPanel)).setVisible();
+        }
 
-		if(e.getSource()==syncSelectionMenu) {
-			ipedChartPanel.getIpedChartsPanel().setSyncViewWithTableSelection(syncSelectionMenu.isSelected());
-			if(syncSelectionMenu.isSelected()) {
-				ipedChartPanel.getIpedChartsPanel().showSelection();
-			}
-		}
-		
-		if(e.getSource()==applyFiltersMenu) {
-			if(!ipedChartPanel.hasNoFilter()) {
-				ipedChartPanel.getIpedChartsPanel().setApplyFilters(applyFiltersMenu.isSelected());
-				App app = (App) ipedChartPanel.getIpedChartsPanel().getGUIProvider();
-				ipedChartPanel.filterSelection();
-				app.setDockablesColors();
-			}
-		}
-		if(e.getSource()==clearAllFiltersMenu) {
-			ipedChartPanel.removeAllFilters();
-		}
-	}
+        if (e.getSource() == syncSelectionMenu) {
+            ipedChartPanel.getIpedChartsPanel().setSyncViewWithTableSelection(syncSelectionMenu.isSelected());
+            if (syncSelectionMenu.isSelected()) {
+                ipedChartPanel.getIpedChartsPanel().showSelection();
+            }
+        }
 
-	@Override
-	public void show(Component invoker, int x, int y) {
-		applyFiltersMenu.setSelected(ipedChartPanel.getIpedChartsPanel().hasFiltersApplied());
-		super.show(invoker, x, y);
-	}
+        if (e.getSource() == applyFiltersMenu) {
+            if (!ipedChartPanel.hasNoFilter()) {
+                ipedChartPanel.getIpedChartsPanel().setApplyFilters(applyFiltersMenu.isSelected());
+                App app = (App) ipedChartPanel.getIpedChartsPanel().getGUIProvider();
+                ipedChartPanel.filterSelection();
+                app.setDockablesColors();
+            }
+        }
+        if (e.getSource() == clearAllFiltersMenu) {
+            ipedChartPanel.removeAllFilters();
+        }
+    }
+
+    @Override
+    public void show(Component invoker, int x, int y) {
+        applyFiltersMenu.setSelected(ipedChartPanel.getIpedChartsPanel().hasFiltersApplied());
+        super.show(invoker, x, y);
+    }
 }

@@ -25,114 +25,61 @@ import org.jfree.data.general.DatasetUtils;
 import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.XYDataset;
 
-public class IpedXYPlot extends XYPlot{
+public class IpedXYPlot extends XYPlot {
 
-	IpedChartPanel ipedChartPanel;
-	
-	private Stroke filterLimitStroke;
-	private AffineTransform affineTransform;
-	Color filterIntervalFillPaint;
+    IpedChartPanel ipedChartPanel;
 
-	public IpedXYPlot(IpedChartPanel ipedChartPanel, AbstractIntervalXYDataset timeTableCumulativeXYDataset, DateAxis domainAxis,
-			NumberAxis rangeAxis, XYItemRenderer renderer) {		
-		super(timeTableCumulativeXYDataset, domainAxis, rangeAxis, renderer);
-		this.ipedChartPanel = ipedChartPanel;
-		
-	    this.filterIntervalFillPaint = new Color(0, 0, 255, 43);
-	    this.filterLimitStroke = new BasicStroke(3,BasicStroke.CAP_SQUARE,BasicStroke.JOIN_MITER, 1);
-	    this.affineTransform = new AffineTransform();
-	    this.affineTransform.rotate(Math.toRadians(90), 0, 0);
-	}
+    private Stroke filterLimitStroke;
+    private AffineTransform affineTransform;
+    Color filterIntervalFillPaint;
 
-	@Override
-	public void drawOutline(Graphics2D g2, Rectangle2D area) {
-		super.drawOutline(g2, area);
-	}
+    public IpedXYPlot(IpedChartPanel ipedChartPanel, AbstractIntervalXYDataset timeTableCumulativeXYDataset, DateAxis domainAxis, NumberAxis rangeAxis, XYItemRenderer renderer) {
+        super(timeTableCumulativeXYDataset, domainAxis, rangeAxis, renderer);
+        this.ipedChartPanel = ipedChartPanel;
 
-	@Override
-	public void drawBackground(Graphics2D g2, Rectangle2D area) {
-		// TODO Auto-generated method stub
-		super.drawBackground(g2, area);
+        this.filterIntervalFillPaint = new Color(0, 0, 255, 43);
+        this.filterLimitStroke = new BasicStroke(3, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 1);
+        this.affineTransform = new AffineTransform();
+        this.affineTransform.rotate(Math.toRadians(90), 0, 0);
+    }
 
-		drawDefinedFiltersRectangles(g2, area, false);
-	}
+    @Override
+    public void drawOutline(Graphics2D g2, Rectangle2D area) {
+        super.drawOutline(g2, area);
+    }
 
-	@Override
-	protected void drawNoDataMessage(Graphics2D g2, Rectangle2D area) {
-		super.drawNoDataMessage(g2, area);
-	}
+    @Override
+    public void drawBackground(Graphics2D g2, Rectangle2D area) {
+        // TODO Auto-generated method stub
+        super.drawBackground(g2, area);
 
-    
+        drawDefinedFiltersRectangles(g2, area, false);
+    }
+
+    @Override
+    protected void drawNoDataMessage(Graphics2D g2, Rectangle2D area) {
+        super.drawNoDataMessage(g2, area);
+    }
+
     /**
-     * Draws defined filters rectangles (if present).
-     * The drawing is performed in XOR mode, therefore
-     * when this method is called twice in a row,
-     * the second call will completely restore the state
-     * of the canvas.
+     * Draws defined filters rectangles (if present). The drawing is performed in
+     * XOR mode, therefore when this method is called twice in a row, the second
+     * call will completely restore the state of the canvas.
      *
-     * @param g2 the graphics device.
-     * @param xor  use XOR for drawing?
+     * @param g2
+     *            the graphics device.
+     * @param xor
+     *            use XOR for drawing?
      */
     private void drawDefinedFilterRectangles(Date[] dates, Graphics2D g2, Rectangle2D area, boolean xor) {
         if (xor) {
             // Set XOR mode to draw the zoom rectangle
-           g2.setXORMode(Color.GRAY);
-       }
-       g2.setPaint(ipedChartPanel.filterIntervalFillPaint);
+            g2.setXORMode(Color.GRAY);
+        }
+        g2.setPaint(ipedChartPanel.filterIntervalFillPaint);
 
-       int xstart = (int) ipedChartPanel.ipedChartsPanel.domainAxis.dateToJava2D(dates[0],  area, ipedChartPanel.ipedChartsPanel.combinedPlot.getDomainAxisEdge());
-       int xend = (int) ipedChartPanel.ipedChartsPanel.domainAxis.dateToJava2D(dates[1],  area, ipedChartPanel.ipedChartsPanel.combinedPlot.getDomainAxisEdge());
-       
-       double minX = area.getMinX();
-       double maxX = area.getMaxX();
-       double maxY = area.getMaxY();
-
-       int x = (int) Math.max(minX, xstart);
-       int y = (int) area.getMinY();
-       int w = (int) Math.min(xend-x,
-               maxX - x);
-       double h = area.getHeight();
-
-       Rectangle2D rectangle2d = new Rectangle2D.Double(x, y, w, h);
-       
-       g2.fill(rectangle2d);
-       
-       drawDefinedFiltersDates(dates, g2, area, xor);
-       
-       if (xor) {
-           // Reset to the default 'overwrite' mode
-           g2.setPaintMode();
-       }
-    }
-    
-    /**
-     * Draws defined filters rectangles (if present).
-     * The drawing is performed in XOR mode, therefore
-     * when this method is called twice in a row,
-     * the second call will completely restore the state
-     * of the canvas.
-     *
-     * @param g2 the graphics device.
-     * @param xor  use XOR for drawing?
-     */
-    public void drawDefinedFiltersRectangles(Graphics2D g2, Rectangle2D area, boolean xor) {
-    	for (Date[] dates : ipedChartPanel.definedFilters) {
-    		drawDefinedFilterRectangles(dates, g2, area, xor);
-   		}
-    }
-	
-
-	private void drawDefinedFiltersDates(Date[] dates, Graphics2D g2, Rectangle2D area, boolean xor) {
-        if (xor) {
-            // Set XOR mode to draw the zoom rectangle
-           g2.setXORMode(Color.GRAY);
-       }
-
-        String strStartDate = ipedChartPanel.getIpedChartsPanel().getDomainAxis().ISO8601DateFormat(dates[0]);//iped.utils.DateUtil.dateToString(dates[0]); 
-        String strEndDate = ipedChartPanel.getIpedChartsPanel().getDomainAxis().ISO8601DateFormat(dates[1]);//iped.utils.DateUtil.dateToString(dates[1]);
-        
-        int xstart = (int) ipedChartPanel.ipedChartsPanel.domainAxis.dateToJava2D(dates[0],  area, ipedChartPanel.ipedChartsPanel.combinedPlot.getDomainAxisEdge());
-        int xend = (int) ipedChartPanel.ipedChartsPanel.domainAxis.dateToJava2D(dates[1],  area, ipedChartPanel.ipedChartsPanel.combinedPlot.getDomainAxisEdge());
+        int xstart = (int) ipedChartPanel.ipedChartsPanel.domainAxis.dateToJava2D(dates[0], area, ipedChartPanel.ipedChartsPanel.combinedPlot.getDomainAxisEdge());
+        int xend = (int) ipedChartPanel.ipedChartsPanel.domainAxis.dateToJava2D(dates[1], area, ipedChartPanel.ipedChartsPanel.combinedPlot.getDomainAxisEdge());
 
         double minX = area.getMinX();
         double maxX = area.getMaxX();
@@ -140,65 +87,116 @@ public class IpedXYPlot extends XYPlot{
 
         int x = (int) Math.max(minX, xstart);
         int y = (int) area.getMinY();
-        int w = (int) Math.min(xend-x,
-                maxX - x);
+        int w = (int) Math.min(xend - x, maxX - x);
         double h = area.getHeight();
 
         Rectangle2D rectangle2d = new Rectangle2D.Double(x, y, w, h);
-        
+
+        g2.fill(rectangle2d);
+
+        drawDefinedFiltersDates(dates, g2, area, xor);
+
+        if (xor) {
+            // Reset to the default 'overwrite' mode
+            g2.setPaintMode();
+        }
+    }
+
+    /**
+     * Draws defined filters rectangles (if present). The drawing is performed in
+     * XOR mode, therefore when this method is called twice in a row, the second
+     * call will completely restore the state of the canvas.
+     *
+     * @param g2
+     *            the graphics device.
+     * @param xor
+     *            use XOR for drawing?
+     */
+    public void drawDefinedFiltersRectangles(Graphics2D g2, Rectangle2D area, boolean xor) {
+        for (Date[] dates : ipedChartPanel.definedFilters) {
+            drawDefinedFilterRectangles(dates, g2, area, xor);
+        }
+    }
+
+    private void drawDefinedFiltersDates(Date[] dates, Graphics2D g2, Rectangle2D area, boolean xor) {
+        if (xor) {
+            // Set XOR mode to draw the zoom rectangle
+            g2.setXORMode(Color.GRAY);
+        }
+
+        String strStartDate = ipedChartPanel.getIpedChartsPanel().getDomainAxis().ISO8601DateFormat(dates[0]);// iped.utils.DateUtil.dateToString(dates[0]);
+        String strEndDate = ipedChartPanel.getIpedChartsPanel().getDomainAxis().ISO8601DateFormat(dates[1]);// iped.utils.DateUtil.dateToString(dates[1]);
+
+        int xstart = (int) ipedChartPanel.ipedChartsPanel.domainAxis.dateToJava2D(dates[0], area, ipedChartPanel.ipedChartsPanel.combinedPlot.getDomainAxisEdge());
+        int xend = (int) ipedChartPanel.ipedChartsPanel.domainAxis.dateToJava2D(dates[1], area, ipedChartPanel.ipedChartsPanel.combinedPlot.getDomainAxisEdge());
+
+        double minX = area.getMinX();
+        double maxX = area.getMaxX();
+        double maxY = area.getMaxY();
+
+        int x = (int) Math.max(minX, xstart);
+        int y = (int) area.getMinY();
+        int w = (int) Math.min(xend - x, maxX - x);
+        double h = area.getHeight();
+
+        Rectangle2D rectangle2d = new Rectangle2D.Double(x, y, w, h);
+
         g2.setPaint(Color.BLACK);
         g2.setStroke(this.filterLimitStroke);
-        g2.setFont(g2.getFont().deriveFont(affineTransform));//rotate text 90
-        g2.drawString(strStartDate, (int) rectangle2d.getMinX()+2, (int) rectangle2d.getMinY()+g2.getFontMetrics().getHeight()+2);
-        g2.drawString(strEndDate, (int) rectangle2d.getMaxX()+2, (int) rectangle2d.getMinY()+g2.getFontMetrics().getHeight()+2);
-       
-       if (xor) {
-           // Reset to the default 'overwrite' mode
-           g2.setPaintMode();
-       }
-	}
+        g2.setFont(g2.getFont().deriveFont(affineTransform));// rotate text 90
+        g2.drawString(strStartDate, (int) rectangle2d.getMinX() + 2, (int) rectangle2d.getMinY() + g2.getFontMetrics().getHeight() + 2);
+        g2.drawString(strEndDate, (int) rectangle2d.getMaxX() + 2, (int) rectangle2d.getMinY() + g2.getFontMetrics().getHeight() + 2);
 
-	/**
-     * Draws defined filters dates text (if present).
-     * The drawing is performed in XOR mode, therefore
-     * when this method is called twice in a row,
-     * the second call will completely restore the state
-     * of the canvas.
+        if (xor) {
+            // Reset to the default 'overwrite' mode
+            g2.setPaintMode();
+        }
+    }
+
+    /**
+     * Draws defined filters dates text (if present). The drawing is performed in
+     * XOR mode, therefore when this method is called twice in a row, the second
+     * call will completely restore the state of the canvas.
      *
-     * @param g2 the graphics device.
-     * @param xor  use XOR for drawing?
+     * @param g2
+     *            the graphics device.
+     * @param xor
+     *            use XOR for drawing?
      */
     private void drawDefinedFiltersDates(Graphics2D g2, Rectangle2D area, boolean xor) {
-    	for (Date[] dates : ipedChartPanel.definedFilters) {
-    		drawDefinedFiltersDates(dates, g2, area, xor);
-		}
-    	
+        for (Date[] dates : ipedChartPanel.definedFilters) {
+            drawDefinedFiltersDates(dates, g2, area, xor);
+        }
+
     }
-    
+
     /**
      * Multiplies the range on the range axis/axes by the specified factor.
      *
-     * @param factor  the zoom factor.
-     * @param info  the plot rendering info.
-     * @param source  the source point.
-     * @param useAnchor  a flag that controls whether or not the source point
-     *         is used for the zoom anchor.
+     * @param factor
+     *            the zoom factor.
+     * @param info
+     *            the plot rendering info.
+     * @param source
+     *            the source point.
+     * @param useAnchor
+     *            a flag that controls whether or not the source point is used for
+     *            the zoom anchor.
      *
      * @see #zoomDomainAxes(double, PlotRenderingInfo, Point2D, boolean)
      */
     @Override
-    public void zoomRangeAxes(double factor, PlotRenderingInfo info,
-                              Point2D source, boolean useAnchor) {
+    public void zoomRangeAxes(double factor, PlotRenderingInfo info, Point2D source, boolean useAnchor) {
 
         // perform the zoom on each range axis
-        for (int i=0; i< this.getRangeAxisCount(); i++) {
-        	ValueAxis yAxis = this.getRangeAxis(i);
+        for (int i = 0; i < this.getRangeAxisCount(); i++) {
+            ValueAxis yAxis = this.getRangeAxis(i);
             if (yAxis == null) {
                 continue;
             }
-            if(yAxis instanceof IpedHourAxis) {
-            	//does not zoom on range axis of IpedHourAxis
-            	continue;
+            if (yAxis instanceof IpedHourAxis) {
+                // does not zoom on range axis of IpedHourAxis
+                continue;
             }
             if (useAnchor) {
                 // get the relevant source coordinate given the plot orientation
@@ -206,8 +204,7 @@ public class IpedXYPlot extends XYPlot{
                 if (this.getOrientation() == PlotOrientation.HORIZONTAL) {
                     sourceY = source.getX();
                 }
-                double anchorY = yAxis.java2DToValue(sourceY,
-                        info.getDataArea(), getRangeAxisEdge());
+                double anchorY = yAxis.java2DToValue(sourceY, info.getDataArea(), getRangeAxisEdge());
                 yAxis.resizeRange2(factor, 0);
             } else {
                 yAxis.resizeRange(factor);
@@ -218,34 +215,39 @@ public class IpedXYPlot extends XYPlot{
     /**
      * Multiplies the range on the range axis/axes by the specified factor.
      *
-     * @param factor  the zoom factor.
-     * @param info  the plot rendering info.
-     * @param source  the source point.
+     * @param factor
+     *            the zoom factor.
+     * @param info
+     *            the plot rendering info.
+     * @param source
+     *            the source point.
      *
      * @see #zoomDomainAxes(double, PlotRenderingInfo, Point2D, boolean)
      */
     @Override
-    public void zoomRangeAxes(double factor, PlotRenderingInfo info,
-                              Point2D source) {
+    public void zoomRangeAxes(double factor, PlotRenderingInfo info, Point2D source) {
         // delegate to other method
         zoomRangeAxes(factor, info, source, false);
-    }    
+    }
 
     /**
      * Zooms in on the range axes.
      *
-     * @param lowerPercent  the lower bound.
-     * @param upperPercent  the upper bound.
-     * @param info  the plot rendering info.
-     * @param source  the source point.
+     * @param lowerPercent
+     *            the lower bound.
+     * @param upperPercent
+     *            the upper bound.
+     * @param info
+     *            the plot rendering info.
+     * @param source
+     *            the source point.
      *
      * @see #zoomDomainAxes(double, double, PlotRenderingInfo, Point2D)
      */
     @Override
-    public void zoomRangeAxes(double lowerPercent, double upperPercent,
-                              PlotRenderingInfo info, Point2D source) {
-        for (int i=0; i< this.getRangeAxisCount(); i++) {
-        	ValueAxis yAxis = this.getRangeAxis(i);
+    public void zoomRangeAxes(double lowerPercent, double upperPercent, PlotRenderingInfo info, Point2D source) {
+        for (int i = 0; i < this.getRangeAxisCount(); i++) {
+            ValueAxis yAxis = this.getRangeAxis(i);
             if (yAxis != null) {
                 yAxis.zoomRange(0, upperPercent);
             }
@@ -256,20 +258,22 @@ public class IpedXYPlot extends XYPlot{
      * Draws a representation of the data within the dataArea region, using the
      * current renderer.
      * <P>
-     * The {@code info} and {@code crosshairState} arguments may be
-     * {@code null}.
+     * The {@code info} and {@code crosshairState} arguments may be {@code null}.
      *
-     * @param g2  the graphics device.
-     * @param dataArea  the region in which the data is to be drawn.
-     * @param index  the dataset index.
-     * @param info  an optional object for collection dimension information.
-     * @param crosshairState  collects crosshair information
-     *                        ({@code null} permitted).
+     * @param g2
+     *            the graphics device.
+     * @param dataArea
+     *            the region in which the data is to be drawn.
+     * @param index
+     *            the dataset index.
+     * @param info
+     *            an optional object for collection dimension information.
+     * @param crosshairState
+     *            collects crosshair information ({@code null} permitted).
      *
      * @return A flag that indicates whether any data was actually rendered.
      */
-    public boolean render(Graphics2D g2, Rectangle2D dataArea, int index,
-            PlotRenderingInfo info, CrosshairState crosshairState) {
+    public boolean render(Graphics2D g2, Rectangle2D dataArea, int index, PlotRenderingInfo info, CrosshairState crosshairState) {
 
         boolean foundData = false;
         XYDataset dataset = getDataset(index);
@@ -278,7 +282,7 @@ public class IpedXYPlot extends XYPlot{
             ValueAxis xAxis = getDomainAxisForDataset(index);
             ValueAxis yAxis = getRangeAxisForDataset(index);
             if (xAxis == null || yAxis == null) {
-                return foundData;  // can't render anything without axes
+                return foundData; // can't render anything without axes
             }
             XYItemRenderer renderer = getRenderer(index);
             if (renderer == null) {
@@ -288,8 +292,7 @@ public class IpedXYPlot extends XYPlot{
                 }
             }
 
-            XYItemRendererState state = renderer.initialise(g2, dataArea, this,
-                    dataset, info);
+            XYItemRendererState state = renderer.initialise(g2, dataArea, this, dataset, info);
             int passCount = renderer.getPassCount();
 
             SeriesRenderingOrder seriesOrder = getSeriesRenderingOrder();
@@ -297,9 +300,9 @@ public class IpedXYPlot extends XYPlot{
                 int seriesCount = dataset.getSeriesCount();
                 for (int item = 0; item < dataset.getItemCount(0); item++) {
                     for (int series = 0; series < seriesCount; series++) {
-                    	if(item<dataset.getItemCount(series)) {
+                        if (item < dataset.getItemCount(series)) {
                             renderer.drawItem(g2, state, dataArea, info, this, xAxis, yAxis, dataset, series, item, crosshairState, pass);
-                    	}
+                        }
                     }
                 }
             }
@@ -308,18 +311,21 @@ public class IpedXYPlot extends XYPlot{
     }
 
     /**
-     * Finds a range of item indices that is guaranteed to contain all the
-     * x-values from x0 to x1 (inclusive).
+     * Finds a range of item indices that is guaranteed to contain all the x-values
+     * from x0 to x1 (inclusive).
      *
-     * @param dataset  the dataset ({@code null} not permitted).
-     * @param series  the series index.
-     * @param xLow  the lower bound of the x-value range.
-     * @param xHigh  the upper bound of the x-value range.
+     * @param dataset
+     *            the dataset ({@code null} not permitted).
+     * @param series
+     *            the series index.
+     * @param xLow
+     *            the lower bound of the x-value range.
+     * @param xHigh
+     *            the upper bound of the x-value range.
      *
      * @return The indices of the boundary items.
      */
-    public static int[] findLiveItems(XYDataset dataset, int series,
-            double xLow, double xHigh) {
+    public static int[] findLiveItems(XYDataset dataset, int series, double xLow, double xHigh) {
         // here we could probably be a little faster by searching for both
         // indices simultaneously, but I'll look at that later if it seems
         // like it matters...
@@ -328,23 +334,27 @@ public class IpedXYPlot extends XYPlot{
         if (i0 > i1) {
             i0 = i1;
         }
-        return new int[] {i0, i1};
+        return new int[] { i0, i1 };
     }
+
     /**
      * Finds the lower index of the range of live items in the specified data
      * series.
      *
-     * @param dataset  the dataset ({@code null} not permitted).
-     * @param series  the series index.
-     * @param xLow  the lowest x-value in the live range.
-     * @param xHigh  the highest x-value in the live range.
+     * @param dataset
+     *            the dataset ({@code null} not permitted).
+     * @param series
+     *            the series index.
+     * @param xLow
+     *            the lowest x-value in the live range.
+     * @param xHigh
+     *            the highest x-value in the live range.
      *
      * @return The index of the required item.
      *
      * @see #findLiveItemsUpperBound(XYDataset, int, double, double)
      */
-    public static int findLiveItemsLowerBound(XYDataset dataset, int series,
-            double xLow, double xHigh) {
+    public static int findLiveItemsLowerBound(XYDataset dataset, int series, double xLow, double xHigh) {
         Args.nullNotPermitted(dataset, "dataset");
         if (xLow >= xHigh) {
             throw new IllegalArgumentException("Requires xLow < xHigh.");
@@ -373,14 +383,12 @@ public class IpedXYPlot extends XYPlot{
                 double midV = dataset.getXValue(series, mid);
                 if (midV >= xLow) {
                     high = mid;
-                }
-                else {
+                } else {
                     low = mid;
                 }
             }
             return high;
-        }
-        else if (dataset.getDomainOrder() == DomainOrder.DESCENDING) {
+        } else if (dataset.getDomainOrder() == DomainOrder.DESCENDING) {
             // when the x-values are sorted in descending order, the lower
             // bound is found by calculating relative to the xHigh value
             int low = 0;
@@ -398,14 +406,12 @@ public class IpedXYPlot extends XYPlot{
                 double midV = dataset.getXValue(series, mid);
                 if (midV > xHigh) {
                     low = mid;
-                }
-                else {
+                } else {
                     high = mid;
                 }
             }
             return high;
-        }
-        else {
+        } else {
             // we don't know anything about the ordering of the x-values,
             // but we can still skip any initial values that fall outside the
             // range...
@@ -426,17 +432,20 @@ public class IpedXYPlot extends XYPlot{
      * Finds the upper index of the range of live items in the specified data
      * series.
      *
-     * @param dataset  the dataset ({@code null} not permitted).
-     * @param series  the series index.
-     * @param xLow  the lowest x-value in the live range.
-     * @param xHigh  the highest x-value in the live range.
+     * @param dataset
+     *            the dataset ({@code null} not permitted).
+     * @param series
+     *            the series index.
+     * @param xLow
+     *            the lowest x-value in the live range.
+     * @param xHigh
+     *            the highest x-value in the live range.
      *
      * @return The index of the required item.
      *
      * @see #findLiveItemsLowerBound(XYDataset, int, double, double)
      */
-    public static int findLiveItemsUpperBound(XYDataset dataset, int series,
-            double xLow, double xHigh) {
+    public static int findLiveItemsUpperBound(XYDataset dataset, int series, double xLow, double xHigh) {
         Args.nullNotPermitted(dataset, "dataset");
         if (xLow >= xHigh) {
             throw new IllegalArgumentException("Requires xLow < xHigh.");
@@ -461,15 +470,13 @@ public class IpedXYPlot extends XYPlot{
                 double midV = dataset.getXValue(series, mid);
                 if (midV <= xHigh) {
                     low = mid;
-                }
-                else {
+                } else {
                     high = mid;
                 }
                 mid = (low + high) / 2;
             }
             return mid;
-        }
-        else if (dataset.getDomainOrder() == DomainOrder.DESCENDING) {
+        } else if (dataset.getDomainOrder() == DomainOrder.DESCENDING) {
             // when the x-values are descending, the upper bound is found by
             // comparing against xLow
             int low = 0;
@@ -487,15 +494,13 @@ public class IpedXYPlot extends XYPlot{
                 double midV = dataset.getXValue(series, mid);
                 if (midV >= xLow) {
                     low = mid;
-                }
-                else {
+                } else {
                     high = mid;
                 }
                 mid = (low + high) / 2;
             }
             return mid;
-        }
-        else {
+        } else {
             // we don't know anything about the ordering of the x-values,
             // but we can still skip any trailing values that fall outside the
             // range...
@@ -512,10 +517,10 @@ public class IpedXYPlot extends XYPlot{
         }
     }
 
-	@Override
-	public SeriesRenderingOrder getSeriesRenderingOrder() {
-		// TODO Auto-generated method stub
-		return SeriesRenderingOrder.FORWARD;
-	}
-    
+    @Override
+    public SeriesRenderingOrder getSeriesRenderingOrder() {
+        // TODO Auto-generated method stub
+        return SeriesRenderingOrder.FORWARD;
+    }
+
 }

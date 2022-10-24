@@ -14,38 +14,36 @@ import iped.viewers.timelinegraph.IpedDateAxis;
  */
 public class CheckWorker extends HighlightWorker {
 
-	public CheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, Date start, Date end,
-			boolean highlight, boolean clearPreviousSelection) {
-		super(domainAxis, resultsProvider, start, end, highlight, clearPreviousSelection);
-	}
+    public CheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, Date start, Date end, boolean highlight, boolean clearPreviousSelection) {
+        super(domainAxis, resultsProvider, start, end, highlight, clearPreviousSelection);
+    }
 
-	public CheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, Date start, Date end,
-			boolean clearPreviousSelection) {
-		this(domainAxis, resultsProvider, start, end, true, clearPreviousSelection);
-	}
+    public CheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, Date start, Date end, boolean clearPreviousSelection) {
+        this(domainAxis, resultsProvider, start, end, true, clearPreviousSelection);
+    }
 
-	@Override
-	public void processResultsItem(JTable t, int i) {
+    @Override
+    public void processResultsItem(JTable t, int i) {
         Boolean checked = (Boolean) t.getModel().getValueAt(i, 1);
         t.getModel().setValueAt(!checked.booleanValue(), i, 1);
-	}
+    }
 
-	@Override
-	protected void doProcess() {
-		BookmarksController.get().setMultiSetting(true);
-		super.doProcess();
-	}
+    @Override
+    protected void doProcess() {
+        BookmarksController.get().setMultiSetting(true);
+        super.doProcess();
+    }
 
-	@Override
-	protected void done() {
-		BookmarksController.get().setMultiSetting(false);
-		resultsProvider.getIPEDSource().getMultiBookmarks().saveState();
+    @Override
+    protected void done() {
+        BookmarksController.get().setMultiSetting(false);
+        resultsProvider.getIPEDSource().getMultiBookmarks().saveState();
         BookmarksController.get().updateUISelection();
-		super.done();
-	}
-	
-	public void clear() {
-		//t.clearSelection();
-	}
+        super.done();
+    }
+
+    public void clear() {
+        // t.clearSelection();
+    }
 
 }

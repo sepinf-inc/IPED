@@ -21,49 +21,48 @@ import org.jfree.chart.title.LegendTitle;
 import org.jfree.chart.ui.Size2D;
 
 public class IpedLegendTitle extends LegendTitle {
-	private IpedChartPanel ipedChartPanel;
-	DefaultListModel<LegendItemBlockContainer> legendListModel;
-	
-	public IpedLegendTitle(LegendItemSource source) {
-		super(source);
-	}
-	
-	public void setIpedChartPanel(IpedChartPanel ipedchartPanel) {
-		this.ipedChartPanel= ipedchartPanel;
-		legendListModel = ipedchartPanel.getIpedChartsPanel().getLegendListModel();
-	}
+    private IpedChartPanel ipedChartPanel;
+    DefaultListModel<LegendItemBlockContainer> legendListModel;
 
-	@Override
-	public Object draw(Graphics2D g2, Rectangle2D area, Object params) {
-		Rectangle b = (Rectangle) area.getBounds().clone();
+    public IpedLegendTitle(LegendItemSource source) {
+        super(source);
+    }
 
-		Graphics2D gPane = g2;
-		
+    public void setIpedChartPanel(IpedChartPanel ipedchartPanel) {
+        this.ipedChartPanel = ipedchartPanel;
+        legendListModel = ipedchartPanel.getIpedChartsPanel().getLegendListModel();
+    }
+
+    @Override
+    public Object draw(Graphics2D g2, Rectangle2D area, Object params) {
+        Rectangle b = (Rectangle) area.getBounds().clone();
+
+        Graphics2D gPane = g2;
+
         Rectangle2D target = b;
         Rectangle2D hotspot = (Rectangle2D) target.clone();
         StandardEntityCollection sec = null;
-        if (params instanceof EntityBlockParams
-                && ((EntityBlockParams) params).getGenerateEntities()) {
+        if (params instanceof EntityBlockParams && ((EntityBlockParams) params).getGenerateEntities()) {
             sec = new StandardEntityCollection();
             sec.add(new TitleEntity(hotspot, this));
         }
-        //target = trimMargin(target);
-        //if (this.getBackgroundPaint() != null) {
-        	//gPane.setPaint(this.getBackgroundPaint());
-        	//gPane.fill(target);
-        //}
-        //BlockFrame border = getFrame();
-        //border.draw(gPane, target);
-        //border.getInsets().trim(target);
+        // target = trimMargin(target);
+        // if (this.getBackgroundPaint() != null) {
+        // gPane.setPaint(this.getBackgroundPaint());
+        // gPane.fill(target);
+        // }
+        // BlockFrame border = getFrame();
+        // border.draw(gPane, target);
+        // border.getInsets().trim(target);
         BlockContainer container = this.getWrapper();
         if (container == null) {
             container = this.getItemContainer();
         }
-        //target = trimPadding(target);
+        // target = trimPadding(target);
         Object val = container.draw(gPane, target, params);
         legendListModel.clear();
         polupatesLegendListModel(container);
-                
+
         if (val instanceof BlockResult) {
             EntityCollection ec = ((BlockResult) val).getEntityCollection();
             if (ec != null && sec != null) {
@@ -71,30 +70,30 @@ public class IpedLegendTitle extends LegendTitle {
                 ((BlockResult) val).setEntityCollection(sec);
             }
         }
-        
+
         return val;
-	}
-	
-	void polupatesLegendListModel(BlockContainer container) {
+    }
+
+    void polupatesLegendListModel(BlockContainer container) {
         Iterator<Block> iterator = container.getBlocks().iterator();
         while (iterator.hasNext()) {
-        	Block b = iterator.next();
-        	if(b instanceof BlockContainer) {
-        		polupatesLegendListModel((BlockContainer)b);
-        	}
-        	if(b instanceof LegendItemBlockContainer) {
-        		legendListModel.addElement((LegendItemBlockContainer)b);
-        	}
+            Block b = iterator.next();
+            if (b instanceof BlockContainer) {
+                polupatesLegendListModel((BlockContainer) b);
+            }
+            if (b instanceof LegendItemBlockContainer) {
+                legendListModel.addElement((LegendItemBlockContainer) b);
+            }
         }
-	}
+    }
 
-	@Override
-	public void draw(Graphics2D g2, Rectangle2D area) {
-		super.draw(g2, area);
-	}
+    @Override
+    public void draw(Graphics2D g2, Rectangle2D area) {
+        super.draw(g2, area);
+    }
 
-	@Override
-	public Size2D arrange(Graphics2D g2, RectangleConstraint constraint) {
+    @Override
+    public Size2D arrange(Graphics2D g2, RectangleConstraint constraint) {
         Size2D result = new Size2D();
         fetchLegendItems();
         if (this.getItemContainer().isEmpty()) {
@@ -107,9 +106,9 @@ public class IpedLegendTitle extends LegendTitle {
         RectangleConstraint c = toContentConstraint(constraint);
         Size2D size = container.arrange(g2, c);
         result.height = calculateTotalHeight(size.height);
-        result.height=0;
+        result.height = 0;
         result.width = calculateTotalWidth(size.width);
         return result;
-	}
+    }
 
 }
