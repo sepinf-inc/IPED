@@ -38,14 +38,18 @@ public class DateUtil {
         }
     }
 
-    volatile static SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+    private static final ThreadLocal<SimpleDateFormat> localDateFormat = new ThreadLocal<SimpleDateFormat>() {
+        @Override
+        protected SimpleDateFormat initialValue() {
+            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+        }
+    };
 
     static public Date ISO8601DateParse(String strDate) {
         try {
-            synchronized (ISO8601DATEFORMAT) {
-                return ISO8601DATEFORMAT.parse(strDate);
-            }
-        } catch (ParseException | NumberFormatException e) {
+            return localDateFormat.get().parse(strDate);
+
+        } catch (ParseException | RuntimeException e) {
             e.printStackTrace();
             return null;
         }
