@@ -319,7 +319,7 @@ public class IPEDSource implements IIPEDSource {
 
     protected void loadCategoryTree() {
         CategoryConfig config = ConfigurationManager.get().findObject(CategoryConfig.class);
-        Category root = config.getConfiguration().clone();
+        Category root = config.getRootCategory().clone();
         // root.setName(rootName);
         ArrayList<Category> leafs = getLeafCategories(root);
         leafs.stream().forEach(l -> checkAndAddMissingCategory(root, l));

@@ -9,28 +9,30 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 public class QualityIcon implements Icon {
-    private final Icon icon;
+    private final ImageIcon icon;
+    private int size;
 
-    public QualityIcon(Icon icon) {
+    public QualityIcon(ImageIcon icon, int size) {
         this.icon = icon;
+        this.size = size;
     }
 
     public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        if (icon instanceof ImageIcon) {
-            g2.drawImage(((ImageIcon) icon).getImage(), x, y, c);
-        } else {
-            icon.paintIcon(c, g2, x, y);
-        }
+        g2.drawImage(((ImageIcon) icon).getImage(), x, y, size, size, c);
     }
 
     public int getIconWidth() {
-        return icon.getIconWidth();
+        return size;
     }
 
     public int getIconHeight() {
-        return icon.getIconHeight();
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
     }
 }

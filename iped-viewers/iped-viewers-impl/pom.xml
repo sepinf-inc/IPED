@@ -110,7 +110,17 @@
         <dependency>
     		<groupId>com.twelvemonkeys.imageio</groupId>
     		<artifactId>imageio-psd</artifactId>
-    		<version>3.7.0</version>
+    		<version>3.8.2</version>
+	  	</dependency>
+        <dependency>
+    		<groupId>com.twelvemonkeys.imageio</groupId>
+    		<artifactId>imageio-webp</artifactId>
+    		<version>3.8.3</version>
+	  	</dependency>
+        <dependency>
+    		<groupId>com.twelvemonkeys.imageio</groupId>
+    		<artifactId>imageio-bmp</artifactId>
+    		<version>3.8.3</version>
 	  	</dependency>
 	    <dependency>
 	  		<groupId>org.jfree</groupId>
