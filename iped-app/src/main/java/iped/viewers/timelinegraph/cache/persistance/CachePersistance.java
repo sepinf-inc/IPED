@@ -1,6 +1,8 @@
 package iped.viewers.timelinegraph.cache.persistance;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
@@ -146,39 +148,37 @@ public class CachePersistance {
     }
 
     private boolean loadEventNewCache(ArrayList<CacheTimePeriodEntry> times, File f) {
-        try {
-            RandomAccessFile dis;
-            if (f.length() > 0) {
-                dis = new RandomAccessFile(new File(f, "0"), "r");
-
-                int committed = dis.readShort();
-                if (committed != 1)
-                    return false;
-
-                String timezoneID = dis.readUTF();
-
-                while (true) {
-                    Date d = new Date(dis.readLong());
-                    CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
-                    ct.events = new ArrayList<CacheEventEntry>();
-                    ct.date = d;
-                    String eventName = dis.readUTF();
-                    while (!eventName.equals("!!")) {
-                        CacheEventEntry ce = new CacheEventEntry();
-                        ce.event = eventName;
-                        ce.docIds = new ArrayList<Integer>();
-                        int docId = dis.readInt();
-                        while (docId != -1) {
-                            ce.docIds.add(docId);
-                            docId = dis.readInt();
-                        }
-                        ct.events.add(ce);
-                        eventName = dis.readUTF();
-                    }
-                    times.add(ct);
-                }
+        File cache = new File(f, "0");
+        if (!cache.exists() || cache.length() == 0) {
+            return false;
+        }
+        try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(cache.toPath())))) {
+            int committed = dis.readShort();
+            if (committed != 1) {
+                return false;
             }
-            return true;
+            String timezoneID = dis.readUTF();
+
+            while (true) {
+                Date d = new Date(dis.readLong());
+                CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
+                ct.events = new ArrayList<CacheEventEntry>();
+                ct.date = d;
+                String eventName = dis.readUTF();
+                while (!eventName.equals("!!")) {
+                    CacheEventEntry ce = new CacheEventEntry();
+                    ce.event = eventName;
+                    ce.docIds = new ArrayList<Integer>();
+                    int docId = dis.readInt();
+                    while (docId != -1) {
+                        ce.docIds.add(docId);
+                        docId = dis.readInt();
+                    }
+                    ct.events.add(ce);
+                    eventName = dis.readUTF();
+                }
+                times.add(ct);
+            }
         } catch (EOFException e) {
             return true;
         } catch (IOException e) {
@@ -187,7 +187,7 @@ public class CachePersistance {
                 return false;
             }
         }
-        return true;
+        return false;
     }
 
     public void saveNewCache(TimeStampCache timeStampCache) {
