@@ -141,7 +141,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
             }
             File file = null;
             try {
-                file = item.getTempFile();
+                file = EmailViewer.getFileRenamedToExt(item.getTempFile(), item.getType());
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
