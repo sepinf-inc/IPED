@@ -1231,6 +1231,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             } else {
                 startCaseSearchFilterLoadByEvent();
             }
+            waitLoaded();
         } catch (Exception e) {
             e.printStackTrace();
         }
