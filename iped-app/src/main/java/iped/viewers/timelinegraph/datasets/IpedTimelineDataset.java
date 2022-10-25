@@ -591,8 +591,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             if (visiblePopulSem != null) {
                 visiblePopulSem.acquire(running);
                 visiblePopulSem.release(running);
-                //memoryCacheReloadSem.acquire();
-                //memoryCacheReloadSem.release();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
