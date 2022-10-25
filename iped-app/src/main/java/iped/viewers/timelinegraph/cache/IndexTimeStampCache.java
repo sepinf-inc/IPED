@@ -14,6 +14,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
@@ -26,6 +28,9 @@ import iped.viewers.timelinegraph.IpedChartsPanel;
 import iped.viewers.timelinegraph.cache.persistance.CachePersistance;
 
 public class IndexTimeStampCache implements TimeStampCache {
+
+    private static final Logger logger = LogManager.getLogger(IndexTimeStampCache.class);
+
     Map<String, Map<TimePeriod, ArrayList<Integer>>> timeStampCacheTree;
     ArrayList<Class<? extends TimePeriod>> periodClassesToCache = new ArrayList<Class<? extends TimePeriod>>();
 
@@ -60,6 +65,7 @@ public class IndexTimeStampCache implements TimeStampCache {
             }
 
             Date d1 = new Date();
+            logger.info("Starting to load/build time cache of [{}]...", periodClassesToCache.toString());
 
             boolean cacheExists = false;
 
@@ -109,7 +115,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                     synchronized (monitor) {
                         monitor.wait();
                         Date d2 = new Date();
-                        System.out.println("Tempo para montar o cache de [" + periodClassesToCache.toString() + "]:" + (d2.getTime() - d1.getTime()));
+                        logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
                         (new CachePersistance()).saveNewCache(this);
                     }
                 } catch (InterruptedException e) {
@@ -118,7 +124,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
             } else {
                 Date d2 = new Date();
-                System.out.println("Tempo para carregar o cache de [" + periodClassesToCache.toString() + "]:" + (d2.getTime() - d1.getTime()));
+                logger.info("Time to load time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
             }
         } catch (Exception e) {
             e.printStackTrace();
