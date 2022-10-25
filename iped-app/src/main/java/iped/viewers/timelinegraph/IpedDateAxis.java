@@ -4,7 +4,6 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.geom.Rectangle2D;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -37,19 +36,21 @@ import org.jfree.chart.util.Args;
 import org.jfree.data.Range;
 import org.jfree.data.time.DateRange;
 import org.jfree.data.time.Day;
+import org.jfree.data.time.FixedMillisecond;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Millisecond;
+import org.jfree.data.time.Minute;
 import org.jfree.data.time.Month;
 import org.jfree.data.time.Quarter;
 import org.jfree.data.time.RegularTimePeriod;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
+import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
 import org.jfree.data.xy.XYDataset;
 
 import iped.app.ui.Messages;
 import iped.viewers.timelinegraph.datasets.AsynchronousDataset;
-import iped.viewers.timelinegraph.model.Minute;
 
 public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity {
     volatile SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
@@ -238,34 +239,62 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
         return super.findMaximumTickLabelHeight(ticks, g2, drawArea, vertical) * 2;// doubled as tick labels upper text are painted bellow main tick label
     }
 
+    private Calendar calendarInstance;
+
     public TimePeriod getDateOnConfiguredTimePeriod(Class<? extends TimePeriod> timePeriodClass, Date date) {
-        Class[] cArg = new Class[2];
-        cArg[0] = Date.class;
-        cArg[1] = Calendar.class;
-        Calendar cal = Calendar.getInstance(getTimeZone());
+        if (calendarInstance == null) {
+            calendarInstance = Calendar.getInstance(getTimeZone());
+        }
+        Calendar cal = (Calendar) calendarInstance.clone();
         try {
-            TimePeriod t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(date, cal);
+            TimePeriod t = _getDateOnConfiguredTimePeriod(timePeriodClass, date, cal);
             return t;
-        } catch (InvocationTargetException e) {
+
+        } catch (Exception e) {
             try {
                 TimePeriod t = null;
                 cal.set(1900, 0, 1, 0, 0, 0);
                 if (date.before(cal.getTime())) {
-                    t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime(), cal);
-                }
-                cal.set(9999, 12, 31, 23, 59, 59);
-                if (date.after(cal.getTime())) {
-                    t = timePeriodClass.getDeclaredConstructor(cArg).newInstance(cal.getTime(), cal);
+                    t = _getDateOnConfiguredTimePeriod(timePeriodClass, cal.getTime(), cal);
+                } else {
+                    cal.set(9999, 12, 31, 23, 59, 59);
+                    if (date.after(cal.getTime())) {
+                        t = _getDateOnConfiguredTimePeriod(timePeriodClass, cal.getTime(), cal);
+                    }
                 }
                 return t;
-            } catch (InvocationTargetException | InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e2) {
+            } catch (Exception e2) {
+                e2.printStackTrace();
                 return null;
             }
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e) {
-            System.out.println("ISO8601DateParse:" + date);
-            e.printStackTrace();
-            return null;
         }
+    }
+
+    private TimePeriod _getDateOnConfiguredTimePeriod(Class<? extends TimePeriod> timePeriodClass, Date date, Calendar cal) {
+        if (timePeriodClass == Day.class) {
+            return new Day(date, cal);
+        } else if (timePeriodClass == Hour.class) {
+            return new Hour(date, cal);
+        } else if (timePeriodClass == Year.class) {
+            return new Year(date, cal);
+        } else if (timePeriodClass == Quarter.class) {
+            return new Quarter(date, cal);
+        } else if (timePeriodClass == Month.class) {
+            return new Month(date, cal);
+        } else if (timePeriodClass == Week.class) {
+            return new Week(date, cal);
+        } else if (timePeriodClass == Minute.class) {
+            return new Minute(date, cal);
+        } else if (timePeriodClass == iped.viewers.timelinegraph.model.Minute.class) {
+            return new iped.viewers.timelinegraph.model.Minute(date, cal);
+        } else if (timePeriodClass == Second.class) {
+            return new Second(date, cal);
+        } else if (timePeriodClass == Millisecond.class) {
+            return new Millisecond(date, cal);
+        } else if (timePeriodClass == FixedMillisecond.class) {
+            return new FixedMillisecond(date);
+        }
+        throw new RuntimeException(timePeriodClass.getName() + " not handled!");
     }
 
     public String ISO8601DateFormat(Date date) {
