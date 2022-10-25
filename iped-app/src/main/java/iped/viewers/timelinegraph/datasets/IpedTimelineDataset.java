@@ -1,7 +1,5 @@
 package iped.viewers.timelinegraph.datasets;
 
-import static org.junit.Assert.assertThrows;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
