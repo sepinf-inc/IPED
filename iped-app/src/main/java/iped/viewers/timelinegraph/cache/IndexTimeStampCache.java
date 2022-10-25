@@ -50,6 +50,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         try {
             timeStampCacheSemaphore.acquire();
         } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -133,18 +134,6 @@ public class IndexTimeStampCache implements TimeStampCache {
         }
     }
 
-    public Map<TimePeriod, ArrayList<Integer>> getCachedEventTimeStamps(String eventField) {
-        try {
-            timeStampCacheSemaphore.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            timeStampCacheSemaphore.release();
-        }
-
-        return timeStampCacheTree.get(eventField);
-    }
-
     public void addTimePeriodClassToCache(Class<? extends TimePeriod> timePeriodClass) {
         periodClassesToCache.add(timePeriodClass);
     }
@@ -152,8 +141,10 @@ public class IndexTimeStampCache implements TimeStampCache {
     public boolean hasTimePeriodClassToCache(Class<? extends TimePeriod> timePeriodClass) {
         try {
             timeStampCacheSemaphore.acquire();// pause until cache is populated
-            timeStampCacheSemaphore.release();
         } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            timeStampCacheSemaphore.release();
         }
         return periodClassesToCache.contains(timePeriodClass);
     }
