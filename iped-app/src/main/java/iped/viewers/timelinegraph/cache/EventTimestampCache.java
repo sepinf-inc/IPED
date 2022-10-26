@@ -132,8 +132,7 @@ class EventTimestampCache implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            timeStampCache.running--;
-            if (timeStampCache.running == 0) {
+            if (timeStampCache.running.decrementAndGet() == 0) {
                 synchronized (timeStampCache.monitor) {
                     timeStampCache.monitor.notifyAll();
                 }

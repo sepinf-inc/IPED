@@ -13,7 +13,10 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
@@ -26,10 +29,13 @@ import iped.viewers.timelinegraph.IpedChartsPanel;
 import iped.viewers.timelinegraph.cache.persistance.CachePersistance;
 
 public class IndexTimeStampCache implements TimeStampCache {
+
+    private static final Logger logger = LogManager.getLogger(IndexTimeStampCache.class);
+
     Map<String, Map<TimePeriod, ArrayList<Integer>>> timeStampCacheTree;
     ArrayList<Class<? extends TimePeriod>> periodClassesToCache = new ArrayList<Class<? extends TimePeriod>>();
 
-    volatile int running = 0;
+    AtomicInteger running = new AtomicInteger();
     Semaphore timeStampCacheSemaphore = new Semaphore(1);
     IMultiSearchResultProvider resultsProvider;
     IpedChartsPanel ipedChartsPanel;
@@ -45,6 +51,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         try {
             timeStampCacheSemaphore.acquire();
         } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -60,6 +67,7 @@ public class IndexTimeStampCache implements TimeStampCache {
             }
 
             Date d1 = new Date();
+            logger.info("Starting to load/build time cache of [{}]...", periodClassesToCache.toString());
 
             boolean cacheExists = false;
 
@@ -98,7 +106,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                     }
                     br = te.next();
                 }
-                running = cacheLoaders.size();
+                running.set(cacheLoaders.size());
 
                 ExecutorService threadPool = Executors.newFixedThreadPool(1);
                 for (EventTimestampCache cacheLoader : cacheLoaders) {
@@ -109,7 +117,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                     synchronized (monitor) {
                         monitor.wait();
                         Date d2 = new Date();
-                        System.out.println("Tempo para montar o cache de [" + periodClassesToCache.toString() + "]:" + (d2.getTime() - d1.getTime()));
+                        logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
                         (new CachePersistance()).saveNewCache(this);
                     }
                 } catch (InterruptedException e) {
@@ -118,25 +126,13 @@ public class IndexTimeStampCache implements TimeStampCache {
 
             } else {
                 Date d2 = new Date();
-                System.out.println("Tempo para carregar o cache de [" + periodClassesToCache.toString() + "]:" + (d2.getTime() - d1.getTime()));
+                logger.info("Time to load time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             timeStampCacheSemaphore.release();
         }
-    }
-
-    public Map<TimePeriod, ArrayList<Integer>> getCachedEventTimeStamps(String eventField) {
-        try {
-            timeStampCacheSemaphore.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            timeStampCacheSemaphore.release();
-        }
-
-        return timeStampCacheTree.get(eventField);
     }
 
     public void addTimePeriodClassToCache(Class<? extends TimePeriod> timePeriodClass) {
@@ -146,8 +142,10 @@ public class IndexTimeStampCache implements TimeStampCache {
     public boolean hasTimePeriodClassToCache(Class<? extends TimePeriod> timePeriodClass) {
         try {
             timeStampCacheSemaphore.acquire();// pause until cache is populated
-            timeStampCacheSemaphore.release();
         } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            timeStampCacheSemaphore.release();
         }
         return periodClassesToCache.contains(timePeriodClass);
     }
