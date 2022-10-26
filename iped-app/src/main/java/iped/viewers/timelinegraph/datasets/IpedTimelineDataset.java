@@ -45,10 +45,14 @@ import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.ItemId;
+import iped.engine.search.QueryBuilder;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
 import iped.properties.ExtraProperties;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
+import iped.viewers.timelinegraph.IpedChartPanel;
 import iped.viewers.timelinegraph.IpedChartsPanel;
 import iped.viewers.timelinegraph.cache.CacheEventEntry;
 import iped.viewers.timelinegraph.cache.CacheTimePeriodEntry;
@@ -348,6 +352,33 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         }
     }
 
+    public String getWindowQuery() {
+    	IpedChartPanel chartPanel = ipedChartsPanel.getChartPanel();
+        Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
+        Date startDate = new Date((long) dateRange.getLowerBound());
+        Date endDate = new Date((long) dateRange.getUpperBound());
+
+        if (startDate.getTime() == 0 && endDate.getTime() == 1) {
+        	return "";
+        }
+        
+        long visibleRangeLength = endDate.getTime() - startDate.getTime();
+        Date tmpDate = new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
+        endDate = new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
+        startDate = tmpDate;
+        
+        
+        String timeFilter = "(";
+        timeFilter += "timeStamp:[";
+        timeFilter += ipedChartsPanel.getDomainAxis().ISO8601DateFormatUTC(startDate);
+        timeFilter += " TO ";
+        timeFilter += ipedChartsPanel.getDomainAxis().ISO8601DateFormatUTC(endDate);
+        timeFilter += "]";
+        timeFilter += ")";
+
+        return timeFilter;
+    }
+    
     int MEMORY_WINDOW_CACHE_PROPORTION = 2;// how many times the visible range the memory window will load, forward and
                                            // backward.
     List<CacheTimePeriodEntry> memoryWindowCache = new ArrayList<CacheTimePeriodEntry>();
