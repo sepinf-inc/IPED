@@ -36,13 +36,8 @@ public class IpedTimelineDatasetManager {
 
     TimeStampCache selectedTimeStampCache;
 
-    CaseSearchFilterListenerFactory cacheFLFactory;
-    CaseSearchFilterListenerFactory luceneFLFactory;
-
     public IpedTimelineDatasetManager(IpedChartsPanel ipedChartsPanel) {
         this.ipedChartsPanel = ipedChartsPanel;
-
-        luceneFLFactory = new CaseSearchFilterListenerFactory(LuceneFilterListener.class);
 
         List<Class<? extends TimePeriod>> periods = Arrays.asList(Day.class, Hour.class, Year.class, Month.class, Quarter.class, Week.class, Minute.class, Second.class, Millisecond.class);
 
@@ -58,11 +53,10 @@ public class IpedTimelineDatasetManager {
             for (TimeStampCache timeStampCache : timeStampCaches) {
                 if (timeStampCache.hasTimePeriodClassToCache(timePeriodClass)) {
                     selectedTimeStampCache = timeStampCache;
-                    return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), null, splitValue);
+                    return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), splitValue);
                 }
             }
-            AbstractIntervalXYDataset res = new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), luceneFLFactory, splitValue);
-            return res;
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.StringTokenizer;
 import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -20,8 +19,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
-import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.util.BytesRef;
 import org.jfree.chart.util.Args;
 import org.jfree.chart.util.PublicCloneable;
 import org.jfree.data.DomainInfo;
@@ -45,10 +42,6 @@ import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.ItemId;
-import iped.engine.search.QueryBuilder;
-import iped.exception.ParseException;
-import iped.exception.QueryNodeException;
-import iped.properties.ExtraProperties;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
@@ -61,7 +54,6 @@ import iped.viewers.timelinegraph.cache.TimeStampCache;
 public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cloneable, PublicCloneable, IntervalXYDataset, DomainInfo, TimelineDataset, TableXYDataset, XYDomainInfo, AsynchronousDataset {
     private static final int CTITEMS_PER_THREAD = 500;
     IMultiSearchResultProvider resultsProvider;
-    CaseSearchFilterListenerFactory cacheFLFactory;
     private Set<IQueryFilterer> exceptThis = new HashSet<IQueryFilterer>();
 
     /**
@@ -145,7 +137,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
      */
     Semaphore memoryCacheReloadSem = new Semaphore(1); //semaphore that controls start and end of load of cache window contourning the visible items
 
-    public IpedTimelineDataset(IpedTimelineDatasetManager ipedTimelineDatasetManager, IMultiSearchResultProvider resultsProvider, CaseSearchFilterListenerFactory cacheFLFactory, String splitValue) throws Exception {
+    public IpedTimelineDataset(IpedTimelineDatasetManager ipedTimelineDatasetManager, IMultiSearchResultProvider resultsProvider, String splitValue) throws Exception {
         this.ipedChartsPanel = ipedTimelineDatasetManager.ipedChartsPanel;
         exceptThis.add(ipedChartsPanel);
         Args.nullNotPermitted(ipedChartsPanel.getTimeZone(), "zone");
@@ -153,81 +145,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         this.workingCalendar = Calendar.getInstance(ipedChartsPanel.getTimeZone(), ipedChartsPanel.getLocale());
         this.xPosition = TimePeriodAnchor.START;
         this.resultsProvider = resultsProvider;
-        this.cacheFLFactory = cacheFLFactory;
         this.splitValue = splitValue;
 
-        if (cacheFLFactory == null) {
-            startCaseSearchFilterLoad();
-        } else {
-            startCaseSearchFilterLoadByEvent();
-        }
-    }
-
-    /*
-     * Start threads to count events by timePeriod/event. The time period
-     * granularity is gotten from the configured in ipedCharts. The threads are
-     * split by eventType.
-     */
-    public void startCaseSearchFilterLoadByEvent() throws Exception {
-        if (memoryCacheReloadSem.availablePermits() == 0) {
-            return;
-        }
-        memoryCacheReloadSem.acquire();
-
-        reader = resultsProvider.getIPEDSource().getLeafReader();
-
-        timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-
-        TermsEnum te = timeEventGroupValues.termsEnum();
-        BytesRef br = te.next();
-
-        csfs = new ArrayList<CaseSearcherFilter>();
-        while (br != null) {
-            StringTokenizer st = new StringTokenizer(br.utf8ToString(), "|");
-            while (st.hasMoreTokens()) {
-                String eventType = st.nextToken().trim();
-                if (eventTypes.add(eventType)) {
-                    // escape : char
-                    String eventField = ipedChartsPanel.getTimeEventColumnName(eventType);
-                    if (eventField == null)
-                        continue;
-
-                    running++;
-                    String eventTypeEsc = eventField.replaceAll(":", "\\\\:");
-                    eventTypeEsc = eventTypeEsc.replaceAll("/", "\\\\/");
-                    eventTypeEsc = eventTypeEsc.replaceAll(" ", "\\\\ ");
-                    eventTypeEsc = eventTypeEsc.replaceAll("-", "\\\\-");
-
-                    String queryText = eventTypeEsc + ":[\"\" TO *]";
-
-                    if (ipedChartsPanel.getChartPanel().getSplitByCategory() && splitValue != null) {
-                        queryText += " && category=\"" + splitValue + "\"";
-                    }
-
-                    CaseSearcherFilter csf = new CaseSearcherFilter(queryText);
-                    csf.getSearcher().setNoScoring(true);
-                    csf.applyUIQueryFilters();
-
-                    IpedTimelineDataset self = this;
-
-                    csf.addCaseSearchFilterListener(cacheFLFactory.getCaseSearchFilterListener(eventType, csf, this, splitValue));
-
-                    IMultiSearchResult timelineSearchResults;
-                    csf.applyUIQueryFilters();
-                    csfs.add(csf);
-                }
-            }
-            br = te.next();
-        }
-
-        visiblePopulSem = new Semaphore(running);
-        visiblePopulSem.acquire(running);
-        memoryCacheReloadSem.acquire();
-
-        for (CaseSearcherFilter csf : csfs) {
-            csf.setThreadPool(slicesThreadPool);
-            queriesThreadPool.execute(csf);
-        }
+        startCaseSearchFilterLoad();
     }
 
     /*
@@ -1265,11 +1185,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     @Override
     public void notifyVisibleRange(double lowerBound, double upperBound) {
         try {
-            if (cacheFLFactory == null) {
-                startCaseSearchFilterLoad();
-            } else {
-                startCaseSearchFilterLoadByEvent();
-            }
+            startCaseSearchFilterLoad();
             waitLoaded();
         } catch (Exception e) {
             e.printStackTrace();
