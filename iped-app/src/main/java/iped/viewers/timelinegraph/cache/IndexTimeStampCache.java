@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +35,7 @@ public class IndexTimeStampCache implements TimeStampCache {
     Map<String, Map<TimePeriod, ArrayList<Integer>>> timeStampCacheTree;
     ArrayList<Class<? extends TimePeriod>> periodClassesToCache = new ArrayList<Class<? extends TimePeriod>>();
 
-    volatile int running = 0;
+    AtomicInteger running = new AtomicInteger();
     Semaphore timeStampCacheSemaphore = new Semaphore(1);
     IMultiSearchResultProvider resultsProvider;
     IpedChartsPanel ipedChartsPanel;
@@ -105,7 +106,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                     }
                     br = te.next();
                 }
-                running = cacheLoaders.size();
+                running.set(cacheLoaders.size());
 
                 ExecutorService threadPool = Executors.newFixedThreadPool(1);
                 for (EventTimestampCache cacheLoader : cacheLoaders) {
