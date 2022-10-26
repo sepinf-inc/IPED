@@ -10,13 +10,14 @@ import com.sun.jna.ptr.IntByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.mail.win10.entries.AppointmentEntry;
+import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.mail.win10.entries.AppointmentEntry.ResponseType;
 import iped.parsers.util.EsedbManager;
 
 public class AppointmentTable extends AbstractTable {
 
-    private static ArrayList<AppointmentEntry> appointments = new ArrayList<>();
-    private static Map<Integer, ArrayList<AppointmentEntry>> folderToApptMap = new HashMap<>();
+    private ArrayList<AppointmentEntry> appointments = new ArrayList<>();
+    private Map<Integer, ArrayList<AppointmentEntry>> folderToApptMap = new HashMap<>();
 
     public AppointmentTable(String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
@@ -28,33 +29,31 @@ public class AppointmentTable extends AbstractTable {
         this.filePath = filePath;
     }
 
-
     @Override
     public void populateTable(EsedbLibrary esedbLibrary) {
         for (int i = 0; i < numRecords; i++) {
-            AppointmentEntry appointment = getAppointment(esedbLibrary, i, errorPointer, tablePointer);
+            AppointmentEntry appointment = extractAppointment(esedbLibrary, i, errorPointer, tablePointer);
             appointments.add(appointment);
-            int uniqueApptParentFolderId = FolderTable.uniqueFoldersMap.get(appointment.getParentFolderId()).getRowId();
-            addAppointmentToParentFolder(appointment, uniqueApptParentFolderId);
+            addAppointmentToParentFolder(appointment, appointment.getParentFolderId());
         }
     }
 
-    public static void addAppointmentToParentFolder(AppointmentEntry appointment, int parentId) {
-        ArrayList<AppointmentEntry> folderAppoints = folderToApptMap
+    private void addAppointmentToParentFolder(AppointmentEntry appointment, int parentId) {
+        ArrayList<AppointmentEntry> folderAppts = folderToApptMap
             .computeIfAbsent(parentId, k -> new ArrayList<AppointmentEntry>());
-        folderAppoints.add(appointment);
+        folderAppts.add(appointment);
     }
     
-    public static ArrayList<AppointmentEntry> getFolderChildAppointments(int parentFolderId) {
-        ArrayList<AppointmentEntry> childAppointments = folderToApptMap.get(parentFolderId);
-
-        if (childAppointments == null) {
-            return new ArrayList<AppointmentEntry>();
+    public ArrayList<AppointmentEntry> getFolderAppointments(FolderEntry folder) {
+        ArrayList<AppointmentEntry> childAppointments = new ArrayList<>();
+        for (int folderId : folder.getAllFolderIds()) {
+            if (folderToApptMap.get(folderId) != null)
+                childAppointments.addAll(folderToApptMap.get(folderId));
         }
         return childAppointments;
     }
 
-    private AppointmentEntry getAppointment(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
+    private AppointmentEntry extractAppointment(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
 
         int result = 0;
 

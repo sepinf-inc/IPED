@@ -67,6 +67,7 @@ import iped.parsers.mail.win10.tables.RecipientTable;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.Util;
 import iped.parsers.util.EsedbManager;
+import iped.parsers.util.IgnoreContentHandler;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
@@ -119,6 +120,13 @@ public class Win10MailParser extends AbstractParser {
     private static final String ATTACH_VIRTUAL_ID_PREFIX = "winAppAttach-";
     private static final String APPT_VIRTUAL_ID_PREFIX = "winAppAppt-";
 
+    private FolderTable folderTable;
+    private MessageTable messageTable;
+    private RecipientTable recipientTable;
+    private AttachmentTable attachTable;
+    private AppointmentTable apptTable;
+    private ContactTable contactTable;
+
     private enum FileTag {
         UNICODE("001e"), CONTACT_JPEG_1("00ff"), CONTACT_JPEG_2("00ff"), CONTACT_JPEG_3("01b5"),
         MESSAGE_UNICODE("1000"), ASCII("1013"), ASCII_PAIRS("10b0"), ANY("3701");
@@ -144,7 +152,6 @@ public class Win10MailParser extends AbstractParser {
     private EDBParser genericParser = new EDBParser();
 
     private EmbeddedDocumentExtractor extractor;
-    private XHTMLContentHandler xhtml;
 
     private ItemInfo itemInfo;
 
@@ -186,63 +193,39 @@ public class Win10MailParser extends AbstractParser {
 
                 String storeVolPath = storeVolFile.getAbsolutePath();
                 PointerByReference filePointerReference = new PointerByReference();
-                List<AbstractTable> tables = getMailTables(storeVolPath, filePointerReference);
+                List<AbstractTable> tables = setMailTables(storeVolPath, filePointerReference);
 
-                for (AbstractTable table : tables) {
-                    File tableFile = tmp.createTemporaryFile();
+                for (FolderEntry folder : folderTable.getFolders()) {
+                    // process folder considering the unique parent folder, since it may be duplicate
+                    FolderEntry uniqueParentFolder = folderTable.getUniqueFoldersMap().get(folder.getParentFolderId());
+                    int parentFolderId = uniqueParentFolder != null ? uniqueParentFolder.getRowId() : folder.getParentFolderId();
+                    processFolder(folder, parentFolderId);
 
-                    try (FileOutputStream tmpTableFile = new FileOutputStream(tableFile)) {
-                        ToXMLContentHandler tableHandler = new ToXMLContentHandler(tmpTableFile, "UTF-8");
-                        Metadata tableMetadata = new Metadata();
-                        tableMetadata.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_DB.toString());
-                        tableMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Mail Table " + table.getTableName()); // $NON-NLS-1$
-                        // tableMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
-                        tableMetadata.set(BasicProps.HASCHILD, "true");
-                        tableMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-                        xhtml = new XHTMLContentHandler(tableHandler, metadata);
-                        xhtml.startDocument();
-
-                        if (table instanceof FolderTable) {
-                            FolderTable folderTable = (FolderTable) table;
-
-                            String path = "";
-                            for (FolderEntry folder : folderTable.getFolders()) {
-                                // process folder considering the unique parent folder, since it may be duplicate
-                                FolderEntry uniqueParentFolder = FolderTable.uniqueFoldersMap.get(folder.getParentFolderId());
-                                int parentFolderId = uniqueParentFolder != null ? uniqueParentFolder.getRowId() : folder.getParentFolderId();
-                                processFolder(folder, parentFolderId);
-
-                                ArrayList<MessageEntry> childEmails = MessageTable.getFolderChildMessages(folder.getRowId());
-                                if (!childEmails.isEmpty()) {
-                                    for (MessageEntry childEmail : childEmails) {
-                                        childEmail.setBody(getMessageBody(childEmail));
-                                        processEmail(childEmail, folder.getRowId(), path);
-                                    }
-                                }
-                                ArrayList<AppointmentEntry> childAppts = AppointmentTable.getFolderChildAppointments(folder.getRowId());
-                                if (!childAppts.isEmpty()) {
-                                    for (AppointmentEntry childAppt : childAppts) {
-                                        childAppt.setBody(getAppointmentBody(childAppt));
-                                        processAppointment(childAppt, folder.getRowId(), path);
-                                    }
-                                }
-
-                                ArrayList<ContactEntry> childContacts = ContactTable.getFolderChildContacts(folder.getRowId());
-                                if (!childContacts.isEmpty()) {
-                                    for (ContactEntry childContact : childContacts) {
-                                        processContact(childContact, folder.getRowId(), path);
-                                    }
-                                }
-                            }
+                    ArrayList<MessageEntry> childEmails = messageTable.getFolderChildMessages(folder);
+                    if (!childEmails.isEmpty()) {
+                        for (MessageEntry childEmail : childEmails) {
+                            childEmail.setBody(getMessageBody(childEmail));
+                            processEmail(childEmail, folder.getRowId());
                         }
-
-                        // try (FileInputStream fis = new FileInputStream(tableFile)) {
-                        //     extractor.parseEmbedded(fis, handler, tableMetadata, true);
-                        // }
                     }
-                    closeTablePointer(table.getTablePointer());
+                    ArrayList<AppointmentEntry> childAppts = apptTable.getFolderAppointments(folder);
+                    if (!childAppts.isEmpty()) {
+                        for (AppointmentEntry childAppt : childAppts) {
+                            childAppt.setBody(getAppointmentBody(childAppt));
+                            processAppointment(childAppt, folder.getRowId());
+                        }
+                    }
+
+                    ArrayList<ContactEntry> childContacts = contactTable.getFolderChildContacts(folder);
+                    if (!childContacts.isEmpty()) {
+                        for (ContactEntry childContact : childContacts) {
+                            processContact(childContact, folder.getRowId());
+                        }
+                    }
                 }
+
+                for (AbstractTable table : tables)
+                    closeTablePointer(table.getTablePointer());
                 closeFilePointer(filePointerReference);
             }
         } catch (Exception e) {
@@ -263,9 +246,9 @@ public class Win10MailParser extends AbstractParser {
      * @return List of tables extracted from database
      * @throws Win10MailException
      */
-    protected List<AbstractTable> getMailTables(String filePath, PointerByReference filePointerReference)
+    protected List<AbstractTable> setMailTables(String filePath, PointerByReference filePointerReference)
             throws Win10MailException {
-        List<AbstractTable> tables = new LinkedList<AbstractTable>();
+        List<AbstractTable> tables = new ArrayList<>();
 
         String dbPath = itemInfo.getPath();
 
@@ -341,17 +324,23 @@ public class Win10MailParser extends AbstractParser {
 
                 AbstractTable table = null;
                 if (tableNameStr.contains("Message")) {
-                    table = new MessageTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    messageTable = new MessageTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    table = messageTable;
                 } else if (tableNameStr.contains("Recipient")) {
-                    table = new RecipientTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    recipientTable = new RecipientTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    table = recipientTable;
                 } else if (tableNameStr.contains("Attachment")) {
-                    table = new AttachmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    attachTable = new AttachmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    table = attachTable;
                 } else if (tableNameStr.contains("Folders")) {
-                    table = new FolderTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    folderTable = new FolderTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    table = folderTable;
                 } else if (tableNameStr.contains("Appointment")) {
-                    table = new AppointmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    apptTable = new AppointmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    table = apptTable;
                 } else if (tableNameStr.contains("Contact")) {
-                    table = new ContactTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    contactTable = new ContactTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                    table = contactTable;
                 }
 
                 if (table != null) {
@@ -361,8 +350,8 @@ public class Win10MailParser extends AbstractParser {
             }
 
         } finally {
-
         }
+
         return tables;
     }
     
@@ -382,18 +371,17 @@ public class Win10MailParser extends AbstractParser {
         entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + folder.getRowId());
         if (parentId != -1)
             entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
-        extractor.parseEmbedded(new EmptyInputStream(), xhtml, entrydata, true);
+        extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), entrydata, true);
     }
 
     
     /** Extract an appointment as a subitem with all information of the event
      * @param appointment to be processed
      * @param parentId used to link to parent folder
-     * @param path
      * @throws SAXException
      * @throws IOException
      */
-    private void processAppointment(AppointmentEntry appointment, long parentId, String path) throws SAXException, IOException {
+    private void processAppointment(AppointmentEntry appointment, long parentId) throws SAXException, IOException {
         Metadata appointMetadata = new Metadata();
 
         String body = appointment.getBody();
@@ -424,18 +412,17 @@ public class Win10MailParser extends AbstractParser {
         preview.append(body);
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
             if (extractor.shouldParseEmbedded(appointMetadata))
-                extractor.parseEmbedded(stream, xhtml, appointMetadata, true);
+                extractor.parseEmbedded(stream, new IgnoreContentHandler(), appointMetadata, true);
         }
     }
 
     /** Extract a contact as a subitem
      * @param contact to be processed
      * @param parentId used to link to parent folder
-     * @param path
      * @throws SAXException
      * @throws IOException
      */
-    private void processContact(ContactEntry contact, long parentId, String path) throws SAXException, IOException {
+    private void processContact(ContactEntry contact, long parentId) throws SAXException, IOException {
         Metadata contactMetadata = new Metadata();
 
         contactMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
@@ -457,7 +444,7 @@ public class Win10MailParser extends AbstractParser {
 
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
             if (extractor.shouldParseEmbedded(contactMetadata))
-                extractor.parseEmbedded(stream, xhtml, contactMetadata, true);
+                extractor.parseEmbedded(stream, new IgnoreContentHandler(), contactMetadata, true);
         }
     }
 
@@ -561,7 +548,7 @@ public class Win10MailParser extends AbstractParser {
      * @param parentId used to link to parent folder
      * @param path
      */
-    private void processEmail(MessageEntry email, long parentId, String path) {
+    private void processEmail(MessageEntry email, long parentId) {
         Metadata emailMetadata = new Metadata();
 
         String subject = email.getSubject();
@@ -608,7 +595,7 @@ public class Win10MailParser extends AbstractParser {
 
             for (int k = 0; k < recipTypes.length; k++) {
                 List<String> recipientNames = new ArrayList<>();
-                List<RecipientEntry> recipients = email.getRecipients();
+                List<RecipientEntry> recipients = recipientTable.getMessageRecipients(email.getRowId());
                 if (recipients != null) {
                     for (int i = 0; i < recipients.size(); i++) {
                         RecipientEntry recipient = recipients.get(i);
@@ -638,10 +625,11 @@ public class Win10MailParser extends AbstractParser {
             }
 
             // Attachments:
+            ArrayList<AttachmentEntry> emailAttachments = attachTable.getMessageAttachments(email.getRowId());
             if (email.getNoOfAttachments() > 0) {
                 preview.append("<b>" + Messages.getString("OutlookPSTParser.Attachments") + " (" + email.getNoOfAttachments()
-                + "):</b><br>");
-                for (AttachmentEntry attach : email.getAttachments()) {
+                    + "):</b><br>");
+                for (AttachmentEntry attach : emailAttachments) {
                     String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
                     attach.setOriginalFileName(StringUtils.substringAfterLast(contentPath, "/"));
                     Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, attach.getAttachSize());
@@ -673,16 +661,15 @@ public class Win10MailParser extends AbstractParser {
 
             try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
                 if (extractor.shouldParseEmbedded(emailMetadata))
-                    extractor.parseEmbedded(stream, xhtml, emailMetadata, true);
+                    extractor.parseEmbedded(stream, new IgnoreContentHandler(), emailMetadata, true);
             }
 
+            for (AttachmentEntry attach : emailAttachments) {
+                processAttachment(attach);
+            }
         } catch (Exception e) {
-            LOGGER.error("Exception extracting email: {}>>{}\t{}", path, email.getSubject(), e.toString());
+            LOGGER.error("Exception extracting email: {}\t{}", email.getSubject(), e.toString());
             // e.printStackTrace();
-        }
-
-        for (AttachmentEntry attach : email.getAttachments()) {
-            processAttachment(attach, path);
         }
 
     }
@@ -691,7 +678,7 @@ public class Win10MailParser extends AbstractParser {
      * @param attachment entry to be processed
      * @param path
      */
-    private void processAttachment(AttachmentEntry attachment, String path) {
+    private void processAttachment(AttachmentEntry attachment) {
         String parentId = EMAIL_VIRTUAL_ID_PREFIX + attachment.getMessageId();
         String filename = attachment.getFileName();
         long rowId = attachment.getRowId();
@@ -708,10 +695,10 @@ public class Win10MailParser extends AbstractParser {
             attachMetadata.set(ExtraProperties.LINKED_ITEMS, attachment.getCaseQuery());
 
             if (extractor.shouldParseEmbedded(attachMetadata))
-                extractor.parseEmbedded(new EmptyInputStream(), xhtml, attachMetadata, true);
+                extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), attachMetadata, true);
 
         } catch (Exception e) {
-            LOGGER.error("Exception extracting attachment {}>>{}\t{}", path, filename, e.toString());
+            LOGGER.error("Exception extracting attachment {}\t{}", filename, e.toString());
             // e.printStackTrace();
         }
     }
@@ -774,7 +761,8 @@ public class Win10MailParser extends AbstractParser {
     private String handleInlineImages(MessageEntry email, String body) {
         String bodyTmp = body;
         if (bodyTmp.contains("cid:")) {
-            for (AttachmentEntry attachment : email.getAttachments()) {
+            ArrayList<AttachmentEntry> emailAttachments = attachTable.getMessageAttachments(email.getRowId());
+            for (AttachmentEntry attachment : emailAttachments) {
                 if (attachment.getAttachCID() != null && attachment.getFilePath() != null) {
                     String attachCid = attachment.getAttachCID().replaceAll("^<|>$", "");
                     bodyTmp = body.replace("cid:" + attachCid, attachment.getFilePath());

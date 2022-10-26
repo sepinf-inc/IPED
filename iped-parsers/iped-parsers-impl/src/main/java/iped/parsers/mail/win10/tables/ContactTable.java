@@ -10,12 +10,13 @@ import com.sun.jna.ptr.IntByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.mail.win10.entries.ContactEntry;
+import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.util.EsedbManager;
 
 public class ContactTable extends AbstractTable {
 
     private List<ContactEntry> contacts = new ArrayList<>();
-    private static Map<Integer, ArrayList<ContactEntry>> folderToContactsMap = new HashMap<>();
+    private Map<Integer, ArrayList<ContactEntry>> folderToContactsMap = new HashMap<>();
 
     public ContactTable(String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
@@ -30,21 +31,20 @@ public class ContactTable extends AbstractTable {
     @Override
     public void populateTable(EsedbLibrary esedbLibrary) {
         for (int i = 0; i < numRecords; i++) {
-            ContactEntry contact = getContact(esedbLibrary, i, errorPointer, tablePointer);
+            ContactEntry contact = extractContact(esedbLibrary, i, errorPointer, tablePointer);
             contacts.add(contact);
-            int uniqueContactParentFolderId = FolderTable.uniqueFoldersMap.get(contact.getParentFolderId()).getRowId();
-            addContactToParentFolder(contact, uniqueContactParentFolderId);
+            addContactToParentFolder(contact, contact.getParentFolderId());
         }
     }
     
 
-    public static void addContactToParentFolder(ContactEntry contact, int parentId) {
+    public void addContactToParentFolder(ContactEntry contact, int parentId) {
         ArrayList<ContactEntry> folderContacts = folderToContactsMap
             .computeIfAbsent(parentId, k -> new ArrayList<ContactEntry>());
         folderContacts.add(contact);
     }
 
-    private ContactEntry getContact(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
+    private ContactEntry extractContact(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
 
         int result = 0;
 
@@ -95,11 +95,11 @@ public class ContactTable extends AbstractTable {
         return contact;
     }
 
-    public static ArrayList<ContactEntry> getFolderChildContacts(int parentFolderId) {
-        ArrayList<ContactEntry> childContacts = folderToContactsMap.get(parentFolderId);
-        
-        if (childContacts == null) {
-            return new ArrayList<ContactEntry>();
+    public ArrayList<ContactEntry> getFolderChildContacts(FolderEntry folder) {
+        ArrayList<ContactEntry> childContacts = new ArrayList<>();
+        for (int id : folder.getAllFolderIds()) {
+            if (folderToContactsMap.get(id) != null)
+                childContacts.addAll(folderToContactsMap.get(id));
         }
         return childContacts;
     }

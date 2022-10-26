@@ -3,18 +3,18 @@ package iped.parsers.mail.win10.entries;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
-
-import iped.parsers.mail.win10.tables.FolderTable;
-import iped.parsers.mail.win10.tables.MessageTable;
 
 public class FolderEntry extends AbstractEntry {
     private int parentFolderID;
     private String displayName;
     private Date createTime;
+    private List<Integer> allIds = new ArrayList<>();
 
     public FolderEntry(int rowId) {
         super(rowId);
+        addFolderId(rowId);
     }
 
     public int getParentFolderId() {
@@ -24,7 +24,6 @@ public class FolderEntry extends AbstractEntry {
     public void setParentFolderID(int parentFolderID) {
         this.parentFolderID = parentFolderID;
     }
-
 
     public String getDisplayName() {
         return this.displayName;
@@ -48,13 +47,12 @@ public class FolderEntry extends AbstractEntry {
         this.createTime = createTime;
     }
 
-    public ArrayList<MessageEntry> getChildMessages() {
-        return MessageTable.getFolderChildMessages(rowId);
+    public void addFolderId(int id) {
+        allIds.add(id);
     }
 
-    
-    public ArrayList<FolderEntry> getSubfolders() {
-        return FolderTable.getSubfolders(rowId);
+    public List<Integer> getAllFolderIds() {
+        return allIds;
     }
 
 }

@@ -9,6 +9,7 @@ import java.util.Map;
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.ptr.IntByReference;
 import iped.parsers.browsers.edge.EsedbLibrary;
+import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.mail.win10.entries.MessageEntry;
 import iped.parsers.util.EsedbManager;
 
@@ -16,7 +17,7 @@ import iped.parsers.util.EsedbManager;
 public class MessageTable extends AbstractTable {
 
     private List<MessageEntry> messages = new ArrayList<>();
-    private static Map<Integer, ArrayList<MessageEntry>> folderToMsgsMap = new HashMap<>();
+    private Map<Integer, ArrayList<MessageEntry>> folderToMsgsMap = new HashMap<>();
 
     public MessageTable(String filePath, String tableName, PointerByReference tablePointer,
             PointerByReference errorPointer, long numRecords) {
@@ -31,10 +32,9 @@ public class MessageTable extends AbstractTable {
     @Override
     public void populateTable(EsedbLibrary esedbLibrary) {
         for (int i = 0; i < numRecords; i++) {
-            MessageEntry message = getMessage(esedbLibrary, i, errorPointer, tablePointer);
+            MessageEntry message = extractMessage(esedbLibrary, i, errorPointer, tablePointer);
             messages.add(message);
-            int uniqueMsgParentFolderId = FolderTable.uniqueFoldersMap.get(message.getParentFolderId()).getRowId();
-            addMessageToParentFolder(message, uniqueMsgParentFolderId);
+            addMessageToParentFolder(message, message.getParentFolderId());
         }
     }
 
@@ -42,22 +42,22 @@ public class MessageTable extends AbstractTable {
         return messages;
     }
 
-    public static void addMessageToParentFolder(MessageEntry message, int parentId) {
+    public void addMessageToParentFolder(MessageEntry message, int parentId) {
         ArrayList<MessageEntry> folderMsgs = folderToMsgsMap.computeIfAbsent(parentId, k -> new ArrayList<MessageEntry>());
         folderMsgs.add(message);
     }
 
-    public static ArrayList<MessageEntry> getFolderChildMessages(int parentFolderId) {
-        ArrayList<MessageEntry> childMessages = folderToMsgsMap.get(parentFolderId);
-        
-        if (childMessages == null) {
-            return new ArrayList<MessageEntry>();
+    public ArrayList<MessageEntry> getFolderChildMessages(FolderEntry folder) {
+        ArrayList<MessageEntry> childMessages = new ArrayList<>();
+        for (int id : folder.getAllFolderIds()) {
+            if (folderToMsgsMap.get(id) != null)
+                childMessages.addAll(folderToMsgsMap.get(id));
         }
         return childMessages;
     }
 
 
-    private MessageEntry getMessage(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
+    private MessageEntry extractMessage(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
 
         int result = 0;
 

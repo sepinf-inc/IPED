@@ -13,8 +13,8 @@ import iped.parsers.util.EsedbManager;
 
 public class AttachmentTable extends AbstractTable {
 
-    private static Map<Long, ArrayList<AttachmentEntry>> msgToAttachmentsMap = new HashMap<>();
-    private static ArrayList<AttachmentEntry> attachmentList = new ArrayList<>();
+    private Map<Long, ArrayList<AttachmentEntry>> msgToAttachmentsMap = new HashMap<>();
+    private ArrayList<AttachmentEntry> attachmentList = new ArrayList<>();
 
     public AttachmentTable(String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
@@ -35,7 +35,7 @@ public class AttachmentTable extends AbstractTable {
         }
     }
 
-    public static void addAttachment(AttachmentEntry attachment) {
+    public void addAttachment(AttachmentEntry attachment) {
         ArrayList<AttachmentEntry> messageAttachments = msgToAttachmentsMap.computeIfAbsent(attachment.getMessageId(), k -> new ArrayList<AttachmentEntry>());
         if (!messageAttachments.stream().map(m -> m.getRowId()).anyMatch(id -> id == attachment.getRowId())) {
             messageAttachments.add(attachment);
@@ -46,7 +46,7 @@ public class AttachmentTable extends AbstractTable {
         return attachmentList;
     }
 
-    public static ArrayList<AttachmentEntry> getMessageAttachments(long messageId) {
+    public ArrayList<AttachmentEntry> getMessageAttachments(long messageId) {
         ArrayList<AttachmentEntry> messageAttachments = msgToAttachmentsMap.get(messageId);
         if (messageAttachments == null) {
             return new ArrayList<AttachmentEntry>();

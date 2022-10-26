@@ -1,12 +1,9 @@
 package iped.parsers.mail.win10.entries;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
 
-import iped.parsers.mail.win10.tables.AttachmentTable;
-import iped.parsers.mail.win10.tables.RecipientTable;
 
 public class MessageEntry extends AbstractEntry {
     private long conversationId;
@@ -21,7 +18,6 @@ public class MessageEntry extends AbstractEntry {
     private Date lastModifiedTime;
     private String body;
     private String bodyOriginalPath;
-
 
     public final char categoryNumber = '3';
 
@@ -122,14 +118,6 @@ public class MessageEntry extends AbstractEntry {
         this.lastModifiedTime = lastModifiedTime;
     }
 
-    public ArrayList<RecipientEntry> getRecipients() {
-        return RecipientTable.getMessageRecipients(rowId);
-    }
-
-    public ArrayList<AttachmentEntry> getAttachments() {
-        return AttachmentTable.getMessageAttachments(rowId);
-    }
-    
     public String getBody() {
         return this.body;
     }

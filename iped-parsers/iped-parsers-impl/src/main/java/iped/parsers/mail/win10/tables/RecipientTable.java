@@ -14,7 +14,7 @@ import iped.parsers.util.EsedbManager;
 
 public class RecipientTable extends AbstractTable {
 
-    private static Map<Long, ArrayList<RecipientEntry>> parentMsgToRecipientsMap = new HashMap<>();
+    private Map<Long, ArrayList<RecipientEntry>> parentMsgToRecipientsMap = new HashMap<>();
 
     public RecipientTable(String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
@@ -26,23 +26,23 @@ public class RecipientTable extends AbstractTable {
         this.filePath = filePath;
     }
 
-    public static void addRecipient(Long messageId, RecipientEntry recipient) {
-        parentMsgToRecipientsMap.computeIfAbsent(messageId, k -> new ArrayList<RecipientEntry>()).add(recipient);
-    }
-
     @Override
     public void populateTable(EsedbLibrary esedbLibrary) {
         for (int i = 0; i < numRecords; i++) {
-            RecipientEntry recipient = getRecipient(esedbLibrary, i, errorPointer, tablePointer);
-            addRecipient(recipient.getMessageId(), recipient);
+            RecipientEntry recipient = extractRecipient(esedbLibrary, i, errorPointer, tablePointer);
+            addRecipient(recipient, recipient.getMessageId());
         }
     }
 
-    public static ArrayList<RecipientEntry> getMessageRecipients(long messageId) {
+    public void addRecipient(RecipientEntry recipient, Long messageId) {
+        parentMsgToRecipientsMap.computeIfAbsent(messageId, k -> new ArrayList<RecipientEntry>()).add(recipient);
+    }
+
+    public ArrayList<RecipientEntry> getMessageRecipients(long messageId) {
         return parentMsgToRecipientsMap.get(messageId);
     }
 
-    private RecipientEntry getRecipient(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
+    private RecipientEntry extractRecipient(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
 
         int result = 0;
 
