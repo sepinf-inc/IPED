@@ -55,25 +55,25 @@ class EventTimestampCache implements Runnable {
                     TreeMap<Date, TimePeriod> periodCache = new TreeMap<>();
                     while (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = (int) values.nextOrd();
-                        outer: while (ord != SortedSetDocValues.NO_MORE_ORDS) {
+                        while (ord != SortedSetDocValues.NO_MORE_ORDS) {
                             if (ord != emptyValueOrd) {
+                                Date date = null;
+                                if (ord < parsedDateCache.size()) {
+                                    date = parsedDateCache.get(ord);
+                                }
+                                if (date == null) {
+                                    String timeStr = cloneBr(values.lookupOrd(ord));
+                                    if (timeStr.isEmpty()) {
+                                        emptyValueOrd = ord;
+                                        continue;
+                                    }
+                                    date = DateUtil.ISO8601DateParse(timeStr);
+                                    while (ord >= parsedDateCache.size()) {
+                                        parsedDateCache.add(null);
+                                    }
+                                    parsedDateCache.set(ord, date);
+                                }
                                 for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
-                                    Date date = null;
-                                    if (ord < parsedDateCache.size()) {
-                                        date = parsedDateCache.get(ord);
-                                    }
-                                    if (date == null) {
-                                        String timeStr = cloneBr(values.lookupOrd(ord));
-                                        if (timeStr.isEmpty()) {
-                                            emptyValueOrd = ord;
-                                            continue outer;
-                                        }
-                                        date = DateUtil.ISO8601DateParse(timeStr);
-                                        while (ord >= parsedDateCache.size()) {
-                                            parsedDateCache.add(null);
-                                        }
-                                        parsedDateCache.set(ord, date);
-                                    }
                                     TimePeriod t;
                                     Entry<Date, TimePeriod> entry = periodCache.floorEntry(date);
                                     if (entry != null && date.compareTo(entry.getValue().getEnd()) <= 0) {
@@ -108,26 +108,26 @@ class EventTimestampCache implements Runnable {
                     int emptyValueOrd = -1;
                     int doc = values.nextDoc();
                     TreeMap<Date, TimePeriod> periodCache = new TreeMap<>();
-                    outer: while (doc != DocIdSetIterator.NO_MORE_DOCS) {
+                    while (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = values.ordValue();
                         if (ord != emptyValueOrd) {
+                            Date date = null;
+                            if (ord < parsedDateCache.size()) {
+                                date = parsedDateCache.get(ord);
+                            }
+                            if (date == null) {
+                                String timeStr = cloneBr(values.lookupOrd(ord));
+                                if (timeStr.isEmpty()) {
+                                    emptyValueOrd = ord;
+                                    continue;
+                                }
+                                date = DateUtil.ISO8601DateParse(timeStr);
+                                while (ord >= parsedDateCache.size()) {
+                                    parsedDateCache.add(null);
+                                }
+                                parsedDateCache.set(ord, date);
+                            }
                             for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
-                                Date date = null;
-                                if (ord < parsedDateCache.size()) {
-                                    date = parsedDateCache.get(ord);
-                                }
-                                if (date == null) {
-                                    String timeStr = cloneBr(values.lookupOrd(ord));
-                                    if (timeStr.isEmpty()) {
-                                        emptyValueOrd = ord;
-                                        continue outer;
-                                    }
-                                    date = DateUtil.ISO8601DateParse(timeStr);
-                                    while (ord >= parsedDateCache.size()) {
-                                        parsedDateCache.add(null);
-                                    }
-                                    parsedDateCache.set(ord, date);
-                                }
                                 TimePeriod t;
                                 Entry<Date, TimePeriod> entry = periodCache.floorEntry(date);
                                 if (entry != null && date.compareTo(entry.getValue().getEnd()) <= 0) {
