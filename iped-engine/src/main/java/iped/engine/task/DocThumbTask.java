@@ -38,6 +38,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.DocThumbTaskConfig;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.task.carver.BaseCarveTask;
+import iped.io.URLUtil;
 import iped.parsers.misc.PDFTextParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.PDFToThumb;
@@ -90,7 +91,7 @@ public class DocThumbTask extends ThumbTask {
                     logger.info("Thumb Size: " + docThumbsConfig.getThumbSize());
                     logger.info("LibreOffice Conversion: " + (docThumbsConfig.isLoEnabled() ? "enabled" : "disabled"));
                     if (docThumbsConfig.isLoEnabled()) {
-                        URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+                        URL url = URLUtil.getURL(this.getClass());
                         File jarDir = new File(url.toURI()).getParentFile();
                         LibreOfficeFinder loFinder = new LibreOfficeFinder(jarDir);
                         loPath = loFinder.getLOPath();
@@ -282,7 +283,7 @@ public class DocThumbTask extends ThumbTask {
             try {
                 Exception exception = null;
                 if (docThumbsConfig.isExternalPdfConversion()) {
-                    URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+                    URL url = URLUtil.getURL(this.getClass());
                     String jarDir = new File(url.toURI()).getParent();
                     String classpath = jarDir + "/*";
                     File file = item.getTempFile();
