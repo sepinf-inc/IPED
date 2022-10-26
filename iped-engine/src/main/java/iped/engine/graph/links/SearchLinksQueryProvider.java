@@ -10,6 +10,8 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.io.URLUtil;
+
 public class SearchLinksQueryProvider {
 
     private Logger LOGGER = LoggerFactory.getLogger(SearchLinksQueryProvider.class);
@@ -51,7 +53,7 @@ public class SearchLinksQueryProvider {
 
     private String getLocation(SearchLinksQuery query) {
         try {
-            URL location = query.getClass().getProtectionDomain().getCodeSource().getLocation();
+            URL location = URLUtil.getURL(query.getClass());
             return location.toString();
         } catch (SecurityException e) {
             return null;
