@@ -43,7 +43,7 @@ import iped.utils.EmptyInputStream;
  * https://stackoverflow.com/questions/34167003/what-format-is-the-safari-history-db-history-visits-visit-time-in
  * http://az4n6.blogspot.com/2014/07/safari-and-iphone-internet-history.html
  * 
- * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
+ * @author Paulo César Herrmann Wanner <herrmann.pchw@pf.gov.br>
  */
 public class SafariSqliteParser extends AbstractSqliteBrowserParser {
 

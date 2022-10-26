@@ -62,7 +62,7 @@ import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class ExtractorIOS extends Extractor {
 

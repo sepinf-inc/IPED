@@ -16,10 +16,10 @@ import iped.geo.localization.Messages;
 
 abstract public class AbstractMapCanvas extends Canvas {
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	MapSelectionListener mapSelectionListener = null;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    MapSelectionListener mapSelectionListener = null;
     MarkerEventListener markerEventListener = null;
     MarkerCheckBoxListener markerCheckBoxListener = null;
 
@@ -120,20 +120,20 @@ abstract public class AbstractMapCanvas extends Canvas {
                 IOUtils.toString(AbstractMapCanvas.class.getResourceAsStream("toolbar.html"), "UTF-8"), "toolbar");
     }
 
-	public void sendLeadSelection(String gid) {
-		leadSelectionToApply = gid;
-	}
+    public void sendLeadSelection(String gid) {
+        leadSelectionToApply = gid;
+    }
 
-	public String getLeadSelectionToApply() {
-		return leadSelectionToApply;
-	}
+    public String getLeadSelectionToApply() {
+        return leadSelectionToApply;
+    }
 
-	public void setLeadSelectionToApply(String leadSelectionToApply) {
-		this.leadSelectionToApply = leadSelectionToApply;
-	}
+    public void setLeadSelectionToApply(String leadSelectionToApply) {
+        this.leadSelectionToApply = leadSelectionToApply;
+    }
 
-	public void runAfterLoad(Runnable run) {
-		onLoadRunnables.add(run);
-	}
-	
+    public void runAfterLoad(Runnable run) {
+        onLoadRunnables.add(run);
+    }
+
 }

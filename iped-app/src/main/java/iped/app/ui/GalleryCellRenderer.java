@@ -115,10 +115,10 @@ public class GalleryCellRenderer implements TableCellRenderer {
             label.setForeground(null);
             label.setText("..."); //$NON-NLS-1$
             label.setIcon(null);
-        } else if (cellValue.icon != null && cellValue.icon == GalleryModel.unsupportedIcon) {
+        } else if (cellValue.icon != null && cellValue.unsupportedType) {
             label.setForeground(warningColor);
             label.setText(unsupportedIconText);
-            label.setIcon(null);
+            label.setIcon(cellValue.icon);
         } else {
             label.setText(null);
             if (cellValue.image != null) {
@@ -128,7 +128,6 @@ public class GalleryCellRenderer implements TableCellRenderer {
                 int w = Math.min(cellValue.originalW, labelW);
                 int h = Math.min(cellValue.originalH, labelH);
                 image = ImageUtil.resizeImage(image, w, h);
-
                 label.setIcon(new ImageIcon(image));
             } else {
                 label.setIcon(cellValue.icon);

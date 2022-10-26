@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ public class RemoteWav2Vec2Service {
         DONE,
         ERROR,
         REGISTER,
+        STATS,
         WARN
     }
 
@@ -49,6 +51,13 @@ public class RemoteWav2Vec2Service {
     private static final int CLIENT_TIMEOUT_MILLIS = 10000;
 
     private static ExecutorService executor = Executors.newCachedThreadPool();
+
+    private static final AtomicLong audiosTranscripted = new AtomicLong();
+    private static final AtomicLong audiosDuration = new AtomicLong();
+    private static final AtomicLong conversionTime = new AtomicLong();
+    private static final AtomicLong transcriptionTime = new AtomicLong();
+    private static final AtomicLong requestsReceived = new AtomicLong();
+    private static final AtomicLong requestsAccepted = new AtomicLong();
 
     private static Logger logger;
 
@@ -96,6 +105,7 @@ public class RemoteWav2Vec2Service {
         cm.loadConfig(localConfig);
 
         Wav2Vec2TranscriptTask task = new Wav2Vec2TranscriptTask();
+        audioConfig.setEnabled(true);
         task.init(cm);
 
         int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
@@ -108,12 +118,12 @@ public class RemoteWav2Vec2Service {
 
             localPort = server.getLocalPort();
 
-            registerThis(discoveryIp, discoveryPort, localPort);
+            registerThis(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions);
 
             logger.info("Transcription server listening on port: " + localPort);
             logger.info("Ready to work!");
 
-            keepRegisteringThis(discoveryIp, discoveryPort, localPort);
+            startSendStatsThread(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions);
 
             waitRequests(server, task, numConcurrentTranscriptions, discoveryIp);
 
@@ -121,7 +131,7 @@ public class RemoteWav2Vec2Service {
 
     }
 
-    private static void registerThis(String discoveryIp, int discoveryPort, int localPort) throws Exception {
+    private static void registerThis(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -130,9 +140,32 @@ public class RemoteWav2Vec2Service {
 
             writer.println(MESSAGES.REGISTER);
             writer.println(localPort);
+            writer.println(concurrentJobs);
 
             if (!MESSAGES.DONE.toString().equals(reader.readLine())) {
                 throw new Exception("Registration failed!");
+            }
+        }
+    }
+
+    private static void sendStats(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs) throws Exception {
+        try (Socket client = new Socket(discoveryIp, discoveryPort);
+                InputStream is = client.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+                PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
+
+            writer.println(MESSAGES.STATS);
+            writer.println(localPort);
+            writer.println(concurrentJobs);
+            writer.println(audiosTranscripted.getAndSet(0));
+            writer.println(audiosDuration.getAndSet(0));
+            writer.println(conversionTime.getAndSet(0));
+            writer.println(transcriptionTime.getAndSet(0));
+            writer.println(requestsReceived.getAndSet(0));
+            writer.println(requestsAccepted.getAndSet(0));
+
+            if (!MESSAGES.DONE.toString().equals(reader.readLine())) {
+                throw new Exception("Sending stats failed!");
             }
         }
     }
@@ -142,6 +175,7 @@ public class RemoteWav2Vec2Service {
         while (true) {
             try {
                 Socket client = server.accept();
+                requestsReceived.incrementAndGet();
                 if (jobs.incrementAndGet() > numConcurrentTranscriptions) {
                     jobs.decrementAndGet();
                     client.close();
@@ -151,7 +185,6 @@ public class RemoteWav2Vec2Service {
                     @Override
                     public void run() {
                         Path tmpFile = null;
-                        File wavFile = null;
                         PrintWriter writer = null;
                         BufferedInputStream bis = null;
                         boolean error = false;
@@ -162,6 +195,7 @@ public class RemoteWav2Vec2Service {
                                     new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);
 
                             writer.println(MESSAGES.ACCEPTED);
+                            requestsAccepted.incrementAndGet();
 
                             String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
                             logger.info("Accepted connection from " + clientName);
@@ -195,16 +229,29 @@ public class RemoteWav2Vec2Service {
                                 logger.info(prefix + "Received " + size + " audio bytes to transcribe.");
                             }
 
-                            wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+                            long t0 = System.currentTimeMillis();
+
+                            // see https://github.com/sepinf-inc/IPED/issues/1400
+                            // now audios are already received as WAV 16Khz 16 bits LE per sample
+                            // wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+                            File wavFile = tmpFile.toFile();
+
+                            long t1 = System.currentTimeMillis();
 
                             if (wavFile == null) {
                                 throw new IOException("Failed to convert audio to wav");
                             } else {
                                 logger.info(prefix + "Audio converted to wav.");
                             }
+                            long durationMillis = 1000 * wavFile.length() / (16000 * 2);
 
                             TextAndScore result = task.transcribeAudio(wavFile);
+                            long t2 = System.currentTimeMillis();
 
+                            audiosTranscripted.incrementAndGet();
+                            audiosDuration.addAndGet(durationMillis);
+                            conversionTime.addAndGet(t1 - t0);
+                            transcriptionTime.addAndGet(t2 - t1);
                             logger.info(prefix + "Transcritpion done.");
 
                             writer.println(Double.toString(result.score));
@@ -228,9 +275,6 @@ public class RemoteWav2Vec2Service {
                             if (tmpFile != null) {
                                 tmpFile.toFile().delete();
                             }
-                            if (wavFile != null) {
-                                wavFile.delete();
-                            }
                         }
                     }
                 });
@@ -241,14 +285,14 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void keepRegisteringThis(String ip, int port, int localPort) {
+    private static void startSendStatsThread(String ip, int port, int localPort, int concurrentJobs) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 while (true) {
                     try {
                         Thread.sleep(1000);
-                        registerThis(ip, port, localPort);
+                        sendStats(ip, port, localPort, concurrentJobs);
 
                     } catch (Exception e) {
                         e.printStackTrace();

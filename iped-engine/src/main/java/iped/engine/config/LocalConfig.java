@@ -22,6 +22,8 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
     public static final String SYS_PROP_APPEND = "iped.appending"; //$NON-NLS-1$
 
+    public static final String NUM_THREADS = "numThreads";
+
     private static final String HASH_DB = "hashesDB";
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
@@ -36,7 +38,6 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
     private File ipedTemp, indexTemp;
     private int numThreads;
     private File hashDbFile;
-    private String mplayerWinPath;
 
     @Override
     public Filter<Path> getResourceLookupFilter() {
@@ -88,7 +89,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
             ipedTemp.mkdirs();
         }
 
-        value = properties.getProperty("numThreads"); //$NON-NLS-1$
+        value = properties.getProperty(NUM_THREADS); // $NON-NLS-1$
         if (value != null) {
             value = value.trim();
         }
@@ -122,15 +123,6 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
             setHashDbFile(new File(value.trim()));
         }
 
-        value = properties.getProperty("mplayerPath"); //$NON-NLS-1$
-        if (value != null) {
-            mplayerWinPath = value.trim();
-        }
-
-    }
-
-    public String getMplayerWinPath() {
-        return mplayerWinPath;
     }
 
     public void setIndexerTemp(File temp) {

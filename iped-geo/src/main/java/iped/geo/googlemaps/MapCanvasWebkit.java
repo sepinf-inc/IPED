@@ -29,10 +29,10 @@ import netscape.javascript.JSObject;
 public class MapCanvasWebkit extends AbstractMapCanvas {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	WebView browser;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    WebView browser;
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
     JSInterfaceFunctions jsInterface = new JSGoogleInterfaceFunctions(this);
@@ -44,7 +44,7 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
         this.jfxPanel = new JFXPanel();
 
         Platform.runLater(new Runnable() {
-			public void run() {
+            public void run() {
                 browser = new WebView();
                 browser.setCache(true);
                 browser.setCacheHint(CacheHint.SPEED);
@@ -71,13 +71,13 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
                             JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
                             window.setMember("app", jsInterface); //$NON-NLS-1$
                             try {
-                            	if(onLoadRunnables.size()>0) {
-                            		for (Iterator iterator = onLoadRunnables.iterator(); iterator.hasNext();) {
-										Runnable runnable = (Runnable) iterator.next();
-										runnable.run();										
-									}
-                            		onLoadRunnables.clear();
-                            	}
+                                if (onLoadRunnables.size() > 0) {
+                                    for (Iterator iterator = onLoadRunnables.iterator(); iterator.hasNext();) {
+                                        Runnable runnable = (Runnable) iterator.next();
+                                        runnable.run();
+                                    }
+                                    onLoadRunnables.clear();
+                                }
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -216,7 +216,7 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
             this.selectionMapToApply = null;
         }
         if (this.leadSelectionToApply != null) {
-        	final String leadSelectionToApplyCopy = this.leadSelectionToApply;
+            final String leadSelectionToApplyCopy = this.leadSelectionToApply;
             Platform.runLater(new Runnable() {
                 public void run() {
                     try {

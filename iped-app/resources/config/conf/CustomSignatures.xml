@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright 2011-2014, Luis Filipe da Cruz Nassif
- 
  This file is part of Indexador e Processador de Evidências Digitais (IPED).
 
  IPED is free software: you can redistribute it and/or modify
@@ -534,6 +532,45 @@
             <match value="regf" type="string" offset="0"/>
             <match value="CREG" type="string" offset="0"/>
         </magic> 
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-main">
+        <sub-class-of type="application/x-windows-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-sam">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SAM"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-software">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SOFTWARE"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-system">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SYSTEM"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-security">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SECURITY"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-ntuser">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="NTUSER.DAT"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-usrclass">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="UsrClass.dat"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-amcache">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="Amcache.hve"/>
     </mime-type>
     
     <mime-type type="application/x-incredimail">

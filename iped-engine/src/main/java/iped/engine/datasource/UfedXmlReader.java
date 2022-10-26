@@ -409,7 +409,12 @@ public class UfedXmlReader extends DataSourceReader {
                 "ContactPhoto", //$NON-NLS-1$
                 "ForwardedMessageData", //$NON-NLS-1$
                 "ReplyMessageData", //$NON-NLS-1$
-                "StreetAddress" //$NON-NLS-1$
+                "StreetAddress", //$NON-NLS-1$
+                "ContactEntry", //$NON-NLS-1$
+                "KeyValueModel", //$NON-NLS-1$
+                "MessageLabel", //$NON-NLS-1$
+                "ProfilePicture", //$NON-NLS-1$
+                "WebAddress" //$NON-NLS-1$
         ));
 
         @Override
@@ -943,6 +948,30 @@ public class UfedXmlReader extends DataSourceReader {
                             for (String val : vals) {
                                 parentItem.getMetadata().add(meta, val);
                             }
+                        }
+                    } else if ("KeyValueModel".equals(type)) {
+                        String key = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Key");
+                        if (key != null) {
+                            String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Value");
+                            if (value != null) {
+                                parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + key, value);
+                            }
+                        }
+                    } else if ("MessageLabel".equals(type)) {
+                        String prop = ExtraProperties.UFED_META_PREFIX + "Label";
+                        String label = item.getMetadata().get(prop);
+                        if (label != null) {
+                            parentItem.getMetadata().add(prop, label);
+                        }
+                    } else if ("ContactEntry".equals(type) || "ProfilePicture".equals(type)
+                            || "WebAddress".equals(type)) {
+                        String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Value");
+                        if (value != null) {
+                            String category = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Category");
+                            if (category != null) {
+                                value += " (" + category + ")";
+                            }
+                            parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
                         }
                     }
                 } else {

@@ -157,21 +157,38 @@ public class ImageUtil {
                 return null;
             reader = iter.next();
             reader.setInput(iis, false, true);
+            
+            // For sources that contains multiple images (e.g. ICO), get the largest one
+            int idx = 0;
+            try {
+                int n = reader.getNumImages(false);
+                if (n > 1) {
+                    int max = -1;
+                    for (int i = 0; i < n; i++) {
+                        int wi = reader.getWidth(i);
+                        if (wi > max) {
+                            max = wi;
+                            idx = i;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+            }
 
-            int w0 = reader.getWidth(0);
-            int h0 = reader.getHeight(0);
+            int w0 = reader.getWidth(idx);
+            int h0 = reader.getHeight(idx);
             int sampling = getSamplingFactor(w0, h0, w, h);
 
             int finalW = (int) Math.ceil((float) w0 / sampling);
             int finalH = (int) Math.ceil((float) h0 / sampling);
 
             ImageReadParam params = reader.getDefaultReadParam();
-            image = reader.getImageTypes(0).next().createBufferedImage(finalW, finalH);
+            image = reader.getImageTypes(idx).next().createBufferedImage(finalW, finalH);
             params.setDestination(image);
             params.setSourceSubsampling(sampling, sampling, 0, 0);
 
             // seems jbig2 codec does not populate the destination image
-            image = reader.read(0, params);
+            image = reader.read(idx, params);
 
         } catch (Throwable e) {
             // e.printStackTrace();

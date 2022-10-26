@@ -23,7 +23,6 @@ import java.io.IOException;
 
 import javax.swing.Icon;
 import javax.swing.JTable;
-import javax.swing.UIManager;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import org.apache.lucene.document.Document;
@@ -38,31 +37,30 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
      */
     private static final long serialVersionUID = 1L;
 
-    private static Icon folderIcon = UIManager.getIcon("FileView.directoryIcon"); //$NON-NLS-1$
-    private static Icon fileIcon = UIManager.getIcon("FileView.fileIcon"); //$NON-NLS-1$
-    private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
-
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-            int row, int column) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 
-        DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value,
-                isSelected, hasFocus, row, column);
+        DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
         int idx = table.convertRowIndexToModel(row);
         int col = table.convertColumnIndexToModel(column);
+        String localizedNameProp = iped.localization.LocalizedProperties.getLocalizedField(IndexItem.NAME);
+        String colName = table.getModel().getColumnName(col);
 
-        if (table.getModel().getColumnName(col).equalsIgnoreCase(IndexItem.NAME)) {
+        if (table.getModel() instanceof SearchResultTableModel && (colName.equalsIgnoreCase(IndexItem.NAME) || colName.equalsIgnoreCase(localizedNameProp))) {
             try {
                 IItemId item = ((SearchResultTableModel) table.getModel()).getSearchResult().getItem(idx);
                 int docId = App.get().appCase.getLuceneId(item);
                 Document doc = App.get().appCase.getSearcher().doc(docId);
                 if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
-                    result.setIcon(folderIcon);
+                    result.setIcon(IconManager.FOLDER_ICON);
                 } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
-                    result.setIcon(diskIcon);
+                    result.setIcon(IconManager.DISK_ICON);
                 } else {
-                    result.setIcon(fileIcon);
+                    String type = doc.get(IndexItem.TYPE);
+                    String contentType = doc.get(IndexItem.CONTENTTYPE);
+                    Icon icon = IconManager.getFileIcon(contentType, type);
+                    result.setIcon(icon);
                 }
 
             } catch (IOException e) {

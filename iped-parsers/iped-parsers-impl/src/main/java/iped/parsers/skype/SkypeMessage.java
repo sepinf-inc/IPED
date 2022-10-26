@@ -5,7 +5,7 @@ import java.util.Date;
 /**
  * Classe que representa uma mensagem registrada no arquivo main.db.
  *
- * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
+ * @author Patrick Dalla Bernardina patrick.pdb@pf.gov.br
  */
 
 public class SkypeMessage {

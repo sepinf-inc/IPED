@@ -8,7 +8,7 @@ import iped.parsers.util.Messages;
 /**
  * Classe que representa uma conversa registrada no arquivo main.db.
  *
- * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
+ * @author Patrick Dalla Bernardina patrick.pdb@pf.gov.br
  */
 
 public class SkypeConversation {
