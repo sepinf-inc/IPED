@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -59,6 +60,7 @@ import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ExternalParsersConfig;
+import iped.engine.config.LocalConfig;
 import iped.engine.config.OCRConfig;
 import iped.engine.config.ParsersConfig;
 import iped.engine.config.ParsingTaskConfig;
@@ -80,6 +82,7 @@ import iped.engine.util.ItemInfoFactory;
 import iped.engine.util.ParentInfo;
 import iped.engine.util.TextCache;
 import iped.engine.util.Util;
+import iped.exception.IPEDException;
 import iped.exception.ZipBombException;
 import iped.io.IStreamSource;
 import iped.parsers.browsers.ie.IndexDatParser;
@@ -142,11 +145,20 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private static final int MAX_SUBITEM_DEPTH = 100;
     private static final String SUBITEM_DEPTH = "subitemDepth"; //$NON-NLS-1$
 
+    /**
+     * Max number of containers expanded concurrently. Configured to be half the
+     * number of workers or external parsing processes if enabled. See
+     * https://github.com/sepinf-inc/IPED/issues/1358
+     */
+    private static int max_expanding_containers;
+
     public static AtomicLong totalText = new AtomicLong();
     public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
 
     private static Map<Integer, ZipBombStats> zipBombStatsMap = new ConcurrentHashMap<>();
     private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
+
+    private static AtomicInteger containersBeingExpanded = new AtomicInteger();
 
     private CategoryToExpandConfig expandConfig;
     private ParsingTaskConfig parsingConfig;
@@ -281,7 +293,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         ((Item) evidence).setParsedTextCache(new TextCache());
     }
 
-	public void process(IItem evidence) throws IOException {
+    public void process(IItem evidence) throws Exception {
 
         long start = System.nanoTime() / 1000;
 
@@ -342,9 +354,19 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         return autoParser.hasSpecificParser(evidence.getMetadata());
     }
 
-    private void safeProcess(IItem evidence) throws IOException {
+    private void safeProcess(IItem evidence) throws Exception {
 
         this.evidence = evidence;
+
+        context = getTikaContext();
+
+        if (this.extractEmbedded) {
+            if (containersBeingExpanded.incrementAndGet() > max_expanding_containers) {
+                containersBeingExpanded.decrementAndGet();
+                super.reEnqueueItem(evidence);
+                return;
+            }
+        }
 
         TikaInputStream tis = null;
         try {
@@ -352,10 +374,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         } catch (IOException e) {
             LOGGER.warn("{} Error opening: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString()); //$NON-NLS-1$
+            if (this.extractEmbedded) {
+                containersBeingExpanded.decrementAndGet();
+            }
             return;
         }
 
-        context = getTikaContext();
         if (evidence.getHashValue() != null && evidence.getLength() != null && evidence.getLength() > 0) {
             try {
                 File thumbFile = getThumbFile(evidence);
@@ -373,10 +397,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             zipBombStatsMap.put(evidence.getId(), new ZipBombStats(evidence.getLength()));
         }
 
-        reader = new ParsingReader(this.autoParser, tis, metadata, context);
-        reader.startBackgroundParsing();
-
         try {
+            reader = new ParsingReader(this.autoParser, tis, metadata, context);
+            reader.startBackgroundParsing();
+
             TextCache textCache = new TextCache();
             textCache.setEnableDiskCache(parsingConfig.isStoreTextCacheOnDisk());
             char[] cbuf = new char[128 * 1024];
@@ -400,7 +424,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         } finally {
             // IOUtil.closeQuietly(tis);
-            reader.close();
+            if (this.extractEmbedded) {
+                containersBeingExpanded.decrementAndGet();
+            }
+            IOUtil.closeQuietly(reader);
             if (numSubitems > 0) {
                 evidence.setExtraAttribute(NUM_SUBITEMS, numSubitems);
             }
@@ -656,17 +683,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             if (reader.setTimeoutPaused(true)) {
                 try {
                     long start = System.nanoTime() / 1000;
-                    // If external parsing is on, items are sent to queue to avoid deadlock
-                    // ProcessTime time = ForkParser2.enabled ? ProcessTime.LATER :
-                    // ProcessTime.AUTO;
 
-                    // Unfortunatelly AUTO value causes issues with JEP (python lib) too,
-                    // because items could be processed by Workers in a different thread (parsing
-                    // thread), instead of Worker default thread. So we are using LATER, which sends
-                    // items to queue and is a bit slower when expanding lots of containers at the
-                    // same time (causes a lot of IO instead mixing IO with CPU used to process
-                    // subitems)
-                    ProcessTime time = ProcessTime.LATER;
+                    ProcessTime time = ProcessTime.AUTO;
+
                     worker.processNewItem(subItem, time);
                     Statistics.get().incSubitemsDiscovered();
                     numSubitems++;
@@ -776,9 +795,17 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             PluginConfig pluginConfig = configurationManager.findObject(PluginConfig.class);
             ForkParser.setPluginDir(pluginConfig.getPluginFolder().getAbsolutePath());
             ForkParser.setPoolSize(parsingConfig.getNumExternalParsers());
+            max_expanding_containers = parsingConfig.getNumExternalParsers() / 2;
+            if (max_expanding_containers == 0) {
+                // Abort. We must have at least 2 external parsing processes, 1 causes deadlock.
+                throw new IPEDException("You must have a minimum of 2 external parsing processes! Adjust the '" + ParsingTaskConfig.NUM_EXTERNAL_PARSERS + "' option.");
+            }
             ForkParser.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
             // do not open extra processes for OCR if ForkParser is enabled
             System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
+        } else {
+            LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
+            max_expanding_containers = Math.max(localConfig.getNumThreads() / 2, 1);
         }
 
         String appRoot = Configuration.getInstance().appRoot;
