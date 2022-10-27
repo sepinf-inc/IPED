@@ -3,6 +3,7 @@ package iped.viewers.timelinegraph;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Paint;
+import java.awt.Window;
 import java.awt.geom.Rectangle2D;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
@@ -18,6 +19,10 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import javax.swing.JOptionPane;
+import javax.swing.JToolTip;
+import javax.swing.PopupFactory;
+import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
 
 import org.jfree.chart.axis.AxisState;
 import org.jfree.chart.axis.DateAxis;
@@ -525,6 +530,19 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
                             result = true;
                             ipedChartsPanel.setTimePeriodClass(downtpclass);
                             ipedChartsPanel.setTimePeriodString(DateUtil.getTimePeriodName(downtpclass));
+                            needTimePeriodClassUpdate = true;
+                        }
+                    }
+                    if (curRangeSize < rangeSize) {// zoomIn
+                        Class<? extends TimePeriod> uptpclass = upsize(tpclass);
+
+                        String tpClassName = DateUtil.getTimePeriodName(tpclass);
+                        String msg = String.format(Messages.get("TimeLineGraph.visibleZoominForGranularity"), tpClassName, DateUtil.getTimePeriodName(uptpclass));
+                        int input = JOptionPane.showConfirmDialog(null, msg, "", JOptionPane.OK_CANCEL_OPTION);
+                        if (input == 0) {
+                            result = true;
+                            ipedChartsPanel.setTimePeriodClass(uptpclass);
+                            ipedChartsPanel.setTimePeriodString(DateUtil.getTimePeriodName(uptpclass));
                             needTimePeriodClassUpdate = true;
                         }
                     }
