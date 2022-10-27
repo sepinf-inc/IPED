@@ -119,6 +119,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                         Date d2 = new Date();
                         logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
                         (new CachePersistance()).saveNewCache(this);
+                        newCache.createMonthIndex();
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();

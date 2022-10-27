@@ -76,6 +76,13 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         }
     }
 
+    public void createMonthIndex() {
+        for (Iterator iterator = entrySet().iterator(); iterator.hasNext();) {
+            Entry e = (Entry) iterator.next();
+            processIndex((String)e.getKey(), (List<CacheTimePeriodEntry>)e.getValue());            
+        }
+    }
+    
     protected void processIndex(String key, List<CacheTimePeriodEntry> value) {
         if(!key.equals("Year") && !key.equals("Month") && !key.equals("Quarter")) {
             Calendar c = (Calendar) Calendar.getInstance().clone();
