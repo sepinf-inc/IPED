@@ -39,7 +39,6 @@ import org.jfree.data.time.Day;
 import org.jfree.data.time.FixedMillisecond;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Millisecond;
-import org.jfree.data.time.Minute;
 import org.jfree.data.time.Month;
 import org.jfree.data.time.Quarter;
 import org.jfree.data.time.RegularTimePeriod;
@@ -51,6 +50,7 @@ import org.jfree.data.xy.XYDataset;
 
 import iped.app.ui.Messages;
 import iped.viewers.timelinegraph.datasets.AsynchronousDataset;
+import iped.viewers.timelinegraph.model.Minute;
 
 public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity {
     volatile SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
