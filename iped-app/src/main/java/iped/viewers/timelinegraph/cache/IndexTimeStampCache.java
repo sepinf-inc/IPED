@@ -41,7 +41,7 @@ public class IndexTimeStampCache implements TimeStampCache {
     IpedChartsPanel ipedChartsPanel;
     TimeZone timezone;
 
-    Map<String, List<CacheTimePeriodEntry>> newCache = new HashMap<String, List<CacheTimePeriodEntry>>();
+    TimeIndexedMap newCache = new TimeIndexedMap();
     Map<String, Map<TimePeriod, CacheTimePeriodEntry>> timePeriodEntryIndex = new HashMap<String, Map<TimePeriod, CacheTimePeriodEntry>>();
 
     public IndexTimeStampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider) {

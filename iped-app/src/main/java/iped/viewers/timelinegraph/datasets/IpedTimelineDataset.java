@@ -49,6 +49,7 @@ import iped.viewers.timelinegraph.IpedChartPanel;
 import iped.viewers.timelinegraph.IpedChartsPanel;
 import iped.viewers.timelinegraph.cache.CacheEventEntry;
 import iped.viewers.timelinegraph.cache.CacheTimePeriodEntry;
+import iped.viewers.timelinegraph.cache.TimeIndexedMap;
 import iped.viewers.timelinegraph.cache.TimeStampCache;
 
 public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cloneable, PublicCloneable, IntervalXYDataset, DomainInfo, TimelineDataset, TableXYDataset, XYDomainInfo, AsynchronousDataset {
@@ -265,7 +266,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     }
                 }
             } catch (Exception e) {
-
+                e.printStackTrace();
             } finally {
                 timeSem.release();
             }
@@ -314,7 +315,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             if (ipedChartsPanel.getChartPanel().getSplitByCategory() && splitValue != null && !splitValue.equals("Categories")) {
                 queryText += "category=\"" + splitValue + "\"";
             }
-
+            
             CaseSearcherFilter csf = new CaseSearcherFilter(queryText);
             csf.getSearcher().setNoScoring(true);
             csf.applyUIQueryFilters(exceptThis);// apply all filters from others UI objects except the chart defined interval
@@ -329,9 +330,10 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
 
             if (result.getLength() > 0) {
                 TimeStampCache cache = ipedChartsPanel.getIpedTimelineDatasetManager().getCache();
-                Map<String, List<CacheTimePeriodEntry>> a = cache.getNewCache();
+                TimeIndexedMap a = (TimeIndexedMap) cache.getNewCache();
 
-                List<CacheTimePeriodEntry> newcache = a.get(ipedChartsPanel.getTimePeriodClass().getSimpleName());
+                String className = ipedChartsPanel.getTimePeriodClass().getSimpleName();
+                List<CacheTimePeriodEntry> newcache = a.get(className);
                 if (newcache != null) {
 
                     Semaphore addValueSem = new Semaphore(1);
@@ -345,7 +347,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     Date endDate = new Date((long) dateRange.getUpperBound());
                     
                     long visibleRangeLength = endDate.getTime() - startDate.getTime();
-                    if (startDate.getTime() == 0 && endDate.getTime() == 1) {
+                    if ( (startDate.getTime()==0 && endDate.getTime()==1)) {
                         visibleIntervalCache = newcache;
                         memoryWindowCache.addAll(newcache);
                     } else {
@@ -353,7 +355,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                         startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
                         endDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
 
-                        Iterator<CacheTimePeriodEntry> it = newcache.iterator();
+                        Iterator<CacheTimePeriodEntry> it = a.iterator(className, new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION), new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION));
                         CacheTimePeriodEntry ctpe = null;
                         while (it.hasNext()) {
                             ctpe = it.next();
