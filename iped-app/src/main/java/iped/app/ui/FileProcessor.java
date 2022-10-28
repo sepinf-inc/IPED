@@ -216,12 +216,9 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    ModalityType previous = App.get().dialogBar.getModalityType();
                     String prevMsg = App.get().progressBar.getString();
                     App.get().progressBar.setString(Messages.getString("FileProcessor.OpeningEvidence")); //$NON-NLS-1$
-                    App.get().dialogBar.setModalityType(ModalityType.APPLICATION_MODAL);
                     App.get().dialogBar.setVisible(visible);
-                    App.get().dialogBar.setModalityType(previous);
                     App.get().progressBar.setString(prevMsg);
                 }
             });
