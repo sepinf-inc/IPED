@@ -895,7 +895,8 @@ public class IndexItem extends BasicProps {
                         evidence.setIdInDataSource("");
                         evidence.setInputStreamFactory(new FileInputStreamFactory(viewFile.toPath()));
                         evidence.setTempFile(viewFile);
-                        evidence.setMediaType(null);
+                        // Do not reset media type (see issue #1409)
+                        // evidence.setMediaType(null);
                     }
                 }
             }
