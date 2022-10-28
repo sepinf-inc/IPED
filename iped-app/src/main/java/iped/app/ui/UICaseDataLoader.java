@@ -158,13 +158,12 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                 if (msg == null && e.getCause() != null) {
                     msg = e.getCause().getMessage();
                 }
+                App.get().dialogBar.setVisible(false);
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("AppLazyInitializer.errorMsg.line1") //$NON-NLS-1$
                         + Messages.getString("AppLazyInitializer.errorMsg.line2") //$NON-NLS-1$
                         + App.get().getLogConfiguration().getLogFile()
                         + Messages.getString("AppLazyInitializer.errorMsg.line3") + msg, // $NON-NLS-1$
                         Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
-
-                App.get().dialogBar.setVisible(false);
             }
         });
     }
