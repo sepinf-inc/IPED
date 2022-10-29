@@ -37,6 +37,7 @@ import iped.engine.core.Manager;
 import iped.engine.localization.Messages;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.exception.IPEDException;
+import iped.io.URLUtil;
 import iped.parsers.ocr.OCRParser;
 
 /**
@@ -143,7 +144,7 @@ public class Main {
      * Define o caminho onde será encontrado o arquivo de configuração principal.
      */
     public void setConfigPath() throws Exception {
-        URL url = Main.class.getProtectionDomain().getCodeSource().getLocation();
+        URL url = URLUtil.getURL(Main.class);
 
         if ("true".equals(System.getProperty("Debugging"))) {
             rootPath = System.getProperty("user.dir");

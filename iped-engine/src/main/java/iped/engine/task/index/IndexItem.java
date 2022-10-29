@@ -258,7 +258,7 @@ public class IndexItem extends BasicProps {
             if (evidence.getInputStreamFactory() != null
                     && evidence.getInputStreamFactory().getDataSourceURI() != null) {
                 URI uri = evidence.getInputStreamFactory().getDataSourceURI();
-                value = Util.getRelativePath(output, uri);
+                value = Util.getRelativePath(output, uri).replace('\\', '/');
 
                 doc.add(new StringField(SOURCE_PATH, value, Field.Store.YES));
                 doc.add(new SortedDocValuesField(SOURCE_PATH, new BytesRef(value)));
@@ -884,7 +884,8 @@ public class IndexItem extends BasicProps {
                         evidence.setIdInDataSource("");
                         evidence.setInputStreamFactory(new FileInputStreamFactory(viewFile.toPath()));
                         evidence.setTempFile(viewFile);
-                        evidence.setMediaType(null);
+                        // Do not reset media type (see issue #1409)
+                        // evidence.setMediaType(null);
                     }
                 }
             }
