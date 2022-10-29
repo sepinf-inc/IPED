@@ -161,6 +161,9 @@ public class MFTCarverTask extends BaseCarveTask {
 
             // Check if data runs are inside the volume
             int cluster = entry.getClusterLength();
+            if (cluster <= 0) {
+                return;
+            }
             List<Long> dataruns = entry.getDataruns();
             for (int i = 0; i < dataruns.size(); i += 2) {
                 long pos = dataruns.get(i) * cluster;
@@ -170,51 +173,56 @@ public class MFTCarverTask extends BaseCarveTask {
                 }
             }
 
-            // Write data runs to a temporary file
-            File tmpFile = null;
-            SeekableInputStream vis = null;
-            FileOutputStream os = null;
-            try {
-                vis = volume.getSeekableInputStream();
-                tmpFile = Files.createTempFile("mftcarved", ".tmp").toFile();
-                os = new FileOutputStream(tmpFile);
-                byte[] buf = new byte[1 << 16];
-                long totPending = entry.getLength();
-                for (int i = 0; i < dataruns.size(); i += 2) {
-                    long runPos = dataruns.get(i) * cluster;
-                    long runLen = dataruns.get(i + 1) * cluster;
-                    vis.seek(runPos);
-                    long runRead = 0;
-                    while (runRead < runLen && totPending > 0) {
-                        int cnt = Math.min(buf.length, (int) Math.min(runLen - runRead, totPending));
-                        int read = vis.read(buf, 0, cnt);
-                        if (read < 0) {
-                            break;
+            if (dataruns.size() == 2 && volume.getIdInDataSource() != null) {
+                // A single pair {position, length} -> a continuous (non-fragmented) file
+                // In this case, just point to volume's data source and set the file offset
+                item.setDataSource(volume.getDataSource());
+                item.setIdInDataSource(volume.getIdInDataSource());
+                item.setInputStreamFactory(volume.getInputStreamFactory());
+                item.setFileOffset(dataruns.get(0) * cluster);
+            } else {
+                // Fragmented -> Write data runs to a temporary file
+                File tmpFile = null;
+                SeekableInputStream vis = null;
+                FileOutputStream os = null;
+                try {
+                    vis = volume.getSeekableInputStream();
+                    tmpFile = Files.createTempFile("mftcarved", ".tmp").toFile();
+                    os = new FileOutputStream(tmpFile);
+                    byte[] buf = new byte[1 << 16];
+                    long totPending = entry.getLength();
+                    for (int i = 0; i < dataruns.size(); i += 2) {
+                        long runPos = dataruns.get(i) * cluster;
+                        long runLen = dataruns.get(i + 1) * cluster;
+                        vis.seek(runPos);
+                        long runRead = 0;
+                        while (runRead < runLen && totPending > 0) {
+                            int cnt = Math.min(buf.length, (int) Math.min(runLen - runRead, totPending));
+                            int read = vis.read(buf, 0, cnt);
+                            if (read < 0) {
+                                break;
+                            }
+                            os.write(buf, 0, read);
+                            runRead += read;
+                            totPending -= read;
                         }
-                        os.write(buf, 0, read);
-                        runRead += read;
-                        totPending -= read;
                     }
+                } finally {
+                    IOUtil.closeQuietly(os);
+                    IOUtil.closeQuietly(vis);
                 }
-
-            } finally {
-                IOUtil.closeQuietly(os);
-                IOUtil.closeQuietly(vis);
+                InputStream is = null;
+                try {
+                    is = new FileInputStream(tmpFile);
+                    ExportFileTask extractor = new ExportFileTask();
+                    extractor.setWorker(worker);
+                    extractor.extractFile(is, item, parent.getLength());
+                } finally {
+                    IOUtil.closeQuietly(is);
+                }
+                // TODO: When / where the temporary file can be deleted?
             }
-            InputStream is = null;
-            try {
-                is = new FileInputStream(tmpFile);
-                ExportFileTask extractor = new ExportFileTask();
-                extractor.setWorker(worker);
-                extractor.extractFile(is, item, parent.getLength());
-            } finally {
-                IOUtil.closeQuietly(is);
-            }
-            // TODO: When the temporary file can be deleted?
 
-            // if (dataruns.size() == 2) {
-            // A single pair {position, length}, i.e. a continuous (non-fragmented) file
-            // }
             synchronized (statsLock) {
                 numCarvedItems++;
                 numNonResidentContent++;
