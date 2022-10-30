@@ -1,4 +1,4 @@
-﻿﻿########################################################################
+﻿########################################################################
 # Minimal configuration for fastest processing on triage scenarios.
 # Do not change the options, or the processing will became slower.
 ########################################################################
