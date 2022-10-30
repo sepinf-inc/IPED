@@ -37,8 +37,6 @@ public class ExtraProperties {
 
     public static final String DELETED = "IpedDeletedEmbeddedItem"; //$NON-NLS-1$
 
-    public static final String CARVED = "IpedCarvedEmbeddedItem"; //$NON-NLS-1$
-
     public static final String MESSAGE_PREFIX = "Message-"; //$NON-NLS-1$
 
     public static final String MESSAGE_SUBJECT = MESSAGE_PREFIX + "Subject"; //$NON-NLS-1$
