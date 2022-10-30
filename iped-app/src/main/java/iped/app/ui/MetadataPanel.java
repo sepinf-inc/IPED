@@ -429,7 +429,7 @@ public class MetadataPanel extends JPanel
         if (array == null) {
             return;
         }
-        App.get().dialogBar.setVisible(true);
+        setWaitVisible(true);
         new Thread() {
             public void run() {
                 filteredArray = filter(array);
@@ -455,27 +455,30 @@ public class MetadataPanel extends JPanel
     }
 
     private void copyResultsToClipboard() {
-        App.get().dialogBar.setVisible(true);
+        setWaitVisible(true);
         new Thread() {
             public void run() {
-                StringBuffer strBuffer = new StringBuffer();
-                for (int i = 0; i < list.getModel().getSize(); i++) {
-                    ValueCount item = list.getModel().getElementAt(i);
-                    String val = item.getVal();
-                    if (val != null && !val.isEmpty()) {
-                        strBuffer.append(val);
-                        strBuffer.append(System.lineSeparator());
+                try {
+                    StringBuffer strBuffer = new StringBuffer();
+                    for (int i = 0; i < list.getModel().getSize(); i++) {
+                        ValueCount item = list.getModel().getElementAt(i);
+                        String val = item.getVal();
+                        if (val != null && !val.isEmpty()) {
+                            strBuffer.append(val);
+                            strBuffer.append(System.lineSeparator());
+                        }
                     }
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()),
+                            null);
+                } finally {
+                    setWaitVisible(false);
                 }
-                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()),
-                        null);
-                App.get().dialogBar.setVisible(false);
             }
         }.start();
     }
 
     private void populateList() {
-        App.get().dialogBar.setVisible(true);
+        setWaitVisible(true);
         final boolean updateResult = !list.isSelectionEmpty();
         if (updateResult) {
             updatingResult = true;
@@ -1235,23 +1238,26 @@ public class MetadataPanel extends JPanel
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                updatingList = true;
-                List<ValueCount> selection = list.getSelectedValuesList();
-                HashSet<ValueCount> selSet = new HashSet<ValueCount>();
-                selSet.addAll(selection);
-                list.setListData(sortedArray);
-                int[] selIdx = new int[selSet.size()];
-                int i = 0;
-                for (int idx = 0; idx < sortedArray.length; idx++)
-                    if (selSet.contains(sortedArray[idx]))
-                        selIdx[i++] = idx;
-                if (i > 0)
-                    list.setSelectedIndices(selIdx);
-                updatingList = false;
-
-                // System.out.println("finish");
-                updateTabColor();
-                App.get().dialogBar.setVisible(false);
+                try {
+                    updatingList = true;
+                    List<ValueCount> selection = list.getSelectedValuesList();
+                    HashSet<ValueCount> selSet = new HashSet<ValueCount>();
+                    selSet.addAll(selection);
+                    list.setListData(sortedArray);
+                    int[] selIdx = new int[selSet.size()];
+                    int i = 0;
+                    for (int idx = 0; idx < sortedArray.length; idx++)
+                        if (selSet.contains(sortedArray[idx]))
+                            selIdx[i++] = idx;
+                    if (i > 0)
+                        list.setSelectedIndices(selIdx);
+                    updatingList = false;
+    
+                    // System.out.println("finish");
+                    updateTabColor();
+                } finally {
+                    setWaitVisible(false);
+                }
             }
         });
 
@@ -1429,5 +1435,13 @@ public class MetadataPanel extends JPanel
         }
         listFilter.setText("");
         propsFilter.setText("");
+    }
+    
+    private void setWaitVisible(final boolean visible) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                App.get().dialogBar.setVisible(visible);
+            }
+        });
     }
 }
