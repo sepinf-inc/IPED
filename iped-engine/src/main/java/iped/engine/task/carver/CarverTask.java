@@ -233,6 +233,20 @@ public class CarverTask extends BaseCarveTask {
             carverTypes = carverConfig.getCarverTypes();
             ignoreCorrupted = carverConfig.isToIgnoreCorrupted();
         }
+        
+        boolean mftCarverEnabled = configurationManager.getEnableTaskProperty(MFTCarverTask.ENABLE_PARAM);
+        if (!mftCarverEnabled) {
+            // If MFT Carver is not enabled, discard MFT-ENTRY carverType
+            for (int i = 0; i < carverTypes.length; i++) {
+                if (carverTypes[i].getName().equals("MFT-ENTRY")) {
+                    for (int j = i + 1; j < carverTypes.length; j++) {
+                        carverTypes[j - 1] = carverTypes[j];
+                    }
+                    carverTypes = Arrays.copyOf(carverTypes, carverTypes.length - 1);
+                    break;
+                }
+            }
+        }
     }
 
     @Override

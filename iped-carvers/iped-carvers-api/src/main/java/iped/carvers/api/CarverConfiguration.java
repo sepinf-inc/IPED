@@ -31,5 +31,10 @@ public interface CarverConfiguration {
     public Carver createCarverFromJSName(File scriptFile);
 
     public boolean isToIgnoreCorrupted();
+    
+    public boolean isExtractResidentContent();
 
+    public boolean isExtractNonResidentContent();
+    
+    public long getMaxNonResidentLenToExtract();
 }

@@ -1,4 +1,4 @@
-﻿########################################################################
+﻿﻿########################################################################
 # Minimal configuration for fastest processing on triage scenarios.
 # Do not change the options, or the processing will became slower.
 ########################################################################
@@ -25,6 +25,7 @@ enableSplitLargeBinary = false
 indexFileContents = false
 enableAudioTranscription = false
 enableCarving = false
+enableMFTCarving = false
 enableLedCarving = false
 enableKnownMetCarving = false
 enableImageThumbs = false

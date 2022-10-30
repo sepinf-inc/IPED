@@ -390,6 +390,26 @@
             <mediaType>video/mpeg</mediaType>
         </carverType>
 -->
-     </carverTypes>
 
+        <!-- MFT-ENTRY carverType is only used if enableMFTCarving is set to true. --> 
+        <carverType>
+            <name>MFT-ENTRY</name>
+            <signatures>
+                <headerSignature>FILE\30\00\03\00</headerSignature>
+            </signatures>
+            <minLength>1024</minLength>
+            <maxLength>1024</maxLength>
+            <mediaType>application/x-mft-entry</mediaType>
+            <carverClass>iped.carvers.custom.MFTEntryCarver</carverClass>
+        </carverType>
+
+    </carverTypes>
+    
+    <!-- If enableMFTCarving is set to true, the following options will be used. --> 
+    <mftCarving>
+        <extractResidentContent>true</extractResidentContent>
+        <extractNonResidentContent>true</extractNonResidentContent>
+        <maxNonResidentLenToExtract>1000000000</maxNonResidentLenToExtract>
+    </mftCarving>
+	
 </carverconfig>

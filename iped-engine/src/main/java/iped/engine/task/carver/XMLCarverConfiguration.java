@@ -44,6 +44,10 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     protected HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
     private ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
 
+    private boolean extractResidentContent = false;
+    private boolean extractNonResidentContent = false;
+    private long maxNonResidentLenToExtract = 0;
+    
     public void loadXMLConfigFile(File confFile) throws IOException {
         originalXmls.add(Files.readString(confFile.toPath()));
         Document doc = null;
@@ -147,7 +151,21 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
                             carverTypesArray.add(cts[k]);
                         }
                     }
-
+                }
+            }
+            
+            NodeList mftCarvingEls = root.getElementsByTagName("mftCarving");
+            for (int i = 0; i < mftCarvingEls.getLength(); i++) {
+                NodeList nl = mftCarvingEls.item(i).getChildNodes();
+                for (int j = 0; j < nl.getLength(); j++) {
+                    String name = nl.item(j).getNodeName();
+                    if (name.equals("extractResidentContent")) {
+                        extractResidentContent = Boolean.valueOf(nl.item(j).getTextContent().trim());
+                    } else if (name.equals("extractNonResidentContent")) {
+                        extractNonResidentContent = Boolean.valueOf(nl.item(j).getTextContent().trim());
+                    } else if (name.equals("maxNonResidentLenToExtract")) {
+                        maxNonResidentLenToExtract = Long.parseLong(nl.item(j).getTextContent().trim());
+                    }
                 }
             }
         } catch (Exception e) {
@@ -298,6 +316,21 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     @Override
     public String toString() {
         return originalXmls.toString().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ');
+    }
+
+    @Override
+    public boolean isExtractResidentContent() {
+        return extractResidentContent;
+    }
+
+    @Override
+    public boolean isExtractNonResidentContent() {
+        return extractNonResidentContent;
+    }
+
+    @Override
+    public long getMaxNonResidentLenToExtract() {
+        return maxNonResidentLenToExtract;
     }
 
 }

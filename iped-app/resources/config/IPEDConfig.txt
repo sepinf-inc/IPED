@@ -1,4 +1,4 @@
-﻿########################################################################
+﻿﻿########################################################################
 # Processing Settings
 ########################################################################
 
@@ -113,6 +113,10 @@ enableCarving = false
 # Enables carving that retrieves known files from the LED base, based on the beginning (64K) of the file.
 # It's necessary to enable "addUnallocated" and to configure "hashesDB" (with LED hashes data imported).
 enableLedCarving = false
+
+# Enables carving of MFT entries outside the active MFT. Additional settings, related to the 
+# extraction of files referenced by recovered MFT entries, can be set in "conf/CarverConfig.xml".
+enableMFTCarving = false
 
 # Enables specific carving of e-Mule "known.met" files. "addUnallocated" must be enabled.
 enableKnownMetCarving = false

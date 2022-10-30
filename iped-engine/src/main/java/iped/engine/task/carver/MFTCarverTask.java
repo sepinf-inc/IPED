@@ -17,13 +17,13 @@ import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.carvers.api.CarverConfiguration;
 import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.core.Manager;
-import iped.engine.data.Item;
 import iped.engine.search.ItemSearcher;
 import iped.engine.task.ExportFileTask;
 import iped.io.SeekableInputStream;
@@ -35,13 +35,13 @@ import iped.utils.IOUtil;
 
 public class MFTCarverTask extends BaseCarveTask {
 
-    private static final String ENABLE_PARAM = "enableMFTCarving";
+    protected static final String ENABLE_PARAM = "enableMFTCarving";
 
     private static Logger logger = LoggerFactory.getLogger(MFTCarverTask.class);
     private static boolean taskEnabled = false;
-    private static boolean extractResidentContent = true; // TODO: Parameter
-    private static boolean extractNonResidentContent = true; // TODO: Parameter
-    private static final long maxNonResidentLenToExtract = 1_000_000_000; // TODO: Parameter
+    private static boolean extractResidentContent = false;
+    private static boolean extractNonResidentContent = false;
+    private static long maxNonResidentLenToExtract = 0;
     private static final AtomicBoolean init = new AtomicBoolean(false);
     private static final AtomicBoolean finished = new AtomicBoolean(false);
     private static int numCarvedItems;
@@ -66,9 +66,20 @@ public class MFTCarverTask extends BaseCarveTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                taskEnabled = true;// TODO: configurationManager.getEnableTaskProperty(ENABLE_PARAM);
+                taskEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
                 if (taskEnabled) {
                     logger.info("Task enabled.");
+                    CarverTaskConfig ctConfig = configurationManager.findObject(CarverTaskConfig.class);
+                    CarverConfiguration config = ctConfig.getConfiguration();
+                    extractResidentContent = config.isExtractResidentContent();
+                    extractNonResidentContent = config.isExtractNonResidentContent();
+                    maxNonResidentLenToExtract = config.getMaxNonResidentLenToExtract();
+                    logger.info("extractResidentContent = " + extractResidentContent);
+                    logger.info("extractNonResidentContent = " + extractNonResidentContent);
+                    if (extractNonResidentContent) {
+                        logger.info("maxNonResidentLenToExtract = " + maxNonResidentLenToExtract);
+                    }
+
                 } else {
                     logger.info("Task disabled.");
                 }
@@ -221,10 +232,7 @@ public class MFTCarverTask extends BaseCarveTask {
                 } finally {
                     IOUtil.closeQuietly(is);
                 }
-                //TODO: Would this avoid creating a temporary file again, if necessary?
-                //TODO: Can this cast be used? 
-                ((Item)item).setTempFile(tmpFile);
-                
+
                 // TODO: When / where the temporary file can be deleted?
             }
 
