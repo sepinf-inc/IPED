@@ -23,6 +23,7 @@ import iped.data.IItemReader;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.core.Manager;
+import iped.engine.data.Item;
 import iped.engine.search.ItemSearcher;
 import iped.engine.task.ExportFileTask;
 import iped.io.SeekableInputStream;
@@ -220,6 +221,10 @@ public class MFTCarverTask extends BaseCarveTask {
                 } finally {
                     IOUtil.closeQuietly(is);
                 }
+                //TODO: Would this avoid creating a temporary file again, if necessary?
+                //TODO: Can this cast be used? 
+                ((Item)item).setTempFile(tmpFile);
+                
                 // TODO: When / where the temporary file can be deleted?
             }
 
