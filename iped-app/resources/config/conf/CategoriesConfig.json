@@ -32,6 +32,7 @@
         {"name": "Scanned Documents"}
       ]}
     ]},
+    {"name":"Cached RDP Screen Tiles","mimes":["application/x-rdp-cachebin"]},
     {"name": "Windows 10", "categories":[
       {"name": "User Activities", "mimes": ["application/x-win10-timeline"]},
       {"name": "User Activities Entries", "mimes": ["application/x-win10-timeline-registry"]}

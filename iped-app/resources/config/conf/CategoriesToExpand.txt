@@ -16,6 +16,7 @@ User Activities
 GDrive Synced Files
 OLE files
 Georeferenced Files
+Cached RDP Screen Tiles
 
 # Generates registry reports:
 Windows Registry

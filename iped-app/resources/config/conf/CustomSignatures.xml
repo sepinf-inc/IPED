@@ -72,6 +72,13 @@
     	<glob pattern="*.pf"/>
   	</mime-type>
 
+    <mime-type type="application/x-rdp-cachebin">
+        <glob pattern="Cache*.BIN"/>
+        <magic priority="60">
+            <match value="RDP8bmp" type="string" offset="0"/>
+        </magic>
+    </mime-type>
+	
 	<mime-type type="image/heic">
     	<magic priority="60">
       		<match value="ftypheic" type="string" offset="4"/>

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+﻿﻿<?xml version="1.0" encoding="UTF-8"?>
 
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
@@ -243,7 +243,9 @@
                 </param>
             </params>
         </parser>
-        
+
+        <parser class="iped.parsers.rdp.cache.RdpScreenCacheParser"></parser>
+
         <parser class="iped.parsers.browsers.firefox.FirefoxSqliteParser">
             <params>
                 <param name="extractEntries" type="bool">true</param>
