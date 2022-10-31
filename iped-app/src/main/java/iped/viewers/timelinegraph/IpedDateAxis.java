@@ -519,7 +519,7 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
             if (!result) {
                 Method method;
                 try {
-                    if (curRangeSize > rangeSize && tpclass != Millisecond.class) {// zoomIn
+                    if (curRangeSize > rangeSize && tpclass != Second.class) {// zoomIn
 
                         Class<? extends TimePeriod> downtpclass = downsize(tpclass);
 

@@ -50,7 +50,7 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
     JTimePeriodMenuItem hourMenu;
     JTimePeriodMenuItem minuteMenu;
     JTimePeriodMenuItem secondMenu;
-    JTimePeriodMenuItem millisecondMenu;
+    //JTimePeriodMenuItem millisecondMenu;
 
     class JTimezoneMenuItem extends JRadioButtonMenuItem {
         TimeZone tz;
@@ -147,11 +147,13 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
         periodGranularityMenu.add(secondMenu);
         timePeriodGroup.add(secondMenu);
 
+        /*
         millisecondMenu = new JTimePeriodMenuItem(Millisecond.class);
         millisecondMenu.setActionCommand("Millisecond");
         millisecondMenu.addActionListener(this);
         periodGranularityMenu.add(millisecondMenu);
         timePeriodGroup.add(millisecondMenu);
+        */
 
         miMap.put(Year.class, yearMenu);
         miMap.put(Quarter.class, quarterMenu);
@@ -161,7 +163,7 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
         miMap.put(Hour.class, hourMenu);
         miMap.put(Minute.class, minuteMenu);
         miMap.put(Second.class, secondMenu);
-        miMap.put(Millisecond.class, millisecondMenu);
+        //miMap.put(Millisecond.class, millisecondMenu);
 
         timePeriodGroup.setSelected(dayMenu.getModel(), true);
 

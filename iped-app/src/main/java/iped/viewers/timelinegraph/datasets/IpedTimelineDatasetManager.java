@@ -39,7 +39,7 @@ public class IpedTimelineDatasetManager {
     public IpedTimelineDatasetManager(IpedChartsPanel ipedChartsPanel) {
         this.ipedChartsPanel = ipedChartsPanel;
 
-        List<Class<? extends TimePeriod>> periods = Arrays.asList(Day.class, Hour.class, Year.class, Month.class, Quarter.class, Week.class, Minute.class, Second.class, Millisecond.class);
+        List<Class<? extends TimePeriod>> periods = Arrays.asList(Day.class, Hour.class, Year.class, Month.class, Quarter.class, Week.class, Minute.class, Second.class);
 
         for (Class<? extends TimePeriod> period : periods) {
             TimeStampCache timeStampCache = new IndexTimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
