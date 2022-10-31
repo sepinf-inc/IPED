@@ -62,29 +62,38 @@ public class RdpScreenCacheParser extends AbstractParser {
                 width+=dis.readByte()*256;
                 height = dis.readByte();
                 height+=dis.readByte()*256;
+
                 byte[] img = new byte[4*width*height];
-                dis.read(img);
-                BufferedImage bimg = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
-                bimg.getWritableTile(0, 0).setDataElements(0, 0, width, height, img);
-                File fout = new File("teste"+(count++)+".png");
-                //ImageIO.write(bimg, "PNG", fout);
+                i=dis.read(img);
+                if(i>4*width) {//at least 1 line
+                    try{
+                        BufferedImage bimg = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
+                        bimg.getWritableTile(0, 0).setDataElements(0, 0, width, height, img);
 
-                Metadata imgMetadata = new Metadata();
-                imgMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "CachedImage"+count+".png");
-                imgMetadata.add(TikaCoreProperties.TITLE, "CachedImage"+count+".png");
-                imgMetadata.add(BasicProps.CONTENTTYPE, "image/png");
+                        Metadata imgMetadata = new Metadata();
+                        imgMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, "CachedImage"+count+".png");
+                        imgMetadata.add(TikaCoreProperties.TITLE, "CachedImage"+count+".png");
+                        imgMetadata.add(BasicProps.CONTENTTYPE, "image/png");
 
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(bimg, "png", baos);
-                if(extractor.shouldParseEmbedded(imgMetadata)) {
-                    extractor.parseEmbedded(TikaInputStream.get(baos.toByteArray(), imgMetadata), handler, imgMetadata, true);
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        ImageIO.write(bimg, "png", baos);
+                        if(extractor.shouldParseEmbedded(imgMetadata)) {
+                            extractor.parseEmbedded(TikaInputStream.get(baos.toByteArray(), imgMetadata), handler, imgMetadata, true);
+                        }
+                    }catch(Exception e) {
+                        //skips the erroneous and try to continue
+                    }
+                    finally {
+                        i = dis.read(key);
+                    }
+                } else {
+                    i = -1;//ends the loop as end of file was found
                 }
-
-                i = dis.read(key);
+            
             }
 
         } catch (Exception e) {
-            throw new TikaException("Erro ao decodificar arquivo de registro: " + nome, e);
+            throw new TikaException("Error on RDP tile extraction: " + nome, e);
         } finally {
         }
     }
