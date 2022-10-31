@@ -661,20 +661,22 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
                 try {
                     SortedSetDocValues timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-                    TermsEnum te = timeEventGroupValues.termsEnum();
-                    BytesRef br = te.next();
-                    while (br != null) {
-                        String eventTypes = br.utf8ToString();
-                        StringTokenizer st = new StringTokenizer(eventTypes, "|");
-                        while (st.hasMoreTokens()) {
-                            String eventType = st.nextToken().trim();
-                            for (int i = 0; i < columnsArray.length; i++) {
-                                if (columnsArray[i].toLowerCase().equals(eventType)) {
-                                    timeEventColumnNamesList.put(eventType, columnsArray[i]);
+                    if(timeEventGroupValues!=null) {
+                        TermsEnum te = timeEventGroupValues.termsEnum();
+                        BytesRef br = te.next();
+                        while (br != null) {
+                            String eventTypes = br.utf8ToString();
+                            StringTokenizer st = new StringTokenizer(eventTypes, "|");
+                            while (st.hasMoreTokens()) {
+                                String eventType = st.nextToken().trim();
+                                for (int i = 0; i < columnsArray.length; i++) {
+                                    if (columnsArray[i].toLowerCase().equals(eventType)) {
+                                        timeEventColumnNamesList.put(eventType, columnsArray[i]);
+                                    }
                                 }
                             }
+                            br = te.next();
                         }
-                        br = te.next();
                     }
                     timeEventColumnNamesListDone = true;
                     timeEventColumnNamesList.notify();
