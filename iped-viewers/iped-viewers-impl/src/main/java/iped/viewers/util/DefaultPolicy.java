@@ -10,6 +10,7 @@ import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
 
+import iped.io.URLUtil;
 import iped.viewers.HtmlViewer;
 
 /**
@@ -27,7 +28,7 @@ public class DefaultPolicy extends Policy {
 
     private static URI getHtmlViewerURI() {
         try {
-            return HtmlViewer.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+            return URLUtil.getURL(HtmlViewer.class).toURI();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -42,7 +43,7 @@ public class DefaultPolicy extends Policy {
 
         try {
 
-            if (domain.getCodeSource() == null || domain.getCodeSource().getLocation() == null) {
+            if (domain.getCodeSource() == null || URLUtil.getURL(domain) == null) {
                 return true;
             }
 
@@ -52,7 +53,7 @@ public class DefaultPolicy extends Policy {
                 }
             }
 
-            URI from = domain.getCodeSource().getLocation().toURI();
+            URI from = URLUtil.getURL(domain).toURI();
             if (from.equals(viewer) && (perm instanceof SocketPermission || perm instanceof URLPermission)) {
                 return false;
             }

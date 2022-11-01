@@ -18,6 +18,7 @@ import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.core.Manager;
 import iped.engine.util.Util;
+import iped.io.URLUtil;
 import iped.utils.IOUtil;
 
 public class AppMain {
@@ -92,7 +93,7 @@ public class AppMain {
     }
 
     private File detectLibDir() throws URISyntaxException {
-        URL url = AppMain.class.getProtectionDomain().getCodeSource().getLocation();
+        URL url = URLUtil.getURL(AppMain.class);
         File jarFile = null;
         if (url.toURI().getAuthority() == null)
             jarFile = new File(url.toURI());
