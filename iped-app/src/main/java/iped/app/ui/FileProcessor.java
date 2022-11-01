@@ -18,7 +18,6 @@
  */
 package iped.app.ui;
 
-import java.awt.Dialog.ModalityType;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
