@@ -19,7 +19,7 @@ public class AppointmentEntry extends AbstractEntry {
     private String additionalPeople;
     private ResponseType response;
     private long updateCount;
-
+    private String bodyOriginalPath;
 
     public AppointmentEntry(int rowId) {
         super(rowId);
@@ -170,4 +170,11 @@ public class AppointmentEntry extends AbstractEntry {
         ACCEPTED, DECLINED, TENTATIVE, AWAITING;
     }
 
+    public String getBodyOriginalPath() {
+        return this.bodyOriginalPath;
+    }
+
+    public void setBodyOriginalPath(String originalBodyPath) {
+        this.bodyOriginalPath = originalBodyPath;
+    }
 }

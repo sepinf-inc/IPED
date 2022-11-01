@@ -59,7 +59,6 @@ public class AppointmentTable extends AbstractTable {
             appointments.add(appointment);
             addAppointmentToParentFolder(appointment, appointment.getParentFolderId());
         }
-        System.out.println("");
     }
 
     private void addAppointmentToParentFolder(AppointmentEntry appointment, int parentId) {

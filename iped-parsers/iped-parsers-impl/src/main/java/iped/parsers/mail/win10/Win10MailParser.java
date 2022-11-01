@@ -392,10 +392,16 @@ public class Win10MailParser extends AbstractParser {
         appointMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_APPT.toString());
         appointMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
         appointMetadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(body, MediaType.TEXT_HTML.toString()));
+        appointMetadata.set("originalBodyPath", appointment.getBodyOriginalPath());
 
         Charset charset = Charset.forName("UTF-8");
         StringBuilder preview = new StringBuilder();
 
+        preview.append("<html>");
+        preview.append("<head>");
+        preview.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charset + "\" />");
+        preview.append("</head>");
+        preview.append("<body>");
         preview.append(htmlPairLine("All day", "" + appointment.getAllDay()));
         preview.append(htmlPairLine("Event", appointment.getEventName()));
         preview.append(htmlPairLine("Location", appointment.getLocation()));
@@ -408,8 +414,12 @@ public class Win10MailParser extends AbstractParser {
         preview.append(htmlPairLine("Repeat", "" + appointment.getRepeat()));
         preview.append(htmlPairLine("Response", "" + appointment.getResponse()));
         preview.append(htmlPairLine("Additional People", appointment.getAdditionalPeople()));
-
+        preview.append("<br>");
         preview.append(body);
+
+        preview.append("</body>");
+        preview.append("</html>");
+
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
             if (extractor.shouldParseEmbedded(appointMetadata))
                 extractor.parseEmbedded(stream, new IgnoreContentHandler(), appointMetadata, true);
@@ -434,6 +444,10 @@ public class Win10MailParser extends AbstractParser {
         Charset charset = Charset.forName("UTF-8");
         StringBuilder preview = new StringBuilder();
 
+        preview.append("<html>");
+        preview.append("<head>");
+        preview.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charset + "\" />");
+        preview.append("<head>");
         preview.append(htmlPairLine("First Name", contact.getFirstName()));
         preview.append(htmlPairLine("Last Name", contact.getLastName()));
         preview.append(htmlPairLine("Email", contact.getEmail()));
@@ -441,8 +455,8 @@ public class Win10MailParser extends AbstractParser {
         preview.append(htmlPairLine("Phone", contact.getPhone()));
         preview.append(htmlPairLine("Work Phone", contact.getWorkPhone()));
         preview.append(htmlPairLine("Address", contact.getAddress()));
-
-
+        preview.append("</html>");
+        
         FileTag[] contactTags = new FileTag[] { FileTag.ASCII, FileTag.ASCII_PAIRS, FileTag.CONTACT_JPEG_1,
             FileTag.CONTACT_JPEG_2, FileTag.CONTACT_JPEG_3 };
         for (FileTag contactTag : contactTags) {
@@ -486,26 +500,14 @@ public class Win10MailParser extends AbstractParser {
             Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, 0);
             if (itemQueryPair.getLeft() != null) {
                 item = itemQueryPair.getLeft();
+                appointment.setBodyOriginalPath(item.getPath());
                 break;
             }
         }
 
         if (item != null) {
             InputStream is = item.getBufferedInputStream();
-            InputStreamReader utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16BE);
-            // convert text from utf-16 to utf-8
-            ReaderInputStream utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
-            apptBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
-            // the BOM of the file seems to be reversed, we do this workaroud for now
-            if (contentPath.contains(FileTag.UNICODE + ".dat") && !apptBody.toLowerCase().contains("html")) {
-                is = item.getBufferedInputStream();
-                utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
-                utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
-                apptBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
-            }
-
-            utf8IS.close();
-            utf16Reader.close();
+            apptBody = Util.decodeMixedCharset(is.readAllBytes());
             is.close();
         }
         return apptBody;
