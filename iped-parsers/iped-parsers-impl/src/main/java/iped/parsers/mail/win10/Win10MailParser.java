@@ -92,7 +92,7 @@ import iped.utils.SimpleHTMLEncoder;
  * |x| merge duplicate folders
  * | | handle contacts
  * | | resolve conflicts when multiple mail cases
- * | | handle appointment body encoding better
+ * |x| handle appointment body encoding better
  * */
  /**
    * Parses Windows Mail App store.vol edb file. Extracts folders, emails, attachments, and appointments from the database.
@@ -407,7 +407,8 @@ public class Win10MailParser extends AbstractParser {
         preview.append(htmlPairLine("Location", appointment.getLocation()));
         preview.append(htmlPairLine("Organizer", appointment.getOrganizer()));
         preview.append(htmlPairLine("Account", appointment.getAccount()));
-        preview.append(htmlPairLine("Link", "<a href=\"" + appointment.getLink() + "\">" + appointment.getLink() + "</a>"));
+        if (!appointment.getLink().isEmpty())
+            preview.append("Link:" + " <a href=\"" + appointment.getLink() + "\">" + appointment.getLink() + "</a><br>");
         preview.append(htmlPairLine("Duration", appointment.getDurationMin() + " minutes"));
         preview.append(htmlPairLine("Start Time", df.format(appointment.getStartTime())));
         preview.append(htmlPairLine("Reminder Time", appointment.getReminderTimeMin() + " minutes"));
@@ -415,7 +416,7 @@ public class Win10MailParser extends AbstractParser {
         preview.append(htmlPairLine("Response", "" + appointment.getResponse()));
         preview.append(htmlPairLine("Additional People", appointment.getAdditionalPeople()));
         preview.append("<br>");
-        preview.append(body);
+        preview.append(body.replace("\r\n", "<br>"));
 
         preview.append("</body>");
         preview.append("</html>");
@@ -455,7 +456,7 @@ public class Win10MailParser extends AbstractParser {
         preview.append(htmlPairLine("Phone", contact.getPhone()));
         preview.append(htmlPairLine("Work Phone", contact.getWorkPhone()));
         preview.append(htmlPairLine("Address", contact.getAddress()));
-        preview.append("</html>");
+        preview.append("<body>");
         
         FileTag[] contactTags = new FileTag[] { FileTag.ASCII, FileTag.ASCII_PAIRS, FileTag.CONTACT_JPEG_1,
             FileTag.CONTACT_JPEG_2, FileTag.CONTACT_JPEG_3 };
@@ -467,9 +468,15 @@ public class Win10MailParser extends AbstractParser {
                 if (contactTag == FileTag.CONTACT_JPEG_1 || contactTag == FileTag.CONTACT_JPEG_2 || contactTag == FileTag.CONTACT_JPEG_3) {
                     String imgSrc = item.getTempFile().toURI().toString();
                     preview.append("<img src=\"" + imgSrc + "\"><br>");
+                } else {
+                    InputStream is = item.getBufferedInputStream();
+                    String contactInfo = Util.decodeMixedCharset(is.readAllBytes());
+                    preview.append("<br>" + contactInfo.replace("\n", "<br>") + "<br>");
                 }
             }
         }
+        preview.append("</body>");
+        preview.append("</html>");
 
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
             if (extractor.shouldParseEmbedded(contactMetadata))

@@ -74,7 +74,7 @@ public class EsedbManager {
             IntByReference recordValueDataInt = new IntByReference();
 
             int result = esedbLibrary.libesedb_record_get_value_32bit(recordPointerRef.getValue(), value_entry, recordValueDataInt,
-            errorPointer);
+                errorPointer);
             if (result < 0)
                 printError("Record Get 32-Bit Data", result, filePath, errorPointer);
             return  recordValueDataInt.getValue();

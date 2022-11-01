@@ -47,7 +47,6 @@ public class ContactTable extends AbstractTable {
         parentFolderIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.PARENT_FOLDER_ID, errorPointer, tablePointer, filePath);
     }
 
-
     @Override
     public void populateTable() {
         for (int i = 0; i < numRecords; i++) {
@@ -56,7 +55,6 @@ public class ContactTable extends AbstractTable {
             addContactToParentFolder(contact, contact.getParentFolderId());
         }
     }
-    
 
     public void addContactToParentFolder(ContactEntry contact, int parentId) {
         ArrayList<ContactEntry> folderContacts = folderToContactsMap

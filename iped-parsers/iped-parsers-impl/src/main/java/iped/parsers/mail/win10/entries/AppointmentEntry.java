@@ -165,16 +165,15 @@ public class AppointmentEntry extends AbstractEntry {
         this.updateCount = updateCount;
     }
 
-
-    public enum ResponseType {
-        ACCEPTED, DECLINED, TENTATIVE, AWAITING;
-    }
-
     public String getBodyOriginalPath() {
         return this.bodyOriginalPath;
     }
 
     public void setBodyOriginalPath(String originalBodyPath) {
         this.bodyOriginalPath = originalBodyPath;
+    }
+
+    public enum ResponseType {
+        ACCEPTED, DECLINED, TENTATIVE, AWAITING;
     }
 }
