@@ -13,8 +13,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -29,7 +29,6 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.xml.sax.ContentHandler;
 
 import iped.data.ICaseData;
-import iped.data.IItem;
 import iped.parsers.standard.StandardParser;
 import iped.properties.ExtraProperties;
 import iped.utils.DateUtil;
@@ -189,7 +188,7 @@ public class BeanMetadataExtraction {
                                     // this.extractEmbedded(seq, context, entryMetadata, pd, handler, value);
                                 } else {
                                     if (value instanceof Date) {
-                                        if (isLocalTime) {
+                                        if (isLocalTime && identifiedTimeZone != null) {
                                             calendar.setTimeInMillis(((Date) value).getTime() + identifiedTimeZone.getRawOffset());
                                             value = calendar.getTime();
                                         }
@@ -219,7 +218,7 @@ public class BeanMetadataExtraction {
                             children.add(new ChildParams(value, parentPd));
                         } else {
                             if (value instanceof Date) {
-                                if (isLocalTime) {
+                                if (isLocalTime && identifiedTimeZone != null) {
                                     calendar.setTimeInMillis(((Date) value).getTime() + identifiedTimeZone.getRawOffset());
                                     value = calendar.getTime();
                                 }
