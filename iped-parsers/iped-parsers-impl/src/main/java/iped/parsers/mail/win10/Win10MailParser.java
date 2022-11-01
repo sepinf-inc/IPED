@@ -2,7 +2,6 @@ package iped.parsers.mail.win10;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -12,7 +11,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
@@ -34,8 +32,6 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.sax.ToXMLContentHandler;
-import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -94,6 +90,9 @@ import iped.utils.SimpleHTMLEncoder;
  * |x| extract each instance as subitems in their respective categories
  * |x| create folder hierarchy
  * |x| merge duplicate folders
+ * | | handle contacts
+ * | | resolve conflicts when multiple mail cases
+ * | | handle appointment body encoding better
  * */
  /**
    * Parses Windows Mail App store.vol edb file. Extracts folders, emails, attachments, and appointments from the database.
@@ -112,6 +111,7 @@ public class Win10MailParser extends AbstractParser {
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(WIN10_MAIL_DB);
 
     private static final char MESSAGE_CATEGORY = '3';
+    private static final char CONTACT_CATEGORY = '2';
     private static final char APPOINTMENT_CATEGORY = '5';
     private static final char ATTACH_CATEGORY = '7';
     
@@ -128,7 +128,7 @@ public class Win10MailParser extends AbstractParser {
     private ContactTable contactTable;
 
     private enum FileTag {
-        UNICODE("001e"), CONTACT_JPEG_1("00ff"), CONTACT_JPEG_2("00ff"), CONTACT_JPEG_3("01b5"),
+        UNICODE("001e"), CONTACT_JPEG_1("00ff"), CONTACT_JPEG_2("01a8"), CONTACT_JPEG_3("01b5"),
         MESSAGE_UNICODE("1000"), ASCII("1013"), ASCII_PAIRS("10b0"), ANY("3701");
 
         private final String tag;
@@ -292,7 +292,7 @@ public class Win10MailParser extends AbstractParser {
 
                 PointerByReference tablePointer = new PointerByReference();
                 IntByReference tableNameSize = new IntByReference();
-                Memory tableName = new Memory(256);
+                Memory tableNameRef = new Memory(256);
 
                 LongByReference numberOfRecords = new LongByReference();
 
@@ -308,12 +308,12 @@ public class Win10MailParser extends AbstractParser {
                 if (result < 0)
                     EsedbManager.printError("Table Get UTF8 Name Size", result, dbPath, errorPointer);
 
-                result = esedbLibrary.libesedb_table_get_utf8_name(tablePointer.getValue(), tableName,
+                result = esedbLibrary.libesedb_table_get_utf8_name(tablePointer.getValue(), tableNameRef,
                         tableNameSize.getValue(), errorPointer);
                 if (result < 0)
                     EsedbManager.printError("Table Get UTF8 Name", result, dbPath, errorPointer);
                 
-                String tableNameStr = tableName.getString(0);
+                String tableName = tableNameRef.getString(0);
 
                 result = esedbLibrary.libesedb_table_get_number_of_records(tablePointer.getValue(),
                         numberOfRecords, errorPointer);
@@ -323,28 +323,28 @@ public class Win10MailParser extends AbstractParser {
                 numRecords = numberOfRecords.getValue();
 
                 AbstractTable table = null;
-                if (tableNameStr.contains("Message")) {
-                    messageTable = new MessageTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                if (tableName.equals("Message")) {
+                    messageTable = new MessageTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
                     table = messageTable;
-                } else if (tableNameStr.contains("Recipient")) {
-                    recipientTable = new RecipientTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                } else if (tableName.equals("Recipient")) {
+                    recipientTable = new RecipientTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
                     table = recipientTable;
-                } else if (tableNameStr.contains("Attachment")) {
-                    attachTable = new AttachmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                } else if (tableName.equals("Attachment")) {
+                    attachTable = new AttachmentTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
                     table = attachTable;
-                } else if (tableNameStr.contains("Folders")) {
-                    folderTable = new FolderTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                } else if (tableName.equals("Folders")) {
+                    folderTable = new FolderTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
                     table = folderTable;
-                } else if (tableNameStr.contains("Appointment")) {
-                    apptTable = new AppointmentTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                } else if (tableName.equals("Appointment")) {
+                    apptTable = new AppointmentTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
                     table = apptTable;
-                } else if (tableNameStr.contains("Contact")) {
-                    contactTable = new ContactTable(itemInfo.getPath(), tableNameStr, tablePointer, errorPointer, numRecords);
+                } else if (tableName.equals("Contact")) {
+                    contactTable = new ContactTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
                     table = contactTable;
                 }
 
                 if (table != null) {
-                    table.populateTable(esedbLibrary);
+                    table.populateTable();
                     tables.add(table);
                 }
             }
@@ -441,6 +441,21 @@ public class Win10MailParser extends AbstractParser {
         preview.append(htmlPairLine("Phone", contact.getPhone()));
         preview.append(htmlPairLine("Work Phone", contact.getWorkPhone()));
         preview.append(htmlPairLine("Address", contact.getAddress()));
+
+
+        FileTag[] contactTags = new FileTag[] { FileTag.ASCII, FileTag.ASCII_PAIRS, FileTag.CONTACT_JPEG_1,
+            FileTag.CONTACT_JPEG_2, FileTag.CONTACT_JPEG_3 };
+        for (FileTag contactTag : contactTags) {
+            String contentPath = getEntryLocation(contact, CONTACT_CATEGORY, contactTag);
+            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, -1L);
+            IItemReader item = itemQueryPair.getLeft();
+            if (item != null) {
+                if (contactTag == FileTag.CONTACT_JPEG_1 || contactTag == FileTag.CONTACT_JPEG_2 || contactTag == FileTag.CONTACT_JPEG_3) {
+                    String imgSrc = item.getTempFile().toURI().toString();
+                    preview.append("<img src=\"" + imgSrc + "\"><br>");
+                }
+            }
+        }
 
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
             if (extractor.shouldParseEmbedded(contactMetadata))
@@ -650,7 +665,7 @@ public class Win10MailParser extends AbstractParser {
             preview.append("</div>\n");
             String bodyHtml = email.getBody();
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
-                bodyHtml = handleInlineImages(email, bodyHtml);
+                bodyHtml = handleInlineImages(email);
                 preview.append(bodyHtml);
                 emailMetadata.set(ExtraProperties.MESSAGE_BODY,
                         Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
@@ -743,12 +758,15 @@ public class Win10MailParser extends AbstractParser {
             return new ImmutablePair<>(null, null);
         }
 
-        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\"" + " && " + BasicProps.LENGTH + ":" + size;
+        List<IItemReader> items = null;
+        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\"";
+        if (size > 0) {
+            String queryWithSize = query + " && " + BasicProps.LENGTH + ":" + size;
+            items = searcher.search(queryWithSize);
+        }
 
-        List<IItemReader> items = searcher.search(query);
         if (items == null || items.isEmpty()) {
             // search without size restriction
-            query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\"";
             items = searcher.search(query);
 
             if (items == null || items.isEmpty())
@@ -758,9 +776,16 @@ public class Win10MailParser extends AbstractParser {
         return new ImmutablePair<>(items.get(0), query);
     }
 
-    private String handleInlineImages(MessageEntry email, String body) {
-        String bodyTmp = body;
-        if (bodyTmp.contains("cid:")) {
+    
+    /** 
+     * Handle cid images, changing the src value to the actual attachment path in the case
+     * @param email with a body
+     * @return new body that handles cid images with associated attachments
+     */
+    private String handleInlineImages(MessageEntry email) {
+        String body = email.getBody();
+        if (body != null && body.contains("cid:")) {
+            String bodyTmp = body;
             ArrayList<AttachmentEntry> emailAttachments = attachTable.getMessageAttachments(email.getRowId());
             for (AttachmentEntry attachment : emailAttachments) {
                 if (attachment.getAttachCID() != null && attachment.getFilePath() != null) {
@@ -768,8 +793,9 @@ public class Win10MailParser extends AbstractParser {
                     bodyTmp = body.replace("cid:" + attachCid, attachment.getFilePath());
                 }
             }
+            body = bodyTmp;
         }
-        return bodyTmp;
+        return body;
     }
 
 

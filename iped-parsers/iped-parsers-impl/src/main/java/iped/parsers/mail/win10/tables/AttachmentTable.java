@@ -8,6 +8,7 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
+import iped.parsers.mail.win10.ColumnCodes;
 import iped.parsers.mail.win10.entries.AttachmentEntry;
 import iped.parsers.util.EsedbManager;
 
@@ -16,18 +17,31 @@ public class AttachmentTable extends AbstractTable {
     private Map<Long, ArrayList<AttachmentEntry>> msgToAttachmentsMap = new HashMap<>();
     private ArrayList<AttachmentEntry> attachmentList = new ArrayList<>();
 
-    public AttachmentTable(String filePath, String tableName, PointerByReference tablePointer,
+    private int rowIdPos, messageIdPos, attachSizePos, attachCIDPos, fileNamePos,
+        mimeTagPos, receivedPos;
+
+
+    public AttachmentTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
         super();
+        this.esedbLibrary = esedbLibrary;
         this.tableName = tableName;
         this.tablePointer = tablePointer;
         this.errorPointer = errorPointer;
         this.numRecords = numRecords;
         this.filePath = filePath;
+
+        rowIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ROW_ID, errorPointer, tablePointer, filePath);
+        messageIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.MESSAGE_ID, errorPointer, tablePointer, filePath);
+        attachSizePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ATTACH_SIZE, errorPointer, tablePointer, filePath);
+        attachCIDPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.IMAGE_CID, errorPointer, tablePointer, filePath);
+        fileNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.FILENAME, errorPointer, tablePointer, filePath);
+        mimeTagPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.MIME_TAG, errorPointer, tablePointer, filePath);
+        receivedPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.RECEIVED, errorPointer, tablePointer, filePath);
     }
 
     @Override
-    public void populateTable(EsedbLibrary esedbLibrary) {
+    public void populateTable() {
         for (int i = 0; i < numRecords; i++) {
             AttachmentEntry attachment = getAttachment(esedbLibrary, i, errorPointer, tablePointer);
             addAttachment(attachment);
@@ -72,13 +86,13 @@ public class AttachmentTable extends AbstractTable {
         if (result < 0)
             EsedbManager.printError("Record Get Number of Values", result, filePath, errorPointer);
 
-        int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
-        int messageId = EsedbManager.getInt32Value(esedbLibrary, 3, recordPointerReference, filePath, errorPointer);
-        long attachSize = EsedbManager.getInt32Value(esedbLibrary, 7, recordPointerReference, filePath, errorPointer);
-        String attachCID = EsedbManager.getUnicodeValue(esedbLibrary, 10, recordPointerReference, filePath, errorPointer);
-        String fileName = EsedbManager.getUnicodeValue(esedbLibrary, 13, recordPointerReference, filePath, errorPointer);
-        String mimeTag = EsedbManager.getUnicodeValue(esedbLibrary, 14, recordPointerReference, filePath, errorPointer);
-        boolean received = EsedbManager.getBooleanValue(esedbLibrary, 20, recordPointerReference, filePath, errorPointer);
+        int rowId = EsedbManager.getInt32Value(esedbLibrary, rowIdPos, recordPointerReference, filePath, errorPointer);
+        int messageId = EsedbManager.getInt32Value(esedbLibrary, messageIdPos, recordPointerReference, filePath, errorPointer);
+        long attachSize = EsedbManager.getInt32Value(esedbLibrary, attachSizePos, recordPointerReference, filePath, errorPointer);
+        String attachCID = EsedbManager.getUnicodeValue(esedbLibrary, attachCIDPos, recordPointerReference, filePath, errorPointer);
+        String fileName = EsedbManager.getUnicodeValue(esedbLibrary, fileNamePos, recordPointerReference, filePath, errorPointer);
+        String mimeTag = EsedbManager.getUnicodeValue(esedbLibrary, mimeTagPos, recordPointerReference, filePath, errorPointer);
+        boolean received = EsedbManager.getBooleanValue(esedbLibrary, receivedPos, recordPointerReference, filePath, errorPointer);
 
         result = esedbLibrary.libesedb_record_free(recordPointerReference, errorPointer);
         if (result < 0)

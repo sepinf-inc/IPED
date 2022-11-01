@@ -10,6 +10,7 @@ public abstract class AbstractTable {
     protected PointerByReference tablePointer;
     protected PointerByReference errorPointer;
     protected String filePath;
+    protected EsedbLibrary esedbLibrary;
 
     public PointerByReference getTablePointer() {
         return this.tablePointer;
@@ -19,5 +20,5 @@ public abstract class AbstractTable {
         return this.tableName;
     }
 
-    abstract public void populateTable(EsedbLibrary esedbLibrary);
+    abstract public void populateTable();
 }

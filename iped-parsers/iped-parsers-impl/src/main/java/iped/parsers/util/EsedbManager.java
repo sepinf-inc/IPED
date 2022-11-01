@@ -69,90 +69,147 @@ public class EsedbManager {
     }
 
 
-    public static int getInt32Value(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
-        IntByReference recordValueDataInt = new IntByReference();
+    public static int getInt32Value(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerRef, String filePath, PointerByReference errorPointer) {
+        if (value_entry >= 0) {
+            IntByReference recordValueDataInt = new IntByReference();
 
-        int result = esedbLibrary.libesedb_record_get_value_32bit(recordPointerReference.getValue(), value_entry, recordValueDataInt,
-        errorPointer);
-        if (result < 0)
-            printError("Record Get 32-Bit Data", result, filePath, errorPointer);
-        return  recordValueDataInt.getValue();
-    }
-
-    public static int getInt16Value(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
-        IntByReference recordValueDataInt = new IntByReference();
-
-        int result = esedbLibrary.libesedb_record_get_value_16bit(recordPointerReference.getValue(), value_entry, recordValueDataInt,
-        errorPointer);
-        if (result < 0)
-            printError("Record Get 16-Bit Data", result, filePath, errorPointer);
-        return  recordValueDataInt.getValue();
-    }
-
-    public static String getUnicodeValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
-        IntByReference recordValueDataInt = new IntByReference();
-        Memory recordValueData = new Memory(3072);
-
-        int result = esedbLibrary.libesedb_record_get_value_utf8_string_size(recordPointerReference.getValue(), value_entry,
-            recordValueDataInt, errorPointer);
-        if (result < 0)
-            printError("Record Get UTF8 String Size", result, filePath, errorPointer);
-        if ((recordValueDataInt.getValue() > 0) && (result == 1)) {
-            result = esedbLibrary.libesedb_record_get_value_utf8_string(recordPointerReference.getValue(), value_entry,
-                    recordValueData, recordValueDataInt.getValue(), errorPointer);
-            if (result < 0)
-                printError("Record Get UTF8 String at " + value_entry, result, filePath, errorPointer);
-            return recordValueData.getString(0, "UTF-8");
-        }
-        return "";
-    }
-
-    public static String getBinaryValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
-        IntByReference recordValueDataInt = new IntByReference();
-        Memory recordValueData = new Memory(3072);
-
-        int result = esedbLibrary.libesedb_record_get_value_binary_data_size(recordPointerReference.getValue(), value_entry,
-            recordValueDataInt, errorPointer);
-        if (result < 0)
-            printError("Record Get Binary Data Size", result, filePath, errorPointer);
-        if ((recordValueDataInt.getValue() > 0) && (result == 1)) {
-            result = esedbLibrary.libesedb_record_get_value_binary_data(recordPointerReference.getValue(), value_entry,
-                    recordValueData, recordValueDataInt.getValue(), errorPointer);
-            if (result < 0)
-                printError("Record Get Binary Data at " + value_entry, result, filePath, errorPointer);
-            return String.valueOf(recordValueData.getCharArray(0, recordValueDataInt.getValue()));
-            
-        }
-        return "";
-    }
-
-    public static Boolean getBooleanValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
-        ShortByReference recordValueDataShort = new ShortByReference();
-
-        int result = esedbLibrary.libesedb_record_get_value_boolean(recordPointerReference.getValue(), value_entry, recordValueDataShort,
+            int result = esedbLibrary.libesedb_record_get_value_32bit(recordPointerRef.getValue(), value_entry, recordValueDataInt,
             errorPointer);
-        if (result < 0)
-            printError("Record Get Boolean Data", result, filePath, errorPointer);
-        return recordValueDataShort.getValue() == 1;
+            if (result < 0)
+                printError("Record Get 32-Bit Data", result, filePath, errorPointer);
+            return  recordValueDataInt.getValue();
+        }
+        return -1;
+    }
+
+    public static int getInt16Value(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerRef, String filePath, PointerByReference errorPointer) {
+        if (value_entry >= 0) {
+            IntByReference recordValueDataInt = new IntByReference();
+
+            int result = esedbLibrary.libesedb_record_get_value_16bit(recordPointerRef.getValue(), value_entry, recordValueDataInt,
+            errorPointer);
+            if (result < 0)
+                printError("Record Get 16-Bit Data", result, filePath, errorPointer);
+            return  recordValueDataInt.getValue();
+        }
+        return -1;
+    }
+
+    public static String getUnicodeValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerRef, String filePath, PointerByReference errorPointer) {
+        if (value_entry >= 0) {
+            IntByReference recordValueDataInt = new IntByReference();
+            Memory recordValueData = new Memory(3072);
+
+            int result = esedbLibrary.libesedb_record_get_value_utf8_string_size(recordPointerRef.getValue(), value_entry,
+                recordValueDataInt, errorPointer);
+            if (result < 0)
+                printError("Record Get UTF8 String Size", result, filePath, errorPointer);
+            if ((recordValueDataInt.getValue() > 0) && (result == 1)) {
+                result = esedbLibrary.libesedb_record_get_value_utf8_string(recordPointerRef.getValue(), value_entry,
+                        recordValueData, recordValueDataInt.getValue(), errorPointer);
+                if (result < 0)
+                    printError("Record Get UTF8 String at " + value_entry, result, filePath, errorPointer);
+                return recordValueData.getString(0, "UTF-8");
+            }
+        }
+        return "";
+    }
+
+    public static String getBinaryValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerRef, String filePath, PointerByReference errorPointer) {
+        if (value_entry >= 0) {
+            IntByReference recordValueDataInt = new IntByReference();
+            Memory recordValueData = new Memory(3072);
+
+            int result = esedbLibrary.libesedb_record_get_value_binary_data_size(recordPointerRef.getValue(), value_entry,
+                recordValueDataInt, errorPointer);
+            if (result < 0)
+                printError("Record Get Binary Data Size", result, filePath, errorPointer);
+            if ((recordValueDataInt.getValue() > 0) && (result == 1)) {
+                result = esedbLibrary.libesedb_record_get_value_binary_data(recordPointerRef.getValue(), value_entry,
+                        recordValueData, recordValueDataInt.getValue(), errorPointer);
+                if (result < 0)
+                    printError("Record Get Binary Data at " + value_entry, result, filePath, errorPointer);
+                return String.valueOf(recordValueData.getCharArray(0, recordValueDataInt.getValue()));
+           }
+        }
+        return "";
+    }
+
+    public static Boolean getBooleanValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerRef, String filePath, PointerByReference errorPointer) {
+        if (value_entry >= 0) {
+            ShortByReference recordValueDataShort = new ShortByReference();
+            int result = esedbLibrary.libesedb_record_get_value_boolean(recordPointerRef.getValue(), value_entry, recordValueDataShort,
+                errorPointer);
+            if (result < 0)
+                printError("Record Get Boolean Data", result, filePath, errorPointer);
+            return recordValueDataShort.getValue() == 1;
+        }
+        return null;
     }
 
 
-    public static Date getFileTime(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerReference, String filePath, PointerByReference errorPointer) {
-        LongByReference recordValueData = new LongByReference();
+    public static Date getFileTime(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerRef, String filePath, PointerByReference errorPointer) {
+        if (value_entry >= 0) {
+            LongByReference recordValueData = new LongByReference();
 
-        int result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), value_entry, recordValueData,
-                errorPointer);
-        if (result < 0)
-            printError("Record Get FileTime Data", result, filePath, errorPointer);
-        
-        Date date = new Date((recordValueData.getValue() - 116444736000000000L)/10000);
-        
-        return date;
+            int result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerRef.getValue(), value_entry, recordValueData,
+                    errorPointer);
+            if (result < 0)
+                printError("Record Get FileTime Data", result, filePath, errorPointer);
+            
+            Date date = new Date((recordValueData.getValue() - 116444736000000000L)/10000);
+            
+            return date;
+        }
+        return null;
     }
 
     public static void printError(String function, int result, String path, PointerByReference errorPointer) {
         LOGGER.warn("Error decoding " + path + ": Function '" + function + "'. Function result number '"
                 + result + "' Error value: " + errorPointer.getValue().getString(0)); //$NON-NLS-1$
         esedbLibrary.libesedb_error_free(errorPointer);
+    }
+
+
+
+    public static int getColumnPosition(EsedbLibrary esedbLibrary, String columnCode, PointerByReference errorPointer, PointerByReference tablePointerRef, String filePath) {
+        int position = -1;
+
+        PointerByReference recordPointerRef = new PointerByReference();
+        IntByReference numberOfColumns = new IntByReference();
+        int columnFlags = 1;
+
+        // use first record
+        int result = esedbLibrary.libesedb_table_get_record(tablePointerRef.getValue(), 0, recordPointerRef,
+            errorPointer);
+        if (result < 0)
+            EsedbManager.printError("Table Get Record", result, filePath, errorPointer);
+
+        result = esedbLibrary.libesedb_table_get_number_of_columns(tablePointerRef.getValue(),
+            numberOfColumns, columnFlags, errorPointer);
+        if (result < 0)
+            EsedbManager.printError("Table Get Number of Columns", result, filePath, errorPointer);
+
+        for (int col = 0; col < numberOfColumns.getValue(); col++) {
+            IntByReference columnNameSize =  new IntByReference();
+            Memory columnName =  new Memory(3072);
+
+            result = esedbLibrary.libesedb_record_get_utf8_column_name_size(recordPointerRef.getValue(), col,
+                columnNameSize, errorPointer);
+            if (result < 0)
+                EsedbManager.printError("Record Get UTF8 Column Name Size", result, filePath, errorPointer);
+
+            result = esedbLibrary.libesedb_record_get_utf8_column_name(recordPointerRef.getValue(),
+                col, columnName, columnNameSize.getValue(), errorPointer);
+            if (result < 0)
+                EsedbManager.printError("Record Get UTF8 Column Name", result, filePath, errorPointer);
+
+            if (columnName.getString(0).equals(columnCode)) {
+                position = col;
+                break;
+            }
+        }
+
+        return position;
     }
 }

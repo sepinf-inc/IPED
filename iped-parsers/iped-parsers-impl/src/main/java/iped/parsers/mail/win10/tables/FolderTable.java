@@ -11,6 +11,7 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
+import iped.parsers.mail.win10.ColumnCodes;
 import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.util.EsedbManager;
 
@@ -24,20 +25,30 @@ public class FolderTable extends AbstractTable {
     private Map<String, FolderEntry> nameFolderMap = new HashMap<>();
     private Map<Integer, FolderEntry> idFolderMap = new HashMap<>();
 
-    public FolderTable(String filePath, String tableName, PointerByReference tablePointer,
+    private int rowIdPos, displayNamePos, displayNamePos2, parentFolderIdPos, createTimePos;
+
+    public FolderTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
         super();
+        this.esedbLibrary = esedbLibrary;
         this.tableName = tableName;
         this.tablePointer = tablePointer;
         this.errorPointer = errorPointer;
         this.numRecords = numRecords;
         this.filePath = filePath;
+
+        rowIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ROW_ID, errorPointer, tablePointer, filePath);
+        displayNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_1, errorPointer, tablePointer, filePath);
+        displayNamePos2 = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_2, errorPointer, tablePointer, filePath);
+        parentFolderIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.PARENT_FOLDER_ID, errorPointer, tablePointer, filePath);
+        createTimePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.CREATE_TIME, errorPointer, tablePointer, filePath);
     }
 
     @Override
-    public void populateTable(EsedbLibrary esedbLibrary) {
+    public void populateTable() {
+
         for (int i = 0; i < numRecords; i++) {
-            FolderEntry folderEntry = extractFolder(esedbLibrary, i, errorPointer, tablePointer);
+            FolderEntry folderEntry = extractFolder(i, errorPointer, tablePointer);
             idFolderMap.put(folderEntry.getRowId(), folderEntry);
 
             // Some folders are the same but have different ids, we don't add duplicates do uniqueFolders
@@ -76,29 +87,39 @@ public class FolderTable extends AbstractTable {
     }
 
 
-    private FolderEntry extractFolder(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
+    private FolderEntry extractFolder(int row, PointerByReference errorPointer, PointerByReference tablePointerReference) {
         int result = 0;
 
-        PointerByReference recordPointerReference = new PointerByReference();
+        PointerByReference recordPointerRef = new PointerByReference();
         IntByReference recordNumberOfValues = new IntByReference();
+        IntByReference numberOfColumns = new IntByReference();
+        int columnFlags = 1;
+
+        result = esedbLibrary.libesedb_table_get_number_of_columns(tablePointerReference.getValue(),
+            numberOfColumns, columnFlags, errorPointer);
+        if (result < 0)
+            EsedbManager.printError("Table Get Number of Columns", result, filePath, errorPointer);
 
         // get row (record)
-        result = esedbLibrary.libesedb_table_get_record(tablePointerReference.getValue(), i, recordPointerReference,
+        result = esedbLibrary.libesedb_table_get_record(tablePointerReference.getValue(), row, recordPointerRef,
                 errorPointer);
         if (result < 0)
             EsedbManager.printError("Table Get Record", result, filePath, errorPointer);
 
-        result = esedbLibrary.libesedb_record_get_number_of_values(recordPointerReference.getValue(),
+        result = esedbLibrary.libesedb_record_get_number_of_values(recordPointerRef.getValue(),
                 recordNumberOfValues, errorPointer);
         if (result < 0)
             EsedbManager.printError("Record Get Number of Values", result, filePath, errorPointer);
 
-        int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
-        String displayName = EsedbManager.getUnicodeValue(esedbLibrary, 34, recordPointerReference, filePath, errorPointer);
-        int parentFolderId = EsedbManager.getInt32Value(esedbLibrary, 2, recordPointerReference, filePath, errorPointer);
-        Date createTime = EsedbManager.getFileTime(esedbLibrary, 37, recordPointerReference, filePath, errorPointer);
 
-        result = esedbLibrary.libesedb_record_free(recordPointerReference, errorPointer);
+        int rowId = EsedbManager.getInt32Value(esedbLibrary, rowIdPos, recordPointerRef, filePath, errorPointer);
+        String displayName = EsedbManager.getUnicodeValue(esedbLibrary, displayNamePos, recordPointerRef, filePath, errorPointer);
+        if (displayName.isEmpty())
+            displayName = EsedbManager.getUnicodeValue(esedbLibrary, displayNamePos2, recordPointerRef, filePath, errorPointer);
+        int parentFolderId = EsedbManager.getInt32Value(esedbLibrary, parentFolderIdPos, recordPointerRef, filePath, errorPointer);
+        Date createTime = EsedbManager.getFileTime(esedbLibrary, createTimePos, recordPointerRef, filePath, errorPointer);
+
+        result = esedbLibrary.libesedb_record_free(recordPointerRef, errorPointer);
         if (result < 0)
             EsedbManager.printError("Record Free", result, filePath, errorPointer);
 

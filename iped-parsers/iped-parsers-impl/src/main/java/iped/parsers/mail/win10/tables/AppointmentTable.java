@@ -9,6 +9,7 @@ import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.ptr.IntByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
+import iped.parsers.mail.win10.ColumnCodes;
 import iped.parsers.mail.win10.entries.AppointmentEntry;
 import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.mail.win10.entries.AppointmentEntry.ResponseType;
@@ -19,23 +20,46 @@ public class AppointmentTable extends AbstractTable {
     private ArrayList<AppointmentEntry> appointments = new ArrayList<>();
     private Map<Integer, ArrayList<AppointmentEntry>> folderToApptMap = new HashMap<>();
 
-    public AppointmentTable(String filePath, String tableName, PointerByReference tablePointer,
+    private int rowIdPos, eventNamePos, locationPos, repeatPos, allDayPos, statusPos, reminderTimeMinPos, organizerPos,
+        accountPos, linkPos, durationMinPos, startTimePos, additionalPeoplePos, responsePos, updateCountPos, parentFolderIdPos;
+
+    public AppointmentTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
         super();
+        this.esedbLibrary = esedbLibrary;
         this.tableName = tableName;
         this.tablePointer = tablePointer;
         this.errorPointer = errorPointer;
         this.numRecords = numRecords;
         this.filePath = filePath;
+
+        rowIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ROW_ID, errorPointer, tablePointer, filePath);
+        eventNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EVENT, errorPointer, tablePointer, filePath);
+        locationPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.LOCATION, errorPointer, tablePointer, filePath);
+        repeatPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.REPEAT, errorPointer, tablePointer, filePath);
+        allDayPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ALLDAY, errorPointer, tablePointer, filePath);
+        statusPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.STATUS, errorPointer, tablePointer, filePath);
+        reminderTimeMinPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.REMINDER_TIME_MIN, errorPointer, tablePointer, filePath);
+        organizerPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ORGANISER, errorPointer, tablePointer, filePath);
+        accountPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ACCOUNT, errorPointer, tablePointer, filePath);
+        linkPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.LINK, errorPointer, tablePointer, filePath);
+        durationMinPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DURATION, errorPointer, tablePointer, filePath);
+        startTimePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.START_TIME, errorPointer, tablePointer, filePath);
+        additionalPeoplePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ADDITIONAL_PEOPLE, errorPointer, tablePointer, filePath);
+        responsePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.RESPONSE, errorPointer, tablePointer, filePath);
+        updateCountPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.UPDATE, errorPointer, tablePointer, filePath);
+        parentFolderIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.PARENT_FOLDER_ID, errorPointer, tablePointer, filePath);
+
     }
 
     @Override
-    public void populateTable(EsedbLibrary esedbLibrary) {
+    public void populateTable() {
         for (int i = 0; i < numRecords; i++) {
             AppointmentEntry appointment = extractAppointment(esedbLibrary, i, errorPointer, tablePointer);
             appointments.add(appointment);
             addAppointmentToParentFolder(appointment, appointment.getParentFolderId());
         }
+        System.out.println("");
     }
 
     private void addAppointmentToParentFolder(AppointmentEntry appointment, int parentId) {
@@ -71,22 +95,22 @@ public class AppointmentTable extends AbstractTable {
         if (result < 0)
             EsedbManager.printError("Record Get Number of Values", result, filePath, errorPointer);
 
-        int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
-        String eventName = EsedbManager.getUnicodeValue(esedbLibrary, 34, recordPointerReference, filePath, errorPointer);
-        String location = EsedbManager.getUnicodeValue(esedbLibrary, 37, recordPointerReference, filePath, errorPointer);
-        boolean repeat = EsedbManager.getBooleanValue(esedbLibrary, 4, recordPointerReference, filePath, errorPointer);
-        boolean allDay = EsedbManager.getBooleanValue(esedbLibrary, 6, recordPointerReference, filePath, errorPointer);
-        long status = EsedbManager.getInt32Value(esedbLibrary, 7, recordPointerReference, filePath, errorPointer);
-        long reminderTimeMin = EsedbManager.getInt32Value(esedbLibrary, 8, recordPointerReference, filePath, errorPointer);
-        String organizer = EsedbManager.getUnicodeValue(esedbLibrary, 41, recordPointerReference, filePath, errorPointer);
-        String account = EsedbManager.getUnicodeValue(esedbLibrary, 42, recordPointerReference, filePath, errorPointer);
-        String link = EsedbManager.getUnicodeValue(esedbLibrary, 46, recordPointerReference, filePath, errorPointer);
-        long durationMin = EsedbManager.getInt32Value(esedbLibrary, 18, recordPointerReference, filePath, errorPointer);
-        Date startTime = EsedbManager.getFileTime(esedbLibrary, 20, recordPointerReference, filePath, errorPointer);
-        String additionalPeople = EsedbManager.getBinaryValue(esedbLibrary, 44, recordPointerReference, filePath, errorPointer);
-        int response = EsedbManager.getInt32Value(esedbLibrary, 22, recordPointerReference, filePath, errorPointer);
-        long updateCount = EsedbManager.getInt32Value(esedbLibrary, 2, recordPointerReference, filePath, errorPointer);
-        int parentFolderId = EsedbManager.getInt32Value(esedbLibrary, 16, recordPointerReference, filePath, errorPointer);
+        int rowId = EsedbManager.getInt32Value(esedbLibrary, rowIdPos, recordPointerReference, filePath, errorPointer);
+        String eventName = EsedbManager.getUnicodeValue(esedbLibrary, eventNamePos, recordPointerReference, filePath, errorPointer);
+        String location = EsedbManager.getUnicodeValue(esedbLibrary, locationPos, recordPointerReference, filePath, errorPointer);
+        boolean repeat = EsedbManager.getBooleanValue(esedbLibrary, repeatPos, recordPointerReference, filePath, errorPointer);
+        boolean allDay = EsedbManager.getBooleanValue(esedbLibrary, allDayPos, recordPointerReference, filePath, errorPointer);
+        long status = EsedbManager.getInt32Value(esedbLibrary, statusPos, recordPointerReference, filePath, errorPointer);
+        long reminderTimeMin = EsedbManager.getInt32Value(esedbLibrary, reminderTimeMinPos, recordPointerReference, filePath, errorPointer);
+        String organizer = EsedbManager.getUnicodeValue(esedbLibrary, organizerPos, recordPointerReference, filePath, errorPointer);
+        String account = EsedbManager.getUnicodeValue(esedbLibrary, accountPos, recordPointerReference, filePath, errorPointer);
+        String link = EsedbManager.getUnicodeValue(esedbLibrary, linkPos, recordPointerReference, filePath, errorPointer);
+        long durationMin = EsedbManager.getInt32Value(esedbLibrary, durationMinPos, recordPointerReference, filePath, errorPointer);
+        Date startTime = EsedbManager.getFileTime(esedbLibrary, startTimePos, recordPointerReference, filePath, errorPointer);
+        String additionalPeople = EsedbManager.getBinaryValue(esedbLibrary, additionalPeoplePos, recordPointerReference, filePath, errorPointer);
+        int response = EsedbManager.getInt32Value(esedbLibrary, responsePos, recordPointerReference, filePath, errorPointer);
+        long updateCount = EsedbManager.getInt32Value(esedbLibrary, updateCountPos, recordPointerReference, filePath, errorPointer);
+        int parentFolderId = EsedbManager.getInt32Value(esedbLibrary, parentFolderIdPos, recordPointerReference, filePath, errorPointer);
 
         result = esedbLibrary.libesedb_record_free(recordPointerReference, errorPointer);
         if (result < 0)

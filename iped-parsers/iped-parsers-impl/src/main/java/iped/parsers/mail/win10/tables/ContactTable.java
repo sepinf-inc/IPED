@@ -9,6 +9,7 @@ import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.ptr.IntByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
+import iped.parsers.mail.win10.ColumnCodes;
 import iped.parsers.mail.win10.entries.ContactEntry;
 import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.util.EsedbManager;
@@ -18,20 +19,39 @@ public class ContactTable extends AbstractTable {
     private List<ContactEntry> contacts = new ArrayList<>();
     private Map<Integer, ArrayList<ContactEntry>> folderToContactsMap = new HashMap<>();
 
-    public ContactTable(String filePath, String tableName, PointerByReference tablePointer,
+    int rowIdPos, displayNamePos, displayNamePos2, firstNamePos, lastNamePos, emailPos, emailWorkPos, emailOtherPos,
+        phonePos, workPhonePos, addressPos, hasNamePos, parentFolderIdPos;
+
+    public ContactTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
         super();
+        this.esedbLibrary = esedbLibrary;
         this.tableName = tableName;
         this.tablePointer = tablePointer;
         this.errorPointer = errorPointer;
         this.numRecords = numRecords;
         this.filePath = filePath;
+
+        rowIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ROW_ID, errorPointer, tablePointer, filePath);
+        displayNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_1, errorPointer, tablePointer, filePath);
+        displayNamePos2 = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_2, errorPointer, tablePointer, filePath);
+        firstNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.FIRST_NAME, errorPointer, tablePointer, filePath);
+        lastNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.LAST_NAME, errorPointer, tablePointer, filePath);
+        emailPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EMAIL, errorPointer, tablePointer, filePath);
+        emailWorkPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EMAIL_WORK, errorPointer, tablePointer, filePath);
+        emailOtherPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EMAIL_OTHER, errorPointer, tablePointer, filePath);
+        phonePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.PHONE, errorPointer, tablePointer, filePath);
+        workPhonePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.WORK_PHONE, errorPointer, tablePointer, filePath);
+        addressPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ADDRESS_CONTACT, errorPointer, tablePointer, filePath);
+        hasNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.HAS_NAME, errorPointer, tablePointer, filePath);
+        parentFolderIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.PARENT_FOLDER_ID, errorPointer, tablePointer, filePath);
     }
 
+
     @Override
-    public void populateTable(EsedbLibrary esedbLibrary) {
+    public void populateTable() {
         for (int i = 0; i < numRecords; i++) {
-            ContactEntry contact = extractContact(esedbLibrary, i, errorPointer, tablePointer);
+            ContactEntry contact = extractContact(i, errorPointer, tablePointer);
             contacts.add(contact);
             addContactToParentFolder(contact, contact.getParentFolderId());
         }
@@ -44,38 +64,38 @@ public class ContactTable extends AbstractTable {
         folderContacts.add(contact);
     }
 
-    private ContactEntry extractContact(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
-
+    private ContactEntry extractContact(int row, PointerByReference errorPointer, PointerByReference tablePointerReference) {
         int result = 0;
 
-        PointerByReference recordPointerReference = new PointerByReference();
+        PointerByReference recordPointerRef = new PointerByReference();
         IntByReference recordNumberOfValues = new IntByReference();
 
         // get row (record)
-        result = esedbLibrary.libesedb_table_get_record(tablePointerReference.getValue(), i, recordPointerReference,
-                errorPointer);
+        result = esedbLibrary.libesedb_table_get_record(tablePointerReference.getValue(), row, recordPointerRef, errorPointer);
         if (result < 0)
             EsedbManager.printError("Table Get Record", result, filePath, errorPointer);
 
-        result = esedbLibrary.libesedb_record_get_number_of_values(recordPointerReference.getValue(),
+        result = esedbLibrary.libesedb_record_get_number_of_values(recordPointerRef.getValue(),
                 recordNumberOfValues, errorPointer);
         if (result < 0)
             EsedbManager.printError("Record Get Number of Values", result, filePath, errorPointer);
 
-        int rowId = EsedbManager.getInt32Value(esedbLibrary, 0, recordPointerReference, filePath, errorPointer);
-        String displayName = EsedbManager.getUnicodeValue(esedbLibrary, 68, recordPointerReference, filePath, errorPointer);
-        String firstName = EsedbManager.getUnicodeValue(esedbLibrary, 69, recordPointerReference, filePath, errorPointer);
-        String lastName = EsedbManager.getUnicodeValue(esedbLibrary, 86, recordPointerReference, filePath, errorPointer);
-        String email = EsedbManager.getUnicodeValue(esedbLibrary, 65, recordPointerReference, filePath, errorPointer);
-        String emailWork = EsedbManager.getUnicodeValue(esedbLibrary, 66, recordPointerReference, filePath, errorPointer);
-        String emailOther = EsedbManager.getUnicodeValue(esedbLibrary, 67, recordPointerReference, filePath, errorPointer);
-        String phone = EsedbManager.getUnicodeValue(esedbLibrary, 90, recordPointerReference, filePath, errorPointer);
-        String workPhone = EsedbManager.getUnicodeValue(esedbLibrary, 80, recordPointerReference, filePath, errorPointer);
-        String address = EsedbManager.getUnicodeValue(esedbLibrary, 78, recordPointerReference, filePath, errorPointer);
-        boolean hasName = EsedbManager.getBooleanValue(esedbLibrary, 17, recordPointerReference, filePath, errorPointer);
-        int parentFolderId = EsedbManager.getInt32Value(esedbLibrary, 2, recordPointerReference, filePath, errorPointer);
+        int rowId = EsedbManager.getInt32Value(esedbLibrary, rowIdPos, recordPointerRef, filePath, errorPointer);
+        String displayName = EsedbManager.getUnicodeValue(esedbLibrary, displayNamePos, recordPointerRef, filePath, errorPointer);
+        if (displayName.isEmpty())
+            displayName = EsedbManager.getUnicodeValue(esedbLibrary, displayNamePos2, recordPointerRef, filePath, errorPointer);
+        String firstName = EsedbManager.getUnicodeValue(esedbLibrary, firstNamePos, recordPointerRef, filePath, errorPointer);
+        String lastName = EsedbManager.getUnicodeValue(esedbLibrary, lastNamePos, recordPointerRef, filePath, errorPointer);
+        String email = EsedbManager.getUnicodeValue(esedbLibrary, emailPos, recordPointerRef, filePath, errorPointer);
+        String emailWork = EsedbManager.getUnicodeValue(esedbLibrary, emailWorkPos, recordPointerRef, filePath, errorPointer);
+        String emailOther = EsedbManager.getUnicodeValue(esedbLibrary, emailOtherPos, recordPointerRef, filePath, errorPointer);
+        String phone = EsedbManager.getUnicodeValue(esedbLibrary, phonePos, recordPointerRef, filePath, errorPointer);
+        String workPhone = EsedbManager.getUnicodeValue(esedbLibrary, workPhonePos, recordPointerRef, filePath, errorPointer);
+        String address = EsedbManager.getUnicodeValue(esedbLibrary, addressPos, recordPointerRef, filePath, errorPointer);
+        boolean hasName = EsedbManager.getBooleanValue(esedbLibrary, hasNamePos, recordPointerRef, filePath, errorPointer);
+        int parentFolderId = EsedbManager.getInt32Value(esedbLibrary, parentFolderIdPos, recordPointerRef, filePath, errorPointer);
 
-        result = esedbLibrary.libesedb_record_free(recordPointerReference, errorPointer);
+        result = esedbLibrary.libesedb_record_free(recordPointerRef, errorPointer);
         if (result < 0)
             EsedbManager.printError("Record Free", result, filePath, errorPointer);
 
