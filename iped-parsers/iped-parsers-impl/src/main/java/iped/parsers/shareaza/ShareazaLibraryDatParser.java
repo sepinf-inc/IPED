@@ -112,7 +112,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         xhtml.endElement("tr"); //$NON-NLS-1$
 
         library.printTable(xhtml, searcher);
-        
+
         metadata.set(BasicProps.HASCHILD, "true");
         metadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
         BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", LIBRARY_DAT_ITEM_MIME_TYPE);
@@ -188,7 +188,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
 
         return result;
     }
-    
+
     private int countHashDBHits(LibraryFolder folder, Set<Integer> indexesCounted) {
         int result = 0;
         for (LibraryFolder f : folder.getLibraryFolders())

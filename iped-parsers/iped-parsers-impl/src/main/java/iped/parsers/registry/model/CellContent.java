@@ -19,8 +19,8 @@ public abstract class CellContent {
     public RegistryFile getRegistryFile() {
         return reg;
     }
-    
-    public ArrayList<Integer> getSubCellsOffsets(){
-    	return new ArrayList<Integer>();
+
+    public ArrayList<Integer> getSubCellsOffsets() {
+        return new ArrayList<Integer>();
     }
 }

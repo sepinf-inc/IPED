@@ -85,8 +85,8 @@ public class LibraryFolders extends ShareazaEntity {
     public Map<Integer, LibraryFile> getIndexToFile() {
         return indexToFile;
     }
-    
+
     public String getName() {
-    	return albumRoot.getName();
+        return albumRoot.getName();
     }
 }

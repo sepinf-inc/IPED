@@ -85,7 +85,7 @@ public class KnownMetParser extends AbstractParser {
             Messages.getString("KnownMetParser.FoundInCase")}; //$NON-NLS-1$
 
     public static final String strYes = Messages.getString("KnownMetParser.Yes"); //$NON-NLS-1$
-    
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -97,7 +97,7 @@ public class KnownMetParser extends AbstractParser {
         final DecimalFormat nf = LocalizedFormat.getDecimalInstance("#,##0"); //$NON-NLS-1$
         final DateFormat df = new SimpleDateFormat(Messages.getString("KnownMetParser.DataFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
-        
+
         metadata.set(HttpHeaders.CONTENT_TYPE, EMULE_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
@@ -105,7 +105,7 @@ public class KnownMetParser extends AbstractParser {
         bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
         bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
         bme.setLocalTime(true);
-        
+
         List<KnownMetEntry> l = iped.parsers.emule.KnownMetDecoder.parseToList(stream);
         if (l == null)
             return;
@@ -137,7 +137,7 @@ public class KnownMetParser extends AbstractParser {
         xhtml.characters(Messages.getString("P2P.FoundInPedoHashDB"));
         xhtml.endElement("p");
         xhtml.newline();
-        
+
         xhtml.startElement("table", "class", "dt"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         int cont = 1;
         List<String> cells = new ArrayList<String>();
@@ -210,7 +210,7 @@ public class KnownMetParser extends AbstractParser {
                 totReq += toSum(e.getTotalRequests());
                 accReq += toSum(e.getAcceptedRequests());
                 bytTrf += toSum(e.getBytesTransfered());
-                
+
                 bme.extractEmbedded(i, context, metadata, handler, e);
             }
 

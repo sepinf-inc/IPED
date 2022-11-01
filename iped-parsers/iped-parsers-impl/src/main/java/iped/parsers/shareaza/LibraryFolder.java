@@ -126,7 +126,7 @@ public class LibraryFolder extends ShareazaEntity {
         return files;
     }
 
-	public String getPath() {
-		return path;
-	}
+    public String getPath() {
+        return path;
+    }
 }

@@ -147,9 +147,9 @@ public class CaseData implements ICaseData {
         objectMap.put(key, value);
     }
 
-	@Override
-	public Object addCaseObject(String key, Object data) {
+    @Override
+    public Object addCaseObject(String key, Object data) {
         return objectMap.put(key, data);
-	}
+    }
 
 }

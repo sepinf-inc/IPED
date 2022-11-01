@@ -206,8 +206,7 @@ public class LibraryFile extends ShareazaEntity {
         return "True".equals(getInheritedShared()); //$NON-NLS-1$
     }
 
-    public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher,
-            Map<Integer, List<String>> albunsForFiles) throws SAXException {
+    public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher, Map<Integer, List<String>> albunsForFiles) throws SAXException {
 
         hashSetHits.addAll(ChildPornHashLookup.lookupHash(md5));
         hashSetHits.addAll(ChildPornHashLookup.lookupHash(sha1));
@@ -219,12 +218,10 @@ public class LibraryFile extends ShareazaEntity {
         if (!hashSetHits.isEmpty()) {
             attributes.addAttribute("", "class", "class", "CDATA", "r");
         }
-        html.startElement("tr", attributes); 
+        html.startElement("tr", attributes);
 
-        printTd(html, searcher, path, name, albunsForFiles.get(index), index, size, time,
-                getInheritedShared(), virtualSize, virtualBase, sha1, tiger, md5, ed2k, bth, verify, uri,
-                metadataAuto, metadataTime, metadataModified, rating, comments, shareTags, hitsTotal,
-                uploadsTotal, cachedPreview, bogus);
+        printTd(html, searcher, path, name, albunsForFiles.get(index), index, size, time, getInheritedShared(), virtualSize, virtualBase, sha1, tiger, md5, ed2k, bth, verify, uri, metadataAuto, metadataTime, metadataModified, rating,
+                comments, shareTags, hitsTotal, uploadsTotal, cachedPreview, bogus);
 
         html.endElement("tr"); //$NON-NLS-1$
     }
@@ -253,7 +250,7 @@ public class LibraryFile extends ShareazaEntity {
                         }
                         html.characters(album);
                         first = false;
-                        
+
                     }
                 } else {
                     html.characters(o.toString());
@@ -287,105 +284,105 @@ public class LibraryFile extends ShareazaEntity {
     public String getSha1() {
         return sha1;
     }
-    
+
     public int getIndex() {
         return index;
     }
 
-	public List<SharedSource> getSharedSources() {
-		return sharedSources;
-	}
+    public List<SharedSource> getSharedSources() {
+        return sharedSources;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getTime() {
-		return time;
-	}
+    public String getTime() {
+        return time;
+    }
 
-	public String getShared() {
-		return shared;
-	}
+    public String getShared() {
+        return shared;
+    }
 
-	public long getVirtualSize() {
-		return virtualSize;
-	}
+    public long getVirtualSize() {
+        return virtualSize;
+    }
 
-	public long getVirtualBase() {
-		return virtualBase;
-	}
+    public long getVirtualBase() {
+        return virtualBase;
+    }
 
-	public String getTiger() {
-		return tiger;
-	}
+    public String getTiger() {
+        return tiger;
+    }
 
-	public String getEd2k() {
-		return ed2k;
-	}
+    public String getEd2k() {
+        return ed2k;
+    }
 
-	public String getBth() {
-		return bth;
-	}
+    public String getBth() {
+        return bth;
+    }
 
-	public String getVerify() {
-		return verify;
-	}
+    public String getVerify() {
+        return verify;
+    }
 
-	public String getUri() {
-		return uri;
-	}
+    public String getUri() {
+        return uri;
+    }
 
-	public boolean isMetadataAuto() {
-		return metadataAuto;
-	}
+    public boolean isMetadataAuto() {
+        return metadataAuto;
+    }
 
-	public String getMetadataTime() {
-		return metadataTime;
-	}
+    public String getMetadataTime() {
+        return metadataTime;
+    }
 
-	public int getRating() {
-		return rating;
-	}
+    public int getRating() {
+        return rating;
+    }
 
-	public String getComments() {
-		return comments;
-	}
+    public String getComments() {
+        return comments;
+    }
 
-	public String getShareTags() {
-		return shareTags;
-	}
+    public String getShareTags() {
+        return shareTags;
+    }
 
-	public boolean isMetadataModified() {
-		return metadataModified;
-	}
+    public boolean isMetadataModified() {
+        return metadataModified;
+    }
 
-	public long getHitsTotal() {
-		return hitsTotal;
-	}
+    public long getHitsTotal() {
+        return hitsTotal;
+    }
 
-	public long getUploadsTotal() {
-		return uploadsTotal;
-	}
+    public long getUploadsTotal() {
+        return uploadsTotal;
+    }
 
-	public boolean isCachedPreview() {
-		return cachedPreview;
-	}
+    public boolean isCachedPreview() {
+        return cachedPreview;
+    }
 
-	public boolean isBogus() {
-		return bogus;
-	}
+    public boolean isBogus() {
+        return bogus;
+    }
 
-	public LibraryFolder getParentFolder() {
-		return parentFolder;
-	}
+    public LibraryFolder getParentFolder() {
+        return parentFolder;
+    }
 
-	public HashSet<String> getHashSetHits() {
-		return hashSetHits;
-	}
+    public HashSet<String> getHashSetHits() {
+        return hashSetHits;
+    }
 
-	public void setIndex(int index) {
-		this.index = index;
-	}
+    public void setIndex(int index) {
+        this.index = index;
+    }
 
 }

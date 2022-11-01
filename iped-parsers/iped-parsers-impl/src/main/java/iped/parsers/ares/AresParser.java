@@ -90,8 +90,7 @@ public class AresParser extends AbstractParser {
         bme.setNameProperty("title");
         bme.registerTransformationMapping(AresEntry.class, ExtraProperties.LINKED_ITEMS, "sha-1:${hash}");
         bme.registerTransformationMapping(AresEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
-        
-        
+
         metadata.set(HttpHeaders.CONTENT_TYPE, ARES_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
@@ -168,7 +167,7 @@ public class AresParser extends AbstractParser {
         String[] colClass = new String[header.length];
         Arrays.fill(colClass, "a"); //$NON-NLS-1$        
         colClass[0] = "s"; //$NON-NLS-1$
-        
+
         for (int i = -1; i < l.size(); i++) {
             cells.clear();
             String trClass = ""; //$NON-NLS-1$
@@ -212,7 +211,7 @@ public class AresParser extends AbstractParser {
                 colClass[5] = "c";
                 Arrays.fill(colClass, 8, 13, "z");
 
-				bme.extractEmbedded(i, context, metadata, handler, e);
+                bme.extractEmbedded(i, context, metadata, handler, e);
                 //AresEntryMetadataExtractor.extractEmbedded(i, context, metadata, handler, e, hashSets);
             }
 
@@ -241,7 +240,7 @@ public class AresParser extends AbstractParser {
                             xhtml.characters(s);
                         }
                     }
-                    
+
                     if (i < 0 || i >= l.size())
                         xhtml.endElement("b"); //$NON-NLS-1$
                     xhtml.endElement("td"); //$NON-NLS-1$
@@ -249,7 +248,7 @@ public class AresParser extends AbstractParser {
             }
             xhtml.endElement("tr"); //$NON-NLS-1$
             xhtml.newline();
-            
+
         }
 
         if (hashAlertHits > 0)
