@@ -303,12 +303,24 @@
             <!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
         </parser>
         
-        <parser class="iped.parsers.emule.KnownMetParser"></parser>
+        <parser class="iped.parsers.emule.KnownMetParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.emule.PartMetParser"></parser>
         <parser class="iped.parsers.emule.PreferencesDatParser"></parser>
-        <parser class="iped.parsers.ares.AresParser"></parser>
+        <parser class="iped.parsers.ares.AresParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.shareaza.ShareazaSearchesDatParser"></parser>
-        <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser"></parser>
+        <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.bittorrent.BitTorrentResumeDatParser"></parser>
         <parser class="iped.parsers.bittorrent.TorrentFileParser"></parser>
         <parser class="iped.parsers.lnk.LNKShortcutParser"></parser>

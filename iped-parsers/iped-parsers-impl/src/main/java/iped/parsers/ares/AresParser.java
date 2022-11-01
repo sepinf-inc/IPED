@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
@@ -74,6 +75,13 @@ public class AresParser extends AbstractParser {
     public static final String strYes = Messages.getString("AresParser.Yes"); //$NON-NLS-1$
     public static final String strNo = Messages.getString("AresParser.No"); //$NON-NLS-1$
 
+    private boolean extractEntries = false;
+
+    @Field
+    public void setExtractEntries(boolean value) {
+        this.extractEntries = value;
+    }
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -86,10 +94,14 @@ public class AresParser extends AbstractParser {
         final DateFormat df = new SimpleDateFormat(Messages.getString("AresParser.DateFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
 
-        BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", ARES_ENTRY_MIME_TYPE);
-        bme.setNameProperty("title");
-        bme.registerTransformationMapping(AresEntry.class, ExtraProperties.LINKED_ITEMS, "sha-1:${hash}");
-        bme.registerTransformationMapping(AresEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+        BeanMetadataExtraction bme = null;
+
+        if (extractEntries) {
+            bme = new BeanMetadataExtraction("p2p", ARES_ENTRY_MIME_TYPE);
+            bme.setNameProperty("title");
+            bme.registerTransformationMapping(AresEntry.class, ExtraProperties.LINKED_ITEMS, "sha-1:${hash}");
+            bme.registerTransformationMapping(AresEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+        }
 
         metadata.set(HttpHeaders.CONTENT_TYPE, ARES_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
@@ -211,8 +223,9 @@ public class AresParser extends AbstractParser {
                 colClass[5] = "c";
                 Arrays.fill(colClass, 8, 13, "z");
 
-                bme.extractEmbedded(i, context, metadata, handler, e);
-                //AresEntryMetadataExtractor.extractEmbedded(i, context, metadata, handler, e, hashSets);
+                if (extractEntries) {
+                    bme.extractEmbedded(i, context, metadata, handler, e);
+                }
             }
 
             AttributesImpl attributes = new AttributesImpl();

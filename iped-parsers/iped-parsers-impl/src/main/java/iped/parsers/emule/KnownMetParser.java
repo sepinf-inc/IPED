@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
@@ -86,6 +87,13 @@ public class KnownMetParser extends AbstractParser {
 
     public static final String strYes = Messages.getString("KnownMetParser.Yes"); //$NON-NLS-1$
 
+    private boolean extractEntries = false;
+
+    @Field
+    public void setExtractEntries(boolean value) {
+        this.extractEntries = value;
+    }
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -101,10 +109,14 @@ public class KnownMetParser extends AbstractParser {
         metadata.set(HttpHeaders.CONTENT_TYPE, EMULE_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
-        BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", KNOWNMET_ENTRY_MIME_TYPE, context);
-        bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
-        bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
-        bme.setLocalTime(true);
+        BeanMetadataExtraction bme = null;
+
+        if (extractEntries) {
+            bme = new BeanMetadataExtraction("p2p", KNOWNMET_ENTRY_MIME_TYPE, context);
+            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
+            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+            bme.setLocalTime(true);
+        }
 
         List<KnownMetEntry> l = iped.parsers.emule.KnownMetDecoder.parseToList(stream);
         if (l == null)
@@ -211,7 +223,9 @@ public class KnownMetParser extends AbstractParser {
                 accReq += toSum(e.getAcceptedRequests());
                 bytTrf += toSum(e.getBytesTransfered());
 
-                bme.extractEmbedded(i, context, metadata, handler, e);
+                if (extractEntries) {
+                    bme.extractEmbedded(i, context, metadata, handler, e);
+                }
             }
 
             AttributesImpl attributes = new AttributesImpl();

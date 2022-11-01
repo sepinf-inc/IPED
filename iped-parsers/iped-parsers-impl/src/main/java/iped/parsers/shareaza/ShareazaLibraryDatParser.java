@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
@@ -36,7 +37,6 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.ares.AresEntry;
 import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
@@ -54,6 +54,13 @@ public class ShareazaLibraryDatParser extends AbstractParser {
     public static final String LIBRARY_DAT_MIME_TYPE = "application/x-shareaza-library-dat"; //$NON-NLS-1$
     public static final String LIBRARY_DAT_ITEM_MIME_TYPE = "application/x-shareaza-library-dat-item"; //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(LIBRARY_DAT_MIME_TYPE));
+
+    private boolean extractEntries = false;
+
+    @Field
+    public void setExtractEntries(boolean value) {
+        this.extractEntries = value;
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -115,15 +122,18 @@ public class ShareazaLibraryDatParser extends AbstractParser {
 
         metadata.set(BasicProps.HASCHILD, "true");
         metadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
-        BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", LIBRARY_DAT_ITEM_MIME_TYPE);
-        bme.addPropertyExclusion(LibraryFolder.class, "indexToFile");
-        bme.addPropertyExclusion(LibraryFolder.class, "parentFolder");
-        bme.addPropertyExclusion(LibraryFile.class, "parentFolder");
-        bme.registerClassNameProperty(LibraryFolder.class, "path");
-        bme.registerClassNameProperty(AlbumFolder.class, "name");
-        bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
-        bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${sha1}");
-        bme.extractEmbedded(0, context, metadata, handler, library.getLibraryFolders());
+
+        if (extractEntries) {
+            BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", LIBRARY_DAT_ITEM_MIME_TYPE);
+            bme.addPropertyExclusion(LibraryFolder.class, "indexToFile");
+            bme.addPropertyExclusion(LibraryFolder.class, "parentFolder");
+            bme.addPropertyExclusion(LibraryFile.class, "parentFolder");
+            bme.registerClassNameProperty(LibraryFolder.class, "path");
+            bme.registerClassNameProperty(AlbumFolder.class, "name");
+            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
+            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${sha1}");
+            bme.extractEmbedded(0, context, metadata, handler, library.getLibraryFolders());
+        }
 
         xhtml.endElement("table"); //$NON-NLS-1$
         /*
