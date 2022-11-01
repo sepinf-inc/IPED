@@ -432,8 +432,13 @@ public class MetadataPanel extends JPanel
         setWaitVisible(true);
         new Thread() {
             public void run() {
-                filteredArray = filter(array);
-                sortAndUpdateList(filteredArray);
+                try {
+                    filteredArray = filter(array);
+                    sortAndUpdateList(filteredArray);
+                } finally {
+                    setWaitVisible(false);
+                }
+
             }
         }.start();
     }
@@ -498,6 +503,8 @@ public class MetadataPanel extends JPanel
                     countValues(updateResult);
                 } catch (IOException e) {
                     e.printStackTrace();
+                } finally {
+                    setWaitVisible(false);
                 }
             }
         }.start();
@@ -1238,26 +1245,22 @@ public class MetadataPanel extends JPanel
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                try {
-                    updatingList = true;
-                    List<ValueCount> selection = list.getSelectedValuesList();
-                    HashSet<ValueCount> selSet = new HashSet<ValueCount>();
-                    selSet.addAll(selection);
-                    list.setListData(sortedArray);
-                    int[] selIdx = new int[selSet.size()];
-                    int i = 0;
-                    for (int idx = 0; idx < sortedArray.length; idx++)
-                        if (selSet.contains(sortedArray[idx]))
-                            selIdx[i++] = idx;
-                    if (i > 0)
-                        list.setSelectedIndices(selIdx);
-                    updatingList = false;
-    
-                    // System.out.println("finish");
-                    updateTabColor();
-                } finally {
-                    setWaitVisible(false);
-                }
+                updatingList = true;
+                List<ValueCount> selection = list.getSelectedValuesList();
+                HashSet<ValueCount> selSet = new HashSet<ValueCount>();
+                selSet.addAll(selection);
+                list.setListData(sortedArray);
+                int[] selIdx = new int[selSet.size()];
+                int i = 0;
+                for (int idx = 0; idx < sortedArray.length; idx++)
+                    if (selSet.contains(sortedArray[idx]))
+                        selIdx[i++] = idx;
+                if (i > 0)
+                    list.setSelectedIndices(selIdx);
+                updatingList = false;
+
+                // System.out.println("finish");
+                updateTabColor();
             }
         });
 
