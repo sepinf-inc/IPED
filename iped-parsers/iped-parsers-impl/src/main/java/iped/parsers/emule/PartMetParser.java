@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
@@ -26,6 +27,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import iped.data.IItemReader;
+import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.properties.ExtraProperties;
@@ -43,8 +45,17 @@ public class PartMetParser extends AbstractParser {
     private static final long serialVersionUID = 6100522577461358577L;
 
     public static final String EMULE_PART_MET_MIME_TYPE = "application/x-emule-part-met";
+    public static final String PART_MET_ENTRY_MIME_TYPE = "application/x-emule-part-met-entry";
+
     private static final Set<MediaType> SUPPORTED_TYPES = Collections
             .singleton(MediaType.parse(EMULE_PART_MET_MIME_TYPE));
+
+    private boolean extractEntries = false;
+
+    @Field
+    public void setExtractEntries(boolean value) {
+        this.extractEntries = value;
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -73,6 +84,14 @@ public class PartMetParser extends AbstractParser {
         int ret = iped.parsers.emule.KnownMetDecoder.parseEntry(e, 1, bytes);
         if (ret <= 0) {
             throw new TikaException("part.met file parsing returned error code " + ret);
+        }
+
+        if (extractEntries) {
+            BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", PART_MET_ENTRY_MIME_TYPE, context);
+            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
+            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+            bme.setLocalTime(true);
+            bme.extractEmbedded(0, context, metadata, handler, e);
         }
 
         metadata.add(ExtraProperties.SHARED_HASHES, e.getHash());

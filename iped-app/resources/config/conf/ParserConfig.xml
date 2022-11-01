@@ -308,7 +308,11 @@
                 <param name="extractEntries" type="bool">true</param>
             </params>
         </parser>
-        <parser class="iped.parsers.emule.PartMetParser"></parser>
+        <parser class="iped.parsers.emule.PartMetParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.emule.PreferencesDatParser"></parser>
         <parser class="iped.parsers.ares.AresParser">
             <params>
