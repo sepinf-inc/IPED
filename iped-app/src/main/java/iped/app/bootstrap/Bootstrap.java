@@ -19,6 +19,7 @@ import org.apache.tika.utils.SystemUtils;
 import ag.ion.bion.officelayer.application.IOfficeApplication;
 import iped.app.config.LogConfiguration;
 import iped.app.processing.Main;
+import iped.app.ui.splash.StartControl;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.PluginConfig;
@@ -123,6 +124,7 @@ public class Bootstrap {
             pb.command(cmd);
 
             Process process = pb.start();
+            StartControl.setChildProcessPid(process.pid());
 
             redirectStream(process.getInputStream(), System.out);
             redirectStream(process.getErrorStream(), System.err);
