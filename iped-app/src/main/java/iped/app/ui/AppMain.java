@@ -160,6 +160,9 @@ public class AppMain {
 
                 Logger LOGGER = LoggerFactory.getLogger(AppMain.class);
                 LOGGER.info(Version.APP_NAME);
+                LOGGER.info("   Java Version: " + System.getProperty("java.version"));
+                LOGGER.info("   Java Home: " + System.getProperty("java.home"));
+                LOGGER.info("   Java VM Name: " + System.getProperty("java.vm.name"));
 
                 Configuration.getInstance().loadIpedRoot();
             }
