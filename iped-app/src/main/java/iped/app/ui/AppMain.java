@@ -25,7 +25,7 @@ import iped.utils.IOUtil;
 public class AppMain {
 
     private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
-    private static StartUpControlClient startControlClient;
+    private static StartUpControlClient startUpControlClient;
 
     File casePath;
 
@@ -40,12 +40,12 @@ public class AppMain {
     public static void main(String[] args) {
         // Start up control client should be is created as soon as possible
         // and only when main is called (not when AppMain is instantiated directly).
-        startControlClient =  new StartUpControlClient();
-        startControlClient.start();
+        startUpControlClient =  new StartUpControlClient();
+        startUpControlClient.start();
         
         // Set the UiScale (must be before any UI-related code).
         UiScale.loadUserSetting();
-        
+
         checkJavaVersion();
         AppMain appMain = new AppMain();
         try {
@@ -173,9 +173,9 @@ public class AppMain {
 
             App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager, libDir.getAbsolutePath());
 
-            if (startControlClient != null) {
-                startControlClient.finish();
-                startControlClient = null;
+            if (startUpControlClient != null) {
+                startUpControlClient.finish();
+                startUpControlClient = null;
             }
             
             UICaseDataLoader init = new UICaseDataLoader(processingManager);
