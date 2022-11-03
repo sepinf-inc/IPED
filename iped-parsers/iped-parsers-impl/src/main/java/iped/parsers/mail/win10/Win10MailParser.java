@@ -73,28 +73,7 @@ import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
 import iped.utils.SimpleHTMLEncoder;
 
-/*
- * Important tables to parse from store.vol:
- *  Message, Contact, Appointment, Attachment, Recipient, Folders, Store
- * 
- * .dat files categories
- * Unistore\data\0; Windows phone data
- * Unistore\data\2; contact lists within the account (contacts)
- * Unistore\data\3; the contents/body of the email (messages)
- * Unistore\data\5; calendar invitations (appointments)
- * Unistore\data\7; email attachments
- * 
- * checkboxes:
- * |x| extract properties from store.vol into lists of new objects (representing the important tables)
- * |x| search for the matching .dat files and add more properties to the objects
- * |x| extract each instance as subitems in their respective categories
- * |x| create folder hierarchy
- * |x| merge duplicate folders
- * | | handle contacts
- * | | resolve conflicts when multiple mail cases
- * |x| handle appointment body encoding better
- * */
- /**
+/**
    * Parses Windows Mail App store.vol edb file. Extracts folders, emails, attachments, and appointments from the database.
    * Searches for additional information (e.g. attachment files and body of the emails) in the case.
    * Generates a subitem in the case for each table entry.
@@ -155,7 +134,9 @@ public class Win10MailParser extends AbstractParser {
 
     private ItemInfo itemInfo;
 
-    private static IItemSearcher searcher;
+    private String dbSourceUUID;
+
+    private IItemSearcher searcher;
     private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("OutlookPSTParser.DateFormat"));
 
     static {
@@ -178,7 +159,8 @@ public class Win10MailParser extends AbstractParser {
         itemInfo = context.get(ItemInfo.class);
         searcher = context.get(IItemSearcher.class);
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
-
+        dbSourceUUID = context.get(IItemReader.class).getDataSource().getUUID();
+        
         TemporaryResources tmp = new TemporaryResources();
         // File tableFile = tmp.createTemporaryFile();
         File storeVolFile = null;
@@ -324,22 +306,22 @@ public class Win10MailParser extends AbstractParser {
 
                 AbstractTable table = null;
                 if (tableName.equals("Message")) {
-                    messageTable = new MessageTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
+                    messageTable = new MessageTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
                     table = messageTable;
                 } else if (tableName.equals("Recipient")) {
-                    recipientTable = new RecipientTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
+                    recipientTable = new RecipientTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
                     table = recipientTable;
                 } else if (tableName.equals("Attachment")) {
-                    attachTable = new AttachmentTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
+                    attachTable = new AttachmentTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
                     table = attachTable;
                 } else if (tableName.equals("Folders")) {
-                    folderTable = new FolderTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
+                    folderTable = new FolderTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
                     table = folderTable;
                 } else if (tableName.equals("Appointment")) {
-                    apptTable = new AppointmentTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
+                    apptTable = new AppointmentTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
                     table = apptTable;
                 } else if (tableName.equals("Contact")) {
-                    contactTable = new ContactTable(esedbLibrary, itemInfo.getPath(), tableName, tablePointer, errorPointer, numRecords);
+                    contactTable = new ContactTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
                     table = contactTable;
                 }
 
@@ -531,7 +513,7 @@ public class Win10MailParser extends AbstractParser {
         IItemReader item = null;
         for (FileTag messageTag : messageTags) {
             String contentPath = Win10MailParser.getEntryLocation(email, MESSAGE_CATEGORY, messageTag);
-            Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, email.getMessageSize());
+            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, email.getMessageSize());
             if (itemQueryPair.getLeft() != null) {
                 item = itemQueryPair.getLeft();
                 email.setBodyOriginalPath(item.getPath());
@@ -565,7 +547,7 @@ public class Win10MailParser extends AbstractParser {
         return "";
     }
 
-    
+
     /** 
      * Extracts the email with recipients, attachments and html body. Ready to be previewed
      * @param email to be processed
@@ -656,7 +638,7 @@ public class Win10MailParser extends AbstractParser {
                 for (AttachmentEntry attach : emailAttachments) {
                     String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
                     attach.setOriginalFileName(StringUtils.substringAfterLast(contentPath, "/"));
-                    Pair<IItemReader, String> itemQueryPair = Win10MailParser.searchItemInCase(contentPath, attach.getAttachSize());
+                    Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, attach.getAttachSize());
                     if (itemQueryPair.getRight() != null) {
                         String successfulQuery = itemQueryPair.getRight();
                         attach.setCaseQuery(successfulQuery);
@@ -762,13 +744,14 @@ public class Win10MailParser extends AbstractParser {
      * @param size
      * @return ImmutablePair<IItemReader, String> of (Item, QueryUsed)
      */
-    public static ImmutablePair<IItemReader, String> searchItemInCase(String path, long size) {
+    public ImmutablePair<IItemReader, String> searchItemInCase(String path, long size) {
         if (searcher == null) {
             return new ImmutablePair<>(null, null);
         }
 
         List<IItemReader> items = null;
-        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\"";
+        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\"" +
+            " && " + BasicProps.EVIDENCE_UUID + ":" + dbSourceUUID;
         if (size > 0) {
             String queryWithSize = query + " && " + BasicProps.LENGTH + ":" + size;
             items = searcher.search(queryWithSize);
@@ -814,7 +797,7 @@ public class Win10MailParser extends AbstractParser {
         if (result < 0)
             EsedbManager.printError("Table Free", result, itemInfo.getPath(), errorPointer);
     }
-    
+
     private void closeFilePointer(PointerByReference filePointerReference) {
         PointerByReference errorPointer = new PointerByReference();
         int result = esedbLibrary.libesedb_file_close(filePointerReference.getValue(), errorPointer);

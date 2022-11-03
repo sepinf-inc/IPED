@@ -38,7 +38,7 @@ public class RecipientTable extends AbstractTable {
     
     }
 
-    public static void addRecipient(Long messageId, RecipientEntry recipient) {
+    public void addRecipient(Long messageId, RecipientEntry recipient) {
         parentMsgToRecipientsMap.computeIfAbsent(messageId, k -> new ArrayList<RecipientEntry>()).add(recipient);
     }
 
@@ -50,7 +50,7 @@ public class RecipientTable extends AbstractTable {
         }
     }
 
-    public static ArrayList<RecipientEntry> getMessageRecipients(long messageId) {
+    public ArrayList<RecipientEntry> getMessageRecipients(long messageId) {
         return parentMsgToRecipientsMap.get(messageId);
     }
 
