@@ -21,7 +21,7 @@ public class SplashScreenManager {
      * may be adjusted in the future, if a larger number of classes are loaded
      * during startup process.
      */
-    private static int maxProgress = 3600;
+    private static int maxProgress = 3750;
 
     /**
      * Expected initial progress (roughly).
@@ -57,24 +57,14 @@ public class SplashScreenManager {
                     // Get IPED's version and an optional custom message
                     String version = Version.APP_VERSION;
                     String msg = null;
-
-                    ConfigurationManager configurationManager = null;
-                    while (true) {
-                        // Wait for ConfigurationManager initialization done in the main process
-                        configurationManager = ConfigurationManager.get();
-                        if (configurationManager != null) {
-                            SplashScreenConfig config = configurationManager.findObject(SplashScreenConfig.class);
-                            if (config != null) {
-                                msg = config.getMessage();
-                                break;
-                            }
-                        }
-                        Thread.sleep(100);
+                    SplashScreenConfig config = ConfigurationManager.get().findObject(SplashScreenConfig.class);
+                    if (config != null) {
+                        msg = config.getMessage();
                     }
 
                     // Draw version
-                    int xv = 514;
-                    int yv = 216;
+                    int xv = 512;
+                    int yv = 220;
                     Rectangle2D r = g.getFontMetrics().getStringBounds(version, g);
                     xv = (int) (xv - r.getWidth());
                     g.setColor(c1);
@@ -88,10 +78,12 @@ public class SplashScreenManager {
                     int xp = 16;
                     if (msg != null && !msg.isBlank()) {
                         int xm = 0;
+                        int ym = 0;
                         while (true) {
                             // Check if the message fits in the window width
                             r = g.getFontMetrics().getStringBounds(msg, g);
                             xm = (int) (d.getWidth() - r.getWidth()) / 2;
+                            ym = 280 + (int) (r.getHeight());
                             if (xm >= xp) {
                                 break;
                             }
@@ -103,12 +95,12 @@ public class SplashScreenManager {
                             font = new Font("Arial", Font.BOLD, fontSize);
                             g.setFont(font);
                         }
-                        int ym = 300;
+
                         g.setColor(c1);
                         g.drawString(msg, xm + 1, ym + 1);
                         g.setColor(c2);
                         g.drawString(msg, xm, ym);
-                        yp = 250;
+                        yp = 255;
                         hp = 14;
                     }
 
@@ -116,7 +108,7 @@ public class SplashScreenManager {
                     Rectangle rc = new Rectangle(xp, yp, (int) d.getWidth() - 2 * xp, hp);
                     g.setColor(c1);
                     g.translate(1, 1);
-                    g.draw(rc);
+                    g.fill(rc);
                     g.translate(-1, -1);
                     g.setColor(c3);
                     g.fill(rc);
