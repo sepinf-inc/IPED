@@ -7,7 +7,6 @@
 Mailboxes
 Compressed Archives
 Emails
-Win10 Mail App Emails
 Databases
 Chats
 Contacts

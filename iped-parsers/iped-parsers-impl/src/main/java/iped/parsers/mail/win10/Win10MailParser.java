@@ -32,6 +32,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -136,6 +137,8 @@ public class Win10MailParser extends AbstractParser {
 
     private String dbSourceUUID;
 
+    XHTMLContentHandler xhtmlHandler;
+
     private IItemSearcher searcher;
     private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("OutlookPSTParser.DateFormat"));
 
@@ -160,9 +163,11 @@ public class Win10MailParser extends AbstractParser {
         searcher = context.get(IItemSearcher.class);
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         dbSourceUUID = context.get(IItemReader.class).getDataSource().getUUID();
-        
+
+        xhtmlHandler = new XHTMLContentHandler(handler, metadata);
+        xhtmlHandler.startDocument();
+
         TemporaryResources tmp = new TemporaryResources();
-        // File tableFile = tmp.createTemporaryFile();
         File storeVolFile = null;
         TikaInputStream storeVolTis = TikaInputStream.get(stream, tmp);
 
@@ -216,6 +221,8 @@ public class Win10MailParser extends AbstractParser {
             throw new TikaException(this.getClass().getSimpleName() + " exception", e);
 
         } finally {
+            xhtmlHandler.endDocument();
+            storeVolTis.close();
             tmp.close();
         }
     }
@@ -353,10 +360,10 @@ public class Win10MailParser extends AbstractParser {
         entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + folder.getRowId());
         if (parentId != -1)
             entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
-        extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), entrydata, true);
+        extractor.parseEmbedded(new EmptyInputStream(), xhtmlHandler, entrydata, true);
     }
 
-    
+
     /** Extract an appointment as a subitem with all information of the event
      * @param appointment to be processed
      * @param parentId used to link to parent folder
@@ -365,7 +372,6 @@ public class Win10MailParser extends AbstractParser {
      */
     private void processAppointment(AppointmentEntry appointment, long parentId) throws SAXException, IOException {
         Metadata appointMetadata = new Metadata();
-
         String body = appointment.getBody();
 
         appointMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
@@ -404,8 +410,10 @@ public class Win10MailParser extends AbstractParser {
         preview.append("</html>");
 
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
-            if (extractor.shouldParseEmbedded(appointMetadata))
-                extractor.parseEmbedded(stream, new IgnoreContentHandler(), appointMetadata, true);
+            if (extractor.shouldParseEmbedded(appointMetadata)) {
+                xhtmlHandler.characters("\t");
+                extractor.parseEmbedded(stream, xhtmlHandler, appointMetadata, true);
+            }
         }
     }
 
@@ -461,8 +469,10 @@ public class Win10MailParser extends AbstractParser {
         preview.append("</html>");
 
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
-            if (extractor.shouldParseEmbedded(contactMetadata))
-                extractor.parseEmbedded(stream, new IgnoreContentHandler(), contactMetadata, true);
+            if (extractor.shouldParseEmbedded(contactMetadata)) {
+                xhtmlHandler.characters("\t");
+                extractor.parseEmbedded(stream, xhtmlHandler, contactMetadata, true);
+            }
         }
     }
 
@@ -667,7 +677,8 @@ public class Win10MailParser extends AbstractParser {
 
             try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
                 if (extractor.shouldParseEmbedded(emailMetadata))
-                    extractor.parseEmbedded(stream, new IgnoreContentHandler(), emailMetadata, true);
+                    xhtmlHandler.characters("\t");
+                    extractor.parseEmbedded(stream, xhtmlHandler, emailMetadata, true);
             }
 
             for (AttachmentEntry attach : emailAttachments) {
@@ -700,8 +711,10 @@ public class Win10MailParser extends AbstractParser {
             attachMetadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
             attachMetadata.set(ExtraProperties.LINKED_ITEMS, attachment.getCaseQuery());
 
-            if (extractor.shouldParseEmbedded(attachMetadata))
-                extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), attachMetadata, true);
+            if (extractor.shouldParseEmbedded(attachMetadata)) {
+                xhtmlHandler.characters("\t");
+                extractor.parseEmbedded(new EmptyInputStream(), xhtmlHandler, attachMetadata, true);
+            }
 
         } catch (Exception e) {
             LOGGER.error("Exception extracting attachment {}\t{}", filename, e.toString());
