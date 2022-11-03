@@ -52,7 +52,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
 
     private static final long serialVersionUID = -207806473837042332L;
     public static final String LIBRARY_DAT_MIME_TYPE = "application/x-shareaza-library-dat"; //$NON-NLS-1$
-    public static final String LIBRARY_DAT_ITEM_MIME_TYPE = "application/x-shareaza-library-dat-item"; //$NON-NLS-1$
+    public static final String LIBRARY_DAT_ENTRY_MIME_TYPE = "application/x-shareaza-library-dat-entry"; //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(LIBRARY_DAT_MIME_TYPE));
 
     private boolean extractEntries = false;
@@ -124,7 +124,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         metadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
 
         if (extractEntries) {
-            BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", LIBRARY_DAT_ITEM_MIME_TYPE);
+            BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", LIBRARY_DAT_ENTRY_MIME_TYPE);
             bme.addPropertyExclusion(LibraryFolder.class, "indexToFile");
             bme.addPropertyExclusion(LibraryFolder.class, "parentFolder");
             bme.addPropertyExclusion(LibraryFile.class, "parentFolder");

@@ -53,9 +53,9 @@ public class ReferencedFileViewer extends AbstractViewer {
         return WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(contentType)
                 || TelegramParser.TELEGRAM_ATTACHMENT.toString().equals(contentType)
                 || SkypeParser.ATTACHMENT_MIME_TYPE.equals(contentType)
-                || KnownMetParser.KNOWNMET_ENTRY_MIME_TYPE.equals(contentType)
+                || KnownMetParser.KNOWN_MET_ENTRY_MIME_TYPE.equals(contentType)
                 || AresParser.ARES_ENTRY_MIME_TYPE.equals(contentType)
-                || ShareazaLibraryDatParser.LIBRARY_DAT_ITEM_MIME_TYPE.equals(contentType)
+                || ShareazaLibraryDatParser.LIBRARY_DAT_ENTRY_MIME_TYPE.equals(contentType)
                 || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType);
     }
 
