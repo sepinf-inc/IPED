@@ -7,7 +7,7 @@ import iped.app.ui.splash.SplashScreenManager;
 public class BootstrapUI extends Bootstrap {
 
     public static void main(String args[]) {
-        new SplashScreenManager().run();
+        new SplashScreenManager().start();
         new BootstrapUI().run(args);
     }
 

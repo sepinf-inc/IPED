@@ -5,57 +5,115 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.SplashScreen;
 import java.awt.geom.Rectangle2D;
 
 import iped.engine.Version;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.SplashScreenConfig;
 
 public class SplashScreenManager {
+    /**
+     * This is the total progress, based on the number of the classes loaded in the
+     * current (parent) process and in the child process (actual application). A
+     * rough estimation is enough to show some progress while loading. This constant
+     * may be adjusted in the future, if a larger number of classes are loaded
+     * during startup process.
+     */
+    private static int maxProgress = 3600;
 
-    public void run() {
+    /**
+     * Expected initial progress (roughly).
+     */
+    private static int minProgress = 500;
+
+    public void start() {
         SplashScreen screen = SplashScreen.getSplashScreen();
         if (screen == null) {
             return;
         }
 
+        StartUpControlServer server = new StartUpControlServer();
+
         Thread threadUpdate = new Thread() {
             public void run() {
                 try {
-                    String msg = "Operação GENESIS - Equipe STS-14";
-                    String version = Version.APP_VERSION;
-
-                    Font font = new Font("Arial", Font.BOLD, 24);
+                    // Create font and colors used
+                    int fontSize = 26;
+                    Font font = new Font("Arial", Font.BOLD, fontSize);
                     Color c1 = new Color(15, 45, 60);
                     Color c2 = new Color(240, 240, 245);
                     Color c3 = new Color(60, 120, 150);
 
+                    // Get splash screen dimension and Graphics2D to be rendered
                     Dimension d = screen.getSize();
                     Graphics2D g = screen.createGraphics();
+                    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                     g.setFont(font);
 
-                    // Version
-                    int x = 572;
-                    int y = 234;
-                    Rectangle2D r = g.getFontMetrics().getStringBounds(version, g);
-                    x = (int) (x - r.getWidth());
-                    g.setColor(c1);
-                    g.drawString(version, x + 1, y + 1);
-                    g.setColor(c2);
-                    g.drawString(version, x, y);
+                    // Get IPED's version and an optional custom message
+                    String version = Version.APP_VERSION;
+                    String msg = null;
 
-                    // Custom Message, if defined
-                    if (msg != null) {
-                        r = g.getFontMetrics().getStringBounds(msg, g);
-                        x = (int) (d.getWidth() - r.getWidth()) / 2;
-                        y = 340;
-                        g.setColor(c1);
-                        g.drawString(msg, x + 1, y + 1);
-                        g.setColor(c2);
-                        g.drawString(msg, x, y);
+                    ConfigurationManager configurationManager = null;
+                    while (true) {
+                        // Wait for ConfigurationManager initialization done in the main process
+                        configurationManager = ConfigurationManager.get();
+                        if (configurationManager != null) {
+                            SplashScreenConfig config = configurationManager.findObject(SplashScreenConfig.class);
+                            if (config != null) {
+                                msg = config.getMessage();
+                                break;
+                            }
+                        }
+                        Thread.sleep(100);
                     }
 
-                    // Empty progress
-                    Rectangle rc = new Rectangle(20, 286, (int) d.getWidth() - 40, 14);
+                    // Draw version
+                    int xv = 514;
+                    int yv = 216;
+                    Rectangle2D r = g.getFontMetrics().getStringBounds(version, g);
+                    xv = (int) (xv - r.getWidth());
+                    g.setColor(c1);
+                    g.drawString(version, xv + 1, yv + 1);
+                    g.setColor(c2);
+                    g.drawString(version, xv, yv);
+
+                    // Draw a custom Message, if defined
+                    int yp = 282;
+                    int hp = 18;
+                    int xp = 16;
+                    if (msg != null && !msg.isBlank()) {
+                        int xm = 0;
+                        while (true) {
+                            // Check if the message fits in the window width
+                            r = g.getFontMetrics().getStringBounds(msg, g);
+                            xm = (int) (d.getWidth() - r.getWidth()) / 2;
+                            if (xm >= xp) {
+                                break;
+                            }
+
+                            // Otherwise, reduce the font size
+                            if (--fontSize < 12) {
+                                break;
+                            }
+                            font = new Font("Arial", Font.BOLD, fontSize);
+                            g.setFont(font);
+                        }
+                        int ym = 300;
+                        g.setColor(c1);
+                        g.drawString(msg, xm + 1, ym + 1);
+                        g.setColor(c2);
+                        g.drawString(msg, xm, ym);
+                        yp = 250;
+                        hp = 14;
+                    }
+
+                    // Draw an empty progress
+                    Rectangle rc = new Rectangle(xp, yp, (int) d.getWidth() - 2 * xp, hp);
                     g.setColor(c1);
                     g.translate(1, 1);
                     g.draw(rc);
@@ -65,26 +123,35 @@ public class SplashScreenManager {
 
                     screen.update();
 
-                    int i = 0;
                     g.setColor(c2);
-                    String pid = "";
+                    long startTime = System.currentTimeMillis();
                     while (screen.isVisible()) {
                         Thread.sleep(100);
 
-                        // Update progress
-                        int size = StartControl.getCurrentProcessSize();
-                        i++;
+                        // Has child process start up finished?
+                        if (server.isFinished()) {
+                            screen.close();
+                            break;
+                        }
 
-                        g.setColor(c3);
-                        g.fillRect(10, 300, 400, 50);
-                        g.setColor(c2);
-                        g.drawString(i + " : " + pid + " : " + size, 20, 330);
+                        // Estimate the progress based on the number of loaded classes
+                        int progress = 0;
+                        progress += StartUpControl.getCurrentProcessSize();
+                        progress += server.getProgress();
 
-                        // double pct = Math.min(1, i / 100.0);
-                        // Rectangle rcFill = new Rectangle(rc.x + 1, rc.y + 1, (int) ((rc.width - 2) *
-                        // pct),
-                        // rc.height - 2);
-                        // g.fill(rcFill);
+                        // Also increment a bit as time goes by
+                        progress += (System.currentTimeMillis() - startTime) / 100;
+
+                        // Update the current progress in the splash screen
+                        double pct = (progress - minProgress) / (double) (maxProgress - minProgress);
+                        if (pct < 0) {
+                            pct = 0;
+                        } else if (pct > 1) {
+                            pct = 1;
+                        }
+                        Rectangle rcFill = new Rectangle(rc.x + 1, rc.y + 1, (int) ((rc.width - 2) * pct),
+                                rc.height - 2);
+                        g.fill(rcFill);
                         screen.update();
                     }
                 } catch (Exception e) {
@@ -94,5 +161,7 @@ public class SplashScreenManager {
         };
         threadUpdate.setDaemon(true);
         threadUpdate.start();
+
+        server.start();
     }
 }
