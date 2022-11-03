@@ -25,6 +25,7 @@ public class AnalysisConfig extends AbstractPropertiesConfigurable {
     private boolean preOpenImagesOnSleuth = false;
     private boolean openImagesCacheWarmUpEnabled = false;
     private int openImagesCacheWarmUpThreads = 255;
+    private String homeJREFolder = "";
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -49,6 +50,11 @@ public class AnalysisConfig extends AbstractPropertiesConfigurable {
             embedLibreOffice = Boolean.valueOf(value);
         }
 
+        value = properties.getProperty("homeJREFolder"); //$NON-NLS-1$
+        if (value != null) {
+            homeJREFolder = value.trim();
+        }
+        
         value = properties.getProperty("searchThreads"); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
@@ -104,6 +110,10 @@ public class AnalysisConfig extends AbstractPropertiesConfigurable {
 
     public boolean isEmbedLibreOffice() {
         return embedLibreOffice;
+    }
+
+    public String getHomeJREFolder() {
+        return homeJREFolder;
     }
 
     public int getSearchThreads() {
