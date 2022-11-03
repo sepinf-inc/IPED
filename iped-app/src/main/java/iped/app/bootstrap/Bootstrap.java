@@ -81,6 +81,8 @@ public class Bootstrap {
 
             Configuration.getInstance().loadConfigurables(iped.getConfigPath(), false);
             
+            configLoaded();
+            
             String classpath = getDefaultClassPath(iped);
             
             PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
@@ -149,6 +151,14 @@ public class Bootstrap {
         }
 
         System.exit(exit);
+    }
+    
+    /**
+     * Called when loadConfigurables is done, inside run. Allow subclasses do custom
+     * actions at this execution point.
+     */
+    protected void configLoaded() {
+        // Default implementation does nothing
     }
     
     private static List<String> getCustomJVMArgs(){
