@@ -27,6 +27,10 @@ public class AppMain {
 
     private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
 
+    private static final String BUNDLED_JRE_VERSION = "11.0.13";
+
+    private static final String HOME_JRE_FOLDER = ".iped/jre-" + BUNDLED_JRE_VERSION;
+
     File casePath;
 
     // configure to debug the analysis UI with some case
@@ -205,10 +209,9 @@ public class AppMain {
             return;
         }
 
-        // Check if JRE home folder is defined in configuration file
+        // Check if bundled JRE should be copied to user home
         AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
-        String homeJREFolder = analysisConfig.getHomeJREFolder();
-        if (homeJREFolder == null || homeJREFolder.isBlank()) {
+        if (!analysisConfig.getCopyJREToUserHome()) {
             return;
         }
 
@@ -225,7 +228,7 @@ public class AppMain {
         }
 
         // Check if JRE is already present in user home
-        File userJrePath = new File(userHome, homeJREFolder);
+        File userJrePath = new File(userHome, HOME_JRE_FOLDER);
         File userJava = new File(userJrePath, "bin/java.exe");
         if (userJava != null && userJava.exists()) {
             return;
@@ -235,7 +238,7 @@ public class AppMain {
         Thread thread = new Thread() {
             public void run() {
                 try {
-                    File userTmpJrePath = new File(userHome, homeJREFolder + "-tmp");
+                    File userTmpJrePath = new File(userHome, HOME_JRE_FOLDER + "-tmp");
                     if (userTmpJrePath.exists()) {
                         IOUtil.deleteDirectory(userTmpJrePath, false);
                     }
