@@ -101,6 +101,7 @@ public class AresParser extends AbstractParser {
             bme.setNameProperty("title");
             bme.registerTransformationMapping(AresEntry.class, ExtraProperties.LINKED_ITEMS, "sha-1:${hash}");
             bme.registerTransformationMapping(AresEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+            bme.setLocalTime(true);
         }
 
         metadata.set(HttpHeaders.CONTENT_TYPE, ARES_MIME_TYPE);

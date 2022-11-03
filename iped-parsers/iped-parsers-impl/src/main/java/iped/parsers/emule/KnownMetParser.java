@@ -115,7 +115,6 @@ public class KnownMetParser extends AbstractParser {
             bme = new BeanMetadataExtraction("p2p", KNOWNMET_ENTRY_MIME_TYPE, context);
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
-            bme.setLocalTime(true);
         }
 
         List<KnownMetEntry> l = iped.parsers.emule.KnownMetDecoder.parseToList(stream);

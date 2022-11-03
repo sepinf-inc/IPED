@@ -90,7 +90,6 @@ public class PartMetParser extends AbstractParser {
             BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", PART_MET_ENTRY_MIME_TYPE, context);
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
-            bme.setLocalTime(true);
             bme.extractEmbedded(0, context, metadata, handler, e);
         }
 
