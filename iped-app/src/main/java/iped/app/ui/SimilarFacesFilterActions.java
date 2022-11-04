@@ -52,7 +52,6 @@ import iped.engine.task.index.IndexItem;
 import iped.parsers.util.IgnoreContentHandler;
 import iped.utils.FileInputStreamFactory;
 import iped.utils.ImageUtil;
-import jep.NDArray;
 
 public class SimilarFacesFilterActions {
 
@@ -267,10 +266,11 @@ public class SimilarFacesFilterActions {
                 // queueEnd.setQueueEnd(true);
                 // task.process(queueEnd);
 
-                List<NDArray> faces = (List<NDArray>) item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
+                List<ArrayList<Double>> faces = (List<ArrayList<Double>>) item
+                        .getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
 
                 if (faces != null && faces.size() > 0) {
-                    float[] array = IndexItem.convNDArrayToFloatArray(faces.get(0));
+                    float[] array = IndexItem.convArrayListDoubleToFloat(faces.get(0));
                     return IndexItem.convFloatArrayToByteArray(array);
                 } else {
                     throw new Exception(Messages.getString("FaceSimilarity.ExternalFaceNotFound"));
