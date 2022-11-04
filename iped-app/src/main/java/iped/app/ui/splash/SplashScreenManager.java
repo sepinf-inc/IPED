@@ -40,7 +40,7 @@ public class SplashScreenManager {
             public void run() {
                 try {
                     // Create font and colors used
-                    int fontSize = 26;
+                    int fontSize = 24;
                     Font font = new Font("Arial", Font.BOLD, fontSize);
                     Color c1 = new Color(15, 45, 60);
                     Color c2 = new Color(250, 250, 255);
@@ -63,7 +63,7 @@ public class SplashScreenManager {
                     }
 
                     // Draw version
-                    int xv = 480;
+                    int xv = 485;
                     int yv = 220;
                     Rectangle2D r = g.getFontMetrics().getStringBounds(version, g);
                     xv = (int) (xv - r.getWidth());
@@ -89,7 +89,7 @@ public class SplashScreenManager {
                             }
 
                             // Otherwise, reduce the font size
-                            if (--fontSize < 12) {
+                            if (--fontSize < 10) {
                                 break;
                             }
                             font = new Font("Arial", Font.BOLD, fontSize);
