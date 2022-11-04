@@ -101,7 +101,7 @@ public class StoreEntry extends AbstractEntry {
         return this.calendarServer;
     }
 
-    public void setCalendarServer(String calandarServer) {
-        this.calendarServer = calandarServer;
+    public void setCalendarServer(String calendarServer) {
+        this.calendarServer = calendarServer;
     }
 }
