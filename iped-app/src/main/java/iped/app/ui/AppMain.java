@@ -28,7 +28,6 @@ public class AppMain {
 
     // configure to debug the analysis UI with some case
     File testPath;// = new File("E:\\teste\\case-to-debug");
-    // File testPath = new File("C:\\Users\\Felipe Costa\\Downloads\\caso_test\\debug_case\\processed_mail");// = new File("E:\\teste\\case-to-debug");
 
     boolean isMultiCase = false;
     boolean nolog = false;
