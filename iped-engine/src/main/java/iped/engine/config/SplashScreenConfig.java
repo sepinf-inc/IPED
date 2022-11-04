@@ -9,7 +9,8 @@ import iped.utils.UTF8Properties;
 public class SplashScreenConfig extends AbstractPropertiesConfigurable {
 
     private static final long serialVersionUID = 1L;
-    private static final String CONFIG_FILE = "conf/SplashScreenConfig.txt";
+    public static final String CONFIG_FILE = "conf/SplashScreenConfig.txt";
+    public static final String CUSTOM_MESSAGE = "customMessage";
 
     private String message;
 
@@ -30,7 +31,7 @@ public class SplashScreenConfig extends AbstractPropertiesConfigurable {
     @Override
     public void processProperties(UTF8Properties properties) {
 
-        String value = properties.getProperty("customMessage"); //$NON-NLS-1$
+        String value = properties.getProperty(CUSTOM_MESSAGE);
         if (value != null && !value.isBlank()) {
             message = value.trim();
         }
