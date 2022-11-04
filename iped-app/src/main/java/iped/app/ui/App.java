@@ -732,7 +732,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         progressBar.setStringPainted(true);
         progressBar.setIndeterminate(true);
 
-        dialogBar = new JDialog(this, Dialog.ModalityType.APPLICATION_MODAL);
+        dialogBar = new JDialog(this, Dialog.ModalityType.DOCUMENT_MODAL);
         dialogBar.setBounds(0, 0, 150, 30);
         dialogBar.setUndecorated(true);
         dialogBar.getContentPane().add(progressBar);

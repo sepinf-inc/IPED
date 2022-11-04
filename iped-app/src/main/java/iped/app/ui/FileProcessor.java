@@ -18,7 +18,6 @@
  */
 package iped.app.ui;
 
-import java.awt.Dialog.ModalityType;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -216,10 +215,14 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    String prevMsg = App.get().progressBar.getString();
-                    App.get().progressBar.setString(Messages.getString("FileProcessor.OpeningEvidence")); //$NON-NLS-1$
-                    App.get().dialogBar.setVisible(visible);
-                    App.get().progressBar.setString(prevMsg);
+                    if (visible) {
+                        String prevMsg = App.get().progressBar.getString();
+                        App.get().progressBar.setString(Messages.getString("FileProcessor.OpeningEvidence")); //$NON-NLS-1$
+                        App.get().dialogBar.setVisible(true);
+                        App.get().progressBar.setString(prevMsg);
+                    } else {
+                        App.get().dialogBar.setVisible(false);
+                    }
                 }
             });
         } catch (Exception e) {
