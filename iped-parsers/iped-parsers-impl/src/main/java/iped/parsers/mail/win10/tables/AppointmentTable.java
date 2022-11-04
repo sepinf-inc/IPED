@@ -20,7 +20,7 @@ public class AppointmentTable extends AbstractTable {
     private ArrayList<AppointmentEntry> appointments = new ArrayList<>();
     private Map<Integer, ArrayList<AppointmentEntry>> folderToApptMap = new HashMap<>();
 
-    private int rowIdPos, eventNamePos, locationPos, repeatPos, allDayPos, statusPos, reminderTimeMinPos, organizerPos,
+    private int rowIdPos, storeIdPos, eventNamePos, locationPos, repeatPos, allDayPos, statusPos, reminderTimeMinPos, organizerPos,
         accountPos, linkPos, durationMinPos, startTimePos, additionalPeoplePos, responsePos, updateCountPos, parentFolderIdPos;
 
     public AppointmentTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
@@ -34,6 +34,7 @@ public class AppointmentTable extends AbstractTable {
         this.filePath = filePath;
 
         rowIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ROW_ID, errorPointer, tablePointer, filePath);
+        storeIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.STORE_ID, errorPointer, tablePointer, filePath);
         eventNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EVENT, errorPointer, tablePointer, filePath);
         locationPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.LOCATION, errorPointer, tablePointer, filePath);
         repeatPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.REPEAT, errorPointer, tablePointer, filePath);
@@ -95,6 +96,7 @@ public class AppointmentTable extends AbstractTable {
             EsedbManager.printError("Record Get Number of Values", result, filePath, errorPointer);
 
         int rowId = EsedbManager.getInt32Value(esedbLibrary, rowIdPos, recordPointerReference, filePath, errorPointer);
+        int storeId = EsedbManager.getInt32Value(esedbLibrary, storeIdPos, recordPointerReference, filePath, errorPointer);
         String eventName = EsedbManager.getUnicodeValue(esedbLibrary, eventNamePos, recordPointerReference, filePath, errorPointer);
         String location = EsedbManager.getUnicodeValue(esedbLibrary, locationPos, recordPointerReference, filePath, errorPointer);
         boolean repeat = EsedbManager.getBooleanValue(esedbLibrary, repeatPos, recordPointerReference, filePath, errorPointer);
@@ -116,6 +118,7 @@ public class AppointmentTable extends AbstractTable {
             EsedbManager.printError("Record Free", result, filePath, errorPointer);
 
         AppointmentEntry appointment = new AppointmentEntry(rowId);
+        appointment.setStoreId(storeId);
         appointment.setEventName(eventName);
         appointment.setLocation(location);
         appointment.setRepeat(repeat);

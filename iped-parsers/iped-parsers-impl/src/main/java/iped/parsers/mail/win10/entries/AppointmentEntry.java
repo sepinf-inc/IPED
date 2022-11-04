@@ -3,8 +3,10 @@ package iped.parsers.mail.win10.entries;
 import java.util.Date;
 
 public class AppointmentEntry extends AbstractEntry {
+    private int storeId;
     private int parentFolderId;
     private String body;
+    private boolean bodyFound;
     private String eventName;
     private String location;
     private boolean repeat;
@@ -25,12 +27,27 @@ public class AppointmentEntry extends AbstractEntry {
         super(rowId);
     }
 
+    public int getStoreId() {
+        return this.storeId;
+    }
+
+    public void setStoreId(int storeId) {
+        this.storeId = storeId;
+    }
+
     public void setBody(String body) {
         this.body = body;
+        if (!body.isEmpty()) {
+            this.bodyFound = true;
+        }
     }
     
     public String getBody() {
         return this.body;
+    }
+
+    public boolean getBodyFound() {
+        return this.bodyFound;
     }
 
     public int getParentFolderId() {

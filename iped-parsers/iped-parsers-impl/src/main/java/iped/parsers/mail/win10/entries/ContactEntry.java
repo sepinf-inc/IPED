@@ -1,6 +1,7 @@
 package iped.parsers.mail.win10.entries;
 
 public class ContactEntry extends AbstractEntry {
+    private int storeId;
     private String displayName;
     private String firstName;
     private String lastName;
@@ -15,6 +16,14 @@ public class ContactEntry extends AbstractEntry {
 
     public ContactEntry(int rowId) {
         super(rowId);
+    }
+
+    public int getStoreId() {
+        return this.storeId;
+    }
+
+    public void setStoreId(int storeId) {
+        this.storeId = storeId;
     }
 
     public String getDisplayName() {

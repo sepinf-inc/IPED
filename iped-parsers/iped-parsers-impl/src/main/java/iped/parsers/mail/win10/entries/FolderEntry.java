@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.TimeZone;
 
 public class FolderEntry extends AbstractEntry {
+    private int storeId;
     private int parentFolderID;
     private String displayName;
     private Date createTime;
@@ -15,6 +16,14 @@ public class FolderEntry extends AbstractEntry {
     public FolderEntry(int rowId) {
         super(rowId);
         addFolderId(rowId);
+    }
+
+    public int getStoreId() {
+        return this.storeId;
+    }
+
+    public void setStoreId(int storeId) {
+        this.storeId = storeId;
     }
 
     public int getParentFolderId() {

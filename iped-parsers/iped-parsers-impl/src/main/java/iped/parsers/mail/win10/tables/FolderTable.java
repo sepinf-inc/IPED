@@ -25,7 +25,7 @@ public class FolderTable extends AbstractTable {
     private Map<String, FolderEntry> nameFolderMap = new HashMap<>();
     private Map<Integer, FolderEntry> idFolderMap = new HashMap<>();
 
-    private int rowIdPos, displayNamePos, displayNamePos2, parentFolderIdPos, createTimePos;
+    private int rowIdPos, storeIdPos, displayNamePos, displayNamePos2, parentFolderIdPos, createTimePos;
 
     public FolderTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
@@ -38,6 +38,7 @@ public class FolderTable extends AbstractTable {
         this.filePath = filePath;
 
         rowIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ROW_ID, errorPointer, tablePointer, filePath);
+        storeIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.STORE_ID, errorPointer, tablePointer, filePath);
         displayNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_1, errorPointer, tablePointer, filePath);
         displayNamePos2 = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_2, errorPointer, tablePointer, filePath);
         parentFolderIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.PARENT_FOLDER_ID, errorPointer, tablePointer, filePath);
@@ -113,6 +114,7 @@ public class FolderTable extends AbstractTable {
 
 
         int rowId = EsedbManager.getInt32Value(esedbLibrary, rowIdPos, recordPointerRef, filePath, errorPointer);
+        int storeId = EsedbManager.getInt32Value(esedbLibrary, storeIdPos, recordPointerRef, filePath, errorPointer);
         String displayName = EsedbManager.getUnicodeValue(esedbLibrary, displayNamePos, recordPointerRef, filePath, errorPointer);
         if (displayName.isEmpty())
             displayName = EsedbManager.getUnicodeValue(esedbLibrary, displayNamePos2, recordPointerRef, filePath, errorPointer);
@@ -124,6 +126,7 @@ public class FolderTable extends AbstractTable {
             EsedbManager.printError("Record Free", result, filePath, errorPointer);
 
         FolderEntry folder = new FolderEntry(rowId);
+        folder.setStoreId(storeId);
         folder.setDisplayName(displayName);
         folder.setCreateTime(createTime);
         folder.setParentFolderID(parentFolderId);

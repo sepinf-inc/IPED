@@ -6,6 +6,7 @@ import java.util.TimeZone;
 
 
 public class MessageEntry extends AbstractEntry {
+    private int storeId;
     private long conversationId;
     private int parentFolderId;
     private long messageSize;
@@ -17,12 +18,21 @@ public class MessageEntry extends AbstractEntry {
     private Date msgDeliveryTime;
     private Date lastModifiedTime;
     private String body;
+    private boolean bodyFound;
     private String bodyOriginalPath;
 
     public final char categoryNumber = '3';
 
     public MessageEntry(int rowId) {
         super(rowId);
+    }
+
+    public long getStoreId() {
+        return this.storeId;
+    }
+
+    public void setStoreId(int storeId) {
+        this.storeId = storeId;
     }
 
     public long getConversationId() {
@@ -40,7 +50,6 @@ public class MessageEntry extends AbstractEntry {
     public void setParentFolderId(int parentFolderId) {
         this.parentFolderId = parentFolderId;
     }
-
 
     public int getNoOfAttachments() {
         return this.noOfAttachments;
@@ -124,6 +133,13 @@ public class MessageEntry extends AbstractEntry {
 
     public void setBody(String body) {
         this.body = body;
+        if (!body.isEmpty()) {
+            this.bodyFound = true;
+        }
+    }
+
+    public boolean getBodyFound() {
+        return this.bodyFound;
     }
 
     public String getBodyOriginalPath() {

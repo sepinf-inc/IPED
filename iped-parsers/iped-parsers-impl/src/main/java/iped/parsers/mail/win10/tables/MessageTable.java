@@ -20,7 +20,7 @@ public class MessageTable extends AbstractTable {
     private List<MessageEntry> messages = new ArrayList<>();
     private Map<Integer, ArrayList<MessageEntry>> folderToMsgsMap = new HashMap<>();
 
-    private int rowIdPos, parentFolderIdPos, conversationIdPos, messageSizePos, noOfAttachmentsPos,
+    private int rowIdPos, storeIdPos, parentFolderIdPos, conversationIdPos, messageSizePos, noOfAttachmentsPos,
         msgAbstractPos, subjectPos, senderNamePos, senderEmailPos, msgDeliveryTimePos, lastModifiedTimePos;
 
     public MessageTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
@@ -34,6 +34,7 @@ public class MessageTable extends AbstractTable {
         this.filePath = filePath;
 
         rowIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ROW_ID, errorPointer, tablePointer, filePath);
+        storeIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.STORE_ID, errorPointer, tablePointer, filePath);
         parentFolderIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.PARENT_FOLDER_ID, errorPointer, tablePointer, filePath);
         conversationIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.CONVERSATION_ID, errorPointer, tablePointer, filePath);
         messageSizePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.MESSAGE_SIZE, errorPointer, tablePointer, filePath);
@@ -94,6 +95,7 @@ public class MessageTable extends AbstractTable {
             EsedbManager.printError("Record Get Number of Values", result, filePath, errorPointer);
 
         int rowId = EsedbManager.getInt32Value(esedbLibrary, rowIdPos, recordPointerReference, filePath, errorPointer);
+        int storeId = EsedbManager.getInt32Value(esedbLibrary, storeIdPos, recordPointerReference, filePath, errorPointer);
         int parentFolderId = EsedbManager.getInt32Value(esedbLibrary, parentFolderIdPos, recordPointerReference, filePath, errorPointer);
         long conversationId = EsedbManager.getInt32Value(esedbLibrary, conversationIdPos, recordPointerReference, filePath, errorPointer);
         long messageSize = EsedbManager.getInt32Value(esedbLibrary, messageSizePos, recordPointerReference, filePath, errorPointer);
@@ -111,6 +113,7 @@ public class MessageTable extends AbstractTable {
 
         MessageEntry message = new MessageEntry(rowId);
 
+        message.setStoreId(storeId);
         message.setConversationId(conversationId);
         message.setParentFolderId(parentFolderId);
         message.setNoOfAttachments(noOfAttachments);

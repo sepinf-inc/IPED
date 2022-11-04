@@ -19,8 +19,8 @@ public class ContactTable extends AbstractTable {
     private List<ContactEntry> contacts = new ArrayList<>();
     private Map<Integer, ArrayList<ContactEntry>> folderToContactsMap = new HashMap<>();
 
-    int rowIdPos, displayNamePos, displayNamePos2, firstNamePos, lastNamePos, emailPos, emailWorkPos, emailOtherPos,
-        phonePos, workPhonePos, addressPos, hasNamePos, parentFolderIdPos;
+    int rowIdPos, storeIdPos, displayNamePos, displayNamePos2, firstNamePos, lastNamePos, emailPos, emailWorkPos,
+        emailOtherPos, phonePos, workPhonePos, addressPos, hasNamePos, parentFolderIdPos;
 
     public ContactTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
@@ -33,6 +33,7 @@ public class ContactTable extends AbstractTable {
         this.filePath = filePath;
 
         rowIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ROW_ID, errorPointer, tablePointer, filePath);
+        storeIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.STORE_ID, errorPointer, tablePointer, filePath);
         displayNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_1, errorPointer, tablePointer, filePath);
         displayNamePos2 = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_2, errorPointer, tablePointer, filePath);
         firstNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.FIRST_NAME, errorPointer, tablePointer, filePath);
@@ -79,6 +80,7 @@ public class ContactTable extends AbstractTable {
             EsedbManager.printError("Record Get Number of Values", result, filePath, errorPointer);
 
         int rowId = EsedbManager.getInt32Value(esedbLibrary, rowIdPos, recordPointerRef, filePath, errorPointer);
+        int storeId = EsedbManager.getInt32Value(esedbLibrary, storeIdPos, recordPointerRef, filePath, errorPointer);
         String displayName = EsedbManager.getUnicodeValue(esedbLibrary, displayNamePos, recordPointerRef, filePath, errorPointer);
         if (displayName.isEmpty())
             displayName = EsedbManager.getUnicodeValue(esedbLibrary, displayNamePos2, recordPointerRef, filePath, errorPointer);
@@ -98,6 +100,7 @@ public class ContactTable extends AbstractTable {
             EsedbManager.printError("Record Free", result, filePath, errorPointer);
 
         ContactEntry contact = new ContactEntry(rowId);
+        contact.setStoreId(storeId);
         contact.setDisplayName(displayName);
         contact.setFirstName(firstName);
         contact.setLastName(lastName);

@@ -2,6 +2,8 @@ package iped.parsers.mail.win10;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -54,6 +56,7 @@ import iped.parsers.mail.win10.entries.ContactEntry;
 import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.mail.win10.entries.MessageEntry;
 import iped.parsers.mail.win10.entries.RecipientEntry;
+import iped.parsers.mail.win10.entries.StoreEntry;
 import iped.parsers.mail.win10.tables.AbstractTable;
 import iped.parsers.mail.win10.tables.AppointmentTable;
 import iped.parsers.mail.win10.tables.AttachmentTable;
@@ -61,13 +64,14 @@ import iped.parsers.mail.win10.tables.ContactTable;
 import iped.parsers.mail.win10.tables.FolderTable;
 import iped.parsers.mail.win10.tables.MessageTable;
 import iped.parsers.mail.win10.tables.RecipientTable;
+import iped.parsers.mail.win10.tables.StoreTable;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.Util;
 import iped.parsers.util.EsedbManager;
-import iped.parsers.util.IgnoreContentHandler;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
+import iped.parsers.util.ToXMLContentHandler;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -78,7 +82,9 @@ import iped.utils.SimpleHTMLEncoder;
    * Parses Windows Mail App store.vol edb file. Extracts folders, emails, attachments, and appointments from the database.
    * Searches for additional information (e.g. attachment files and body of the emails) in the case.
    * Generates a subitem in the case for each table entry.
-   * 
+   *
+   * More info: https://eprints.whiterose.ac.uk/133161/1/Navigating_the_Windows_Mail_database_accepted.pdf
+   *
    * @author Felipe Farias da Costa
  */
 public class Win10MailParser extends AbstractParser {
@@ -88,13 +94,14 @@ public class Win10MailParser extends AbstractParser {
     public static final MediaType WIN10_MAIL_APPT = MediaType.parse("message/x-win10-mail-appt");
     public static final MediaType WIN10_MAIL_ATTACH = MediaType.parse("message/x-win10-mail-attach");
     public static final MediaType WIN10_MAIL_CONTACT = MediaType.parse("message/x-win10-mail-contact");
+    public static final MediaType WIN10_MAIL_STORE = MediaType.parse("message/x-win10-mail-store");
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(WIN10_MAIL_DB);
 
     private static final char MESSAGE_CATEGORY = '3';
     private static final char CONTACT_CATEGORY = '2';
     private static final char APPOINTMENT_CATEGORY = '5';
     private static final char ATTACH_CATEGORY = '7';
-    
+
     private static final String EMAIL_VIRTUAL_ID_PREFIX = "winAppMail-";
     private static final String FOLDER_VIRTUAL_ID_PREFIX = "winAppFolder-";
     private static final String ATTACH_VIRTUAL_ID_PREFIX = "winAppAttach-";
@@ -106,6 +113,7 @@ public class Win10MailParser extends AbstractParser {
     private AttachmentTable attachTable;
     private AppointmentTable apptTable;
     private ContactTable contactTable;
+    private StoreTable storeTable;
 
     private enum FileTag {
         UNICODE("001e"), CONTACT_JPEG_1("00ff"), CONTACT_JPEG_2("01a8"), CONTACT_JPEG_3("01b5"),
@@ -137,7 +145,7 @@ public class Win10MailParser extends AbstractParser {
 
     private String dbSourceUUID;
 
-    XHTMLContentHandler xhtmlHandler;
+    XHTMLContentHandler xhtml;
 
     private IItemSearcher searcher;
     private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("OutlookPSTParser.DateFormat"));
@@ -164,8 +172,8 @@ public class Win10MailParser extends AbstractParser {
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         dbSourceUUID = context.get(IItemReader.class).getDataSource().getUUID();
 
-        xhtmlHandler = new XHTMLContentHandler(handler, metadata);
-        xhtmlHandler.startDocument();
+        xhtml = new XHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
 
         TemporaryResources tmp = new TemporaryResources();
         File storeVolFile = null;
@@ -211,6 +219,26 @@ public class Win10MailParser extends AbstractParser {
                     }
                 }
 
+                // Store table
+                File storeTableFile = tmp.createTemporaryFile();
+                try (FileOutputStream tmpStoreFile = new FileOutputStream(storeTableFile)) {
+                    Metadata metadataStore = new Metadata();
+                    metadataStore.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_STORE.toString());
+                    metadataStore.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Win10 Mail App Store Table");
+
+                    ToXMLContentHandler storeTableHandler = new ToXMLContentHandler(tmpStoreFile, "UTF-8");
+                    XHTMLContentHandler xhtmlStore = StoreTable.emitStoreHeader(storeTableHandler, metadataStore);
+
+                    for (StoreEntry storeEntry : storeTable.getStoreEntries()) {
+                        StoreTable.emitStoreEntry(xhtmlStore, storeEntry);
+                    }
+                    StoreTable.endStoreEntries(xhtmlStore);
+
+                    try (FileInputStream fis = new FileInputStream(storeTableFile)) {
+                        extractor.parseEmbedded(fis, xhtml, metadataStore, true);
+                    }
+                }
+
                 for (AbstractTable table : tables)
                     closeTablePointer(table.getTablePointer());
                 closeFilePointer(filePointerReference);
@@ -221,14 +249,14 @@ public class Win10MailParser extends AbstractParser {
             throw new TikaException(this.getClass().getSimpleName() + " exception", e);
 
         } finally {
-            xhtmlHandler.endDocument();
+            xhtml.endDocument();
             storeVolTis.close();
             tmp.close();
         }
     }
 
 
-    /** 
+    /**
      * Retrieves all important mail tables from the specified database
      * @param filePath
      * @param filePointerReference
@@ -301,7 +329,7 @@ public class Win10MailParser extends AbstractParser {
                         tableNameSize.getValue(), errorPointer);
                 if (result < 0)
                     EsedbManager.printError("Table Get UTF8 Name", result, dbPath, errorPointer);
-                
+
                 String tableName = tableNameRef.getString(0);
 
                 result = esedbLibrary.libesedb_table_get_number_of_records(tablePointer.getValue(),
@@ -330,6 +358,9 @@ public class Win10MailParser extends AbstractParser {
                 } else if (tableName.equals("Contact")) {
                     contactTable = new ContactTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
                     table = contactTable;
+                } else if (tableName.equals("Store")) {
+                    storeTable = new StoreTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
+                    table = storeTable;
                 }
 
                 if (table != null) {
@@ -343,9 +374,9 @@ public class Win10MailParser extends AbstractParser {
 
         return tables;
     }
-    
 
-    
+
+
     /** Extract folder preserving hierarchy
      * @param folder to be processed
      * @param parentId parent folder id
@@ -353,14 +384,15 @@ public class Win10MailParser extends AbstractParser {
      * @throws IOException
      */
     private void processFolder(FolderEntry folder, long parentId) throws SAXException, IOException {
-        Metadata entrydata = new Metadata();
-        entrydata.set(TikaCoreProperties.TITLE, folder.getDisplayName());
-        entrydata.set(TikaCoreProperties.CREATED, folder.getCreateTime());
-        entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
-        entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + folder.getRowId());
+        Metadata folderMetadata = new Metadata();
+        folderMetadata.set(TikaCoreProperties.TITLE, folder.getDisplayName());
+        folderMetadata.set(TikaCoreProperties.CREATED, folder.getCreateTime());
+        folderMetadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
+        folderMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + folder.getRowId());
+        folderMetadata.add("StoreId", "" + folder.getStoreId());
         if (parentId != -1)
-            entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
-        extractor.parseEmbedded(new EmptyInputStream(), xhtmlHandler, entrydata, true);
+            folderMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
+        extractor.parseEmbedded(new EmptyInputStream(), xhtml, folderMetadata, true);
     }
 
 
@@ -380,7 +412,9 @@ public class Win10MailParser extends AbstractParser {
         appointMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_APPT.toString());
         appointMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
         appointMetadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(body, MediaType.TEXT_HTML.toString()));
-        appointMetadata.set("originalBodyPath", appointment.getBodyOriginalPath());
+        if (appointment.getBodyFound());
+            appointMetadata.add("originalBodyPath", appointment.getBodyOriginalPath());
+        appointMetadata.add("StoreId", "" + appointment.getStoreId());
 
         Charset charset = Charset.forName("UTF-8");
         StringBuilder preview = new StringBuilder();
@@ -402,7 +436,7 @@ public class Win10MailParser extends AbstractParser {
         preview.append(htmlPairLine("Reminder Time", appointment.getReminderTimeMin() + " minutes"));
         preview.append(htmlPairLine("Repeat", "" + appointment.getRepeat()));
         preview.append(htmlPairLine("Response", "" + appointment.getResponse()));
-        preview.append(htmlPairLine("Additional People", appointment.getAdditionalPeople()));
+        preview.append(htmlPairLine("Additional People (raw)", appointment.getAdditionalPeople()));
         preview.append("<br>");
         preview.append(body.replace("\r\n", "<br>"));
 
@@ -411,8 +445,8 @@ public class Win10MailParser extends AbstractParser {
 
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
             if (extractor.shouldParseEmbedded(appointMetadata)) {
-                xhtmlHandler.characters("\t");
-                extractor.parseEmbedded(stream, xhtmlHandler, appointMetadata, true);
+                xhtml.characters("\t");
+                extractor.parseEmbedded(stream, xhtml, appointMetadata, true);
             }
         }
     }
@@ -431,6 +465,7 @@ public class Win10MailParser extends AbstractParser {
         contactMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, contact.getDisplayName());
         contactMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_CONTACT.toString());
         contactMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
+        contactMetadata.add("StoreId", "" + contact.getStoreId());
 
         Charset charset = Charset.forName("UTF-8");
         StringBuilder preview = new StringBuilder();
@@ -447,7 +482,7 @@ public class Win10MailParser extends AbstractParser {
         preview.append(htmlPairLine("Work Phone", contact.getWorkPhone()));
         preview.append(htmlPairLine("Address", contact.getAddress()));
         preview.append("<body>");
-        
+
         FileTag[] contactTags = new FileTag[] { FileTag.ASCII, FileTag.ASCII_PAIRS, FileTag.CONTACT_JPEG_1,
             FileTag.CONTACT_JPEG_2, FileTag.CONTACT_JPEG_3 };
         for (FileTag contactTag : contactTags) {
@@ -470,8 +505,8 @@ public class Win10MailParser extends AbstractParser {
 
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
             if (extractor.shouldParseEmbedded(contactMetadata)) {
-                xhtmlHandler.characters("\t");
-                extractor.parseEmbedded(stream, xhtmlHandler, contactMetadata, true);
+                xhtml.characters("\t");
+                extractor.parseEmbedded(stream, xhtml, contactMetadata, true);
             }
         }
     }
@@ -483,7 +518,7 @@ public class Win10MailParser extends AbstractParser {
     }
 
 
-    /** Search through the case for a .dat file containing the appointment body 
+    /** Search through the case for a .dat file containing the appointment body
      * @param appointment from which the body is requested
      * @return appointment body
      * @throws IOException
@@ -512,9 +547,9 @@ public class Win10MailParser extends AbstractParser {
         return apptBody;
     }
 
-    
+
     /** Search through the case for a .dat file containing the email body, probably in html format
-     * @param email that we want to search for the body 
+     * @param email that we want to search for the body
      * @return message body
      * @throws IOException
      */
@@ -558,7 +593,7 @@ public class Win10MailParser extends AbstractParser {
     }
 
 
-    /** 
+    /**
      * Extracts the email with recipients, attachments and html body. Ready to be previewed
      * @param email to be processed
      * @param parentId used to link to parent folder
@@ -574,11 +609,14 @@ public class Win10MailParser extends AbstractParser {
         String virtualId = EMAIL_VIRTUAL_ID_PREFIX + email.getRowId();
 
         emailMetadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
-        emailMetadata.set("originalBodyPath", email.getBodyOriginalPath());
         emailMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_MSG.toString());
         emailMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         emailMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
         emailMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
+        emailMetadata.add("StoreId", "" + email.getStoreId());
+        emailMetadata.add("ConversationId", "" + email.getConversationId());
+        if (email.getBodyFound())
+            emailMetadata.add("originalBodyPath", email.getBodyOriginalPath());
 
         try {
             Charset charset = Charset.forName("UTF-8");
@@ -677,8 +715,8 @@ public class Win10MailParser extends AbstractParser {
 
             try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
                 if (extractor.shouldParseEmbedded(emailMetadata))
-                    xhtmlHandler.characters("\t");
-                    extractor.parseEmbedded(stream, xhtmlHandler, emailMetadata, true);
+                    xhtml.characters("\t");
+                    extractor.parseEmbedded(stream, xhtml, emailMetadata, true);
             }
 
             for (AttachmentEntry attach : emailAttachments) {
@@ -712,8 +750,8 @@ public class Win10MailParser extends AbstractParser {
             attachMetadata.set(ExtraProperties.LINKED_ITEMS, attachment.getCaseQuery());
 
             if (extractor.shouldParseEmbedded(attachMetadata)) {
-                xhtmlHandler.characters("\t");
-                extractor.parseEmbedded(new EmptyInputStream(), xhtmlHandler, attachMetadata, true);
+                xhtml.characters("\t");
+                extractor.parseEmbedded(new EmptyInputStream(), xhtml, attachMetadata, true);
             }
 
         } catch (Exception e) {
@@ -722,7 +760,7 @@ public class Win10MailParser extends AbstractParser {
         }
     }
 
-    
+
     /**
      * Encodes the file path in the same way microsoft does
      * in order to generate the file location of the .dat file in the case
@@ -738,7 +776,8 @@ public class Win10MailParser extends AbstractParser {
         while (hexRowId.length() < 8) hexRowId = "0" + hexRowId;
 
         entryPath.append("/" + category);
-        entryPath.append("/" + "abcdefghijklmnopqrstuvwxyz".charAt(Integer.parseInt("" + hexRowId.charAt(hexRowId.length()-1), 16)) + "/");
+        entryPath.append("/" + "abcdefghijklmnopqrstuvwxyz".charAt(
+            Integer.parseInt("" + hexRowId.charAt(hexRowId.length()-1), 16)) + "/");
         entryPath.append(hexRowId.charAt(hexRowId.length()-2));
         entryPath.append(hexRowId.substring(1, 6) + "0");
         entryPath.append(hexRowId.charAt(hexRowId.length()-1));
@@ -750,8 +789,8 @@ public class Win10MailParser extends AbstractParser {
         return entryPath.toString();
     }
 
-    
-    /** 
+
+    /**
      * Tries to find file from path and size, if doesn't succeed tries without the size parameters
      * @param path
      * @param size
@@ -781,8 +820,8 @@ public class Win10MailParser extends AbstractParser {
         return new ImmutablePair<>(items.get(0), query);
     }
 
-    
-    /** 
+
+    /**
      * Handle cid images, changing the src value to the actual attachment path in the case
      * @param email with a body
      * @return new body that handles cid images with associated attachments
