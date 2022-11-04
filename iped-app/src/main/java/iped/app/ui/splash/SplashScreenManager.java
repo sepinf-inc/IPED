@@ -63,7 +63,7 @@ public class SplashScreenManager {
                     }
 
                     // Draw version
-                    int xv = 512;
+                    int xv = 480;
                     int yv = 220;
                     Rectangle2D r = g.getFontMetrics().getStringBounds(version, g);
                     xv = (int) (xv - r.getWidth());
