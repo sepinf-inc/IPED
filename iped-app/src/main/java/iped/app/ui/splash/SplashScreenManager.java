@@ -43,7 +43,7 @@ public class SplashScreenManager {
                     int fontSize = 26;
                     Font font = new Font("Arial", Font.BOLD, fontSize);
                     Color c1 = new Color(15, 45, 60);
-                    Color c2 = new Color(240, 240, 245);
+                    Color c2 = new Color(250, 250, 255);
                     Color c3 = new Color(60, 120, 150);
 
                     // Get splash screen dimension and Graphics2D to be rendered
@@ -75,7 +75,7 @@ public class SplashScreenManager {
                     // Draw a custom Message, if defined
                     int yp = 282;
                     int hp = 18;
-                    int xp = 16;
+                    int xp = 24;
                     if (msg != null && !msg.isBlank()) {
                         int xm = 0;
                         int ym = 0;
