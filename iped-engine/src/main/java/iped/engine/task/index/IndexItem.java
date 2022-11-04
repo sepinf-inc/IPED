@@ -93,7 +93,6 @@ import iped.utils.SeekableInputStreamFactory;
 import iped.utils.SelectImagePathWithDialog;
 import iped.utils.StringUtil;
 import iped.utils.UTF8Properties;
-import jep.NDArray;
 
 /**
  * Cria um org.apache.lucene.document.Document a partir das propriedades do
@@ -610,8 +609,8 @@ public class IndexItem extends BasicProps {
             else
                 doc.add(new SortedNumericDocValuesField(key, NumericUtils.doubleToSortableLong((Double) oValue)));
 
-        } else if (oValue instanceof NDArray) {
-            float[] floatArray = convNDArrayToFloatArray((NDArray) oValue);
+        } else if (key.equals("face_encodings")) {
+            float[] floatArray = convArrayListDoubleToFloat((ArrayList<Double>) oValue);
             byte[] byteArray = convFloatArrayToByteArray(floatArray);
             int suffix = 0;
             // KnnVectorField is not multivalued, must use other key if it exists
@@ -646,8 +645,20 @@ public class IndexItem extends BasicProps {
         return buffer.array();
     }
 
-    public static final float[] convNDArrayToFloatArray(NDArray nd) {
-        return convDoubleToFloatArray((double[]) nd.getData());
+    public static final float[] convArrayListDoubleToFloat(ArrayList<Double> nd) {
+        float[] result = new float[nd.size()];
+        for (int i=0;i<result.length;i++) {
+            result[i] = nd.get(i).floatValue();
+        }
+        return result;
+    }
+
+    public static final int[] convArrayListLongToInt(ArrayList<Long> nd) {
+        int[] result = new int[nd.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = nd.get(i).intValue();
+        }
+        return result;
     }
 
     public static final float[] convDoubleToFloatArray(double[] array) {

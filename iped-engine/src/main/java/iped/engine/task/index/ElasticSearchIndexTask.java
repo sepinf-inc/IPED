@@ -86,6 +86,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
     public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
     public static final String KEY_VAL_SEPARATOR = ":";
     
+    public static final int FACE_SIZE = 128;
+
     private static boolean isEnabled = false;
 
     private ElasticSearchTaskConfig elasticConfig;
@@ -272,6 +274,14 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put("extraAttributes." + ImageSimilarityTask.IMAGE_FEATURES,
                 Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures, "method",
                         Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+        
+        // mapping faces as nested field
+        var faces_mapping=new HashMap<String,Object>();
+        faces_mapping.put("face_encoding", Map.of("type", "knn_vector", "dimension", FACE_SIZE, "method",
+                Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+        faces_mapping.put("face_location", Collections.singletonMap("type", "short"));
+        
+        properties.put("faces", Map.of("type", "nested", "properties", faces_mapping));
 
         Map<String, String> contentMapping = new HashMap<>(Map.of("type", "text"));
 
@@ -526,6 +536,29 @@ public class ElasticSearchIndexTask extends AbstractTask {
             }
             extraAttributes.put(ImageSimilarityTask.IMAGE_FEATURES, v);
         }
+        if (extraAttributes.containsKey("face_encodings") && extraAttributes.containsKey("face_locations")) {
+            ArrayList face_encodings = (ArrayList) extraAttributes.get("face_encodings");
+            ArrayList face_locations = (ArrayList) extraAttributes.get("face_locations");
+            ArrayList<Map<String, Object>> faces = new ArrayList<>();
+            for (int i = 0; i < face_encodings.size(); i++) {
+                float encoding[] = IndexItem.convArrayListDoubleToFloat((ArrayList<Double>) face_encodings.get(i));
+                int location[] = IndexItem.convArrayListLongToInt((ArrayList<Long>) face_locations.get(i));
+                Map<String, Object> map=new HashMap<>();
+                map.put("face_encoding",encoding);
+                map.put("face_location",location);
+                faces.add(map);
+                System.out.println("Faces " + ((float[]) faces.get(i).get("face_encoding"))[0]);
+            }
+            
+            
+            builder.field("faces", faces.toArray());
+
+           
+            
+            extraAttributes.remove("face_encodings");
+            extraAttributes.remove("face_locations");
+        }
+
         builder.field("extraAttributes", extraAttributes);
 
         ISeekableInputStreamFactory isisf = item.getInputStreamFactory();

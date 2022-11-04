@@ -46,6 +46,12 @@ timeLock = threading.Lock()
 detectTime = 0
 featureTime = 0
 
+def npArrayToList(npArray):
+    temp=[]
+    for arr in npArray:
+        temp.append(list(arr))
+    return temp
+ 
 def createProcessQueue():
     global processQueue, maxProcesses
     if processQueue is None:
@@ -304,7 +310,7 @@ class FaceRecognitionTask:
             processQueue.put(proc, block=True)
         
         face_locations = self.convertTuplesToList(face_locations)
-        
+        face_encodings = npArrayToList(face_encodings)
         item.setExtraAttribute("face_locations", face_locations)
         item.setExtraAttribute("face_encodings", face_encodings)
         
