@@ -1,31 +1,5 @@
 package iped.app.home.newcase.tabs.process;
 
-/*
- * @created 13/09/2022
- * @project IPED
- * @author Thiago S. Figueiredo
- *          Patrick Dalla Bernardina
- */
-
-import iped.app.home.DefaultPanel;
-import iped.app.home.MainFrame;
-import iped.app.home.MainFrameCardsNames;
-import iped.app.home.newcase.NewCaseContainerPanel;
-import iped.app.home.newcase.tabs.process.AbstractTaskClassPopupMenu.JAbstractTaskClassMenuItem;
-import iped.configuration.Configurable;
-import iped.engine.config.ConfigurationManager;
-import iped.engine.config.TaskInstallerConfig;
-import iped.engine.task.AbstractTask;
-import iped.engine.task.PythonTask;
-import iped.engine.task.ScriptTask;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-
-import org.reflections.Reflections;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -38,6 +12,40 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+
+import org.reflections.Reflections;
+
+/*
+ * @created 13/09/2022
+ * @project IPED
+ * @author Thiago S. Figueiredo
+ *          Patrick Dalla Bernardina
+ */
+
+import iped.app.home.DefaultPanel;
+import iped.app.home.MainFrame;
+import iped.app.home.MainFrameCardsNames;
+import iped.app.home.newcase.NewCaseContainerPanel;
+import iped.configuration.Configurable;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.TaskInstallerConfig;
+import iped.engine.task.AbstractTask;
+import iped.engine.task.PythonTask;
+import iped.engine.task.ScriptTask;
 
 public class ProcessOptionTab extends DefaultPanel implements TableModelListener {
 
