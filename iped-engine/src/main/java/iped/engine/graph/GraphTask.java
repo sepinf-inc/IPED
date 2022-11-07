@@ -108,7 +108,11 @@ public class GraphTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new GraphTaskConfig());
+        GraphTaskConfig result = ConfigurationManager.get().findObject(GraphTaskConfig.class);
+        if(result == null) {
+            result = new GraphTaskConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override
