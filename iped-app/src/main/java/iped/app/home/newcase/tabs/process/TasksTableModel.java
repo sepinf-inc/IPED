@@ -121,5 +121,14 @@ public class TasksTableModel extends AbstractTableModel {
         }
     }
 
+    public void setEnabled(List<AbstractTask> enabledTaskArrayList) {
+        for (int i=0; i<enabledTaskArrayList.size();i++) {
+            int j = taskList.indexOf(enabledTaskArrayList.get(i));
+            if(j>-1) {
+                enabled.set(j, true);
+            }
+        }
+    }
+
 
 }

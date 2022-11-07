@@ -11,6 +11,7 @@ import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.MainFrameCardsNames;
 import iped.app.home.newcase.NewCaseContainerPanel;
+import iped.app.home.newcase.tabs.process.AbstractTaskClassPopupMenu.JAbstractTaskClassMenuItem;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.TaskInstallerConfig;
@@ -23,19 +24,27 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
+import org.reflections.Reflections;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class ProcessOptionTab extends DefaultPanel implements TableModelListener {
 
     private JTable jtableTasks;
     private TasksTableModel tasksTableModel;
     private TaskInstallerConfig taskInstallerConfig;
+    private List<AbstractTask> enabledTaskArrayList;
     private List<AbstractTask> taskArrayList;
 
     JFileChooser scriptChooser = new JFileChooser();
@@ -87,9 +96,28 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         if(taskInstallerConfig==null) {
             taskInstallerConfig = (TaskInstallerConfig)ConfigurationManager.get().findObject(TaskInstallerConfig.class);
         }
-        taskArrayList = taskInstallerConfig.getNewTaskInstances();
+        enabledTaskArrayList = taskInstallerConfig.getNewTaskInstances();
+        taskArrayList = new ArrayList<AbstractTask>();
+        taskArrayList.addAll(enabledTaskArrayList);
+
+        Reflections reflections = new Reflections("iped.engine.task");
+        Set<Class<? extends AbstractTask>> classes = reflections.getSubTypesOf(iped.engine.task.AbstractTask.class);
+        for(Class<? extends AbstractTask> aClass : classes) {
+            if(!Modifier.isAbstract(aClass.getModifiers())) {
+                if(!enabledTaskArrayList.contains(aClass)) {
+                    try {
+                        taskArrayList.add(aClass.getDeclaredConstructor().newInstance());
+                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                            | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
 
         tasksTableModel = new TasksTableModel(mainFrame, taskArrayList);
+        tasksTableModel.setEnabled(enabledTaskArrayList);
         jtableTasks = new JTable();
         setupTableLayout();
         panel.add( new JScrollPane(jtableTasks));
@@ -99,9 +127,34 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         if(taskInstallerConfig==null) {
             taskInstallerConfig = (TaskInstallerConfig)ConfigurationManager.get().findObject(TaskInstallerConfig.class);
         }
-        taskArrayList = taskInstallerConfig.getNewTaskInstances();
+        enabledTaskArrayList = taskInstallerConfig.getNewTaskInstances();
+        taskArrayList = new ArrayList<AbstractTask>();
+        taskArrayList.addAll(enabledTaskArrayList);
+
+        List<Class<? extends AbstractTask>> installedClasses = new ArrayList<Class<? extends AbstractTask>>();
+        for (Iterator<AbstractTask> iterator = taskArrayList.iterator(); iterator.hasNext();) {
+            AbstractTask abstractTask = iterator.next();
+            installedClasses.add(abstractTask.getClass());            
+        }
+
+        Reflections reflections = new Reflections("iped.engine.task");
+        Set<Class<? extends AbstractTask>> classes = reflections.getSubTypesOf(iped.engine.task.AbstractTask.class);
+        for(Class<? extends AbstractTask> aClass : classes) {
+            if(!Modifier.isAbstract(aClass.getModifiers())) {
+                if(!installedClasses.contains(aClass)) {
+                    try {
+                        taskArrayList.add(aClass.getDeclaredConstructor().newInstance());
+                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                            | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
 
         tasksTableModel = new TasksTableModel(mainFrame, taskArrayList);
+        tasksTableModel.setEnabled(enabledTaskArrayList);
         tasksTableModel.addTableModelListener(this);
         jtableTasks = new JTable();
         setupTableLayout();
@@ -125,10 +178,6 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         JButton buttoCancel = new JButton("Voltar");
         buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
         AbstractTaskClassPopupMenu abstractTaskClassPopupMenu = new AbstractTaskClassPopupMenu(jtableTasks);
-        JButton buttoAddTask = new JButton("Add task");
-        buttoAddTask.addActionListener( e -> {
-            abstractTaskClassPopupMenu.show(this, buttoAddTask.getX()+buttoAddTask.getParent().getX()+2, buttoAddTask.getY() + buttoAddTask.getParent().getY());
-        });
 
         JButton buttoAddScriptTask = new JButton("Add script task");
         buttoAddScriptTask.addActionListener( e -> {
@@ -150,7 +199,6 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         JButton buttonNext = new JButton("Iniciar processamento");
         buttonNext.addActionListener( e -> mainFrame.startIPEDProcessing() );
         panelButtons.add(buttoCancel);
-        panelButtons.add(buttoAddTask);
         panelButtons.add(buttoAddScriptTask);
         panelButtons.add(buttonNext);
         return panelButtons;
