@@ -51,7 +51,11 @@ public class LanguageDetectTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+        EnableTaskProperty result = ConfigurationManager.get().findObject(EnableTaskProperty.class);
+        if(result == null) {
+            result = new EnableTaskProperty(ENABLE_PARAM);
+        }
+        return Arrays.asList(result);
     }
 
     @Override

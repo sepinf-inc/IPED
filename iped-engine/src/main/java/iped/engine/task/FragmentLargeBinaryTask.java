@@ -31,7 +31,11 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new SplitLargeBinaryConfig());
+        SplitLargeBinaryConfig result = ConfigurationManager.get().findObject(SplitLargeBinaryConfig.class);
+        if(result == null) {
+            result = new SplitLargeBinaryConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

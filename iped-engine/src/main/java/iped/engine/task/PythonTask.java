@@ -23,7 +23,7 @@ import jep.Jep;
 import jep.JepException;
 import jep.NDArray;
 
-public class PythonTask extends AbstractTask {
+public class PythonTask extends AbstractTask implements IScriptTask {
 
     private static final String JEP_NOT_FOUND = PythonParser.JEP_NOT_FOUND;
     private static final String DISABLED = PythonParser.DISABLED;

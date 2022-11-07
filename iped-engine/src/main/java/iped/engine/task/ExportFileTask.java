@@ -707,8 +707,19 @@ public class ExportFileTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM), new ExportByCategoriesConfig(),
-                new ExportByKeywordsConfig());
+        EnableTaskProperty result = ConfigurationManager.get().findObject(EnableTaskProperty.class);
+        if(result == null) {
+            result = new EnableTaskProperty(ENABLE_PARAM);
+        }
+        ExportByCategoriesConfig result2 = ConfigurationManager.get().findObject(ExportByCategoriesConfig.class);
+        if(result2 == null) {
+            result2 = new ExportByCategoriesConfig();
+        }
+        ExportByKeywordsConfig result3 = ConfigurationManager.get().findObject(ExportByKeywordsConfig.class);
+        if(result3 == null) {
+            result3 = new ExportByKeywordsConfig();
+        }
+        return Arrays.asList(result, result2, result3);
     }
 
     @Override

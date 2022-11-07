@@ -211,7 +211,11 @@ public class CarverTask extends BaseCarveTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new CarverTaskConfig());
+        CarverTaskConfig result = ConfigurationManager.get().findObject(CarverTaskConfig.class);
+        if(result == null) {
+            result = new CarverTaskConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

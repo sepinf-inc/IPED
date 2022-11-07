@@ -142,7 +142,11 @@ public class RegexTask extends AbstractTask {
     }
 
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new RegexTaskConfig());
+        RegexTaskConfig result = ConfigurationManager.get().findObject(RegexTaskConfig.class);
+        if(result == null) {
+            result = new RegexTaskConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

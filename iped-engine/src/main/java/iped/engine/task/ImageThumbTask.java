@@ -64,7 +64,11 @@ public class ImageThumbTask extends ThumbTask {
     }
 
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new ImageThumbTaskConfig());
+        ImageThumbTaskConfig result = ConfigurationManager.get().findObject(ImageThumbTaskConfig.class);
+        if(result == null) {
+            result = new ImageThumbTaskConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

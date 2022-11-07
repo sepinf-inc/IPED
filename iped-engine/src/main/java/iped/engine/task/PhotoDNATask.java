@@ -33,7 +33,11 @@ public class PhotoDNATask extends AbstractTask {
     private PhotoDNA photodna;
 
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new PhotoDNAConfig());
+        PhotoDNAConfig result = ConfigurationManager.get().findObject(PhotoDNAConfig.class);
+        if(result == null) {
+            result = new PhotoDNAConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

@@ -114,7 +114,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new ElasticSearchTaskConfig());
+        ElasticSearchTaskConfig result = ConfigurationManager.get().findObject(ElasticSearchTaskConfig.class);
+        if(result == null) {
+            result = new ElasticSearchTaskConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

@@ -38,7 +38,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.data.IPEDSource;
 import iped.engine.search.IPEDSearcher;
 
-public class ScriptTask extends AbstractTask {
+public class ScriptTask extends AbstractTask implements IScriptTask {
 
     private static IPEDSource ipedCase;
     private static int numInstances = 0;
