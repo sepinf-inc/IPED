@@ -4,23 +4,42 @@ package iped.app.home.newcase.tabs.process;
  * @created 13/09/2022
  * @project IPED
  * @author Thiago S. Figueiredo
+ *          Patrick Dalla Bernardina
  */
 
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.MainFrameCardsNames;
 import iped.app.home.newcase.NewCaseContainerPanel;
+import iped.configuration.Configurable;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.TaskInstallerConfig;
+import iped.engine.task.AbstractTask;
+import iped.engine.task.PythonTask;
+import iped.engine.task.ScriptTask;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.util.ArrayList;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 
-public class ProcessOptionTab extends DefaultPanel {
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.io.File;
+import java.util.List;
+
+public class ProcessOptionTab extends DefaultPanel implements TableModelListener {
 
     private JTable jtableTasks;
     private TasksTableModel tasksTableModel;
+    private TaskInstallerConfig taskInstallerConfig;
+    private List<AbstractTask> taskArrayList;
 
+    JFileChooser scriptChooser = new JFileChooser();
+    
     public ProcessOptionTab(MainFrame mainFrame) {
         super(mainFrame);
     }
@@ -50,6 +69,7 @@ public class ProcessOptionTab extends DefaultPanel {
         setupProfilesPanel(panelForm);
         panelForm.add( Box.createRigidArea( new Dimension(10, 10) ) );
         setupTasksTables(panelForm);
+        //setupScriptsTables(panelForm);
         return panelForm;
     }
 
@@ -63,34 +83,26 @@ public class ProcessOptionTab extends DefaultPanel {
         panel.add(buttonPanel);
     }
 
-    private void setupTasksTables(JPanel panel){
-        ArrayList<Task> taskArrayList = new ArrayList<>();
-        Task task = new Task();
-        task.setName("Calcular Hash");
-        taskArrayList.add(task);
-        task = new Task();
-        task.setName("Calcular Hash do PhotoDNA");
-        taskArrayList.add(task);
-        task = new Task();
-        task.setName("Pesquisa de Hash no banco de dados do IPED");
-        taskArrayList.add(task);
-        task = new Task();
-        task.setName("Pesquisa de PhotoDNA no banco de dados do IPED");
-        taskArrayList.add(task);
-        task = new Task();
-        task.setName("Detecção de Nudez");
-        taskArrayList.add(task);
-        task = new Task();
-        task.setName("Detecção de nudez usando o algoritmo de aprendizagem profundo do Yahoo OpenNSFW");
-        taskArrayList.add(task);
-        task = new Task();
-        task.setName("Detecção e decodificação de QRCode");
-        taskArrayList.add(task);
-        task = new Task();
-        task.setName("Ignorar do processamento e do caso arquivos duplicados com o mesmo hash");
-        taskArrayList.add(task);
+    private void setupScriptsTables(JPanel panel){
+        if(taskInstallerConfig==null) {
+            taskInstallerConfig = (TaskInstallerConfig)ConfigurationManager.get().findObject(TaskInstallerConfig.class);
+        }
+        taskArrayList = taskInstallerConfig.getNewTaskInstances();
 
-        tasksTableModel = new TasksTableModel(taskArrayList);
+        tasksTableModel = new TasksTableModel(mainFrame, taskArrayList);
+        jtableTasks = new JTable();
+        setupTableLayout();
+        panel.add( new JScrollPane(jtableTasks));
+    }
+
+    private void setupTasksTables(JPanel panel){
+        if(taskInstallerConfig==null) {
+            taskInstallerConfig = (TaskInstallerConfig)ConfigurationManager.get().findObject(TaskInstallerConfig.class);
+        }
+        taskArrayList = taskInstallerConfig.getNewTaskInstances();
+
+        tasksTableModel = new TasksTableModel(mainFrame, taskArrayList);
+        tasksTableModel.addTableModelListener(this);
         jtableTasks = new JTable();
         setupTableLayout();
         panel.add( new JScrollPane(jtableTasks));
@@ -112,11 +124,48 @@ public class ProcessOptionTab extends DefaultPanel {
         panelButtons.setBackground(Color.white);
         JButton buttoCancel = new JButton("Voltar");
         buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
+        AbstractTaskClassPopupMenu abstractTaskClassPopupMenu = new AbstractTaskClassPopupMenu(jtableTasks);
+        JButton buttoAddTask = new JButton("Add task");
+        buttoAddTask.addActionListener( e -> {
+            abstractTaskClassPopupMenu.show(this, buttoAddTask.getX()+buttoAddTask.getParent().getX()+2, buttoAddTask.getY() + buttoAddTask.getParent().getY());
+        });
+
+        JButton buttoAddScriptTask = new JButton("Add script task");
+        buttoAddScriptTask.addActionListener( e -> {
+            int result = scriptChooser.showOpenDialog(mainFrame);
+            if(result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = scriptChooser.getSelectedFile();
+                
+                AbstractTask task;
+                if (selectedFile.getName().endsWith(".py")) {
+                    task = new PythonTask(selectedFile);
+                } else {
+                    task = new ScriptTask(selectedFile);
+                }
+                taskArrayList.add(task);
+                tasksTableModel.fireTableRowsInserted(taskArrayList.size()-1, taskArrayList.size()-1);                
+            }
+        });
+        
         JButton buttonNext = new JButton("Iniciar processamento");
         buttonNext.addActionListener( e -> mainFrame.startIPEDProcessing() );
         panelButtons.add(buttoCancel);
+        panelButtons.add(buttoAddTask);
+        panelButtons.add(buttoAddScriptTask);
         panelButtons.add(buttonNext);
         return panelButtons;
+    }
+
+    @Override
+    public void tableChanged(TableModelEvent e) {
+        if(e.getType()==TableModelEvent.INSERT) {
+            jtableTasks.getSelectionModel().setLeadSelectionIndex(e.getLastRow());
+            AbstractTask task = ((TasksTableModel)jtableTasks.getModel()).getTaskList().get(e.getLastRow());
+            List<Configurable<?>> configurables = task.getConfigurables();
+            if(configurables != null && configurables.size()>0) {
+                mainFrame.showPanel(new TaskConfigTabPanel(task, mainFrame));
+            }
+        }
     }
 
 }

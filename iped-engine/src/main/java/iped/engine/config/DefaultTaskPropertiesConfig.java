@@ -2,7 +2,7 @@ package iped.engine.config;
 
 import iped.utils.UTF8Properties;
 
-public class DefaultTaskPropertiesConfig extends AbstractTaskPropertiesConfig {
+public abstract class DefaultTaskPropertiesConfig extends AbstractTaskPropertiesConfig {
 
     /**
      * 

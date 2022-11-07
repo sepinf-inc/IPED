@@ -5,8 +5,11 @@ import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.opencase.OpenCasePanel;
 import iped.app.home.processmanager.ProcessManagerContainer;
 import iped.app.home.style.StyleManager;
+import iped.app.processing.Main;
+import iped.app.ui.AppMain;
 import iped.app.ui.Messages;
 import iped.app.ui.themes.ThemeManager;
+import iped.configuration.Configurable;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
@@ -17,7 +20,10 @@ import iped.utils.ui.ScreenUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Set;
 
 /**
  * @created 02/09/2022
@@ -30,13 +36,17 @@ public class MainFrame extends JFrame {
 
     private final JPanel cardsContentPanel = new JPanel();
     private ProcessManagerContainer pmc;
+    private File testPath = new File("/home/patrick.pdb/multicase/indices/indiceDebugEvents");
+    private File casePath;
+    private File libDir;
 
     /**
      * Class constructor
+     * @param iped 
      */
     public MainFrame() {
         super(Version.APP_NAME);
-        this.createAndShowGUI();
+        this.createAndShowGUI();        
     }
 
     /**
@@ -61,6 +71,31 @@ public class MainFrame extends JFrame {
         ScreenUtils.showOnScreen(0, this);
     }
 
+    private void detectCasePath() throws URISyntaxException {
+        if (testPath != null) {
+            casePath = testPath;
+            libDir = new File(casePath + "/iped/lib");
+        }else {
+            libDir = detectLibDir();
+            casePath = libDir.getParentFile().getParentFile();
+        }
+
+
+        if (!new File(casePath, "iped").exists()) //$NON-NLS-1$
+            casePath = null;
+    }
+
+    private File detectLibDir() throws URISyntaxException {
+        URL url = MainFrame.class.getProtectionDomain().getCodeSource().getLocation();
+        File jarFile = null;
+        if (url.toURI().getAuthority() == null)
+            jarFile = new File(url.toURI());
+        else
+            jarFile = new File(url.toURI().getSchemeSpecificPart());
+
+        return jarFile.getParentFile();
+    }
+
     /**
      *Adjust layout configurations, sizes and behaviors
      */
@@ -77,7 +112,13 @@ public class MainFrame extends JFrame {
         this.add(cardsContentPanel, gbc);
 
         //FIXME Remove hardcoded location and set properly path
-        Configuration.getInstance().loadConfigurables("C:/Users/xxxxx/Documents/projetos/IPED/target/release/iped-4.0.2", true);
+        detectCasePath();
+
+        Configuration configuration = Configuration.getInstance();
+        configuration.loadConfigurables(casePath.getAbsolutePath()+"/iped", true);
+        ConfigurationManager configManager = ConfigurationManager.get();
+        Set<Configurable<?>> configs= configManager.getObjects();
+
         // Set the locale used for docking frames, so texts and tool tips are localized (if available)
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
 
@@ -138,6 +179,11 @@ public class MainFrame extends JFrame {
      */
     public void showPanel(MainFrameCardsNames cardName){
         ((CardLayout) cardsContentPanel.getLayout()).show(cardsContentPanel, cardName.getName());
+    }
+    
+    public void showPanel(DefaultPanel panel) {
+        cardsContentPanel.add(panel, "tew");
+        ((CardLayout) cardsContentPanel.getLayout()).show(cardsContentPanel, "tew");
     }
 
     public void startIPEDProcessing(){
