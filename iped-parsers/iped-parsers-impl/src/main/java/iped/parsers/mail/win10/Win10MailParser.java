@@ -692,7 +692,8 @@ public class Win10MailParser extends AbstractParser {
                         attach.setCaseQuery(successfulQuery);
                         IItemReader item = itemQueryPair.getLeft();
                         attach.setFilePath(item != null ? item.getTempFile().toURI().toString() : "");
-                        preview.append("<a href=\"\" onclick=app.open('" + attach.getCaseQuery() + "')>" + attach.getFileName() + "</a><br>");
+                        String queryHTML = SimpleHTMLEncoder.htmlEncode(attach.getCaseQuery());
+                        preview.append("<a href=\"\" onclick=\"app.open('" + queryHTML + "');\">" + attach.getFileName() + "</a><br>");
                     } else {
                         preview.append(SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + "<br>");
                     }
@@ -860,4 +861,5 @@ public class Win10MailParser extends AbstractParser {
         if (result < 0)
             EsedbManager.printError("File Free", result, itemInfo.getPath(), errorPointer);
     }
+
 }
