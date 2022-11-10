@@ -1,13 +1,17 @@
 package iped.engine.config;
 
 import java.io.Externalizable;
+import java.io.File;
 import java.io.IOException;
 import java.io.InvalidClassException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -69,7 +73,6 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<iped.
         public String getRegex() {
             return regex;
         }
-
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
@@ -193,4 +196,25 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<iped.
         }
     }
 
+    @Override
+    public void save(Path resource) {
+        try {
+            StringBuffer output = new StringBuffer();
+            output.append(FORMAT_MATCHES+"="+formatRegexMatches);
+            output.append("\n");
+            output.append("\n");
+            for (Iterator iterator = regexList.iterator(); iterator.hasNext();) {
+                RegexEntry regexEntry = (RegexEntry) iterator.next();
+                output.append(regexEntry.toString());
+                output.append("\n");
+            }
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CONFIG_FILE);            
+            
+            Files.write(resource,output.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

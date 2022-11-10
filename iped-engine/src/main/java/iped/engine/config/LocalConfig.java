@@ -157,4 +157,16 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
     public void setHashDbFile(File hashDbFile) {
         this.hashDbFile = hashDbFile;
     }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CONFIG_FILE);            
+            properties.store(confFile);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -20,9 +20,10 @@ import java.util.function.Predicate;
 import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
 
-public class ConfigurationDirectory implements IConfigurationDirectory {
+public class ConfigurationDirectory implements IConfigurationDirectory, Comparable<IConfigurationDirectory> {
 
     List<Path> configDirs = new ArrayList<Path>();
+    String name;
 
     public ConfigurationDirectory(Path configDir) {
         configDirs.add(configDir);
@@ -94,7 +95,24 @@ public class ConfigurationDirectory implements IConfigurationDirectory {
                 }
             }
         });
-
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
+
+    @Override
+    public int compareTo(IConfigurationDirectory o) {
+        return this.getName().compareTo(o.getName());
+    }
 }

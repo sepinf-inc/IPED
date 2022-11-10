@@ -1,5 +1,6 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,6 +60,18 @@ public class ExportByCategoriesConfig extends AbstractTaskConfig<Set<String>> {
                 continue;
             }
             categoriesToExport.add(line.trim());
+        }
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, Configuration.CONFIG_FILE);            
+            Files.write(confFile.toPath(),categoriesToExport);
+        }catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

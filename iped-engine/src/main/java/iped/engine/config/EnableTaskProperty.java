@@ -1,5 +1,6 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
@@ -54,6 +55,16 @@ public class EnableTaskProperty extends AbstractPropertiesConfigurable implement
     @Override
     public void setEnabled(boolean enabled) {
         this.value = enabled;
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confFile = new File(resource.toFile(), Configuration.CONFIG_FILE);
+            properties.store(confFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

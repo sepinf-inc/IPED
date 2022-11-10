@@ -1,10 +1,12 @@
 package iped.engine.config;
 
 import java.io.Externalizable;
+import java.io.File;
 import java.io.IOException;
 import java.io.InvalidClassException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +86,18 @@ public class ExportByKeywordsConfig extends AbstractTaskConfig<List<String>> imp
         out.writeInt(keywords.size());
         for (String s : keywords) {
             out.writeUTF(s);
+        }
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, Configuration.CONFIG_FILE);            
+            Files.write(confFile.toPath(),keywords);
+        }catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

@@ -8,9 +8,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -24,12 +26,12 @@ import org.xml.sax.SAXException;
 
 import iped.configuration.Configurable;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.IScriptTask;
 import iped.engine.task.PythonTask;
 import iped.engine.task.ScriptTask;
 import iped.exception.IPEDException;
 
 public class TaskInstallerConfig implements Configurable<String> {
-
     /**
      * 
      */
@@ -113,4 +115,36 @@ public class TaskInstallerConfig implements Configurable<String> {
         this.xml = config;
     }
 
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CONFIG_XML);            
+
+            Files.write(confFile.toPath(), xml.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void update(List<AbstractTask> tasks) {
+        StringBuffer output=new StringBuffer();
+        output.append(xml.substring(xml.indexOf("<tasks>")));
+        output.append("<tasks>");
+        for (Iterator iterator = tasks.iterator(); iterator.hasNext();) {
+            AbstractTask task = (AbstractTask) iterator.next();
+            if(task instanceof IScriptTask) {
+                output.append("<task script=\"");
+                output.append(((IScriptTask) task).getScriptFileName());
+                output.append("></task>");
+            }else {
+                output.append("<task class=\"");
+                output.append(task.getClass().getCanonicalName());
+                output.append("></task>");
+            }
+        }
+        output.append("</tasks>");
+        xml = output.toString();
+    }
 }

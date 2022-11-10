@@ -4,7 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
-import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,19 +18,20 @@ import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.MainFrameCardsNames;
-import iped.app.home.newcase.NewCaseContainerPanel;
-import iped.app.home.newcase.tabs.CaseInfoTab;
-import iped.app.home.newcase.tabs.evidence.EvidencesTab;
 import iped.configuration.Configurable;
+import iped.engine.config.ConfigurationManager;
 import iped.engine.task.AbstractTask;
 
 public class TaskConfigTabPanel extends DefaultPanel {
     AbstractTask task;
     private List<Configurable<?>> configurables;
+    private HashMap<Configurable<?>, ConfigurablePanel> configurablePanels = new HashMap<Configurable<?>, ConfigurablePanel>();
     private JTabbedPane tabbedPane;
-    
-    public TaskConfigTabPanel(AbstractTask task, MainFrame mainFrame) {
+    ConfigurationManager configurationManager;
+
+    public TaskConfigTabPanel(ConfigurationManager configurationManager, AbstractTask task, MainFrame mainFrame) {
         super(mainFrame);
+        this.configurationManager=configurationManager;
         configurables = task.getConfigurables();
         JPanel panelTitle = new JPanel();
         JLabel labelTitle = new JLabel(task.getName());
@@ -46,7 +47,7 @@ public class TaskConfigTabPanel extends DefaultPanel {
         this.setLayout(new BorderLayout());
         this.add(createNavigationButtonsPanel(), BorderLayout.SOUTH);
     }
-    
+
     /**
      * Setup and create a new JTabbedPane instance
      * Here is created a instance of all nested JPanels
@@ -59,22 +60,33 @@ public class TaskConfigTabPanel extends DefaultPanel {
         });
         for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
             Configurable<?> configurable = (Configurable<?>) iterator.next();
-            tabbedPane.addTab(configurable.getClass().getSimpleName(), UIManager.getIcon("FileView.fileIcon"), new ConfigurablePanel(configurable, mainFrame), "Página para preenchimento das informações do caso");
+            ConfigurablePanel configPanel = ConfigurablePanel.createConfigurablePanel(configurable, mainFrame);
+            configPanel.createConfigurableGUI();
+            configurablePanels.put(configurable,configPanel);            
+            tabbedPane.addTab(configurable.getClass().getSimpleName(), UIManager.getIcon("FileView.fileIcon"), configPanel, "Página para preenchimento das informações do caso");
         }
         this.add(tabbedPane);
-        
-        
+
         return tabbedPane;
     }
 
     private Component createNavigationButtonsPanel() {
         JPanel panelButtons = new JPanel();
         panelButtons.setBackground(Color.white);
-        JButton buttoCancel = new JButton("Voltar");
-        buttoCancel.addActionListener( e -> mainFrame.showPanel(MainFrameCardsNames.NEW_CASE));
-        panelButtons.add(buttoCancel);
+        JButton btVoltar = new JButton("Voltar");
+        btVoltar.addActionListener( e -> {
+            for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
+                Configurable<?> configurable = (Configurable<?>)iterator.next();
+                ConfigurablePanel configPanel = configurablePanels.get(configurable);
+                if(configPanel.hasChanged()) {
+                    configurablePanels.get(configurable).applyChanges();
+                    configurationManager.notifyUpdate(configurable);
+                }
+            }
+
+            mainFrame.showPanel(MainFrameCardsNames.NEW_CASE);
+        });
+        panelButtons.add(btVoltar);
         return panelButtons;
     }
-
-
 }

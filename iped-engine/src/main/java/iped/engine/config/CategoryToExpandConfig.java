@@ -1,7 +1,9 @@
 package iped.engine.config;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -66,8 +68,6 @@ public class CategoryToExpandConfig extends AbstractTaskConfig<Set<String>> {
                     categoriesToExpand.add(cat.getName());
                     cats.addAll(cat.getChildren());
                 }
-                
-
             }
         }
     }
@@ -80,6 +80,18 @@ public class CategoryToExpandConfig extends AbstractTaskConfig<Set<String>> {
     @Override
     public void setConfiguration(Set<String> config) {
         categoriesToExpand = config;
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, Configuration.CONFIG_FILE);            
+            Files.write(confFile.toPath(),categoriesToExpand);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

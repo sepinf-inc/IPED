@@ -84,5 +84,4 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
         return retries;
     }
 
-
 }

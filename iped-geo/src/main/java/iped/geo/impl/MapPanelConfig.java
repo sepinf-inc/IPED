@@ -1,6 +1,8 @@
 package iped.geo.impl;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 import iped.configuration.Configurable;
+import iped.engine.config.Configuration;
 import iped.utils.UTF8Properties;
 
 public class MapPanelConfig implements Configurable<UTF8Properties> {
@@ -85,6 +88,18 @@ public class MapPanelConfig implements Configurable<UTF8Properties> {
     @Override
     public void setConfiguration(UTF8Properties config) {
         this.properties = config;
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, GEO_CONFIG_FILE);            
+            properties.store(confFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

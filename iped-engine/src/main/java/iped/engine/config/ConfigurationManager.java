@@ -7,7 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Writer;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -20,11 +22,15 @@ import iped.configuration.IConfigurationDirectory;
 import iped.configuration.ObjectManager;
 
 public class ConfigurationManager implements ObjectManager<Configurable<?>> {
-
     private static ConfigurationManager singleton = null;
+    List<ConfigurableChangeListener> configurableChangeListeners = new ArrayList<ConfigurableChangeListener>();   
 
     private IConfigurationDirectory directory;
+
     private Map<Configurable<?>, Boolean> loadedConfigurables = new LinkedHashMap<>();
+    private List<Configurable<?>> changedConfigurables = new ArrayList<Configurable<?>>();
+
+    boolean changed=false;
 
     public static ConfigurationManager get() {
         return singleton;
@@ -40,8 +46,8 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
         }
         return singleton;
     }
-
-    private ConfigurationManager(IConfigurationDirectory directory) {
+    
+    public ConfigurationManager(IConfigurationDirectory directory) {
         this.directory = directory;
     }
 
@@ -157,7 +163,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     public void removeObject(Configurable<?> aObject) {
         loadedConfigurables.remove(aObject);
     }
-    
+
     public void saveSerializedConfig(File file) throws FileNotFoundException, IOException {
         try(FileOutputStream fos = new FileOutputStream(file);
                 ObjectOutputStream oos = new ObjectOutputStream(fos)){
@@ -172,5 +178,57 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
             loadedConfigurables = (Map<Configurable<?>, Boolean>) ois.readObject();
         }
     }
+/*
+    public void saveConfigurables() {
+        for (Iterator<Configurable<?>> iterator = changedConfigurable.iterator(); iterator.hasNext();) {
+            Configurable<?> config = iterator.next();
+            
+            try {
+                Writer w = null;
+                try {
+                    List<Path> resources = directory.lookUpResource(config);
+                    for (Iterator iterator2 = resources.iterator(); iterator2.hasNext();) {
+                        Path path = (Path) iterator2.next();
+                        config.save(path);                            
+                    }
+                }finally {
+                    if(w!=null) {
+                        w.close();
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+*/
+    
+    public IConfigurationDirectory getDirectory() {
+        return directory;
+    }
 
+    public void setDirectory(IConfigurationDirectory directory) {
+        this.directory = directory;
+    }
+
+    public void notifyUpdate(Configurable<?> configurable) {
+        changedConfigurables.add(configurable);
+        for (Iterator<ConfigurableChangeListener> iterator = configurableChangeListeners.iterator(); iterator.hasNext();) {
+            ConfigurableChangeListener ccl =  iterator.next();
+            ccl.onChange(configurable);            
+        }        
+        changed=true;
+    }
+    
+    public boolean hasChanged() {
+        return changed;
+    }
+
+    public void addConfigurableChangeListener(ConfigurableChangeListener ccl) {
+        configurableChangeListeners.add(ccl);
+    }
+
+    public void removeConfigurableChangeListener(ConfigurableChangeListener ccl) {
+        configurableChangeListeners.remove(ccl);
+    }
 }

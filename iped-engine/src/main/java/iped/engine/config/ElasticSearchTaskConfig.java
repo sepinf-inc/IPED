@@ -138,5 +138,4 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
         return termVector;
     }
 
-
 }

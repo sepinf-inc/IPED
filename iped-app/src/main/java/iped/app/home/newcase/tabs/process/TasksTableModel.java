@@ -4,12 +4,12 @@ package iped.app.home.newcase.tabs.process;/*
  * @author Thiago S. Figueiredo
  */
 
-
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
+import iped.engine.config.ConfigurationManager;
 import iped.engine.task.AbstractTask;
 
 import java.awt.*;
@@ -17,15 +17,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TasksTableModel extends AbstractTableModel {
+    ConfigurationManager configurationManager;
 
     private static final long serialVersionUID = 3318254202725499526L;
     
-    private final String[] COLLUM_NAME = {" ", "TASK", "OPÇÕES"};
+    private final String[] COLLUM_NAME = {"#", " ", "TASK", "OPÇÕES"};
     private final List<AbstractTask> taskList;
     private ArrayList<Boolean> enabled = new ArrayList<Boolean>();
     MainFrame mainFrame;
 
-    public TasksTableModel(MainFrame mainFrame, List<AbstractTask> taskList) {
+    public TasksTableModel(ConfigurationManager configurationManager, MainFrame mainFrame, List<AbstractTask> taskList) {
+        this.configurationManager=configurationManager;
         this.taskList = taskList;
         this.mainFrame = mainFrame;
         for (int i=0; i<taskList.size();i++) {
@@ -51,9 +53,10 @@ public class TasksTableModel extends AbstractTableModel {
     public Class<?> getColumnClass(int columnIndex) {
         switch(columnIndex)
         {
-            case 0: return Boolean.class;
-            case 1: return String.class;
-            case 2: return JPanel.class;
+            case 0: return Integer.class;
+            case 1: return Boolean.class;
+            case 2: return String.class;
+            case 3: return JPanel.class;
             default: return String.class;
         }
     }
@@ -64,14 +67,15 @@ public class TasksTableModel extends AbstractTableModel {
             return "";
         AbstractTask currentTask = taskList.get(rowIndex);
         switch (columnIndex){
-            case 0: {
+            case 0: return rowIndex+1;
+            case 1: {
                 if(rowIndex>=enabled.size()) {
                     enabled.add(false);
                 }
                 return enabled.get(rowIndex);
             }
-            case 1: return currentTask.getName();
-            case 2: return createColumnOptionPanel(rowIndex);
+            case 2: return currentTask.getName();
+            case 3: return createColumnOptionPanel(rowIndex);
             default: return "";
         }
     }
@@ -88,7 +92,8 @@ public class TasksTableModel extends AbstractTableModel {
             JButton taskOptionButton = new JButton("...");
             
             taskOptionButton.addActionListener( e -> {
-                mainFrame.showPanel(new TaskConfigTabPanel(task, mainFrame));
+                TaskConfigTabPanel tp = new TaskConfigTabPanel(configurationManager, task, mainFrame);
+                mainFrame.showPanel(tp);
             });
 
             taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
@@ -101,9 +106,10 @@ public class TasksTableModel extends AbstractTableModel {
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         switch (columnIndex){
-            case 0: return true;
-            case 1: return false;
-            case 2: return true;
+            case 0: return false;
+            case 1: return true;
+            case 2: return false;
+            case 3: return true;
             default: return false;
         }
     }
@@ -117,7 +123,7 @@ public class TasksTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         AbstractTask currentTask = taskList.get(rowIndex);
         switch (columnIndex){
-            case 0: enabled.set(rowIndex, ((boolean) aValue)); break;
+            case 1: enabled.set(rowIndex, ((boolean) aValue)); break;
         }
     }
 

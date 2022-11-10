@@ -5,9 +5,13 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,11 +27,26 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 import org.reflections.Reflections;
+
+import iped.app.home.DefaultPanel;
+import iped.app.home.MainFrame;
+import iped.app.home.MainFrameCardsNames;
+import iped.app.home.newcase.NewCaseContainerPanel;
+import iped.configuration.Configurable;
+import iped.configuration.IConfigurationDirectory;
+import iped.engine.config.ConfigurableChangeListener;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.ProfileManager;
+import iped.engine.config.TaskInstallerConfig;
+import iped.engine.task.AbstractTask;
+import iped.engine.task.PythonTask;
+import iped.engine.task.ScriptTask;
 
 /*
  * @created 13/09/2022
@@ -35,19 +54,7 @@ import org.reflections.Reflections;
  * @author Thiago S. Figueiredo
  *          Patrick Dalla Bernardina
  */
-
-import iped.app.home.DefaultPanel;
-import iped.app.home.MainFrame;
-import iped.app.home.MainFrameCardsNames;
-import iped.app.home.newcase.NewCaseContainerPanel;
-import iped.configuration.Configurable;
-import iped.engine.config.ConfigurationManager;
-import iped.engine.config.TaskInstallerConfig;
-import iped.engine.task.AbstractTask;
-import iped.engine.task.PythonTask;
-import iped.engine.task.ScriptTask;
-
-public class ProcessOptionTab extends DefaultPanel implements TableModelListener {
+public class ProcessOptionTab extends DefaultPanel implements TableModelListener, ItemListener, ConfigurableChangeListener{
 
     private JTable jtableTasks;
     private TasksTableModel tasksTableModel;
@@ -56,13 +63,24 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     private List<AbstractTask> taskArrayList;
 
     JFileChooser scriptChooser = new JFileChooser();
-    
+    private JComboBox<IConfigurationDirectory> profilesCombo;
+    private JPanel panelForm;
+    private JScrollPane scrollTablePane;
+    private ConfigurationManager configurationManager;
+    private ConfigurationManager defaultConfigurationManager=ConfigurationManager.get();
+    private JPanel profilePanel;
+    private JTextField tfProfile;
+    private JButton buttonNext;
+
     public ProcessOptionTab(MainFrame mainFrame) {
         super(mainFrame);
     }
 
     @Override
     protected void createAndShowGUI() {
+        configurationManager=ConfigurationManager.get();
+        defaultConfigurationManager=ConfigurationManager.get();
+        defaultConfigurationManager.addConfigurableChangeListener(this);
         this.setLayout( new BorderLayout() );
         setBorder(new EmptyBorder(10,10,10,10));
         this.add(createTitlePanel(), BorderLayout.NORTH);
@@ -80,60 +98,82 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     }
 
     private JPanel createFormPanel(){
-        JPanel panelForm = new JPanel();
+        panelForm = new JPanel();
         panelForm.setLayout(new BoxLayout( panelForm, BoxLayout.PAGE_AXIS ));
         panelForm.setBackground(Color.white);
         setupProfilesPanel(panelForm);
         panelForm.add( Box.createRigidArea( new Dimension(10, 10) ) );
         setupTasksTables(panelForm);
-        //setupScriptsTables(panelForm);
         return panelForm;
     }
 
     private void setupProfilesPanel(JPanel panel){
-        JPanel buttonPanel = new JPanel();
-        //buttonPanel.setLayout(new BoxLayout( buttonPanel, BoxLayout.LINE_AXIS ));
-        buttonPanel.setBackground(Color.white);
-        buttonPanel.add( new JLabel("Perfil de execução:") );
-        buttonPanel.add( new JComboBox<>() );
-        buttonPanel.add( new JButton("Criar novo perfil") );
-        panel.add(buttonPanel);
+        if(panel.getComponentCount()<=0) {
+            profilePanel=new JPanel();
+            panel.add(profilePanel);
+        }else {
+            profilePanel = (JPanel) panel.getComponent(0);
+        }
+        profilePanel.removeAll();
+
+        profilePanel.setBackground(Color.white);
+        profilePanel.add( new JLabel("Perfil de execução:") );
+        
+        ProfileManager profileManager = ProfileManager.get();
+        profilesCombo = new JComboBox(profileManager.getObjects().toArray());
+        profilesCombo.setPreferredSize(new Dimension(200,(int)profilesCombo.getPreferredSize().getHeight()));        
+        profilePanel.add(profilesCombo);
+        profilesCombo.addItemListener(this);
     }
 
-    private void setupScriptsTables(JPanel panel){
-        if(taskInstallerConfig==null) {
-            taskInstallerConfig = (TaskInstallerConfig)ConfigurationManager.get().findObject(TaskInstallerConfig.class);
-        }
-        enabledTaskArrayList = taskInstallerConfig.getNewTaskInstances();
-        taskArrayList = new ArrayList<AbstractTask>();
-        taskArrayList.addAll(enabledTaskArrayList);
+    private void setupNewProfilePanel(JPanel panel){
+        profilePanel = (JPanel) panel.getComponent(0);
+        profilePanel.removeAll();
+        
+        profilePanel.setBackground(Color.white);
+        profilePanel.add(new JLabel("Novo perfil de execução:") );
+        
+        buttonNext.setEnabled(false);
+        
+        tfProfile = new JTextField();
+        tfProfile.setBackground(Color.RED);
+        tfProfile.setPreferredSize(new Dimension(200,(int)tfProfile.getPreferredSize().getHeight()));        
+        tfProfile.setText(((IConfigurationDirectory) profilesCombo.getSelectedItem()).getName());
+        profilePanel.add(tfProfile);
 
-        Reflections reflections = new Reflections("iped.engine.task");
-        Set<Class<? extends AbstractTask>> classes = reflections.getSubTypesOf(iped.engine.task.AbstractTask.class);
-        for(Class<? extends AbstractTask> aClass : classes) {
-            if(!Modifier.isAbstract(aClass.getModifiers())) {
-                if(!enabledTaskArrayList.contains(aClass)) {
-                    try {
-                        taskArrayList.add(aClass.getDeclaredConstructor().newInstance());
-                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                            | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
+        JButton btInsertProfile = new JButton("Criar novo perfil");
+
+        profilePanel.add(btInsertProfile);
+        btInsertProfile.addActionListener(e -> {
+            try {
+                IConfigurationDirectory dir = ProfileManager.get().createProfile(tfProfile.getText(), configurationManager);                
+                profilesCombo.addItem(dir);
+
+                buttonNext.setEnabled(true);
+                setupProfilesPanel(panel);
+                profilesCombo.setSelectedItem(dir);
+                panel.repaint();
+            } catch (FileAlreadyExistsException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
             }
-        }
+        });
 
-        tasksTableModel = new TasksTableModel(mainFrame, taskArrayList);
-        tasksTableModel.setEnabled(enabledTaskArrayList);
-        jtableTasks = new JTable();
-        setupTableLayout();
-        panel.add( new JScrollPane(jtableTasks));
+        JButton btCancel = new JButton("Cancelar");
+        btCancel.addActionListener( e -> {
+            setupTasksTables((IConfigurationDirectory) profilesCombo.getSelectedItem(), panelForm);
+            buttonNext.setEnabled(true);
+            setupProfilesPanel(panel);
+            panel.repaint();
+        });
+
+        profilePanel.add(btCancel);
     }
 
     private void setupTasksTables(JPanel panel){
+        taskInstallerConfig = (TaskInstallerConfig) configurationManager.findObject(TaskInstallerConfig.class);
         if(taskInstallerConfig==null) {
-            taskInstallerConfig = (TaskInstallerConfig)ConfigurationManager.get().findObject(TaskInstallerConfig.class);
+            taskInstallerConfig = (TaskInstallerConfig) defaultConfigurationManager.findObject(TaskInstallerConfig.class);
         }
         enabledTaskArrayList = taskInstallerConfig.getNewTaskInstances();
         taskArrayList = new ArrayList<AbstractTask>();
@@ -161,23 +201,28 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             }
         }
 
-        tasksTableModel = new TasksTableModel(mainFrame, taskArrayList);
+        tasksTableModel = new TasksTableModel(configurationManager, mainFrame, taskArrayList);
         tasksTableModel.setEnabled(enabledTaskArrayList);
         tasksTableModel.addTableModelListener(this);
         jtableTasks = new JTable();
         setupTableLayout();
-        panel.add( new JScrollPane(jtableTasks));
+        if(scrollTablePane==null) {
+            scrollTablePane = new JScrollPane();
+        }
+        scrollTablePane.setViewportView(jtableTasks);
+        panel.add(scrollTablePane);
     }
 
     private void setupTableLayout(){
         jtableTasks.setFillsViewportHeight(true);
         jtableTasks.setRowHeight(30);
         jtableTasks.setModel(tasksTableModel);
-        jtableTasks.getColumn( jtableTasks.getColumnName(2)).setCellRenderer( new TableTaskOptionsCellRenderer() );
-        jtableTasks.getColumn( jtableTasks.getColumnName(2)).setCellEditor( new TableTaskOptionsCellEditor(new JCheckBox()) );
+        jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellRenderer( new TableTaskOptionsCellRenderer() );
+        jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellEditor( new TableTaskOptionsCellEditor(new JCheckBox()) );
 
         jtableTasks.getColumn( jtableTasks.getColumnName(0)).setMaxWidth(30);
-        jtableTasks.getColumn( jtableTasks.getColumnName(2)).setMaxWidth(60);
+        jtableTasks.getColumn( jtableTasks.getColumnName(1)).setMaxWidth(30);
+        jtableTasks.getColumn( jtableTasks.getColumnName(3)).setMaxWidth(60);
     }
 
     private Component createNavigationButtonsPanel() {
@@ -192,7 +237,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             int result = scriptChooser.showOpenDialog(mainFrame);
             if(result == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = scriptChooser.getSelectedFile();
-                
+
                 AbstractTask task;
                 if (selectedFile.getName().endsWith(".py")) {
                     task = new PythonTask(selectedFile);
@@ -203,9 +248,14 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 tasksTableModel.fireTableRowsInserted(taskArrayList.size()-1, taskArrayList.size()-1);                
             }
         });
-        
-        JButton buttonNext = new JButton("Iniciar processamento");
-        buttonNext.addActionListener( e -> mainFrame.startIPEDProcessing() );
+
+        buttonNext = new JButton("Iniciar processamento");
+        buttonNext.addActionListener( e -> {
+            if(configurationManager.hasChanged()) {
+                mainFrame.showPanel(MainFrameCardsNames.PROCESS_MANAGER);
+            }
+        } );
+
         panelButtons.add(buttoCancel);
         panelButtons.add(buttoAddScriptTask);
         panelButtons.add(buttonNext);
@@ -219,11 +269,45 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             AbstractTask task = ((TasksTableModel)jtableTasks.getModel()).getTaskList().get(e.getLastRow());
             List<Configurable<?>> configurables = task.getConfigurables();
             if(configurables != null && configurables.size()>0) {
-                mainFrame.showPanel(new TaskConfigTabPanel(task, mainFrame));
+                mainFrame.showPanel(new TaskConfigTabPanel(configurationManager, task, mainFrame));
             }
         }
     }
+    
+    private void setupTasksTables(IConfigurationDirectory directory, JPanel panel){
+        configurationManager = new ConfigurationManager(directory);
+        configurationManager.addConfigurableChangeListener(this);
+        Set<Configurable<?>> configs = defaultConfigurationManager.getObjects();
+        for (Iterator iterator = configs.iterator(); iterator.hasNext();) {
+            Configurable<?> configurable = (Configurable<?>) iterator.next();
+            configurationManager.addObject(configurable);
+        }
+        try {
+            configurationManager.loadConfigs(true);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        setupTasksTables(panelForm);
+    }
+    
 
+    @Override
+    public void itemStateChanged(ItemEvent e) {
+        if(e.getStateChange()==ItemEvent.SELECTED) {
+            setupTasksTables((IConfigurationDirectory) e.getItem(), panelForm);
+        }
+    }
+
+    public ConfigurationManager getConfigurationManager() {
+        return configurationManager;
+    }
+
+    public void setConfigurationManager(ConfigurationManager configurationManager) {
+        this.configurationManager = configurationManager;
+    }
+
+    @Override
+    public void onChange(Configurable<?> configurable) {
+        setupNewProfilePanel(panelForm);
+    }
 }
-
-

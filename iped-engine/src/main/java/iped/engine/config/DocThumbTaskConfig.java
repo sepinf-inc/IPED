@@ -1,5 +1,8 @@
 package iped.engine.config;
 
+import java.io.IOException;
+import java.nio.file.Path;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,6 +123,15 @@ public class DocThumbTaskConfig extends AbstractTaskPropertiesConfig {
             super.setEnabled(false);
         }
 
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            properties.store(resource.toFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

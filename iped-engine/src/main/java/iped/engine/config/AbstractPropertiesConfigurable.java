@@ -1,6 +1,7 @@
 package iped.engine.config;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import iped.configuration.Configurable;
@@ -31,5 +32,14 @@ public abstract class AbstractPropertiesConfigurable implements Configurable<UTF
     }
 
     abstract void processProperties(UTF8Properties properties);
+
+    @Override
+    public void save(Path resource) {
+        try {
+            properties.store(resource.toFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

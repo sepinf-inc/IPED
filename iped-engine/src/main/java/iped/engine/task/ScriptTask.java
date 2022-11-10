@@ -132,4 +132,9 @@ public class ScriptTask extends AbstractTask implements IScriptTask {
         }
     }
 
+    @Override
+    public String getScriptFileName() {
+        return scriptFile.getName();
+    }
+
 }

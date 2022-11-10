@@ -36,6 +36,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
 
     private static AhoCorasick tree = null;
     private static String CARVE_DIR_INDIVIDUAIS = "carvers";
+    Document doc = null;
 
     private ArrayList<String> originalXmls = new ArrayList<>();
     private boolean ignoreCorrupted = true;
@@ -295,9 +296,8 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         return this.ignoreCorrupted;
     }
 
-    @Override
-    public String toString() {
-        return originalXmls.toString().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ');
+    public String getXMLString() {
+        return doc.toString();        
     }
 
 }

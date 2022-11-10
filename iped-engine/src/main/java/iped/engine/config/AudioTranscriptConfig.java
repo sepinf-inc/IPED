@@ -100,7 +100,6 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
     @Override
     public void processProperties(UTF8Properties properties) {
-
         String langs = properties.getProperty(LANG_KEY).trim();
         if (LANG_AUTO_VAL.equalsIgnoreCase(langs)) {
             languages.add(System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP));
@@ -134,7 +133,5 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         if (googleModel != null) {
             googleModel = googleModel.trim();
         }
-
     }
-
 }

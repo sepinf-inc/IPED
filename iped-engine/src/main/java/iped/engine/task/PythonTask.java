@@ -322,4 +322,9 @@ public class PythonTask extends AbstractTask implements IScriptTask {
         }
     }
 
+    @Override
+    public String getScriptFileName() {
+        return scriptFile.getName();
+    }
+
 }

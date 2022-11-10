@@ -1,5 +1,6 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -30,5 +31,17 @@ public abstract class AbstractTaskPropertiesConfig extends AbstractTaskConfig<UT
     }
 
     abstract void processProperties(UTF8Properties properties);
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, getTaskConfigFileName());            
+            properties.store(confFile);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 }

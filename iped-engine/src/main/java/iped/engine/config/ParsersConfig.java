@@ -2,6 +2,7 @@ package iped.engine.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
@@ -60,4 +61,16 @@ public class ParsersConfig implements Configurable<String> {
         return tmp.toFile();
     }
 
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, PARSER_CONFIG);            
+
+            Files.write(confFile.toPath(), parserConfigXml.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -5,8 +5,6 @@ import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.opencase.OpenCasePanel;
 import iped.app.home.processmanager.ProcessManagerContainer;
 import iped.app.home.style.StyleManager;
-import iped.app.processing.Main;
-import iped.app.ui.AppMain;
 import iped.app.ui.Messages;
 import iped.app.ui.themes.ThemeManager;
 import iped.configuration.Configurable;
@@ -116,6 +114,7 @@ public class MainFrame extends JFrame {
 
         Configuration configuration = Configuration.getInstance();
         configuration.loadConfigurables(casePath.getAbsolutePath()+"/iped", true);
+
         ConfigurationManager configManager = ConfigurationManager.get();
         Set<Configurable<?>> configs= configManager.getObjects();
 

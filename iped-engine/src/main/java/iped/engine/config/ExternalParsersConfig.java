@@ -1,5 +1,6 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream.Filter;
@@ -56,6 +57,19 @@ public class ExternalParsersConfig implements Configurable<String> {
             }
         }
         return tmp.toFile().getAbsolutePath();
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, EXTERNAL_PARSERS);            
+
+            Files.write(confFile.toPath(), externalParsersXml.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
