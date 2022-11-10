@@ -25,11 +25,10 @@ public class StoreTable extends AbstractTable {
     private int rowIdPos, addressPos, displayNamePos, displayNamePos2, protocolPos, downloadNewEmailMinsPos, downloadEmailFromDaysPos,
         incomingEmailServerPos, outgoingEmailServerPos, outgoingEmailServerUsernamePos, contactsServerPos, calendarServerPos;
 
-    public StoreTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePtr,
+    public StoreTable(EsedbLibrary esedbLibrary, String filePath, PointerByReference tablePtr,
             PointerByReference errorPtr, long numRecords) {
         super();
         this.esedbLibrary = esedbLibrary;
-        this.tableName = tableName;
         this.tablePointer = tablePtr;
         this.errorPointer = errorPtr;
         this.numRecords = numRecords;

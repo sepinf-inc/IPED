@@ -21,11 +21,10 @@ public class AttachmentTable extends AbstractTable {
         mimeTagPos, receivedPos;
 
 
-    public AttachmentTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
+    public AttachmentTable(EsedbLibrary esedbLibrary, String filePath, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
         super();
         this.esedbLibrary = esedbLibrary;
-        this.tableName = tableName;
         this.tablePointer = tablePointer;
         this.errorPointer = errorPointer;
         this.numRecords = numRecords;

@@ -22,11 +22,10 @@ public class ContactTable extends AbstractTable {
     int rowIdPos, storeIdPos, displayNamePos, displayNamePos2, firstNamePos, lastNamePos, emailPos, emailWorkPos,
         emailOtherPos, phonePos, workPhonePos, addressPos, hasNamePos, parentFolderIdPos;
 
-    public ContactTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
+    public ContactTable(EsedbLibrary esedbLibrary, String filePath, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
         super();
         this.esedbLibrary = esedbLibrary;
-        this.tableName = tableName;
         this.tablePointer = tablePointer;
         this.errorPointer = errorPointer;
         this.numRecords = numRecords;

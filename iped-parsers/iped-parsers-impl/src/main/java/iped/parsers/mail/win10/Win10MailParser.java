@@ -341,25 +341,25 @@ public class Win10MailParser extends AbstractParser {
 
                 AbstractTable table = null;
                 if (tableName.equals("Message")) {
-                    messageTable = new MessageTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
+                    messageTable = new MessageTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
                     table = messageTable;
                 } else if (tableName.equals("Recipient")) {
-                    recipientTable = new RecipientTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
+                    recipientTable = new RecipientTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
                     table = recipientTable;
                 } else if (tableName.equals("Attachment")) {
-                    attachTable = new AttachmentTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
+                    attachTable = new AttachmentTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
                     table = attachTable;
                 } else if (tableName.equals("Folders")) {
-                    folderTable = new FolderTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
+                    folderTable = new FolderTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
                     table = folderTable;
                 } else if (tableName.equals("Appointment")) {
-                    apptTable = new AppointmentTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
+                    apptTable = new AppointmentTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
                     table = apptTable;
                 } else if (tableName.equals("Contact")) {
-                    contactTable = new ContactTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
+                    contactTable = new ContactTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
                     table = contactTable;
                 } else if (tableName.equals("Store")) {
-                    storeTable = new StoreTable(esedbLibrary, dbPath, tableName, tablePointer, errorPointer, numRecords);
+                    storeTable = new StoreTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
                     table = storeTable;
                 }
 

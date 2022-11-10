@@ -27,11 +27,10 @@ public class FolderTable extends AbstractTable {
 
     private int rowIdPos, storeIdPos, displayNamePos, displayNamePos2, parentFolderIdPos, createTimePos;
 
-    public FolderTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
+    public FolderTable(EsedbLibrary esedbLibrary, String filePath, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
         super();
         this.esedbLibrary = esedbLibrary;
-        this.tableName = tableName;
         this.tablePointer = tablePointer;
         this.errorPointer = errorPointer;
         this.numRecords = numRecords;

@@ -23,11 +23,10 @@ public class AppointmentTable extends AbstractTable {
     private int rowIdPos, storeIdPos, eventNamePos, locationPos, repeatPos, allDayPos, statusPos, reminderTimeMinPos, organizerPos,
         accountPos, linkPos, durationMinPos, startTimePos, additionalPeoplePos, responsePos, updateCountPos, parentFolderIdPos;
 
-    public AppointmentTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
+    public AppointmentTable(EsedbLibrary esedbLibrary, String filePath, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
         super();
         this.esedbLibrary = esedbLibrary;
-        this.tableName = tableName;
         this.tablePointer = tablePointer;
         this.errorPointer = errorPointer;
         this.numRecords = numRecords;

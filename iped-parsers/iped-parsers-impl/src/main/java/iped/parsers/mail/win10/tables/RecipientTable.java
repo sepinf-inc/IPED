@@ -19,11 +19,10 @@ public class RecipientTable extends AbstractTable {
 
     int rowIdPos, messageIdPos, displayNamePos, displayNamePos2, emailAddressPos, recipientTypePos;
 
-    public RecipientTable(EsedbLibrary esedbLibrary, String filePath, String tableName, PointerByReference tablePointer,
+    public RecipientTable(EsedbLibrary esedbLibrary, String filePath, PointerByReference tablePointer,
         PointerByReference errorPointer, long numRecords) {
         super();
         this.esedbLibrary = esedbLibrary;
-        this.tableName = tableName;
         this.tablePointer = tablePointer;
         this.errorPointer = errorPointer;
         this.numRecords = numRecords;
