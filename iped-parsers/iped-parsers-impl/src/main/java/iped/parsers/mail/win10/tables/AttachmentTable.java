@@ -43,7 +43,7 @@ public class AttachmentTable extends AbstractTable {
     @Override
     public void populateTable() {
         for (int i = 0; i < numRecords; i++) {
-            AttachmentEntry attachment = getAttachment(esedbLibrary, i, errorPointer, tablePointer);
+            AttachmentEntry attachment = extractAttachment(i, errorPointer, tablePointer);
             addAttachment(attachment);
             attachmentList.add(attachment);
         }
@@ -68,7 +68,7 @@ public class AttachmentTable extends AbstractTable {
         return messageAttachments;
     }
 
-    private AttachmentEntry getAttachment(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
+    private AttachmentEntry extractAttachment(int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
 
         int result = 0;
 

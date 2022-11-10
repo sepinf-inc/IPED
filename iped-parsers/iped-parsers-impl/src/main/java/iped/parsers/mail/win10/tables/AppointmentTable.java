@@ -56,7 +56,7 @@ public class AppointmentTable extends AbstractTable {
     @Override
     public void populateTable() {
         for (int i = 0; i < numRecords; i++) {
-            AppointmentEntry appointment = extractAppointment(esedbLibrary, i, errorPointer, tablePointer);
+            AppointmentEntry appointment = extractAppointment(i, errorPointer, tablePointer);
             appointments.add(appointment);
             addAppointmentToParentFolder(appointment, appointment.getParentFolderId());
         }
@@ -77,7 +77,7 @@ public class AppointmentTable extends AbstractTable {
         return childAppointments;
     }
 
-    private AppointmentEntry extractAppointment(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
+    private AppointmentEntry extractAppointment(int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
 
         int result = 0;
 

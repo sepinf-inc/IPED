@@ -45,7 +45,7 @@ public class RecipientTable extends AbstractTable {
     @Override
     public void populateTable() {
         for (int i = 0; i < numRecords; i++) {
-            RecipientEntry recipient = getRecipient(esedbLibrary, i, errorPointer, tablePointer);
+            RecipientEntry recipient = extractRecipient(i, errorPointer, tablePointer);
             addRecipient(recipient.getMessageId(), recipient);
         }
     }
@@ -54,7 +54,7 @@ public class RecipientTable extends AbstractTable {
         return parentMsgToRecipientsMap.get(messageId);
     }
 
-    private RecipientEntry getRecipient(EsedbLibrary esedbLibrary, int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
+    private RecipientEntry extractRecipient(int i, PointerByReference errorPointer, PointerByReference tablePointerReference) {
 
         int result = 0;
 
