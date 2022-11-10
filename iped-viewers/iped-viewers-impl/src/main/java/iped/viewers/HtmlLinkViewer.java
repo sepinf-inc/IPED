@@ -20,6 +20,7 @@ import iped.io.IStreamSource;
 import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
+import iped.parsers.util.Util;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.utils.IOUtil;
 import iped.viewers.api.AttachmentSearcher;
@@ -141,7 +142,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
             }
             File file = null;
             try {
-                file = EmailViewer.getFileRenamedToExt(item.getTempFile(), item.getType());
+                file = Util.getFileRenamedToExt(item.getTempFile(), item.getType());
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
