@@ -68,7 +68,7 @@ public interface Configurable<T> extends Serializable {
      * Writes a configuration resource found after applying the lookup filter.
      * 
      * @param resource
-     *            a configuration resource.
+     *            a configuration path where to save the necessary data.
      */
     public void save(Path resource);
 

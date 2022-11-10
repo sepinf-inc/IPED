@@ -9,6 +9,12 @@ import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
 import iped.utils.UTF8Properties;
 
+/**
+ * @created 10/11/2022
+ * @project IPED
+ * @author Patrick Dalla Bernardina
+ */
+
 public abstract class ConfigurablePanel extends DefaultPanel implements DocumentListener{
     Configurable<?> configurable;
     SpringLayout layout;
@@ -18,7 +24,12 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
         super(mainFrame);
         this.configurable = configurable;
     }
-    
+
+    /**
+     * Factory method to instantiate an ConfigurablePanel suitable to the configurable object
+     * @param configurable - the configurable object that the created ConfigurablePanel will handle.
+     * @param mainFram - the main frame of the panel.
+     */
     static ConfigurablePanel createConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
         Object config = configurable.getConfiguration();
         ConfigurablePanel result=null;
@@ -33,8 +44,16 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
         
         return result;
     }
-    
+
+    /**
+     * Creates the UI objects of the panel.
+     * Every editable UI must install "this" object as a DocumentListener to keep track of changes 
+     */
     abstract public void createConfigurableGUI();
+
+    /**
+     * Applies the changes made on UI objects to the underlying configurable object
+     */
     abstract public void applyChanges();
 
     @Override
