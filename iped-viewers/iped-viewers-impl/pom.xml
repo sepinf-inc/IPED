@@ -97,7 +97,7 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>org.icepdf</groupId>
+            <groupId>com.github.pcorless.icepdf</groupId>
             <artifactId>icepdf-viewer</artifactId>
             <version>${icepdf.version}</version>
             <type>jar</type>

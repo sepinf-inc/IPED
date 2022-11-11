@@ -21,7 +21,7 @@ import org.icepdf.ri.common.SwingViewBuilder;
 import org.icepdf.ri.common.views.DocumentViewController;
 import org.icepdf.ri.common.views.DocumentViewControllerImpl;
 import org.icepdf.ri.common.views.DocumentViewModelImpl;
-import org.icepdf.ri.util.PropertiesManager;
+import org.icepdf.ri.util.ViewerPropertiesManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,13 +113,15 @@ public class IcePDFViewer extends AbstractViewer {
         pdfController.getDocumentViewController().setAnnotationCallback(
                 new org.icepdf.ri.common.MyAnnotationCallback(pdfController.getDocumentViewController()));
 
-        PropertiesManager propManager = PropertiesManager.getInstance();
-        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ANNOTATION, "false"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_TOOL, "false"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ZOOM, "true"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_SHOW_STATUSBAR, "false"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_HIDE_UTILITYPANE, "true"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_DEFAULT_PAGEFIT, Integer.toString(fitMode));
+        ViewerPropertiesManager propManager = ViewerPropertiesManager.getInstance();
+        propManager.set(ViewerPropertiesManager.PROPERTY_SHOW_TOOLBAR_ANNOTATION, "false"); //$NON-NLS-1$
+        propManager.set(ViewerPropertiesManager.PROPERTY_SHOW_TOOLBAR_TOOL, "false"); //$NON-NLS-1$
+        propManager.set(ViewerPropertiesManager.PROPERTY_SHOW_TOOLBAR_ZOOM, "true"); //$NON-NLS-1$
+        propManager.set(ViewerPropertiesManager.PROPERTY_SHOW_STATUSBAR, "false"); //$NON-NLS-1$
+        propManager.set(ViewerPropertiesManager.PROPERTY_HIDE_UTILITYPANE, "true"); //$NON-NLS-1$
+        propManager.set(ViewerPropertiesManager.PROPERTY_DEFAULT_PAGEFIT, Integer.toString(fitMode));
+        propManager.set(ViewerPropertiesManager.PROPERTY_SHOW_TOOLBAR_SEARCH, "false"); //$NON-NLS-1$
+        
 
         SwingViewBuilder factory = new SwingViewBuilder(pdfController, viewMode, fitMode);
         viewerPanel = factory.buildViewerPanel();
