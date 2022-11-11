@@ -64,6 +64,13 @@ public class IcePDFViewer extends AbstractViewer {
         System.setProperty("org.icepdf.core.ccittfax.jai", "true"); //$NON-NLS-1$ //$NON-NLS-2$
         System.setProperty("org.icepdf.core.minMemory", "150M"); //$NON-NLS-1$ //$NON-NLS-2$
         System.setProperty("org.icepdf.core.views.page.text.highlightColor", "0xFFFF00"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        // Set rendering hints to improve rendering quality
+        System.setProperty("org.icepdf.core.screen.alphaInterpolation","VALUE_ALPHA_INTERPOLATION_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("org.icepdf.core.screen.colorRender","VALUE_COLOR_RENDER_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("org.icepdf.core.screen.interpolation","VALUE_INTERPOLATION_BILINEAR"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("org.icepdf.core.screen.render","VALUE_RENDER_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
+        
         // pode provocar crash da jvm
         // System.setProperty("org.icepdf.core.awtFontLoading", "true");
 
