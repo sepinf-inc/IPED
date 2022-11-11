@@ -81,10 +81,12 @@ public class TaskConfigTabPanel extends DefaultPanel {
         btVoltar.addActionListener( e -> {
             for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
                 Configurable<?> configurable = (Configurable<?>)iterator.next();
-                ConfigurablePanel configPanel = configurablePanels.get(configurable);
-                if(configPanel.hasChanged()) {
-                    configurablePanels.get(configurable).applyChanges();
-                    configurationManager.notifyUpdate(configurable);
+                if(!(configurable instanceof EnableTaskProperty)) {
+                    ConfigurablePanel configPanel = configurablePanels.get(configurable);
+                    if(configPanel.hasChanged()) {
+                        configurablePanels.get(configurable).applyChanges();
+                        configurationManager.notifyUpdate(configurable);
+                    }
                 }
             }
 

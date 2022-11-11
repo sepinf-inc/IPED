@@ -4,7 +4,15 @@ package iped.app.home.newcase.tabs.process;/*
  * @author Thiago S. Figueiredo
  */
 
-import javax.swing.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.table.AbstractTableModel;
 
 import iped.app.home.MainFrame;
@@ -13,11 +21,6 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.config.TaskInstallerConfig;
 import iped.engine.task.AbstractTask;
-
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 public class TasksTableModel extends AbstractTableModel {
     ConfigurationManager configurationManager;
@@ -92,8 +95,15 @@ public class TasksTableModel extends AbstractTableModel {
         panel.setLayout( new GridBagLayout() );
 
         List<Configurable<?>> configurables = task.getConfigurables();
+        int count = 0;//counts the number of non EnableTaskProperty configurables
+        for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
+            Configurable<?> configurable = (Configurable<?>)iterator.next();
+            if(!(configurable instanceof EnableTaskProperty)) {
+                count++;
+            }
+        }
         
-        if(configurables.size()>0) {
+        if(count>0) {
             GridBagConstraints gbc = new GridBagConstraints();
             JButton taskOptionButton = new JButton("...");
             

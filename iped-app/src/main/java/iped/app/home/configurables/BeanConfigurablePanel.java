@@ -7,9 +7,18 @@ import java.beans.PropertyDescriptor;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentEvent.ElementChange;
+import javax.swing.event.DocumentEvent.EventType;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
+import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
 
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
@@ -49,14 +58,26 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
                     }catch (Exception e) {
                         e.printStackTrace();
                     }
-                    JTextField textField = new JTextField();
+                    
+                    JComponent uiField = null;
                     if(o!=null) {
-                        textField.setText(o.toString());                    
+                        if(o instanceof Boolean) {
+                            JCheckBox checkField = new JCheckBox();
+                            checkField.setText(o.toString());
+                            checkField.addChangeListener(e->{
+                                changed=true;
+                            });
+                            uiField = checkField;
+                        }else {
+                            JTextField textField = new JTextField();
+                            textField.setText(o.toString());
+                            textField.getDocument().addDocumentListener(this);
+                            uiField = textField;
+                        }
                     }
 
-                    layout.putConstraint(SpringLayout.VERTICAL_CENTER, textField, 0, SpringLayout.VERTICAL_CENTER, label);
-                    textField.getDocument().addDocumentListener(this);
-                    comps.add(textField);
+                    layout.putConstraint(SpringLayout.VERTICAL_CENTER, uiField, 0, SpringLayout.VERTICAL_CENTER, label);
+                    comps.add(uiField);
                     lastLabel=label;
                 }
                 for (Iterator iterator = comps.iterator(); iterator.hasNext();) {
