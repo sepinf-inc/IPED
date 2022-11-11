@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -127,21 +126,21 @@ public class TaskInstallerConfig implements Configurable<String> {
             e.printStackTrace();
         }
     }
-
+    
     public void update(List<AbstractTask> tasks) {
         StringBuffer output=new StringBuffer();
-        output.append(xml.substring(xml.indexOf("<tasks>")));
-        output.append("<tasks>");
+        output.append(xml.substring(0,xml.indexOf("<tasks>")));
+        output.append("<tasks>\n");
         for (Iterator iterator = tasks.iterator(); iterator.hasNext();) {
             AbstractTask task = (AbstractTask) iterator.next();
             if(task instanceof IScriptTask) {
                 output.append("<task script=\"");
                 output.append(((IScriptTask) task).getScriptFileName());
-                output.append("></task>");
+                output.append("\"></task>\n");
             }else {
                 output.append("<task class=\"");
                 output.append(task.getClass().getCanonicalName());
-                output.append("></task>");
+                output.append("\"></task>\n");
             }
         }
         output.append("</tasks>");

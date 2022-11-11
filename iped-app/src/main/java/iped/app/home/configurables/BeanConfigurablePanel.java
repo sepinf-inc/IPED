@@ -1,4 +1,4 @@
-package iped.app.home.newcase.tabs.process;
+package iped.app.home.configurables;
 
 import java.awt.Component;
 import java.beans.IntrospectionException;
@@ -15,10 +15,8 @@ import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
 
 public class BeanConfigurablePanel extends ConfigurablePanel{
-
     protected BeanConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
-        // TODO Auto-generated constructor stub
     }
 
     public void createConfigurableGUI() {
@@ -27,7 +25,7 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
             ArrayList<Component> comps = new ArrayList<Component>();
             JLabel largestLabel = null;
             int max=0;
-            
+
             Object config = configurable.getConfiguration();
             if(config!=null) {
                 property:for (PropertyDescriptor pd : Introspector.getBeanInfo(config.getClass()).getPropertyDescriptors()) {
@@ -44,6 +42,7 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
                     if(lastLabel!=null) {
                         layout.putConstraint(SpringLayout.NORTH, label, 15, SpringLayout.SOUTH, lastLabel);
                     }
+
                     Object o=null;
                     try {
                         o = pd.getReadMethod().invoke(config);
@@ -54,10 +53,8 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
                     if(o!=null) {
                         textField.setText(o.toString());                    
                     }
-                    if(lastLabel!=null) {
-                        layout.putConstraint(SpringLayout.NORTH, textField, 15, SpringLayout.SOUTH, lastLabel);
-                        layout.putConstraint(SpringLayout.NORTH, textField, 15, SpringLayout.SOUTH, lastLabel);
-                    }
+
+                    layout.putConstraint(SpringLayout.VERTICAL_CENTER, textField, 0, SpringLayout.VERTICAL_CENTER, label);
                     textField.getDocument().addDocumentListener(this);
                     comps.add(textField);
                     lastLabel=label;

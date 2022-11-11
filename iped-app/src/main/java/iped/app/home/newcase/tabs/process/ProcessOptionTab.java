@@ -127,13 +127,19 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     }
 
     private void setupNewProfilePanel(JPanel panel){
-        profilePanel = (JPanel) panel.getComponent(0);
+        if(panel.getComponentCount()<=0) {
+            profilePanel=new JPanel();
+            panel.add(profilePanel);
+        }else {
+            profilePanel = (JPanel) panel.getComponent(0);
+        }
         profilePanel.removeAll();
         
         profilePanel.setBackground(Color.white);
         profilePanel.add(new JLabel("Novo perfil de execução:") );
         
         buttonNext.setEnabled(false);
+        buttonNext.setToolTipText("Save or cancel profile edition before continue.");
         
         tfProfile = new JTextField();
         tfProfile.setBackground(Color.RED);
@@ -146,10 +152,12 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         profilePanel.add(btInsertProfile);
         btInsertProfile.addActionListener(e -> {
             try {
-                IConfigurationDirectory dir = ProfileManager.get().createProfile(tfProfile.getText(), configurationManager);                
+                updateTaskInstallerConfig();
+                IConfigurationDirectory dir = ProfileManager.get().createProfile(tfProfile.getText(), configurationManager);
                 profilesCombo.addItem(dir);
 
                 buttonNext.setEnabled(true);
+                buttonNext.setToolTipText("");
                 setupProfilesPanel(panel);
                 profilesCombo.setSelectedItem(dir);
                 panel.repaint();
@@ -168,6 +176,17 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         });
 
         profilePanel.add(btCancel);
+        profilePanel.updateUI();
+    }
+
+    private void updateTaskInstallerConfig() {
+        List<AbstractTask> tasks = new ArrayList<AbstractTask>();
+        for(int i=0; i<tasksTableModel.getRowCount();i++) {
+            if(tasksTableModel.getEnabled(i)) {
+                tasks.add(tasksTableModel.getTaskList().get(i));
+            }
+        }
+        taskInstallerConfig.update(tasks);
     }
 
     private void setupTasksTables(JPanel panel){
@@ -309,5 +328,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     @Override
     public void onChange(Configurable<?> configurable) {
         setupNewProfilePanel(panelForm);
+        panelForm.invalidate();
+        panelForm.repaint();
     }
 }

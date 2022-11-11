@@ -10,6 +10,7 @@ import javax.swing.table.AbstractTableModel;
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.TaskInstallerConfig;
 import iped.engine.task.AbstractTask;
 
 import java.awt.*;
@@ -26,8 +27,11 @@ public class TasksTableModel extends AbstractTableModel {
     private ArrayList<Boolean> enabled = new ArrayList<Boolean>();
     MainFrame mainFrame;
 
+    private TaskInstallerConfig taskInstallerConfig;
+
     public TasksTableModel(ConfigurationManager configurationManager, MainFrame mainFrame, List<AbstractTask> taskList) {
         this.configurationManager=configurationManager;
+        this.taskInstallerConfig = (TaskInstallerConfig) configurationManager.findObject(TaskInstallerConfig.class);
         this.taskList = taskList;
         this.mainFrame = mainFrame;
         for (int i=0; i<taskList.size();i++) {
@@ -123,7 +127,10 @@ public class TasksTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         AbstractTask currentTask = taskList.get(rowIndex);
         switch (columnIndex){
-            case 1: enabled.set(rowIndex, ((boolean) aValue)); break;
+            case 1: 
+                enabled.set(rowIndex, ((boolean) aValue));
+                configurationManager.notifyUpdate(taskInstallerConfig);
+                break;
         }
     }
 
@@ -135,6 +142,8 @@ public class TasksTableModel extends AbstractTableModel {
             }
         }
     }
-
-
+    
+    public boolean getEnabled(int rowIndex) {
+        return enabled.get(rowIndex);
+    }
 }

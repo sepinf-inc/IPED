@@ -9,7 +9,6 @@ import iped.configuration.EnabledInterface;
 import iped.utils.UTF8Properties;
 
 public class EnableTaskProperty extends AbstractPropertiesConfigurable implements EnabledInterface {
-
     /**
      * 
      */
@@ -61,6 +60,8 @@ public class EnableTaskProperty extends AbstractPropertiesConfigurable implement
     public void save(Path resource) {
         try {
             File confFile = new File(resource.toFile(), Configuration.CONFIG_FILE);
+            properties.load(confFile);
+            properties.setProperty(propertyName, Boolean.toString(value));
             properties.store(confFile);
         } catch (IOException e) {
             e.printStackTrace();

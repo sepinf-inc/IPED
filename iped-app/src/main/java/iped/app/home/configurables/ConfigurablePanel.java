@@ -1,4 +1,9 @@
-package iped.app.home.newcase.tabs.process;
+package iped.app.home.configurables;
+
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.HashSet;
 
 import javax.swing.SpringLayout;
 import javax.swing.event.DocumentEvent;
@@ -7,6 +12,7 @@ import javax.swing.event.DocumentListener;
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
+import iped.engine.config.EnableTaskProperty;
 import iped.utils.UTF8Properties;
 
 /**
@@ -30,18 +36,35 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
      * @param configurable - the configurable object that the created ConfigurablePanel will handle.
      * @param mainFram - the main frame of the panel.
      */
-    static ConfigurablePanel createConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
+    public static ConfigurablePanel createConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
         Object config = configurable.getConfiguration();
         ConfigurablePanel result=null;
         
-        if(config instanceof UTF8Properties) {
+        if(configurable instanceof EnableTaskProperty) {
+            result = new EnableTaskConfigurablePanel((EnableTaskProperty)configurable, mainFrame);
+        }else if(config instanceof UTF8Properties) {
             result = new UTF8PropertiesConfigurablePanel((Configurable<UTF8Properties>)configurable, mainFrame);
         }else if(config instanceof String) {
             result = new TextConfigurablePanel((Configurable<String>)configurable, mainFrame);
-        }else {
+        }else if(config instanceof Collection<?>) {
+            Type type;
+            try {
+                type = configurable.getClass().getMethod("getConfiguration").getGenericReturnType();
+                if(type instanceof ParameterizedType) {
+                    ParameterizedType ptype = (ParameterizedType) type;
+                    Type[] typeArguments = ptype.getActualTypeArguments();
+                    if(typeArguments[0].getTypeName().equals(String.class.getCanonicalName())) {
+                        result = new StringSetConfigurablePanel((Configurable<HashSet<String>>)configurable, mainFrame);
+                    }
+                }
+            } catch (NoSuchMethodException | SecurityException e) {
+                e.printStackTrace();
+            }
+        }
+        if(result==null) {
             result = new BeanConfigurablePanel((Configurable<?>)configurable, mainFrame);
         }
-        
+
         return result;
     }
 

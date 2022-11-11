@@ -1,4 +1,6 @@
-package iped.app.home.newcase.tabs.process;
+package iped.app.home.configurables;
+
+import java.awt.BorderLayout;
 
 import javax.swing.JScrollPane;
 
@@ -8,18 +10,21 @@ import iped.configuration.Configurable;
 
 public class TextConfigurablePanel extends ConfigurablePanel{
 
-    protected TextConfigurablePanel(Configurable<String> configurable, MainFrame mainFrame) {
+    protected RegexTextPane textArea;
+
+    protected TextConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
     }
 
     public void createConfigurableGUI() {
-        RegexTextPane textArea = new RegexTextPane();
+        textArea = new RegexTextPane();
         textArea.setAutoscrolls(true);
         textArea.setText(configurable.getConfiguration().toString());
         JScrollPane txtAreaScroll = new JScrollPane();
         txtAreaScroll.setViewportView(textArea);
-        txtAreaScroll.setAutoscrolls(true);        
-        this.add(txtAreaScroll);
+        txtAreaScroll.setAutoscrolls(true);
+        this.setLayout(new BorderLayout());
+        this.add(txtAreaScroll,BorderLayout.CENTER);
     }
 
     @Override

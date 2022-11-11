@@ -1,4 +1,4 @@
-package iped.app.home.newcase.tabs.process;
+package iped.app.home.configurables;
 
 import java.awt.Component;
 import java.util.ArrayList;
@@ -48,10 +48,7 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
                 if(o!=null) {
                     textField.setText(o.toString());                    
                 }
-                if(lastLabel!=null) {
-                    layout.putConstraint(SpringLayout.NORTH, textField, 15, SpringLayout.SOUTH, lastLabel);
-                    layout.putConstraint(SpringLayout.NORTH, textField, 15, SpringLayout.SOUTH, lastLabel);
-                }
+                layout.putConstraint(SpringLayout.VERTICAL_CENTER, textField, 0, SpringLayout.VERTICAL_CENTER, label);
                 textField.getDocument().addDocumentListener(this);
                 comps.add(textField);
                 textFields.put(e.getKey(), textField);

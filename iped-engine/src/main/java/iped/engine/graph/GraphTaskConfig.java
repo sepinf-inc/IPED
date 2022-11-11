@@ -52,7 +52,7 @@ public class GraphTaskConfig extends AbstractTaskConfig<GraphConfiguration> {
         try {
             File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
             confDir.mkdirs();
-            File confFile = new File(confDir, Configuration.CONFIG_FILE);            
+            File confFile = new File(confDir, CONFIG_FILE);            
             Files.write(confFile.toPath(),graphConfig.toString().getBytes(StandardCharsets.UTF_8));
         }catch (Exception e) {
             e.printStackTrace();

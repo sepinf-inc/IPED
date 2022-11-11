@@ -35,16 +35,21 @@ public class ExportByKeywordsConfig extends AbstractTaskConfig<List<String>> imp
 
     @Override
     public void processTaskConfig(Path resource) throws IOException {
-
-        String content = Util.readUTF8Content(resource.toFile());
-        for (String line : content.split("\n")) { //$NON-NLS-1$
-            line = line.trim();
-            if (line.startsWith("#") || line.isEmpty()) { //$NON-NLS-1$
-                continue;
-            }
-            keywords.add(line);
+        String content = null;
+        try {
+            content = Util.readUTF8Content(resource.toFile());
+        }catch (ArrayIndexOutOfBoundsException e) {
+            
         }
-
+        if(content!=null) {
+            for (String line : content.split("\n")) { //$NON-NLS-1$
+                line = line.trim();
+                if (line.startsWith("#") || line.isEmpty()) { //$NON-NLS-1$
+                    continue;
+                }
+                keywords.add(line);
+            }
+        }
     }
 
     @Override
@@ -94,7 +99,7 @@ public class ExportByKeywordsConfig extends AbstractTaskConfig<List<String>> imp
         try {
             File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
             confDir.mkdirs();
-            File confFile = new File(confDir, Configuration.CONFIG_FILE);            
+            File confFile = new File(confDir, CONFIG_FILE);
             Files.write(confFile.toPath(),keywords);
         }catch (Exception e) {
             e.printStackTrace();

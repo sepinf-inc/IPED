@@ -18,6 +18,7 @@ import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.MainFrameCardsNames;
+import iped.app.home.configurables.ConfigurablePanel;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.task.AbstractTask;
