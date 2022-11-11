@@ -21,6 +21,7 @@ public class GraphTaskConfig extends AbstractTaskConfig<GraphConfiguration> {
     public static final String CONFIG_FILE = "GraphConfig.json";
 
     private GraphConfiguration graphConfig;
+    private String json;
 
     @Override
     public GraphConfiguration getConfiguration() {
@@ -44,6 +45,7 @@ public class GraphTaskConfig extends AbstractTaskConfig<GraphConfiguration> {
 
     @Override
     public void processTaskConfig(Path resource) throws IOException {
+        json = Files.readString(resource);
         graphConfig = GraphConfiguration.loadFrom(resource.toFile());
     }
 
@@ -52,8 +54,8 @@ public class GraphTaskConfig extends AbstractTaskConfig<GraphConfiguration> {
         try {
             File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
             confDir.mkdirs();
-            File confFile = new File(confDir, CONFIG_FILE);            
-            Files.write(confFile.toPath(),graphConfig.toString().getBytes(StandardCharsets.UTF_8));
+            File confFile = new File(confDir, CONFIG_FILE);
+            Files.write(confFile.toPath(),json.getBytes(StandardCharsets.UTF_8));
         }catch (Exception e) {
             e.printStackTrace();
         }
