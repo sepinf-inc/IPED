@@ -3,6 +3,7 @@ package iped.utils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -26,31 +27,35 @@ public class UTF8Properties extends Properties {
     String cumulativeSeparator=";";
 
     public synchronized void load(File file) throws IOException {
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
-        String str = null;
-        while ((str = in.readLine()) != null) {
-            if (str.isEmpty() || str.charAt(0) == '#') {
-                continue;
-            }
-            int pos = str.indexOf('=');
-            while (pos > 0 && str.charAt(pos - 1) == '\\') {
-                pos = str.indexOf('=', pos + 1);
-            }
-            if (pos > 0) {
-                String key = str.substring(0, pos).replace("\\=", "=").replace("\\:", ":").trim(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                String val = str.substring(pos + 1).replace("\\=", "=").replace("\\:", ":").trim(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                if(isCumulative()) {
-                    String valant = super.getProperty(key);
-                    if(valant!=null) {
-                        val = valant + cumulativeSeparator + val;
+        try {
+            BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
+            String str = null;
+            while ((str = in.readLine()) != null) {
+                if (str.isEmpty() || str.charAt(0) == '#') {
+                    continue;
+                }
+                int pos = str.indexOf('=');
+                while (pos > 0 && str.charAt(pos - 1) == '\\') {
+                    pos = str.indexOf('=', pos + 1);
+                }
+                if (pos > 0) {
+                    String key = str.substring(0, pos).replace("\\=", "=").replace("\\:", ":").trim(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    String val = str.substring(pos + 1).replace("\\=", "=").replace("\\:", ":").trim(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    if(isCumulative()) {
+                        String valant = super.getProperty(key);
+                        if(valant!=null) {
+                            val = valant + cumulativeSeparator + val;
+                        }
+                        super.put(key, val);
+                    }else {
+                        super.put(key, val);
                     }
-                    super.put(key, val);
-                }else {
-                    super.put(key, val);
                 }
             }
+            in.close();
+        }catch (FileNotFoundException e) {
+            //ignores
         }
-        in.close();
     }
 
     public synchronized void store(File file) throws IOException {

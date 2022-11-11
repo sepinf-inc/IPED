@@ -10,11 +10,13 @@ import javax.swing.table.AbstractTableModel;
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.EnableTaskProperty;
 import iped.engine.config.TaskInstallerConfig;
 import iped.engine.task.AbstractTask;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class TasksTableModel extends AbstractTableModel {
@@ -129,6 +131,14 @@ public class TasksTableModel extends AbstractTableModel {
         switch (columnIndex){
             case 1: 
                 enabled.set(rowIndex, ((boolean) aValue));
+                List<Configurable<?>> configs = taskList.get(rowIndex).getConfigurables();
+                for (Iterator iterator = configs.iterator(); iterator.hasNext();) {
+                    Configurable<?> configurable = (Configurable<?>) iterator.next();
+                    if(configurable instanceof EnableTaskProperty) {
+                        ((EnableTaskProperty) configurable).setEnabled(true);
+                        configurationManager.notifyUpdate(configurable);
+                    }
+                }
                 configurationManager.notifyUpdate(taskInstallerConfig);
                 break;
         }

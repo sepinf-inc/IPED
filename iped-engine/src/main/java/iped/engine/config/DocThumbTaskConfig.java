@@ -125,13 +125,4 @@ public class DocThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
     }
 
-    @Override
-    public void save(Path resource) {
-        try {
-            properties.store(resource.toFile());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 }

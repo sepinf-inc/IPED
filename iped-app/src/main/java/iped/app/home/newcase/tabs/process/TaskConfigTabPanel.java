@@ -21,6 +21,7 @@ import iped.app.home.MainFrameCardsNames;
 import iped.app.home.configurables.ConfigurablePanel;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.EnableTaskProperty;
 import iped.engine.task.AbstractTask;
 
 public class TaskConfigTabPanel extends DefaultPanel {
@@ -61,10 +62,12 @@ public class TaskConfigTabPanel extends DefaultPanel {
         });
         for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
             Configurable<?> configurable = (Configurable<?>) iterator.next();
-            ConfigurablePanel configPanel = ConfigurablePanel.createConfigurablePanel(configurable, mainFrame);
-            configPanel.createConfigurableGUI();
-            configurablePanels.put(configurable,configPanel);            
-            tabbedPane.addTab(configurable.getClass().getSimpleName(), UIManager.getIcon("FileView.fileIcon"), configPanel, "Página para preenchimento das informações do caso");
+            if(!(configurable instanceof EnableTaskProperty)) {
+                ConfigurablePanel configPanel = ConfigurablePanel.createConfigurablePanel(configurable, mainFrame);
+                configPanel.createConfigurableGUI();
+                configurablePanels.put(configurable,configPanel);            
+                tabbedPane.addTab(configurable.getClass().getSimpleName(), UIManager.getIcon("FileView.fileIcon"), configPanel, "Página para preenchimento das informações do caso");
+            }
         }
         this.add(tabbedPane);
 

@@ -1,5 +1,6 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
@@ -57,5 +58,17 @@ public class LocaleConfig extends AbstractPropertiesConfigurable {
 
     public Locale getLocale() {
         return locale;
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CONFIG_FILE);            
+            properties.store(confFile);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

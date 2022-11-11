@@ -1,7 +1,9 @@
 package iped.engine.config;
 
+import java.io.CharArrayReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,6 +30,7 @@ public class CategoryConfig extends AbstractTaskConfig<String> {
     private static final String CONFIG_FILE = "CategoriesConfig.json";
 
     private Category root;
+    private String json;
 
     private transient Map<String, String> normalizedMap;
 
@@ -87,30 +90,23 @@ public class CategoryConfig extends AbstractTaskConfig<String> {
 
     @Override
     public String getConfiguration() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectWriter writer = objectMapper.writerFor(Category.class);
-        try {
-            return writer.writeValueAsString(root);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return json;
     }
 
     @Override
-    public void setConfiguration(String config) {
+    public void setConfiguration(String json) {
+        this.json = json;
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectReader reader = objectMapper.readerFor(Category.class);
         try {
-            root = reader.readValue(config);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            try (Reader in = new CharArrayReader(json.toCharArray()) ) {
+                root = reader.readValue(in);
+                populateParents(root);
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
         }
-        populateParents(root);
-    }
-
-    public Category getRootCategory() {
-        return root;
-    }
+}
 
     @Override
     public String getTaskEnableProperty() {
@@ -124,7 +120,8 @@ public class CategoryConfig extends AbstractTaskConfig<String> {
 
     @Override
     public void processTaskConfig(Path resource) throws IOException {
-        setConfiguration(Files.readString(resource));
+        json = Files.readString(resource);
+        setConfiguration(json);
     }
 
     private void populateParents(Category category) {
@@ -165,10 +162,14 @@ public class CategoryConfig extends AbstractTaskConfig<String> {
             File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
             confDir.mkdirs();
             File confFile = new File(confDir, CONFIG_FILE);            
-            Files.write(confFile.toPath(),output.toString().getBytes(StandardCharsets.UTF_8));
+            Files.write(confFile.toPath(),json.getBytes(StandardCharsets.UTF_8));
         }catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public Category getRoot() {
+        return root;
     }
 
 }

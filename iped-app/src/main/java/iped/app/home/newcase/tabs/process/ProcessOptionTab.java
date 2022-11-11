@@ -42,6 +42,7 @@ import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.config.ConfigurableChangeListener;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.EnableTaskProperty;
 import iped.engine.config.ProfileManager;
 import iped.engine.config.TaskInstallerConfig;
 import iped.engine.task.AbstractTask;
@@ -184,6 +185,14 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         for(int i=0; i<tasksTableModel.getRowCount();i++) {
             if(tasksTableModel.getEnabled(i)) {
                 tasks.add(tasksTableModel.getTaskList().get(i));
+            }
+            //loop to update enableTaskProperties configurables
+            List<Configurable<?>> configs = tasksTableModel.getTaskList().get(i).getConfigurables();
+            for (Iterator iterator = configs.iterator(); iterator.hasNext();) {
+                Configurable<?> configurable = (Configurable<?>) iterator.next();
+                if(configurable instanceof EnableTaskProperty) {
+                    ((EnableTaskProperty) configurable).setEnabled(tasksTableModel.getEnabled(i));
+                }
             }
         }
         taskInstallerConfig.update(tasks);

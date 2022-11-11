@@ -20,6 +20,10 @@ public class PluginConfig extends AbstractPropertiesConfigurable {
     private static final long serialVersionUID = 1L;
     private String relativePluginFolder;
     private String tskJarPath;
+    private String value;
+    final static private String tskJarPathpropName = "tskJarPath";
+    final static private String propertyName = "pluginFolder";
+    
 
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
 
@@ -63,12 +67,12 @@ public class PluginConfig extends AbstractPropertiesConfigurable {
     @Override
     public void processProperties(UTF8Properties properties) {
 
-        String value = properties.getProperty("pluginFolder"); //$NON-NLS-1$
+        value = properties.getProperty(propertyName); //$NON-NLS-1$
         if (value != null) {
             relativePluginFolder = value.trim();
         }
 
-        tskJarPath = properties.getProperty("tskJarPath"); //$NON-NLS-1$
+        tskJarPath = properties.getProperty(tskJarPathpropName); //$NON-NLS-1$
         if (tskJarPath != null && !tskJarPath.isEmpty())
             tskJarPath = tskJarPath.trim();
         else if (!SystemUtils.IS_OS_WINDOWS) {
@@ -76,6 +80,21 @@ public class PluginConfig extends AbstractPropertiesConfigurable {
         }
         if (!SystemUtils.IS_OS_WINDOWS && !new File(tskJarPath).exists()) {
             throw new IPEDException("File not found " + tskJarPath + ". Set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$ //$NON-NLS-2$
+        }
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, LOCAL_CONFIG);            
+            properties.load(confFile);
+            properties.setProperty(propertyName , value);
+            properties.setProperty(tskJarPathpropName , tskJarPath);
+            properties.store(confFile);
+        }catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

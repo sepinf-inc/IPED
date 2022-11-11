@@ -40,9 +40,7 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
         Object config = configurable.getConfiguration();
         ConfigurablePanel result=null;
         
-        if(configurable instanceof EnableTaskProperty) {
-            result = new EnableTaskConfigurablePanel((EnableTaskProperty)configurable, mainFrame);
-        }else if(config instanceof UTF8Properties) {
+        if(config instanceof UTF8Properties) {
             result = new UTF8PropertiesConfigurablePanel((Configurable<UTF8Properties>)configurable, mainFrame);
         }else if(config instanceof String) {
             result = new TextConfigurablePanel((Configurable<String>)configurable, mainFrame);

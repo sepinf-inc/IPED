@@ -53,6 +53,7 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<iped.
         private int prefix, suffix;
         private boolean ignoreCase;
         private String regex;
+        private String srcRegex;
 
         public String getRegexName() {
             return regexName;
@@ -75,13 +76,15 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<iped.
         }
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("regexName=").append(regexName).append(",");
-            sb.append("prefix=").append(prefix).append(",");
-            sb.append("suffix=").append(suffix).append(",");
-            sb.append("ignoreCase=").append(ignoreCase).append(",");
-            sb.append("regex=").append(regex);
-            return sb.toString();
+            return regexName+","+ignoreCase+","+prefix+","+suffix+"="+srcRegex;
+        }
+
+        public String getSrcRegex() {
+            return srcRegex;
+        }
+
+        public void setSrcRegex(String srcRegex) {
+            this.srcRegex = srcRegex;
         }
     }
 
@@ -154,6 +157,7 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<iped.
                 entry.ignoreCase = params.length > 1 ? Boolean.valueOf(params[1].trim()) : true;
                 entry.prefix = params.length > 2 ? Integer.valueOf(params[2].trim()) : 0;
                 entry.suffix = params.length > 3 ? Integer.valueOf(params[3].trim()) : 0;
+                entry.srcRegex = values[1].trim();
                 entry.regex = replace(values[1].trim());
                 replaceWordBoundaries(entry);
                 regexList.add(entry);
@@ -212,7 +216,7 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<iped.
             confDir.mkdirs();
             File confFile = new File(confDir, CONFIG_FILE);            
             
-            Files.write(resource,output.toString().getBytes(StandardCharsets.UTF_8));
+            Files.write(confFile.toPath(),output.toString().getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
         }
