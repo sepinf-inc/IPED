@@ -21,12 +21,12 @@ public class SplashScreenManager {
      * may be adjusted in the future, if a larger number of classes are loaded
      * during startup process.
      */
-    private static int maxProgress = 3750;
+    private static int maxProgress = 2300;
 
     /**
      * Expected initial progress (roughly).
      */
-    private static int minProgress = 500;
+    private static int minProgress = 0;
 
     public void start() {
         SplashScreen screen = SplashScreen.getSplashScreen();
@@ -128,7 +128,9 @@ public class SplashScreenManager {
 
                         // Estimate the progress based on the number of loaded classes
                         int progress = 0;
-                        progress += StartUpControl.getCurrentProcessSize();
+
+                        // This causes illegal reflective access message on Console
+                        // progress += StartUpControl.getCurrentProcessSize();
                         progress += server.getProgress();
 
                         // Also increment a bit as time goes by
