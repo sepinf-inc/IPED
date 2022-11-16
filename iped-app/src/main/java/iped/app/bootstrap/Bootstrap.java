@@ -19,6 +19,7 @@ import org.apache.tika.utils.SystemUtils;
 import ag.ion.bion.officelayer.application.IOfficeApplication;
 import iped.app.config.LogConfiguration;
 import iped.app.processing.Main;
+import iped.app.ui.splash.SplashScreenManager;
 import iped.app.ui.splash.StartUpControl;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
@@ -158,7 +159,7 @@ public class Bootstrap {
      * actions at this execution point.
      */
     protected void configLoaded() {
-        // Default implementation does nothing
+        new SplashScreenManager().start();
     }
     
     private static List<String> getCustomJVMArgs(){
