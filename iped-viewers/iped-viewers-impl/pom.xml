@@ -122,6 +122,12 @@
     		<artifactId>imageio-bmp</artifactId>
     		<version>3.8.3</version>
 	  	</dependency>
+	  	<dependency>
+	  	    <!--Used by IcePDF-7.0-->
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-tiff</artifactId>
+            <version>3.8.3</version>
+        </dependency>
 	</dependencies>
 
 </project>
