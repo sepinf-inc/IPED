@@ -29,11 +29,16 @@ public class SplashScreenManager {
     private static int minProgress = 0;
 
     public void start() {
-        SplashScreen screen = SplashScreen.getSplashScreen();
-        if (screen == null) {
+        SplashScreen sc = null;
+        try {
+            sc = SplashScreen.getSplashScreen();
+        } catch (Exception e) {
+        }
+        if (sc == null) {
             return;
         }
 
+        SplashScreen screen = sc;
         StartUpControlServer server = new StartUpControlServer();
 
         Thread threadUpdate = new Thread() {
