@@ -629,6 +629,9 @@
                                     <classpathPrefix>lib/</classpathPrefix>
                                     <mainClass>iped.app.bootstrap.Bootstrap</mainClass>
                                 </manifest>
+                                <manifestEntries>
+                                    <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
+                                </manifestEntries>  
                             </archive>
                         </configuration>
                     </execution>
