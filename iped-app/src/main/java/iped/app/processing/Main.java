@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import iped.app.config.LogConfiguration;
 import iped.app.processing.ui.ProgressConsole;
 import iped.app.processing.ui.ProgressFrame;
+import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
@@ -55,6 +56,8 @@ public class Main {
     File logFile;
     LogConfiguration logConfiguration;
     CmdLineArgsImpl cmdLineParams;
+
+    private StartUpControlClient startUpControlClient;
 
     private Manager manager;
 
@@ -219,6 +222,10 @@ public class Main {
             provider.addPropertyChangeListener(console, false);
         }
 
+        if (startUpControlClient != null) {
+            startUpControlClient.finish();
+        }
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -274,6 +281,9 @@ public class Main {
         Main iped = new Main(args, true);
         PrintStream SystemOut = System.out;
         boolean success = false;
+
+        iped.startUpControlClient = new StartUpControlClient();
+        iped.startUpControlClient.start();
 
         try {
             iped.setConfigPath();

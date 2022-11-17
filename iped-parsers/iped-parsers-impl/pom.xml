@@ -96,10 +96,20 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>org.icepdf</groupId>
+            <groupId>com.github.pcorless.icepdf</groupId>
             <artifactId>icepdf-core</artifactId>
             <version>${icepdf.version}</version>
             <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.github.jai-imageio</groupId>
+                    <artifactId>jai-imageio-jpeg2000</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-ext-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>iped</groupId>

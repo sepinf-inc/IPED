@@ -19,6 +19,8 @@ import org.apache.tika.utils.SystemUtils;
 import ag.ion.bion.officelayer.application.IOfficeApplication;
 import iped.app.config.LogConfiguration;
 import iped.app.processing.Main;
+import iped.app.ui.splash.SplashScreenManager;
+import iped.app.ui.splash.StartUpControl;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.PluginConfig;
@@ -80,6 +82,8 @@ public class Bootstrap {
 
             Configuration.getInstance().loadConfigurables(iped.getConfigPath(), false);
             
+            configLoaded();
+            
             String classpath = getDefaultClassPath(iped);
             
             PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
@@ -123,6 +127,7 @@ public class Bootstrap {
             pb.command(cmd);
 
             Process process = pb.start();
+            System.setProperty(StartUpControl.ipedChildProcessPID, String.valueOf(process.pid()));
 
             redirectStream(process.getInputStream(), System.out);
             redirectStream(process.getErrorStream(), System.err);
@@ -147,6 +152,14 @@ public class Bootstrap {
         }
 
         System.exit(exit);
+    }
+    
+    /**
+     * Called when loadConfigurables is done, inside run. Allow subclasses do custom
+     * actions at this execution point.
+     */
+    protected void configLoaded() {
+        new SplashScreenManager().start();
     }
     
     private static List<String> getCustomJVMArgs(){
