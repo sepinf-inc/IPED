@@ -20,6 +20,7 @@ public class TextConfigurablePanel extends ConfigurablePanel{
         textArea = new RegexTextPane();
         textArea.setAutoscrolls(true);
         textArea.setText(configurable.getConfiguration().toString());
+        textArea.getDocument().addDocumentListener(this);
         JScrollPane txtAreaScroll = new JScrollPane();
         txtAreaScroll.setViewportView(textArea);
         txtAreaScroll.setAutoscrolls(true);
@@ -29,8 +30,7 @@ public class TextConfigurablePanel extends ConfigurablePanel{
 
     @Override
     public void applyChanges() {
-        // TODO Auto-generated method stub
-        
+        ((Configurable<String>)configurable).setConfiguration(textArea.getText());        
     }
 
 }

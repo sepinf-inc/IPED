@@ -11,8 +11,10 @@ import javax.swing.event.DocumentListener;
 
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
+import iped.app.home.configurables.bean.BeanConfigurablePanel;
 import iped.configuration.Configurable;
-import iped.engine.config.EnableTaskProperty;
+import iped.engine.config.RegexTaskConfig;
+import iped.engine.task.carver.XMLCarverConfiguration;
 import iped.utils.UTF8Properties;
 
 /**
@@ -22,8 +24,8 @@ import iped.utils.UTF8Properties;
  */
 
 public abstract class ConfigurablePanel extends DefaultPanel implements DocumentListener{
-    Configurable<?> configurable;
-    SpringLayout layout;
+    protected Configurable<?> configurable;
+    protected SpringLayout layout;
     protected boolean changed=false;
 
     protected ConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
@@ -44,6 +46,10 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
             result = new UTF8PropertiesConfigurablePanel((Configurable<UTF8Properties>)configurable, mainFrame);
         }else if(config instanceof String) {
             result = new TextConfigurablePanel((Configurable<String>)configurable, mainFrame);
+        }else if(config instanceof XMLCarverConfiguration) {
+            result = new XMLCarverConfigurablePanel((Configurable<XMLCarverConfiguration>)configurable, mainFrame);
+        }else if(configurable.getClass().equals(RegexTaskConfig.class)) {
+            result = new RegexConfigurablePanel((Configurable<?>)configurable, mainFrame);
         }else if(config instanceof Collection<?>) {
             Type type;
             try {

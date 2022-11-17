@@ -58,7 +58,8 @@ public class TaskConfigTabPanel extends DefaultPanel {
     private JTabbedPane setupTabbedPanel(){
         tabbedPane = new JTabbedPane(JTabbedPane.TOP);
         tabbedPane.setUI(new BasicTabbedPaneUI() {
-            @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 45;}
+            @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 25;}
+
         });
         for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
             Configurable<?> configurable = (Configurable<?>) iterator.next();

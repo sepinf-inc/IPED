@@ -24,6 +24,7 @@ public class StringSetConfigurablePanel extends TextConfigurablePanel {
             output.append(string);
             output.append("\n");
         }
+        textArea.getDocument().removeDocumentListener(this);
         textArea.setText(output.toString());
         textArea.getDocument().addDocumentListener(this);
     }

@@ -1,5 +1,6 @@
 package iped.engine.task.carver;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +25,7 @@ import org.arabidopsis.ahocorasick.AhoCorasick;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import iped.carvers.api.CarvedItemListener;
 import iped.carvers.api.Carver;
@@ -62,6 +64,22 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
             DocumentBuilder docBuilder = dbf.newDocumentBuilder();
 
             doc = docBuilder.parse(confFile);
+        }catch (SAXException | ParserConfigurationException e) {
+            throw new IOException(e);
+        }
+    }
+
+    public void loadXMLConfigFile(String xml) throws IOException, SAXException, ParserConfigurationException {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(false);
+        DocumentBuilder docBuilder = dbf.newDocumentBuilder();
+
+        doc = docBuilder.parse(new ByteArrayInputStream(xml.getBytes()));
+    }
+    
+    public void loadXMLConfigXML(Document docParam) throws IOException {
+        try {
+            doc = docParam;
 
             Element root = doc.getDocumentElement();
 
@@ -162,6 +180,9 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         } catch (Exception e) {
             throw new IOException(e);
         }
+    }
+
+    public void loadXMLConfigXML(File confFile) throws IOException {
     }
 
     private void configCarverType(CarverType ct, Element carverTypeEl, String scriptDir) {

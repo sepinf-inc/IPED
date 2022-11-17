@@ -3,9 +3,10 @@ package iped.app.ui.controls.textarea;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,6 +16,7 @@ import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.PlainDocument;
 import javax.swing.text.PlainView;
+import javax.swing.text.Position;
 import javax.swing.text.Segment;
 import javax.swing.text.Utilities;
 
@@ -56,6 +58,9 @@ public class XmlView extends PlainView {
         patternColors.put(Pattern.compile(TAG_COMMENT), new Color(63, 95, 191));
     }
 
+    private TreeMap<Integer, Integer> startMap;
+    private TreeMap<Integer, Color> colorMap;
+
     public XmlView(Element element) {
 
         super(element);
@@ -67,14 +72,13 @@ public class XmlView extends PlainView {
     @Override
     protected int drawUnselectedText(Graphics graphics, int x, int y, int p0,
             int p1) throws BadLocationException {
-
         Document doc = getDocument();
         String text = doc.getText(p0, p1 - p0);
 
         Segment segment = getLineBuffer();
 
-        SortedMap<Integer, Integer> startMap = new TreeMap<Integer, Integer>();
-        SortedMap<Integer, Color> colorMap = new TreeMap<Integer, Color>();
+        startMap = new TreeMap<Integer, Integer>();
+        colorMap = new TreeMap<Integer, Color>();
 
         // Match all regexes on this snippet, store positions
         for (Map.Entry<Pattern, Color> entry : patternColors.entrySet()) {
@@ -122,4 +126,32 @@ public class XmlView extends PlainView {
         return x;
     }
 
+    public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
+        //if(true)return super.modelToView(pos, a, b);
+        // line coordinates
+        Document doc = getDocument();
+        Element map = getElement();
+        int lineIndex = map.getElementIndex(pos);
+        if (lineIndex < 0) {
+            return lineToRect(a, 0);
+        }
+        Rectangle lineArea = lineToRect(a, lineIndex);
+
+        // determine span from the start of the line
+        int xtabBase = lineArea.x;
+        Element line = map.getElement(lineIndex);
+        int p0 = line.getStartOffset();
+        Segment s =  getLineBuffer();
+        doc.getText(p0, pos - p0, s);
+
+        //int xOffs = Utilities.getTabbedTextWidth(s, metrics, xtabBase, this,p0);
+
+        // fill in the results and return
+        int x = drawUnselectedText(getGraphics(), (int) a.getBounds().getX(), (int) a.getBounds().getMaxY() + lineArea.y, p0, pos-1);
+        lineArea.x += x;
+        lineArea.width = 1;
+        lineArea.height = metrics.getHeight();
+
+        return lineArea;
+   }
 }
