@@ -53,6 +53,9 @@ public class RegRipperParser extends AbstractParser {
 
     private static Logger LOGGER = LoggerFactory.getLogger(RegRipperParser.class);
 
+    private final static String activeTimeBiasStartTag = "ActiveTimeBias -&gt; ";
+    private final static String activeTimeBiasEndTag = " (";
+
     private static Set<MediaType> SUPPORTED_TYPES = null;
     private static String[] cmd;
     private static String TOOL_NAME = "rip"; //$NON-NLS-1$
@@ -160,19 +163,16 @@ public class RegRipperParser extends AbstractParser {
         }
     }
 
-    final static String activeTimeBiasStartTag =  "ActiveTimeBias -&gt; ";
-    final static String activeTimeBiasEndTag =  " (";
-
-    public void extractCaseTimezone(String nome, String caminho, File htmlFile, ParseContext context) throws RegistryFileException, IOException {
+    private void extractCaseTimezone(String nome, String caminho, File htmlFile, ParseContext context) throws RegistryFileException, IOException {
         TimeZone tz = null;
 
         String content = Files.readString(htmlFile.toPath());
 
-        int start = content.indexOf(activeTimeBiasStartTag)+ activeTimeBiasStartTag.length();
-        if(start>0) {
-            String activeTimeBias = content.substring(start,content.indexOf(activeTimeBiasEndTag,start)).trim();
+        int start = content.indexOf(activeTimeBiasStartTag) + activeTimeBiasStartTag.length();
+        if (start > 0) {
+            String activeTimeBias = content.substring(start, content.indexOf(activeTimeBiasEndTag, start)).trim();
             int timeBias = Integer.parseInt(activeTimeBias);
-            String[] tzs = TimeZone.getAvailableIDs(timeBias  * 60 * 1000 * -1);
+            String[] tzs = TimeZone.getAvailableIDs(timeBias * 60 * 1000 * -1);
             if (tzs != null && tzs.length > 0) {
                 tz = TimeZone.getTimeZone(tzs[0]);
             }
@@ -232,7 +232,7 @@ public class RegRipperParser extends AbstractParser {
         reportMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
         reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-        if(reportName.contains("SYSTEM_OS")) {
+        if (reportName.contains("SYSTEM_OS")) {
             String nome = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).toUpperCase();
             ItemInfo itemInfo = context.get(ItemInfo.class);
             String caminho = itemInfo.getPath().toLowerCase().replace("\\", "/");
@@ -242,7 +242,7 @@ public class RegRipperParser extends AbstractParser {
                 e.printStackTrace();
             }
         }
-        
+
         if (extractor.shouldParseEmbedded(reportMetadata)) {
             try (InputStream is = new FileInputStream(htmlFile)) {
                 extractor.parseEmbedded(is, handler, reportMetadata, true);
