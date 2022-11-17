@@ -365,7 +365,7 @@ public class BeanMetadataExtraction {
         String caminho = itemInfo.getPath().toLowerCase().replace("\\", "/");
         ICaseData caseData = context.get(ICaseData.class);
         if (caseData != null) {
-            HashMap<String, TimeZone> tzs = (HashMap<String, TimeZone>) caseData.getCaseObject("TimeZones");
+            HashMap<String, TimeZone> tzs = (HashMap<String, TimeZone>) caseData.getCaseObject(ICaseData.TIMEZONE_INFO_KEY);
             if (tzs != null) {
                 if (tzs.size() == -1) {
                     identifiedTimeZone = tzs.values().iterator().next();

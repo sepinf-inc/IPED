@@ -182,10 +182,10 @@ public class RegRipperParser extends AbstractParser {
                 synchronized (caseData) {
                     if (nome.equals("SYSTEM")) {
                         if (tz != null) {
-                            HashMap<String, TimeZone> tzs2 = (HashMap<String, TimeZone>) caseData.getCaseObject("TimeZones");
+                            HashMap<String, TimeZone> tzs2 = (HashMap<String, TimeZone>) caseData.getCaseObject(ICaseData.TIMEZONE_INFO_KEY);
                             if (tzs2 == null) {
                                 tzs2 = new HashMap<String, TimeZone>();
-                                caseData.addCaseObject("TimeZones", tzs2);
+                                caseData.addCaseObject(ICaseData.TIMEZONE_INFO_KEY, tzs2);
                             }
                             tzs2.put(caminho, tz);
                         }

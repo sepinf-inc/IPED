@@ -12,6 +12,8 @@ import java.io.Serializable;
  */
 public interface ICaseData extends Serializable {
 
+    public static final String TIMEZONE_INFO_KEY = "TimeZones";
+
     /**
      * Retorna um objeto armazenado no caso.
      *

@@ -151,10 +151,10 @@ public class RegistryParser extends AbstractParser {
 
                 if (nome.equals("SYSTEM")) {
                     if (tz != null) {
-                        HashMap<String, TimeZone> tzs = (HashMap<String, TimeZone>) caseData.getCaseObject("TimeZones");
+                        HashMap<String, TimeZone> tzs = (HashMap<String, TimeZone>) caseData.getCaseObject(ICaseData.TIMEZONE_INFO_KEY);
                         if (tzs == null) {
                             tzs = new HashMap<String, TimeZone>();
-                            caseData.addCaseObject("TimeZones", tzs);
+                            caseData.addCaseObject(ICaseData.TIMEZONE_INFO_KEY, tzs);
                         }
                         tzs.put(caminho, tz);
                     }
