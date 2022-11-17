@@ -6,7 +6,6 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -53,10 +52,8 @@ public class BeanMetadataExtraction {
                                                                                     // the propery name String as the second
     HashMap<Class, ArrayList<String[]>> transformationMapping = new HashMap<Class, ArrayList<String[]>>();// the object is an array of dimension 2 with the class as the first element and
                                                                                                           // the metadata name String as the second
-
     private int level;
     private ParseContext parseContext;
-    private Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
     public BeanMetadataExtraction(String prefix, String mimeType, ParseContext parseContext) {
         this(prefix, mimeType);
@@ -188,9 +185,9 @@ public class BeanMetadataExtraction {
                                     // this.extractEmbedded(seq, context, entryMetadata, pd, handler, value);
                                 } else {
                                     if (value instanceof Date) {
-                                        if (isLocalTime && identifiedTimeZone != null) {
-                                            calendar.setTimeInMillis(((Date) value).getTime() + identifiedTimeZone.getRawOffset());
-                                            value = calendar.getTime();
+                                        if (isLocalTime) {
+                                            TimeZone tz = identifiedTimeZone != null ? identifiedTimeZone : TimeZone.getDefault();
+                                            value = new Date(((Date) value).getTime() - tz.getRawOffset());
                                         }
                                         entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
                                     } else {
@@ -218,9 +215,9 @@ public class BeanMetadataExtraction {
                             children.add(new ChildParams(value, parentPd));
                         } else {
                             if (value instanceof Date) {
-                                if (isLocalTime && identifiedTimeZone != null) {
-                                    calendar.setTimeInMillis(((Date) value).getTime() + identifiedTimeZone.getRawOffset());
-                                    value = calendar.getTime();
+                                if (isLocalTime) {
+                                    TimeZone tz = identifiedTimeZone != null ? identifiedTimeZone : TimeZone.getDefault();
+                                    value = new Date(((Date) value).getTime() - tz.getRawOffset());
                                 }
                                 entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
                             } else {
