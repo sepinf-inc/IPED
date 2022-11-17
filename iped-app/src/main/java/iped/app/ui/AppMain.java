@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.config.LogConfiguration;
+import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
 import iped.engine.config.AnalysisConfig;
@@ -26,6 +27,7 @@ import iped.utils.IOUtil;
 public class AppMain {
 
     private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
+    private static StartUpControlClient startUpControlClient;
 
     private static final String BUNDLED_JRE_VERSION = "11.0.13";
 
@@ -42,6 +44,11 @@ public class AppMain {
     File libDir;
 
     public static void main(String[] args) {
+        // Start up control client should be is created as soon as possible
+        // and only when main is called (not when AppMain is instantiated directly).
+        startUpControlClient =  new StartUpControlClient();
+        startUpControlClient.start();
+        
         // Set the UiScale (must be before any UI-related code).
         UiScale.loadUserSetting();
 
@@ -175,6 +182,11 @@ public class AppMain {
 
             App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager, libDir.getAbsolutePath());
 
+            if (startUpControlClient != null) {
+                startUpControlClient.finish();
+                startUpControlClient = null;
+            }
+            
             UICaseDataLoader init = new UICaseDataLoader(processingManager);
             init.execute();
 
