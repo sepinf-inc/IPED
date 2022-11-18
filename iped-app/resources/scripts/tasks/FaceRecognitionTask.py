@@ -307,5 +307,6 @@ class FaceRecognitionTask:
         
         item.setExtraAttribute("face_locations", face_locations)
         item.setExtraAttribute("face_encodings", face_encodings)
+        item.setExtraAttribute("numFaces",len(face_locations))
         
         self.cacheResults(hash, face_locations, face_encodings)
