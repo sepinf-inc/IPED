@@ -537,7 +537,7 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
                         Class<? extends TimePeriod> uptpclass = upsize(tpclass);
 
                         String tpClassName = DateUtil.getTimePeriodName(tpclass);
-                        String msg = String.format(Messages.get("TimeLineGraph.visibleZoominForGranularity"), tpClassName, DateUtil.getTimePeriodName(uptpclass));
+                        String msg = String.format(Messages.get("TimeLineGraph.visibleZoomoutForGranularity"), tpClassName, DateUtil.getTimePeriodName(uptpclass));
                         int input = JOptionPane.showConfirmDialog(null, msg, "", JOptionPane.OK_CANCEL_OPTION);
                         if (input == 0) {
                             result = true;
