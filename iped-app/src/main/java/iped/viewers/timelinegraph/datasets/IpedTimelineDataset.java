@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -83,9 +82,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     String[] eventTypesArray;
     LeafReader reader;
 
-    static ThreadPoolExecutor queriesThreadPool = new ThreadPoolExecutor(5, 10, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-
-    static ThreadPoolExecutor slicesThreadPool = new ThreadPoolExecutor(10, 10, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+    static ThreadPoolExecutor queriesThreadPool = new ThreadPoolExecutor(5, 10, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());//pool of concurrent group of itens in a dataset beeing populated
+    static ThreadPoolExecutor datasetsThreadPool = new ThreadPoolExecutor(3, 10, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());//pool of concurrent datasets beeing populated
 
     class Count extends Number {
         int value = 0;
@@ -163,7 +161,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 try {
                     caseSearchFilterLoad();
                 } catch (Exception e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 } finally {
                     visiblePopulSem.release(running);
@@ -172,7 +169,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         });
         visiblePopulSem = new Semaphore(running);
         visiblePopulSem.acquire(running);
-        queriesThreadPool.execute(t);
+        datasetsThreadPool.execute(t);
 
     }
 
@@ -258,9 +255,14 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                             }
                             if (count.value > 0) {
                                 addValueSem.acquire();
-                                TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ct.date);
-                                addValue(count, t, ce.event, includedDocs, includedItems);
-                                addValueSem.release();
+                                try {
+                                    TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ct.date);
+                                    addValue(count, t, ce.event, includedDocs, includedItems);
+                                }catch (Exception e) {
+                                    e.printStackTrace();
+                                }finally {
+                                    addValueSem.release();
+                                }
                             }
                         }
                     }
