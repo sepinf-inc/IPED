@@ -29,6 +29,7 @@ import org.xml.sax.ContentHandler;
 
 import iped.data.ICaseData;
 import iped.parsers.standard.StandardParser;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.utils.DateUtil;
 import iped.utils.EmptyInputStream;
@@ -113,6 +114,7 @@ public class BeanMetadataExtraction {
                 entryMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, mimeType);
                 entryMetadata.set(HttpHeaders.CONTENT_TYPE, mimeType);
                 entryMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                entryMetadata.set(BasicProps.LENGTH, "");
                 entryMetadata.set("bean:className", bean.getClass().getCanonicalName());
 
                 ArrayList<ChildParams> children = new ArrayList<ChildParams>();
