@@ -174,7 +174,17 @@ public class RegRipperParser extends AbstractParser {
             int timeBias = Integer.parseInt(timeBiasStr);
             String[] tzs = TimeZone.getAvailableIDs(timeBias * 60 * 1000 * -1);
             if (tzs != null && tzs.length > 0) {
-                tz = TimeZone.getTimeZone(tzs[0]);
+                for (String _tz : tzs) {
+                    // prioritize local timezone if some equal ID was returned
+                    if (_tz.equals(TimeZone.getDefault().getID())) {
+                        tz = TimeZone.getTimeZone(_tz);
+                        break;
+                    }
+                }
+                if (tz == null) {
+                    // fallback to first if not found
+                    tz = TimeZone.getTimeZone(tzs[0]);
+                }
             }
 
             ICaseData caseData = context.get(ICaseData.class);
