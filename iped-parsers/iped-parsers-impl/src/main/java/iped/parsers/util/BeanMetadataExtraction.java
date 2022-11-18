@@ -187,7 +187,10 @@ public class BeanMetadataExtraction {
                                     if (value instanceof Date) {
                                         if (isLocalTime) {
                                             TimeZone tz = identifiedTimeZone != null ? identifiedTimeZone : TimeZone.getDefault();
-                                            value = new Date(((Date) value).getTime() - tz.getRawOffset());
+                                            // this can still be wrong by 1h when daylight saving ends
+                                            // there is no way to know if clock was already turned back by 1h or not
+                                            int offset = tz.getOffset(((Date) value).getTime() - tz.getRawOffset());
+                                            value = new Date(((Date) value).getTime() - offset);
                                         }
                                         entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
                                     } else {
@@ -222,7 +225,10 @@ public class BeanMetadataExtraction {
                             if (value instanceof Date) {
                                 if (isLocalTime) {
                                     TimeZone tz = identifiedTimeZone != null ? identifiedTimeZone : TimeZone.getDefault();
-                                    value = new Date(((Date) value).getTime() - tz.getRawOffset());
+                                    // this can still be wrong by 1h when daylight saving ends
+                                    // there is no way to know if clock was already turned back by 1h or not
+                                    int offset = tz.getOffset(((Date) value).getTime() - tz.getRawOffset());
+                                    value = new Date(((Date) value).getTime() - offset);
                                 }
                                 entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
                             } else {
