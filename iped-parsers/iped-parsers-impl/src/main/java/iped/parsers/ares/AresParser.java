@@ -99,6 +99,9 @@ public class AresParser extends AbstractParser {
         if (extractEntries) {
             bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, ARES_ENTRY_MIME_TYPE);
             bme.setNameProperty("title");
+            // normalization to use same property name of other p2p parsers
+            bme.registerPropertyNameMapping(AresEntry.class, "title", "name");
+            bme.registerPropertyNameMapping(AresEntry.class, "hash", "sha1");
             bme.registerTransformationMapping(AresEntry.class, ExtraProperties.LINKED_ITEMS, "sha-1:${hash}");
             bme.registerTransformationMapping(AresEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
             bme.setLocalTime(true);
