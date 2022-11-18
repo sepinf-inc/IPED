@@ -113,7 +113,7 @@ public class ProcessOptionTab extends DefaultPanel {
         JButton buttoCancel = new JButton("Voltar");
         buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
         JButton buttonNext = new JButton("Iniciar processamento");
-        buttonNext.addActionListener( e -> mainFrame.showPanel(MainFrameCardsNames.PROCESS_MANAGER) );
+        buttonNext.addActionListener( e -> mainFrame.startIPEDProcessing() );
         panelButtons.add(buttoCancel);
         panelButtons.add(buttonNext);
         return panelButtons;

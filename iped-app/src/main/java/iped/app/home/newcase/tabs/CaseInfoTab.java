@@ -8,6 +8,7 @@ import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.newcase.model.CaseInfo;
 import iped.app.home.newcase.NewCaseContainerPanel;
+import iped.app.home.newcase.model.IPEDProcess;
 import iped.app.home.style.StyleManager;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
@@ -16,6 +17,8 @@ import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Case info TAB
@@ -23,6 +26,7 @@ import java.io.File;
 public class CaseInfoTab extends DefaultPanel {
 
     private LocalConfig localConfig;
+    private IPEDProcess ipedProcess;
 
     private JTextField textFieldCaseOutput;
     private JCheckBox checkBoxOutputOnSSD;
@@ -48,6 +52,7 @@ public class CaseInfoTab extends DefaultPanel {
      * Prepare everything to be displayed
      */
     protected void createAndShowGUI(){
+        ipedProcess = NewCaseContainerPanel.getInstance().getIpedProcess();
         this.setLayout( new BorderLayout() );
         this.add(createTitlePanel(), BorderLayout.NORTH);
         this.add(createFormPanel(), BorderLayout.CENTER);
@@ -84,6 +89,7 @@ public class CaseInfoTab extends DefaultPanel {
         textAreaCaseNotes.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         textAreaCaseNotes.setRows(5);
         textFieldCaseOutput = new JTextField();
+        textFieldCaseOutput.setEditable(false);
         checkBoxOutputOnSSD = new JCheckBox("A pasta do caso esta em um SSD?");
         checkBoxOutputOnSSD.setToolTipText(OutpuOnSSDTooltip);
         checkBoxOutputOnSSD.setSelected(localConfig.isOutputOnSSD());
@@ -95,9 +101,15 @@ public class CaseInfoTab extends DefaultPanel {
             fileChooserDestino.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fileChooserDestino.setAcceptAllFileFilterUsed(false);
             if( fileChooserDestino.showOpenDialog(this) == JFileChooser.APPROVE_OPTION){
-                textFieldCaseOutput.setText( fileChooserDestino.getSelectedFile().toString() );
+                setCaseOutputValue(fileChooserDestino.getSelectedFile().toPath());
             }
         } );
+    }
+
+    private void setCaseOutputValue(Path caseOutput){
+        IPEDProcess ipedProcess = NewCaseContainerPanel.getInstance().getIpedProcess();
+        ipedProcess.setCaseOutputPath(caseOutput);
+        textFieldCaseOutput.setText( caseOutput.toString() );
     }
 
     /**
@@ -214,16 +226,15 @@ public class CaseInfoTab extends DefaultPanel {
     }
 
     private void navigateToNextTab(){
-        if( textFieldCaseOutput.getText() == null || textFieldCaseOutput.getText().trim().isEmpty()  ){
+        Path casePath = ipedProcess.getCaseOutputPath();
+        //check if output path exists
+        if( (casePath == null) || ( ! Files.isDirectory(casePath) ) ){
             JOptionPane.showMessageDialog(this, "A pasta de destino do caso é obrigatório", "Pasta de destino do caso", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        File caseOutput = new File(textFieldCaseOutput.getText());
-        if(! caseOutput.exists() ){
-            JOptionPane.showMessageDialog(this, "A pasta de destino não é valida", "Pasta de destino do caso", JOptionPane.WARNING_MESSAGE);
-            return;
-        }else if(! caseOutput.canWrite() ){
-            JOptionPane.showMessageDialog(this, "A pasta de destino informada não tem permissão para escrita", "Pasta de destino do caso", JOptionPane.WARNING_MESSAGE);
+        //Check case output permissions
+        if( (! Files.isReadable(casePath)) || (! Files.isWritable(casePath)) ){
+            JOptionPane.showMessageDialog(this, "É necessário permissão de leitura e escrita na pasta de destino do caso.", "Pasta de destino do caso", JOptionPane.WARNING_MESSAGE);
             return;
         }
         populateCaseInfo();
@@ -231,7 +242,7 @@ public class CaseInfoTab extends DefaultPanel {
     }
 
     private void populateCaseInfo(){
-        CaseInfo caseInfo = NewCaseContainerPanel.getInstance().getIpedProcess().getCaseInfo();
+        CaseInfo caseInfo = ipedProcess.getCaseInfo();
         caseInfo.setCaseNumber(textFieldCaseNumber.getText());
         caseInfo.setCaseName(textFieldCaseName.getText());
         caseInfo.setInvestigatedNames(textAreaInvestigatedNames.getText());

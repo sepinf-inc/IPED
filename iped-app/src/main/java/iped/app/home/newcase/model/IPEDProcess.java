@@ -4,12 +4,14 @@ package iped.app.home.newcase.model;/*
  * @author Thiago S. Figueiredo
  */
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class IPEDProcess {
 
     private CaseInfo caseInfo;
     private ArrayList<Evidence> evidenceList;
+    private Path caseOutputPath;
 
     public IPEDProcess() {
         caseInfo = new CaseInfo();
@@ -30,5 +32,13 @@ public class IPEDProcess {
 
     public void setEvidenceList(ArrayList<Evidence> evidenceList) {
         this.evidenceList = evidenceList;
+    }
+
+    public Path getCaseOutputPath() {
+        return caseOutputPath;
+    }
+
+    public void setCaseOutputPath(Path caseOutputPath) {
+        this.caseOutputPath = caseOutputPath;
     }
 }

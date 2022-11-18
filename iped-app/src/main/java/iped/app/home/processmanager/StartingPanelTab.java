@@ -11,10 +11,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
-public class StartingPanel extends DefaultPanel {
+public class StartingPanelTab extends DefaultPanel {
 
 
-    public StartingPanel(MainFrame mainFrame) {
+    public StartingPanelTab(MainFrame mainFrame) {
         super(mainFrame);
     }
 

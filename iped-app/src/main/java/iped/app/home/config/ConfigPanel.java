@@ -14,6 +14,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.config.LocaleConfig;
 import iped.engine.config.PluginConfig;
+import org.apache.tika.utils.SystemUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -117,7 +118,7 @@ public class ConfigPanel extends DefaultPanel {
         panelForm.add(new JLabel("Banco de dados de Hash:"), getGridBagConstraints(0, linha, labelCellColumnWidth, labelsWeightx));
         panelForm.add(textFieldHashesDB, getGridBagConstraints(1, linha, inputCellColumnWidth, inputsWeightx));
 
-        if (System.getProperty("os.name").startsWith("Linux")) {
+        if (SystemUtils.IS_OS_LINUX) {
             linha++;
             panelForm.add(new JLabel("JAR do SleuthKit:"), getGridBagConstraints(0, linha, labelCellColumnWidth, labelsWeightx));
             panelForm.add(textFieldTskJarPath, getGridBagConstraints(1, linha, inputCellColumnWidth, inputsWeightx));
@@ -190,7 +191,7 @@ public class ConfigPanel extends DefaultPanel {
         textFieldTskJarPath.setText( (pluginConfig.getTskJarFile() != null )? pluginConfig.getTskJarFile().getAbsolutePath() : "" );
         textFieldPluginFolder.setText( (pluginConfig.getPluginFolder() != null )? pluginConfig.getPluginFolder().getPath() : "" );
         //FIXME Waiting issue #1320
-        textFieldMplayerPath.setText( localConfig.getMplayerWinPath() );
+        //textFieldMplayerPath.setText( localConfig.getMplayerWinPath() );
         //FIXME Waiting issue #331
         textFieldRegripperFolder.setText( "" );
 
