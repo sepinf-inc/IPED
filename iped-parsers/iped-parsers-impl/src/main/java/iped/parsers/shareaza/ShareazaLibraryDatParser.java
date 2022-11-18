@@ -124,7 +124,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         metadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
 
         if (extractEntries) {
-            BeanMetadataExtraction bme = new BeanMetadataExtraction("p2p", LIBRARY_DAT_ENTRY_MIME_TYPE);
+            BeanMetadataExtraction bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, LIBRARY_DAT_ENTRY_MIME_TYPE);
             bme.addPropertyExclusion(LibraryFolder.class, "indexToFile");
             bme.addPropertyExclusion(LibraryFolder.class, "parentFolder");
             bme.addPropertyExclusion(LibraryFile.class, "parentFolder");

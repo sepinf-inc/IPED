@@ -87,6 +87,8 @@ public class ExtraProperties {
 
     public static final String UFED_META_PREFIX = "ufed:"; //$NON-NLS-1$
 
+    public static final String P2P_META_PREFIX = "p2p:"; //$NON-NLS-1$
+
     public static final String ITEM_VIRTUAL_ID = "itemVirtualIdentifier"; //$NON-NLS-1$
 
     public static final String PARENT_VIRTUAL_ID = "parentVirtualIdentifier"; //$NON-NLS-1$

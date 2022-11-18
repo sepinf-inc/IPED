@@ -112,7 +112,7 @@ public class KnownMetParser extends AbstractParser {
         BeanMetadataExtraction bme = null;
 
         if (extractEntries) {
-            bme = new BeanMetadataExtraction("p2p", KNOWN_MET_ENTRY_MIME_TYPE, context);
+            bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, KNOWN_MET_ENTRY_MIME_TYPE, context);
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
         }

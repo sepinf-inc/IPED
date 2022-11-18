@@ -178,7 +178,7 @@ public class BeanMetadataExtraction {
                                 if (metadataName == null) {
                                     metadataName = pd.getDisplayName();
                                     if (prefix != null && prefix.length() > 0) {
-                                        metadataName = prefix + ":" + metadataName;
+                                        metadataName = prefix + metadataName;
                                     }
                                 }
 
@@ -208,7 +208,7 @@ public class BeanMetadataExtraction {
                     entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, metadataName);
 
                     if (prefix != null && prefix.length() > 0) {
-                        metadataName = prefix + ":" + metadataName;
+                        metadataName = prefix + metadataName;
                     }
 
                     for (int i = 0; i < colObj.length; i++) {
