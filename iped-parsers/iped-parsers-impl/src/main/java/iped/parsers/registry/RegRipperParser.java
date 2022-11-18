@@ -53,8 +53,8 @@ public class RegRipperParser extends AbstractParser {
 
     private static Logger LOGGER = LoggerFactory.getLogger(RegRipperParser.class);
 
-    private final static String activeTimeBiasStartTag = "ActiveTimeBias -&gt; ";
-    private final static String activeTimeBiasEndTag = " (";
+    private final static String timeBiasStartTag = "Bias           -&gt; ";
+    private final static String timeBiasEndTag = " (";
 
     private static Set<MediaType> SUPPORTED_TYPES = null;
     private static String[] cmd;
@@ -168,10 +168,10 @@ public class RegRipperParser extends AbstractParser {
 
         String content = Files.readString(htmlFile.toPath());
 
-        int start = content.indexOf(activeTimeBiasStartTag) + activeTimeBiasStartTag.length();
+        int start = content.indexOf(timeBiasStartTag) + timeBiasStartTag.length();
         if (start > 0) {
-            String activeTimeBias = content.substring(start, content.indexOf(activeTimeBiasEndTag, start)).trim();
-            int timeBias = Integer.parseInt(activeTimeBias);
+            String timeBiasStr = content.substring(start, content.indexOf(timeBiasEndTag, start)).trim();
+            int timeBias = Integer.parseInt(timeBiasStr);
             String[] tzs = TimeZone.getAvailableIDs(timeBias * 60 * 1000 * -1);
             if (tzs != null && tzs.length > 0) {
                 tz = TimeZone.getTimeZone(tzs[0]);
