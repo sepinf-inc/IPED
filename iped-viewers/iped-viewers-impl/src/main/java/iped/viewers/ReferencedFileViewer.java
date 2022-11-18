@@ -26,7 +26,8 @@ import iped.viewers.localization.Messages;
 
 public class ReferencedFileViewer extends AbstractViewer {
 
-    private String labelPrefix;
+    private static final String REFERENCE_NOT_FOUND = Messages.getString("ReferenceViewer.FileNotFound");
+    private static final String REFERENCE_NOT_SUPPORTED = Messages.getString("ReferenceViewer.NotSupported");
 
     private JLabel typeNotSupported;
 
@@ -39,7 +40,6 @@ public class ReferencedFileViewer extends AbstractViewer {
         super();
         this.multiViewer = multiViewer;
         this.attachSearcher = attachSearcher;
-        this.labelPrefix = Messages.getString("ReferenceViewer.NotSupported");
         this.typeNotSupported = new JLabel();
         this.getPanel().add(typeNotSupported);
     }
@@ -77,18 +77,21 @@ public class ReferencedFileViewer extends AbstractViewer {
     public void loadFile(IStreamSource content, Set<String> highlightTerms) {
 
         if (content == null) {
-            if (lastItem != null)
+            if (lastItem != null) {
                 lastItem.dispose();
-            typeNotSupported.setVisible(false);
+            }
             return;
         }
+
+        typeNotSupported.setVisible(false);
 
         if (content instanceof IItem) {
             IItem item = (IItem) content;
             String query = item.getMetadata().get(ExtraProperties.LINKED_ITEMS);
             lastItem = attachSearcher.getItem(query);
             if (lastItem == null) {
-                typeNotSupported.setVisible(false);
+                typeNotSupported.setText(REFERENCE_NOT_FOUND + query);
+                typeNotSupported.setVisible(true);
             } else if (lastItem.getViewFile() != null) {
                 FileContentSource viewContent = new FileContentSource(lastItem.getViewFile());
                 String mediaType = detectType(lastItem.getViewFile());
@@ -103,7 +106,7 @@ public class ReferencedFileViewer extends AbstractViewer {
         if (multiViewer.isSupportedType(mediaType)) {
             multiViewer.loadFile(content, mediaType, highlightTerms);
         } else {
-            typeNotSupported.setText(labelPrefix + mediaType);
+            typeNotSupported.setText(REFERENCE_NOT_SUPPORTED + mediaType);
             typeNotSupported.setVisible(true);
         }
     }
