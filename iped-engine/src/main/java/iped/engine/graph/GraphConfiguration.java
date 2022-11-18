@@ -16,8 +16,10 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import iped.engine.config.LocaleConfig;
 
@@ -244,6 +246,16 @@ public class GraphConfiguration implements Serializable {
             value.decodePhoneRegion(file);
             value.index();
             return value;
+        }
+    }
+
+    public String toString() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectWriter writer = objectMapper.writerFor(GraphConfiguration.class);
+        try {
+            return writer.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 

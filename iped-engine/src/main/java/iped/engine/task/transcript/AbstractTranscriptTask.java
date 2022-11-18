@@ -312,8 +312,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             if (!tmpFile.exists()) {
                 LOGGER.warn("Conversion to wav failed, no wav generated: {} ", itemPath);
                 tmpFile = null;
-            }
-            if (tmpFile.length() == 0) {
+            } else if (tmpFile.length() == 0) {
                 tmpFile.delete();
                 LOGGER.warn("Conversion to wav failed, empty wav generated: {} ", itemPath);
                 tmpFile = null;

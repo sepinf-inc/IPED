@@ -343,7 +343,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>sleuthkit-dlls</artifactId>
-                                    <version>${sleuthkit.version}</version>
+                                    <version>4.11.1-p3</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -629,6 +629,9 @@
                                     <classpathPrefix>lib/</classpathPrefix>
                                     <mainClass>iped.app.bootstrap.Bootstrap</mainClass>
                                 </manifest>
+                                <manifestEntries>
+                                    <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
+                                </manifestEntries>  
                             </archive>
                         </configuration>
                     </execution>
@@ -669,6 +672,9 @@
                                     <addClasspath>true</addClasspath>
                                     <mainClass>iped.app.bootstrap.BootstrapUI</mainClass>
                                 </manifest>
+                                <manifestEntries>
+                                    <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
+                                </manifestEntries>                                
                             </archive>
                         </configuration>
                     </execution>
@@ -809,6 +815,23 @@
                                 <resource>
                                     <filtering>false</filtering>
                                     <directory>${plugin.rsc}</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <!-- COPY SCRIPTS -->
+                    <execution>
+                        <id>copy-scripts</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${release.dir}/scripts</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>false</filtering>
+                                    <directory>${resources.dir}/scripts</directory>
                                 </resource>
                             </resources>
                         </configuration>

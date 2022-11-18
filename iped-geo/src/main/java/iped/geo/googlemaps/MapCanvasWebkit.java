@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import org.apache.commons.io.IOUtils;
 
@@ -28,15 +29,16 @@ import netscape.javascript.JSObject;
 public class MapCanvasWebkit extends AbstractMapCanvas {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	WebView browser;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    WebView browser;
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
     JSInterfaceFunctions jsInterface = new JSGoogleInterfaceFunctions(this);
     String googleApiKey = "";
     File keyStore = new File(System.getProperty("user.home") + "/.iped/googleApi.key");
+    private ChangeListener<State> onLoadChange;
 
     public MapCanvasWebkit() {
         this.jfxPanel = new JFXPanel();
@@ -60,20 +62,28 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
                     }
                 });
 
-                webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<State>() {
+                webEngine.loadContent(UiUtil.getUIEmptyHtml());
 
+                onLoadChange = new ChangeListener<State>() {
                     @Override
                     public void changed(ObservableValue<? extends State> observable, State oldState, State newState) {
                         if (newState == State.SUCCEEDED) {
                             JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
                             window.setMember("app", jsInterface); //$NON-NLS-1$
-                            window.setMember("javalog", new LogBridge());
-                            // webEngine.executeScript("console.log = function(message) {
-                            // window.javalog.log(message); }");
+                            try {
+                                if (onLoadRunnables.size() > 0) {
+                                    for (Iterator iterator = onLoadRunnables.iterator(); iterator.hasNext();) {
+                                        Runnable runnable = (Runnable) iterator.next();
+                                        runnable.run();
+                                    }
+                                    onLoadRunnables.clear();
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
-                });
-                webEngine.loadContent(UiUtil.getUIEmptyHtml());
+                };
             }
         });
     }
@@ -105,6 +115,8 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
     public void setText(final String html) {
         Platform.runLater(new Runnable() {
             public void run() {
+                webEngine.getLoadWorker().stateProperty().removeListener(onLoadChange);
+                webEngine.getLoadWorker().stateProperty().addListener(onLoadChange);
                 webEngine.loadContent(html);
                 jfxPanel.invalidate();
             }
@@ -150,6 +162,7 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
 
     private String replaceApiKey(String html) {
         googleApiKey = JMapOptionsPane.getGoogleAPIKey();
+        googleApiKey="";
         html = html.replace("{{GOOGLE_API_KEY}}", googleApiKey); //$NON-NLS-1$
         return html;
     }
@@ -171,7 +184,6 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
 
     @Override
     public void update() {
-
         if (this.selectionMapToApply != null) {
             // repinta selecoes alteradas
             final String[] marks = new String[this.selectionMapToApply.keySet().size()];
@@ -187,17 +199,33 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
                             marcadorselecionado = true;
                         }
                         try {
-                            webEngine.executeScript("gxml.seleciona(\"" + marks[i] + "\",'" + b + "');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            webEngine.executeScript("gxml.seleciona([\"" + marks[i] + "\"],'" + b + "');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
                     if (marcadorselecionado) {
-                        webEngine.executeScript("gxml.centralizaSelecao();");
+                        try {
+                            webEngine.executeScript("gxml.centralizaSelecao();");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             });
             this.selectionMapToApply = null;
+        }
+        if (this.leadSelectionToApply != null) {
+            final String leadSelectionToApplyCopy = this.leadSelectionToApply;
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    try {
+                        webEngine.executeScript("updateLeadMarker(\""+leadSelectionToApplyCopy.toString()+"\");");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         }
     }
 

@@ -1,7 +1,6 @@
 package iped.engine.config;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -9,13 +8,15 @@ import java.util.Map;
 
 import org.apache.tika.mime.MediaType;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import iped.engine.data.Category;
 import iped.properties.MediaTypes;
 
-public class CategoryConfig extends AbstractTaskConfig<Category> {
+public class CategoryConfig extends AbstractTaskConfig<String> {
 
     /**
      * 
@@ -83,13 +84,30 @@ public class CategoryConfig extends AbstractTaskConfig<Category> {
     }
 
     @Override
-    public Category getConfiguration() {
-        return root;
+    public String getConfiguration() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectWriter writer = objectMapper.writerFor(Category.class);
+        try {
+            return writer.writeValueAsString(root);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void setConfiguration(Category root) {
-        this.root = root;
+    public void setConfiguration(String config) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectReader reader = objectMapper.readerFor(Category.class);
+        try {
+            root = reader.readValue(config);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        populateParents(root);
+    }
+
+    public Category getRootCategory() {
+        return root;
     }
 
     @Override
@@ -104,14 +122,7 @@ public class CategoryConfig extends AbstractTaskConfig<Category> {
 
     @Override
     public void processTaskConfig(Path resource) throws IOException {
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectReader reader = objectMapper.readerFor(Category.class);
-        try (Reader in = Files.newBufferedReader(resource)) {
-            root = reader.readValue(in);
-            populateParents(root);
-        }
-
+        setConfiguration(Files.readString(resource));
     }
 
     private void populateParents(Category category) {

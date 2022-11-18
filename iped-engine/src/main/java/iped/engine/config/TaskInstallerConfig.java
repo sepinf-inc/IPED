@@ -35,7 +35,7 @@ public class TaskInstallerConfig implements Configurable<String> {
      */
     private static final long serialVersionUID = 1L;
     private static final String CONFIG_XML = "TaskInstaller.xml"; //$NON-NLS-1$
-    public static final String SCRIPT_BASE = "conf/scripts"; //$NON-NLS-1$
+    public static final String SCRIPT_BASE = "scripts/tasks"; //$NON-NLS-1$
 
     private String xml;
 
@@ -82,18 +82,22 @@ public class TaskInstallerConfig implements Configurable<String> {
             attr = node.getAttributes().getNamedItem("script"); //$NON-NLS-1$
             if (attr != null) {
                 String scriptName = attr.getNodeValue();
-                File scriptDir = new File(Configuration.getInstance().appRoot, SCRIPT_BASE);
-                tasks.putIfAbsent(scriptName, getScriptTask(scriptDir, scriptName));
+                File scriptDir = new File(Configuration.getInstance().configPath, SCRIPT_BASE);
+                File script = new File(scriptDir, scriptName);
+                if (!script.exists()) {
+                    scriptDir = new File(Configuration.getInstance().appRoot, SCRIPT_BASE);
+                    script = new File(scriptDir, scriptName);
+                    if (!script.exists()) {
+                        throw new IPEDException("Script File not found: " + script.getAbsolutePath()); //$NON-NLS-1$
+                    }
+                }
+                tasks.putIfAbsent(scriptName, getScriptTask(script));
             }
         }
     }
 
-    private AbstractTask getScriptTask(File scriptDir, String name) {
-        File script = new File(scriptDir, name);
-        if (!script.exists())
-            throw new IPEDException("Script File not found: " + script.getAbsolutePath()); //$NON-NLS-1$
-
-        if (name.endsWith(".py"))
+    private AbstractTask getScriptTask(File script) {
+        if (script.getName().endsWith(".py"))
             return new PythonTask(script);
         else
             return new ScriptTask(script);

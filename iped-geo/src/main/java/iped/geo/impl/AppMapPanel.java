@@ -34,16 +34,16 @@ import iped.viewers.api.IMultiSearchResultProvider;
 public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	IMultiSearchResultProvider resultsProvider;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
     MapCanvasFactory mcf;
 
     AbstractMapCanvas browserCanvas;
     boolean mapaDesatualizado = true; // variável para registrar se os dados a serem apresentados pelo mapa precisa
-                                      // renderização
+    // renderização
     KMLResult kmlResult;
     JTable resultsTable;
     boolean mapSrcSelected = false;
@@ -51,7 +51,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
     String tilesSourceURL = null, savedTilesSourceURL = null;
     private MapPanelConfig mpConfig;
-    
+
     private JProgressBar gpsProgressBar;
 
     public AppMapPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
@@ -67,7 +67,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         gpsProgressBar.setOpaque(true);
         gpsProgressBar.setStringPainted(true);
         gpsProgressBar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.gray, 1), BorderFactory.createEmptyBorder(4, 0, 4, 0)));
-        
+
         mcf = new MapCanvasFactory(this);
 
         this.addMouseListener(new MouseListener() {
@@ -107,6 +107,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         final Component self = this;
         changeTileServer = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                final String leadSelectionToApply = browserCanvas.getLeadSelectionToApply();
                 StringBuffer url = new StringBuffer("");
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
@@ -129,6 +130,19 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                             tilesSourceURL = url.toString();
                             config(tilesSourceURL);
                             mapaDesatualizado = true;
+
+                            /*
+                             * Sends the current lead selection to the next map
+                             * rendered to select it after load.
+                             * */
+                            runAfterLoad(new Runnable() {
+                                @Override
+                                public void run() {
+                                    browserCanvas.sendLeadSelection(leadSelectionToApply);
+                                    browserCanvas.update();
+                                }
+                            });
+
                             updateMap();
                         }
                     }
@@ -173,6 +187,8 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         }
 
         if (mapaDesatualizado && (resultsProvider.getResults().getLength() > 0)) {
+            this.kmlResult = null;
+
             gpsProgressBar.setString(Messages.getString("KMLResult.LoadingGPSData") + "..."); //$NON-NLS-1$ //$NON-NLS-2$
             gpsProgressBar.setValue(0);
             gpsProgressBar.setVisible(true);
@@ -195,6 +211,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             gpsProgressBar.setVisible(false);
         }
         browserCanvas.setKML(kmlResult.getKML());
+        this.kmlResult=kmlResult;
         mapaDesatualizado = false;
     }
 
@@ -230,6 +247,16 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
     public IMultiSearchResultProvider getResultsProvider() {
         return resultsProvider;
+    }
+
+    public void runAfterLoad(Runnable run) {
+        if (this.kmlResult != null && mapaDesatualizado == false) {
+            run.run();
+        } else {
+            if (browserCanvas != null) {
+                browserCanvas.runAfterLoad(run);
+            }
+        }
     }
 
 }
