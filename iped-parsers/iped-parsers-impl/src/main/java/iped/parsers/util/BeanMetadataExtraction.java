@@ -168,7 +168,7 @@ public class BeanMetadataExtraction {
                             }
 
                             if (pd.getDisplayName().equals(resolvedNameProp)) {
-                                String name = value.toString().replace("/", "_");
+                                String name = value.toString();
                                 entryMetadata.add(TikaCoreProperties.TITLE, name);// adds the name property without prefix
                                 entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, name);
                             }
@@ -204,12 +204,12 @@ public class BeanMetadataExtraction {
                         return false;
                     }
                     String metadataName = parentPd.getDisplayName();
+                    entryMetadata.add(TikaCoreProperties.TITLE, metadataName);// adds the name property without prefix
+                    entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, metadataName);
+
                     if (prefix != null && prefix.length() > 0) {
                         metadataName = prefix + ":" + metadataName;
                     }
-                    String name = metadataName.replace("/", "_");
-                    entryMetadata.add(TikaCoreProperties.TITLE, name);// adds the name property without prefix
-                    entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, name);
 
                     for (int i = 0; i < colObj.length; i++) {
                         Object value = colObj[i];
