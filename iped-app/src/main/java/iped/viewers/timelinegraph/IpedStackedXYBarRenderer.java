@@ -57,7 +57,7 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
      * @return A boolean.
      */
     public boolean isSeriesVisible(int series) {
-        HashSet<Integer> invisibles = invisibleSeries.get(getPlot().getDataset());
+        HashSet<Integer> invisibles = invisibleSeries.get(((XYPlot)getPlot().getRootPlot()).getDataset());
         if (invisibles == null) {
             return true;
         } else {
@@ -70,7 +70,7 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
     }
 
     public Boolean getSeriesVisible(int series) {
-        HashSet<Integer> invisibles = invisibleSeries.get(getPlot().getDataset());
+        HashSet<Integer> invisibles = invisibleSeries.get(((XYPlot)getPlot().getRootPlot()).getDataset());
         if (invisibles == null) {
             return true;
         } else {
@@ -83,7 +83,7 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
     }
 
     public void setSeriesVisible(int series, Boolean visible) {
-        XYPlot xyPlot = getPlot();
+        XYPlot xyPlot = ((XYPlot)getPlot().getRootPlot());
         HashSet<Integer> invisibles = invisibleSeries.get(xyPlot.getDataset());
         if (invisibles == null) {
             invisibles = new HashSet<Integer>();

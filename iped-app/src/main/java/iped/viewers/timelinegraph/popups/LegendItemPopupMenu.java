@@ -61,10 +61,8 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
             if (isSelected(selLegends, currSeries)) {
                 if (rootPlot.getRenderer().isSeriesVisible(i)) {
                     ipedChartPanel.getExcludedEvents().add(currSeries);
-                    for (XYPlot xyPlot : xyPlots) {
-                        rootPlot.getRenderer().setPlot(xyPlot);
-                        rootPlot.getRenderer().setSeriesVisible(i, false, true);
-                    }
+                    rootPlot.getRenderer().setPlot(rootPlot);
+                    rootPlot.getRenderer().setSeriesVisible(i, false, true);
                 }
             }
         }
@@ -79,10 +77,8 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
             if (isSelected(selLegends, currSeries)) {
                 if (!rootPlot.getRenderer().isSeriesVisible(i)) {
                     ipedChartPanel.getExcludedEvents().remove(currSeries);
-                    for (XYPlot xyPlot : xyPlots) {
-                        rootPlot.getRenderer().setPlot(xyPlot);
-                        rootPlot.getRenderer().setSeriesVisible(i, true, true);
-                    }
+                    rootPlot.getRenderer().setPlot(rootPlot);
+                    rootPlot.getRenderer().setSeriesVisible(i, true, true);
                 }
             }
         }
