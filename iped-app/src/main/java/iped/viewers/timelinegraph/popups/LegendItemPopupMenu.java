@@ -56,14 +56,14 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) ipedChartPanel.getChart().getPlot());
         List<XYPlot> xyPlots = rootPlot.getSubplots();
 
-        for (XYPlot xyPlot : xyPlots) {
-            for (int i = 0; i < xyPlot.getDataset(0).getSeriesCount(); i++) {
-                String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
-                if (isSelected(selLegends, currSeries)) {
-                    if (rootPlot.getRenderer().isSeriesVisible(i)) {
-                        ipedChartPanel.getExcludedEvents().add(currSeries);
+        for (int i = 0; i < rootPlot.getDataset(0).getSeriesCount(); i++) {
+            String currSeries = (String) rootPlot.getDataset(0).getSeriesKey(i);
+            if (isSelected(selLegends, currSeries)) {
+                if (rootPlot.getRenderer().isSeriesVisible(i)) {
+                    ipedChartPanel.getExcludedEvents().add(currSeries);
+                    for (XYPlot xyPlot : xyPlots) {
                         rootPlot.getRenderer().setPlot(xyPlot);
-                        rootPlot.getRenderer().setSeriesVisible(i, !rootPlot.getRenderer().isSeriesVisible(i), true);
+                        rootPlot.getRenderer().setSeriesVisible(i, false, true);
                     }
                 }
             }
@@ -74,14 +74,14 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) ipedChartPanel.getChart().getPlot());
         List<XYPlot> xyPlots = rootPlot.getSubplots();
 
-        for (XYPlot xyPlot : xyPlots) {
-            for (int i = 0; i < xyPlot.getDataset(0).getSeriesCount(); i++) {
-                String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
-                if (isSelected(selLegends, currSeries)) {
-                    if (!rootPlot.getRenderer().isSeriesVisible(i)) {
-                        ipedChartPanel.getExcludedEvents().remove(currSeries);
+        for (int i = 0; i < rootPlot.getDataset(0).getSeriesCount(); i++) {
+            String currSeries = (String) rootPlot.getDataset(0).getSeriesKey(i);
+            if (isSelected(selLegends, currSeries)) {
+                if (!rootPlot.getRenderer().isSeriesVisible(i)) {
+                    ipedChartPanel.getExcludedEvents().remove(currSeries);
+                    for (XYPlot xyPlot : xyPlots) {
                         rootPlot.getRenderer().setPlot(xyPlot);
-                        rootPlot.getRenderer().setSeriesVisible(i, !rootPlot.getRenderer().isSeriesVisible(i), true);
+                        rootPlot.getRenderer().setSeriesVisible(i, true, true);
                     }
                 }
             }
