@@ -488,15 +488,21 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
                                 // hide excluded events
                                 IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChartPanel().getChart().getPlot());
+                                
                                 if (rootPlot != null && rootPlot.getSubplots().size() > 0) {
-                                    XYPlot xyPlot = (XYPlot) rootPlot.getSubplots().get(0);
-                                    for (int i = 0; i < xyPlot.getDataset(0).getSeriesCount(); i++) {
-                                        String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
-                                        if (chartPanel.getExcludedEvents().contains(currSeries)) {
-                                            rootPlot.getRenderer().setSeriesVisible(i, false);
+                                    List<XYPlot> xyPlots = rootPlot.getSubplots();
+
+                                    for (XYPlot xyPlot : xyPlots) {
+                                        for (int i = 0; i < xyPlot.getDataset(0).getSeriesCount(); i++) {
+                                            String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
+                                            if (chartPanel.getExcludedEvents().contains(currSeries)) {
+                                                xyPlot.getRenderer().setPlot(xyPlot);
+                                                xyPlot.getRenderer().setSeriesVisible(i, false);
+                                            }
                                         }
                                     }
                                 }
+                                combinedPlot.fireChangeEvent();
                             }
                         }
                     } catch (Exception e) {
