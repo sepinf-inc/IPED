@@ -545,9 +545,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
             extraAttributes.put(ImageSimilarityTask.IMAGE_FEATURES, v);
         }
 
-        if (extraAttributes.containsKey("face_encodings") && extraAttributes.containsKey("face_locations")) {
-            ArrayList<NDArray> face_encodings = (ArrayList<NDArray>) extraAttributes.get("face_encodings");
-            ArrayList<ArrayList<Long>> face_locations = (ArrayList) extraAttributes.get("face_locations");
+        if (extraAttributes.containsKey(ExtraProperties.FACE_ENCODINGS) && extraAttributes.containsKey(ExtraProperties.FACE_LOCATIONS)) {
+            ArrayList<NDArray> face_encodings = (ArrayList<NDArray>) extraAttributes.get(ExtraProperties.FACE_ENCODINGS);
+            ArrayList<ArrayList<Long>> face_locations = (ArrayList) extraAttributes.get(ExtraProperties.FACE_LOCATIONS);
             ArrayList<Map<String, Object>> faces = new ArrayList<>();
             for (int i = 0; i < face_encodings.size(); i++) {
                 float encoding[] = IndexItem.convNDArrayToFloatArray(face_encodings.get(i));
@@ -560,8 +560,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
             builder.field("faces", faces.toArray());
 
-            extraAttributes.remove("face_encodings");
-            extraAttributes.remove("face_locations");
+            extraAttributes.remove(ExtraProperties.FACE_ENCODINGS);
+            extraAttributes.remove(ExtraProperties.FACE_LOCATIONS);
         }
 
         builder.field("extraAttributes", extraAttributes);

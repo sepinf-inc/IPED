@@ -305,8 +305,9 @@ class FaceRecognitionTask:
         
         face_locations = self.convertTuplesToList(face_locations)
         
-        item.setExtraAttribute("face_locations", face_locations)
-        item.setExtraAttribute("face_encodings", face_encodings)
-        item.setExtraAttribute("numFaces",len(face_locations))
+        from iped.properties import ExtraProperties
+        item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
+        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
+        item.setExtraAttribute(ExtraProperties.FACE_COUNT, len(face_locations))
         
         self.cacheResults(hash, face_locations, face_encodings)
