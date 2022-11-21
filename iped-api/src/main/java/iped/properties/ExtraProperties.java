@@ -141,6 +141,12 @@ public class ExtraProperties {
 
     public static final String DOWNLOADED_DATA = "downloadedData";
 
+    public static final String FACE_COUNT = "face_count";
+
+    public static final String FACE_LOCATIONS = "face_locations";
+
+    public static final String FACE_ENCODINGS = "face_encodings";
+
     public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, COMMUNICATION_DATE.getName(),
             MESSAGE_BODY, COMMUNICATION_FROM, COMMUNICATION_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,
             Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT, MESSAGE_ATTACHMENT_COUNT.getName());
