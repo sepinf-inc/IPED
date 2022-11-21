@@ -281,7 +281,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
         faces_mapping.put("face_encoding", Map.of("type", "knn_vector", "dimension", FACE_SIZE, "method",
                 Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
         faces_mapping.put("face_location", Collections.singletonMap("type", "short"));
-
         properties.put("faces", Map.of("type", "nested", "properties", faces_mapping));
 
         Map<String, String> contentMapping = new HashMap<>(Map.of("type", "text"));
@@ -557,7 +556,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 map.put("face_encoding", encoding);
                 map.put("face_location", location);
                 faces.add(map);
-                System.out.println("Faces " + ((float[]) faces.get(i).get("face_encoding"))[0]);
             }
 
             builder.field("faces", faces.toArray());
