@@ -62,11 +62,11 @@
             <maxLength>500000000</maxLength>
         </carverType>
 
-        <carverType>
+        <!--carverType>
             <name>DER</name>
             <mediaType>application/pkix-cert</mediaType>
             <carverClass>iped.carvers.custom.DERCarver</carverClass>
-        </carverType>
+        </carverType-->
         
         <carverType>
             <name>CER</name>

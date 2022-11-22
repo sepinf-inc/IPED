@@ -93,7 +93,11 @@ public class IPEDMultiSource extends IPEDSource {
 
             String content = new String(bytes, "UTF-8"); //$NON-NLS-1$
             for (String pathStr : content.split("\n")) { //$NON-NLS-1$
-                File path = new File(pathStr.trim());
+                pathStr = pathStr.trim();
+                if (pathStr.isEmpty() || pathStr.startsWith("#")) {
+                    continue;
+                }
+                File path = new File(pathStr);
                 if (!new File(path, MODULE_DIR).exists()) {
                     throw new IllegalArgumentException("Invalid case path: " + path.getAbsolutePath());
                 }

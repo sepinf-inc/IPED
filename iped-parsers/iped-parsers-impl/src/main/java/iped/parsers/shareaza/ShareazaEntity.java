@@ -21,9 +21,9 @@ package iped.parsers.shareaza;
 import java.io.IOException;
 
 /**
- * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
-abstract class ShareazaEntity {
+public abstract class ShareazaEntity {
 
     private final String entityName;
 

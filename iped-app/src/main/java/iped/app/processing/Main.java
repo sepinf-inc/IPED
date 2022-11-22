@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import iped.app.config.LogConfiguration;
 import iped.app.processing.ui.ProgressConsole;
 import iped.app.processing.ui.ProgressFrame;
+import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
@@ -37,6 +38,7 @@ import iped.engine.core.Manager;
 import iped.engine.localization.Messages;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.exception.IPEDException;
+import iped.io.URLUtil;
 import iped.parsers.ocr.OCRParser;
 
 /**
@@ -54,6 +56,8 @@ public class Main {
     File logFile;
     LogConfiguration logConfiguration;
     CmdLineArgsImpl cmdLineParams;
+
+    private StartUpControlClient startUpControlClient;
 
     private Manager manager;
 
@@ -143,7 +147,7 @@ public class Main {
      * Define o caminho onde será encontrado o arquivo de configuração principal.
      */
     public void setConfigPath() throws Exception {
-        URL url = Main.class.getProtectionDomain().getCodeSource().getLocation();
+        URL url = URLUtil.getURL(Main.class);
 
         if ("true".equals(System.getProperty("Debugging"))) {
             rootPath = System.getProperty("user.dir");
@@ -218,6 +222,10 @@ public class Main {
             provider.addPropertyChangeListener(console, false);
         }
 
+        if (startUpControlClient != null) {
+            startUpControlClient.finish();
+        }
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -273,6 +281,9 @@ public class Main {
         Main iped = new Main(args, true);
         PrintStream SystemOut = System.out;
         boolean success = false;
+
+        iped.startUpControlClient = new StartUpControlClient();
+        iped.startUpControlClient.start();
 
         try {
             iped.setConfigPath();
