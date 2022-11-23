@@ -112,11 +112,11 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                 for (int i = 0; i < xyPlot.getDataset(0).getSeriesCount(); i++) {
                     String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
                     if (isSelected(selLegends, currSeries)) {
-                        if (rootPlot.getRenderer().isSeriesVisible(i)) {
+                        if (!ipedChartPanel.getExcludedEvents().contains(currSeries)) {
                             ipedChartPanel.getExcludedEvents().add(currSeries);
                         }
-                        rootPlot.getRenderer().setPlot(xyPlot);
-                        rootPlot.getRenderer().setSeriesVisible(i, false, true);
+                        xyPlot.getRenderer().setPlot(xyPlot);
+                        xyPlot.getRenderer().setSeriesVisible(i, false, true);
                     }
                 }
             }
@@ -139,11 +139,9 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                 for (int i = 0; i < xyPlot.getDataset(0).getSeriesCount(); i++) {
                     String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
                     if (isSelected(selLegends, currSeries)) {
-                        if (!rootPlot.getRenderer().isSeriesVisible(i)) {
-                            ipedChartPanel.getExcludedEvents().remove(currSeries);
-                        }
-                        rootPlot.getRenderer().setPlot(xyPlot);
-                        rootPlot.getRenderer().setSeriesVisible(i, true, true);
+                        ipedChartPanel.getExcludedEvents().remove(currSeries);
+                        xyPlot.getRenderer().setPlot(xyPlot);
+                        xyPlot.getRenderer().setSeriesVisible(i, true, true);
                     }
                 }
             }
