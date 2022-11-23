@@ -28,17 +28,11 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.TreeSet;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JTable;
 
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.SortedSetDocValues;
-import org.apache.lucene.search.DocIdSetIterator;
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
@@ -47,7 +41,6 @@ import org.jfree.chart.entity.AxisEntity;
 import org.jfree.chart.entity.ChartEntity;
 import org.jfree.chart.entity.EntityCollection;
 import org.jfree.chart.entity.JFreeChartEntity;
-import org.jfree.chart.entity.LegendItemEntity;
 import org.jfree.chart.entity.PlotEntity;
 import org.jfree.chart.entity.XYItemEntity;
 import org.jfree.chart.event.PlotChangeEvent;
@@ -63,10 +56,7 @@ import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
 
 import iped.app.ui.App;
-import iped.data.IItemId;
-import iped.properties.BasicProps;
 import iped.utils.IconUtil;
-import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.timelinegraph.datasets.TimelineDataset;
 import iped.viewers.timelinegraph.model.Minute;
 import iped.viewers.timelinegraph.popups.ChartPanelPopupMenu;
@@ -423,7 +413,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
             try {
                 Point2D zoomPoint = (Point2D) zoomPointParentField.get(this);
                 zoomPoint.setLocation(zoomPoint.getX(), e.getY());
-                //zoomPointParentField.set(this, zoomPoint);
             } catch (IllegalArgumentException | IllegalAccessException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
