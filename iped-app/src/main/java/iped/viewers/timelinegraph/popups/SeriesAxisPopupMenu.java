@@ -35,11 +35,12 @@ public class SeriesAxisPopupMenu extends JPopupMenu implements ActionListener {
         breakByBookmark.addActionListener(this);
         add(breakByBookmark);
 
-        breakByCategory = new JRadioButtonMenuItem(Messages.getString("TimeLineGraph.breakByCategory"));
-        bg.add(breakByCategory);
-        breakByCategory.addActionListener(this);
-        add(breakByCategory);
-
+        /*
+         * breakByCategory = new
+         * JRadioButtonMenuItem(Messages.getString("TimeLineGraph.breakByCategory"));
+         * bg.add(breakByCategory); breakByCategory.addActionListener(this);
+         * add(breakByCategory);
+         */
         // TODO
         /*
          * breakByMetadata = new
