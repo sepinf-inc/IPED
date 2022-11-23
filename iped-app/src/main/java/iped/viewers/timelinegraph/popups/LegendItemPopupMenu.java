@@ -25,6 +25,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
     JMenuItem hide;
     JMenuItem show;
     JMenuItem filter;
+    JMenuItem unfilter;
 
     public LegendItemPopupMenu(IpedChartPanel ipedChartPanel) {
         this.ipedChartPanel = ipedChartPanel;
@@ -40,6 +41,10 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         filter = new JMenuItem(Messages.getString("TimeLineGraph.filterEventFromResultSet"));
         filter.addActionListener(this);
         add(filter);
+
+        unfilter = new JMenuItem(Messages.getString("TimeLineGraph.unfilterEventFromResultSet","Unfilter"));
+        unfilter.addActionListener(this);
+        add(unfilter);
     }
 
     public boolean isSelected(List<LegendItemBlockContainer> selLegends, String currSeries) {
@@ -109,14 +114,40 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                     if (isSelected(selLegends, currSeries)) {
                         if (rootPlot.getRenderer().isSeriesVisible(i)) {
                             ipedChartPanel.getExcludedEvents().add(currSeries);
-                        } else {
-                            ipedChartPanel.getExcludedEvents().remove(currSeries);
                         }
                         rootPlot.getRenderer().setPlot(xyPlot);
-                        rootPlot.getRenderer().setSeriesVisible(i, !rootPlot.getRenderer().isSeriesVisible(i), true);
+                        rootPlot.getRenderer().setSeriesVisible(i, false, true);
                     }
                 }
             }
+
+            if (ipedChartPanel.hasNoFilter()) {
+                ipedChartPanel.getIpedChartsPanel().setApplyFilters(false);
+                App app = (App) ipedChartPanel.getIpedChartsPanel().getGUIProvider();
+                app.setDockablesColors();
+            } else {
+                ipedChartPanel.getIpedChartsPanel().setApplyFilters(true);
+            }
+            ipedChartPanel.filterSelection();
+        }
+
+        if (e.getSource() == unfilter) {
+            IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) ipedChartPanel.getChart().getPlot());
+            List<XYPlot> xyPlots = rootPlot.getSubplots();
+
+            for (XYPlot xyPlot : xyPlots) {
+                for (int i = 0; i < xyPlot.getDataset(0).getSeriesCount(); i++) {
+                    String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
+                    if (isSelected(selLegends, currSeries)) {
+                        if (!rootPlot.getRenderer().isSeriesVisible(i)) {
+                            ipedChartPanel.getExcludedEvents().remove(currSeries);
+                        }
+                        rootPlot.getRenderer().setPlot(xyPlot);
+                        rootPlot.getRenderer().setSeriesVisible(i, true, true);
+                    }
+                }
+            }
+
             if (ipedChartPanel.hasNoFilter()) {
                 ipedChartPanel.getIpedChartsPanel().setApplyFilters(false);
                 App app = (App) ipedChartPanel.getIpedChartsPanel().getGUIProvider();
@@ -154,6 +185,28 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
             show.setEnabled(false);
         } else {
             show.setEnabled(true);
+        }
+
+        if (ipedChartPanel.hasNoFilter()) {
+            if (selectionContainsIncluded) {
+                filter.setEnabled(true);
+            }else {
+                filter.setEnabled(false);
+            }
+            if (!selectionContainsExcluded) {
+                unfilter.setEnabled(false);
+            }
+        }else {
+            if (selectionContainsIncluded) {
+                filter.setEnabled(true);
+            }else {
+                filter.setEnabled(false);
+            }
+            if (selectionContainsExcluded) {
+                unfilter.setEnabled(true);
+            }else {
+                unfilter.setEnabled(false);
+            }
         }
 
         super.show(invoker, x, y);
