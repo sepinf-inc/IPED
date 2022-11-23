@@ -97,7 +97,7 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>org.icepdf</groupId>
+            <groupId>com.github.pcorless.icepdf</groupId>
             <artifactId>icepdf-viewer</artifactId>
             <version>${icepdf.version}</version>
             <type>jar</type>
@@ -122,6 +122,12 @@
     		<artifactId>imageio-bmp</artifactId>
     		<version>3.8.3</version>
 	  	</dependency>
+	  	<dependency>
+	  	    <!--Used by IcePDF-7.0-->
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-tiff</artifactId>
+            <version>3.8.3</version>
+        </dependency>
 	    <dependency>
 	  		<groupId>org.jfree</groupId>
 	  		<artifactId>jfreechart</artifactId>

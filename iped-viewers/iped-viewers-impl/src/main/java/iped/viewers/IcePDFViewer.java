@@ -21,7 +21,7 @@ import org.icepdf.ri.common.SwingViewBuilder;
 import org.icepdf.ri.common.views.DocumentViewController;
 import org.icepdf.ri.common.views.DocumentViewControllerImpl;
 import org.icepdf.ri.common.views.DocumentViewModelImpl;
-import org.icepdf.ri.util.PropertiesManager;
+import org.icepdf.ri.util.ViewerPropertiesManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +64,13 @@ public class IcePDFViewer extends AbstractViewer {
         System.setProperty("org.icepdf.core.ccittfax.jai", "true"); //$NON-NLS-1$ //$NON-NLS-2$
         System.setProperty("org.icepdf.core.minMemory", "150M"); //$NON-NLS-1$ //$NON-NLS-2$
         System.setProperty("org.icepdf.core.views.page.text.highlightColor", "0xFFFF00"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        // Set rendering hints to improve rendering quality
+        System.setProperty("org.icepdf.core.screen.alphaInterpolation","VALUE_ALPHA_INTERPOLATION_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("org.icepdf.core.screen.colorRender","VALUE_COLOR_RENDER_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("org.icepdf.core.screen.interpolation","VALUE_INTERPOLATION_BILINEAR"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("org.icepdf.core.screen.render","VALUE_RENDER_QUALITY"); //$NON-NLS-1$ //$NON-NLS-2$
+        
         // pode provocar crash da jvm
         // System.setProperty("org.icepdf.core.awtFontLoading", "true");
 
@@ -113,13 +120,15 @@ public class IcePDFViewer extends AbstractViewer {
         pdfController.getDocumentViewController().setAnnotationCallback(
                 new org.icepdf.ri.common.MyAnnotationCallback(pdfController.getDocumentViewController()));
 
-        PropertiesManager propManager = PropertiesManager.getInstance();
-        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ANNOTATION, "false"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_TOOL, "false"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ZOOM, "true"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_SHOW_STATUSBAR, "false"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_HIDE_UTILITYPANE, "true"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_DEFAULT_PAGEFIT, Integer.toString(fitMode));
+        ViewerPropertiesManager propManager = ViewerPropertiesManager.getInstance();
+        propManager.set(ViewerPropertiesManager.PROPERTY_SHOW_TOOLBAR_ANNOTATION, "false"); //$NON-NLS-1$
+        propManager.set(ViewerPropertiesManager.PROPERTY_SHOW_TOOLBAR_TOOL, "false"); //$NON-NLS-1$
+        propManager.set(ViewerPropertiesManager.PROPERTY_SHOW_TOOLBAR_ZOOM, "true"); //$NON-NLS-1$
+        propManager.set(ViewerPropertiesManager.PROPERTY_SHOW_STATUSBAR, "false"); //$NON-NLS-1$
+        propManager.set(ViewerPropertiesManager.PROPERTY_HIDE_UTILITYPANE, "true"); //$NON-NLS-1$
+        propManager.set(ViewerPropertiesManager.PROPERTY_DEFAULT_PAGEFIT, Integer.toString(fitMode));
+        propManager.set(ViewerPropertiesManager.PROPERTY_SHOW_TOOLBAR_SEARCH, "false"); //$NON-NLS-1$
+        
 
         SwingViewBuilder factory = new SwingViewBuilder(pdfController, viewMode, fitMode);
         viewerPanel = factory.buildViewerPanel();

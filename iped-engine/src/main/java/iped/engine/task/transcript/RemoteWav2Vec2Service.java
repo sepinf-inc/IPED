@@ -28,6 +28,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.task.transcript.AbstractTranscriptTask.TextAndScore;
+import iped.io.URLUtil;
 import iped.utils.IOUtil;
 
 public class RemoteWav2Vec2Service {
@@ -89,7 +90,7 @@ public class RemoteWav2Vec2Service {
             printHelpAndExit();
         }
 
-        File jar = new File(RemoteWav2Vec2Service.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        File jar = new File(URLUtil.getURL(RemoteWav2Vec2Service.class).toURI());
         File root = jar.getParentFile().getParentFile();
 
         System.setProperty("org.apache.logging.log4j.level", "INFO");

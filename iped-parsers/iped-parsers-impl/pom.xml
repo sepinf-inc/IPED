@@ -49,6 +49,11 @@
         		</exclusion>
         	</exclusions>
         </dependency>
+        <dependency>
+            <groupId>com.googlecode.plist</groupId>
+            <artifactId>dd-plist</artifactId>
+            <version>1.26</version>
+        </dependency>
 		<dependency>
   		    <groupId>org.apache.tika</groupId>
 		    <artifactId>tika-parser-sqlite3-module</artifactId>
@@ -91,10 +96,20 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>org.icepdf</groupId>
+            <groupId>com.github.pcorless.icepdf</groupId>
             <artifactId>icepdf-core</artifactId>
             <version>${icepdf.version}</version>
             <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.github.jai-imageio</groupId>
+                    <artifactId>jai-imageio-jpeg2000</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-ext-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>iped</groupId>
@@ -182,6 +197,13 @@
             <artifactId>libfqlite</artifactId>
             <version>1.57.05</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.springframework/spring-expression -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-expression</artifactId>
+            <version>5.3.23</version>
+        </dependency>
+
     </dependencies>
     
     <build>
