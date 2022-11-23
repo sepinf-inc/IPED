@@ -35,7 +35,6 @@ import javax.swing.JButton;
 
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
-import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.entity.AxisEntity;
 import org.jfree.chart.entity.ChartEntity;
@@ -110,18 +109,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
 
     private boolean zoomingStart;
 
-    private Field zoomPointParentField;
-
     public IpedChartPanel(IpedChart chart, IpedChartsPanel ipedChartsPanel) {
         super(chart, true);
-        
-        try {
-            zoomPointParentField = this.getClass().getSuperclass().getDeclaredField("zoomPoint");
-            zoomPointParentField.setAccessible(true);
-        } catch (NoSuchFieldException | SecurityException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
         
         useBuffer = true;
 
@@ -410,13 +399,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
             // tricks the parent event handler with a new mouse event where the Y is the
             // bottom of the chart ((int)scaledDataArea.getMaxY())
             Rectangle2D scaledDataArea = getScreenDataArea((int) e.getX(), (int) e.getY());
-            try {
-                Point2D zoomPoint = (Point2D) zoomPointParentField.get(this);
-                zoomPoint.setLocation(zoomPoint.getX(), e.getY());
-            } catch (IllegalArgumentException | IllegalAccessException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
+            zoomPoint.setLocation(zoomPoint.getX(), e.getY());
             MouseEvent en = new MouseEvent((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(), (int) scaledDataArea.getMaxY(), e.getClickCount(), e.isPopupTrigger(), e.getButton());
             super.mouseDragged(en);
         } else {
