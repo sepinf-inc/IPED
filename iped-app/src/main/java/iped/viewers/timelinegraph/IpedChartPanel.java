@@ -22,6 +22,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -92,6 +93,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     JButton apllyFilters;
 
     private int filterMask = InputEvent.SHIFT_DOWN_MASK;
+    private int panMask = InputEvent.CTRL_DOWN_MASK;
 
     boolean useBuffer;
     private double filterTriggerDistance;
@@ -118,8 +120,19 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
 
     private boolean zoomingStart;
 
+    private Field zoomPointParentField;
+
     public IpedChartPanel(IpedChart chart, IpedChartsPanel ipedChartsPanel) {
         super(chart, true);
+        
+        try {
+            zoomPointParentField = this.getClass().getSuperclass().getDeclaredField("zoomPoint");
+            zoomPointParentField.setAccessible(true);
+        } catch (NoSuchFieldException | SecurityException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        
         useBuffer = true;
 
         this.ipedChartsPanel = ipedChartsPanel;
@@ -341,7 +354,9 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
                 }
                 return;
             } else {
-                zoomingStart = true;
+                if((mods & this.panMask) != this.panMask) {
+                    zoomingStart = true;
+                }
             }
         }
 
@@ -398,9 +413,21 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         }
 
         if (zoomingStart) {
+            if ((mods & this.filterMask) != this.filterMask) {
+                
+            }
+            
             // tricks the parent event handler with a new mouse event where the Y is the
             // bottom of the chart ((int)scaledDataArea.getMaxY())
             Rectangle2D scaledDataArea = getScreenDataArea((int) e.getX(), (int) e.getY());
+            try {
+                Point2D zoomPoint = (Point2D) zoomPointParentField.get(this);
+                zoomPoint.setLocation(zoomPoint.getX(), e.getY());
+                //zoomPointParentField.set(this, zoomPoint);
+            } catch (IllegalArgumentException | IllegalAccessException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
             MouseEvent en = new MouseEvent((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(), (int) scaledDataArea.getMaxY(), e.getClickCount(), e.isPopupTrigger(), e.getButton());
             super.mouseDragged(en);
         } else {
