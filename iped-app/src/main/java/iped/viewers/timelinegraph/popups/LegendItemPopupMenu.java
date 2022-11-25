@@ -66,8 +66,8 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                 String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
                 if (isSelected(selLegends, currSeries)) {
                     rootPlot.getRenderer().setPlot(xyPlot);
+                    ipedChartPanel.getHiddenEvents().add(currSeries);
                     if (rootPlot.getRenderer().isSeriesVisible(i)) {
-                        ipedChartPanel.getHiddenEvents().add(currSeries);
                         rootPlot.getRenderer().setSeriesVisible(i, false, true);
                     }
                 }
@@ -84,8 +84,8 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                 String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
                 if (isSelected(selLegends, currSeries)) {
                     rootPlot.getRenderer().setPlot(xyPlot);
+                    ipedChartPanel.getHiddenEvents().remove(currSeries);
                     if (!rootPlot.getRenderer().isSeriesVisible(i)) {
-                        ipedChartPanel.getHiddenEvents().remove(currSeries);
                         rootPlot.getRenderer().setSeriesVisible(i, true, true);
                     }
                 }
@@ -116,7 +116,6 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                             ipedChartPanel.getExcludedEvents().add(currSeries);
                         }
                         xyPlot.getRenderer().setPlot(xyPlot);
-                        //xyPlot.getRenderer().setSeriesVisible(i, false, true);
                     }
                 }
             }
@@ -141,7 +140,6 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                     if (isSelected(selLegends, currSeries)) {
                         ipedChartPanel.getExcludedEvents().remove(currSeries);
                         xyPlot.getRenderer().setPlot(xyPlot);
-                        //xyPlot.getRenderer().setSeriesVisible(i, true, true);
                     }
                 }
             }

@@ -489,7 +489,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                                 splitPane.setBottomComponent(listScroller);
                                 splitPane.setVisible(true);
 
-                                // hide excluded events
+                                // hide hidden events
                                 IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChartPanel().getChart().getPlot());
                                 
                                 if (rootPlot != null && rootPlot.getSubplots().size() > 0) {
@@ -498,7 +498,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                                     for (XYPlot xyPlot : xyPlots) {
                                         for (int i = 0; i < xyPlot.getDataset(0).getSeriesCount(); i++) {
                                             String currSeries = (String) xyPlot.getDataset(0).getSeriesKey(i);
-                                            if (chartPanel.getExcludedEvents().contains(currSeries)) {
+                                            if (chartPanel.getHiddenEvents().contains(currSeries)) {
                                                 xyPlot.getRenderer().setPlot(xyPlot);
                                                 xyPlot.getRenderer().setSeriesVisible(i, false);
                                             }
