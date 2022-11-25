@@ -22,12 +22,12 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.ImageIcon;
@@ -88,7 +88,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     private double filterTriggerDistance;
 
     ArrayList<Date[]> definedFilters = new ArrayList<Date[]>();
-    ArrayList<String> excludedEvents = new ArrayList<String>();
+    HashSet<String> excludedEvents = new HashSet<String>();
+    HashSet<String> hiddenEvents = new HashSet<String>();
     private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
     Date startFilterDate = null;
@@ -905,11 +906,11 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         app.setDockablesColors();
     }
 
-    public ArrayList<String> getExcludedEvents() {
+    public HashSet<String> getExcludedEvents() {
         return excludedEvents;
     }
 
-    public void setExcludedEvents(ArrayList<String> excludedEvents) {
+    public void setExcludedEvents(HashSet<String> excludedEvents) {
         this.excludedEvents = excludedEvents;
     }
 
@@ -983,5 +984,13 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         lastMouseMoveX = -1;
         resetLastMouseResponsiveEntityBkColor();
         super.mouseExited(e);
+    }
+
+    public HashSet<String> getHiddenEvents() {
+        return hiddenEvents;
+    }
+
+    public void setHiddenEvents(HashSet<String> hiddenEvents) {
+        this.hiddenEvents = hiddenEvents;
     }
 }

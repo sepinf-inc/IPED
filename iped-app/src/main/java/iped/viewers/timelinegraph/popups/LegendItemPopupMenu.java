@@ -67,7 +67,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                 if (isSelected(selLegends, currSeries)) {
                     rootPlot.getRenderer().setPlot(xyPlot);
                     if (rootPlot.getRenderer().isSeriesVisible(i)) {
-                        ipedChartPanel.getExcludedEvents().add(currSeries);
+                        ipedChartPanel.getHiddenEvents().add(currSeries);
                         rootPlot.getRenderer().setSeriesVisible(i, false, true);
                     }
                 }
@@ -85,7 +85,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                 if (isSelected(selLegends, currSeries)) {
                     rootPlot.getRenderer().setPlot(xyPlot);
                     if (!rootPlot.getRenderer().isSeriesVisible(i)) {
-                        ipedChartPanel.getExcludedEvents().remove(currSeries);
+                        ipedChartPanel.getHiddenEvents().remove(currSeries);
                         rootPlot.getRenderer().setSeriesVisible(i, true, true);
                     }
                 }
@@ -116,7 +116,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                             ipedChartPanel.getExcludedEvents().add(currSeries);
                         }
                         xyPlot.getRenderer().setPlot(xyPlot);
-                        xyPlot.getRenderer().setSeriesVisible(i, false, true);
+                        //xyPlot.getRenderer().setSeriesVisible(i, false, true);
                     }
                 }
             }
@@ -141,7 +141,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                     if (isSelected(selLegends, currSeries)) {
                         ipedChartPanel.getExcludedEvents().remove(currSeries);
                         xyPlot.getRenderer().setPlot(xyPlot);
-                        xyPlot.getRenderer().setSeriesVisible(i, true, true);
+                        //xyPlot.getRenderer().setSeriesVisible(i, true, true);
                     }
                 }
             }
@@ -163,49 +163,50 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         List<LegendItemBlockContainer> selLegends = list.getSelectedValuesList();
         boolean selectionContainsExcluded = false;
         boolean selectionContainsIncluded = false;
+        boolean selectionContainsHidden=false;
+        boolean selectionContainsNotHidden=false;
         for (Iterator iterator = selLegends.iterator(); iterator.hasNext();) {
             LegendItemBlockContainer legendItemBlockContainer = (LegendItemBlockContainer) iterator.next();
             if (ipedChartPanel.getExcludedEvents().contains(legendItemBlockContainer.getSeriesKey())) {
                 selectionContainsExcluded = true;
             } else {
                 selectionContainsIncluded = true;
+                if (ipedChartPanel.getHiddenEvents().contains(legendItemBlockContainer.getSeriesKey())) {
+                    selectionContainsHidden = true;
+                } else {
+                    selectionContainsNotHidden = true;
+                }
             }
-            if (selectionContainsIncluded && selectionContainsExcluded) {
+            if (selectionContainsIncluded && selectionContainsExcluded && selectionContainsHidden && selectionContainsNotHidden) {
                 break;
             }
         }
-        if (!selectionContainsIncluded) {
+
+        if (selectionContainsExcluded) {
+            unfilter.setEnabled(true);
+            show.setEnabled(false);
             hide.setEnabled(false);
-        } else {
-            hide.setEnabled(true);
+        }else {
+            unfilter.setEnabled(false);
         }
-        if (!selectionContainsExcluded) {
+
+        if (selectionContainsIncluded) {
+            filter.setEnabled(true);
+        }else {
+            filter.setEnabled(false);
+        }
+
+        if (!selectionContainsHidden) {
             show.setEnabled(false);
         } else {
             show.setEnabled(true);
         }
-
-        if (ipedChartPanel.hasNoFilter()) {
-            if (selectionContainsIncluded) {
-                filter.setEnabled(true);
-            }else {
-                filter.setEnabled(false);
-            }
-            if (!selectionContainsExcluded) {
-                unfilter.setEnabled(false);
-            }
-        }else {
-            if (selectionContainsIncluded) {
-                filter.setEnabled(true);
-            }else {
-                filter.setEnabled(false);
-            }
-            if (selectionContainsExcluded) {
-                unfilter.setEnabled(true);
-            }else {
-                unfilter.setEnabled(false);
-            }
+        if (!selectionContainsNotHidden) {
+            hide.setEnabled(false);
+        } else {
+            hide.setEnabled(true);
         }
+
 
         super.show(invoker, x, y);
     }

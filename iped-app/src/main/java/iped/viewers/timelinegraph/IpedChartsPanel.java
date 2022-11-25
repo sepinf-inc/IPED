@@ -207,6 +207,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 background = Color.WHITE;
                 foreground = Color.BLACK;
             }
+            if(chartPanel.getHiddenEvents().contains((String) value.getSeriesKey())) {
+                foreground = Color.RED;
+            }
             result.setForeground(foreground);
             result.setBackground(background);
 
