@@ -169,11 +169,11 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                 selectionContainsExcluded = true;
             } else {
                 selectionContainsIncluded = true;
-                if (ipedChartPanel.getHiddenEvents().contains(legendItemBlockContainer.getSeriesKey())) {
-                    selectionContainsHidden = true;
-                } else {
-                    selectionContainsNotHidden = true;
-                }
+            }
+            if (ipedChartPanel.getHiddenEvents().contains(legendItemBlockContainer.getSeriesKey())) {
+                selectionContainsHidden = true;
+            } else {
+                selectionContainsNotHidden = true;
             }
             if (selectionContainsIncluded && selectionContainsExcluded && selectionContainsHidden && selectionContainsNotHidden) {
                 break;
@@ -182,8 +182,6 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
 
         if (selectionContainsExcluded) {
             unfilter.setEnabled(true);
-            show.setEnabled(false);
-            hide.setEnabled(false);
         }else {
             unfilter.setEnabled(false);
         }
