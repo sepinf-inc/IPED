@@ -4,8 +4,10 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import iped.utils.UTF8Properties;
 
@@ -27,7 +29,7 @@ public class UiScale {
                     value = value.trim();
                     if (!value.equalsIgnoreCase(AUTO)) {
                         double factor = Double.parseDouble(value);
-                        DecimalFormat df = new DecimalFormat("0.000");
+                        DecimalFormat df = new DecimalFormat("0.000", DecimalFormatSymbols.getInstance(Locale.US));
                         String val = df.format(factor);
                         System.setProperty("sun.java2d.uiScale", val);
                         return val;

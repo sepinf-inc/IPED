@@ -43,7 +43,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -119,9 +118,6 @@ public class SleuthkitReader extends DataSourceReader {
     // this guarantees just one producer populates the DB at a time (e.g. when
     // decoding embedded disks recursively)
     private static Semaphore decodeImageSemaphore = new Semaphore(1);
-
-    // count number of embedded disks being decoded at the same time
-    private static AtomicInteger embeddedDisksBeingDecoded = new AtomicInteger();
 
     private CmdLineArgs args;
     private Long firstId, lastId;
@@ -310,10 +306,6 @@ public class SleuthkitReader extends DataSourceReader {
 
         checkTSKVersion();
 
-        if (embeddedDisk) {
-            embeddedDisksBeingDecoded.incrementAndGet();
-        }
-
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args.getProfile() != null) {
             if (args.getProfile().equals("fastmode")) //$NON-NLS-1$ //$NON-NLS-2$
@@ -448,10 +440,6 @@ public class SleuthkitReader extends DataSourceReader {
 
         } else if (addImageFuture.get(image) != null)
             addImageFuture.get(image).get();
-
-        if (embeddedDisk) {
-            embeddedDisksBeingDecoded.decrementAndGet();
-        }
 
     }
     
@@ -1162,18 +1150,10 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         if (embeddedDisk) {
-            // always add to queue to avoid deadlock if expanding many virtual disks simultaneously
-            Manager.getInstance().getProcessingQueues().addItemFirstNonBlocking(item);
+            // add embedded disk subitems to queue head to process them first
+            Manager.getInstance().getProcessingQueues().addItemFirst(item);
         } else {
-            if (embeddedDisksBeingDecoded.get() < Manager.getInstance().getNumWorkers()) {
-                // this can block if queue is full, but we have at least 1 worker running
-                Manager.getInstance().getProcessingQueues().addItem(item);
-            } else {
-                // avoid deadlock if all workers are trying to decode virtual disks and the main
-                // evidence is still being decoded
-                Manager.getInstance().getProcessingQueues().addItemNonBlocking(item);
-            }
-
+            Manager.getInstance().getProcessingQueues().addItem(item);
         }
         // store parents trackID after adding to queue (where it is computed and ID
         // could be reassigned)
