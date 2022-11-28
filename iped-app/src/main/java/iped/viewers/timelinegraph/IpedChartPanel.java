@@ -49,7 +49,6 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.plot.Zoomable;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.RegularTimePeriod;
@@ -57,9 +56,10 @@ import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
 
 import iped.app.ui.App;
+import iped.jfextensions.chart.ChartPanel;
+import iped.jfextensions.model.Minute;
 import iped.utils.IconUtil;
 import iped.viewers.timelinegraph.datasets.TimelineDataset;
-import iped.viewers.timelinegraph.model.Minute;
 import iped.viewers.timelinegraph.popups.ChartPanelPopupMenu;
 import iped.viewers.timelinegraph.popups.DataItemPopupMenu;
 import iped.viewers.timelinegraph.popups.PlotPopupMenu;
@@ -308,6 +308,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     @Override
     public void mousePressed(MouseEvent e) {
         super.mousePressed(e);
+        
         int mods = e.getModifiersEx();
         if (((mods & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK)) {
             if ((mods & this.filterMask) == this.filterMask) {
@@ -346,7 +347,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
                 }
             }
         }
-
     }
 
     @Override
@@ -400,10 +400,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         }
 
         if (zoomingStart) {
-            if ((mods & this.filterMask) != this.filterMask) {
-                
-            }
-            
             // tricks the parent event handler with a new mouse event where the Y is the
             // bottom of the chart ((int)scaledDataArea.getMaxY())
             Rectangle2D scaledDataArea = getScreenDataArea((int) e.getX(), (int) e.getY());
@@ -413,7 +409,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         } else {
             super.mouseDragged(e);
         }
-
     }
 
     @Override

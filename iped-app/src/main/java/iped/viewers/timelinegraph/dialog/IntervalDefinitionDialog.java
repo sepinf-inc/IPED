@@ -53,8 +53,8 @@ import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocaleConfig;
+import iped.jfextensions.model.Minute;
 import iped.viewers.timelinegraph.IpedChartPanel;
-import iped.viewers.timelinegraph.model.Minute;
 
 public class IntervalDefinitionDialog {
     JDialog dialog = new JDialog(App.get());

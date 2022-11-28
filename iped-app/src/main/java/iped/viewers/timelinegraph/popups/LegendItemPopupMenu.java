@@ -6,7 +6,6 @@ import java.awt.event.ActionListener;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;

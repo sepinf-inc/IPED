@@ -129,9 +129,9 @@
             <version>3.8.3</version>
         </dependency>
 	    <dependency>
-	  		<groupId>org.jfree</groupId>
-	  		<artifactId>jfreechart</artifactId>
-	  		<version>1.5.3</version>
+	  		<groupId>iped</groupId>
+	  		<artifactId>iped-jfextensions</artifactId>
+	  		<version>4.1-snapshot</version>
 	  	</dependency>
 	  	
 	</dependencies>

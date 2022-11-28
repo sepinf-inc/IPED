@@ -9,9 +9,7 @@ import java.util.HashMap;
 import java.util.TimeZone;
 
 import javax.swing.ButtonGroup;
-import javax.swing.ButtonModel;
 import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
@@ -21,8 +19,6 @@ import org.jfree.data.Range;
 import org.jfree.data.time.DateRange;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
-import org.jfree.data.time.Millisecond;
-import iped.viewers.timelinegraph.model.Minute;
 import org.jfree.data.time.Month;
 import org.jfree.data.time.Quarter;
 import org.jfree.data.time.Second;
@@ -31,6 +27,7 @@ import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
 
 import iped.app.ui.Messages;
+import iped.jfextensions.model.Minute;
 import iped.viewers.timelinegraph.ChartTimePeriodConstraint;
 import iped.viewers.timelinegraph.DateUtil;
 import iped.viewers.timelinegraph.IpedChartsPanel;

@@ -3,7 +3,6 @@ package iped.viewers.timelinegraph;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Paint;
-import java.awt.Window;
 import java.awt.geom.Rectangle2D;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
@@ -19,10 +18,6 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import javax.swing.JOptionPane;
-import javax.swing.JToolTip;
-import javax.swing.PopupFactory;
-import javax.swing.SwingUtilities;
-import javax.swing.ToolTipManager;
 
 import org.jfree.chart.axis.AxisState;
 import org.jfree.chart.axis.DateAxis;
@@ -54,8 +49,8 @@ import org.jfree.data.time.Year;
 import org.jfree.data.xy.XYDataset;
 
 import iped.app.ui.Messages;
+import iped.jfextensions.model.Minute;
 import iped.viewers.timelinegraph.datasets.AsynchronousDataset;
-import iped.viewers.timelinegraph.model.Minute;
 
 public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity {
     volatile SimpleDateFormat ISO8601DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
@@ -290,8 +285,8 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
             return new Week(date, cal);
         } else if (timePeriodClass == Minute.class) {
             return new Minute(date, cal);
-        } else if (timePeriodClass == iped.viewers.timelinegraph.model.Minute.class) {
-            return new iped.viewers.timelinegraph.model.Minute(date, cal);
+        } else if (timePeriodClass == iped.jfextensions.model.Minute.class) {
+            return new iped.jfextensions.model.Minute(date, cal);
         } else if (timePeriodClass == Second.class) {
             return new Second(date, cal);
         } else if (timePeriodClass == Millisecond.class) {

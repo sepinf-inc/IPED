@@ -9,7 +9,7 @@ import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
 
-import iped.viewers.timelinegraph.model.Minute;
+import iped.jfextensions.model.Minute;
 
 public class ChartTimePeriodConstraint {
     static double YEAR_UNIT_RANGE_SIZE = 365l * 24l * 60l * 60l * 1000l;// a week
