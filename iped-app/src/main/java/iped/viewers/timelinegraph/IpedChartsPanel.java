@@ -47,6 +47,7 @@ import javax.swing.JTable;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.ToolTipManager;
+import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -160,6 +161,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     private HashMap<String, AbstractIntervalXYDataset> result;
     private DefaultListModel<LegendItemBlockContainer> legendListModel;
 
+    Color fgColor;
+    Color bgColor;
+    
     private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
     public IpedChartsPanel() {
@@ -193,7 +197,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
         @Override
         public Component getListCellRendererComponent(JList<? extends LegendItemBlockContainer> list, LegendItemBlockContainer value, int index, boolean isSelected, boolean cellHasFocus) {
-
+            
             JLabel result = this;
 
             result.setInheritsPopupMenu(true);
@@ -204,8 +208,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 background = Color.BLUE;
                 foreground = Color.WHITE;
             } else {
-                background = Color.WHITE;
-                foreground = Color.BLACK;
+                background = bgColor;
+                foreground = fgColor;
             }
             if(chartPanel.getHiddenEvents().contains((String) value.getSeriesKey())) {
                 foreground = Color.RED;
@@ -260,6 +264,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         this.resultsTable = resultsTable;
         this.resultsProvider = resultsProvider;
         this.guiProvider = guiProvider;
+        
+        fgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.foreground");
+        bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
 
         splitPane = new IpedSplitPane();
         splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
@@ -295,7 +302,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         if (renderer == null) {
             renderer = new IpedStackedXYBarRenderer(this);
         }
-        ((IpedStackedXYBarRenderer) renderer).setBarPainter(new IpedXYBarPainter((XYBarRenderer) renderer));
+        barPainter = new IpedXYBarPainter((XYBarRenderer) renderer);
+        ((IpedStackedXYBarRenderer) renderer).setBarPainter(barPainter);
         ((IpedStackedXYBarRenderer) renderer).setMargin(0);
         renderer.setDefaultToolTipGenerator(toolTipGenerator);
         renderer.setDefaultItemLabelsVisible(true);
@@ -479,6 +487,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                             JFreeChart chart = null;
                             if (result != null && result.size() > 0) {
                                 chart = createChart(result);
+                                
                                 isUpdated = true;
                             }
 

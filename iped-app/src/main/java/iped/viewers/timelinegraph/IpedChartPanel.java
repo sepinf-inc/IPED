@@ -32,6 +32,7 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.UIManager;
 
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
@@ -48,6 +49,7 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.plot.Zoomable;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.RegularTimePeriod;
@@ -199,8 +201,13 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
                 if (curMouseResponsiveChartEntity != lastMouseResponsiveChartEntity) {
                     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                     Graphics2D g2 = (Graphics2D) getGraphics();
-                    Color bk = getBackground();
-                    Color bklight = new Color(bk.getRed() + 20, bk.getGreen() + 20, bk.getBlue() + 20);
+                    
+                    Color bk = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
+                    if(bk==null) {
+                        bk=ipedChartsPanel.getChartPanel().getBackground();
+                    }
+                    int mult = bk.getRed()>=240 ? -1 : 1;
+                    Color bklight = new Color(bk.getRed() + (20*mult), bk.getGreen() + (20*mult), bk.getBlue() + (20*mult));
                     curMouseResponsiveChartEntity.setMouseOverPaint(bklight);
                     g2.dispose();
                     self.getChart().getPlot().notifyListeners(new PlotChangeEvent(self.getChart().getPlot()));
@@ -276,7 +283,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         if (lastMouseResponsiveChartEntity != null) {
             setCursor(Cursor.getDefaultCursor());
             Graphics2D g2 = (Graphics2D) getGraphics();
-            Color bk = getBackground();
+            Color bk = ipedChartsPanel.bgColor;
             lastMouseResponsiveChartEntity.setMouseOverPaint(bk);
             g2.dispose();
             getChart().getPlot().notifyListeners(new PlotChangeEvent(getChart().getPlot()));
