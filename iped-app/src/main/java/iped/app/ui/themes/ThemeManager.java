@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -33,9 +34,18 @@ public class ThemeManager {
     private final Map<Object, Object> savedDefaults = new HashMap<Object, Object>();
     private final List<Theme> themes = new ArrayList<Theme>();
     private Theme currentTheme;
+    List<ThemeChangeListener> themeChangeListeners = new ArrayList<ThemeChangeListener>(); 
 
     public static ThemeManager getInstance() {
         return instance;
+    }
+    
+    public void addThemeChangeListener(ThemeChangeListener themeChangeListener) {
+        themeChangeListeners.add(themeChangeListener);
+    }
+    
+    public void removeThemeChangeListener(ThemeChangeListener themeChangeListener) {
+        themeChangeListeners.remove(themeChangeListener);
     }
 
     public synchronized void setLookAndFeel() throws Exception {
@@ -87,6 +97,7 @@ public class ThemeManager {
             UIManager.getLookAndFeelDefaults().put(key, value);
         }
         newTheme.apply();
+        Theme oldTheme = currentTheme;
         currentTheme = newTheme;
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -109,6 +120,12 @@ public class ThemeManager {
                         }
                     }
                 });
+                
+                for (Iterator iterator = themeChangeListeners.iterator(); iterator.hasNext();) {
+                    ThemeChangeListener themeChangeListener = (ThemeChangeListener) iterator.next();
+                    themeChangeListener.changeTheme(oldTheme, currentTheme);
+                }
+
                 App.get().updateUI(true);
             }
         });

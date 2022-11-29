@@ -9,6 +9,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Date;
 
+import javax.swing.UIManager;
+
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.ValueAxis;
@@ -25,7 +27,10 @@ import org.jfree.data.general.DatasetUtils;
 import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.XYDataset;
 
-public class IpedXYPlot extends XYPlot {
+import iped.app.ui.themes.Theme;
+import iped.app.ui.themes.ThemeChangeListener;
+
+public class IpedXYPlot extends XYPlot implements ThemeChangeListener {
 
     IpedChartPanel ipedChartPanel;
 
@@ -278,8 +283,7 @@ public class IpedXYPlot extends XYPlot {
         boolean foundData = false;
         XYDataset dataset = getDataset(index);
 
-        XYItemRenderer renderer = getRenderer(index);
-        renderer.initialise(g2, dataArea, this, null, info);
+        IpedStackedXYBarRenderer renderer = (IpedStackedXYBarRenderer) getRenderer(index);
 
         if (!DatasetUtils.isEmptyOrNull(dataset)) {
             foundData = true;
@@ -289,7 +293,7 @@ public class IpedXYPlot extends XYPlot {
                 return foundData; // can't render anything without axes
             }
             if (renderer == null) {
-                renderer = getRenderer();
+                renderer = (IpedStackedXYBarRenderer)getRenderer();
                 if (renderer == null) { // no default renderer available
                     return foundData;
                 }
@@ -526,4 +530,24 @@ public class IpedXYPlot extends XYPlot {
         return SeriesRenderingOrder.FORWARD;
     }
 
+    @Override
+    public void changeTheme(Theme oldTheme, Theme newTheme) {
+        Color fgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.foreground");
+        if(fgColor==null) {
+            fgColor=Color.BLACK;
+        }
+        Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
+        if(bgColor==null) {
+            bgColor=Color.WHITE;
+        }
+
+        //ipedChartPanel.getChart().setBackgroundPaint(ipedChartPanel.getBackground());
+        this.setBackgroundPaint(bgColor);
+        this.getDomainAxis().setTickLabelPaint(fgColor);
+        this.getDomainAxis().setLabelPaint(fgColor);
+        this.getRangeAxis().setTickLabelPaint(fgColor);
+        this.getRangeAxis().setLabelPaint(fgColor);
+        ipedChartPanel.getIpedChartsPanel().repaint();
+        //this.notifyListeners(new PlotChangeEvent(this));
+    }
 }

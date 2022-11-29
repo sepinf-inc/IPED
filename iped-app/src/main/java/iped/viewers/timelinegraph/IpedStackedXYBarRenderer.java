@@ -1,13 +1,10 @@
 package iped.viewers.timelinegraph;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.HashSet;
-
-import javax.swing.UIManager;
 
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.entity.EntityCollection;
@@ -22,7 +19,7 @@ import org.jfree.data.general.Dataset;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.XYDataset;
 
-public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
+public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
     HashMap<Dataset, HashSet<Integer>> invisibleSeries = new HashMap<Dataset, HashSet<Integer>>();
     HashMap<Dataset, HashSet<Integer>> invisibleSeriesInLegend = new HashMap<Dataset, HashSet<Integer>>();
 
@@ -120,26 +117,7 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
     public XYItemRendererState initialise(Graphics2D g2, Rectangle2D dataArea, XYPlot plot, XYDataset data, PlotRenderingInfo info) {
         lastY = 0;
         lastItem = -1;
-        
-        Color fgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.foreground");
-        if(fgColor==null) {
-            fgColor=Color.BLACK;
-        }
-        Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
-        if(bgColor==null) {
-            bgColor=Color.WHITE;
-            ipedChartsPanel.getChartPanel().getChart().setBackgroundPaint(ipedChartsPanel.getChartPanel().getBackground());
-        }else {
-            ipedChartsPanel.getChartPanel().getChart().setBackgroundPaint(bgColor);
-        }
-        
 
-        plot.setBackgroundPaint(bgColor);
-        plot.getDomainAxis().setTickLabelPaint(fgColor);
-        plot.getDomainAxis().setLabelPaint(fgColor);
-        plot.getRangeAxis().setTickLabelPaint(fgColor);
-        plot.getRangeAxis().setLabelPaint(fgColor);
-        
         if(data!=null) {
             XYItemRendererState state = super.initialise(g2, dataArea, plot, data, info);
             return state;

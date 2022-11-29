@@ -89,6 +89,8 @@ import iped.app.ui.App;
 import iped.app.ui.ClearFilterListener;
 import iped.app.ui.ColumnsManager;
 import iped.app.ui.events.RowSorterTableDataChange;
+import iped.app.ui.themes.ThemeChangeListener;
+import iped.app.ui.themes.ThemeManager;
 import iped.data.IItemId;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
@@ -208,8 +210,14 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 background = Color.BLUE;
                 foreground = Color.WHITE;
             } else {
-                background = bgColor;
-                foreground = fgColor;
+                background = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
+                if(background==null) {
+                    background = Color.WHITE;
+                }
+                foreground = UIManager.getLookAndFeelDefaults().getColor("Viewer.foreground");
+                if(foreground==null) {
+                    foreground = Color.BLACK;
+                }
             }
             if(chartPanel.getHiddenEvents().contains((String) value.getSeriesKey())) {
                 foreground = Color.RED;
@@ -764,6 +772,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         boolean firstExecution = plots != null && plots.length <= 0;
 
         for (Object plot : plots) {
+            ThemeManager.getInstance().removeThemeChangeListener((ThemeChangeListener)plot);
             combinedPlot.remove((XYPlot) plot);
         }
         combinedPlot.removeAllDataSets();
@@ -796,7 +805,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 combinedPlot.fireChangeEvent();
                 return null;
             }
-            XYPlot plot = new IpedXYPlot(chartPanel, dataset, domainAxis, rangeAxis, renderer);
+            IpedXYPlot plot = new IpedXYPlot(chartPanel, dataset, domainAxis, rangeAxis, renderer);
+            ThemeManager.getInstance().addThemeChangeListener(plot);
+            plot.changeTheme(null, ThemeManager.getInstance().getCurrentTheme());
             if (firstPlot == null) {
                 firstPlot = plot;
             }

@@ -283,7 +283,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         if (lastMouseResponsiveChartEntity != null) {
             setCursor(Cursor.getDefaultCursor());
             Graphics2D g2 = (Graphics2D) getGraphics();
-            Color bk = ipedChartsPanel.bgColor;
+            Color bk = ipedChartsPanel.getBackground();
             lastMouseResponsiveChartEntity.setMouseOverPaint(bk);
             g2.dispose();
             getChart().getPlot().notifyListeners(new PlotChangeEvent(getChart().getPlot()));
