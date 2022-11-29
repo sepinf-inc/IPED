@@ -6,6 +6,8 @@ import java.awt.geom.Rectangle2D;
 import java.util.Iterator;
 
 import javax.swing.DefaultListModel;
+import javax.swing.JList;
+import javax.swing.ListModel;
 
 import org.jfree.chart.LegendItemSource;
 import org.jfree.chart.block.Block;
@@ -23,6 +25,7 @@ import org.jfree.chart.ui.Size2D;
 public class IpedLegendTitle extends LegendTitle {
     private IpedChartPanel ipedChartPanel;
     DefaultListModel<LegendItemBlockContainer> legendListModel;
+    private JList legendList;
 
     public IpedLegendTitle(LegendItemSource source) {
         super(source);
@@ -31,6 +34,7 @@ public class IpedLegendTitle extends LegendTitle {
     public void setIpedChartPanel(IpedChartPanel ipedchartPanel) {
         this.ipedChartPanel = ipedchartPanel;
         legendListModel = ipedchartPanel.getIpedChartsPanel().getLegendListModel();
+        legendList = ipedchartPanel.getIpedChartsPanel().getLegendList();
     }
 
     @Override
@@ -60,8 +64,18 @@ public class IpedLegendTitle extends LegendTitle {
         }
         // target = trimPadding(target);
         Object val = container.draw(gPane, target, params);
+        Object[] o = legendList.getSelectedValues();
         legendListModel.clear();
-        polupatesLegendListModel(container);
+        polupatesLegendListModel(legendListModel, container);
+        list:for (int i = 0; i < legendList.getModel().getSize(); i++) {
+            LegendItemBlockContainer l = (LegendItemBlockContainer) legendList.getModel().getElementAt(i);
+            for (int j = 0; j < o.length; j++) {
+                if(l.getSeriesKey().equals(((LegendItemBlockContainer)o[j]).getSeriesKey())) {
+                    legendList.addSelectionInterval(i, i);
+                    continue list;
+                }
+            }
+        }
 
         if (val instanceof BlockResult) {
             EntityCollection ec = ((BlockResult) val).getEntityCollection();
@@ -74,15 +88,15 @@ public class IpedLegendTitle extends LegendTitle {
         return val;
     }
 
-    void polupatesLegendListModel(BlockContainer container) {
+    void polupatesLegendListModel(DefaultListModel<LegendItemBlockContainer> llm, BlockContainer container) {
         Iterator<Block> iterator = container.getBlocks().iterator();
         while (iterator.hasNext()) {
             Block b = iterator.next();
             if (b instanceof BlockContainer) {
-                polupatesLegendListModel((BlockContainer) b);
+                polupatesLegendListModel(llm, (BlockContainer) b);
             }
             if (b instanceof LegendItemBlockContainer) {
-                legendListModel.addElement((LegendItemBlockContainer) b);
+                llm.addElement((LegendItemBlockContainer) b);
             }
         }
     }
