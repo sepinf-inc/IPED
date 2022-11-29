@@ -128,12 +128,6 @@
             <artifactId>imageio-tiff</artifactId>
             <version>3.8.3</version>
         </dependency>
-	    <dependency>
-	  		<groupId>iped</groupId>
-	  		<artifactId>iped-jfextensions</artifactId>
-	  		<version>4.1-snapshot</version>
-	  	</dependency>
-	  	
 	</dependencies>
 
 </project>

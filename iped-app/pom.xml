@@ -52,6 +52,11 @@
 		    <artifactId>jcalendar</artifactId>
 		    <version>1.4</version>
 		</dependency>
+		<dependency>
+	  		<groupId>com.github.sepinf-inc</groupId>
+	  		<artifactId>jfreechartextensions</artifactId>
+	  		<version>5d6b903557dac49a925a7a62d5c6592bd07482c5</version>
+	  	</dependency>
     </dependencies>
     
     <build>
