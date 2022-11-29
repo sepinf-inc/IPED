@@ -118,7 +118,6 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
 
     @Override
     public XYItemRendererState initialise(Graphics2D g2, Rectangle2D dataArea, XYPlot plot, XYDataset data, PlotRenderingInfo info) {
-        XYItemRendererState state = super.initialise(g2, dataArea, plot, data, info);
         lastY = 0;
         lastItem = -1;
         
@@ -141,8 +140,12 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
         plot.getRangeAxis().setTickLabelPaint(fgColor);
         plot.getRangeAxis().setLabelPaint(fgColor);
         
-        // state.setProcessVisibleItemsOnly(false);
-        return state;
+        if(data!=null) {
+            XYItemRendererState state = super.initialise(g2, dataArea, plot, data, info);
+            return state;
+        }else {
+            return null;
+        }
     }
 
     int lastItem = -1;
