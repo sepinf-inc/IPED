@@ -1359,15 +1359,15 @@
         <sub-class-of type="text/html"/>
     </mime-type>
 
-    <mime-type type="message/x-win10-mail-appt">
+    <mime-type type="application/x-win10-mail-appointment">
         <sub-class-of type="text/html"/>
     </mime-type>
 
-    <mime-type type="message/x-win10-mail-contact">
+    <mime-type type="application/x-win10-mail-contact">
         <sub-class-of type="text/html"/>
     </mime-type>
 
-    <mime-type type="message/x-win10-mail-store">
+    <mime-type type="application/x-win10-mail-store">
         <sub-class-of type="text/html"/>
     </mime-type>
     

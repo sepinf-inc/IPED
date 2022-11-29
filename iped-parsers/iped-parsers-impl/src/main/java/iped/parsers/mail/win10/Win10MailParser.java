@@ -66,12 +66,12 @@ import iped.parsers.mail.win10.tables.MessageTable;
 import iped.parsers.mail.win10.tables.RecipientTable;
 import iped.parsers.mail.win10.tables.StoreTable;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.Util;
 import iped.parsers.util.EsedbManager;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.ToXMLContentHandler;
+import iped.parsers.util.Util;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -91,10 +91,10 @@ public class Win10MailParser extends AbstractParser {
 
     public static final MediaType WIN10_MAIL_DB = MediaType.application("x-win10-mail-db");
     public static final MediaType WIN10_MAIL_MSG = MediaType.parse("message/x-win10-mail-msg");
-    public static final MediaType WIN10_MAIL_APPT = MediaType.parse("message/x-win10-mail-appt");
-    public static final MediaType WIN10_MAIL_ATTACH = MediaType.parse("message/x-win10-mail-attach");
-    public static final MediaType WIN10_MAIL_CONTACT = MediaType.parse("message/x-win10-mail-contact");
-    public static final MediaType WIN10_MAIL_STORE = MediaType.parse("message/x-win10-mail-store");
+    public static final MediaType WIN10_MAIL_APPT = MediaType.application("x-win10-mail-appointment");
+    public static final MediaType WIN10_MAIL_ATTACH = MediaType.application("x-win10-mail-attach");
+    public static final MediaType WIN10_MAIL_CONTACT = MediaType.application("x-win10-mail-contact");
+    public static final MediaType WIN10_MAIL_STORE = MediaType.application("x-win10-mail-store");
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(WIN10_MAIL_DB);
 
     private static final char MESSAGE_CATEGORY = '3';
