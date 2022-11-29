@@ -828,9 +828,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
             HighlightWorker sw = new HighlightWorker(ipedChartsPanel.getDomainAxis(), ipedChartsPanel.resultsProvider, removedDates[0], removedDates[1], false, false);
         }
         definedFilters.clear();
-        while (excludedEvents.size() > 0) {
-            excludedEvents.remove(excludedEvents.size() - 1);
-        }
+        excludedEvents.clear();
         ipedChartsPanel.setApplyFilters(false);
         filterSelection();
         IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChart().getPlot());
