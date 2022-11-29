@@ -680,8 +680,9 @@ public class Win10MailParser extends AbstractParser {
 
             // Attachments:
             ArrayList<AttachmentEntry> emailAttachments = attachTable.getMessageAttachments(email.getRowId());
-            if (email.getNoOfAttachments() > 0) {
-                preview.append("<b>" + Messages.getString("OutlookPSTParser.Attachments") + " (" + email.getNoOfAttachments()
+            int noOfAttachments = emailAttachments.size();
+            if (noOfAttachments > 0) {
+                preview.append("<b>" + Messages.getString("OutlookPSTParser.Attachments") + " (" + noOfAttachments
                     + "):</b><br>");
                 for (AttachmentEntry attach : emailAttachments) {
                     String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
@@ -695,10 +696,10 @@ public class Win10MailParser extends AbstractParser {
                         String queryHTML = SimpleHTMLEncoder.htmlEncode(attach.getCaseQuery());
                         preview.append("<a href=\"\" onclick=\"app.open('" + queryHTML + "');\">" + attach.getFileName() + "</a><br>");
                     } else {
-                        preview.append(SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + "<br>");
+                        preview.append(SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + " <em>(not found)<em><br>");
                     }
                 }
-                emailMetadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, email.getNoOfAttachments());
+                emailMetadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, noOfAttachments);
             }
 
             // Body:
