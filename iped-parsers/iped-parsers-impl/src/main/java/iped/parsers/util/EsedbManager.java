@@ -171,7 +171,6 @@ public class EsedbManager {
     }
 
 
-
     public static int getColumnPosition(EsedbLibrary esedbLibrary, String columnCode, PointerByReference errorPointer, PointerByReference tablePointerRef, String filePath) {
         int position = -1;
 
@@ -182,13 +181,17 @@ public class EsedbManager {
         // use first record
         int result = esedbLibrary.libesedb_table_get_record(tablePointerRef.getValue(), 0, recordPointerRef,
             errorPointer);
-        if (result < 0)
+        if (result < 0) {   // no records
             EsedbManager.printError("Table Get Record", result, filePath, errorPointer);
+            return -1;
+        }
 
         result = esedbLibrary.libesedb_table_get_number_of_columns(tablePointerRef.getValue(),
             numberOfColumns, columnFlags, errorPointer);
-        if (result < 0)
+        if (result < 0) { // no columns
             EsedbManager.printError("Table Get Number of Columns", result, filePath, errorPointer);
+            return -1;
+        }
 
         for (int col = 0; col < numberOfColumns.getValue(); col++) {
             IntByReference columnNameSize =  new IntByReference();
@@ -196,18 +199,34 @@ public class EsedbManager {
 
             result = esedbLibrary.libesedb_record_get_utf8_column_name_size(recordPointerRef.getValue(), col,
                 columnNameSize, errorPointer);
-            if (result < 0)
-                EsedbManager.printError("Record Get UTF8 Column Name Size", result, filePath, errorPointer);
+            if (result < 0) continue;
 
             result = esedbLibrary.libesedb_record_get_utf8_column_name(recordPointerRef.getValue(),
                 col, columnName, columnNameSize.getValue(), errorPointer);
-            if (result < 0)
-                EsedbManager.printError("Record Get UTF8 Column Name", result, filePath, errorPointer);
+            if (result < 0) continue;
 
             if (columnName.getString(0).equals(columnCode)) {
                 position = col;
                 break;
             }
+        }
+
+        if (position == -1) {
+            IntByReference tableNameSize = new IntByReference();
+            Memory tableNameRef = new Memory(256);
+
+            result = esedbLibrary.libesedb_table_get_utf8_name_size(tablePointerRef.getValue(), tableNameSize,
+                errorPointer);
+            if (result < 0)
+                EsedbManager.printError("Table Get UTF8 Name Size", result, filePath, errorPointer);
+
+            result = esedbLibrary.libesedb_table_get_utf8_name(tablePointerRef.getValue(), tableNameRef,
+                tableNameSize.getValue(), errorPointer);
+            if (result < 0)
+                EsedbManager.printError("Table Get UTF8 Name", result, filePath, errorPointer);
+    
+            String tableName = tableNameRef.getString(0);
+            LOGGER.warn("While decoding '" + filePath + "': Column '" + columnCode + "' not found in table '" + tableName + "'");
         }
 
         return position;
