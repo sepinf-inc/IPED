@@ -89,7 +89,6 @@ import iped.app.ui.App;
 import iped.app.ui.ClearFilterListener;
 import iped.app.ui.ColumnsManager;
 import iped.app.ui.events.RowSorterTableDataChange;
-import iped.app.ui.themes.ThemeChangeListener;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItemId;
 import iped.engine.search.QueryBuilder;
@@ -772,7 +771,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         boolean firstExecution = plots != null && plots.length <= 0;
 
         for (Object plot : plots) {
-            ThemeManager.getInstance().removeThemeChangeListener((ThemeChangeListener)plot);
             combinedPlot.remove((XYPlot) plot);
         }
         combinedPlot.removeAllDataSets();
@@ -806,8 +804,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 return null;
             }
             IpedXYPlot plot = new IpedXYPlot(chartPanel, dataset, domainAxis, rangeAxis, renderer);
-            ThemeManager.getInstance().addThemeChangeListener(plot);
-            plot.changeTheme(null, ThemeManager.getInstance().getCurrentTheme());
+            plot.changeTheme(ThemeManager.getInstance().getCurrentTheme());
             if (firstPlot == null) {
                 firstPlot = plot;
             }

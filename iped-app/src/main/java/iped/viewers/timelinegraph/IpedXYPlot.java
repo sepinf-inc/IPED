@@ -28,9 +28,8 @@ import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.XYDataset;
 
 import iped.app.ui.themes.Theme;
-import iped.app.ui.themes.ThemeChangeListener;
 
-public class IpedXYPlot extends XYPlot implements ThemeChangeListener {
+public class IpedXYPlot extends XYPlot {
 
     IpedChartPanel ipedChartPanel;
 
@@ -530,8 +529,7 @@ public class IpedXYPlot extends XYPlot implements ThemeChangeListener {
         return SeriesRenderingOrder.FORWARD;
     }
 
-    @Override
-    public void changeTheme(Theme oldTheme, Theme newTheme) {
+    public void changeTheme(Theme newTheme) {
         Color fgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.foreground");
         if(fgColor==null) {
             fgColor=Color.BLACK;
@@ -541,13 +539,11 @@ public class IpedXYPlot extends XYPlot implements ThemeChangeListener {
             bgColor=Color.WHITE;
         }
 
-        //ipedChartPanel.getChart().setBackgroundPaint(ipedChartPanel.getBackground());
         this.setBackgroundPaint(bgColor);
         this.getDomainAxis().setTickLabelPaint(fgColor);
         this.getDomainAxis().setLabelPaint(fgColor);
         this.getRangeAxis().setTickLabelPaint(fgColor);
         this.getRangeAxis().setLabelPaint(fgColor);
         ipedChartPanel.getIpedChartsPanel().repaint();
-        //this.notifyListeners(new PlotChangeEvent(this));
     }
 }

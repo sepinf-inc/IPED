@@ -56,6 +56,8 @@ import org.jfree.data.time.Second;
 import org.jfree.data.time.TimePeriod;
 
 import iped.app.ui.App;
+import iped.app.ui.themes.Theme;
+import iped.app.ui.themes.ThemeManager;
 import iped.jfextensions.chart.ChartPanel;
 import iped.jfextensions.model.Minute;
 import iped.utils.IconUtil;
@@ -992,5 +994,19 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
 
     public void setHiddenEvents(HashSet<String> hiddenEvents) {
         this.hiddenEvents = hiddenEvents;
+    }
+
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        if(getChart()!=null) {
+            IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChart().getPlot());
+            List<IpedXYPlot> xyPlots = rootPlot.getSubplots();
+            
+            Theme theme = ThemeManager.getInstance().getCurrentTheme();
+            for (IpedXYPlot xyPlot : xyPlots) {
+                xyPlot.changeTheme(theme);
+            }
+        }
     }
 }
