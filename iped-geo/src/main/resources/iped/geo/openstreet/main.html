@@ -1,24 +1,66 @@
 <html> 
     <head>
-		
+
 		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
-		
+
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
    integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
    crossorigin=""/>
-				
+
 		<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
    integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
    crossorigin=""></script>
-		
+
 		<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" crossorigin=""></script>
 		<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" crossorigin=""></script>
 		<script>
 		{{markerclusterjs}}
 		</script>
+		
+		<script>
+        function applyDarkTheme(){
+			var sSheetList = document.styleSheets;
+			
+			var rule = 'null';
+			var i=0;
+			while(i<document.styleSheets[2].rules.length){
+				 if(document.styleSheets[2].rules[i].selectorText.includes('img.leaflet-tile')){
+	    		     rule = document.styleSheets[2].rules[i];
+                     break;
+				 }
+				 i++;
+			}
+            if(rule != 'null'){
+                document.styleSheets[2].deleteRule(rule);
+            }
+
+            document.styleSheets[2].insertRule('img.leaflet-tile {filter: hue-rotate(180deg) brightness(80%) invert(1);}',0);
+        
+            document.body.style.background = 'black';
+        }
+        
+        function applyLightTheme(){
+            var rule = 'null';
+            var i=0;
+            while(i<document.styleSheets[2].rules.length){
+                 if(document.styleSheets[2].rules[i].selectorText.includes('img.leaflet-tile')){
+                     rule = document.styleSheets[2].rules[i]; 
+                     break;
+                 }
+                 i++;
+            }
+            if(rule != 'null'){
+                document.styleSheets[2].deleteRule(rule);
+            }
+            document.styleSheets[2].insertRule('img.leaflet-tile {filter: }',0);
+	        
+            document.body.style.background = '';
+        }
+		</script>
 
 		<style type="text/css">
 		#map_canvas { height:800px; }
+		
 		.circle_class{
 			border: 2px dotted #38f;
 			background: rgba(255,255,255,0.5);
@@ -30,15 +72,19 @@
 			z-index: 800;
 		}
 		.leaflet-popup{
-			opacity: 0.8;
-		}
+            opacity: 0.8;
+        }
+		
 		.rect_class{
 			border-radius: 0%;
 		}
 		.kml-popup{
 			background: rgba(255,255,255,0.7);
 		}
-		body { margin:0px;padding:0px }
+		body { 
+		  margin:0px;
+		  padding:0px 
+		}
 		</style>
 
         <script type="text/javascript">
@@ -49,18 +95,20 @@
     var mapImpl = "OSM";
     var map;
     var track;
-    
+
     function initialize() {
         var kmlUrl = '';
+
+        {{applyTheme}}
         
         map = new L.IPEDMap('map_canvas', { center: new L.LatLng(58.4, 43.0), zoom: 11, boxZoom:true });
-
 		L.tileLayer('{{tileServerUrl}}', {
     			maxZoom: 18,
     			minZoom: 2,
     			tileSize: 512,
     			zoomOffset: -1,
 				}).addTo(map);
+				
 
          const parser = new DOMParser();
          const kml = parser.parseFromString('{{kml}}', 'text/xml');

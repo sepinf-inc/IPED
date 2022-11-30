@@ -259,4 +259,13 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         }
     }
 
+    @Override
+    public void updateUI() {
+        super.updateUI();
+
+        if(browserCanvas!=null) {
+            browserCanvas.update();
+        }
+    }
+
 }
