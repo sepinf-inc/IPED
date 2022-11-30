@@ -1,10 +1,13 @@
 package iped.geo.openstreet;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
+
+import javax.swing.UIManager;
 
 import org.apache.commons.io.IOUtils;
 
@@ -134,6 +137,13 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                 webEngine.getLoadWorker().stateProperty().removeListener(onLoadChange);
                 webEngine.getLoadWorker().stateProperty().addListener(onLoadChange);
                 webEngine.loadContent(html);
+                runAfterLoad(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateUI();
+                    }
+                });
+                
                 jfxPanel.invalidate();
             }
         });
@@ -156,6 +166,14 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
             html = html.replace("{{layers_img}}", layers_img);            
             html = html.replace("{{markerclusterjs}}", markerclusterjs);
+            
+            String themeScript="applyLightTheme();";
+            Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
+            if(bgColor!=null) {
+                themeScript="applyDarkTheme();";
+            }
+            html = html.replace("{{applyTheme}}", themeScript);
+            
             html = html.replace("{{tileServerUrl}}", url);
             html = html.replace("{{toolbar}}", getToolBarHtml());
 
@@ -267,6 +285,27 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                 }
             });
         }
+        updateUI();
+    }
+    
+    public void updateUI() {
+        String themeScript="applyLightTheme();";
+        Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
+        if(bgColor!=null) {
+            themeScript="applyDarkTheme();";
+        }
+        final String themeScriptFinal=themeScript; 
+        Platform.runLater(new Runnable() {
+            public void run() {
+                try {
+                    webEngine.executeScript(themeScriptFinal);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // nothing
+                }
+            }
+        });
     }
 
     @Override
