@@ -96,10 +96,10 @@
     var map;
     var track;
 
+    {{applyTheme}}
+
     function initialize() {
         var kmlUrl = '';
-
-        {{applyTheme}}
         
         map = new L.IPEDMap('map_canvas', { center: new L.LatLng(58.4, 43.0), zoom: 11, boxZoom:true });
 		L.tileLayer('{{tileServerUrl}}', {
