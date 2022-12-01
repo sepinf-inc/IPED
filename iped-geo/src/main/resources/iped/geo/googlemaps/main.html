@@ -15,10 +15,12 @@
 
         <script>
         function applyDarkTheme(){
+            document.documentElement.style.background = 'black';
             document.body.style.background = 'black';
         }
         
         function applyLightTheme(){
+            document.documentElement.style.background = '';
             document.body.style.background = '';
         }
         </script>
@@ -43,10 +45,10 @@
     var map;
 	var gxml;
 	var proxy = "/cgi-bin/proxy.php?"
+
+	{{applyTheme}}
+	
     function initialize() {
-    
-        {{applyTheme}}
-    
         var kmlUrl = '';
         var myOptions = {
             mapTypeId: google.maps.MapTypeId.HYBRID,
