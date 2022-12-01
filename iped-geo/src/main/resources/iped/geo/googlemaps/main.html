@@ -13,6 +13,17 @@
 		body { margin:0px;padding:0px }
 		</style>		
 
+        <script>
+        function applyDarkTheme(){
+            document.body.style.background = 'black';
+        }
+        
+        function applyLightTheme(){
+            document.body.style.background = '';
+        }
+        </script>
+
+
         <script type="text/javascript" src= "http://maps.google.com/maps/api/js?sensor=false&libraries=geometry"></script>
         <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{GOOGLE_API_KEY}}&callback=initMap"></script>
         <script type="text/javascript">
@@ -33,6 +44,9 @@
 	var gxml;
 	var proxy = "/cgi-bin/proxy.php?"
     function initialize() {
+    
+        {{applyTheme}}
+    
         var kmlUrl = '';
         var myOptions = {
             mapTypeId: google.maps.MapTypeId.HYBRID,

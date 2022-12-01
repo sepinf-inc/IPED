@@ -1,11 +1,14 @@
 package iped.geo.googlemaps;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
+
+import javax.swing.UIManager;
 
 import org.apache.commons.io.IOUtils;
 
@@ -118,6 +121,13 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
                 webEngine.getLoadWorker().stateProperty().removeListener(onLoadChange);
                 webEngine.getLoadWorker().stateProperty().addListener(onLoadChange);
                 webEngine.loadContent(html);
+                runAfterLoad(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateUI();
+                    }
+                });
+                
                 jfxPanel.invalidate();
             }
         });
@@ -142,6 +152,13 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
                     .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png"))); //$NON-NLS-1$
 
             html = replaceApiKey(html);
+            
+            String themeScript="applyLightTheme();";
+            Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
+            if(bgColor!=null) {
+                themeScript="applyDarkTheme();";
+            }
+            html = html.replace("{{applyTheme}}", themeScript);
 
             html = html.replace("{{load_geoxml3}}", js); //$NON-NLS-1$
             html = html.replace("{{load_keydragzoom}}", js2); //$NON-NLS-1$
@@ -227,6 +244,7 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
                 }
             });
         }
+        updateUI();
     }
 
     @Override
@@ -237,6 +255,26 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
                     webEngine.executeScript("gxml.marca(\"" + mid + "\",'" + b + "');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 } catch (Exception e) {
                     e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    public void updateUI() {
+        String themeScript="applyLightTheme();";
+        Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
+        if(bgColor!=null) {
+            themeScript="applyDarkTheme();";
+        }
+        final String themeScriptFinal=themeScript; 
+        Platform.runLater(new Runnable() {
+            public void run() {
+                try {
+                    webEngine.executeScript(themeScriptFinal);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // nothing
                 }
             }
         });
