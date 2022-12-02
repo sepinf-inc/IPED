@@ -16,10 +16,12 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
 import iped.geo.AbstractMapCanvas;
+import iped.geo.kml.GetResultsJSWorker;
 import iped.geo.kml.GetResultsKMLWorker;
 import iped.geo.kml.KMLResult;
 import iped.geo.localization.Messages;
@@ -168,7 +170,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         }
     }
 
-    public void updateMap() {
+    synchronized public void updateMap() {
         if (tilesSourceURL == null) {
             if (savedTilesSourceURL != null) {
                 tilesSourceURL = savedTilesSourceURL;
@@ -187,6 +189,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         }
 
         if (mapaDesatualizado && (resultsProvider.getResults().getLength() > 0)) {
+            mapaDesatualizado = false;
             this.kmlResult = null;
 
             gpsProgressBar.setString(Messages.getString("KMLResult.LoadingGPSData") + "..."); //$NON-NLS-1$ //$NON-NLS-2$
@@ -194,8 +197,9 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             gpsProgressBar.setVisible(true);
 
             String[] cols = new String[] { BasicProps.ID };
-            GetResultsKMLWorker kmlWorker = new GetResultsKMLWorker(resultsProvider, cols, gpsProgressBar, this);
-            kmlWorker.execute();
+            //GetResultsKMLWorker kmlWorker = new GetResultsKMLWorker(resultsProvider, cols, gpsProgressBar, this);
+            GetResultsJSWorker jsWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas);
+            jsWorker.execute();
 
         } else {
             browserCanvas.update();
@@ -264,6 +268,10 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         super.updateUI();
 
         if(browserCanvas!=null) {
+            Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
+            if(bgColor!=null) {
+                browserCanvas.getContainer().setBackground(bgColor);
+            }
             browserCanvas.update();
         }
     }

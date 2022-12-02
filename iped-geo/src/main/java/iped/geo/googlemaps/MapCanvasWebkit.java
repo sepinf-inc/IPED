@@ -280,4 +280,10 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
         });
     }
 
+    @Override
+    public void addPlacemark(String gid, String longit, String lat) {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

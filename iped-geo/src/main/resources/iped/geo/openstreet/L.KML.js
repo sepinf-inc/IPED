@@ -546,6 +546,19 @@ L.KML = L.MarkerClusterGroup.extend({
 		return l;
 	},
 
+    addPlacemark: function (id, lat, long, options) {
+        var m = new L.KMLMarker(new L.LatLng(lat, long), options);
+        m.id=id;
+        this.markers[id]=m;
+        ms =[];
+        ms.push(m);
+        layer = new L.FeatureGroup(ms);
+        this.fire('addlayer', {
+                layer: layer
+        });
+        this.addLayer(layer);
+    },
+    
 	parsePlacemark: function (place, xml, style, options) {
 		var h, i, j, k, el, il, opts = options || {};
 
