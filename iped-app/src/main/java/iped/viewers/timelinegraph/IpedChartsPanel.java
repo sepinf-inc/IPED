@@ -271,10 +271,13 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         this.resultsTable = resultsTable;
         this.resultsProvider = resultsProvider;
         this.guiProvider = guiProvider;
+        this.isUpdated = false;
         
         fgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.foreground");
         bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
 
+
+        this.removeAll();
         splitPane = new IpedSplitPane();
         splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 
@@ -344,7 +347,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         domainAxis.setUpperMargin(0.01);
         combinedPlot.setDomainAxis(domainAxis);
 
-        ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
+        if(ipedTimelineDatasetManager==null) {
+            ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
+        }
     }
 
     public String getTimeEventColumnName(String timeEvent) {
