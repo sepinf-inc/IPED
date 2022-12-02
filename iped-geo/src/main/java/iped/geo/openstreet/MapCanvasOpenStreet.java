@@ -3,9 +3,11 @@ package iped.geo.openstreet;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.Semaphore;
 
 import javax.swing.UIManager;
 
@@ -41,6 +43,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     ChangeListener<State> onLoadChange;
 
     String url;
+    private boolean htmlloaded;
 
     public MapCanvasOpenStreet() {
         this.jfxPanel = new JFXPanel();
@@ -136,14 +139,13 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             public void run() {            	
                 webEngine.getLoadWorker().stateProperty().removeListener(onLoadChange);
                 webEngine.getLoadWorker().stateProperty().addListener(onLoadChange);
-                webEngine.loadContent(html);
                 runAfterLoad(new Runnable() {
                     @Override
                     public void run() {
                         updateUI();
                     }
                 });
-                
+                webEngine.loadContent(html);
                 jfxPanel.invalidate();
             }
         });
@@ -154,28 +156,55 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     }
 
     @Override
+    public void load() {
+        try {
+            Semaphore sem = new Semaphore(1);
+            sem.acquire();
+            String html = getMainHtml();
+            runAfterLoad(new Runnable() {
+                @Override
+                public void run() {
+                    sem.release();
+                }
+            });
+            setText(html);
+            sem.acquire();
+            sem.release();
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getMainHtml() throws IOException {
+        String html = IOUtils.toString(getClass().getResourceAsStream("main.html"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
+        String js = IOUtils.toString(getClass().getResourceAsStream("L.KML.js"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
+        String markerclusterjs = IOUtils.toString(getClass().getResourceAsStream("leaflet.markercluster.js"), //$NON-NLS-1$
+                "UTF-8"); //$NON-NLS-1$
+
+        String layers_img = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
+                .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("layers.png"))); //$NON-NLS-1$
+
+        html = html.replace("{{layers_img}}", layers_img);            
+        html = html.replace("{{markerclusterjs}}", markerclusterjs);
+        
+        String themeScript="applyLightTheme();";
+        Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
+        if(bgColor!=null) {
+            themeScript="applyDarkTheme();";
+        }
+        html = html.replace("{{applyTheme}}", themeScript);
+        
+        html = html.replace("{{tileServerUrl}}", url);
+        html = html.replace("{{toolbar}}", getToolBarHtml());
+
+        html = html.replace("{{L.KML}}", js); //$NON-NLS-1$
+        return html;
+    }
+    
+    @Override
     public void setKML(String kml) {
         try {
-            String html = IOUtils.toString(getClass().getResourceAsStream("main.html"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
-            String js = IOUtils.toString(getClass().getResourceAsStream("L.KML.js"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
-            String markerclusterjs = IOUtils.toString(getClass().getResourceAsStream("leaflet.markercluster.js"), //$NON-NLS-1$
-                    "UTF-8"); //$NON-NLS-1$
-
-            String layers_img = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
-                    .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("layers.png"))); //$NON-NLS-1$
-
-            html = html.replace("{{layers_img}}", layers_img);            
-            html = html.replace("{{markerclusterjs}}", markerclusterjs);
-            
-            String themeScript="applyLightTheme();";
-            Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
-            if(bgColor!=null) {
-                themeScript="applyDarkTheme();";
-            }
-            html = html.replace("{{applyTheme}}", themeScript);
-            
-            html = html.replace("{{tileServerUrl}}", url);
-            html = html.replace("{{toolbar}}", getToolBarHtml());
+            String html = getMainHtml();
 
             String b64_selecionado = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
                     .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado.png"))); //$NON-NLS-1$
@@ -185,21 +214,8 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                     .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png"))); //$NON-NLS-1$
             String b64_marcado = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
                     .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png"))); //$NON-NLS-1$
-
-            // html = replaceApiKey(html);
-
-            html = html.replace("{{L.KML}}", js); //$NON-NLS-1$
-            // html = html.replace("{{load_keydragzoom}}", js2); //$NON-NLS-1$
-            // html = html.replace("{{load_extensions}}", js3); //$NON-NLS-1$
-            // html = html.replace("{{load_geoxml3_ext}}", js4); //$NON-NLS-1$
-            // html = html.replace("{{icone_selecionado_base64}}", b64_selecionado);
-            // //$NON-NLS-1$
-            // html = html.replace("{{icone_selecionado_m_base64}}", b64_selecionado_m);
-            // //$NON-NLS-1$
-            // html = html.replace("{{icone_m_base64}}", b64_marcado); //$NON-NLS-1$
-            // html = html.replace("{{kml}}", kml.replace("\n", "").replace("\r", ""));
-            // //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-
+            
+                       
             kml = kml.replace("\n", "").replace("\r", "");
             kml = kml.replace("<Document>",
                     "<Document><Style id=\"item\"><IconStyle><Icon><href>{{icone_base64}}</href></Icon></IconStyle></Style>");
@@ -214,9 +230,27 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             kml = kml.replace("{{b64_selecionado_m}}", b64_selecionado_m);
             kml = kml.replace("{{b64_marcado}}", b64_marcado);
             kml = kml.replace("</Placemark>", "<styleUrl>#item</styleUrl></Placemark>");
-            html = html.replace("{{kml}}", kml);
-
+            
             setText(html);
+            
+            final String kmlFinal = kml;
+
+            if(!htmlloaded) {
+                htmlloaded=true;
+                runAfterLoad(new Runnable() {
+                    @Override
+                    public void run() {
+                        webEngine.executeScript("loadKml('"+kmlFinal+"')");
+                    }
+                });
+            }else {
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        webEngine.executeScript("loadKml('"+kmlFinal+"')");
+                    }
+                });
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -294,6 +328,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         if(bgColor!=null) {
             themeScript="applyDarkTheme();";
         }
+        
         final String themeScriptFinal=themeScript; 
         Platform.runLater(new Runnable() {
             public void run() {
@@ -316,6 +351,36 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                     webEngine.executeScript("track.marca(\"" + mid + "\",'" + b + "');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 } catch (Exception e) {
                     e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    @Override
+    public void viewAll() {
+        Platform.runLater(new Runnable() {
+            public void run() {
+                try {
+                    webEngine.executeScript("track.fire('loaded');track.viewAll();");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // nothing
+                }
+            }
+        });
+    }
+    
+    @Override
+    public void addPlacemark(String gid, String longit, String lat) {
+        Platform.runLater(new Runnable() {
+            public void run() {
+                try {
+                    webEngine.executeScript("track.addPlacemark('"+gid+"','"+lat+"','"+longit+"')");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // nothing
                 }
             }
         });

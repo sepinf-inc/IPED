@@ -3,12 +3,12 @@
 
 		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 
-		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+   integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
    crossorigin=""/>
 
-		<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+		<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+   integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
    crossorigin=""></script>
 
 		<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" crossorigin=""></script>
@@ -109,17 +109,21 @@
     			zoomOffset: -1,
 				}).addTo(map);
 				
-
-         const parser = new DOMParser();
-         const kml = parser.parseFromString('{{kml}}', 'text/xml');
-         track = new L.KML(kml);
+         var kml = '';
+         track = new L.KML();
          map.addLayer(track);
+    }
+    
+    function loadKml(kmlpar){
+        const parser = new DOMParser();
+        const kml = parser.parseFromString(kmlpar, 'text/xml');
+        track.addKML(kml);
 
-		document.getElementById('ordem_descr').innerHTML = track.tourOrder;
-		document.getElementById('resultsinfo').innerHTML = track.markersCount(); 
+        document.getElementById('ordem_descr').innerHTML = track.tourOrder;
+        document.getElementById('resultsinfo').innerHTML = track.markersCount(); 
 
-		const bounds = track.getBounds();
-		map.fitBounds(bounds);
+        const bounds = track.getBounds();
+        map.fitBounds(bounds);
     }
 
     function updateLeadMarker(marker){
