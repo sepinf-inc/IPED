@@ -1,15 +1,11 @@
 package iped.utils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Classe auxiliar que realiza leitura de propriedades em arquivos codificados
@@ -22,7 +18,7 @@ import java.util.Properties;
 public class UTF8Properties extends Properties {
 
     private static final long serialVersionUID = -8198271272010610933L;
-    
+
     boolean cumulative = false;
     String cumulativeSeparator=";";
 
@@ -67,6 +63,116 @@ public class UTF8Properties extends Properties {
             writer.write("\r\n"); //$NON-NLS-1$
         }
         writer.close();
+    }
+
+    public synchronized void storeAndPreserve(File file) throws IOException {
+        OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8"); //$NON-NLS-1$
+        Object[] keys = this.keySet().toArray();
+        Arrays.sort(keys);
+        for (Object key : keys) {
+            writer.write(key.toString().replace("=", "\\=") + " = " + this.get(key).toString().replace("=", "\\=")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+            writer.write("\r\n"); //$NON-NLS-1$
+        }
+        writer.close();
+    }
+
+    public synchronized void saveOnFile(File fileToBeChanged) throws IOException {
+        BufferedReader reader = null;
+        FileWriter writer = null;
+        Charset UTF8 = Charset.forName("UTF-8");
+
+        try{
+            reader = new BufferedReader(new FileReader(fileToBeChanged, UTF8));
+
+            //Read all file lines and put on a StringBuffer
+            String line = reader.readLine();
+            StringBuffer fileContent = new StringBuffer();
+            while (line != null){
+                fileContent.append(line).append(System.lineSeparator());
+                line = reader.readLine();
+            }
+
+            //Iterate over all properties key ant set value on filecontent
+            String changedContent = fileContent.toString();
+            for(Object key : this.keySet()) {
+                //Try to find the propertie Key
+                Matcher matcher = getPropertieKeyRegexPattern(key.toString()).matcher(changedContent);
+                if (!matcher.find())
+                    continue;
+                //If propertie key exists, change the propertie value
+                //Whe need to use Matcher.quoteReplacement to prevent
+                final String subst = "$1= " + Matcher.quoteReplacement( String.valueOf(this.get(key)) );
+                changedContent = matcher.replaceAll(subst);
+            }
+
+            //save the file content
+            writer = new FileWriter(fileToBeChanged, UTF8);
+            writer.write(changedContent);
+        }finally{
+            try{
+                //Close all resources
+                if(reader != null)
+                    reader.close();
+                if(writer != null){
+                    writer.flush();
+                    writer.close();
+                }
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public synchronized void enableOrDisablePropertie(File fileToBeChanged, String propertieName, Boolean isDisable){
+        String fileContent = "";
+        BufferedReader reader = null;
+        FileWriter writer = null;
+
+        try{
+            reader = new BufferedReader(new FileReader(fileToBeChanged));
+
+            //Read all file content and set on fileContent var
+            String line = reader.readLine();
+            while (line != null){
+                fileContent = fileContent + line + System.lineSeparator();
+                line = reader.readLine();
+            }
+
+            String conteudoModificado = fileContent ;
+            //is option is to disablePropertie
+            if (isDisable){
+                String chaveComentada = "#" + propertieName;
+                //analisa se a chave ja esta comentada para que não adicione mais um #
+                if( ! fileContent.contains(chaveComentada) )
+                    conteudoModificado = fileContent.replaceAll(propertieName, chaveComentada);
+            } else {
+                conteudoModificado = fileContent.replaceAll("#"+propertieName, propertieName);
+            }
+
+            //Save modification on file
+            writer = new FileWriter(fileToBeChanged);
+            writer.write(conteudoModificado);
+        }catch (IOException e){
+            e.printStackTrace();
+        }finally{
+            try{
+                //Fechando os recursos
+                if(reader != null)
+                    reader.close();
+                if(writer != null){
+                    writer.flush();
+                    writer.close();
+                }
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private Pattern getPropertieKeyRegexPattern(String key){
+        //Regex to find a propertie key on a String
+        final String regex = "(^\\s*#*\\s*"+ key +"\\s*)=(.*)";
+        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
     }
 
     public boolean isCumulative() {

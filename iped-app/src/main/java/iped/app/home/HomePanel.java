@@ -7,6 +7,7 @@ package iped.app.home;
  */
 
 import iped.app.home.style.StyleManager;
+import iped.app.ui.Messages;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,11 +79,11 @@ public class HomePanel extends DefaultPanel {
         //default app inset
         Insets inset = StyleManager.getDefaultPanelInsets();
         GridBagConstraints c = getOptionsButtonsGridBagConstraints(GridBagConstraints.LINE_START, 0, inset.left, 2);
-        this.add( getNewOptionsButton("INICIAR NOVO CASO", "newcase.png", MainFrameCardsNames.NEW_CASE), c );
+        this.add( getNewOptionsButton(Messages.get("Home.StartNewCase"), "newcase.png", MainFrameCardsNames.NEW_CASE), c );
         c = getOptionsButtonsGridBagConstraints(GridBagConstraints.CENTER, 1,2 ,2);
-        this.add(getNewOptionsButton("ABRIR CASO", "opencase.png", MainFrameCardsNames.OPEN_CASE), c);
+        this.add(getNewOptionsButton(Messages.get("Home.OpenCase"), "opencase.png", MainFrameCardsNames.OPEN_CASE), c);
         c = getOptionsButtonsGridBagConstraints(GridBagConstraints.LINE_END, 2, 2, inset.right);
-        this.add(getNewOptionsButton("CONFIGURAÇÕES", "config.png", MainFrameCardsNames.CONFIG), c);
+        this.add(getNewOptionsButton(Messages.get("Home.Config"), "config.png", MainFrameCardsNames.CONFIG), c);
     }
 
     /**
@@ -132,7 +133,8 @@ public class HomePanel extends DefaultPanel {
                 if (optionButton.getIcon() != null && optionButton.getIcon().getIconHeight() != optionButton.getHeight()) {
                     int padding = 150;
                     //we use the smaller button size to determine the icon size because the button not necessarily is redimensioned with same width and height
-                    int smallerButtonSize = Math.min(optionButton.getHeight(), optionButton.getWidth());
+                    //int smallerButtonSize = Math.min(optionButton.getHeight(), optionButton.getWidth());
+                    int smallerButtonSize = optionButton.getHeight();
                     Dimension resizedDimension = new Dimension(smallerButtonSize - padding,smallerButtonSize - padding);
                     optionButton.setIcon( createNewButtonIcon(iconName, resizedDimension) );
                 }

@@ -4,15 +4,18 @@ package iped.app.home.config;/*
  * @author Thiago S. Figueiredo
  */
 
+import iped.app.ui.Messages;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public enum Languages {
 
-    PT_BR(0, "Português Brasileiro", "pt-BR"),
-    EN(1, "Inglês", "en"),
-    IT(2, "Italiano", "it-IT"),
-    DE(3, "Alemão", "de-DE");
+    PT_BR(0, Messages.get("Home.LanguagePtBR"), "pt-BR"),
+    EN(1, Messages.get("Home.LanguageEN"), "en"),
+    IT(2, Messages.get("Home.LanguageIT"), "it-IT"),
+    DE(3, Messages.get("Home.LanguageDE"), "de-DE"),
+    ES(4, Messages.get("Home.LanguageEsAr"), "es-AR");
 
     private int value;
     private String description;

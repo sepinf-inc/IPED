@@ -14,7 +14,7 @@ import iped.utils.UTF8Properties;
 public class LocalConfig extends AbstractPropertiesConfigurable {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
 
@@ -23,8 +23,9 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
     public static final String SYS_PROP_APPEND = "iped.appending"; //$NON-NLS-1$
 
     public static final String NUM_THREADS = "numThreads";
-
-    private static final String HASH_DB = "hashesDB";
+    public static final String HASH_DB = "hashesDB";
+    public static final String INDEX_TEMP = "indexTemp";
+    public static final String INDEX_TEMP_ON_SSD = "indexTempOnSSD";
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -57,7 +58,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
         File newTmp = null, tmp = new File(System.getProperty("java.io.basetmpdir")); //$NON-NLS-1$
 
-        value = properties.getProperty("indexTemp"); //$NON-NLS-1$
+        value = properties.getProperty(INDEX_TEMP); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
         }
@@ -99,7 +100,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
             numThreads = Runtime.getRuntime().availableProcessors();
         }
 
-        value = properties.getProperty("indexTempOnSSD"); //$NON-NLS-1$
+        value = properties.getProperty(INDEX_TEMP_ON_SSD); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
         }
@@ -138,6 +139,11 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         return indexTempOnSSD;
     }
 
+    public void setIndexTempOnSSD(Boolean indexTempOnSSD){
+        properties.setProperty(INDEX_TEMP_ON_SSD, (indexTempOnSSD != null)? indexTempOnSSD.toString() : "false" );
+        this.indexTempOnSSD = (indexTempOnSSD != null? indexTempOnSSD : false );
+    }
+
     public File getIndexTemp() {
         return indexTemp;
     }
@@ -150,6 +156,12 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         return numThreads;
     }
 
+    public void setNumThreads(int numThreads){
+        this.numThreads = numThreads;
+        String stringValue = (numThreads == Runtime.getRuntime().availableProcessors()) ? "default" : String.valueOf(numThreads);
+        properties.setProperty(NUM_THREADS, stringValue);
+    }
+
     public File getHashDbFile() {
         return hashDbFile;
     }
@@ -158,15 +170,17 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         this.hashDbFile = hashDbFile;
     }
 
+
     @Override
     public void save(Path resource) {
         try {
             File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
             confDir.mkdirs();
-            File confFile = new File(confDir, CONFIG_FILE);            
+            File confFile = new File(confDir, CONFIG_FILE);
             properties.store(confFile);
         }catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 }

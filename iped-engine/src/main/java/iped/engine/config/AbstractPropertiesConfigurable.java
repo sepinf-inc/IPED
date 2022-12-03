@@ -9,7 +9,7 @@ import iped.utils.UTF8Properties;
 public abstract class AbstractPropertiesConfigurable implements Configurable<UTF8Properties> {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
     protected UTF8Properties properties = new UTF8Properties();
@@ -31,5 +31,9 @@ public abstract class AbstractPropertiesConfigurable implements Configurable<UTF
     }
 
     abstract void processProperties(UTF8Properties properties);
+
+    public UTF8Properties getPropertie() {
+        return properties;
+    }
 
 }
