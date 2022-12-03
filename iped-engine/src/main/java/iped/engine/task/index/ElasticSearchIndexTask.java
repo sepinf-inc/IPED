@@ -67,6 +67,7 @@ import iped.io.ISeekableInputStreamFactory;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
+import jep.NDArray;
 
 public class ElasticSearchIndexTask extends AbstractTask {
 
@@ -86,6 +87,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
     public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
     public static final String KEY_VAL_SEPARATOR = ":";
     
+    public static final int FACE_SIZE = 128;
+
     private static boolean isEnabled = false;
 
     private ElasticSearchTaskConfig elasticConfig;
@@ -276,6 +279,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put("extraAttributes." + ImageSimilarityTask.IMAGE_FEATURES,
                 Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures, "method",
                         Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+
+        // mapping faces as nested field
+        var faces_mapping = new HashMap<String, Object>();
+        faces_mapping.put("face_encoding", Map.of("type", "knn_vector", "dimension", FACE_SIZE, "method",
+                Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+        faces_mapping.put("face_location", Collections.singletonMap("type", "short"));
+        properties.put("faces", Map.of("type", "nested", "properties", faces_mapping));
 
         Map<String, String> contentMapping = new HashMap<>(Map.of("type", "text"));
 
@@ -499,6 +509,14 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     }
 
+    public static final int[] convArrayListLongToInt(ArrayList<Long> nd) {
+        int[] result = new int[nd.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = nd.get(i).intValue();
+        }
+        return result;
+    }
+
     private XContentBuilder getJsonMetadataBuilder(IItem item) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
@@ -530,6 +548,26 @@ public class ElasticSearchIndexTask extends AbstractTask {
             }
             extraAttributes.put(ImageSimilarityTask.IMAGE_FEATURES, v);
         }
+
+        if (extraAttributes.containsKey(ExtraProperties.FACE_ENCODINGS) && extraAttributes.containsKey(ExtraProperties.FACE_LOCATIONS)) {
+            ArrayList<NDArray> face_encodings = (ArrayList<NDArray>) extraAttributes.get(ExtraProperties.FACE_ENCODINGS);
+            ArrayList<ArrayList<Long>> face_locations = (ArrayList) extraAttributes.get(ExtraProperties.FACE_LOCATIONS);
+            ArrayList<Map<String, Object>> faces = new ArrayList<>();
+            for (int i = 0; i < face_encodings.size(); i++) {
+                float encoding[] = IndexItem.convNDArrayToFloatArray(face_encodings.get(i));
+                int location[] = convArrayListLongToInt(face_locations.get(i));
+                Map<String, Object> map = new HashMap<>();
+                map.put("face_encoding", encoding);
+                map.put("face_location", location);
+                faces.add(map);
+            }
+
+            builder.field("faces", faces.toArray());
+
+            extraAttributes.remove(ExtraProperties.FACE_ENCODINGS);
+            extraAttributes.remove(ExtraProperties.FACE_LOCATIONS);
+        }
+
         builder.field("extraAttributes", extraAttributes);
 
         ISeekableInputStreamFactory isisf = item.getInputStreamFactory();

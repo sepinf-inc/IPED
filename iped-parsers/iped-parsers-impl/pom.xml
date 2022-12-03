@@ -197,6 +197,13 @@
             <artifactId>libfqlite</artifactId>
             <version>1.57.05</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.springframework/spring-expression -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-expression</artifactId>
+            <version>5.3.23</version>
+        </dependency>
+
     </dependencies>
     
     <build>

@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
@@ -46,6 +47,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import iped.data.IItemReader;
+import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.ExportFolder;
 import iped.parsers.util.Messages;
@@ -66,9 +68,10 @@ public class KnownMetParser extends AbstractParser {
     public static final String EDONKEY = "edonkey";
 
     public static final String EMULE_MIME_TYPE = "application/x-emule"; //$NON-NLS-1$
+    public static final String KNOWN_MET_ENTRY_MIME_TYPE = "application/x-emule-known-met-entry"; //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(EMULE_MIME_TYPE));
 
-    private static final String[] header = new String[] { Messages.getString("KnownMetParser.Seq"), //$NON-NLS-1$
+    public static final String[] header = new String[] { Messages.getString("KnownMetParser.Seq"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.Name"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.Hash"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.LastModDate"), //$NON-NLS-1$
@@ -82,8 +85,15 @@ public class KnownMetParser extends AbstractParser {
             Messages.getString("KnownMetParser.FoundInPedoHashDB"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.FoundInCase")}; //$NON-NLS-1$
 
-    private static final String strYes = Messages.getString("KnownMetParser.Yes"); //$NON-NLS-1$
-    
+    public static final String strYes = Messages.getString("KnownMetParser.Yes"); //$NON-NLS-1$
+
+    private boolean extractEntries = false;
+
+    @Field
+    public void setExtractEntries(boolean value) {
+        this.extractEntries = value;
+    }
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -98,6 +108,16 @@ public class KnownMetParser extends AbstractParser {
 
         metadata.set(HttpHeaders.CONTENT_TYPE, EMULE_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
+
+        BeanMetadataExtraction bme = null;
+
+        if (extractEntries) {
+            bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, KNOWN_MET_ENTRY_MIME_TYPE, context);
+            // normalization to use same property name of other p2p parsers
+            bme.registerPropertyNameMapping(KnownMetEntry.class, "hash", "ed2k");
+            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
+            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+        }
 
         List<KnownMetEntry> l = iped.parsers.emule.KnownMetDecoder.parseToList(stream);
         if (l == null)
@@ -130,7 +150,7 @@ public class KnownMetParser extends AbstractParser {
         xhtml.characters(Messages.getString("P2P.FoundInPedoHashDB"));
         xhtml.endElement("p");
         xhtml.newline();
-        
+
         xhtml.startElement("table", "class", "dt"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         int cont = 1;
         List<String> cells = new ArrayList<String>();
@@ -203,6 +223,10 @@ public class KnownMetParser extends AbstractParser {
                 totReq += toSum(e.getTotalRequests());
                 accReq += toSum(e.getAcceptedRequests());
                 bytTrf += toSum(e.getBytesTransfered());
+
+                if (extractEntries) {
+                    bme.extractEmbedded(i, context, metadata, handler, e);
+                }
             }
 
             AttributesImpl attributes = new AttributesImpl();
