@@ -10,9 +10,10 @@ import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrameCardsNames;
 import iped.app.home.MainFrame;
 import iped.app.home.newcase.model.IPEDProcess;
-import iped.app.home.newcase.tabs.CaseInfoTab;
+import iped.app.home.newcase.tabs.caseinfo.CaseInfoTab;
 import iped.app.home.newcase.tabs.evidence.EvidencesTab;
 import iped.app.home.newcase.tabs.process.ProcessOptionTab;
+import iped.app.ui.Messages;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
@@ -54,9 +55,9 @@ public class NewCaseContainerPanel extends DefaultPanel {
         tabbedPane.setUI(new BasicTabbedPaneUI() {
             @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 45;}
         });
-        tabbedPane.addTab("Informações do caso", UIManager.getIcon("FileView.fileIcon"), new CaseInfoTab(mainFrame), "Página para preenchimento das informações do caso");
-        tabbedPane.addTab("Evidências", UIManager.getIcon("Tree.expandedIcon"), new EvidencesTab(mainFrame), "Página de seleção de arquivos e evidências a serem processadas");
-        tabbedPane.addTab("Opções de processamento", UIManager.getIcon("Tree.collapsedIcon"), new ProcessOptionTab(mainFrame), "Página de seleção de Tasks para o processamento");
+        tabbedPane.addTab(Messages.get("Home.CaseInformation"), UIManager.getIcon("FileView.fileIcon"), new CaseInfoTab(mainFrame), Messages.get("Home.CaseInformationTollTip"));
+        tabbedPane.addTab(Messages.get("Home.Evidences"), UIManager.getIcon("Tree.expandedIcon"), new EvidencesTab(mainFrame), Messages.get("Home.EvidencesToolTip"));
+        tabbedPane.addTab(Messages.get("Home.ProcessOptions"), UIManager.getIcon("Tree.collapsedIcon"), new ProcessOptionTab(mainFrame), Messages.get("Home.ProcessOptionsToolTip"));
         return tabbedPane;
     }
 

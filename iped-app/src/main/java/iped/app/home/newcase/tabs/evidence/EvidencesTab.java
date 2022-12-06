@@ -11,6 +11,7 @@ import iped.app.home.MainFrame;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.newcase.model.Evidence;
 import iped.app.home.style.StyleManager;
+import iped.app.ui.Messages;
 import org.apache.commons.io.FileUtils;
 
 import javax.swing.*;
@@ -30,10 +31,10 @@ import java.util.List;
  */
 public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogListener {
 
-    private JButton buttonAddFolder = new JButton("Adicionar Pasta");
-    private JButton buttonAddFile = new JButton("Adicionar arquivo");
-    private JButton buttonAddImages = new JButton("Adicionar imagens recursivamente");
-    private JButton buttonAddPhysicalDrive = new JButton("Adicionar disco");
+    private JButton buttonAddFolder;
+    private JButton buttonAddFile;
+    private JButton buttonAddImages;
+    private JButton buttonAddPhysicalDrive;
     private JTable jtableEvidences;
     private EvidencesTableModel evidencesTableModel;
     private ArrayList<Evidence> evidencesList;
@@ -63,7 +64,7 @@ public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogList
     private JPanel createTitlePanel(){
         JPanel panelTitle = new JPanel();
         panelTitle.setBackground(Color.white);
-        JLabel labelTitle = new JLabel("Evidências");
+        JLabel labelTitle = new JLabel(Messages.get("Home.Evidences.Title"));
         labelTitle.setFont(StyleManager.getPageTitleFont());
         panelTitle.add(labelTitle);
         return panelTitle;
@@ -84,10 +85,10 @@ public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogList
     }
 
     private void createFormComponentInstances(){
-        buttonAddFolder = new JButton("Adicionar Pasta");
-        buttonAddFile = new JButton("Adicionar arquivo");
-        buttonAddImages = new JButton("Adicionar imagens recursivamente");
-        buttonAddPhysicalDrive = new JButton("Adicionar disco");
+        buttonAddFolder = new JButton(Messages.get("Home.Evidences.AddFolder"));
+        buttonAddFile = new JButton(Messages.get("Home.Evidences.AddFile"));
+        buttonAddImages = new JButton(Messages.get("Home.Evidences.AddImagesRecursively"));
+        buttonAddPhysicalDrive = new JButton(Messages.get("Home.Evidences.AddDisk"));
     }
 
     /**
@@ -101,7 +102,7 @@ public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogList
         buttonPanel.add( buttonAddFolder );
         buttonAddFolder.addActionListener( e -> {
             JFileChooser fileChooserDestino = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-            fileChooserDestino.setDialogTitle("Selecione a pasta");
+            fileChooserDestino.setDialogTitle(Messages.get("Home.Evidences.SelectFolder"));
             fileChooserDestino.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fileChooserDestino.setAcceptAllFileFilterUsed(false);
             if( fileChooserDestino.showOpenDialog(this) == JFileChooser.APPROVE_OPTION){
@@ -115,9 +116,9 @@ public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogList
         buttonPanel.add( buttonAddFile );
         buttonAddFile.addActionListener( e -> {
             JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-            fileChooser.setDialogTitle("Selecione o arquivo");
+            fileChooser.setDialogTitle(Messages.get("Home.Evidences.SelectFile"));
             fileChooser.setAcceptAllFileFilterUsed(false);
-            if (fileChooser.showDialog(this, "Adicionar arquivo") == JFileChooser.APPROVE_OPTION) {
+            if (fileChooser.showDialog(this, Messages.get("Home.Evidences.AddFileTitle")) == JFileChooser.APPROVE_OPTION) {
                 Evidence evidence = new Evidence();
                 evidence.setFileName(fileChooser.getSelectedFile().getName());
                 evidence.setPath(fileChooser.getSelectedFile().getPath());
@@ -128,7 +129,7 @@ public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogList
         buttonPanel.add( buttonAddImages );
         buttonAddImages.addActionListener(e -> {
             JFileChooser fileChooserProcurarImagens = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-            fileChooserProcurarImagens.setDialogTitle("Selecione a pasta de origem da pesquisa");
+            fileChooserProcurarImagens.setDialogTitle(Messages.get("Home.Evidences.ChooseSourceFolder"));
             fileChooserProcurarImagens.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fileChooserProcurarImagens.setAcceptAllFileFilterUsed(false);
             String pastaDeOrigem = null;
@@ -147,7 +148,7 @@ public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogList
                 }
                 evidencesTableModel.fireTableDataChanged();
             }catch(Exception ex){
-                System.out.println("Erro na pesquisa de imagens");
+                System.out.println(Messages.get("Home.Evidences.ImageSearchError"));
             }
         });
         buttonPanel.add( buttonAddPhysicalDrive );
@@ -190,9 +191,9 @@ public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogList
     private JPanel createNavigationButtonsPanel() {
         JPanel panelButtons = new JPanel();
         panelButtons.setBackground(Color.white);
-        JButton buttoCancel = new JButton("Voltar");
+        JButton buttoCancel = new JButton(Messages.get("Home.Back"));
         buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
-        JButton buttonNext = new JButton("Próximo");
+        JButton buttonNext = new JButton(Messages.get("Home.Next"));
         buttonNext.addActionListener( e -> NewCaseContainerPanel.getInstance().goToNextTab());
         panelButtons.add(buttoCancel);
         panelButtons.add(buttonNext);
@@ -201,7 +202,7 @@ public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogList
 
     public static List<String> procurar(Path path, String[] fileExtensions) {
         if (!Files.isDirectory(path)) {
-            throw new IllegalArgumentException("Path must be a directory!");
+            throw new IllegalArgumentException(Messages.get("Home.Evidences.PathMustBeDirectory"));
         }
         File root = path.toFile();
         List<String> result = new ArrayList<>();

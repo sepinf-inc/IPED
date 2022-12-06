@@ -6,18 +6,17 @@ package iped.app.home.newcase.model;
  * @author Thiago S. Figueiredo
  */
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 
 public class CaseInfo {
 
     private String caseNumber;
     private String caseName;
-    private String investigatedNames;
+    private ArrayList<String> investigatedNames;
     private String requestDate;
-    private String demandant;
-    private String organization;
-    private String examinerNames;
+    private String requester;
+    private String organizationName;
+    private ArrayList<String> examiners;
     private String contact;
     private String caseNotes;
 
@@ -37,11 +36,11 @@ public class CaseInfo {
         this.caseName = caseName;
     }
 
-    public String getInvestigatedNames() {
+    public ArrayList<String> getInvestigatedNames() {
         return investigatedNames;
     }
 
-    public void setInvestigatedNames(String investigatedNames) {
+    public void setInvestigatedNames(ArrayList<String> investigatedNames) {
         this.investigatedNames = investigatedNames;
     }
 
@@ -53,28 +52,28 @@ public class CaseInfo {
         this.requestDate = requestDate;
     }
 
-    public String getDemandant() {
-        return demandant;
+    public String getRequester() {
+        return requester;
     }
 
-    public void setDemandant(String demandant) {
-        this.demandant = demandant;
+    public void setRequester(String requester) {
+        this.requester = requester;
     }
 
-    public String getOrganization() {
-        return organization;
+    public String getOrganizationName() {
+        return organizationName;
     }
 
-    public void setOrganization(String organization) {
-        this.organization = organization;
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
     }
 
-    public String getExaminerNames() {
-        return examinerNames;
+    public ArrayList<String> getExaminers() {
+        return examiners;
     }
 
-    public void setExaminerNames(String examinerNames) {
-        this.examinerNames = examinerNames;
+    public void setExaminers(ArrayList<String> examiners) {
+        this.examiners = examiners;
     }
 
     public String getContact() {

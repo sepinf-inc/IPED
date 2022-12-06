@@ -39,8 +39,9 @@ public class HomePanel extends DefaultPanel {
      * Create and setup IPED Application Logo panel
      */
     private void createAndSetupAppLogo(){
-        String IPEDLogoFilename = "IPED-logo_lupa.png";
-        ImageIcon imgLogo = createNewButtonIcon(IPEDLogoFilename, new Dimension(758, 151));
+        String IPEDLogoFilename = "logo_iped_azul.png";
+        Dimension imgDimension = new Dimension(550, 200);
+        ImageIcon imgLogo = createNewButtonIcon(IPEDLogoFilename, imgDimension);
         JLabel labelLogo = new JLabel(imgLogo, JLabel.CENTER);
         labelLogo.addComponentListener(new ComponentAdapter() {
             @Override
@@ -48,9 +49,9 @@ public class HomePanel extends DefaultPanel {
                 if (labelLogo.getIcon() != null) {
                     int padding = 300;
                     //Image size proportion to calculate resize maintaining image proportion
-                    double proportion = 0.199;
+                    double proportion =  (imgDimension.getHeight() / imgDimension.getWidth());
                     int newWidth = labelLogo.getWidth() - padding;
-                    int maxWidht = 1200;
+                    int maxWidht = 700;
                     newWidth = Math.min(maxWidht, newWidth);
                     double height = (newWidth * proportion );
                     Dimension resizedDimension = new Dimension(newWidth, (int) height);
@@ -96,9 +97,8 @@ public class HomePanel extends DefaultPanel {
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = anchor;
         c.fill = GridBagConstraints.BOTH;
-        //Don`t know why, but center cell (cell number 1) is not resized equally if used same weight
-        c.weightx = (gridx == 1 )? 0.5 : 0.3;
-        c.weighty = 0.3;
+        c.weightx = 0.3;
+        c.weighty = 0.2;
         c.gridx = gridx;
         c.gridy = 1;
         c.gridwidth = 1;
@@ -118,6 +118,7 @@ public class HomePanel extends DefaultPanel {
         JButton optionButton = new JButton(buttonText);
         optionButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         optionButton.setBorderPainted(false);
+        optionButton.setFocusable(false);
         optionButton.setFont(StyleManager.getHomeButtonFont());
         //Button label alignment
         optionButton.setVerticalTextPosition(SwingConstants.BOTTOM);
@@ -131,11 +132,13 @@ public class HomePanel extends DefaultPanel {
             @Override
             public void componentResized(ComponentEvent e) {
                 if (optionButton.getIcon() != null && optionButton.getIcon().getIconHeight() != optionButton.getHeight()) {
-                    int padding = 150;
+                    int padding = 110;
                     //we use the smaller button size to determine the icon size because the button not necessarily is redimensioned with same width and height
-                    //int smallerButtonSize = Math.min(optionButton.getHeight(), optionButton.getWidth());
-                    int smallerButtonSize = optionButton.getHeight();
-                    Dimension resizedDimension = new Dimension(smallerButtonSize - padding,smallerButtonSize - padding);
+                    int iconSize = optionButton.getHeight() - padding;
+                    iconSize = Math.min(iconSize, optionButton.getWidth());
+                    int maxIconSize = 200;
+                    iconSize = Math.min(iconSize, maxIconSize);
+                    Dimension resizedDimension = new Dimension(iconSize,iconSize);
                     optionButton.setIcon( createNewButtonIcon(iconName, resizedDimension) );
                 }
             }
