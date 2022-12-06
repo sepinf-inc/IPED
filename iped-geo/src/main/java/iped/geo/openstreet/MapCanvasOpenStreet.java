@@ -7,11 +7,13 @@ import java.net.URL;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Semaphore;
 
 import javax.swing.UIManager;
 
 import org.apache.commons.io.IOUtils;
+import org.neo4j.internal.helpers.Cancelable;
 
 import iped.geo.AbstractMapCanvas;
 import iped.utils.UiUtil;
@@ -44,6 +46,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
     String url;
     private boolean htmlloaded;
+    private Semaphore sem;
 
     public MapCanvasOpenStreet() {
         this.jfxPanel = new JFXPanel();
@@ -136,7 +139,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     @Override
     public void setText(final String html) {
         Platform.runLater(new Runnable() {
-            public void run() {            	
+            public void run() {
                 webEngine.getLoadWorker().stateProperty().removeListener(onLoadChange);
                 webEngine.getLoadWorker().stateProperty().addListener(onLoadChange);
                 runAfterLoad(new Runnable() {
@@ -158,20 +161,65 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     @Override
     public void load() {
         try {
-            Semaphore sem = new Semaphore(1);
+            if(sem!=null) {
+                sem.release();
+            }
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    webEngine.getLoadWorker().cancel();
+                }
+            });
+            
+            onLoadRunnables.clear();
+            clearAddPlacemarkLines();
+            
+            sem = new Semaphore(1);
             sem.acquire();
+            
+            String b64_selecionado = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
+                .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado.png"))); //$NON-NLS-1$
+            String b64_selecionado_m = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
+                .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado_m.png"))); //$NON-NLS-1$
+            String b64_normal = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
+                .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png"))); //$NON-NLS-1$
+            String b64_marcado = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
+                .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png"))); //$NON-NLS-1$
+
+            String kml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><kml xmlns=\"http://www.opengis.net/kml/2.2\">";
+            kml += "<Document>";
+            kml+="<Style id=\"item\"><IconStyle><Icon><href>{{icone_base64}}</href></Icon></IconStyle></Style>";
+            kml+="<Style id=\"itemSelecionado\"><IconStyle><Icon><href>{{b64_selecionado}}</href></Icon></IconStyle></Style>";
+            kml+="<Style id=\"itemSelecionadoMarcado\"><IconStyle><Icon><href>{{b64_selecionado_m}}</href></Icon></IconStyle></Style>";
+            kml+="<Style id=\"itemMarcado\"><IconStyle><Icon><href>{{b64_marcado}}</href></Icon></IconStyle></Style>";
+            kml = kml.replace("{{icone_base64}}", b64_normal);
+            kml = kml.replace("{{b64_selecionado}}", b64_selecionado);
+            kml = kml.replace("{{b64_selecionado_m}}", b64_selecionado_m);
+            kml = kml.replace("{{b64_marcado}}", b64_marcado);
+            kml += "</Document>";
+            kml += "</kml>";
+
             String html = getMainHtml();
+            String kmlFinal = kml.toString();
             runAfterLoad(new Runnable() {
                 @Override
                 public void run() {
+                    webEngine.executeScript("track.parseStylesFromXmlString('"+kmlFinal+"')");
+                    
                     sem.release();
                 }
             });
+
             setText(html);
+            
             sem.acquire();
             sem.release();
         }catch (Exception e) {
-            e.printStackTrace();
+            if((e instanceof CancellationException)||(e instanceof InterruptedException)) {
+                sem.release();
+            }else {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -203,6 +251,9 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     
     @Override
     public void setKML(String kml) {
+        if(kml==null || kml.length()<4) {
+            return;
+        }
         try {
             String html = getMainHtml();
 
@@ -279,22 +330,25 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             final String[] marks = new String[self.selectionMapToApply.keySet().size()];
             self.selectionMapToApply.keySet().toArray(marks);
             final HashMap<String, Boolean> selecoesAfazerCopy = selectionMapToApply;
-
-            Platform.runLater(new Runnable() {
+            self.selectionMapToApply = null;
+            
+            Runnable selecionaMarcadores = new Runnable() {
                 public void run() {
                     boolean marcadorselecionado = false;
+                    StringBuffer script = new StringBuffer();
                     for (int i = 0; i < marks.length; i++) {
                         Boolean b = selecoesAfazerCopy.get(marks[i]);
                         if (b) {
                             marcadorselecionado = true;
                         }
                         try {
-                            webEngine.executeScript("track.selecionaMarcador([\"" + marks[i] + "\"],'" + b + "');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            script.append("track.selecionaMarcador([\"" + marks[i] + "\"],'" + b + "');");
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
                     if (marcadorselecionado) {
+                        webEngine.executeScript(script.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         try {
                             webEngine.executeScript("track.centralizaSelecao();");
                         } catch (Exception e) {
@@ -302,8 +356,14 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                         }
                     }
                 }
-            });
-            self.selectionMapToApply = null;
+            };
+            
+            if(Platform.isFxApplicationThread()) {
+                selecionaMarcadores.run();
+            }else {
+                Platform.runLater(selecionaMarcadores);
+            }
+
         }
         if (self.leadSelectionToApply != null) {
             final String leadSelectionToApplyCopy = self.leadSelectionToApply;
@@ -321,14 +381,14 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         }
         updateUI();
     }
-    
+
     public void updateUI() {
         String themeScript="applyLightTheme();";
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
         if(bgColor!=null) {
             themeScript="applyDarkTheme();";
         }
-        
+
         final String themeScriptFinal=themeScript; 
         Platform.runLater(new Runnable() {
             public void run() {
@@ -370,13 +430,50 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             }
         });
     }
-    
+
+    StringBuffer addPlacemarkLines=new StringBuffer();
+    int addPlacemarkCount=0;
+
     @Override
-    public void addPlacemark(String gid, String longit, String lat) {
+    public void addPlacemark(String gid, String name, String descr,  String longit, String lat, boolean checked, boolean selected) {
+        addPlacemarkLines.append("track.addPlacemark('"+gid+"','"+name+"','"+descr+"','"+lat+"','"+longit+"','"+checked+"','"+selected+"');");
+        addPlacemarkCount++;
+        if(addPlacemarkCount>=1000) {
+            flushAddPlacemarkLines();
+        }        
+    }
+
+    private void flushAddPlacemarkLines() {
+        if(addPlacemarkCount>0) {
+            final String finalPlacemarks = addPlacemarkLines.toString();
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    try {
+                        webEngine.executeScript(finalPlacemarks);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        // nothing
+                    }
+                }
+            });
+            addPlacemarkCount=0;
+            addPlacemarkLines=new StringBuffer();
+        }
+    }
+
+    private void clearAddPlacemarkLines() {
+        addPlacemarkLines=new StringBuffer();
+        addPlacemarkCount=0;
+    }
+
+    @Override
+    public void viewAll(double minlongit, double minlat, double maxlongit, double maxlat) {
+        flushAddPlacemarkLines();
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
-                    webEngine.executeScript("track.addPlacemark('"+gid+"','"+lat+"','"+longit+"')");
+                    webEngine.executeScript("track.viewAll('"+minlongit+"','"+minlat+"','"+maxlongit+"','"+maxlat+"')");
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {

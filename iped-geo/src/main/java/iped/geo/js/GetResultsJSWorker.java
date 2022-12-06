@@ -1,12 +1,12 @@
-package iped.geo.kml;
+package iped.geo.js;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 import javax.swing.JProgressBar;
@@ -17,48 +17,60 @@ import org.apache.tika.metadata.Metadata;
 
 import iped.data.IItemId;
 import iped.geo.AbstractMapCanvas;
+import iped.geo.kml.KMLResult;
 import iped.geo.localization.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
-import iped.utils.DateUtil;
 import iped.utils.SimpleHTMLEncoder;
 import iped.viewers.api.IMultiSearchResultProvider;
 
-public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<Void, Integer> {
+public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLResult, Integer> {
     IMultiSearchResultProvider app;
     String[] colunas;
     JProgressBar progress;
     int contSemCoordenadas = 0, itemsWithGPS = 0;
     AbstractMapCanvas browserCanvas;
+    Consumer consumer;
+    private double minlongit;
+    private double maxlongit;
+    private double minlat;
+    private double maxlat;
 
 
-    public GetResultsJSWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress, AbstractMapCanvas browserCanvas) {
+    public GetResultsJSWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress, AbstractMapCanvas browserCanvas, Consumer consumer) {
         this.app = app;
         this.colunas = colunas;
         this.progress = progress;
         this.browserCanvas = browserCanvas;
+        this.consumer = consumer;
     }
 
     @Override
     public void done() {
-        /*
         if (consumer != null) {
-            KMLResult kmlResult;
+            Object result = null;
             try {
-                kmlResult = this.get();
+                result = this.get();
             } catch (Exception e) {
-                e.printStackTrace();
-                kmlResult = new KMLResult();
+                if(e instanceof CancellationException) {
+                    
+                }else {
+                    e.printStackTrace();
+                }
             }
-            consumer.accept(kmlResult);
+            if(result!=null) {
+                consumer.accept(result);
+            }
         }
-        */
     }
 
     @Override
-    protected Void doInBackground() throws Exception {
+    protected KMLResult doInBackground() throws Exception {
+        int countPlacemark=0;
+        KMLResult kmlResult = new KMLResult();
+
         try {
             browserCanvas.load();
 
@@ -71,7 +83,8 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<Void, 
                 coluna = BasicProps.ID;
                 descendingOrder = false;
             }
-
+            
+            minlongit=190.0; maxlongit=-190.0; minlat=190.0; maxlat=-190.0;
 
             IMultiSearchResult results = app.getResults();
             Document doc;
@@ -92,8 +105,11 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<Void, 
             for (IItemId item : multiResult.getIterator()) {
                 gpsItems.put(item, null);
             }
-
+            
             for (int row = 0; row < results.getLength(); row++) {
+                if(isCancelled()) {
+                    return null;
+                }
 
                 if (progress != null) {
                     progress.setValue(row + 1);
@@ -109,7 +125,9 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<Void, 
                 doc = app.getIPEDSource().getSearcher().doc(luceneId);
 
                 String lat;
+                double dlat;
                 String longit;
+                double dlongit;
                 String alt = resolveAltitude(doc);
 
                 String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
@@ -119,6 +137,8 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<Void, 
                     lat = locs[0].trim();
                     longit = locs[1].trim();
                     generateLocationJSMarker(coluna, doc, df, row, item, lat, longit, alt, -1);
+                    updateViewableRegion(longit, lat);
+                    countPlacemark++;
                     gpsItems.put(item, null);
 
                 } else if (locations != null && locations.length > 1) {
@@ -130,33 +150,64 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<Void, 
                         lat = locs[0].trim();
                         longit = locs[1].trim();
                         generateLocationJSMarker(coluna, doc, df, row, item, lat, longit, alt, ++subitem);
+                        countPlacemark++;
                         subitems.add(subitem);
                     }
                 } else {
                     contSemCoordenadas++;
                 }
-
+                
+                if(countPlacemark==10) {
+                    browserCanvas.viewAll(minlongit, minlat , maxlongit, maxlat);//adjust the map early to show the first added coordinate instead of 
+                                            //preconfigured map initial position
+                }
             }
-            
-            browserCanvas.viewAll();
-
+            kmlResult.setResultKML("", itemsWithGPS, gpsItems);
+            browserCanvas.viewAll(minlongit, minlat, maxlongit, maxlat);
         } catch (Exception e) {
-            e.printStackTrace();
+            if(!isCancelled()) {
+                e.printStackTrace();
+            }
         } finally {
             // Thread.currentThread().setContextClassLoader(oldCcl);
 
         }
 
-        return null;
+        return kmlResult;
 
+    }
+
+    private void updateViewableRegion(String longit, String lat) {
+        try {
+            double dlongit = Double.parseDouble(longit);
+            if(dlongit<minlongit) {
+                minlongit = dlongit;
+            }
+            if(dlongit>maxlongit) {
+                maxlongit=dlongit;
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            double dlat = Double.parseDouble(lat);
+            if(dlat<minlat) {
+                minlat = dlat;
+            }
+            if(dlat>maxlat) {
+                maxlat = dlat;
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static String getBaseGID(String gid) {
         if (gid.split("_").length == 4) {
             return gid.substring(0, gid.lastIndexOf('_'));
-        } else
+        } else {
             return gid;
-
+        }
     }
 
     private void generateLocationJSMarker(String coluna, Document doc, SimpleDateFormat df, int row, IItemId item, String lat, String longit, String alt, int subitem) {
@@ -170,8 +221,10 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<Void, 
         } else {
             gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
-        
-        browserCanvas.addPlacemark(gid,longit,lat);
+        boolean checked = app.getIPEDSource().getMultiBookmarks().isChecked(item);
+        boolean selected = app.getResultsTable().isRowSelected(row);
+
+        browserCanvas.addPlacemark(gid, htmlFormat(doc.get(BasicProps.NAME)), Messages.getString("KMLResult.SearchResultsDescription"), longit, lat, checked, selected);
     }
 
     static public String htmlFormat(String html) {

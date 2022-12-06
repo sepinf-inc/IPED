@@ -281,7 +281,7 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
     }
 
     @Override
-    public void addPlacemark(String gid, String longit, String lat) {
+    public void addPlacemark(String gid, String name, String descr, String longit, String lat, boolean checked, boolean selected) {
         // TODO Auto-generated method stub
         
     }

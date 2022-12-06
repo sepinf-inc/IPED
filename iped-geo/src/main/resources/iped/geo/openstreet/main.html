@@ -100,7 +100,7 @@
 
     function initialize() {
         var kmlUrl = '';
-        
+
         map = new L.IPEDMap('map_canvas', { center: new L.LatLng(58.4, 43.0), zoom: 11, boxZoom:true });
 		L.tileLayer('{{tileServerUrl}}', {
     			maxZoom: 18,
@@ -113,7 +113,7 @@
          track = new L.KML();
          map.addLayer(track);
     }
-    
+
     function loadKml(kmlpar){
         const parser = new DOMParser();
         const kml = parser.parseFromString(kmlpar, 'text/xml');
@@ -136,7 +136,7 @@
        	}
        	return mpos;
     }
-    
+
 	mpos=0;
     function moveToMarkerPos(pos){
     	if(pos<0){
@@ -147,29 +147,22 @@
     	}
 
 		var i=0;
-       	for (var ind in track.markers){
-    		if(i==pos){
-    			window.app.markerMouseClickedBF(ind,1,'');
-    			track.centralizaMarcadores([track.markers[ind]]);
-    			mpos=i;
-    			break;
-    		}
-       		i++;
-       	}
+		var keys = Object.keys(track.markers);
+		window.app.markerMouseClickedBF(keys[pos],1,'');
+        //track.centralizaMarcador(track.markers[keys[pos]]);
+        mpos=pos;
     	return false;
     }
-    
+
     function moveToLastMarker(){
     	moveToMarkerPos(track.markersCount()-1);
     }
-    
+
     function zoomOut(){
     	track.viewAll();
     }
-    
 	</script>
     </head>
-    
     
     <body onload="initialize();">
        <table style="height:100%;width:100%"><tr>
