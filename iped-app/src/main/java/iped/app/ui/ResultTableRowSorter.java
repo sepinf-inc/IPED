@@ -135,7 +135,7 @@ public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSort
 
             if (!this.isCancelled()) {
                 App.get().resultsTable.setRowSorter(sorter);
-                App.get().resultsModel.fireTableChanged(new RowSorterTableDataChange(App.get().resultsModel));
+                App.get().resultsModel.fireTableChanged(new RowSorterTableDataChange(App.get().resultsModel, sortKeys));
             } else {
                 App.get().resultsTable.setRowSorter(oldSorter);
             }

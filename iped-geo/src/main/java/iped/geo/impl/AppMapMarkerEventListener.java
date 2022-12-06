@@ -18,30 +18,28 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
 
     @Override
     public void onClicked(String mid, MouseEvent e) {
-        int pos = 0;
-
         // procura pela posição correspondente na tabela do item clicado no mapa
         mid = GetResultsKMLWorker.getBaseGID(mid);
-        IMultiSearchResult results = mapaPanel.getResultsProvider().getResults();
-        for (int i = 0; i < results.getLength(); i++) {
-            IItemId item = results.getItem(i);
-            String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-            if (mid.equals(gid)) {
-                pos = i;
-                break;
-            }
-        }
-
         JTable t = mapaPanel.getResultsProvider().getResultsTable();
-        pos = t.convertRowIndexToView(pos);
-        if (e.isShiftDown()) {
+        int pos = mapaPanel.getItemPositioninResultsTable(mid);
+        AppMapMarkerEventListener.doTableSelection(t, pos,e.isShiftDown());
+    }
+    
+    static public void doTableSelection(JTable t, int pos, boolean additiveSelection) {
+        if (additiveSelection) {
             if (t.isRowSelected(pos)) {
                 t.removeRowSelectionInterval(pos, pos);
             } else {
                 t.addRowSelectionInterval(pos, pos);
             }
         } else {
-            t.setRowSelectionInterval(pos, pos);
+            boolean wasSelected = t.isRowSelected(pos);
+            t.getSelectionModel().setValueIsAdjusting(true);
+            t.removeRowSelectionInterval(0, t.getRowCount()-1);
+            if (!wasSelected) {
+                t.setRowSelectionInterval(pos, pos);
+            }
+            t.getSelectionModel().setValueIsAdjusting(false);
         }
     }
 

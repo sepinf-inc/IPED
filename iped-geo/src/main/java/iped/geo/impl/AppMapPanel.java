@@ -9,6 +9,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
@@ -17,15 +18,18 @@ import javax.swing.JProgressBar;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
 import iped.geo.AbstractMapCanvas;
-import iped.geo.kml.GetResultsJSWorker;
+import iped.geo.js.GetResultsJSWorker;
 import iped.geo.kml.GetResultsKMLWorker;
 import iped.geo.kml.KMLResult;
 import iped.geo.localization.Messages;
 import iped.properties.BasicProps;
+import iped.search.IMultiSearchResult;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 
@@ -55,6 +59,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
     private MapPanelConfig mpConfig;
 
     private JProgressBar gpsProgressBar;
+    private GetResultsJSWorker jsWorker;
 
     public AppMapPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
@@ -188,7 +193,15 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             config(tilesSourceURL);
         }
 
-        if (mapaDesatualizado && (resultsProvider.getResults().getLength() > 0)) {
+        if (mapaDesatualizado) {
+            if(jsWorker!=null) {
+                try {
+                    jsWorker.cancel(true);
+                }catch (CancellationException e) {
+                    // ignores
+                }
+            }
+
             mapaDesatualizado = false;
             this.kmlResult = null;
 
@@ -198,7 +211,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
             String[] cols = new String[] { BasicProps.ID };
             //GetResultsKMLWorker kmlWorker = new GetResultsKMLWorker(resultsProvider, cols, gpsProgressBar, this);
-            GetResultsJSWorker jsWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas);
+            jsWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas, this);
             jsWorker.execute();
 
         } else {
@@ -214,8 +227,8 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         } else {
             gpsProgressBar.setVisible(false);
         }
-        browserCanvas.setKML(kmlResult.getKML());
         this.kmlResult=kmlResult;
+        browserCanvas.setKML(kmlResult.getKML());
         mapaDesatualizado = false;
     }
 
@@ -274,6 +287,54 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             }
             browserCanvas.update();
         }
+    }
+    
+    String lastMid = "";
+    int lastPos = -1;
+    boolean lastMidReset=true;
+    
+    public void disableLastMidReset() {
+        lastMidReset=false;
+    }
+    
+    class LastMidTableModelListener implements TableModelListener{
+        @Override
+        public void tableChanged(TableModelEvent e) {
+            if(lastMidReset) {
+                lastMid = "";
+                lastPos = -1;            
+            }
+            lastMidReset=true;
+        }
+    }
+    
+    LastMidTableModelListener lastMidTableModelListener = new LastMidTableModelListener();
+
+    public int getItemPositioninResultsTable(String mid) {
+        if(mid.equals(lastMid)) {
+            return lastPos;
+        }
+
+        JTable t = this.getResultsProvider().getResultsTable();
+
+        t.getModel().removeTableModelListener(lastMidTableModelListener);
+        t.getModel().addTableModelListener(lastMidTableModelListener);
+
+        int pos = 0;
+        IMultiSearchResult results = this.getResultsProvider().getResults();
+        for (int i = 0; i < results.getLength(); i++) {
+            IItemId item = results.getItem(i);
+            String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+            if (mid.equals(gid)) {
+                pos = i;
+                break;
+            }
+        }
+
+        lastMid = mid;
+        lastPos = t.convertRowIndexToView(pos);
+
+        return lastPos;
     }
 
 }

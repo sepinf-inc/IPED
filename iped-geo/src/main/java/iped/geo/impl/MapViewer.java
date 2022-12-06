@@ -18,6 +18,7 @@ import iped.geo.localization.Messages;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.ResultSetViewer;
+import iped.viewers.api.events.RowSorterTableDataChange;
 import javafx.application.Platform;
 
 public class MapViewer implements ResultSetViewer, TableModelListener, ListSelectionListener {
@@ -88,9 +89,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
             /**/
             return;
         }
-        /*
-         * if(e.getColumn()==-1) { if((e.getFirstRow()==0)) { return; } }
-         */
+        
         if (e.getColumn() == 1) {// se o evento foi disparado pelo check box que fica na coluna 1
             updatingCheckbox = true;
             IItemId item = resultsProvider.getResults().getItem(e.getFirstRow());

@@ -323,6 +323,7 @@ L.KML = L.MarkerClusterGroup.extend({
 		this.markers[id].atualizaIcone();
 	},
     viewAll: function(){
+        this.flushAddPlacemarkArray();
     	ms=[];
     	for (var ind in this.markers){
 			var m = this.markers[ind];
@@ -330,6 +331,21 @@ L.KML = L.MarkerClusterGroup.extend({
     	}
 		this.centralizaMarcadores(ms);
 	},
+    viewAll: function(minlongit, minlat, maxlongit, maxlat){
+        this.flushAddPlacemarkArray();
+        var corner1 = L.latLng(minlat, minlongit);
+        var corner2 = L.latLng(maxlat, maxlongit);
+        var bounds = L.latLngBounds(corner1, corner2);
+        var target = this._map._getBoundsCenterZoom(bounds, map.options);
+        var zoom = this._map._zoom;
+        if(target.zoom < zoom){
+            zoom = target.zoom;
+        }
+        this._map.setView(target.center, zoom, map.option);
+    },
+    centralizaMarcador: function(m){
+        this._map.setView(m.getLatLng(), zoom, map.option);
+    },
 	centralizaMarcadores: function(ms){
     	if(ms.length>0){
     		var fg = new L.featureGroup(ms);
@@ -353,11 +369,11 @@ L.KML = L.MarkerClusterGroup.extend({
     	}
 		this.centralizaMarcadores(ms);
     },
-	
+
 	styles:[],
 	markers:[],
 	layers:[],
-	
+
 	addKML: function (xml, kmlOptions) {
 		layers = this.parseKML(xml, kmlOptions);
 		if (!layers || !layers.length) return;
@@ -373,6 +389,12 @@ L.KML = L.MarkerClusterGroup.extend({
 
 	latLngs: [],
 
+    parseStylesFromXmlString: function (xmlString, kmlOptions) {
+        let parser = new DOMParser();
+        let xmldoc = parser.parseFromString(xmlString, 'text/xml');
+        styles = this.parseStyles(xmldoc, kmlOptions);
+    },
+    
 	parseKML: function (xml, kmlOptions) {
 		styles = this.parseStyles(xml, kmlOptions);
 		style = styles;
@@ -387,19 +409,23 @@ L.KML = L.MarkerClusterGroup.extend({
 			}
 		}
 		el = xml.getElementsByTagName('Placemark');
-		for (var j = 0; j < el.length; j++) {
-			if (!this._check_folder(el[j])) { continue; }
-			l = this.parsePlacemark(el[j], xml, style);
-			if (l) { layers.push(l); }
-		}
+        if(el){
+            for (var j = 0; j < el.length; j++) {
+                if (!this._check_folder(el[j])) { continue; }
+                l = this.parsePlacemark(el[j], xml, style);
+                if (l) { layers.push(l); }
+            }
+        }
 		el = xml.getElementsByTagName('gx:Tour');
-		this.tourOrder=el[0].getElementsByTagName('name')[0].childNodes[0].nodeValue;
+		if(el.length>0){
+            this.tourOrder=el[0].getElementsByTagName('name')[0].childNodes[0].nodeValue;
+        }
 
 		el = xml.getElementsByTagName('GroundOverlay');
-		for (var k = 0; k < el.length; k++) {
-			l = this.parseGroundOverlay(el[k]);
-			if (l) { layers.push(l); }
-		}
+        for (var k = 0; k < el.length; k++) {
+            l = this.parseGroundOverlay(el[k]);
+            if (l) { layers.push(l); }
+        }
 		return layers;
 	},
 
@@ -545,18 +571,37 @@ L.KML = L.MarkerClusterGroup.extend({
 		}
 		return l;
 	},
-
-    addPlacemark: function (id, lat, long, options) {
+	
+    msAddPlacemark:[],
+    selectedPlacemarks:[],
+    
+    addPlacemark: function (id, name, descr, lat, long, checked, selected, options) {
         var m = new L.KMLMarker(new L.LatLng(lat, long), options);
         m.id=id;
+        m.checked=checked;
+        m.selected=selected;
+        m.name = name;
+        m.descr = descr;
+        m.bindPopup('<input type="checkbox" id="marker_checkbox" value=""/><h2>' + m.name + '</h2>' + m.descr, { className: 'kml-popup'});
+        m.styleUrl='#item';
+        m.parent=this;
+        if(m.checked || m.selected){
+            m.atualizaIcone();
+        }
         this.markers[id]=m;
-        ms =[];
-        ms.push(m);
-        layer = new L.FeatureGroup(ms);
-        this.fire('addlayer', {
-                layer: layer
-        });
-        this.addLayer(layer);
+        this.msAddPlacemark.push(m);
+        if(this.msAddPlacemark.length>=100){
+            this.flushAddPlacemarkArray();
+        }
+    },
+    
+    flushAddPlacemarkArray(){
+        if(this.msAddPlacemark.length>0){
+            layer = new L.FeatureGroup(this.msAddPlacemark);
+            this.fire('addlayer', {layer: layer});
+            this.addLayer(layer);
+            this.msAddPlacemark=[];
+        }        
     },
     
 	parsePlacemark: function (place, xml, style, options) {
@@ -627,25 +672,25 @@ L.KML = L.MarkerClusterGroup.extend({
 		return layer;
 	},
 
-  addPlacePopup: function(place, layer) {
-    var el, i, j, name, descr = '';
-    el = place.getElementsByTagName('name');
-    if (el.length && el[0].childNodes.length) {
-      name = el[0].childNodes[0].nodeValue;
-	  layer.name=name;
-    }
-    el = place.getElementsByTagName('description');
-    for (i = 0; i < el.length; i++) {
-      for (j = 0; j < el[i].childNodes.length; j++) {
-        descr = descr + el[i].childNodes[j].nodeValue;
-      }
-    }
-    layer.descr=descr;
-
-    if (name) {
-      layer.bindPopup('<input type="checkbox" id="marker_checkbox" value=""/><h2>' + name + '</h2>' + descr, { className: 'kml-popup'});
-    }
-  },
+      addPlacePopup: function(place, layer) {
+        var el, i, j, name, descr = '';
+        el = place.getElementsByTagName('name');
+        if (el.length && el[0].childNodes.length) {
+          name = el[0].childNodes[0].nodeValue;
+    	  layer.name=name;
+        }
+        el = place.getElementsByTagName('description');
+        for (i = 0; i < el.length; i++) {
+          for (j = 0; j < el[i].childNodes.length; j++) {
+            descr = descr + el[i].childNodes[j].nodeValue;
+          }
+        }
+        layer.descr=descr;
+    
+        if (name) {
+          layer.bindPopup('<input type="checkbox" id="marker_checkbox" value=""/><h2>' + name + '</h2>' + descr, { className: 'kml-popup'});
+        }
+      },
 
 	parseCoords: function (xml) {
 		var el = xml.getElementsByTagName('coordinates');
@@ -871,14 +916,26 @@ L.KMLMarker = L.Marker.extend({
 			return;
 		}
 
-		if(e.originalEvent.shiftKey){
-			if(this.selected=='true'){
-				this.selected='false';
-			}else{
-				this.selected='true';
-			}
-			this.atualizaIcone();
-		}
+        if(this.parent){
+            if(!e.originalEvent.shiftKey){
+                while(this.parent.selectedPlacemarks.length>0){
+                    if(this!=this.parent.selectedPlacemarks[0]){
+                        this.parent.selectedPlacemarks[0].selected=false;
+                        this.parent.selectedPlacemarks[0].atualizaIcone();
+                    }
+                    this.parent.selectedPlacemarks.shift();
+                }
+            }
+        }
+
+        if(this.selected=='true'){
+            this.selected='false';
+        }else{
+            this.selected='true';
+            this.parent.selectedPlacemarks.push(this);
+        }
+        this.atualizaIcone();
+
 		if(e.originalEvent.ctrlKey){
 			if(this.checked=='true'){
 				this.checked='false';
@@ -897,16 +954,17 @@ L.KMLMarker = L.Marker.extend({
 			}
 			this.togglePopup();
 		}
+        var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
 		if(e.originalEvent.shiftKey){
-			var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
 			window.app.markerMouseClickedBF(this.id, button, 'shift');
+            if(e.originalEvent.ctrlKey){
+                window.app.checkMarkerBF(this.id, this.checked=='true');
+            }
 		}else{
 			if(e.originalEvent.ctrlKey){
 				window.app.checkMarkerBF(this.id, this.checked=='true');
-			}else{
-				var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
-				window.app.markerMouseClickedBF(this.id, button, '');
 			}			
+            window.app.markerMouseClickedBF(this.id, button, '');
 		}
 	},
 	selected:false,
