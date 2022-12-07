@@ -228,12 +228,19 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         String js = IOUtils.toString(getClass().getResourceAsStream("L.KML.js"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
         String markerclusterjs = IOUtils.toString(getClass().getResourceAsStream("leaflet.markercluster.js"), //$NON-NLS-1$
                 "UTF-8"); //$NON-NLS-1$
+        String leafletarrowheads = IOUtils.toString(getClass().getResourceAsStream("leaflet-arrowheads.js"), //$NON-NLS-1$
+                "UTF-8"); //$NON-NLS-1$
+        String leafletgeometryutil = IOUtils.toString(getClass().getResourceAsStream("leaflet.geometryutil.js"), //$NON-NLS-1$
+                "UTF-8"); //$NON-NLS-1$
 
         String layers_img = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
                 .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("layers.png"))); //$NON-NLS-1$
 
         html = html.replace("{{layers_img}}", layers_img);            
         html = html.replace("{{markerclusterjs}}", markerclusterjs);
+        html = html.replace("{{leafletgeometryutil}}", leafletgeometryutil);
+        html = html.replace("{{leafletarrowheads}}", leafletarrowheads);
+        
         
         String themeScript="applyLightTheme();";
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
@@ -473,7 +480,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
-                    webEngine.executeScript("track.viewAll('"+minlongit+"','"+minlat+"','"+maxlongit+"','"+maxlat+"')");
+                    webEngine.executeScript("asyncCreatePaths();track.setAllRange('"+minlongit+"','"+minlat+"','"+maxlongit+"','"+maxlat+"');");
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
