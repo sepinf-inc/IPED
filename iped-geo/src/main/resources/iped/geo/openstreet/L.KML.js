@@ -1,4 +1,3 @@
-
 /*
 	Copyright (c) 2021, Patrick Dalla Bernardina - MIT licence
 	
@@ -251,15 +250,16 @@ BoxSelect = L.Handler.extend({
 
 });
 
-
 L.KML = L.MarkerClusterGroup.extend({
 	tourOrder:'none',
+	resolveFullyLoaded: null,
+	fullyLoaded: null,
 	initialize: function (kml, kmlOptions) {
 		L.MarkerClusterGroup.prototype.initialize.call(this,kmlOptions);
 		this._kml = kml;
 		this._layers = {};
 		this._kmlOptions = kmlOptions;
-		
+		this.fullyLoaded = new Promise((resolve, reject) => {this.resolveFullyLoaded = resolve});		
 		if (kml) {
 			this.addKML(kml, kmlOptions);
 		}
@@ -322,19 +322,14 @@ L.KML = L.MarkerClusterGroup.extend({
 		}
 		this.markers[id].atualizaIcone();
 	},
+	minlat:0, 
+	minlongit:0, 
+	maxlat:0, 
+	maxlingit:0,
     viewAll: function(){
         this.flushAddPlacemarkArray();
-    	ms=[];
-    	for (var ind in this.markers){
-			var m = this.markers[ind];
-   			ms.push(m);
-    	}
-		this.centralizaMarcadores(ms);
-	},
-    viewAll: function(minlongit, minlat, maxlongit, maxlat){
-        this.flushAddPlacemarkArray();
-        var corner1 = L.latLng(minlat, minlongit);
-        var corner2 = L.latLng(maxlat, maxlongit);
+        var corner1 = L.latLng(this.minlat, this.minlongit);
+        var corner2 = L.latLng(this.maxlat, this.maxlongit);
         var bounds = L.latLngBounds(corner1, corner2);
         var target = this._map._getBoundsCenterZoom(bounds, map.options);
         var zoom = this._map._zoom;
@@ -342,6 +337,14 @@ L.KML = L.MarkerClusterGroup.extend({
             zoom = target.zoom;
         }
         this._map.setView(target.center, zoom, map.option);
+	},
+
+    setAllRange: function(minlongit, minlat, maxlongit, maxlat){
+        this.minlongit = minlongit;
+        this.minlat = minlat;
+        this.maxlongit = maxlongit;
+        this.maxlat=maxlat;
+        this.viewAll();        
     },
     centralizaMarcador: function(m){
         this._map.setView(m.getLatLng(), zoom, map.option);
@@ -372,8 +375,47 @@ L.KML = L.MarkerClusterGroup.extend({
 
 	styles:[],
 	markers:[],
+	markerCoords:[],
 	layers:[],
+	pathsVisible:false,
 
+	createPaths: function () {
+        this.fullyLoaded.then((track)=>{
+            if(this.paths){
+                this.removeLayer(this.paths);
+            }
+            this.paths = new L.Polyline(this.markerCoords, {
+                color: 'red',
+                weight: 3,
+                opacity: 1,
+                smoothFactor: 1
+            });
+            this.paths.arrowheads({
+                  size: '18px',
+                  fill: true,
+                  yawn: 25,
+                  frequency: 'allvertices'
+            });
+        });
+    },
+    
+    tooglePaths: function (){
+        if(this.paths){
+            alert('paths already created');
+        }else{
+            this.createPaths();
+        }
+
+        if(pathsVisible){
+            this.removeLayer(this.paths);
+            alert('hide');
+        }else{
+            this.addLayer(this.paths);
+            alert('show');
+        }
+        pathsVisible=!pathsVisible;
+    },
+	
 	addKML: function (xml, kmlOptions) {
 		layers = this.parseKML(xml, kmlOptions);
 		if (!layers || !layers.length) return;
@@ -589,19 +631,21 @@ L.KML = L.MarkerClusterGroup.extend({
             m.atualizaIcone();
         }
         this.markers[id]=m;
+        this.markerCoords.push(m.getLatLng());
         this.msAddPlacemark.push(m);
         if(this.msAddPlacemark.length>=100){
             this.flushAddPlacemarkArray();
         }
     },
     
-    flushAddPlacemarkArray(){
+    flushAddPlacemarkArray: function (){
         if(this.msAddPlacemark.length>0){
             layer = new L.FeatureGroup(this.msAddPlacemark);
             this.fire('addlayer', {layer: layer});
             this.addLayer(layer);
-            this.msAddPlacemark=[];
-        }        
+            this.msAddPlacemark=[];            
+        }
+        this.resolveFullyLoaded(this);
     },
     
 	parsePlacemark: function (place, xml, style, options) {
