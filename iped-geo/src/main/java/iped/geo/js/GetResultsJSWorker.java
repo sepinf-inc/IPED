@@ -84,6 +84,12 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                 descendingOrder = false;
             }
             
+            if (descendingOrder) {
+                browserCanvas.setTourOrder(coluna+"-DESC");
+            } else {
+                browserCanvas.setTourOrder(coluna);
+            }
+            
             minlongit=190.0; maxlongit=-190.0; minlat=190.0; maxlat=-190.0;
 
             IMultiSearchResult results = app.getResults();
