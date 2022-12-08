@@ -3,7 +3,6 @@ package iped.geo.openstreet;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,7 +12,6 @@ import java.util.concurrent.Semaphore;
 import javax.swing.UIManager;
 
 import org.apache.commons.io.IOUtils;
-import org.neo4j.internal.helpers.Cancelable;
 
 import iped.geo.AbstractMapCanvas;
 import iped.utils.UiUtil;
@@ -441,7 +439,6 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     StringBuffer addPlacemarkLines=new StringBuffer();
     int addPlacemarkCount=0;
 
-    @Override
     public void addPlacemark(String gid, String name, String descr,  String longit, String lat, boolean checked, boolean selected) {
         addPlacemarkLines.append("track.addPlacemark('"+gid+"','"+name+"','"+descr+"','"+lat+"','"+longit+"','"+checked+"','"+selected+"');");
         addPlacemarkCount++;
@@ -450,7 +447,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         }        
     }
 
-    private void flushAddPlacemarkLines() {
+    protected void flushAddPlacemarkLines() {
         if(addPlacemarkCount>0) {
             final String finalPlacemarks = addPlacemarkLines.toString();
             Platform.runLater(new Runnable() {
@@ -476,7 +473,6 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
     @Override
     public void viewAll(double minlongit, double minlat, double maxlongit, double maxlat) {
-        flushAddPlacemarkLines();
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
@@ -488,5 +484,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                 }
             }
         });
+    }
+
+    @Override
+    public void refreshMap() {
+        flushAddPlacemarkLines();
     }
 }
