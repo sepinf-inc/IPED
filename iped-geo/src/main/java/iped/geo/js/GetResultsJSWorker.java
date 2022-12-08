@@ -163,6 +163,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                 }
             }
             kmlResult.setResultKML("", itemsWithGPS, gpsItems);
+            browserCanvas.refreshMap();
             browserCanvas.viewAll(minlongit, minlat, maxlongit, maxlat);
         } catch (Exception e) {
             if(!isCancelled()) {

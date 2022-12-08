@@ -136,8 +136,6 @@ abstract public class AbstractMapCanvas extends Canvas {
         onLoadRunnables.add(run);
     }
 
-    public abstract void addPlacemark(String gid, String name, String descr, String longit, String lat, boolean checked, boolean selected);
-
     public void load() {
     }
 
@@ -146,5 +144,12 @@ abstract public class AbstractMapCanvas extends Canvas {
 
     public void viewAll(double minlongit, double minlat, double maxlongit, double maxlat) {
     }
+
+    public void refreshMap() {
+        
+    }
+
+    public abstract void addPlacemark(String gid, String htmlFormat, String string, String longit, String lat,
+            boolean checked, boolean selected);
 
 }
