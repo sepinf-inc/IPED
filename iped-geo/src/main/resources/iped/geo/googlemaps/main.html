@@ -41,6 +41,7 @@
 		{{load_extensions}}
 		</script>
     <script>
+    var mpos=-1;
     var mapImpl = "GOOGLE";
     var map;
 	var gxml;
@@ -68,12 +69,12 @@
 	    gxml.icone_marcador_selecionado_m = "{{icone_selecionado_m_base64}}";
 	    gxml.icone_marcador_m = "{{icone_m_base64}}";
 
-		gxml.processString('{{kml}}', 'Results'); 
+		//gxml.processString('{{kml}}', 'Results'); 
 		map.enableKeyDragSelect();
-		
+
 		document.getElementById('ordem_descr').innerHTML = gxml.tourOrder;
 		document.getElementById('resultsinfo').innerHTML = 'Mapped Items:'+gxml.overlayman.markers.length; 
-		
+
 	    map.addListener('dragend_rect', function(rect, proj) {
 	    	var ms = gxml.selecionaRetangulo(rect, proj);
 	    	window.app.selectMarkerBF(ms);
@@ -85,7 +86,6 @@
     }
 
     
-    mpos=0;
     function updateLeadMarker(marker){
 		var i=0;
        	for (var ind in gxml.overlayman.markers){
@@ -98,10 +98,14 @@
        	return mpos;
     }
 
-    function moveToMarkerPos(pos){
+    function moveToMarkerPos(pos){    
     	if(pos<0){
-    		alert('The navigation already is on the first item.');
-    		return false;
+    	   if(mpos==0){
+	           alert('The navigation already is on the first item.');
+	           return false;
+    	   }else{
+    	       pos = 0;
+    	   }
     	}
     	if(pos>=gxml.overlayman.markers.length){
     		alert('The navigation already is on the last item.')
@@ -120,6 +124,7 @@
     
     function zoomOut(){
     	var markers = gxml.overlayman.markers;
+        alert(markers.length);
     	var bounds = new google.maps.LatLngBounds();
     	for (var i = 0; i < markers.length; i++) {
     	 bounds.extend(markers[i].getPosition());

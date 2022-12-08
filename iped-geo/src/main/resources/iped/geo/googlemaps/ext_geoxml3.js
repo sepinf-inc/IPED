@@ -21,6 +21,45 @@ function GeoXmlIped(myvar, map, url, opts) {
 	this.navigationPos = 0;
 }
 
+GeoXmlIped.prototype.addPlacemark = function (gid, name, descr, lat, longit, checked, selected){
+    let point = new google.maps.LatLng(lat, longit);
+    let href = '';
+    var m = new google.maps.Marker({position: point, map: this.map});
+    m.id = gid;
+    m.title = name;
+    m.href = href;
+    m.geoxml = this;
+    var obj = { "type": "point", "title": name, "description": escape(descr), "href": href, "shadow": null, "visibility": true, "x": point.x, "y": point.y, "id": m.id };
+    this.kml[0].marks.push(obj);
+    //function(point, name, desc, styleid, idx, instyle, visible, kml_id, markerurl,snip) 
+    m.extendedData = {};
+    m.extendedData.id = gid;
+    
+    let scale =1;
+    var bicon = new google.maps.MarkerImage("http://maps.google.com/mapfiles/kml/pal3/icon40.png",
+        new google.maps.Size(32*scale, 32*scale), //size
+        new google.maps.Point(0, 0), //origin
+        new google.maps.Point(16*scale, 16*scale), //anchor
+        new google.maps.Size(32*scale, 32*scale) //scaledSize 
+        );
+    m.setIcon(bicon);
+    
+    this.overlayman.addMarker(m, name, 0, '', true);
+    
+    this.handleMarkerEvents(m);
+        
+}
+
+GeoXmlIped.prototype.flushPlacemarks = function() {
+        var markers = this.overlayman.markers;
+        var bounds = new google.maps.LatLngBounds();
+        for (var i = 0; i < markers.length; i++) {
+         bounds.extend(markers[i].getPosition());
+        }
+
+        this.map.fitBounds(bounds);
+}
+    
 GeoXmlIped.prototype.selecionaRetangulo = function (rect, proj, callback){
 	var sw = proj.fromContainerPixelToLatLng(new google.maps.Point(rect.left, rect.bottom));
   	var ne = proj.fromContainerPixelToLatLng(new google.maps.Point(rect.right, rect.top));
@@ -101,36 +140,50 @@ GeoXmlIped.prototype.checkMarker = function(mpos, checked){
 GeoXmlIped.prototype.handlePlacemark = function(mark, idx, depth, fullstyle) {
 	//chama o método herdado
 	GeoXml.prototype.handlePlacemark.call(this, mark, idx, depth, fullstyle);
+
+    var e = mark.getElementsByTagName("ExtendedData");
+    if(e.length<=0) return;
+    
+    m.extendedData = {};
+    var marcado = '';
+    for (i = 0; i <e.length; i++) {
+        var d = e[i].getElementsByTagName("Data");
+        for (j = 0; j <d.length; j++) {
+            values = d[j].getElementsByTagName("value");
+            m.extendedData[d[j].getAttribute("name")] = values[0].childNodes[0].nodeValue;
+
+            if(d[j].getAttribute("name")=="checked"){
+                if(values[0].childNodes[0].nodeValue=="true"){
+                    marcado = "checked";
+                }
+            }
+        }
+    }
+
+    var m = this.overlayman.markers[this.overlayman.markers.length-1];
+    this.handleMarkerEvents(m);
+}	
 	
-	
+GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
 	//pega o ultimo marcador criado (que corresponde ao que acabou de ser criado
-	var m = this.overlayman.markers[this.overlayman.markers.length-1];
 	m.arrayPos = this.overlayman.markers.length-1;
-
-	var e = mark.getElementsByTagName("ExtendedData");
-	if(e.length<=0) return;
-	
-	m.extendedData = {};
-	var marcado = '';
-	for (i = 0; i <e.length; i++) {
-		var d = e[i].getElementsByTagName("Data");
-		for (j = 0; j <d.length; j++) {
-			values = d[j].getElementsByTagName("value");
-			m.extendedData[d[j].getAttribute("name")] = values[0].childNodes[0].nodeValue;
-
-			if(d[j].getAttribute("name")=="checked"){
-				if(values[0].childNodes[0].nodeValue=="true"){
-					marcado = "checked";
-				}
-			}
-		}
-	}
 
 	this.ajustaIcone(m);
 
 	/* Adiciona checkbox ao infoWindow*/
-	
+    html = "<h1 " + this.titlestyle + ">" + m.name + "</h1>";
+    html +=  "<div " + this.descstyle + ">" + m.descr + "</div>";
+
+	var infoWindowOptions = { 
+                    content: html, 
+                    pixelOffset: new google.maps.Size(0, 2)
+                };
+	m.infoWindow = new google.maps.InfoWindow(infoWindowOptions);
 	var html = m.infoWindow.getContent();
+	var marcado = '';
+	if(m.checked){
+        marcado = 'checked';
+    }
 	html = html.substring(0,html.indexOf(">")+1)+"<input type=\"checkbox\" id=\"ck_marcador_"+m.extendedData.id+"\" "+marcado+" onclick=\"window.app.checkMarkerBF(\'"+m.extendedData.id+"\', this.checked);gxml.checkMarker("+m.arrayPos+", this.checked);\" />" + html.substring(html.indexOf(">")+1, html.length);
 	m.infoWindow.setContent(html);
 	
