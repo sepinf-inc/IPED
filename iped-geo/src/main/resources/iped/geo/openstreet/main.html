@@ -98,6 +98,7 @@
 		</script>
 
     <script>
+    var mpos=-1;
     var mapImpl = "OSM";
     var map;
     var track;
@@ -143,11 +144,15 @@
        	return mpos;
     }
 
-	mpos=0;
     function moveToMarkerPos(pos){
-    	if(pos<0){
-    		alert('The navigation already is on the first item.');
-    	}
+        if(pos<0){
+           if(mpos==0){
+               alert('The navigation already is on the first item.');
+               return false;
+           }else{
+               pos = 0;
+           }
+        }
     	if(pos>=track.markersCount()){
     		alert('The navigation already is on the last item.')
     	}
