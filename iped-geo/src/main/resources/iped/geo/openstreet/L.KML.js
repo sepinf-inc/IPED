@@ -303,7 +303,7 @@ L.KML = L.MarkerClusterGroup.extend({
 		window.app.selectMarkerBF(mids);
 	},
 	selecionaMarcador: function (id, b){
-		for(i=0;i<id.length;i++){
+		for(i=0;i<id.length-1;i++){
 			if(b=='true'){
 				this.markers[id[i]].selected='true';
 			}else{
@@ -616,6 +616,7 @@ L.KML = L.MarkerClusterGroup.extend({
 	
     msAddPlacemark:[],
     selectedPlacemarks:[],
+    lastAddedPlacemark: null,
     
     addPlacemark: function (id, name, descr, lat, long, checked, selected, options) {
         var m = new L.KMLMarker(new L.LatLng(lat, long), options);
@@ -631,6 +632,14 @@ L.KML = L.MarkerClusterGroup.extend({
         if(m.checked || m.selected){
             m.atualizaIcone();
         }
+
+        if(this.lastAddedPlacemark){
+            this.lastAddedPlacemark.next = m;
+            m.previous = this.lastAddedPlacemark;
+        }
+        this.lastAddedPlacemark=m;
+
+
         this.markers[id]=m;
         this.markerCoords.push(m.getLatLng());
         this.msAddPlacemark.push(m);
@@ -964,6 +973,65 @@ L.KMLMarker = L.Marker.extend({
 			}
 		}
 	},
+    next:null,
+    previous:null,
+    nextLine:null,
+    previousLine:null,
+    directionLinesVisible:false,
+    createDirectionLines: function(){
+        let nextlinestyle = {color: "red", weight: 3};
+        let previouslinestyle = {color: "blue", weight: 3};
+        if(this.nextLine){
+        }else{
+            if(this.next){
+                this.nextLine = L.polyline([this.getLatLng(), this.next.getLatLng()], nextlinestyle);
+                this.nextLine.arrowheads({
+                      size: "18px",
+                      fill: true,
+                      yawn: 30,
+                      frequency: 'endonly'
+                    });
+            }
+        }
+        if(this.previousLine){
+        }else{
+            if(this.previous){
+                this.previousLine = L.polyline([this.previous.getLatLng(), this.getLatLng()], previouslinestyle);
+                this.nextLine.arrowheads({
+                      size: "18px",
+                      fill: true,
+                      yawn: 30,
+                      frequency: 'endonly'
+                    });
+            }
+        }
+    },
+    showDirectionLines: function(){
+        this.createDirectionLines();
+        if(this.nextLine) this.parent.addLayer(this.nextLine);
+        if(this.previousLine) this.parent.addLayer(this.previousLine);
+        this.directionLinesVisible=true;
+    },
+    hideDirectionLines: function(){
+        this.createDirectionLines();
+        if(this.nextLine) this.parent.removeLayer(this.nextLine);
+        if(this.previousLine) this.parent.removeLayer(this.previousLine);
+        this.directionLinesVisible=false;
+    },
+	toogleDirectionLines: function(){
+        alert('toogleDirectionLines');
+        this.createDirectionLines();
+        try{
+            if(this.directionLinesVisible){
+                this.hideDirectionLines();
+            }else{
+                this.showDirectionLines();
+            }
+            this.directionLinesVisible=!this.directionLinesVisible;
+        }catch(e){
+            alert(e);                    
+        }
+    },
 	onClick: function(e){
 		//workaround to skip leaflet behaviour that invokes onClick twice, the one programatically invoked is skipped;
 		if(!e.originalEvent.isTrusted) {
@@ -977,16 +1045,18 @@ L.KMLMarker = L.Marker.extend({
                         this.parent.selectedPlacemarks[0].selected=false;
                         this.parent.selectedPlacemarks[0].atualizaIcone();
                     }
-                    this.parent.selectedPlacemarks.shift();
+                    this.parent.selectedPlacemarks.shift();//remove first item from array
                 }
             }
         }
 
         if(this.selected=='true'){
             this.selected='false';
+            this.hideDirectionLines();
         }else{
             this.selected='true';
             this.parent.selectedPlacemarks.push(this);
+            this.showDirectionLines();
         }
         this.atualizaIcone();
 

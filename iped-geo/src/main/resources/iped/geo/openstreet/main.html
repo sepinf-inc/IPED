@@ -132,7 +132,8 @@
         const bounds = track.getBounds();
         map.fitBounds(bounds);
     }
-
+    
+    var lastLeadMarker = null;
     function updateLeadMarker(marker){
 		var i=0;
        	for (var ind in track.markers){
@@ -141,6 +142,13 @@
        		}
        		i++;
        	}
+       	if(lastLeadMarker){
+       	    lastLeadMarker.hideDirectionLines();
+       	}
+       	if(lastLeadMarker!=track.markers[marker]){
+            track.markers[marker].showDirectionLines();
+       	}
+       	lastLeadMarker = track.markers[marker];
        	return mpos;
     }
 
