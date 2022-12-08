@@ -303,7 +303,7 @@ L.KML = L.MarkerClusterGroup.extend({
 		window.app.selectMarkerBF(mids);
 	},
 	selecionaMarcador: function (id, b){
-		for(i=0;i<id.length-1;i++){
+		for(i=0;i<id.length;i++){
 			if(b=='true'){
 				this.markers[id[i]].selected='true';
 			}else{
