@@ -118,7 +118,13 @@
 				
          var kml = '';
          track = new L.KML();
+         track.onFullyLoaded=doFullyLoaded;
          map.addLayer(track);
+    }
+    
+    function doFullyLoaded(){
+       document.getElementById('ordem_descr').innerHTML = track.tourOrder;
+       document.getElementById('resultsinfo').innerHTML = track.markersCount(); 
     }
 
     function loadKml(kmlpar){
