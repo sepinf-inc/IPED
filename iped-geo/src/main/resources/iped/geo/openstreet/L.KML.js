@@ -434,7 +434,7 @@ L.KML = L.MarkerClusterGroup.extend({
     parseStylesFromXmlString: function (xmlString, kmlOptions) {
         let parser = new DOMParser();
         let xmldoc = parser.parseFromString(xmlString, 'text/xml');
-        styles = this.parseStyles(xmldoc, kmlOptions);
+        this.styles = this.parseStyles(xmldoc, kmlOptions);
     },
     
 	parseKML: function (xml, kmlOptions) {
@@ -620,6 +620,7 @@ L.KML = L.MarkerClusterGroup.extend({
     addPlacemark: function (id, name, descr, lat, long, checked, selected, options) {
         var m = new L.KMLMarker(new L.LatLng(lat, long), options);
         m.id=id;
+        m.styles = this.styles;
         m.checked=checked;
         m.selected=selected;
         m.name = name;
@@ -951,15 +952,15 @@ L.KMLMarker = L.Marker.extend({
 	atualizaIcone: function(){
 		if(this.selected=='true'){
 			if(this.checked=='true'){
-				this.setIcon(styles['#itemSelecionadoMarcado'].icon);
+				this.setIcon(this.styles['#itemSelecionadoMarcado'].icon);
 			}else{
-				this.setIcon(styles['#itemSelecionado'].icon);
+				this.setIcon(this.styles['#itemSelecionado'].icon);
 			}
 		}else{
 			if(this.checked=='true'){
-				this.setIcon(styles['#itemMarcado'].icon);
+				this.setIcon(this.styles['#itemMarcado'].icon);
 			}else{
-				this.setIcon(styles['#item'].icon);
+				this.setIcon(this.styles['#item'].icon);
 			}
 		}
 	},

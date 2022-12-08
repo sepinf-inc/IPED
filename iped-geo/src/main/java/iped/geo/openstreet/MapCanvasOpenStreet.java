@@ -202,9 +202,13 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             runAfterLoad(new Runnable() {
                 @Override
                 public void run() {
-                    webEngine.executeScript("track.parseStylesFromXmlString('"+kmlFinal+"')");
-                    
-                    sem.release();
+                    try {
+                        webEngine.executeScript("track.parseStylesFromXmlString('"+kmlFinal+"');");
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }finally {
+                        sem.release();
+                    }
                 }
             });
 
