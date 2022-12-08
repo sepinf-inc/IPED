@@ -638,6 +638,15 @@ L.KML = L.MarkerClusterGroup.extend({
         }
     },
     
+    refreshMarkers: function() {
+        let addedMarkers = window.app.getMarkers();
+        alert(addedMarkers.getLength());
+        for (var k = 0; k < addedMarkers.getLength(); k++) {
+            let m = addedMarkers.getSlot(k);
+            this.addPlacemark(m.id, m.name, m.descr, m.lat, m.longit, m.checked, m.selected);
+        }
+    },
+    
     flushAddPlacemarkArray: function (){
         if(this.msAddPlacemark.length>0){
             layer = new L.FeatureGroup(this.msAddPlacemark);
