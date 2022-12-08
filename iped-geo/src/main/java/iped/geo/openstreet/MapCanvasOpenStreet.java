@@ -492,6 +492,18 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
     @Override
     public void refreshMap() {
-        flushAddPlacemarkLines();
+        flushAddPlacemarkLines();        
+        Platform.runLater(new Runnable() {
+            public void run() {
+                try {
+                    webEngine.executeScript("track.resolveFullyLoaded(track);");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // nothing
+                }
+            }
+        });
+
     }
 }
