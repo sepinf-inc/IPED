@@ -496,7 +496,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
-                    webEngine.executeScript("track.resolveFullyLoaded(track);");
+                    webEngine.executeScript("track.tourOrder='"+tourOrder+"';track.resolveFullyLoaded(track);");
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {

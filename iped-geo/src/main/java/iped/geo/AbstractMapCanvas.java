@@ -22,6 +22,7 @@ abstract public class AbstractMapCanvas extends Canvas {
     MapSelectionListener mapSelectionListener = null;
     MarkerEventListener markerEventListener = null;
     MarkerCheckBoxListener markerCheckBoxListener = null;
+    protected String tourOrder;
 
     ActionListener onChangeTileServer = null;
 
@@ -145,11 +146,18 @@ abstract public class AbstractMapCanvas extends Canvas {
     public void viewAll(double minlongit, double minlat, double maxlongit, double maxlat) {
     }
 
-    public void refreshMap() {
-        
+    public void refreshMap() {        
     }
 
     public abstract void addPlacemark(String gid, String htmlFormat, String string, String longit, String lat,
             boolean checked, boolean selected);
+
+    public String getTourOrder() {
+        return tourOrder;
+    }
+
+    public void setTourOrder(String tourOrder) {
+        this.tourOrder = tourOrder;
+    }
 
 }
