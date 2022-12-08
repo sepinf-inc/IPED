@@ -41,6 +41,7 @@
             }
 
             document.styleSheets[2].insertRule('img.leaflet-tile {filter: hue-rotate(180deg) brightness(80%) invert(1);}',0);
+            document.getElementById('barra_content').style='width:100%; border:0px;color:white;';
         
             document.body.style.background = 'black';
         }
@@ -59,6 +60,7 @@
                 document.styleSheets[2].deleteRule(rule);
             }
             document.styleSheets[2].insertRule('img.leaflet-tile {filter: }',0);
+            document.getElementById('barra_content').style='width:100%; border:0px;color:black;';
 	        
             document.body.style.background = '';
         }
