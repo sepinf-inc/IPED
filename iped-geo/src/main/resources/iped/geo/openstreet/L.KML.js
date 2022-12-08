@@ -254,12 +254,18 @@ L.KML = L.MarkerClusterGroup.extend({
 	tourOrder:'none',
 	resolveFullyLoaded: null,
 	fullyLoaded: null,
+	onFullyLoaded: null,
 	initialize: function (kml, kmlOptions) {
 		L.MarkerClusterGroup.prototype.initialize.call(this,kmlOptions);
 		this._kml = kml;
 		this._layers = {};
 		this._kmlOptions = kmlOptions;
-		this.fullyLoaded = new Promise((resolve, reject) => {this.resolveFullyLoaded = resolve});		
+		this.fullyLoaded = new Promise((resolve, reject) => {this.resolveFullyLoaded = resolve});
+		this.fullyLoaded = this.fullyLoaded.then((track)=>{
+            if(track.onFullyLoaded){
+                track.onFullyLoaded();
+            }
+        });		
 		if (kml) {
 			this.addKML(kml, kmlOptions);
 		}
@@ -380,7 +386,7 @@ L.KML = L.MarkerClusterGroup.extend({
 	pathsVisible:false,
 
 	createPaths: function () {
-        this.fullyLoaded.then((track)=>{
+        this.fullyLoaded = this.fullyLoaded.then((track)=>{
             if(this.paths){
                 this.removeLayer(this.paths);
             }
@@ -662,9 +668,8 @@ L.KML = L.MarkerClusterGroup.extend({
             layer = new L.FeatureGroup(this.msAddPlacemark);
             this.fire('addlayer', {layer: layer});
             this.addLayer(layer);
-            this.msAddPlacemark=[];            
+            this.msAddPlacemark=[];
         }
-        this.resolveFullyLoaded(this);
     },
     
 	parsePlacemark: function (place, xml, style, options) {
