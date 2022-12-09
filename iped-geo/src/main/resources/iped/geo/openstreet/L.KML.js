@@ -255,6 +255,8 @@ L.KML = L.MarkerClusterGroup.extend({
 	resolveFullyLoaded: null,
 	fullyLoaded: null,
 	onFullyLoaded: null,
+    nextlinestyle: {color: 'blue', weight: 3},
+    previouslinestyle: {color: 'red', weight: 3},
 	initialize: function (kml, kmlOptions) {
 		L.MarkerClusterGroup.prototype.initialize.call(this,kmlOptions);
 		this._kml = kml;
@@ -387,21 +389,25 @@ L.KML = L.MarkerClusterGroup.extend({
 
 	createPaths: function () {
         this.fullyLoaded = this.fullyLoaded.then((track)=>{
-            if(this.paths){
-                this.removeLayer(this.paths);
+            try{
+                if(this.paths){
+                    this.removeLayer(this.paths);
+                }
+                this.paths = new L.Polyline(this.markerCoords, {
+                    color: 'red',
+                    weight: 3,
+                    opacity: 1,
+                    smoothFactor: 1
+                });
+                this.paths.arrowheads({
+                      size: '18px',
+                      fill: true,
+                      yawn: 25,
+                      frequency: 'allvertices'
+                });
+            }catch(e){
+                alert(e);                
             }
-            this.paths = new L.Polyline(this.markerCoords, {
-                color: 'red',
-                weight: 3,
-                opacity: 1,
-                smoothFactor: 1
-            });
-            this.paths.arrowheads({
-                  size: '18px',
-                  fill: true,
-                  yawn: 25,
-                  frequency: 'allvertices'
-            });
         });
     },
     
@@ -983,25 +989,11 @@ L.KMLMarker = L.Marker.extend({
     nextLine:null,
     previousLine:null,
     directionLinesVisible:false,
-    createDirectionLines: function(){
-        let nextlinestyle = {color: "red", weight: 3};
-        let previouslinestyle = {color: "blue", weight: 3};
+    createNextDirectionLine: function(){        
         if(this.nextLine){
         }else{
             if(this.next){
-                this.nextLine = L.polyline([this.getLatLng(), this.next.getLatLng()], nextlinestyle);
-                this.nextLine.arrowheads({
-                      size: "18px",
-                      fill: true,
-                      yawn: 30,
-                      frequency: 'endonly'
-                    });
-            }
-        }
-        if(this.previousLine){
-        }else{
-            if(this.previous){
-                this.previousLine = L.polyline([this.previous.getLatLng(), this.getLatLng()], previouslinestyle);
+                this.nextLine = L.polyline([this.getLatLng(), this.next.getLatLng()], this.parent.nextlinestyle);
                 this.nextLine.arrowheads({
                       size: "18px",
                       fill: true,
@@ -1011,10 +1003,26 @@ L.KMLMarker = L.Marker.extend({
             }
         }
     },
+    createDirectionLines: function(){
+        this.createNextDirectionLine();
+        if(this.previousLine){
+        }else{
+            if(this.previous){
+                this.previous.createNextDirectionLine();
+                this.previousLine = this.previous.nextLine;
+            }
+        }
+    },
     showDirectionLines: function(){
         this.createDirectionLines();
-        if(this.nextLine) this.parent.addLayer(this.nextLine);
-        if(this.previousLine) this.parent.addLayer(this.previousLine);
+        if(this.nextLine){
+            this.nextLine.setStyle(this.parent.nextlinestyle);
+            this.parent.addLayer(this.nextLine);            
+        }
+        if(this.previousLine) {
+            this.previousLine.setStyle(this.parent.previouslinestyle);
+            this.parent.addLayer(this.previousLine);
+        }
         this.directionLinesVisible=true;
     },
     hideDirectionLines: function(){
