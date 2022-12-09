@@ -7,6 +7,7 @@ package iped.app.home.newcase.tabs.evidence;
  */
 
 import iped.app.home.newcase.model.Evidence;
+import iped.app.ui.Messages;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -15,7 +16,7 @@ import java.util.ArrayList;
 
 public class EvidencesTableModel extends AbstractTableModel {
 
-    private final String[] COLUMN_NAME = {"FILE NAME", "ALIAS", "PATH", "OPTIONS"};
+    private final String[] COLUMN_NAME = {Messages.get("Home.Evidences.Table.FileName"), Messages.get("Home.Evidences.Table.Alias"), Messages.get("Home.Evidences.Table.Path"), Messages.get("Home.Evidences.Table.Options")};
     private final ArrayList<Evidence> evidencesList;
     private EvidenceInfoDialog evidenceInfoDialog;
 

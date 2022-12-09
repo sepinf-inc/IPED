@@ -6,6 +6,7 @@ package iped.app.home.newcase.tabs.evidence;/*
 
 import iped.app.home.newcase.model.Evidence;
 import iped.app.home.style.StyleManager;
+import iped.app.ui.Messages;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +31,7 @@ public class EvidenceInfoDialog extends JDialog {
         super(owner);
         evidenceDialog = this;
 
-        evidenceDialog.setTitle("Detalhes da evidência"); //$NON-NLS-1$
+        evidenceDialog.setTitle(Messages.get("Home.Evidences.DialogTitle")); //$NON-NLS-1$
         evidenceDialog.setBounds(0, 0, 1024, 400);
         evidenceDialog.setLocationRelativeTo(null);
 
@@ -41,34 +42,34 @@ public class EvidenceInfoDialog extends JDialog {
         JPanel panel = new JPanel(new GridBagLayout());
 
         int line = 0;
-        JLabel filename = new JLabel("Nome do arquivo:");
+        JLabel filename = new JLabel(Messages.get("Home.Evidences.Dialog.FileName"));
         panel.add(filename, getGridBagConstraints(0, line, 1, 1));
         panel.add(labelFileName, getGridBagConstraints(1, line, 2, 1));
 
         line++;
-        panel.add(new JLabel("Localização (Path):"), getGridBagConstraints(0, line, 1, 1));
+        panel.add(new JLabel(Messages.get("Home.Evidences.Dialog.Path")), getGridBagConstraints(0, line, 1, 1));
         panel.add(labelPath, getGridBagConstraints(1, line, 2, 1));
 
         line++;
-        panel.add(new JLabel("Alias:"), getGridBagConstraints(0, line, 1, 1));
+        panel.add(new JLabel(Messages.get("Home.Evidences.Dialog.Alias")), getGridBagConstraints(0, line, 1, 1));
         panel.add(textFieldAlias, getGridBagConstraints(1, line, 2, 1));
 
         line++;
-        panel.add(new JLabel("Descrição do material:"), getGridBagConstraints(0, line, 1, 1));
+        panel.add(new JLabel(Messages.get("Home.Evidences.Dialog.EvidenceDesc")), getGridBagConstraints(0, line, 1, 1));
         textAreaMaterial.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         textAreaMaterial.setRows(3);
         panel.add(textAreaMaterial, getGridBagConstraints(1, line, 2, 1));
 
         line++;
-        panel.add(new JLabel("Senha (Imagem APFS):"), getGridBagConstraints(0, line, 1, 1));
+        panel.add(new JLabel(Messages.get("Home.Evidences.Dialog.Password")), getGridBagConstraints(0, line, 1, 1));
         panel.add(textFieldPassword, getGridBagConstraints(1, line, 2, 1));
 
         line++;
-        panel.add(new JLabel("TimeZone (FAT FS):"), getGridBagConstraints(0, line, 1, 1));
+        panel.add(new JLabel(Messages.get("Home.Evidences.Dialog.TimeZone")), getGridBagConstraints(0, line, 1, 1));
         panel.add(textFieldTimeZone, getGridBagConstraints(1, line, 2, 1));
 
         line++;
-        panel.add(new JLabel("Comandos Adicionais:"), getGridBagConstraints(0, line, 1, 1));
+        panel.add(new JLabel(Messages.get("Home.Evidences.Dialog.AdditionalCommand")), getGridBagConstraints(0, line, 1, 1));
         panel.add(textFieldAdditionalCommand, getGridBagConstraints(1, line, 2, 1));
 
         fullPanel.add(panel, BorderLayout.CENTER);
