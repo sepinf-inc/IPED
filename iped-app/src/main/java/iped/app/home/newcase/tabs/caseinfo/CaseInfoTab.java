@@ -10,6 +10,7 @@ import iped.app.home.newcase.model.CaseInfo;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.newcase.model.IPEDProcess;
 import iped.app.home.style.StyleManager;
+import iped.app.home.utils.CasePathManager;
 import iped.app.ui.Messages;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
@@ -18,12 +19,15 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * Case info TAB
@@ -45,6 +49,11 @@ public class CaseInfoTab extends DefaultPanel {
     private JTextArea textAreaExaminerNames;
     private JTextField textFieldContact;
     private JTextArea textAreaCaseNotes;
+    private JPanel panelCaseOutputOptions;
+    private JRadioButton radioCaseOutAdd;
+    private JRadioButton radioCaseOutContinue;
+    private JRadioButton radioCaseOutRestart;
+    ButtonGroup buttonGroupCaseOutOptions;
 
 
     public CaseInfoTab(MainFrame mainFrame) {
@@ -97,6 +106,17 @@ public class CaseInfoTab extends DefaultPanel {
         checkBoxOutputOnSSD.setToolTipText(Messages.get("Home.NewCase.IsCaseOutputOnSSDToolTip"));
         checkBoxOutputOnSSD.setSelected(localConfig.isOutputOnSSD());
         checkBoxOutputOnSSD.setOpaque(false);
+        checkBoxOutputOnSSD.addItemListener(e->{
+            try {
+                Boolean isEnableOutputSSD = (e.getStateChange() == ItemEvent.SELECTED);
+                LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
+                localConfig.getPropertie().setProperty(LocalConfig.OUTPUT_ON_SSD, isEnableOutputSSD.toString());
+                localConfig.getPropertie().saveOnFile(CasePathManager.getInstance().getLocalConfigFile());
+                ConfigurationManager.get().reloadConfigurable(LocalConfig.class);
+            }catch (IOException ex){
+                ex.printStackTrace();
+            }
+        });
         buttonSelectCaseOutput = new JButton("...");
         buttonSelectCaseOutput.addActionListener( e -> {
             JFileChooser fileChooserDestino = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
@@ -140,6 +160,14 @@ public class CaseInfoTab extends DefaultPanel {
     }
 
     private void setCaseOutputValue(Path caseOutput){
+        //first check if exists a case on selected output folder
+        boolean isExistsCase = Paths.get(caseOutput.toString(), "IPED-SearchApp.exe").toFile().exists();
+        if(isExistsCase) {
+            panelCaseOutputOptions.setVisible(isExistsCase);
+            //check if the existent case is finished, if yes the user cannot choose the continue options
+            boolean isCaseFinished = Paths.get(caseOutput.toString(), "iped", "data", "processing_finished").toFile().exists();
+            radioCaseOutContinue.setVisible(! isCaseFinished);
+        }
         IPEDProcess ipedProcess = NewCaseContainerPanel.getInstance().getIpedProcess();
         ipedProcess.setCaseOutputPath(caseOutput);
         textFieldCaseOutput.setText( caseOutput.toString() );
@@ -202,7 +230,10 @@ public class CaseInfoTab extends DefaultPanel {
         panelForm.add(new JLabel(Messages.get("Home.NewCase.CaseOutput")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(createSetCaseOutputPanel(), getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-       panelForm.add(checkBoxOutputOnSSD, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+        panelForm.add(checkBoxOutputOnSSD, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+
+        panelCaseOutputOptions = createCaseOutputOptionsPanel();
+        panelForm.add(panelCaseOutputOptions, getGridBagConstraints(column0, currentLine++, fullColumnWidth, fullWeightx, new Insets(10,10,0,10)));
 
         return panelForm;
 
@@ -219,6 +250,31 @@ public class CaseInfoTab extends DefaultPanel {
         panelCaseOutput.add(textFieldCaseOutput);
         panelCaseOutput.add(buttonSelectCaseOutput);
         return panelCaseOutput;
+    }
+
+    private JPanel createCaseOutputOptionsPanel(){
+        buttonGroupCaseOutOptions = new ButtonGroup();
+        radioCaseOutAdd = new JRadioButton(Messages.get("Home.AppendExistentCase"), false);
+        radioCaseOutAdd.setBackground(super.getCurrentBackGroundColor());
+        radioCaseOutContinue = new JRadioButton(Messages.get("Home.ContinueExistentCase"), false);
+        radioCaseOutContinue.setBackground(super.getCurrentBackGroundColor());
+        radioCaseOutRestart = new JRadioButton(Messages.get("Home.RestartExistentCase"), false);
+        radioCaseOutRestart.setBackground(super.getCurrentBackGroundColor());
+        buttonGroupCaseOutOptions.add(radioCaseOutAdd);
+        buttonGroupCaseOutOptions.add(radioCaseOutContinue);
+        buttonGroupCaseOutOptions.add(radioCaseOutRestart);
+
+        JPanel panel = new JPanel();
+        panel.setVisible(false);
+        panel.setBackground(super.getCurrentBackGroundColor());
+        panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+        JLabel labelCaseOptionMessage = new JLabel(Messages.get("Home.ExistentCaseAlert"));
+        labelCaseOptionMessage.setForeground(Color.RED);
+        panel.add(labelCaseOptionMessage);
+        panel.add(radioCaseOutAdd);
+        panel.add(radioCaseOutContinue);
+        panel.add(radioCaseOutRestart);
+        return panel;
     }
 
     /**
@@ -314,19 +370,34 @@ public class CaseInfoTab extends DefaultPanel {
             JOptionPane.showMessageDialog(this, Messages.get("Home.NewCase.CaseOutputPermission"), Messages.get("Home.NewCase.CaseOutputPermissionTitle"), JOptionPane.WARNING_MESSAGE);
             return;
         }
+        if( panelCaseOutputOptions.isVisible() && (buttonGroupCaseOutOptions.getSelection() == null ) ){
+            JOptionPane.showMessageDialog(this, Messages.get("Home.NewCase.CaseOutPutOptionsRequired"), Messages.get("Home.NewCase.CaseOutputRequiredTitle"), JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        setCaseOutputOptions();
         populateCaseInfo();
         NewCaseContainerPanel.getInstance().goToNextTab();
+    }
+
+    private void setCaseOutputOptions(){
+        if(radioCaseOutAdd.isSelected())
+            ipedProcess.getOptions().add("--append");
+        if (radioCaseOutContinue.isSelected())
+            ipedProcess.getOptions().add("--continue");
+        if( radioCaseOutRestart.isSelected())
+            ipedProcess.getOptions().add("--restart");
     }
 
     private void populateCaseInfo(){
         CaseInfo caseInfo = ipedProcess.getCaseInfo();
         caseInfo.setCaseNumber(textFieldCaseNumber.getText());
         caseInfo.setCaseName(textFieldCaseName.getText());
-        caseInfo.setInvestigatedNames(new ArrayList<>(Arrays.asList(textAreaInvestigatedNames.getText())));
+        caseInfo.setInvestigatedNames(new ArrayList<>(Arrays.asList(textAreaInvestigatedNames.getText().split("\n") )));
         caseInfo.setRequestDate(textFieldRequestDate.getText());
         caseInfo.setRequester(textFieldDemandant.getText());
         caseInfo.setOrganizationName(textFieldOrganization.getText());
-        caseInfo.setExaminers(new ArrayList<>( Arrays.asList(textAreaExaminerNames.getText()) ));
+        caseInfo.setExaminers(new ArrayList<>( Arrays.asList(textAreaExaminerNames.getText().split("\n")) ));
         caseInfo.setContact(textFieldContact.getText());
         caseInfo.setCaseNotes(textAreaCaseNotes.getText());
     }
@@ -335,11 +406,17 @@ public class CaseInfoTab extends DefaultPanel {
         CaseInfo caseInfo = ipedProcess.getCaseInfo();
         textFieldCaseNumber.setText( caseInfo.getCaseNumber() != null ? caseInfo.getCaseNumber() : textFieldCaseNumber.getText() );
         textFieldCaseName.setText(caseInfo.getCaseName() != null ? caseInfo.getCaseName() : textFieldCaseName.getText() );
-        textAreaInvestigatedNames.setText( ( (caseInfo.getInvestigatedNames() != null) && (!caseInfo.getInvestigatedNames().isEmpty()) ) ? caseInfo.getInvestigatedNames().toString() : textAreaInvestigatedNames.getText());
+        if( (caseInfo.getInvestigatedNames() != null) && (!caseInfo.getInvestigatedNames().isEmpty()) ){
+            String investigatedNames = caseInfo.getInvestigatedNames().stream().map(String::trim).collect(Collectors.joining("\n"));
+            textAreaInvestigatedNames.setText(investigatedNames);
+        }
         textFieldRequestDate.setText(caseInfo.getRequestDate() != null ? caseInfo.getRequestDate() : textFieldRequestDate.getText() );
         textFieldDemandant.setText(caseInfo.getRequester() != null? caseInfo.getRequester() : textFieldDemandant.getText() );
         textFieldOrganization.setText(caseInfo.getOrganizationName() != null ? caseInfo.getOrganizationName() : textFieldOrganization.getText() );
-        textAreaExaminerNames.setText( ( (caseInfo.getExaminers() != null) && (!caseInfo.getExaminers().isEmpty())) ? caseInfo.getExaminers().toString() : textAreaExaminerNames.getText() );
+        if( (caseInfo.getExaminers() != null) && (!caseInfo.getExaminers().isEmpty())){
+            String examinerNames = caseInfo.getExaminers().stream().map(String::trim).collect(Collectors.joining("\n"));
+            textAreaExaminerNames.append(examinerNames);
+        }
         textFieldContact.setText(caseInfo.getContact() != null ? caseInfo.getContact() : textFieldContact.getText() );
         textAreaCaseNotes.setText(caseInfo.getCaseNotes() != null ? caseInfo.getCaseNotes() : textAreaCaseNotes.getText() );
     }

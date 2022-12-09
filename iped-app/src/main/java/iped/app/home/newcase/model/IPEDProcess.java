@@ -12,6 +12,7 @@ public class IPEDProcess {
     private CaseInfo caseInfo;
     private ArrayList<Evidence> evidenceList;
     private Path caseOutputPath;
+    private ArrayList<String> options;
 
     public IPEDProcess() {
         caseInfo = new CaseInfo();
@@ -40,5 +41,15 @@ public class IPEDProcess {
 
     public void setCaseOutputPath(Path caseOutputPath) {
         this.caseOutputPath = caseOutputPath;
+    }
+
+    public ArrayList<String> getOptions() {
+        if (options == null)
+            options = new ArrayList<String>();
+        return options;
+    }
+
+    public void setOptions(ArrayList<String> options) {
+        this.options = options;
     }
 }

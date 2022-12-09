@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,7 +24,7 @@ import iped.configuration.ObjectManager;
 
 public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     private static ConfigurationManager singleton = null;
-    List<ConfigurableChangeListener> configurableChangeListeners = new ArrayList<ConfigurableChangeListener>();   
+    List<ConfigurableChangeListener> configurableChangeListeners = new ArrayList<ConfigurableChangeListener>();
 
     private IConfigurationDirectory directory;
 
@@ -46,7 +47,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
         }
         return singleton;
     }
-    
+
     public ConfigurationManager(IConfigurationDirectory directory) {
         this.directory = directory;
     }
@@ -182,14 +183,14 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     public void saveConfigurables() {
         for (Iterator<Configurable<?>> iterator = changedConfigurable.iterator(); iterator.hasNext();) {
             Configurable<?> config = iterator.next();
-            
+
             try {
                 Writer w = null;
                 try {
                     List<Path> resources = directory.lookUpResource(config);
                     for (Iterator iterator2 = resources.iterator(); iterator2.hasNext();) {
                         Path path = (Path) iterator2.next();
-                        config.save(path);                            
+                        config.save(path);
                     }
                 }finally {
                     if(w!=null) {
@@ -202,7 +203,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
         }
     }
 */
-    
+
     public IConfigurationDirectory getDirectory() {
         return directory;
     }
@@ -215,11 +216,11 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
         changedConfigurables.add(configurable);
         for (Iterator<ConfigurableChangeListener> iterator = configurableChangeListeners.iterator(); iterator.hasNext();) {
             ConfigurableChangeListener ccl =  iterator.next();
-            ccl.onChange(configurable);            
-        }        
+            ccl.onChange(configurable);
+        }
         changed=true;
     }
-    
+
     public boolean hasChanged() {
         return changed;
     }
@@ -231,4 +232,23 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     public void removeConfigurableChangeListener(ConfigurableChangeListener ccl) {
         configurableChangeListeners.remove(ccl);
     }
+
+    /**
+     * A method to refresh the changed configurable properties values
+     * First whe change the old instance on loadedConfigurables by the new one
+     * so whe call LoadConfig method to reload the new propertie
+     * @param clazz - Configurable Class
+     */
+    public void reloadConfigurable(Class<? extends Configurable<?>> clazz){
+        try {
+            removeObject(get().findObject(clazz));
+            Class<?>[] empty = {};
+            Configurable<?> configurable = clazz.getConstructor(empty).newInstance();
+            addObject(configurable);
+            loadConfig(configurable);
+        } catch (IOException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException ex) {
+            ex.printStackTrace();
+        }
+    }
+
 }

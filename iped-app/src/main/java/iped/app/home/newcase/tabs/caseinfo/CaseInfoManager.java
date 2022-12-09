@@ -28,6 +28,7 @@ public class CaseInfoManager {
             caseInfoJson.put( "caseName", caseInfo.getCaseName() );
             caseInfoJson.put( "investigatedNames", caseInfo.getInvestigatedNames() );
             caseInfoJson.put( "requestDate", caseInfo.getRequestDate() );
+            caseInfoJson.put("requester", caseInfo.getRequester());
             caseInfoJson.put("organizationName", caseInfo.getOrganizationName() );
             caseInfoJson.put( "examiners", caseInfo.getExaminers() );
             caseInfoJson.put("contact", caseInfo.getContact());
@@ -47,10 +48,17 @@ public class CaseInfoManager {
         JSONObject json = new JSONObject(str);
         caseInfo.setCaseNumber( json.getString("caseNumber") );
         caseInfo.setCaseName( json.getString("caseName") );
-        caseInfo.setInvestigatedNames( new ArrayList<>( Arrays.asList(json.getString("investigatedNames").split("\\r?\\n")) ) );
+        caseInfo.setInvestigatedNames(new ArrayList<>());
+        JSONArray array = json.getJSONArray("investigatedNames");
+        for (int i = 0; i < array.length(); i++)
+            caseInfo.getInvestigatedNames().add(array.getString(i));
         caseInfo.setRequestDate( json.getString("requestDate") );
+        caseInfo.setRequester(json.getString("requester"));
         caseInfo.setOrganizationName(json.getString("organizationName") );
-        caseInfo.setExaminers( new ArrayList<>( Arrays.asList(json.getString("examiners").split("\\r?\\n")) ) );
+        caseInfo.setExaminers(new ArrayList<>());
+        array = json.getJSONArray("examiners");
+        for (int i = 0; i < array.length(); i++)
+            caseInfo.getExaminers().add(array.getString(i));
         caseInfo.setContact(json.getString("contact"));
         caseInfo.setCaseNotes(json.getString("caseNotes"));
         return caseInfo;

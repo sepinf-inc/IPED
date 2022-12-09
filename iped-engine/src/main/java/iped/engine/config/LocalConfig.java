@@ -26,6 +26,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
     public static final String HASH_DB = "hashesDB";
     public static final String INDEX_TEMP = "indexTemp";
     public static final String INDEX_TEMP_ON_SSD = "indexTempOnSSD";
+    public static final String OUTPUT_ON_SSD = "outputOnSSD";
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -108,7 +109,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
             indexTempOnSSD = Boolean.valueOf(value);
         }
 
-        value = properties.getProperty("outputOnSSD"); //$NON-NLS-1$
+        value = properties.getProperty(OUTPUT_ON_SSD); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
         }

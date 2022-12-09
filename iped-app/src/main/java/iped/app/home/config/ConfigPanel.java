@@ -12,7 +12,6 @@ import iped.app.home.MainFrameCardsNames;
 import iped.app.home.style.StyleManager;
 import iped.app.home.utils.CasePathManager;
 import iped.app.ui.Messages;
-import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
@@ -29,7 +28,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
@@ -147,7 +145,7 @@ public class ConfigPanel extends DefaultPanel {
             boolean isEnableHashDB = (e.getStateChange() == ItemEvent.SELECTED);
             LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
             localConfig.getPropertie().enableOrDisablePropertie(CasePathManager.getInstance().getLocalConfigFile(), LocalConfig.HASH_DB, (! isEnableHashDB));
-            reloadConfigurable(LocalConfig.class);
+            ConfigurationManager.get().reloadConfigurable(LocalConfig.class);
             updateLocalConfigComponentsState();
         });
 
@@ -179,24 +177,6 @@ public class ConfigPanel extends DefaultPanel {
             textFieldPluginFolder.setText(relativePath.toString());
         });
 
-    }
-
-    /**
-     * A method to refresh the changed configurable properties values
-     * First whe change the old instance on loadedConfigurables by the new one
-     * so whe call LoadConfig method to reload the new propertie
-     * @param clazz - Configurable Class
-     */
-    private void reloadConfigurable(Class<? extends Configurable<?>> clazz){
-        try {
-            ConfigurationManager.get().removeObject(ConfigurationManager.get().findObject(clazz));
-            Class<?>[] empty = {};
-            Configurable<?> configurable = clazz.getConstructor(empty).newInstance();
-            ConfigurationManager.get().addObject(configurable);
-            ConfigurationManager.get().loadConfig(configurable);
-        } catch (IOException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException ex) {
-            ex.printStackTrace();
-        }
     }
 
     /**
@@ -385,7 +365,7 @@ public class ConfigPanel extends DefaultPanel {
         if (!RUNNIG_ON_WINDOWS){
             if(! pluginConfig.isTskJarPathEnabled()){
                 pluginConfig.getPropertie().enableOrDisablePropertie(CasePathManager.getInstance().getLocalConfigFile(), PluginConfig.TSK_JAR_PATH, false);
-                reloadConfigurable(PluginConfig.class);
+                ConfigurationManager.get().reloadConfigurable(PluginConfig.class);
                 pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
             }
             textFieldTskJarPath.setText( (pluginConfig.getTskJarFile() != null )? pluginConfig.getTskJarFile().getAbsolutePath() : "" );
@@ -409,7 +389,7 @@ public class ConfigPanel extends DefaultPanel {
 
 
             //Force LocalConfig to reload possible changes made by LocaleConfig
-            reloadConfigurable(LocalConfig.class);
+            ConfigurationManager.get().reloadConfigurable(LocalConfig.class);
             LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
             //Set changes on LocalConfig Configurable class
             localConfig.setIndexTempOnSSD( checkBoxIndexTempOnSSD.isSelected() );
@@ -420,7 +400,7 @@ public class ConfigPanel extends DefaultPanel {
             localConfig.getPropertie().saveOnFile(CasePathManager.getInstance().getLocalConfigFile());
 
             //Force PluginConfig to reload possible changes made by LocalConfig
-            reloadConfigurable(PluginConfig.class);
+            ConfigurationManager.get().reloadConfigurable(PluginConfig.class);
             PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
             //Set changes on PluginConfig Configurable class
             pluginConfig.setPluginFolder(textFieldPluginFolder.getText());
@@ -431,8 +411,8 @@ public class ConfigPanel extends DefaultPanel {
             pluginConfig.getPropertie().saveOnFile(CasePathManager.getInstance().getLocalConfigFile());
 
             //Force LocalConfig to reload changes made by PluginConfig
-            reloadConfigurable(LocalConfig.class);
-            reloadConfigurable(PluginConfig.class);
+            ConfigurationManager.get().reloadConfigurable(LocalConfig.class);
+            ConfigurationManager.get().reloadConfigurable(PluginConfig.class);
 
         } catch (IOException e) {
             e.printStackTrace();
