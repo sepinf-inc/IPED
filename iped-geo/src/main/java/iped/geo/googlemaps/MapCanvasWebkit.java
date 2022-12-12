@@ -356,20 +356,17 @@ public class MapCanvasWebkit extends AbstractMapCanvas {
             Platform.runLater(new Runnable() {
                 public void run() {
                     boolean marcadorselecionado = false;
+                    StringBuffer script = new StringBuffer();
                     for (int i = 0; i < marks.length; i++) {
                         Boolean b = selecoesAfazerCopy.get(marks[i]);
                         if (b) {
                             marcadorselecionado = true;
                         }
-                        try {
-                            webEngine.executeScript("gxml.seleciona([\"" + marks[i] + "\"],'" + b + "');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        script.append("gxml.seleciona([\"" + marks[i] + "\"],'" + b + "');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     }
                     if (marcadorselecionado) {
                         try {
-                            webEngine.executeScript("gxml.centralizaSelecao();");
+                            webEngine.executeScript(script.toString()+"gxml.centralizaSelecao();");
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

@@ -46,6 +46,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
     IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
     MapCanvasFactory mcf;
+    MapViewer mapViewer;
 
     AbstractMapCanvas browserCanvas;
     boolean mapaDesatualizado = true; // variável para registrar se os dados a serem apresentados pelo mapa precisa
@@ -335,6 +336,14 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         lastPos = t.convertRowIndexToView(pos);
 
         return lastPos;
+    }
+
+    public MapViewer getMapViewer() {
+        return mapViewer;
+    }
+
+    public void setMapViewer(MapViewer mapViewer) {
+        this.mapViewer = mapViewer;
     }
 
 }

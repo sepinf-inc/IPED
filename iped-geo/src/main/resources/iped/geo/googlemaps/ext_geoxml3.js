@@ -18,6 +18,8 @@ GeoXmlIped.prototype.constructor=GeoXmlIped;
 function GeoXmlIped(myvar, map, url, opts) {
 	GeoXml.call(this, myvar, map, url, opts);
 	
+	this.selectedArray=[];	
+	
 	this.navigationPos = 0;
 }
 
@@ -73,6 +75,7 @@ GeoXmlIped.prototype.selecionaRetangulo = function (rect, proj, callback){
   		if(bnds.contains(markers[i].getPosition())){
   			markersin.push(markers[i].extendedData.id);
   			markers[i].extendedData.selected = 'true';
+  			this.selectedArray.push(markers[i]);
 			this.ajustaIcone(markers[i]);
   			if (typeof callback === "function") {
   				callback(markers[i]);  			
@@ -95,6 +98,7 @@ GeoXmlIped.prototype.selecionaCirculo = function (pInicio, pFim, proj, callback)
   		if(dist > distM){
   			markersin.push(markers[i].extendedData.id);
   			markers[i].extendedData.selected = 'true';
+  			this.selectedArray.push(markers[i]);
   			this.ajustaIcone(markers[i]);
   			if (typeof callback === "function") {
   				callback(markers[i]);
@@ -124,14 +128,16 @@ GeoXmlIped.prototype.ajustaIcone = function( mark ) {
 }
 
 GeoXmlIped.prototype.checkMarker = function(mpos, checked){
-	for (i = 0; i <this.overlayman.markers.length; i++) {
-		var m = this.overlayman.markers[i];
-		m.extendedData.selected = 'false';
-		this.ajustaIcone(m);
+	for (i = 0; i <this.selectedArray.length; i++) {
+		var m = selectedArray[i];
+        m.extendedData.selected = 'false';
+        this.ajustaIcone(m);
 	}
+	this.selectedArray=[];
 
 	m = this.overlayman.markers[mpos];
 	m.extendedData.selected = 'true';
+	this.selectedArray.push(m);
 	m.extendedData.checked = ''+checked;
 	this.ajustaIcone(m);
 }
@@ -191,34 +197,45 @@ GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
 	google.maps.event.addListener(m, "mouseover", function(){ window.app.markerMouseEnteredBF(this.extendedData.id) });
 	google.maps.event.addListener(m, "mouseout", function(){ window.app.markerMouseExitedBF(this.extendedData.id) });
 	google.maps.event.addListener(m, "click", function(){
-	    var e = window.event;
-		var button = (typeof e.which != "undefined") ? e.which : e.button;
-		
-		if(!(e.shiftKey||e.ctrlKey)){
-			//desseleciona todos os itens imitando o comportamento da tabela
-			for(var i =0; i<this.geoxml.overlayman.markers.length; i++){
-				this.geoxml.overlayman.markers[i].extendedData.selected = 'false';
-				this.geoxml.ajustaIcone(this.geoxml.overlayman.markers[i]);
-			}
-		}
-		
-		//seleciona o item clicado
-		this.geoxml.navigationPos=this.arrayPos;
-		if(e.shiftKey){
-			if(this.extendedData.selected == 'true'){
-				this.extendedData.selected='false';
-			}else{
-				this.extendedData.selected='true';
-			}
-			this.geoxml.ajustaIcone(this);
-			
-			window.app.markerMouseClickedBF(this.extendedData.id, button, 'shift');	
-		}else{
-			this.extendedData.selected='true';
-			this.geoxml.ajustaIcone(this);
-			
-			window.app.markerMouseClickedBF(this.extendedData.id, button, '');	
-		}
+        try{
+            var e = window.event;
+            var button = (typeof e.which != "undefined") ? e.which : e.button;
+            
+            if(!(e.shiftKey||e.ctrlKey)){
+                //desseleciona todos os itens imitando o comportamento da tabela
+                for(var i =0; i<this.geoxml.selectedArray.length; i++){
+                    this.geoxml.selectedArray[i].extendedData.selected = 'false';
+                    this.geoxml.ajustaIcone(this.geoxml.selectedArray[i]);
+                }
+                this.geoxml.selectedArray=[];
+            }
+            
+            //seleciona o item clicado
+            this.geoxml.navigationPos=this.arrayPos;
+            if(e.shiftKey){
+                if(this.extendedData.selected == 'true'){
+                    this.extendedData.selected='false';
+                    let i = this.geoxml.selectedArray.indexOf(this);
+                    if(i>-1){
+                        this.geoxml.selectedArray.splice(i,1);
+                    }
+                }else{
+                    this.extendedData.selected='true';
+                    this.geoxml.selectedArray.push(this);
+                }
+                this.geoxml.ajustaIcone(this);
+                
+                window.app.markerMouseClickedBF(this.extendedData.id, button, 'shift'); 
+            }else{
+                this.extendedData.selected='true';
+                this.geoxml.selectedArray.push(this);
+                this.geoxml.ajustaIcone(this);
+                
+                window.app.markerMouseClickedBF(this.extendedData.id, button, '');  
+            }
+        }catch(e){
+            alert(e);
+        }
 		 
 		});
 	google.maps.event.addListener(m, "dblclick", function(){ 
@@ -247,12 +264,20 @@ GeoXmlIped.prototype.seleciona = function(mid, selecionado) {
 	for (i = 0; i <this.overlayman.markers.length; i++) {
 		var m = this.overlayman.markers[i];
 		if(m.extendedData.id == mid){
-			if(selecionado == 'true'){
-				m.extendedData.selected = 'true';
-			}else{
-				m.extendedData.selected = 'false';
-			}
-			this.ajustaIcone(m);			
+            let wasSelected = m.extendedData.selected;
+			if(wasSelected!=selecionado){
+                if(selecionado == 'true'){
+                    m.extendedData.selected = 'true';
+                    this.selectedArray.push(m);
+                }else{
+                    m.extendedData.selected = 'false';
+                    let index = this.selectedArray.indexOf(m);
+                    if(index>-1){
+                        this.selectedArray.splice(index,1);
+                    }
+                }
+                this.ajustaIcone(m);            
+            }
 		}		
 	}
 }
@@ -262,6 +287,7 @@ GeoXmlIped.prototype.marca = function(mid, marcado) {
 	for (i = 0; i <this.overlayman.markers.length; i++) {
 		var m = this.overlayman.markers[i];
 		if(m.extendedData.id == mid){
+            let wasChecked = m.extendedData.checked;
 			if(marcado == 'false'){
 				m.extendedData.checked = 'false';
 				ckbox = document.getElementById("ck_marcador_"+mid);
@@ -275,21 +301,18 @@ GeoXmlIped.prototype.marca = function(mid, marcado) {
 					ckbox.checked = true;
 				}
 			}
-			this.ajustaIcone(m);			
+			if(wasChecked!=marcado){
+                this.ajustaIcone(m);            
+            }
 		}		
 	}
 }
 
 /* função para seleção programática de item no mapa */
 GeoXmlIped.prototype.centralizaSelecao = function() {
-	sumlat = 0;
-	sumlong = 0;
-	var m = this.overlayman.markers[0];
-	for (i = 0; i <this.overlayman.markers.length; i++) {
-		if(this.overlayman.markers[i].extendedData.selected == 'true'){
-			m = this.overlayman.markers[i];
-			break;
-		}
-	}
-	m.geoxml.map.panTo(m.getPosition());
+    var m = this.selectedArray[0];
+    
+    if(m){
+        m.geoxml.map.panTo(m.getPosition());
+    }
 }
