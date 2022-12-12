@@ -36,8 +36,8 @@ GeoXmlIped.prototype.addPlacemark = function (gid, name, descr, lat, longit, che
     //function(point, name, desc, styleid, idx, instyle, visible, kml_id, markerurl,snip) 
     m.extendedData = {};
     m.extendedData.id = gid;
-    m.extendedData.selected = 'false';
-    m.extendedData.checked = 'false';
+    m.extendedData.selected = selected;
+    m.extendedData.checked = checked;
     
     let scale =1;
     var bicon = new google.maps.MarkerImage( this.icone_marcador,
