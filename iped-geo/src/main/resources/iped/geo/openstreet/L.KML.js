@@ -629,6 +629,32 @@ L.KML = L.MarkerClusterGroup.extend({
     msAddPlacemark:[],
     selectedPlacemarks:[],
     lastAddedPlacemark: null,
+
+    deselectAll:function (){
+        while(this.selectedPlacemarks.length>0){
+            if(this!=this.selectedPlacemarks[0]){
+                this.selectedPlacemarks[0].selected=false;
+                this.selectedPlacemarks[0].hideDirectionLines();
+                this.selectedPlacemarks[0].atualizaIcone();
+            }
+            this.selectedPlacemarks.shift();//remove first item from array
+        }
+    },
+    
+    highlight: function(mark){
+        mark.selected='true';
+        this.selectedPlacemarks.push(mark);
+        mark.showDirectionLines();
+    },
+    
+    unhighlight: function(mark){
+        mark.selected='false';
+        let i = this.selectedPlacemarks.indexOf(mark);
+        if(i>-1){
+            this.selectedPlacemarks.splice(i,1);
+        }
+        mark.hideDirectionLines();
+    },
     
     addPlacemark: function (id, name, descr, lat, long, checked, selected, options) {
         var m = new L.KMLMarker(new L.LatLng(lat, long), options);
@@ -1053,24 +1079,14 @@ L.KMLMarker = L.Marker.extend({
 
         if(this.parent){
             if(!e.originalEvent.shiftKey){
-                while(this.parent.selectedPlacemarks.length>0){
-                    if(this!=this.parent.selectedPlacemarks[0]){
-                        this.parent.selectedPlacemarks[0].selected=false;
-                        this.parent.selectedPlacemarks[0].hideDirectionLines();
-                        this.parent.selectedPlacemarks[0].atualizaIcone();
-                    }
-                    this.parent.selectedPlacemarks.shift();//remove first item from array
-                }
+                this.parent.deselectAll();
             }
         }
 
         if(this.selected=='true'){
-            this.selected='false';
-            this.hideDirectionLines();
+            this.parent.unhighlight(this);
         }else{
-            this.selected='true';
-            this.parent.selectedPlacemarks.push(this);
-            this.showDirectionLines();
+            this.parent.highlight(this);
         }
         this.atualizaIcone();
 
@@ -1084,6 +1100,7 @@ L.KMLMarker = L.Marker.extend({
 			}
 			this.atualizaIcone();
 		}
+		
 		if(!this.isPopupOpen()){
 			if(this.checked=='true'){
 				this.bindPopup('<input type="checkbox" id="marker_checkbox" checked onclick="L.checkMarker(\''+this.id+'\')"/><h2>' + this.name + '</h2>' + this.descr, { className: 'kml-popup'});
