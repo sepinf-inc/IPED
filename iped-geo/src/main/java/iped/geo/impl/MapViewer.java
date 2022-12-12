@@ -27,10 +27,9 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
     IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
     AppMapPanel mapaPanel;
-    JScrollPane mapsScroll;
     DefaultSingleCDockable dockable; // dockable where the viewer is installed
 
-    public static volatile boolean desabilitaTemp = false;
+    public static volatile boolean desabilitaTemp = false; //disables unnecessary map updates 
     public static volatile boolean updatingCheckbox = false;
 
     public MapViewer() {
@@ -42,7 +41,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
         this.resultsProvider = resultsProvider;
         this.guiProvider = guiProvider;
         mapaPanel = new AppMapPanel(resultsProvider, guiProvider);
-        mapsScroll = new JScrollPane(mapaPanel);
+        mapaPanel.setMapViewer(this);
         resultsTable.getModel().addTableModelListener(this);
         resultsTable.getSelectionModel().addListSelectionListener(this);
     }
@@ -100,8 +99,8 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
         }
 
         /* Se a alteração foi feita no próprio mapa
-         * ou a operação é de ordenação
-         * , ela não precisa ser refeita. */
+         * ou a operação é de ordenação,
+         * ela não precisa ser refeita. */
         if (!desabilitaTemp) {
             mapaPanel.setMapOutDated(true);
 
@@ -138,7 +137,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting() || resultsTable.getRowSorter()==null)
+        if (e.getValueIsAdjusting() || resultsTable.getRowSorter()==null || desabilitaTemp)
             return;
 
         Runnable run = new Runnable() {

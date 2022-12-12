@@ -11,9 +11,11 @@ import iped.search.IMultiSearchResult;
 
 public class AppMapMarkerEventListener implements MarkerEventListener {
     AppMapPanel mapaPanel;
+    MapViewer mapViewer;
 
     public AppMapMarkerEventListener(AppMapPanel mapaPanel) {
         this.mapaPanel = mapaPanel;
+        mapViewer=mapaPanel.getMapViewer();
     }
 
     @Override
@@ -22,7 +24,10 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         mid = GetResultsKMLWorker.getBaseGID(mid);
         JTable t = mapaPanel.getResultsProvider().getResultsTable();
         int pos = mapaPanel.getItemPositioninResultsTable(mid);
+        boolean olddesabilitaTemp = mapViewer.desabilitaTemp;
+        mapViewer.desabilitaTemp = true;
         AppMapMarkerEventListener.doTableSelection(t, pos,e.isShiftDown());
+        mapViewer.desabilitaTemp = olddesabilitaTemp;
     }
     
     static public void doTableSelection(JTable t, int pos, boolean additiveSelection) {
