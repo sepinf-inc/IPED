@@ -161,24 +161,32 @@
     }
 
     function moveToMarkerPos(pos){
-        if(pos<0){
-           if(mpos==0){
-               alert('The navigation already is on the first item.');
-               return false;
-           }else{
-               pos = 0;
-           }
-        }
-    	if(pos>=track.markersCount()){
-    		alert('The navigation already is on the last item.')
-    	}
-
-		var i=0;
-		var keys = Object.keys(track.markers);
-		window.app.markerMouseClickedBF(keys[pos],1,'');
-        //track.centralizaMarcador(track.markers[keys[pos]]);
-        mpos=pos;
-    	return false;
+	    try{
+	        if(pos<0){
+	           if(mpos==0){
+	               alert('The navigation already is on the first item.');
+	               return false;
+	           }else{
+	               pos = 0;
+	           }
+	        }
+	        if(pos>=track.markersCount()){
+	            alert('The navigation already is on the last item.');
+	            return false;
+	        }
+	
+	        var i=0;
+	        var keys = Object.keys(track.markers);
+	        track.deselectAll();
+	        track.highlight(track.markers[keys[pos]]);
+	        window.app.markerMouseClickedBF(keys[pos],1,'');
+	        
+            map.flyTo(track.markers[keys[pos]].getLatLng());
+	        mpos=pos;
+	        return false;
+	    }catch(e){
+	        alert(e);
+	    }
     }
 
     function moveToLastMarker(){
