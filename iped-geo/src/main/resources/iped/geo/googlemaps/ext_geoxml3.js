@@ -36,6 +36,8 @@ GeoXmlIped.prototype.addPlacemark = function (gid, name, descr, lat, longit, che
     //function(point, name, desc, styleid, idx, instyle, visible, kml_id, markerurl,snip) 
     m.extendedData = {};
     m.extendedData.id = gid;
+    m.extendedData.selected = 'false';
+    m.extendedData.checked = 'false';
     
     let scale =1;
     var bicon = new google.maps.MarkerImage("http://maps.google.com/mapfiles/kml/pal3/icon40.png",
@@ -124,7 +126,10 @@ GeoXmlIped.prototype.ajustaIcone = function( mark ) {
 			bicon.url=this.icone_marcador;
 		}
 	}
-	mark.setIcon(bicon);	
+	mark.setIcon(bicon);
+    if(mark.extendedData.selected == 'true'){
+        mark.setZIndex(mark.getZIndex()+1);
+    }
 }
 
 GeoXmlIped.prototype.checkMarker = function(mpos, checked){
@@ -169,12 +174,15 @@ GeoXmlIped.prototype.handlePlacemark = function(mark, idx, depth, fullstyle) {
     var m = this.overlayman.markers[this.overlayman.markers.length-1];
     this.handleMarkerEvents(m);
 }	
-	
+
 GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
 	//pega o ultimo marcador criado (que corresponde ao que acabou de ser criado
 	m.arrayPos = this.overlayman.markers.length-1;
 
-	this.ajustaIcone(m);
+    var bicon = m.getIcon();
+    bicon.url=this.icone_marcador;
+	m.setIcon(bicon);
+	m.setZIndex(0);
 
 	/* Adiciona checkbox ao infoWindow*/
     html = "<h1 " + this.titlestyle + ">" + m.name + "</h1>";
@@ -192,7 +200,7 @@ GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
     }
 	html = html.substring(0,html.indexOf(">")+1)+"<input type=\"checkbox\" id=\"ck_marcador_"+m.extendedData.id+"\" "+marcado+" onclick=\"window.app.checkMarkerBF(\'"+m.extendedData.id+"\', this.checked);gxml.checkMarker("+m.arrayPos+", this.checked);\" />" + html.substring(html.indexOf(">")+1, html.length);
 	m.infoWindow.setContent(html);
-	
+
 	/* Adiciona listeners */
 	google.maps.event.addListener(m, "mouseover", function(){ window.app.markerMouseEnteredBF(this.extendedData.id) });
 	google.maps.event.addListener(m, "mouseout", function(){ window.app.markerMouseExitedBF(this.extendedData.id) });
@@ -200,6 +208,8 @@ GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
         try{
             var e = window.event;
             var button = (typeof e.which != "undefined") ? e.which : e.button;
+            
+            let wasSelected = this.extendedData.selected; 
             
             if(!(e.shiftKey||e.ctrlKey)){
                 //desseleciona todos os itens imitando o comportamento da tabela
@@ -210,29 +220,46 @@ GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
                 this.geoxml.selectedArray=[];
             }
             
-            //seleciona o item clicado
-            this.geoxml.navigationPos=this.arrayPos;
-            if(e.shiftKey){
-                if(this.extendedData.selected == 'true'){
-                    this.extendedData.selected='false';
-                    let i = this.geoxml.selectedArray.indexOf(this);
-                    if(i>-1){
-                        this.geoxml.selectedArray.splice(i,1);
-                    }
-                }else{
-                    this.extendedData.selected='true';
-                    this.geoxml.selectedArray.push(this);
+            if(wasSelected == 'true'){
+                this.extendedData.selected='false';
+                let i = this.geoxml.selectedArray.indexOf(this);
+                if(i>-1){
+                    this.geoxml.selectedArray.splice(i,1);
                 }
-                this.geoxml.ajustaIcone(this);
-                
-                window.app.markerMouseClickedBF(this.extendedData.id, button, 'shift'); 
             }else{
                 this.extendedData.selected='true';
                 this.geoxml.selectedArray.push(this);
-                this.geoxml.ajustaIcone(this);
-                
+            }
+            var that=this;
+            
+            //seleciona o item clicado
+            this.geoxml.navigationPos=this.arrayPos;
+            if(e.shiftKey){
+                window.app.markerMouseClickedBF(this.extendedData.id, button, 'shift'); 
+                if(e.ctrlKey){
+                    if(this.extendedData.checked=='true'){
+                        this.extendedData.checked='false';
+                        window.app.checkMarkerBF(this.id, false);
+                    }else{
+                        this.extendedData.checked='true';
+                        window.app.checkMarkerBF(this.id, true);
+                    }
+                }
+            }else{
+                if(e.ctrlKey){
+                    if(this.extendedData.checked=='true'){
+                        this.extendedData.checked='false';
+                        window.app.checkMarkerBF(this.id, false);
+                    }else{
+                        this.extendedData.checked='true';
+                        window.app.checkMarkerBF(this.id, true);
+                    }
+                }
                 window.app.markerMouseClickedBF(this.extendedData.id, button, '');  
             }
+
+            setTimeout(()=>{that.geoxml.ajustaIcone(that);},10);
+
         }catch(e){
             alert(e);
         }
