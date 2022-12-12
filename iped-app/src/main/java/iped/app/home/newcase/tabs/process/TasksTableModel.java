@@ -26,7 +26,7 @@ public class TasksTableModel extends AbstractTableModel {
     ConfigurationManager configurationManager;
 
     private static final long serialVersionUID = 3318254202725499526L;
-    
+
     private final String[] COLLUM_NAME = {"#", " ", "TASK", "OPÇÕES"};
     private final List<AbstractTask> taskList;
     private ArrayList<Boolean> enabled = new ArrayList<Boolean>();
@@ -76,19 +76,28 @@ public class TasksTableModel extends AbstractTableModel {
             return "";
         AbstractTask currentTask = taskList.get(rowIndex);
         switch (columnIndex){
+            //Task order column
             case 0: return rowIndex+1;
+            //Task checkbox column
             case 1: {
                 if(rowIndex>=enabled.size()) {
                     enabled.add(false);
                 }
                 return enabled.get(rowIndex);
             }
+            //task name column
             case 2: return currentTask.getName();
+            //options button column
             case 3: return createColumnOptionPanel(rowIndex);
             default: return "";
         }
     }
 
+    /**
+     * Create a JPanel to change the tasks properties
+     * @param rowIndex
+     * @return
+     */
     private JPanel createColumnOptionPanel(int rowIndex){
         AbstractTask task = taskList.get(rowIndex);
         JPanel panel = new JPanel();
@@ -102,11 +111,11 @@ public class TasksTableModel extends AbstractTableModel {
                 count++;
             }
         }
-        
+
         if(count>0) {
             GridBagConstraints gbc = new GridBagConstraints();
             JButton taskOptionButton = new JButton("...");
-            
+
             taskOptionButton.addActionListener( e -> {
                 TaskConfigTabPanel tp = new TaskConfigTabPanel(configurationManager, task, mainFrame);
                 mainFrame.showPanel(tp);
@@ -115,17 +124,17 @@ public class TasksTableModel extends AbstractTableModel {
             taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
             panel.add(taskOptionButton, gbc);
         }
-        
+
         return panel;
     }
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         switch (columnIndex){
-            case 0: return false;
-            case 1: return true;
-            case 2: return false;
-            case 3: return true;
+            case 0: return false;//task order column
+            case 1: return true; //Checkbox column
+            case 2: return false;//task name column
+            case 3: return true;//Option button column
             default: return false;
         }
     }
@@ -139,7 +148,8 @@ public class TasksTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         AbstractTask currentTask = taskList.get(rowIndex);
         switch (columnIndex){
-            case 1: 
+            //Checkbox Column
+            case 1:
                 enabled.set(rowIndex, ((boolean) aValue));
                 List<Configurable<?>> configs = taskList.get(rowIndex).getConfigurables();
                 for (Iterator iterator = configs.iterator(); iterator.hasNext();) {
@@ -162,7 +172,7 @@ public class TasksTableModel extends AbstractTableModel {
             }
         }
     }
-    
+
     public boolean getEnabled(int rowIndex) {
         return enabled.get(rowIndex);
     }

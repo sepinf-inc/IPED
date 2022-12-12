@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
@@ -28,10 +27,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
+import iped.app.home.style.StyleManager;
+import iped.app.ui.Messages;
 import org.reflections.Reflections;
 
 import iped.app.home.DefaultPanel;
@@ -71,7 +71,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     private ConfigurationManager defaultConfigurationManager=ConfigurationManager.get();
     private JPanel profilePanel;
     private JTextField tfProfile;
-    private JButton buttonNext;
+    private JButton buttonStartProcess;
 
     public ProcessOptionTab(MainFrame mainFrame) {
         super(mainFrame);
@@ -83,7 +83,6 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         defaultConfigurationManager=ConfigurationManager.get();
         defaultConfigurationManager.addConfigurableChangeListener(this);
         this.setLayout( new BorderLayout() );
-        setBorder(new EmptyBorder(10,10,10,10));
         this.add(createTitlePanel(), BorderLayout.NORTH);
         this.add(createFormPanel(), BorderLayout.CENTER);
         this.add(createNavigationButtonsPanel(), BorderLayout.SOUTH);
@@ -91,9 +90,9 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
     private JPanel createTitlePanel(){
         JPanel panelTitle = new JPanel();
-        panelTitle.setBackground(Color.white);
-        JLabel labelTitle = new JLabel("Opções de processamento");
-        labelTitle.setFont(new Font("Arial Bold", Font.PLAIN, 28));
+        panelTitle.setBackground(super.getCurrentBackGroundColor());
+        JLabel labelTitle = new JLabel(Messages.get("Home.ProcOptions.Title"));
+        labelTitle.setFont(StyleManager.getPageTitleFont());
         panelTitle.add(labelTitle);
         return panelTitle;
     }
@@ -101,7 +100,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     private JPanel createFormPanel(){
         panelForm = new JPanel();
         panelForm.setLayout(new BoxLayout( panelForm, BoxLayout.PAGE_AXIS ));
-        panelForm.setBackground(Color.white);
+        panelForm.setBackground(super.getCurrentBackGroundColor());
         setupProfilesPanel(panelForm);
         panelForm.add( Box.createRigidArea( new Dimension(10, 10) ) );
         setupTasksTables(panelForm);
@@ -116,40 +115,41 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             profilePanel = (JPanel) panel.getComponent(0);
         }
         profilePanel.removeAll();
+        profilePanel.setBackground(super.getCurrentBackGroundColor());
+        profilePanel.add( new JLabel(Messages.get("Home.ProcOptions.ExecProfile")) );
 
-        profilePanel.setBackground(Color.white);
-        profilePanel.add( new JLabel("Perfil de execução:") );
-        
-        ProfileManager profileManager = ProfileManager.get();
-        profilesCombo = new JComboBox(profileManager.getObjects().toArray());
-        profilesCombo.setPreferredSize(new Dimension(200,(int)profilesCombo.getPreferredSize().getHeight()));        
+        profilesCombo = new JComboBox(ProfileManager.get().getObjects().toArray());
+        profilesCombo.setPreferredSize(new Dimension(200,(int)profilesCombo.getPreferredSize().getHeight()));
         profilePanel.add(profilesCombo);
         profilesCombo.addItemListener(this);
     }
 
-    private void setupNewProfilePanel(JPanel panel){
-        if(panel.getComponentCount()<=0) {
+    /**
+     * Update the original Profile combobox panelForm to show option to create a new profile
+     * @param panelForm - Process option form panel
+     */
+    private void setupNewProfilePanel(JPanel panelForm){
+        if(panelForm.getComponentCount()<=0) {
             profilePanel=new JPanel();
-            panel.add(profilePanel);
+            panelForm.add(profilePanel);
         }else {
-            profilePanel = (JPanel) panel.getComponent(0);
+            profilePanel = (JPanel) panelForm.getComponent(0);
         }
         profilePanel.removeAll();
-        
-        profilePanel.setBackground(Color.white);
-        profilePanel.add(new JLabel("Novo perfil de execução:") );
-        
-        buttonNext.setEnabled(false);
-        buttonNext.setToolTipText("Save or cancel profile edition before continue.");
-        
+
+        profilePanel.setBackground(super.getCurrentBackGroundColor());
+        profilePanel.add(new JLabel(Messages.get("Home.ProcOptions.NewProfile") ) );
+
+        buttonStartProcess.setEnabled(false);
+        buttonStartProcess.setToolTipText(Messages.get("Home.ProcOptions.ButtonStarExecTooltip"));
+
         tfProfile = new JTextField();
         tfProfile.setBackground(Color.RED);
-        tfProfile.setPreferredSize(new Dimension(200,(int)tfProfile.getPreferredSize().getHeight()));        
+        tfProfile.setPreferredSize(new Dimension(200,(int)tfProfile.getPreferredSize().getHeight()));
         tfProfile.setText(((IConfigurationDirectory) profilesCombo.getSelectedItem()).getName());
         profilePanel.add(tfProfile);
 
-        JButton btInsertProfile = new JButton("Criar novo perfil");
-
+        JButton btInsertProfile = new JButton(Messages.get("Home.ProcOptions.CreateNewProfile"));
         profilePanel.add(btInsertProfile);
         btInsertProfile.addActionListener(e -> {
             try {
@@ -157,11 +157,11 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 IConfigurationDirectory dir = ProfileManager.get().createProfile(tfProfile.getText(), configurationManager);
                 profilesCombo.addItem(dir);
 
-                buttonNext.setEnabled(true);
-                buttonNext.setToolTipText("");
-                setupProfilesPanel(panel);
+                buttonStartProcess.setEnabled(true);
+                buttonStartProcess.setToolTipText("");
+                setupProfilesPanel(panelForm);
                 profilesCombo.setSelectedItem(dir);
-                panel.repaint();
+                panelForm.repaint();
             } catch (FileAlreadyExistsException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
@@ -170,10 +170,10 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
         JButton btCancel = new JButton("Cancelar");
         btCancel.addActionListener( e -> {
-            setupTasksTables((IConfigurationDirectory) profilesCombo.getSelectedItem(), panelForm);
-            buttonNext.setEnabled(true);
-            setupProfilesPanel(panel);
-            panel.repaint();
+            setupTasksTables((IConfigurationDirectory) profilesCombo.getSelectedItem(), this.panelForm);
+            buttonStartProcess.setEnabled(true);
+            setupProfilesPanel(panelForm);
+            panelForm.repaint();
         });
 
         profilePanel.add(btCancel);
@@ -210,7 +210,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         List<Class<? extends AbstractTask>> installedClasses = new ArrayList<Class<? extends AbstractTask>>();
         for (Iterator<AbstractTask> iterator = taskArrayList.iterator(); iterator.hasNext();) {
             AbstractTask abstractTask = iterator.next();
-            installedClasses.add(abstractTask.getClass());            
+            installedClasses.add(abstractTask.getClass());
         }
 
         Reflections reflections = new Reflections("iped.engine.task");
@@ -255,7 +255,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
     private Component createNavigationButtonsPanel() {
         JPanel panelButtons = new JPanel();
-        panelButtons.setBackground(Color.white);
+        panelButtons.setBackground(super.getCurrentBackGroundColor());
         JButton buttoCancel = new JButton("Voltar");
         buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
         AbstractTaskClassPopupMenu abstractTaskClassPopupMenu = new AbstractTaskClassPopupMenu(jtableTasks);
@@ -273,12 +273,12 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                     task = new ScriptTask(selectedFile);
                 }
                 taskArrayList.add(task);
-                tasksTableModel.fireTableRowsInserted(taskArrayList.size()-1, taskArrayList.size()-1);                
+                tasksTableModel.fireTableRowsInserted(taskArrayList.size()-1, taskArrayList.size()-1);
             }
         });
 
-        buttonNext = new JButton("Iniciar processamento");
-        buttonNext.addActionListener( e -> {
+        buttonStartProcess = new JButton("Iniciar processamento");
+        buttonStartProcess.addActionListener(e -> {
             if(configurationManager.hasChanged()) {
                 mainFrame.showPanel(MainFrameCardsNames.PROCESS_MANAGER);
             }
@@ -286,7 +286,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
         panelButtons.add(buttoCancel);
         panelButtons.add(buttoAddScriptTask);
-        panelButtons.add(buttonNext);
+        panelButtons.add(buttonStartProcess);
         return panelButtons;
     }
 
@@ -301,7 +301,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             }
         }
     }
-    
+
     private void setupTasksTables(IConfigurationDirectory directory, JPanel panel){
         configurationManager = new ConfigurationManager(directory);
         configurationManager.addConfigurableChangeListener(this);
@@ -317,7 +317,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         }
         setupTasksTables(panelForm);
     }
-    
+
 
     @Override
     public void itemStateChanged(ItemEvent e) {
@@ -334,6 +334,10 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         this.configurationManager = configurationManager;
     }
 
+    /**
+     * A listener for task table item selection
+     * @param configurable
+     */
     @Override
     public void onChange(Configurable<?> configurable) {
         setupNewProfilePanel(panelForm);

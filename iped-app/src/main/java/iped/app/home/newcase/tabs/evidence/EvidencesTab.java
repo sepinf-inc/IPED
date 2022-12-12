@@ -10,6 +10,9 @@ import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.newcase.model.Evidence;
+import iped.app.home.newcase.tabs.evidence.table.EvidencesTableModel;
+import iped.app.home.newcase.tabs.evidence.table.TableEvidenceOptionsCellEditor;
+import iped.app.home.newcase.tabs.evidence.table.TableEvidenceOptionsCellRenderer;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
 import org.apache.commons.io.FileUtils;
@@ -29,7 +32,7 @@ import java.util.List;
 /**
  * A page to manage the evidences to be processed
  */
-public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogListener {
+public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
 
     private JButton buttonAddFolder;
     private JButton buttonAddFile;
@@ -153,7 +156,10 @@ public class EvidencesTab extends DefaultPanel implements EvidenceInfoDialogList
         });
         buttonPanel.add( buttonAddPhysicalDrive );
         buttonAddPhysicalDrive.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "TODO");
+            DiskSelecionDialog diskSelecionDialog = new DiskSelecionDialog(this.mainFrame, evidencesList);
+            diskSelecionDialog.addListener(this);
+            diskSelecionDialog.showDialog();
+
         });
         panel.add(buttonPanel);
     }

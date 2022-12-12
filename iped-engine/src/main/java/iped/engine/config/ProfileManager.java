@@ -2,6 +2,7 @@ package iped.engine.config;
 
 import java.io.File;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -12,42 +13,31 @@ import iped.configuration.ObjectManager;
 
 public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
     private static ProfileManager singleton = null;
-    Set<IConfigurationDirectory> configDirectories = new TreeSet<IConfigurationDirectory>();
+    Set<IConfigurationDirectory> listOfProfileDirectories = new TreeSet<IConfigurationDirectory>();
     private File profilesDir;
-    private File appRoot;
+    private File confDir;
+
 
     public static ProfileManager get() {
         if(singleton==null) {
-            return createInstance();
-        }
-        return singleton;
-    }
-
-    public static ProfileManager createInstance() {
-        if (singleton == null) {
             synchronized (ConfigurationManager.class) {
-                if (singleton == null) {
                     singleton = new ProfileManager();
-                }
             }
         }
         return singleton;
     }
 
-    public ProfileManager() {
-        Configuration globalConfig = Configuration.getInstance();
-
-        appRoot = new File("/home/patrick.pdb/ipedtimeline-workspace/iped-parent/target/release/iped-4.1-snapshot/conf");
-        profilesDir = new File("/home/patrick.pdb/ipedtimeline-workspace/iped-parent/target/release/iped-4.1-snapshot/profiles");
-
-        File[] files = profilesDir.listFiles();
-        if(files!=null) {
-            for (int i = 0; i < files.length; i++) {
-                ConfigurationDirectory configDirectory = new ConfigurationDirectory(appRoot.toPath());
-                configDirectory.addPath(files[i].toPath());
-                configDirectory.setName(files[i].getName());
-                configDirectories.add(configDirectory);
-            }        
+    /**
+     * populate the listOfProfileDirectories with all profiles located on iped/profile directory
+     */
+    private ProfileManager() {
+        confDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), Configuration.CONF_DIR ).toFile();
+        profilesDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), Configuration.PROFILES_DIR ).toFile();
+        for(File currentProfile : profilesDir.listFiles() ){
+            ConfigurationDirectory currentProfileDirectory = new ConfigurationDirectory(confDir.toPath());
+            currentProfileDirectory.addPath(currentProfile.toPath());
+            currentProfileDirectory.setName(currentProfile.getName());
+            listOfProfileDirectories.add(currentProfileDirectory);
         }
     }
 
@@ -63,17 +53,17 @@ public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
 
     @Override
     public Set<IConfigurationDirectory> getObjects() {
-        return configDirectories;
+        return listOfProfileDirectories;
     }
 
     @Override
     public void addObject(IConfigurationDirectory aObject) {
-        
+
     }
 
     @Override
     public void removeObject(IConfigurationDirectory aObject) {
-        
+
     }
 
     public IConfigurationDirectory createProfile(String profileName, ConfigurationManager configurationManager) throws FileAlreadyExistsException {
@@ -90,11 +80,11 @@ public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
             configurable.save(newProfile.toPath());
         }
 
-        ConfigurationDirectory configDirectory = new ConfigurationDirectory(appRoot.toPath());
+        ConfigurationDirectory configDirectory = new ConfigurationDirectory(confDir.toPath());
         configDirectory.addPath(newProfile.toPath());
         configDirectory.setName(profileName);
-        configDirectories.add(configDirectory);
-        
+        listOfProfileDirectories.add(configDirectory);
+
         return configDirectory;
     }
 }

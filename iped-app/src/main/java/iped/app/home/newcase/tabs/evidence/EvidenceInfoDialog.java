@@ -15,7 +15,7 @@ import java.util.ArrayList;
 public class EvidenceInfoDialog extends JDialog {
 
     private Evidence evidence;
-    private ArrayList<EvidenceInfoDialogListener> dialogListenerList = new ArrayList<>();
+    private ArrayList<EvidenceListListener> evidenceListListener = new ArrayList<>();
 
     private JDialog evidenceDialog;
     private JButton okButton = new JButton("OK");
@@ -125,17 +125,11 @@ public class EvidenceInfoDialog extends JDialog {
         evidence.setTimezone(textFieldTimeZone.getText());
         evidence.setAditionalComands(textFieldAdditionalCommand.getText());
         evidence.setMaterial(textAreaMaterial.getText());
-        dialogListenerList.forEach( e -> e.evidenceDataChange() );
+        evidenceListListener.forEach(e -> e.evidenceDataChange() );
     }
 
-    public void addListener(EvidenceInfoDialogListener listener){
-        dialogListenerList.add(listener);
+    public void addListener(EvidenceListListener listener){
+        evidenceListListener.add(listener);
     }
-
-}
-
-interface EvidenceInfoDialogListener{
-
-    public void evidenceDataChange();
 
 }

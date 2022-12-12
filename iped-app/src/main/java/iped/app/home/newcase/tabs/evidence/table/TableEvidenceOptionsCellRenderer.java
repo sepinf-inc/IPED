@@ -1,4 +1,4 @@
-package iped.app.home.newcase.tabs.evidence;/*
+package iped.app.home.newcase.tabs.evidence.table;/*
  * @created 13/09/2022
  * @project IPED
  * @author Thiago S. Figueiredo

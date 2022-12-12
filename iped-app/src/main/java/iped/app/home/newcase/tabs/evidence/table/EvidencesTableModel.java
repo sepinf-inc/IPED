@@ -1,4 +1,4 @@
-package iped.app.home.newcase.tabs.evidence;
+package iped.app.home.newcase.tabs.evidence.table;
 
 /*
  * @created 12/09/2022
@@ -7,6 +7,7 @@ package iped.app.home.newcase.tabs.evidence;
  */
 
 import iped.app.home.newcase.model.Evidence;
+import iped.app.home.newcase.tabs.evidence.EvidenceInfoDialog;
 import iped.app.ui.Messages;
 
 import javax.swing.*;
@@ -68,9 +69,8 @@ public class EvidencesTableModel extends AbstractTableModel {
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         switch (columnIndex){
-            case 1:
-            case 3:
-                return true;
+            case 1: return true;
+            case 3: return true;
             default: return false;
         }
     }
