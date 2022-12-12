@@ -1056,6 +1056,7 @@ L.KMLMarker = L.Marker.extend({
                 while(this.parent.selectedPlacemarks.length>0){
                     if(this!=this.parent.selectedPlacemarks[0]){
                         this.parent.selectedPlacemarks[0].selected=false;
+                        this.parent.selectedPlacemarks[0].hideDirectionLines();
                         this.parent.selectedPlacemarks[0].atualizaIcone();
                     }
                     this.parent.selectedPlacemarks.shift();//remove first item from array
