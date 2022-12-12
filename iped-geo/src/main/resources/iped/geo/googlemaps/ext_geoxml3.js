@@ -211,7 +211,7 @@ GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
             
             let wasSelected = this.extendedData.selected; 
             
-            if(!(e.shiftKey||e.ctrlKey)){
+            if(!(e.shiftKey)){
                 //desseleciona todos os itens imitando o comportamento da tabela
                 for(var i =0; i<this.geoxml.selectedArray.length; i++){
                     this.geoxml.selectedArray[i].extendedData.selected = 'false';
