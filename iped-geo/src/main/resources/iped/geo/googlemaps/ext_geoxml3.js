@@ -40,7 +40,7 @@ GeoXmlIped.prototype.addPlacemark = function (gid, name, descr, lat, longit, che
     m.extendedData.checked = 'false';
     
     let scale =1;
-    var bicon = new google.maps.MarkerImage("http://maps.google.com/mapfiles/kml/pal3/icon40.png",
+    var bicon = new google.maps.MarkerImage( this.icone_marcador,
         new google.maps.Size(32*scale, 32*scale), //size
         new google.maps.Point(0, 0), //origin
         new google.maps.Point(16*scale, 16*scale), //anchor
@@ -178,11 +178,6 @@ GeoXmlIped.prototype.handlePlacemark = function(mark, idx, depth, fullstyle) {
 GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
 	//pega o ultimo marcador criado (que corresponde ao que acabou de ser criado
 	m.arrayPos = this.overlayman.markers.length-1;
-
-    var bicon = m.getIcon();
-    bicon.url=this.icone_marcador;
-	m.setIcon(bicon);
-	m.setZIndex(0);
 
 	/* Adiciona checkbox ao infoWindow*/
     html = "<h1 " + this.titlestyle + ">" + m.name + "</h1>";
