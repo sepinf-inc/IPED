@@ -13,8 +13,10 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -32,8 +34,11 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.ICaseData;
+import iped.parsers.registry.model.RegistryFileException;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
@@ -48,6 +53,9 @@ public class RegRipperParser extends AbstractParser {
 
     private static Logger LOGGER = LoggerFactory.getLogger(RegRipperParser.class);
 
+    private final static String timeBiasStartTag = "Bias           -&gt; ";
+    private final static String timeBiasEndTag = " (";
+
     private static Set<MediaType> SUPPORTED_TYPES = null;
     private static String[] cmd;
     private static String TOOL_NAME = "rip"; //$NON-NLS-1$
@@ -61,7 +69,6 @@ public class RegRipperParser extends AbstractParser {
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-
         if (SUPPORTED_TYPES != null)
             return SUPPORTED_TYPES;
 
@@ -133,7 +140,7 @@ public class RegRipperParser extends AbstractParser {
             ArrayList<String> command = new ArrayList<>(Arrays.asList(cmd));
             command.addAll(Arrays.asList("-a", "-r", tempFile.getAbsolutePath()));
             String reportName = filename + "_Full_Report";
-            runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp);
+            runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp, metadata, context);
 
             // run specific profiles for each hive
             String regType = detectHive(tempFile);
@@ -144,19 +151,61 @@ public class RegRipperParser extends AbstractParser {
                 for (File child : directoryListing) {
                     command = new ArrayList<>(Arrays.asList(cmd));
                     command.addAll(Arrays.asList("-f", profiles + "/" + child.getName(), "-r", tempFile.getAbsolutePath()));
+                    
                     reportName = filename + "_" + child.getName().replace("_", "") + "_Report";
-                    runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp);
+                    runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp, metadata, context);
                 }
             }
-            
+           
         } finally {
             xhtml.endDocument();
             tmp.close();
         }
-
     }
 
-    private void runCmdAndCreateReport(List<String> command, String reportName, ContentHandler handler, EmbeddedDocumentExtractor extractor, TemporaryResources tmp) throws IOException, TikaException, SAXException {
+    private void extractCaseTimezone(String nome, String caminho, File htmlFile, ParseContext context) throws RegistryFileException, IOException {
+        TimeZone tz = null;
+
+        String content = Files.readString(htmlFile.toPath());
+
+        int start = content.indexOf(timeBiasStartTag) + timeBiasStartTag.length();
+        if (start > 0) {
+            String timeBiasStr = content.substring(start, content.indexOf(timeBiasEndTag, start)).trim();
+            int timeBias = Integer.parseInt(timeBiasStr);
+            String[] tzs = TimeZone.getAvailableIDs(timeBias * 60 * 1000 * -1);
+            if (tzs != null && tzs.length > 0) {
+                for (String _tz : tzs) {
+                    // prioritize local timezone if some equal ID was returned
+                    if (_tz.equals(TimeZone.getDefault().getID())) {
+                        tz = TimeZone.getTimeZone(_tz);
+                        break;
+                    }
+                }
+                if (tz == null) {
+                    // fallback to first if not found
+                    tz = TimeZone.getTimeZone(tzs[0]);
+                }
+            }
+
+            ICaseData caseData = context.get(ICaseData.class);
+            if (caseData != null) {
+                synchronized (caseData) {
+                    if (nome.equals("SYSTEM")) {
+                        if (tz != null) {
+                            HashMap<String, TimeZone> tzs2 = (HashMap<String, TimeZone>) caseData.getCaseObject(ICaseData.TIMEZONE_INFO_KEY);
+                            if (tzs2 == null) {
+                                tzs2 = new HashMap<String, TimeZone>();
+                                caseData.addCaseObject(ICaseData.TIMEZONE_INFO_KEY, tzs2);
+                            }
+                            tzs2.put(caminho, tz);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void runCmdAndCreateReport(List<String> command, String reportName, ContentHandler handler, EmbeddedDocumentExtractor extractor, TemporaryResources tmp, Metadata metadata, ParseContext context) throws IOException, TikaException, SAXException {
         ProcessBuilder pb = new ProcessBuilder(command);
         if (!TOOL_PATH.isEmpty()) {
             pb.directory(new File(TOOL_PATH));
@@ -187,11 +236,22 @@ public class RegRipperParser extends AbstractParser {
             // ignores empty reports
             return;
         }
-
+        
         Metadata reportMetadata = new Metadata();
         reportMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, reportName);
         reportMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
         reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+        if (reportName.contains("SYSTEM_OS")) {
+            String nome = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).toUpperCase();
+            ItemInfo itemInfo = context.get(ItemInfo.class);
+            String caminho = itemInfo.getPath().toLowerCase().replace("\\", "/");
+            try {
+                extractCaseTimezone(nome, caminho, htmlFile, context);
+            } catch (RegistryFileException | IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         if (extractor.shouldParseEmbedded(reportMetadata)) {
             try (InputStream is = new FileInputStream(htmlFile)) {

@@ -189,6 +189,8 @@ public class Configuration {
         configManager.loadConfig(pluginConfig);
         addPluginJarsToConfigurationLookup(configDirectory, pluginConfig);
 
+        configManager.addObject(new SplashScreenConfig());
+        
         if (!loadAll) {
             configManager.loadConfigs();
             return;

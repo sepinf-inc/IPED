@@ -116,6 +116,9 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Parameter(names = "--downloadInternetData", description = "download Internet data to enrich evidence data processing. E.g. media files still available in WhatsApp servers and not found in the evidence")
     private boolean downloadInternetData;
+    
+    @Parameter(names = { "-splash" }, description = "custom message to be shown in the splash screen")
+    private String splashMessage;    
 
     @Parameter(names = { "--help", "-h", "/?" }, help = true, description = "display this help")
     private boolean help;
@@ -237,6 +240,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         return portable;
     }
 
+    @Override
+    public String getSplashMessage() {
+        return splashMessage;
+    }
+    
     @Override
     public boolean isHelp() {
         return help;

@@ -154,11 +154,11 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+                App.get().dialogBar.setVisible(false);
                 String msg = e.getMessage();
                 if (msg == null && e.getCause() != null) {
                     msg = e.getCause().getMessage();
                 }
-                App.get().dialogBar.setVisible(false);
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("AppLazyInitializer.errorMsg.line1") //$NON-NLS-1$
                         + Messages.getString("AppLazyInitializer.errorMsg.line2") //$NON-NLS-1$
                         + App.get().getLogConfiguration().getLogFile()
@@ -170,19 +170,22 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
 
     @Override
     public void done() {
-        CategoryTreeModel.install();
-        App.get().filterManager.loadFilters();
-        BookmarksController.get().updateUIandHistory();
-
-        App.get().tree.setModel(treeModel);
-        App.get().tree.setLargeModel(true);
-        App.get().tree.setCellRenderer(new TreeCellRenderer());
-
-        if (updateItems) {
-            ColumnsManager.getInstance().dispose();
-            App.get().appletListener.updateFileListing();
+        try {
+            CategoryTreeModel.install();
+            App.get().filterManager.loadFilters();
+            BookmarksController.get().updateUIandHistory();
+    
+            App.get().tree.setModel(treeModel);
+            App.get().tree.setLargeModel(true);
+            App.get().tree.setCellRenderer(new TreeCellRenderer());
+    
+            if (updateItems) {
+                ColumnsManager.getInstance().dispose();
+                App.get().appletListener.updateFileListing();
+            }
+        } finally {
+            App.get().dialogBar.setVisible(false);
         }
-        App.get().dialogBar.setVisible(false);
     }
 
 }

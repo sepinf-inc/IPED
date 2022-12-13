@@ -21,7 +21,7 @@ import org.w3c.dom.NodeList;
 
 import iped.configuration.IConfigurationDirectory;
 
-public class RegistryKeyParserManager {
+public class RegistryKeyParserManager implements RegistryKeyParserFilter {
 
     private static final String BASE_FOLDER = "iped.parsers.registry.RegistryParser";
 
@@ -184,11 +184,9 @@ public class RegistryKeyParserManager {
             int slashIndex = meio.indexOf("/");
             if (slashIndex >= 0) {
                 meio = meio.substring(0, slashIndex);
-                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio
-                        + patternSubts.substring(patternSubts.indexOf("*") + 1);
+                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio + patternSubts.substring(patternSubts.indexOf("*") + 1);
             } else {
-                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio
-                        + patternSubts.substring(patternSubts.indexOf("*") + 1);
+                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio + patternSubts.substring(patternSubts.indexOf("*") + 1);
             }
             wildIndex = patternSubts.indexOf("*");
         }

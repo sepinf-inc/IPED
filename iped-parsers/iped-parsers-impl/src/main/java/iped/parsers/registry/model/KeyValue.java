@@ -3,6 +3,7 @@ package iped.parsers.registry.model;
 import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -40,21 +41,34 @@ public class KeyValue extends CellContent {
         return (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
     }
 
+    @Override
+    public ArrayList<Integer> getSubCellsOffsets() {
+        ArrayList<Integer> result = new ArrayList<Integer>();
+        byte buffer[] = Arrays.copyOfRange(data, 4, 8);
+        int dataLength = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+
+        if (dataLength < 0) {// when most significant bit is set to 1 the data is less than 4 bytes in length
+            return result;
+        } else {
+            buffer = Arrays.copyOfRange(data, 8, 12);
+            this.dataOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+            result.add(this.dataOffset);
+        }
+        return result;
+    }
+
     public byte[] getValueData() {
         byte buffer[] = Arrays.copyOfRange(data, 4, 8);
-        int dataLength = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                | (buffer[3] & 0xFF) << 24;
+        int dataLength = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
 
         if (dataLength < 0) {// when most significant bit is set to 1 the data is less than 4 bytes in length
                              // and is stored in the dataoffset field
-            dataLength = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                    | (buffer[3] & 0x7F) << 24; // ignora o bit mais significante
+            dataLength = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0x7F) << 24; // ignora o bit mais significante
             buffer = Arrays.copyOfRange(data, 8, 8 + dataLength);
             return buffer;
         } else {
             buffer = Arrays.copyOfRange(data, 8, 12);
-            this.dataOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                    | (buffer[3] & 0xFF) << 24;
+            this.dataOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
             buffer = null;
 
             HiveCell cell = reg.getCell(this.dataOffset);
@@ -84,6 +98,20 @@ public class KeyValue extends CellContent {
 
     }
 
+    public int getValueDataAsInt() throws RegistryFileException {
+        try {
+            byte[] buffer = getValueData();
+            if (buffer.length >= 4) {
+                int t = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+                return t;
+            } else {
+                throw new RegistryFileException("Value not of int type");
+            }
+        } catch (Exception e) {
+            throw new RegistryFileException(e);
+        }
+    }
+
     public Date getValueDataAsDate() throws RegistryFileException {
         int type = getValueDatatype();
         if (type != REG_BINARY) {
@@ -93,8 +121,7 @@ public class KeyValue extends CellContent {
         byte[] buffer = getValueData();
 
         if (buffer.length != 16) {
-            throw new RegistryFileException(
-                    "O dado representado pelo valor possui mais de 16 bytes, não sendo a representação válida de uma data.");
+            throw new RegistryFileException("O dado representado pelo valor possui mais de 16 bytes, não sendo a representação válida de uma data.");
         }
 
         Calendar cal = Calendar.getInstance();
@@ -172,8 +199,7 @@ public class KeyValue extends CellContent {
                     if (buffer.length == 0) {
                         result = "";
                     } else {
-                        if ((buffer.length >= 2) && (buffer[buffer.length - 1] == 0)
-                                && (buffer[buffer.length - 2] == 0))
+                        if ((buffer.length >= 2) && (buffer[buffer.length - 1] == 0) && (buffer[buffer.length - 2] == 0))
                             buffer = Arrays.copyOf(buffer, buffer.length - 2);
                         result = new String(buffer, "UTF-16LE");
                     }
@@ -186,8 +212,7 @@ public class KeyValue extends CellContent {
                 result = "";
                 try {
                     if (buffer.length >= 0) {
-                        if ((buffer.length >= 4) && (buffer[buffer.length - 1] == 0) && (buffer[buffer.length - 2] == 0)
-                                && (buffer[buffer.length - 3] == 0)) {
+                        if ((buffer.length >= 4) && (buffer[buffer.length - 1] == 0) && (buffer[buffer.length - 2] == 0) && (buffer[buffer.length - 3] == 0)) {
                             // provavelmente unicode
                             int i = 0;
                             do {
@@ -223,11 +248,9 @@ public class KeyValue extends CellContent {
             case REG_DWORD:
                 buffer = getValueData();
                 if (buffer.length >= 4) {
-                    t = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                            | (buffer[3] & 0xFF) << 24;
+                    t = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
                     result = Integer.toString(t);
-                    if (getValueName().toLowerCase().contains("time")
-                            || getValueName().toLowerCase().contains("last")) {
+                    if (getValueName().toLowerCase().contains("time") || getValueName().toLowerCase().contains("last")) {
                         try {
                             result += " (" + dateFormat.get().format(getValueDataAsPosixDate()) + ")";
                         } catch (Exception e) {
@@ -244,16 +267,12 @@ public class KeyValue extends CellContent {
             case REG_QWORD:
                 buffer = getValueData();
                 if (buffer.length >= 8) {
-                    long l = (long) (buffer[0] & 0xFF) | (long) (buffer[1] & 0xFF) << 8
-                            | (long) (buffer[2] & 0xFF) << 16 | (long) (buffer[3] & 0xFF) << 24
-                            | (long) (buffer[4] & 0xFF) << 32 | (long) (buffer[5] & 0xFF) << 40
+                    long l = (long) (buffer[0] & 0xFF) | (long) (buffer[1] & 0xFF) << 8 | (long) (buffer[2] & 0xFF) << 16 | (long) (buffer[3] & 0xFF) << 24 | (long) (buffer[4] & 0xFF) << 32 | (long) (buffer[5] & 0xFF) << 40
                             | (long) (buffer[6] & 0xFF) << 48 | (long) (buffer[7] & 0xFF) << 56;
                     result = Long.toString(l);
-                    if (getValueName().toLowerCase().contains("time")
-                            || getValueName().toLowerCase().contains("last")) {
+                    if (getValueName().toLowerCase().contains("time") || getValueName().toLowerCase().contains("last")) {
                         try {
-                            result += " (" + dateFormat.get().format(new Date((l) / (long) 10000 - 11644473600000l))
-                                    + ")";
+                            result += " (" + dateFormat.get().format(new Date((l) / (long) 10000 - 11644473600000l)) + ")";
                         } catch (Exception e) {
                             // igonra
                         }
@@ -274,8 +293,7 @@ public class KeyValue extends CellContent {
                         if (buffer.length == 16) {
                             // verifica o nome da chave para ver se ela tem alguma indicação que seu
                             // conteúdo seja uma data
-                            if (containsIgnoreCase(getValueName(), "date")
-                                    || containsIgnoreCase(getValueName(), "last")) {
+                            if (containsIgnoreCase(getValueName(), "date") || containsIgnoreCase(getValueName(), "last")) {
                                 SimpleDateFormat sdf = new SimpleDateFormat();
                                 result = "(Data:" + sdf.format(getValueDataAsDate() + ")");
                             }
@@ -296,8 +314,7 @@ public class KeyValue extends CellContent {
                 }
 
                 if (buffer.length == 12) {
-                    if (getValueName().toLowerCase().contains("time")
-                            || getValueName().toLowerCase().contains("last")) {
+                    if (getValueName().toLowerCase().contains("time") || getValueName().toLowerCase().contains("last")) {
                         try {
                             result += "(" + dateFormat.get().format(getValueDataAsDate()) + ")";
                         } catch (Exception e) {
