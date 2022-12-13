@@ -18,6 +18,12 @@ GeoXmlIped.prototype.constructor=GeoXmlIped;
 var lastAddedPlacemark = null;
 
 function GeoXmlIped(myvar, map, url, opts) {
+    if(opts.clustering){
+        
+    }else{
+        opts.clustering={};
+    }
+    opts.clustering.gridSize = 50;
 	GeoXml.call(this, myvar, map, url, opts);
 	
 	this.selectedArray=[];
@@ -92,7 +98,6 @@ GeoXmlIped.prototype.addMarker = function (marker, title, idx, sidebar, visible,
         marker.onMap = true;
         if(!!marker.label){ marker.label.setMap(this.overlayman.map);}
     
-        //this.overlayman.cluster.addMarker(marker);
         marker.isAdded = true;
         this.overlayman.cluster.markers_.push(marker);
     
