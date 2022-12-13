@@ -20,7 +20,9 @@ var lastAddedPlacemark = null;
 function GeoXmlIped(myvar, map, url, opts) {
 	GeoXml.call(this, myvar, map, url, opts);
 	
-	this.selectedArray=[];	
+	this.selectedArray=[];
+	this.addpromises=[];
+	this.calcBounds = new google.maps.LatLngBounds();
 	
 	this.navigationPos = 0;
 }
@@ -47,21 +49,59 @@ GeoXmlIped.prototype.addPlacemark = function (gid, name, descr, lat, longit, che
     m.extendedData = {};
     m.extendedData.id = gid;
     m.extendedData.selected = selected;
-    m.extendedData.checked = checked;
-    
+    m.extendedData.checked = checked;    
     let scale =1;
-    var bicon = new google.maps.MarkerImage( this.icone_marcador,
+    
+    let icon = null;
+    if(m.extendedData.selected=='true'){
+        if(m.extendedData.checked =='true'){
+            icon = this.icone_marcador_selecionado_m;
+        }else{
+            icon = this.icone_marcador_selecionado;
+        }
+    }else{
+        if(m.extendedData.checked =='true'){
+            icon = this.icone_marcador_m;
+        }else{
+            icon = this.icone_marcador;
+        }
+    }
+    var bicon = new google.maps.MarkerImage( icon,
         new google.maps.Size(32*scale, 32*scale), //size
         new google.maps.Point(0, 0), //origin
         new google.maps.Point(16*scale, 16*scale), //anchor
         new google.maps.Size(32*scale, 32*scale) //scaledSize 
         );
     m.setIcon(bicon);
+
+    let that = this;
     
-    this.overlayman.addMarker(m, name, 0, '', true);
+    that.addMarker(m, name, 0, '', true);
     
-    this.handleMarkerEvents(m);
-        
+    m.arrayPos = that.overlayman.markers.length-1;  
+    that.bounds.extend(m.getPosition());      
+    that.handleMarkerEvents(m);    
+}
+
+GeoXmlIped.prototype.addMarker = function (marker, title, idx, sidebar, visible, forcevisible){
+    try{
+        marker.hidden = false;
+        marker.title = title;
+        this.overlayman.folders[idx].push(this.overlayman.markers.length);
+        this.overlayman.markers.push(marker);
+        marker.onMap = true;
+        if(!!marker.label){ marker.label.setMap(this.overlayman.map);}
+    
+        //this.overlayman.cluster.addMarker(marker);
+        marker.isAdded = true;
+        this.overlayman.cluster.markers_.push(marker);
+    
+        if(sidebar){
+            this.overlayman.folderhtml[idx].push(sidebar);
+        }
+    }catch(e){
+        alert(e);
+    }
 }
 
 GeoXmlIped.prototype.createNextDirectionLine = function(m){
@@ -100,7 +140,6 @@ const lineSymbol = {
   };
 
 GeoXmlIped.prototype.showDirectionLines = function(m){
-    alert('showDirectionLines');
     this.createDirectionLines(m);
     if(m.nextLine){
         //this.nextLine.setStyle(this.parent.nextlinestyle);
@@ -123,13 +162,14 @@ GeoXmlIped.prototype.hideDirectionLines = function(m){
 }
 
 GeoXmlIped.prototype.flushPlacemarks = function() {
-        var markers = this.overlayman.markers;
-        var bounds = new google.maps.LatLngBounds();
-        for (var i = 0; i < markers.length; i++) {
-         bounds.extend(markers[i].getPosition());
+    var that=this;
+    Promise.all(that.addpromises).then((markers)=>{
+        try{
+            that.map.fitBounds(that.bounds);
+        }catch(e){
+            alert(e);
         }
-
-        this.map.fitBounds(bounds);
+    });
 }
     
 GeoXmlIped.prototype.selecionaRetangulo = function (rect, proj, callback){
@@ -240,12 +280,11 @@ GeoXmlIped.prototype.handlePlacemark = function(mark, idx, depth, fullstyle) {
     }
 
     var m = this.overlayman.markers[this.overlayman.markers.length-1];
+    m.arrayPos = this.overlayman.markers.length-1;
     this.handleMarkerEvents(m);
 }	
 
 GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
-	//pega o ultimo marcador criado (que corresponde ao que acabou de ser criado
-	m.arrayPos = this.overlayman.markers.length-1;
 
 	/* Adiciona checkbox ao infoWindow*/
     html = "<h1 " + this.titlestyle + ">" + m.name + "</h1>";
