@@ -420,10 +420,8 @@ L.KML = L.MarkerClusterGroup.extend({
 
         if(pathsVisible){
             this.removeLayer(this.paths);
-            alert('hide');
         }else{
             this.addLayer(this.paths);
-            alert('show');
         }
         pathsVisible=!pathsVisible;
     },
@@ -1019,7 +1017,19 @@ L.KMLMarker = L.Marker.extend({
         if(this.nextLine){
         }else{
             if(this.next){
-                this.nextLine = L.polyline([this.getLatLng(), this.next.getLatLng()], this.parent.nextlinestyle);
+                let lagLng = null;
+                let nextLagLng = null;
+                if(this._spiderLeg){
+                    latLng = this._spiderLeg.getLatLngs()[0];
+                }else{
+                    latLng = this.getLatLng();
+                }
+                if(this.next._spiderLeg){
+                    nextLatLng = this.next._spiderLeg.getLatLngs()[0];                    
+                }else{
+                    nextLatLng = this.next.getLatLng();
+                }
+                this.nextLine = L.polyline([latLng, nextLatLng], this.parent.nextlinestyle);
                 this.nextLine.arrowheads({
                       size: "18px",
                       fill: true,
@@ -1072,10 +1082,10 @@ L.KMLMarker = L.Marker.extend({
         }
     },
 	onClick: function(e){
-		//workaround to skip leaflet behaviour that invokes onClick twice, the one programatically invoked is skipped;
-		if(!e.originalEvent.isTrusted) {
-			return;
-		}
+        //workaround to skip leaflet behaviour that invokes onClick twice, the one programatically invoked is skipped;
+        if(!e.originalEvent.isTrusted) {
+        	return;
+        }
 
         if(this.parent){
             if(!e.originalEvent.shiftKey){
@@ -1121,6 +1131,17 @@ L.KMLMarker = L.Marker.extend({
 			}			
             window.app.markerMouseClickedBF(this.id, button, '');
 		}
+		
+		var that = this;
+		
+        setTimeout(()=>{
+            let ar = Object.keys(that.parent.markers)
+            for(var i =0; i<ar.length; i++){
+                if(ar[i] == that.id){
+                    window.mpos = i;   
+                }
+            }
+        },1);		
 	},
 	selected:false,
 	checked:false
