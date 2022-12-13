@@ -15,6 +15,8 @@
 GeoXmlIped.prototype = Object.create(GeoXml.prototype);
 GeoXmlIped.prototype.constructor=GeoXmlIped;
 
+var lastAddedPlacemark = null;
+
 function GeoXmlIped(myvar, map, url, opts) {
 	GeoXml.call(this, myvar, map, url, opts);
 	
@@ -31,6 +33,14 @@ GeoXmlIped.prototype.addPlacemark = function (gid, name, descr, lat, longit, che
     m.title = name;
     m.href = href;
     m.geoxml = this;
+    if(lastAddedPlacemark){
+        m.previous=lastAddedPlacemark;
+        lastAddedPlacemark.next=m;
+    }else{
+        m.previous=null;
+    }
+    m.next=null;
+    lastAddedPlacemark=m;
     var obj = { "type": "point", "title": name, "description": escape(descr), "href": href, "shadow": null, "visibility": true, "x": point.x, "y": point.y, "id": m.id };
     this.kml[0].marks.push(obj);
     //function(point, name, desc, styleid, idx, instyle, visible, kml_id, markerurl,snip) 
@@ -52,6 +62,64 @@ GeoXmlIped.prototype.addPlacemark = function (gid, name, descr, lat, longit, che
     
     this.handleMarkerEvents(m);
         
+}
+
+GeoXmlIped.prototype.createNextDirectionLine = function(m){
+    if(m.nextLine){
+    }else{
+        if(m.next){
+            m.nextLine =  new google.maps.Polyline({
+                geodesic:true,
+                icons:[
+                    {
+                    icon:lineSymbol,
+                    offset: "100%"
+                    }
+                ],
+                });
+            const path = m.nextLine.getPath();
+            path.push(m.getPosition());
+            path.push(m.next.getPosition());
+        }
+    }
+}
+
+GeoXmlIped.prototype.createDirectionLines = function(m){
+    this.createNextDirectionLine(m);
+    if(m.previousLine){
+    }else{
+        if(m.previous){
+            this.createNextDirectionLine(m.previous);
+            m.previousLine = m.previous.nextLine;
+        }
+    }
+}
+
+const lineSymbol = {
+    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+  };
+
+GeoXmlIped.prototype.showDirectionLines = function(m){
+    alert('showDirectionLines');
+    this.createDirectionLines(m);
+    if(m.nextLine){
+        //this.nextLine.setStyle(this.parent.nextlinestyle);
+        m.nextLine.setOptions({strokeColor: 'red'});
+        m.nextLine.setMap(this.map);
+    }
+    if(m.previousLine) {
+        //this.previousLine.setStyle(this.parent.previouslinestyle);
+        m.previousLine.setOptions({strokeColor: 'blue'});
+        m.previousLine.setMap(this.map);
+    }
+    m.directionLinesVisible=true;
+}
+
+GeoXmlIped.prototype.hideDirectionLines = function(m){
+    this.createDirectionLines(m);
+    if(m.nextLine) m.nextLine.setMap(null);
+    if(m.previousLine) m.previousLine.setMap(null); 
+    this.directionLinesVisible=false;
 }
 
 GeoXmlIped.prototype.flushPlacemarks = function() {
@@ -211,6 +279,7 @@ GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
                 for(var i =0; i<this.geoxml.selectedArray.length; i++){
                     this.geoxml.selectedArray[i].extendedData.selected = 'false';
                     this.geoxml.ajustaIcone(this.geoxml.selectedArray[i]);
+                    this.geoxml.hideDirectionLines(this.geoxml.selectedArray[i]);
                 }
                 this.geoxml.selectedArray=[];
             }
@@ -221,9 +290,11 @@ GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
                 if(i>-1){
                     this.geoxml.selectedArray.splice(i,1);
                 }
+                this.geoxml.hideDirectionLines(this);
             }else{
                 this.extendedData.selected='true';
                 this.geoxml.selectedArray.push(this);
+                this.geoxml.showDirectionLines(this);
             }
             var that=this;
             
@@ -254,7 +325,13 @@ GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
             }
 
             setTimeout(()=>{that.geoxml.ajustaIcone(that);},10);
-
+            setTimeout(()=>{
+                for(var i =0; i<this.geoxml.overlayman.markers.length; i++){
+                    if(this.geoxml.overlayman.markers[i].id == that.id){
+                        window.mpos = i;                        
+                    }
+                }
+            },1);
         }catch(e){
             alert(e);
         }
