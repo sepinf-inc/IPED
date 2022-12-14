@@ -10,6 +10,8 @@
 		<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
    integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
    crossorigin=""></script>
+   
+        {{googlemaps_scripts}}   
 
 		<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" crossorigin=""></script>
 		<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" crossorigin=""></script>
@@ -111,12 +113,8 @@
         var kmlUrl = '';
 
         map = new L.IPEDMap('map_canvas', { center: new L.LatLng(58.4, 43.0), zoom: 11, boxZoom:true });
-		L.tileLayer('{{tileServerUrl}}', {
-    			maxZoom: 18,
-    			minZoom: 2,
-    			tileSize: 512,
-    			zoomOffset: -1,
-				}).addTo(map);
+        
+        {{tilelayer_script}}
 				
          var kml = '';
          track = new L.KML();

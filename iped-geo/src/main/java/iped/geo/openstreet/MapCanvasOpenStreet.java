@@ -242,7 +242,15 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         html = html.replace("{{markerclusterjs}}", markerclusterjs);
         html = html.replace("{{leafletgeometryutil}}", leafletgeometryutil);
         html = html.replace("{{leafletarrowheads}}", leafletarrowheads);
-        
+
+        if(url.contains("googlemaps")) {
+            html = html.replace("{{googlemaps_scripts}}", "<script src=\"https://maps.googleapis.com/maps/api/js?key=\" async defer></script>\n"
+                    + "<script src=\"https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js\"></script>");
+            html = html.replace("{{tilelayer_script}}", "L.gridLayer.googleMutant({type: \"hybrid\"}).addTo(map);");
+        }else {
+            html = html.replace("{{googlemaps_scripts}}", "");
+            html = html.replace("{{tilelayer_script}}", "L.tileLayer('"+url+"', {maxZoom: 18, minZoom: 2, tileSize: 512, zoomOffset: -1 }).addTo(map);");
+        }
         
         String themeScript="applyLightTheme();";
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
@@ -251,7 +259,6 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         }
         html = html.replace("{{applyTheme}}", themeScript);
         
-        html = html.replace("{{tileServerUrl}}", url);
         html = html.replace("{{toolbar}}", getToolBarHtml());
 
         html = html.replace("{{L.KML}}", js); //$NON-NLS-1$
