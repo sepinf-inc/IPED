@@ -64,12 +64,11 @@
 			iwwidth:280
 		});
 
-	    gxml.icone_marcador = "{{icone_base64}}"; 
-	    gxml.icone_marcador_selecionado = "{{icone_selecionado_base64}}"; 
-	    gxml.icone_marcador_selecionado_m = "{{icone_selecionado_m_base64}}";
-	    gxml.icone_marcador_m = "{{icone_m_base64}}";
+        gxml.setIcon("{{icone_base64}}"); 
+        gxml.setHighlightedIcon("{{icone_selecionado_base64}}"); 
+        gxml.setHighlightedCheckedIcon("{{icone_selecionado_m_base64}}");
+        gxml.setCheckedIcon("{{icone_m_base64}}");
 
-		//gxml.processString('{{kml}}', 'Results'); 
 		map.enableKeyDragSelect();
 
 		document.getElementById('ordem_descr').innerHTML = gxml.tourOrder;
