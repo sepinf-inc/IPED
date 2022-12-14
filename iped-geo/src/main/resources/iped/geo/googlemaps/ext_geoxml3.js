@@ -19,18 +19,52 @@ var lastAddedPlacemark = null;
 
 function GeoXmlIped(myvar, map, url, opts) {
     if(opts.clustering){
-        
     }else{
         opts.clustering={};
     }
     opts.clustering.gridSize = 50;
 	GeoXml.call(this, myvar, map, url, opts);
-	
+
 	this.selectedArray=[];
 	this.addpromises=[];
 	this.calcBounds = new google.maps.LatLngBounds();
-	
+
 	this.navigationPos = 0;
+
+    html = "";
+    this.infoWindowOptions = { 
+                    content: html, 
+                    pixelOffset: new google.maps.Size(0, 2)
+                };
+    this.infoWindow = new google.maps.InfoWindow(this.infoWindowOptions);
+
+}
+
+GeoXmlIped.prototype.createMarkerIcon = function (icon){
+    let scale = 1;
+
+    return new google.maps.MarkerImage( icon,
+        new google.maps.Size(32*scale, 32*scale), //size
+        new google.maps.Point(0, 0), //origin
+        new google.maps.Point(16*scale, 16*scale), //anchor
+        new google.maps.Size(32*scale, 32*scale) //scaledSize 
+        );
+}
+
+GeoXmlIped.prototype.setHighlightedIcon = function (icon){
+    this.highlightedIcon = this.createMarkerIcon(icon);
+}
+
+GeoXmlIped.prototype.setHighlightedCheckedIcon = function (icon){
+    this.highlightedCheckedIcon = this.createMarkerIcon(icon);
+}
+
+GeoXmlIped.prototype.setCheckedIcon = function (icon){
+    this.checkedIcon = this.createMarkerIcon(icon);
+}
+
+GeoXmlIped.prototype.setIcon = function (icon){
+    this.icon = this.createMarkerIcon(icon);
 }
 
 GeoXmlIped.prototype.addPlacemark = function (gid, name, descr, lat, longit, checked, selected){
@@ -39,6 +73,8 @@ GeoXmlIped.prototype.addPlacemark = function (gid, name, descr, lat, longit, che
     var m = new google.maps.Marker({position: point, map: this.map});
     m.id = gid;
     m.title = name;
+    m.name = name;
+    m.descr = descr;
     m.href = href;
     m.geoxml = this;
     if(lastAddedPlacemark){
@@ -56,29 +92,23 @@ GeoXmlIped.prototype.addPlacemark = function (gid, name, descr, lat, longit, che
     m.extendedData.id = gid;
     m.extendedData.selected = selected;
     m.extendedData.checked = checked;    
-    let scale =1;
     
     let icon = null;
     if(m.extendedData.selected=='true'){
         if(m.extendedData.checked =='true'){
-            icon = this.icone_marcador_selecionado_m;
+            icon = this.highlightedCheckedIcon;
         }else{
-            icon = this.icone_marcador_selecionado;
+            icon = this.highlightedIcon;
         }
     }else{
         if(m.extendedData.checked =='true'){
-            icon = this.icone_marcador_m;
+            icon = this.checkedIcon;
         }else{
-            icon = this.icone_marcador;
+            icon = this.icon;
         }
     }
-    var bicon = new google.maps.MarkerImage( icon,
-        new google.maps.Size(32*scale, 32*scale), //size
-        new google.maps.Point(0, 0), //origin
-        new google.maps.Point(16*scale, 16*scale), //anchor
-        new google.maps.Size(32*scale, 32*scale) //scaledSize 
-        );
-    m.setIcon(bicon);
+    
+    m.setIcon(icon);
 
     let that = this;
     
@@ -224,24 +254,24 @@ GeoXmlIped.prototype.selecionaCirculo = function (pInicio, pFim, proj, callback)
   	return markersin;
 }
 
-GeoXmlIped.prototype.ajustaIcone = function( mark ) {
-	var bicon = mark.getIcon();
-	if(mark.extendedData.selected == 'true'){
-		if(mark.extendedData.checked == 'true'){
-			bicon.url=this.icone_marcador_selecionado_m;
-		}else{
-			bicon.url=this.icone_marcador_selecionado;
-		}
-	}else{
-		if(mark.extendedData.checked == 'true'){
-			bicon.url=this.icone_marcador_m;
-		}else{
-			bicon.url=this.icone_marcador;
-		}
-	}
-	mark.setIcon(bicon);
-    if(mark.extendedData.selected == 'true'){
-        mark.setZIndex(mark.getZIndex()+1);
+GeoXmlIped.prototype.ajustaIcone = function( m ) {
+	var icon = null;
+    if(m.extendedData.selected=='true'){
+        if(m.extendedData.checked =='true'){
+            icon = this.highlightedCheckedIcon;
+        }else{
+            icon = this.highlightedIcon;
+        }
+    }else{
+        if(m.extendedData.checked =='true'){
+            icon = this.checkedIcon;
+        }else{
+            icon = this.icon;
+        }
+    }
+	m.setIcon(icon);
+    if(m.extendedData.selected == 'true'){
+        m.setZIndex(mark.getZIndex()+1);
     }
 }
 
@@ -291,28 +321,25 @@ GeoXmlIped.prototype.handlePlacemark = function(mark, idx, depth, fullstyle) {
 
 GeoXmlIped.prototype.handleMarkerEvents = function(m, idx, depth, fullstyle) {
 
-	/* Adiciona checkbox ao infoWindow*/
-    html = "<h1 " + this.titlestyle + ">" + m.name + "</h1>";
-    html +=  "<div " + this.descstyle + ">" + m.descr + "</div>";
-
-	var infoWindowOptions = { 
-                    content: html, 
-                    pixelOffset: new google.maps.Size(0, 2)
-                };
-	m.infoWindow = new google.maps.InfoWindow(infoWindowOptions);
-	var html = m.infoWindow.getContent();
-	var marcado = '';
-	if(m.checked){
-        marcado = 'checked';
-    }
-	html = html.substring(0,html.indexOf(">")+1)+"<input type=\"checkbox\" id=\"ck_marcador_"+m.extendedData.id+"\" "+marcado+" onclick=\"window.app.checkMarkerBF(\'"+m.extendedData.id+"\', this.checked);gxml.checkMarker("+m.arrayPos+", this.checked);\" />" + html.substring(html.indexOf(">")+1, html.length);
-	m.infoWindow.setContent(html);
-
+    m.infoWindow = this.infoWindow;
+    
 	/* Adiciona listeners */
 	google.maps.event.addListener(m, "mouseover", function(){ window.app.markerMouseEnteredBF(this.extendedData.id) });
 	google.maps.event.addListener(m, "mouseout", function(){ window.app.markerMouseExitedBF(this.extendedData.id) });
 	google.maps.event.addListener(m, "click", function(){
         try{
+            var html = "<h1 " + this.titlestyle + ">" + m.name + "</h1>";
+            html +=  "<div " + this.descstyle + ">" + m.descr + "</div>";
+        
+            var marcado = '';
+            if(m.checked){
+                marcado = 'checked';
+            }
+            html = html.substring(0,html.indexOf(">")+1)+"<input type=\"checkbox\" id=\"ck_marcador_"+m.extendedData.id+"\" "+marcado+" onclick=\"window.app.checkMarkerBF(\'"+m.extendedData.id+"\', this.checked);gxml.checkMarker("+m.arrayPos+", this.checked);\" />" + html.substring(html.indexOf(">")+1, html.length);
+            m.infoWindow.setContent(html);
+            m.infoWindow.open({anchor: m, map});
+            
+            
             var e = window.event;
             var button = (typeof e.which != "undefined") ? e.which : e.button;
             
