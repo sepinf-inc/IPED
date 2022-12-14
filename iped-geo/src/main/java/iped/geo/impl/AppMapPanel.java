@@ -137,21 +137,6 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                         if (url.length() > 0) {
                             tilesSourceURL = url.toString();
                             config(tilesSourceURL);
-                            mapaDesatualizado = true;
-
-                            /*
-                             * Sends the current lead selection to the next map
-                             * rendered to select it after load.
-                             * */
-                            runAfterLoad(new Runnable() {
-                                @Override
-                                public void run() {
-                                    browserCanvas.sendLeadSelection(leadSelectionToApply);
-                                    browserCanvas.update();
-                                }
-                            });
-
-                            updateMap();
                         }
                     }
                 });
@@ -162,17 +147,11 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
     public void config(String url) {
         if (url == null) {
         } else {
-            // remove o antigo browsercanvas, caso haja algum configurado
-            if (browserCanvas != null) {
-                this.remove(browserCanvas.getContainer());
-                this.repaint();
+            if(browserCanvas==null) {
+                browserCanvas = mcf.createMapCanvas(url);
+            }else {
+                browserCanvas.setTileServerUrl(url);
             }
-
-            browserCanvas = mcf.createMapCanvas(url);
-
-            gpsProgressBar.setVisible(false);
-            this.add(gpsProgressBar, BorderLayout.NORTH);
-            this.add(browserCanvas.getContainer(), BorderLayout.CENTER);
         }
     }
 
@@ -192,6 +171,10 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                 tilesSourceURL = JMapOptionsPane.showOptionsDialog(this);
             }
             config(tilesSourceURL);
+            mapaDesatualizado=true;
+            gpsProgressBar.setVisible(false);
+            this.add(gpsProgressBar, BorderLayout.NORTH);
+            this.add(browserCanvas.getContainer(), BorderLayout.CENTER);
         }
 
         if (mapaDesatualizado) {

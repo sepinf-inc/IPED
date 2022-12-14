@@ -14,6 +14,7 @@ import javax.swing.UIManager;
 import org.apache.commons.io.IOUtils;
 
 import iped.geo.AbstractMapCanvas;
+import iped.geo.impl.JMapOptionsPane;
 import iped.utils.UiUtil;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -243,22 +244,18 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         html = html.replace("{{leafletgeometryutil}}", leafletgeometryutil);
         html = html.replace("{{leafletarrowheads}}", leafletarrowheads);
 
-        if(url.contains("googlemaps")) {
-            html = html.replace("{{googlemaps_scripts}}", "<script src=\"https://maps.googleapis.com/maps/api/js?key=\" async defer></script>\n"
-                    + "<script src=\"https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js\"></script>");
-            html = html.replace("{{tilelayer_script}}", "L.gridLayer.googleMutant({type: \"hybrid\"}).addTo(map);");
-        }else {
-            html = html.replace("{{googlemaps_scripts}}", "");
-            html = html.replace("{{tilelayer_script}}", "L.tileLayer('"+url+"', {maxZoom: 18, minZoom: 2, tileSize: 512, zoomOffset: -1 }).addTo(map);");
-        }
-        
+        html = html.replace("{{googlemaps_scripts}}", "<script src=\"https://maps.googleapis.com/maps/api/js?key="+JMapOptionsPane.getGoogleAPIKey()+"\" async defer></script>\n"
+                + "<script src=\"https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js\"></script>");
+
+        html = html.replace("{{tilelayer_script}}", "setTileServerUrl('"+JMapOptionsPane.getSavedTilesSourceURL()+"');");
+
         String themeScript="applyLightTheme();";
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
         if(bgColor!=null) {
             themeScript="applyDarkTheme();";
         }
         html = html.replace("{{applyTheme}}", themeScript);
-        
+
         html = html.replace("{{toolbar}}", getToolBarHtml());
 
         html = html.replace("{{L.KML}}", js); //$NON-NLS-1$
@@ -511,6 +508,20 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                 }
             }
         });
+    }
 
+    @Override
+    public void setTileServerUrl(String url) {
+        Platform.runLater(new Runnable() {
+            public void run() {
+                try {
+                    webEngine.executeScript("setTileServerUrl('"+url+"');");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // nothing
+                }
+            }
+        });
     }
 }
