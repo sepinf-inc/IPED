@@ -87,20 +87,21 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
             return;
         }
         
-        if (e.getColumn() == 1) {// se o evento foi disparado pelo check box que fica na coluna 1
-            updatingCheckbox = true;
-            IItemId item = resultsProvider.getResults().getItem(e.getFirstRow());
-
-            Boolean b = (Boolean) resultsTable.getModel().getValueAt(e.getFirstRow(), e.getColumn());
-
-            mapaPanel.selectCheckbox(item, b.booleanValue());
-        }
-
         /* Se a alteração foi feita no próprio mapa
          * ou a operação é de ordenação,
          * ela não precisa ser refeita. */
-        if (!desabilitaTemp) {
+        if (!desabilitaTemp) {            
             mapaPanel.setMapOutDated(true);
+            
+            if (e.getColumn() == 1) {// se o evento foi disparado pelo check box que fica na coluna 1
+                updatingCheckbox = true;
+                IItemId item = resultsProvider.getResults().getItem(e.getFirstRow());
+
+                Boolean b = (Boolean) resultsTable.getModel().getValueAt(e.getFirstRow(), e.getColumn());
+
+                mapaPanel.selectCheckbox(item, b.booleanValue());
+            }
+            
 
             /* somente chamado se o tab de mapas estiver sendo exibido */
             if (dockable != null && dockable.isShowing()) {
