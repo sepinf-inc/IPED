@@ -160,4 +160,9 @@ abstract public class AbstractMapCanvas extends Canvas {
         this.tourOrder = tourOrder;
     }
 
+    public void setTileServerUrl(String url) {
+        // TODO Auto-generated method stub
+        
+    }
+
 }
