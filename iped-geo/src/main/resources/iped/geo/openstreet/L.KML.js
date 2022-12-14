@@ -662,7 +662,8 @@ L.KML = L.MarkerClusterGroup.extend({
         m.selected=selected;
         m.name = name;
         m.descr = descr;
-        m.bindPopup('<input type="checkbox" id="marker_checkbox" value=""/><h2>' + m.name + '</h2>' + m.descr, { className: 'kml-popup'});
+        m.bindPopup('<input type="checkbox" id="marker_checkbox" value=""  onclick="L.checkMarker(window.clickedMark.id)"/><h2>' + m.name + '</h2>' + m.descr, { className: 'kml-popup'});
+        this.popupOpened=false;
         m.styleUrl='#item';
         m.parent=this;
         if(m.checked || m.selected){
@@ -1082,66 +1083,68 @@ L.KMLMarker = L.Marker.extend({
         }
     },
 	onClick: function(e){
-        //workaround to skip leaflet behaviour that invokes onClick twice, the one programatically invoked is skipped;
-        if(!e.originalEvent.isTrusted) {
-        	return;
-        }
-
-        if(this.parent){
-            if(!e.originalEvent.shiftKey){
-                this.parent.deselectAll();
+        try{
+            window.clickedMark = this;
+            
+            //workaround to skip leaflet behaviour that invokes onClick twice, the one programatically invoked is skipped;
+            if(!e.originalEvent.isTrusted) {
+                return;
             }
-        }
-
-        if(this.selected=='true'){
-            this.parent.unhighlight(this);
-        }else{
-            this.parent.highlight(this);
-        }
-        this.atualizaIcone();
-
-		if(e.originalEvent.ctrlKey){
-			if(this.checked=='true'){
-				this.checked='false';
-				document.getElementById('marker_checkbox').checked=false;
-			}else{
-				this.checked='true';
-				document.getElementById('marker_checkbox').checked=true;
-			}
-			this.atualizaIcone();
-		}
-		
-		if(!this.isPopupOpen()){
-			if(this.checked=='true'){
-				this.bindPopup('<input type="checkbox" id="marker_checkbox" checked onclick="L.checkMarker(\''+this.id+'\')"/><h2>' + this.name + '</h2>' + this.descr, { className: 'kml-popup'});
-			}else{
-				this.bindPopup('<input type="checkbox" id="marker_checkbox" onclick="L.checkMarker(\''+this.id+'\')"/><h2>' + this.name + '</h2>' + this.descr, { className: 'kml-popup'});
-			}
-			this.togglePopup();
-		}
-        var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
-		if(e.originalEvent.shiftKey){
-			window.app.markerMouseClickedBF(this.id, button, 'shift');
-            if(e.originalEvent.ctrlKey){
-                window.app.checkMarkerBF(this.id, this.checked=='true');
-            }
-		}else{
-			if(e.originalEvent.ctrlKey){
-				window.app.checkMarkerBF(this.id, this.checked=='true');
-			}			
-            window.app.markerMouseClickedBF(this.id, button, '');
-		}
-		
-		var that = this;
-		
-        setTimeout(()=>{
-            let ar = Object.keys(that.parent.markers)
-            for(var i =0; i<ar.length; i++){
-                if(ar[i] == that.id){
-                    window.mpos = i;   
+    
+            if(this.parent){
+                if(!e.originalEvent.shiftKey){
+                    this.parent.deselectAll();
                 }
             }
-        },1);		
+    
+            if(this.selected=='true'){
+                this.parent.unhighlight(this);
+            }else{
+                this.parent.highlight(this);
+            }
+            this.atualizaIcone();
+    
+            if(e.originalEvent.ctrlKey){
+                if(this.checked=='true'){
+                    this.checked='false';
+                }else{
+                    this.checked='true';
+                }
+                this.atualizaIcone();
+            }
+
+            if(this.checked=='true'){
+                document.getElementById('marker_checkbox').checked=true;
+            }else{
+                document.getElementById('marker_checkbox').checked=false;
+            }
+            
+            var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
+            if(e.originalEvent.shiftKey){
+                window.app.markerMouseClickedBF(this.id, button, 'shift');
+                if(e.originalEvent.ctrlKey){
+                    window.app.checkMarkerBF(this.id, this.checked=='true');
+                }
+            }else{
+                if(e.originalEvent.ctrlKey){
+                    window.app.checkMarkerBF(this.id, this.checked=='true');
+                }           
+                window.app.markerMouseClickedBF(this.id, button, '');
+            }
+            
+            var that = this;
+            
+            setTimeout(()=>{
+                let ar = Object.keys(that.parent.markers)
+                for(var i =0; i<ar.length; i++){
+                    if(ar[i] == that.id){
+                        window.mpos = i;   
+                    }
+                }
+            },1);       
+        }catch(e){
+            alert(e);
+        }
 	},
 	selected:false,
 	checked:false
