@@ -314,8 +314,10 @@ L.KML = L.MarkerClusterGroup.extend({
 		for(i=0;i<id.length;i++){
 			if(b=='true'){
 				this.markers[id[i]].selected='true';
+				this.markers[id[i]].showDirectionLines();
 			}else{
 				this.markers[id[i]].selected='false';
+                this.markers[id[i]].hideDirectionLines();
 			}
 			this.markers[id[i]].atualizaIcone();
 		}
@@ -641,17 +643,18 @@ L.KML = L.MarkerClusterGroup.extend({
     
     highlight: function(mark){
         mark.selected='true';
-        this.selectedPlacemarks.push(mark);
+        this.selectedPlacemarks.push(mark);        
         mark.showDirectionLines();
+        mark.atualizaIcone();
     },
     
     unhighlight: function(mark){
         mark.selected='false';
         let i = this.selectedPlacemarks.indexOf(mark);
+        mark.hideDirectionLines();
         if(i>-1){
             this.selectedPlacemarks.splice(i,1);
         }
-        mark.hideDirectionLines();
     },
     
     addPlacemark: function (id, name, descr, lat, long, checked, selected, options) {
@@ -687,7 +690,6 @@ L.KML = L.MarkerClusterGroup.extend({
     
     refreshMarkers: function() {
         let addedMarkers = window.app.getMarkers();
-        alert(addedMarkers.getLength());
         for (var k = 0; k < addedMarkers.getLength(); k++) {
             let m = addedMarkers.getSlot(k);
             this.addPlacemark(m.id, m.name, m.descr, m.lat, m.longit, m.checked, m.selected);
@@ -1093,6 +1095,7 @@ L.KMLMarker = L.Marker.extend({
     
             if(this.parent){
                 if(!e.originalEvent.shiftKey){
+                    alert('deselectAll');
                     this.parent.deselectAll();
                 }
             }
