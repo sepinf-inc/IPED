@@ -320,17 +320,36 @@ L.KML = L.MarkerClusterGroup.extend({
                 this.markers[id[i]].hideDirectionLines();
 			}
 			this.markers[id[i]].atualizaIcone();
+			t=this.markers[id[i]].__parent;
+			alert('Mapzoom:'+this._zoom);
+			while(t){
+                alert('mzoom:'+t._zoom);
+                if(t._zoom==this._zoom){
+                    t.spiderfy();
+                }
+                t=t.__parent;
+                
+            } 
 		}
 	},
 	marca: function (id, b){
-		if(b=='true'){
-			this.markers[id].checked='true';
-			document.getElementById('marker_checkbox').checked=true;
-		}else{
-			this.markers[id].checked='false';
-			document.getElementById('marker_checkbox').checked=false;
-		}
-		this.markers[id].atualizaIcone();
+        try{
+            let marker_checkbox = document.getElementById('marker_checkbox')
+            if(b=='true'){
+                this.markers[id].checked='true';
+                if(marker_checkbox){
+                    marker_checkbox.checked=true;
+                }
+            }else{
+                this.markers[id].checked='false';
+                if(marker_checkbox){
+                    marker_checkbox.checked=false;
+                }
+            }
+            this.markers[id].atualizaIcone();
+        }catch(e){
+            alert(e);
+        }
 	},
 	minlat:0, 
 	minlongit:0, 
