@@ -113,7 +113,8 @@
     function setTileServerUrl(url) {
         if(url){
             let oldmapTilesLayer = mapTilesLayer;
-	        if(url.includes('googlemaps')){
+	        if(url.includes('googleapis')){
+	           alert(document.getElementById('mapsapi').src);
 	            if(url.includes('hybrid')){
 	                mapTilesLayer = L.gridLayer.googleMutant({type: 'hybrid'});
 	            }else if(url.includes('terrain')){
@@ -126,12 +127,16 @@
 	        }else{
 	            mapTilesLayer = L.tileLayer(url, {maxZoom: 18, minZoom: 2, tileSize: 512, zoomOffset: -1 });
 	        }
-	        mapTilesLayer.addTo(map);
-            if(oldmapTilesLayer){
-                if(map.hasLayer(oldmapTilesLayer)){
-                    map.removeLayer(oldmapTilesLayer);
-                }
-            }
+	        try{
+	            mapTilesLayer.addTo(map);
+	            if(oldmapTilesLayer){
+	                if(map.hasLayer(oldmapTilesLayer)){
+	                    map.removeLayer(oldmapTilesLayer);
+	                }
+	            }
+	        }catch(e){
+	           alert(e);
+	        }
         }
     }
 

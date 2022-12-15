@@ -44,12 +44,19 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     ChangeListener<State> onLoadChange;
 
     String url;
+    String lastGoogleApiKey=null;
     private boolean htmlloaded;
     private Semaphore sem;
 
     public MapCanvasOpenStreet() {
         this.jfxPanel = new JFXPanel();
 
+        this.url = JMapOptionsPane.getSavedTilesSourceURL();
+        int i = url.indexOf("key=");
+        if(i>=0) {
+            lastGoogleApiKey=lastGoogleApiKey=url.substring(url.indexOf("key="));
+        }
+        
         Platform.runLater(new Runnable() {
             public void run() {
                 browser = new WebView();
@@ -91,6 +98,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                         System.out.println("Alert:" + event.getData()); //$NON-NLS-1$
                     }
                 });
+
 
                 webEngine.loadContent(UiUtil.getUIEmptyHtml());
 
@@ -214,7 +222,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             });
 
             setText(html);
-            
+
             sem.acquire();
             sem.release();
         }catch (Exception e) {
@@ -227,6 +235,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     }
 
     public String getMainHtml() throws IOException {
+        this.url = JMapOptionsPane.getSavedTilesSourceURL();
         String html = IOUtils.toString(getClass().getResourceAsStream("main.html"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
         String js = IOUtils.toString(getClass().getResourceAsStream("L.KML.js"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
         String markerclusterjs = IOUtils.toString(getClass().getResourceAsStream("leaflet.markercluster.js"), //$NON-NLS-1$
@@ -244,10 +253,11 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         html = html.replace("{{leafletgeometryutil}}", leafletgeometryutil);
         html = html.replace("{{leafletarrowheads}}", leafletarrowheads);
 
-        html = html.replace("{{googlemaps_scripts}}", "<script src=\"https://maps.googleapis.com/maps/api/js?key="+JMapOptionsPane.getGoogleAPIKey()+"\" async defer></script>\n"
+        String apikey = JMapOptionsPane.getGoogleAPIKey();
+        html = html.replace("{{googlemaps_scripts}}", "<script id=\"mapsapi\" src=\"https://maps.googleapis.com/maps/api/js?key="+apikey+"\" async defer></script>\n"
                 + "<script src=\"https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js\"></script>");
 
-        html = html.replace("{{tilelayer_script}}", "setTileServerUrl('"+JMapOptionsPane.getSavedTilesSourceURL()+"');");
+        html = html.replace("{{tilelayer_script}}", "setTileServerUrl('"+url+"');");
 
         String themeScript="applyLightTheme();";
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
@@ -511,17 +521,23 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     }
 
     @Override
-    public void setTileServerUrl(String url) {
-        Platform.runLater(new Runnable() {
-            public void run() {
-                try {
-                    webEngine.executeScript("setTileServerUrl('"+url+"');");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    // nothing
+    public boolean setTileServerUrl(String url) {
+        if(url.contains("googleapis") && url.contains("key") && !url.substring(url.indexOf("key=")).equals(lastGoogleApiKey)) {
+            lastGoogleApiKey=url.substring(url.indexOf("key="));
+            return true;
+        }else {
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    try {
+                        webEngine.executeScript("setTileServerUrl('"+url+"');");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        // nothing
+                    }
                 }
-            }
-        });
+            });
+            return false;
+        }
     }
 }

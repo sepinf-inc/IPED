@@ -121,7 +121,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
                         public void run() {
-                            String result = JMapOptionsPane.showOptionsDialog(self);
+                            String result = JMapOptionsPane.showOptionsDialog(self, tilesSourceURL);
                             if (result != null) {
                                 url.append(result);
                             }
@@ -136,7 +136,23 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                     public void run() {
                         if (url.length() > 0) {
                             tilesSourceURL = url.toString();
-                            config(tilesSourceURL);
+                            if(config(tilesSourceURL)) {
+                                mapaDesatualizado = true;
+
+                                /*
+                                 * Sends the current lead selection to the next map
+                                 * rendered to select it after load.
+                                 * */
+                                runAfterLoad(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        browserCanvas.sendLeadSelection(leadSelectionToApply);
+                                        browserCanvas.update();
+                                    }
+                                });
+
+                                updateMap();
+                            }
                         }
                     }
                 });
@@ -144,13 +160,15 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         };
     }
 
-    public void config(String url) {
+    public boolean config(String url) {
         if (url == null) {
+            return false;
         } else {
             if(browserCanvas==null) {
                 browserCanvas = mcf.createMapCanvas(url);
+                return false;
             }else {
-                browserCanvas.setTileServerUrl(url);
+                return browserCanvas.setTileServerUrl(url);
             }
         }
     }
