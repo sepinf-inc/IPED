@@ -34,6 +34,8 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
      * 
      */
     private static final long serialVersionUID = 1L;
+    private static final String DARK_THEME_SCRIPT = "applyDarkTheme();";
+    private static final String LIGHT_THEME_SCRIPT = "applyLightTheme();";
     WebView browser;
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
@@ -47,6 +49,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     String lastGoogleApiKey=null;
     private boolean htmlloaded;
     private Semaphore sem;
+    private String themeScript;
 
     public MapCanvasOpenStreet() {
         this.jfxPanel = new JFXPanel();
@@ -259,10 +262,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
         html = html.replace("{{tilelayer_script}}", "setTileServerUrl('"+url+"');");
 
-        String themeScript="applyLightTheme();";
+        themeScript=MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
         if(bgColor!=null) {
-            themeScript="applyDarkTheme();";
+            themeScript=MapCanvasOpenStreet.DARK_THEME_SCRIPT;
         }
         html = html.replace("{{applyTheme}}", themeScript);
 
@@ -404,26 +407,33 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         }
         updateUI();
     }
-
+   
     public void updateUI() {
-        String themeScript="applyLightTheme();";
+        boolean updateTheme = false;
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
-        if(bgColor!=null) {
-            themeScript="applyDarkTheme();";
+        if(bgColor!=null && themeScript.equals(MapCanvasOpenStreet.LIGHT_THEME_SCRIPT)) {
+            themeScript=MapCanvasOpenStreet.DARK_THEME_SCRIPT;
+            updateTheme = true;
+        }
+        if(bgColor==null && themeScript.equals(MapCanvasOpenStreet.DARK_THEME_SCRIPT)) {
+            themeScript=MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;
+            updateTheme = true;
         }
 
-        final String themeScriptFinal=themeScript; 
-        Platform.runLater(new Runnable() {
-            public void run() {
-                try {
-                    webEngine.executeScript(themeScriptFinal);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    // nothing
+        if(updateTheme) {
+            final String themeScriptFinal=themeScript; 
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    try {
+                        webEngine.executeScript(themeScriptFinal);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        // nothing
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     @Override

@@ -114,7 +114,6 @@
         if(url){
             let oldmapTilesLayer = mapTilesLayer;
 	        if(url.includes('googleapis')){
-	           alert(document.getElementById('mapsapi').src);
 	            if(url.includes('hybrid')){
 	                mapTilesLayer = L.gridLayer.googleMutant({type: 'hybrid'});
 	            }else if(url.includes('terrain')){
