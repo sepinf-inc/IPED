@@ -468,7 +468,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     int addPlacemarkCount=0;
 
     public void addPlacemark(String gid, String name, String descr,  String longit, String lat, boolean checked, boolean selected) {
-        addPlacemarkLines.append("track.addPlacemark('"+gid+"','"+name+"','"+descr+"','"+lat+"','"+longit+"','"+checked+"','"+selected+"');");
+        addPlacemarkLines.append("['"+gid+"','"+name+"','"+descr+"','"+lat+"','"+longit+"','"+checked+"','"+selected+"'],");
         addPlacemarkCount++;
         if(addPlacemarkCount>=1000) {
             flushAddPlacemarkLines();
@@ -481,7 +481,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             Platform.runLater(new Runnable() {
                 public void run() {
                     try {
-                        webEngine.executeScript(finalPlacemarks);
+                        webEngine.executeScript("track.addPlacemarks(["+finalPlacemarks.substring(0,finalPlacemarks.length()-1)+"]);");
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {

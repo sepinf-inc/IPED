@@ -337,7 +337,7 @@ L.KML = L.MarkerClusterGroup.extend({
 	maxlat:0, 
 	maxlingit:0,
     viewAll: function(){
-        this.flushAddPlacemarkArray();
+        this.flushAddPlacemarkArray(this.msAddPlacemark);
         var corner1 = L.latLng(this.minlat, this.minlongit);
         var corner2 = L.latLng(this.maxlat, this.maxlongit);
         var bounds = L.latLngBounds(corner1, corner2);
@@ -629,6 +629,7 @@ L.KML = L.MarkerClusterGroup.extend({
     msAddPlacemark:[],
     selectedPlacemarks:[],
     lastAddedPlacemark: null,
+    addpromises:[],
 
     deselectAll:function (){
         while(this.selectedPlacemarks.length>0){
@@ -657,6 +658,15 @@ L.KML = L.MarkerClusterGroup.extend({
         }
     },
     
+    addPlacemarks: function (a) {
+        var that=this;
+        this.addpromises.push(new Promise((resolve)=>{
+            for(var i=0; i<a.length; i++){
+                that.addPlacemark(a[i][0],a[i][1],a[i][2],a[i][3],a[i][4],a[i][5],a[i][6],a[i][7]);
+            }
+            resolve();
+        }));
+    },
     addPlacemark: function (id, name, descr, lat, long, checked, selected, options) {
         var m = new L.KMLMarker(new L.LatLng(lat, long), options);
         m.id=id;
@@ -683,8 +693,13 @@ L.KML = L.MarkerClusterGroup.extend({
         this.markers[id]=m;
         this.markerCoords.push(m.getLatLng());
         this.msAddPlacemark.push(m);
-        if(this.msAddPlacemark.length>=100){
-            this.flushAddPlacemarkArray();
+        if(this.msAddPlacemark.length>=10000){
+            var placemarks=this.msAddPlacemark;
+            new Promise((resolve)=>{
+                this.flushAddPlacemarkArray(placemarks);
+                resolve();
+            });
+            this.msAddPlacemark=[];
         }
     },
     
@@ -696,12 +711,11 @@ L.KML = L.MarkerClusterGroup.extend({
         }
     },
     
-    flushAddPlacemarkArray: function (){
-        if(this.msAddPlacemark.length>0){
-            layer = new L.FeatureGroup(this.msAddPlacemark);
+    flushAddPlacemarkArray: function (placemarks){
+        if(placemarks.length>0){
+            layer = new L.FeatureGroup(placemarks);
             this.fire('addlayer', {layer: layer});
             this.addLayer(layer);
-            this.msAddPlacemark=[];
         }
     },
     
