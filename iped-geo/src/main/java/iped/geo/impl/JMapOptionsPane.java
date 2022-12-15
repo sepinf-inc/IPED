@@ -59,6 +59,9 @@ public class JMapOptionsPane extends JOptionPane {
     String url = "";
     JTextField txTileLayerURl;
     JRadioButton btnGoogleMaps;
+
+    JComboBox<String> cbGoogleTileType;
+    
     String rbOutraCache = "";
     boolean canceled = true;
     JTextField txGoogleApiKey = new JTextField();
@@ -93,6 +96,7 @@ public class JMapOptionsPane extends JOptionPane {
         txGoogleApiKey.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void removeUpdate(DocumentEvent e) {
+                googleApiKey=txGoogleApiKey.getText();
                 if ("".equals(txGoogleApiKey.getText())) {
                     btOk.setEnabled(false);
                 }
@@ -100,6 +104,7 @@ public class JMapOptionsPane extends JOptionPane {
 
             @Override
             public void insertUpdate(DocumentEvent e) {
+                googleApiKey=txGoogleApiKey.getText();
                 if ((!"".equals(txGoogleApiKey.getText())) && (!btOk.isEnabled())) {
                     btOk.setEnabled(true);
                 }
@@ -107,6 +112,7 @@ public class JMapOptionsPane extends JOptionPane {
 
             @Override
             public void changedUpdate(DocumentEvent e) {
+                googleApiKey=txGoogleApiKey.getText();
                 if ("".equals(txGoogleApiKey.getText())) {
                     btOk.setEnabled(false);
                 } else {
@@ -181,8 +187,25 @@ public class JMapOptionsPane extends JOptionPane {
         paneLeaflet.add(txTileLayerURl, BorderLayout.AFTER_LAST_LINE);
         pane.add(paneLeaflet);
 
+        cbGoogleTileType = new JComboBox<String>();
+        cbGoogleTileType.addItem("Hybrid");
+        cbGoogleTileType.addItem("Satellite");
+        cbGoogleTileType.addItem("Roadmap");
+        cbGoogleTileType.addItem("Terrain");
+        
+        cbGoogleTileType.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                btnGoogleMaps.setEnabled(true);
+                btnGoogleMaps.setSelected(true);
+            }
+        });
+        
         btnGoogleMaps = new JRadioButton(Messages.getString("JMapOptionsPane.UseGoogleMaps"));
-        paneGoogle.add(btnGoogleMaps, BorderLayout.BEFORE_FIRST_LINE);
+        JPanel paneGoogleOpt = new JPanel();
+        paneGoogleOpt.add(btnGoogleMaps, BorderLayout.BEFORE_FIRST_LINE);
+        paneGoogleOpt.add(cbGoogleTileType, BorderLayout.EAST);
+        paneGoogle.add(paneGoogleOpt, BorderLayout.BEFORE_FIRST_LINE);
         paneGoogleKey.setLayout(new BorderLayout());
         paneGoogleKey.add(lbGoogleApiKey, BorderLayout.BEFORE_FIRST_LINE);
         txGoogleApiKey.setMinimumSize(new Dimension(150, 10));
@@ -299,8 +322,16 @@ public class JMapOptionsPane extends JOptionPane {
     }
 
     public void config(String tilesSourceURL) {
-        if (tilesSourceURL.contains("googlemaps")) {
+        if (tilesSourceURL.contains("googleapis")) {
             txTileLayerURl.setText("");
+            
+            for(int i=0; i<cbGoogleTileType.getItemCount(); i++) {
+                String type = cbGoogleTileType.getItemAt(i);
+                if(tilesSourceURL.contains(type.toLowerCase())) {
+                    cbGoogleTileType.setSelectedIndex(i);
+                }
+            }
+            
             btnGoogleMaps.setSelected(true);
         } else {
             btnGoogleMaps.setSelected(false);
@@ -327,7 +358,7 @@ public class JMapOptionsPane extends JOptionPane {
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
         if (btnGoogleMaps.isSelected()) {
-            url = "http://www.googlemaps.com.br";
+            url = "https://maps.googleapis.com/maps/api/js?mapType="+((String)cbGoogleTileType.getSelectedItem()).toLowerCase()+"&key="+txGoogleApiKey.getText().trim();
         } else {
             url = txTileLayerURl.getText();
         }
@@ -435,6 +466,10 @@ public class JMapOptionsPane extends JOptionPane {
         }
 
         return singleton.getUrl();
+    }
+    
+    public String getGoogleMapType() {
+        return (String) cbGoogleTileType.getSelectedItem();
     }
 
     public static String showOptionsDialog(Component parentComponent) throws HeadlessException {
