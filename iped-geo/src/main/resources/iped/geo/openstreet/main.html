@@ -215,7 +215,7 @@
 	        track.highlight(track.markers[keys[pos]]);
 	        window.app.markerMouseClickedBF(keys[pos],1,'');
 	        
-            map.flyTo(track.markers[keys[pos]].getLatLng());
+            map.flyTo(track.markers[keys[pos]].getLatLng(), map.zoom, {duration:1.5});
 	        mpos=pos;
 	        return false;
 	    }catch(e){
