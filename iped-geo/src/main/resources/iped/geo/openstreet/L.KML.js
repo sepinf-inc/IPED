@@ -320,16 +320,18 @@ L.KML = L.MarkerClusterGroup.extend({
                 this.markers[id[i]].hideDirectionLines();
 			}
 			this.markers[id[i]].atualizaIcone();
-			t=this.markers[id[i]].__parent;
-			alert('Mapzoom:'+this._zoom);
-			while(t){
-                alert('mzoom:'+t._zoom);
-                if(t._zoom==this._zoom){
-                    t.spiderfy();
-                }
-                t=t.__parent;
-                
-            } 
+			new Promise(()=>{
+                t=this.markers[id[i]].__parent;
+                while(t){
+                    if(t._zoom<=this._zoom){
+                        if(t._childCount<=36){
+                            t.spiderfy();
+                        }
+                        break;
+                    }
+                    t=t.__parent;
+                } 
+            });
 		}
 	},
 	marca: function (id, b){
@@ -376,7 +378,7 @@ L.KML = L.MarkerClusterGroup.extend({
         this.viewAll();        
     },
     centralizaMarcador: function(m){
-        this._map.setView(m.getLatLng(), zoom, map.option);
+        this._map.setView(m.getLatLng(), this._map.zoom, this._map.option);
     },
 	centralizaMarcadores: function(ms){
     	if(ms.length>0){
@@ -387,8 +389,7 @@ L.KML = L.MarkerClusterGroup.extend({
 			if(target.zoom < zoom){
 				zoom = target.zoom; 	
 			}
-			this._map.setView(target.center, zoom, map.option);
-	    	//map.fitBounds(fg.getBounds());
+	    	map.fitBounds(fg.getBounds());
     	}
 	},
     centralizaSelecao: function(){
@@ -1128,7 +1129,6 @@ L.KMLMarker = L.Marker.extend({
     
             if(this.parent){
                 if(!e.originalEvent.shiftKey){
-                    alert('deselectAll');
                     this.parent.deselectAll();
                 }
             }
