@@ -13,7 +13,9 @@ import javax.swing.event.TableModelListener;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import iped.data.IItemId;
+import iped.geo.js.GetResultsJSWorker;
 import iped.geo.localization.Messages;
+import iped.properties.BasicProps;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.ResultSetViewer;
@@ -61,7 +63,11 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
 
     @Override
     public void redraw() {
-        mapaPanel.updateMap();
+        if(mapaPanel.browserCanvas.isLoaded()) {
+            if (!updatingCheckbox) {
+                mapaPanel.updateMap();
+            }
+        }
     }
 
     boolean internaltableChanged = false;
@@ -87,21 +93,25 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
             return;
         }
         
+        if(!mapaPanel.browserCanvas.isLoaded()) {
+            mapaPanel.updateMap();
+        }        
+        
         /* Se a alteração foi feita no próprio mapa
          * ou a operação é de ordenação,
          * ela não precisa ser refeita. */
         if (!desabilitaTemp) {            
-            mapaPanel.setMapOutDated(true);
-            
             if (e.getColumn() == 1) {// se o evento foi disparado pelo check box que fica na coluna 1
                 updatingCheckbox = true;
+                
                 IItemId item = resultsProvider.getResults().getItem(e.getFirstRow());
 
                 Boolean b = (Boolean) resultsTable.getModel().getValueAt(e.getFirstRow(), e.getColumn());
 
                 mapaPanel.selectCheckbox(item, b.booleanValue());
+            }else {
+                mapaPanel.setMapOutDated(true);
             }
-            
 
             /* somente chamado se o tab de mapas estiver sendo exibido */
             if (dockable != null && dockable.isShowing()) {
@@ -116,6 +126,9 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
         } else {
             // reabilita renderização automatica pela alteração no modelo
             desabilitaTemp = false;
+        }
+        if(dockable == null || !dockable.isShowing()) {
+            updatingCheckbox = false;
         }
     }
 

@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -17,6 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -25,7 +28,6 @@ import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
 import iped.geo.AbstractMapCanvas;
 import iped.geo.js.GetResultsJSWorker;
-import iped.geo.kml.GetResultsKMLWorker;
 import iped.geo.kml.KMLResult;
 import iped.geo.localization.Messages;
 import iped.properties.BasicProps;
@@ -61,6 +63,15 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
     private JProgressBar gpsProgressBar;
     private GetResultsJSWorker jsWorker;
+    private PropertyChangeListener lastPropertyChangeListener;
+    
+    public enum MapLoadState {
+        NOTLOADED,
+        LOADING,
+        LOADED
+    };
+    MapLoadState loadState = MapLoadState.NOTLOADED;
+    private GetResultsJSWorker mapLoadWorker;
 
     public AppMapPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
@@ -114,6 +125,8 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
         final Component self = this;
         changeTileServer = new ActionListener() {
+            private PropertyChangeListener lastTileServerChange;
+
             public void actionPerformed(ActionEvent e) {
                 final String leadSelectionToApply = browserCanvas.getLeadSelectionToApply();
                 StringBuffer url = new StringBuffer("");
@@ -131,33 +144,53 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
-                SwingUtilities.invokeLater(new Runnable() {
+                Runnable tileServerChange = new Runnable() {
                     @Override
                     public void run() {
-                        if (url.length() > 0) {
-                            tilesSourceURL = url.toString();
-                            if(config(tilesSourceURL)) {
-                                mapaDesatualizado = true;
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (url.length() > 0) {
+                                    tilesSourceURL = url.toString();
+                                    if(config(tilesSourceURL)) {
+                                        mapaDesatualizado = true;
 
-                                /*
-                                 * Sends the current lead selection to the next map
-                                 * rendered to select it after load.
-                                 * */
-                                runAfterLoad(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        browserCanvas.sendLeadSelection(leadSelectionToApply);
-                                        browserCanvas.update();
+                                        /*
+                                         * Sends the current lead selection to the next map
+                                         * rendered to select it after load.
+                                         * */
+                                        runAfterLoad(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                browserCanvas.sendLeadSelection(leadSelectionToApply);
+                                                browserCanvas.update();
+                                            }
+                                        });
+
+                                        updateMap();
                                     }
-                                });
-
-                                updateMap();
+                                }
                             }
-                        }
+                        });
                     }
-                });
+                };
+                if(loadState!=MapLoadState.LOADED) {
+                    if(lastTileServerChange!=null) {
+                        mapLoadWorker.removePropertyChangeListener(lastTileServerChange);
+                    }
+                    lastTileServerChange = new PropertyChangeListener() {
+                        @Override
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            tileServerChange.run();
+                        }
+                    };
+                    mapLoadWorker.addPropertyChangeListener(lastTileServerChange);
+                }else {
+                    tileServerChange.run();
+                }
             }
         };
+        browserCanvas = mcf.createMapCanvas(savedTilesSourceURL);
     }
 
     public boolean config(String url) {
@@ -212,10 +245,43 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             gpsProgressBar.setVisible(true);
 
             String[] cols = new String[] { BasicProps.ID };
-            //GetResultsKMLWorker kmlWorker = new GetResultsKMLWorker(resultsProvider, cols, gpsProgressBar, this);
-            jsWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas, this);
-            jsWorker.execute();
-
+            
+            if(loadState == MapLoadState.NOTLOADED) {
+                loadState = MapLoadState.LOADING;
+                mapLoadWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas, this);
+                mapLoadWorker.addPropertyChangeListener(new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if ("state".equals(evt.getPropertyName())
+                                && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
+                            loadState = MapLoadState.LOADED;
+                        }
+                    }
+                });
+                mapLoadWorker.execute();
+            }else if(loadState == MapLoadState.LOADING){
+                if(lastPropertyChangeListener!=null) {
+                    //cancels prior map update in case it hasn't finished yet
+                    mapLoadWorker.removePropertyChangeListener(lastPropertyChangeListener);
+                    jsWorker.cancel(true);
+                }
+                AppMapPanel self = this;
+                //enqueue the map update to run after map load worker ends.
+                lastPropertyChangeListener = new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if ("state".equals(evt.getPropertyName())
+                                && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
+                            jsWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas, self);
+                            jsWorker.execute();
+                        }                        
+                    }
+                };
+                mapLoadWorker.addPropertyChangeListener(lastPropertyChangeListener);
+            }else if(loadState == MapLoadState.LOADED){
+                jsWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas, this);
+                jsWorker.execute();
+            }
         } else {
             browserCanvas.update();
         }

@@ -111,30 +111,32 @@
     {{applyTheme}}
 
     function setTileServerUrl(url) {
-        if(url){
-            let oldmapTilesLayer = mapTilesLayer;
-	        if(url.includes('googleapis')){
-	            if(url.includes('hybrid')){
-	                mapTilesLayer = L.gridLayer.googleMutant({type: 'hybrid'});
-	            }else if(url.includes('terrain')){
-	                mapTilesLayer = L.gridLayer.googleMutant({type: 'terrain'});
-	            }else if(url.includes('satellite')){
-	                mapTilesLayer = L.gridLayer.googleMutant({type: 'satellite'});
-	            }else{
-	                mapTilesLayer = L.gridLayer.googleMutant({type: 'roadmap'});
-	            }
-	        }else{
-	            mapTilesLayer = L.tileLayer(url, {maxZoom: 18, minZoom: 2, tileSize: 512, zoomOffset: -1 });
-	        }
-	        try{
-	            mapTilesLayer.addTo(map);
-	            if(oldmapTilesLayer){
-	                if(map.hasLayer(oldmapTilesLayer)){
-	                    map.removeLayer(oldmapTilesLayer);
+        if(map){
+	        if(url){
+	            let oldmapTilesLayer = mapTilesLayer;
+	            if(url.includes('googleapis')){
+	                if(url.includes('hybrid')){
+	                    mapTilesLayer = L.gridLayer.googleMutant({type: 'hybrid'});
+	                }else if(url.includes('terrain')){
+	                    mapTilesLayer = L.gridLayer.googleMutant({type: 'terrain'});
+	                }else if(url.includes('satellite')){
+	                    mapTilesLayer = L.gridLayer.googleMutant({type: 'satellite'});
+	                }else{
+	                    mapTilesLayer = L.gridLayer.googleMutant({type: 'roadmap'});
 	                }
+	            }else{
+	                mapTilesLayer = L.tileLayer(url, {maxZoom: 18, minZoom: 2, tileSize: 512, zoomOffset: -1 });
 	            }
-	        }catch(e){
-	           alert(e);
+	            try{
+	                mapTilesLayer.addTo(map);
+	                if(oldmapTilesLayer){
+	                    if(map.hasLayer(oldmapTilesLayer)){
+	                        map.removeLayer(oldmapTilesLayer);
+	                    }
+	                }
+	            }catch(e){
+	               alert(e);
+	            }
 	        }
         }
     }
@@ -174,57 +176,54 @@
         const bounds = track.getBounds();
         map.fitBounds(bounds);
     }
-    
+
     var lastLeadMarker = null;
     function updateLeadMarker(marker){
-		var i=0;
-       	for (var ind in track.markers){
-       		if(track.markers[ind]==track.markers[marker]){
-    			mpos=i;
-       		}
-       		i++;
+       	if(track.curMark){
+       	    track.curMark.hideDirectionLines();
        	}
-       	if(lastLeadMarker){
-       	    lastLeadMarker.hideDirectionLines();
-       	}
-       	if(lastLeadMarker!=track.markers[marker]){
+       	if(track.curMark!=track.markers[marker]){
             track.markers[marker].showDirectionLines();
        	}
-       	lastLeadMarker = track.markers[marker];
-       	return mpos;
+       	track.curMark = track.markers[marker];
     }
 
-    function moveToMarkerPos(pos){
+    function moveToMarker(m){
+        if(m){
+	        try{    
+	            track.deselectAll();
+	            track.highlight(m);
+	            window.app.markerMouseClickedBF(m.id,1,'');
+	    
+	            map.setView(m.getLatLng(), map.zoom);
+	        }catch(e){
+	            alert(e);
+	        }
+        }
+    }
+
+    function moveToNextMarker(){
+        m = track.getNextMarker();
+        moveToMarker(m);
+    }
+
+    function moveToPreviousMarker(){
+	    m = track.getPreviousMarker();
+	    moveToMarker(m);
+    }
+
+    function moveToLastMarker(){
 	    try{
-	        if(pos<0){
-	           if(mpos==0){
-	               alert('The navigation already is on the first item.');
-	               return false;
-	           }else{
-	               pos = 0;
-	           }
-	        }
-	        if(pos>=track.markersCount()){
-	            alert('The navigation already is on the last item.');
-	            return false;
-	        }
-	
-	        var i=0;
-	        var keys = Object.keys(track.markers);
-	        track.deselectAll();
-	        track.highlight(track.markers[keys[pos]]);
-	        window.app.markerMouseClickedBF(keys[pos],1,'');
-	        
-            map.flyTo(track.markers[keys[pos]].getLatLng(), map.zoom, {duration:1.5});
-	        mpos=pos;
-	        return false;
+	        m = track.getLastMarker();
+	        moveToMarker(m);
 	    }catch(e){
 	        alert(e);
 	    }
     }
 
-    function moveToLastMarker(){
-    	moveToMarkerPos(track.markersCount()-1);
+    function moveToFirstMarker(){
+        m = track.getFirstMarker();
+        moveToMarker(m);
     }
 
     function zoomOut(){
