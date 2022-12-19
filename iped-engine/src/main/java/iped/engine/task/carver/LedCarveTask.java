@@ -252,7 +252,6 @@ public class LedCarveTask extends BaseCarveTask {
         return mediaType.getBaseType().equals(UNALLOCATED_MIMETYPE)
                 || mediaType.getBaseType().equals(MediaType.OCTET_STREAM)
                 || mediaType.getBaseType().equals(MediaTypes.VDI)
-                || mediaType.getBaseType().equals(MediaTypes.VHDX)
                 || mediaType.getBaseType().equals(mtPageFile)
                 || mediaType.getBaseType().equals(mtVolumeShadow);
     }
