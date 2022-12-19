@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
@@ -23,6 +24,7 @@ abstract public class AbstractMapCanvas extends Canvas {
     MarkerEventListener markerEventListener = null;
     MarkerCheckBoxListener markerCheckBoxListener = null;
     protected String tourOrder;
+    protected boolean loaded = false;
 
     ActionListener onChangeTileServer = null;
 
@@ -146,12 +148,6 @@ abstract public class AbstractMapCanvas extends Canvas {
     public void viewAll(double minlongit, double minlat, double maxlongit, double maxlat) {
     }
 
-    public void refreshMap() {        
-    }
-
-    public abstract void addPlacemark(String gid, String htmlFormat, String string, String longit, String lat,
-            boolean checked, boolean selected);
-
     public String getTourOrder() {
         return tourOrder;
     }
@@ -166,5 +162,26 @@ abstract public class AbstractMapCanvas extends Canvas {
     public boolean setTileServerUrl(String url) {
         return false;        
     }
+
+    public boolean isLoaded() {
+        return loaded;
+    }
+
+    public void updateView(List<StringBuffer> gidsList) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void setLoaded(boolean loaded) {
+        this.loaded = loaded;
+    }
+    
+    /**
+    * Creates the placemarks on the loaded map. The creation is done in batches, one javascript call per list entry.
+    * <p>
+    *
+    * @param  gidsList  a list of List<String> object with the placemarks informations.
+    */
+    public abstract void createPlacemarks(List<StringBuffer> gidsList);
 
 }

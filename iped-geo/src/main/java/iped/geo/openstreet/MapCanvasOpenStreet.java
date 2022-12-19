@@ -4,8 +4,10 @@ import java.awt.Color;
 import java.awt.Component;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Semaphore;
 
@@ -229,6 +231,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             sem.acquire();
             sem.release();
         }catch (Exception e) {
+            loaded=false;
             if((e instanceof CancellationException)||(e instanceof InterruptedException)) {
                 sem.release();
             }else {
@@ -464,39 +467,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         });
     }
 
-    StringBuffer addPlacemarkLines=new StringBuffer();
-    int addPlacemarkCount=0;
-
-    public void addPlacemark(String gid, String name, String descr,  String longit, String lat, boolean checked, boolean selected) {
-        addPlacemarkLines.append("['"+gid+"','"+name+"','"+descr+"','"+lat+"','"+longit+"','"+checked+"','"+selected+"'],");
-        addPlacemarkCount++;
-        if(addPlacemarkCount>=1000) {
-            flushAddPlacemarkLines();
-        }        
-    }
-
-    protected void flushAddPlacemarkLines() {
-        if(addPlacemarkCount>0) {
-            final String finalPlacemarks = addPlacemarkLines.toString();
-            Platform.runLater(new Runnable() {
-                public void run() {
-                    try {
-                        webEngine.executeScript("track.addPlacemarks(["+finalPlacemarks.substring(0,finalPlacemarks.length()-1)+"]);");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    } finally {
-                        // nothing
-                    }
-                }
-            });
-            addPlacemarkCount=0;
-            addPlacemarkLines=new StringBuffer();
-        }
-    }
-
     private void clearAddPlacemarkLines() {
-        addPlacemarkLines=new StringBuffer();
-        addPlacemarkCount=0;
     }
 
     @Override
@@ -515,12 +486,42 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     }
 
     @Override
-    public void refreshMap() {
-        flushAddPlacemarkLines();        
+    public boolean setTileServerUrl(String url) {
+        if(url.contains("googleapis") && url.contains("key") && !url.substring(url.indexOf("key=")).equals(lastGoogleApiKey)) {
+            lastGoogleApiKey=url.substring(url.indexOf("key="));
+            return true;
+        }else {
+            if(isLoaded()) {
+                Platform.runLater(new Runnable() {
+                    public void run() {
+                        try {
+                            webEngine.executeScript("setTileServerUrl('"+url+"');");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        } finally {
+                            // nothing
+                        }
+                    }
+                });
+            }
+            return false;
+        }
+    }
+
+    @Override
+    public void updateView(List<StringBuffer> gids) {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
-                    webEngine.executeScript("track.tourOrder='"+tourOrder+"';track.resolveFullyLoaded(track);");
+                    if(gids.size()>0) {
+                        webEngine.executeScript("track.clearVisibleMarkers();");
+                        for(int i=0; i<gids.size(); i++) {
+                            webEngine.executeScript("track.showMarkers("+gids.get(i).toString()+");");
+                        }
+                        webEngine.executeScript("track.orderVisibleMarkers();");
+                    } else {
+                        webEngine.executeScript("track.hideAllMarkers();");
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
@@ -531,23 +532,22 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     }
 
     @Override
-    public boolean setTileServerUrl(String url) {
-        if(url.contains("googleapis") && url.contains("key") && !url.substring(url.indexOf("key=")).equals(lastGoogleApiKey)) {
-            lastGoogleApiKey=url.substring(url.indexOf("key="));
-            return true;
-        }else {
-            Platform.runLater(new Runnable() {
-                public void run() {
-                    try {
-                        webEngine.executeScript("setTileServerUrl('"+url+"');");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    } finally {
-                        // nothing
+    public void createPlacemarks(List<StringBuffer> gids) {
+        Platform.runLater(new Runnable() {
+            public void run() {
+                try {
+                    if(gids.size()>0) {
+                        for(int i=0; i<gids.size(); i++) {
+                            webEngine.executeScript("track.createMarkers("+gids.get(i).toString()+");");
+                        }
+                        webEngine.executeScript("track.orderVisibleMarkers();");
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // nothing
                 }
-            });
-            return false;
-        }
+            }
+        });
     }
 }

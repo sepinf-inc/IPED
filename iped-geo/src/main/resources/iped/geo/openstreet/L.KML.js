@@ -287,7 +287,6 @@ L.KML = L.MarkerClusterGroup.extend({
    				mids.push(m.id);
 				m.selected='true';
 				m.atualizaIcone();
-				
 			}
     	}
 		window.app.selectMarkerBF(mids);
@@ -312,26 +311,20 @@ L.KML = L.MarkerClusterGroup.extend({
 	},
 	selecionaMarcador: function (id, b){
 		for(i=0;i<id.length;i++){
+            mark=this.markers[id[i]];
 			if(b=='true'){
-				this.markers[id[i]].selected='true';
-				this.markers[id[i]].showDirectionLines();
+				mark.selected='true';
+				mark.showDirectionLines();
+				this.selectedPlacemarks.push(mark);
 			}else{
-				this.markers[id[i]].selected='false';
-                this.markers[id[i]].hideDirectionLines();
+				mark.selected='false';
+                mark.hideDirectionLines();
+                let i = this.selectedPlacemarks.indexOf(mark);
+                if(i>-1){
+                    this.selectedPlacemarks.splice(i,1);
+                }
 			}
-			this.markers[id[i]].atualizaIcone();
-			new Promise(()=>{
-                t=this.markers[id[i]].__parent;
-                while(t){
-                    if(t._zoom<=this._zoom){
-                        if(t._childCount<=36){
-                            t.spiderfy();
-                        }
-                        break;
-                    }
-                    t=t.__parent;
-                } 
-            });
+			mark.atualizaIcone();
 		}
 	},
 	marca: function (id, b){
@@ -357,16 +350,15 @@ L.KML = L.MarkerClusterGroup.extend({
 	minlongit:0, 
 	maxlat:0, 
 	maxlingit:0,
+	orderPromise:null,
+	
     viewAll: function(){
-        this.flushAddPlacemarkArray(this.msAddPlacemark);
         var corner1 = L.latLng(this.minlat, this.minlongit);
         var corner2 = L.latLng(this.maxlat, this.maxlongit);
         var bounds = L.latLngBounds(corner1, corner2);
         var target = this._map._getBoundsCenterZoom(bounds, map.options);
         var zoom = this._map._zoom;
-        if(target.zoom < zoom){
-            zoom = target.zoom;
-        }
+        zoom = target.zoom;
         this._map.setView(target.center, zoom, map.option);
 	},
 
@@ -389,7 +381,11 @@ L.KML = L.MarkerClusterGroup.extend({
 			if(target.zoom < zoom){
 				zoom = target.zoom; 	
 			}
-	    	map.fitBounds(fg.getBounds());
+			if(ms.length>1){
+                map.fitBounds(fg.getBounds());
+            }else{
+                this.centralizaMarcador(ms[0]);
+            }
     	}
 	},
     centralizaSelecao: function(){
@@ -650,6 +646,10 @@ L.KML = L.MarkerClusterGroup.extend({
     selectedPlacemarks:[],
     lastAddedPlacemark: null,
     addpromises:[],
+    visibleLayer:null,
+    orderedVisiblePlacemarks:[],
+    placemarks:[],
+    placemarkIndexes:[],
 
     deselectAll:function (){
         while(this.selectedPlacemarks.length>0){
@@ -671,22 +671,13 @@ L.KML = L.MarkerClusterGroup.extend({
     
     unhighlight: function(mark){
         mark.selected='false';
-        let i = this.selectedPlacemarks.indexOf(mark);
         mark.hideDirectionLines();
+        let i = this.selectedPlacemarks.indexOf(mark);
         if(i>-1){
             this.selectedPlacemarks.splice(i,1);
         }
     },
     
-    addPlacemarks: function (a) {
-        var that=this;
-        this.addpromises.push(new Promise((resolve)=>{
-            for(var i=0; i<a.length; i++){
-                that.addPlacemark(a[i][0],a[i][1],a[i][2],a[i][3],a[i][4],a[i][5],a[i][6],a[i][7]);
-            }
-            resolve();
-        }));
-    },
     addPlacemark: function (id, name, descr, lat, long, checked, selected, options) {
         var m = new L.KMLMarker(new L.LatLng(lat, long), options);
         m.id=id;
@@ -699,21 +690,12 @@ L.KML = L.MarkerClusterGroup.extend({
         this.popupOpened=false;
         m.styleUrl='#item';
         m.parent=this;
-        if(m.checked || m.selected){
-            m.atualizaIcone();
-        }
-
-        if(this.lastAddedPlacemark){
-            this.lastAddedPlacemark.next = m;
-            m.previous = this.lastAddedPlacemark;
-        }
-        this.lastAddedPlacemark=m;
-
+        m.atualizaIcone();
 
         this.markers[id]=m;
         this.markerCoords.push(m.getLatLng());
         this.msAddPlacemark.push(m);
-        if(this.msAddPlacemark.length>=10000){
+        if(this.msAddPlacemark.length>=10000000){
             var placemarks=this.msAddPlacemark;
             new Promise((resolve)=>{
                 this.flushAddPlacemarkArray(placemarks);
@@ -721,24 +703,148 @@ L.KML = L.MarkerClusterGroup.extend({
             });
             this.msAddPlacemark=[];
         }
-    },
-    
-    refreshMarkers: function() {
-        let addedMarkers = window.app.getMarkers();
-        for (var k = 0; k < addedMarkers.getLength(); k++) {
-            let m = addedMarkers.getSlot(k);
-            this.addPlacemark(m.id, m.name, m.descr, m.lat, m.longit, m.checked, m.selected);
-        }
+        return m;
     },
     
     flushAddPlacemarkArray: function (placemarks){
         if(placemarks.length>0){
-            layer = new L.FeatureGroup(placemarks);
-            this.fire('addlayer', {layer: layer});
-            this.addLayer(layer);
+            this.visibleLayer = new L.FeatureGroup(placemarks);
+            this.fire('addlayer', {layer: this.visibleLayer});
+            this.addLayer(this.visibleLayer);
         }
     },
-    
+    curMark:null,
+    getNextMarker(a){
+        if(this.curMark.next){
+            this.curMark=this.curMark.next;
+            return this.curMark;
+        }else{
+            return null;
+        }
+    },
+    getPreviousMarker(a){
+        if(this.curMark.previous){
+            this.curMark=this.curMark.previous;
+            return this.curMark;
+        }else{
+            return null;
+        }
+    },
+    getLastMarker(a){
+        this.curMark = this.orderedVisiblePlacemarks[this.orderedVisiblePlacemarks.length-1];
+        return this.curMark;
+    },
+    getFirstMarker(a){
+        this.curMark = this.placemarks[this.placemarkIndexes[0]];
+        return this.curMark;
+    },
+    hideAllMarkers(){
+        this.clearVisibleMarkers();
+        if(this.visibleLayer) this.removeLayer(this.visibleLayer);
+        this.visibleLayer=null;
+    },
+    clearVisibleMarkers(){
+        if(this.curMark){
+            let mark=this.curMark;
+            mark.hideDirectionLines();
+            let i = this.selectedPlacemarks.indexOf(mark);
+            if(i>-1){
+                this.selectedPlacemarks.splice(i,1);
+            }
+        }
+        this.orderedVisiblePlacemarks=[];
+        this.placemarks=[];
+        this.placemarkIndexes=[];
+    },
+    orderVisibleMarkers(){
+            if(this.placemarks.length>0){
+                if(this.visibleLayer) this.removeLayer(this.visibleLayer);
+                this.visibleLayer = new L.FeatureGroup(this.placemarks);
+                this.fire('addlayer', {layer: this.visibleLayer});
+                this.addLayer(this.visibleLayer);
+            }
+            var that = this;
+            if(that.placemarks.length>0){
+                this.orderPromise = new Promise((resolve, reject) => {
+                    try{
+                        for(let i=0; i<this.placemarkIndexes.length; i++){
+                            that.orderedVisiblePlacemarks[that.placemarkIndexes[i]]=that.placemarks[i];
+                        }
+                        let m=null;
+                        let lastPlacemark=null;
+                        for(let i=0; i<that.orderedVisiblePlacemarks.length; i++){
+                            m=that.orderedVisiblePlacemarks[i];
+                            if(m){
+                                if(m.nextLine && that.hasLayer(m.nextLine)){
+                                    that.removeLayer(m.nextLine);
+                                }
+                                m.nextLine=null;                                
+                                if(m.previousLine && that.hasLayer(m.previousLine)){
+                                    that.removeLayer(m.previousLine);
+                                }
+                                m.previousLine=null;
+                                if(lastPlacemark){
+                                    lastPlacemark.next = m;
+                                    m.previous = lastPlacemark;
+                                }else{
+                                    m.previous = null;
+                                }
+                                lastPlacemark=m;
+                            }
+                        }
+                        if(m){
+                            m.next=null;
+                        }
+                        resolve();
+                    }catch(e){
+                        alert(e);
+                        reject();                    
+                    }
+                });
+            }
+
+        /*
+        Promise.all(this.addpromises).then(()=>{
+        });*/        
+    },
+    showMarkers(a){
+        try{
+            if(a){
+                for(let i=0; i<a.length; i++){
+                    let m=this.markers['marker_'+a[i][0]];
+                    this.placemarks.push(m);
+                    this.placemarkIndexes.push(a[i][1]);
+                    if(a[i][2]){
+                        m.checked = 'true';
+                    }else{
+                        m.checked = 'false';
+                    }
+                    this.orderedVisiblePlacemarks.push(null);
+                }
+            }
+        }catch(e){
+            alert(e);
+        }
+    },
+    createMarkers(a){
+        try{
+            if(a){
+                    for(let i=0; i<a.length; i++){
+                        m = this.addPlacemark('marker_'+a[i][0], a[i][2], a[i][3], a[i][4], a[i][5], a[i][6], a[i][7], {});
+                        this.markers.push(m);
+                        this.placemarks.push(m);
+                        this.placemarkIndexes.push(a[i][1]);
+                        this.orderedVisiblePlacemarks.push(null);
+                    }
+                    /*
+                this.addpromises.push(new Promise((resolve)=>{
+                    resolve();
+                }));*/
+            }
+        }catch(e){
+            alert(e);
+        }
+    },
 	parsePlacemark: function (place, xml, style, options) {
 		var h, i, j, k, el, il, opts = options || {};
 
@@ -1080,12 +1186,13 @@ L.KMLMarker = L.Marker.extend({
         this.createNextDirectionLine();
         if(this.previousLine){
         }else{
-            if(this.previous){
+            if(this.previous){                
                 this.previous.createNextDirectionLine();
                 this.previousLine = this.previous.nextLine;
             }
         }
     },
+
     showDirectionLines: function(){
         this.createDirectionLines();
         if(this.nextLine){
@@ -1098,6 +1205,7 @@ L.KMLMarker = L.Marker.extend({
         }
         this.directionLinesVisible=true;
     },
+
     hideDirectionLines: function(){
         this.createDirectionLines();
         if(this.nextLine) this.parent.removeLayer(this.nextLine);
@@ -1168,16 +1276,9 @@ L.KMLMarker = L.Marker.extend({
                 window.app.markerMouseClickedBF(this.id, button, '');
             }
             
-            var that = this;
+            this.parent.curMark=this;
             
-            setTimeout(()=>{
-                let ar = Object.keys(that.parent.markers)
-                for(var i =0; i<ar.length; i++){
-                    if(ar[i] == that.id){
-                        window.mpos = i;   
-                    }
-                }
-            },1);       
+            var that = this;
         }catch(e){
             alert(e);
         }
