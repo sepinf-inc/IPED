@@ -16,6 +16,7 @@ import javax.swing.SwingConstants;
 import javax.swing.table.AbstractTableModel;
 
 import iped.app.home.MainFrame;
+import iped.app.ui.Messages;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
@@ -27,7 +28,7 @@ public class TasksTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 3318254202725499526L;
 
-    private final String[] COLLUM_NAME = {"#", " ", "TASK", "OPÇÕES"};
+    private final String[] COLLUM_NAME = {"#", " ", "Task", Messages.get("Home.ProcOptions.Table.Options")};
     private final List<AbstractTask> taskList;
     private ArrayList<Boolean> enabled = new ArrayList<Boolean>();
     MainFrame mainFrame;
@@ -117,8 +118,7 @@ public class TasksTableModel extends AbstractTableModel {
             JButton taskOptionButton = new JButton("...");
 
             taskOptionButton.addActionListener( e -> {
-                TaskConfigTabPanel tp = new TaskConfigTabPanel(configurationManager, task, mainFrame);
-                mainFrame.showPanel(tp);
+                new TaskConfigDialog(configurationManager, task, mainFrame).setVisible(true);
             });
 
             taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);

@@ -1,53 +1,54 @@
-package iped.app.home.newcase.tabs.process;
+package iped.app.home.newcase.tabs.process;/*
+ * @created 16/12/2022
+ * @project IPED
+ * @author Patrick Dalla Bernardina
+ * @author Thiago S. Figueiredo
+ */
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.UIManager;
-import javax.swing.plaf.basic.BasicTabbedPaneUI;
-
-import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
-import iped.app.home.MainFrameCardsNames;
 import iped.app.home.configurables.ConfigurablePanel;
+import iped.app.home.style.StyleManager;
+import iped.app.ui.Messages;
 import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.task.AbstractTask;
 
-public class TaskConfigTabPanel extends DefaultPanel {
-    AbstractTask task;
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicTabbedPaneUI;
+import java.awt.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+public class TaskConfigDialog extends JDialog {
     private List<Configurable<?>> configurables;
     private HashMap<Configurable<?>, ConfigurablePanel> configurablePanels = new HashMap<Configurable<?>, ConfigurablePanel>();
-    private JTabbedPane tabbedPane;
     ConfigurationManager configurationManager;
+    MainFrame mainFrame;
 
-    public TaskConfigTabPanel(ConfigurationManager configurationManager, AbstractTask task, MainFrame mainFrame) {
+    public TaskConfigDialog(ConfigurationManager configurationManager, AbstractTask task, MainFrame mainFrame) {
         super(mainFrame);
+        this.mainFrame = mainFrame;
         this.configurationManager=configurationManager;
         configurables = task.getConfigurables();
-        JPanel panelTitle = new JPanel();
-        JLabel labelTitle = new JLabel(task.getName());
-        labelTitle.setFont(new Font("Arial Bold", Font.PLAIN, 28));
-        panelTitle.setBackground(Color.white);
-        panelTitle.add(labelTitle);
-        this.add(panelTitle, BorderLayout.NORTH);
-        setupTabbedPanel();
+        setModal(true);
+        JPanel formPanel = new JPanel(new BorderLayout());
+        formPanel.add(createTitlePanel(task.getName()), BorderLayout.NORTH);
+        formPanel.add(createTabbedPanel(), BorderLayout.CENTER);
+        formPanel.add(createButtonsPanel(), BorderLayout.SOUTH);
+        this.getContentPane().add(formPanel);
+        this.setBounds(0, 0, (mainFrame.getWidth()), (mainFrame.getHeight() - 50));
+        this.setLocationRelativeTo(null);
     }
 
-    @Override
-    protected void createAndShowGUI() {
-        this.setLayout(new BorderLayout());
-        this.add(createNavigationButtonsPanel(), BorderLayout.SOUTH);
+    private JPanel createTitlePanel(String titleText){
+        JPanel panelTitle = new JPanel();
+        JLabel labelTitle = new JLabel(titleText);
+        labelTitle.setFont(StyleManager.getPageTitleFont());
+        panelTitle.setBackground(Color.white);
+        panelTitle.add(labelTitle);
+        return panelTitle;
     }
 
     /**
@@ -55,8 +56,8 @@ public class TaskConfigTabPanel extends DefaultPanel {
      * Here is created a instance of all nested JPanels
      * @return JTabbedPane
      */
-    private JTabbedPane setupTabbedPanel(){
-        tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+    private JTabbedPane createTabbedPanel(){
+        JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
         tabbedPane.setUI(new BasicTabbedPaneUI() {
             @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 25;}
 
@@ -66,19 +67,16 @@ public class TaskConfigTabPanel extends DefaultPanel {
             if(!(configurable instanceof EnableTaskProperty)) {
                 ConfigurablePanel configPanel = ConfigurablePanel.createConfigurablePanel(configurable, mainFrame);
                 configPanel.createConfigurableGUI();
-                configurablePanels.put(configurable,configPanel);            
-                tabbedPane.addTab(configurable.getClass().getSimpleName(), UIManager.getIcon("FileView.fileIcon"), configPanel, "Página para preenchimento das informações do caso");
+                configurablePanels.put(configurable,configPanel);
+                tabbedPane.addTab(configurable.getClass().getSimpleName(), UIManager.getIcon("FileView.fileIcon"), configPanel, "");
             }
         }
-        this.add(tabbedPane);
-
-        return tabbedPane;
+        return  tabbedPane;
     }
 
-    private Component createNavigationButtonsPanel() {
-        JPanel panelButtons = new JPanel();
-        panelButtons.setBackground(Color.white);
-        JButton btVoltar = new JButton("Voltar");
+    private Component createButtonsPanel() {
+
+        JButton btVoltar = new JButton(Messages.get("Home.Back"));
         btVoltar.addActionListener( e -> {
             for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
                 Configurable<?> configurable = (Configurable<?>)iterator.next();
@@ -90,10 +88,13 @@ public class TaskConfigTabPanel extends DefaultPanel {
                     }
                 }
             }
-
-            mainFrame.showPanel(MainFrameCardsNames.NEW_CASE);
+            this.setVisible(false);
         });
+
+        JPanel panelButtons = new JPanel();
+        panelButtons.setBackground(Color.white);
         panelButtons.add(btVoltar);
         return panelButtons;
     }
+
 }

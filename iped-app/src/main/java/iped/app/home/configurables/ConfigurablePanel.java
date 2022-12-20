@@ -36,12 +36,12 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
     /**
      * Factory method to instantiate an ConfigurablePanel suitable to the configurable object
      * @param configurable - the configurable object that the created ConfigurablePanel will handle.
-     * @param mainFram - the main frame of the panel.
+     * @param mainFrame - the main frame of the panel.
      */
     public static ConfigurablePanel createConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
         Object config = configurable.getConfiguration();
         ConfigurablePanel result=null;
-        
+
         if(config instanceof UTF8Properties) {
             result = new UTF8PropertiesConfigurablePanel((Configurable<UTF8Properties>)configurable, mainFrame);
         }else if(config instanceof String) {
@@ -74,7 +74,7 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
 
     /**
      * Creates the UI objects of the panel.
-     * Every editable UI must install "this" object as a DocumentListener to keep track of changes 
+     * Every editable UI must install "this" object as a DocumentListener to keep track of changes
      */
     abstract public void createConfigurableGUI();
 
@@ -86,10 +86,10 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
     @Override
     protected void createAndShowGUI() {
         layout = new SpringLayout();
-        
+
         this.setLayout(layout);
     }
-    
+
     @Override
     public void insertUpdate(DocumentEvent e) {
         changed=true;
@@ -104,7 +104,7 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
     public void changedUpdate(DocumentEvent e) {
         changed=true;
     }
-    
+
     public boolean hasChanged() {
         return changed;
     }

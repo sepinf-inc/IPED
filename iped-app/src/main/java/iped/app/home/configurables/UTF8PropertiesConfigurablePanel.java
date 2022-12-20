@@ -1,73 +1,63 @@
 package iped.app.home.configurables;
 
-import java.awt.Component;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-import javax.swing.SpringLayout;
+import javax.swing.*;
 
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
 import iped.utils.UTF8Properties;
 
 public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
-    HashMap<Object, JTextField> textFields = new HashMap<Object, JTextField>(); 
+    HashMap<Object, JTextField> textFieldList = new HashMap<Object, JTextField>();
 
     public UTF8PropertiesConfigurablePanel(Configurable<UTF8Properties> configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
     }
 
     public void createConfigurableGUI() {
-        Component lastLabel = null;
-        ArrayList<Component> comps = new ArrayList<Component>();
-        JLabel largestLabel = null;
-        int max=0;
-        
+        JPanel contentPanel = new JPanel(new GridBagLayout());
+        contentPanel.setBackground(Color.white);
         UTF8Properties config = (UTF8Properties) configurable.getConfiguration();
+        int currentLine = 0;
         if(config!=null) {
-            Set<Entry<Object, Object>> es = config.entrySet();
-            for (Iterator<Entry<Object, Object>> iterator = es.iterator(); iterator.hasNext();) {
-                Entry<Object, Object> e = iterator.next();                    
-                JLabel label = new JLabel(e.getKey() +":");
-                int width = e.getKey().toString().length();
-                if(max<width) {
-                    max=width;
-                    largestLabel=label;
-                }
-                comps.add(label);
-                if(lastLabel!=null) {
-                    layout.putConstraint(SpringLayout.NORTH, label, 15, SpringLayout.SOUTH, lastLabel);
-                }
-                Object o=e.getValue();
-                JTextField textField = new JTextField();
-                if(o!=null) {
-                    textField.setText(o.toString());                    
-                }
-                layout.putConstraint(SpringLayout.VERTICAL_CENTER, textField, 0, SpringLayout.VERTICAL_CENTER, label);
+            for(Entry<Object, Object> propertie : config.entrySet()){
+                //create label
+                contentPanel.add(new JLabel(propertie.getKey() +":"), getGridBagConstraints(0, currentLine, 1, 0));
+                //create input
+                JTextField textField = new JTextField( (propertie.getValue() != null) ? propertie.getValue().toString() : "" );
                 textField.getDocument().addDocumentListener(this);
-                comps.add(textField);
-                textFields.put(e.getKey(), textField);
-                lastLabel=label;
-            }
-            for (Iterator iterator = comps.iterator(); iterator.hasNext();) {
-                Component component = (Component) iterator.next();
-                if(component!=largestLabel) {
-                    if(component instanceof JLabel) {
-                        layout.putConstraint(SpringLayout.EAST, component, 0, SpringLayout.EAST, largestLabel);
-                    }else {
-                        layout.putConstraint(SpringLayout.WEST, component, 5,SpringLayout.EAST, largestLabel);
-                    }
-                }
-                this.add(component);
+                contentPanel.add(textField, getGridBagConstraints(1, currentLine, 1, 1));
+                //
+                textFieldList.put(propertie.getKey(), textField);
+                currentLine++;
             }
         }else {
-            System.out.print("null");
+            contentPanel.add(new JLabel("No content!!"), getGridBagConstraints(0, currentLine, 1, 1));
         }
+
+        JScrollPane contentScrollPanel = new JScrollPane();
+        contentScrollPanel.setViewportView(contentPanel);
+        contentScrollPanel.setAutoscrolls(true);
+        this.setLayout(new BorderLayout());
+        this.add(contentScrollPanel,BorderLayout.CENTER);
+    }
+
+    private GridBagConstraints getGridBagConstraints(int tableColumnIndex, int tableLineIndex, int cellWidth, double weightX) {
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = weightX;
+        c.gridx = tableColumnIndex;
+        c.gridy = tableLineIndex;
+        c.gridwidth = cellWidth;
+        c.gridheight = 1;
+        c.insets = new Insets(2, 10,2, 10);
+        return c;
     }
 
     @Override
@@ -77,8 +67,8 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
             Set<Entry<Object, Object>> es = config.entrySet();
             for (Iterator<Entry<Object, Object>> iterator = es.iterator(); iterator.hasNext();) {
                 Entry<Object, Object> e = iterator.next();
-                JTextField textField = textFields.get(e.getKey());
-                config.setProperty(e.getKey().toString(), textField.getText());                
+                JTextField textField = textFieldList.get(e.getKey());
+                config.setProperty(e.getKey().toString(), textField.getText());
             }
         }
     }

@@ -41,6 +41,13 @@ public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
         }
     }
 
+    public ConfigurationDirectory getDefaultProfile() {
+        confDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), Configuration.CONF_DIR ).toFile();
+        ConfigurationDirectory currentProfileDirectory = new ConfigurationDirectory(confDir.toPath());
+        currentProfileDirectory.setName("default");
+        return currentProfileDirectory;
+    }
+
     @Override
     public Set<? extends IConfigurationDirectory> findObjects(Class<? extends IConfigurationDirectory> clazz) {
         return null;
@@ -58,7 +65,7 @@ public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
 
     @Override
     public void addObject(IConfigurationDirectory aObject) {
-
+        listOfProfileDirectories.add(aObject);
     }
 
     @Override
