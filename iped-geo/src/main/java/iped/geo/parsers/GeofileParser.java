@@ -109,6 +109,7 @@ public class GeofileParser extends AbstractParser {
 
         List<Object> featureList = folder.getFeatures();
         EmbeddedParent parent = parentMap.get(parentPath);
+        int zerosCount= (int)Math.ceil(Math.log10(featureList.size()));
         for (Iterator<Object> iterator = featureList.iterator(); iterator.hasNext();) {
             Object o = iterator.next();
             if (o instanceof SimpleFeature) {
@@ -118,7 +119,8 @@ public class GeofileParser extends AbstractParser {
                 String name = feature.getName().getLocalPart();
                 if (name == null)
                     name = "Marcador";
-                featureParser(feature, name + cont, handler, metadata, extractor);
+                String leftZeros = "0".repeat(zerosCount-Integer.toString(cont).length());
+                featureParser(feature, name+leftZeros+cont, handler, metadata, extractor);
                 cont++;
             }
 
