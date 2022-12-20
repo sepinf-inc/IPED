@@ -254,12 +254,17 @@ public class OCRParserTest {
         magickDir += osName.startsWith("windows") ? "/tools/imagemagick/magick" : "magick";
 
         try {
-            Process process = Runtime.getRuntime().exec(magickDir + " -version");
-            int result = process.waitFor();
-            // try again with older imagemagick command
-            if (result != 0 && !osName.startsWith("windows")) {
-                process = Runtime.getRuntime().exec("convert -version");
+            Process process;
+            int result = -1;
+            try {
+                process = Runtime.getRuntime().exec(magickDir + " -version");
                 result = process.waitFor();
+            } catch (IOException e) {
+                if (!osName.startsWith("windows")) {
+                    // try with older command
+                    process = Runtime.getRuntime().exec("convert -version");
+                    result = process.waitFor();
+                }
             }
             if (result != 0) {
                 throw new IOException("Returned error code " + result);
