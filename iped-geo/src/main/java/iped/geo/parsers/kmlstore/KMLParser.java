@@ -83,9 +83,11 @@ public class KMLParser {
 
                 for (Iterator<Element> iterator2 = tracks.iterator(); iterator2.hasNext();) {
                     Element element2 = iterator2.next();
+                    if (element2.getName().toLowerCase().equals("name")) {
+                        name = element2.getText();
+                    }
                     if (element2.getName().toLowerCase().equals("when")) {
                         timestamp = element2.getText();
-                        name = element2.getText();
                     }
                     if (element2.getName().toLowerCase().equals("coord")) {
                         coord = parseCoordinate(element2.getText(), " ");
@@ -100,7 +102,7 @@ public class KMLParser {
                         coord = null;
                     }
                 }
-
+                
             }
         }
     }
