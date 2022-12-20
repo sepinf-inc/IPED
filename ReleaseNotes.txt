@@ -1,3 +1,22 @@
+20/12/2022: IPED-4.0.7:
+Fixes:
+#1336: Makes analysis UI to work from an unmounted network path again (@tc-wleite)
+#1446: Map tab not working with http(s) system proxy (@lfcnassif)
+#1403: OutOfMemoryError caused by com.dd.plist library (@lfcnassif)
+#1421: Aborting StackOverflow exception thrown by QRCodeTask (@lfcnassif)
+#1415: QRCodeTask hangs for hours (@hauck-jvsh @lfcnassif)
+#1392: Error applying user defined filters with colon in property name after reopening the case (@lfcnassif)
+#1441: DocThumbTask not working on 4.0.x if enableExternalParsing is enabled (@lfcnassif)
+#1433: Common properties of items coming from UFED decoding not exported to reports (@lfcnassif)
+#1307: FaceRecognition module not detecting large faces full filling some high resolution images (@lfcnassif)
+#1409: Items with "thumbsOnly" option don't display properly in the generated report (@tc-wleite)
+#1452: LedCarveTask might miss a lot of items (@lfcnassif)
+#1451: Disable LED carving on VHDX virtual disks (@lfcnassif)
+#1394: Error opening subitems on Linux inside a case processed on Windows (@lfcnassif)
+#1439: The IdInDataSource in MinIO is being changed to the preview item (@hauck-jvsh)
+#1428: On Linux v.4.0.6. fails to decrypt APFS partition that v.3.17.1 could decrypt - Sleuthkit 4.11.1 issue (@arisjr)
+
+
 19/10/2022: IPED-4.0.6
 Fixes:
 #1374: Vulnerability in WhatsAppParser caused by Apache Commons Text 1.8 dependency [affects 3.18.1 to 4.0.5] (@lfcnassif)
