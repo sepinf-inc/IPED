@@ -21,6 +21,7 @@ import org.apache.tika.io.TemporaryResources;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+import iped.geo.localization.Messages;
 import iped.geo.parsers.GeofileParser;
 
 public class GPXFeatureListFactory implements FeatureListFactory {
@@ -51,6 +52,8 @@ public class GPXFeatureListFactory implements FeatureListFactory {
         TransformerFactory tFactory = TransformerFactory.newInstance();
         StreamSource stylesource = new StreamSource(xslStream);
         Transformer transformer = tFactory.newTransformer(stylesource);
+        transformer.setParameter("gpxXslt.dateTrailLabel", Messages.getString("gpxXslt.dateTrailLabel"));
+        transformer.setParameter("gpxXslt.routeLabel", Messages.getString("gpxXslt.routeLabel"));
         DOMSource source = new DOMSource(document);
         StreamResult result = new StreamResult(destFile);
         transformer.transform(source, result);

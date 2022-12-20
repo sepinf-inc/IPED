@@ -42,7 +42,14 @@
 <xsl:template match="trk">
   <xsl:for-each select="trkseg">
 	<Folder>
-	<name>Trilha em <xsl:value-of select="trkpt/time"/></name>
+	<xsl:choose>
+       <xsl:when test="../name">
+           <name><xsl:value-of select="../name"/></name>
+       </xsl:when>
+       <xsl:otherwise>
+	       <name><xsl:param name="gpxXslt.dateTrailLabel" /> <xsl:value-of select="trkpt/time"/></name>
+	   </xsl:otherwise>
+	</xsl:choose>
 	<xsl:for-each select="trkpt">
 	<Placemark>
 		<name><xsl:value-of select="time"/></name>
@@ -58,7 +65,7 @@
 
 <xsl:template match="rte">
 	<Folder>
-	<name>Rota: <xsl:value-of select="name"/></name>
+	<name><xsl:param name="gpxXslt.routeLabel" /> <xsl:value-of select="name"/></name>
 	<xsl:for-each select="rtept">
 	<Placemark>
 		<name><xsl:value-of select="time"/></name>
