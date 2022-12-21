@@ -406,6 +406,7 @@ L.KML = L.MarkerClusterGroup.extend({
 	markerCoords:[],
 	layers:[],
 	pathsVisible:false,
+	lastVisibleTrack:null,
 
 	createPaths: function () {
         this.fullyLoaded = this.fullyLoaded.then((track)=>{
@@ -764,6 +765,11 @@ L.KML = L.MarkerClusterGroup.extend({
                 }
             }
         }
+        if(this.lastVisibleTrack){
+            if(this.hasLayer(this.lastVisibleTrack)){
+                this.removeLayer(this.lastVisibleTrack);
+            }
+        }
         this.orderedVisiblePlacemarks=[];
         this.placemarks=[];
         this.placemarkIndexes=[];
@@ -844,6 +850,7 @@ L.KML = L.MarkerClusterGroup.extend({
                       yawn: 25,
                       frequency: 'allvertices'
                 });
+                this.lastVisibleTrack=poly;
                 this.addLayer(poly);
             }
         }catch(e){

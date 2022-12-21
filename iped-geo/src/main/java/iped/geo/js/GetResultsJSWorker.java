@@ -199,7 +199,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                     
                                     String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                                     
-                                    gpsItems.put(item, null);
+                                    subitems.add(subitem);
 
                                     itemsWithGPS++;
                                     finalGids.append("['"+gid+"',"+finalRow+"],");
@@ -406,6 +406,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                         +"],");
 
                                 updateViewableRegion(longit, lat);
+                                itemsWithGPS++;
                                 gpsItems.put(item, null);
 
                             } else if (locations != null && locations.length > 1) {
@@ -440,6 +441,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                             +"],");
 
                                     updateViewableRegion(longit, lat);
+                                    itemsWithGPS++;
                                     subitems.add(subitem);
                                 }
                             } else {
@@ -465,6 +467,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             browserCanvas.createPlacemarks(gidsList);
             browserCanvas.viewAll(minlongit, minlat, maxlongit, maxlat);
             browserCanvas.setLoaded(true);
+            kmlResult.setResultKML("", itemsWithGPS, gpsItems);
         } catch (Exception e) {
             if(!isCancelled()) {
                 e.printStackTrace();

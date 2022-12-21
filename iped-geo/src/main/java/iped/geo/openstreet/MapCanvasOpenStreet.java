@@ -523,7 +523,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                         }
                         webEngine.executeScript("track.orderVisibleMarkers();");
                     } else {
-                        webEngine.executeScript("track.hideAllMarkers();");
+                        webEngine.executeScript("track.clearVisibleMarkers();");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
