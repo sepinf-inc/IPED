@@ -89,9 +89,6 @@ public class GeofileParser extends AbstractParser {
                 }
                 if (o instanceof Folder) {
                     Folder folder = (Folder) o;
-                    if(resourceName.contains("1_Roscoff_Morlaix_A")) {
-                        System.out.println("roscof");
-                    }
                     
                     int id = folderParser(folder, -1, handler, metadata, extractor);
                     recursiveFolderParse(id, folder, handler, metadata, extractor, context);
