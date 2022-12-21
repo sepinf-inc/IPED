@@ -43,14 +43,7 @@ public class MFTEntryCarver extends AbstractCarver {
         try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             is.seek(headerOffset.getOffset());
             byte[] bytes = new byte[MFTEntry.entryLength];
-            int read = 0;
-            while (read < MFTEntry.entryLength) {
-                int r = is.read(bytes, read, MFTEntry.entryLength - read);
-                if (r == -1) {
-                    break;
-                }
-                read += r;
-            }
+            int read = is.readNBytes(bytes, 0, MFTEntry.entryLength);
             if (length != MFTEntry.entryLength) {
                 throw new InvalidCarvedObjectException("Incorrect number of bytes read from MFT entry: " + read);
             }
