@@ -248,7 +248,7 @@ public class LedCarveTask extends BaseCarveTask {
         bytesHashed.addAndGet(cntBytesHashed);
     }
 
-    private static boolean isAcceptedType(MediaType mediaType) {
+    public static boolean isAcceptedType(MediaType mediaType) {
         return mediaType.getBaseType().equals(UNALLOCATED_MIMETYPE)
                 || mediaType.getBaseType().equals(MediaType.OCTET_STREAM)
                 || mediaType.getBaseType().equals(MediaTypes.VDI)
