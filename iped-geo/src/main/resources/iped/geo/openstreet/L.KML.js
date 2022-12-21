@@ -750,11 +750,6 @@ L.KML = L.MarkerClusterGroup.extend({
         this.curMark = this.placemarks[this.placemarkIndexes[0]];
         return this.curMark;
     },
-    hideAllMarkers(){
-        this.clearVisibleMarkers();
-        if(this.visibleLayer) this.removeLayer(this.visibleLayer);
-        this.visibleLayer=null;
-    },
     clearVisibleMarkers(){
         if(this.curMark){
             let mark=this.curMark;
@@ -762,6 +757,11 @@ L.KML = L.MarkerClusterGroup.extend({
             let i = this.selectedPlacemarks.indexOf(mark);
             if(i>-1){
                 this.selectedPlacemarks.splice(i,1);
+            }
+            if(mark.track){
+                if(this.hasLayer(mark.track)){
+                    this.removeLayer(mark.track);
+                }
             }
         }
         this.orderedVisiblePlacemarks=[];
