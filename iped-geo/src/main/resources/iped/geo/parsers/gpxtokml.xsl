@@ -52,7 +52,6 @@
 	</xsl:choose>
 	<xsl:for-each select="trkpt">
 	<Placemark>
-		<name><xsl:value-of select="time"/></name>
 		<Point>
 		<coordinates><xsl:value-of select="@lon"/>,<xsl:value-of select="@lat"/>,<xsl:value-of select="ele"/></coordinates>
 		</Point>
