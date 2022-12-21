@@ -10,10 +10,8 @@ public class Evidence implements Cloneable {
     private String alias;
     private String path;
     private String timezone;
-    private String senha;
     private String password;
     private String aditionalComands;
-    private String evidenceDescription;
     private String material;
 
     public String getFileName() {
@@ -48,14 +46,6 @@ public class Evidence implements Cloneable {
         this.timezone = timezone;
     }
 
-    public String getSenha() {
-        return senha;
-    }
-
-    public void setSenha(String senha) {
-        this.senha = senha;
-    }
-
     public String getPassword() {
         return password;
     }
@@ -70,14 +60,6 @@ public class Evidence implements Cloneable {
 
     public void setAditionalComands(String aditionalComands) {
         this.aditionalComands = aditionalComands;
-    }
-
-    public String getEvidenceDescription() {
-        return evidenceDescription;
-    }
-
-    public void setEvidenceDescription(String evidenceDescription) {
-        this.evidenceDescription = evidenceDescription;
     }
 
     public String getMaterial() {

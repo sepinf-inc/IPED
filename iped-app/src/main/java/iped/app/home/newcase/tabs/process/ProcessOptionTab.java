@@ -303,9 +303,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
         buttonStartProcess = new JButton(Messages.get("Home.ProcOptions.StartProcessing"));
         buttonStartProcess.addActionListener(e -> {
-            if(configurationManager.hasChanged()) {
-                mainFrame.showPanel(MainFrameCardsNames.PROCESS_MANAGER);
-            }
+            //mainFrame.showPanel(MainFrameCardsNames.PROCESS_MANAGER);
+            mainFrame.startIPEDProcessing();
         } );
 
         panelButtons.add(buttoCancel);

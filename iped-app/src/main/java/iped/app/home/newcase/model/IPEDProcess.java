@@ -43,6 +43,13 @@ public class IPEDProcess {
         this.caseOutputPath = caseOutputPath;
     }
 
+    /**
+     * A list to of iped command options like:
+     * 1: --append
+     * 2: --continue
+     * 3: --restart
+     * @return ArrayList<String> - A lista containing the options
+     */
     public ArrayList<String> getOptions() {
         if (options == null)
             options = new ArrayList<String>();

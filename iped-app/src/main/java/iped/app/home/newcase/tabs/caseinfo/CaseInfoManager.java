@@ -7,7 +7,7 @@ package iped.app.home.newcase.tabs.caseinfo;/*
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 import iped.app.home.newcase.model.CaseInfo;
-import iped.engine.data.ReportInfo;
+import iped.app.home.newcase.model.Evidence;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class CaseInfoManager {
 
@@ -33,6 +32,7 @@ public class CaseInfoManager {
             caseInfoJson.put( "examiners", caseInfo.getExaminers() );
             caseInfoJson.put("contact", caseInfo.getContact());
             caseInfoJson.put("caseNotes", caseInfo.getCaseNotes());
+            caseInfoJson.put("materials", caseInfo.getMaterials());
             FileWriter writer = new FileWriter(destinationFile, UTF8);
             writer.write(caseInfoJson.toString());
             writer.flush();
@@ -40,6 +40,19 @@ public class CaseInfoManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void castEvidenceListToMaterialsList(CaseInfo caseInfo, ArrayList<Evidence> evidenceList){
+        if( (evidenceList == null || evidenceList.isEmpty()) || (caseInfo == null) )
+            return;
+        ArrayList<String> materialList = new ArrayList<>();
+        for( Evidence currentEvidence : evidenceList ){
+            String materialDescription = currentEvidence.getMaterial() != null ? currentEvidence.getMaterial() : currentEvidence.getAlias();
+            if(materialDescription == null || materialDescription.isEmpty())
+                materialDescription = (currentEvidence.getFileName() == null || currentEvidence.getFileName().isEmpty())? "no information.." : currentEvidence.getFileName();
+            materialList.add(materialDescription);
+        }
+        caseInfo.setMaterials(materialList);
     }
 
     public CaseInfo loadCaseInfo(File fileToLoad) throws IOException {

@@ -55,9 +55,9 @@ public class NewCaseContainerPanel extends DefaultPanel {
         tabbedPane.setUI(new BasicTabbedPaneUI() {
             @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 45;}
         });
-        tabbedPane.addTab(Messages.get("Home.CaseInformation"), UIManager.getIcon("FileView.fileIcon"), new CaseInfoTab(mainFrame), Messages.get("Home.CaseInformationTollTip"));
-        tabbedPane.addTab(Messages.get("Home.Evidences"), UIManager.getIcon("Tree.expandedIcon"), new EvidencesTab(mainFrame), Messages.get("Home.EvidencesToolTip"));
-        tabbedPane.addTab(Messages.get("Home.ProcessOptions"), UIManager.getIcon("Tree.collapsedIcon"), new ProcessOptionTab(mainFrame), Messages.get("Home.ProcessOptionsToolTip"));
+        tabbedPane.addTab(Messages.get("Home.CaseInformation"), null, new CaseInfoTab(mainFrame), Messages.get("Home.CaseInformationTollTip"));
+        tabbedPane.addTab(Messages.get("Home.Evidences"), null, new EvidencesTab(mainFrame), Messages.get("Home.EvidencesToolTip"));
+        tabbedPane.addTab(Messages.get("Home.ProcessOptions"), null, new ProcessOptionTab(mainFrame), Messages.get("Home.ProcessOptionsToolTip"));
         return tabbedPane;
     }
 

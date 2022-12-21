@@ -19,6 +19,7 @@ public class CaseInfo {
     private ArrayList<String> examiners;
     private String contact;
     private String caseNotes;
+    private ArrayList<String> materials;
 
     public String getCaseNumber() {
         return caseNumber;
@@ -90,5 +91,13 @@ public class CaseInfo {
 
     public void setCaseNotes(String caseNotes) {
         this.caseNotes = caseNotes;
+    }
+
+    public ArrayList<String> getMaterials() {
+        return materials;
+    }
+
+    public void setMaterials(ArrayList<String> materials) {
+        this.materials = materials;
     }
 }

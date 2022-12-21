@@ -147,13 +147,8 @@ public class MainFrame extends JFrame {
         ((CardLayout) cardsContentPanel.getLayout()).show(cardsContentPanel, cardName.getName());
     }
 
-    public void showPanel(DefaultPanel panel) {
-        cardsContentPanel.add(panel, "tew");
-        ((CardLayout) cardsContentPanel.getLayout()).show(cardsContentPanel, "tew");
-    }
-
     public void startIPEDProcessing(){
-        ((CardLayout) cardsContentPanel.getLayout()).show(cardsContentPanel, MainFrameCardsNames.PROCESS_MANAGER.getName());
+        showPanel(MainFrameCardsNames.PROCESS_MANAGER);
         pmc.startProcess();
     }
 

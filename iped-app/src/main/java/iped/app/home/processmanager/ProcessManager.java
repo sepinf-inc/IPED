@@ -5,8 +5,7 @@ package iped.app.home.processmanager;/*
  */
 
 import iped.app.home.newcase.model.Evidence;
-import iped.app.home.newcase.model.IPEDProcess;
-import iped.app.processing.Main;
+import iped.configuration.IConfigurationDirectory;
 import iped.engine.util.Util;
 import org.apache.commons.lang3.SystemUtils;
 
@@ -69,9 +68,14 @@ public class ProcessManager {
         return argumentos;
     }
 
+    public String getIpedJarCommand(){
+        String command = " -jar ".concat( Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), "iped.jar").toString() );
+        return command;
+    }
+
     public String getJarBinCommand(){
         String javaBin = "java";
-        File embeddedJRE = new File(getRootPath() + "/jre");
+        File embeddedJRE = Paths.get(getRootPath(), "jre").toFile();
         File javaHome = new File(System.getProperty("java.home"));
         if (!javaHome.equals(embeddedJRE)) {
             String warn = Util.getJavaVersionWarn();
@@ -80,7 +84,7 @@ public class ProcessManager {
             }
         }
         if (org.apache.tika.utils.SystemUtils.IS_OS_WINDOWS) {
-            javaBin = javaHome.getPath() + "/bin/java.exe";
+            javaBin = Paths.get(javaHome.getPath(), "bin", "java.exe").toString();
         }
         return javaBin;
     }
@@ -104,7 +108,7 @@ public class ProcessManager {
         return rootPath;
     }
 
-    public void startIpedProcess(ArrayList<String> commandList) {
+    public void startIpedProcess(ArrayList<String> commandList) throws IpedStartException {
         String output = "";
         try {
             final Process process = Runtime.getRuntime().exec(commandList.toArray(new String[0]));
@@ -113,10 +117,10 @@ public class ProcessManager {
             int exitVal = process.exitValue();
             output = readProcessOutput(process);
             if (exitVal != 0) {
-                System.out.println("Falha na execução, código de saída: " + exitVal);
+                throw new IpedStartException(output);
             }
         } catch (final IOException | InterruptedException e) {
-            e.printStackTrace();
+            throw new IpedStartException("Exception on Iped start", e);
         }
     }
 
