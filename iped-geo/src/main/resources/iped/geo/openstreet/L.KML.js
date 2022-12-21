@@ -258,6 +258,7 @@ L.KML = L.MarkerClusterGroup.extend({
     nextlinestyle: {color: 'blue', weight: 3},
     trackLineStyle: {color: 'green', weight:3, smoothFactor:4},
     previouslinestyle: {color: 'red', weight: 3},
+    geoJSONLayer: null,
 	initialize: function (kml, kmlOptions) {
 		L.MarkerClusterGroup.prototype.initialize.call(this,kmlOptions);
 		this._kml = kml;
@@ -273,6 +274,21 @@ L.KML = L.MarkerClusterGroup.extend({
 			this.addKML(kml, kmlOptions);
 		}
 	},
+    drawFeature(json){
+        if(this.geoJSONLayer){
+            alert(this.hasLayer(this.geoJSONLayer));
+            this.removeLayer(this.geoJSONLayer);
+        }
+        this.geoJSONLayer = L.geoJSON(json);
+        this.addLayer(this.geoJSONLayer);
+    },
+    hideLastFeature(json){
+        if(this.geoJSONLayer){
+            alert(this.hasLayer(this.geoJSONLayer));
+            this.removeLayer(this.geoJSONLayer);
+            this.geoJSONLayer = null;
+        }
+    },
 	markersCount: function(){
 		var i=0;
        	for (var ind in this.markers){
@@ -315,7 +331,7 @@ L.KML = L.MarkerClusterGroup.extend({
             mark=this.markers[id[i]];
 			if(b=='true'){
 				mark.selected='true';
-				mark.showDirectionLines();
+				//mark.showDirectionLines();
 				this.selectedPlacemarks.push(mark);
 			}else{
 				mark.selected='false';
@@ -670,7 +686,7 @@ L.KML = L.MarkerClusterGroup.extend({
             this.curMark.hideDirectionLines();
         }
         if(this.curMark!=this.markers[marker]){
-            this.markers[marker].showDirectionLines();
+            //this.markers[marker].showDirectionLines();
         }
         this.curMark = this.markers[marker];
     },
@@ -678,7 +694,7 @@ L.KML = L.MarkerClusterGroup.extend({
     highlight: function(mark){
         mark.selected='true';
         this.selectedPlacemarks.push(mark);        
-        mark.showDirectionLines();
+        //mark.showDirectionLines();
         mark.atualizaIcone();
     },
     
@@ -1275,7 +1291,7 @@ L.KMLMarker = L.Marker.extend({
             if(this.directionLinesVisible){
                 this.hideDirectionLines();
             }else{
-                this.showDirectionLines();
+                //this.showDirectionLines();
             }
             this.directionLinesVisible=!this.directionLinesVisible;
         }catch(e){

@@ -13,6 +13,7 @@ import java.util.concurrent.Semaphore;
 import javax.swing.UIManager;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import iped.geo.AbstractMapCanvas;
 import iped.geo.impl.JMapOptionsPane;
@@ -541,7 +542,8 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                 try {
                     if(gids.size()>0) {
                         for(int i=0; i<gids.size(); i++) {
-                            webEngine.executeScript("track.createMarkers("+gids.get(i).toString()+");");
+                            String jsgids=gids.get(i).toString();
+                            webEngine.executeScript("track.createMarkers("+jsgids+");");
                         }
                         webEngine.executeScript("track.orderVisibleMarkers();");
                     }
@@ -563,6 +565,25 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                         for(int i=0; i<gids.size(); i++) {
                             webEngine.executeScript("try{track.drawPolyline("+gids.get(i).toString()+");}catch(e){alert(e);}");
                         }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // nothing
+                }
+            }
+        });
+    }
+
+    @Override
+    public void drawJSONFeature(String jsonFeature) {
+        Platform.runLater(new Runnable() {
+            public void run() {
+                try {
+                    if(jsonFeature!=null && jsonFeature.length()>3) {
+                        webEngine.executeScript("try{track.drawFeature("+jsonFeature+");}catch(e){alert(e);}");
+                    }else {
+                        webEngine.executeScript("try{track.hideLastFeature();}catch(e){alert(e);}");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

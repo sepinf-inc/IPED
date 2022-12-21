@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.Iterator;
@@ -26,6 +27,8 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
+import org.geotools.geojson.feature.FeatureJSON;
+import org.neo4j.cypher.internal.runtime.WRITE;
 import org.opengis.feature.simple.SimpleFeature;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -50,7 +53,8 @@ public class GeofileParser extends AbstractParser {
     public static final MediaType JSON_GOOGLE_MIME = MediaType.application("json-location");
 
     private static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(GPX_MIME, KML_MIME);
-    private static final String ISTRACK = "geo:isTrack";
+    public static final String ISTRACK = "geo:isTrack";
+    public static final String FEATURE_STRING = "geo:featureString";
     private int virtualId;
 
     @Override
@@ -104,7 +108,7 @@ public class GeofileParser extends AbstractParser {
         int cont = 1;
 
         List<Object> featureList = folder.getFeatures();
-        int zerosCount= (int)Math.ceil(Math.log10(featureList.size()));
+        int zerosCount=Integer.toString(featureList.size()).length();
         for (Iterator<Object> iterator = featureList.iterator(); iterator.hasNext();) {
             Object o = iterator.next();
             if (o instanceof SimpleFeature) {
@@ -143,6 +147,24 @@ public class GeofileParser extends AbstractParser {
                 kmeta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentId));
                 if(folder.isTrack()) {
                     kmeta.set(ISTRACK, "1");
+                    List<Object> features = folder.getFeatures();
+                    if(features!=null) {
+                        StringBuffer jsonArray = new StringBuffer();
+                        FeatureJSON fjson = new FeatureJSON();
+                        jsonArray.append("[");
+                        for (Iterator iterator = features.iterator(); iterator.hasNext();) {
+                            Object o = (Object) iterator.next();
+                            if(o instanceof SimpleFeature) {
+                                SimpleFeature feature = (SimpleFeature) o;
+                                StringWriter writer = new StringWriter();
+                                fjson.writeFeature(feature, writer);
+                                jsonArray.append(writer.toString());
+                                jsonArray.append(",");
+                            }
+                        }
+                        jsonArray.append("]");
+                        kmeta.set(FEATURE_STRING, jsonArray.toString());
+                    }
                 }
 
                 extractor.parseEmbedded(featureStream, handler, kmeta, false);
@@ -190,6 +212,12 @@ public class GeofileParser extends AbstractParser {
                     p = (Point) g;
                 } else {
                     p = g.getCentroid();
+                    FeatureJSON fjson = new FeatureJSON();
+                    StringWriter writer = new StringWriter();
+
+                    fjson.writeFeature(feature, writer);
+
+                    kmeta.set(FEATURE_STRING, writer.toString());
                 }
                 Coordinate[] coords = p.getCoordinates();
                 lon = coords[0].x;

@@ -48,6 +48,8 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
             gidsList.add(gids);
             mapaPanel.browserCanvas.drawPolyline(gidsList);
         }
+        String jsonFeature = mapaPanel.getSelectedJSONFeature();        
+        mapaPanel.browserCanvas.drawJSONFeature(jsonFeature);
 
         mapViewer.desabilitaTemp = olddesabilitaTemp;
     }

@@ -60,7 +60,11 @@ public class KMLParser {
                 if (isTrack(ele)) {
                     parsePlacemarkTrack(ele, features, featureBuilder);
                 } else {
-                    features.add(parsePlacemark(ele, featureBuilder));
+                    try {
+                        features.add(parsePlacemark(ele, featureBuilder));
+                    }catch(Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             if (ele.getName().toLowerCase().equals("folder")) {
@@ -138,18 +142,21 @@ public class KMLParser {
         for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
             Element ele = iterator.next();
 
-            Geometry geoInt = parseGeometry(ele, geometryFactory);
-            if (geoInt != null) {
-                geo = geoInt;
-            }
             if (ele.getName().toLowerCase().equals("name")) {
                 name = ele.getText();
+                continue;
             }
             if (ele.getName().toLowerCase().equals("description")) {
                 description = ele.getText();
+                continue;
             }
             if (ele.getName().toLowerCase().equals("timestamp")) {
                 timestamp = ele.getChildren().get(0).getText();
+                continue;
+            }
+            Geometry geoInt = parseGeometry(ele, geometryFactory);
+            if (geoInt != null) {
+                geo = geoInt;
             }
         }
 
@@ -203,7 +210,7 @@ public class KMLParser {
             geo = geometryFactory.createPoint(coord);
         }
 
-        if (ele.getName().toLowerCase().equals("linestring")) {
+        if (ele.getName().toLowerCase().equals("linestring") || ele.getName().toLowerCase().equals("linearring")) {
             List<Element> eles = ele.getChildren();
             Element coordsEle = null;
             for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
@@ -214,8 +221,8 @@ public class KMLParser {
                 }
             }
 
-            String coordinates = coordsEle.getText();
-            StringTokenizer st = new StringTokenizer(coordinates, " ");
+            String coordinates = coordsEle.getText().trim();
+            StringTokenizer st = new StringTokenizer(coordinates, " \t\n\r");
             Coordinate[] coords = new Coordinate[st.countTokens()];
             int i = 0;
             while (st.hasMoreTokens()) {
@@ -223,8 +230,11 @@ public class KMLParser {
                 coords[i] = parseCoordinate(tok);
                 i++;
             }
-            geo = geometryFactory.createLineString(coords);
-
+            if(ele.getName().toLowerCase().equals("linestring")) {
+                geo = geometryFactory.createLineString(coords);
+            }else {
+                geo = geometryFactory.createLinearRing(coords);
+            }
         }
 
         if (ele.getName().toLowerCase().equals("polygon")) {
@@ -243,9 +253,11 @@ public class KMLParser {
             }
 
             if (boundary != null) {
+                geo = parseGeometry(boundary.getChildren().get(0),geometryFactory);
+                /*
                 String coordinates = boundary.getChildren().get(0).getChildren().get(0).getText();
 
-                StringTokenizer st = new StringTokenizer(coordinates, " ");
+                StringTokenizer st = new StringTokenizer(coordinates, " ,");
                 Coordinate[] coords = new Coordinate[st.countTokens()];
                 int i = 0;
                 while (st.hasMoreTokens()) {
@@ -254,6 +266,7 @@ public class KMLParser {
                     i++;
                 }
                 geo = geometryFactory.createPolygon(coords);
+                */
             }
         }
 
@@ -280,20 +293,24 @@ public class KMLParser {
         List<Element> eles = pm.getChildren();
         for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
             Element ele = iterator.next();
-            if (ele.getName().toLowerCase().equals("placemark")) {
-                features.add(parsePlacemark(ele, featureBuilder));
-            }
-            if (ele.getName().toLowerCase().equals("folder")) {
-                features.add(parseFolder(ele, featureBuilder));
-            }
-            if (ele.getName().toLowerCase().equals("name")) {
-                folder.setName(ele.getText());
-            }
-            if (ele.getName().toLowerCase().equals("extendeddata")) {
-                Element data = ele.getChild("Data");
-                if(data!=null && data.getAttribute("name")!=null && data.getAttribute("name").getValue().equals("iped.geo.track")) {
-                    folder.setTrack(true);
+            try {
+                if (ele.getName().toLowerCase().equals("placemark")) {
+                    features.add(parsePlacemark(ele, featureBuilder));
                 }
+                if (ele.getName().toLowerCase().equals("folder")) {
+                    features.add(parseFolder(ele, featureBuilder));
+                }
+                if (ele.getName().toLowerCase().equals("name")) {
+                    folder.setName(ele.getText());
+                }
+                if (ele.getName().toLowerCase().equals("extendeddata")) {
+                    Element data = ele.getChild("Data");
+                    if(data!=null && data.getAttribute("name")!=null && data.getAttribute("name").getValue().equals("iped.geo.track")) {
+                        folder.setTrack(true);
+                    }
+                }
+            }catch(Exception e) {
+                e.printStackTrace();
             }
         }
 

@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import javax.swing.JProgressBar;
 import javax.swing.SortOrder;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Metadata;
 
@@ -392,7 +393,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                         +"',"
                                         +finalRow
                                         +",'"
-                                        +htmlFormat(doc.get(BasicProps.NAME))
+                                        +StringEscapeUtils.escapeJavaScript(htmlFormat(doc.get(BasicProps.NAME)))
                                         +"','"
                                         +Messages.getString("KMLResult.SearchResultsDescription")
                                         +"',"
@@ -427,7 +428,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                             +"',"
                                             +finalRow
                                             +",'"
-                                            +htmlFormat(doc.get(BasicProps.NAME))
+                                            +StringEscapeUtils.escapeJavaScript(htmlFormat(doc.get(BasicProps.NAME)))
                                             +"','"
                                             +Messages.getString("KMLResult.SearchResultsDescription")
                                             +"',"

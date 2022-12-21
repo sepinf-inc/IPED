@@ -189,4 +189,6 @@ abstract public class AbstractMapCanvas extends Canvas {
         
     }
 
+    public abstract void drawJSONFeature(String string);
+
 }

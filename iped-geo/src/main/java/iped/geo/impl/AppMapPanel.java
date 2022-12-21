@@ -34,6 +34,7 @@ import iped.geo.AbstractMapCanvas;
 import iped.geo.js.GetResultsJSWorker;
 import iped.geo.kml.KMLResult;
 import iped.geo.localization.Messages;
+import iped.geo.parsers.GeofileParser;
 import iped.properties.BasicProps;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
@@ -434,8 +435,6 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                     
                     IMultiSearchResult results = search.multiSearch();
                     
-                    
-                    
                     if(results.getLength()>0) {
                         IItemId[] siblings = new IItemId[results.getLength()];
                         for(int i=0; i<results.getLength(); i++) {
@@ -445,6 +444,19 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                     }
                 }
             }
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String getSelectedJSONFeature() {
+        try {
+            IItemId item = resultsProvider.getResults().getItem(resultsProvider.getResultsTable().convertRowIndexToModel(resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex()));
+            int docId = resultsProvider.getIPEDSource().getLuceneId(item);
+            Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+            String jsonFeature = doc.get(GeofileParser.FEATURE_STRING);
+            return jsonFeature;
         }catch(Exception e) {
             e.printStackTrace();
         }
