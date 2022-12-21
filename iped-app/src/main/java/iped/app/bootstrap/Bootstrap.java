@@ -119,6 +119,7 @@ public class Bootstrap {
             cmd.addAll(getCurrentJVMArgs());
             cmd.addAll(getCustomJVMArgs());
             cmd.addAll(getSystemProperties());
+            cmd.add("-Djava.net.useSystemProxies=true"); // fix for #1446
             cmd.add(getMainClassName());
             cmd.addAll(finalArgs);
             
