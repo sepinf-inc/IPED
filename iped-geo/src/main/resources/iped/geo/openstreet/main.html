@@ -178,15 +178,6 @@
     }
 
     var lastLeadMarker = null;
-    function updateLeadMarker(marker){
-       	if(track.curMark){
-       	    track.curMark.hideDirectionLines();
-       	}
-       	if(track.curMark!=track.markers[marker]){
-            track.markers[marker].showDirectionLines();
-       	}
-       	track.curMark = track.markers[marker];
-    }
 
     function moveToMarker(m){
         if(m){

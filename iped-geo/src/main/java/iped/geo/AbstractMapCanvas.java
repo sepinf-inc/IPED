@@ -21,8 +21,8 @@ abstract public class AbstractMapCanvas extends Canvas {
      */
     private static final long serialVersionUID = 1L;
     MapSelectionListener mapSelectionListener = null;
-    MarkerEventListener markerEventListener = null;
-    MarkerCheckBoxListener markerCheckBoxListener = null;
+    protected MarkerEventListener markerEventListener = null;
+    protected MarkerCheckBoxListener markerCheckBoxListener = null;
     protected String tourOrder;
     protected boolean loaded = false;
 
@@ -184,7 +184,7 @@ abstract public class AbstractMapCanvas extends Canvas {
     */
     public abstract void createPlacemarks(List<StringBuffer> gidsList);
 
-    public void drawPolygon(List<StringBuffer> gids) {
+    public void drawPolyline(List<StringBuffer> gids) {
         // TODO Auto-generated method stub
         
     }

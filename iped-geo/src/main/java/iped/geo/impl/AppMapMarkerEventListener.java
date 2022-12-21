@@ -8,7 +8,6 @@ import javax.swing.JTable;
 import iped.data.IItemId;
 import iped.geo.MarkerEventListener;
 import iped.geo.kml.GetResultsKMLWorker;
-import iped.search.IMultiSearchResult;
 
 public class AppMapMarkerEventListener implements MarkerEventListener {
     AppMapPanel mapaPanel;
@@ -27,7 +26,9 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         int pos = mapaPanel.getItemPositioninResultsTable(mid);
         boolean olddesabilitaTemp = mapViewer.desabilitaTemp;
         mapViewer.desabilitaTemp = true;
-        AppMapMarkerEventListener.doTableSelection(t, pos,e.isShiftDown());
+        if(e!=null) {
+            AppMapMarkerEventListener.doTableSelection(t, pos,e.isShiftDown());
+        }
 
         IItemId[] siblings = mapaPanel.getTrackSiblings();
         if(siblings!=null && siblings.length>0) {
@@ -45,7 +46,7 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
             gids.append("]");
             ArrayList<StringBuffer> gidsList = new ArrayList<StringBuffer>();
             gidsList.add(gids);
-            mapaPanel.browserCanvas.drawPolygon(gidsList);
+            mapaPanel.browserCanvas.drawPolyline(gidsList);
         }
 
         mapViewer.desabilitaTemp = olddesabilitaTemp;

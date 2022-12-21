@@ -326,6 +326,7 @@ L.KML = L.MarkerClusterGroup.extend({
                 }
 			}
 			mark.atualizaIcone();
+			mark.onClick();
 		}
 	},
 	marca: function (id, b){
@@ -371,7 +372,7 @@ L.KML = L.MarkerClusterGroup.extend({
         this.viewAll();        
     },
     centralizaMarcador: function(m){
-        this._map.setView(m.getLatLng(), this._map.zoom, this._map.option);
+        this._map.setView(m.getLatLng());
     },
 	centralizaMarcadores: function(ms){
     	if(ms.length>0){
@@ -663,6 +664,15 @@ L.KML = L.MarkerClusterGroup.extend({
             this.selectedPlacemarks.shift();//remove first item from array
         }
     },
+    updateLeadMarker(marker){
+        if(this.curMark){
+            this.curMark.hideDirectionLines();
+        }
+        if(this.curMark!=this.markers[marker]){
+            this.markers[marker].showDirectionLines();
+        }
+        this.curMark = this.markers[marker];
+    },
     
     highlight: function(mark){
         mark.selected='true';
@@ -809,7 +819,7 @@ L.KML = L.MarkerClusterGroup.extend({
         Promise.all(this.addpromises).then(()=>{
         });*/        
     },
-    drawPolygon(a){
+    drawPolyline(a){
         try{
             if(a){
                 let m=this.markers['marker_'+a[0]];

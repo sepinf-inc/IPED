@@ -368,6 +368,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                         Boolean b = selecoesAfazerCopy.get(marks[i]);
                         if (b) {
                             marcadorselecionado = true;
+                            script.append("track.deselectAll();");
                         }
                         try {
                             script.append("track.selecionaMarcador([\"" + marks[i] + "\"],'" + b + "');");
@@ -398,7 +399,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             Platform.runLater(new Runnable() {
                 public void run() {
                     try {
-                        webEngine.executeScript("updateLeadMarker(\""+leadSelectionToApplyCopy.toString()+"\");");
+                        webEngine.executeScript("track.updateLeadMarker(\""+leadSelectionToApplyCopy+"\");");
+                        if(markerEventListener!=null) {
+                            markerEventListener.onClicked(leadSelectionToApplyCopy, null);                            
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {
@@ -551,13 +555,13 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     }
 
     @Override
-    public void drawPolygon(List<StringBuffer> gids) {
+    public void drawPolyline(List<StringBuffer> gids) {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
                     if(gids.size()>0) {
                         for(int i=0; i<gids.size(); i++) {
-                            webEngine.executeScript("try{track.drawPolygon("+gids.get(i).toString()+");}catch(e){alert(e);}");
+                            webEngine.executeScript("try{track.drawPolyline("+gids.get(i).toString()+");}catch(e){alert(e);}");
                         }
                     }
                 } catch (Exception e) {
