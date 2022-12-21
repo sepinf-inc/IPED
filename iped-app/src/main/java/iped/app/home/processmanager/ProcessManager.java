@@ -53,21 +53,6 @@ public class ProcessManager {
         return commandArgs;
     }
 
-    private List<String> getJavaCommand(){
-        List<String> argumentos = new ArrayList<String>();
-        boolean isWindows = SystemUtils.IS_OS_WINDOWS;
-        if( isWindows ){
-            //String pathExecutavelIped = Paths.get(ipedJarFilePath.getParent().toString(), "iped.exe").toString();
-            //argumentos.add(0, pathExecutavelIped );
-        }else{
-            argumentos.add(0, "java");
-            argumentos.add(1, "-jar");
-            //argumentos.add(2, ipedJarFilePath.toString());
-        }
-        //argumentos.addAll(args);
-        return argumentos;
-    }
-
     public String getIpedJarCommand(){
         String command = " -jar ".concat( Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), "iped.jar").toString() );
         return command;

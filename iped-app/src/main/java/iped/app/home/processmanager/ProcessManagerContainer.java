@@ -119,11 +119,18 @@ public class ProcessManagerContainer extends DefaultPanel {
     }
 
     public void startProcess(){
+        labelTitle.setText(Messages.get("Home.ProcessManager.StartingProcess"));
+        currentLabelIcon.setIcon(startingIcon);
+        errorOptionsButtonPanel.setVisible(false);
+        successOptionsButtonPanel.setVisible(false);
+
+
         saveCaseInfoJsonOnCaseOutputPath();
         ProcessManager processManager = new ProcessManager();
         ArrayList<String> commandList =  new ArrayList<String>();
         commandList.add(processManager.getJarBinCommand());
         commandList.add(processManager.getIpedJarCommand());
+        //commandList.add(Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), "iped.exe").toString() );
         commandList.addAll(processManager.getEvidencesCommandList(ipedProcess.getEvidenceList()) );
         commandList.addAll(processManager.getCaseOutputCommand(ipedProcess.getCaseOutputPath()));
         commandList.addAll(ipedProcess.getOptions());
