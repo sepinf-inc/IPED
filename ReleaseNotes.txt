@@ -1,4 +1,4 @@
-20/12/2022: IPED-4.0.7:
+21/12/2022: IPED-4.0.7:
 Fixes:
 #1336: Makes analysis UI to work from an unmounted network path again (@tc-wleite)
 #1446: Map tab not working with http(s) system proxy (@lfcnassif)
@@ -15,6 +15,7 @@ Fixes:
 #1394: Error opening subitems on Linux inside a case processed on Windows (@lfcnassif)
 #1439: The IdInDataSource in MinIO is being changed to the preview item (@hauck-jvsh)
 #1428: On Linux v.4.0.6. fails to decrypt APFS partition that v.3.17.1 could decrypt - Sleuthkit 4.11.1 issue (@arisjr)
+#1454: Remove "<br/> Empty media" from Telegram messages (@lfcnassif)
 
 
 19/10/2022: IPED-4.0.6
