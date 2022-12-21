@@ -24,7 +24,7 @@ public class OLECarver extends AbstractCarver {
         try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             is.seek(header.getOffset());
             byte buf[] = new byte[512];
-            is.read(buf);
+            is.readNBytes(buf, 0, buf.length);
 
             int blockSizeOff = 0x1E;
 
