@@ -276,15 +276,15 @@ L.KML = L.MarkerClusterGroup.extend({
 	},
     drawFeature(json){
         if(this.geoJSONLayer){
-            alert(this.hasLayer(this.geoJSONLayer));
             this.removeLayer(this.geoJSONLayer);
         }
         this.geoJSONLayer = L.geoJSON(json);
         this.addLayer(this.geoJSONLayer);
+
+        this._map.fitBounds(this.geoJSONLayer.getBounds());
     },
     hideLastFeature(json){
         if(this.geoJSONLayer){
-            alert(this.hasLayer(this.geoJSONLayer));
             this.removeLayer(this.geoJSONLayer);
             this.geoJSONLayer = null;
         }
@@ -331,7 +331,7 @@ L.KML = L.MarkerClusterGroup.extend({
             mark=this.markers[id[i]];
 			if(b=='true'){
 				mark.selected='true';
-				//mark.showDirectionLines();
+				//mark.showDirectionLines(); 
 				this.selectedPlacemarks.push(mark);
 			}else{
 				mark.selected='false';
@@ -407,14 +407,7 @@ L.KML = L.MarkerClusterGroup.extend({
     	}
 	},
     centralizaSelecao: function(){
-    	ms=[];
-    	for (var ind in this.markers){
-			var m = this.markers[ind];
-    		if(m.selected=='true'){
-    			ms.push(m);
-    		}
-    	}
-		this.centralizaMarcadores(ms);
+		this.centralizaMarcadores(this.selectedPlacemarks);
     },
 
 	styles:[],
