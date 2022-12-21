@@ -184,4 +184,9 @@ abstract public class AbstractMapCanvas extends Canvas {
     */
     public abstract void createPlacemarks(List<StringBuffer> gidsList);
 
+    public void drawPolygon(List<StringBuffer> gids) {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

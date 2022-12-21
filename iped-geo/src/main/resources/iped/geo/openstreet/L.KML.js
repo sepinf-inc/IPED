@@ -256,6 +256,7 @@ L.KML = L.MarkerClusterGroup.extend({
 	fullyLoaded: null,
 	onFullyLoaded: null,
     nextlinestyle: {color: 'blue', weight: 3},
+    trackLineStyle: {color: 'green', weight:3, smoothFactor:4},
     previouslinestyle: {color: 'red', weight: 3},
 	initialize: function (kml, kmlOptions) {
 		L.MarkerClusterGroup.prototype.initialize.call(this,kmlOptions);
@@ -656,6 +657,7 @@ L.KML = L.MarkerClusterGroup.extend({
             if(this!=this.selectedPlacemarks[0]){
                 this.selectedPlacemarks[0].selected=false;
                 this.selectedPlacemarks[0].hideDirectionLines();
+                this.selectedPlacemarks[0].hideTrack();
                 this.selectedPlacemarks[0].atualizaIcone();
             }
             this.selectedPlacemarks.shift();//remove first item from array
@@ -806,6 +808,37 @@ L.KML = L.MarkerClusterGroup.extend({
         /*
         Promise.all(this.addpromises).then(()=>{
         });*/        
+    },
+    drawPolygon(a){
+        try{
+            if(a){
+                let m=this.markers['marker_'+a[0]];
+                
+                if(m.track){
+                    poly=m.track;
+                }else{
+                    let latLngs = [];
+                    for(let i=0; i<a.length; i++){
+                        m=this.markers['marker_'+a[i]];
+                        latLngs.push(m.getLatLng());
+                    }
+                    poly=L.polyline(latLngs, this.trackLineStyle);
+                    for(let i=0; i<a.length; i++){
+                        m=this.markers['marker_'+a[i]];
+                        m.track=poly;
+                    }
+                }
+                poly=poly.arrowheads({
+                      size: '18px',
+                      fill: true,
+                      yawn: 25,
+                      frequency: 'allvertices'
+                });
+                this.addLayer(poly);
+            }
+        }catch(e){
+            alert(e);
+        }
     },
     showMarkers(a){
         try{
@@ -1191,6 +1224,12 @@ L.KMLMarker = L.Marker.extend({
                 this.previousLine = this.previous.nextLine;
             }
         }
+    },
+    
+    hideTrack(){
+        if(this.track){
+            this.parent.removeLayer(this.track);
+        }        
     },
 
     showDirectionLines: function(){

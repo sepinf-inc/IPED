@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.io.IOException;
 import java.util.Base64;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -541,6 +540,25 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                             webEngine.executeScript("track.createMarkers("+gids.get(i).toString()+");");
                         }
                         webEngine.executeScript("track.orderVisibleMarkers();");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // nothing
+                }
+            }
+        });
+    }
+
+    @Override
+    public void drawPolygon(List<StringBuffer> gids) {
+        Platform.runLater(new Runnable() {
+            public void run() {
+                try {
+                    if(gids.size()>0) {
+                        for(int i=0; i<gids.size(); i++) {
+                            webEngine.executeScript("try{track.drawPolygon("+gids.get(i).toString()+");}catch(e){alert(e);}");
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

@@ -1,6 +1,7 @@
 package iped.geo.impl;
 
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 import javax.swing.JTable;
 
@@ -27,6 +28,26 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         boolean olddesabilitaTemp = mapViewer.desabilitaTemp;
         mapViewer.desabilitaTemp = true;
         AppMapMarkerEventListener.doTableSelection(t, pos,e.isShiftDown());
+
+        IItemId[] siblings = mapaPanel.getTrackSiblings();
+        if(siblings!=null && siblings.length>0) {
+            StringBuffer gids = new StringBuffer();
+            gids.append("[");
+            for (int i = 0; i < siblings.length; i++) {
+                IItemId item = siblings[i];
+                gids.append("'");
+                gids.append(item.getSourceId());
+                gids.append("_");
+                gids.append(item.getId());
+                gids.append("'");
+                gids.append(",");
+            }
+            gids.append("]");
+            ArrayList<StringBuffer> gidsList = new ArrayList<StringBuffer>();
+            gidsList.add(gids);
+            mapaPanel.browserCanvas.drawPolygon(gidsList);
+        }
+
         mapViewer.desabilitaTemp = olddesabilitaTemp;
     }
     

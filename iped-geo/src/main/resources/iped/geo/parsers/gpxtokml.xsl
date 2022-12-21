@@ -32,7 +32,7 @@
     <name><xsl:value-of select="name"/></name>
     <styleUrl>#route</styleUrl>
     <Point>
-	 <coordinates><xsl:value-of select="@lon"/>,<xsl:value-of select="@lat"/>,<xsl:value-of select="ele"/></coordinates>
+	 <coordinates><xsl:value-of select="@lon"/>,<xsl:value-of select="@lat"/><xsl:if test="ele">,<xsl:value-of select="ele"/></xsl:if></coordinates>
 	</Point>
 	<xsl:if test="time"><TimeStamp><when><xsl:value-of select="time"/></when></TimeStamp></xsl:if>
 	<xsl:if test="desc"><description><xsl:value-of select="desc"/></description></xsl:if>
@@ -59,6 +59,11 @@
 		<xsl:if test="time"><TimeStamp><when><xsl:value-of select="time"/></when></TimeStamp></xsl:if>
 	</Placemark>
 	</xsl:for-each>
+    <ExtendedData>
+        <Data name="iped.geo.track">
+            <value>track</value>
+        </Data>
+    </ExtendedData>
 	</Folder>
   </xsl:for-each>
 </xsl:template>
@@ -75,6 +80,11 @@
 		<xsl:if test="time"><TimeStamp><when><xsl:value-of select="time"/></when></TimeStamp></xsl:if>
 	</Placemark>
 	</xsl:for-each>
+    <ExtendedData>
+        <Data name="iped.geo.track">
+            <value>track</value>
+        </Data>
+    </ExtendedData>
 	</Folder>
 </xsl:template>
 

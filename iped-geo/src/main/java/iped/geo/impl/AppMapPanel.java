@@ -24,13 +24,18 @@ import javax.swing.UIManager;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
+import org.apache.lucene.document.Document;
+
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.data.ItemId;
+import iped.engine.task.index.IndexItem;
 import iped.geo.AbstractMapCanvas;
 import iped.geo.js.GetResultsJSWorker;
 import iped.geo.kml.KMLResult;
 import iped.geo.localization.Messages;
 import iped.properties.BasicProps;
+import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
@@ -411,6 +416,39 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
     public void setMapViewer(MapViewer mapViewer) {
         this.mapViewer = mapViewer;
+    }
+    
+    static final String[] trackSortFields = {BasicProps.NAME}; 
+
+    public IItemId[] getTrackSiblings() {
+        try {
+            IItemId item = resultsProvider.getResults().getItem(resultsProvider.getResultsTable().convertRowIndexToModel(resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex()));
+            int docId = resultsProvider.getIPEDSource().getLuceneId(item);
+            Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+            String parentId = doc.get(IndexItem.PARENTID);
+            if(parentId!=null) {
+                int parentDocId = resultsProvider.getIPEDSource().getLuceneId(new ItemId(item.getSourceId(), Integer.parseInt(parentId)));
+                Document parentDoc = resultsProvider.getIPEDSource().getReader().document(parentDocId);
+                if("1".equals(parentDoc.get("geo:isTrack"))) {
+                    IIPEDSearcher search = resultsProvider.createNewSearch("parentId:"+parentId, trackSortFields);
+                    
+                    IMultiSearchResult results = search.multiSearch();
+                    
+                    
+                    
+                    if(results.getLength()>0) {
+                        IItemId[] siblings = new IItemId[results.getLength()];
+                        for(int i=0; i<results.getLength(); i++) {
+                            siblings[i]=results.getItem(i);
+                        }
+                        return siblings;
+                    }
+                }
+            }
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

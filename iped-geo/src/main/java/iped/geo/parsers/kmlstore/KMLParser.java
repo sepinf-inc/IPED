@@ -64,7 +64,8 @@ public class KMLParser {
                 }
             }
             if (ele.getName().toLowerCase().equals("folder")) {
-                features.add(parseFolder(ele, featureBuilder));
+                Folder f = parseFolder(ele, featureBuilder);
+                features.add(f);
             }
         }
 
@@ -74,35 +75,41 @@ public class KMLParser {
     private static void parsePlacemarkTrack(Element ele, List<Object> features, SimpleFeatureBuilder featureBuilder) {
         List<Element> eles = ele.getChildren();
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
+        
         for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
             Element element = iterator.next();
             if (element.getName().toLowerCase().equals("track")) {
+                ArrayList<String> timestamps = new ArrayList<String>();
                 List<Element> tracks = element.getChildren();
-                String timestamp = null, name = null;
-                Coordinate coord = null;
 
                 for (Iterator<Element> iterator2 = tracks.iterator(); iterator2.hasNext();) {
                     Element element2 = iterator2.next();
-                    if (element2.getName().toLowerCase().equals("name")) {
-                        name = element2.getText();
-                    }
                     if (element2.getName().toLowerCase().equals("when")) {
-                        timestamp = element2.getText();
-                    }
-                    if (element2.getName().toLowerCase().equals("coord")) {
-                        coord = parseCoordinate(element2.getText(), " ");
-                    }
-                    if ((timestamp != null) && (coord != null)) {
-                        featureBuilder.add(geometryFactory.createPoint(coord));
-                        featureBuilder.add(name);
-                        featureBuilder.add("Trilha");
-                        featureBuilder.add(timestamp);
-                        features.add(featureBuilder.buildFeature(null));
-                        timestamp = null;
-                        coord = null;
+                        timestamps.add(element2.getText());
                     }
                 }
                 
+                Coordinate[] coords = new Coordinate[timestamps.size()];
+
+                int i=0;
+                for (Iterator<Element> iterator2 = tracks.iterator(); iterator2.hasNext();) {
+                    Element element2 = iterator2.next();
+                    if (element2.getName().toLowerCase().equals("coord")) {
+                        coords[i] = parseCoordinate(element2.getText(), " ,");
+                        i++;
+                    }
+                }
+                
+                for (int j = 0; j < coords.length; j++) {
+                    String timestamp = timestamps.get(i);
+                    Coordinate coord = coords[i];
+
+                    featureBuilder.add(geometryFactory.createPoint(coord));
+                    featureBuilder.add(timestamp);
+                    featureBuilder.add("Trilha");
+                    featureBuilder.add(timestamp);
+                    features.add(featureBuilder.buildFeature(null));
+                }
             }
         }
     }
@@ -281,6 +288,12 @@ public class KMLParser {
             }
             if (ele.getName().toLowerCase().equals("name")) {
                 folder.setName(ele.getText());
+            }
+            if (ele.getName().toLowerCase().equals("extendeddata")) {
+                Element data = ele.getChild("Data");
+                if(data!=null && data.getAttribute("name")!=null && data.getAttribute("name").getValue().equals("iped.geo.track")) {
+                    folder.setTrack(true);
+                }
             }
         }
 

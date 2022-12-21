@@ -1472,12 +1472,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     @Override
-    public IIPEDSearcher createNewSearch(String query) {
-        IIPEDSearcher searcher = new IPEDSearcher(appCase, query);
-        return searcher;
-    }
-
-    @Override
     public IIPEDSource getIPEDSource() {
         return appCase;
     }
@@ -1502,5 +1496,21 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public void setEnableGallerySimSearchButton(boolean enabled) {
         this.butSimSearch.setEnabled(enabled);
+    }
+
+    @Override
+    public IIPEDSearcher createNewSearch(String query) {        
+        return createNewSearch(query, null);
+    }
+
+    @Override
+    public IIPEDSearcher createNewSearch(String query, String[] sortFields) {        
+        IIPEDSearcher searcher = null;
+        if(sortFields==null) {
+            searcher = new IPEDSearcher(appCase, query);
+        }else {
+            searcher = new IPEDSearcher(appCase, query, sortFields);
+        }
+        return searcher;
     }
 }
