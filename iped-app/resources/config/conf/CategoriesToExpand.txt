@@ -16,7 +16,6 @@ User Activities
 GDrive Synced Files
 OLE files
 Georeferenced Files
-MFT Entries
 
 # Generates registry reports:
 Windows Registry
