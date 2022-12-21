@@ -177,11 +177,11 @@ public class DocThumbTask extends ThumbTask {
     protected void process(IItem item) throws Exception {
         if (!isEnabled() 
                 || !item.isToAddToCase()
-                || ((externalParsingEnabled || !docThumbsConfig.isPdfEnabled() || !isPdfType(item.getMediaType())
+                || ((externalParsingEnabled || !docThumbsConfig.isPdfEnabled() || !isPdfType(item.getMediaType()))
                         && (!docThumbsConfig.isLoEnabled() || !isLibreOfficeType(item.getMediaType())))
                 || item.getHashValue() == null 
                 || item.getThumb() != null
-                || item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null)) {
+                || item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null) {
             return;
         }
         File thumbFile = getThumbFile(item);
