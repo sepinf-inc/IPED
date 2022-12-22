@@ -149,12 +149,7 @@ public class MainFrame extends JFrame {
 
     public void startIPEDProcessing(){
         showPanel(MainFrameCardsNames.PROCESS_MANAGER);
-        Thread t = new Thread(new Runnable() {
-            public void run() {
-                pmc.startProcess();
-            }
-        });
-        t.start();
+        pmc.startProcess();
     }
 
     /**

@@ -5,10 +5,11 @@ package iped.app.home.processmanager;/*
  */
 
 import iped.app.home.newcase.model.Evidence;
+import iped.app.home.newcase.model.IPEDProcess;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.util.Util;
-import org.apache.commons.lang3.SystemUtils;
 
+import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -17,9 +18,11 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 
 public class ProcessManager {
+
+    private Process process;
+    private ArrayList<ProcessListener> processListener = new ArrayList<>();
 
     public ArrayList<String> getEvidencesCommandList(ArrayList<Evidence> evidenceList){
         ArrayList<String> commandArgs = new ArrayList<>();
@@ -53,9 +56,18 @@ public class ProcessManager {
         return commandArgs;
     }
 
-    public String getIpedJarCommand(){
-        String command = " -jar ".concat( Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), "iped.jar").toString() );
-        return command;
+    public ArrayList<String> getIpedSearchAppJarCommand(Path caseOutput){
+        ArrayList<String> cmds = new ArrayList<>();
+        cmds.add("-jar");
+        cmds.add(Paths.get(caseOutput.toString(), "iped", "lib", "iped-search-app.jar").toString() );
+        return cmds;
+    }
+
+    public ArrayList<String> getIpedJarCommand(){
+        ArrayList<String> cmds = new ArrayList<>();
+        cmds.add("-jar");
+        cmds.add(Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), "iped.jar").toString() );
+        return cmds;
     }
 
     public String getJarBinCommand(){
@@ -93,36 +105,73 @@ public class ProcessManager {
         return rootPath;
     }
 
-    public void startIpedProcess(ArrayList<String> commandList) throws IpedStartException {
-        String output = "";
+    public void openCase(IPEDProcess ipedProcess){
+        ArrayList<String> commandList =  new ArrayList<String>();
+        commandList.add(getJarBinCommand());
+        commandList.addAll(getIpedSearchAppJarCommand(ipedProcess.getCaseOutputPath()));
+        try{
+            process = Runtime.getRuntime().exec(commandList.toArray(new String[0]));
+            process.waitFor();
+            int exitVal = process.exitValue();
+            if (exitVal != 0) {
+                throw new Exception("Failed to open case");
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void startIpedProcess(IPEDProcess ipedProcess, JTextArea logTextArea) throws IpedStartException {
+        ArrayList<String> commandList =  new ArrayList<String>();
+        commandList.add(getJarBinCommand());
+        commandList.addAll(getIpedJarCommand());
+        commandList.addAll(getEvidencesCommandList(ipedProcess.getEvidenceList()) );
+        commandList.addAll(getCaseOutputCommand(ipedProcess.getCaseOutputPath()));
+        commandList.addAll(ipedProcess.getOptions());
         try {
-            final Process process = Runtime.getRuntime().exec(commandList.toArray(new String[0]));
+            System.out.println("IPED command: " + String.join(" ", commandList.toArray(new String[0])));
+            process = Runtime.getRuntime().exec(commandList.toArray(new String[0]));
+            fireProcessStartListener();
+            readProcessOutput(process, logTextArea);
             // aguarda terminar a aplicação
             process.waitFor();
             int exitVal = process.exitValue();
-            output = readProcessOutput(process);
             if (exitVal != 0) {
-                throw new IpedStartException(output);
+                throw new IpedStartException(logTextArea.getText());
             }
         } catch (final IOException | InterruptedException e) {
             throw new IpedStartException("Exception on Iped start", e);
+        }finally {
+            fireProcessFinishedListener();
         }
     }
 
-
-
-    public String readProcessOutput(Process process) throws IOException {
+    public void readProcessOutput(Process process, JTextArea logTextArea) throws IOException {
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        StringBuffer output = new StringBuffer();
         String line = "";
         while ((line = inputReader.readLine()) != null) {
-            output.append(line).append("\n");
+            logTextArea.append(line + "\n");
         }
         BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
         while ((line = errorReader.readLine()) != null) {
-            output.append(line).append("\n");
+            logTextArea.append(line + "\n");
         }
-        return output.toString();
+    }
+
+    private void fireProcessStartListener(){
+        for( ProcessListener listener : processListener )
+            listener.processStarted();
+    }
+
+    private void fireProcessFinishedListener(){
+        for( ProcessListener listener : processListener )
+            listener.processFinished();
+    }
+
+    public void addProcessListener(ProcessListener listener) {
+        processListener.add(listener);
     }
 
 }
+
+
