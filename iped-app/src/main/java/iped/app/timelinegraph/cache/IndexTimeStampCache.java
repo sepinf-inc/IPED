@@ -25,6 +25,7 @@ import org.jfree.data.time.TimePeriod;
 
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
+import iped.engine.core.Manager;
 import iped.properties.ExtraProperties;
 import iped.viewers.api.IMultiSearchResultProvider;
 
@@ -118,7 +119,9 @@ public class IndexTimeStampCache implements TimeStampCache {
                         monitor.wait();
                         Date d2 = new Date();
                         logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
-                        (new CachePersistance()).saveNewCache(this);
+                        if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
+                            (new CachePersistance()).saveNewCache(this);
+                        }
                         newCache.createMonthIndex();
                     }
                 } catch (InterruptedException e) {
