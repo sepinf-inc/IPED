@@ -17,7 +17,7 @@ public class MFTEntry {
             firstAttrId = -1, usedSize = -1, totalSize = -1, residentFileStart = -1, clusterLength = -1;
     private String name, dosAttributes;
     private Date creationDate, lastModificationDate, lastAccessDate, lastEntryModificationDate;
-    private List<Long> dataruns;
+    private long[] dataruns;
 
     private MFTEntry() {
     }
@@ -86,7 +86,11 @@ public class MFTEntry {
                     entry.length = attr.getDataLength();
                     entry.residentFileStart = -1;
                     if (attr.getDataruns() != null) {
-                        entry.dataruns = attr.getDataruns();
+                        List<Long> l = attr.getDataruns();
+                        entry.dataruns = new long[l.size()];
+                        for (int i = 0; i < l.size(); i++) {
+                            entry.dataruns[i] = l.get(i);                            
+                        }
                     }
                     if (attr.getClusterLength() > 0) {
                         entry.clusterLength = attr.getClusterLength();
@@ -378,7 +382,7 @@ public class MFTEntry {
         return length > 0 && dataruns != null;
     }
 
-    public List<Long> getDataruns() {
+    public long[] getDataruns() {
         return dataruns;
     }
 
@@ -387,7 +391,7 @@ public class MFTEntry {
     }
 
     public boolean isFragmented() {
-        return dataruns != null && dataruns.size() > 2;
+        return dataruns != null && dataruns.length > 2;
     }
 
     private static String formatDosAttributes(int a) {

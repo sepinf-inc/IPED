@@ -176,22 +176,22 @@ public class MFTCarverTask extends BaseCarveTask {
             if (cluster <= 0) {
                 return;
             }
-            List<Long> dataruns = entry.getDataruns();
-            for (int i = 0; i < dataruns.size(); i += 2) {
-                long pos = dataruns.get(i) * cluster;
-                long len = dataruns.get(i + 1) * cluster;
+            long[] dataruns = entry.getDataruns();
+            for (int i = 0; i < dataruns.length; i += 2) {
+                long pos = dataruns[i] * cluster;
+                long len = dataruns[i + 1] * cluster;
                 if (pos + len > volumeLen) {
                     return;
                 }
             }
 
-            if (dataruns.size() == 2 && volume.getIdInDataSource() != null) {
+            if (dataruns.length == 2 && volume.getIdInDataSource() != null) {
                 // A single pair {position, length} -> a continuous (non-fragmented) file
                 // In this case, just point to volume's data source and set the file offset
                 item.setDataSource(volume.getDataSource());
                 item.setIdInDataSource(volume.getIdInDataSource());
                 item.setInputStreamFactory(volume.getInputStreamFactory());
-                item.setFileOffset(dataruns.get(0) * cluster);
+                item.setFileOffset(dataruns[0] * cluster);
             } else {
                 // Fragmented -> Write data runs to a temporary file
                 File tmpFile = null;
@@ -203,9 +203,9 @@ public class MFTCarverTask extends BaseCarveTask {
                     os = new FileOutputStream(tmpFile);
                     byte[] buf = new byte[1 << 16];
                     long totPending = entry.getLength();
-                    for (int i = 0; i < dataruns.size(); i += 2) {
-                        long runPos = dataruns.get(i) * cluster;
-                        long runLen = dataruns.get(i + 1) * cluster;
+                    for (int i = 0; i < dataruns.length; i += 2) {
+                        long runPos = dataruns[i] * cluster;
+                        long runLen = dataruns[i + 1] * cluster;
                         vis.seek(runPos);
                         long runRead = 0;
                         while (runRead < runLen && totPending > 0) {
