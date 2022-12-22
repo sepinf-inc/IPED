@@ -15,6 +15,7 @@ import iped.data.IItemId;
 public interface IMultiSearchResult {
 
     IItemId getItem(int i);
+
     IIPEDSource getIPEDSource();
 
     Iterable<IItemId> getIterator();
@@ -22,9 +23,5 @@ public interface IMultiSearchResult {
     int getLength();
 
     float getScore(int i);
-    
-    /* returns true if the resultset includes the docid */
-    boolean hasDocId(int docId);
-
 
 }

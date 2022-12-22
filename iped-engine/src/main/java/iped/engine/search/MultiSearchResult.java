@@ -167,7 +167,6 @@ public class MultiSearchResult implements IMultiSearchResult {
         return result;
     }
 
-	@Override
 	public boolean hasDocId(int docId) {
 		return docids.get(docId); 
 	}

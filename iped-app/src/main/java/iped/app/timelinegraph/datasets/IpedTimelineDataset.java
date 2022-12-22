@@ -47,6 +47,7 @@ import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.ItemId;
+import iped.engine.search.MultiSearchResult;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
@@ -214,7 +215,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                     throw new InterruptedException();
                                 }
 
-                                if (result.hasDocId(docId)) {
+                                if (result instanceof MultiSearchResult && ((MultiSearchResult) result).hasDocId(docId)) {
                                     IIPEDSource atomicSource = appcase.getAtomicSource(docId);
                                     int sourceId = atomicSource.getSourceId();
                                     int baseDoc = appcase.getBaseLuceneId(atomicSource);
