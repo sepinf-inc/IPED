@@ -28,4 +28,6 @@ public interface Carver {
     public void removeCarvedItemListener(CarvedItemListener carvedItemListener);
 
     public void setIgnoreCorrupted(boolean ignore);
+    
+    public String finish();
 }

@@ -241,4 +241,10 @@ public abstract class AbstractCarver implements Carver {
     public boolean isSpecificIgnoreCorrupted() {
         return false;
     }
+    
+    @Override
+    public String finish() {
+        // Default implementation does nothing and returns null (as a final message)
+        return null;
+    }
 }
