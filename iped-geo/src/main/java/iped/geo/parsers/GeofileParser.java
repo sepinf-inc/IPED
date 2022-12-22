@@ -16,6 +16,7 @@ import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -77,6 +78,9 @@ public class GeofileParser extends AbstractParser {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 
+            if(file.getAbsolutePath().contains("Tectonic") && file.getAbsolutePath().contains("doc.kml")) {
+                System.out.println("teste");
+            }
             List<Object> featureList = FeatureListFactoryRegister.getFeatureList(mimeType).parseFeatureList(file);
 
             int cont = 1;
@@ -215,9 +219,11 @@ public class GeofileParser extends AbstractParser {
                     FeatureJSON fjson = new FeatureJSON();
                     StringWriter writer = new StringWriter();
 
+                    feature.setAttribute("description", StringEscapeUtils.escapeJavaScript(feature.getAttribute("description").toString()));
                     fjson.writeFeature(feature, writer);
 
-                    kmeta.set(FEATURE_STRING, writer.toString());
+                    String str = writer.toString();
+                    kmeta.set(FEATURE_STRING, str);
                 }
                 Coordinate[] coords = p.getCoordinates();
                 lon = coords[0].x;

@@ -254,19 +254,6 @@ public class KMLParser {
 
             if (boundary != null) {
                 geo = parseGeometry(boundary.getChildren().get(0),geometryFactory);
-                /*
-                String coordinates = boundary.getChildren().get(0).getChildren().get(0).getText();
-
-                StringTokenizer st = new StringTokenizer(coordinates, " ,");
-                Coordinate[] coords = new Coordinate[st.countTokens()];
-                int i = 0;
-                while (st.hasMoreTokens()) {
-                    String tok = st.nextToken(" ");
-                    coords[i] = parseCoordinate(tok);
-                    i++;
-                }
-                geo = geometryFactory.createPolygon(coords);
-                */
             }
         }
 
