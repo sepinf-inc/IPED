@@ -1,6 +1,8 @@
 package iped.carvers.custom;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import iped.carvers.api.Hit;
 import iped.carvers.api.InvalidCarvedObjectException;
@@ -10,6 +12,12 @@ import iped.io.SeekableInputStream;
 import iped.parsers.mft.MFTEntry;
 
 public class MFTEntryCarver extends AbstractCarver {
+    /**
+     * A static map to avoid (or at least minimize) adding to the case multiple
+     * repeated carved MFT entries.
+     */
+    private static final Set<MFTEntry> mftEntries = new HashSet<MFTEntry>();
+
     @Override
     protected String getCarvedNamePrefix() {
         return "Carved-MFT-Entry-";
@@ -37,9 +45,6 @@ public class MFTEntryCarver extends AbstractCarver {
             throw new InvalidCarvedObjectException("Invalid MFT entry length: " + length);
         }
         String name = parentEvidence.getName();
-        if (name.equalsIgnoreCase("$MFT") || name.equalsIgnoreCase("$MFTMirr") || name.equalsIgnoreCase("$LogFile")) {
-            throw new InvalidCarvedObjectException("MFT entries are not be carved from " + name);
-        }
         try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             is.seek(headerOffset.getOffset());
             byte[] bytes = new byte[MFTEntry.entryLength];
@@ -72,6 +77,17 @@ public class MFTEntryCarver extends AbstractCarver {
             if (entry.getCreationDate() == null && entry.getLastModificationDate() == null
                     && entry.getLastAccessDate() == null) {
                 throw new InvalidCarvedObjectException("Invalid MFT entry. No dates found.");
+            }
+            synchronized (mftEntries) {
+                if (!mftEntries.add(entry)) {
+                    throw new InvalidCarvedObjectException("MFT entry already processed.");
+                }
+            }
+            // This is done after checking repeated entries, so records in the active MFT
+            // are added to the known entries map.
+            if (!parentEvidence.isDeleted() && (name.equalsIgnoreCase("$MFT") || name.equalsIgnoreCase("$MFTMirr")
+                    || name.equalsIgnoreCase("$LogFile"))) {
+                throw new InvalidCarvedObjectException("MFT entries should not be carved from " + name);
             }
         } catch (Exception e) {
             throw new InvalidCarvedObjectException(e);
