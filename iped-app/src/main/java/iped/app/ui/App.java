@@ -108,7 +108,6 @@ import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
-import bibliothek.gui.dock.common.intern.CDockable;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
 import bibliothek.gui.dock.themes.basic.action.BasicButtonHandler;
@@ -1112,6 +1111,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public void sendCheckAllToResultSetViewers(boolean checked) {
         for (ResultSetViewer setViewer : resultSetViewerConfiguration.getResultSetViewers()) {
             setViewer.checkAll(checked);
+        }
+    }
+
+    public void notifyCaseDataChanged() {
+        for (ResultSetViewer setViewer : resultSetViewerConfiguration.getResultSetViewers()) {
+            setViewer.notifyCaseDataChanged();
         }
     }
 

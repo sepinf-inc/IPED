@@ -35,6 +35,7 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -126,7 +127,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     String timePeriodString = "Day";
 
     TreeMap<String, String> timeEventColumnNamesList = new TreeMap<String, String>();
-    private Boolean timeEventColumnNamesListDone = false;
+    AtomicBoolean dataSetUpdated = new AtomicBoolean();
 
     boolean isUpdated = true;
 
@@ -680,7 +681,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         }
     }
 
-    Thread t = new Thread(new Runnable() {
+    Runnable populateEventNames = new Runnable() {
         // populates list with timeevent column names with uppercase letters
         @Override
         public void run() {
@@ -707,22 +708,20 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                             br = te.next();
                         }
                     }
-                    timeEventColumnNamesListDone = true;
-                    timeEventColumnNamesList.notify();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
-    });
+    };
 
     @Override
     public void tableChanged(TableModelEvent e) {
         if ((e instanceof RowSorterTableDataChange)) {
             return;
         }
-        if (timeEventColumnNamesList.size() == 0 && !t.isAlive()) {
-            t.start();
+        if (!dataSetUpdated.getAndSet(true)) {
+            new Thread(populateEventNames).start();
             ipedTimelineDatasetManager.startBackgroundCacheCreation();
         }
 
@@ -1034,5 +1033,11 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     public void checkAll(boolean value) {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public void notifyCaseDataChanged() {
+        this.ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
+        this.dataSetUpdated.set(false);
     }
 }
