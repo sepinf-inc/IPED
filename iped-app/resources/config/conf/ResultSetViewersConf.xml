@@ -5,7 +5,7 @@
 	</resultSetViewer>
 
 	<resultSetViewer>
-		<class>iped.viewers.timelinegraph.IpedChartsPanel</class>
+		<class>iped.app.timelinegraph.IpedChartsPanel</class>
 	</resultSetViewer>
 
 </resultSetViewers>
