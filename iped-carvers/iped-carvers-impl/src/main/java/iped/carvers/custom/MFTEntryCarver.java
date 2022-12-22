@@ -93,4 +93,9 @@ public class MFTEntryCarver extends AbstractCarver {
             throw new InvalidCarvedObjectException(e);
         }
     }
+    
+    @Override
+    public String finish() {
+        return mftEntries.isEmpty() ? null : "mftEntries set size = " + mftEntries.size();
+    }
 }
