@@ -41,7 +41,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         filter.addActionListener(this);
         add(filter);
 
-        unfilter = new JMenuItem(Messages.getString("TimeLineGraph.unfilterEventFromResultSet","Unfilter"));
+        unfilter = new JMenuItem(Messages.getString("TimeLineGraph.unfilterEventFromResultSet", "Unfilter"));
         unfilter.addActionListener(this);
         add(unfilter);
     }
@@ -160,8 +160,8 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         List<LegendItemBlockContainer> selLegends = list.getSelectedValuesList();
         boolean selectionContainsExcluded = false;
         boolean selectionContainsIncluded = false;
-        boolean selectionContainsHidden=false;
-        boolean selectionContainsNotHidden=false;
+        boolean selectionContainsHidden = false;
+        boolean selectionContainsNotHidden = false;
         for (Iterator iterator = selLegends.iterator(); iterator.hasNext();) {
             LegendItemBlockContainer legendItemBlockContainer = (LegendItemBlockContainer) iterator.next();
             if (ipedChartPanel.getExcludedEvents().contains(legendItemBlockContainer.getSeriesKey())) {
@@ -181,13 +181,13 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
 
         if (selectionContainsExcluded) {
             unfilter.setEnabled(true);
-        }else {
+        } else {
             unfilter.setEnabled(false);
         }
 
         if (selectionContainsIncluded) {
             filter.setEnabled(true);
-        }else {
+        } else {
             filter.setEnabled(false);
         }
 
@@ -201,7 +201,6 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         } else {
             hide.setEnabled(true);
         }
-
 
         super.show(invoker, x, y);
     }

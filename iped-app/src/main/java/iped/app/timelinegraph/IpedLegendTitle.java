@@ -67,10 +67,10 @@ public class IpedLegendTitle extends LegendTitle {
         Object[] o = legendList.getSelectedValues();
         legendListModel.clear();
         polupatesLegendListModel(legendListModel, container);
-        list:for (int i = 0; i < legendList.getModel().getSize(); i++) {
+        list: for (int i = 0; i < legendList.getModel().getSize(); i++) {
             LegendItemBlockContainer l = (LegendItemBlockContainer) legendList.getModel().getElementAt(i);
             for (int j = 0; j < o.length; j++) {
-                if(l.getSeriesKey().equals(((LegendItemBlockContainer)o[j]).getSeriesKey())) {
+                if (l.getSeriesKey().equals(((LegendItemBlockContainer) o[j]).getSeriesKey())) {
                     legendList.addSelectionInterval(i, i);
                     continue list;
                 }

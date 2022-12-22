@@ -44,24 +44,24 @@ public class CachePersistance {
     static Thread t;
 
     public CachePersistance() {
-    	File startDir;
-    	startDir = new File(App.get().casesPathFile, "iped");
-    	startDir = new File(startDir, "data");
-    	startDir = new File(startDir, "timecache");
-    	startDir.mkdirs();
+        File startDir;
+        startDir = new File(App.get().casesPathFile, "iped");
+        startDir = new File(startDir, "data");
+        startDir = new File(startDir, "timecache");
+        startDir.mkdirs();
         // if case cache folder is not writable, use user.home for caches
         if (!IOUtil.canWrite(startDir)) {
-        	startDir = new File(System.getProperty("user.home"), ".iped");
-        	startDir = new File(startDir, "timecache");
+            startDir = new File(System.getProperty("user.home"), ".iped");
+            startDir = new File(startDir, "timecache");
             getTempBaseDir(startDir);
-        }else {
+        } else {
             getTempBaseDir(startDir);
         }
     }
 
     public void getTempBaseDir(File startDir) {
         try {
-        	baseDir = startDir;
+            baseDir = startDir;
             baseDir.mkdirs();
             final File tempCasesDir = baseDir;
 

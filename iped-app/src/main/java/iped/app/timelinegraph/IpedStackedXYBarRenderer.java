@@ -19,7 +19,7 @@ import org.jfree.data.general.Dataset;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.XYDataset;
 
-public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
+public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
     HashMap<Dataset, HashSet<Integer>> invisibleSeries = new HashMap<Dataset, HashSet<Integer>>();
     HashMap<Dataset, HashSet<Integer>> invisibleSeriesInLegend = new HashMap<Dataset, HashSet<Integer>>();
 
@@ -56,7 +56,7 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
      * @return A boolean.
      */
     public boolean isSeriesVisible(int series) {
-        HashSet<Integer> invisibles = invisibleSeries.get(((XYPlot)getPlot()).getDataset());
+        HashSet<Integer> invisibles = invisibleSeries.get(((XYPlot) getPlot()).getDataset());
         if (invisibles == null) {
             return true;
         } else {
@@ -69,7 +69,7 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
     }
 
     public Boolean getSeriesVisible(int series) {
-        HashSet<Integer> invisibles = invisibleSeries.get(((XYPlot)getPlot()).getDataset());
+        HashSet<Integer> invisibles = invisibleSeries.get(((XYPlot) getPlot()).getDataset());
         if (invisibles == null) {
             return true;
         } else {
@@ -82,7 +82,7 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
     }
 
     public void setSeriesVisible(int series, Boolean visible) {
-        XYPlot xyPlot = ((XYPlot)getPlot());
+        XYPlot xyPlot = ((XYPlot) getPlot());
         HashSet<Integer> invisibles = invisibleSeries.get(xyPlot.getDataset());
         if (invisibles == null) {
             invisibles = new HashSet<Integer>();
@@ -118,10 +118,10 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer{
         lastY = 0;
         lastItem = -1;
 
-        if(data!=null) {
+        if (data != null) {
             XYItemRendererState state = super.initialise(g2, dataArea, plot, data, info);
             return state;
-        }else {
+        } else {
             return null;
         }
     }

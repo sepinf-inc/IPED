@@ -164,7 +164,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     Color fgColor;
     Color bgColor;
-    
+
     private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
     public IpedChartsPanel() {
@@ -198,7 +198,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
         @Override
         public Component getListCellRendererComponent(JList<? extends LegendItemBlockContainer> list, LegendItemBlockContainer value, int index, boolean isSelected, boolean cellHasFocus) {
-            
+
             JLabel result = this;
 
             result.setInheritsPopupMenu(true);
@@ -210,15 +210,15 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 foreground = Color.WHITE;
             } else {
                 background = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
-                if(background==null) {
+                if (background == null) {
                     background = Color.WHITE;
                 }
                 foreground = UIManager.getLookAndFeelDefaults().getColor("Viewer.foreground");
-                if(foreground==null) {
+                if (foreground == null) {
                     foreground = Color.BLACK;
                 }
             }
-            if(chartPanel.getHiddenEvents().contains((String) value.getSeriesKey())) {
+            if (chartPanel.getHiddenEvents().contains((String) value.getSeriesKey())) {
                 foreground = Color.RED;
             }
             result.setForeground(foreground);
@@ -272,10 +272,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         this.resultsProvider = resultsProvider;
         this.guiProvider = guiProvider;
         this.isUpdated = false;
-        
+
         fgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.foreground");
         bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
-
 
         this.removeAll();
         splitPane = new IpedSplitPane();
@@ -347,7 +346,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         domainAxis.setUpperMargin(0.01);
         combinedPlot.setDomainAxis(domainAxis);
 
-        if(ipedTimelineDatasetManager==null) {
+        if (ipedTimelineDatasetManager == null) {
             ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
         }
     }
@@ -499,7 +498,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                             JFreeChart chart = null;
                             if (result != null && result.size() > 0) {
                                 chart = createChart(result);
-                                
+
                                 isUpdated = true;
                             }
 
@@ -512,7 +511,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
                                 // hide hidden events
                                 IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChartPanel().getChart().getPlot());
-                                
+
                                 if (rootPlot != null && rootPlot.getSubplots().size() > 0) {
                                     List<XYPlot> xyPlots = rootPlot.getSubplots();
 
@@ -691,7 +690,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
                 try {
                     SortedSetDocValues timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-                    if(timeEventGroupValues!=null) {
+                    if (timeEventGroupValues != null) {
                         TermsEnum te = timeEventGroupValues.termsEnum();
                         BytesRef br = te.next();
                         while (br != null) {

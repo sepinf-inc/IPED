@@ -292,7 +292,7 @@ public class IpedXYPlot extends XYPlot {
                 return foundData; // can't render anything without axes
             }
             if (renderer == null) {
-                renderer = (IpedStackedXYBarRenderer)getRenderer();
+                renderer = (IpedStackedXYBarRenderer) getRenderer();
                 if (renderer == null) { // no default renderer available
                     return foundData;
                 }
@@ -531,12 +531,12 @@ public class IpedXYPlot extends XYPlot {
 
     public void changeTheme(Theme newTheme) {
         Color fgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.foreground");
-        if(fgColor==null) {
-            fgColor=Color.BLACK;
+        if (fgColor == null) {
+            fgColor = Color.BLACK;
         }
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
-        if(bgColor==null) {
-            bgColor=Color.WHITE;
+        if (bgColor == null) {
+            bgColor = Color.WHITE;
         }
 
         this.setBackgroundPaint(bgColor);

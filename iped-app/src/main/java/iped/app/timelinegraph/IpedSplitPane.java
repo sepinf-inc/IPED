@@ -19,7 +19,7 @@ public class IpedSplitPane extends JSplitPane {
 
     public IpedSplitPane() {
         super();
-        
+
         setResizeWeight(0.85d);
 
         divider = this.getComponents()[2];

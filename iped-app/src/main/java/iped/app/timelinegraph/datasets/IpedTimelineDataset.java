@@ -82,8 +82,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     String[] eventTypesArray;
     LeafReader reader;
 
-    static ThreadPoolExecutor queriesThreadPool = new ThreadPoolExecutor(5, 10, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());//pool of concurrent group of itens in a dataset beeing populated
-    static ThreadPoolExecutor datasetsThreadPool = new ThreadPoolExecutor(3, 10, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());//pool of concurrent datasets beeing populated
+    static ThreadPoolExecutor queriesThreadPool = new ThreadPoolExecutor(5, 10, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());// pool of concurrent group of itens in a dataset beeing populated
+    static ThreadPoolExecutor datasetsThreadPool = new ThreadPoolExecutor(3, 10, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());// pool of concurrent datasets beeing populated
 
     class Count extends Number {
         int value = 0;
@@ -134,7 +134,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
      * cache already has a windows of items larger than the visible range, this
      * window prevents some possible unloaded info from not being ploted.
      */
-    Semaphore memoryCacheReloadSem = new Semaphore(1); //semaphore that controls start and end of load of cache window contourning the visible items
+    Semaphore memoryCacheReloadSem = new Semaphore(1); // semaphore that controls start and end of load of cache window contourning the
+                                                       // visible items
 
     public IpedTimelineDataset(IpedTimelineDatasetManager ipedTimelineDatasetManager, IMultiSearchResultProvider resultsProvider, String splitValue) throws Exception {
         this.ipedChartsPanel = ipedTimelineDatasetManager.ipedChartsPanel;
@@ -258,9 +259,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                 try {
                                     TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ct.date);
                                     addValue(count, t, ce.event, includedDocs, includedItems);
-                                }catch (Exception e) {
+                                } catch (Exception e) {
                                     e.printStackTrace();
-                                }finally {
+                                } finally {
                                     addValueSem.release();
                                 }
                             }
@@ -276,21 +277,20 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     }
 
     public String getWindowQuery() {
-    	IpedChartPanel chartPanel = ipedChartsPanel.getChartPanel();
+        IpedChartPanel chartPanel = ipedChartsPanel.getChartPanel();
         Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
         Date startDate = new Date((long) dateRange.getLowerBound());
         Date endDate = new Date((long) dateRange.getUpperBound());
 
         if (startDate.getTime() == 0 && endDate.getTime() == 1) {
-        	return "";
+            return "";
         }
-        
+
         long visibleRangeLength = endDate.getTime() - startDate.getTime();
         Date tmpDate = new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
         endDate = new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
         startDate = tmpDate;
-        
-        
+
         String timeFilter = "(";
         timeFilter += "timeStamp:[";
         timeFilter += ipedChartsPanel.getDomainAxis().ISO8601DateFormatUTC(startDate);
@@ -301,14 +301,14 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
 
         return timeFilter;
     }
-    
+
     int MEMORY_WINDOW_CACHE_PROPORTION = 2;// how many times the visible range the memory window will load, forward and
                                            // backward.
     List<CacheTimePeriodEntry> memoryWindowCache = new ArrayList<CacheTimePeriodEntry>();
 
     public void caseSearchFilterLoad() throws Exception {
         memoryCacheReloadSem.acquire();
-        
+
         try {
             IMultiSearchResult result;
 
@@ -317,7 +317,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             if (ipedChartsPanel.getChartPanel().getSplitByCategory() && splitValue != null && !splitValue.equals("Categories")) {
                 queryText += "category=\"" + splitValue + "\"";
             }
-            
+
             CaseSearcherFilter csf = new CaseSearcherFilter(queryText);
             csf.getSearcher().setNoScoring(true);
             csf.applyUIQueryFilters(exceptThis);// apply all filters from others UI objects except the chart defined interval
@@ -347,9 +347,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
                     Date startDate = new Date((long) dateRange.getLowerBound());
                     Date endDate = new Date((long) dateRange.getUpperBound());
-                    
+
                     long visibleRangeLength = endDate.getTime() - startDate.getTime();
-                    if ( (startDate.getTime()==0 && endDate.getTime()==1)) {
+                    if ((startDate.getTime() == 0 && endDate.getTime() == 1)) {
                         visibleIntervalCache = newcache;
                         memoryWindowCache.addAll(newcache);
                     } else {
@@ -357,7 +357,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                         startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
                         endDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
 
-                        Iterator<CacheTimePeriodEntry> it = a.iterator(className, new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION), new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION));
+                        Iterator<CacheTimePeriodEntry> it = a.iterator(className, new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION),
+                                new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION));
                         CacheTimePeriodEntry ctpe = null;
                         while (it.hasNext()) {
                             ctpe = it.next();
@@ -388,7 +389,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                         remove = true;
                                     }
                                 }
-                            } else {//inside visible window
+                            } else {// inside visible window
                                 if (!memoryWindowCache.contains(ctpe)) {
                                     visibleIntervalCache.add(ctpe);
                                     memoryWindowCache.add(ctpe);
@@ -411,28 +412,28 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                         Runnable r = new Runnable() {
                             @Override
                             public void run() {
-                            	try {
+                                try {
                                     populatesWithBeforeAndAfterList(result, beforecache, aftercache, addValueSem);
-                            	}finally {
-                                    memoryCacheReloadSem.release();//releases after thread end
-                        		}
+                                } finally {
+                                    memoryCacheReloadSem.release();// releases after thread end
+                                }
                             }
                         };
                         Thread t = new Thread(r);
                         t.start();// runs out of visibility asynchronously so to release GUI thread to the user.
-                    }else {
-                        memoryCacheReloadSem.release();//releases imediatelly as all cache was loaded
+                    } else {
+                        memoryCacheReloadSem.release();// releases imediatelly as all cache was loaded
                     }
                 }
 
-            }else {
-                memoryCacheReloadSem.release();//releases imediatelly as all cache was loaded
-            	
+            } else {
+                memoryCacheReloadSem.release();// releases imediatelly as all cache was loaded
+
             }
-        }catch(Exception e) {
-            memoryCacheReloadSem.release();//garantee release of semaphore on untreated exception
+        } catch (Exception e) {
+            memoryCacheReloadSem.release();// garantee release of semaphore on untreated exception
             throw e;
-		}
+        }
 
     }
 
@@ -504,7 +505,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             }
             timeSem.acquire(threadCount);
             timeSem.release(threadCount);
-            
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

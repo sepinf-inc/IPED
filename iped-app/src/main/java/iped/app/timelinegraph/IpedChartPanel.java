@@ -116,7 +116,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
 
     public IpedChartPanel(IpedChart chart, IpedChartsPanel ipedChartsPanel) {
         super(chart, true);
-        
+
         useBuffer = true;
 
         this.ipedChartsPanel = ipedChartsPanel;
@@ -203,13 +203,13 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
                 if (curMouseResponsiveChartEntity != lastMouseResponsiveChartEntity) {
                     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                     Graphics2D g2 = (Graphics2D) getGraphics();
-                    
+
                     Color bk = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
-                    if(bk==null) {
-                        bk=ipedChartsPanel.getChartPanel().getBackground();
+                    if (bk == null) {
+                        bk = ipedChartsPanel.getChartPanel().getBackground();
                     }
-                    int mult = bk.getRed()>=240 ? -1 : 1;
-                    Color bklight = new Color(bk.getRed() + (20*mult), bk.getGreen() + (20*mult), bk.getBlue() + (20*mult));
+                    int mult = bk.getRed() >= 240 ? -1 : 1;
+                    Color bklight = new Color(bk.getRed() + (20 * mult), bk.getGreen() + (20 * mult), bk.getBlue() + (20 * mult));
                     curMouseResponsiveChartEntity.setMouseOverPaint(bklight);
                     g2.dispose();
                     self.getChart().getPlot().notifyListeners(new PlotChangeEvent(self.getChart().getPlot()));
@@ -310,7 +310,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     @Override
     public void mousePressed(MouseEvent e) {
         super.mousePressed(e);
-        
+
         int mods = e.getModifiersEx();
         if (((mods & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK)) {
             if ((mods & this.filterMask) == this.filterMask) {
@@ -344,7 +344,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
                 }
                 return;
             } else {
-                if((mods & this.panMask) != this.panMask) {
+                if ((mods & this.panMask) != this.panMask) {
                     zoomingStart = true;
                 }
             }
@@ -999,10 +999,10 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     @Override
     public void updateUI() {
         super.updateUI();
-        if(getChart()!=null) {
+        if (getChart() != null) {
             IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChart().getPlot());
             List<IpedXYPlot> xyPlots = rootPlot.getSubplots();
-            
+
             Theme theme = ThemeManager.getInstance().getCurrentTheme();
             for (IpedXYPlot xyPlot : xyPlots) {
                 xyPlot.changeTheme(theme);
