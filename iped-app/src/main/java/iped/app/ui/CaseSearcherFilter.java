@@ -20,7 +20,6 @@ package iped.app.ui;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -59,15 +58,15 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
     private static SoftReference<MultiSearchResult> allItemsCache;
     private static IPEDSource ipedCase;
-    
+
     private ExecutorService threadPool;
-    
+
     volatile int numFilters = 0;
 
     String queryText;
     Query query;
     IPEDSearcher searcher;
-    
+
     public CaseSearcherFilter(String queryText) {
         this.queryText = queryText;
         searcher = new IPEDSearcher(App.get().appCase, queryText);
@@ -79,7 +78,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     }
 
     public void applyUIQueryFilters() {
-    	applyUIQueryFilters(null);//no exceptions
+        applyUIQueryFilters(null);// no exceptions
     }
 
     public void applyUIQueryFilters(Set<IQueryFilterer> exceptions) {
@@ -92,7 +91,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
             // e.printStackTrace();
         }
     }
-    
+
     public Query getQueryWithUIFilter(Set<IQueryFilterer> exceptions) throws ParseException, QueryNodeException {
         Query result;
         numFilters = 0;
@@ -105,17 +104,17 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
             if (!(query instanceof MatchAllDocsQuery))
                 numFilters++;
         }
-        
+
         if(App.get().queryComboBox.getSelectedItem()!=null) {
             String searchText = App.get().queryComboBox.getSelectedItem().toString();
             if(searchText!=null) {
-            	if (!(searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP))) {
+                if (!(searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP))) {
                     BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
                     boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(searchText), Occur.MUST);
                     boolQuery.add(result, Occur.MUST);
                     result = boolQuery.build();
                     numFilters++;
-            	}
+                }
             }
         }
 
@@ -149,20 +148,20 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
         /* loop through all registered result set viewer to get configured query filters */ 
         List<ResultSetViewer> list = App.get().getResultSetViewers();
         for (Iterator<ResultSetViewer> iterator = list.iterator(); iterator.hasNext();) {
-			ResultSetViewer resultSetViewer = iterator.next();
-			if(resultSetViewer instanceof IQueryFilterer) {
-				if(exceptions==null || !exceptions.contains(resultSetViewer)) {
-			        Query resultSetViewerQuery = ((IQueryFilterer) resultSetViewer).getQuery();
-			        if (resultSetViewerQuery != null) {
-			            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-			            boolQuery.add(resultSetViewerQuery, Occur.MUST);
-			            boolQuery.add(result, Occur.MUST);
-			            result = boolQuery.build();
-			            numFilters++;
-			        }
-				}
-			}
-		}        
+            ResultSetViewer resultSetViewer = iterator.next();
+            if (resultSetViewer instanceof IQueryFilterer) {
+                if (exceptions == null || !exceptions.contains(resultSetViewer)) {
+                    Query resultSetViewerQuery = ((IQueryFilterer) resultSetViewer).getQuery();
+                    if (resultSetViewerQuery != null) {
+                        BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+                        boolQuery.add(resultSetViewerQuery, Occur.MUST);
+                        boolQuery.add(result, Occur.MUST);
+                        result = boolQuery.build();
+                        numFilters++;
+                    }
+                }
+            }
+        }
 
         if (App.get().similarImagesQueryRefItem != null) {
             Query similarImagesQuery = new SimilarImagesSearch()
@@ -181,11 +180,11 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     }
 
     MultiSearchResult result = null;
-    
+
     public MultiSearchResult getDoneResult() {
-    	return this.result;
+        return this.result;
     }
-    
+
     @Override
     public MultiSearchResult doInBackground() {
 
@@ -195,10 +194,10 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 return null;
 
             try {
-            	for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
-            		caseSearchFilterListener.onStart();
-        		}
-            	
+                for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
+                    caseSearchFilterListener.onStart();
+                }
+
                 if (ipedCase == null || ipedCase != App.get().appCase) {
                     allItemsCache = null;
                     ipedCase = App.get().appCase;
@@ -215,7 +214,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                     if (q instanceof MatchAllDocsQuery && (allItemsCache == null || allItemsCache.get() == null))
                         allItemsCache = new SoftReference(result.clone());
                 }
-                
+
                 String filtro = ""; //$NON-NLS-1$
                 if (App.get().filterComboBox.getSelectedItem() != null)
                     filtro = App.get().filterComboBox.getSelectedItem().toString();
@@ -297,7 +296,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                     numFilters++;
                     //LOGGER.info("Metadata panel filtering took {}ms", (System.currentTimeMillis() - t));
                 }
-                
+
 
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -305,14 +304,14 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
             }
 
-        	for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
-        		if(isCancelled()) {
-        			break;
-        		}
-        		caseSearchFilterListener.onDone();
-    		}
-        	result.setIpedSearcher(searcher);
-        	result.setIPEDSource(ipedCase);
+            for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
+                if (isCancelled()) {
+                    break;
+                }
+                caseSearchFilterListener.onDone();
+            }
+            result.setIpedSearcher(searcher);
+            result.setIPEDSource(ipedCase);
 
             return result;
         }
@@ -325,48 +324,48 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
     @Override
     public boolean doCancel(boolean mayInterruptIfRunning) {
-    	searcher.cancel();
-    	
-    	for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
-    		caseSearchFilterListener.onCancel(mayInterruptIfRunning);
-		}
+        searcher.cancel();
+
+        for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
+            caseSearchFilterListener.onCancel(mayInterruptIfRunning);
+        }
 
         return cancel(mayInterruptIfRunning);
     }
 
-	public int getNumFilters() {
-		return numFilters;
-	}
+    public int getNumFilters() {
+        return numFilters;
+    }
 
-	public void setNumFilters(int numFilters) {
-		this.numFilters = numFilters;
-	}
+    public void setNumFilters(int numFilters) {
+        this.numFilters = numFilters;
+    }
 
-	public IPEDSearcher getSearcher() {
-		return searcher;
-	}
+    public IPEDSearcher getSearcher() {
+        return searcher;
+    }
 
-	public void setSearcher(IPEDSearcher searcher) {
-		this.searcher = searcher;
-	}
+    public void setSearcher(IPEDSearcher searcher) {
+        this.searcher = searcher;
+    }
 
-	public String getQueryText() {
-		return queryText;
-	}
+    public String getQueryText() {
+        return queryText;
+    }
 
-	public void setQueryText(String queryText) {
-		this.queryText = queryText;
-	}
+    public void setQueryText(String queryText) {
+        this.queryText = queryText;
+    }
 
-	public void addCaseSearchFilterListener(CaseSearchFilterListener csfl) {
-		listeners.add(csfl);
-	}
+    public void addCaseSearchFilterListener(CaseSearchFilterListener csfl) {
+        listeners.add(csfl);
+    }
 
-	public ExecutorService getThreadPool() {
-		return threadPool;
-	}
+    public ExecutorService getThreadPool() {
+        return threadPool;
+    }
 
-	public void setThreadPool(ExecutorService threadPool) {
-		this.threadPool = threadPool;
-	}
+    public void setThreadPool(ExecutorService threadPool) {
+        this.threadPool = threadPool;
+    }
 }

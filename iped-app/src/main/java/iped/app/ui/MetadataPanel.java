@@ -308,9 +308,9 @@ public class MetadataPanel extends JPanel
             return getVal() + " (" + nf.format(count) + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }
 
-		public int getCount() {
-			return count;
-		}
+        public int getCount() {
+            return count;
+        }
     }
 
     private static class RangeCount extends ValueCount {

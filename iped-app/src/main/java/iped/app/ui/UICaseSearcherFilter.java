@@ -135,18 +135,18 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
         /* loop through all registered result set viewer to get configured query filters */ 
         List<ResultSetViewer> list = App.get().getResultSetViewers();
         for (Iterator<ResultSetViewer> iterator = list.iterator(); iterator.hasNext();) {
-			ResultSetViewer resultSetViewer = iterator.next();
-			if(resultSetViewer instanceof IQueryFilterer) {
-		        Query resultSetViewerQuery = ((IQueryFilterer) resultSetViewer).getQuery();
-		        if (resultSetViewerQuery != null) {
-		            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-		            boolQuery.add(resultSetViewerQuery, Occur.MUST);
-		            boolQuery.add(result, Occur.MUST);
-		            result = boolQuery.build();
-		            numFilters++;
-		        }
-			}
-		}        
+            ResultSetViewer resultSetViewer = iterator.next();
+            if (resultSetViewer instanceof IQueryFilterer) {
+                Query resultSetViewerQuery = ((IQueryFilterer) resultSetViewer).getQuery();
+                if (resultSetViewerQuery != null) {
+                    BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+                    boolQuery.add(resultSetViewerQuery, Occur.MUST);
+                    boolQuery.add(result, Occur.MUST);
+                    result = boolQuery.build();
+                    numFilters++;
+                }
+            }
+        }
 
         if (App.get().similarImagesQueryRefItem != null) {
             Query similarImagesQuery = new SimilarImagesSearch()
@@ -320,7 +320,7 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
 
         if (!this.isCancelled())
             try {
-            	this.get().setIpedSearcher(this.searcher);
+                this.get().setIpedSearcher(this.searcher);
                 App.get().ipedResult = this.get();
 
                 App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(LocalizedFormat.format(this.get().getLength()));

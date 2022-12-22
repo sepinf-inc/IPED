@@ -4,9 +4,9 @@ import java.awt.Dialog.ModalityType;
 import java.io.IOException;
 import java.util.Set;
 
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,24 +21,24 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener{
     private static Logger LOGGER = LoggerFactory.getLogger(UICaseSearchFilterListener.class);
     ProgressDialog progressDialog;
     CaseSearcherFilter caseSearcherFilter;
-    
+
     public UICaseSearchFilterListener(CaseSearcherFilter caseSearcherFilter) {
-    	this.caseSearcherFilter = caseSearcherFilter;
-	}
+        this.caseSearcherFilter = caseSearcherFilter;
+    }
 
-	@Override
-	public void init() {
-		
-	}
+    @Override
+    public void init() {
 
-	@Override
-	public void onDone() {
-		try {
-	        saveHighlightTerms();
-		}catch(Exception e) {
-			
-		}		
-		
+    }
+
+    @Override
+    public void onDone() {
+        try {
+            saveHighlightTerms();
+        } catch (Exception e) {
+
+        }
+
         App.get().clearAllFilters.setNumberOfFilters(caseSearcherFilter.getNumFilters());
 
         if (!caseSearcherFilter.isCancelled())
@@ -64,7 +64,7 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener{
             }
         if (progressDialog != null)
             progressDialog.close();
-	}
+    }
 
     private void saveHighlightTerms() throws ParseException, QueryNodeException {
         Set<String> highlightTerms = new QueryBuilder(App.get().appCase).getQueryStrings(caseSearcherFilter.getQueryText());
@@ -83,8 +83,8 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener{
         App.get().setQuery(highlightQuery);
     }
 
-	@Override
-	public void onCancel(boolean mayInterruptIfRunning) {
+    @Override
+    public void onCancel(boolean mayInterruptIfRunning) {
         LOGGER.error(Messages.getString("UISearcher.Canceled")); //$NON-NLS-1$
         caseSearcherFilter.searcher.cancel();
         try {
@@ -93,11 +93,11 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener{
         } catch (IOException e) {
             e.printStackTrace();
         }
-	}
+    }
 
-	@Override
-	public void onStart() {
+    @Override
+    public void onStart() {
         progressDialog = new ProgressDialog(App.get(), caseSearcherFilter, true, 0, ModalityType.TOOLKIT_MODAL);
-	}
+    }
 
 }

@@ -313,15 +313,15 @@ public class IPEDMultiSource extends IPEDSource {
         throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
     }
 
-	@Override
-	public Set<String> getEvidenceUUIDs() {
-		if(evidenceUUIDs.size()<=0) {
-			for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
-				IPEDSource curcase = (IPEDSource) iterator.next();
-				evidenceUUIDs.addAll(curcase.getEvidenceUUIDs());
-			}
-		}
-		return super.getEvidenceUUIDs();
-	}
+    @Override
+    public Set<String> getEvidenceUUIDs() {
+        if (evidenceUUIDs.size() <= 0) {
+            for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
+                IPEDSource curcase = (IPEDSource) iterator.next();
+                evidenceUUIDs.addAll(curcase.getEvidenceUUIDs());
+            }
+        }
+        return super.getEvidenceUUIDs();
+    }
 
 }
