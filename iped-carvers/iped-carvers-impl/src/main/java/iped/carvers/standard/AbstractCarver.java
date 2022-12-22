@@ -27,7 +27,7 @@ public abstract class AbstractCarver implements Carver {
     Hit lastEscapeFooter;
     boolean ignoreCorrupted;
 
-    // Uses a method the get the prefix, so it can be overridden by subclasses.
+    // Uses a method to get the prefix, so it can be overridden by subclasses.
     protected String getCarvedNamePrefix() {
         return "Carved-";
     }
