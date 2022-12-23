@@ -48,7 +48,7 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
 
     @Override
     public boolean isEnabled() {
-        return !caseData.isIpedReport();
+        return !caseData.isIpedReport() && splitConfig.isEnabled();
     }
 
     public static boolean isXHtmlToSplit(IItem evidence) {
