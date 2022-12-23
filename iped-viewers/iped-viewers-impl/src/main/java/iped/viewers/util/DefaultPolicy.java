@@ -4,7 +4,10 @@ import java.net.SocketPermission;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLPermission;
+import java.security.CodeSource;
 import java.security.Permission;
+import java.security.PermissionCollection;
+import java.security.Permissions;
 import java.security.Policy;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
@@ -66,4 +69,15 @@ public class DefaultPolicy extends Policy {
         return true;
     }
 
+    @Override
+    public PermissionCollection getPermissions(CodeSource codeSource) {
+        // Allow monitoring using VisualVM (#1463)
+        Thread thread = Thread.currentThread();
+        for (StackTraceElement e : thread.getStackTrace()) {
+            if ("sun.rmi.server.LoaderHandler".equals(e.getClassName()) && "loadClass".equals(e.getMethodName())) {
+                return new Permissions();
+            }
+        }
+        return super.getPermissions(codeSource);
+    }
 }
