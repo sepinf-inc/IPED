@@ -233,7 +233,7 @@ public class CarverTask extends BaseCarveTask {
             carverTypes = carverConfig.getCarverTypes();
             ignoreCorrupted = carverConfig.isToIgnoreCorrupted();
         }
-
+        
         boolean mftCarverEnabled = configurationManager.getEnableTaskProperty(MFTCarverTask.ENABLE_PARAM);
         if (!mftCarverEnabled) {
             // If MFT Carver is not enabled, discard MFT-ENTRY carverType
@@ -251,15 +251,8 @@ public class CarverTask extends BaseCarveTask {
 
     @Override
     public void finish() throws Exception {
-        synchronized (registeredCarvers) {
-            for (CarverType carverType : registeredCarvers.keySet()) {
-                Carver carver = registeredCarvers.get(carverType);
-                String msg = carver.finish();
-                if (msg != null)
-                    LOGGER.info(carverType.getName() + " finished: " + msg);
-            }
-            registeredCarvers.clear();
-        }
+        // TODO Auto-generated method stub
+
     }
 
     private CarvedItemListener getCarvedItemListener() {
