@@ -80,13 +80,13 @@ public class MultiSearchResult implements IMultiSearchResult {
             throw new UnsupportedOperationException("Remove not allowed"); //$NON-NLS-1$
         }
 
-		public int getPos() {
-			return pos;
-		}
+        public int getPos() {
+            return pos;
+        }
 
-		public void setPos(int pos) {
-			this.pos = pos;
-		}
+        public void setPos(int pos) {
+            this.pos = pos;
+        }
     }
 
     public static MultiSearchResult get(IPEDMultiSource iSource, LuceneSearchResult luceneResult) {
@@ -167,28 +167,28 @@ public class MultiSearchResult implements IMultiSearchResult {
         return result;
     }
 
-	public boolean hasDocId(int docId) {
-		return docids.get(docId); 
-	}
+    public boolean hasDocId(int docId) {
+        return docids.get(docId);
+    }
 
-	public IPEDSearcher getIpedSearcher() {
-		return ipedSearcher;
-	}
+    public IPEDSearcher getIpedSearcher() {
+        return ipedSearcher;
+    }
 
-	public void setIpedSearcher(IPEDSearcher ipedSearcher) {
-		this.ipedSearcher = ipedSearcher;
-	}
+    public void setIpedSearcher(IPEDSearcher ipedSearcher) {
+        this.ipedSearcher = ipedSearcher;
+    }
 
-	@Override
-	public IIPEDSource getIPEDSource() {
-		return ipedSource;
-	}
+    @Override
+    public IIPEDSource getIPEDSource() {
+        return ipedSource;
+    }
 
-	public void setIPEDSource(IIPEDSource ipedSource) {
-		this.ipedSource = ipedSource;
-		this.docids = new BitSet(ids.length);
-		for (int i = 0; i < ids.length; i++) {
-			docids.set(ipedSource.getLuceneId(ids[i]));
-		}
-	}
+    public void setIPEDSource(IIPEDSource ipedSource) {
+        this.ipedSource = ipedSource;
+        this.docids = new BitSet(ids.length);
+        for (int i = 0; i < ids.length; i++) {
+            docids.set(ipedSource.getLuceneId(ids[i]));
+        }
+    }
 }

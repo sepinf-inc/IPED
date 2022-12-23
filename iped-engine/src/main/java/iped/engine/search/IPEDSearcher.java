@@ -165,10 +165,10 @@ public class IPEDSearcher implements IIPEDSearcher {
     }
     
     public boolean hasDocId(int docId) {
-    	if(collector!=null) {
-    		return collector.bits.get(docId);
-    	}
-    	return true;
+        if (collector != null) {
+            return collector.bits.get(docId);
+        }
+        return true;
     }
 
     private Query getNonTreeQuery(Query query) {
