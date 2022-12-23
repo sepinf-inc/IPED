@@ -1,4 +1,4 @@
-﻿##################################################################################################################
+﻿﻿##################################################################################################################
 # Configuration for Regular Expression search task.
 #
 # Syntax:
@@ -91,3 +91,15 @@ BR_BOLETO = \b[0-9]{5}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{6}(\s|\.)?[0
 BR_BANK_ACCOUNT = (ag|agen|ag[eê]ncia)(\s|\.|:){0,10}[0-9]{4}(\-?[0-9xX])?.{0,10}(cc|conta|conta[ \-]corrente)(\s|\.|:){0,10}[0-9]{5,11}(\-?[0-9xX])?
 
 BR_CAR_PLATE = \b((([A-Z]{3})(()|-)([0-9]{4}))|(Placas?( |:|: )([A-Za-z]{3})( )([0-9]{4})))\b
+
+#ISO/IEC 13249-3:2016 Part 3: Spatial
+GEOMETRIC_SIMPLE = (POINT|LINESTRING)\s?(\()\s?((-?[0-9]{1,3}(\.)?[0-9]{0,20})\s(-?[0-9]{1,3}(\.)?[0-9]{0,20})\s?[,)]\s?)+
+GEOMETRIC_COMPLEX = (POLYGON|MULTIPOINT|MULTILINESTRING)\s?(\()(\s?(\()((-?[0-9]{1,3}(\.)?[0-9]{0,20})\s(-?[0-9]{1,3}(\.)?[0-9]{0,20})\s?[,)]\s?)*\s?[,)])+
+GEOMETRIC_MULTIPOLYGON = (MULTIPOLYGON)\s?(\()(\s?(\()(\s?(\()((-?[0-9]{1,3}(\.)?[0-9]{0,20})\s(-?[0-9]{1,3}(\.)?[0-9]{0,20})\s?[,)]\s?)*\s?[,)])+\s?[,)])+ 
+
+#RFC 7946
+GEOJSON = ({)\s?(\"type\"):\s*\"(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon)\"[^(})]*(})
+
+#GOOGLEMAPS URL
+GOOGLEMAPS_PLACEURL = (google).{1,4}(\/maps\/place\/)[^\/]*\/@(-?[0-9\.]+),(-?[0-9\.]+),([0-9z]+)
+GOOGLEMAPS_QURL = (google).{1,5}(\/maps\?q=)([\-0-9\.]+).(2C)([\-0-9\.]+)&z=([0-9]+)

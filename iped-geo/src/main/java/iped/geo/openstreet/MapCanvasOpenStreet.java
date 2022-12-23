@@ -593,4 +593,37 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             }
         });
     }
+
+    @Override
+    public void drawJSONFeatures(String[] jsonFeature) {
+        Platform.runLater(new Runnable() {
+            public void run() {
+                try {
+                    if(jsonFeature.length>0) {
+                        StringBuffer str = new StringBuffer();
+                        for (int i = 0; i < jsonFeature.length; i++) {
+                            str.append("track.drawFeature("+convertToGeoJson(jsonFeature[i])+");");
+                        }
+
+                        if(str.length()>3) {
+                            webEngine.executeScript("try{track.hideLastFeature();+"+str.toString()+"}catch(e){alert(e);}");
+                        }else {
+                            webEngine.executeScript("try{track.hideLastFeature();}catch(e){alert(e);}");
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // nothing
+                }
+            }
+        });
+    }
+
+    private String convertToGeoJson(String string) {
+        if(string.trim().startsWith("{")) {
+            return string;
+        }
+        return null;
+    }
 }

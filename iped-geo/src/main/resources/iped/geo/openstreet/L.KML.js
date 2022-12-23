@@ -258,7 +258,7 @@ L.KML = L.MarkerClusterGroup.extend({
     nextlinestyle: {color: 'blue', weight: 3},
     trackLineStyle: {color: 'green', weight:3, smoothFactor:4},
     previouslinestyle: {color: 'red', weight: 3},
-    geoJSONLayer: null,
+    geoJSONLayers: [],
 	initialize: function (kml, kmlOptions) {
 		L.MarkerClusterGroup.prototype.initialize.call(this,kmlOptions);
 		this._kml = kml;
@@ -275,18 +275,18 @@ L.KML = L.MarkerClusterGroup.extend({
 		}
 	},
     drawFeature(json){
-        if(this.geoJSONLayer){
-            this.removeLayer(this.geoJSONLayer);
-        }
-        this.geoJSONLayer = L.geoJSON(json);
-        this.addLayer(this.geoJSONLayer);
+        let l = L.geoJSON(json);
+        this.geoJSONLayers.push(l);
+        this.addLayer(l);
 
-        this._map.fitBounds(this.geoJSONLayer.getBounds());
+        this._map.fitBounds(l.getBounds());
     },
     hideLastFeature(json){
-        if(this.geoJSONLayer){
-            this.removeLayer(this.geoJSONLayer);
-            this.geoJSONLayer = null;
+        while(this.geoJSONLayers.length>0){
+            if(this!=this.geoJSONLayers[0]){
+		this.removeLayer(this.geoJSONLayers[0]);
+            }
+            this.geoJSONLayers.shift();//remove first item from array
         }
     },
 	markersCount: function(){

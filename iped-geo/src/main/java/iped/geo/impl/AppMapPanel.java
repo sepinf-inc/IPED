@@ -70,7 +70,9 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
     private JProgressBar gpsProgressBar;
     private GetResultsJSWorker jsWorker;
     private PropertyChangeListener lastPropertyChangeListener;
-    
+
+    static final String[] fieldNames = {"GEOMETRIC_SIMPLE", "GEOMETRIC_COMPLEX", "GEOMETRIC_MULTIPOLYGON", "GEOJSON"};
+
     public enum MapLoadState {
         NOTLOADED,
         LOADING,
@@ -457,6 +459,39 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
             String jsonFeature = doc.get(GeofileParser.FEATURE_STRING);
             return jsonFeature;
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String[] getSelectedRegexFeatures() {
+        try {
+            IItemId item = resultsProvider.getResults().getItem(resultsProvider.getResultsTable().convertRowIndexToModel(resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex()));
+            int docId = resultsProvider.getIPEDSource().getLuceneId(item);
+            Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+            
+            int count=0;
+            String[][] features = new String[fieldNames.length][];
+            for (int i = 0; i < fieldNames.length; i++) {
+                features[i]=doc.getValues("Regex:"+fieldNames[i]);
+                count+=features[i].length;
+            }
+            
+            String[] result = new String[count];
+            int findex=0;
+            int counttoLast=0;
+            int featIndex=0;
+            for (int i = 0; i < count; i++) {
+                featIndex = i-counttoLast;
+                while(featIndex>=features[findex].length) {
+                    counttoLast=i;
+                    findex++;
+                }
+                result[i]=features[findex][featIndex];
+            }
+            
+            return result;
         }catch(Exception e) {
             e.printStackTrace();
         }

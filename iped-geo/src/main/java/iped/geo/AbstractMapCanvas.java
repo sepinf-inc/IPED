@@ -191,4 +191,9 @@ abstract public class AbstractMapCanvas extends Canvas {
 
     public abstract void drawJSONFeature(String string);
 
+    public void drawJSONFeatures(String[] jsonFeatures) {
+        // TODO Auto-generated method stub
+        
+    }
+
 }
