@@ -29,7 +29,6 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.geotools.geojson.feature.FeatureJSON;
-import org.neo4j.cypher.internal.runtime.WRITE;
 import org.opengis.feature.simple.SimpleFeature;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -77,10 +76,6 @@ public class GeofileParser extends AbstractParser {
         try {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
-
-            if(file.getAbsolutePath().contains("Tectonic") && file.getAbsolutePath().contains("doc.kml")) {
-                System.out.println("teste");
-            }
             List<Object> featureList = FeatureListFactoryRegister.getFeatureList(mimeType).parseFeatureList(file);
 
             int cont = 1;
