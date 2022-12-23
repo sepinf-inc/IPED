@@ -157,6 +157,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     private boolean internalUpdate;
     private TimeZone timeZone = TimeZone.getDefault();
     private Locale locale = Locale.getDefault();
+    private Range firstRange;
 
     SortedSetDocValues timeStampValues = null;
     private RunnableFuture<Void> swRefresh;
@@ -438,6 +439,10 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     }
 
     public void refreshChart() {
+        refreshChart(false);
+    }
+
+    public void refreshChart(boolean resetDomainRange) {
         try {
             IpedChartsPanel self = this;
 
@@ -495,10 +500,11 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                             return;
                         }
                         createDataSets();
+
                         if (!isCancelled()) {
                             JFreeChart chart = null;
                             if (result != null && result.size() > 0) {
-                                chart = createChart(result);
+                                chart = createChart(result, resetDomainRange);
 
                                 isUpdated = true;
                             }
@@ -765,7 +771,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         }
     }
 
-    private JFreeChart createChart(HashMap<String, AbstractIntervalXYDataset> datasets) {
+    private JFreeChart createChart(HashMap<String, AbstractIntervalXYDataset> datasets, boolean resetDomainRange) {
         domainAxis.setLabel("Date (" + timePeriodString + ") [" + timeZone.getDisplayName() + " " + DateUtil.getTimezoneOffsetInformation(timeZone) + "]");
 
         combinedPlot.setSkipFireEventChange(true);
@@ -786,6 +792,10 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
         XYItemRenderer renderer = getRenderer();
         combinedPlot.setRenderer(renderer);
+
+        if (resetDomainRange && firstRange != null) {
+            domainAxis.forceRange(firstRange, false, false);
+        }
 
         int ids = 0;
         XYPlot firstPlot = null;
@@ -821,6 +831,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
         if (firstExecution) {
             domainAxis.autoAdjustRange();
+            firstRange = domainAxis.getRange();
         }
 
         return chart;
@@ -1039,5 +1050,11 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     public void notifyCaseDataChanged() {
         this.ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
         this.dataSetUpdated.set(false);
+    }
+
+    public void resetZoom() {
+        setTimePeriodClass(Day.class);
+        setTimePeriodString("Day");
+        refreshChart(true);
     }
 }

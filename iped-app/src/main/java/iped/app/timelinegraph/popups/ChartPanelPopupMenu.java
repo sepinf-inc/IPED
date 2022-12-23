@@ -3,21 +3,15 @@ package iped.app.timelinegraph.popups;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Date;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-
-import org.apache.lucene.index.SortedSetDocValues;
 
 import iped.app.timelinegraph.IpedChartPanel;
 import iped.app.timelinegraph.dialog.IntervalDefinitionDialog;
 import iped.app.ui.App;
 import iped.app.ui.Messages;
-import iped.data.IItemId;
 
 public class ChartPanelPopupMenu extends JPopupMenu implements ActionListener {
     IpedChartPanel ipedChartPanel;
@@ -25,6 +19,7 @@ public class ChartPanelPopupMenu extends JPopupMenu implements ActionListener {
     JCheckBoxMenuItem applyFiltersMenu;
     JCheckBoxMenuItem syncSelectionMenu;
     JMenuItem clearAllFiltersMenu;
+    JMenuItem resetGraphZoom;
 
     private JMenuItem openIntervalsDialogMenu;
 
@@ -46,6 +41,10 @@ public class ChartPanelPopupMenu extends JPopupMenu implements ActionListener {
         syncSelectionMenu = new JCheckBoxMenuItem(Messages.getString("TimeLineGraph.syncTableSelectionInChartView"));
         syncSelectionMenu.addActionListener(this);
         add(syncSelectionMenu);
+
+        resetGraphZoom = new JMenuItem(Messages.getString("TimeLineGraph.resetZoom"));
+        resetGraphZoom.addActionListener(this);
+        add(resetGraphZoom);
 
     }
 
@@ -72,6 +71,10 @@ public class ChartPanelPopupMenu extends JPopupMenu implements ActionListener {
         }
         if (e.getSource() == clearAllFiltersMenu) {
             ipedChartPanel.removeAllFilters();
+        }
+
+        if (e.getSource() == resetGraphZoom) {
+            ipedChartPanel.getIpedChartsPanel().resetZoom();
         }
     }
 
