@@ -2,7 +2,6 @@ package iped.parsers.mft;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -90,7 +89,7 @@ public class MFTEntry {
                         List<Long> l = attr.getDataruns();
                         entry.dataruns = new long[l.size()];
                         for (int i = 0; i < l.size(); i++) {
-                            entry.dataruns[i] = l.get(i);
+                            entry.dataruns[i] = l.get(i);                            
                         }
                     }
                     if (attr.getClusterLength() > 0) {
@@ -446,111 +445,5 @@ public class MFTEntry {
             sb.setCharAt(sb.length() - 1, ')');
         }
         return sb.toString();
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + attrOffset;
-        result = prime * result + (int) (baseRecordFileRef ^ (baseRecordFileRef >>> 32));
-        result = prime * result + clusterLength;
-        result = prime * result + ((creationDate == null) ? 0 : creationDate.hashCode());
-        result = prime * result + Arrays.hashCode(dataruns);
-        result = prime * result + ((dosAttributes == null) ? 0 : dosAttributes.hashCode());
-        result = prime * result + firstAttrId;
-        result = prime * result + fixUpOffset;
-        result = prime * result + fixUpSize;
-        result = prime * result + flags;
-        result = prime * result + ((lastAccessDate == null) ? 0 : lastAccessDate.hashCode());
-        result = prime * result + ((lastEntryModificationDate == null) ? 0 : lastEntryModificationDate.hashCode());
-        result = prime * result + ((lastModificationDate == null) ? 0 : lastModificationDate.hashCode());
-        result = prime * result + (int) (length ^ (length >>> 32));
-        result = prime * result + linkCount;
-        result = prime * result + (int) (logFileSequenceNumber ^ (logFileSequenceNumber >>> 32));
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + (int) (parentRecordNumber ^ (parentRecordNumber >>> 32));
-        result = prime * result + (int) (recordNumber ^ (recordNumber >>> 32));
-        result = prime * result + residentFileStart;
-        result = prime * result + sequence;
-        result = prime * result + totalSize;
-        result = prime * result + usedSize;
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        MFTEntry other = (MFTEntry) obj;
-        if (attrOffset != other.attrOffset)
-            return false;
-        if (baseRecordFileRef != other.baseRecordFileRef)
-            return false;
-        if (clusterLength != other.clusterLength)
-            return false;
-        if (creationDate == null) {
-            if (other.creationDate != null)
-                return false;
-        } else if (!creationDate.equals(other.creationDate))
-            return false;
-        if (!Arrays.equals(dataruns, other.dataruns))
-            return false;
-        if (dosAttributes == null) {
-            if (other.dosAttributes != null)
-                return false;
-        } else if (!dosAttributes.equals(other.dosAttributes))
-            return false;
-        if (firstAttrId != other.firstAttrId)
-            return false;
-        if (fixUpOffset != other.fixUpOffset)
-            return false;
-        if (fixUpSize != other.fixUpSize)
-            return false;
-        if (flags != other.flags)
-            return false;
-        if (lastAccessDate == null) {
-            if (other.lastAccessDate != null)
-                return false;
-        } else if (!lastAccessDate.equals(other.lastAccessDate))
-            return false;
-        if (lastEntryModificationDate == null) {
-            if (other.lastEntryModificationDate != null)
-                return false;
-        } else if (!lastEntryModificationDate.equals(other.lastEntryModificationDate))
-            return false;
-        if (lastModificationDate == null) {
-            if (other.lastModificationDate != null)
-                return false;
-        } else if (!lastModificationDate.equals(other.lastModificationDate))
-            return false;
-        if (length != other.length)
-            return false;
-        if (linkCount != other.linkCount)
-            return false;
-        if (logFileSequenceNumber != other.logFileSequenceNumber)
-            return false;
-        if (name == null) {
-            if (other.name != null)
-                return false;
-        } else if (!name.equals(other.name))
-            return false;
-        if (parentRecordNumber != other.parentRecordNumber)
-            return false;
-        if (recordNumber != other.recordNumber)
-            return false;
-        if (residentFileStart != other.residentFileStart)
-            return false;
-        if (sequence != other.sequence)
-            return false;
-        if (totalSize != other.totalSize)
-            return false;
-        if (usedSize != other.usedSize)
-            return false;
-        return true;
     }
 }
