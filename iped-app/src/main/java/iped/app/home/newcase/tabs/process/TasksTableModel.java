@@ -18,35 +18,38 @@ import javax.swing.table.AbstractTableModel;
 import iped.app.home.MainFrame;
 import iped.app.ui.Messages;
 import iped.configuration.Configurable;
-import iped.engine.config.ConfigurationManager;
-import iped.engine.config.EnableTaskProperty;
-import iped.engine.config.TaskInstallerConfig;
+import iped.engine.config.*;
 import iped.engine.task.AbstractTask;
 
 public class TasksTableModel extends AbstractTableModel {
-    ConfigurationManager configurationManager;
+
 
     private static final long serialVersionUID = 3318254202725499526L;
 
     private final String[] COLLUM_NAME = {"#", " ", "Task", Messages.get("Home.ProcOptions.Table.Options")};
-    private final List<AbstractTask> taskList;
-    private ArrayList<Boolean> enabled = new ArrayList<Boolean>();
+    private ConfigurationManager configurationManager;
+    private List<AbstractTask> taskList;
+    private ArrayList<Boolean> enabled = new ArrayList<>();
     MainFrame mainFrame;
 
-    private TaskInstallerConfig taskInstallerConfig;
+    private final TaskInstallerConfig taskInstallerConfig;
 
     public TasksTableModel(ConfigurationManager configurationManager, MainFrame mainFrame, List<AbstractTask> taskList) {
         this.configurationManager=configurationManager;
-        this.taskInstallerConfig = (TaskInstallerConfig) configurationManager.findObject(TaskInstallerConfig.class);
+        this.taskInstallerConfig = configurationManager.findObject(TaskInstallerConfig.class);
         this.taskList = taskList;
         this.mainFrame = mainFrame;
-        for (int i=0; i<taskList.size();i++) {
-            enabled.add(false);
-        }
     }
 
     public List<AbstractTask> getTaskList() {
         return taskList;
+    }
+
+    public void updateData(ConfigurationManager configurationManager, List<AbstractTask> taskList, ArrayList<Boolean> enabled) {
+        this.taskList = taskList;
+        this.configurationManager = configurationManager;
+        this.enabled = enabled;
+        this.fireTableDataChanged();
     }
 
     @Override
@@ -80,12 +83,7 @@ public class TasksTableModel extends AbstractTableModel {
             //Task order column
             case 0: return rowIndex+1;
             //Task checkbox column
-            case 1: {
-                if(rowIndex>=enabled.size()) {
-                    enabled.add(false);
-                }
-                return enabled.get(rowIndex);
-            }
+            case 1: return enabled.get(rowIndex);
             //task name column
             case 2: return currentTask.getName();
             //options button column
@@ -96,8 +94,6 @@ public class TasksTableModel extends AbstractTableModel {
 
     /**
      * Create a JPanel to change the tasks properties
-     * @param rowIndex
-     * @return
      */
     private JPanel createColumnOptionPanel(int rowIndex){
         AbstractTask task = taskList.get(rowIndex);
@@ -106,9 +102,8 @@ public class TasksTableModel extends AbstractTableModel {
 
         List<Configurable<?>> configurables = task.getConfigurables();
         int count = 0;//counts the number of non EnableTaskProperty configurables
-        for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
-            Configurable<?> configurable = (Configurable<?>)iterator.next();
-            if(!(configurable instanceof EnableTaskProperty)) {
+        for (Configurable<?> value : configurables) {
+            if (!(value instanceof EnableTaskProperty)) {
                 count++;
             }
         }
@@ -117,9 +112,7 @@ public class TasksTableModel extends AbstractTableModel {
             GridBagConstraints gbc = new GridBagConstraints();
             JButton taskOptionButton = new JButton("...");
 
-            taskOptionButton.addActionListener( e -> {
-                new TaskConfigDialog(configurationManager, task, mainFrame).setVisible(true);
-            });
+            taskOptionButton.addActionListener( e -> new TaskConfigDialog(configurationManager, task, mainFrame).setVisible(true));
 
             taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
             panel.add(taskOptionButton, gbc);
@@ -146,28 +139,24 @@ public class TasksTableModel extends AbstractTableModel {
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        AbstractTask currentTask = taskList.get(rowIndex);
-        switch (columnIndex){
-            //Checkbox Column
-            case 1:
-                enabled.set(rowIndex, ((boolean) aValue));
-                List<Configurable<?>> configs = taskList.get(rowIndex).getConfigurables();
-                for (Iterator iterator = configs.iterator(); iterator.hasNext();) {
-                    Configurable<?> configurable = (Configurable<?>) iterator.next();
-                    if(configurable instanceof EnableTaskProperty) {
-                        ((EnableTaskProperty) configurable).setEnabled(true);
-                        configurationManager.notifyUpdate(configurable);
-                    }
+        //Enable-disable Column
+        if (columnIndex == 1) {
+            enabled.set(rowIndex, ((boolean) aValue));
+            List<Configurable<?>> configs = taskList.get(rowIndex).getConfigurables();
+            for (Configurable<?> config : configs) {
+                if (config instanceof EnableTaskProperty) {
+                    ((EnableTaskProperty) config).setEnabled(true);
+                    configurationManager.notifyUpdate(config);
                 }
-                configurationManager.notifyUpdate(taskInstallerConfig);
-                break;
+            }
+            configurationManager.notifyUpdate(taskInstallerConfig);
         }
     }
 
     public void setEnabled(List<AbstractTask> enabledTaskArrayList) {
-        for (int i=0; i<enabledTaskArrayList.size();i++) {
-            int j = taskList.indexOf(enabledTaskArrayList.get(i));
-            if(j>-1) {
+        for (AbstractTask abstractTask : enabledTaskArrayList) {
+            int j = taskList.indexOf(abstractTask);
+            if (j > -1) {
                 enabled.set(j, true);
             }
         }

@@ -7,12 +7,8 @@ import java.awt.Dimension;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -22,12 +18,11 @@ import javax.swing.event.TableModelListener;
 
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
+import iped.configuration.EnabledInterface;
 import iped.engine.config.*;
-import org.reflections.Reflections;
 
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
-import iped.app.home.MainFrameCardsNames;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
@@ -46,19 +41,17 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     private JTable jtableTasks;
     private TasksTableModel tasksTableModel;
     private TaskInstallerConfig taskInstallerConfig;
-    private List<AbstractTask> enabledTaskArrayList;
     private List<AbstractTask> taskArrayList;
 
     JFileChooser scriptChooser = new JFileChooser();
     private JComboBox<IConfigurationDirectory> profilesCombo;
-    private JPanel panelForm;
-    private JScrollPane scrollTablePane;
-    private ConfigurationManager configurationManager;
+    private ConfigurationManager selectedConfigurationManager;
     private ConfigurationManager defaultConfigurationManager;
     private JPanel selectProfilePanel;
     private JPanel createProfilePanel;
     private JTextField tfProfileName;
     private JButton buttonStartProcess;
+    ConfigurationDirectory defaultProfile;
 
     private static final String SELECT_PROFILE_PANEL = "selectProfilePanel";
     private static final String CREATE_PROFILE_PANEL = "createProfilePanel";
@@ -69,9 +62,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
     @Override
     protected void createAndShowGUI() {
-        configurationManager=ConfigurationManager.get();
-        defaultConfigurationManager=ConfigurationManager.get();
-        defaultConfigurationManager.addConfigurableChangeListener(this);
+        this.createObjectInstances();
         this.setLayout( new BorderLayout() );
         this.add(createTitlePanel(), BorderLayout.NORTH);
         this.add(createFormPanel(), BorderLayout.CENTER);
@@ -79,6 +70,22 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         //show select profile panel and hide create profile panel
         //use this method after create createNavigationButtonsPanel to avoid NullpointerException
         showProfilePanel(SELECT_PROFILE_PANEL);
+    }
+
+    private void createObjectInstances(){
+        //create a "default" profile item on profilemanager
+        defaultProfile = ProfileManager.get().getDefaultProfile();
+        ProfileManager.get().addObject(defaultProfile);
+
+        defaultConfigurationManager = ConfigurationManager.get();
+        //for the first time, the selected configuration is the default
+        selectedConfigurationManager = new ConfigurationManager(defaultProfile);
+        defaultConfigurationManager.addConfigurableChangeListener(this);
+        try {
+            defaultConfigurationManager.loadConfigs(true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private JPanel createTitlePanel(){
@@ -91,13 +98,14 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     }
 
     private JPanel createFormPanel(){
-        panelForm = new JPanel();
+        JPanel panelForm = new JPanel();
         panelForm.setLayout(new BoxLayout( panelForm, BoxLayout.PAGE_AXIS ));
         panelForm.setBackground(super.getCurrentBackGroundColor());
         setupSelectProfilesPanel(panelForm);
         setupCreateProfilePanel(panelForm);
         panelForm.add( Box.createRigidArea( new Dimension(10, 10) ) );
         setupTasksTables(panelForm);
+        loadTasksTables(defaultProfile);
         return panelForm;
     }
 
@@ -110,16 +118,13 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         parentPanel.add(selectProfilePanel);
         selectProfilePanel.setBackground(super.getCurrentBackGroundColor());
         selectProfilePanel.add( new JLabel(Messages.get("Home.ProcOptions.ExecProfile")) );
-        //create a "default" profile item on profilemanager
-        ConfigurationDirectory defaultProfile = ProfileManager.get().getDefaultProfile();
-        ProfileManager.get().addObject(defaultProfile);
         profilesCombo = new JComboBox(ProfileManager.get().getObjects().toArray());
         profilesCombo.setPreferredSize(new Dimension(200,(int)profilesCombo.getPreferredSize().getHeight()));
         selectProfilePanel.add(profilesCombo);
         profilesCombo.setSelectedItem(defaultProfile);
         profilesCombo.addItemListener(e->{
             if(e.getStateChange()==ItemEvent.SELECTED) {
-                reloadTasksTables((IConfigurationDirectory) e.getItem());
+                loadTasksTables((IConfigurationDirectory) e.getItem());
             }
         });
     }
@@ -145,7 +150,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         btInsertProfile.addActionListener(e -> {
             try {
                 updateTaskInstallerConfig();
-                IConfigurationDirectory dir = ProfileManager.get().createProfile(tfProfileName.getText(), configurationManager);
+                IConfigurationDirectory dir = ProfileManager.get().createProfile(tfProfileName.getText(), selectedConfigurationManager);
                 profilesCombo.addItem(dir);
                 showProfilePanel(SELECT_PROFILE_PANEL);
                 profilesCombo.setSelectedItem(dir);
@@ -156,7 +161,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
         JButton btCancel = new JButton(Messages.get("Home.Cancel"));
         btCancel.addActionListener( e -> {
-            reloadTasksTables((IConfigurationDirectory) profilesCombo.getSelectedItem());
+            loadTasksTables((IConfigurationDirectory) profilesCombo.getSelectedItem());
             showProfilePanel(SELECT_PROFILE_PANEL);
         });
         createProfilePanel.add(btCancel);
@@ -189,78 +194,78 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
 
     private void updateTaskInstallerConfig() {
-        List<AbstractTask> tasks = new ArrayList<AbstractTask>();
+        List<AbstractTask> tasks = new ArrayList<>();
         for(int i=0; i<tasksTableModel.getRowCount();i++) {
             if(tasksTableModel.getEnabled(i)) {
                 tasks.add(tasksTableModel.getTaskList().get(i));
             }
             //loop to update enableTaskProperties configurables
             List<Configurable<?>> configs = tasksTableModel.getTaskList().get(i).getConfigurables();
-            for (Iterator iterator = configs.iterator(); iterator.hasNext();) {
-                Configurable<?> configurable = (Configurable<?>) iterator.next();
-                if(configurable instanceof EnableTaskProperty) {
-                    ((EnableTaskProperty) configurable).setEnabled(tasksTableModel.getEnabled(i));
+            for (Configurable<?> config : configs) {
+                if (config instanceof EnableTaskProperty) {
+                    ((EnableTaskProperty) config).setEnabled(tasksTableModel.getEnabled(i));
                 }
             }
         }
         taskInstallerConfig.update(tasks);
     }
 
+    private void loadTasksTables(IConfigurationDirectory selectedDirectory){
+        selectedConfigurationManager = new ConfigurationManager(selectedDirectory);
+        selectedConfigurationManager.addConfigurableChangeListener(this);
+        Set<Configurable<?>> configs = defaultConfigurationManager.getObjects();
+        for (Configurable<?> config : configs) {
+            //overwrite if already exists
+            selectedConfigurationManager.addObject(config);
+        }
+        try {
+            selectedConfigurationManager.loadConfigs(true);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        //Get a TaskInstallerConfig instance with the TaskInstaller.xml content frin the selected profile directory
+        taskInstallerConfig = selectedConfigurationManager.findObject(TaskInstallerConfig.class);
+        //if the selected profile dos not has a TaskInstaller.xml, load it from de CONFDIR location
+        if(taskInstallerConfig==null)
+            taskInstallerConfig = defaultConfigurationManager.findObject(TaskInstallerConfig.class);
+        //Create a list with all AbstractTask class instance from the TaskInstaller.xml file
+        taskArrayList = taskInstallerConfig.getNewTaskInstances();
+        ArrayList<Boolean> enabled = new ArrayList<>();
+        for(AbstractTask currentTask : taskArrayList  ){
+            List<Configurable<?>> configurableList = currentTask.getConfigurables();
+            if (configurableList == null || configurableList.isEmpty()){
+                try {
+                    currentTask.init(selectedConfigurationManager);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                enabled.add(currentTask.isEnabled());
+                continue;
+            }
+
+
+            if(configurableList.get(0) instanceof EnabledInterface) {
+                EnabledInterface etp = (EnabledInterface) configurableList.get(0);
+                enabled.add(etp.isEnabled());
+                continue;
+            }
+            enabled.add(false);
+        }
+
+        tasksTableModel.updateData(selectedConfigurationManager, taskArrayList, enabled);
+    }
+
     /**
-     * Create and populate a table with all tasks list
+     * Create the tasks table
      * @param parentPanel - Panel to show the tasktable
      */
     private void setupTasksTables(JPanel parentPanel){
-        //enabledTaskArrayList: List of Tasks instances from TaskInstallerConfig.xml (default iped tasks and external tasks)
-        //installedClasses: List of Classes of enabledTaskArrayList
-        //taskArrayList: List of Tasks instances from enabledTaskArrayList (TaskInstallerConfig.xml) and "iped.engine.task" classes
-
-        //Load all tasks class from TaskInstallerConfig.xml using reflection (method taskInstallerConfig.getNewTaskInstances())
-        taskInstallerConfig = (TaskInstallerConfig) configurationManager.findObject(TaskInstallerConfig.class);
-        if(taskInstallerConfig==null) {
-            taskInstallerConfig = (TaskInstallerConfig) defaultConfigurationManager.findObject(TaskInstallerConfig.class);
-        }
-        enabledTaskArrayList = taskInstallerConfig.getNewTaskInstances();
-
-        //Create a list of classes based on enabledTaskArrayList object instances
-        //this list will be used to filter class instance from "iped.engine.task" classes
-        List<Class<? extends AbstractTask>> installedClasses = new ArrayList<Class<? extends AbstractTask>>();
-        for (Iterator<AbstractTask> iterator = enabledTaskArrayList.iterator(); iterator.hasNext();) {
-            AbstractTask abstractTask = iterator.next();
-            installedClasses.add(abstractTask.getClass());
-        }
-
-        //Copy all tasks instances from enabledTaskArrayList
-        taskArrayList = new ArrayList<AbstractTask>();
-        taskArrayList.addAll(enabledTaskArrayList);
-
-        //Create instance from "iped.engine.task" classes that isn't loaded and add to taskArrayList
-        //Add to taskArrayList tasks who is not in installedClasses list
-        Reflections reflections = new Reflections("iped.engine.task");
-        Set<Class<? extends AbstractTask>> classes = reflections.getSubTypesOf(iped.engine.task.AbstractTask.class);
-        for(Class<? extends AbstractTask> aClass : classes) {
-            if(!Modifier.isAbstract(aClass.getModifiers())) {
-                if(!installedClasses.contains(aClass)) {
-                    try {
-                        taskArrayList.add(aClass.getDeclaredConstructor().newInstance());
-                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                            | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
         //Create the table model
-        tasksTableModel = new TasksTableModel(configurationManager, mainFrame, taskArrayList);
-        tasksTableModel.setEnabled(enabledTaskArrayList);
+        tasksTableModel = new TasksTableModel(selectedConfigurationManager, mainFrame, taskArrayList);
         tasksTableModel.addTableModelListener(this);
         jtableTasks = new JTable();
         setupTableLayout();
-        if(scrollTablePane==null) {
-            scrollTablePane = new JScrollPane();
-        }
+        JScrollPane scrollTablePane = new JScrollPane();
         scrollTablePane.setViewportView(jtableTasks);
         parentPanel.add(scrollTablePane);
     }
@@ -302,10 +307,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         });
 
         buttonStartProcess = new JButton(Messages.get("Home.ProcOptions.StartProcessing"));
-        buttonStartProcess.addActionListener(e -> {
-            //mainFrame.showPanel(MainFrameCardsNames.PROCESS_MANAGER);
-            mainFrame.startIPEDProcessing();
-        } );
+        buttonStartProcess.addActionListener(e -> mainFrame.startIPEDProcessing());
 
         panelButtons.add(buttoCancel);
         panelButtons.add(buttoAddScriptTask);
@@ -320,40 +322,17 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             AbstractTask task = ((TasksTableModel)jtableTasks.getModel()).getTaskList().get(e.getLastRow());
             List<Configurable<?>> configurables = task.getConfigurables();
             if(configurables != null && configurables.size()>0) {
-                new TaskConfigDialog(configurationManager, task, mainFrame).setVisible(true);
+                new TaskConfigDialog(selectedConfigurationManager, task, mainFrame).setVisible(true);
             }
         }
     }
 
-    private void reloadTasksTables(IConfigurationDirectory selectedDirectory){
-        configurationManager = new ConfigurationManager(selectedDirectory);
-        configurationManager.addConfigurableChangeListener(this);
-        Set<Configurable<?>> configs = defaultConfigurationManager.getObjects();
-        for (Iterator iterator = configs.iterator(); iterator.hasNext();) {
-            Configurable<?> configurable = (Configurable<?>) iterator.next();
-            //overwrite if already exists
-            configurationManager.addObject(configurable);
-        }
-        try {
-            configurationManager.loadConfigs(true);
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-        setupTasksTables(panelForm);
-    }
 
-    public ConfigurationManager getConfigurationManager() {
-        return configurationManager;
-    }
-
-    public void setConfigurationManager(ConfigurationManager configurationManager) {
-        this.configurationManager = configurationManager;
-    }
 
     /**
      * A listener for task table item selection
      * this action will show to  user a panel create a new profile!!
-     * @param configurable
+     *
      */
     @Override
     public void onChange(Configurable<?> configurable) {
