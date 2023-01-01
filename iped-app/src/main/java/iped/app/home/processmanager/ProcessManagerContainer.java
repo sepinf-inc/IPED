@@ -132,7 +132,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
             Thread t = new Thread(new Runnable() {
                 public void run() {
                     ProcessManager pm = new ProcessManager();
-                    pm.openCase(ipedProcess);
+                    pm.openSingleCase(ipedProcess.getCaseOutputPath());
                 }
             });
             t.start();

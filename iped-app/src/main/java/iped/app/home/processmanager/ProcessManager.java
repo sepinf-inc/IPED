@@ -6,6 +6,7 @@ package iped.app.home.processmanager;/*
 
 import iped.app.home.newcase.model.Evidence;
 import iped.app.home.newcase.model.IPEDProcess;
+import iped.app.home.utils.CasePathManager;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.util.Util;
 
@@ -22,7 +23,7 @@ import java.util.ArrayList;
 public class ProcessManager {
 
     private Process process;
-    private ArrayList<ProcessListener> processListener = new ArrayList<>();
+    private final ArrayList<ProcessListener> processListener = new ArrayList<>();
 
     public ArrayList<String> getEvidencesCommandList(ArrayList<Evidence> evidenceList){
         ArrayList<String> commandArgs = new ArrayList<>();
@@ -105,16 +106,33 @@ public class ProcessManager {
         return rootPath;
     }
 
-    public void openCase(IPEDProcess ipedProcess){
-        ArrayList<String> commandList =  new ArrayList<String>();
+    public void openMulticase(File multiCaseFile){
+        ArrayList<String> commandList =  new ArrayList<>();
         commandList.add(getJarBinCommand());
-        commandList.addAll(getIpedSearchAppJarCommand(ipedProcess.getCaseOutputPath()));
+        commandList.addAll(getIpedSearchAppJarCommand(CasePathManager.getInstance().getCasePath().toPath()));
+        commandList.add("-multicases");
+        commandList.add(multiCaseFile.getPath());
+        StringBuffer output = new StringBuffer();
+        System.out.println(commandList);
+        startIpedSearchAppProcess(commandList, output);
+    }
+
+    public void openSingleCase(Path casePath){
+        ArrayList<String> commandList =  new ArrayList<>();
+        commandList.add(getJarBinCommand());
+        commandList.addAll(getIpedSearchAppJarCommand(casePath));
+        StringBuffer output = new StringBuffer();
+        startIpedSearchAppProcess(commandList, output);
+    }
+
+    private void startIpedSearchAppProcess(ArrayList<String> commandList, StringBuffer output){
         try{
+            System.out.println("IPED Search command: " + String.join(" ", commandList.toArray(new String[0])));
             process = Runtime.getRuntime().exec(commandList.toArray(new String[0]));
+            readProcessOutput(process, output);
             process.waitFor();
-            int exitVal = process.exitValue();
-            if (exitVal != 0) {
-                throw new Exception("Failed to open case");
+            if (process.exitValue() != 0) {
+                throw new Exception(output.toString());
             }
         }catch (Exception e) {
             e.printStackTrace();
@@ -122,7 +140,7 @@ public class ProcessManager {
     }
 
     public void startIpedProcess(IPEDProcess ipedProcess, JTextArea logTextArea) throws IpedStartException {
-        ArrayList<String> commandList =  new ArrayList<String>();
+        ArrayList<String> commandList =  new ArrayList<>();
         commandList.add(getJarBinCommand());
         commandList.addAll(getIpedJarCommand());
         commandList.addAll(getEvidencesCommandList(ipedProcess.getEvidenceList()) );
@@ -148,14 +166,22 @@ public class ProcessManager {
 
     public void readProcessOutput(Process process, JTextArea logTextArea) throws IOException {
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line = "";
-        while ((line = inputReader.readLine()) != null) {
+        String line;
+        while ((line = inputReader.readLine()) != null)
             logTextArea.append(line + "\n");
-        }
         BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-        while ((line = errorReader.readLine()) != null) {
+        while ((line = errorReader.readLine()) != null)
             logTextArea.append(line + "\n");
-        }
+    }
+
+    public void readProcessOutput(Process process, StringBuffer outputText) throws IOException {
+        BufferedReader inputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line;
+        while ((line = inputReader.readLine()) != null)
+            outputText.append(line).append("\n");
+        BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        while ((line = errorReader.readLine()) != null)
+            outputText.append(line).append("\n");
     }
 
     private void fireProcessStartListener(){

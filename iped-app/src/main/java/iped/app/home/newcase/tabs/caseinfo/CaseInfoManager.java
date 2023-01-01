@@ -8,12 +8,15 @@ import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 import iped.app.home.newcase.model.CaseInfo;
 import iped.app.home.newcase.model.Evidence;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class CaseInfoManager {
@@ -42,6 +45,15 @@ public class CaseInfoManager {
         }
     }
 
+    public void validateCasePath(Path casePath) throws CaseException {
+        if( casePath == null)
+            throw new CaseException("Invalid case path");
+        if( ! Paths.get(casePath.toString(), "IPED-SearchApp.exe").toFile().exists() )
+            throw new CaseException("Invalid case path");
+        if( ! Paths.get(casePath.toString(), "iped", "data", "processing_finished").toFile().exists() )
+            throw new CaseException("The case process is not finished.");
+    }
+
     public void castEvidenceListToMaterialsList(CaseInfo caseInfo, ArrayList<Evidence> evidenceList){
         if( (evidenceList == null || evidenceList.isEmpty()) || (caseInfo == null) )
             return;
@@ -63,17 +75,27 @@ public class CaseInfoManager {
         caseInfo.setCaseName( json.getString("caseName") );
         caseInfo.setInvestigatedNames(new ArrayList<>());
         JSONArray array = json.getJSONArray("investigatedNames");
-        for (int i = 0; i < array.length(); i++)
-            caseInfo.getInvestigatedNames().add(array.getString(i));
+        for (int i = 0; i < array.length(); i++) {
+            if(! StringUtils.isBlank(array.getString(i)) )
+                caseInfo.getInvestigatedNames().add(array.getString(i));
+        }
         caseInfo.setRequestDate( json.getString("requestDate") );
         caseInfo.setRequester(json.getString("requester"));
         caseInfo.setOrganizationName(json.getString("organizationName") );
         caseInfo.setExaminers(new ArrayList<>());
         array = json.getJSONArray("examiners");
-        for (int i = 0; i < array.length(); i++)
-            caseInfo.getExaminers().add(array.getString(i));
+        for (int i = 0; i < array.length(); i++){
+            if(! StringUtils.isBlank(array.getString(i)) )
+                caseInfo.getExaminers().add(array.getString(i));
+        }
         caseInfo.setContact(json.getString("contact"));
         caseInfo.setCaseNotes(json.getString("caseNotes"));
+        caseInfo.setMaterials(new ArrayList<>());
+        array = json.getJSONArray("materials");
+        for (int i = 0; i < array.length(); i++) {
+            if (!StringUtils.isBlank(array.getString(i)))
+                caseInfo.getMaterials().add(array.getString(i));
+        }
         return caseInfo;
     }
 
