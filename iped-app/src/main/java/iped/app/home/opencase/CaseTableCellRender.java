@@ -6,11 +6,12 @@ package iped.app.home.opencase;/*
 
 import iped.app.home.newcase.model.CaseInfo;
 import iped.app.home.newcase.tabs.caseinfo.CaseInfoManager;
+import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -18,13 +19,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
-public class CaseTableCellRender extends JPanel implements TableCellRenderer {
+public class CaseTableCellRender extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         Path casePath = (Path) value;
         //Check if caseinfo file exists
         CaseInfo caseInfo = getCaseInfoFromPath(casePath);
-        JPanel rowPanel = caseInfo != null ? getCaseInfoJPanel(caseInfo) : getPathJPanel(casePath);
+        JPanel rowPanel = caseInfo != null ? getCaseInfoJPanel(caseInfo, casePath) : getPathJLabel(casePath);
         setRowBackgroundColor(row, isSelected, rowPanel, hasFocus);
         rowPanel.setBorder(BorderFactory.createEmptyBorder(3, 15, 3, 15));
         table.setRowHeight(row, (int) rowPanel.getPreferredSize().getHeight());
@@ -33,26 +35,30 @@ public class CaseTableCellRender extends JPanel implements TableCellRenderer {
 
     private void setRowBackgroundColor(int row, boolean isSelected, JPanel casePanel, boolean hasFocus){
         if(isSelected)
-            casePanel.setBackground(UIManager.getColor("Table.selectionBackground"));
+            casePanel.setBackground(StyleManager.getColumnRowSelectedBackground());
         else
-            casePanel.setBackground( (row%2 == 0) ? Color.WHITE : new Color(242, 242, 242) );
+            casePanel.setBackground( StyleManager.getColumnRowUnSelectedBackground(row) );
         if(hasFocus)
-            casePanel.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
+            casePanel.setBorder( StyleManager.getColumnRowFocusBorder() );
 
 
     }
 
-    private JPanel getPathJPanel(Path casePath){
+    private JPanel getPathJLabel(Path casePath){
         JPanel casePanel = new JPanel();
         casePanel.setLayout(new BoxLayout(casePanel, BoxLayout.LINE_AXIS));
-        JLabel caseLabel = new JLabel(Messages.get("App.Case")+": ".concat(casePath.toString()));
-        casePanel.add(caseLabel);
+        casePanel.add(getCasePathJlabel(casePath));
         return casePanel;
     }
 
-    private JPanel getCaseInfoJPanel(CaseInfo caseInfo){
+    private JLabel getCasePathJlabel(Path casePath){
+        return new JLabel(getLabelText("Home.OpenCase.CaseLocation", casePath.toString()));
+    }
+
+    private JPanel getCaseInfoJPanel(CaseInfo caseInfo, Path casePath){
         JPanel casePanel = new JPanel();
         casePanel.setLayout(new BoxLayout(casePanel, BoxLayout.PAGE_AXIS));
+        casePanel.add(getCasePathJlabel(casePath));
         if( !StringUtils.isBlank(caseInfo.getCaseNumber()) )
             casePanel.add(new JLabel( getLabelText("Home.NewCase.CaseNumber", caseInfo.getCaseNumber()) ) );
         if( !StringUtils.isBlank(caseInfo.getCaseName()) )

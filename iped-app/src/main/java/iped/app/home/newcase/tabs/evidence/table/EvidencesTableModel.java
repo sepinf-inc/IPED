@@ -12,10 +12,11 @@ import iped.app.ui.Messages;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class EvidencesTableModel extends AbstractTableModel {
+public class EvidencesTableModel extends DefaultTableModel {
 
     private final String[] COLUMN_NAME = {Messages.get("Home.Evidences.Table.FileName"), Messages.get("Home.Evidences.Table.Alias"), Messages.get("Home.Evidences.Table.Path"), Messages.get("Home.Evidences.Table.Options")};
     private final ArrayList<Evidence> evidencesList;
@@ -24,6 +25,13 @@ public class EvidencesTableModel extends AbstractTableModel {
     public EvidencesTableModel(ArrayList<Evidence> evidencesList, EvidenceInfoDialog evidenceInfoDialog) {
         this.evidencesList = evidencesList;
         this.evidenceInfoDialog = evidenceInfoDialog;
+    }
+
+    @Override
+    public Class<?> getColumnClass(int columnIndex) {
+        if( columnIndex == 3 )
+            return JPanel.class;
+        return super.getColumnClass(columnIndex);
     }
 
     @Override
@@ -50,7 +58,6 @@ public class EvidencesTableModel extends AbstractTableModel {
     }
 
     private JPanel createColumnOptionPanel(int rowIndex ){
-        //Evidence evidence = evidencesList.get(rowIndex);
         JPanel panel = new JPanel();
         panel.setLayout( new GridBagLayout() );
         GridBagConstraints gbc = new GridBagConstraints();
@@ -82,6 +89,8 @@ public class EvidencesTableModel extends AbstractTableModel {
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        if(evidencesList == null || evidencesList.isEmpty())
+            return;
         Evidence currentEvidence = evidencesList.get(rowIndex);
         if (columnIndex == 1 ){
             currentEvidence.setAlias(String.valueOf(aValue));

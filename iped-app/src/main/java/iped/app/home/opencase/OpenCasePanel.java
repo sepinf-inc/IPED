@@ -44,6 +44,7 @@ public class OpenCasePanel extends DefaultPanel {
     protected void createAndShowGUI() {
         this.setLayout( new BoxLayout( this, BoxLayout.Y_AXIS ) );
         this.add(createTitlePanel());
+        this.add(createTableButtonsPanel());
         this.add(createFormPanel());
         this.add(createButtonsPanel());
     }
@@ -104,7 +105,6 @@ public class OpenCasePanel extends DefaultPanel {
         panelForm.setLayout(new BoxLayout( panelForm, BoxLayout.PAGE_AXIS ));
         panelForm.setBackground(super.getCurrentBackGroundColor());
         panelForm.add( Box.createRigidArea( new Dimension(10, 10) ) );
-        panelForm.add(createTableButtonsPanel());
         setupCaseTables(panelForm);
         return panelForm;
     }
@@ -116,8 +116,9 @@ public class OpenCasePanel extends DefaultPanel {
     private void setupCaseTables(JPanel panel){
         casesTableModel = new CasesTableModel(getCaseList());
         jTableCaseList = new JTable(casesTableModel);
+        jTableCaseList.setFillsViewportHeight(true);
         jTableCaseList.setDefaultRenderer(JPanel.class, new CaseTableCellRender());
-        jTableCaseList.getTableHeader().setFont(new Font("Times New Roman", Font.BOLD, 12));
+        StyleManager.setTableHeaderStyle(jTableCaseList);
         panel.add( new JScrollPane(jTableCaseList));
     }
 

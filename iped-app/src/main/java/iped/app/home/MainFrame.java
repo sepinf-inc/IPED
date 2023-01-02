@@ -8,6 +8,7 @@ import iped.app.home.style.StyleManager;
 import iped.app.home.utils.CasePathManager;
 import iped.app.ui.Messages;
 import iped.app.ui.themes.ThemeManager;
+import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
@@ -67,6 +68,7 @@ public class MainFrame extends JFrame {
      *Adjust layout configurations, sizes and behaviors
      */
     private void setupLayout() throws Exception {
+        UiScale.loadUserSetting();
         this.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx=1.0;

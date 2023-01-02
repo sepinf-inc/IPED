@@ -6,6 +6,8 @@ package iped.app.home.opencase;
  * @author Thiago S. Figueiredo
  */
 
+import iped.app.ui.Messages;
+
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.nio.file.Path;
@@ -13,7 +15,7 @@ import java.util.ArrayList;
 
 public class CasesTableModel extends AbstractTableModel {
 
-    private final String[] COLUMN_NAME = {"Lista de casos"};
+    private final String[] COLUMN_NAME = {Messages.get("Home.OpenCase.CaseTableHeader")};
     private final ArrayList<Path> caseList;
 
     public CasesTableModel(ArrayList<Path> caseList) {

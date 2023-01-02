@@ -5,6 +5,7 @@ package iped.app.home.newcase.tabs.caseinfo;/*
  */
 
 import com.github.openjson.JSONArray;
+import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
 import iped.app.home.newcase.model.CaseInfo;
 import iped.app.home.newcase.model.Evidence;
@@ -13,15 +14,13 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class CaseInfoManager {
-
-    Charset UTF8 = Charset.forName("UTF-8");
 
     public void saveCaseInfo(CaseInfo caseInfo, File destinationFile){
         try {
@@ -36,7 +35,7 @@ public class CaseInfoManager {
             caseInfoJson.put("contact", caseInfo.getContact());
             caseInfoJson.put("caseNotes", caseInfo.getCaseNotes());
             caseInfoJson.put("materials", caseInfo.getMaterials());
-            FileWriter writer = new FileWriter(destinationFile, UTF8);
+            FileWriter writer = new FileWriter(destinationFile, StandardCharsets.UTF_8);
             writer.write(caseInfoJson.toString());
             writer.flush();
             writer.close();
@@ -68,35 +67,42 @@ public class CaseInfoManager {
     }
 
     public CaseInfo loadCaseInfo(File fileToLoad) throws IOException {
-        String str = new String(Files.readAllBytes(fileToLoad.toPath()), UTF8);
+        String str = Files.readString(fileToLoad.toPath(), StandardCharsets.UTF_8);
         CaseInfo caseInfo = new CaseInfo();
         JSONObject json = new JSONObject(str);
         caseInfo.setCaseNumber( json.getString("caseNumber") );
         caseInfo.setCaseName( json.getString("caseName") );
         caseInfo.setInvestigatedNames(new ArrayList<>());
-        JSONArray array = json.getJSONArray("investigatedNames");
-        for (int i = 0; i < array.length(); i++) {
-            if(! StringUtils.isBlank(array.getString(i)) )
-                caseInfo.getInvestigatedNames().add(array.getString(i));
-        }
+        getJsonArray(json,"investigatedNames").forEach(value -> {
+            if(! StringUtils.isBlank((String) value) )
+                caseInfo.getInvestigatedNames().add((String) value);
+        });
         caseInfo.setRequestDate( json.getString("requestDate") );
         caseInfo.setRequester(json.getString("requester"));
         caseInfo.setOrganizationName(json.getString("organizationName") );
         caseInfo.setExaminers(new ArrayList<>());
-        array = json.getJSONArray("examiners");
-        for (int i = 0; i < array.length(); i++){
-            if(! StringUtils.isBlank(array.getString(i)) )
-                caseInfo.getExaminers().add(array.getString(i));
-        }
+        getJsonArray(json,"examiners").forEach(value -> {
+            if(! StringUtils.isBlank((String) value) )
+                caseInfo.getExaminers().add((String) value);
+        });
         caseInfo.setContact(json.getString("contact"));
         caseInfo.setCaseNotes(json.getString("caseNotes"));
         caseInfo.setMaterials(new ArrayList<>());
-        array = json.getJSONArray("materials");
-        for (int i = 0; i < array.length(); i++) {
-            if (!StringUtils.isBlank(array.getString(i)))
-                caseInfo.getMaterials().add(array.getString(i));
-        }
+        getJsonArray(json,"materials").forEach(value -> {
+            if(! StringUtils.isBlank((String) value) )
+                caseInfo.getMaterials().add((String) value);
+        });
         return caseInfo;
+    }
+
+    private JSONArray getJsonArray(JSONObject json, String name ){
+        JSONArray array = new JSONArray();
+        try{
+            array = json.getJSONArray(name);
+        }catch(JSONException e){
+            return array;
+        }
+        return array;
     }
 
 }

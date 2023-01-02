@@ -174,8 +174,9 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
         infoDialog.addListener(this);
         evidencesTableModel = new EvidencesTableModel(evidencesList, infoDialog);
         jtableEvidences = new JTable();
+        jtableEvidences.setModel(evidencesTableModel);
         setupTableLayout();
-        panel.add( new JScrollPane(jtableEvidences));
+        panel.add(new JScrollPane(jtableEvidences));
     }
 
     /**
@@ -184,7 +185,7 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
     private void setupTableLayout(){
         jtableEvidences.setFillsViewportHeight(true);
         jtableEvidences.setRowHeight(30);
-        jtableEvidences.setModel(evidencesTableModel);
+        StyleManager.setTableHeaderStyle(jtableEvidences);
         jtableEvidences.getColumn( jtableEvidences.getColumnName(3)).setCellRenderer( new TableEvidenceOptionsCellRenderer() );
         jtableEvidences.getColumn( jtableEvidences.getColumnName(3)).setCellEditor( new TableEvidenceOptionsCellEditor(new JCheckBox()) );
         jtableEvidences.getColumn( jtableEvidences.getColumnName(3)).setMaxWidth(70);
