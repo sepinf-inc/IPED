@@ -36,7 +36,7 @@ public class AppMain {
     File casePath;
 
     // configure to debug the analysis UI with some case
-    File testPath;// = new File("E:\\teste\\case-to-debug");
+    File testPath = null;// = new File("E:\\teste\\case-to-debug");
 
     boolean isMultiCase = false;
     boolean nolog = false;
@@ -177,7 +177,7 @@ public class AppMain {
 
                 Configuration.getInstance().loadIpedRoot();
             }
-            
+
             Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath(), true);
 
             App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager, libDir.getAbsolutePath());

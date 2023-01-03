@@ -8,7 +8,7 @@
         <p style="font-size:24px"><b>IPED - Documento de AYUDA</b></p>
         <b>Sintaxis de búsqueda:</b><br />
         <br />
-        Para abrir la aplicación de análisis, se requiere instalar Java JRE 8 o más reciente, se recomienda encarecidamente un JRE de 64 bits, descargar desde <a href="http://www.java.com">www.java.com</a>. Si su caso o informe está almacenado en un disco óptico, el análisis puede volverse lento. Si es así, copie todo el caso en un disco duro local, desde donde se debe abrir la aplicación de análisis..<br>
+        Para abrir la interfaz de análisis, necesita un sistema operativo de 64 bits. Si su caso o informe está almacenado en un disco óptico, el análisis puede volverse lento. Si es así, copie todo el caso en un disco duro local, desde donde se debe abrir la aplicación de análisis..<br>
         <br>
         La búsqueda por palabra clave busca términos en el nombre del archivo y el contenido de los archivos de texto, como Word, Excel, PDF, correos electrónicos, páginas de Internet, chats, etc. Si está habilitado, OCR (<i>Reconocimiento óptico de caracteres</i>) La tecnología se utiliza para buscar texto en archivos de imagen. Sin embargo, es posible que algunos resultados no se encuentren en imágenes de baja calidad o baja resolución, o si las fuentes son pequeñas o poco comunes.<br>
         <br>
@@ -35,16 +35,18 @@
                 <br /><br /></li>
             <li>10. <b>"Thomas Edson"~5</b><br>Busca archivos que contengan <b>Thomas</b> como máximo 5 palabras de distancia de <b>Edson</b>.
                 <br><br /></li>
-            <li>11. <b>nombre:recibo</b><br>Busca archivos que contengan <b>recibo</b> en su propiedad de nombre.
+            <li>11. <b>(Thomas Edson John)@2</b><br>Busque archivos que contengan al menos dos términos del conjunto.
+                <br><br /></li>
+            <li>12. <b>nombre:recibo</b><br>Busca archivos que contengan <b>recibo</b> en su propiedad de nombre.
                 <br>Todas las propiedades que se muestran en el administrador de columnas se pueden utilizar, excepto "marcador" y "puntuación" actualmente.
                 <br><br /></li>
-            <li>12. <b>tamaño:[5000 TO *]</b><br>Busca archivos con un tamaño superior a 5000 bytes, inclusive.
+            <li>13. <b>tamaño:[5000 TO *]</b><br>Busca archivos con un tamaño superior a 5000 bytes, inclusive. Utilice {} en lugar de [] para excluir el valor.
                 <br><br /></li>
-            <li>13. <b>modificado:[2015-01-31 TO 2015-03-31T12\:59\:59Z]</b><br>Buscar archivos con fecha de modificación entre las 00:00 horas del 31/01/2015 y el 12: 59:59pm del 31/03/2015.
+            <li>14. <b>modificado:[2015-01-31 TO 2015-03-31T12\:59\:59Z]</b><br>Buscar archivos con fecha de modificación entre las 00:00 horas del 31/01/2015 y el 12: 59:59pm del 31/03/2015.
                 <br><br /></li>
-            <li>14. <b>/<0-17>y(r|o)/</b><br>Busca expresiones regulares, delimitadas por 2 barras diagonales. Solo funciona para letras indexadas (alfanuméricas por defecto).
+            <li>15. <b>/<0-17>y(r|o)/</b><br>Busca expresiones regulares, delimitadas por 2 barras diagonales. Solo funciona para letras indexadas (alfanuméricas por defecto).
                 <br><br /></li>
         </ul>
-        Para obtener más información sobre la sintaxis de búsqueda, consulte http://lucene.apache.org/core/4_9_0/queryparser/org/apache/lucene/queryparser/classic/package-summary.html.
+        Para obtener más información sobre la sintaxis de búsqueda, consulte https://lucene.apache.org/core/9_2_0/queryparser/org/apache/lucene/queryparser/flexible/standard/StandardQueryParser.html.
     </body>
 </html>

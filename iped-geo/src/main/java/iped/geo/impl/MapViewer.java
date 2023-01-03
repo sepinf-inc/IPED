@@ -199,4 +199,9 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
         return guiProvider;
     }
 
+    @Override
+    public void notifyCaseDataChanged() {
+        // TODO Auto-generated method stub
+    }
+
 }

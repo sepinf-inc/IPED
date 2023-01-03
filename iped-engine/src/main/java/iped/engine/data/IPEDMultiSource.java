@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -309,6 +311,17 @@ public class IPEDMultiSource extends IPEDSource {
     @Override
     public int getLastId() {
         throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
+    }
+
+    @Override
+    public Set<String> getEvidenceUUIDs() {
+        if (evidenceUUIDs.size() <= 0) {
+            for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
+                IPEDSource curcase = (IPEDSource) iterator.next();
+                evidenceUUIDs.addAll(curcase.getEvidenceUUIDs());
+            }
+        }
+        return super.getEvidenceUUIDs();
     }
 
 }
