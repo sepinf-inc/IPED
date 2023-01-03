@@ -135,9 +135,11 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
             fileChooserProcurarImagens.setDialogTitle(Messages.get("Home.Evidences.ChooseSourceFolder"));
             fileChooserProcurarImagens.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fileChooserProcurarImagens.setAcceptAllFileFilterUsed(false);
-            String pastaDeOrigem = null;
+            String pastaDeOrigem;
             if( fileChooserProcurarImagens.showOpenDialog(this) == JFileChooser.APPROVE_OPTION){
                 pastaDeOrigem = fileChooserProcurarImagens.getSelectedFile().toString();
+            }else{
+                return;
             }
             Path path = Paths.get(pastaDeOrigem);
             try {
@@ -175,19 +177,19 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
         evidencesTableModel = new EvidencesTableModel(evidencesList, infoDialog);
         jtableEvidences = new JTable();
         jtableEvidences.setModel(evidencesTableModel);
-        setupTableLayout();
+        setupTableLayout(infoDialog);
         panel.add(new JScrollPane(jtableEvidences));
     }
 
     /**
      * Adjusts the JTable layout
      */
-    private void setupTableLayout(){
+    private void setupTableLayout(EvidenceInfoDialog infoDialog){
         jtableEvidences.setFillsViewportHeight(true);
         jtableEvidences.setRowHeight(30);
         StyleManager.setTableHeaderStyle(jtableEvidences);
         jtableEvidences.getColumn( jtableEvidences.getColumnName(3)).setCellRenderer( new TableEvidenceOptionsCellRenderer() );
-        jtableEvidences.getColumn( jtableEvidences.getColumnName(3)).setCellEditor( new TableEvidenceOptionsCellEditor(new JCheckBox()) );
+        jtableEvidences.getColumn( jtableEvidences.getColumnName(3)).setCellEditor( new TableEvidenceOptionsCellEditor(evidencesList, infoDialog) );
         jtableEvidences.getColumn( jtableEvidences.getColumnName(3)).setMaxWidth(70);
     }
 
