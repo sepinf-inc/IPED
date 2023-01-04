@@ -18,8 +18,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.nio.file.Paths;
 import java.util.Objects;
 
@@ -37,7 +35,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
     private JPanel processRunningPanel;
     private IpedStartException ipedStartException;
     private JTextArea logTextArea;
-    private Timer openCaseTimer;
+    private JButton buttonOpenCase;
 
     //Constants to change content view
     private final String STARTING_PROCESS = "startingProcess";
@@ -96,9 +94,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         errorOptionsButtonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         errorOptionsButtonPanel.setBackground(super.getCurrentBackGroundColor());
         JButton buttonBack = new JButton(Messages.get("Home.ProcessManager.BackToCaseInfo"));
-        buttonBack.addActionListener(e->{
-            mainFrame.showPanel(MainFrameCardsNames.NEW_CASE);
-        });
+        buttonBack.addActionListener(e->mainFrame.showPanel(MainFrameCardsNames.NEW_CASE) );
         errorOptionsButtonPanel.add(buttonBack);
         JButton buttonShowLog = new JButton(Messages.get("Home.ProcessManager.ShowTerminalLog"));
         buttonShowLog.addActionListener(e->{
@@ -119,44 +115,26 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         successOptionsButtonPanel.setBackground(super.getCurrentBackGroundColor());
 
         JButton buttonBackCase = new JButton(Messages.get("Home.ProcessManager.BackToCaseInfo"));
-        buttonBackCase.addActionListener(e->{
-            mainFrame.showPanel(MainFrameCardsNames.NEW_CASE);
-        });
+        buttonBackCase.addActionListener(e->mainFrame.showPanel(MainFrameCardsNames.NEW_CASE));
         successOptionsButtonPanel.add(buttonBackCase);
 
-        JButton buttonOpenCase = new JButton(Messages.get("Home.ProcessManager.OpenCase"));
+        buttonOpenCase = new JButton(Messages.get("Home.ProcessManager.OpenCase"));
         buttonOpenCase.addActionListener(e->{
-            buttonOpenCase.setEnabled(false);
-            buttonOpenCase.setText(Messages.get("Home.ProcessManager.OpenCaseMsg"));
-            openCaseTimer.start();
-            Thread t = new Thread(new Runnable() {
-                public void run() {
-                    ProcessManager pm = new ProcessManager();
-                    pm.openSingleCase(ipedProcess.getCaseOutputPath());
-                }
+            Thread t = new Thread(() -> {
+                ProcessManager pm = new ProcessManager();
+                pm.addProcessListener(ProcessManagerContainer.this);
+                pm.openSingleCase(ipedProcess.getCaseOutputPath());
             });
             t.start();
         });
-        //A timer to prevent user to double click
-        openCaseTimer = new Timer(10000, new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                buttonOpenCase.setEnabled(true);
-                buttonOpenCase.setText(Messages.get("Home.ProcessManager.OpenCase"));
-            }
-        });
-        openCaseTimer.setRepeats(false);
         successOptionsButtonPanel.add(buttonOpenCase);
 
         JButton buttonShowLog = new JButton(Messages.get("Home.ProcessManager.ShowTerminalLog"));
-        buttonShowLog.addActionListener(e->{
-            JOptionPane.showMessageDialog(this, logTextArea, Messages.get("Home.ProcessManager.TerminalLog"), JOptionPane.ERROR_MESSAGE);
-        });
+        buttonShowLog.addActionListener(e-> JOptionPane.showMessageDialog(this, logTextArea, Messages.get("Home.ProcessManager.TerminalLog"), JOptionPane.ERROR_MESSAGE));
         successOptionsButtonPanel.add(buttonShowLog);
 
         JButton buttonExit = new JButton(Messages.get("Home.ProcessManager.ExitApplication"));
-        buttonExit.addActionListener(e->{
-            System.exit(0);
-        });
+        buttonExit.addActionListener(e-> System.exit(0));
         successOptionsButtonPanel.add(buttonExit);
 
         successOptionsButtonPanel.setVisible(false);
@@ -175,17 +153,15 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
     public void startProcess(){
         switchPanelTo(STARTING_PROCESS);
         saveCaseInfoJsonOnCaseOutputPath();
-        Thread t = new Thread(new Runnable() {
-            public void run() {
-                try {
-                    ProcessManager processManager = new ProcessManager();
-                    processManager.addProcessListener(ProcessManagerContainer.this);
-                    processManager.startIpedProcess(ipedProcess, logTextArea);
-                } catch (IpedStartException e) {
-                    ipedStartException = e;
-                    switchPanelTo(FAILED_PROCESS);
-                    e.printStackTrace();
-                }
+        Thread t = new Thread(() -> {
+            try {
+                ProcessManager processManager = new ProcessManager();
+                processManager.addProcessListener(ProcessManagerContainer.this);
+                processManager.startIpedProcess(ipedProcess, logTextArea);
+            } catch (IpedStartException e) {
+                ipedStartException = e;
+                switchPanelTo(FAILED_PROCESS);
+                e.printStackTrace();
             }
         });
         t.start();
@@ -240,7 +216,13 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
      */
     @Override
     public void processStarted() {
-        switchPanelTo(RUNNING_PROCESS);
+        try {
+            Thread.sleep(3000);
+            switchPanelTo(RUNNING_PROCESS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**
@@ -249,5 +231,17 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
     @Override
     public void processFinished() {
         switchPanelTo(FINISHED_PROCESS);
+    }
+
+    @Override
+    public void caseIsOpening() {
+        buttonOpenCase.setEnabled(false);
+        buttonOpenCase.setText(Messages.get("Home.ProcessManager.OpenCaseMsg"));
+    }
+
+    @Override
+    public void caseWasClosed() {
+        buttonOpenCase.setEnabled(true);
+        buttonOpenCase.setText(Messages.get("Home.ProcessManager.OpenCase"));
     }
 }

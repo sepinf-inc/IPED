@@ -13,6 +13,8 @@ public class IPEDProcess {
     private ArrayList<Evidence> evidenceList;
     private Path caseOutputPath;
     private ArrayList<String> options;
+    private ExistentCaseOptions existentCaseOption;
+    private String profile;
 
     public IPEDProcess() {
         caseInfo = new CaseInfo();
@@ -44,19 +46,32 @@ public class IPEDProcess {
     }
 
     /**
-     * A list to of iped command options like:
-     * 1: --append
-     * 2: --continue
-     * 3: --restart
-     * @return ArrayList<String> - A lista containing the options
+     * A list to of iped command options
+     * @return ArrayList<String> - A list containing the options
      */
     public ArrayList<String> getOptions() {
         if (options == null)
-            options = new ArrayList<String>();
+            options = new ArrayList<>();
         return options;
     }
 
     public void setOptions(ArrayList<String> options) {
         this.options = options;
+    }
+
+    public String getProfile() {
+        return profile;
+    }
+
+    public void setProfile(String profile) {
+        this.profile = profile;
+    }
+
+    public ExistentCaseOptions getExistentCaseOption() {
+        return existentCaseOption;
+    }
+
+    public void setExistentCaseOption(ExistentCaseOptions existentCaseOption) {
+        this.existentCaseOption = existentCaseOption;
     }
 }

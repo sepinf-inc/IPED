@@ -6,7 +6,10 @@ package iped.app.home.processmanager;/*
 
 public interface ProcessListener {
 
-    public void processStarted();
-    public void processFinished();
+    void processStarted();
+    void processFinished();
+
+    void caseIsOpening();
+    void caseWasClosed();
 
 }

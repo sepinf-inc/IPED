@@ -10,6 +10,7 @@ import iped.app.home.MainFrame;
 import iped.app.home.MainFrameCardsNames;
 import iped.app.home.newcase.tabs.caseinfo.CaseException;
 import iped.app.home.newcase.tabs.caseinfo.CaseInfoManager;
+import iped.app.home.processmanager.ProcessListener;
 import iped.app.home.processmanager.ProcessManager;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
@@ -27,11 +28,13 @@ import java.util.ArrayList;
 /**
  * A panel to manage IPED cases to be opened
  */
-public class OpenCasePanel extends DefaultPanel {
+public class OpenCasePanel extends DefaultPanel implements ProcessListener {
 
     private JTable jTableCaseList;
     private CasesTableModel casesTableModel;
     private ArrayList<Path> caseList;
+    private JButton buttonOpen;
+    private JButton buttonCancel;
 
     public OpenCasePanel(MainFrame mainFrame) {
         super(mainFrame);
@@ -135,9 +138,9 @@ public class OpenCasePanel extends DefaultPanel {
     private JPanel createButtonsPanel() {
         JPanel panelButtons = new JPanel();
         panelButtons.setBackground(Color.white);
-        JButton buttonOpen = new JButton(Messages.get("Home.OpenCase.OpenAllCasesInTheList"));
+        buttonOpen = new JButton(Messages.get("Home.OpenCase.OpenAllCasesInTheList"));
         buttonOpen.addActionListener( e -> this.openCases());
-        JButton buttonCancel = new JButton(Messages.get("Case.Cancel"));
+        buttonCancel = new JButton(Messages.get("Case.Cancel"));
         buttonCancel.addActionListener( e -> mainFrame.showPanel(MainFrameCardsNames.HOME));
         panelButtons.add(buttonOpen);
         panelButtons.add(buttonCancel);
@@ -150,31 +153,56 @@ public class OpenCasePanel extends DefaultPanel {
             JOptionPane.showMessageDialog(this, Messages.get("Home.OpenCase.EmptyCaseMessage"), Messages.get("Home.OpenCase.EmptyCaseMessageTitle"), JOptionPane.WARNING_MESSAGE);
             return;
         }
+        Thread t = new Thread(() -> {
+            ProcessManager pm = new ProcessManager();
+            pm.addProcessListener(OpenCasePanel.this);
 
-        //If user choose a single case, will open iped search single case
-        if( caseList.size() == 1 ){
-            try{
-                new ProcessManager().openSingleCase(caseList.get(0));
-            }catch(Exception ex){
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            //If user choose a single case, will open iped search single case
+            if (caseList.size() == 1) {
+                try {
+                    pm.openSingleCase(caseList.get(0));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(OpenCasePanel.this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+                return;
             }
-            return;
-        }
 
-        //Open iped search multicase mode
-        //first create on temp folder a txt file containing the cases to be opened
-        File multiCaseFile = Paths.get(System.getProperty("user.home"), ".iped","multicasetemp.txt" ).toFile();
-        try (FileWriter fileWriter = new FileWriter(multiCaseFile); PrintWriter printWriter = new PrintWriter(fileWriter)) {
-            for (Path currentPath : caseList)
-                printWriter.println(currentPath.toString());
-            printWriter.close();
-            fileWriter.close();
-            new ProcessManager().openMulticase(multiCaseFile);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
+            //Open iped search multicase mode
+            //first create on temp folder a txt file containing the cases to be opened
+            File multiCaseFile = Paths.get(System.getProperty("user.home"), ".iped", "multicasetemp.txt").toFile();
+            try (FileWriter fileWriter = new FileWriter(multiCaseFile); PrintWriter printWriter = new PrintWriter(fileWriter)) {
+                for (Path currentPath : caseList)
+                    printWriter.println(currentPath.toString());
+                printWriter.close();
+                fileWriter.close();
+                pm.openMulticase(multiCaseFile);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(OpenCasePanel.this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        t.start();
+    }
+
+    @Override
+    public void processStarted() {
+
+    }
+
+    @Override
+    public void processFinished() {
+
+    }
+
+    @Override
+    public void caseIsOpening() {
+        buttonOpen.setEnabled(false);
+    }
+
+    @Override
+    public void caseWasClosed() {
+        buttonOpen.setEnabled(true);
     }
 
 }

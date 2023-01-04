@@ -8,6 +8,7 @@ import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.newcase.model.CaseInfo;
 import iped.app.home.newcase.NewCaseContainerPanel;
+import iped.app.home.newcase.model.ExistentCaseOptions;
 import iped.app.home.newcase.model.IPEDProcess;
 import iped.app.home.style.StyleManager;
 import iped.app.home.utils.CasePathManager;
@@ -53,8 +54,8 @@ public class CaseInfoTab extends DefaultPanel {
     private JRadioButton radioCaseOutAdd;
     private JRadioButton radioCaseOutContinue;
     private JRadioButton radioCaseOutRestart;
-    ButtonGroup buttonGroupCaseOutOptions;
-
+    private ButtonGroup buttonGroupCaseOutOptions;
+    private FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("caseinfo.json", new String[]{"json", "JSON"});
 
     public CaseInfoTab(MainFrame mainFrame) {
         super(mainFrame);
@@ -133,8 +134,7 @@ public class CaseInfoTab extends DefaultPanel {
         JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
         fileChooser.setDialogTitle(title);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("caseinfo.json", new String[]{"json", "JSON"});
-        fileChooser.addChoosableFileFilter(filter);
+        fileChooser.addChoosableFileFilter(jsonFilter);
         int returnValue = fileChooser.showSaveDialog(this);
         if (returnValue == JFileChooser.APPROVE_OPTION){
             File file = fileChooser.getSelectedFile();
@@ -150,8 +150,7 @@ public class CaseInfoTab extends DefaultPanel {
         JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
         fileChooser.setDialogTitle(title);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("caseinfo.json", new String[]{"json", "JSON"});
-        fileChooser.addChoosableFileFilter(filter);
+        fileChooser.addChoosableFileFilter(jsonFilter);
         int returnValue = fileChooser.showOpenDialog (this);
         if (returnValue == JFileChooser.APPROVE_OPTION){
             return fileChooser.getSelectedFile();
@@ -162,12 +161,18 @@ public class CaseInfoTab extends DefaultPanel {
     private void setCaseOutputValue(Path caseOutput){
         //first check if exists a case on selected output folder
         boolean isExistsCase = Paths.get(caseOutput.toString(), "IPED-SearchApp.exe").toFile().exists();
+        panelCaseOutputOptions.setVisible(isExistsCase);
         if(isExistsCase) {
-            panelCaseOutputOptions.setVisible(isExistsCase);
             //check if the existent case is finished, if yes the user cannot choose the continue options
             boolean isCaseFinished = Paths.get(caseOutput.toString(), "iped", "data", "processing_finished").toFile().exists();
             radioCaseOutContinue.setVisible(! isCaseFinished);
         }
+        //when user reselect other path wee need to unselect the previously selected radio button
+        if( ! panelCaseOutputOptions.isVisible() ) {
+            ipedProcess.setExistentCaseOption(null);
+            buttonGroupCaseOutOptions.clearSelection();
+        }
+
         IPEDProcess ipedProcess = NewCaseContainerPanel.getInstance().getIpedProcess();
         ipedProcess.setCaseOutputPath(caseOutput);
         textFieldCaseOutput.setText( caseOutput.toString() );
@@ -233,7 +238,7 @@ public class CaseInfoTab extends DefaultPanel {
         panelForm.add(checkBoxOutputOnSSD, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
         panelCaseOutputOptions = createCaseOutputOptionsPanel();
-        panelForm.add(panelCaseOutputOptions, getGridBagConstraints(column0, currentLine++, fullColumnWidth, fullWeightx, new Insets(10,10,0,10)));
+        panelForm.add(panelCaseOutputOptions, getGridBagConstraints(column0, currentLine, fullColumnWidth, fullWeightx, new Insets(10,10,0,10)));
 
         return panelForm;
 
@@ -299,6 +304,8 @@ public class CaseInfoTab extends DefaultPanel {
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
+            if(caseInfo == null)
+                return;
             ipedProcess.setCaseInfo(caseInfo);
             populateFormCaseInfo();
         });
@@ -382,11 +389,11 @@ public class CaseInfoTab extends DefaultPanel {
 
     private void setCaseOutputOptions(){
         if(radioCaseOutAdd.isSelected())
-            ipedProcess.getOptions().add("--append");
+            ipedProcess.setExistentCaseOption(ExistentCaseOptions.APPEND);
         if (radioCaseOutContinue.isSelected())
-            ipedProcess.getOptions().add("--continue");
+            ipedProcess.setExistentCaseOption(ExistentCaseOptions.CONTINUE);
         if( radioCaseOutRestart.isSelected())
-            ipedProcess.getOptions().add("--restart");
+            ipedProcess.setExistentCaseOption(ExistentCaseOptions.RESTART);
     }
 
     private void populateCaseInfo(){

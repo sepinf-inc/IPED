@@ -67,6 +67,8 @@ public class CaseInfoManager {
     }
 
     public CaseInfo loadCaseInfo(File fileToLoad) throws IOException {
+        if(fileToLoad == null)
+            return null;
         String str = Files.readString(fileToLoad.toPath(), StandardCharsets.UTF_8);
         CaseInfo caseInfo = new CaseInfo();
         JSONObject json = new JSONObject(str);

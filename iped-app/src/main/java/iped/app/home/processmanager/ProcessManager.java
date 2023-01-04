@@ -9,6 +9,7 @@ import iped.app.home.newcase.model.IPEDProcess;
 import iped.app.home.utils.CasePathManager;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.util.Util;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
 import java.io.BufferedReader;
@@ -54,6 +55,15 @@ public class ProcessManager {
         ArrayList<String> commandArgs = new ArrayList<>();
         commandArgs.add("-o");
         commandArgs.add( "\"" + caseOutput.toString() + "\"" );
+        return commandArgs;
+    }
+
+    public ArrayList<String> getProfileCommand(String profileName){
+        ArrayList<String> commandArgs = new ArrayList<>();
+        if( StringUtils.isEmpty(profileName) )
+            return commandArgs;
+        commandArgs.add("-profile");
+        commandArgs.add( profileName );
         return commandArgs;
     }
 
@@ -129,6 +139,7 @@ public class ProcessManager {
         try{
             System.out.println("IPED Search command: " + String.join(" ", commandList.toArray(new String[0])));
             process = Runtime.getRuntime().exec(commandList.toArray(new String[0]));
+            fireCaseIsOpening();
             readProcessOutput(process, output);
             process.waitFor();
             if (process.exitValue() != 0) {
@@ -136,22 +147,27 @@ public class ProcessManager {
             }
         }catch (Exception e) {
             e.printStackTrace();
+        }finally {
+            fireCaseWasClosed();
         }
     }
 
     public void startIpedProcess(IPEDProcess ipedProcess, JTextArea logTextArea) throws IpedStartException {
-        ArrayList<String> commandList =  new ArrayList<>();
-        commandList.add(getJarBinCommand());
-        commandList.addAll(getIpedJarCommand());
-        commandList.addAll(getEvidencesCommandList(ipedProcess.getEvidenceList()) );
-        commandList.addAll(getCaseOutputCommand(ipedProcess.getCaseOutputPath()));
-        commandList.addAll(ipedProcess.getOptions());
         try {
+            ArrayList<String> commandList =  new ArrayList<>();
+            commandList.add(getJarBinCommand());
+            commandList.addAll(getIpedJarCommand());
+            commandList.addAll(getEvidencesCommandList(ipedProcess.getEvidenceList()) );
+            commandList.addAll(getCaseOutputCommand(ipedProcess.getCaseOutputPath()));
+            commandList.addAll(getProfileCommand(ipedProcess.getProfile()));
+            commandList.addAll(ipedProcess.getOptions());
+            if(ipedProcess.getExistentCaseOption() != null)
+                commandList.add(ipedProcess.getExistentCaseOption().getCommand());
             System.out.println("IPED command: " + String.join(" ", commandList.toArray(new String[0])));
             process = Runtime.getRuntime().exec(commandList.toArray(new String[0]));
             fireProcessStartListener();
             readProcessOutput(process, logTextArea);
-            // aguarda terminar a aplicação
+            //wait process finish
             process.waitFor();
             int exitVal = process.exitValue();
             if (exitVal != 0) {
@@ -192,6 +208,15 @@ public class ProcessManager {
     private void fireProcessFinishedListener(){
         for( ProcessListener listener : processListener )
             listener.processFinished();
+    }
+
+    public void fireCaseIsOpening(){
+        for( ProcessListener listener : processListener )
+            listener.caseIsOpening();
+    }
+    public void fireCaseWasClosed(){
+        for( ProcessListener listener : processListener )
+            listener.caseWasClosed();
     }
 
     public void addProcessListener(ProcessListener listener) {

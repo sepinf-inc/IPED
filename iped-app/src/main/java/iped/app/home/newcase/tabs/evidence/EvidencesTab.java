@@ -203,7 +203,13 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
         JButton buttoCancel = new JButton(Messages.get("Home.Back"));
         buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
         JButton buttonNext = new JButton(Messages.get("Home.Next"));
-        buttonNext.addActionListener( e -> NewCaseContainerPanel.getInstance().goToNextTab());
+        buttonNext.addActionListener( e -> {
+            if(evidencesList == null || evidencesList.isEmpty()){
+                JOptionPane.showMessageDialog(this, Messages.get("Home.Evidences.NoEvidencesAlert"), Messages.get("Home.Evidences.NoEvidencesAlertTitle"), JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            NewCaseContainerPanel.getInstance().goToNextTab();
+        });
         panelButtons.add(buttoCancel);
         panelButtons.add(buttonNext);
         return panelButtons;

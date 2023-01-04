@@ -307,7 +307,14 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         });
 
         buttonStartProcess = new JButton(Messages.get("Home.ProcOptions.StartProcessing"));
-        buttonStartProcess.addActionListener(e -> mainFrame.startIPEDProcessing());
+        buttonStartProcess.addActionListener(e -> {
+            String selectedProfile = ((ConfigurationDirectory) profilesCombo.getSelectedItem()).getName();
+            if(defaultProfile.getName().equalsIgnoreCase(selectedProfile) )
+                NewCaseContainerPanel.getInstance().getIpedProcess().setProfile(null);
+            else
+                NewCaseContainerPanel.getInstance().getIpedProcess().setProfile(selectedProfile);
+            mainFrame.startIPEDProcessing();
+        });
 
         panelButtons.add(buttoCancel);
         panelButtons.add(buttoAddScriptTask);
