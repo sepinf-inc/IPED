@@ -257,17 +257,17 @@ public class MFTCarverTask extends BaseCarveTask {
             }
         }
 
+        StringBuilder sb = new StringBuilder();
+        sb.append(BasicProps.ID).append(":(");
+        for (int id : ids) {
+            sb.append(id).append(" ");
+        }
+        sb.append(") && ");
+        sb.append(BasicProps.CONTENTTYPE);
+        sb.append(":\"");
+        sb.append(QueryParserUtil.escape(MediaTypes.DISK_VOLUME.toString()));
+        sb.append("\"");
         try (ItemSearcher searcher = new ItemSearcher(output.getParentFile(), Manager.getInstance().getIndexWriter())) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(BasicProps.ID).append(":(");
-            for (int id : ids) {
-                sb.append(id).append(" ");
-            }
-            sb.append(") && ");
-            sb.append(BasicProps.CONTENTTYPE);
-            sb.append(":\"");
-            sb.append(QueryParserUtil.escape(MediaTypes.DISK_VOLUME.toString()));
-            sb.append("\"");
             List<IItemReader> volumes = searcher.search(sb.toString());
             if (!volumes.isEmpty()) {
                 IItemReader volume = volumes.get(0);
