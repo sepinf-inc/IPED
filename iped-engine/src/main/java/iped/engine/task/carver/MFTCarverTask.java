@@ -9,8 +9,11 @@ import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
@@ -51,6 +54,9 @@ public class MFTCarverTask extends BaseCarveTask {
     private static long totLengthNonResidentContent;
     private static final Object statsLock = new Object();
     private static final Map<Integer, IItemReader> volumesMap = new HashMap<Integer, IItemReader>();
+    private static final Set<String> recentQueries = new HashSet<String>();
+    private static final LinkedList<String> recentQueriesOrder = new LinkedList<String>();
+    private static final int maxRecentQueries = 1024;
 
     @Override
     public boolean isEnabled() {
@@ -267,8 +273,14 @@ public class MFTCarverTask extends BaseCarveTask {
         sb.append(":\"");
         sb.append(QueryParserUtil.escape(MediaTypes.DISK_VOLUME.toString()));
         sb.append("\"");
+        String query = sb.toString();
+        synchronized (recentQueries) {
+            if (recentQueries.contains(query)) {
+                return null;
+            }
+        }
         try (ItemSearcher searcher = new ItemSearcher(output.getParentFile(), Manager.getInstance().getIndexWriter())) {
-            List<IItemReader> volumes = searcher.search(sb.toString());
+            List<IItemReader> volumes = searcher.search(query);
             if (!volumes.isEmpty()) {
                 IItemReader volume = volumes.get(0);
                 synchronized (volumesMap) {
@@ -279,6 +291,14 @@ public class MFTCarverTask extends BaseCarveTask {
                 return volume;
             }
             logger.info("No volume found for parentIds: " + ids);
+            synchronized (recentQueries) {
+                recentQueries.add(query);
+                recentQueriesOrder.add(query);
+                if (recentQueriesOrder.size() > maxRecentQueries) {
+                    String oldest = recentQueriesOrder.poll();
+                    recentQueries.remove(oldest);
+                }
+            }
         }
         return null;
     }
