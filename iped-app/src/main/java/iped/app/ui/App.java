@@ -75,6 +75,7 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.text.JTextComponent;
+import javax.swing.tree.TreePath;
 
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
@@ -127,6 +128,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocaleConfig;
 import iped.engine.core.Manager;
+import iped.engine.data.Category;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
@@ -144,6 +146,7 @@ import iped.viewers.api.AbstractViewer;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IColumnsManager;
 import iped.viewers.api.IMultiSearchResultProvider;
+import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
 import iped.viewers.api.ResultSetViewerConfiguration;
 import iped.viewers.components.HitsTable;
@@ -168,6 +171,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public IPEDMultiSource appCase;
 
     FilterManager filterManager;
+
     public JDialog dialogBar;
     JProgressBar progressBar;
     JComboBox<String> queryComboBox, filterComboBox;
@@ -433,13 +437,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.setIconImage(new ImageIcon(image).getImage());
         this.setVisible(true);
         ToolTipManager.sharedInstance().setInitialDelay(10);
-        
+
         dockingControl = new CControl(this);
 
         // Set the locale used for docking frames, so texts and tool tips are localized (if available)
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
         dockingControl.setLanguage(localeConfig.getLocale());        
-        
+
         // Set the locale used by JFileChooser's
         JFileChooser.setDefaultLocale(localeConfig.getLocale());
 
@@ -551,7 +555,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         });
 
         int largeColWidth = 4096; 
-        
+
         appGraphAnalytics = new AppGraphAnalytics();
 
         viewerController = new ViewerController();
@@ -684,14 +688,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 return RectGradientPainter.FACTORY.createDecorationPainter(pane);
             }
         });
-        
+
         // Customize appearance of buttons and check boxes shown in docking frames title bar,
         // so focus is not painted (avoiding intersection with buttons icons) and more clear 
         // indication when a CCheckBox is selected. 
         dockingControl.getController().getActionViewConverter().putClient(ActionType.BUTTON, ViewTarget.TITLE,
                 new ViewGenerator<ButtonDockAction, BasicTitleViewItem<JComponent>>() {
-                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter, ButtonDockAction action,
-                            Dockable dockable) {
+                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter, ButtonDockAction action, Dockable dockable) {
                         BasicButtonHandler handler = new BasicButtonHandler(action, dockable);
                         CustomButton button = new CustomButton(handler, handler);
                         handler.setModel(button.getModel());
@@ -700,15 +703,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 });
         dockingControl.getController().getActionViewConverter().putTheme(ActionType.CHECK, ViewTarget.TITLE,
                 new ViewGenerator<SelectableDockAction, BasicTitleViewItem<JComponent>>() {
-                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter,
-                            SelectableDockAction action, Dockable dockable) {
+                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter, SelectableDockAction action, Dockable dockable) {
                         BasicSelectableHandler.Check handler = new BasicSelectableHandler.Check(action, dockable);
                         CustomButton button = new CustomButton(handler, handler);
                         handler.setModel(button.getModel());
                         return handler;
                     }
                 });
-        
+
         dockingControl.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.TOP_OF_DOCKABLE);
         this.getContentPane().add(dockingControl.getContentArea(), BorderLayout.CENTER);
         defaultColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND);
@@ -771,6 +773,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         clearAllFilters.addClearListener(similarFacesFilterPanel);
         clearAllFilters.addClearListener(timelineListener);
 
+
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
         subItemTable.addMouseListener(subItemModel);
         subItemTable.getSelectionModel().addListSelectionListener(subItemModel);
@@ -818,7 +821,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
     }
-    
+
     protected void toggleGlobalBlurFilter() {
         boolean enableBlur = !galleryModel.getBlurFilter();
         galleryModel.setBlurFilter(enableBlur);
@@ -839,13 +842,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         queryComboBox.getEditor().getEditorComponent().addMouseListener(appletListener);
         queryComboBox.getComponent(0).addMouseListener(appletListener);
         new AutoCompleteColumns((JTextComponent) queryComboBox.getEditor().getEditorComponent());
-        
+
         Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
         if (foreground == null)
             fontStartTag = null;
         else
             fontStartTag = "<font color=" + UiUtil.getHexRGB(foreground) + ">"; //$NON-NLS-1$ //$NON-NLS-2$
-        
+
         if (refresh) {
             if (gallery != null) {
                 ((GalleryCellEditor) gallery.getDefaultEditor(GalleryCellRenderer.class)).updateUI();
@@ -945,6 +948,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     resultSetViewer.getPanel());
 
             resultSetViewer.setDockableContainer(tabDock);
+
+            if(resultSetViewer instanceof ClearFilterListener) {
+                clearAllFilters.addClearListener((ClearFilterListener)resultSetViewer);
+            }
 
             rsTabDock.add(tabDock);
             tabDock.addCDockableLocationListener(new CDockableLocationListener() {
@@ -1094,7 +1101,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         }
     }
-    
+
     private void updateGalleryColCount(int inc) {
         setGalleryColCount(getGalleryColCount() + inc);
     }
@@ -1102,6 +1109,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public void sendCheckAllToResultSetViewers(boolean checked) {
         for (ResultSetViewer setViewer : resultSetViewerConfiguration.getResultSetViewers()) {
             setViewer.checkAll(checked);
+        }
+    }
+
+    public void notifyCaseDataChanged() {
+        for (ResultSetViewer setViewer : resultSetViewerConfiguration.getResultSetViewers()) {
+            setViewer.notifyCaseDataChanged();
         }
     }
 
@@ -1184,7 +1197,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
 
-    private void setDockablesColors() {
+    public void setDockablesColors() {
+        for (int i = 0; i < dockingControl.getCDockableCount(); i++) {
+            DefaultSingleCDockable tabDock = (DefaultSingleCDockable) dockingControl.getCDockable(i);
+            Component c = tabDock.getContentPane().getComponent(0);
+            if (c instanceof IQueryFilterer) {
+                setTabColor(tabDock, !((IQueryFilterer) c).hasFiltersApplied());
+            }
+        }
+
         setTabColor(categoriesTabDock, categoriesDefaultColor);
         setTabColor(metadataTabDock, metadataDefaultColor);
         setTabColor(evidenceTabDock, evidenceDefaultColor);
@@ -1247,7 +1268,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public void loadPanelLayout() {
         PanelsLayout.load(dockingControl);
     }
-    
+
     public void adjustLayout(boolean isReset) {
         if (!verticalLayout) {
             if (isReset)
@@ -1402,10 +1423,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             selectDockableTab(bookmarksTabDock);
             selectDockableTab(tableTabDock);
         }
-        
+
         setupViewerDocks();
         viewerController.validateViewers();
-        
+
         if (isReset)
             setGalleryColCount(GalleryModel.defaultColCount);
     }
@@ -1502,5 +1523,25 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public void setEnableGallerySimSearchButton(boolean enabled) {
         this.butSimSearch.setEnabled(enabled);
+    }
+
+    public List<ResultSetViewer> getResultSetViewers(){
+        return getResultSetViewerConfiguration().getResultSetViewers();
+    }
+
+    @Override
+    public Set<String> getSelectedBookmarks() {
+        return bookmarksListener.getSelectedBookmarkNames();
+    }
+
+    @Override
+    public Set<String> getSelectedCategories() {
+        HashSet<TreePath> paths = categoryListener.getSelection();
+        HashSet<String> result = new HashSet<String>();
+        for (TreePath path : paths) {
+            Category category = (Category) path.getLastPathComponent();
+            result.add(category.getName());
+        }
+        return result;
     }
 }
