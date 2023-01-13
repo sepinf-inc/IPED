@@ -30,6 +30,8 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     private static final String MAX_DIMENSION_SIZE = "maxDimensionSize";
 
+    private static final String FRAMES_MILLIS_INTERVAL = "framesMillisecondsInterval";
+
     /**
      * Image width of extracted frame.
      */
@@ -86,6 +88,12 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
      */
     private int maxDimensionSize = 1024;
 
+    /**
+     * Milliseconds interval to extract frames. -1 means disabled.
+     */
+    private int framesMillisecondsInterval = -1;
+
+
     public int getWidth() {
         return width;
     }
@@ -136,6 +144,10 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     public int getMaxDimensionSize() {
         return maxDimensionSize;
+    }
+
+    public int getFramesMillisecondsInterval() {
+        return this.framesMillisecondsInterval;
     }
 
     @Override
@@ -205,6 +217,11 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty(MAX_DIMENSION_SIZE);
         if (value != null) {
             maxDimensionSize = Integer.parseInt(value.trim());
+        }
+        
+        value = properties.getProperty(FRAMES_MILLIS_INTERVAL);
+        if (value != null) {
+            framesMillisecondsInterval = Integer.parseInt(value.trim());
         }
 
     }

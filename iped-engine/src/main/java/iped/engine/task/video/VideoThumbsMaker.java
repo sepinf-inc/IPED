@@ -37,6 +37,7 @@ public class VideoThumbsMaker {
     private String mplayer = "mplayer.exe"; //$NON-NLS-1$
     private Boolean videoThumbsOriginalDimension = false;
     private int maxDimensionSize = 1024;
+    private int framesMillisecondsInterval = -1;
     private int timeoutProcess = 45000;
     private int timeoutInfo = 15000;
     private int timeoutFirstCall = 300000;
@@ -161,9 +162,18 @@ public class VideoThumbsMaker {
                 maxSize = config.getThumbWidth();
             }
         }
+
         int frequency = (int) ((result.getVideoDuration() - 1000) * 0.00095 / (maxThumbs + 2));
         if (frequency < 1) {
             frequency = 1;
+        }
+        
+        if (framesMillisecondsInterval > 0) {
+            int newMaxThumbs = (int) (result.getVideoDuration() / framesMillisecondsInterval) + 1;
+            if (newMaxThumbs > maxThumbs) {
+                maxThumbs = newMaxThumbs;
+                frequency = 1; // this will cause frameStep to be used below
+            }
         }
 
         File[] files = null;
@@ -534,6 +544,10 @@ public class VideoThumbsMaker {
 
     public String getMPlayer() {
         return mplayer;
+    }
+
+    public void setFramesMillisecondsInterval(int framesMillisecondsInterval) {
+        this.framesMillisecondsInterval = framesMillisecondsInterval;
     }
 
     public void setVideoThumbsOriginalDimension(Boolean videoThumbsOriginalDimension) {
