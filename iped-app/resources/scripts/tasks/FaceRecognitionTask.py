@@ -12,6 +12,9 @@ import subprocess
 import threading, queue
 import traceback
 import platform
+from sklearn.cluster import DBSCAN
+from iped.properties import ExtraProperties
+from java.lang import Integer
 
 # configuration properties
 enableProp = 'enableFaceRecognition'
@@ -45,6 +48,10 @@ cache = {}
 timeLock = threading.Lock()
 detectTime = 0
 featureTime = 0
+
+clusterExecuted=0
+clusterLock = threading.Lock()
+
 
 def createProcessQueue():
     global processQueue, maxProcesses
@@ -175,7 +182,49 @@ class FaceRecognitionTask:
                 logger.info('[FaceRecognitionTask] Time(s) to get face features: ' + str(featureTime / maxProcesses))
                 detectTime = -1
                 featureTime = -1
-    
+        global clusterExecuted
+        with clusterLock:
+            if clusterExecuted==1:
+                return
+            clusterExecuted=1
+        searcher.setQuery(ExtraProperties.FACE_COUNT+" face_count:[1 TO *]")
+        result=searcher.search()
+        ids=[id for id in result.getIds()]        
+        encodings=[]
+        for id in ids:
+            encoding=ipedCase.getItemByID(id).getExtraAttribute(ExtraProperties.FACE_ENCODINGS)
+            if len(encoding)!=512:
+                encoding=encoding[0]
+           
+            import struct
+            encoding=struct.unpack(">128f",bytes(np.array(encoding,np.byte)))
+            encodings.append(encoding)
+        
+        if result.getLength()==0:
+            return
+        
+        clt = DBSCAN(metric="euclidean")
+        clt.fit(encodings)
+        clusters={}
+        #print("labels",clt.labels_)
+        #print("ids",ids)
+        for i in range(len(clt.labels_)):
+            if clt.labels_[i]<0:#-1 is an unknown cluster
+                continue
+            try:
+                clusters[clt.labels_[i]]["ids"].append(ids[i])
+            except:
+                clusters[clt.labels_[i]]={"ids":[ids[i]],"name":"Face_"+str(clt.labels_[i])}
+            #print(clusters)
+        for c in clusters:
+            c=clusters[c]
+            bookmarkId=ipedCase.getBookmarks().newBookmark(c["name"])
+            ipedCase.getBookmarks().addBookmark([Integer(id) for id in c["ids"]] , bookmarkId)
+        
+        ipedCase.getBookmarks().saveState(True)
+
+        
+        
     # Needed because tuples cause ClassNotFoundException on java side later
     def convertTuplesToList(self, tuples):
         result = []
@@ -305,7 +354,6 @@ class FaceRecognitionTask:
         
         face_locations = self.convertTuplesToList(face_locations)
         
-        from iped.properties import ExtraProperties
         item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
         item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
         item.setExtraAttribute(ExtraProperties.FACE_COUNT, len(face_locations))
