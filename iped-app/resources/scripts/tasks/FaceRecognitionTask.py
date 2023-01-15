@@ -23,6 +23,7 @@ numFaceRecognitionProcessesProp = 'numFaceRecognitionProcesses'
 maxResolutionProp = 'maxResolution'
 faceDetectionModelProp = 'faceDetectionModel'
 upSamplingProp = 'upSampling'
+maxClusterDistProp = 'maxClusterDist'
 
 # External process script
 processScript = 'FaceRecognitionProcess.py'
@@ -156,6 +157,15 @@ class FaceRecognitionTask:
         upSampling = extraProps.getProperty(upSamplingProp)
         if upSampling is not None:
             up_sampling = int(upSampling)
+            
+        global maxClusterDist
+        
+        maxClusterDist = extraProps.getProperty(maxClusterDistProp)
+        
+        if maxClusterDist is None:
+            maxClusterDist=0
+        else:
+            maxClusterDist=float(maxClusterDist)
         
         createProcessQueue()
         return
@@ -182,9 +192,10 @@ class FaceRecognitionTask:
                 logger.info('[FaceRecognitionTask] Time(s) to get face features: ' + str(featureTime / maxProcesses))
                 detectTime = -1
                 featureTime = -1
-        global clusterExecuted
+        global clusterExecuted,maxClusterDist
+        print("Dist",maxClusterDist)
         with clusterLock:
-            if clusterExecuted==1:
+            if clusterExecuted==1 or maxClusterDist==0:
                 return
             clusterExecuted=1
         searcher.setQuery(ExtraProperties.FACE_COUNT+" :[1 TO *]")
@@ -197,7 +208,7 @@ class FaceRecognitionTask:
                 encoding=ipedCase.getItemByID(id).getExtraAttribute(ExtraProperties.FACE_ENCODINGS)
                 if len(encoding)!=512:
                     encoding=encoding[0]
-               
+                #convert bytes to float array
                 import struct
                 encoding=struct.unpack(">128f",bytes(np.array(encoding,np.byte)))
                 encodings.append(encoding)
@@ -208,7 +219,7 @@ class FaceRecognitionTask:
         if len(encodings)==0:
             return
         
-        clt = DBSCAN(metric="euclidean",n_jobs=-1,eps=0.3)
+        clt = DBSCAN(metric="euclidean",n_jobs=-1,eps=maxClusterDist)
         clt.fit(encodings)
         clusters={}
         print("labels",clt.labels_)
