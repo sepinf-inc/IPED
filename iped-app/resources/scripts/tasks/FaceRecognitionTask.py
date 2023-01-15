@@ -208,7 +208,7 @@ class FaceRecognitionTask:
         if len(encodings)==0:
             return
         
-        clt = DBSCAN(metric="euclidean")
+        clt = DBSCAN(metric="euclidean",n_jobs=-1,eps=0.3)
         clt.fit(encodings)
         clusters={}
         print("labels",clt.labels_)
