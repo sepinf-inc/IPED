@@ -187,26 +187,31 @@ class FaceRecognitionTask:
             if clusterExecuted==1:
                 return
             clusterExecuted=1
-        searcher.setQuery(ExtraProperties.FACE_COUNT+" face_count:[1 TO *]")
+        searcher.setQuery(ExtraProperties.FACE_COUNT+" :[1 TO *]")
         result=searcher.search()
         ids=[id for id in result.getIds()]        
         encodings=[]
+        encodings_ids=[]
         for id in ids:
-            encoding=ipedCase.getItemByID(id).getExtraAttribute(ExtraProperties.FACE_ENCODINGS)
-            if len(encoding)!=512:
-                encoding=encoding[0]
-           
-            import struct
-            encoding=struct.unpack(">128f",bytes(np.array(encoding,np.byte)))
-            encodings.append(encoding)
-        
-        if result.getLength()==0:
+            try:
+                encoding=ipedCase.getItemByID(id).getExtraAttribute(ExtraProperties.FACE_ENCODINGS)
+                if len(encoding)!=512:
+                    encoding=encoding[0]
+               
+                import struct
+                encoding=struct.unpack(">128f",bytes(np.array(encoding,np.byte)))
+                encodings.append(encoding)
+                encodings_ids.append(id)
+            except:
+                print(encoding)
+        ids=encodings_ids
+        if len(encodings)==0:
             return
         
         clt = DBSCAN(metric="euclidean")
         clt.fit(encodings)
         clusters={}
-        #print("labels",clt.labels_)
+        print("labels",clt.labels_)
         #print("ids",ids)
         for i in range(len(clt.labels_)):
             if clt.labels_[i]<0:#-1 is an unknown cluster
