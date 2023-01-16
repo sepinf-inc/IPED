@@ -182,7 +182,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
             App.get().tree.setCellRenderer(new TreeCellRenderer());
     
             if (updateItems) {
-                ColumnsManager.getInstance().dispose();
+                ColumnsManagerUI.getInstance().dispose();
                 App.get().appletListener.updateFileListing();
             }
         } finally {

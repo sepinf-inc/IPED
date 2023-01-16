@@ -309,7 +309,7 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.manageColumns) {
 
-            ColumnsManager.getInstance().setVisible();
+            ColumnsManagerUI.getInstance().setVisible();
 
         } else if (e.getSource() == menu.pinFirstColumns) {
 

@@ -1,39 +1,20 @@
 package iped.app.ui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dialog.ModalityType;
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
@@ -41,7 +22,6 @@ import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.app.ui.controls.HintTextField;
 import iped.data.IItemId;
 import iped.engine.config.AnalysisConfig;
 import iped.engine.config.ConfigurationManager;
@@ -60,11 +40,10 @@ import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.utils.StringUtil;
 import iped.viewers.api.IColumnsManager;
 import iped.viewers.util.ProgressDialog;
 
-public class ColumnsManager implements ActionListener, Serializable, IColumnsManager {
+public class ColumnsManager implements Serializable, IColumnsManager {
 
     private static final long serialVersionUID = 1057562688829969313L;
 
@@ -123,33 +102,21 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private ArrayList<String> loadedFields = new ArrayList<String>();
 
-    private JDialog dialog = new JDialog(App.get());
-    private final JPanel listPanel;
-    private JComboBox<Object> combo;
-    private JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
-    private HintTextField textFieldNameFilter;
     private int firstColsToPin = 7;
 
     private boolean autoManageCols;
+
+    public boolean isAutoManageCols() {
+        return autoManageCols;
+    }
+    public void  setAutoManageCols(boolean autoManageCOls) {
+        this.autoManageCols = autoManageCOls;
+    }
 
     public static ColumnsManager getInstance() {
         if (instance == null)
             instance = new ColumnsManager();
         return instance;
-    }
-
-    public void dispose() {
-        dialog.setVisible(false);
-        instance = null;
-        getInstance().loadedFields = this.loadedFields;
-        getInstance().colState = this.colState;
-    }
-
-    public void setVisible() {
-        updateDinamicFields();
-        updateList();
-        dialog.setVisible(true);
-        combo.requestFocus();
     }
 
     public void setPinnedColumns(int firstColsToPin) {
@@ -164,6 +131,10 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     public String[] getLoadedCols() {
         String[] cols = loadedFields.toArray(new String[0]);
         return cols;
+    }
+
+    public ArrayList<String> getLoadedFields() {
+        return loadedFields;
     }
 
     static class ColumnState implements Serializable {
@@ -198,75 +169,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
         autoManageCols = analysisConfig.isAutoManageCols();
 
-        dialog.setBounds(new Rectangle(400, 400));
-        dialog.setTitle(Messages.getString("ColumnsManager.Title")); //$NON-NLS-1$
-
-        JLabel label = new JLabel(Messages.getString("ColumnsManager.ShowCols")); //$NON-NLS-1$
-        label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-        label.setAlignmentX(0);
-
-        listPanel = new JPanel() {
-            private static final long serialVersionUID = -4882872614411133375L;
-            
-            @Override
-            public void updateUI() {
-                super.updateUI();
-                Color c = UIManager.getColor("List.background");
-                if (c != null)
-                    setBackground(new Color(c.getRGB()));
-            }
-        };
-        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
-
-        combo = new JComboBox<Object>(groupNames);
-        combo.setAlignmentX(0);
-
-        autoManage.setSelected(autoManageCols);
-        autoManage.setAlignmentX(0);
-        autoManage.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        autoManage.addActionListener(this);
-
-        textFieldNameFilter = new HintTextField(Messages.getString("ColumnsManager.Filter"));
-        textFieldNameFilter.setAlignmentX(0);
-        textFieldNameFilter.getDocument().addDocumentListener(new DocumentListener() {
-            public void removeUpdate(DocumentEvent e) {
-                changedUpdate(e);
-            }
-
-            public void insertUpdate(DocumentEvent e) {
-                changedUpdate(e);
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                if (textFieldNameFilter.isFocusOwner()) {
-                    updateList();
-                }
-            }
-        });
-
-        Box topPanel = Box.createVerticalBox();
-        topPanel.add(autoManage);
-        topPanel.add(label);
-        topPanel.add(combo);
-        topPanel.add(textFieldNameFilter);
-        combo.addActionListener(this);
-
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.add(topPanel, BorderLayout.NORTH);
-
-        JScrollPane scrollList = new JScrollPane(listPanel);
-        scrollList.getVerticalScrollBar().setUnitIncrement(10);
-        panel.add(scrollList, BorderLayout.CENTER);
-
-        dialog.getContentPane().add(panel);
-        dialog.setLocationRelativeTo(App.get());
-
         updateDinamicFields();
 
         loadSavedCols();
-
-        updateList();
     }
 
     private File getColStateFile() {
@@ -393,7 +298,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             if (!dinamicFields.contains(field) && !colNamesToPin.contains(field.toLowerCase())
                     && !field.equals(BasicProps.LENGTH)) // length header changes to listed items total size info
             {
-                updateGUICol(field, false);
+                updateCol(field, false);
             }
         }
 
@@ -401,7 +306,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         for (String field : dinamicFields) {
             if (!colState.visibleFields.contains(field))
-                updateGUICol(field, true);
+                updateCol(field, true);
         }
 
         // move important new cols to front
@@ -440,7 +345,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             for (int k = 0; k < timeFields.length; k++) {
                 if (colName.equalsIgnoreCase(timeFields[k])) {
                     if (!colState.visibleFields.contains(timeFields[k])) {
-                        updateGUICol(colName, true);
+                        updateCol(colName, true);
                     }
                     App.get().resultsTable.moveColumn(i, newPos);
                     if (newPos > i) {
@@ -477,11 +382,11 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (String field : (List<String>) colState.visibleFields.clone())
             if (!newCols.contains(field) && !field.equals(ResultTableModel.SCORE_COL)
                     && !field.equals(ResultTableModel.BOOKMARK_COL))
-                updateGUICol(field, false);
+                updateCol(field, false);
 
         for (String field : newCols) {
             if (!colState.visibleFields.contains(field))
-                updateGUICol(field, true);
+                updateCol(field, true);
         }
 
         int newPos = 2;
@@ -505,7 +410,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         }
     }
 
-    private void updateDinamicFields() {
+    void updateDinamicFields() {
 
         if (indexFields == null || lastCase != App.get().appCase) {
             lastCase = App.get().appCase;
@@ -604,44 +509,10 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     }
 
-    private void updateList() {
-        listPanel.removeAll();
-        List<String> fields = Arrays.asList(fieldGroups[combo.getSelectedIndex()]);
-        fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
-        Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
-        String filter = textFieldNameFilter.getText().trim().toLowerCase();
-        for (String f : fields) {
-            if (filter.isEmpty() || f.toLowerCase().indexOf(filter) >= 0) {
-                JCheckBox check = new JCheckBox();
-                check.setText(f);
-                if (colState.visibleFields.contains(LocalizedProperties.getNonLocalizedField(f)))
-                    check.setSelected(true);
-                check.addActionListener(this);
-                listPanel.add(check);
-            }
-        }
-        dialog.revalidate();
-        dialog.repaint();
-    }
+    Map<String, Integer> lastWidths = new HashMap<>();
+    int lastModelIdx; 
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-
-        if (e.getSource().equals(autoManage))
-            autoManageCols = autoManage.isSelected();
-        else if (e.getSource().equals(combo)) {
-            updateList();
-        } else {
-            JCheckBox source = (JCheckBox) e.getSource();
-            updateGUICol(source.getText(), source.isSelected());
-        }
-
-    }
-
-    private Map<String, Integer> lastWidths = new HashMap<>();
-
-    private void updateGUICol(String colName, boolean insert) {
-
+    void updateCol(String colName, boolean insert) {
         colName = LocalizedProperties.getNonLocalizedField(colName);
         int modelIdx = loadedFields.indexOf(colName);
         if (insert) {
@@ -652,14 +523,6 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 modelIdx = ResultTableModel.fixedCols.length + loadedFields.size() - 1;
             } else
                 modelIdx += ResultTableModel.fixedCols.length;
-
-            TableColumn tc = new TableColumn(modelIdx);
-            if (lastWidths.containsKey(colName))
-                tc.setPreferredWidth(lastWidths.get(colName));
-            else
-                tc.setPreferredWidth(150);
-            App.get().resultsTable.addColumn(tc);
-            setColumnRenderer(tc);
         } else {
             colState.visibleFields.remove(colName);
             modelIdx += ResultTableModel.fixedCols.length;
@@ -667,14 +530,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             if (viewIdx > -1) {
                 TableColumn col = App.get().resultsTable.getColumnModel().getColumn(viewIdx);
                 lastWidths.put(colName, col.getWidth());
-                App.get().resultsTable.removeColumn(col);
             }
         }
-    }
-
-    public void setColumnRenderer(TableColumn tc) {
-        if (ResultTableModel.SCORE_COL.equals(loadedFields.get(tc.getModelIndex() - ResultTableModel.fixedCols.length)))
-            tc.setCellRenderer(new ProgressCellRenderer());
+        lastModelIdx = modelIdx;
     }
 
 }

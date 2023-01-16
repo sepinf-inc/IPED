@@ -397,7 +397,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 viewerController.dispose();
             }
             if (this.resultsTable != null) {
-                ColumnsManager.getInstance().dispose();
+                ColumnsManagerUI.getInstance().dispose();
             }
 
             appCase.close();

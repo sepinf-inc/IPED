@@ -91,7 +91,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                         TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i + fixedColdWidths.length);
                         tc.setPreferredWidth(ColumnsManager.getInstance().colState.initialWidths.get(i));
 
-                        ColumnsManager.getInstance().setColumnRenderer(tc);
+                        ColumnsManagerUI.getInstance().setColumnRenderer(tc);
                     }
 
                 }
