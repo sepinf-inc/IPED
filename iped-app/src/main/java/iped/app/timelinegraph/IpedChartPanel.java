@@ -441,7 +441,12 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
                     definedFilters.add(filterDates);
 
                     timelineSelectionPopupMenu.setDates(filterDates);
-                    timelineSelectionPopupMenu.show(e.getComponent(), e.getX(), e.getY());
+                    if(ipedChartsPanel.hasFiltersApplied()) {
+                        ipedChartsPanel.setApplyFilters(true);
+                        filterSelection();
+                    }else {
+                        timelineSelectionPopupMenu.show(e.getComponent(), e.getX(), e.getY());
+                    }
 
                     mouseOverDates = filterDates;
                 }
