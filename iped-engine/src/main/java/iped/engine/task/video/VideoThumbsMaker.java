@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 import iped.utils.ImageUtil;
 
@@ -37,7 +40,8 @@ public class VideoThumbsMaker {
     private String mplayer = "mplayer.exe"; //$NON-NLS-1$
     private Boolean videoThumbsOriginalDimension = false;
     private int maxDimensionSize = 1024;
-    private int framesMillisecondsInterval = -1;
+    private String numFramesEquation;
+    private ScriptEngine scriptEngine;
     private int timeoutProcess = 45000;
     private int timeoutInfo = 15000;
     private int timeoutFirstCall = 300000;
@@ -168,8 +172,8 @@ public class VideoThumbsMaker {
             frequency = 1;
         }
         
-        if (framesMillisecondsInterval > 0) {
-            int newMaxThumbs = (int) (result.getVideoDuration() / framesMillisecondsInterval) + 1;
+        if (numFramesEquation != null) {
+            int newMaxThumbs = getNumFramesFromJSEquation(result.getVideoDuration() / 1000) + 1;
             if (newMaxThumbs > maxThumbs) {
                 maxThumbs = newMaxThumbs;
                 frequency = 1; // this will cause frameStep to be used below
@@ -538,6 +542,21 @@ public class VideoThumbsMaker {
         return null;
     }
 
+    private int getNumFramesFromJSEquation(long duration) {
+        if (scriptEngine == null) {
+            ScriptEngineManager manager = new ScriptEngineManager();
+            scriptEngine = manager.getEngineByExtension("js"); // $NON-NLS-1$
+        }
+        scriptEngine.put("duration", duration);
+        try {
+            Object result = scriptEngine.eval(numFramesEquation);
+            return ((Number) result).intValue();
+
+        } catch (ScriptException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void setMPlayer(String mplayer) {
         this.mplayer = mplayer;
     }
@@ -546,8 +565,8 @@ public class VideoThumbsMaker {
         return mplayer;
     }
 
-    public void setFramesMillisecondsInterval(int framesMillisecondsInterval) {
-        this.framesMillisecondsInterval = framesMillisecondsInterval;
+    public void setNumFramesEquation(String numFramesEquation) {
+        this.numFramesEquation = numFramesEquation;
     }
 
     public void setVideoThumbsOriginalDimension(Boolean videoThumbsOriginalDimension) {

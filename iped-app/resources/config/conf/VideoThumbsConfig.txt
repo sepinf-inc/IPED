@@ -31,10 +31,11 @@ GalleryThumbs = 320,2,3
 # image processing pipeline (ocr, image similarity, and others)
 enableVideoThumbsSubitems = false
 
-# If enabled, set the milliseconds interval to extract frames from videos as subitems.
+# If enabled, uses a javascript function to compute the number of frames to extract from videos as subitems.
+# You can use the 'duration' variable: the video duration in seconds.
 # This applies just if 'enableVideoThumbsSubitems' is enabled.
 # At least a minimum of <columns> x <rows> frames from 'Layout' option are extracted.
-#framesMillisecondsInterval = 1000
+#numFramesEquation = Math.sqrt(duration)
 
 # Enables video frames extraction using original video resolution to be applied on Video Thumbs Subitems.
 # If enabled, first value of 'Layout' option above will be ignored.
