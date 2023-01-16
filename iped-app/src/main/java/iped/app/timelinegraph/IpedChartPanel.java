@@ -819,10 +819,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
 
     public void removeFilter(Date[] removedDates) {
         definedFilters.remove(removedDates);
-        HighlightWorker sw = new HighlightWorker(ipedChartsPanel.getDomainAxis(), ipedChartsPanel.resultsProvider, removedDates[0], removedDates[1], false, false);
-        for (Date[] dates : definedFilters) {
-            ipedChartsPanel.highlightItemsOnInterval(dates[0], dates[1], false);
-        }
     }
 
     public void removeAllFilters() {
