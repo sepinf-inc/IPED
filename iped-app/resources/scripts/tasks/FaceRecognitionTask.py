@@ -15,6 +15,7 @@ import platform
 from sklearn.cluster import DBSCAN
 from iped.properties import ExtraProperties
 from java.lang import Integer
+import struct
 
 # configuration properties
 enableProp = 'enableFaceRecognition'
@@ -53,6 +54,9 @@ featureTime = 0
 clusterExecuted=0
 clusterLock = threading.Lock()
 
+def byteArrayToFloatArray(face):
+    #convert bytes to float array
+    return struct.unpack(">128f",bytes(np.array(face,np.byte)))
 
 def createProcessQueue():
     global processQueue, maxProcesses
@@ -204,27 +208,30 @@ class FaceRecognitionTask:
         result=searcher.search()
         ids=[]        
         encodings=[]
+        
         for id in result.getIds():
             try:
                 encoding=ipedCase.getItemByID(id).getExtraAttribute(ExtraProperties.FACE_ENCODINGS)
                 if len(encoding)!=512:
-                    encoding=encoding[0]
-                #convert bytes to float array
-                import struct
-                encoding=struct.unpack(">128f",bytes(np.array(encoding,np.byte)))
-                encodings.append(encoding)
-                ids.append(id)
+                    for face in encoding:
+                        encodings.append(byteArrayToFloatArray(face))
+                        ids.append(id)
+                else:
+                    encodings.append(byteArrayToFloatArray(encoding))
+                    ids.append(id)
             except:
                 print(encoding)
 
         if len(encodings)==0:
             return
-        
+        #print(encodings)
+        print("Number of faces",len(ids))
         clt = DBSCAN(metric="euclidean",n_jobs=-1,eps=maxClusterDist)
         clt.fit(encodings)
         clusters={}
         print("labels",clt.labels_)
-        #print("ids",ids)
+        print("Number of labels",len(clt.labels_))
+        
         for i in range(len(clt.labels_)):
             if clt.labels_[i]<0:#-1 is an unknown cluster
                 continue
