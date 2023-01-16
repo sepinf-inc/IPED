@@ -198,12 +198,13 @@ class FaceRecognitionTask:
             if clusterExecuted==1 or maxClusterDist==0:
                 return
             clusterExecuted=1
+        #compute the time spend grouping faces
+        groupTime=time.time()
         searcher.setQuery(ExtraProperties.FACE_COUNT+" :[1 TO *]")
         result=searcher.search()
-        ids=[id for id in result.getIds()]        
+        ids=[]        
         encodings=[]
-        encodings_ids=[]
-        for id in ids:
+        for id in result.getIds():
             try:
                 encoding=ipedCase.getItemByID(id).getExtraAttribute(ExtraProperties.FACE_ENCODINGS)
                 if len(encoding)!=512:
@@ -212,10 +213,10 @@ class FaceRecognitionTask:
                 import struct
                 encoding=struct.unpack(">128f",bytes(np.array(encoding,np.byte)))
                 encodings.append(encoding)
-                encodings_ids.append(id)
+                ids.append(id)
             except:
                 print(encoding)
-        ids=encodings_ids
+
         if len(encodings)==0:
             return
         
@@ -238,7 +239,7 @@ class FaceRecognitionTask:
             ipedCase.getBookmarks().addBookmark([Integer(id) for id in c["ids"]] , bookmarkId)
         
         ipedCase.getBookmarks().saveState(True)
-
+        logger.info('[FaceRecognitionTask] Time(s) to group similar faces: ' + str(time.time()-groupTime))
         
         
     # Needed because tuples cause ClassNotFoundException on java side later
