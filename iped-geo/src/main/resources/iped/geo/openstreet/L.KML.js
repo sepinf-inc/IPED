@@ -291,11 +291,11 @@ L.KML = L.MarkerClusterGroup.extend({
         }
     },
 	markersCount: function(){
-		var i=0;
-       	for (var ind in this.markers){
-			i++;
-		}
-		return i;
+        try{
+            return this.visibleMarkerCoords.length;
+        }catch(e){
+            alert(e);
+        }
 	},
 	selecionaMarcadorBounds: function (bounds){
 		mids=[];
@@ -791,7 +791,8 @@ L.KML = L.MarkerClusterGroup.extend({
             if(track.onFullyLoaded){
                 track.onFullyLoaded();
             }
-        });    
+        });
+        
 
         this.placemarks=[];
         this.placemarkIndexes=[];
