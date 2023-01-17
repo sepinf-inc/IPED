@@ -795,6 +795,8 @@ L.KML = L.MarkerClusterGroup.extend({
 
         this.placemarks=[];
         this.placemarkIndexes=[];
+        if(this.visibleLayer) this.removeLayer(this.visibleLayer);
+        this.visibleLayer=null;
     },
     orderVisibleMarkers(){
             if(this.placemarks.length>0){
