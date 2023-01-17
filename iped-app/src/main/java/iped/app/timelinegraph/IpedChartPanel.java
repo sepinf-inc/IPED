@@ -538,6 +538,9 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
 
             int w = (int) this.filterIntervalRectangle.getMaxX() - (int) this.filterIntervalRectangle.getMinX();
             int h = (int) this.filterIntervalRectangle.getMaxY() - (int) this.filterIntervalRectangle.getMinY();
+            if (w <= 0) {
+                return;
+            }
             BufferedImage bimage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
             Graphics2D bg2 = bimage.createGraphics();
             bg2.setColor(Color.GRAY);
