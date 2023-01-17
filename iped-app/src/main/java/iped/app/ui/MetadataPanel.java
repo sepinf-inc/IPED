@@ -235,17 +235,17 @@ public class MetadataPanel extends JPanel
         this.add(scrollList, BorderLayout.CENTER);
     }
 
-    abstract class LookupOrd {
+    static public abstract class LookupOrd {
         boolean isCategory = false;
 
-        abstract String lookupOrd(int ord) throws IOException;
+        public abstract String lookupOrd(int ord) throws IOException;
     }
 
-    class LookupOrdSDV extends LookupOrd {
+    static public class LookupOrdSDV extends LookupOrd {
 
         SortedDocValues sdv;
 
-        LookupOrdSDV(SortedDocValues sdv) {
+        public LookupOrdSDV(SortedDocValues sdv) {
             this.sdv = sdv;
         }
 
@@ -259,11 +259,11 @@ public class MetadataPanel extends JPanel
         }
     }
 
-    class LookupOrdSSDV extends LookupOrd {
+    static public class LookupOrdSSDV extends LookupOrd {
 
         SortedSetDocValues ssdv;
 
-        LookupOrdSSDV(SortedSetDocValues ssdv) {
+        public LookupOrdSSDV(SortedSetDocValues ssdv) {
             this.ssdv = ssdv;
         }
 
@@ -277,11 +277,11 @@ public class MetadataPanel extends JPanel
         }
     }
 
-    private static class ValueCount {
+    public static class ValueCount {
         LookupOrd lo;
         int ord, count;
 
-        ValueCount(LookupOrd lo, int ord, int count) {
+        public ValueCount(LookupOrd lo, int ord, int count) {
             this.lo = lo;
             this.ord = ord;
             this.count = count;
@@ -306,6 +306,10 @@ public class MetadataPanel extends JPanel
         public String toString() {
             NumberFormat nf = LocalizedFormat.getNumberInstance(); 
             return getVal() + " (" + nf.format(count) + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+        }
+
+        public int getCount() {
+            return count;
         }
     }
 

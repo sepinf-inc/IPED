@@ -78,7 +78,7 @@ public class TouchSleuthkitImages {
                                     InputStream in = null;
                                     try {
                                         in = new BufferedInputStream(new FileInputStream(img), 2048);
-                                        long offset = in.read(b0);
+                                        long offset = in.readNBytes(b0, 0, b0.length);
                                         boolean isEwf = true;
                                         for (int j = 0; j < ewfSignature.length; j++) {
                                             if (b0[j] != ewfSignature[j]) {
@@ -87,7 +87,7 @@ public class TouchSleuthkitImages {
                                             }
                                         }
                                         if (isEwf) {
-                                            offset += in.read(b1);
+                                            offset += in.readNBytes(b1, 0, b1.length);
                                             int sections = 0;
                                             while (++sections < 65536) {
                                                 long nextSection = 0;
@@ -100,7 +100,7 @@ public class TouchSleuthkitImages {
                                                 for (int j = 0; j < 16 && offset < nextSection; j++) {
                                                     offset += in.skip(nextSection - offset);
                                                 }
-                                                offset += in.read(b1);
+                                                offset += in.readNBytes(b1, 0, b1.length);
                                             }
                                             tWarmUp = System.currentTimeMillis() - tWarmUp;
                                             LOGGER.debug("Cache warm up for file " + img.getAbsolutePath() //$NON-NLS-1$

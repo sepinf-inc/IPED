@@ -104,6 +104,14 @@ def main():
         img = np.array(img)
         img = rotateImg(img, tiff_orient)
         
+        try:
+            # Workaround for https://github.com/sepinf-inc/IPED/issues/1307:
+            import cv2
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        except ImportError:
+            cv2 = None
+        
         face_locations = fr.face_locations(img, number_of_times_to_upsample=upsample, model=detection_model)
         
         num_faces = len(face_locations)
