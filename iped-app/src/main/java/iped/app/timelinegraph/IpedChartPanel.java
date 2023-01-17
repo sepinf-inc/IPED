@@ -310,7 +310,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     @Override
     public void mousePressed(MouseEvent e) {
         super.mousePressed(e);
-
         int mods = e.getModifiersEx();
         if (((mods & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK)) {
             if ((mods & this.filterMask) == this.filterMask) {
@@ -323,13 +322,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
                     Date[] dates = findDefinedFilterDates(startFilterDate);
                     if (dates != null) {
                         startFilterDate = dates[0];
-                        removeFilter(dates);
-
-                        // already exists an interval continuos with this so edits him instead of
-                        // creating a new one
-                        Graphics2D g2 = (Graphics2D) getGraphics();
-
-                        ipedChartsPanel.paintImmediately(this.getScreenDataArea().getBounds());
                     }
 
                     int x = (int) ipedChartsPanel.domainAxis.dateToJava2D(startFilterDate, this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge());
@@ -374,12 +366,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
 
             endFilterDate = new Date((long) ipedChartsPanel.domainAxis.java2DToValue(e.getX(), this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge()));
             endFilterDate = lastdateFromDatePart(endFilterDate);
-
-            Date[] dates = findDefinedFilterDates(endFilterDate);
-            if (dates != null) {
-                removeFilter(dates);
-                ipedChartsPanel.paintImmediately(this.getScreenDataArea().getBounds());
-            }
 
             int x = (int) ipedChartsPanel.domainAxis.dateToJava2D(endFilterDate, this.getScreenDataArea(), ipedChartsPanel.combinedPlot.getDomainAxisEdge());
 
@@ -428,6 +414,18 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         }
 
         if (this.filterIntervalRectangle != null) {
+
+            if (endFilterDate.compareTo(startFilterDate) >= 0) {
+                Date[] dates = findDefinedFilterDates(startFilterDate);
+                if (dates != null) {
+                    removeFilter(dates);
+                }
+                dates = findDefinedFilterDates(endFilterDate);
+                if (dates != null) {
+                    removeFilter(dates);
+                }
+            }
+
             boolean filterTrigger1 = Math.abs(e.getX() - this.filterIntervalPoint.getX()) >= this.filterTriggerDistance;
 
             if (filterTrigger1) {
