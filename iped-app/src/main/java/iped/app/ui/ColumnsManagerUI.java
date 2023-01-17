@@ -59,7 +59,7 @@ public class ColumnsManagerUI implements ActionListener {
 
     public void setVisible() {
         columnsManager.updateDinamicFields();
-        updateList();
+        updatePanelList();
         dialog.setVisible(true);
         combo.requestFocus();
     }
@@ -108,7 +108,7 @@ public class ColumnsManagerUI implements ActionListener {
 
             public void changedUpdate(DocumentEvent e) {
                 if (textFieldNameFilter.isFocusOwner()) {
-                    updateList();
+                    updatePanelList();
                 }
             }
         });
@@ -130,10 +130,10 @@ public class ColumnsManagerUI implements ActionListener {
         dialog.getContentPane().add(panel);
         dialog.setLocationRelativeTo(App.get());
 
-        updateList();
+        updatePanelList();
     }
 
-    protected void updateList() {
+    protected void updatePanelList() {
         listPanel.removeAll();
         List<String> fieldNames = Arrays.asList(columnsManager.fieldGroups[combo.getSelectedIndex()]);
         fieldNames = fieldNames.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
@@ -161,7 +161,7 @@ public class ColumnsManagerUI implements ActionListener {
         if (e.getSource().equals(autoManage))
             columnsManager.setAutoManageCols(autoManage.isSelected());
         else if (e.getSource().equals(combo)) {
-            updateList();
+            updatePanelList();
         } else {
             JCheckBox source = (JCheckBox) e.getSource();
             String text = source.getText();

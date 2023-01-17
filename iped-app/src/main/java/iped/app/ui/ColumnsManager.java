@@ -483,7 +483,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
                 officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),
                 regexFields.toArray(new String[0]), languageFields.toArray(new String[0]),
                 nerFields.toArray(new String[0]), p2pFields.toArray(new String[0]),
-                ufedFields.toArray(new String[0])};
+                ufedFields.toArray(new String[0]) };
 
         ArrayList<String> otherFields = new ArrayList<String>();
         for (String f : indexFields) {
