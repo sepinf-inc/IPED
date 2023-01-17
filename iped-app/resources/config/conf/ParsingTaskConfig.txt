@@ -19,7 +19,7 @@ parseCorruptedFiles = true
 
 # Minimum timeout (seconds) while parsing files. To this baseline will be added the result of timeOutPerMB * file size in MB (see next parameter).
 # After the timeout, the file's raw strings will be indexed.
-timeOut = 18000
+timeOut = 180
 
 # Timeout (seconds) for each Megabyte of the file being parsed.
 # Total_Timeout = timeOut + timeOutPerMB * <file_size_in_MB>
