@@ -13,7 +13,7 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
     private ColumnsManagerUI columnsManagerUI;
     private static ColumnsManagerReportUI instance;
 
-    public static ColumnsManagerUI getInstance() {
+    public static ColumnsManagerReportUI getInstance() {
         if (instance == null)
             instance = new ColumnsManagerReportUI();
         return instance;

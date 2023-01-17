@@ -2,8 +2,10 @@ package iped.app.ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,6 +44,8 @@ public class ColumnsManagerUI implements ActionListener {
     protected static ColumnsManager columnsManager = ColumnsManager.getInstance();
     private static ColumnsManagerUI instance;
 
+    protected static Map<String, JCheckBox> columnsCheckBoxes;
+
     public static ColumnsManagerUI getInstance() {
         if (instance == null)
             instance = new ColumnsManagerUI();
@@ -61,6 +65,9 @@ public class ColumnsManagerUI implements ActionListener {
     }
 
     protected ColumnsManagerUI() {
+
+        columnsCheckBoxes = new HashMap<>();
+
         dialog.setBounds(new Rectangle(400, 400));
         dialog.setTitle(Messages.getString("ColumnsManager.Title")); //$NON-NLS-1$
 
@@ -126,21 +133,21 @@ public class ColumnsManagerUI implements ActionListener {
         updateList();
     }
 
-
     protected void updateList() {
         listPanel.removeAll();
-        List<String> fields = Arrays.asList(columnsManager.fieldGroups[combo.getSelectedIndex()]);
-        fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
-        Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
+        List<String> fieldNames = Arrays.asList(columnsManager.fieldGroups[combo.getSelectedIndex()]);
+        fieldNames = fieldNames.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
+        Collections.sort(fieldNames, StringUtil.getIgnoreCaseComparator());
         String filter = textFieldNameFilter.getText().trim().toLowerCase();
-        for (String f : fields) {
-            if (filter.isEmpty() || f.toLowerCase().indexOf(filter) >= 0) {
+        for (String fieldName : fieldNames) {
+            if (filter.isEmpty() || fieldName.toLowerCase().indexOf(filter) >= 0) {
                 JCheckBox check = new JCheckBox();
-                check.setText(f);
-                if (columnsManager.colState.visibleFields.contains(LocalizedProperties.getNonLocalizedField(f)))
+                check.setText(fieldName);
+                if (columnsManager.colState.visibleFields.contains(LocalizedProperties.getNonLocalizedField(fieldName)))
                     check.setSelected(true);
                 check.addActionListener(this);
                 listPanel.add(check);
+                columnsCheckBoxes.put(fieldName, check);
             }
         }
         dialog.revalidate();
@@ -189,5 +196,15 @@ public class ColumnsManagerUI implements ActionListener {
         if (ResultTableModel.SCORE_COL.equals(columnsManager.getLoadedFields().get(tc.getModelIndex() - ResultTableModel.fixedCols.length)))
             tc.setCellRenderer(new ProgressCellRenderer());
     }
-    
+
+    public static List<String> getSelectedProperties() {
+        List<String> selectedColumns = new ArrayList<>();
+        for (Map.Entry<String, JCheckBox> hmEntry : columnsCheckBoxes.entrySet()) {
+            JCheckBox check = hmEntry.getValue();
+            if (check.isSelected()) {
+                selectedColumns.add(check.getText());
+            }
+        }
+        return selectedColumns;
+    }
 }
