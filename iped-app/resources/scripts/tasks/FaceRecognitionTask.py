@@ -198,7 +198,7 @@ class FaceRecognitionTask:
                 detectTime = -1
                 featureTime = -1
         global clusterExecuted,maxClusterDist
-        print("Dist",maxClusterDist)
+        
         with clusterLock:
             if clusterExecuted==1 or maxClusterDist==0:
                 return
@@ -225,15 +225,11 @@ class FaceRecognitionTask:
 
         if len(encodings)==0:
             return
-        logger.info("[FaceRecognitionTask] Time(s) to extract faces ",str(time.time()-groupTime))
-        #print(encodings)
-        #print("Number of faces",len(ids))
+        logger.info("[FaceRecognitionTask] Time(s) to extract "+str(len(ids))+ " faces ",str(time.time()-groupTime))
         clt = DBSCAN(metric="euclidean",n_jobs=-1,eps=maxClusterDist)
         clt.fit(encodings)
         clusters={}
-        #print("labels",clt.labels_)
-        #print("Number of labels",len(clt.labels_))
-        
+                
         for i in range(len(clt.labels_)):
             if clt.labels_[i]<0:#-1 is an unknown cluster
                 continue
@@ -241,7 +237,6 @@ class FaceRecognitionTask:
                 clusters[clt.labels_[i]]["ids"].append(ids[i])
             except:
                 clusters[clt.labels_[i]]={"ids":[ids[i]],"name":"Face_"+str(clt.labels_[i])}
-            #print(clusters)
         tot=0
         for c in clusters:
             tot+=1
