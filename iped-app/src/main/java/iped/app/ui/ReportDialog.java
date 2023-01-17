@@ -231,7 +231,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
         }
         
         if (e.getSource() == propertiesButton) {
-            ColumnsManagerUI.getInstance().setVisible();
+            ColumnsManagerReportUI.getInstance().setVisible();
         }
 
         if (e.getSource() == keywordsButton) {

@@ -31,14 +31,15 @@ import iped.utils.StringUtil;
 
 
 public class ColumnsManagerUI implements ActionListener {
-    private JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
-    private JDialog dialog = new JDialog(App.get());
-    private final JPanel listPanel;
-    private JComboBox<Object> combo;
+    protected JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
+    protected JComboBox<Object> combo;
+    protected JLabel showColsLabel = new JLabel(Messages.getString("ColumnsManager.ShowCols")); //$NON-NLS-1$
+    protected HintTextField textFieldNameFilter;
+    protected JDialog dialog = new JDialog(App.get());
+    protected final JPanel listPanel;
+    protected JPanel panel = new JPanel(new BorderLayout());
 
-    private HintTextField textFieldNameFilter;
-
-    private static ColumnsManager columnsManager = ColumnsManager.getInstance();
+    protected static ColumnsManager columnsManager = ColumnsManager.getInstance();
     private static ColumnsManagerUI instance;
 
     public static ColumnsManagerUI getInstance() {
@@ -59,13 +60,12 @@ public class ColumnsManagerUI implements ActionListener {
         combo.requestFocus();
     }
 
-    private ColumnsManagerUI() {
+    protected ColumnsManagerUI() {
         dialog.setBounds(new Rectangle(400, 400));
         dialog.setTitle(Messages.getString("ColumnsManager.Title")); //$NON-NLS-1$
 
-        JLabel label = new JLabel(Messages.getString("ColumnsManager.ShowCols")); //$NON-NLS-1$
-        label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-        label.setAlignmentX(0);
+        showColsLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        showColsLabel.setAlignmentX(0);
 
         listPanel = new JPanel() {
             private static final long serialVersionUID = -4882872614411133375L;
@@ -108,12 +108,11 @@ public class ColumnsManagerUI implements ActionListener {
 
         Box topPanel = Box.createVerticalBox();
         topPanel.add(autoManage);
-        topPanel.add(label);
+        topPanel.add(showColsLabel);
         topPanel.add(combo);
         topPanel.add(textFieldNameFilter);
         combo.addActionListener(this);
 
-        JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         panel.add(topPanel, BorderLayout.NORTH);
 
@@ -128,7 +127,7 @@ public class ColumnsManagerUI implements ActionListener {
     }
 
 
-    private void updateList() {
+    protected void updateList() {
         listPanel.removeAll();
         List<String> fields = Arrays.asList(columnsManager.fieldGroups[combo.getSelectedIndex()]);
         fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
