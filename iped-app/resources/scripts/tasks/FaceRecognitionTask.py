@@ -7,6 +7,7 @@
 
 #import face_recognition as fr
 import os
+os.environ["OPENBLAS_NUM_THREADS"]="4"
 import time
 import subprocess
 import threading, queue
@@ -224,13 +225,14 @@ class FaceRecognitionTask:
 
         if len(encodings)==0:
             return
+        logger.info("[FaceRecognitionTask] Time(s) to extract faces ",str(time.time()-groupTime))
         #print(encodings)
-        print("Number of faces",len(ids))
+        #print("Number of faces",len(ids))
         clt = DBSCAN(metric="euclidean",n_jobs=-1,eps=maxClusterDist)
         clt.fit(encodings)
         clusters={}
-        print("labels",clt.labels_)
-        print("Number of labels",len(clt.labels_))
+        #print("labels",clt.labels_)
+        #print("Number of labels",len(clt.labels_))
         
         for i in range(len(clt.labels_)):
             if clt.labels_[i]<0:#-1 is an unknown cluster
@@ -240,12 +242,15 @@ class FaceRecognitionTask:
             except:
                 clusters[clt.labels_[i]]={"ids":[ids[i]],"name":"Face_"+str(clt.labels_[i])}
             #print(clusters)
+        tot=0
         for c in clusters:
+            tot+=1
             c=clusters[c]
             bookmarkId=ipedCase.getBookmarks().newBookmark(c["name"])
             ipedCase.getBookmarks().addBookmark([Integer(id) for id in c["ids"]] , bookmarkId)
         
         ipedCase.getBookmarks().saveState(True)
+        logger.info('[FaceRecognitionTask] Number of face groups founds: ' + str(tot))
         logger.info('[FaceRecognitionTask] Time(s) to group similar faces: ' + str(time.time()-groupTime))
         
         
