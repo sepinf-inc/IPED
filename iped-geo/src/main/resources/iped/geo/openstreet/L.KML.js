@@ -895,8 +895,6 @@ L.KML = L.MarkerClusterGroup.extend({
     showMarkers(a){
         try{
             if(a){
-                alert(a.length);
-                alert(a);
                 for(let i=0; i<a.length; i++){
                     let m=this.markers['marker_'+a[i][0]];
                     if(m){
