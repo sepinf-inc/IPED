@@ -71,13 +71,12 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
     private GetResultsJSWorker jsWorker;
     private PropertyChangeListener lastPropertyChangeListener;
 
-    static final String[] fieldNames = {"GEOMETRIC_SIMPLE", "GEOMETRIC_COMPLEX", "GEOMETRIC_MULTIPOLYGON", "GEOJSON"};
+    static final String[] fieldNames = { "GEOMETRIC_SIMPLE", "GEOMETRIC_COMPLEX", "GEOMETRIC_MULTIPOLYGON", "GEOJSON" };
 
     public enum MapLoadState {
-        NOTLOADED,
-        LOADING,
-        LOADED
+        NOTLOADED, LOADING, LOADED
     };
+
     MapLoadState loadState = MapLoadState.NOTLOADED;
     private GetResultsJSWorker mapLoadWorker;
 
@@ -160,13 +159,13 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                             public void run() {
                                 if (url.length() > 0) {
                                     tilesSourceURL = url.toString();
-                                    if(config(tilesSourceURL)) {
+                                    if (config(tilesSourceURL)) {
                                         mapaDesatualizado = true;
 
                                         /*
-                                         * Sends the current lead selection to the next map
-                                         * rendered to select it after load.
-                                         * */
+                                         * Sends the current lead selection to the next map rendered to select it after
+                                         * load.
+                                         */
                                         runAfterLoad(new Runnable() {
                                             @Override
                                             public void run() {
@@ -182,8 +181,8 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                         });
                     }
                 };
-                if(loadState!=MapLoadState.LOADED) {
-                    if(lastTileServerChange!=null) {
+                if (loadState != MapLoadState.LOADED) {
+                    if (lastTileServerChange != null) {
                         mapLoadWorker.removePropertyChangeListener(lastTileServerChange);
                     }
                     lastTileServerChange = new PropertyChangeListener() {
@@ -193,7 +192,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                         }
                     };
                     mapLoadWorker.addPropertyChangeListener(lastTileServerChange);
-                }else {
+                } else {
                     tileServerChange.run();
                 }
             }
@@ -205,10 +204,10 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         if (url == null) {
             return false;
         } else {
-            if(browserCanvas==null) {
+            if (browserCanvas == null) {
                 browserCanvas = mcf.createMapCanvas(url);
                 return false;
-            }else {
+            } else {
                 return browserCanvas.setTileServerUrl(url);
             }
         }
@@ -230,17 +229,17 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                 tilesSourceURL = JMapOptionsPane.showOptionsDialog(this);
             }
             config(tilesSourceURL);
-            mapaDesatualizado=true;
+            mapaDesatualizado = true;
             gpsProgressBar.setVisible(false);
             this.add(gpsProgressBar, BorderLayout.NORTH);
             this.add(browserCanvas.getContainer(), BorderLayout.CENTER);
         }
 
         if (mapaDesatualizado) {
-            if(jsWorker!=null) {
+            if (jsWorker != null) {
                 try {
                     jsWorker.cancel(true);
-                }catch (CancellationException e) {
+                } catch (CancellationException e) {
                     // ignores
                 }
             }
@@ -253,40 +252,38 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             gpsProgressBar.setVisible(true);
 
             String[] cols = new String[] { BasicProps.ID };
-            
-            if(loadState == MapLoadState.NOTLOADED) {
+
+            if (loadState == MapLoadState.NOTLOADED) {
                 loadState = MapLoadState.LOADING;
                 mapLoadWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas, this);
                 mapLoadWorker.addPropertyChangeListener(new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
-                        if ("state".equals(evt.getPropertyName())
-                                && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
+                        if ("state".equals(evt.getPropertyName()) && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
                             loadState = MapLoadState.LOADED;
                         }
                     }
                 });
                 mapLoadWorker.execute();
-            }else if(loadState == MapLoadState.LOADING){
-                if(lastPropertyChangeListener!=null) {
-                    //cancels prior map update in case it hasn't finished yet
+            } else if (loadState == MapLoadState.LOADING) {
+                if (lastPropertyChangeListener != null) {
+                    // cancels prior map update in case it hasn't finished yet
                     mapLoadWorker.removePropertyChangeListener(lastPropertyChangeListener);
                     jsWorker.cancel(true);
                 }
                 AppMapPanel self = this;
-                //enqueue the map update to run after map load worker ends.
+                // enqueue the map update to run after map load worker ends.
                 lastPropertyChangeListener = new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
-                        if ("state".equals(evt.getPropertyName())
-                                && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
+                        if ("state".equals(evt.getPropertyName()) && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
                             jsWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas, self);
                             jsWorker.execute();
-                        }                        
+                        }
                     }
                 };
                 mapLoadWorker.addPropertyChangeListener(lastPropertyChangeListener);
-            }else if(loadState == MapLoadState.LOADED){
+            } else if (loadState == MapLoadState.LOADED) {
                 jsWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas, this);
                 jsWorker.execute();
             }
@@ -303,7 +300,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         } else {
             gpsProgressBar.setVisible(false);
         }
-        this.kmlResult=kmlResult;
+        this.kmlResult = kmlResult;
         browserCanvas.setKML(kmlResult.getKML());
         mapaDesatualizado = false;
     }
@@ -356,38 +353,38 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
     public void updateUI() {
         super.updateUI();
 
-        if(browserCanvas!=null) {
+        if (browserCanvas != null) {
             Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
-            if(bgColor!=null) {
+            if (bgColor != null) {
                 browserCanvas.getContainer().setBackground(bgColor);
             }
             browserCanvas.update();
         }
     }
-    
+
     String lastMid = "";
     int lastPos = -1;
-    boolean lastMidReset=true;
-    
+    boolean lastMidReset = true;
+
     public void disableLastMidReset() {
-        lastMidReset=false;
+        lastMidReset = false;
     }
-    
-    class LastMidTableModelListener implements TableModelListener{
+
+    class LastMidTableModelListener implements TableModelListener {
         @Override
         public void tableChanged(TableModelEvent e) {
-            if(lastMidReset) {
+            if (lastMidReset) {
                 lastMid = "";
-                lastPos = -1;            
+                lastPos = -1;
             }
-            lastMidReset=true;
+            lastMidReset = true;
         }
     }
-    
+
     LastMidTableModelListener lastMidTableModelListener = new LastMidTableModelListener();
 
     public int getItemPositioninResultsTable(String mid) {
-        if(mid.equals(lastMid)) {
+        if (mid.equals(lastMid)) {
             return lastPos;
         }
 
@@ -420,8 +417,8 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
     public void setMapViewer(MapViewer mapViewer) {
         this.mapViewer = mapViewer;
     }
-    
-    static final String[] trackSortFields = {BasicProps.NAME}; 
+
+    static final String[] trackSortFields = { BasicProps.NAME };
 
     public IItemId[] getTrackSiblings() {
         try {
@@ -429,24 +426,24 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             int docId = resultsProvider.getIPEDSource().getLuceneId(item);
             Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
             String parentId = doc.get(IndexItem.PARENTID);
-            if(parentId!=null) {
+            if (parentId != null) {
                 int parentDocId = resultsProvider.getIPEDSource().getLuceneId(new ItemId(item.getSourceId(), Integer.parseInt(parentId)));
                 Document parentDoc = resultsProvider.getIPEDSource().getReader().document(parentDocId);
-                if("1".equals(parentDoc.get("geo:isTrack"))) {
-                    IIPEDSearcher search = resultsProvider.createNewSearch("parentId:"+parentId, trackSortFields);
-                    
+                if ("1".equals(parentDoc.get("geo:isTrack"))) {
+                    IIPEDSearcher search = resultsProvider.createNewSearch("parentId:" + parentId, trackSortFields);
+
                     IMultiSearchResult results = search.multiSearch();
-                    
-                    if(results.getLength()>0) {
+
+                    if (results.getLength() > 0) {
                         IItemId[] siblings = new IItemId[results.getLength()];
-                        for(int i=0; i<results.getLength(); i++) {
-                            siblings[i]=results.getItem(i);
+                        for (int i = 0; i < results.getLength(); i++) {
+                            siblings[i] = results.getItem(i);
                         }
                         return siblings;
                     }
                 }
             }
-        }catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -459,7 +456,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
             String jsonFeature = doc.get(GeofileParser.FEATURE_STRING);
             return jsonFeature;
-        }catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -470,29 +467,29 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             IItemId item = resultsProvider.getResults().getItem(resultsProvider.getResultsTable().convertRowIndexToModel(resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex()));
             int docId = resultsProvider.getIPEDSource().getLuceneId(item);
             Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
-            
-            int count=0;
+
+            int count = 0;
             String[][] features = new String[fieldNames.length][];
             for (int i = 0; i < fieldNames.length; i++) {
-                features[i]=doc.getValues("Regex:"+fieldNames[i]);
-                count+=features[i].length;
+                features[i] = doc.getValues("Regex:" + fieldNames[i]);
+                count += features[i].length;
             }
-            
+
             String[] result = new String[count];
-            int findex=0;
-            int counttoLast=0;
-            int featIndex=0;
+            int findex = 0;
+            int counttoLast = 0;
+            int featIndex = 0;
             for (int i = 0; i < count; i++) {
-                featIndex = i-counttoLast;
-                while(featIndex>=features[findex].length) {
-                    counttoLast=i;
+                featIndex = i - counttoLast;
+                while (featIndex >= features[findex].length) {
+                    counttoLast = i;
                     findex++;
                 }
-                result[i]=features[findex][featIndex];
+                result[i] = features[findex][featIndex];
             }
-            
+
             return result;
-        }catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;

@@ -62,7 +62,7 @@ public class KMLParser {
                 } else {
                     try {
                         features.add(parsePlacemark(ele, featureBuilder));
-                    }catch(Exception e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -79,7 +79,7 @@ public class KMLParser {
     private static void parsePlacemarkTrack(Element ele, List<Object> features, SimpleFeatureBuilder featureBuilder) {
         List<Element> eles = ele.getChildren();
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
-        
+
         for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
             Element element = iterator.next();
             if (element.getName().toLowerCase().equals("track")) {
@@ -92,10 +92,10 @@ public class KMLParser {
                         timestamps.add(element2.getText());
                     }
                 }
-                
+
                 Coordinate[] coords = new Coordinate[timestamps.size()];
 
-                int i=0;
+                int i = 0;
                 for (Iterator<Element> iterator2 = tracks.iterator(); iterator2.hasNext();) {
                     Element element2 = iterator2.next();
                     if (element2.getName().toLowerCase().equals("coord")) {
@@ -103,7 +103,7 @@ public class KMLParser {
                         i++;
                     }
                 }
-                
+
                 for (int j = 0; j < coords.length; j++) {
                     String timestamp = timestamps.get(i);
                     Coordinate coord = coords[i];
@@ -230,9 +230,9 @@ public class KMLParser {
                 coords[i] = parseCoordinate(tok);
                 i++;
             }
-            if(ele.getName().toLowerCase().equals("linestring")) {
+            if (ele.getName().toLowerCase().equals("linestring")) {
                 geo = geometryFactory.createLineString(coords);
-            }else {
+            } else {
                 geo = geometryFactory.createLinearRing(coords);
             }
         }
@@ -253,7 +253,7 @@ public class KMLParser {
             }
 
             if (boundary != null) {
-                geo = parseGeometry(boundary.getChildren().get(0),geometryFactory);
+                geo = parseGeometry(boundary.getChildren().get(0), geometryFactory);
             }
         }
 
@@ -292,11 +292,11 @@ public class KMLParser {
                 }
                 if (ele.getName().toLowerCase().equals("extendeddata")) {
                     Element data = ele.getChild("Data");
-                    if(data!=null && data.getAttribute("name")!=null && data.getAttribute("name").getValue().equals("iped.geo.track")) {
+                    if (data != null && data.getAttribute("name") != null && data.getAttribute("name").getValue().equals("iped.geo.track")) {
                         folder.setTrack(true);
                     }
                 }
-            }catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

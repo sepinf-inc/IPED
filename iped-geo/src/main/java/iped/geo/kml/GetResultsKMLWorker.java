@@ -32,8 +32,7 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
     int contSemCoordenadas = 0, itemsWithGPS = 0;
     Consumer<KMLResult> consumer;
 
-    public GetResultsKMLWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress,
-            Consumer<KMLResult> consumer) {
+    public GetResultsKMLWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress, Consumer<KMLResult> consumer) {
         this.app = app;
         this.colunas = colunas;
         this.progress = progress;
@@ -186,9 +185,8 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
 
     }
 
-    private void generateLocationKML(StringBuilder tourPlayList, StringBuilder outerKml, String coluna,
-            org.apache.lucene.document.Document doc, SimpleDateFormat df, int row, IItemId item, String lat,
-            String longit, String alt, int subitem) {
+    private void generateLocationKML(StringBuilder tourPlayList, StringBuilder outerKml, String coluna, org.apache.lucene.document.Document doc, SimpleDateFormat df, int row, IItemId item, String lat, String longit, String alt,
+            int subitem) {
         if (progress != null)
             progress.setString(Messages.getString("KMLResult.LoadingGPSData") + ": " + (++itemsWithGPS)); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -262,8 +260,7 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
         kml.append("<TimeSpan><begin>" + dataCriacao + "</begin></TimeSpan>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         kml.append("</Placemark>"); //$NON-NLS-1$
-        
-        
+
         outerKml.append(kml);
     }
 

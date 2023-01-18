@@ -43,9 +43,7 @@ public class GPXFeatureListFactory implements FeatureListFactory {
         }
     }
 
-    public static void xslTransform(File srcFile, File destFile, InputStream xslStream)
-            throws ParserConfigurationException, FileNotFoundException, SAXException, IOException,
-            TransformerException {
+    public static void xslTransform(File srcFile, File destFile, InputStream xslStream) throws ParserConfigurationException, FileNotFoundException, SAXException, IOException, TransformerException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document document = builder.parse(new FileInputStream(srcFile));

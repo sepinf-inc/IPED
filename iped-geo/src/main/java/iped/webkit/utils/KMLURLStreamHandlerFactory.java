@@ -3,7 +3,7 @@ package iped.webkit.utils;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 
-public class KMLURLStreamHandlerFactory implements URLStreamHandlerFactory  {
+public class KMLURLStreamHandlerFactory implements URLStreamHandlerFactory {
     private static String PREFIX = "sun.net.www.protocol";
 
     public URLStreamHandler createDefaultURLStreamHandler(String protocol) {
@@ -11,7 +11,7 @@ public class KMLURLStreamHandlerFactory implements URLStreamHandlerFactory  {
         try {
             @SuppressWarnings("deprecation")
             Object o = Class.forName(name).newInstance();
-            return (URLStreamHandler)o;
+            return (URLStreamHandler) o;
         } catch (ClassNotFoundException x) {
             // ignore
         } catch (Exception e) {
@@ -20,7 +20,7 @@ public class KMLURLStreamHandlerFactory implements URLStreamHandlerFactory  {
         }
         return null;
     }
-    
+
     @Override
     public URLStreamHandler createURLStreamHandler(String protocol) {
         if ("ipedgeo".equals(protocol)) {

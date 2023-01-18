@@ -45,10 +45,10 @@ import iped.properties.ExtraProperties;
 public class GeofileParser extends AbstractParser {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	public static final MediaType GPX_MIME = MediaType.application("gpx");
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    public static final MediaType GPX_MIME = MediaType.application("gpx");
     public static final MediaType KML_MIME = MediaType.application("vnd.google-earth.kml+xml");
     public static final MediaType JSON_GOOGLE_MIME = MediaType.application("json-location");
 
@@ -61,10 +61,9 @@ public class GeofileParser extends AbstractParser {
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
     }
-    
+
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-            throws IOException, SAXException, TikaException {
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
         TemporaryResources tmp = new TemporaryResources();
         TikaInputStream tis = TikaInputStream.get(stream, tmp);
         File file = tis.getFile();
@@ -74,12 +73,11 @@ public class GeofileParser extends AbstractParser {
         String mimeType = metadata.get("Indexer-Content-Type");
 
         try {
-            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                    new ParsingEmbeddedDocumentExtractor(context));
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
             List<Object> featureList = FeatureListFactoryRegister.getFeatureList(mimeType).parseFeatureList(file);
 
             int cont = 1;
-            virtualId=0;
+            virtualId = 0;
             for (Iterator<Object> iterator = featureList.iterator(); iterator.hasNext();) {
                 Object o = iterator.next();
                 if (o instanceof SimpleFeature) {
@@ -92,7 +90,7 @@ public class GeofileParser extends AbstractParser {
                 }
                 if (o instanceof Folder) {
                     Folder folder = (Folder) o;
-                    
+
                     int id = folderParser(folder, -1, handler, metadata, extractor);
                     recursiveFolderParse(id, folder, handler, metadata, extractor, context);
                 }
@@ -102,12 +100,11 @@ public class GeofileParser extends AbstractParser {
         }
     }
 
-    public void recursiveFolderParse(int parentId, Folder folder, ContentHandler handler, Metadata metadata,
-            EmbeddedDocumentExtractor extractor, ParseContext context) throws TikaException {
+    public void recursiveFolderParse(int parentId, Folder folder, ContentHandler handler, Metadata metadata, EmbeddedDocumentExtractor extractor, ParseContext context) throws TikaException {
         int cont = 1;
 
         List<Object> featureList = folder.getFeatures();
-        int zerosCount=Integer.toString(featureList.size()).length();
+        int zerosCount = Integer.toString(featureList.size()).length();
         for (Iterator<Object> iterator = featureList.iterator(); iterator.hasNext();) {
             Object o = iterator.next();
             if (o instanceof SimpleFeature) {
@@ -116,8 +113,8 @@ public class GeofileParser extends AbstractParser {
                 String name = feature.getName().getLocalPart();
                 if (name == null)
                     name = "Marcador";
-                String leftZeros = "0".repeat(zerosCount-Integer.toString(cont).length());
-                featureParser(feature, parentId, name+leftZeros+cont, handler, metadata, extractor);
+                String leftZeros = "0".repeat(zerosCount - Integer.toString(cont).length());
+                featureParser(feature, parentId, name + leftZeros + cont, handler, metadata, extractor);
                 cont++;
             }
 
@@ -129,8 +126,7 @@ public class GeofileParser extends AbstractParser {
         }
     }
 
-    private int folderParser(Folder folder, int parentId, ContentHandler handler, Metadata metadata,
-            EmbeddedDocumentExtractor extractor) throws TikaException {
+    private int folderParser(Folder folder, int parentId, ContentHandler handler, Metadata metadata, EmbeddedDocumentExtractor extractor) throws TikaException {
         if (extractor.shouldParseEmbedded(metadata)) {
             try {
                 ByteArrayInputStream featureStream = new ByteArrayInputStream(folder.getName().getBytes());
@@ -144,16 +140,16 @@ public class GeofileParser extends AbstractParser {
                 int id = virtualId++;
                 kmeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(id));
                 kmeta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentId));
-                if(folder.isTrack()) {
+                if (folder.isTrack()) {
                     kmeta.set(ISTRACK, "1");
                     List<Object> features = folder.getFeatures();
-                    if(features!=null) {
+                    if (features != null) {
                         StringBuffer jsonArray = new StringBuffer();
                         FeatureJSON fjson = new FeatureJSON();
                         jsonArray.append("[");
                         for (Iterator iterator = features.iterator(); iterator.hasNext();) {
                             Object o = (Object) iterator.next();
-                            if(o instanceof SimpleFeature) {
+                            if (o instanceof SimpleFeature) {
                                 SimpleFeature feature = (SimpleFeature) o;
                                 StringWriter writer = new StringWriter();
                                 fjson.writeFeature(feature, writer);
@@ -167,7 +163,7 @@ public class GeofileParser extends AbstractParser {
                 }
 
                 extractor.parseEmbedded(featureStream, handler, kmeta, false);
-                
+
                 return id;
 
             } catch (Exception e) {
@@ -181,8 +177,7 @@ public class GeofileParser extends AbstractParser {
         return DatatypeConverter.parseDateTime(timestamp).getTime();
     }
 
-    private void featureParser(SimpleFeature feature, int parentId, String name, ContentHandler handler, Metadata metadata,
-            EmbeddedDocumentExtractor extractor) throws TikaException {
+    private void featureParser(SimpleFeature feature, int parentId, String name, ContentHandler handler, Metadata metadata, EmbeddedDocumentExtractor extractor) throws TikaException {
         if (extractor.shouldParseEmbedded(metadata)) {
             try {
                 ByteArrayInputStream featureStream = new ByteArrayInputStream(generateFeatureHtml(feature));
@@ -196,7 +191,7 @@ public class GeofileParser extends AbstractParser {
                 }
                 kmeta.set(HttpHeaders.CONTENT_TYPE, "text/plain");
                 kmeta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentId));
-                
+
                 String title = (String) feature.getAttribute("name");
                 if (title.trim().equals(""))
                     title = name;

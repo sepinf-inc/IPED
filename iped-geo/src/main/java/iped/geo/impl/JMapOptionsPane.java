@@ -42,10 +42,10 @@ import iped.geo.localization.Messages;
 public class JMapOptionsPane extends JOptionPane {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	static final String BING_URL = "http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1";
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    static final String BING_URL = "http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1";
     static final String OSM_URL = "https://tile.openstreetmap.org/${z}/${x}/${y}.png";
 
     static File userHome = new File(System.getProperty("user.home"), ".iped");
@@ -61,7 +61,7 @@ public class JMapOptionsPane extends JOptionPane {
     JRadioButton btnGoogleMaps;
 
     JComboBox<String> cbGoogleTileType;
-    
+
     String rbOutraCache = "";
     boolean canceled = true;
     JTextField txGoogleApiKey = new JTextField();
@@ -96,7 +96,7 @@ public class JMapOptionsPane extends JOptionPane {
         txGoogleApiKey.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void removeUpdate(DocumentEvent e) {
-                googleApiKey=txGoogleApiKey.getText();
+                googleApiKey = txGoogleApiKey.getText();
                 if ("".equals(txGoogleApiKey.getText())) {
                     btOk.setEnabled(false);
                 }
@@ -104,7 +104,7 @@ public class JMapOptionsPane extends JOptionPane {
 
             @Override
             public void insertUpdate(DocumentEvent e) {
-                googleApiKey=txGoogleApiKey.getText();
+                googleApiKey = txGoogleApiKey.getText();
                 if ((!"".equals(txGoogleApiKey.getText())) && (!btOk.isEnabled())) {
                     btOk.setEnabled(true);
                 }
@@ -112,7 +112,7 @@ public class JMapOptionsPane extends JOptionPane {
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                googleApiKey=txGoogleApiKey.getText();
+                googleApiKey = txGoogleApiKey.getText();
                 if ("".equals(txGoogleApiKey.getText())) {
                     btOk.setEnabled(false);
                 } else {
@@ -158,8 +158,7 @@ public class JMapOptionsPane extends JOptionPane {
 
         cbTileSrcs = new JComboBox<>();
 
-        MapPanelConfig mpc = (MapPanelConfig) ConfigurationManager.get().findObjects(MapPanelConfig.class)
-                .toArray()[0];
+        MapPanelConfig mpc = (MapPanelConfig) ConfigurationManager.get().findObjects(MapPanelConfig.class).toArray()[0];
         defaultTilesSources = mpc.getDefaultTilesSources();
 
         Set<String> ms = defaultTilesSources.keySet();
@@ -192,7 +191,7 @@ public class JMapOptionsPane extends JOptionPane {
         cbGoogleTileType.addItem("Satellite");
         cbGoogleTileType.addItem("Roadmap");
         cbGoogleTileType.addItem("Terrain");
-        
+
         cbGoogleTileType.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -200,7 +199,7 @@ public class JMapOptionsPane extends JOptionPane {
                 btnGoogleMaps.setSelected(true);
             }
         });
-        
+
         btnGoogleMaps = new JRadioButton(Messages.getString("JMapOptionsPane.UseGoogleMaps"));
         JPanel paneGoogleOpt = new JPanel();
         paneGoogleOpt.add(btnGoogleMaps, BorderLayout.BEFORE_FIRST_LINE);
@@ -324,14 +323,14 @@ public class JMapOptionsPane extends JOptionPane {
     public void config(String tilesSourceURL) {
         if (tilesSourceURL.contains("googleapis")) {
             txTileLayerURl.setText("");
-            
-            for(int i=0; i<cbGoogleTileType.getItemCount(); i++) {
+
+            for (int i = 0; i < cbGoogleTileType.getItemCount(); i++) {
                 String type = cbGoogleTileType.getItemAt(i);
-                if(tilesSourceURL.contains(type.toLowerCase())) {
+                if (tilesSourceURL.contains(type.toLowerCase())) {
                     cbGoogleTileType.setSelectedIndex(i);
                 }
             }
-            
+
             btnGoogleMaps.setSelected(true);
         } else {
             btnGoogleMaps.setSelected(false);
@@ -358,7 +357,7 @@ public class JMapOptionsPane extends JOptionPane {
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
         if (btnGoogleMaps.isSelected()) {
-            url = "https://maps.googleapis.com/maps/api/js?mapType="+((String)cbGoogleTileType.getSelectedItem()).toLowerCase()+"&key="+txGoogleApiKey.getText().trim();
+            url = "https://maps.googleapis.com/maps/api/js?mapType=" + ((String) cbGoogleTileType.getSelectedItem()).toLowerCase() + "&key=" + txGoogleApiKey.getText().trim();
         } else {
             url = txTileLayerURl.getText();
         }
@@ -399,7 +398,7 @@ public class JMapOptionsPane extends JOptionPane {
                         return "";
                     return googleApiKey;
                 } catch (IOException e) {
-                	//ignore
+                    // ignore
                 }
             }
             return "";
@@ -411,7 +410,7 @@ public class JMapOptionsPane extends JOptionPane {
     public static String getSavedTilesSourceURL() {
         File f = getLastTileSourceURLFile();
         String tileSourceURL = null;
-        if (f != null) {       	
+        if (f != null) {
             try (BufferedReader reader = Files.newBufferedReader(f.toPath(), StandardCharsets.UTF_8)) {
                 tileSourceURL = reader.readLine();
                 if (tileSourceURL == null)
@@ -467,7 +466,7 @@ public class JMapOptionsPane extends JOptionPane {
 
         return singleton.getUrl();
     }
-    
+
     public String getGoogleMapType() {
         return (String) cbGoogleTileType.getSelectedItem();
     }

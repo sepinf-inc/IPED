@@ -29,7 +29,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
     AppMapPanel mapaPanel;
     DefaultSingleCDockable dockable; // dockable where the viewer is installed
 
-    public static volatile boolean desabilitaTemp = false; //disables unnecessary map updates 
+    public static volatile boolean desabilitaTemp = false; // disables unnecessary map updates
     public static volatile boolean updatingCheckbox = false;
 
     public MapViewer() {
@@ -63,7 +63,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
 
     @Override
     public void redraw() {
-        if(mapaPanel.browserCanvas.isLoaded()) {
+        if (mapaPanel.browserCanvas.isLoaded()) {
             if (!updatingCheckbox) {
                 mapaPanel.updateMap();
             }
@@ -92,24 +92,25 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
             /**/
             return;
         }
-        
-        if(!mapaPanel.browserCanvas.isLoaded()) {
+
+        if (!mapaPanel.browserCanvas.isLoaded()) {
             mapaPanel.updateMap();
-        }        
-        
-        /* Se a alteração foi feita no próprio mapa
-         * ou a operação é de ordenação,
-         * ela não precisa ser refeita. */
-        if (!desabilitaTemp) {            
+        }
+
+        /*
+         * Se a alteração foi feita no próprio mapa ou a operação é de ordenação, ela
+         * não precisa ser refeita.
+         */
+        if (!desabilitaTemp) {
             if (e.getColumn() == 1) {// se o evento foi disparado pelo check box que fica na coluna 1
                 updatingCheckbox = true;
-                
+
                 IItemId item = resultsProvider.getResults().getItem(e.getFirstRow());
 
                 Boolean b = (Boolean) resultsTable.getModel().getValueAt(e.getFirstRow(), e.getColumn());
 
                 mapaPanel.selectCheckbox(item, b.booleanValue());
-            }else {
+            } else {
                 mapaPanel.setMapOutDated(true);
             }
 
@@ -127,7 +128,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
             // reabilita renderização automatica pela alteração no modelo
             desabilitaTemp = false;
         }
-        if(dockable == null || !dockable.isShowing()) {
+        if (dockable == null || !dockable.isShowing()) {
             updatingCheckbox = false;
         }
     }
@@ -136,20 +137,20 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
         // update internal map item cursor with lead selection
         int resultTableLeadSelIdx = resultsTable.getSelectionModel().getLeadSelectionIndex();
         try {
-            if(resultTableLeadSelIdx != -1) {
+            if (resultTableLeadSelIdx != -1) {
                 int rowModel = resultsTable.convertRowIndexToModel(resultTableLeadSelIdx);
                 IItemId item = resultsProvider.getResults().getItem(rowModel);
                 String gid = "marker_" + item.getSourceId() + "_" + item.getId();
                 mapaPanel.browserCanvas.sendLeadSelection(gid);
             }
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting() || resultsTable.getRowSorter()==null || desabilitaTemp)
+        if (e.getValueIsAdjusting() || resultsTable.getRowSorter() == null || desabilitaTemp)
             return;
 
         Runnable run = new Runnable() {

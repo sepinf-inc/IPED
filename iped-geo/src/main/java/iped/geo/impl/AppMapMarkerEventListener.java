@@ -15,7 +15,7 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
 
     public AppMapMarkerEventListener(AppMapPanel mapaPanel) {
         this.mapaPanel = mapaPanel;
-        mapViewer=mapaPanel.getMapViewer();
+        mapViewer = mapaPanel.getMapViewer();
     }
 
     @Override
@@ -26,12 +26,12 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         int pos = mapaPanel.getItemPositioninResultsTable(mid);
         boolean olddesabilitaTemp = mapViewer.desabilitaTemp;
         mapViewer.desabilitaTemp = true;
-        if(e!=null) {
-            AppMapMarkerEventListener.doTableSelection(t, pos,e.isShiftDown());
+        if (e != null) {
+            AppMapMarkerEventListener.doTableSelection(t, pos, e.isShiftDown());
         }
 
         IItemId[] siblings = mapaPanel.getTrackSiblings();
-        if(siblings!=null && siblings.length>0) {
+        if (siblings != null && siblings.length > 0) {
             StringBuffer gids = new StringBuffer();
             gids.append("[");
             for (int i = 0; i < siblings.length; i++) {
@@ -48,12 +48,12 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
             gidsList.add(gids);
             mapaPanel.browserCanvas.drawPolyline(gidsList);
         }
-        String jsonFeature = mapaPanel.getSelectedJSONFeature();        
+        String jsonFeature = mapaPanel.getSelectedJSONFeature();
         mapaPanel.browserCanvas.drawJSONFeature(jsonFeature);
 
         mapViewer.desabilitaTemp = olddesabilitaTemp;
     }
-    
+
     static public void doTableSelection(JTable t, int pos, boolean additiveSelection) {
         if (additiveSelection) {
             if (t.isRowSelected(pos)) {
@@ -64,7 +64,7 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         } else {
             boolean wasSelected = t.isRowSelected(pos);
             t.getSelectionModel().setValueIsAdjusting(true);
-            t.removeRowSelectionInterval(0, t.getRowCount()-1);
+            t.removeRowSelectionInterval(0, t.getRowCount() - 1);
             if (!wasSelected) {
                 t.setRowSelectionInterval(pos, pos);
             }

@@ -13,7 +13,7 @@ public class KMLURLConnection extends URLConnection {
 
     @Override
     public void connect() throws IOException {
-        System.out.println("Connected:"+this.url);
+        System.out.println("Connected:" + this.url);
     }
 
 }

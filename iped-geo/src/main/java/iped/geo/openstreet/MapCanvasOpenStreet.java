@@ -48,7 +48,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     ChangeListener<State> onLoadChange;
 
     String url;
-    String lastGoogleApiKey=null;
+    String lastGoogleApiKey = null;
     private boolean htmlloaded;
     private Semaphore sem;
     private String themeScript;
@@ -58,10 +58,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
         this.url = JMapOptionsPane.getSavedTilesSourceURL();
         int i = url.indexOf("key=");
-        if(i>=0) {
-            lastGoogleApiKey=lastGoogleApiKey=url.substring(url.indexOf("key="));
+        if (i >= 0) {
+            lastGoogleApiKey = lastGoogleApiKey = url.substring(url.indexOf("key="));
         }
-        
+
         Platform.runLater(new Runnable() {
             public void run() {
                 browser = new WebView();
@@ -78,8 +78,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                         final int y = (int) Math.ceil(dragStartY - e.getY());
 
                         try {
-                            webEngine.executeScript("map.panBy({x:" + x + ", y:" + y
-                                    + "},{duration: 1,easeLinearity: 1,noMoveStart: true,animate: false})");
+                            webEngine.executeScript("map.panBy({x:" + x + ", y:" + y + "},{duration: 1,easeLinearity: 1,noMoveStart: true,animate: false})");
                         } catch (Exception e1) {
                             e1.printStackTrace();
                         }
@@ -103,7 +102,6 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                         System.out.println("Alert:" + event.getData()); //$NON-NLS-1$
                     }
                 });
-
 
                 webEngine.loadContent(UiUtil.getUIEmptyHtml());
 
@@ -173,7 +171,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     @Override
     public void load() {
         try {
-            if(sem!=null) {
+            if (sem != null) {
                 sem.release();
             }
             Platform.runLater(new Runnable() {
@@ -182,28 +180,28 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                     webEngine.getLoadWorker().cancel();
                 }
             });
-            
+
             onLoadRunnables.clear();
             clearAddPlacemarkLines();
-            
+
             sem = new Semaphore(1);
             sem.acquire();
-            
+
             String b64_selecionado = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
-                .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado.png"))); //$NON-NLS-1$
+                    .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado.png"))); //$NON-NLS-1$
             String b64_selecionado_m = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
-                .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado_m.png"))); //$NON-NLS-1$
+                    .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado_m.png"))); //$NON-NLS-1$
             String b64_normal = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
-                .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png"))); //$NON-NLS-1$
+                    .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png"))); //$NON-NLS-1$
             String b64_marcado = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
-                .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png"))); //$NON-NLS-1$
+                    .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png"))); //$NON-NLS-1$
 
             String kml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><kml xmlns=\"http://www.opengis.net/kml/2.2\">";
             kml += "<Document>";
-            kml+="<Style id=\"item\"><IconStyle><Icon><href>{{icone_base64}}</href></Icon></IconStyle></Style>";
-            kml+="<Style id=\"itemSelecionado\"><IconStyle><Icon><href>{{b64_selecionado}}</href></Icon></IconStyle></Style>";
-            kml+="<Style id=\"itemSelecionadoMarcado\"><IconStyle><Icon><href>{{b64_selecionado_m}}</href></Icon></IconStyle></Style>";
-            kml+="<Style id=\"itemMarcado\"><IconStyle><Icon><href>{{b64_marcado}}</href></Icon></IconStyle></Style>";
+            kml += "<Style id=\"item\"><IconStyle><Icon><href>{{icone_base64}}</href></Icon></IconStyle></Style>";
+            kml += "<Style id=\"itemSelecionado\"><IconStyle><Icon><href>{{b64_selecionado}}</href></Icon></IconStyle></Style>";
+            kml += "<Style id=\"itemSelecionadoMarcado\"><IconStyle><Icon><href>{{b64_selecionado_m}}</href></Icon></IconStyle></Style>";
+            kml += "<Style id=\"itemMarcado\"><IconStyle><Icon><href>{{b64_marcado}}</href></Icon></IconStyle></Style>";
             kml = kml.replace("{{icone_base64}}", b64_normal);
             kml = kml.replace("{{b64_selecionado}}", b64_selecionado);
             kml = kml.replace("{{b64_selecionado_m}}", b64_selecionado_m);
@@ -217,10 +215,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                 @Override
                 public void run() {
                     try {
-                        webEngine.executeScript("track.parseStylesFromXmlString('"+kmlFinal+"');");
-                    }catch(Exception e){
+                        webEngine.executeScript("track.parseStylesFromXmlString('" + kmlFinal + "');");
+                    } catch (Exception e) {
                         e.printStackTrace();
-                    }finally {
+                    } finally {
                         sem.release();
                     }
                 }
@@ -230,11 +228,11 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
             sem.acquire();
             sem.release();
-        }catch (Exception e) {
-            loaded=false;
-            if((e instanceof CancellationException)||(e instanceof InterruptedException)) {
+        } catch (Exception e) {
+            loaded = false;
+            if ((e instanceof CancellationException) || (e instanceof InterruptedException)) {
                 sem.release();
-            }else {
+            } else {
                 e.printStackTrace();
             }
         }
@@ -254,21 +252,21 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         String layers_img = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
                 .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("layers.png"))); //$NON-NLS-1$
 
-        html = html.replace("{{layers_img}}", layers_img);            
+        html = html.replace("{{layers_img}}", layers_img);
         html = html.replace("{{markerclusterjs}}", markerclusterjs);
         html = html.replace("{{leafletgeometryutil}}", leafletgeometryutil);
         html = html.replace("{{leafletarrowheads}}", leafletarrowheads);
 
         String apikey = JMapOptionsPane.getGoogleAPIKey();
-        html = html.replace("{{googlemaps_scripts}}", "<script id=\"mapsapi\" src=\"https://maps.googleapis.com/maps/api/js?key="+apikey+"\" async defer></script>\n"
+        html = html.replace("{{googlemaps_scripts}}", "<script id=\"mapsapi\" src=\"https://maps.googleapis.com/maps/api/js?key=" + apikey + "\" async defer></script>\n"
                 + "<script src=\"https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js\"></script>");
 
-        html = html.replace("{{tilelayer_script}}", "setTileServerUrl('"+url+"');");
+        html = html.replace("{{tilelayer_script}}", "setTileServerUrl('" + url + "');");
 
-        themeScript=MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;
+        themeScript = MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
-        if(bgColor!=null) {
-            themeScript=MapCanvasOpenStreet.DARK_THEME_SCRIPT;
+        if (bgColor != null) {
+            themeScript = MapCanvasOpenStreet.DARK_THEME_SCRIPT;
         }
         html = html.replace("{{applyTheme}}", themeScript);
 
@@ -277,10 +275,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         html = html.replace("{{L.KML}}", js); //$NON-NLS-1$
         return html;
     }
-    
+
     @Override
     public void setKML(String kml) {
-        if(kml==null || kml.length()<4) {
+        if (kml == null || kml.length() < 4) {
             return;
         }
         try {
@@ -294,40 +292,35 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                     .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png"))); //$NON-NLS-1$
             String b64_marcado = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
                     .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png"))); //$NON-NLS-1$
-            
-                       
+
             kml = kml.replace("\n", "").replace("\r", "");
-            kml = kml.replace("<Document>",
-                    "<Document><Style id=\"item\"><IconStyle><Icon><href>{{icone_base64}}</href></Icon></IconStyle></Style>");
-            kml = kml.replace("<Document>",
-                    "<Document><Style id=\"itemSelecionado\"><IconStyle><Icon><href>{{b64_selecionado}}</href></Icon></IconStyle></Style>");
-            kml = kml.replace("<Document>",
-                    "<Document><Style id=\"itemSelecionadoMarcado\"><IconStyle><Icon><href>{{b64_selecionado_m}}</href></Icon></IconStyle></Style>");
-            kml = kml.replace("<Document>",
-                    "<Document><Style id=\"itemMarcado\"><IconStyle><Icon><href>{{b64_marcado}}</href></Icon></IconStyle></Style>");
+            kml = kml.replace("<Document>", "<Document><Style id=\"item\"><IconStyle><Icon><href>{{icone_base64}}</href></Icon></IconStyle></Style>");
+            kml = kml.replace("<Document>", "<Document><Style id=\"itemSelecionado\"><IconStyle><Icon><href>{{b64_selecionado}}</href></Icon></IconStyle></Style>");
+            kml = kml.replace("<Document>", "<Document><Style id=\"itemSelecionadoMarcado\"><IconStyle><Icon><href>{{b64_selecionado_m}}</href></Icon></IconStyle></Style>");
+            kml = kml.replace("<Document>", "<Document><Style id=\"itemMarcado\"><IconStyle><Icon><href>{{b64_marcado}}</href></Icon></IconStyle></Style>");
             kml = kml.replace("{{icone_base64}}", b64_normal);
             kml = kml.replace("{{b64_selecionado}}", b64_selecionado);
             kml = kml.replace("{{b64_selecionado_m}}", b64_selecionado_m);
             kml = kml.replace("{{b64_marcado}}", b64_marcado);
             kml = kml.replace("</Placemark>", "<styleUrl>#item</styleUrl></Placemark>");
-            
+
             setText(html);
-            
+
             final String kmlFinal = kml;
 
-            if(!htmlloaded) {
-                htmlloaded=true;
+            if (!htmlloaded) {
+                htmlloaded = true;
                 runAfterLoad(new Runnable() {
                     @Override
                     public void run() {
-                        webEngine.executeScript("loadKml('"+kmlFinal+"')");
+                        webEngine.executeScript("loadKml('" + kmlFinal + "')");
                     }
                 });
-            }else {
+            } else {
                 Platform.runLater(new Runnable() {
                     @Override
                     public void run() {
-                        webEngine.executeScript("loadKml('"+kmlFinal+"')");
+                        webEngine.executeScript("loadKml('" + kmlFinal + "')");
                     }
                 });
             }
@@ -360,7 +353,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             self.selectionMapToApply.keySet().toArray(marks);
             final HashMap<String, Boolean> selecoesAfazerCopy = selectionMapToApply;
             self.selectionMapToApply = null;
-            
+
             Runnable selecionaMarcadores = new Runnable() {
                 public void run() {
                     boolean marcadorselecionado = false;
@@ -378,7 +371,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                         }
                     }
                     if (marcadorselecionado) {
-                        webEngine.executeScript(script.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        webEngine.executeScript(script.toString()); // $NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         try {
                             webEngine.executeScript("track.centralizaSelecao();");
                         } catch (Exception e) {
@@ -387,10 +380,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                     }
                 }
             };
-            
-            if(Platform.isFxApplicationThread()) {
+
+            if (Platform.isFxApplicationThread()) {
                 selecionaMarcadores.run();
-            }else {
+            } else {
                 Platform.runLater(selecionaMarcadores);
             }
 
@@ -400,9 +393,9 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             Platform.runLater(new Runnable() {
                 public void run() {
                     try {
-                        webEngine.executeScript("track.updateLeadMarker(\""+leadSelectionToApplyCopy+"\");");
-                        if(markerEventListener!=null) {
-                            markerEventListener.onClicked(leadSelectionToApplyCopy, null);                            
+                        webEngine.executeScript("track.updateLeadMarker(\"" + leadSelectionToApplyCopy + "\");");
+                        if (markerEventListener != null) {
+                            markerEventListener.onClicked(leadSelectionToApplyCopy, null);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -414,21 +407,21 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         }
         updateUI();
     }
-   
+
     public void updateUI() {
         boolean updateTheme = false;
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
-        if(bgColor!=null && themeScript.equals(MapCanvasOpenStreet.LIGHT_THEME_SCRIPT)) {
-            themeScript=MapCanvasOpenStreet.DARK_THEME_SCRIPT;
+        if (bgColor != null && themeScript.equals(MapCanvasOpenStreet.LIGHT_THEME_SCRIPT)) {
+            themeScript = MapCanvasOpenStreet.DARK_THEME_SCRIPT;
             updateTheme = true;
         }
-        if(bgColor==null && themeScript.equals(MapCanvasOpenStreet.DARK_THEME_SCRIPT)) {
-            themeScript=MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;
+        if (bgColor == null && themeScript.equals(MapCanvasOpenStreet.DARK_THEME_SCRIPT)) {
+            themeScript = MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;
             updateTheme = true;
         }
 
-        if(updateTheme) {
-            final String themeScriptFinal=themeScript; 
+        if (updateTheme) {
+            final String themeScriptFinal = themeScript;
             Platform.runLater(new Runnable() {
                 public void run() {
                     try {
@@ -479,7 +472,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
-                    webEngine.executeScript("asyncCreatePaths();track.setAllRange('"+minlongit+"','"+minlat+"','"+maxlongit+"','"+maxlat+"');");
+                    webEngine.executeScript("asyncCreatePaths();track.setAllRange('" + minlongit + "','" + minlat + "','" + maxlongit + "','" + maxlat + "');");
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
@@ -491,15 +484,15 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
     @Override
     public boolean setTileServerUrl(String url) {
-        if(url.contains("googleapis") && url.contains("key") && !url.substring(url.indexOf("key=")).equals(lastGoogleApiKey)) {
-            lastGoogleApiKey=url.substring(url.indexOf("key="));
+        if (url.contains("googleapis") && url.contains("key") && !url.substring(url.indexOf("key=")).equals(lastGoogleApiKey)) {
+            lastGoogleApiKey = url.substring(url.indexOf("key="));
             return true;
-        }else {
-            if(isLoaded()) {
+        } else {
+            if (isLoaded()) {
                 Platform.runLater(new Runnable() {
                     public void run() {
                         try {
-                            webEngine.executeScript("setTileServerUrl('"+url+"');");
+                            webEngine.executeScript("setTileServerUrl('" + url + "');");
                         } catch (Exception e) {
                             e.printStackTrace();
                         } finally {
@@ -517,10 +510,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
-                    if(gids.size()>0) {
+                    if (gids.size() > 0) {
                         webEngine.executeScript("track.clearVisibleMarkers();");
-                        for(int i=0; i<gids.size(); i++) {
-                            webEngine.executeScript("track.showMarkers("+gids.get(i).toString()+");");
+                        for (int i = 0; i < gids.size(); i++) {
+                            webEngine.executeScript("track.showMarkers(" + gids.get(i).toString() + ");");
                         }
                         webEngine.executeScript("track.orderVisibleMarkers();");
                     } else {
@@ -540,10 +533,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
-                    if(gids.size()>0) {
-                        for(int i=0; i<gids.size(); i++) {
-                            String jsgids=gids.get(i).toString();
-                            webEngine.executeScript("track.createMarkers("+jsgids+");");
+                    if (gids.size() > 0) {
+                        for (int i = 0; i < gids.size(); i++) {
+                            String jsgids = gids.get(i).toString();
+                            webEngine.executeScript("track.createMarkers(" + jsgids + ");");
                         }
                         webEngine.executeScript("track.orderVisibleMarkers();");
                     }
@@ -561,9 +554,9 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
-                    if(gids.size()>0) {
-                        for(int i=0; i<gids.size(); i++) {
-                            webEngine.executeScript("try{track.drawPolyline("+gids.get(i).toString()+");}catch(e){alert(e);}");
+                    if (gids.size() > 0) {
+                        for (int i = 0; i < gids.size(); i++) {
+                            webEngine.executeScript("try{track.drawPolyline(" + gids.get(i).toString() + ");}catch(e){alert(e);}");
                         }
                     }
                 } catch (Exception e) {
@@ -580,9 +573,9 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
-                    if(jsonFeature!=null && jsonFeature.length()>3) {
-                        webEngine.executeScript("try{track.drawFeature("+jsonFeature+");}catch(e){alert(e);}");
-                    }else {
+                    if (jsonFeature != null && jsonFeature.length() > 3) {
+                        webEngine.executeScript("try{track.drawFeature(" + jsonFeature + ");}catch(e){alert(e);}");
+                    } else {
                         webEngine.executeScript("try{track.hideLastFeature();}catch(e){alert(e);}");
                     }
                 } catch (Exception e) {
@@ -599,15 +592,15 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
-                    if(jsonFeature.length>0) {
+                    if (jsonFeature.length > 0) {
                         StringBuffer str = new StringBuffer();
                         for (int i = 0; i < jsonFeature.length; i++) {
-                            str.append("track.drawFeature("+convertToGeoJson(jsonFeature[i])+");");
+                            str.append("track.drawFeature(" + convertToGeoJson(jsonFeature[i]) + ");");
                         }
 
-                        if(str.length()>3) {
-                            webEngine.executeScript("try{track.hideLastFeature();+"+str.toString()+"}catch(e){alert(e);}");
-                        }else {
+                        if (str.length() > 3) {
+                            webEngine.executeScript("try{track.hideLastFeature();+" + str.toString() + "}catch(e){alert(e);}");
+                        } else {
                             webEngine.executeScript("try{track.hideLastFeature();}catch(e){alert(e);}");
                         }
                     }
@@ -621,7 +614,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     }
 
     private String convertToGeoJson(String string) {
-        if(string.trim().startsWith("{")) {
+        if (string.trim().startsWith("{")) {
             return string;
         }
         return null;

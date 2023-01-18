@@ -43,7 +43,6 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
     private double minlat;
     private double maxlat;
 
-
     public GetResultsJSWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress, AbstractMapCanvas browserCanvas, Consumer consumer) {
         this.app = app;
         this.colunas = colunas;
@@ -59,13 +58,13 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             try {
                 result = this.get();
             } catch (Exception e) {
-                if(e instanceof CancellationException) {
-                    
-                }else {
+                if (e instanceof CancellationException) {
+
+                } else {
                     e.printStackTrace();
                 }
             }
-            if(result!=null) {
+            if (result != null) {
                 consumer.accept(result);
             }
         }
@@ -73,19 +72,19 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
 
     @Override
     protected KMLResult doInBackground() throws Exception {
-        if(browserCanvas.isLoaded()) {
+        if (browserCanvas.isLoaded()) {
             return doReloadInBackground();
-        }else {
+        } else {
             browserCanvas.load();
             return createAllPlacemarks();
         }
     }
 
     protected KMLResult doReloadInBackground() throws Exception {
-        int countPlacemark=0;
+        int countPlacemark = 0;
         KMLResult kmlResult = new KMLResult();
 
-        int threadCount=10;
+        int threadCount = 10;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         try {
             String coluna = null;
@@ -99,12 +98,15 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             }
 
             if (descendingOrder) {
-                browserCanvas.setTourOrder(coluna+"-DESC");
+                browserCanvas.setTourOrder(coluna + "-DESC");
             } else {
                 browserCanvas.setTourOrder(coluna);
             }
 
-            minlongit=190.0; maxlongit=-190.0; minlat=190.0; maxlat=-190.0;
+            minlongit = 190.0;
+            maxlongit = -190.0;
+            minlat = 190.0;
+            maxlat = -190.0;
 
             IMultiSearchResult results = app.getResults();
             Document doc;
@@ -114,7 +116,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             }
 
             String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
-            
+
             IIPEDSearcher searcher = app.createNewSearch(query);
             IMultiSearchResult multiResult = searcher.multiSearch();
 
@@ -124,33 +126,33 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             }
 
             List<StringBuffer> gidsList = Collections.synchronizedList(new ArrayList<>());
-            
+
             StringBuffer gids = null;
-            
+
             int batchSize = 1000;
             Semaphore sem = new Semaphore(batchSize);
 
             for (int row = 0; row < results.getLength(); row++) {
-                if(isCancelled()) {
+                if (isCancelled()) {
                     return null;
                 }
-                
-                int finalRow =  row;
-                
-                if(row%batchSize==0){
-                    if(gids!=null) {
+
+                int finalRow = row;
+
+                if (row % batchSize == 0) {
+                    if (gids != null) {
                         sem.acquire(batchSize);
                         sem.release(batchSize);
                         gids.append("]");
                         gidsList.add(gids);
                     }
-                    sem.acquire(Math.min(batchSize, results.getLength() - (((int) row/batchSize)*batchSize)));
+                    sem.acquire(Math.min(batchSize, results.getLength() - (((int) row / batchSize) * batchSize)));
                     gids = new StringBuffer();
                     gids.append("[");
                 }
-                
+
                 final StringBuffer finalGids = gids;
-                
+
                 Runnable r = new Runnable() {
                     @Override
                     public void run() {
@@ -169,25 +171,26 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                             Document doc = app.getIPEDSource().getSearcher().doc(luceneId);
 
                             String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
-                            
+
                             if (locations != null && locations.length == 1) {
                                 String[] locs = locations[0].split(";"); //$NON-NLS-1$
                                 String lat = locs[0].trim();
                                 String longit = locs[1].trim();
-                                
-                                updateViewableRegion(longit, lat);                            
-                                
+
+                                updateViewableRegion(longit, lat);
+
                                 String gid = item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-                                
+
                                 gpsItems.put(item, null);
 
-                                int checked=0;
-                                if(app.getIPEDSource().getMultiBookmarks().isChecked(item)) {
-                                    checked=1;
-                                };
+                                int checked = 0;
+                                if (app.getIPEDSource().getMultiBookmarks().isChecked(item)) {
+                                    checked = 1;
+                                }
+                                ;
                                 itemsWithGPS++;
-                                finalGids.append("['"+gid+"',"+finalRow+","+checked+"],");
-                            }else {
+                                finalGids.append("['" + gid + "'," + finalRow + "," + checked + "],");
+                            } else {
                                 int subitem = -1;
                                 List<Integer> subitems = new ArrayList<>();
                                 gpsItems.put(item, subitems);
@@ -195,37 +198,36 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                     String[] locs = location.split(";"); //$NON-NLS-1$
                                     String lat = locs[0].trim();
                                     String longit = locs[1].trim();
-                                    
-                                    updateViewableRegion(longit, lat);                            
-                                    
+
+                                    updateViewableRegion(longit, lat);
+
                                     String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                                    
+
                                     subitems.add(subitem);
 
                                     itemsWithGPS++;
-                                    finalGids.append("['"+gid+"',"+finalRow+"],");
+                                    finalGids.append("['" + gid + "'," + finalRow + "],");
                                 }
                             }
-                            
+
                             if (progress != null)
                                 progress.setString(Messages.getString("KMLResult.LoadingGPSData") + ": " + (itemsWithGPS)); //$NON-NLS-1$ //$NON-NLS-2$
-                            
-                            
-                        }catch(Exception e) {
-                            e.printStackTrace();                            
-                        }finally{
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        } finally {
                             sem.release();
                         }
                     }
-                }; 
-                
+                };
+
                 countPlacemark++;
-                
+
                 executorService.execute(r);
             }
             sem.acquire(batchSize);
             sem.release(batchSize);
-            if(gids!=null && gids.length()>5) {
+            if (gids != null && gids.length() > 5) {
                 gids.append("]");
                 gidsList.add(gids);
             }
@@ -233,7 +235,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             kmlResult.setResultKML("", itemsWithGPS, gpsItems);
             browserCanvas.viewAll(minlongit, minlat, maxlongit, maxlat);
         } catch (Exception e) {
-            if(!isCancelled()) {
+            if (!isCancelled()) {
                 e.printStackTrace();
             }
         } finally {
@@ -247,24 +249,24 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
     synchronized private void updateViewableRegion(String longit, String lat) {
         try {
             double dlongit = Double.parseDouble(longit);
-            if(dlongit<minlongit) {
+            if (dlongit < minlongit) {
                 minlongit = dlongit;
             }
-            if(dlongit>maxlongit) {
-                maxlongit=dlongit;
+            if (dlongit > maxlongit) {
+                maxlongit = dlongit;
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         try {
             double dlat = Double.parseDouble(lat);
-            if(dlat<minlat) {
+            if (dlat < minlat) {
                 minlat = dlat;
             }
-            if(dlat>maxlat) {
+            if (dlat > maxlat) {
                 maxlat = dlat;
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -290,10 +292,10 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
     }
 
     protected KMLResult createAllPlacemarks() throws Exception {
-        int countPlacemark=0;
+        int countPlacemark = 0;
         KMLResult kmlResult = new KMLResult();
 
-        int threadCount=10;
+        int threadCount = 10;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         try {
 
@@ -306,15 +308,18 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                 coluna = BasicProps.ID;
                 descendingOrder = false;
             }
-            
+
             if (descendingOrder) {
-                browserCanvas.setTourOrder(coluna+"-DESC");
+                browserCanvas.setTourOrder(coluna + "-DESC");
             } else {
                 browserCanvas.setTourOrder(coluna);
             }
 
-            minlongit=190.0; maxlongit=-190.0; minlat=190.0; maxlat=-190.0;
-            
+            minlongit = 190.0;
+            maxlongit = -190.0;
+            minlat = 190.0;
+            maxlat = -190.0;
+
             Document doc;
 
             String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
@@ -328,37 +333,37 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             }
 
             Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
-            
+
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"); //$NON-NLS-1$
             df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
-            
+
             List<StringBuffer> gidsList = Collections.synchronizedList(new ArrayList<>());
             StringBuffer gids = null;
-            
+
             int batchSize = 1000;
             Semaphore sem = new Semaphore(batchSize);
 
             for (int row = 0; row < results.getLength(); row++) {
-                if(isCancelled()) {
+                if (isCancelled()) {
                     return null;
                 }
 
-                int finalRow =  row;
-                
-                if(row%batchSize==0){
-                    if(gids!=null) {
+                int finalRow = row;
+
+                if (row % batchSize == 0) {
+                    if (gids != null) {
                         sem.acquire(batchSize);
                         sem.release(batchSize);
                         gids.append("]");
                         gidsList.add(gids);
                     }
-                    sem.acquire(Math.min(batchSize, results.getLength() - (((int) row/batchSize)*batchSize)));
+                    sem.acquire(Math.min(batchSize, results.getLength() - (((int) row / batchSize) * batchSize)));
                     gids = new StringBuffer();
                     gids.append("[");
                 }
-                
+
                 final StringBuffer finalGids = gids;
-                
+
                 Runnable r = new Runnable() {
                     @Override
                     public void run() {
@@ -378,33 +383,18 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
 
                             String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
 
-                            
                             if (locations != null && locations.length == 1) {
                                 String[] locs = locations[0].split(";"); //$NON-NLS-1$
                                 lat = locs[0].trim();
                                 longit = locs[1].trim();
 
-                                String gid = item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$                                
-                                
+                                String gid = item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+
                                 boolean checked = app.getIPEDSource().getMultiBookmarks().isChecked(item);
                                 boolean selected = app.getResultsTable().isRowSelected(finalRow);
 
-                                finalGids.append("['"+gid
-                                        +"',"
-                                        +finalRow
-                                        +",'"
-                                        +StringEscapeUtils.escapeJavaScript(htmlFormat(doc.get(BasicProps.NAME)))
-                                        +"','"
-                                        +Messages.getString("KMLResult.SearchResultsDescription")
-                                        +"',"
-                                        +lat
-                                        +","
-                                        +longit
-                                        +","
-                                        +checked
-                                        +","
-                                        +selected
-                                        +"],");
+                                finalGids.append("['" + gid + "'," + finalRow + ",'" + StringEscapeUtils.escapeJavaScript(htmlFormat(doc.get(BasicProps.NAME))) + "','" + Messages.getString("KMLResult.SearchResultsDescription") + "'," + lat
+                                        + "," + longit + "," + checked + "," + selected + "],");
 
                                 updateViewableRegion(longit, lat);
                                 itemsWithGPS++;
@@ -420,26 +410,12 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                     longit = locs[1].trim();
 
                                     String gid = item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                                    
+
                                     boolean checked = app.getIPEDSource().getMultiBookmarks().isChecked(item);
                                     boolean selected = app.getResultsTable().isRowSelected(finalRow);
 
-                                    finalGids.append("['"+gid
-                                            +"',"
-                                            +finalRow
-                                            +",'"
-                                            +StringEscapeUtils.escapeJavaScript(htmlFormat(doc.get(BasicProps.NAME)))
-                                            +"','"
-                                            +Messages.getString("KMLResult.SearchResultsDescription")
-                                            +"',"
-                                            +lat
-                                            +","
-                                            +longit
-                                            +","
-                                            +checked
-                                            +","
-                                            +selected
-                                            +"],");
+                                    finalGids.append("['" + gid + "'," + finalRow + ",'" + StringEscapeUtils.escapeJavaScript(htmlFormat(doc.get(BasicProps.NAME))) + "','" + Messages.getString("KMLResult.SearchResultsDescription") + "',"
+                                            + lat + "," + longit + "," + checked + "," + selected + "],");
 
                                     updateViewableRegion(longit, lat);
                                     itemsWithGPS++;
@@ -448,9 +424,9 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                             } else {
                                 contSemCoordenadas++;
                             }
-                        }catch(Exception e) {
-                            e.printStackTrace();                            
-                        }finally{
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        } finally {
                             sem.release();
                         }
                     }
@@ -460,7 +436,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             }
             sem.acquire(batchSize);
             sem.release(batchSize);
-            if(gids!=null && gids.length()>5) {
+            if (gids != null && gids.length() > 5) {
                 gids.append("]");
                 gidsList.add(gids);
             }
@@ -470,7 +446,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             browserCanvas.setLoaded(true);
             kmlResult.setResultKML("", itemsWithGPS, gpsItems);
         } catch (Exception e) {
-            if(!isCancelled()) {
+            if (!isCancelled()) {
                 e.printStackTrace();
             }
         } finally {
@@ -479,6 +455,5 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
 
         return kmlResult;
     }
-
 
 }

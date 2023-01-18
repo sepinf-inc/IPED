@@ -119,8 +119,7 @@ abstract public class AbstractMapCanvas extends Canvas {
     }
 
     public String getToolBarHtml() throws IOException {
-        return replaceLocalizedMarks(
-                IOUtils.toString(AbstractMapCanvas.class.getResourceAsStream("toolbar.html"), "UTF-8"), "toolbar");
+        return replaceLocalizedMarks(IOUtils.toString(AbstractMapCanvas.class.getResourceAsStream("toolbar.html"), "UTF-8"), "toolbar");
     }
 
     public void sendLeadSelection(String gid) {
@@ -157,10 +156,11 @@ abstract public class AbstractMapCanvas extends Canvas {
     }
 
     /*
-     * returns true if main html needs to be reloaded to finish the tile server update
+     * returns true if main html needs to be reloaded to finish the tile server
+     * update
      */
     public boolean setTileServerUrl(String url) {
-        return false;        
+        return false;
     }
 
     public boolean isLoaded() {
@@ -169,31 +169,33 @@ abstract public class AbstractMapCanvas extends Canvas {
 
     public void updateView(List<StringBuffer> gidsList) {
         // TODO Auto-generated method stub
-        
+
     }
 
     public void setLoaded(boolean loaded) {
         this.loaded = loaded;
     }
-    
+
     /**
-    * Creates the placemarks on the loaded map. The creation is done in batches, one javascript call per list entry.
-    * <p>
-    *
-    * @param  gidsList  a list of List<String> object with the placemarks informations.
-    */
+     * Creates the placemarks on the loaded map. The creation is done in batches,
+     * one javascript call per list entry.
+     * <p>
+     *
+     * @param gidsList
+     *            a list of List<String> object with the placemarks informations.
+     */
     public abstract void createPlacemarks(List<StringBuffer> gidsList);
 
     public void drawPolyline(List<StringBuffer> gids) {
         // TODO Auto-generated method stub
-        
+
     }
 
     public abstract void drawJSONFeature(String string);
 
     public void drawJSONFeatures(String[] jsonFeatures) {
         // TODO Auto-generated method stub
-        
+
     }
 
 }

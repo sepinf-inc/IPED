@@ -23,12 +23,12 @@ public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
         // procura pela posição correspondente na tabela do item clicado no mapa
         int pos = 0;
         mid = GetResultsKMLWorker.getBaseGID(mid);
-        
+
         pos = mapaPanel.getItemPositioninResultsTable(mid);
         JTable t = mapaPanel.getResultsProvider().getResultsTable();
         mapaPanel.disableLastMidReset();
         t.setValueAt(checked, pos, t.convertColumnIndexToView(1));
-        
+
     }
 
 }
