@@ -21,6 +21,7 @@ import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Metadata;
 
 import iped.data.IItemId;
+import iped.engine.search.IPEDSearcher;
 import iped.geo.AbstractMapCanvas;
 import iped.geo.kml.KMLResult;
 import iped.geo.localization.Messages;
@@ -108,20 +109,21 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             minlat = 190.0;
             maxlat = -190.0;
 
-            IMultiSearchResult results = app.getResults();
+            //IMultiSearchResult results = app.getResults();
             Document doc;
 
+            String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";            
+                        
+            IPEDSearcher searcher = (IPEDSearcher) app.createNewSearch(query);
+            searcher.setNoScoring(true);
+            IMultiSearchResult results = searcher.multiSearch();
+            
             if (progress != null) {
                 progress.setMaximum(results.getLength());
             }
 
-            String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
-
-            IIPEDSearcher searcher = app.createNewSearch(query);
-            IMultiSearchResult multiResult = searcher.multiSearch();
-
             Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
-            for (IItemId item : multiResult.getIterator()) {
+            for (IItemId item : results.getIterator()) {
                 gpsItems.put(item, null);
             }
 
