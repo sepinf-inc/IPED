@@ -197,7 +197,7 @@ public class ColumnsManagerUI implements ActionListener {
             tc.setCellRenderer(new ProgressCellRenderer());
     }
 
-    public static List<String> getSelectedProperties() {
+    public List<String> getSelectedProperties() {
         List<String> selectedColumns = new ArrayList<>();
         for (Map.Entry<String, JCheckBox> hmEntry : columnsCheckBoxes.entrySet()) {
             JCheckBox check = hmEntry.getValue();

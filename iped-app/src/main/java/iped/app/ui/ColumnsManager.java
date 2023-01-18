@@ -92,7 +92,9 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     private IPEDSource lastCase;
 
+    File moduleDir;
     private File caseCols;
+    private File reportCols;
 
     String[] indexFields = null;
 
@@ -144,6 +146,24 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         ArrayList<String> visibleFields = new ArrayList<String>();
     }
 
+    static class ColumnsReport implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+        ArrayList<String> selectedCols = new ArrayList<String>();
+    }
+
+    protected void saveReportColumns() {
+        try {
+            ColumnsReport cr = new ColumnsReport();
+            cr.selectedCols.addAll(ColumnsManagerUI.getInstance().getSelectedProperties());
+            if (cr.selectedCols.size() > 0) {
+                Util.writeObject(cr, reportCols.getAbsolutePath());
+            }
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+    }
+
     public void saveColumnsState() {
         try {
             ColumnState cs = new ColumnState();
@@ -165,9 +185,12 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         }
     }
 
-    private ColumnsManager() {
+    protected ColumnsManager() {
         AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
         autoManageCols = analysisConfig.isAutoManageCols();
+
+        moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+        reportCols = new File(moduleDir, "reportCols.dat");
 
         updateDinamicFields();
 
@@ -175,7 +198,6 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     }
 
     private File getColStateFile() {
-        File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
         caseCols = new File(moduleDir, "visibleCols.dat"); //$NON-NLS-1$
         File cols = caseCols;
         if (!cols.exists())

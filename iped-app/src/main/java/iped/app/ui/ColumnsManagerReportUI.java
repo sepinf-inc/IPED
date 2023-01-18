@@ -65,7 +65,7 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
             String text = source.getText();
             boolean isSelected = source.isSelected();
             columnsManager.updateCol(text, isSelected);
-            // updateGUICol(source.getText(), isSelected);
+            columnsManager.saveReportColumns();
         }
     }
 
