@@ -420,42 +420,40 @@ L.KML = L.MarkerClusterGroup.extend({
 	lastVisibleTrack:null,
 
 	createPaths: function () {
-        this.fullyLoaded = this.fullyLoaded.then((track)=>{
-            try{
-                if(this.paths){
-                    this.removeLayer(this.paths);
+        if(this.paths){
+            return new Promise((resolve, reject)=>{resolve();});
+        }else{
+            return this.fullyLoaded.then((track)=>{
+                try{
+                    this.paths = new L.Polyline(this.visibleMarkerCoords, {
+                        color: 'red',
+                        weight: 3,
+                        opacity: 1,
+                        smoothFactor: 1
+                    });
+                    this.paths.arrowheads({
+                          size: '18px',
+                          fill: true,
+                          yawn: 25,
+                          frequency: 'allvertices'
+                    });
+                }catch(e){
+                    alert(e);                
                 }
-
-                this.paths = new L.Polyline(this.visibleMarkerCoords, {
-                    color: 'red',
-                    weight: 3,
-                    opacity: 1,
-                    smoothFactor: 1
-                });
-                this.paths.arrowheads({
-                      size: '18px',
-                      fill: true,
-                      yawn: 25,
-                      frequency: 'allvertices'
-                });
-            }catch(e){
-                alert(e);                
-            }
-	   });
+           });
+        }
     },
     
     tooglePaths: function (){
-        if(this.paths){
-        }else{
-            this.createPaths();
-        }
-
         if(this.pathsVisible){
             this.removeLayer(this.paths);
+            this.pathsVisible=false;
         }else{
-            this.addLayer(this.paths);
+            this.createPaths().then(()=>{
+                this.addLayer(this.paths);
+                this.pathsVisible=true;
+            });
         }
-        this.pathsVisible=!this.pathsVisible;
     },
 	
 	addKML: function (xml, kmlOptions) {
@@ -815,9 +813,6 @@ L.KML = L.MarkerClusterGroup.extend({
                             that.orderedVisiblePlacemarks[j]=that.placemarks[i];
                             that.visibleMarkerCoords[j]=that.placemarks[i].getLatLng();
                         }
-                        that.visibleMarkerCoords = that.visibleMarkerCoords.filter(elements => {
-                            return elements !== null;
-                        });
                         let m=null;
                         let lastPlacemark=null;
                         for(let i=0; i<that.orderedVisiblePlacemarks.length; i++){
@@ -896,17 +891,21 @@ L.KML = L.MarkerClusterGroup.extend({
     showMarkers(a){
         try{
             if(a){
+                alert(a.length);
+                alert(a);
                 for(let i=0; i<a.length; i++){
                     let m=this.markers['marker_'+a[i][0]];
-                    this.placemarks.push(m);
-                    this.placemarkIndexes.push(a[i][1]);
-                    if(a[i][2]){
-                        m.checked = 'true';
-                    }else{
-                        m.checked = 'false';
+                    if(m){
+                        this.placemarks.push(m);
+                        this.placemarkIndexes.push(a[i][1]);
+                        if(a[i][2]){
+                            m.checked = 'true';
+                        }else{
+                            m.checked = 'false';
+                        }
+                        this.orderedVisiblePlacemarks.push(null);
+                        this.visibleMarkerCoords.push(null);
                     }
-                    this.orderedVisiblePlacemarks.push(null);
-                    this.visibleMarkerCoords.push(null);
                 }
             }
         }catch(e){
