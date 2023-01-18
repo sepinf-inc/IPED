@@ -79,7 +79,7 @@ public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSort
     @Override
     public void setSortKeys(final List<? extends SortKey> sortKeys) {
         List<? extends SortKey> oldSortKeys = super.getSortKeys();
-        if((oldSortKeys==sortKeys)||(oldSortKeys.size()==0 && sortKeys==null)) {
+        if ((oldSortKeys == sortKeys) || (oldSortKeys.size() == 0 && sortKeys == null)) {
             return;
         }
         if (sortKeys == null) {

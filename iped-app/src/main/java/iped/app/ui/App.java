@@ -1541,16 +1541,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     @Override
-    public IIPEDSearcher createNewSearch(String query) {        
+    public IIPEDSearcher createNewSearch(String query) {
         return createNewSearch(query, null);
     }
 
     @Override
-    public IIPEDSearcher createNewSearch(String query, String[] sortFields) {        
+    public IIPEDSearcher createNewSearch(String query, String[] sortFields) {
         IIPEDSearcher searcher = null;
-        if(sortFields==null) {
+        if (sortFields == null) {
             searcher = new IPEDSearcher(appCase, query);
-        }else {
+        } else {
             searcher = new IPEDSearcher(appCase, query, sortFields);
         }
         return searcher;

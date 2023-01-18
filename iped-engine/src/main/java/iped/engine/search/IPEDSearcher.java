@@ -69,7 +69,7 @@ public class IPEDSearcher implements IIPEDSearcher {
     public IPEDSearcher(IPEDSource ipedCase, String query, String[] sort) {
         SortField[] fields = new SortField[sort.length];
         for (int i = 0; i < fields.length; i++) {
-            fields[i]=new SortField(sort[i], SortField.Type.STRING);
+            fields[i] = new SortField(sort[i], SortField.Type.STRING);
         }
         this.sort = new Sort(fields);
         this.ipedCase = ipedCase;
@@ -159,9 +159,9 @@ public class IPEDSearcher implements IIPEDSearcher {
 
         // sort by index doc order: needed by features using docValues that iterate over results
         Sort sort = null;
-        if(this.sort!=null) {
+        if (this.sort != null) {
             sort = this.sort;
-        }else {
+        } else {
             sort = new Sort(SortField.FIELD_DOC);
         }
         
