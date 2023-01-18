@@ -225,7 +225,7 @@ class FaceRecognitionTask:
 
         if len(encodings)==0:
             return
-        logger.info("[FaceRecognitionTask] Time(s) to extract "+str(len(ids))+ " faces ",str(time.time()-groupTime))
+        logger.info("[FaceRecognitionTask] Time(s) to extract "+str(len(ids))+ " faces "+str(time.time()-groupTime))
         clt = DBSCAN(metric="euclidean",n_jobs=-1,eps=maxClusterDist)
         clt.fit(encodings)
         clusters={}
