@@ -13,14 +13,16 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.io.input.BoundedReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IItem;
 import iped.utils.IOUtil;
 
-public class TextCache implements Closeable {
+public class TextCache implements Closeable, Cloneable {
 
     private static Logger logger = LoggerFactory.getLogger(TextCache.class);
 
@@ -32,6 +34,8 @@ public class TextCache implements Closeable {
     private Writer writer;
     private long size = 0;
     private boolean diskCacheEnabled = true;
+    private long offset = -1;
+    private AtomicInteger refCount = new AtomicInteger();
 
     public void setSourceItem(IItem sourceItem) {
         this.sourceItem = sourceItem;
@@ -100,17 +104,36 @@ public class TextCache implements Closeable {
             }
         }
 
-        if (reader != null)
+        if (reader != null) {
+            if (offset > -1) {
+                long skipped = 0;
+                while (skipped < offset) {
+                    skipped += reader.skip(offset - skipped);
+                }
+                reader = new BoundedReader(reader, (int) size);
+            }
             return new KnownSizeReader(reader);
+        }
 
         return null;
+    }
+
+    public void setTextBounds(long offset, int size) {
+        if (offset < 0 || size < 0) {
+            throw new IllegalArgumentException("Both offset & size must be non negative.");
+        }
+        if (offset + size > this.size) {
+            throw new IllegalArgumentException("offset + size must be less than or equal to original text size.");
+        }
+        this.offset = offset;
+        this.size = size;
     }
 
     @Override
     public void close() throws IOException {
         if (writer != null)
             writer.close();
-        if (tmp != null)
+        if (tmp != null && refCount.decrementAndGet() == 0)
             tmp.delete();
     }
 
@@ -136,6 +159,22 @@ public class TextCache implements Closeable {
             return size;
         }
 
+    }
+
+    @Override
+    public TextCache clone() {
+        TextCache o = new TextCache();
+        o.sourceItem = sourceItem;
+        o.sb = sb;
+        o.tmp = tmp;
+        // we just use clone for reading for now
+        // o.writer = writer;
+        o.size = size;
+        o.diskCacheEnabled = diskCacheEnabled;
+        o.offset = offset;
+        o.refCount = refCount;
+        refCount.incrementAndGet();
+        return o;
     }
 
 }
