@@ -574,7 +574,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             public void run() {
                 try {
                     if (jsonFeature != null && jsonFeature.length() > 3) {
-                        webEngine.executeScript("try{track.drawFeature(" + jsonFeature + ");}catch(e){alert(e);}");
+                        webEngine.executeScript("try{track.hideLastFeature();track.drawFeature(" + jsonFeature + ");}catch(e){alert(e);}");
                     } else {
                         webEngine.executeScript("try{track.hideLastFeature();}catch(e){alert(e);}");
                     }
