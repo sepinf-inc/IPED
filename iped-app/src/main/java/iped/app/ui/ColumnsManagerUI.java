@@ -41,7 +41,7 @@ public class ColumnsManagerUI implements ActionListener {
     protected final JPanel listPanel;
     protected JPanel panel = new JPanel(new BorderLayout());
 
-    protected static ColumnsManager columnsManager = ColumnsManager.getInstance();
+    protected static ColumnsManager columnsManager;
     private static ColumnsManagerUI instance;
 
     protected static Map<String, JCheckBox> columnsCheckBoxes;
@@ -66,7 +66,7 @@ public class ColumnsManagerUI implements ActionListener {
     }
 
     protected ColumnsManagerUI() {
-
+        columnsManager = ColumnsManager.getInstance();
         columnsCheckBoxes = new HashMap<>();
 
         dialog.setBounds(new Rectangle(400, 400));
@@ -148,7 +148,7 @@ public class ColumnsManagerUI implements ActionListener {
                     check.setSelected(true);
                 check.addActionListener(this);
                 listPanel.add(check);
-                columnsCheckBoxes.put(fieldName, check);
+                columnsCheckBoxes.put(LocalizedProperties.getNonLocalizedField(fieldName), check);
             }
         }
         dialog.revalidate();
@@ -203,7 +203,7 @@ public class ColumnsManagerUI implements ActionListener {
         for (Map.Entry<String, JCheckBox> hmEntry : columnsCheckBoxes.entrySet()) {
             JCheckBox check = hmEntry.getValue();
             if (check.isSelected()) {
-                selectedColumns.add(check.getText());
+                selectedColumns.add(LocalizedProperties.getNonLocalizedField(check.getText()));
             }
         }
         return selectedColumns;

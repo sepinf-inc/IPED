@@ -1,7 +1,10 @@
 package iped.app.ui;
 
 import java.awt.BorderLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -10,8 +13,10 @@ import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
+import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 
 import iped.engine.task.index.IndexItem;
@@ -21,6 +26,7 @@ import iped.utils.StringUtil;
 public class ColumnsManagerReportUI extends ColumnsManagerUI {
     private ColumnsManagerUI columnsManagerUI;
     private static ColumnsManagerReportUI instance;
+    private JButton okButton = new JButton("OK");
 
     private static final String[] basicReportProps = { IndexItem.NAME, IndexItem.PATH, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.CREATED,
         IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.DELETED, IndexItem.CARVED, IndexItem.HASH, IndexItem.ID_IN_SOURCE };
@@ -37,19 +43,27 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         columnsManager = null;
         columnsManagerUI = null;
         instance = null;
-        selectOnlyBasicProperties();
     }
 
     protected ColumnsManagerReportUI() {
         super();
-        dialog.getContentPane().remove(panel);
         columnsManagerUI = ColumnsManagerUI.getInstance();
+
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                dispose();
+            }
+        });
+
+        dialog.getContentPane().remove(panel);
         autoManage.removeActionListener(columnsManagerUI);
 
         Box topPanel = Box.createVerticalBox();
         topPanel.add(showColsLabel);
         topPanel.add(combo);
         topPanel.add(textFieldNameFilter);
+        okButton.addActionListener(this);
         combo.addActionListener(this);
 
         panel = new JPanel(new BorderLayout());
@@ -60,11 +74,19 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         scrollList.getVerticalScrollBar().setUnitIncrement(10);
         panel.add(scrollList, BorderLayout.CENTER);
 
+        JPanel bPanel = new JPanel(new BorderLayout());
+        bPanel.add(okButton, BorderLayout.EAST);
+        panel.add(bPanel, BorderLayout.SOUTH);
+
         dialog.getContentPane().add(panel);
         dialog.setLocationRelativeTo(App.get());
 
-        // initial selected properties are the basics
-        selectOnlyBasicProperties();
+        ArrayList<String> selectedFields = columnsManager.loadReportSelectedFields();
+        if (selectedFields != null) {
+            selectProperties(selectedFields);
+        } else {
+            selectProperties(Arrays.asList(basicReportProps));
+        }
 
         updatePanelList();
     }
@@ -73,12 +95,14 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(combo)) {
             updatePanelList();
+        } else if (e.getSource().equals(okButton)) {
+            columnsManager.saveReportColumns();
+            dispose();
         } else {
             JCheckBox source = (JCheckBox) e.getSource();
             String text = source.getText();
             boolean isSelected = source.isSelected();
             columnsManager.updateCol(text, isSelected);
-            columnsManager.saveReportColumns();
         }
     }
 
@@ -105,11 +129,11 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         dialog.repaint();
     }
 
-    private void selectOnlyBasicProperties() {
+    private void selectProperties(List<String> props) {
         for (Map.Entry<String, JCheckBox> hmEntry : columnsCheckBoxes.entrySet()) {
             JCheckBox check = hmEntry.getValue();
             String key = hmEntry.getKey();
-            if (Arrays.asList(basicReportProps).contains(key)) {
+            if (props.contains(LocalizedProperties.getNonLocalizedField(key))) {
                 check.setSelected(true);
             } else {
                 check.setSelected(false);

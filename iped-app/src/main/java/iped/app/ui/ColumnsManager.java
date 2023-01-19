@@ -244,6 +244,20 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         }
     }
 
+    protected ArrayList<String> loadReportSelectedFields() {
+        ColumnsReport cr = new ColumnsReport();
+        ArrayList<String> selectedFields = null;
+        if (reportCols.exists()) {
+            try {
+                cr = (ColumnsReport) Util.readObject(reportCols.getAbsolutePath());
+            } catch (ClassNotFoundException | IOException e) {
+                e.printStackTrace();
+            }
+            selectedFields = (ArrayList<String>) cr.selectedCols.clone();
+        }
+        return selectedFields;
+    }
+
     public void updateDinamicCols() {
         if (!autoManageCols)
             return;
