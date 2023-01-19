@@ -131,6 +131,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
 
             int batchSize = 1000;
             Semaphore sem = new Semaphore(batchSize);
+            int maporder = 0;
 
             for (int row = 0; row < results.getLength(); row++) {
                 if (isCancelled()) {
@@ -151,21 +152,23 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                     gids.append("[");
                 }
 
+                if (progress != null) {
+                    progress.setValue(finalRow + 1);
+                }
+
                 final StringBuffer finalGids = gids;
+                final IItemId item = results.getItem(app.getResultsTable().convertRowIndexToModel(finalRow));
+                if (!gpsItems.containsKey(item)) {
+                    sem.release();
+                    continue;
+                }
+                final int finalMapOrder = maporder; 
+                maporder++;
 
                 Runnable r = new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            if (progress != null) {
-                                progress.setValue(finalRow + 1);
-                            }
-
-                            IItemId item = results.getItem(app.getResultsTable().convertRowIndexToModel(finalRow));
-
-                            if (!gpsItems.containsKey(item)) {
-                                return;
-                            }
 
                             int luceneId = app.getIPEDSource().getLuceneId(item);
                             Document doc = app.getIPEDSource().getSearcher().doc(luceneId);
@@ -189,7 +192,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                 }
                                 ;
                                 itemsWithGPS++;
-                                finalGids.append("['" + gid + "'," + finalRow + "," + checked + "],");
+                                finalGids.append("['" + gid + "'," + finalMapOrder + "," + checked + "],");
                             } else {
                                 int subitem = -1;
                                 List<Integer> subitems = new ArrayList<>();
@@ -206,7 +209,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                     subitems.add(subitem);
 
                                     itemsWithGPS++;
-                                    finalGids.append("['" + gid + "'," + finalRow + "],");
+                                    finalGids.append("['" + gid + "'," + finalMapOrder + "],");
                                 }
                             }
 
