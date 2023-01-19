@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
@@ -30,6 +31,15 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         return instance;
     }
 
+    @Override
+    public void dispose() {
+        dialog.setVisible(false);
+        columnsManager = null;
+        columnsManagerUI = null;
+        instance = null;
+        selectOnlyBasicProperties();
+    }
+
     protected ColumnsManagerReportUI() {
         super();
         dialog.getContentPane().remove(panel);
@@ -52,6 +62,9 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
 
         dialog.getContentPane().add(panel);
         dialog.setLocationRelativeTo(App.get());
+
+        // initial selected properties are the basics
+        selectOnlyBasicProperties();
 
         updatePanelList();
     }
@@ -80,15 +93,28 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
             if (filter.isEmpty() || fieldName.toLowerCase().indexOf(filter) >= 0) {
                 JCheckBox check = new JCheckBox();
                 check.setText(fieldName);
-                if (Arrays.asList(basicReportProps).contains(LocalizedProperties.getNonLocalizedField(fieldName)))
+                JCheckBox previousCheckBox = columnsCheckBoxes.get(LocalizedProperties.getNonLocalizedField(fieldName));
+                if (previousCheckBox != null && previousCheckBox.isSelected())
                     check.setSelected(true);
                 check.addActionListener(this);
                 listPanel.add(check);
-                columnsCheckBoxes.put(fieldName, check);
+                columnsCheckBoxes.put(LocalizedProperties.getNonLocalizedField(fieldName), check);
             }
         }
         dialog.revalidate();
         dialog.repaint();
     }
-    
+
+    private void selectOnlyBasicProperties() {
+        for (Map.Entry<String, JCheckBox> hmEntry : columnsCheckBoxes.entrySet()) {
+            JCheckBox check = hmEntry.getValue();
+            String key = hmEntry.getKey();
+            if (Arrays.asList(basicReportProps).contains(key)) {
+                check.setSelected(true);
+            } else {
+                check.setSelected(false);
+            }
+        }
+    }
+
 }

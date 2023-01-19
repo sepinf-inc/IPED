@@ -55,6 +55,7 @@ public class ColumnsManagerUI implements ActionListener {
     public void dispose() {
         dialog.setVisible(false);
         columnsManager = null;
+        instance = null;
     }
 
     public void setVisible() {
