@@ -83,9 +83,9 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
 
         loadedSelectedProperties = columnsManager.loadReportSelectedFields();
         if (loadedSelectedProperties != null) {
-            enableOnlySelectedProperties(loadedSelectedProperties);
+            columnsManager.enableOnlySelectedProperties(loadedSelectedProperties);
         } else {
-            enableOnlySelectedProperties(Arrays.asList(basicReportProps));
+            columnsManager.enableOnlySelectedProperties(Arrays.asList(basicReportProps));
         }
 
         updatePanelList();
@@ -107,6 +107,7 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         }
     }
 
+    // Updates according to the allCheckBoxesStates variable
     @Override
     protected void updatePanelList() {
         listPanel.removeAll();
@@ -128,16 +129,4 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         dialog.revalidate();
         dialog.repaint();
     }
-
-    private void enableOnlySelectedProperties(List<String> props) {
-        for (Map.Entry<String, Boolean> hmEntry : columnsManager.allCheckBoxesState.entrySet()) {
-            String nonLocalizedKey = LocalizedProperties.getNonLocalizedField(hmEntry.getKey());
-            if (props.contains(nonLocalizedKey)) {
-                columnsManager.allCheckBoxesState.put(nonLocalizedKey, true);
-            } else {
-                columnsManager.allCheckBoxesState.put(nonLocalizedKey, false);
-            }
-        }
-    }
-
 }

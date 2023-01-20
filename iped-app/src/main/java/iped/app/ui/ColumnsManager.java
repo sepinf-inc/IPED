@@ -157,7 +157,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     protected void saveReportColumns() {
         try {
             ColumnsReport cr = new ColumnsReport();
-            cr.selectedCols.addAll(ColumnsManagerUI.getInstance().getSelectedProperties());
+            cr.selectedCols.addAll(getSelectedProperties());
             if (cr.selectedCols.size() > 0) {
                 Util.writeObject(cr, reportCols.getAbsolutePath());
             }
@@ -582,4 +582,28 @@ public class ColumnsManager implements Serializable, IColumnsManager {
             fieldNames.forEach(f -> allCheckBoxesState.putIfAbsent(LocalizedProperties.getNonLocalizedField(f), false));
         }
     }
+
+    public List<String> getSelectedProperties() {
+        List<String> selectedColumns = new ArrayList<>();
+        for (Map.Entry<String, Boolean> hmEntry : allCheckBoxesState.entrySet()) {
+            String fieldName = hmEntry.getKey();
+            Boolean checkBoxState = hmEntry.getValue();
+            if (checkBoxState == true) {
+                selectedColumns.add(LocalizedProperties.getNonLocalizedField(fieldName));
+            }
+        }
+        return selectedColumns;
+    }
+    
+    protected void enableOnlySelectedProperties(List<String> props) {
+        for (Map.Entry<String, Boolean> hmEntry : allCheckBoxesState.entrySet()) {
+            String nonLocalizedKey = LocalizedProperties.getNonLocalizedField(hmEntry.getKey());
+            if (props.contains(nonLocalizedKey)) {
+                allCheckBoxesState.put(nonLocalizedKey, true);
+            } else {
+                allCheckBoxesState.put(nonLocalizedKey, false);
+            }
+        }
+    }
+
 }

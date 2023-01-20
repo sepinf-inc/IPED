@@ -194,15 +194,4 @@ public class ColumnsManagerUI implements ActionListener {
             tc.setCellRenderer(new ProgressCellRenderer());
     }
 
-    public List<String> getSelectedProperties() {
-        List<String> selectedColumns = new ArrayList<>();
-        for (Map.Entry<String, Boolean> hmEntry : columnsManager.allCheckBoxesState.entrySet()) {
-            String fieldName = hmEntry.getKey();
-            Boolean checkBoxState = hmEntry.getValue();
-            if (checkBoxState == true) {
-                selectedColumns.add(LocalizedProperties.getNonLocalizedField(fieldName));
-            }
-        }
-        return selectedColumns;
-    }
 }
