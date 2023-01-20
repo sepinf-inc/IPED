@@ -470,6 +470,11 @@ public class Manager {
         // remove item data from storage or file system
         ExportFileTask.deleteIgnoredItemData(caseData, output, true, writer);
 
+        // clear bookmarks pointing to deleted items
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
+            ipedCase.clearOldBookmarks();
+        }
+
         writer.close();
 
         // removes graph connections from evidence
