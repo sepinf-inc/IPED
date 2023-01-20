@@ -1,12 +1,15 @@
 package iped.engine.util;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
@@ -16,6 +19,7 @@ import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.input.BoundedReader;
+import org.apache.commons.io.input.RandomAccessFileInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +98,14 @@ public class TextCache implements Closeable, Cloneable {
 
         if (tmp != null) {
             try {
-                reader = Files.newBufferedReader(tmp.toPath());
+                if (offset == -1) {
+                    reader = Files.newBufferedReader(tmp.toPath());
+                } else {
+                    RandomAccessFile raf = new RandomAccessFile(tmp, "r");
+                    raf.seek(offset);
+                    reader = new InputStreamReader(new RandomAccessFileInputStream(raf, true), StandardCharsets.UTF_8);
+                    reader = new BufferedReader(new BoundedReader(reader, (int) size));
+                }
 
             } catch (FileSystemException | FileNotFoundException e) {
                 logger.error("Error reading extracted text file{}, maybe your antivirus blocked or deleted it? {}",
@@ -105,13 +116,6 @@ public class TextCache implements Closeable, Cloneable {
         }
 
         if (reader != null) {
-            if (offset > -1) {
-                long skipped = 0;
-                while (skipped < offset) {
-                    skipped += reader.skip(offset - skipped);
-                }
-                reader = new BoundedReader(reader, (int) size);
-            }
             return new KnownSizeReader(reader);
         }
 
