@@ -16,7 +16,6 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
-import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 
 import iped.engine.task.index.IndexItem;
@@ -27,6 +26,7 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
     private ColumnsManagerUI columnsManagerUI;
     private static ColumnsManagerReportUI instance;
     private JButton okButton = new JButton("OK");
+    ArrayList<String> loadedSelectedProperties;
 
     private static final String[] basicReportProps = { IndexItem.NAME, IndexItem.PATH, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.CREATED,
         IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.DELETED, IndexItem.CARVED, IndexItem.HASH, IndexItem.ID_IN_SOURCE };
@@ -81,11 +81,11 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         dialog.getContentPane().add(panel);
         dialog.setLocationRelativeTo(App.get());
 
-        ArrayList<String> selectedFields = columnsManager.loadReportSelectedFields();
-        if (selectedFields != null) {
-            selectProperties(selectedFields);
+        loadedSelectedProperties = columnsManager.loadReportSelectedFields();
+        if (loadedSelectedProperties != null) {
+            enableOnlySelectedProperties(loadedSelectedProperties);
         } else {
-            selectProperties(Arrays.asList(basicReportProps));
+            enableOnlySelectedProperties(Arrays.asList(basicReportProps));
         }
 
         updatePanelList();
@@ -102,6 +102,7 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
             JCheckBox source = (JCheckBox) e.getSource();
             String text = source.getText();
             boolean isSelected = source.isSelected();
+            columnsManager.allCheckBoxesState.put(text, isSelected);
             columnsManager.updateCol(text, isSelected);
         }
     }
@@ -117,26 +118,24 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
             if (filter.isEmpty() || fieldName.toLowerCase().indexOf(filter) >= 0) {
                 JCheckBox check = new JCheckBox();
                 check.setText(fieldName);
-                JCheckBox previousCheckBox = columnsCheckBoxes.get(LocalizedProperties.getNonLocalizedField(fieldName));
-                if (previousCheckBox != null && previousCheckBox.isSelected())
+                Boolean checkBoxState = columnsManager.allCheckBoxesState.get(LocalizedProperties.getNonLocalizedField(fieldName));
+                if (checkBoxState != null && checkBoxState == true)
                     check.setSelected(true);
                 check.addActionListener(this);
                 listPanel.add(check);
-                columnsCheckBoxes.put(LocalizedProperties.getNonLocalizedField(fieldName), check);
             }
         }
         dialog.revalidate();
         dialog.repaint();
     }
 
-    private void selectProperties(List<String> props) {
-        for (Map.Entry<String, JCheckBox> hmEntry : columnsCheckBoxes.entrySet()) {
-            JCheckBox check = hmEntry.getValue();
-            String key = hmEntry.getKey();
-            if (props.contains(LocalizedProperties.getNonLocalizedField(key))) {
-                check.setSelected(true);
+    private void enableOnlySelectedProperties(List<String> props) {
+        for (Map.Entry<String, Boolean> hmEntry : columnsManager.allCheckBoxesState.entrySet()) {
+            String nonLocalizedKey = LocalizedProperties.getNonLocalizedField(hmEntry.getKey());
+            if (props.contains(nonLocalizedKey)) {
+                columnsManager.allCheckBoxesState.put(nonLocalizedKey, true);
             } else {
-                check.setSelected(false);
+                columnsManager.allCheckBoxesState.put(nonLocalizedKey, false);
             }
         }
     }

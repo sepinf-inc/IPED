@@ -108,6 +108,8 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     private boolean autoManageCols;
 
+    protected Map<String, Boolean> allCheckBoxesState = new HashMap<>();
+
     public boolean isAutoManageCols() {
         return autoManageCols;
     }
@@ -186,6 +188,8 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     }
 
     protected ColumnsManager() {
+        allCheckBoxesState = new HashMap<>();
+
         AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
         autoManageCols = analysisConfig.isAutoManageCols();
 
@@ -195,6 +199,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         updateDinamicFields();
 
         loadSavedCols();
+        addAllCheckBoxesState();
     }
 
     private File getColStateFile() {
@@ -571,4 +576,10 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         lastModelIdx = modelIdx;
     }
 
+    private void addAllCheckBoxesState() {
+        for (int i = 0; i < fieldGroups.length; i++) {
+            List<String> fieldNames = Arrays.asList(fieldGroups[i]);
+            fieldNames.forEach(f -> allCheckBoxesState.putIfAbsent(LocalizedProperties.getNonLocalizedField(f), false));
+        }
+    }
 }

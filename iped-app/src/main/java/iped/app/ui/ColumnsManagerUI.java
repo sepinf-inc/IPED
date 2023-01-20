@@ -44,7 +44,6 @@ public class ColumnsManagerUI implements ActionListener {
     protected static ColumnsManager columnsManager;
     private static ColumnsManagerUI instance;
 
-    protected static Map<String, JCheckBox> columnsCheckBoxes;
 
     public static ColumnsManagerUI getInstance() {
         if (instance == null)
@@ -67,7 +66,6 @@ public class ColumnsManagerUI implements ActionListener {
 
     protected ColumnsManagerUI() {
         columnsManager = ColumnsManager.getInstance();
-        columnsCheckBoxes = new HashMap<>();
 
         dialog.setBounds(new Rectangle(400, 400));
         dialog.setTitle(Messages.getString("ColumnsManager.Title")); //$NON-NLS-1$
@@ -148,13 +146,11 @@ public class ColumnsManagerUI implements ActionListener {
                     check.setSelected(true);
                 check.addActionListener(this);
                 listPanel.add(check);
-                columnsCheckBoxes.put(LocalizedProperties.getNonLocalizedField(fieldName), check);
             }
         }
         dialog.revalidate();
         dialog.repaint();
     }
-
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -200,10 +196,11 @@ public class ColumnsManagerUI implements ActionListener {
 
     public List<String> getSelectedProperties() {
         List<String> selectedColumns = new ArrayList<>();
-        for (Map.Entry<String, JCheckBox> hmEntry : columnsCheckBoxes.entrySet()) {
-            JCheckBox check = hmEntry.getValue();
-            if (check.isSelected()) {
-                selectedColumns.add(LocalizedProperties.getNonLocalizedField(check.getText()));
+        for (Map.Entry<String, Boolean> hmEntry : columnsManager.allCheckBoxesState.entrySet()) {
+            String fieldName = hmEntry.getKey();
+            Boolean checkBoxState = hmEntry.getValue();
+            if (checkBoxState == true) {
+                selectedColumns.add(LocalizedProperties.getNonLocalizedField(fieldName));
             }
         }
         return selectedColumns;
