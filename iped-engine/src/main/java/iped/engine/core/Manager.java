@@ -470,6 +470,11 @@ public class Manager {
         // remove item data from storage or file system
         ExportFileTask.deleteIgnoredItemData(caseData, output, true, writer);
 
+        // clear bookmarks pointing to deleted items
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
+            ipedCase.clearOldBookmarks();
+        }
+
         writer.close();
 
         // removes graph connections from evidence
@@ -513,6 +518,12 @@ public class Manager {
         if (newIndex) {
             // first empty commit to be used by --restart
             writer.commit();
+        }
+
+        if (args.isRestart()) {
+            try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
+                ipedCase.clearOldBookmarks();
+            }
         }
 
         if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
