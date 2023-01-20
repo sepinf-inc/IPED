@@ -1,6 +1,7 @@
 package iped.app.timelinegraph.cache;
 
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -94,6 +95,9 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
             if (maxDate == null) {
                 maxDate = new Date(0);
             }
+            
+            Collections.sort(value);
+            
             int i = 0;
             for (Iterator iterator = value.iterator(); iterator.hasNext();) {
                 CacheTimePeriodEntry cacheTimePeriodEntry = (CacheTimePeriodEntry) iterator.next();
