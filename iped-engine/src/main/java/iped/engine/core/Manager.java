@@ -515,6 +515,12 @@ public class Manager {
             writer.commit();
         }
 
+        if (args.isRestart()) {
+            try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
+                ipedCase.clearOldBookmarks();
+            }
+        }
+
         if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
             loadExistingData();
         }
