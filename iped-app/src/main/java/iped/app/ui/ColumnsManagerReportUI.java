@@ -96,7 +96,7 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         if (e.getSource().equals(combo)) {
             updatePanelList();
         } else if (e.getSource().equals(okButton)) {
-            columnsManager.saveReportColumns();
+            columnsManager.saveReportSelectedProps();
             dispose();
         } else {
             JCheckBox source = (JCheckBox) e.getSource();
@@ -107,7 +107,7 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         }
     }
 
-    // Updates according to the allCheckBoxesStates variable
+    // Updates according to the allCheckBoxesStates list
     @Override
     protected void updatePanelList() {
         listPanel.removeAll();

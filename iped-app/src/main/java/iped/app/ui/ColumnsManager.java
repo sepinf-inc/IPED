@@ -148,18 +148,12 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         ArrayList<String> visibleFields = new ArrayList<String>();
     }
 
-    static class ColumnsReport implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-        ArrayList<String> selectedCols = new ArrayList<String>();
-    }
-
-    protected void saveReportColumns() {
+    protected void saveReportSelectedProps() {
         try {
-            ColumnsReport cr = new ColumnsReport();
-            cr.selectedCols.addAll(getSelectedProperties());
-            if (cr.selectedCols.size() > 0) {
-                Util.writeObject(cr, reportCols.getAbsolutePath());
+            Set<String> reportProps = new HashSet<>();
+            reportProps.addAll(getSelectedProperties());
+            if (reportProps.size() > 0) {
+                Util.writeObject(reportProps, reportCols.getAbsolutePath());
             }
         } catch (Exception e1) {
             e1.printStackTrace();
@@ -250,15 +244,16 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     }
 
     protected ArrayList<String> loadReportSelectedFields() {
-        ColumnsReport cr = new ColumnsReport();
+        Set<String> columnsReport = new HashSet<>();
         ArrayList<String> selectedFields = null;
         if (reportCols.exists()) {
             try {
-                cr = (ColumnsReport) Util.readObject(reportCols.getAbsolutePath());
+                columnsReport = (Set<String>) Util.readObject(reportCols.getAbsolutePath());
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
             }
-            selectedFields = (ArrayList<String>) cr.selectedCols.clone();
+            selectedFields = new ArrayList<>();
+            selectedFields.addAll(columnsReport);
         }
         return selectedFields;
     }
