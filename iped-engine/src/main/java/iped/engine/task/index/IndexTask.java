@@ -61,6 +61,7 @@ public class IndexTask extends AbstractTask {
     public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
 
     private static final AtomicBoolean finished = new AtomicBoolean();
+    private static final AtomicBoolean lastIDLoaded = new AtomicBoolean();
 
     private static FieldType contentField;
 
@@ -247,7 +248,7 @@ public class IndexTask extends AbstractTask {
         indexConfig = configurationManager.findObject(IndexTaskConfig.class);
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
+        if ((args.isAppendIndex() || args.isContinue() || args.isRestart()) && !lastIDLoaded.getAndSet(true)) {
             try (IPEDSource ipedSrc = new IPEDSource(output.getParentFile(), worker.writer)) {
                 stats.setLastId(ipedSrc.getLastId());
                 Item.setStartID(ipedSrc.getLastId() + 1);
