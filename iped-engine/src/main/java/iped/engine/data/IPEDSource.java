@@ -120,7 +120,7 @@ public class IPEDSource implements IIPEDSource {
 
     int totalItens = 0;
 
-    private int lastId = 0;
+    private int lastId = -1;
 
     LinkedHashSet<String> keywords = new LinkedHashSet<String>();
 
