@@ -857,7 +857,7 @@ public class SleuthkitReader extends DataSourceReader {
                 }
                 frag.setName(absFile.getName() + sufix);
                 frag.setLength(len);
-                if (splitConfig.isEnabled() && len >= splitConfig.getMinItemSizeToFragment())
+                if (len >= splitConfig.getMinItemSizeToFragment())
                     frag.setHash(""); //$NON-NLS-1$
 
                 setPath(frag, absFile.getUniquePath() + sufix);
