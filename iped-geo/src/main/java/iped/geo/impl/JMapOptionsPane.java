@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -125,8 +126,7 @@ public class JMapOptionsPane extends JOptionPane {
         btnLeaflet = new JRadioButton(Messages.getString("JMapOptionsPane.UseLeaflet"));
         paneLeaflet.setLayout(new BorderLayout());
         paneLeaflet.add(btnLeaflet, BorderLayout.BEFORE_FIRST_LINE);
-        JLabel lbTileLayerURL = new JLabel(Messages.getString("JMapOptionsPane.UrlPatternLabel"));
-        paneLeaflet.add(lbTileLayerURL, BorderLayout.LINE_START);
+
         txTileLayerURl = new JTextField();
 
         txTileLayerURl.getDocument().addDocumentListener(new DocumentListener() {
@@ -155,6 +155,8 @@ public class JMapOptionsPane extends JOptionPane {
         });
 
         JPanel paneTileUrlSelect = new JPanel();
+        paneTileUrlSelect.setLayout(new BorderLayout());
+        paneTileUrlSelect.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 1));
 
         cbTileSrcs = new JComboBox<>();
 
@@ -171,19 +173,33 @@ public class JMapOptionsPane extends JOptionPane {
         JRadioButton rbList = new JRadioButton("");
         rbOutra = new JRadioButton(Messages.getString("JMapOptionsPane.AnotherURL"));
 
+        btnLeaflet.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                rbList.setSelected(true);
+            }
+        });
+
         ButtonGroup bgTileUrl = new ButtonGroup();
 
         bgTileUrl.add(rbList);
         bgTileUrl.add(rbOutra);
-        paneTileUrlSelect.add(rbList);
-        paneTileUrlSelect.add(cbTileSrcs, BorderLayout.BEFORE_FIRST_LINE);
-        paneTileUrlSelect.add(rbOutra);
-        paneLeaflet.add(paneTileUrlSelect, BorderLayout.LINE_START);
+        paneTileUrlSelect.add(rbList, BorderLayout.WEST);
+        paneTileUrlSelect.add(cbTileSrcs, BorderLayout.CENTER);
+        paneTileUrlSelect.add(rbOutra, BorderLayout.SOUTH);
+        paneLeaflet.add(paneTileUrlSelect, BorderLayout.CENTER);
+
+        JLabel lbTileLayerURL = new JLabel(Messages.getString("JMapOptionsPane.UrlPatternLabel"));
 
         txTileLayerURl.setText("");
         txTileLayerURl.setEnabled(false);
         txTileLayerURl.setMinimumSize(new Dimension(150, 10));
-        paneLeaflet.add(txTileLayerURl, BorderLayout.AFTER_LAST_LINE);
+
+        JPanel urlPanel = new JPanel(new BorderLayout());
+        urlPanel.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 1));
+        urlPanel.add(lbTileLayerURL, BorderLayout.NORTH);
+        urlPanel.add(txTileLayerURl, BorderLayout.SOUTH);
+        paneLeaflet.add(urlPanel, BorderLayout.SOUTH);
         pane.add(paneLeaflet);
 
         cbGoogleTileType = new JComboBox<String>();
@@ -191,7 +207,6 @@ public class JMapOptionsPane extends JOptionPane {
         cbGoogleTileType.addItem("Satellite");
         cbGoogleTileType.addItem("Roadmap");
         cbGoogleTileType.addItem("Terrain");
-
         cbGoogleTileType.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -199,17 +214,21 @@ public class JMapOptionsPane extends JOptionPane {
                 btnGoogleMaps.setSelected(true);
             }
         });
+        JPanel cbGoogleTileTypePanel = new JPanel(new BorderLayout());
+        cbGoogleTileTypePanel.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 1));
+        cbGoogleTileTypePanel.add(cbGoogleTileType, BorderLayout.CENTER);
 
         btnGoogleMaps = new JRadioButton(Messages.getString("JMapOptionsPane.UseGoogleMaps"));
-        JPanel paneGoogleOpt = new JPanel();
+        JPanel paneGoogleOpt = new JPanel(new BorderLayout());
         paneGoogleOpt.add(btnGoogleMaps, BorderLayout.BEFORE_FIRST_LINE);
-        paneGoogleOpt.add(cbGoogleTileType, BorderLayout.EAST);
-        paneGoogle.add(paneGoogleOpt, BorderLayout.BEFORE_FIRST_LINE);
+        paneGoogleOpt.add(cbGoogleTileTypePanel, BorderLayout.CENTER);
+        paneGoogleKey.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 1));
         paneGoogleKey.setLayout(new BorderLayout());
         paneGoogleKey.add(lbGoogleApiKey, BorderLayout.BEFORE_FIRST_LINE);
         txGoogleApiKey.setMinimumSize(new Dimension(150, 10));
         paneGoogleKey.add(txGoogleApiKey, BorderLayout.AFTER_LAST_LINE);
         txGoogleApiKey.setEnabled(false);
+        paneGoogle.add(paneGoogleOpt, BorderLayout.BEFORE_FIRST_LINE);
         paneGoogle.add(paneGoogleKey, BorderLayout.CENTER);
         pane.add(paneGoogle, BorderLayout.BEFORE_FIRST_LINE);
 
