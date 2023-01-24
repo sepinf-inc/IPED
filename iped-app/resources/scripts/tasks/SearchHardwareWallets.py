@@ -40,11 +40,14 @@ class SearchHardwareWallets:
         #search in case and return item ids
         ids = searcher.search().getIds()
         
+        if len(ids) == 0:
+            return
+        
         #create new bookmark and get its id
-        bookmarkId = ipedCase.getBookmarks().newBookmark("Hardware Wallet")
+        bookmarkId = ipedCase.getBookmarks().newBookmark("Possible Hardware Wallets")
         
         #set bookmark comment
-        ipedCase.getBookmarks().setBookmarkComment(bookmarkId, "possible use of Hardware Krypto Wallets")
+        ipedCase.getBookmarks().setBookmarkComment(bookmarkId, "Possible use of Hardware Crypto Wallets")
         
         #add item ids to created bookmark
         ipedCase.getBookmarks().addBookmark(ids, bookmarkId)
