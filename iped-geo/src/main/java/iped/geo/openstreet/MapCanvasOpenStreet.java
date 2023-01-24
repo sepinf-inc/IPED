@@ -509,6 +509,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
     @Override
     public void updateView(List<StringBuffer> gids) {
+        MapCanvasOpenStreet self = this;
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
@@ -521,6 +522,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                     } else {
                         webEngine.executeScript("track.clearVisibleMarkers();");
                     }
+                    webEngine.executeScript("track.tourOrder='"+self.tourOrder+"';");                    
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
