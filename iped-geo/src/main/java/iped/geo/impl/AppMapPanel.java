@@ -353,12 +353,14 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
     public void updateUI() {
         super.updateUI();
 
+        // disabled for now, see discussion on
+        // https://github.com/sepinf-inc/IPED/issues/1443
         if (browserCanvas != null) {
             Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
             if (bgColor != null) {
-                browserCanvas.getContainer().setBackground(bgColor);
+                // browserCanvas.getContainer().setBackground(bgColor);
             }
-            browserCanvas.update();
+            // browserCanvas.update();
         }
     }
 

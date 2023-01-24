@@ -13,7 +13,6 @@ import java.util.concurrent.Semaphore;
 import javax.swing.UIManager;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringEscapeUtils;
 
 import iped.geo.AbstractMapCanvas;
 import iped.geo.impl.JMapOptionsPane;
@@ -266,7 +265,8 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         themeScript = MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
         if (bgColor != null) {
-            themeScript = MapCanvasOpenStreet.DARK_THEME_SCRIPT;
+            // disabled for now, see https://github.com/sepinf-inc/IPED/issues/1443
+            // themeScript = MapCanvasOpenStreet.DARK_THEME_SCRIPT;
         }
         html = html.replace("{{applyTheme}}", themeScript);
 
@@ -411,13 +411,15 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     public void updateUI() {
         boolean updateTheme = false;
         Color bgColor = UIManager.getLookAndFeelDefaults().getColor("Viewer.background");
+
+        // Dark theme disabled for now until it is optimized, see https://github.com/sepinf-inc/IPED/issues/1443
         if (bgColor != null && themeScript.equals(MapCanvasOpenStreet.LIGHT_THEME_SCRIPT)) {
-            themeScript = MapCanvasOpenStreet.DARK_THEME_SCRIPT;
-            updateTheme = true;
+            // themeScript = MapCanvasOpenStreet.DARK_THEME_SCRIPT;
+            // updateTheme = true;
         }
         if (bgColor == null && themeScript.equals(MapCanvasOpenStreet.DARK_THEME_SCRIPT)) {
-            themeScript = MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;
-            updateTheme = true;
+            // themeScript = MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;
+            // updateTheme = true;
         }
 
         if (updateTheme) {
