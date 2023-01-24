@@ -85,7 +85,7 @@ class SearchHardwareWallets:
             '''
             ParsedText = item.getParsedTextCache().split('\n')
             for w in wallets:
-                regex = r'(?i).*Device Install.*VID_' + w.get('VendorID') + '&PID_' + w.get('ProductID') + '.*'
+                regex = r'(?i).*Device Install.*VID_' + str(w.get('VendorID')) + '&PID_' + str(w.get('ProductID')) + '.*'
                 indices = [i for i, x in enumerate(ParsedText) if re.match(regex, x)]
                 for i in indices:
                     # read two lines, second line contains timestamp of first seen
