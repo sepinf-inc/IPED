@@ -21,7 +21,7 @@ public class NoScoringCollector extends SimpleCollector {
 
     private int docBase = 0;
     private int totalHits = 0;
-    private BitSet bits;
+    public BitSet bits;
 
     private volatile boolean canceled = false;
 
@@ -74,7 +74,7 @@ public class NoScoringCollector extends SimpleCollector {
 
         return results;
     }
-
+    
     @Override
     public ScoreMode scoreMode() {
         return ScoreMode.COMPLETE_NO_SCORES;

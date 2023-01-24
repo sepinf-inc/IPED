@@ -108,20 +108,20 @@ public class SQLiteCarver extends AbstractCarver {
             if (leafPayloadFraction[0] != 32)
                 return false;
             is.skip(20);
-            is.read(schemaFormatNumber);
+            is.readNBytes(schemaFormatNumber, 0, schemaFormatNumber.length);
             ByteBuffer wrapped = ByteBuffer.wrap(schemaFormatNumber);
             int schemaFormatNumberInt = wrapped.getInt();
             if (schemaFormatNumberInt != 1 && schemaFormatNumberInt != 2 && schemaFormatNumberInt != 3
                     && schemaFormatNumberInt != 4)
                 return false;
             is.skip(8);
-            is.read(dbTextEncoding);
+            is.readNBytes(dbTextEncoding, 0, dbTextEncoding.length);
             wrapped = ByteBuffer.wrap(dbTextEncoding);
             int dbTextEncodingInt = wrapped.getInt();
             if (dbTextEncodingInt != 1 && dbTextEncodingInt != 2 && dbTextEncodingInt != 3)
                 return false;
             is.skip(12);
-            is.read(reservedZero);
+            is.readNBytes(reservedZero, 0, reservedZero.length);
             for (int i = 0; i < reservedZero.length; i++) {
                 if (reservedZero[i] != 0)
                     return false;
