@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
@@ -39,6 +38,7 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
 
     @Override
     public void dispose() {
+        super.dispose();
         dialog.setVisible(false);
         columnsManager = null;
         columnsManagerUI = null;
