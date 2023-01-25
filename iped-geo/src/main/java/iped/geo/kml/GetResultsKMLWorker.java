@@ -25,6 +25,12 @@ import iped.utils.DateUtil;
 import iped.utils.SimpleHTMLEncoder;
 import iped.viewers.api.IMultiSearchResultProvider;
 
+
+/**
+ * SwingWorker class for parallel creation of kml with information from georeferenced items from the resultset.
+ * In initial map versions, the the resulting KML was passed to map canvas to plot the items on map. This was slow an 
+ * wasted too much resource. So it was kept only for the specific KML export function. 
+ */
 public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLResult, Integer> {
     IMultiSearchResultProvider app;
     String[] colunas;
@@ -32,6 +38,15 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
     int contSemCoordenadas = 0, itemsWithGPS = 0;
     Consumer<KMLResult> consumer;
 
+    /**
+     * Constructor.
+     * 
+     * @param app The provider of the result set that will be rendered on map
+     * @param colunas Columns that will be exported as extended data on the KML. 
+     * @param progress The progress bar that will be informed about rendering progress
+     * @param browserCanvas The map canvas object where the result will be rendered
+     * @param An consumer that will be called after the rendering is done to consume rendering information 
+     */
     public GetResultsKMLWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress, Consumer<KMLResult> consumer) {
         this.app = app;
         this.colunas = colunas;
