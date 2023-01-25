@@ -119,8 +119,6 @@ def newSubItem(self, item, text, subItemID, info):
     newItem = Item()
     newItem.setParent(item)
     newItem.setName('Hardware-Wallet_' + str(subItemID))
-    #Should put information about found wallet in text field, but it doesn't, why?
-    newItem.setParsedTextCache(text)
     newItem.setPath(item.getPath() + ">>" + newItem.getName())
     newItem.getMetadata().set(hwFound, 'true')
     newItem.getMetadata().set('Hardware-Wallet-VendorID', str(info.get('VendorID')))
@@ -129,8 +127,20 @@ def newSubItem(self, item, text, subItemID, info):
     newItem.getMetadata().set('Hardware-Wallet-DeviceName', str(info.get('DeviceName')))
     newItem.setSubItem(True)
     newItem.setSubitemId(subItemID)
+    newItem.setSumVolume(False);
+    
+    # export item content to case storage
+    from iped.engine.task import ExportFileTask
+    from org.apache.commons.lang3 import StringUtils
+    from java.io import ByteArrayInputStream
+    exporter = ExportFileTask();
+    exporter.setWorker(worker);
+    bytes = StringUtils.getBytes(text, 'UTF-8')
+    dataStream = ByteArrayInputStream(bytes);
+    exporter.extractFile(dataStream, newItem, item.getLength());
+    
     from iped.engine.core import Statistics
     Statistics.get().incSubitemsDiscovered();
-    newItem.setSumVolume(False);
+
     worker.processNewItem(newItem);
     
