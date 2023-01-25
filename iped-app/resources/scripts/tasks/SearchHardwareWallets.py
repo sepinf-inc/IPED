@@ -11,7 +11,6 @@ from iped.parsers.registry import RegRipperParser
 reportSuffix = RegRipperParser.FULL_REPORT_SUFFIX
 
 configFile = 'hardwarewallets.json'
-hwInfo = 'Hardware-Wallet-Info'
 hwFound = 'Hardware-Wallet-Found'
 
 bookmarkCreated = False
@@ -89,12 +88,12 @@ class SearchHardwareWallets:
                 indices = [i for i, x in enumerate(ParsedText) if re.match(regex, x)]
                 # read info for Device (until empty line)
                 for i in indices:
-                    hwInfo = 'Found HardWare-Wallet %s, %s\n' % (w.get('VendorName', ''), w.get('DeviceName', ''))
+                    hwInfo = ''
                     lineNo = i
                     while len(ParsedText[lineNo]) > 1:
                         hwInfo += ParsedText[lineNo] + '\n'
                         lineNo += 1
-                    newSubItem(self, item, hwInfo, subItemID)
+                    newSubItem(self, item, hwInfo, subItemID, w)
                     subItemID += 1
         elif re.match(setupapi_regex, item.getName()):
             ''' setupapi.dev.log examples
@@ -107,15 +106,14 @@ class SearchHardwareWallets:
                 indices = [i for i, x in enumerate(ParsedText) if re.match(regex, x)]
                 for i in indices:
                     # read two lines, second line contains timestamp of first seen
-                    hwInfo = 'Found HardWare-Wallet %s, %s\n' % (w.get('VendorName', ''), w.get('DeviceName', ''))
-                    hwInfo += ParsedText[i] + '\n'
+                    hwInfo = ParsedText[i] + '\n'
                     hwInfo += ParsedText[i+1]
-                    newSubItem(self, item, hwInfo, subItemID)
+                    newSubItem(self, item, hwInfo, subItemID, w)
                     subItemID += 1
 
 
 
-def newSubItem(self, item, text, subItemID):
+def newSubItem(self, item, text, subItemID, info):
     from iped.engine.data import Item
 
     newItem = Item()
@@ -124,8 +122,11 @@ def newSubItem(self, item, text, subItemID):
     #Should put information about found wallet in text field, but it doesn't, why?
     newItem.setParsedTextCache(text)
     newItem.setPath(item.getPath() + ">>" + newItem.getName())
-    newItem.setExtraAttribute(hwInfo, text)
-    newItem.setExtraAttribute(hwFound, 'true')
+    newItem.getMetadata().set(hwFound, 'true')
+    newItem.getMetadata().set('Hardware-Wallet-VendorID', str(info.get('VendorID')))
+    newItem.getMetadata().set('Hardware-Wallet-ProductID', str(info.get('ProductID')))
+    newItem.getMetadata().set('Hardware-Wallet-VendorName', str(info.get('VendorName')))
+    newItem.getMetadata().set('Hardware-Wallet-DeviceName', str(info.get('DeviceName')))
     newItem.setSubItem(True)
     newItem.setSubitemId(subItemID)
     from iped.engine.core import Statistics
