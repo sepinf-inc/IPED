@@ -32,8 +32,8 @@ class SearchHardwareWallets:
             return
         from java.lang import System
         ipedRoot = System.getProperty('iped.root')
-        f = open(os.path.join(ipedRoot, 'conf', configFile))
-        SearchHardwareWallets.wallets = json.load(f)
+        with open(os.path.join(ipedRoot, 'conf', configFile)) as f:
+            SearchHardwareWallets.wallets = json.load(f)
         return
 
     
