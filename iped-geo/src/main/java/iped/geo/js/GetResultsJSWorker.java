@@ -31,6 +31,10 @@ import iped.search.IMultiSearchResult;
 import iped.utils.SimpleHTMLEncoder;
 import iped.viewers.api.IMultiSearchResultProvider;
 
+
+/**
+ * SwingWorker class for parallel creation of leaflet map via javascript data and commands. 
+ */
 public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLResult, Integer> {
     IMultiSearchResultProvider app;
     String[] colunas;
@@ -43,6 +47,15 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
     private double minlat;
     private double maxlat;
 
+    /**
+     * Constructor.
+     * 
+     * @param app The provider of the result set that will be rendered on map
+     * @param colunas Deprecated. 
+     * @param progress The progress bar that will be informed about rendering progress
+     * @param browserCanvas The map canvas object where the result will be rendered
+     * @param An consumer that will be called after the rendering is done to consume rendering information 
+     */
     public GetResultsJSWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress, AbstractMapCanvas browserCanvas, Consumer consumer) {
         this.app = app;
         this.colunas = colunas;
@@ -51,6 +64,9 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
         this.consumer = consumer;
     }
 
+    /**
+     * Implements done swingworker method. Calls the configured consumer passing the result info object.
+     */
     @Override
     public void done() {
         if (consumer != null) {
@@ -70,6 +86,11 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
         }
     }
 
+    /**
+     * Implements doInBackground swingworker method. If the canvas is not loaded,
+     * creates all markers. If it already loaded only reloads info of markers that must
+     * be kept visible according to the result set.
+     */
     @Override
     protected KMLResult doInBackground() throws Exception {
         if (browserCanvas.isLoaded()) {
@@ -80,6 +101,10 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
         }
     }
 
+    /**
+     * Creates javascript markers id array to be passed to the browser canvas
+     * with all the markers that must be visible on map.
+     */
     protected KMLResult doReloadInBackground() throws Exception {
         int countPlacemark = 0;
         KMLResult kmlResult = new KMLResult();
@@ -249,6 +274,11 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
 
     }
 
+    /**
+     * Updates internal values that keeps information about
+     * the bounding rectangle that shows all items with data of
+     * a new marker to be shown.
+     */
     synchronized private void updateViewableRegion(String longit, String lat) {
         try {
             double dlongit = Double.parseDouble(longit);
@@ -274,6 +304,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
         }
     }
 
+    @Deprecated
     public static String getBaseGID(String gid) {
         if (gid.split("_").length == 4) {
             return gid.substring(0, gid.lastIndexOf('_'));
@@ -282,6 +313,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
         }
     }
 
+    @Deprecated
     static public String htmlFormat(String html) {
         if (html == null) {
             return ""; //$NON-NLS-1$
@@ -289,11 +321,15 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
         return SimpleHTMLEncoder.htmlEncode(html);
     }
 
+    @Deprecated
     static public String resolveAltitude(Document doc) {
         String alt = doc.get(ExtraProperties.COMMON_META_PREFIX + Metadata.ALTITUDE.getName());
         return alt;
     }
 
+    /**
+     * Creates javascript array with info to create all the placemarks on map canvas.
+     */
     protected KMLResult createAllPlacemarks() throws Exception {
         int countPlacemark = 0;
         KMLResult kmlResult = new KMLResult();
