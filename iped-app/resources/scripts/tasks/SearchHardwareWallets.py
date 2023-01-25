@@ -12,6 +12,8 @@ configFile = 'hardwarewallets.json'
 # The main class name must be equal to the script file name without .py extension
 # One instance of this class is created by each processing thread and each thread calls the implemented methods of its own object.
 class SearchHardwareWallets:
+    
+    wallets = None
 
     # Returns if this task is enabled or not. This could access options read by init() method.
     def isEnabled(self):
@@ -26,7 +28,12 @@ class SearchHardwareWallets:
     # @Params
     # configuration:    configuration manager by which configurables can be retrieved after populated.
     def init(self, configuration):
-        #print("init")
+        if SearchHardwareWallets.wallets is not None:
+            return
+        from java.lang import System
+        ipedRoot = System.getProperty('iped.root')
+        f = open(os.path.join(ipedRoot, 'conf', configFile))
+        SearchHardwareWallets.wallets = json.load(f)
         return
 
     
@@ -57,17 +64,13 @@ class SearchHardwareWallets:
 
 
     def process(self, item):
-        from java.lang import System
-        ipedRoot = System.getProperty('iped.root')
-        f = open(os.path.join(ipedRoot, 'conf', configFile))
-        wallets = json.load(f)
         SubItemID = 0
         # search for setupapi.dev.log or setupapi.dev.YYYYMMDD_hhmmss.log
         setupapi_regex = regex = r'(?i)setupapi\.dev\.[0-9_\.]*log'
         if item.getName() == 'SYSTEM-Report':
             ParsedText = item.getParsedTextCache().split('\n')
             # search for wallet in RegistryReport
-            for w in wallets:
+            for w in SearchHardwareWallets.wallets:
                 regex = r'(?i).*' + w.get('VendorID') + '.*' + w.get('ProductID') + '.*'
                 indices = [i for i, x in enumerate(ParsedText) if re.match(regex, x)]
                 # read info for Device (until empty line)
@@ -84,7 +87,7 @@ class SearchHardwareWallets:
             >>>  Section start 2014/06/26 15:43:49.248
             '''
             ParsedText = item.getParsedTextCache().split('\n')
-            for w in wallets:
+            for w in SearchHardwareWallets.wallets:
                 regex = r'(?i).*Device Install.*VID_' + str(w.get('VendorID')) + '&PID_' + str(w.get('ProductID')) + '.*'
                 indices = [i for i, x in enumerate(ParsedText) if re.match(regex, x)]
                 for i in indices:
