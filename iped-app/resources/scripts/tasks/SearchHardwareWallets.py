@@ -85,7 +85,7 @@ class SearchHardwareWallets:
             ParsedText = item.getParsedTextCache().split('\n')
             # search for wallet in RegistryReport
             for w in SearchHardwareWallets.wallets:
-                regex = r'(?i).*' + w.get('VendorID') + '.*' + w.get('ProductID') + '.*'
+                regex = r'(?i).*' + str(w.get('VendorID')) + '.*' + str(w.get('ProductID')) + '.*'
                 indices = [i for i, x in enumerate(ParsedText) if re.match(regex, x)]
                 # read info for Device (until empty line)
                 for i in indices:
