@@ -14,6 +14,8 @@ configFile = 'hardwarewallets.json'
 hwInfo = 'Hardware-Wallet-Info'
 hwFound = 'Hardware-Wallet-Found'
 
+bookmarkCreated = False
+
 
 # The main class name must be equal to the script file name without .py extension
 # One instance of this class is created by each processing thread and each thread calls the implemented methods of its own object.
@@ -44,6 +46,10 @@ class SearchHardwareWallets:
 
     
     def finish(self):
+        
+        global bookmarkCreated
+        if bookmarkCreated:
+            return
 
         query = hwFound + ":true"
         
@@ -67,6 +73,8 @@ class SearchHardwareWallets:
         
         #save changes synchronously
         ipedCase.getBookmarks().saveState(True)
+
+        bookmarkCreated = True
 
 
     def process(self, item):
