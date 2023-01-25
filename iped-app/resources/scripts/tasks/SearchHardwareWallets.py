@@ -7,7 +7,13 @@ import json
 import os
 import re
 
+from iped.parsers.registry import RegRipperParser
+reportSuffix = RegRipperParser.FULL_REPORT_SUFFIX
+
 configFile = 'hardwarewallets.json'
+hwInfo = 'Hardware-Wallet-Info'
+hwFound = 'Hardware-Wallet-Found'
+
 
 # The main class name must be equal to the script file name without .py extension
 # One instance of this class is created by each processing thread and each thread calls the implemented methods of its own object.
@@ -39,7 +45,7 @@ class SearchHardwareWallets:
     
     def finish(self):
 
-        query = "Hardware-Wallet:true"
+        query = hwFound + ":true"
         
         #set query into searcher
         searcher.setQuery(query)
@@ -67,7 +73,7 @@ class SearchHardwareWallets:
         subItemID = 0
         # search for setupapi.dev.log or setupapi.dev.YYYYMMDD_hhmmss.log
         setupapi_regex = regex = r'(?i)setupapi\.dev\.[0-9_\.]*log'
-        if item.getName() == 'SYSTEM-Report':
+        if item.getName() == 'SYSTEM' + reportSuffix:
             ParsedText = item.getParsedTextCache().split('\n')
             # search for wallet in RegistryReport
             for w in SearchHardwareWallets.wallets:
@@ -110,8 +116,8 @@ def newSubItem(self, item, text, subItemID):
     #Should put information about found wallet in text field, but it doesn't, why?
     newItem.setParsedTextCache(text)
     newItem.setPath(item.getPath() + ">>" + newItem.getName())
-    newItem.setExtraAttribute("Wallet-Info", text)
-    newItem.setExtraAttribute("Hardware-Wallet", 'true')
+    newItem.setExtraAttribute(hwInfo, text)
+    newItem.setExtraAttribute(hwFound, 'true')
     newItem.setSubItem(True)
     newItem.setSubitemId(subItemID)
     from iped.engine.core import Statistics
