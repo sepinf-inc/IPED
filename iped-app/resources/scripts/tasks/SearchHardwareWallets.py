@@ -64,7 +64,7 @@ class SearchHardwareWallets:
 
 
     def process(self, item):
-        SubItemID = 0
+        subItemID = 0
         # search for setupapi.dev.log or setupapi.dev.YYYYMMDD_hhmmss.log
         setupapi_regex = regex = r'(?i)setupapi\.dev\.[0-9_\.]*log'
         if item.getName() == 'SYSTEM-Report':
@@ -80,7 +80,8 @@ class SearchHardwareWallets:
                     while len(ParsedText[lineNo]) > 1:
                         hwInfo += ParsedText[lineNo] + '\n'
                         lineNo += 1
-                    newSubItem(self, item, hwInfo, SubItemID)
+                    newSubItem(self, item, hwInfo, subItemID)
+                    subItemID += 1
         elif re.match(setupapi_regex, item.getName()):
             ''' setupapi.dev.log examples
             >>>  [Setup online Device Install (Hardware initiated) - USB\VID_0C45&PID_64AD\6&2e9d4003&0&4]
@@ -95,23 +96,24 @@ class SearchHardwareWallets:
                     hwInfo = 'Found HardWare-Wallet %s, %s\n' % (w.get('VendorName', ''), w.get('DeviceName', ''))
                     hwInfo += ParsedText[i] + '\n'
                     hwInfo += ParsedText[i+1]
-                    newSubItem(self, item, hwInfo, SubItemID)
+                    newSubItem(self, item, hwInfo, subItemID)
+                    subItemID += 1
 
 
 
-def newSubItem(self, item, text, SubItemID):
+def newSubItem(self, item, text, subItemID):
     from iped.engine.data import Item
 
     newItem = Item()
     newItem.setParent(item)
-    newItem.setName('Hardware-Wallet')
+    newItem.setName('Hardware-Wallet_' + str(subItemID))
     #Should put information about found wallet in text field, but it doesn't, why?
     newItem.setParsedTextCache(text)
     newItem.setPath(item.getPath() + ">>" + newItem.getName())
     newItem.setExtraAttribute("Wallet-Info", text)
     newItem.setExtraAttribute("Hardware-Wallet", 'true')
     newItem.setSubItem(True)
-    newItem.setSubitemId(SubItemID)
+    newItem.setSubitemId(subItemID)
     from iped.engine.core import Statistics
     Statistics.get().incSubitemsDiscovered();
     newItem.setSumVolume(False);
