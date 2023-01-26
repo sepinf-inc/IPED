@@ -56,9 +56,11 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
         this.jfxPanel = new JFXPanel();
 
         this.url = JMapOptionsPane.getSavedTilesSourceURL();
-        int i = url.indexOf("key=");
-        if (i >= 0) {
-            lastGoogleApiKey = lastGoogleApiKey = url.substring(url.indexOf("key="));
+        if (url != null) {
+            int i = url.indexOf("key=");
+            if (i >= 0) {
+                lastGoogleApiKey = url.substring(url.indexOf("key="));
+            }
         }
 
         Platform.runLater(new Runnable() {
