@@ -5,9 +5,13 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -63,5 +67,28 @@ public class IconUtil {
             e.printStackTrace();
         }
         return new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR));
+    }
+
+    /**
+     * Create a list of images with different resolutions, from a source image. This
+     * method is intended to get images used as applications icons, passing the
+     * return list to JFrame.setIconImages().
+     */
+    public static List<BufferedImage> getIconImages(String name, String resPath) {
+        try {
+            URL icon = IconUtil.class.getResource(resPath + "/" + name + ".png");
+            BufferedImage src = ImageIO.read(icon);
+            List<BufferedImage> targets = new ArrayList<BufferedImage>();
+            targets.add(src);
+            // Create images for all even values up to 16
+            int start = (src.getWidth() & ~1) - 2;
+            for (int size = start; size >= 16; size -= 2) {
+                targets.add(ImageUtil.resizeImage(src, size, size));
+            }
+            return targets;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
