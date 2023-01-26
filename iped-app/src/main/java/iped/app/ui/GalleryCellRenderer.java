@@ -36,7 +36,6 @@ import iped.utils.QualityIcon;
 public class GalleryCellRenderer implements TableCellRenderer {
 
     JPanel top = new JPanel(), panel = new JPanel();
-    // JLayeredPane panel = new JLayeredPane();
     JLabel label = new JLabel(), cLabel = new JLabel();
     JCheckBox check = new JCheckBox();
     Border selBorder;
@@ -46,7 +45,8 @@ public class GalleryCellRenderer implements TableCellRenderer {
     Color background;
     Color warningColor;
     public static int labelH;
-    static final String unsupportedIconText = "<html><center>" + Messages.getString("UnsupportedIcon.Unavailable") + "</center></html>";
+    static final String unsupportedIconText = "<html><center>" + Messages.getString("UnsupportedIcon.Unavailable")
+            + "</center></html>";
 
     public GalleryCellRenderer() {
         super();
@@ -56,43 +56,37 @@ public class GalleryCellRenderer implements TableCellRenderer {
         top.add(cLabel, BorderLayout.CENTER);
         panel.add(top, BorderLayout.NORTH);
         panel.add(label, BorderLayout.CENTER);
-
-        // Layered Code
-        /*
-         * panel.add(label, new Integer(0)); panel.add(check, new Integer(1));
-         * label.setBounds(0,0, 100,100); check.setBounds(0, 0, 20, 20);
-         */
         label.setHorizontalAlignment(JLabel.CENTER);
 
         updateUI();
     }
-    
+
     public void updateUI() {
         selColor = UIManager.getColor("Gallery.cellSelected");
         if (selColor == null)
             selColor = new Color(180, 200, 230);
-        
+
         color = UIManager.getColor("Gallery.cellBackground");
         if (color == null)
             color = Color.white;
-        
+
         background = UIManager.getColor("Gallery.background");
         if (background == null)
             background = new Color(240, 240, 242);
-        
+
         Color borderColor = UIManager.getColor("Gallery.cellBorder");
         if (borderColor == null)
             borderColor = new Color(200, 200, 202);
         border = BorderFactory.createLineBorder(borderColor, 1);
-        
+
         Color selBorderColor = UIManager.getColor("Gallery.cellSelectBorder");
         if (selBorderColor == null)
             selBorderColor = new Color(20, 50, 80);
         selBorder = BorderFactory.createLineBorder(selBorderColor, 1);
-        
+
         warningColor = UIManager.getColor("Gallery.warning");
         if (warningColor == null)
-            warningColor = Color.red;        
+            warningColor = Color.red;
     }
 
     @Override
@@ -155,5 +149,4 @@ public class GalleryCellRenderer implements TableCellRenderer {
             }
         }
     }
-
 }
