@@ -30,9 +30,9 @@ import javax.swing.RowSorter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.app.ui.events.RowSorterTableDataChange;
 import iped.app.ui.parallelsorter.ParallelTableRowSorter;
 import iped.viewers.api.CancelableWorker;
+import iped.viewers.api.events.RowSorterTableDataChange;
 import iped.viewers.util.ProgressDialog;
 
 public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSortModel> {
@@ -78,6 +78,10 @@ public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSort
 
     @Override
     public void setSortKeys(final List<? extends SortKey> sortKeys) {
+        List<? extends SortKey> oldSortKeys = super.getSortKeys();
+        if ((oldSortKeys == sortKeys) || (oldSortKeys.size() == 0 && sortKeys == null)) {
+            return;
+        }
         if (sortKeys == null) {
             super.setSortKeys(null);
             App.get().resultsModel.fireTableChanged(new RowSorterTableDataChange(App.get().resultsModel));
@@ -131,11 +135,11 @@ public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSort
 
             if (!this.isCancelled()) {
                 App.get().resultsTable.setRowSorter(sorter);
+                App.get().resultsModel.fireTableChanged(new RowSorterTableDataChange(App.get().resultsModel, sortKeys));
             } else {
                 App.get().resultsTable.setRowSorter(oldSorter);
             }
 
-            App.get().resultsModel.fireTableChanged(new RowSorterTableDataChange(App.get().resultsModel));
             App.get().resultsTable.getTableHeader().repaint();
             App.get().galleryModel.fireTableStructureChanged();
 
