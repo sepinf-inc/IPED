@@ -55,6 +55,7 @@ import iped.engine.task.ParsingTask;
 import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.parsers.standard.StandardParser;
+import iped.utils.IconUtil;
 import iped.utils.LocalizedFormat;
 
 /**
@@ -92,7 +93,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
     public ProgressFrame(UIPropertyListenerProvider task) {
         super(Version.APP_NAME);
-
+        setIconImages(IconUtil.getIconImages("process", "/iped/app/ui"));
+        
         this.setBounds(0, 0, 800, 400);
         this.setLocationRelativeTo(null);
         this.task = task;
