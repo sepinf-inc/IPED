@@ -29,4 +29,6 @@ public interface ResultSetViewer {
 
     public GUIProvider getGUIProvider();
 
+    public void notifyCaseDataChanged();
+
 }

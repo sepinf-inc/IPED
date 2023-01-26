@@ -3061,7 +3061,7 @@ class ByteArraySeekData extends ByteArrayEditableData {
                 buf = new int[readBuf.length];
                 for (int i = 0; i < buf.length; i++)
                     buf[i] = -1;
-                int n = file.read(readBuf);
+                int n = file.readNBytes(readBuf, 0, readBuf.length);
                 for (int i = 0; i < n; i++) {
                     buf[i] = readBuf[i] & 255;
                 }
