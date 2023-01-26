@@ -388,16 +388,21 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
 
                             if (locations != null && locations.length == 1) {
                                 String[] locs = locations[0].split(";"); //$NON-NLS-1$
-                                lat = locs[0].trim();
-                                longit = locs[1].trim();
+
+                                // fix invalid values such as -043.2307
+                                lat = Float.valueOf(locs[0].trim()).toString();
+                                longit = Float.valueOf(locs[1].trim()).toString();
 
                                 String gid = item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
 
                                 boolean checked = app.getIPEDSource().getMultiBookmarks().isChecked(item);
                                 boolean selected = app.getResultsTable().isRowSelected(finalRow);
 
+                                if (finalGids.length() > 1) {
+                                    finalGids.append(",");
+                                }
                                 finalGids.append("['" + gid + "'," + finalRow + ",'" + StringEscapeUtils.escapeJavaScript(htmlFormat(doc.get(BasicProps.NAME))) + "','" + Messages.getString("KMLResult.SearchResultsDescription") + "'," + lat
-                                        + "," + longit + "," + checked + "," + selected + "],");
+                                        + "," + longit + "," + checked + "," + selected + "]");
 
                                 updateViewableRegion(longit, lat);
                                 itemsWithGPS++;
@@ -409,16 +414,21 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                 gpsItems.put(item, subitems);
                                 for (String location : locations) {
                                     String[] locs = location.split(";"); //$NON-NLS-1$
-                                    lat = locs[0].trim();
-                                    longit = locs[1].trim();
+
+                                    // fix invalid values such as -043.2307
+                                    lat = Float.valueOf(locs[0].trim()).toString();
+                                    longit = Float.valueOf(locs[1].trim()).toString();
 
                                     String gid = item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
                                     boolean checked = app.getIPEDSource().getMultiBookmarks().isChecked(item);
                                     boolean selected = app.getResultsTable().isRowSelected(finalRow);
 
+                                    if (finalGids.length() > 1) {
+                                        finalGids.append(",");
+                                    }
                                     finalGids.append("['" + gid + "'," + finalRow + ",'" + StringEscapeUtils.escapeJavaScript(htmlFormat(doc.get(BasicProps.NAME))) + "','" + Messages.getString("KMLResult.SearchResultsDescription") + "',"
-                                            + lat + "," + longit + "," + checked + "," + selected + "],");
+                                            + lat + "," + longit + "," + checked + "," + selected + "]");
 
                                     updateViewableRegion(longit, lat);
                                     itemsWithGPS++;
