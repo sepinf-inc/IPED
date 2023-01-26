@@ -21,10 +21,8 @@ package iped.app.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.image.BufferedImage;
 
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -33,7 +31,7 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 
-import iped.utils.ImageUtil;
+import iped.utils.QualityIcon;
 
 public class GalleryCellRenderer implements TableCellRenderer {
 
@@ -111,28 +109,8 @@ public class GalleryCellRenderer implements TableCellRenderer {
         check.setSelected(App.get().appCase.getMultiBookmarks().isChecked(cellValue.id));
         cLabel.setText(cellValue.name);
 
-        if (cellValue.icon == null && cellValue.image == null) {
-            label.setForeground(null);
-            label.setText("..."); //$NON-NLS-1$
-            label.setIcon(null);
-        } else if (cellValue.icon != null && cellValue.unsupportedType) {
-            label.setForeground(warningColor);
-            label.setText(unsupportedIconText);
-            label.setIcon(cellValue.icon);
-        } else {
-            label.setText(null);
-            if (cellValue.image != null) {
-                int labelW = table.getWidth() / table.getColumnCount() - 2;
-                labelH = label.getHeight();
-                BufferedImage image = cellValue.image;
-                int w = Math.min(cellValue.originalW, labelW);
-                int h = Math.min(cellValue.originalH, labelH);
-                image = ImageUtil.resizeImage(image, w, h);
-                label.setIcon(new ImageIcon(image));
-            } else {
-                label.setIcon(cellValue.icon);
-            }
-        }
+        labelH = label.getHeight();
+        adjustGalleryCellContent(cellValue, label, warningColor, table);
 
         Color c = null;
         if (isSelected) {
@@ -146,6 +124,36 @@ public class GalleryCellRenderer implements TableCellRenderer {
         top.setBackground(c);
 
         return panel;
+    }
+
+    public static void adjustGalleryCellContent(GalleryValue cellValue, JLabel label, Color warningColor,
+            JTable table) {
+        if (cellValue.icon == null && cellValue.image == null) {
+            label.setForeground(null);
+            label.setText("..."); //$NON-NLS-1$
+            label.setIcon(null);
+        } else if (cellValue.icon != null && cellValue.unsupportedType) {
+            label.setForeground(warningColor);
+            label.setText(unsupportedIconText);
+            label.setIcon(cellValue.icon);
+        } else {
+            label.setText(null);
+            if (cellValue.image != null) {
+                int labelW = table.getWidth() / table.getColumnCount() - 2;
+                int w = cellValue.image.getWidth();
+                int h = cellValue.image.getHeight();
+                if (w * labelH < labelW * h) {
+                    w = w * labelH / h;
+                    h = labelH;
+                } else {
+                    h = h * labelW / w;
+                    w = labelW;
+                }
+                label.setIcon(new QualityIcon(cellValue.image, w, h));
+            } else {
+                label.setIcon(cellValue.icon);
+            }
+        }
     }
 
 }
