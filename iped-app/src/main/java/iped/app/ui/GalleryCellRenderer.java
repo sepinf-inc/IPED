@@ -48,6 +48,13 @@ public class GalleryCellRenderer implements TableCellRenderer {
     static final String unsupportedIconText = "<html><center>" + Messages.getString("UnsupportedIcon.Unavailable")
             + "</center></html>";
 
+    // Limit how much images can be enlarged (usually thumbs are down sized, but
+    // small images may be enlarged).
+    // Thumbnail's dimensions are used instead of the original ones, to speed up
+    // (avoid querying original dimension), to reduce stored information (in gallery
+    // objects) and to simplify the code.
+    private static final double maxEnlargeFactor = 2;
+
     public GalleryCellRenderer() {
         super();
         panel.setLayout(new BorderLayout());
@@ -137,11 +144,21 @@ public class GalleryCellRenderer implements TableCellRenderer {
                 int w = cellValue.image.getWidth();
                 int h = cellValue.image.getHeight();
                 if (w * labelH < labelW * h) {
-                    w = w * labelH / h;
-                    h = labelH;
+                    if (h * maxEnlargeFactor < labelH) {
+                        h *= maxEnlargeFactor;
+                        w *= maxEnlargeFactor;
+                    } else {
+                        w = w * labelH / h;
+                        h = labelH;
+                    }
                 } else {
-                    h = h * labelW / w;
-                    w = labelW;
+                    if (w * maxEnlargeFactor < labelW) {
+                        h *= maxEnlargeFactor;
+                        w *= maxEnlargeFactor;
+                    } else {
+                        h = h * labelW / w;
+                        w = labelW;
+                    }
                 }
                 label.setIcon(new QualityIcon(cellValue.image, w, h));
             } else {
