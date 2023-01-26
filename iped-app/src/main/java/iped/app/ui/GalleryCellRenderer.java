@@ -44,7 +44,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
     Color color;
     Color background;
     Color warningColor;
-    public static int labelH;
+    private static int labelH;
     static final String unsupportedIconText = "<html><center>" + Messages.getString("UnsupportedIcon.Unavailable")
             + "</center></html>";
 
