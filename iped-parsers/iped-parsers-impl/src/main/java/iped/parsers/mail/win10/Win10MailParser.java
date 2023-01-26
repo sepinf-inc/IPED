@@ -250,7 +250,6 @@ public class Win10MailParser extends AbstractParser {
 
         } finally {
             xhtml.endDocument();
-            storeVolTis.close();
             tmp.close();
         }
     }
