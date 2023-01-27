@@ -57,11 +57,13 @@ public class HashDBTool {
     private static final String nsrlProductCode = "ProductCode";
     private static final String nsrlProductName = "ProductName";
     private static final String nsrlSpecialCode = "SpecialCode";
+    private static final String nsrlFileName = "FileName";
     private static final String nsrlSetPropertyValue = "NSRL";
     private static final String nsrlPrefix = "nsrl";
 
-    private static final String nsrlDBSelectProducts = "select package_id, name, version from PKG";
+    private static final String nsrlDBSelectProducts = "select package_id, name from PKG";
     private static final String nsrlDBSelectHashes = "select sha1, md5, file_name, file_size, package_id from FILE";
+    private static final String nsrlDBEstimateHashesCount = "select max(rowid) from FILE";
 
     private static final String caidDataModelKey = "odata.metadata";
     private static final String caidDataModelValue = "http://github.com/ICMEC/ProjectVic/DataModels/1.2.xml#Media";
@@ -71,6 +73,7 @@ public class HashDBTool {
 
     private static final String setPropertyName = "set";
     private static final String statusPropertyName = "status";
+    private static final String fileLengthPropertyName = "fileLength";
 
     private static final String vicDataModelKey13 = "odata.metadata";
     private static final String vicDataModelValue13 = "http://github.com/ICMEC/ProjectVic/DataModels/1.3.xml#Media";
@@ -852,8 +855,123 @@ public class HashDBTool {
     }
 
     private boolean readNsrlDb(File file) {
-        // TODO
-        System.err.println(">>" + file.getName());
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+        nsrlProdCodeToName = new HashMap<Integer, String>();
+        long t = System.currentTimeMillis();
+        try {
+            conn = createNsrlDbConn(file);
+            stmt = conn.createStatement();
+
+            // Read NSRL product names
+            stmt.execute(nsrlDBSelectProducts);
+            stmt.setFetchSize(1024);
+            rs = stmt.getResultSet();
+            while (rs.next()) {
+                int packageId = rs.getInt(1);
+                String name = rs.getString(2);
+                nsrlProdCodeToName.put(packageId, name);
+            }
+            rs.close();
+            
+            // Estimate the number of rows (count would be too slow)
+            int tot = 0;
+            stmt.execute(nsrlDBEstimateHashesCount);
+            rs = stmt.getResultSet();
+            if (rs.next()) {
+                tot = rs.getInt(1);
+            }
+            rs.close();
+
+            // NSRL properties
+            int setPropertyId = getPropertyId(setPropertyName);
+            int fileNamePropertyId = getPropertyId(nsrlPrefix + nsrlFileName);
+            int fileLengthPropertyId = getPropertyId(fileLengthPropertyName);
+            int productNamePropertyId = getPropertyId(nsrlPrefix + nsrlProductName);
+
+            // NSRL hashes
+            int idxSha1 = hashType("SHA1");
+            int idxMd5 = hashType("MD5");
+
+            // Read NSRL files
+            byte[][] hashes = new byte[hashTypes.length][];
+            Map<Integer, Set<String>> properties = new HashMap<Integer, Set<String>>();
+            stmt.execute(nsrlDBSelectHashes);
+            stmt.setFetchSize(65536);
+            rs = stmt.getResultSet();
+            int cnt = 0;
+            while (rs.next()) {
+                String sha1 = rs.getString(1);
+                String md5 = rs.getString(2);
+                String fileName = rs.getString(3);
+                long fileLength = rs.getLong(4);
+                int packageId = rs.getInt(5);
+
+                boolean hasHash = false;
+                Arrays.fill(hashes, null);
+                properties.clear();
+
+                byte[] hSha1 = hashes[idxSha1] = hashStrToBytes(sha1, hashBytesLen[idxSha1]);
+                if (hSha1.length == 0) {
+                    hashes[idxSha1] = null;
+                    totInvHash++;
+                } else {
+                    hasHash = true;
+                }
+
+                byte[] hMd5 = hashes[idxMd5] = hashStrToBytes(md5, hashBytesLen[idxMd5]);
+                if (hMd5.length == 0) {
+                    hashes[idxMd5] = null;
+                    totInvHash++;
+                } else {
+                    hasHash = true;
+                }
+
+                if (hasHash) {
+                    String productName = nsrlProdCodeToName.get(packageId);
+                    if (productName != null) {
+                        merge(properties, setPropertyId, nsrlSetPropertyValue);
+                        merge(properties, fileNamePropertyId, fileName);
+                        merge(properties, fileLengthPropertyId, String.valueOf(fileLength));
+                        merge(properties, productNamePropertyId, productName);
+                        process(hashes, properties);
+                        if ((cnt++ & 8191) == 0) {
+                            updatePercentage(cnt / (double) tot);
+                        }
+                    }
+                }
+            }
+            rs.close();
+
+            updatePercentage(-1);
+            System.out.println("\r" + cnt + " records read in " + endTime(t));
+            printTotals();
+        } catch (Exception e) {
+            System.out.println("Error reading file: " + file);
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (Exception e) {
+                }
+            }
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (Exception e) {
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                }
+            }
+            nsrlProdCodeToName = null;
+        }
         return true;
     }
 
