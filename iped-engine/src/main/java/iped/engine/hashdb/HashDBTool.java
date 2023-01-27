@@ -60,6 +60,9 @@ public class HashDBTool {
     private static final String nsrlSetPropertyValue = "NSRL";
     private static final String nsrlPrefix = "nsrl";
 
+    private static final String nsrlDBSelectProducts = "select package_id, name, version from PKG";
+    private static final String nsrlDBSelectHashes = "select sha1, md5, file_name, file_size, package_id from FILE";
+
     private static final String caidDataModelKey = "odata.metadata";
     private static final String caidDataModelValue = "http://github.com/ICMEC/ProjectVic/DataModels/1.2.xml#Media";
     private static final String caidSetPropertyValue = "CAID";
@@ -609,6 +612,8 @@ public class HashDBTool {
             return readProjectVIC(file);
         if (type == FileType.NIST_CAID)
             return readNistCaid(file);
+        if (type == FileType.NSRL_DB)
+            return readNSRLDB(file);
 
         String savedDelimiter = null;
         Set<String> savedSkipCols = null;
@@ -843,6 +848,12 @@ public class HashDBTool {
                 mapColValues.putAll(savedMapColValues);
             }
         }
+        return true;
+    }
+
+    private boolean readNSRLDB(File file) {
+        // TODO
+        System.err.println(">>" + file.getName());
         return true;
     }
 
@@ -1278,7 +1289,7 @@ public class HashDBTool {
             } else if (type == FileType.CSV || type == FileType.INPUT || type == FileType.ICSE) {
                 if (!checkInputHeader(file, type))
                     return false;
-            } else if (type == FileType.PROJECT_VIC || type == FileType.NIST_CAID) {
+            } else if (type == FileType.PROJECT_VIC || type == FileType.NIST_CAID || type == FileType.NSRL_DB) {
                 // Identification was based on its content (plus file extension)
             } else {
                 if (type == FileType.UNKNOWN) {
@@ -1322,9 +1333,70 @@ public class HashDBTool {
             return FileType.PROJECT_VIC;
         if (name.endsWith(".json") && isKnownJson(file, FileType.NIST_CAID))
             return FileType.NIST_CAID;
+        if (name.endsWith(".db") && isKnownDB(file, FileType.NSRL_DB))
+            return FileType.NSRL_DB;
         if (!inputFolderUsed)
             return FileType.INPUT;
         return FileType.UNKNOWN;
+    }
+
+    private Connection createNsrlDbConn(File file) throws Exception {
+        SQLiteConfig config = new SQLiteConfig();
+        config.setReadOnly(true);
+        config.setCacheSize(131072);
+        config.setPageSize(8192);
+        config.setEncoding(Encoding.UTF8);
+        config.setLockingMode(LockingMode.NORMAL);
+        config.setOpenMode(SQLiteOpenMode.READONLY);
+        Connection conn = config.createConnection("jdbc:sqlite:" + file.getAbsolutePath());
+        return conn;
+    }
+
+    private boolean isKnownDB(File file, FileType type) {
+        if (type == FileType.NSRL_DB) {
+            for (int i = 0; i < 2; i++) {
+                String select = i == 0 ? nsrlDBSelectProducts : nsrlDBSelectHashes;
+                Connection conn = null;
+                Statement stmt = null;
+                ResultSet rs = null;
+                boolean ok = false;
+                try {
+                    conn = createNsrlDbConn(file);
+                    stmt = conn.createStatement();
+                    stmt.execute(select + " LIMIT 1");
+                    stmt.setFetchSize(1);
+                    rs = stmt.getResultSet();
+                    ok = rs.next();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                } finally {
+                    if (rs != null) {
+                        try {
+                            rs.close();
+                        } catch (Exception e) {
+                        }
+                    }
+                    if (stmt != null) {
+                        try {
+                            stmt.close();
+                        } catch (Exception e) {
+                        }
+                    }
+                    if (conn != null) {
+                        try {
+                            conn.close();
+                        } catch (Exception e) {
+                        }
+                    }
+                }
+                if (!ok) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     private boolean isKnownJson(File file, FileType type) {
@@ -1905,8 +1977,9 @@ public class HashDBTool {
         System.out.println("    Allows importing CSV files with a set of hashes and associated properties");
         System.out.println("    into a database that can be later used during IPED case processing, to");
         System.out.println("    search for these hashes and add their properties to the case item when a");
-        System.out.println("    hit is found. NIST NSRL RDS files, NIST CAID Non-RDS JSON, Project VIC JSON");
-        System.out.println("    and INTERPOL ICSE database CSV can also be imported directly.");
+        System.out.println("    hit is found. NIST NSRL RDS files (v2), NIST NSRL RDS DBs (v3), NIST CAID");
+        System.out.println("    Non-RDS JSON, Project VIC JSONand INTERPOL ICSE database CSV can also be");
+        System.out.println("    imported directly.");
         System.out.println();
         System.out.println("Usage: java -jar iped-hashdb.jar -d <input file or folder> -o <output DB file>");
         System.out.println("            [-replace | -replaceAll | -remove | -removeAll] [-noOpt]");
@@ -1967,6 +2040,6 @@ public class HashDBTool {
     }
 
     enum FileType {
-        CSV, NSRL_MAIN, NSRL_MAIN_ZIP, NSRL_PROD, PROJECT_VIC, UNKNOWN, INPUT, ICSE, NIST_CAID;
+        CSV, NSRL_DB, NSRL_MAIN, NSRL_MAIN_ZIP, NSRL_PROD, PROJECT_VIC, UNKNOWN, INPUT, ICSE, NIST_CAID;
     }
 }
