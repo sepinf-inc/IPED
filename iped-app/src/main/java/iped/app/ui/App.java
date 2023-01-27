@@ -433,7 +433,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.setSize(new Dimension(800, 600));
         this.setExtendedState(Frame.MAXIMIZED_BOTH);
         this.addWindowListener(this);
-        this.setIconImages(IconUtil.getIconImages("search", "/iped/app/ui"));
+        this.setIconImages(IconUtil.getIconImages("search", "/iped/app/icon"));
         this.setVisible(true);
         ToolTipManager.sharedInstance().setInitialDelay(10);
 

@@ -93,7 +93,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
     public ProgressFrame(UIPropertyListenerProvider task) {
         super(Version.APP_NAME);
-        setIconImages(IconUtil.getIconImages("process", "/iped/app/ui"));
+        setIconImages(IconUtil.getIconImages("process", "/iped/app/icon"));
         
         this.setBounds(0, 0, 800, 400);
         this.setLocationRelativeTo(null);
