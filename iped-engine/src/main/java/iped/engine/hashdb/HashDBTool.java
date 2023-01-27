@@ -1045,8 +1045,9 @@ public class HashDBTool {
                                     if (h.length == 0) {
                                         hashes[idx] = null;
                                         totInvHash++;
+                                    } else {
+                                        hasHash = true;
                                     }
-                                    hasHash = true;
                                 }
                             } else if ("PhotoDNA".equalsIgnoreCase(name)) {
                                 String value = jp.nextTextValue();
@@ -1192,8 +1193,9 @@ public class HashDBTool {
                                     if (h.length == 0) {
                                         hashes[idx] = null;
                                         totInvHash++;
+                                    } else {
+                                        hasHash = true;
                                     }
-                                    hasHash = true;
                                 }
                             } else if ("MediaSize".equalsIgnoreCase(name)) {
                                 token = jp.nextToken();
