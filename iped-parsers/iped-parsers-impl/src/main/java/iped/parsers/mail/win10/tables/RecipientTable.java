@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.PointerByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.mail.win10.ColumnCodes;
@@ -15,7 +15,7 @@ import iped.parsers.util.EsedbManager;
 
 public class RecipientTable extends AbstractTable {
 
-    private static Map<Long, ArrayList<RecipientEntry>> parentMsgToRecipientsMap = new HashMap<>();
+    private Map<Long, ArrayList<RecipientEntry>> parentMsgToRecipientsMap = new HashMap<>();
 
     int rowIdPos, messageIdPos, displayNamePos, displayNamePos2, emailAddressPos, recipientTypePos;
 
