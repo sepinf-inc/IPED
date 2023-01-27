@@ -103,7 +103,6 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
             String text = source.getText();
             boolean isSelected = source.isSelected();
             columnsManager.allCheckBoxesState.put(text, isSelected);
-            columnsManager.updateCol(text, isSelected);
         }
     }
 
