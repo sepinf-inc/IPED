@@ -607,13 +607,13 @@ public class HashDBTool {
         System.out.println("\nReading " + (type == FileType.INPUT ? "" : type.toString() + " ") + "file "
                 + file.getPath() + "...");
         if (type == FileType.NSRL_PROD)
-            return readNSRLProd(file);
+            return readNsrlProd(file);
         if (type == FileType.PROJECT_VIC)
-            return readProjectVIC(file);
+            return readProjectVic(file);
         if (type == FileType.NIST_CAID)
             return readNistCaid(file);
         if (type == FileType.NSRL_DB)
-            return readNSRLDB(file);
+            return readNsrlDb(file);
 
         String savedDelimiter = null;
         Set<String> savedSkipCols = null;
@@ -851,7 +851,7 @@ public class HashDBTool {
         return true;
     }
 
-    private boolean readNSRLDB(File file) {
+    private boolean readNsrlDb(File file) {
         // TODO
         System.err.println(">>" + file.getName());
         return true;
@@ -867,7 +867,7 @@ public class HashDBTool {
         st.add(newVal);
     }
 
-    private boolean readProjectVIC(File file) {
+    private boolean readProjectVic(File file) {
         BufferedInputStream bis = null;
         RandomAccessFile raf = null;
         JsonParser jp = null;
@@ -1163,7 +1163,7 @@ public class HashDBTool {
         return false;
     }
 
-    private boolean readNSRLProd(File file) {
+    private boolean readNsrlProd(File file) {
         BufferedReader in = null;
         try {
             in = new BufferedReader(new FileReader(file), 1 << 20);
@@ -1274,7 +1274,7 @@ public class HashDBTool {
             File file = inputs.get(i);
             FileType type = getFileType(file);
             if (type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP) {
-                if (!checkNSRLHeader(file, type))
+                if (!checkNsrlHeader(file, type))
                     return false;
                 File prodFile = new File(file.getParentFile(), nsrlProdFileName);
                 if (!prodFile.exists() || !prodFile.isFile()) {
@@ -1282,7 +1282,7 @@ public class HashDBTool {
                             + " must be present in the same folder of NSRL main file (" + file.getName() + ").");
                     return false;
                 }
-                if (!checkNSRLHeader(prodFile, FileType.NSRL_PROD))
+                if (!checkNsrlHeader(prodFile, FileType.NSRL_PROD))
                     return false;
                 // Insert NSRL Product file before the main file.
                 inputs.add(i++, prodFile);
@@ -1428,7 +1428,7 @@ public class HashDBTool {
         return false;
     }
 
-    private boolean checkNSRLHeader(File file, FileType type) {
+    private boolean checkNsrlHeader(File file, FileType type) {
         BufferedReader in = null;
         ZipInputStream zipInput = null;
         try {
