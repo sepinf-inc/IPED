@@ -733,8 +733,7 @@ public class HashDBTool {
             CSVRecord prevRecord = null;
             while (it.hasNext()) {
                 CSVRecord record = it.next();
-                cnt++;
-                if ((cnt & 8191) == 0)
+                if ((cnt++ & 8191) == 0)
                     updatePercentage(record.getCharacterPosition() / (double) len);
                 if (type != FileType.ICSE && !record.isConsistent()) {
                     in.close();
@@ -874,7 +873,7 @@ public class HashDBTool {
                 nsrlProdCodeToName.put(packageId, name);
             }
             rs.close();
-            
+
             // Estimate the number of rows (count would be too slow)
             int tot = 0;
             stmt.execute(nsrlDBEstimateHashesCount);
@@ -895,6 +894,7 @@ public class HashDBTool {
             int idxMd5 = hashType("MD5");
 
             // Read NSRL files
+            byte[][] prevHashes = new byte[hashTypes.length][];
             byte[][] hashes = new byte[hashTypes.length][];
             Map<Integer, Set<String>> properties = new HashMap<Integer, Set<String>>();
             stmt.execute(nsrlDBSelectHashes);
@@ -902,6 +902,9 @@ public class HashDBTool {
             rs = stmt.getResultSet();
             int cnt = 0;
             while (rs.next()) {
+                if ((cnt++ & 8191) == 0)
+                    updatePercentage(cnt / (double) tot);
+
                 String sha1 = rs.getString(1);
                 String md5 = rs.getString(2);
                 String fileName = rs.getString(3);
@@ -910,8 +913,7 @@ public class HashDBTool {
 
                 boolean hasHash = false;
                 Arrays.fill(hashes, null);
-                properties.clear();
-
+                
                 byte[] hSha1 = hashes[idxSha1] = hashStrToBytes(sha1, hashBytesLen[idxSha1]);
                 if (hSha1.length == 0) {
                     hashes[idxSha1] = null;
@@ -929,21 +931,47 @@ public class HashDBTool {
                 }
 
                 if (hasHash) {
-                    String productName = nsrlProdCodeToName.get(packageId);
-                    if (productName != null) {
-                        merge(properties, setPropertyId, nsrlSetPropertyValue);
-                        merge(properties, fileNamePropertyId, fileName);
-                        merge(properties, fileLengthPropertyId, String.valueOf(fileLength));
-                        merge(properties, productNamePropertyId, productName);
-                        process(hashes, properties);
-                        if ((cnt++ & 8191) == 0) {
-                            updatePercentage(cnt / (double) tot);
+                    boolean sameHashes = true;
+                    for (int i = 0; i < hashes.length; i++) {
+                        byte[] a = hashes[i];
+                        byte[] b = prevHashes[i];
+                        if (a == null && b == null)
+                            continue;
+                        if (a == null || b == null || !Arrays.equals(a, b)) {
+                            sameHashes = false;
+                            break;
                         }
                     }
+                    if (sameHashes) {
+                        totComb++;
+                        if (mode == ProcessMode.REPLACE_ALL || mode == ProcessMode.REMOVE_ALL) {
+                            properties.clear();
+                        }
+                    } else {
+                        if (cnt > 1 && !process(prevHashes, properties)) {
+                            System.out.println();
+                            throw new RuntimeException("Record #" + (cnt - 1) + ": invalid content!");
+                        }
+                        properties.clear();
+                        System.arraycopy(hashes, 0, prevHashes, 0, hashes.length);
+                    }
+
+                    String productName = nsrlProdCodeToName.get(packageId);
+                    if (productName == null) {
+                        productName = "Product #" + packageId;
+                        totNoProd++;
+                    }
+                    merge(properties, setPropertyId, nsrlSetPropertyValue);
+                    merge(properties, fileNamePropertyId, fileName);
+                    merge(properties, fileLengthPropertyId, String.valueOf(fileLength));
+                    merge(properties, productNamePropertyId, productName);
                 }
             }
             rs.close();
-
+            if (!process(prevHashes, properties)) {
+                System.out.println();
+                throw new RuntimeException("Record #" + (cnt - 1) + ": invalid content!");
+            }
             updatePercentage(-1);
             System.out.println("\r" + cnt + " records read in " + endTime(t));
             printTotals();
@@ -1466,7 +1494,6 @@ public class HashDBTool {
         config.setCacheSize(131072);
         config.setPageSize(8192);
         config.setEncoding(Encoding.UTF8);
-        config.setLockingMode(LockingMode.NORMAL);
         config.setOpenMode(SQLiteOpenMode.READONLY);
         Connection conn = config.createConnection("jdbc:sqlite:" + file.getAbsolutePath());
         return conn;
