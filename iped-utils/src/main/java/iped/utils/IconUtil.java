@@ -7,6 +7,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,8 @@ public class IconUtil {
                     @Override
                     public void paintIcon(Component c, Graphics g, int x, int y) {
                         Graphics2D g2 = (Graphics2D) g;
-                        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                                RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                         g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                         g2.drawImage(orgIcon.getImage(), x, y, w, h, null);
@@ -83,8 +85,16 @@ public class IconUtil {
             // Create images for all even values up to 16
             int start = (src.getWidth() & ~1) - 2;
             for (int size = start; size >= 16; size -= 2) {
-                targets.add(ImageUtil.resizeImage(src, size, size));
+                BufferedImage img = null;
+                try {
+                    icon = IconUtil.class.getResource(resPath + "/" + name + size + ".png");
+                    img = ImageIO.read(icon);
+                } catch (Exception e) {
+                    img = ImageUtil.resizeImage(src, size, size);
+                }
+                targets.add(img);
             }
+            Collections.reverse(targets);
             return targets;
         } catch (Exception e) {
             e.printStackTrace();
