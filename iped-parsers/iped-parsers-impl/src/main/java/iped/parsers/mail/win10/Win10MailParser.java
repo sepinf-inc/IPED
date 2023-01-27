@@ -107,14 +107,6 @@ public class Win10MailParser extends AbstractParser {
     private static final String ATTACH_VIRTUAL_ID_PREFIX = "winAppAttach-";
     private static final String APPT_VIRTUAL_ID_PREFIX = "winAppAppt-";
 
-    private FolderTable folderTable;
-    private MessageTable messageTable;
-    private RecipientTable recipientTable;
-    private AttachmentTable attachTable;
-    private AppointmentTable apptTable;
-    private ContactTable contactTable;
-    private StoreTable storeTable;
-
     private enum FileTag {
         UNICODE("001e"), CONTACT_JPEG_1("00ff"), CONTACT_JPEG_2("01a8"), CONTACT_JPEG_3("01b5"),
         MESSAGE_UNICODE("1000"), ASCII("1013"), ASCII_PAIRS("10b0"), ANY("3701");
@@ -131,24 +123,30 @@ public class Win10MailParser extends AbstractParser {
         }
     }
 
+    private class Parameters {
+        FolderTable folderTable;
+        MessageTable messageTable;
+        RecipientTable recipientTable;
+        AttachmentTable attachTable;
+        AppointmentTable apptTable;
+        ContactTable contactTable;
+        StoreTable storeTable;
+        EmbeddedDocumentExtractor extractor;
+        ItemInfo itemInfo;
+        String dbSourceUUID;
+        XHTMLContentHandler xhtml;
+        IItemSearcher searcher;
+        SimpleDateFormat df = new SimpleDateFormat(Messages.getString("OutlookPSTParser.DateFormat"));
+    }
+
     private static Logger LOGGER = LoggerFactory.getLogger(Win10MailParser.class);
 
     private static Object lock = new Object();
 
     private static EsedbLibrary esedbLibrary;
 
+    // This is already thread safe
     private EDBParser genericParser = new EDBParser();
-
-    private EmbeddedDocumentExtractor extractor;
-
-    private ItemInfo itemInfo;
-
-    private String dbSourceUUID;
-
-    XHTMLContentHandler xhtml;
-
-    private IItemSearcher searcher;
-    private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("OutlookPSTParser.DateFormat"));
 
     static {
         esedbLibrary = EsedbManager.getEsedbLibrary();
@@ -162,59 +160,60 @@ public class Win10MailParser extends AbstractParser {
         return SUPPORTED_TYPES;
     }
 
-
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        itemInfo = context.get(ItemInfo.class);
-        searcher = context.get(IItemSearcher.class);
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        dbSourceUUID = context.get(IItemReader.class).getDataSource().getUUID();
+        Parameters params = new Parameters();
 
-        xhtml = new XHTMLContentHandler(handler, metadata);
-        xhtml.startDocument();
+        params.itemInfo = context.get(ItemInfo.class);
+        params.searcher = context.get(IItemSearcher.class);
+        params.df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        params.dbSourceUUID = context.get(IItemReader.class).getDataSource().getUUID();
+
+        params.xhtml = new XHTMLContentHandler(handler, metadata);
+        params.xhtml.startDocument();
 
         TemporaryResources tmp = new TemporaryResources();
         File storeVolFile = null;
         TikaInputStream storeVolTis = TikaInputStream.get(stream, tmp);
 
-        extractor = context.get(EmbeddedDocumentExtractor.class,
+        params.extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
 
         try {
-            if (extractor.shouldParseEmbedded(metadata)) {
+            if (params.extractor.shouldParseEmbedded(metadata)) {
                 storeVolFile = storeVolTis.getFile();
 
                 String storeVolPath = storeVolFile.getAbsolutePath();
                 PointerByReference filePointerReference = new PointerByReference();
-                List<AbstractTable> tables = setMailTables(storeVolPath, filePointerReference);
+                List<AbstractTable> tables = setMailTables(storeVolPath, filePointerReference, params);
 
-                for (FolderEntry folder : folderTable.getFolders()) {
+                for (FolderEntry folder : params.folderTable.getFolders()) {
                     // process folder considering the unique parent folder, since it may be duplicate
-                    FolderEntry uniqueParentFolder = folderTable.getUniqueFoldersMap().get(folder.getParentFolderId());
+                    FolderEntry uniqueParentFolder = params.folderTable.getUniqueFoldersMap().get(folder.getParentFolderId());
                     int parentFolderId = uniqueParentFolder != null ? uniqueParentFolder.getRowId() : folder.getParentFolderId();
-                    processFolder(folder, parentFolderId);
+                    processFolder(folder, parentFolderId, params);
 
-                    ArrayList<MessageEntry> childEmails = messageTable.getFolderChildMessages(folder);
+                    ArrayList<MessageEntry> childEmails = params.messageTable.getFolderChildMessages(folder);
                     if (!childEmails.isEmpty()) {
                         for (MessageEntry childEmail : childEmails) {
-                            childEmail.setBody(getMessageBody(childEmail));
-                            processEmail(childEmail, folder.getRowId());
+                            childEmail.setBody(getMessageBody(childEmail, params));
+                            processEmail(childEmail, folder.getRowId(), params);
                         }
                     }
-                    ArrayList<AppointmentEntry> childAppts = apptTable.getFolderAppointments(folder);
+                    ArrayList<AppointmentEntry> childAppts = params.apptTable.getFolderAppointments(folder);
                     if (!childAppts.isEmpty()) {
                         for (AppointmentEntry childAppt : childAppts) {
-                            childAppt.setBody(getAppointmentBody(childAppt));
-                            processAppointment(childAppt, folder.getRowId());
+                            childAppt.setBody(getAppointmentBody(childAppt, params));
+                            processAppointment(childAppt, folder.getRowId(), params);
                         }
                     }
 
-                    ArrayList<ContactEntry> childContacts = contactTable.getFolderChildContacts(folder);
+                    ArrayList<ContactEntry> childContacts = params.contactTable.getFolderChildContacts(folder);
                     if (!childContacts.isEmpty()) {
                         for (ContactEntry childContact : childContacts) {
-                            processContact(childContact, folder.getRowId());
+                            processContact(childContact, folder.getRowId(), params);
                         }
                     }
                 }
@@ -229,27 +228,28 @@ public class Win10MailParser extends AbstractParser {
                     ToXMLContentHandler storeTableHandler = new ToXMLContentHandler(tmpStoreFile, "UTF-8");
                     XHTMLContentHandler xhtmlStore = StoreTable.emitStoreHeader(storeTableHandler, metadataStore);
 
-                    for (StoreEntry storeEntry : storeTable.getStoreEntries()) {
+                    for (StoreEntry storeEntry : params.storeTable.getStoreEntries()) {
                         StoreTable.emitStoreEntry(xhtmlStore, storeEntry);
                     }
                     StoreTable.endStoreEntries(xhtmlStore);
 
                     try (FileInputStream fis = new FileInputStream(storeTableFile)) {
-                        extractor.parseEmbedded(fis, xhtml, metadataStore, true);
+                        params.extractor.parseEmbedded(fis, params.xhtml, metadataStore, true);
                     }
                 }
 
                 for (AbstractTable table : tables)
-                    closeTablePointer(table.getTablePointer());
-                closeFilePointer(filePointerReference);
+                    closeTablePointer(table.getTablePointer(), params);
+                closeFilePointer(filePointerReference, params);
             }
         } catch (Exception e) {
-            LOGGER.error("Exception parsing Win10 Mail app email, using generic parser");
+            LOGGER.error("Exception parsing Win10 Mail app email, using generic parser", e);
+            e.printStackTrace();
             genericParser.parse(storeVolTis, handler, metadata, context);
             throw new TikaException(this.getClass().getSimpleName() + " exception", e);
 
         } finally {
-            xhtml.endDocument();
+            params.xhtml.endDocument();
             tmp.close();
         }
     }
@@ -262,11 +262,11 @@ public class Win10MailParser extends AbstractParser {
      * @return List of tables extracted from database
      * @throws Win10MailException
      */
-    protected List<AbstractTable> setMailTables(String filePath, PointerByReference filePointerReference)
+    protected List<AbstractTable> setMailTables(String filePath, PointerByReference filePointerReference, Parameters params)
             throws Win10MailException {
         List<AbstractTable> tables = new ArrayList<>();
 
-        String dbPath = itemInfo.getPath();
+        String dbPath = params.itemInfo.getPath();
 
         try {
             PointerByReference errorPointer = new PointerByReference();
@@ -300,7 +300,7 @@ public class Win10MailParser extends AbstractParser {
 
                 numTables = numTablesRef.getValue();
 
-                LOGGER.info(numTables + " tables found in " + itemInfo.getPath());
+                LOGGER.info(numTables + " tables found in " + params.itemInfo.getPath());
             }
 
             // extract info from selected tables
@@ -340,26 +340,26 @@ public class Win10MailParser extends AbstractParser {
 
                 AbstractTable table = null;
                 if (tableName.equals("Message")) {
-                    messageTable = new MessageTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
-                    table = messageTable;
+                    params.messageTable = new MessageTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
+                    table = params.messageTable;
                 } else if (tableName.equals("Recipient")) {
-                    recipientTable = new RecipientTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
-                    table = recipientTable;
+                    params.recipientTable = new RecipientTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
+                    table = params.recipientTable;
                 } else if (tableName.equals("Attachment")) {
-                    attachTable = new AttachmentTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
-                    table = attachTable;
+                    params.attachTable = new AttachmentTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
+                    table = params.attachTable;
                 } else if (tableName.equals("Folders")) {
-                    folderTable = new FolderTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
-                    table = folderTable;
+                    params.folderTable = new FolderTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
+                    table = params.folderTable;
                 } else if (tableName.equals("Appointment")) {
-                    apptTable = new AppointmentTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
-                    table = apptTable;
+                    params.apptTable = new AppointmentTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
+                    table = params.apptTable;
                 } else if (tableName.equals("Contact")) {
-                    contactTable = new ContactTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
-                    table = contactTable;
+                    params.contactTable = new ContactTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
+                    table = params.contactTable;
                 } else if (tableName.equals("Store")) {
-                    storeTable = new StoreTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
-                    table = storeTable;
+                    params.storeTable = new StoreTable(esedbLibrary, dbPath, tablePointer, errorPointer, numRecords);
+                    table = params.storeTable;
                 }
 
                 if (table != null) {
@@ -382,7 +382,7 @@ public class Win10MailParser extends AbstractParser {
      * @throws SAXException
      * @throws IOException
      */
-    private void processFolder(FolderEntry folder, long parentId) throws SAXException, IOException {
+    private void processFolder(FolderEntry folder, long parentId, Parameters params) throws SAXException, IOException {
         Metadata folderMetadata = new Metadata();
         folderMetadata.set(TikaCoreProperties.TITLE, folder.getDisplayName());
         folderMetadata.set(TikaCoreProperties.CREATED, folder.getCreateTime());
@@ -391,7 +391,7 @@ public class Win10MailParser extends AbstractParser {
         folderMetadata.add("StoreId", "" + folder.getStoreId());
         if (parentId != -1)
             folderMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
-        extractor.parseEmbedded(new EmptyInputStream(), xhtml, folderMetadata, true);
+        params.extractor.parseEmbedded(new EmptyInputStream(), params.xhtml, folderMetadata, true);
     }
 
 
@@ -401,7 +401,7 @@ public class Win10MailParser extends AbstractParser {
      * @throws SAXException
      * @throws IOException
      */
-    private void processAppointment(AppointmentEntry appointment, long parentId) throws SAXException, IOException {
+    private void processAppointment(AppointmentEntry appointment, long parentId, Parameters params) throws SAXException, IOException {
         Metadata appointMetadata = new Metadata();
         String body = appointment.getBody();
 
@@ -431,7 +431,7 @@ public class Win10MailParser extends AbstractParser {
         if (!appointment.getLink().isEmpty())
             preview.append("Link:" + " <a href=\"" + appointment.getLink() + "\">" + appointment.getLink() + "</a><br>");
         preview.append(htmlPairLine("Duration", appointment.getDurationMin() + " minutes"));
-        preview.append(htmlPairLine("Start Time", df.format(appointment.getStartTime())));
+        preview.append(htmlPairLine("Start Time", params.df.format(appointment.getStartTime())));
         preview.append(htmlPairLine("Reminder Time", appointment.getReminderTimeMin() + " minutes"));
         preview.append(htmlPairLine("Repeat", "" + appointment.getRepeat()));
         preview.append(htmlPairLine("Response", "" + appointment.getResponse()));
@@ -443,9 +443,9 @@ public class Win10MailParser extends AbstractParser {
         preview.append("</html>");
 
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
-            if (extractor.shouldParseEmbedded(appointMetadata)) {
-                xhtml.characters("\t");
-                extractor.parseEmbedded(stream, xhtml, appointMetadata, true);
+            if (params.extractor.shouldParseEmbedded(appointMetadata)) {
+                params.xhtml.characters("\t");
+                params.extractor.parseEmbedded(stream, params.xhtml, appointMetadata, true);
             }
         }
     }
@@ -456,7 +456,7 @@ public class Win10MailParser extends AbstractParser {
      * @throws SAXException
      * @throws IOException
      */
-    private void processContact(ContactEntry contact, long parentId) throws SAXException, IOException {
+    private void processContact(ContactEntry contact, long parentId, Parameters params) throws SAXException, IOException {
         Metadata contactMetadata = new Metadata();
 
         contactMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
@@ -486,7 +486,7 @@ public class Win10MailParser extends AbstractParser {
             FileTag.CONTACT_JPEG_2, FileTag.CONTACT_JPEG_3 };
         for (FileTag contactTag : contactTags) {
             String contentPath = getEntryLocation(contact, CONTACT_CATEGORY, contactTag);
-            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, -1L);
+            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, -1L, params);
             IItemReader item = itemQueryPair.getLeft();
             if (item != null) {
                 if (contactTag == FileTag.CONTACT_JPEG_1 || contactTag == FileTag.CONTACT_JPEG_2 || contactTag == FileTag.CONTACT_JPEG_3) {
@@ -503,9 +503,9 @@ public class Win10MailParser extends AbstractParser {
         preview.append("</html>");
 
         try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
-            if (extractor.shouldParseEmbedded(contactMetadata)) {
-                xhtml.characters("\t");
-                extractor.parseEmbedded(stream, xhtml, contactMetadata, true);
+            if (params.extractor.shouldParseEmbedded(contactMetadata)) {
+                params.xhtml.characters("\t");
+                params.extractor.parseEmbedded(stream, params.xhtml, contactMetadata, true);
             }
         }
     }
@@ -522,7 +522,7 @@ public class Win10MailParser extends AbstractParser {
      * @return appointment body
      * @throws IOException
      */
-    private String getAppointmentBody(AppointmentEntry appointment) throws IOException {
+    private String getAppointmentBody(AppointmentEntry appointment, Parameters params) throws IOException {
         FileTag[] messageTags = new FileTag[] { FileTag.UNICODE, FileTag.ASCII_PAIRS };
         IItemReader item = null;
         String apptBody = "";
@@ -530,7 +530,7 @@ public class Win10MailParser extends AbstractParser {
 
         for (FileTag messageTag : messageTags) {
             contentPath = getEntryLocation(appointment, APPOINTMENT_CATEGORY, messageTag);
-            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, 0);
+            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, 0, params);
             if (itemQueryPair.getLeft() != null) {
                 item = itemQueryPair.getLeft();
                 appointment.setBodyOriginalPath(item.getPath());
@@ -552,12 +552,12 @@ public class Win10MailParser extends AbstractParser {
      * @return message body
      * @throws IOException
      */
-    private String getMessageBody(MessageEntry email) throws IOException {
+    private String getMessageBody(MessageEntry email, Parameters params) throws IOException {
         FileTag[] messageTags = new FileTag[] { FileTag.ASCII, FileTag.MESSAGE_UNICODE };
         IItemReader item = null;
         for (FileTag messageTag : messageTags) {
             String contentPath = Win10MailParser.getEntryLocation(email, MESSAGE_CATEGORY, messageTag);
-            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, email.getMessageSize());
+            Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, email.getMessageSize(), params);
             if (itemQueryPair.getLeft() != null) {
                 item = itemQueryPair.getLeft();
                 email.setBodyOriginalPath(item.getPath());
@@ -598,7 +598,7 @@ public class Win10MailParser extends AbstractParser {
      * @param parentId used to link to parent folder
      * @param path
      */
-    private void processEmail(MessageEntry email, long parentId) {
+    private void processEmail(MessageEntry email, long parentId, Parameters params) {
         Metadata emailMetadata = new Metadata();
 
         String subject = email.getSubject();
@@ -648,7 +648,7 @@ public class Win10MailParser extends AbstractParser {
 
             for (int k = 0; k < recipTypes.length; k++) {
                 List<String> recipientNames = new ArrayList<>();
-                List<RecipientEntry> recipients = recipientTable.getMessageRecipients(email.getRowId());
+                List<RecipientEntry> recipients = params.recipientTable.getMessageRecipients(email.getRowId());
                 if (recipients != null) {
                     for (int i = 0; i < recipients.size(); i++) {
                         RecipientEntry recipient = recipients.get(i);
@@ -674,11 +674,11 @@ public class Win10MailParser extends AbstractParser {
             Date sent = email.getMsgDeliveryTime();
             if (sent != null) {
                 emailMetadata.set(ExtraProperties.MESSAGE_DATE, sent);
-                preview.append("<b>" + Messages.getString("OutlookPSTParser.Sent") + ":</b> " + df.format(sent) + " (UTC) <br>");
+                preview.append("<b>" + Messages.getString("OutlookPSTParser.Sent") + ":</b> " + params.df.format(sent) + " (UTC) <br>");
             }
 
             // Attachments:
-            ArrayList<AttachmentEntry> emailAttachments = attachTable.getMessageAttachments(email.getRowId());
+            ArrayList<AttachmentEntry> emailAttachments = params.attachTable.getMessageAttachments(email.getRowId());
             int noOfAttachments = emailAttachments.size();
             if (noOfAttachments > 0) {
                 preview.append("<b>" + Messages.getString("OutlookPSTParser.Attachments") + " (" + noOfAttachments
@@ -686,7 +686,7 @@ public class Win10MailParser extends AbstractParser {
                 for (AttachmentEntry attach : emailAttachments) {
                     String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
                     attach.setOriginalFileName(StringUtils.substringAfterLast(contentPath, "/"));
-                    Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, attach.getAttachSize());
+                    Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, attach.getAttachSize(), params);
                     if (itemQueryPair.getRight() != null) {
                         String successfulQuery = itemQueryPair.getRight();
                         attach.setCaseQuery(successfulQuery);
@@ -705,7 +705,7 @@ public class Win10MailParser extends AbstractParser {
             preview.append("</div>\n");
             String bodyHtml = email.getBody();
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
-                bodyHtml = handleInlineImages(email);
+                bodyHtml = handleInlineImages(email, params);
                 preview.append(bodyHtml);
                 emailMetadata.set(ExtraProperties.MESSAGE_BODY,
                         Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
@@ -715,13 +715,13 @@ public class Win10MailParser extends AbstractParser {
             preview.append("</html>");
 
             try (ByteArrayInputStream stream = new ByteArrayInputStream(preview.toString().getBytes(charset))) {
-                if (extractor.shouldParseEmbedded(emailMetadata))
-                    xhtml.characters("\t");
-                    extractor.parseEmbedded(stream, xhtml, emailMetadata, true);
+                if (params.extractor.shouldParseEmbedded(emailMetadata))
+                    params.xhtml.characters("\t");
+                params.extractor.parseEmbedded(stream, params.xhtml, emailMetadata, true);
             }
 
             for (AttachmentEntry attach : emailAttachments) {
-                processAttachment(attach);
+                processAttachment(attach, params);
             }
         } catch (Exception e) {
             LOGGER.error("Exception extracting email: {}\t{}", email.getSubject(), e.toString());
@@ -734,7 +734,7 @@ public class Win10MailParser extends AbstractParser {
      * @param attachment entry to be processed
      * @param path
      */
-    private void processAttachment(AttachmentEntry attachment) {
+    private void processAttachment(AttachmentEntry attachment, Parameters params) {
         String parentId = EMAIL_VIRTUAL_ID_PREFIX + attachment.getMessageId();
         String filename = attachment.getFileName();
         long rowId = attachment.getRowId();
@@ -750,9 +750,9 @@ public class Win10MailParser extends AbstractParser {
             attachMetadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
             attachMetadata.set(ExtraProperties.LINKED_ITEMS, attachment.getCaseQuery());
 
-            if (extractor.shouldParseEmbedded(attachMetadata)) {
-                xhtml.characters("\t");
-                extractor.parseEmbedded(new EmptyInputStream(), xhtml, attachMetadata, true);
+            if (params.extractor.shouldParseEmbedded(attachMetadata)) {
+                params.xhtml.characters("\t");
+                params.extractor.parseEmbedded(new EmptyInputStream(), params.xhtml, attachMetadata, true);
             }
 
         } catch (Exception e) {
@@ -797,22 +797,21 @@ public class Win10MailParser extends AbstractParser {
      * @param size
      * @return ImmutablePair<IItemReader, String> of (Item, QueryUsed)
      */
-    public ImmutablePair<IItemReader, String> searchItemInCase(String path, long size) {
-        if (searcher == null) {
+    public ImmutablePair<IItemReader, String> searchItemInCase(String path, long size, Parameters params) {
+        if (params.searcher == null) {
             return new ImmutablePair<>(null, null);
         }
 
         List<IItemReader> items = null;
-        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\"" +
-            " && " + BasicProps.EVIDENCE_UUID + ":" + dbSourceUUID;
+        String query = BasicProps.PATH + ":\"" + params.searcher.escapeQuery(path) + "\"" + " && " + BasicProps.EVIDENCE_UUID + ":" + params.dbSourceUUID;
         if (size > 0) {
             String queryWithSize = query + " && " + BasicProps.LENGTH + ":" + size;
-            items = searcher.search(queryWithSize);
+            items = params.searcher.search(queryWithSize);
         }
 
         if (items == null || items.isEmpty()) {
             // search without size restriction
-            items = searcher.search(query);
+            items = params.searcher.search(query);
 
             if (items == null || items.isEmpty())
                 return new ImmutablePair<>(null, null);
@@ -827,11 +826,11 @@ public class Win10MailParser extends AbstractParser {
      * @param email with a body
      * @return new body that handles cid images with associated attachments
      */
-    private String handleInlineImages(MessageEntry email) {
+    private String handleInlineImages(MessageEntry email, Parameters params) {
         String body = email.getBody();
         if (body != null && body.contains("cid:")) {
             String bodyTmp = body;
-            ArrayList<AttachmentEntry> emailAttachments = attachTable.getMessageAttachments(email.getRowId());
+            ArrayList<AttachmentEntry> emailAttachments = params.attachTable.getMessageAttachments(email.getRowId());
             for (AttachmentEntry attachment : emailAttachments) {
                 if (attachment.getAttachCID() != null && attachment.getFilePath() != null) {
                     String attachCid = attachment.getAttachCID().replaceAll("^<|>$", "");
@@ -844,22 +843,22 @@ public class Win10MailParser extends AbstractParser {
     }
 
 
-    private void closeTablePointer(PointerByReference tablePointer) {
+    private void closeTablePointer(PointerByReference tablePointer, Parameters params) {
         PointerByReference errorPointer = new PointerByReference();
         int result = esedbLibrary.libesedb_table_free(tablePointer, errorPointer);
         if (result < 0)
-            EsedbManager.printError("Table Free", result, itemInfo.getPath(), errorPointer);
+            EsedbManager.printError("Table Free", result, params.itemInfo.getPath(), errorPointer);
     }
 
-    private void closeFilePointer(PointerByReference filePointerReference) {
+    private void closeFilePointer(PointerByReference filePointerReference, Parameters params) {
         PointerByReference errorPointer = new PointerByReference();
         int result = esedbLibrary.libesedb_file_close(filePointerReference.getValue(), errorPointer);
         if (result < 0)
-            EsedbManager.printError("File Close", result, itemInfo.getPath(), errorPointer);
+            EsedbManager.printError("File Close", result, params.itemInfo.getPath(), errorPointer);
 
         result = esedbLibrary.libesedb_file_free(filePointerReference, errorPointer);
         if (result < 0)
-            EsedbManager.printError("File Free", result, itemInfo.getPath(), errorPointer);
+            EsedbManager.printError("File Free", result, params.itemInfo.getPath(), errorPointer);
     }
 
 }
