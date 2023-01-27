@@ -32,7 +32,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -101,6 +100,8 @@ public class HTMLReportTask extends AbstractTask {
     private static final String propNamePlaceHolder = "%PROPERTY_NAME%";
     private static final String propValuePlaceHolder = "%PROPERTY_VALUE%";
 
+    private static final String SELECTED_PROPERTIES_FILENAME = "data/reportProps.dat";
+    
     private static final List<String> basicReportProps = Arrays.asList(BasicProps.NAME, BasicProps.PATH, BasicProps.TYPE, BasicProps.LENGTH,
         BasicProps.CREATED, BasicProps.MODIFIED, BasicProps.ACCESSED, BasicProps.DELETED, BasicProps.CARVED,
         BasicProps.HASH, IndexItem.ID_IN_SOURCE);
@@ -215,7 +216,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     protected ArrayList<String> loadReportSelectedProps() {
-        File reportCols = new File(Configuration.getInstance().appRoot, "reportCols.dat");
+        File reportCols = new File(Configuration.getInstance().appRoot, SELECTED_PROPERTIES_FILENAME);
 
         Set<String> columnsReport = new HashSet<>();
         ArrayList<String> selectedFields = null;
@@ -401,8 +402,6 @@ public class HTMLReportTask extends AbstractTask {
         reg.path = evidence.getPath();
 
         reg.evidenceId = evidence.getId();
-        // reg.evidenceId = ipedCase.getLuceneId(evidence.getId());
-        // reg.evidenceId = ipedCase.getLuceneId(new ItemId(0, evidence.getId()));
 
         Set<String> categories = evidence.getCategorySet();
         categories = categories.stream().map(c -> CategoryLocalization.getInstance().getLocalizedCategory(c.trim()))

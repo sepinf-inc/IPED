@@ -94,7 +94,10 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     File moduleDir;
     private File caseCols;
-    private File reportCols;
+
+    private static final String SELECTED_PROPERTIES_FILENAME = "data/reportProps.dat";
+
+    private File reportPropsFile;
 
     String[] indexFields = null;
 
@@ -150,10 +153,10 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     protected void saveReportSelectedProps() {
         try {
-            Set<String> reportProps = new HashSet<>();
-            reportProps.addAll(getSelectedProperties());
-            if (reportProps.size() > 0) {
-                Util.writeObject(reportProps, reportCols.getAbsolutePath());
+            Set<String> reportPropsSet = new HashSet<>();
+            reportPropsSet.addAll(getSelectedProperties());
+            if (reportPropsSet.size() > 0) {
+                Util.writeObject(reportPropsSet, reportPropsFile.getAbsolutePath());
             }
         } catch (Exception e1) {
             e1.printStackTrace();
@@ -188,7 +191,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         autoManageCols = analysisConfig.isAutoManageCols();
 
         moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
-        reportCols = new File(moduleDir, "reportCols.dat");
+        reportPropsFile = new File(moduleDir, SELECTED_PROPERTIES_FILENAME);
 
         updateDinamicFields();
 
@@ -246,9 +249,9 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     protected ArrayList<String> loadReportSelectedFields() {
         Set<String> columnsReport = new HashSet<>();
         ArrayList<String> selectedFields = null;
-        if (reportCols.exists()) {
+        if (reportPropsFile.exists()) {
             try {
-                columnsReport = (Set<String>) Util.readObject(reportCols.getAbsolutePath());
+                columnsReport = (Set<String>) Util.readObject(reportPropsFile.getAbsolutePath());
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
             }
