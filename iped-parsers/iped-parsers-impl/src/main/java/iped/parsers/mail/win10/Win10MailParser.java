@@ -133,7 +133,7 @@ public class Win10MailParser extends AbstractParser {
         StoreTable storeTable;
         EmbeddedDocumentExtractor extractor;
         ItemInfo itemInfo;
-        String dbSourceUUID;
+        int grandParentId = -1;
         XHTMLContentHandler xhtml;
         IItemSearcher searcher;
         SimpleDateFormat df = new SimpleDateFormat(Messages.getString("OutlookPSTParser.DateFormat"));
@@ -169,7 +169,13 @@ public class Win10MailParser extends AbstractParser {
         params.itemInfo = context.get(ItemInfo.class);
         params.searcher = context.get(IItemSearcher.class);
         params.df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        params.dbSourceUUID = context.get(IItemReader.class).getDataSource().getUUID();
+
+        // get grandParent of current item to search related items below same tree
+        Integer parentId = context.get(IItemReader.class).getParentId();
+        List<IItemReader> parent = params.searcher.search(BasicProps.ID + ":" + parentId);
+        if (parent != null && parent.size() == 1) {
+            params.grandParentId = parent.get(0).getParentId();
+        }
 
         params.xhtml = new XHTMLContentHandler(handler, metadata);
         params.xhtml.startDocument();
@@ -803,7 +809,7 @@ public class Win10MailParser extends AbstractParser {
         }
 
         List<IItemReader> items = null;
-        String query = BasicProps.PATH + ":\"" + params.searcher.escapeQuery(path) + "\"" + " && " + BasicProps.EVIDENCE_UUID + ":" + params.dbSourceUUID;
+        String query = BasicProps.PATH + ":\"" + params.searcher.escapeQuery(path) + "\"" + " && " + BasicProps.PARENTIDs + ":" + params.grandParentId;
         if (size > 0) {
             String queryWithSize = query + " && " + BasicProps.LENGTH + ":" + size;
             items = params.searcher.search(queryWithSize);
@@ -817,7 +823,10 @@ public class Win10MailParser extends AbstractParser {
                 return new ImmutablePair<>(null, null);
         }
 
-        return new ImmutablePair<>(items.get(0), query);
+        // return query based on item hash, it doesn't change between different runs
+        String hashQuery = BasicProps.HASH + ":" + items.get(0).getHash();
+
+        return new ImmutablePair<>(items.get(0), hashQuery);
     }
 
 
