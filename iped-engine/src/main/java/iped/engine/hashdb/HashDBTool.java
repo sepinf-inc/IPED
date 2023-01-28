@@ -2125,7 +2125,7 @@ public class HashDBTool {
         System.out.println("    into a database that can be later used during IPED case processing, to");
         System.out.println("    search for these hashes and add their properties to the case item when a");
         System.out.println("    hit is found. NIST NSRL RDS files (v2), NIST NSRL RDS DBs (v3), NIST CAID");
-        System.out.println("    Non-RDS JSON, Project VIC JSONand INTERPOL ICSE database CSV can also be");
+        System.out.println("    Non-RDS JSON, Project VIC JSON and INTERPOL ICSE database CSV can also be");
         System.out.println("    imported directly.");
         System.out.println();
         System.out.println("Usage: java -jar iped-hashdb.jar -d <input file or folder> -o <output DB file>");
