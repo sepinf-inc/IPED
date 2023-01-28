@@ -74,7 +74,7 @@ public class GalleryModel extends AbstractTableModel {
     private static final double blurIntensity = 0.02d;
 
     private int colCount = defaultColCount;
-    private int thumbSize = 160;
+    private int thumbSize;
     private int galleryThreads = 1;
     private boolean logRendering = false;
     private ImageThumbTask imgThumbTask;
