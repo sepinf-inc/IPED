@@ -57,12 +57,11 @@ public class HashDBTool {
     private static final String nsrlProductCode = "ProductCode";
     private static final String nsrlProductName = "ProductName";
     private static final String nsrlSpecialCode = "SpecialCode";
-    private static final String nsrlFileName = "FileName";
     private static final String nsrlSetPropertyValue = "NSRL";
     private static final String nsrlPrefix = "nsrl";
 
     private static final String nsrlDBSelectProducts = "select package_id, name from PKG";
-    private static final String nsrlDBSelectHashes = "select sha1, md5, file_name, file_size, package_id from FILE";
+    private static final String nsrlDBSelectHashes = "select sha1, md5, package_id from FILE";
     private static final String nsrlDBEstimateHashesCount = "select max(rowid) from FILE";
 
     private static final String caidDataModelKey = "odata.metadata";
@@ -73,7 +72,6 @@ public class HashDBTool {
 
     private static final String setPropertyName = "set";
     private static final String statusPropertyName = "status";
-    private static final String fileLengthPropertyName = "fileLength";
 
     private static final String vicDataModelKey13 = "odata.metadata";
     private static final String vicDataModelValue13 = "http://github.com/ICMEC/ProjectVic/DataModels/1.3.xml#Media";
@@ -885,8 +883,6 @@ public class HashDBTool {
 
             // NSRL properties
             int setPropertyId = getPropertyId(setPropertyName);
-            int fileNamePropertyId = getPropertyId(nsrlPrefix + nsrlFileName);
-            int fileLengthPropertyId = getPropertyId(fileLengthPropertyName);
             int productNamePropertyId = getPropertyId(nsrlPrefix + nsrlProductName);
 
             // NSRL hashes
@@ -907,9 +903,7 @@ public class HashDBTool {
 
                 String sha1 = rs.getString(1);
                 String md5 = rs.getString(2);
-                String fileName = rs.getString(3);
-                long fileLength = rs.getLong(4);
-                int packageId = rs.getInt(5);
+                int packageId = rs.getInt(3);
 
                 boolean hasHash = false;
                 Arrays.fill(hashes, null);
@@ -962,8 +956,6 @@ public class HashDBTool {
                         totNoProd++;
                     }
                     merge(properties, setPropertyId, nsrlSetPropertyValue);
-                    merge(properties, fileNamePropertyId, fileName);
-                    merge(properties, fileLengthPropertyId, String.valueOf(fileLength));
                     merge(properties, productNamePropertyId, productName);
                 }
             }
