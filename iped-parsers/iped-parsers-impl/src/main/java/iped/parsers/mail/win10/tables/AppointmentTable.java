@@ -1,5 +1,6 @@
 package iped.parsers.mail.win10.tables;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -107,7 +108,8 @@ public class AppointmentTable extends AbstractTable {
         String link = EsedbManager.getUnicodeValue(esedbLibrary, linkPos, recordPointerReference, filePath, errorPointer);
         long durationMin = EsedbManager.getInt32Value(esedbLibrary, durationMinPos, recordPointerReference, filePath, errorPointer);
         Date startTime = EsedbManager.getFileTime(esedbLibrary, startTimePos, recordPointerReference, filePath, errorPointer);
-        String additionalPeople = EsedbManager.getBinaryValue(esedbLibrary, additionalPeoplePos, recordPointerReference, filePath, errorPointer);
+        byte[] additionalPeopleBytes = EsedbManager.getBinaryValue(esedbLibrary, additionalPeoplePos, recordPointerReference, filePath, errorPointer);
+        String additionalPeople = new String(additionalPeopleBytes, StandardCharsets.UTF_8);
         int response = EsedbManager.getInt32Value(esedbLibrary, responsePos, recordPointerReference, filePath, errorPointer);
         long updateCount = EsedbManager.getInt32Value(esedbLibrary, updateCountPos, recordPointerReference, filePath, errorPointer);
         int parentFolderId = EsedbManager.getInt32Value(esedbLibrary, parentFolderIdPos, recordPointerReference, filePath, errorPointer);

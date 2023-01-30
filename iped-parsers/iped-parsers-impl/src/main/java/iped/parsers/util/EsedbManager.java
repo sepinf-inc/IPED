@@ -2,7 +2,6 @@ package iped.parsers.util;
 
 import java.io.File;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Date;
@@ -116,7 +115,7 @@ public class EsedbManager {
         return "";
     }
 
-    public static String getBinaryValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerRef, String filePath, PointerByReference errorPointer) {
+    public static byte[] getBinaryValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerRef, String filePath, PointerByReference errorPointer) {
         if (value_entry >= 0) {
             IntByReference recordValueDataInt = new IntByReference();
             Memory recordValueData = new Memory(3072);
@@ -130,10 +129,10 @@ public class EsedbManager {
                         recordValueData, recordValueDataInt.getValue(), errorPointer);
                 if (result < 0)
                     printError("Record Get Binary Data at " + value_entry, result, filePath, errorPointer);
-                return new String(recordValueData.getByteArray(0, recordValueDataInt.getValue()), StandardCharsets.UTF_8);
+                return recordValueData.getByteArray(0, recordValueDataInt.getValue());
            }
         }
-        return "";
+        return null;
     }
 
     public static Boolean getBooleanValue(EsedbLibrary esedbLibrary, int value_entry, PointerByReference recordPointerRef, String filePath, PointerByReference errorPointer) {
