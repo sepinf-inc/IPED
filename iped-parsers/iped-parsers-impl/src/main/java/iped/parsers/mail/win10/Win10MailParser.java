@@ -249,8 +249,7 @@ public class Win10MailParser extends AbstractParser {
                 closeFilePointer(filePointerReference, params);
             }
         } catch (Exception e) {
-            LOGGER.error("Exception parsing Win10 Mail app email, using generic parser", e);
-            e.printStackTrace();
+            LOGGER.warn("Exception parsing Win10 Mail DB, using generic parser for " + params.itemInfo.getPath(), e);
             genericParser.parse(storeVolTis, handler, metadata, context);
             throw new TikaException(this.getClass().getSimpleName() + " exception", e);
 
@@ -727,11 +726,10 @@ public class Win10MailParser extends AbstractParser {
             }
 
             for (AttachmentEntry attach : emailAttachments) {
-                processAttachment(attach, params);
+                processAttachment(attach, email, params);
             }
         } catch (Exception e) {
-            LOGGER.error("Exception extracting email: {}\t{}", email.getSubject(), e.toString());
-            // e.printStackTrace();
+            LOGGER.warn("Exception extracting email: subject='" + email.getSubject() + "' rowid='" + email.getRowId() + "' DB='" + params.itemInfo.getPath() + "'", e);
         }
 
     }
@@ -740,7 +738,7 @@ public class Win10MailParser extends AbstractParser {
      * @param attachment entry to be processed
      * @param path
      */
-    private void processAttachment(AttachmentEntry attachment, Parameters params) {
+    private void processAttachment(AttachmentEntry attachment, MessageEntry email, Parameters params) {
         String parentId = EMAIL_VIRTUAL_ID_PREFIX + attachment.getMessageId();
         String filename = attachment.getFileName();
         long rowId = attachment.getRowId();
@@ -762,8 +760,7 @@ public class Win10MailParser extends AbstractParser {
             }
 
         } catch (Exception e) {
-            LOGGER.error("Exception extracting attachment {}\t{}", filename, e.toString());
-            // e.printStackTrace();
+            LOGGER.warn("Exception extracting attachment: name='" + filename + "' email='" + email.getSubject() + "' rowid='" + email.getRowId() + "' DB='" + params.itemInfo.getPath() + "'", e);
         }
     }
 
