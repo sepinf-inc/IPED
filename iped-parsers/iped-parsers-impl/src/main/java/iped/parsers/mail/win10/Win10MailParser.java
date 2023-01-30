@@ -822,11 +822,28 @@ public class Win10MailParser extends AbstractParser {
             if (items == null || items.isEmpty())
                 return new ImmutablePair<>(null, null);
         }
+        
+        IItemReader item = null;
+        if (items.size() == 1) {
+            item = items.get(0);
+        } else {
+            // needs to check path, searching for "a/b/file" can return "a/b/file-slack" or
+            // "a/b/file>>subitem"
+            for (IItemReader ir : items) {
+                if (ir.getPath().endsWith(path)) {
+                    item = ir;
+                    break;
+                }
+            }
+            if (item == null) {
+                return new ImmutablePair<>(null, null);
+            }
+        }
 
         // return query based on item hash, it doesn't change between different runs
-        String hashQuery = BasicProps.HASH + ":" + items.get(0).getHash();
+        String hashQuery = BasicProps.HASH + ":" + item.getHash();
 
-        return new ImmutablePair<>(items.get(0), hashQuery);
+        return new ImmutablePair<>(item, hashQuery);
     }
 
 
