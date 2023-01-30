@@ -2,6 +2,7 @@ package iped.parsers.util;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Date;
@@ -90,7 +91,7 @@ public class EsedbManager {
             errorPointer);
             if (result < 0)
                 printError("Record Get 16-Bit Data", result, filePath, errorPointer);
-            return  recordValueDataInt.getValue();
+            return recordValueDataInt.getValue();
         }
         return -1;
     }
@@ -129,7 +130,7 @@ public class EsedbManager {
                         recordValueData, recordValueDataInt.getValue(), errorPointer);
                 if (result < 0)
                     printError("Record Get Binary Data at " + value_entry, result, filePath, errorPointer);
-                return String.valueOf(recordValueData.getCharArray(0, recordValueDataInt.getValue()));
+                return new String(recordValueData.getByteArray(0, recordValueDataInt.getValue()), StandardCharsets.UTF_8);
            }
         }
         return "";
