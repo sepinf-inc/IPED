@@ -698,7 +698,7 @@ public class Win10MailParser extends AbstractParser {
                         IItemReader item = itemQueryPair.getLeft();
                         attach.setFilePath(item != null ? item.getTempFile().toURI().toString() : "");
                         String queryHTML = SimpleHTMLEncoder.htmlEncode(attach.getCaseQuery());
-                        preview.append("<a href=\"\" onclick=\"app.open('" + queryHTML + "');\">" + attach.getFileName() + "</a><br>");
+                        preview.append("<a href=\"\" onclick=\"app.open('" + queryHTML + "');\">" + SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + "</a><br>");
                     } else {
                         preview.append(SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + " <em>(not found)<em><br>");
                     }
