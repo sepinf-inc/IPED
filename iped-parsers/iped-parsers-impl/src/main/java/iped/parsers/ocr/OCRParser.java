@@ -109,6 +109,10 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
     private static final String TESSERACT_ERROR_MSG = "tesseract returned error code ";
 
+    private static final String INPUT_FILE_TOKEN = "${INPUT}"; //$NON-NLS-1$
+
+    private static final String OUTPUT_FILE_TOKEN = "${OUTPUT}"; //$NON-NLS-1$
+
     public static final String ENABLE_PROP = TOOL_NAME + ".enabled"; //$NON-NLS-1$
     public static final String TOOL_PATH_PROP = TOOL_NAME + ".path"; //$NON-NLS-1$
     public static final String LANGUAGE_PROP = "ocr.language"; //$NON-NLS-1$
@@ -137,9 +141,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
     private static HashMap<File, Connection> connMap = new HashMap<>();
 
-    // Root folder to store ocr results
-    private File outputBase;
-
     private static final Set<MediaType> directSupportedTypes = getDirectSupportedTypes();
     private static final Set<MediaType> nonStandardSupportedTypes = getNonStandardSupportedTypes();
     private static final Set<MediaType> nonImageSupportedTypes = getNonImageSupportedTypes();
@@ -149,6 +150,11 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     private static final Set<MediaType> imageSupportedTypes = new HashSet<MediaType>();
     private static final Set<MediaType> allSupportedTypes = new HashSet<MediaType>();
     
+    // Root folder to store ocr results
+    private File outputBase;
+    private String[] command;
+    private Random random = new Random();
+
     static {
         imageSupportedTypes.addAll(directSupportedTypes);
         imageSupportedTypes.addAll(nonStandardSupportedTypes);
@@ -278,26 +284,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             throw new RuntimeException("Error running " + cmd[0], e); //$NON-NLS-1$
         }
     }
-
-    /**
-     * The token, which if present in the Command string, will be replaced with the
-     * input filename. Alternately, the input data can be streamed over STDIN.
-     */
-    private static final String INPUT_FILE_TOKEN = "${INPUT}"; //$NON-NLS-1$
-    /**
-     * The token, which if present in the Command string, will be replaced with the
-     * output filename. Alternately, the output data can be collected on STDOUT.
-     */
-    private static final String OUTPUT_FILE_TOKEN = "${OUTPUT}"; //$NON-NLS-1$
-
-    /**
-     * The external command to invoke.
-     * 
-     * @see Runtime#exec(String[])
-     */
-    private String[] command;
-
-    private Random random = new Random();
 
     private boolean isFromBookmarkToOCR(ItemInfo ocrContext) {
 
