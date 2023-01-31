@@ -65,7 +65,9 @@ public class RegistryParser extends AbstractParser {
         String nome = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).toUpperCase();
         try {
             if (defaultRegistryKeyParser == null) {
-                defaultRegistryKeyParser = RegistryKeyParserManager.getRegistryKeyParserManager().getDefaultRegistryKeyParser();
+                synchronized (RegistryParser.class) {
+                    defaultRegistryKeyParser = RegistryKeyParserManager.getRegistryKeyParserManager().getDefaultRegistryKeyParser();
+                }
             }
             if (!(nome.equals("SYSTEM") || nome.equals("SOFTWARE") || nome.equals("SAM") || nome.equals("SECURITY") || nome.equals("NTUSER.DAT")))
                 return;

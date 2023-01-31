@@ -35,7 +35,7 @@ public class RegistryKeyParserManager implements RegistryKeyParserFilter {
         loadConfigPath();
     }
 
-    private void loadConfigPath() {
+    synchronized private void loadConfigPath() {
         try {
             String appRoot = System.getProperty(IConfigurationDirectory.IPED_APP_ROOT);
 
