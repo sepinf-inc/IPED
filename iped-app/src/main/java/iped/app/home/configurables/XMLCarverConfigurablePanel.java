@@ -26,11 +26,11 @@ public class XMLCarverConfigurablePanel extends TextConfigurablePanel {
     }
 
     @Override
-    public void applyChanges() {
+    public void applyChanges() throws ConfigurableValidationException{
         try {
             config.loadXMLConfigFile(textArea.getText());
         } catch (IOException | SAXException | ParserConfigurationException e) {
-            e.printStackTrace();
+            throw new ConfigurableValidationException("Erro de sintaxe no XML", e);
         }        
     }
 

@@ -93,6 +93,7 @@ public class TaskConfigDialog extends JDialog {
                 }
                 this.setVisible(false);
             }catch(ConfigurableValidationException cve) {
+                JOptionPane.showMessageDialog(this, cve.getMessage() + "\n" + cve.getCause(), "", JOptionPane.WARNING_MESSAGE);
                 cve.printStackTrace();
             }
         });

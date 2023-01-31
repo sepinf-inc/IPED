@@ -5,27 +5,34 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 
 import org.apache.tika.mime.MediaType;
 import org.arabidopsis.ahocorasick.AhoCorasick;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import iped.carvers.api.CarvedItemListener;
 import iped.carvers.api.Carver;
@@ -54,7 +61,17 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     protected HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
     protected HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
     private ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
+    
+    static URL xsdFile=null;
 
+    static {
+        try {
+            xsdFile = XMLCarverConfiguration.class.getResource("CarverConfig.xsd");
+        }catch(Exception e) {
+            System.out.println("Warning: CarverConfig XSD file not loaded.");
+        }
+    }
+    
     public void loadXMLConfigFile(File confFile) throws IOException {
         originalXmls.add(Files.readString(confFile.toPath()));
         Document doc = null;
@@ -70,11 +87,32 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     }
 
     public void loadXMLConfigFile(String xml) throws IOException, SAXException, ParserConfigurationException {
+        SchemaFactory factory = 
+                SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        Schema schema = factory.newSchema(xsdFile);
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(false);
+        dbf.setSchema(schema);
+        dbf.setNamespaceAware(true);
         DocumentBuilder docBuilder = dbf.newDocumentBuilder();
 
-        doc = docBuilder.parse(new ByteArrayInputStream(xml.getBytes()));
+        ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes());
+        
+        docBuilder.setErrorHandler(new ErrorHandler() {
+            @Override
+            public void warning(SAXParseException exception) throws SAXException {
+            }
+            
+            @Override
+            public void fatalError(SAXParseException exception) throws SAXException {
+            }
+            
+            @Override
+            public void error(SAXParseException exception) throws SAXException {
+                throw exception;                
+            }
+        });
+        doc = docBuilder.parse(bis);
+
     }
     
     public void loadXMLConfigXML(Document docParam) throws IOException {

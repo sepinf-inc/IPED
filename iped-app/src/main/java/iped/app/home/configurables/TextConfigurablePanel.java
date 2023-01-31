@@ -29,7 +29,7 @@ public class TextConfigurablePanel extends ConfigurablePanel{
     }
 
     @Override
-    public void applyChanges() {
+    public void applyChanges() throws ConfigurableValidationException {
         ((Configurable<String>)configurable).setConfiguration(textArea.getText());        
     }
 
