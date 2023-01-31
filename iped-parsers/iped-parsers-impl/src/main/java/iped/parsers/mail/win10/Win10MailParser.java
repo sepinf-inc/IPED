@@ -718,8 +718,15 @@ public class Win10MailParser extends AbstractParser {
             preview.append("<hr>");
             preview.append("</div>\n");
             String bodyHtml = email.getBody();
+
+            // get body preview if full body is not found
+            if ((bodyHtml == null || bodyHtml.isBlank()) && !email.getMsgAbstract().isBlank()) {
+                bodyHtml = "<div>";
+                bodyHtml += SimpleHTMLEncoder.htmlEncode(email.getMsgAbstract());
+                bodyHtml += "</div>";
+            }
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
-                bodyHtml = handleInlineImages(email, params);
+                bodyHtml = handleInlineImages(email.getRowId(), bodyHtml, params);
                 preview.append(bodyHtml);
                 emailMetadata.set(ExtraProperties.MESSAGE_BODY,
                         Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
@@ -859,11 +866,10 @@ public class Win10MailParser extends AbstractParser {
      * @param email with a body
      * @return new body that handles cid images with associated attachments
      */
-    private String handleInlineImages(MessageEntry email, Parameters params) {
-        String body = email.getBody();
+    private String handleInlineImages(int rowId, String body, Parameters params) {
         if (body != null && body.contains("cid:")) {
             String bodyTmp = body;
-            ArrayList<AttachmentEntry> emailAttachments = params.attachTable.getMessageAttachments(email.getRowId());
+            ArrayList<AttachmentEntry> emailAttachments = params.attachTable.getMessageAttachments(rowId);
             for (AttachmentEntry attachment : emailAttachments) {
                 if (attachment.getAttachCID() != null && attachment.getFilePath() != null) {
                     String attachCid = attachment.getAttachCID().replaceAll("^<|>$", "");
