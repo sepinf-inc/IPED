@@ -19,6 +19,7 @@ import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -76,6 +77,7 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
+import iped.utils.IOUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 /**
@@ -571,27 +573,33 @@ public class Win10MailParser extends AbstractParser {
         }
 
         if (item != null) {
-            InputStream is = item.getBufferedInputStream();
-            InputStreamReader utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16LE);
+            InputStream is = null;
+            InputStreamReader utf16Reader = null;
+            ReaderInputStream utf8IS = null;
+            try {
+                is = item.getBufferedInputStream();
+                utf16Reader = new InputStreamReader(new CloseShieldInputStream(is), StandardCharsets.UTF_16LE);
 
-            // convert text from utf-16 to utf-8
-            byte[] byteOrderMark = new byte[2];
-            is.mark(2);
-            if ((is.read(byteOrderMark)) != -1) {
-                is.reset();
-                if (byteOrderMark[0] == (byte) 0xFE && byteOrderMark[1] == (byte) 0xFF) {
-                    utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16BE);
+                // convert text from utf-16 to utf-8
+                byte[] byteOrderMark = new byte[2];
+                is.mark(2);
+                if ((is.readNBytes(byteOrderMark, 0, 2)) == 2) {
+                    is.reset();
+                    if (byteOrderMark[0] == (byte) 0xFE && byteOrderMark[1] == (byte) 0xFF) {
+                        IOUtil.closeQuietly(utf16Reader);
+                        utf16Reader = new InputStreamReader(is, StandardCharsets.UTF_16BE);
+                    }
                 }
+                utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
+
+                String messageBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
+                return messageBody;
+
+            } finally {
+                IOUtil.closeQuietly(utf8IS);
+                IOUtil.closeQuietly(utf16Reader);
+                IOUtil.closeQuietly(is);
             }
-            ReaderInputStream utf8IS = new ReaderInputStream(utf16Reader, StandardCharsets.UTF_8);
-
-            String messageBody = IOUtils.toString(utf8IS, StandardCharsets.UTF_8);
-
-            utf8IS.close();
-            utf16Reader.close();
-            is.close();
-
-            return messageBody;
         }
         return "";
     }
