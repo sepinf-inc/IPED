@@ -806,7 +806,8 @@ public class Win10MailParser extends AbstractParser {
         }
 
         List<IItemReader> items = null;
-        String query = BasicProps.PATH + ":\"" + params.searcher.escapeQuery(path) + "\"" + " && " + BasicProps.PARENTIDs + ":" + params.grandParentId;
+        String queryWithPath = BasicProps.PATH + ":\"" + params.searcher.escapeQuery(path) + "\"";
+        String query = queryWithPath + " && " + BasicProps.PARENTIDs + ":" + params.grandParentId;
         if (size > 0) {
             String queryWithSize = query + " && " + BasicProps.LENGTH + ":" + size;
             items = params.searcher.search(queryWithSize);
@@ -838,7 +839,7 @@ public class Win10MailParser extends AbstractParser {
         }
 
         // return query based on item hash, it doesn't change between different runs
-        String hashQuery = BasicProps.HASH + ":" + item.getHash();
+        String hashQuery = queryWithPath + " && " + BasicProps.HASH + ":" + item.getHash();
 
         return new ImmutablePair<>(item, hashQuery);
     }
