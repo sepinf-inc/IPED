@@ -6,14 +6,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.PointerByReference;
 
 import iped.parsers.browsers.edge.EsedbLibrary;
 import iped.parsers.mail.win10.ColumnCodes;
 import iped.parsers.mail.win10.entries.AppointmentEntry;
-import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.mail.win10.entries.AppointmentEntry.ResponseType;
+import iped.parsers.mail.win10.entries.FolderEntry;
 import iped.parsers.util.EsedbManager;
 
 public class AppointmentTable extends AbstractTable {
@@ -109,7 +109,7 @@ public class AppointmentTable extends AbstractTable {
         long durationMin = EsedbManager.getInt32Value(esedbLibrary, durationMinPos, recordPointerReference, filePath, errorPointer);
         Date startTime = EsedbManager.getFileTime(esedbLibrary, startTimePos, recordPointerReference, filePath, errorPointer);
         byte[] additionalPeopleBytes = EsedbManager.getBinaryValue(esedbLibrary, additionalPeoplePos, recordPointerReference, filePath, errorPointer);
-        String additionalPeople = new String(additionalPeopleBytes, StandardCharsets.UTF_8);
+        String additionalPeople = additionalPeopleBytes != null ? new String(additionalPeopleBytes, StandardCharsets.UTF_8) : null;
         int response = EsedbManager.getInt32Value(esedbLibrary, responsePos, recordPointerReference, filePath, errorPointer);
         long updateCount = EsedbManager.getInt32Value(esedbLibrary, updateCountPos, recordPointerReference, filePath, errorPointer);
         int parentFolderId = EsedbManager.getInt32Value(esedbLibrary, parentFolderIdPos, recordPointerReference, filePath, errorPointer);
