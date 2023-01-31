@@ -66,7 +66,7 @@ public class ColumnsManagerUI implements ActionListener {
         columnsManager = ColumnsManager.getInstance();
 
         dialog.setBounds(new Rectangle(400, 400));
-        dialog.setTitle(Messages.getString("ColumnsManager.Title")); //$NON-NLS-1$
+        dialog.setTitle(Messages.getString("ColumnsManager.Title"));
 
         showColsLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
         showColsLabel.setAlignmentX(0);

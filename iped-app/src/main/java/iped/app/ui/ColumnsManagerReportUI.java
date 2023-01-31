@@ -49,6 +49,8 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         super();
         columnsManagerUI = ColumnsManagerUI.getInstance();
 
+        dialog.setTitle(Messages.getString("ReportDialog.PropertiesDialogTitle"));
+
         dialog.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
