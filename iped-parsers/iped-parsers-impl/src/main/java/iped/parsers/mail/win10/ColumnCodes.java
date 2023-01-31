@@ -17,7 +17,7 @@ public class ColumnCodes {
     public static final String IMAGE_CID = "3712001f";
     public static final String DISPLAY_NAME_1 = "3001001f";
     public static final String ADDRESS_TYPE = "3002001f";
-    public static final String ADDRESS = "3003001f";
+    public static final String EMAIL_ADDRESS = "3003001f";
     public static final String CREATE_TIME = "30070040";
     public static final String LAST_MODIFIED_TIME = "30080040";
     public static final String FILENAME = "3704001f";
@@ -37,10 +37,10 @@ public class ColumnCodes {
     public static final String DISPLAY_NAME_2 = "0080001f";
     public static final String FIRST_NAME = "0082001f";
     public static final String LAST_NAME = "0084001f";
-    public static final String EMAIL = "0090001f";
-    public static final String EMAIL_WORK = "0091001f";
-    public static final String EMAIL_OTHER = "0092001f";
-    public static final String WORK_PHONE = "0099001f";
+    public static final String CONTACT_EMAIL = "0090001f";
+    public static final String EMAIL_WORK_CONTACT = "0091001f";
+    public static final String EMAIL_OTHER_CONTACT = "0092001f";
+    public static final String WORK_PHONE_CONTACT = "0099001f";
     public static final String ADDRESS_CONTACT = "00d1001f";
     public static final String USER_ID = "010a0041";
     public static final String HAS_NAME = "01bf000b";

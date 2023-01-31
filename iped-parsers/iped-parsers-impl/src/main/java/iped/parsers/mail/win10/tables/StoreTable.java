@@ -35,7 +35,7 @@ public class StoreTable extends AbstractTable {
         this.filePath = filePath;
 
         rowIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ROW_ID, errorPtr, tablePtr, filePath);
-        addressPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ADDRESS, errorPtr, tablePtr, filePath);
+        addressPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EMAIL_ADDRESS, errorPtr, tablePtr, filePath);
         displayNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_1, errorPtr, tablePtr, filePath);
         displayNamePos2 = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_2, errorPtr, tablePtr, filePath);
         protocolPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.PROTOCOL, errorPtr, tablePtr, filePath);

@@ -32,7 +32,7 @@ public class RecipientTable extends AbstractTable {
         messageIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.MESSAGE_ID, errorPointer, tablePointer, filePath);
         displayNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_1, errorPointer, tablePointer, filePath);
         displayNamePos2 = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_2, errorPointer, tablePointer, filePath);
-        emailAddressPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EMAIL, errorPointer, tablePointer, filePath);
+        emailAddressPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EMAIL_ADDRESS, errorPointer, tablePointer, filePath);
         recipientTypePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.RECIPIENT_TYPE, errorPointer, tablePointer, filePath);
     
     }

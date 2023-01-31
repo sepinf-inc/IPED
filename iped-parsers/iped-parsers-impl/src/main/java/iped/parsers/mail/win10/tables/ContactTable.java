@@ -37,11 +37,11 @@ public class ContactTable extends AbstractTable {
         displayNamePos2 = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.DISPLAY_NAME_2, errorPointer, tablePointer, filePath);
         firstNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.FIRST_NAME, errorPointer, tablePointer, filePath);
         lastNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.LAST_NAME, errorPointer, tablePointer, filePath);
-        emailPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EMAIL, errorPointer, tablePointer, filePath);
-        emailWorkPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EMAIL_WORK, errorPointer, tablePointer, filePath);
-        emailOtherPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EMAIL_OTHER, errorPointer, tablePointer, filePath);
+        emailPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.CONTACT_EMAIL, errorPointer, tablePointer, filePath);
+        emailWorkPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EMAIL_WORK_CONTACT, errorPointer, tablePointer, filePath);
+        emailOtherPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.EMAIL_OTHER_CONTACT, errorPointer, tablePointer, filePath);
         phonePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.PHONE, errorPointer, tablePointer, filePath);
-        workPhonePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.WORK_PHONE, errorPointer, tablePointer, filePath);
+        workPhonePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.WORK_PHONE_CONTACT, errorPointer, tablePointer, filePath);
         addressPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.ADDRESS_CONTACT, errorPointer, tablePointer, filePath);
         hasNamePos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.HAS_NAME, errorPointer, tablePointer, filePath);
         parentFolderIdPos = EsedbManager.getColumnPosition(esedbLibrary, ColumnCodes.PARENT_FOLDER_ID, errorPointer, tablePointer, filePath);
