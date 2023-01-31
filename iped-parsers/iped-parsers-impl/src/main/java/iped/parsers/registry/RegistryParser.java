@@ -39,8 +39,6 @@ public class RegistryParser extends AbstractParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(REGISTRY_MIME);
 
-    HashMap<String, EmbeddedParent> parentMap = new HashMap<String, EmbeddedParent>();
-
     RegistryKeyParser defaultRegistryKeyParser = null;
 
     private boolean extractItems = false;
@@ -85,7 +83,7 @@ public class RegistryParser extends AbstractParser {
 
             if (extractItems) {
                 KeyNode kf = rf.findKeyNode("/");
-                recursiveKeyParser(kf, "ROOT", "", handler, metadata, context);
+                recursiveKeyParser(kf, "ROOT", "", handler, metadata, context, new HashMap<String, EmbeddedParent>());
             }
         } catch (Exception e) {
             throw new TikaException("Erro ao decodificar arquivo de registro: " + nome, e);
@@ -162,8 +160,8 @@ public class RegistryParser extends AbstractParser {
             }
         }
     }
-
-    private void keyParser(KeyNode kn, boolean hasChildren, String keyPath, String parentPath, ContentHandler handler, Metadata metadata, ParseContext context) throws TikaException {
+    
+    private void keyParser(KeyNode kn, boolean hasChildren, String keyPath, String parentPath, ContentHandler handler, Metadata metadata, ParseContext context, HashMap<String, EmbeddedParent> parentMap) throws TikaException {
         RegistryKeyParser parser = RegistryKeyParserManager.getRegistryKeyParserManager().getRegistryKeyParser(keyPath);
         if (parser != null) {
             String title = keyPath.substring(parentPath.length() + 1);
@@ -180,17 +178,17 @@ public class RegistryParser extends AbstractParser {
         }
     }
 
-    private void recursiveKeyParser(KeyNode kn, String keyPath, String parentPath, ContentHandler handler, Metadata metadata, ParseContext context) throws TikaException {
+    private void recursiveKeyParser(KeyNode kn, String keyPath, String parentPath, ContentHandler handler, Metadata metadata, ParseContext context, HashMap<String, EmbeddedParent> parentMap) throws TikaException {
         ArrayList<KeyNode> kns = kn.getSubKeys();
 
-        keyParser(kn, ((kns != null) && (kns.size() > 0)), keyPath, parentPath, handler, metadata, context);
+        keyParser(kn, ((kns != null) && (kns.size() > 0)), keyPath, parentPath, handler, metadata, context, parentMap);
 
         EmbeddedItem item = context.get(EmbeddedItem.class);
 
         if (RegistryKeyParserManager.getRegistryKeyParserManager().hasChildRegistered(keyPath)) {
             if (kns != null) {
                 for (int i = 0; i < kns.size(); i++) {
-                    recursiveKeyParser(kns.get(i), keyPath + "/" + kns.get(i).getKeyName(), keyPath, handler, metadata, context);
+                    recursiveKeyParser(kns.get(i), keyPath + "/" + kns.get(i).getKeyName(), keyPath, handler, metadata, context, parentMap);
                 }
             }
         }
