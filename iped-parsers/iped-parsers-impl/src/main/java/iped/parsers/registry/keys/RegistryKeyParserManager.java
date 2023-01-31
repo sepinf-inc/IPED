@@ -25,11 +25,13 @@ public class RegistryKeyParserManager implements RegistryKeyParserFilter {
 
     private static final String BASE_FOLDER = "iped.parsers.registry.RegistryParser";
 
-    ScriptEngine engine;
-    Invocable inv;
-
     // singleton
     private static RegistryKeyParserManager registroKeyParserManager = new RegistryKeyParserManager();
+
+    private KeyPathPatternMap<RegistryKeyParser> map = new KeyPathPatternMap<RegistryKeyParser>();
+    private RegistryKeyParser defaultRegistryKeyParser = new HtmlKeyParser();
+    private ScriptEngine engine;
+    private Invocable inv;
 
     private RegistryKeyParserManager() {
         loadConfigPath();
@@ -143,9 +145,6 @@ public class RegistryKeyParserManager implements RegistryKeyParserFilter {
     public static RegistryKeyParserManager getRegistryKeyParserManager() {
         return registroKeyParserManager;
     }
-
-    private KeyPathPatternMap<RegistryKeyParser> map = new KeyPathPatternMap<RegistryKeyParser>();
-    private RegistryKeyParser defaultRegistryKeyParser = new HtmlKeyParser();
 
     public RegistryKeyParser getDefaultRegistryKeyParser() {
         return defaultRegistryKeyParser;
