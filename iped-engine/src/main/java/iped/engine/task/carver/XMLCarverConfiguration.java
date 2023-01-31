@@ -333,7 +333,11 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             StreamResult result = new StreamResult(bos);
             transformer.transform(source, result);
-            return bos.toString();
+            String strResult = bos.toString();
+            if(strResult.endsWith("?>")) {
+                return null;
+            }
+            return strResult;
         } catch (TransformerException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

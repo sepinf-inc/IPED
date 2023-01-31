@@ -81,7 +81,7 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
     /**
      * Applies the changes made on UI objects to the underlying configurable object
      */
-    abstract public void applyChanges();
+    abstract public void applyChanges() throws ConfigurableValidationException;
 
     @Override
     protected void createAndShowGUI() {

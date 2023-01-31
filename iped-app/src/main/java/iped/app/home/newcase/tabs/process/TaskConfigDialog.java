@@ -7,6 +7,7 @@ package iped.app.home.newcase.tabs.process;/*
 
 import iped.app.home.MainFrame;
 import iped.app.home.configurables.ConfigurablePanel;
+import iped.app.home.configurables.ConfigurableValidationException;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
 import iped.configuration.Configurable;
@@ -75,20 +76,25 @@ public class TaskConfigDialog extends JDialog {
     }
 
     private Component createButtonsPanel() {
-
+        
+        
         JButton btVoltar = new JButton(Messages.get("Home.Back"));
         btVoltar.addActionListener( e -> {
-            for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
-                Configurable<?> configurable = (Configurable<?>)iterator.next();
-                if(!(configurable instanceof EnableTaskProperty)) {
-                    ConfigurablePanel configPanel = configurablePanels.get(configurable);
-                    if(configPanel.hasChanged()) {
-                        configurablePanels.get(configurable).applyChanges();
-                        configurationManager.notifyUpdate(configurable);
+            try {
+                for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
+                    Configurable<?> configurable = (Configurable<?>)iterator.next();
+                    if(!(configurable instanceof EnableTaskProperty)) {
+                        ConfigurablePanel configPanel = configurablePanels.get(configurable);
+                        if(configPanel.hasChanged()) {
+                            configurablePanels.get(configurable).applyChanges();
+                            configurationManager.notifyUpdate(configurable);
+                        }
                     }
                 }
+                this.setVisible(false);
+            }catch(ConfigurableValidationException cve) {
+                cve.printStackTrace();
             }
-            this.setVisible(false);
         });
 
         JPanel panelButtons = new JPanel();
