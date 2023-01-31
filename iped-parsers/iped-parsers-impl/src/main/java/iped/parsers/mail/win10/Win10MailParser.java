@@ -707,6 +707,7 @@ public class Win10MailParser extends AbstractParser {
             }
 
             // Body:
+            preview.append("<hr>");
             preview.append("</div>\n");
             String bodyHtml = email.getBody();
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
