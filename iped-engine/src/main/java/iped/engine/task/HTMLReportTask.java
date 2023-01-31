@@ -1020,11 +1020,9 @@ public class HTMLReportTask extends AbstractTask {
 
     private static void replaceFirst(StringBuilder sb, String a, String b) {
         int pos = 0;
-        while ((pos = sb.indexOf(a, pos)) >= 0) {
-            String rep = b == null ? "-" : b; //$NON-NLS-1$
+        if ((pos = sb.indexOf(a, pos)) >= 0) {
+            String rep = b == null ? "-" : b;
             sb.replace(pos, pos + a.length(), rep);
-            pos += rep.length();
-            break;
         }
     }
 
