@@ -324,7 +324,7 @@ public class EdgeWebCacheParser extends AbstractParser {
                     printError("Check File Signature", result, errorPointer, itemInfo);
 
                 if (result == 0) {
-                    throw new EdgeWebCacheException("File does not contains an ESEDB");
+                    throw new EdgeWebCacheException("File does not contain an ESEDB");
                 }
 
                 result = esedbLibrary.libesedb_file_open(filePointerReference.getValue(), filePath, accessFlags,
