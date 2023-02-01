@@ -714,7 +714,7 @@ public class Win10MailParser extends AbstractParser {
                         preview.append("<a href=\"" + Util.getExportPath(item) + "\" onclick=\"app.open('" + queryHTML + "');\">"
                                 + SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + "</a><br>");
                     } else {
-                        preview.append(SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + " <em>(not found)<em><br>");
+                        preview.append(SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + " <em>" + Messages.getString("Win10Mail.NotFound") + "<em><br>");
                     }
                 }
                 emailMetadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, noOfAttachments);
