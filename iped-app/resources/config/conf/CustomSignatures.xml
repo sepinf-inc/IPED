@@ -1349,5 +1349,26 @@
  	
  	<mime-type type="application/x-tor-tc-fragment">
 	</mime-type>
+
+    <mime-type type="application/x-win10-mail-db">
+        <sub-class-of type="application/x-edb"/>
+        <glob pattern="store.vol"/>
+    </mime-type>
+
+    <mime-type type="message/x-win10-mail-msg">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-appointment">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-contact">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-store">
+        <sub-class-of type="text/html"/>
+    </mime-type>
     
 </mime-info>

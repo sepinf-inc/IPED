@@ -12,6 +12,7 @@ Chats
 Contacts
 ISO disks
 Internet History
+Win10 Mail App Additional Info
 User Activities
 GDrive Synced Files
 OLE files
