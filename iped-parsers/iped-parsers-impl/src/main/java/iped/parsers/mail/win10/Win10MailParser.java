@@ -733,7 +733,7 @@ public class Win10MailParser extends AbstractParser {
                 bodyHtml += "</div>";
             }
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
-                bodyHtml = handleInlineImages(email.getRowId(), bodyHtml, params);
+                bodyHtml = handleInlineImages(bodyHtml, emailAttachments);
                 preview.append(bodyHtml);
                 emailMetadata.set(ExtraProperties.MESSAGE_BODY,
                         Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
@@ -874,15 +874,16 @@ public class Win10MailParser extends AbstractParser {
     /**
      * Handle cid images, changing the src value to the attachment base64 image
      * 
-     * @param email
-     *            with a body
+     * @param body
+     *            email body to replace inline images
+     * @param attachments
+     *            list of email attachsments
+     * 
      * @return new body that handles cid images with associated attachments
      */
-    private String handleInlineImages(int rowId, String body, Parameters params) {
+    private String handleInlineImages(String body, ArrayList<AttachmentEntry> attachments) {
         if (body != null && body.contains("cid:")) {
-            String bodyTmp = body;
-            ArrayList<AttachmentEntry> emailAttachments = params.attachTable.getMessageAttachments(rowId);
-            for (AttachmentEntry attachment : emailAttachments) {
+            for (AttachmentEntry attachment : attachments) {
                 if (attachment.getAttachCID() != null && attachment.getCaseItem() != null) {
                     String attachCid = attachment.getAttachCID().replaceAll("^<|>$", "");
                     String base64Img = "";
@@ -895,10 +896,9 @@ public class Win10MailParser extends AbstractParser {
                     } catch (Exception e) {
                         // ignore non images and other errors
                     }
-                    bodyTmp = body.replace("cid:" + attachCid, "data:image/jpeg;base64," + base64Img);
+                    body = body.replace("cid:" + attachCid, "data:image/jpeg;base64," + base64Img);
                 }
             }
-            body = bodyTmp;
         }
         return body;
     }
