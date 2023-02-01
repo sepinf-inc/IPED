@@ -78,7 +78,7 @@ public class AttachmentEntry extends AbstractEntry {
 	}
 
 	public void setMimeTag(String mimeTag) {
-		this.mimeTag = mimeTag;
+        this.mimeTag = mimeTag != null ? mimeTag.toLowerCase() : null;
 	}
 
 	public void setReceived(Boolean received) {

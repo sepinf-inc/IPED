@@ -631,10 +631,10 @@ public class Win10MailParser extends AbstractParser {
         emailMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         emailMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
         emailMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, FOLDER_VIRTUAL_ID_PREFIX + parentId);
-        emailMetadata.add("StoreId", "" + email.getStoreId());
-        emailMetadata.add("ConversationId", "" + email.getConversationId());
+        emailMetadata.add(Message.MESSAGE_PREFIX + "StoreId", Long.toString(email.getStoreId()));
+        emailMetadata.add(Message.MESSAGE_PREFIX + "ConversationId", Long.toString(email.getConversationId()));
         if (email.getBodyFound())
-            emailMetadata.add("originalBodyPath", email.getBodyOriginalPath());
+            emailMetadata.add(Message.MESSAGE_PREFIX + "OriginalBodyPath", email.getBodyOriginalPath());
 
         try {
             Charset charset = Charset.forName("UTF-8");
@@ -771,11 +771,14 @@ public class Win10MailParser extends AbstractParser {
             attachMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, attachment.getFileName());
             attachMetadata.set(TikaCoreProperties.ORIGINAL_RESOURCE_NAME, attachment.getOriginalFileName());
             attachMetadata.add(StandardParser.INDEXER_CONTENT_TYPE, WIN10_MAIL_ATTACH.toString());
-            attachMetadata.set(Metadata.CONTENT_TYPE, attachment.getMimeTag());
+            attachMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
             attachMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, ATTACH_VIRTUAL_ID_PREFIX + rowId);
             attachMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, parentId);
             attachMetadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
             attachMetadata.set(ExtraProperties.LINKED_ITEMS, attachment.getCaseQuery());
+            attachMetadata.set(Message.MESSAGE_PREFIX + "AttachmentMime", attachment.getMimeTag());
+            attachMetadata.set(Message.MESSAGE_PREFIX + "AttachmentCid", attachment.getAttachCID());
+            attachMetadata.set(Message.MESSAGE_PREFIX + "AttachmentSize", Long.toString(attachment.getAttachSize()));
 
             if (params.extractor.shouldParseEmbedded(attachMetadata)) {
                 params.xhtml.characters("\t");
