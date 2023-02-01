@@ -1,11 +1,13 @@
 package iped.app.ui.controls.textarea;
 
+import java.net.URL;
+
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.ViewFactory;
 
 public class XmlEditorKit extends StyledEditorKit {
 
-    private ViewFactory xmlViewFactory;
+    private XmlViewFactory xmlViewFactory;
 
     public XmlEditorKit() {
         xmlViewFactory = new XmlViewFactory();
@@ -19,5 +21,10 @@ public class XmlEditorKit extends StyledEditorKit {
     @Override
     public String getContentType() {
         return "text/xml";
+    }
+
+    public void setSchema(URL xsdFile) {
+        xmlViewFactory.setSchema(xsdFile);
+        
     }
 }

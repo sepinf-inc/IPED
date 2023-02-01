@@ -62,7 +62,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     protected HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
     private ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
     
-    static URL xsdFile=null;
+    public static URL xsdFile=null;
 
     static {
         try {

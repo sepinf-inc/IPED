@@ -9,6 +9,10 @@ import javax.swing.SpringLayout;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.configurables.bean.BeanConfigurablePanel;
@@ -45,7 +49,23 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
         if(config instanceof UTF8Properties) {
             result = new UTF8PropertiesConfigurablePanel((Configurable<UTF8Properties>)configurable, mainFrame);
         }else if(config instanceof String) {
-            result = new TextConfigurablePanel((Configurable<String>)configurable, mainFrame);
+            /*try to see if it is a json object*/
+            boolean isJson = false;
+            String strConfig = (String) config;
+            if(strConfig.trim().startsWith("{")) {
+                JSONParser parser = new JSONParser();
+                try {
+                    parser.parse(strConfig);
+                    isJson=true;
+                } catch (ParseException e) {
+                }
+            }
+            
+            if(isJson) {
+                result = new JSONConfigurablePanel((Configurable<String>)configurable, mainFrame);
+            }else {
+                result = new TextConfigurablePanel((Configurable<String>)configurable, mainFrame);
+            }
         }else if(config instanceof XMLCarverConfiguration) {
             result = new XMLCarverConfigurablePanel((Configurable<XMLCarverConfiguration>)configurable, mainFrame);
         }else if(configurable.getClass().equals(RegexTaskConfig.class)) {

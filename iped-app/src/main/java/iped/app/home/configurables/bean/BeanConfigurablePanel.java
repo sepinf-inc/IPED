@@ -11,13 +11,17 @@ import java.util.Iterator;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import iped.app.home.MainFrame;
 import iped.app.home.configurables.ConfigurablePanel;
+import iped.app.ui.controls.textarea.RegexTextPane;
 import iped.configuration.Configurable;
 
 public class BeanConfigurablePanel extends ConfigurablePanel{
@@ -44,24 +48,7 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
         }catch (Exception e) {
             e.printStackTrace();
         }
-        
-        JComponent uiField = null;
-        if(o!=null) {
-            if(o instanceof Boolean) {
-                JCheckBox checkField = new JCheckBox();
-                checkField.setText(o.toString());
-                checkField.addChangeListener(e->{
-                    changed=true;
-                });
-                uiField = checkField;
-            }else {
-                JTextField textField = new JTextField();
-                textField.setText(o.toString());
-                textField.getDocument().addDocumentListener(this);
-                uiField = textField;
-            }
-        }
-        return uiField;
+        return createInputForObject(o);
     }
     
     /**
@@ -102,6 +89,9 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
             comps.add(uiField);
             lastLabel=label;
         }
+    }
+    
+    public void addCreatedObjects() {
         for (Iterator iterator = comps.iterator(); iterator.hasNext();) {
             Component component = (Component) iterator.next();
             if(component!=largestLabel) {
@@ -115,6 +105,73 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
         }
     }
 
+    private JComponent createInputForObject(Object o) {
+        JComponent uiField = null;
+        if(o!=null) {
+            if(o instanceof Boolean) {
+                JCheckBox checkField = new JCheckBox();
+                checkField.setText(o.toString());
+                checkField.addChangeListener(e->{
+                    changed=true;
+                });
+                uiField = checkField;
+            }else {
+                uiField = createInputForString(o.toString());
+            }
+        }
+        return uiField;
+    }
+    
+    public JComponent createInputForString(String strConfig) {
+        boolean isJson=false;
+        if(strConfig.trim().startsWith("{")) {
+            JSONParser parser = new JSONParser();
+            try {
+                parser.parse(strConfig);
+                isJson=true;
+            } catch (ParseException e) {
+            }
+        }
+        JComponent uiField = null;
+        
+        if(isJson) {
+            RegexTextPane textArea = new RegexTextPane();
+            textArea.setAutoscrolls(true);
+            textArea.setText(strConfig);
+            textArea.getDocument().addDocumentListener(this);
+            JScrollPane txtAreaScroll = new JScrollPane();
+            txtAreaScroll.setViewportView(textArea);
+            txtAreaScroll.setAutoscrolls(true);
+            uiField = txtAreaScroll;
+            layout.putConstraint(SpringLayout.SOUTH, uiField, 0, SpringLayout.SOUTH, this);
+            layout.putConstraint(SpringLayout.EAST, uiField, 0, SpringLayout.EAST, this);
+        }else {
+            JTextField textField = new JTextField();
+            textField.setText(strConfig);
+            textField.getDocument().addDocumentListener(this);
+            uiField = textField;
+        }
+        return uiField;
+    }
+    
+    public void createObjectGUI(Object o, String strLabel) {
+        JLabel label = new JLabel(strLabel+":");
+        int width = strLabel.length();
+        if(max<width) {
+            max=width;
+            largestLabel=label;
+        }
+        comps.add(label);
+        if(lastLabel!=null) {
+            layout.putConstraint(SpringLayout.NORTH, label, 15, SpringLayout.SOUTH, lastLabel);
+        }
+        lastLabel=label;
+        
+        JComponent uiField = createInputForObject(o);
+        layout.putConstraint(SpringLayout.NORTH, uiField, 0, SpringLayout.NORTH, label);
+        comps.add(uiField);
+    }
+
     public void createConfigurableGUI() {
         try {
             lastLabel = null;
@@ -125,11 +182,12 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
             Object config = configurable.getConfiguration();
             if(config!=null) {
                 if(config instanceof Pair<?, ?>) {
-                    createBeanGUI(((Pair<?, ?>)config).getLeft());
-                    createBeanGUI(((Pair<?, ?>)config).getRight());
+                    createObjectGUI(((Pair<?, ?>)config).getLeft(),"Left");
+                    createObjectGUI(((Pair<?, ?>)config).getRight(),"Right");
                 }else {
                     createBeanGUI(config);
                 }
+                addCreatedObjects();
             }else {
                 System.out.print("null");
             }
