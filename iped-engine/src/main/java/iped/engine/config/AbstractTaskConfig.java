@@ -53,4 +53,9 @@ public abstract class AbstractTaskConfig<T> implements Configurable<T>, EnabledI
         enabledProp.setEnabled(enabled);
     }
 
+    @Override
+    public void reset() {
+        
+    }
+
 }

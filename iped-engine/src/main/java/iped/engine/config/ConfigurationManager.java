@@ -72,9 +72,12 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
         }
     }
 
-    public void loadConfigs(boolean forceReload) throws IOException {
+    public void loadConfigs(boolean forceReload) throws IOException {        
         for (Iterator<Configurable<?>> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
             Configurable<?> configurable = iterator.next();
+            if(forceReload) {
+                configurable.reset();
+            }
 
             List<Path> resources = directory.lookUpResource(configurable);
 

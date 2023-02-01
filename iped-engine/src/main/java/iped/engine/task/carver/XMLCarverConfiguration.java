@@ -20,10 +20,8 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 
 import org.apache.tika.mime.MediaType;
 import org.arabidopsis.ahocorasick.AhoCorasick;
@@ -53,11 +51,11 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
 
     private static AhoCorasick tree = null;
     private static String CARVE_DIR_INDIVIDUAIS = "carvers";
-    Document doc = null;
+    Document mergedDoc = null;
 
     private ArrayList<String> originalXmls = new ArrayList<>();
     private boolean ignoreCorrupted = true;
-    protected HashSet<MediaType> TYPES_TO_PROCESS;
+    protected HashSet<MediaType> TYPES_TO_PROCESS= new HashSet<MediaType>();
     protected HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
     protected HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
     private ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
@@ -72,21 +70,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         }
     }
     
-    public void loadXMLConfigFile(File confFile) throws IOException {
-        originalXmls.add(Files.readString(confFile.toPath()));
-        Document doc = null;
-        try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setNamespaceAware(false);
-            DocumentBuilder docBuilder = dbf.newDocumentBuilder();
-
-            doc = docBuilder.parse(confFile);
-        }catch (SAXException | ParserConfigurationException e) {
-            throw new IOException(e);
-        }
-    }
-
-    public void loadXMLConfigFile(String xml) throws IOException, SAXException, ParserConfigurationException {
+    public DocumentBuilder getDocBuilder() throws SAXException, ParserConfigurationException {
         SchemaFactory factory = 
                 SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         Schema schema = factory.newSchema(xsdFile);
@@ -94,9 +78,6 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         dbf.setSchema(schema);
         dbf.setNamespaceAware(true);
         DocumentBuilder docBuilder = dbf.newDocumentBuilder();
-
-        ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes());
-        
         docBuilder.setErrorHandler(new ErrorHandler() {
             @Override
             public void warning(SAXParseException exception) throws SAXException {
@@ -111,13 +92,33 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
                 throw exception;                
             }
         });
-        doc = docBuilder.parse(bis);
-
+        return docBuilder;
     }
     
-    public void loadXMLConfigXML(Document docParam) throws IOException {
+    public void loadXMLConfigFile(File confFile) throws IOException {
         try {
-            doc = docParam;
+            Document doc = getDocBuilder().parse(confFile);
+            loadConfigDocument(doc);
+            //adds the file if it was parsed successfully
+            originalXmls.add(Files.readString(confFile.toPath()));
+        }catch (SAXException | ParserConfigurationException e) {
+            throw new IOException(e);
+        }
+    }
+
+    public void loadXMLConfigFile(String xml) throws IOException, SAXException, ParserConfigurationException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes());
+        Document doc = getDocBuilder().parse(bis);
+        reset();
+        loadConfigDocument(doc);
+    }
+
+    public void loadConfigDocument(Document docParam) throws IOException {
+        try {
+            Document doc = docParam;
+            if(mergedDoc==null) {
+                mergedDoc = doc;
+            }
 
             Element root = doc.getDocumentElement();
 
@@ -125,13 +126,13 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
             for (int i = 0; i < toProcessEls.getLength(); i++) {
                 Element toProcessEl = (Element) toProcessEls.item(i);
 
-                if (TYPES_TO_PROCESS == null) {
-                    TYPES_TO_PROCESS = new HashSet<MediaType>();
-                }
                 String line = toProcessEl.getTextContent().trim();
                 String[] types = line.split(";"); //$NON-NLS-1$ //$NON-NLS-2$
                 for (String type : types) {
                     TYPES_TO_PROCESS.add(MediaType.parse(type.trim()));
+                }
+                if(mergedDoc!=doc) {
+                    mergedDoc.getDocumentElement().appendChild(toProcessEl);
                 }
             }
 
@@ -147,14 +148,26 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
                 for (String type : types) {
                     TYPES_TO_NOT_PROCESS.add(type.trim());
                 }
+                if(mergedDoc!=doc) {
+                    mergedDoc.getDocumentElement().appendChild(toNotProcessEl);
+                }
             }
 
             NodeList ignoreCorruptedEls = root.getElementsByTagName("ignoreCorrupted");
             ignoreCorrupted = Boolean.valueOf(ignoreCorruptedEls.item(0).getTextContent().trim());
+            if(mergedDoc!=doc) {
+                NodeList mergedIgnoreCorruptedEls = mergedDoc.getDocumentElement().getElementsByTagName("ignoreCorrupted");
+                if(mergedIgnoreCorruptedEls!=null) {
+                    mergedIgnoreCorruptedEls.item(0).setTextContent(ignoreCorruptedEls.item(0).getTextContent().trim());
+                }else {
+                    mergedDoc.getDocumentElement().appendChild(ignoreCorruptedEls.item(0));
+                }
+            }
 
             NodeList carversEls = root.getElementsByTagName("carverTypes");
             for (int i = 0; i < carversEls.getLength(); i++) {
                 Element carverEls = (Element) carversEls.item(i);
+                mergedDoc.getDocumentElement().appendChild(carverEls);
                 NodeList carverTypeEls = carverEls.getElementsByTagName("carverType");
                 for (int j = 0; j < carverTypeEls.getLength(); j++) {
                     Element carverTypeEl = (Element) carverTypeEls.item(j);
@@ -367,7 +380,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         try {
             Transformer transformer = transformerFactory.newTransformer();
-            DOMSource source = new DOMSource(doc);
+            DOMSource source = new DOMSource(mergedDoc);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             StreamResult result = new StreamResult(bos);
             transformer.transform(source, result);
@@ -382,5 +395,14 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         }
         return "";
     }
+
+    public void reset() {
+        originalXmls.clear();
+        TYPES_TO_PROCESS.clear();
+        TYPES_TO_NOT_PROCESS.clear();
+        TYPES_TO_CARVE.clear();
+        carverTypesArray.clear();
+        mergedDoc=null;
+   }
 
 }

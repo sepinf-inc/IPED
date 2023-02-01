@@ -146,4 +146,9 @@ public class TaskInstallerConfig implements Configurable<String> {
         output.append("</tasks>");
         xml = output.toString();
     }
+
+    @Override
+    public void reset() {
+        // TODO Auto-generated method stub        
+    }
 }

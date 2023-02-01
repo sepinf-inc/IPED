@@ -25,7 +25,6 @@ public class XMLCarverConfigurablePanel extends TextConfigurablePanel {
         XmlEditorKit xek = new XmlEditorKit();
         xek.setSchema(XMLCarverConfiguration.xsdFile);
         textArea.setEditorKitForContentType("text/xml", xek);
-
         textArea.setContentType("text/xml");
         textArea.getDocument().removeDocumentListener(this);
         textArea.setText(config.getXMLString());

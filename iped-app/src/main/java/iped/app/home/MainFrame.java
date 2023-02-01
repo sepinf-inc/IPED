@@ -84,7 +84,8 @@ public class MainFrame extends JFrame {
         //Load configurables files
         Main iped = new Main();
         iped.setConfigPath();
-        Configuration configuration = Configuration.getInstance();
+
+        Configuration configuration = new Configuration();
         configuration.loadConfigurables(iped.getConfigPath(), true);
 
 

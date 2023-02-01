@@ -102,4 +102,9 @@ public class MapPanelConfig implements Configurable<UTF8Properties> {
         }
     }
 
+    @Override
+    public void reset() {
+        // TODO Auto-generated method stub
+    }
+
 }

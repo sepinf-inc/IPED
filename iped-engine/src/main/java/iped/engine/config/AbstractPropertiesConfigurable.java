@@ -36,4 +36,10 @@ public abstract class AbstractPropertiesConfigurable implements Configurable<UTF
         return properties;
     }
 
+    @Override
+    public void reset() {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

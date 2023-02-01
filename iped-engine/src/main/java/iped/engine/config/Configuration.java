@@ -71,7 +71,10 @@ public class Configuration {
         return singleton;
     }
 
-    private Configuration() {
+    /**
+     * The config UI must have access to configuration constructor to create a specific configuration.
+     */
+    public Configuration() {
     }
 
     private String getAppRoot(String configPath) {

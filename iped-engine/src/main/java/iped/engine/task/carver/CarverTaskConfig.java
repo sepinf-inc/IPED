@@ -84,4 +84,9 @@ public class CarverTaskConfig extends AbstractTaskConfig<XMLCarverConfiguration>
         }
     }
 
+    @Override
+    public void reset() {
+        carverConfiguration.reset();        
+    }
+
 }

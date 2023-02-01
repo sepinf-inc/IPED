@@ -73,4 +73,9 @@ public class ParsersConfig implements Configurable<String> {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public void reset() {
+        // TODO Auto-generated method stub        
+    }
 }
