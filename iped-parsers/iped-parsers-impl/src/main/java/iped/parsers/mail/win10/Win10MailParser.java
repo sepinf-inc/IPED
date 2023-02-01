@@ -733,7 +733,7 @@ public class Win10MailParser extends AbstractParser {
                 bodyHtml += "</div>";
             }
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
-                bodyHtml = handleInlineImages(bodyHtml, emailAttachments);
+                bodyHtml = handleInlineImages(bodyHtml, emailAttachments, email, params);
                 preview.append(bodyHtml);
                 emailMetadata.set(ExtraProperties.MESSAGE_BODY,
                         Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
@@ -881,22 +881,24 @@ public class Win10MailParser extends AbstractParser {
      * 
      * @return new body that handles cid images with associated attachments
      */
-    private String handleInlineImages(String body, ArrayList<AttachmentEntry> attachments) {
+    private String handleInlineImages(String body, ArrayList<AttachmentEntry> attachments, MessageEntry email, Parameters params) {
         if (body != null && body.contains("cid:")) {
             for (AttachmentEntry attachment : attachments) {
                 if (attachment.getAttachCID() != null && attachment.getCaseItem() != null) {
                     String attachCid = attachment.getAttachCID().replaceAll("^<|>$", "");
-                    String base64Img = "";
                     // always convert to a jpeg with limited resolution
                     try (InputStream is = attachment.getCaseItem().getBufferedInputStream()) {
                         BufferedImage img = ImageUtil.getSubSampledImage(is, 1024, 1024);
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        ImageIO.write(img, "jpg", baos);
-                        base64Img = Base64.getEncoder().encodeToString(baos.toByteArray());
+                        if (img != null) {
+                            img = ImageUtil.getOpaqueImage(img);
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            ImageIO.write(img, "jpg", baos);
+                            String base64Img = Base64.getEncoder().encodeToString(baos.toByteArray());
+                            body = body.replace("cid:" + attachCid, "data:image/jpeg;base64," + base64Img);
+                        }
                     } catch (Exception e) {
-                        // ignore non images and other errors
+                        LOGGER.warn("Exception inlining attachment: name='" + attachment.getFileName() + "' email='" + email.getSubject() + "' rowid='" + email.getRowId() + "' DB='" + params.itemInfo.getPath() + "'", e);
                     }
-                    body = body.replace("cid:" + attachCid, "data:image/jpeg;base64," + base64Img);
                 }
             }
         }
