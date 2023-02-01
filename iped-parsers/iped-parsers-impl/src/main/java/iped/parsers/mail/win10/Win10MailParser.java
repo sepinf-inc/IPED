@@ -706,10 +706,9 @@ public class Win10MailParser extends AbstractParser {
                     String contentPath = Win10MailParser.getEntryLocation(attach, ATTACH_CATEGORY, FileTag.ANY);
                     attach.setOriginalFileName(StringUtils.substringAfterLast(contentPath, "/"));
                     Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, attach.getAttachSize(), params);
-                    if (itemQueryPair.getRight() != null) {
-                        String successfulQuery = itemQueryPair.getRight();
-                        attach.setCaseQuery(successfulQuery);
-                        IItemReader item = itemQueryPair.getLeft();
+                    attach.setCaseQuery(itemQueryPair.getRight());
+                    IItemReader item = itemQueryPair.getLeft();
+                    if (item != null) {
                         attach.setCaseItem(item);
                         String queryHTML = SimpleHTMLEncoder.htmlEncode(attach.getCaseQuery());
                         preview.append("<a href=\"" + Util.getExportPath(item) + "\" onclick=\"app.open('" + queryHTML + "');\">"
@@ -832,19 +831,20 @@ public class Win10MailParser extends AbstractParser {
         }
 
         List<IItemReader> items = null;
-        String queryWithPath = BasicProps.PATH + ":\"" + params.searcher.escapeQuery(path) + "\"";
-        String query = queryWithPath + " && " + BasicProps.PARENTIDs + ":" + params.grandParentId;
+        String pathQuery = BasicProps.PATH + ":\"" + params.searcher.escapeQuery(path) + "\"";
+        String pathParentQuery = pathQuery + " && " + BasicProps.PARENTIDs + ":" + params.grandParentId;
+        String pathParentSizeQuery = pathParentQuery + " && " + BasicProps.LENGTH + ":" + size;
         if (size > 0) {
-            String queryWithSize = query + " && " + BasicProps.LENGTH + ":" + size;
-            items = params.searcher.search(queryWithSize);
+            items = params.searcher.search(pathParentSizeQuery);
         }
 
         if (items == null || items.isEmpty()) {
             // search without size restriction
-            items = params.searcher.search(query);
+            items = params.searcher.search(pathParentQuery);
 
             if (items == null || items.isEmpty())
-                return new ImmutablePair<>(null, null);
+                // return the more restrictive query to avoid false positives
+                return new ImmutablePair<>(null, pathParentSizeQuery);
         }
         
         IItemReader item = null;
@@ -860,12 +860,14 @@ public class Win10MailParser extends AbstractParser {
                 }
             }
             if (item == null) {
-                return new ImmutablePair<>(null, null);
+                // return the more restrictive query to avoid false positives
+                return new ImmutablePair<>(null, pathParentSizeQuery);
             }
         }
 
-        // return query based on item hash, it doesn't change between different runs
-        String hashQuery = queryWithPath + " && " + BasicProps.HASH + ":" + item.getHash();
+        // return query based on item hash, very specific and execution independent
+        // also add path to avoid including unrelated items with same hash in report
+        String hashQuery = pathQuery + " && " + BasicProps.HASH + ":" + item.getHash();
 
         return new ImmutablePair<>(item, hashQuery);
     }
