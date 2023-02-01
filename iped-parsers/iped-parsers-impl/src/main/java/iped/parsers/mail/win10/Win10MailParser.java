@@ -1,6 +1,8 @@
 package iped.parsers.mail.win10;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -11,12 +13,15 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
+
+import javax.imageio.ImageIO;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CloseShieldInputStream;
@@ -78,6 +83,7 @@ import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
 import iped.utils.IOUtil;
+import iped.utils.ImageUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 /**
@@ -704,7 +710,7 @@ public class Win10MailParser extends AbstractParser {
                         String successfulQuery = itemQueryPair.getRight();
                         attach.setCaseQuery(successfulQuery);
                         IItemReader item = itemQueryPair.getLeft();
-                        attach.setFilePath(item != null ? item.getTempFile().toURI().toString() : "");
+                        attach.setCaseItem(item);
                         String queryHTML = SimpleHTMLEncoder.htmlEncode(attach.getCaseQuery());
                         preview.append("<a href=\"\" onclick=\"app.open('" + queryHTML + "');\">" + SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + "</a><br>");
                     } else {
@@ -862,8 +868,10 @@ public class Win10MailParser extends AbstractParser {
 
 
     /**
-     * Handle cid images, changing the src value to the actual attachment path in the case
-     * @param email with a body
+     * Handle cid images, changing the src value to the attachment base64 image
+     * 
+     * @param email
+     *            with a body
      * @return new body that handles cid images with associated attachments
      */
     private String handleInlineImages(int rowId, String body, Parameters params) {
@@ -871,9 +879,19 @@ public class Win10MailParser extends AbstractParser {
             String bodyTmp = body;
             ArrayList<AttachmentEntry> emailAttachments = params.attachTable.getMessageAttachments(rowId);
             for (AttachmentEntry attachment : emailAttachments) {
-                if (attachment.getAttachCID() != null && attachment.getFilePath() != null) {
+                if (attachment.getAttachCID() != null && attachment.getCaseItem() != null) {
                     String attachCid = attachment.getAttachCID().replaceAll("^<|>$", "");
-                    bodyTmp = body.replace("cid:" + attachCid, attachment.getFilePath());
+                    String base64Img = "";
+                    // always convert to a jpeg with limited resolution
+                    try (InputStream is = attachment.getCaseItem().getBufferedInputStream()) {
+                        BufferedImage img = ImageUtil.getSubSampledImage(is, 1024, 1024);
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        ImageIO.write(img, "jpg", baos);
+                        base64Img = Base64.getEncoder().encodeToString(baos.toByteArray());
+                    } catch (Exception e) {
+                        // ignore non images and other errors
+                    }
+                    bodyTmp = body.replace("cid:" + attachCid, "data:image/jpeg;base64," + base64Img);
                 }
             }
             body = bodyTmp;

@@ -1,12 +1,14 @@
 package iped.parsers.mail.win10.entries;
 
+import iped.data.IItemReader;
+
 public class AttachmentEntry extends AbstractEntry {
     private long messageId;
     private long attachSize;
     private String attachCID;
     private String fileName;
     private String originalFileName;
-	private String filePath;
+    private IItemReader item;
 	private String mimeTag;
     private Boolean received;
 	private String caseQuery;
@@ -63,12 +65,12 @@ public class AttachmentEntry extends AbstractEntry {
 		this.originalFileName = originalFileName;
 	}
 
-	public String getFilePath() {
-		return this.filePath;
+    public IItemReader getCaseItem() {
+        return this.item;
 	}
 
-	public void setFilePath(String filePath) {
-		this.filePath = filePath;
+    public void setCaseItem(IItemReader item) {
+        this.item = item;
 	}
 	
 	public String getMimeTag() {
