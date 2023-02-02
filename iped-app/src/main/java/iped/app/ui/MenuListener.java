@@ -86,6 +86,12 @@ public class MenuListener implements ActionListener {
         }
     }
 
+    private void setupColumnsSelector() {
+        ColumnsSelectUI columnsSelector = ColumnsSelectUI.getInstance();
+        columnsSelector.dialog.setModal(true);
+        columnsSelector.setVisible();
+    }
+
     private class Filtro extends FileFilter {
 
         @Override
@@ -102,7 +108,7 @@ public class MenuListener implements ActionListener {
 
         @Override
         public String getDescription() {
-            return "Comma Separeted Values (" + CSV + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            return "Comma Separated Values (" + CSV + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }
 
     }
@@ -200,15 +206,19 @@ public class MenuListener implements ActionListener {
                 int luceneId = App.get().appCase.getLuceneId(item);
                 selectedIds.add(luceneId);
             }
-            setupFileChooser();
-            fileChooser.setFileFilter(csvFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                if (!file.getName().endsWith(CSV)) {
-                    file = new File(file.getAbsolutePath() + CSV);
+            setupColumnsSelector();
+            if (ColumnsSelectUI.getOkButtonClicked() == true) {
+                setupFileChooser();
+                fileChooser.setFileFilter(csvFilter);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    if (!file.getName().endsWith(CSV)) {
+                        file = new File(file.getAbsolutePath() + CSV);
+                    }
+                    ArrayList<String> loadedSelectedFields = ColumnsManager.loadSelectedFields(ColumnsManager.SELECTED_PROPERTIES_FILENAME);
+                    (new CopyProperties(file, selectedIds, loadedSelectedFields)).execute();
                 }
-                (new CopyProperties(file, selectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.copyChecked) {
@@ -219,17 +229,20 @@ public class MenuListener implements ActionListener {
                     uniqueSelectedIds.add(docId);
                 }
             });
-            setupFileChooser();
-            fileChooser.setFileFilter(csvFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                if (!file.getName().endsWith(CSV)) {
-                    file = new File(file.getAbsolutePath() + CSV);
+            setupColumnsSelector();
+            if (ColumnsSelectUI.getOkButtonClicked() == true) {
+                setupFileChooser();
+                fileChooser.setFileFilter(csvFilter);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    if (!file.getName().endsWith(CSV)) {
+                        file = new File(file.getAbsolutePath() + CSV);
+                    }
+                    ArrayList<String> loadedSelectedFields = ColumnsManager.loadSelectedFields(ColumnsManager.SELECTED_PROPERTIES_FILENAME);
+                    (new CopyProperties(file, uniqueSelectedIds, loadedSelectedFields)).execute();
                 }
-                (new CopyProperties(file, uniqueSelectedIds)).execute();
             }
-
         } else if (e.getSource() == menu.exportChecked) {
             ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
             for (IPEDSource source : App.get().appCase.getAtomicSources()) {

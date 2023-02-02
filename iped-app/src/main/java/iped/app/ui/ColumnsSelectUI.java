@@ -17,22 +17,20 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import iped.engine.task.index.IndexItem;
 import iped.localization.LocalizedProperties;
 import iped.utils.StringUtil;
 
-public class ColumnsManagerReportUI extends ColumnsManagerUI {
+public class ColumnsSelectUI extends ColumnsManagerUI {
     private ColumnsManagerUI columnsManagerUI;
-    private static ColumnsManagerReportUI instance;
+    private static ColumnsSelectUI instance;
     private JButton okButton = new JButton("OK");
     ArrayList<String> loadedSelectedProperties;
+    private static boolean okButtonClicked;
+    protected String saveFileName;
 
-    private static final String[] basicReportProps = { IndexItem.NAME, IndexItem.PATH, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.CREATED,
-        IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.DELETED, IndexItem.CARVED, IndexItem.HASH, IndexItem.ID_IN_SOURCE };
-
-    public static ColumnsManagerReportUI getInstance() {
+    public static ColumnsSelectUI getInstance() {
         if (instance == null)
-            instance = new ColumnsManagerReportUI();
+            instance = new ColumnsSelectUI();
         return instance;
     }
 
@@ -45,8 +43,14 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         instance = null;
     }
 
-    protected ColumnsManagerReportUI() {
+    public static boolean getOkButtonClicked() {
+        return okButtonClicked;
+    }
+
+    protected ColumnsSelectUI() {
         super();
+        saveFileName = ColumnsManager.SELECTED_PROPERTIES_FILENAME;
+        okButtonClicked = false;
         columnsManagerUI = ColumnsManagerUI.getInstance();
 
         dialog.setTitle(Messages.getString("ReportDialog.PropertiesDialogTitle"));
@@ -83,13 +87,12 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         dialog.getContentPane().add(panel);
         dialog.setLocationRelativeTo(App.get());
 
-        loadedSelectedProperties = columnsManager.loadReportSelectedFields();
+        loadedSelectedProperties = ColumnsManager.loadSelectedFields(saveFileName);
         if (loadedSelectedProperties != null) {
             columnsManager.enableOnlySelectedProperties(loadedSelectedProperties);
         } else {
-            columnsManager.enableOnlySelectedProperties(Arrays.asList(basicReportProps));
+            columnsManager.enableOnlySelectedProperties(new ArrayList<String>(Arrays.asList(ResultTableModel.fields)));
         }
-
         updatePanelList();
     }
 
@@ -98,13 +101,18 @@ public class ColumnsManagerReportUI extends ColumnsManagerUI {
         if (e.getSource().equals(combo)) {
             updatePanelList();
         } else if (e.getSource().equals(okButton)) {
-            columnsManager.saveReportSelectedProps();
+            columnsManager.saveSelectedProps(saveFileName);
+            okButtonClicked = true;
             dispose();
         } else {
             JCheckBox source = (JCheckBox) e.getSource();
-            String text = source.getText();
+            String nonLocalizedText = LocalizedProperties.getNonLocalizedField(source.getText());
             boolean isSelected = source.isSelected();
-            columnsManager.allCheckBoxesState.put(text, isSelected);
+            if (columnsManager.getSelectedProperties().size() == 1 && !isSelected) {
+                updatePanelList();
+                return;
+            }
+            columnsManager.allCheckBoxesState.put(nonLocalizedText, isSelected);
         }
     }
 

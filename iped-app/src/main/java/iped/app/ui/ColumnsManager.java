@@ -92,12 +92,11 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     private IPEDSource lastCase;
 
-    File moduleDir;
+    private static File moduleDir;
     private File caseCols;
 
-    private static final String SELECTED_PROPERTIES_FILENAME = "data/reportProps.dat";
-
-    private File reportPropsFile;
+    public static final String SELECTED_PROPERTIES_FILENAME = "data/selectedProps.dat";
+    public static final String SELECTED_REPORT_PROPERTIES_FILENAME = "data/reportProps.dat";
 
     String[] indexFields = null;
 
@@ -151,12 +150,13 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         ArrayList<String> visibleFields = new ArrayList<String>();
     }
 
-    protected void saveReportSelectedProps() {
+    protected void saveSelectedProps(String propsFileName) {
+        File propsFile = new File(moduleDir, propsFileName);
         try {
             Set<String> reportPropsSet = new HashSet<>();
             reportPropsSet.addAll(getSelectedProperties());
             if (reportPropsSet.size() > 0) {
-                Util.writeObject(reportPropsSet, reportPropsFile.getAbsolutePath());
+                Util.writeObject(reportPropsSet, propsFile.getAbsolutePath());
             }
         } catch (Exception e1) {
             e1.printStackTrace();
@@ -191,7 +191,6 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         autoManageCols = analysisConfig.isAutoManageCols();
 
         moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
-        reportPropsFile = new File(moduleDir, SELECTED_PROPERTIES_FILENAME);
 
         updateDinamicFields();
 
@@ -246,12 +245,13 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         }
     }
 
-    protected ArrayList<String> loadReportSelectedFields() {
+    public static ArrayList<String> loadSelectedFields(String propsFileName) {
         Set<String> columnsReport = new HashSet<>();
         ArrayList<String> selectedFields = null;
-        if (reportPropsFile.exists()) {
+        File propsFile = new File(moduleDir, propsFileName);
+        if (propsFile.exists()) {
             try {
-                columnsReport = (Set<String>) Util.readObject(reportPropsFile.getAbsolutePath());
+                columnsReport = (Set<String>) Util.readObject(propsFile.getAbsolutePath());
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
             }
