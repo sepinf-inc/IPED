@@ -49,10 +49,10 @@ public class TimelineListener implements ActionListener, ClearFilterListener {
     private void updateGUI(boolean updateResults) {
         if (timelineViewEnabled) {
             timelineButton.setIcon(filteredIcon);
-            ColumnsManager.getInstance().moveTimelineColumns(5);
+            ColumnsManagerUI.getInstance().moveTimelineColumns(5);
         } else {
             timelineButton.setIcon(defaultIcon);
-            ColumnsManager.getInstance().moveTimelineColumns(14);
+            ColumnsManagerUI.getInstance().moveTimelineColumns(14);
         }
         updateSortingColumn();
         if (updateResults) {

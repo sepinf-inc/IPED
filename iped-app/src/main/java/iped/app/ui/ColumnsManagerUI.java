@@ -27,6 +27,7 @@ import javax.swing.table.TableColumn;
 
 import iped.app.ui.controls.HintTextField;
 import iped.localization.LocalizedProperties;
+import iped.properties.BasicProps;
 import iped.utils.StringUtil;
 
 
@@ -128,6 +129,29 @@ public class ColumnsManagerUI implements ActionListener {
         dialog.setLocationRelativeTo(App.get());
 
         updatePanelList();
+    }
+
+    public void moveTimelineColumns(int newPos) {
+        String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
+        for (int i = 0; i < App.get().resultsTable.getColumnCount(); i++) {
+            TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
+            String colName = col.getHeaderValue().toString();
+            for (int k = 0; k < timeFields.length; k++) {
+                if (colName.equalsIgnoreCase(timeFields[k])) {
+                    if (!columnsManager.colState.visibleFields.contains(timeFields[k])) {
+                        columnsManager.updateCol(colName, true);
+                        updateGUICol(colName, true);
+                    }
+                    App.get().resultsTable.moveColumn(i, newPos);
+                    if (newPos > i) {
+                        i--;
+                    } else {
+                        newPos++;
+                    }
+                    timeFields[k] = null;
+                }
+            }
+        }
     }
 
     protected void updatePanelList() {

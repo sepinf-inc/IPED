@@ -38,8 +38,6 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
     public void dispose() {
         super.dispose();
         dialog.setVisible(false);
-        columnsManager = null;
-        columnsManagerUI = null;
         instance = null;
     }
 

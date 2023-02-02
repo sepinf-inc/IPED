@@ -19,7 +19,6 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
     public void dispose() {
         super.dispose();
         dialog.setVisible(false);
-        columnsManager = null;
         instance = null;
     }
 

@@ -376,28 +376,6 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         }
     }
 
-    public void moveTimelineColumns(int newPos) {
-        String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
-        for (int i = 0; i < App.get().resultsTable.getColumnCount(); i++) {
-            TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
-            String colName = col.getHeaderValue().toString();
-            for (int k = 0; k < timeFields.length; k++) {
-                if (colName.equalsIgnoreCase(timeFields[k])) {
-                    if (!colState.visibleFields.contains(timeFields[k])) {
-                        updateCol(colName, true);
-                    }
-                    App.get().resultsTable.moveColumn(i, newPos);
-                    if (newPos > i) {
-                        i--;
-                    } else {
-                        newPos++;
-                    }
-                    timeFields[k] = null;
-                }
-            }
-        }
-    }
-
     public void resetToLastLayout() {
         File cols = this.getColStateFile();
         try {
