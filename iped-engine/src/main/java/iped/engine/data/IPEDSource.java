@@ -29,7 +29,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -121,7 +120,7 @@ public class IPEDSource implements IIPEDSource {
 
     int totalItens = 0;
 
-    private int lastId = 0;
+    private int lastId = -1;
 
     LinkedHashSet<String> keywords = new LinkedHashSet<String>();
 
@@ -232,6 +231,28 @@ public class IPEDSource implements IIPEDSource {
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    /**
+     * Clear bookmarks to items removed from the case.
+     */
+    public void clearOldBookmarks() {
+        ArrayList<Integer> idsToRemove = new ArrayList<>();
+        for (int id = 0; id <= lastId; id++) {
+            if (docs[id] == -1) {
+                idsToRemove.add(id);
+            }
+        }
+        for (int bookmarkId : bookmarks.getBookmarkMap().keySet().toArray(new Integer[0])) {
+            bookmarks.removeBookmark(idsToRemove, bookmarkId);
+            if (bookmarks.getBookmarkCount(bookmarkId) == 0) {
+                bookmarks.delBookmark(bookmarkId);
+            }
+        }
+        for (int id : idsToRemove) {
+            bookmarks.setChecked(false, id);
+        }
+        bookmarks.saveState(true);
     }
 
     public void populateLuceneIdToIdMap() throws IOException {

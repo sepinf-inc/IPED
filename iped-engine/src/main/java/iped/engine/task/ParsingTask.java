@@ -315,8 +315,8 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         SplitLargeBinaryConfig splitConfig = ConfigurationManager.get()
                 .findObject(SplitLargeBinaryConfig.class);
         if (((Item) evidence).getTextCache() == null
-                && ((evidence.getLength() == null || !splitConfig.isEnabled() || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
-                || (StandardParser.isSpecificParser(parser) && !FragmentLargeBinaryTask.isXHtmlToSplit(evidence)))) {
+                && ((evidence.getLength() == null || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
+                || StandardParser.isSpecificParser(parser))) {
             try {
                 depth++;
                 ParsingTask task = new ParsingTask(worker, autoParser);

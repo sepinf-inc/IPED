@@ -433,8 +433,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.setSize(new Dimension(800, 600));
         this.setExtendedState(Frame.MAXIMIZED_BOTH);
         this.addWindowListener(this);
-        URL image = getClass().getResource("search.png"); //$NON-NLS-1$
-        this.setIconImage(new ImageIcon(image).getImage());
+        this.setIconImages(IconUtil.getIconImages("search", "/iped/app/icon"));
         this.setVisible(true);
         ToolTipManager.sharedInstance().setInitialDelay(10);
 
@@ -1493,12 +1492,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     @Override
-    public IIPEDSearcher createNewSearch(String query) {
-        IIPEDSearcher searcher = new IPEDSearcher(appCase, query);
-        return searcher;
-    }
-
-    @Override
     public IIPEDSource getIPEDSource() {
         return appCase;
     }
@@ -1525,6 +1518,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.butSimSearch.setEnabled(enabled);
     }
 
+
     public List<ResultSetViewer> getResultSetViewers(){
         return getResultSetViewerConfiguration().getResultSetViewers();
     }
@@ -1544,4 +1538,23 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
         return result;
     }
+
+    @Override
+    public IIPEDSearcher createNewSearch(String query) {
+        CaseSearcherFilter csf = new CaseSearcherFilter(query);
+        csf.applyUIQueryFilters();
+        return csf.getSearcher();
+    }
+
+    @Override
+    public IIPEDSearcher createNewSearch(String query, String[] sortFields) {
+        IIPEDSearcher searcher = null;
+        if (sortFields == null) {
+            searcher = new IPEDSearcher(appCase, query);
+        } else {
+            searcher = new IPEDSearcher(appCase, query, sortFields);
+        }
+        return searcher;
+    }
+
 }

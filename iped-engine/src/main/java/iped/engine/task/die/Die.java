@@ -14,7 +14,7 @@ import java.util.TreeMap;
 public class Die {
     private static final float INF = -1e10f;
     private static final int numStripes1 = 3, numStripes2 = 5, grid1 = 6, grid2 = 11, grid3 = 3, grid4 = 5, grid5 = 7;
-    private static final int size = 160;
+    private static final int size = 256;
     private static final int binSize = 25;
     private static final short[] sqrt = new short[1 << 20];
     private static final short[] atan = new short[1 << 22];

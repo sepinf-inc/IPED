@@ -57,7 +57,7 @@ public class ImageThumbTask extends ThumbTask {
     private ExternalImageConverter externalImageConverter;
     private static final AtomicBoolean extConvPropInit = new AtomicBoolean(false);
 
-    private int thumbSize = 160;
+    private int thumbSize;
 
     public ImageThumbTaskConfig getImageThumbConfig() {
         return imgThumbConfig;
