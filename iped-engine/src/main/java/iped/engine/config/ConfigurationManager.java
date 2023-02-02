@@ -1,5 +1,6 @@
 package iped.engine.config;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -11,6 +12,7 @@ import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -72,16 +74,38 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
         }
     }
 
-    public void loadConfigs(boolean forceReload) throws IOException {        
-        for (Iterator<Configurable<?>> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
-            Configurable<?> configurable = iterator.next();
-            if(forceReload) {
-                configurable.reset();
+    public void loadConfigs(boolean forceReload) throws IOException {
+        if(directory instanceof ConfigurationDirectory) {
+            for (Iterator<Configurable<?>> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
+                Configurable<?> configurable = iterator.next();
+                if(forceReload) {
+                    configurable.reset();
+                }
+
+                List<Path> resources = directory.lookUpResource(configurable);
+
+                configurable.processConfigs(resources);
             }
-
-            List<Path> resources = directory.lookUpResource(configurable);
-
-            configurable.processConfigs(resources);
+        }else if(directory instanceof SerializedConfigurationDirectory) {
+            loadedConfigurables = new HashMap<Configurable<?>, Boolean>();
+            ObjectInputStream ois = ((SerializedConfigurationDirectory) directory).openInputStream();
+            try {
+                Configurable configurable=(Configurable)ois.readObject();
+                while(configurable!=null) {
+                    loadedConfigurables.put(configurable, true);
+                    try {
+                        configurable=(Configurable)ois.readObject();
+                    }catch (EOFException e) {
+                        configurable=null;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 

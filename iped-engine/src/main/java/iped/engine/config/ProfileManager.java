@@ -1,6 +1,10 @@
 package iped.engine.config;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Paths;
 import java.util.Iterator;
@@ -12,6 +16,7 @@ import iped.configuration.IConfigurationDirectory;
 import iped.configuration.ObjectManager;
 
 public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
+    private static final String PROFILE_EXTENSION = ".ipedprofile";
     private static ProfileManager singleton = null;
     Set<IConfigurationDirectory> listOfProfileDirectories = new TreeSet<IConfigurationDirectory>();
     private File profilesDir;
@@ -34,10 +39,16 @@ public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
         confDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), Configuration.CONF_DIR ).toFile();
         profilesDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), Configuration.PROFILES_DIR ).toFile();
         for(File currentProfile : profilesDir.listFiles() ){
-            ConfigurationDirectory currentProfileDirectory = new ConfigurationDirectory(confDir.toPath());
-            currentProfileDirectory.addPath(currentProfile.toPath());
-            currentProfileDirectory.setName(currentProfile.getName());
-            listOfProfileDirectories.add(currentProfileDirectory);
+            if(currentProfile.isDirectory()) {
+                ConfigurationDirectory currentProfileDirectory = new ConfigurationDirectory(confDir.toPath());
+                currentProfileDirectory.addPath(currentProfile.toPath());
+                currentProfileDirectory.setName(currentProfile.getName());
+                listOfProfileDirectories.add(currentProfileDirectory);
+            }else {
+                SerializedConfigurationDirectory currentProfileDirectory = new SerializedConfigurationDirectory(currentProfile.toPath());
+                currentProfileDirectory.setName(currentProfile.getName().substring(0,currentProfile.getName().lastIndexOf(PROFILE_EXTENSION)));
+                listOfProfileDirectories.add(currentProfileDirectory);
+            }
         }
     }
 
@@ -73,7 +84,7 @@ public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
 
     }
 
-    public IConfigurationDirectory createProfile(String profileName, ConfigurationManager configurationManager) throws FileAlreadyExistsException {
+    public IConfigurationDirectory createProfilePath(String profileName, ConfigurationManager configurationManager) throws FileAlreadyExistsException {
         File newProfile = new File(profilesDir, profileName);
         if(newProfile.exists()) {
             throw new FileAlreadyExistsException("Profile name already exists");
@@ -89,6 +100,31 @@ public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
 
         ConfigurationDirectory configDirectory = new ConfigurationDirectory(confDir.toPath());
         configDirectory.addPath(newProfile.toPath());
+        configDirectory.setName(profileName);
+        listOfProfileDirectories.add(configDirectory);
+
+        return configDirectory;
+    }
+
+    public IConfigurationDirectory createProfile(String profileName, ConfigurationManager configurationManager) throws FileAlreadyExistsException {
+        File newProfile = new File(profilesDir, profileName + PROFILE_EXTENSION);
+        if(newProfile.exists()) {
+            throw new FileAlreadyExistsException("Profile name already exists");
+        }
+
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(newProfile));
+            Set<Configurable<?>> configs = configurationManager.getObjects();
+            for (Iterator iterator = configs.iterator(); iterator.hasNext();) {
+                Configurable<?> configurable = (Configurable<?>) iterator.next();
+                oos.writeObject(configurable);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        
+        SerializedConfigurationDirectory configDirectory = new SerializedConfigurationDirectory(newProfile.toPath());
         configDirectory.setName(profileName);
         listOfProfileDirectories.add(configDirectory);
 

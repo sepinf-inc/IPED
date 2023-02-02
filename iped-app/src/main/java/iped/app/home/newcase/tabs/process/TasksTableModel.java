@@ -24,6 +24,7 @@ import iped.app.home.MainFrame;
 import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.configuration.Configurable;
+import iped.configuration.EnabledInterface;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.config.TaskInstallerConfig;
@@ -191,8 +192,8 @@ public class TasksTableModel extends AbstractTableModel {
             enabled.set(rowIndex, ((boolean) aValue));
             List<Configurable<?>> configs = taskList.get(rowIndex).getConfigurables();
             for (Configurable<?> config : configs) {
-                if (config instanceof EnableTaskProperty) {
-                    ((EnableTaskProperty) config).setEnabled(true);
+                if (config instanceof EnabledInterface) {
+                    ((EnabledInterface) config).setEnabled((boolean) aValue);
                     configurationManager.notifyUpdate(config);
                 }
             }
