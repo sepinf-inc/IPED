@@ -30,6 +30,7 @@ import iped.app.ui.viewers.HexSearcherImpl;
 import iped.app.ui.viewers.TextViewer;
 import iped.engine.task.index.IndexItem;
 import iped.io.IStreamSource;
+import iped.io.URLUtil;
 import iped.viewers.ATextViewer;
 import iped.viewers.CADViewer;
 import iped.viewers.EmailViewer;
@@ -112,7 +113,7 @@ public class ViewerController {
                     }
 
                     // LibreOffice viewer initialization
-                    URI jarUri = LibreOfficeViewer.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+                    URI jarUri = URLUtil.getURL(LibreOfficeViewer.class).toURI();
                     File moduledir = new File(jarUri).getParentFile().getParentFile();
                     LibreOfficeFinder loFinder = new LibreOfficeFinder(moduledir);
                     final String pathLO = loFinder.getLOPath();

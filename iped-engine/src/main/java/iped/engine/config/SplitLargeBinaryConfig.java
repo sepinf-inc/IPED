@@ -1,15 +1,18 @@
 package iped.engine.config;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Path;
+
 import iped.utils.UTF8Properties;
 
-public class SplitLargeBinaryConfig extends AbstractTaskPropertiesConfig {
+public class SplitLargeBinaryConfig extends AbstractPropertiesConfigurable {
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
-    private static final String ENABLE_PARAM = "enableSplitLargeBinary";
     private static final String CONF_FILE = "SplitLargeBinaryConfig.txt";
 
     private long minItemSizeToFragment = 100 * 1024 * 1024;
@@ -26,16 +29,6 @@ public class SplitLargeBinaryConfig extends AbstractTaskPropertiesConfig {
 
     public int getFragmentOverlapSize() {
         return fragmentOverlapSize;
-    }
-
-    @Override
-    public String getTaskEnableProperty() {
-        return ENABLE_PARAM;
-    }
-
-    @Override
-    public String getTaskConfigFileName() {
-        return CONF_FILE;
     }
 
     @Override
@@ -56,6 +49,16 @@ public class SplitLargeBinaryConfig extends AbstractTaskPropertiesConfig {
             fragmentOverlapSize = Integer.valueOf(value.trim());
         }
 
+    }
+
+    @Override
+    public Filter<Path> getResourceLookupFilter() {
+        return new Filter<Path>() {
+            @Override
+            public boolean accept(Path entry) throws IOException {
+                return entry.endsWith(CONF_FILE);
+            }
+        };
     }
 
 }

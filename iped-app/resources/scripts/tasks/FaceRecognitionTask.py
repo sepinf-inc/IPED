@@ -55,6 +55,8 @@ def createProcessQueue():
 
 def log_stderr(proc):
     for line in iter(proc.stderr.readline, b''):
+        if proc.poll() is not None:
+            break
         line = line.strip()
         if line:
             logger.info("[FaceRecognitionTask] Process-" + str(proc.pid) + " stderr: " + line)
@@ -305,7 +307,9 @@ class FaceRecognitionTask:
         
         face_locations = self.convertTuplesToList(face_locations)
         
-        item.setExtraAttribute("face_locations", face_locations)
-        item.setExtraAttribute("face_encodings", face_encodings)
+        from iped.properties import ExtraProperties
+        item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
+        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
+        item.setExtraAttribute(ExtraProperties.FACE_COUNT, len(face_locations))
         
         self.cacheResults(hash, face_locations, face_encodings)

@@ -397,6 +397,10 @@
         <glob pattern="Library2.dat" />
     </mime-type>
     
+    <mime-type type="application/x-shareaza-library-dat-entry">
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
     <mime-type type="application/x-bittorrent-resume-dat">
         <_comment>BitTorrent Client Resume.dat file</_comment>
         <sub-class-of type="application/x-p2p"/>
@@ -782,6 +786,14 @@
         <glob pattern=".*\.part\.met( \([1-9]\))?\.bak" isregex="true"/>
     </mime-type>
     
+    <mime-type type="application/x-emule-known-met-entry">
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-emule-part-met-entry">
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
     <mime-type type="application/x-emule-searches">
         <sub-class-of type="text/plain"/>
         <glob pattern="AC_SearchStrings.dat"/>
@@ -805,6 +817,10 @@
             <match value="__ARESDB1.04L_" type="string" offset="0"/>
         </magic>
         <glob pattern="*.ares"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ares-galaxy-entry">
+        <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
     
     <mime-type type="application/x-msie-cache">
@@ -1333,5 +1349,26 @@
  	
  	<mime-type type="application/x-tor-tc-fragment">
 	</mime-type>
+
+    <mime-type type="application/x-win10-mail-db">
+        <sub-class-of type="application/x-edb"/>
+        <glob pattern="store.vol"/>
+    </mime-type>
+
+    <mime-type type="message/x-win10-mail-msg">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-appointment">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-contact">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-store">
+        <sub-class-of type="text/html"/>
+    </mime-type>
     
 </mime-info>

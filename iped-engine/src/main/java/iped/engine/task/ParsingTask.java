@@ -53,6 +53,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.configuration.Configurable;
+import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.engine.config.CategoryToExpandConfig;
@@ -222,6 +223,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         // DEFINE CONTEXTO: PARSING RECURSIVO, ETC
         context = new ParseContext();
         context.set(Parser.class, this.autoParser);
+        context.set(ICaseData.class, caseData);
 
         ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
         context.set(ItemInfo.class, itemInfo);
@@ -314,7 +316,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 .findObject(SplitLargeBinaryConfig.class);
         if (((Item) evidence).getTextCache() == null
                 && ((evidence.getLength() == null || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
-                || (StandardParser.isSpecificParser(parser) && !FragmentLargeBinaryTask.isXHtmlToSplit(evidence)))) {
+                || StandardParser.isSpecificParser(parser))) {
             try {
                 depth++;
                 ParsingTask task = new ParsingTask(worker, autoParser);

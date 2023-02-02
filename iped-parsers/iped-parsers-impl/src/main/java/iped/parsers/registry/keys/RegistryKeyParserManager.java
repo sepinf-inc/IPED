@@ -21,21 +21,23 @@ import org.w3c.dom.NodeList;
 
 import iped.configuration.IConfigurationDirectory;
 
-public class RegistryKeyParserManager {
+public class RegistryKeyParserManager implements RegistryKeyParserFilter {
 
     private static final String BASE_FOLDER = "iped.parsers.registry.RegistryParser";
 
-    ScriptEngine engine;
-    Invocable inv;
-
     // singleton
     private static RegistryKeyParserManager registroKeyParserManager = new RegistryKeyParserManager();
+
+    private KeyPathPatternMap<RegistryKeyParser> map = new KeyPathPatternMap<RegistryKeyParser>();
+    private RegistryKeyParser defaultRegistryKeyParser = new HtmlKeyParser();
+    private ScriptEngine engine;
+    private Invocable inv;
 
     private RegistryKeyParserManager() {
         loadConfigPath();
     }
 
-    private void loadConfigPath() {
+    synchronized private void loadConfigPath() {
         try {
             String appRoot = System.getProperty(IConfigurationDirectory.IPED_APP_ROOT);
 
@@ -144,9 +146,6 @@ public class RegistryKeyParserManager {
         return registroKeyParserManager;
     }
 
-    private KeyPathPatternMap<RegistryKeyParser> map = new KeyPathPatternMap<RegistryKeyParser>();
-    private RegistryKeyParser defaultRegistryKeyParser = new HtmlKeyParser();
-
     public RegistryKeyParser getDefaultRegistryKeyParser() {
         return defaultRegistryKeyParser;
     }
@@ -184,11 +183,9 @@ public class RegistryKeyParserManager {
             int slashIndex = meio.indexOf("/");
             if (slashIndex >= 0) {
                 meio = meio.substring(0, slashIndex);
-                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio
-                        + patternSubts.substring(patternSubts.indexOf("*") + 1);
+                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio + patternSubts.substring(patternSubts.indexOf("*") + 1);
             } else {
-                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio
-                        + patternSubts.substring(patternSubts.indexOf("*") + 1);
+                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio + patternSubts.substring(patternSubts.indexOf("*") + 1);
             }
             wildIndex = patternSubts.indexOf("*");
         }

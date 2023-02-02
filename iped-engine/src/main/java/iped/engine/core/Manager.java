@@ -22,7 +22,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,6 +57,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FileSystemConfig;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.config.LocalConfig;
+import iped.engine.config.SplashScreenConfig;
 import iped.engine.data.Bookmarks;
 import iped.engine.data.CaseData;
 import iped.engine.data.IPEDSource;
@@ -467,6 +470,11 @@ public class Manager {
         // remove item data from storage or file system
         ExportFileTask.deleteIgnoredItemData(caseData, output, true, writer);
 
+        // clear bookmarks pointing to deleted items
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
+            ipedCase.clearOldBookmarks();
+        }
+
         writer.close();
 
         // removes graph connections from evidence
@@ -510,6 +518,12 @@ public class Manager {
         if (newIndex) {
             // first empty commit to be used by --restart
             writer.commit();
+        }
+
+        if (args.isRestart()) {
+            try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
+                ipedCase.clearOldBookmarks();
+            }
         }
 
         if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
@@ -867,6 +881,7 @@ public class Manager {
             IOUtil.copyDirectory(new File(defaultProfile, "conf"), new File(output, "conf"));
             IOUtil.copyFile(new File(defaultProfile, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
             IOUtil.copyFile(new File(defaultProfile, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
+            setSplashMessage(output);
 
             // copy non default profile
             File currentProfile = new File(Configuration.getInstance().configPath);
@@ -911,6 +926,25 @@ public class Manager {
 
     public void setProcessingFinished(boolean isProcessingFinished) {
         this.isProcessingFinished = isProcessingFinished;
+    }
+    
+    private void setSplashMessage(File dir) throws IOException {
+        String msg = args.getSplashMessage();
+        if (msg != null && !msg.isBlank()) {
+            File splashConfigFile = new File(dir, SplashScreenConfig.CONFIG_FILE);
+            if (splashConfigFile.exists()) {
+                List<String> l = Files.readAllLines(splashConfigFile.toPath(), StandardCharsets.UTF_8);
+                for (int i = 0; i < l.size(); i++) {
+                    String line = l.get(i);
+                    if (line.trim().startsWith(SplashScreenConfig.CUSTOM_MESSAGE)) {
+                        l.set(i, SplashScreenConfig.CUSTOM_MESSAGE + " = " + msg);
+                        Files.write(splashConfigFile.toPath(), l, StandardCharsets.UTF_8, StandardOpenOption.WRITE,
+                                StandardOpenOption.TRUNCATE_EXISTING);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
 }

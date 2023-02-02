@@ -185,7 +185,7 @@ public class LedCarveTask extends BaseCarveTask {
             long offset = 0;
             int read512 = 0;
             is = evidence.getBufferedInputStream();
-            while ((read512 = is.read(buf512)) > 0) {
+            while ((read512 = is.readNBytes(buf512, 0, buf512.length)) > 0) {
                 if (read512 != buf512.length) break;
                 cnt512total++;
                 boolean empty = true;
@@ -203,7 +203,7 @@ public class LedCarveTask extends BaseCarveTask {
                     if (ledHashDB.containsMD5_512(hash512)) {
                         cnt512hit++;
                         is.mark(65536);
-                        int read64K = is.read(buf64K);
+                        int read64K = is.readNBytes(buf64K, 0, buf64K.length);
                         is.reset();
                         if (read64K == buf64K.length) {
                             cntBytesHashed += read512 + read64K;
@@ -248,11 +248,10 @@ public class LedCarveTask extends BaseCarveTask {
         bytesHashed.addAndGet(cntBytesHashed);
     }
 
-    private static boolean isAcceptedType(MediaType mediaType) {
+    public static boolean isAcceptedType(MediaType mediaType) {
         return mediaType.getBaseType().equals(UNALLOCATED_MIMETYPE)
                 || mediaType.getBaseType().equals(MediaType.OCTET_STREAM)
                 || mediaType.getBaseType().equals(MediaTypes.VDI)
-                || mediaType.getBaseType().equals(MediaTypes.VHDX)
                 || mediaType.getBaseType().equals(mtPageFile)
                 || mediaType.getBaseType().equals(mtVolumeShadow);
     }

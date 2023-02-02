@@ -83,8 +83,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("ColumnsManager.UFED"), Messages.getString("ColumnsManager.Other"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("ColumnsManager.All") }; //$NON-NLS-1$
+            Messages.getString("ColumnsManager.PeerToPeer"), Messages.getString("ColumnsManager.UFED"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("ColumnsManager.Other"), Messages.getString("ColumnsManager.All") }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final File getGlobalColsFile() {
         String name = "visibleCols"; //$NON-NLS-1$
@@ -527,6 +527,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> officeFields = new ArrayList<String>();
         ArrayList<String> htmlFields = new ArrayList<String>();
         ArrayList<String> nerFields = new ArrayList<String>();
+        ArrayList<String> p2pFields = new ArrayList<String>();
         ArrayList<String> ufedFields = new ArrayList<String>();
         ArrayList<String> hashDbFields = new ArrayList<String>();
         ArrayList<String> communicationFields = new ArrayList<String>();
@@ -559,6 +560,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 htmlFields.add(f);
             else if (f.startsWith(NamedEntityTask.NER_PREFIX))
                 nerFields.add(f);
+            else if (f.startsWith(ExtraProperties.P2P_META_PREFIX))
+                p2pFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
             else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
@@ -574,7 +577,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 videoFields.toArray(new String[0]), pdfFields.toArray(new String[0]),
                 officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),
                 regexFields.toArray(new String[0]), languageFields.toArray(new String[0]),
-                nerFields.toArray(new String[0]), ufedFields.toArray(new String[0]) };
+                nerFields.toArray(new String[0]), p2pFields.toArray(new String[0]),
+                ufedFields.toArray(new String[0])};
 
         ArrayList<String> otherFields = new ArrayList<String>();
         for (String f : indexFields) {

@@ -87,8 +87,9 @@ public class Util {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
             byte[] buffer = new byte[255];
-            while (is.read(buffer) != -1) {
-                digest.update(buffer);
+            int len;
+            while ((len = is.read(buffer)) != -1) {
+                digest.update(buffer, 0, len);
             }
             hash = byteArrayToHex(digest.digest());
 

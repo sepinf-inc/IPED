@@ -19,7 +19,7 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
     private boolean logGalleryRendering = false;
     private int minTimeout = 20;
     private int timeoutPerMB = 2;
-    private int thumbSize = 160;
+    private int thumbSize = 256;
     private int galleryThreads = 1;
     private int lowResDensity = 96;
     private int highResDensity = 250;

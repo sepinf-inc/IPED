@@ -18,7 +18,6 @@
  */
 package iped.app.ui;
 
-import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -75,7 +74,7 @@ public class GalleryModel extends AbstractTableModel {
     private static final double blurIntensity = 0.02d;
 
     private int colCount = defaultColCount;
-    private int thumbSize = 160;
+    private int thumbSize;
     private int galleryThreads = 1;
     private boolean logRendering = false;
     private ImageThumbTask imgThumbTask;
@@ -198,7 +197,6 @@ public class GalleryModel extends AbstractTableModel {
                 BufferedImage image = null;
                 InputStream stream = null;
                 GalleryValue value = new GalleryValue(doc.get(IndexItem.NAME), null, id);
-                boolean getDimension = true;
                 try {
                     if (cache.containsKey(id)) {
                         return;
@@ -227,15 +225,6 @@ public class GalleryModel extends AbstractTableModel {
                     String hash = doc.get(IndexItem.HASH);
                     if (image == null && hash != null && !hash.isEmpty()) {
                         image = getViewImage(docId, hash, isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
-                        int resizeTolerance = 4;
-                        if (image != null) {
-                            if (image.getWidth() < thumbSize - resizeTolerance
-                                    && image.getHeight() < thumbSize - resizeTolerance) {
-                                value.originalW = image.getWidth();
-                                value.originalH = image.getHeight();
-                                getDimension = false;
-                            }
-                        }
                     }
 
                     if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
@@ -255,15 +244,6 @@ public class GalleryModel extends AbstractTableModel {
 
                     if (stream != null) {
                         stream.mark(10000000);
-                    }
-
-                    if (stream != null && getDimension) {
-                        Dimension d = ImageUtil.getImageFileDimension(stream);
-                        if (d != null) {
-                            value.originalW = d.width;
-                            value.originalH = d.height;
-                        }
-                        stream.reset();
                     }
 
                     if (image == null && stream != null && imgThumbTask.getImageThumbConfig().isExtractThumb()
@@ -287,6 +267,11 @@ public class GalleryModel extends AbstractTableModel {
                         if (value.icon == null)
                             value.icon = errorIcon;
                     } else {
+                        // Resize image only if it is too large (> 2x the desired thumbSize)
+                        if (image.getWidth() > thumbSize * 2 || image.getHeight() > thumbSize * 2) {
+                            image = ImageUtil.resizeImage(image, thumbSize, thumbSize);
+                        }
+                        
                         if (blurFilter) {
                             image = ImageUtil.blur(image, thumbSize, blurIntensity);
                         }

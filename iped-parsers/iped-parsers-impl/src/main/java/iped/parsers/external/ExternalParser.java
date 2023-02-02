@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.io.URLUtil;
 import iped.utils.IOUtil;
 
 /**
@@ -238,7 +239,7 @@ public class ExternalParser extends AbstractParser {
         if (rootFolder != null)
             return rootFolder;
 
-        URL url = ExternalParser.class.getProtectionDomain().getCodeSource().getLocation();
+        URL url = URLUtil.getURL(ExternalParser.class);
         try {
             rootFolder = new File(url.toURI()).getParentFile().getParentFile().getAbsolutePath();
 
