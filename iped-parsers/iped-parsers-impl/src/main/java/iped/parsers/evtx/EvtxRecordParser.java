@@ -3,7 +3,6 @@ package iped.parsers.evtx;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -43,8 +42,6 @@ public class EvtxRecordParser extends AbstractParser {
 
     public static final MediaType EVTX_MIME_TYPE = MediaType.application("x-elf-file"); //$NON-NLS-1$
     public static final String EVTX_RECORD_MIME_TYPE = "application/x-elf-record"; //$NON-NLS-1$
-    
-    HashMap<String, ArrayList<EvtxRecord>> subItens = new HashMap<String, ArrayList<EvtxRecord>>();
     
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
