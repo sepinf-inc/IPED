@@ -48,6 +48,10 @@
 			            </element>
 			        </sequence>
 			    </complexType>
+                <unique name="oneCarverTypeName">
+                  <selector xpath="carverType"/>
+                  <field xpath="@name"/>
+                </unique>
     		</element>
     	</choice>
     </complexType>
