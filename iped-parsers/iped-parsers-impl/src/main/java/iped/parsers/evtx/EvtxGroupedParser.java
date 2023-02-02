@@ -54,11 +54,7 @@ public class EvtxGroupedParser extends AbstractParser {
 	private static final Property RECID_PROP = Property.internalIntegerSequence(EVTX_METADATA_PREFIX+":eventRecordID");
 
 	protected int maxEventPerItem = 50;
-	static String timeCreated = EVTX_METADATA_PREFIX+":timeCreated";
-    
 	private String[] groupBy;
-	int maxProviderId=0;
-	private int totalRecordCount;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -84,17 +80,25 @@ public class EvtxGroupedParser extends AbstractParser {
     class GroupPageCountMap extends HashMap<String,Integer>{
     }
     
+    class IntRef {
+        int val = 0;
+    }
+
     class EvtxRecordGroupExtractor{
 		String subKey;
     	ArrayList<EvtxRecord> recs;
     	ParseContext context;
 		private ContentHandler handler;
+        IntRef maxProviderId;
+        IntRef totalRecordCount;
 
-    	public EvtxRecordGroupExtractor(String subKey, ArrayList<EvtxRecord> recs, ParseContext context, ContentHandler handler) {
+        public EvtxRecordGroupExtractor(String subKey, ArrayList<EvtxRecord> recs, ParseContext context, ContentHandler handler, IntRef maxProviderId, IntRef totalRecordCount) {
     		this.subKey = subKey;
     		this.recs = recs;
     		this.context = context;
     		this.handler = handler;
+            this.maxProviderId = maxProviderId;
+            this.totalRecordCount = totalRecordCount;
     	}
     	
     	public void run() {
@@ -120,8 +124,8 @@ public class EvtxGroupedParser extends AbstractParser {
                 String providerVid = providerIDMap.get(currentProvider);
             	String providerGUID = recs.get(0).getEventProviderGUID();
                 if(providerVid==null) {
-                	maxProviderId++;
-                	providerVid=Integer.toString(maxProviderId);
+                    maxProviderId.val++;
+                    providerVid = Integer.toString(maxProviderId.val);
                 	providerIDMap.put(currentProvider, providerVid);
 
             		Metadata providerMetadata = new Metadata();
@@ -181,7 +185,7 @@ public class EvtxGroupedParser extends AbstractParser {
     			}
 
                 recordMetadata.set(RECCOUNT_PROP, groupRecordCount);
-                totalRecordCount+=groupRecordCount;
+                totalRecordCount.val += groupRecordCount;
 
                 if (extractor.shouldParseEmbedded(recordMetadata)) {
                     try {
@@ -214,6 +218,9 @@ public class EvtxGroupedParser extends AbstractParser {
 
         final TikaInputStream tis = TikaInputStream.get(stream, tmp);
         
+        IntRef maxProviderId = new IntRef();
+        IntRef totalRecordCount = new IntRef();
+
         if (extractor.shouldParseEmbedded(metadata)) {
             EvtxFile evtxFile = new EvtxFile(tis);
             evtxFile.setName(filePath);
@@ -221,6 +228,7 @@ public class EvtxGroupedParser extends AbstractParser {
             HashMap<String, ArrayList<EvtxRecord>> subItens = new HashMap<String, ArrayList<EvtxRecord>>();
             
             EvtxRecordConsumer co = new EvtxRecordConsumer() {
+
     			@Override
     			public void accept(EvtxRecord evtxRecord) {
     				try {
@@ -248,7 +256,7 @@ public class EvtxGroupedParser extends AbstractParser {
                         recs.add(evtxRecord);
                         
                         if(recs.size()>=maxEventPerItem) {
-                        	EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(groupValue, recs, context, handler);
+                            EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(groupValue, recs, context, handler, maxProviderId, totalRecordCount);
                         	ex.run();
                         	subItens.put(groupValue, new ArrayList<>());//empty
                         }
@@ -267,7 +275,7 @@ public class EvtxGroupedParser extends AbstractParser {
 
                 	ArrayList<EvtxRecord> recs = subItens.get(subKey);
                 	if(recs.size()>0) {
-                    	EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(subKey, recs, context, handler);
+                        EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(subKey, recs, context, handler, maxProviderId, totalRecordCount);
                     	ex.run();
                 	}
     			}
