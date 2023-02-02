@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -45,9 +44,9 @@ public class EvtxGroupedParser extends AbstractParser {
 	private static Logger LOGGER = LoggerFactory.getLogger(EvtxGroupedParser.class);
     
 	private static final long serialVersionUID = 9091294620647570196L;
-    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-elf-file")); //$NON-NLS-1$
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(EvtxRecordParser.EVTX_MIME_TYPE); // $NON-NLS-1$
 
-    public static final String EVTX_RECORD_MIME_TYPE = "application/x-elf-record"; //$NON-NLS-1$
+    public static final MediaType EVTX_RECORD_MIME_TYPE = EvtxRecordParser.EVTX_RECORD_MIME_TYPE;
 
 	private static final String EVTX_METADATA_PREFIX = "WinEvt";
 
@@ -126,7 +125,7 @@ public class EvtxGroupedParser extends AbstractParser {
                 	providerIDMap.put(currentProvider, providerVid);
 
             		Metadata providerMetadata = new Metadata();
-            		providerMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, EVTX_RECORD_MIME_TYPE);
+                    providerMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, EVTX_RECORD_MIME_TYPE.toString());
             		providerMetadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
                     providerMetadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
                     providerMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(-1));                        
@@ -148,7 +147,7 @@ public class EvtxGroupedParser extends AbstractParser {
                 groupTitle+="_"+"0".repeat(8-pageStr.length())+pageStr;
 
             	Metadata recordMetadata = new Metadata();
-                recordMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, EVTX_RECORD_MIME_TYPE);
+                recordMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, EVTX_RECORD_MIME_TYPE.toString());
                 recordMetadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
                 recordMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, providerVid);
                 recordMetadata.set(TikaCoreProperties.TITLE, groupTitle);//eventtype
