@@ -27,6 +27,7 @@ import org.apache.tika.mime.MediaType;
 import org.arabidopsis.ahocorasick.AhoCorasick;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -112,7 +113,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         reset();
         loadConfigDocument(doc);
     }
-
+    
     public void loadConfigDocument(Document docParam) throws IOException {
         try {
             Document doc = docParam;
@@ -132,7 +133,8 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
                     TYPES_TO_PROCESS.add(MediaType.parse(type.trim()));
                 }
                 if(mergedDoc!=doc) {
-                    mergedDoc.getDocumentElement().appendChild(toProcessEl);
+                    Node imported = mergedDoc.importNode(toProcessEl, true);
+                    mergedDoc.getDocumentElement().appendChild(imported);
                 }
             }
 
@@ -149,7 +151,8 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
                     TYPES_TO_NOT_PROCESS.add(type.trim());
                 }
                 if(mergedDoc!=doc) {
-                    mergedDoc.getDocumentElement().appendChild(toNotProcessEl);
+                    Node imported = mergedDoc.importNode(toNotProcessEl, true);
+                    mergedDoc.getDocumentElement().appendChild(imported);
                 }
             }
 
@@ -160,14 +163,20 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
                 if(mergedIgnoreCorruptedEls!=null) {
                     mergedIgnoreCorruptedEls.item(0).setTextContent(ignoreCorruptedEls.item(0).getTextContent().trim());
                 }else {
-                    mergedDoc.getDocumentElement().appendChild(ignoreCorruptedEls.item(0));
+                    Node imported = mergedDoc.importNode(ignoreCorruptedEls.item(0), true);
+                    mergedDoc.getDocumentElement().appendChild(imported);
                 }
             }
 
             NodeList carversEls = root.getElementsByTagName("carverTypes");
             for (int i = 0; i < carversEls.getLength(); i++) {
                 Element carverEls = (Element) carversEls.item(i);
-                mergedDoc.getDocumentElement().appendChild(carverEls);
+
+                if(mergedDoc!=doc) {
+                    Node imported = mergedDoc.importNode(carverEls, true);
+                    mergedDoc.getDocumentElement().appendChild(imported);
+                }
+
                 NodeList carverTypeEls = carverEls.getElementsByTagName("carverType");
                 for (int j = 0; j < carverTypeEls.getLength(); j++) {
                     Element carverTypeEl = (Element) carverTypeEls.item(j);

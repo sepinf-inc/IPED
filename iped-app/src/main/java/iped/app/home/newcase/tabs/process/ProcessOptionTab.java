@@ -242,7 +242,6 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 continue;
             }
 
-
             if(configurableList.get(0) instanceof EnabledInterface) {
                 EnabledInterface etp = (EnabledInterface) configurableList.get(0);
                 enabled.add(etp.isEnabled());
@@ -279,6 +278,10 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         jtableTasks.getColumn( jtableTasks.getColumnName(0)).setMaxWidth(30);
         jtableTasks.getColumn( jtableTasks.getColumnName(1)).setMaxWidth(30);
         jtableTasks.getColumn( jtableTasks.getColumnName(3)).setMaxWidth(60);
+        
+        jtableTasks.setTransferHandler(new LineOrderTransferHandler());
+        jtableTasks.setDropMode(DropMode.INSERT_ROWS);
+        jtableTasks.setDragEnabled(true);
     }
 
     private Component createNavigationButtonsPanel() {
@@ -286,7 +289,6 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         panelButtons.setBackground(super.getCurrentBackGroundColor());
         JButton buttoCancel = new JButton(Messages.get("Home.Back"));
         buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
-        //AbstractTaskClassPopupMenu abstractTaskClassPopupMenu = new AbstractTaskClassPopupMenu(jtableTasks);
 
         JButton buttoAddScriptTask = new JButton(Messages.get("Home.ProcOptions.AddScriptTask"));
         buttoAddScriptTask.addActionListener( e -> {
@@ -300,7 +302,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 } else {
                     task = new ScriptTask(selectedFile);
                 }
-                taskArrayList.add(task);
+                tasksTableModel.addData(task, true);
                 tasksTableModel.fireTableRowsInserted(taskArrayList.size()-1, taskArrayList.size()-1);
             }
         });
@@ -324,7 +326,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     @Override
     public void tableChanged(TableModelEvent e) {
         if(e.getType()==TableModelEvent.INSERT) {
-            jtableTasks.getSelectionModel().setLeadSelectionIndex(e.getLastRow());
+            jtableTasks.getSelectionModel().setLeadSelectionIndex(e.getLastRow());            
             AbstractTask task = ((TasksTableModel)jtableTasks.getModel()).getTaskList().get(e.getLastRow());
             List<Configurable<?>> configurables = task.getConfigurables();
             if(configurables != null && configurables.size()>0) {
