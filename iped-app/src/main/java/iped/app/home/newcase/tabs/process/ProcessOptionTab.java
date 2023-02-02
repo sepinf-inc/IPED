@@ -196,14 +196,13 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     private void updateTaskInstallerConfig() {
         List<AbstractTask> tasks = new ArrayList<>();
         for(int i=0; i<tasksTableModel.getRowCount();i++) {
-            if(tasksTableModel.getEnabled(i)) {
-                tasks.add(tasksTableModel.getTaskList().get(i));
-            }
+            tasks.add(tasksTableModel.getTaskList().get(i));
+
             //loop to update enableTaskProperties configurables
             List<Configurable<?>> configs = tasksTableModel.getTaskList().get(i).getConfigurables();
             for (Configurable<?> config : configs) {
-                if (config instanceof EnableTaskProperty) {
-                    ((EnableTaskProperty) config).setEnabled(tasksTableModel.getEnabled(i));
+                if (config instanceof EnabledInterface) {
+                    ((EnabledInterface) config).setEnabled(tasksTableModel.getEnabled(i));
                 }
             }
         }
@@ -230,7 +229,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             taskInstallerConfig = defaultConfigurationManager.findObject(TaskInstallerConfig.class);
         //Create a list with all AbstractTask class instance from the TaskInstaller.xml file
         taskArrayList = taskInstallerConfig.getNewTaskInstances();
-        ArrayList<Boolean> enabled = new ArrayList<>();
+        ArrayList<Boolean> enabled = new ArrayList<Boolean>();
         for(AbstractTask currentTask : taskArrayList  ){
             List<Configurable<?>> configurableList = currentTask.getConfigurables();
             if (configurableList == null || configurableList.isEmpty()){
