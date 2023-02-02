@@ -1,14 +1,12 @@
 package iped.geo.impl;
 
 import iped.geo.AbstractMapCanvas;
-import iped.geo.googlemaps.MapCanvasWebkit;
 import iped.geo.kml.KMLResult;
 import iped.geo.openstreet.MapCanvasOpenStreet;
 
 public class MapCanvasFactory {
 
     MapCanvasOpenStreet browserCanvasOS;
-    AbstractMapCanvas browserCanvasWK;
     AppMapPanel appMapaPanel;
 
     public MapCanvasFactory(AppMapPanel appMapaPanel) {
@@ -19,20 +17,12 @@ public class MapCanvasFactory {
         AbstractMapCanvas browserCanvas;
         boolean browserCanvasWasNull = false;
 
-        if (url.contains("googlemaps")) {
-            if (browserCanvasWK == null) {
-                browserCanvasWasNull = true;
-                browserCanvasWK = new MapCanvasWebkit();
-            }
-            browserCanvas = browserCanvasWK;
-        } else {
-            if (browserCanvasOS == null) {
-                browserCanvasWasNull = true;
-                browserCanvasOS = new MapCanvasOpenStreet();
-            }
-            browserCanvasOS.setUrl(url);
-            browserCanvas = browserCanvasOS;
+        if (browserCanvasOS == null) {
+            browserCanvasWasNull = true;
+            browserCanvasOS = new MapCanvasOpenStreet();
         }
+        browserCanvasOS.setUrl(url);
+        browserCanvas = browserCanvasOS;
 
         if (browserCanvasWasNull) {
             browserCanvas.addSaveKmlFunction(new Runnable() {
