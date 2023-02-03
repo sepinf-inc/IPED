@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -34,6 +35,7 @@ import iped.parsers.evtx.model.EvtxRecord;
 import iped.parsers.evtx.model.EvtxRecordConsumer;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
 import iped.utils.EmptyInputStream;
 
@@ -55,6 +57,11 @@ public class EvtxGroupedParser extends AbstractParser {
 
     protected int maxEventPerItem = 50;
     private String[] groupBy;
+
+    static {
+        MetadataUtil.setMetadataType(RECCOUNT_PROP.getName(), Integer.class);
+        MetadataUtil.setMetadataType(RECID_PROP.getName(), Integer.class);
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -162,7 +169,9 @@ public class EvtxGroupedParser extends AbstractParser {
                     String recContent = evtxRecord.getBinXml().toString();
                     String date = evtxRecord.getEventDateTime();
 
-                    recordMetadata.add(EVTX_METADATA_PREFIX + ":" + evtxRecord.getEventProviderName() + ":" + evtxRecord.getEventId(), date);
+                    String eventKey = EVTX_METADATA_PREFIX + ":" + evtxRecord.getEventProviderName() + ":" + evtxRecord.getEventId();
+                    MetadataUtil.setMetadataType(eventKey, Date.class);
+                    recordMetadata.add(eventKey, date);
                     recordMetadata.add(RECID_PROP, (int) evtxRecord.getEventRecordId());
                     recordMetadata.add(EVTX_METADATA_PREFIX + ":ProviderGUID", providerGUID);
                     content.append(recContent);
@@ -172,7 +181,9 @@ public class EvtxGroupedParser extends AbstractParser {
                         try {
                             for (Iterator<Entry<String, String>> iterator3 = datas.entrySet().iterator(); iterator3.hasNext();) {
                                 Entry<String, String> data = iterator3.next();
-                                recordMetadata.add(EVTX_METADATA_PREFIX + ":" + data.getKey(), data.getValue());
+                                String metaKey = EVTX_METADATA_PREFIX + ":" + data.getKey();
+                                MetadataUtil.setMetadataType(metaKey, String.class);
+                                recordMetadata.add(metaKey, data.getValue());
                             }
                         } catch (Exception e) {
                             // logs an error but continue
