@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,8 +35,11 @@ import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
+import iped.utils.StringUtil;
 
 public class MetadataUtil {
+
+    private static Map<String, Class<?>> typesMap = Collections.synchronizedMap(new TreeMap<String, Class<?>>(StringUtil.getIgnoreCaseComparator()));
 
     private static Set<String> generalKeys = getGeneralKeys();
 
@@ -60,6 +64,14 @@ public class MetadataUtil {
     private static final Set<String> RAW_MAIL_HEADERS = getRawMailHeaders();
 
     private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]+\\@[0-9a-zA-Z\\-\\.]+");
+
+    public static Map<String, Class<?>> getMetadataTypes() {
+        return Collections.unmodifiableMap(typesMap);
+    }
+
+    public static void setMetadataType(String metadataName, Class<?> metadataType) {
+        typesMap.put(metadataName, metadataType);
+    }
 
     private static final Set<String> getBasicHeaders() {
         Collator collator = Collator.getInstance();
