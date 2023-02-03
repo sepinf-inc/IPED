@@ -178,17 +178,11 @@ public class EvtxGroupedParser extends AbstractParser {
 
                     HashMap<String, String> datas = evtxRecord.getEventData();
                     if (datas != null && datas.size() > 0) {
-                        try {
-                            for (Iterator<Entry<String, String>> iterator3 = datas.entrySet().iterator(); iterator3.hasNext();) {
-                                Entry<String, String> data = iterator3.next();
-                                String metaKey = EVTX_METADATA_PREFIX + data.getKey();
-                                MetadataUtil.setMetadataType(metaKey, String.class);
-                                recordMetadata.add(metaKey, data.getValue());
-                            }
-                        } catch (Exception e) {
-                            // logs an error but continue
-                            System.out.println("EvtxRecord event data error.");
-                            e.printStackTrace();
+                        for (Iterator<Entry<String, String>> iterator3 = datas.entrySet().iterator(); iterator3.hasNext();) {
+                            Entry<String, String> data = iterator3.next();
+                            String metaKey = EVTX_METADATA_PREFIX + data.getKey();
+                            MetadataUtil.setMetadataType(metaKey, String.class);
+                            recordMetadata.add(metaKey, data.getValue());
                         }
                     }
                     groupRecordCount++;
@@ -198,15 +192,11 @@ public class EvtxGroupedParser extends AbstractParser {
                 totalRecordCount.val += groupRecordCount;
 
                 if (extractor.shouldParseEmbedded(recordMetadata)) {
-                    try {
-                        ByteArrayInputStream chatStream = new ByteArrayInputStream(content.toString().getBytes());
-                        extractor.parseEmbedded(chatStream, handler, recordMetadata, false);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    ByteArrayInputStream chatStream = new ByteArrayInputStream(content.toString().getBytes());
+                    extractor.parseEmbedded(chatStream, handler, recordMetadata, false);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (SAXException | IOException e) {
+                throw new RuntimeException(e);
             }
         }
 
@@ -239,37 +229,33 @@ public class EvtxGroupedParser extends AbstractParser {
 
                 @Override
                 public void accept(EvtxRecord evtxRecord) {
-                    try {
-                        String groupValue = "";
-                        if (groupBy != null) {
-                            for (int i = 0; i < groupBy.length; i++) {
-                                if (groupBy[i].contains("@")) {
-                                    String[] terms = groupBy[i].split("@");
-                                    EvtxElement el = evtxRecord.getElement(terms[0]);
-                                    groupValue += groupBy[i] + ":" + el.getAttributeByName(terms[1]);
-                                } else {
-                                    groupValue += groupBy[i] + ":" + evtxRecord.getElementValue(groupBy[i]);
-                                }
-                                if (i < groupBy.length - 1) {
-                                    groupValue += ";";
-                                }
+                    String groupValue = "";
+                    if (groupBy != null) {
+                        for (int i = 0; i < groupBy.length; i++) {
+                            if (groupBy[i].contains("@")) {
+                                String[] terms = groupBy[i].split("@");
+                                EvtxElement el = evtxRecord.getElement(terms[0]);
+                                groupValue += groupBy[i] + ":" + el.getAttributeByName(terms[1]);
+                            } else {
+                                groupValue += groupBy[i] + ":" + evtxRecord.getElementValue(groupBy[i]);
+                            }
+                            if (i < groupBy.length - 1) {
+                                groupValue += ";";
                             }
                         }
+                    }
 
-                        ArrayList<EvtxRecord> recs = subItens.get(groupValue);
-                        if (recs == null) {
-                            recs = new ArrayList<EvtxRecord>();
-                            subItens.put(groupValue, recs);
-                        }
-                        recs.add(evtxRecord);
+                    ArrayList<EvtxRecord> recs = subItens.get(groupValue);
+                    if (recs == null) {
+                        recs = new ArrayList<EvtxRecord>();
+                        subItens.put(groupValue, recs);
+                    }
+                    recs.add(evtxRecord);
 
-                        if (recs.size() >= maxEventPerItem) {
-                            EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(groupValue, recs, context, handler, maxProviderId, totalRecordCount);
-                            ex.run();
-                            subItens.put(groupValue, new ArrayList<>());// empty
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    if (recs.size() >= maxEventPerItem) {
+                        EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(groupValue, recs, context, handler, maxProviderId, totalRecordCount);
+                        ex.run();
+                        subItens.put(groupValue, new ArrayList<>());// empty
                     }
                 }
             };
@@ -277,22 +263,17 @@ public class EvtxGroupedParser extends AbstractParser {
             evtxFile.setEvtxRecordConsumer(co);
             evtxFile.processFile();
 
-            try {
-                for (Iterator<String> iterator = subItens.keySet().iterator(); iterator.hasNext();) {
-                    String subKey = (String) iterator.next();
+            for (Iterator<String> iterator = subItens.keySet().iterator(); iterator.hasNext();) {
+                String subKey = (String) iterator.next();
 
-                    ArrayList<EvtxRecord> recs = subItens.get(subKey);
-                    if (recs.size() > 0) {
-                        EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(subKey, recs, context, handler, maxProviderId, totalRecordCount);
-                        ex.run();
-                    }
+                ArrayList<EvtxRecord> recs = subItens.get(subKey);
+                if (recs.size() > 0) {
+                    EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(subKey, recs, context, handler, maxProviderId, totalRecordCount);
+                    ex.run();
                 }
-
-                // metadata.set(RECCOUNT_PROP, totalRecordCount);
-            } catch (Exception e) {
-                System.out.println("Evtx File Parser error:" + filePath);
-                e.printStackTrace();
             }
+
+            // metadata.set(RECCOUNT_PROP, totalRecordCount);
         }
     }
 }
