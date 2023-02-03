@@ -41,20 +41,20 @@ import iped.utils.EmptyInputStream;
  * Parser that extract event records grouped by EventID  
  */
 public class EvtxGroupedParser extends AbstractParser {
-	private static Logger LOGGER = LoggerFactory.getLogger(EvtxGroupedParser.class);
-    
-	private static final long serialVersionUID = 9091294620647570196L;
+    private static Logger LOGGER = LoggerFactory.getLogger(EvtxGroupedParser.class);
+
+    private static final long serialVersionUID = 9091294620647570196L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(EvtxRecordParser.EVTX_MIME_TYPE); // $NON-NLS-1$
 
     public static final MediaType EVTX_RECORD_MIME_TYPE = EvtxRecordParser.EVTX_RECORD_MIME_TYPE;
 
-	private static final String EVTX_METADATA_PREFIX = "WinEvt";
+    private static final String EVTX_METADATA_PREFIX = "WinEvt";
 
-	private static final Property RECCOUNT_PROP = Property.internalInteger(EVTX_METADATA_PREFIX+":recordCount");
-	private static final Property RECID_PROP = Property.internalIntegerSequence(EVTX_METADATA_PREFIX+":eventRecordID");
+    private static final Property RECCOUNT_PROP = Property.internalInteger(EVTX_METADATA_PREFIX + ":recordCount");
+    private static final Property RECID_PROP = Property.internalIntegerSequence(EVTX_METADATA_PREFIX + ":eventRecordID");
 
-	protected int maxEventPerItem = 50;
-	private String[] groupBy;
+    protected int maxEventPerItem = 50;
+    private String[] groupBy;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -63,126 +63,125 @@ public class EvtxGroupedParser extends AbstractParser {
 
     @Field
     public void setGroupBy(String value) {
-    	if(value.trim()!="") {
-    		value=";"+value;
-    	}
-        groupBy = ("Event/System/Provider@Name"+value).split(";");//always groups by Provider@Name
+        if (value.trim() != "") {
+            value = ";" + value;
+        }
+        groupBy = ("Event/System/Provider@Name" + value).split(";");// always groups by Provider@Name
     }
 
     @Field
     public void setMaxEventPerItem(Integer value) {
-    	this.maxEventPerItem = value;
+        this.maxEventPerItem = value;
     }
-    
-    class ProviderIDMap extends HashMap<String, String>{
+
+    class ProviderIDMap extends HashMap<String, String> {
     }
-    
-    class GroupPageCountMap extends HashMap<String,Integer>{
+
+    class GroupPageCountMap extends HashMap<String, Integer> {
     }
-    
+
     class IntRef {
         int val = 0;
     }
 
-    class EvtxRecordGroupExtractor{
-		String subKey;
-    	ArrayList<EvtxRecord> recs;
-    	ParseContext context;
-		private ContentHandler handler;
+    class EvtxRecordGroupExtractor {
+        String subKey;
+        ArrayList<EvtxRecord> recs;
+        ParseContext context;
+        private ContentHandler handler;
         IntRef maxProviderId;
         IntRef totalRecordCount;
 
         public EvtxRecordGroupExtractor(String subKey, ArrayList<EvtxRecord> recs, ParseContext context, ContentHandler handler, IntRef maxProviderId, IntRef totalRecordCount) {
-    		this.subKey = subKey;
-    		this.recs = recs;
-    		this.context = context;
-    		this.handler = handler;
+            this.subKey = subKey;
+            this.recs = recs;
+            this.context = context;
+            this.handler = handler;
             this.maxProviderId = maxProviderId;
             this.totalRecordCount = totalRecordCount;
-    	}
-    	
-    	public void run() {
-    		if(recs.size()<=0) {
-    			return;
-    		}
-    		try {
-    	        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-    	                new ParsingEmbeddedDocumentExtractor(context));
+        }
 
-    	        ProviderIDMap providerIDMap = context.get(ProviderIDMap.class);
-    	        if(providerIDMap==null) {
-    	        	providerIDMap=new ProviderIDMap();
-    	        	context.set(ProviderIDMap.class,providerIDMap);
-    	        }
-    	        GroupPageCountMap groupPageCountMap = context.get(GroupPageCountMap.class);
-    	        if(groupPageCountMap==null) {
-    	        	groupPageCountMap=new GroupPageCountMap();
-    	        	context.set(GroupPageCountMap.class,groupPageCountMap);
-    	        }
-    	        
-    			String currentProvider = subKey.substring(0,subKey.indexOf(";"));
+        public void run() {
+            if (recs.size() <= 0) {
+                return;
+            }
+            try {
+                EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
+
+                ProviderIDMap providerIDMap = context.get(ProviderIDMap.class);
+                if (providerIDMap == null) {
+                    providerIDMap = new ProviderIDMap();
+                    context.set(ProviderIDMap.class, providerIDMap);
+                }
+                GroupPageCountMap groupPageCountMap = context.get(GroupPageCountMap.class);
+                if (groupPageCountMap == null) {
+                    groupPageCountMap = new GroupPageCountMap();
+                    context.set(GroupPageCountMap.class, groupPageCountMap);
+                }
+
+                String currentProvider = subKey.substring(0, subKey.indexOf(";"));
                 String providerVid = providerIDMap.get(currentProvider);
-            	String providerGUID = recs.get(0).getEventProviderGUID();
-                if(providerVid==null) {
+                String providerGUID = recs.get(0).getEventProviderGUID();
+                if (providerVid == null) {
                     maxProviderId.val++;
                     providerVid = Integer.toString(maxProviderId.val);
-                	providerIDMap.put(currentProvider, providerVid);
+                    providerIDMap.put(currentProvider, providerVid);
 
-            		Metadata providerMetadata = new Metadata();
+                    Metadata providerMetadata = new Metadata();
                     providerMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, EVTX_RECORD_MIME_TYPE.toString());
-            		providerMetadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
+                    providerMetadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
                     providerMetadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
-                    providerMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(-1));                        
-                    providerMetadata.set(TikaCoreProperties.TITLE, currentProvider.substring(currentProvider.lastIndexOf(":")+1));//eventtype
+                    providerMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(-1));
+                    providerMetadata.set(TikaCoreProperties.TITLE, currentProvider.substring(currentProvider.lastIndexOf(":") + 1));// eventtype
                     providerMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, providerVid);
-                    providerMetadata.set(EVTX_METADATA_PREFIX+":ProviderGUID", providerGUID);
+                    providerMetadata.set(EVTX_METADATA_PREFIX + ":ProviderGUID", providerGUID);
                     extractor.parseEmbedded(new EmptyInputStream(), handler, providerMetadata, false);
                 }
-                
-    			String groupTitle = subKey.substring(currentProvider.length()+1);
+
+                String groupTitle = subKey.substring(currentProvider.length() + 1);
                 Integer page = groupPageCountMap.get(subKey);
-                if(page==null) {
-                	page=1;
-                }else {
-                	page++;
+                if (page == null) {
+                    page = 1;
+                } else {
+                    page++;
                 }
                 groupPageCountMap.put(subKey, page);
-                String pageStr=Integer.toString(+page);
-                groupTitle+="_"+"0".repeat(8-pageStr.length())+pageStr;
+                String pageStr = Integer.toString(+page);
+                groupTitle += "_" + "0".repeat(8 - pageStr.length()) + pageStr;
 
-            	Metadata recordMetadata = new Metadata();
+                Metadata recordMetadata = new Metadata();
                 recordMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, EVTX_RECORD_MIME_TYPE.toString());
                 recordMetadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
                 recordMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, providerVid);
-                recordMetadata.set(TikaCoreProperties.TITLE, groupTitle);//eventtype
+                recordMetadata.set(TikaCoreProperties.TITLE, groupTitle);// eventtype
 
                 StringBuffer content = new StringBuffer();
-                int groupRecordCount=0;
+                int groupRecordCount = 0;
                 for (Iterator iterator2 = recs.iterator(); iterator2.hasNext();) {
-    				EvtxRecord evtxRecord = (EvtxRecord) iterator2.next();
-    				String recContent = evtxRecord.getBinXml().toString();
+                    EvtxRecord evtxRecord = (EvtxRecord) iterator2.next();
+                    String recContent = evtxRecord.getBinXml().toString();
                     String date = evtxRecord.getEventDateTime();
 
-                    recordMetadata.add(EVTX_METADATA_PREFIX+":"+evtxRecord.getEventProviderName()+":" + evtxRecord.getEventId(), date);
+                    recordMetadata.add(EVTX_METADATA_PREFIX + ":" + evtxRecord.getEventProviderName() + ":" + evtxRecord.getEventId(), date);
                     recordMetadata.add(RECID_PROP, (int) evtxRecord.getEventRecordId());
-                    recordMetadata.add(EVTX_METADATA_PREFIX+":ProviderGUID", providerGUID);
+                    recordMetadata.add(EVTX_METADATA_PREFIX + ":ProviderGUID", providerGUID);
                     content.append(recContent);
 
                     HashMap<String, String> datas = evtxRecord.getEventData();
-                    if(datas!=null && datas.size()>0) {
-                    	try {
-        	                for(Iterator<Entry<String,String>> iterator3 = datas.entrySet().iterator(); iterator3.hasNext();) {
-        	                	Entry<String,String> data =  iterator3.next();
-        						recordMetadata.add(EVTX_METADATA_PREFIX+":"+data.getKey(), data.getValue());
-        					}
-                    	}catch(Exception e) {
-                    		//logs an error but continue
-                        	System.out.println("EvtxRecord event data error.");
-                    		e.printStackTrace();
-                    	}
+                    if (datas != null && datas.size() > 0) {
+                        try {
+                            for (Iterator<Entry<String, String>> iterator3 = datas.entrySet().iterator(); iterator3.hasNext();) {
+                                Entry<String, String> data = iterator3.next();
+                                recordMetadata.add(EVTX_METADATA_PREFIX + ":" + data.getKey(), data.getValue());
+                            }
+                        } catch (Exception e) {
+                            // logs an error but continue
+                            System.out.println("EvtxRecord event data error.");
+                            e.printStackTrace();
+                        }
                     }
                     groupRecordCount++;
-    			}
+                }
 
                 recordMetadata.set(RECCOUNT_PROP, groupRecordCount);
                 totalRecordCount.val += groupRecordCount;
@@ -191,25 +190,23 @@ public class EvtxGroupedParser extends AbstractParser {
                     try {
                         ByteArrayInputStream chatStream = new ByteArrayInputStream(content.toString().getBytes());
                         extractor.parseEmbedded(chatStream, handler, recordMetadata, false);
-                    }catch(Exception e) {
-                    	e.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
-    		}catch (Exception e) {
-    			e.printStackTrace();
-			}
-    	}
-    	
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-            throws IOException, SAXException, TikaException {
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
         TemporaryResources tmp = new TemporaryResources();
-        
+
         String filePath = ""; //$NON-NLS-1$
         ItemInfo itemInfo = context.get(ItemInfo.class);
 
@@ -217,7 +214,7 @@ public class EvtxGroupedParser extends AbstractParser {
             filePath = itemInfo.getPath();
 
         final TikaInputStream tis = TikaInputStream.get(stream, tmp);
-        
+
         IntRef maxProviderId = new IntRef();
         IntRef totalRecordCount = new IntRef();
 
@@ -226,65 +223,65 @@ public class EvtxGroupedParser extends AbstractParser {
             evtxFile.setName(filePath);
 
             HashMap<String, ArrayList<EvtxRecord>> subItens = new HashMap<String, ArrayList<EvtxRecord>>();
-            
+
             EvtxRecordConsumer co = new EvtxRecordConsumer() {
 
-    			@Override
-    			public void accept(EvtxRecord evtxRecord) {
-    				try {
-        				String groupValue = "";
-        				if(groupBy!=null) {
-            				for(int i=0; i < groupBy.length; i++) {
-            					if(groupBy[i].contains("@")) {
-            						String[] terms = groupBy[i].split("@");
-            						EvtxElement el = evtxRecord.getElement(terms[0]);
-            						groupValue += groupBy[i]+":"+el.getAttributeByName(terms[1]);
-            					}else {
-                					groupValue += groupBy[i]+":"+evtxRecord.getElementValue(groupBy[i]);
-            					}
-            					if(i < groupBy.length-1) {
-            						groupValue += ";";
-            					}
-            				}
-        				}
+                @Override
+                public void accept(EvtxRecord evtxRecord) {
+                    try {
+                        String groupValue = "";
+                        if (groupBy != null) {
+                            for (int i = 0; i < groupBy.length; i++) {
+                                if (groupBy[i].contains("@")) {
+                                    String[] terms = groupBy[i].split("@");
+                                    EvtxElement el = evtxRecord.getElement(terms[0]);
+                                    groupValue += groupBy[i] + ":" + el.getAttributeByName(terms[1]);
+                                } else {
+                                    groupValue += groupBy[i] + ":" + evtxRecord.getElementValue(groupBy[i]);
+                                }
+                                if (i < groupBy.length - 1) {
+                                    groupValue += ";";
+                                }
+                            }
+                        }
 
                         ArrayList<EvtxRecord> recs = subItens.get(groupValue);
-                        if(recs==null) {
-                        	recs=new ArrayList<EvtxRecord>();
-                        	subItens.put(groupValue, recs);
+                        if (recs == null) {
+                            recs = new ArrayList<EvtxRecord>();
+                            subItens.put(groupValue, recs);
                         }
                         recs.add(evtxRecord);
-                        
-                        if(recs.size()>=maxEventPerItem) {
-                            EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(groupValue, recs, context, handler, maxProviderId, totalRecordCount);
-                        	ex.run();
-                        	subItens.put(groupValue, new ArrayList<>());//empty
-                        }
-    				}catch (Exception e) {
-						e.printStackTrace();
-					}
-    			}
-    		};
 
-    		evtxFile.setEvtxRecordConsumer(co);
+                        if (recs.size() >= maxEventPerItem) {
+                            EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(groupValue, recs, context, handler, maxProviderId, totalRecordCount);
+                            ex.run();
+                            subItens.put(groupValue, new ArrayList<>());// empty
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+
+            evtxFile.setEvtxRecordConsumer(co);
             evtxFile.processFile();
 
             try {
                 for (Iterator<String> iterator = subItens.keySet().iterator(); iterator.hasNext();) {
-                	String subKey = (String) iterator.next();
+                    String subKey = (String) iterator.next();
 
-                	ArrayList<EvtxRecord> recs = subItens.get(subKey);
-                	if(recs.size()>0) {
+                    ArrayList<EvtxRecord> recs = subItens.get(subKey);
+                    if (recs.size() > 0) {
                         EvtxRecordGroupExtractor ex = new EvtxRecordGroupExtractor(subKey, recs, context, handler, maxProviderId, totalRecordCount);
-                    	ex.run();
-                	}
-    			}
+                        ex.run();
+                    }
+                }
 
-                //metadata.set(RECCOUNT_PROP, totalRecordCount);
-            }catch (Exception e) {
-            	System.out.println("Evtx File Parser error:"+filePath);
-				e.printStackTrace();				
-			}
+                // metadata.set(RECCOUNT_PROP, totalRecordCount);
+            } catch (Exception e) {
+                System.out.println("Evtx File Parser error:" + filePath);
+                e.printStackTrace();
+            }
         }
     }
 }
