@@ -56,6 +56,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.task.regex.RegexTask;
 import iped.engine.util.Util;
 import iped.localization.LocalizedProperties;
+import iped.parsers.evtx.EvtxGroupedParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
@@ -84,6 +85,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.PeerToPeer"), Messages.getString("ColumnsManager.UFED"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("ColumnsManager.WindowsEvt"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.Other"), Messages.getString("ColumnsManager.All") }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final File getGlobalColsFile() {
@@ -532,6 +534,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> hashDbFields = new ArrayList<String>();
         ArrayList<String> communicationFields = new ArrayList<String>();
         ArrayList<String> commonFields = new ArrayList<String>();
+        ArrayList<String> winEvtFields = new ArrayList<String>();
 
         for (String f : allExtraAttrs) {
             if (f.startsWith(RegexTask.REGEX_PREFIX))
@@ -568,6 +571,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 communicationFields.add(f);
             else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
                 commonFields.add(f);
+            else if (f.startsWith(EvtxGroupedParser.EVTX_METADATA_PREFIX)) {
+                winEvtFields.add(f);
+            }
         }
 
         String[][] customGroups = new String[][] { defaultFields.clone(), hashDbFields.toArray(new String[0]),
@@ -578,7 +584,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),
                 regexFields.toArray(new String[0]), languageFields.toArray(new String[0]),
                 nerFields.toArray(new String[0]), p2pFields.toArray(new String[0]),
-                ufedFields.toArray(new String[0])};
+                ufedFields.toArray(new String[0]), winEvtFields.toArray(new String[0]) };
 
         ArrayList<String> otherFields = new ArrayList<String>();
         for (String f : indexFields) {

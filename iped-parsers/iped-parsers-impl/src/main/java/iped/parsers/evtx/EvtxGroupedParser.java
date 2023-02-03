@@ -50,7 +50,7 @@ public class EvtxGroupedParser extends AbstractParser {
 
     public static final MediaType EVTX_RECORD_MIME_TYPE = EvtxRecordParser.EVTX_RECORD_MIME_TYPE;
 
-    private static final String EVTX_METADATA_PREFIX = "WinEvt:";
+    public static final String EVTX_METADATA_PREFIX = "WinEvt:";
 
     private static final Property RECCOUNT_PROP = Property.internalInteger(EVTX_METADATA_PREFIX + "recordCount");
     private static final Property RECID_PROP = Property.internalIntegerSequence(EVTX_METADATA_PREFIX + "eventRecordID");
