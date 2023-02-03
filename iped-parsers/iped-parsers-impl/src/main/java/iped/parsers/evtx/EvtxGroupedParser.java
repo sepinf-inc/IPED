@@ -60,11 +60,6 @@ public class EvtxGroupedParser extends AbstractParser {
     protected int maxEventPerItem = 50;
     private String[] groupBy;
 
-    static {
-        MetadataUtil.setMetadataType(RECCOUNT_PROP.getName(), Integer.class);
-        MetadataUtil.setMetadataType(RECID_PROP.getName(), Integer.class);
-    }
-
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -220,6 +215,9 @@ public class EvtxGroupedParser extends AbstractParser {
 
         IntRef maxProviderId = new IntRef();
         IntRef totalRecordCount = new IntRef();
+
+        MetadataUtil.setMetadataType(RECCOUNT_PROP.getName(), Integer.class);
+        MetadataUtil.setMetadataType(RECID_PROP.getName(), Integer.class);
 
         if (extractor.shouldParseEmbedded(metadata)) {
             EvtxFile evtxFile = new EvtxFile(tis);
