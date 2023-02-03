@@ -29,7 +29,11 @@ function process(e){
 	var path = e.getPath().toLowerCase().replace(/\\/g, "/");
 
 	if(mime.equals("application/x-chrome-cache-index") && path.contains("/appdata/roaming/discord")){
-		e.setMediaTypeStr("application/x-discord-index");
+		if(e.getPath().toLowerCase().contains("gpucache")){
+			e.setMediaTypeStr("application/x-discord-gpucache-index");
+		} else {
+			e.setMediaTypeStr("application/x-discord-index");
+		}
 	}
 	
 	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk/i.test(e.getName())){

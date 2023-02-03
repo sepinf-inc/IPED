@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipException;
 
 import org.apache.commons.io.IOUtils;
 import org.brotli.dec.BrotliInputStream;
@@ -147,7 +148,7 @@ public class CacheEntry {
 
 		selfHash = readUnsignedInt(is);
 		keyData = IOUtils.readFully(is, 256 - 24 * 4);
-
+		
 	}
 
 	public int getResponseDataSize() {
@@ -181,19 +182,24 @@ public class CacheEntry {
 		return "GET";
 	}
 
-	public InputStream getResponseDataStream(String contentType) throws Exception {
+	public InputStream getResponseDataStream(String contentEncoding) throws Exception, ZipException {
+
 		BufferedInputStream bis = new BufferedInputStream(getResponseRawDataStream());
 		bis.mark(1 << 14);
-		try {
-			switch (contentType) {
+			
+		if (contentEncoding == null) {
+			return bis;
+		}
+		
+		switch (contentEncoding) {
 			case "br":
 				return new BrotliInputStream(bis);
-			default:
+			case "gzip":
 				return new GZIPInputStream(bis);
-			}
-		} catch (Exception e) {
-			throw new Exception("Unable to unzip content (contentType=" + contentType + ")", e);
+			default:
+				return bis;	
 		}
+		
 	}
 
 	/**
@@ -278,7 +284,7 @@ public class CacheEntry {
 
 		return new String(data);
 	}
-
+	
 	@Override
 	public String toString() {
 		return "CacheEntry [hash=" + hash + ", nextEntry=" + nextEntry + ", rankingsNode=" + rankingsNode
@@ -286,8 +292,7 @@ public class CacheEntry {
 				+ ", creationTime=" + creationTime + ", keyDataSize=" + keyDataSize + ", longKeyAddress="
 				+ longKeyAddress + ", dataStreamSize=" + Arrays.toString(dataStreamSize) + ", dataStreamAdresses="
 				+ Arrays.toString(dataStreamAdresses) + ", flags=" + flags + ", paddings=" + Arrays.toString(paddings)
-				+ ", selfHash=" + selfHash + ", keyData=" + Arrays.toString(keyData) + ", dataFiles=" + dataFiles
-				+ ", externalFiles=" + externalFiles + "]";
+				+ ", selfHash=" + selfHash + ", getKey()=" + getKey() +", keyData=" + Arrays.toString(keyData) + "]";
 	}
 
 }

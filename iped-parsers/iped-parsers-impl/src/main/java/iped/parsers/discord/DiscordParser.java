@@ -82,8 +82,8 @@ public class DiscordParser extends AbstractParser {
 
             String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND "
                     + BasicProps.PATH + ":\"" + parentPath + "\" AND " + BasicProps.CARVED + ":false AND NOT "
-                    + BasicProps.TYPE + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR
-                    + ":true";
+                    + BasicProps.TYPE + ":slack AND NOT " + BasicProps.TYPE + ":fileslack AND NOT " + BasicProps.NAME + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR
+                    + ":true AND NOT " + BasicProps.PATH + ":gpucache" ;
 
             List<IItemReader> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
             List<IItemReader> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME
@@ -100,7 +100,13 @@ public class DiscordParser extends AbstractParser {
                 	
                 	Map<String, String> httpResponse = ce.getHttpResponse();
                 	
-                	try (InputStream is = ce.getResponseDataStream(httpResponse.get("content-encoding"))) {
+                	String contentEncoding = httpResponse.get("content-encoding");
+                	
+                	if (contentEncoding == null || contentEncoding == "") {
+                		continue;
+                	} 
+                	                	
+                	try (InputStream is = ce.getResponseDataStream(contentEncoding)) {
 
                         ObjectMapper mapper = new ObjectMapper();
                         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -167,11 +173,15 @@ public class DiscordParser extends AbstractParser {
 
                         extractMessages(chatName, discordRoot, handler, extractor);
 
-                    } catch(JsonProcessingException e){
-                    	LOGGER.error("JSON is invalid, go to next JSON. " + ce.toString());
+                    } catch (IllegalArgumentException ex) {
+                    	LOGGER.error("IllegalArgument found in file, go to next JSON. key"  + ce.toString());
+                    	ex.printStackTrace();
                     	continue;
-                    }
-                    catch (Exception ex) {
+                    } catch(JsonProcessingException ex){
+                    	LOGGER.error("JSON is invalid, go to next JSON. " + ce.toString());
+                    	ex.printStackTrace();
+                    	continue;
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                         if (exception == null) {
                             exception = new TikaException("DiscordParser parsing error.");
