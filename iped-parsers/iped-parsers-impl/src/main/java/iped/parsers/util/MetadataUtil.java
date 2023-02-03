@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -65,12 +66,24 @@ public class MetadataUtil {
 
     private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]+\\@[0-9a-zA-Z\\-\\.]+");
 
+    private static final Set<String> customMetadataPrefixes = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
     public static Map<String, Class<?>> getMetadataTypes() {
         return Collections.unmodifiableMap(typesMap);
     }
 
     public static void setMetadataType(String metadataName, Class<?> metadataType) {
         typesMap.put(metadataName, metadataType);
+    }
+
+    /**
+     * Method to add a new metadata prefix. Can be called from parsers to install a
+     * new meta prefix.
+     * 
+     * @param metaPrefix
+     */
+    public static void addCustomMetadataPrefix(String metaPrefix) {
+        customMetadataPrefixes.add(metaPrefix);
     }
 
     private static final Set<String> getBasicHeaders() {
@@ -607,12 +620,18 @@ public class MetadataUtil {
 
     private static void includePrefix(Metadata metadata, String prefix) {
         String[] keys = metadata.names();
-        for (String key : keys) {
+        outer: for (String key : keys) {
             if (generalKeys.contains(key) || key.toLowerCase().startsWith(prefix.toLowerCase())
                     || key.startsWith(ExtraProperties.UFED_META_PREFIX)
                     || key.startsWith(ExtraProperties.COMMON_META_PREFIX)
-                    || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX))
+                    || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX)) {
                 continue;
+            }
+            for (String customPrefix : customMetadataPrefixes) {
+                if (key.startsWith(customPrefix)) {
+                    continue outer;
+                }
+            }
             String[] values = metadata.getValues(key);
             metadata.remove(key);
             for (String val : values)
