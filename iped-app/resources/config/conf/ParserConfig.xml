@@ -261,7 +261,7 @@
         <parser class="iped.parsers.browsers.safari.SafariPlistParser"></parser>
         
         <parser class="iped.parsers.database.EDBParser"></parser>
-        <parser class="iped.parsers.registry.RegistryParser"></parser>
+        <parser class="iped.parsers.registry.RegRipperParser"></parser>
         <parser class="iped.parsers.browsers.ie.IndexDatParser"></parser>
         <parser class="iped.parsers.compress.PackageParser"></parser>    
         <parser class="iped.parsers.compress.SevenZipParser"></parser>
