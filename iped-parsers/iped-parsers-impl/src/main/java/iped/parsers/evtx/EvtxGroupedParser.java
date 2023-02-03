@@ -50,10 +50,10 @@ public class EvtxGroupedParser extends AbstractParser {
 
     public static final MediaType EVTX_RECORD_MIME_TYPE = EvtxRecordParser.EVTX_RECORD_MIME_TYPE;
 
-    private static final String EVTX_METADATA_PREFIX = "WinEvt";
+    private static final String EVTX_METADATA_PREFIX = "WinEvt:";
 
-    private static final Property RECCOUNT_PROP = Property.internalInteger(EVTX_METADATA_PREFIX + ":recordCount");
-    private static final Property RECID_PROP = Property.internalIntegerSequence(EVTX_METADATA_PREFIX + ":eventRecordID");
+    private static final Property RECCOUNT_PROP = Property.internalInteger(EVTX_METADATA_PREFIX + "recordCount");
+    private static final Property RECID_PROP = Property.internalIntegerSequence(EVTX_METADATA_PREFIX + "eventRecordID");
 
     protected int maxEventPerItem = 50;
     private String[] groupBy;
@@ -141,7 +141,7 @@ public class EvtxGroupedParser extends AbstractParser {
                     providerMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(-1));
                     providerMetadata.set(TikaCoreProperties.TITLE, currentProvider.substring(currentProvider.lastIndexOf(":") + 1));// eventtype
                     providerMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, providerVid);
-                    providerMetadata.set(EVTX_METADATA_PREFIX + ":ProviderGUID", providerGUID);
+                    providerMetadata.set(EVTX_METADATA_PREFIX + "ProviderGUID", providerGUID);
                     extractor.parseEmbedded(new EmptyInputStream(), handler, providerMetadata, false);
                 }
 
@@ -169,11 +169,11 @@ public class EvtxGroupedParser extends AbstractParser {
                     String recContent = evtxRecord.getBinXml().toString();
                     String date = evtxRecord.getEventDateTime();
 
-                    String eventKey = EVTX_METADATA_PREFIX + ":" + evtxRecord.getEventProviderName() + ":" + evtxRecord.getEventId();
+                    String eventKey = EVTX_METADATA_PREFIX + evtxRecord.getEventProviderName() + ":" + evtxRecord.getEventId();
                     MetadataUtil.setMetadataType(eventKey, Date.class);
                     recordMetadata.add(eventKey, date);
                     recordMetadata.add(RECID_PROP, (int) evtxRecord.getEventRecordId());
-                    recordMetadata.add(EVTX_METADATA_PREFIX + ":ProviderGUID", providerGUID);
+                    recordMetadata.add(EVTX_METADATA_PREFIX + "ProviderGUID", providerGUID);
                     content.append(recContent);
 
                     HashMap<String, String> datas = evtxRecord.getEventData();
@@ -181,7 +181,7 @@ public class EvtxGroupedParser extends AbstractParser {
                         try {
                             for (Iterator<Entry<String, String>> iterator3 = datas.entrySet().iterator(); iterator3.hasNext();) {
                                 Entry<String, String> data = iterator3.next();
-                                String metaKey = EVTX_METADATA_PREFIX + ":" + data.getKey();
+                                String metaKey = EVTX_METADATA_PREFIX + data.getKey();
                                 MetadataUtil.setMetadataType(metaKey, String.class);
                                 recordMetadata.add(metaKey, data.getValue());
                             }
