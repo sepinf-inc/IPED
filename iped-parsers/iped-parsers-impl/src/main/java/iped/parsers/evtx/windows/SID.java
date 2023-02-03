@@ -1,21 +1,20 @@
 package iped.parsers.evtx.windows;
 
 public class SID {
-	byte[] b;
-	String sid;
-	
-	public SID(byte[] b) {
-		this.b = b;
-	}
-	
-	@Override
-	public String toString() {
-		if(sid==null) {
-			sid = binarySidToStringSid(this.b);		
-		}
-		return sid;
-	}
-	
+    byte[] b;
+    String sid;
+
+    public SID(byte[] b) {
+        this.b = b;
+    }
+
+    @Override
+    public String toString() {
+        if (sid == null) {
+            sid = binarySidToStringSid(this.b);
+        }
+        return sid;
+    }
 
     public static String binarySidToStringSid(byte[] SID) {
         StringBuilder strSID = new StringBuilder("S-");
@@ -40,17 +39,12 @@ public class SID {
         for (int i = 0; i < count; i++) {
             int currSubAuthOffset = i * 4;
             tmpBuff.setLength(0);
-            tmpBuff.append(String.format("%02X%02X%02X%02X",
-                    (SID[11 + currSubAuthOffset] & 0xFF),
-                    (SID[10 + currSubAuthOffset] & 0xFF),
-                    (SID[9 + currSubAuthOffset] & 0xFF),
-                    (SID[8 + currSubAuthOffset] & 0xFF)));
+            tmpBuff.append(String.format("%02X%02X%02X%02X", (SID[11 + currSubAuthOffset] & 0xFF), (SID[10 + currSubAuthOffset] & 0xFF), (SID[9 + currSubAuthOffset] & 0xFF), (SID[8 + currSubAuthOffset] & 0xFF)));
 
-            strSID.append('-').append(
-                    Long.parseLong(tmpBuff.toString(), 16));
+            strSID.append('-').append(Long.parseLong(tmpBuff.toString(), 16));
         }
 
         return strSID.toString();
-    }	
+    }
 
 }

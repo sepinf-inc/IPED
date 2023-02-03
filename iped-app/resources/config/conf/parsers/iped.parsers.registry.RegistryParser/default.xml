@@ -78,7 +78,7 @@
 
 		<!-- Event Log related -->
 		<key name="ROOT/ControlSet001/Services/EventLog/*/*"/>
-    <key name="ROOT/Microsoft/Windows/CurrentVersion/WINEVT/Publishers/*/*/*"/>
+        <key name="ROOT/Microsoft/Windows/CurrentVersion/WINEVT/Publishers/*/*/*"/>
 		
 	</registryKeyParser>
 

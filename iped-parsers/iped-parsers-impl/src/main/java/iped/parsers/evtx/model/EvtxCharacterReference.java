@@ -4,8 +4,8 @@ import java.nio.ByteBuffer;
 
 public class EvtxCharacterReference {
 
-	public EvtxCharacterReference(EvtxFile evtxFile, ByteBuffer bb) {
-		// TODO Auto-generated constructor stub
-	}
+    public EvtxCharacterReference(EvtxFile evtxFile, ByteBuffer bb) {
+        // TODO Auto-generated constructor stub
+    }
 
 }

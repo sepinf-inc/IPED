@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 public class EvtxCDATASegment {
 
-	public EvtxCDATASegment(EvtxFile evtxFile, ByteBuffer bb) {
-	}
+    public EvtxCDATASegment(EvtxFile evtxFile, ByteBuffer bb) {
+    }
 
 }

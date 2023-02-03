@@ -4,8 +4,8 @@ import java.nio.ByteBuffer;
 
 public class EvtxPITarget {
 
-	public EvtxPITarget(EvtxFile evtxFile, ByteBuffer bb) {
-		// TODO Auto-generated constructor stub
-	}
+    public EvtxPITarget(EvtxFile evtxFile, ByteBuffer bb) {
+        // TODO Auto-generated constructor stub
+    }
 
 }

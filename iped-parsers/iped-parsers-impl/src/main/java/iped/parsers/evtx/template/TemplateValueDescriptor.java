@@ -1,7 +1,6 @@
 package iped.parsers.evtx.template;
 
-public class TemplateValueDescriptor{
-	int size;
-	short type;
+public class TemplateValueDescriptor {
+    int size;
+    short type;
 }
-

@@ -17,170 +17,171 @@ import org.apache.lucene.util.ArrayUtil;
 import iped.parsers.evtx.template.TemplateData;
 
 public class EvtxFile {
-	HashMap<Integer, TemplateData> templateDatas = new HashMap<Integer, TemplateData>();
-	HashMap<Integer, EvtxXmlFragment> templateXmls = new HashMap<Integer, EvtxXmlFragment>();
+    HashMap<Integer, TemplateData> templateDatas = new HashMap<Integer, TemplateData>();
+    HashMap<Integer, EvtxXmlFragment> templateXmls = new HashMap<Integer, EvtxXmlFragment>();
 
-	byte[] header = new byte[4096];
-	byte[] curChunk = new byte[64*1024];
-	int chunckCount=0;
-	String name;
-	
-	boolean dirty = false;
-	
-	long totalCount = 0;
-	
-	ArrayList<Object> templateValues = new ArrayList<Object>();
+    byte[] header = new byte[4096];
+    byte[] curChunk = new byte[64 * 1024];
+    int chunckCount = 0;
+    String name;
 
-	EvtxRecordConsumer evtxRecordConsumer;
-	private InputStream is;		
+    boolean dirty = false;
 
-	public EvtxFile(File src) throws FileNotFoundException {
-		this.is = new FileInputStream(src);
-	}
+    long totalCount = 0;
 
-	public EvtxFile(InputStream is) {
-		this.is = is;
-	}
+    ArrayList<Object> templateValues = new ArrayList<Object>();
 
-	public void processFile() {
-		try {
-			DataInputStream dis = new DataInputStream(new BufferedInputStream(is, 64*1024));
+    EvtxRecordConsumer evtxRecordConsumer;
+    private InputStream is;
 
-			dis.read(header);
+    public EvtxFile(File src) throws FileNotFoundException {
+        this.is = new FileInputStream(src);
+    }
 
-			ByteBuffer bb = ByteBuffer.wrap(header);
-			bb.order(ByteOrder.LITTLE_ENDIAN);
+    public EvtxFile(InputStream is) {
+        this.is = is;
+    }
 
-			String sig = new String(ArrayUtil.copyOfSubArray(header, 0, 8));
+    public void processFile() {
+        try {
+            DataInputStream dis = new DataInputStream(new BufferedInputStream(is, 64 * 1024));
 
-			if(!sig.equals("ElfFile\0")) {
-				throw new EvtxParseExeption("Invalid header signature");
-			}
-			long firstChunckNumber=bb.asLongBuffer().get(1);
-			long lastChunckNumber=bb.asLongBuffer().get(2);
-			long nextRecordIdentifier=bb.asLongBuffer().get(2);
-			int flags = bb.asIntBuffer().get(30);
-			chunckCount=bb.asShortBuffer().get(21);
-			if(flags == 0x0001) {
-				//isDirty (not commited) so try to parse another chunk
-				dirty = true;
-			}
-			
-			if(name.contains("TerminalServices")&&name.contains("Ope")) {
-				System.out.println();
-			}
-			
-			boolean available=true;
-			for (int i = 0; available; i++) {
-				int read = dis.read(curChunk);
-				if(read>0) {
-					try {
-						EvtxChunk chunk = new EvtxChunk(this, curChunk);
-						chunk.processChunk();
-					}catch (EvtxParseExeption e) {
-						if(e instanceof EvtxInvalidChunkHeaderException) {
-							if(i<chunckCount) {
-								if(!dirty) {
-									System.out.println("Invalid chunk header found on non dirty evtx file:"+((EvtxInvalidChunkHeaderException)e).getHeader());
-								}else {						
-									System.out.println("Invalid chunk header found before end of chunckcount on evtx file:"+((EvtxInvalidChunkHeaderException)e).getHeader());
-								}
-							}
-							//if the file is dirty ignores parsing with no error because it can be normal to occur
-						}else {
-							e.printStackTrace();
-						}
-					}finally {
-						if(i>=chunckCount) {
-							available = dis.available()>0;
-						}
-						templateXmls.clear();
-					}
-				}else {
-					//eof
-					available=false;
-				}
-			}
-		}catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	static class EvtxRecConsumer implements EvtxRecordConsumer{
-		ArrayList<Exception> es = new ArrayList<>();
-		int count;
-		
-		@Override
-		public void accept(EvtxRecord evtxRecord) {
-			try {
-				System.out.println("ID:"+evtxRecord.id);
-				System.out.println("Written time:"+evtxRecord.writtenTime);
-				System.out.println("---------------------------------------------------");
-				
-				EvtxBinXml binXml = evtxRecord.getBinXml();
-				System.out.println(evtxRecord.getEventId());
-				System.out.println(binXml.toString());
-				System.out.println("");
-				count++;
-			}catch(Exception e) {
-				es.add(e);
-			}
-			//throw new NullPointerException(); 
-		}
-	}
+            dis.read(header);
 
-	public EvtxRecordConsumer getEvtxRecordConsumer() {
-		return evtxRecordConsumer;
-	}
+            ByteBuffer bb = ByteBuffer.wrap(header);
+            bb.order(ByteOrder.LITTLE_ENDIAN);
 
-	public void setEvtxRecordConsumer(EvtxRecordConsumer evtxRecordConsumer) {
-		this.evtxRecordConsumer = evtxRecordConsumer;
-	}
-	
-	public void addTemplateData(int offset, TemplateData templateDefinition) {
-		templateDatas.put(offset, templateDefinition);
-	}
-	
-	public TemplateData getTemplateData(int offset) {
-		return templateDatas.get(offset);
-	}
-	
-	public void addTemplateXml(int offset, EvtxXmlFragment templateXml) {
-		templateXmls.put(offset, templateXml);
-	}
-	
-	public EvtxXmlFragment getTemplateXml(int offset) {
-		return templateXmls.get(offset);
-	}
-	
-	public static void main(String[] args) throws FileNotFoundException {
-		File f = new File("/home/patrick.pdb/multicase/system.out");
-		//System.setOut(new PrintStream(f));
-		File dir = new File("/home/patrick.pdb/multicase/events");
-		File[] files = dir.listFiles();
-		EvtxRecConsumer rc = new EvtxRecConsumer();
-		for (int i = 0; i < files.length; i++) {
-			if(files[i].getName().contains("System.evtx")) {
-				EvtxFile evtxfile = new EvtxFile(files[i]);
-				evtxfile.setEvtxRecordConsumer(rc);
-				evtxfile.processFile();
-			}
-		}
-	}
+            String sig = new String(ArrayUtil.copyOfSubArray(header, 0, 8));
 
-	public String getName() {
-		return name;
-	}
+            if (!sig.equals("ElfFile\0")) {
+                throw new EvtxParseExeption("Invalid header signature");
+            }
+            long firstChunckNumber = bb.asLongBuffer().get(1);
+            long lastChunckNumber = bb.asLongBuffer().get(2);
+            long nextRecordIdentifier = bb.asLongBuffer().get(2);
+            int flags = bb.asIntBuffer().get(30);
+            chunckCount = bb.asShortBuffer().get(21);
+            if (flags == 0x0001) {
+                // isDirty (not commited) so try to parse another chunk
+                dirty = true;
+            }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+            if (name.contains("TerminalServices") && name.contains("Ope")) {
+                System.out.println();
+            }
 
-	public long getRecordCount() {
-		return totalCount;
-	}
+            boolean available = true;
+            for (int i = 0; available; i++) {
+                int read = dis.read(curChunk);
+                if (read > 0) {
+                    try {
+                        EvtxChunk chunk = new EvtxChunk(this, curChunk);
+                        chunk.processChunk();
+                    } catch (EvtxParseExeption e) {
+                        if (e instanceof EvtxInvalidChunkHeaderException) {
+                            if (i < chunckCount) {
+                                if (!dirty) {
+                                    System.out.println("Invalid chunk header found on non dirty evtx file:" + ((EvtxInvalidChunkHeaderException) e).getHeader());
+                                } else {
+                                    System.out.println("Invalid chunk header found before end of chunckcount on evtx file:" + ((EvtxInvalidChunkHeaderException) e).getHeader());
+                                }
+                            }
+                            // if the file is dirty ignores parsing with no error because it can be normal
+                            // to occur
+                        } else {
+                            e.printStackTrace();
+                        }
+                    } finally {
+                        if (i >= chunckCount) {
+                            available = dis.available() > 0;
+                        }
+                        templateXmls.clear();
+                    }
+                } else {
+                    // eof
+                    available = false;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	public boolean isDirty() {
-		return dirty;
-	}
+    static class EvtxRecConsumer implements EvtxRecordConsumer {
+        ArrayList<Exception> es = new ArrayList<>();
+        int count;
+
+        @Override
+        public void accept(EvtxRecord evtxRecord) {
+            try {
+                System.out.println("ID:" + evtxRecord.id);
+                System.out.println("Written time:" + evtxRecord.writtenTime);
+                System.out.println("---------------------------------------------------");
+
+                EvtxBinXml binXml = evtxRecord.getBinXml();
+                System.out.println(evtxRecord.getEventId());
+                System.out.println(binXml.toString());
+                System.out.println("");
+                count++;
+            } catch (Exception e) {
+                es.add(e);
+            }
+            // throw new NullPointerException();
+        }
+    }
+
+    public EvtxRecordConsumer getEvtxRecordConsumer() {
+        return evtxRecordConsumer;
+    }
+
+    public void setEvtxRecordConsumer(EvtxRecordConsumer evtxRecordConsumer) {
+        this.evtxRecordConsumer = evtxRecordConsumer;
+    }
+
+    public void addTemplateData(int offset, TemplateData templateDefinition) {
+        templateDatas.put(offset, templateDefinition);
+    }
+
+    public TemplateData getTemplateData(int offset) {
+        return templateDatas.get(offset);
+    }
+
+    public void addTemplateXml(int offset, EvtxXmlFragment templateXml) {
+        templateXmls.put(offset, templateXml);
+    }
+
+    public EvtxXmlFragment getTemplateXml(int offset) {
+        return templateXmls.get(offset);
+    }
+
+    public static void main(String[] args) throws FileNotFoundException {
+        File f = new File("/home/patrick.pdb/multicase/system.out");
+        // System.setOut(new PrintStream(f));
+        File dir = new File("/home/patrick.pdb/multicase/events");
+        File[] files = dir.listFiles();
+        EvtxRecConsumer rc = new EvtxRecConsumer();
+        for (int i = 0; i < files.length; i++) {
+            if (files[i].getName().contains("System.evtx")) {
+                EvtxFile evtxfile = new EvtxFile(files[i]);
+                evtxfile.setEvtxRecordConsumer(rc);
+                evtxfile.processFile();
+            }
+        }
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public long getRecordCount() {
+        return totalCount;
+    }
+
+    public boolean isDirty() {
+        return dirty;
+    }
 }

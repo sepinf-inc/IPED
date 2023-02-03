@@ -6,8 +6,8 @@ import iped.parsers.evtx.template.TemplateInstance;
 
 public class EvtxNormalSubstitution extends EvtxOptionalSubstitution {
 
-	public EvtxNormalSubstitution(EvtxFile evtxFile, ByteBuffer bb, EvtxElement evtxElement) throws EvtxParseExeption {
-		super(evtxFile,bb, evtxElement);
-	}
+    public EvtxNormalSubstitution(EvtxFile evtxFile, ByteBuffer bb, EvtxElement evtxElement) throws EvtxParseExeption {
+        super(evtxFile, bb, evtxElement);
+    }
 
 }
