@@ -41,11 +41,6 @@
             <artifactId>kharon</artifactId>
             <version>0.1.6</version>
         </dependency>
-        <dependency>
-		    <groupId>net.iakovlev</groupId>
-		    <artifactId>timeshape</artifactId>
-		    <version>2020d.12</version>
-		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.toedter/jcalendar -->
 		<dependency>
 		    <groupId>com.toedter</groupId>
