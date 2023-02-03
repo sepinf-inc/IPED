@@ -25,7 +25,7 @@ import iped.configuration.IConfigurationDirectory;
 import iped.configuration.ObjectManager;
 
 public class ConfigurationManager implements ObjectManager<Configurable<?>> {
-    private static ConfigurationManager singleton = null;
+    private static ConfigurationManager selectedCM = null;
     List<ConfigurableChangeListener> configurableChangeListeners = new ArrayList<ConfigurableChangeListener>();
 
     private IConfigurationDirectory directory;
@@ -35,19 +35,29 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
 
     boolean changed=false;
 
+    /**
+     * @return returns current selected configuration profile
+     */
     public static ConfigurationManager get() {
-        return singleton;
+        return selectedCM;
     }
 
+    public static void setCurrentConfigurationManager(ConfigurationManager cm) {
+        selectedCM = cm;
+    }
+
+    /**
+     * Creates an ConfigurationManager instance an sets it as the current selected CM.
+     */
     public static ConfigurationManager createInstance(IConfigurationDirectory directory) {
-        if (singleton == null) {
+        if (selectedCM == null) {
             synchronized (ConfigurationManager.class) {
-                if (singleton == null) {
-                    singleton = new ConfigurationManager(directory);
+                if (selectedCM == null) {
+                    selectedCM = new ConfigurationManager(directory);
                 }
             }
         }
-        return singleton;
+        return selectedCM;
     }
 
     public ConfigurationManager(IConfigurationDirectory directory) {
@@ -128,7 +138,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     }
 
     public <T extends Configurable<?>> T findObject(Class<? extends Configurable<?>> clazz) {
-        for (Configurable<?> configurable : singleton.loadedConfigurables.keySet()) {
+        for (Configurable<?> configurable : selectedCM.loadedConfigurables.keySet()) {
             if (configurable.getClass().equals(clazz)) {
                 return (T) configurable;
             }
@@ -137,7 +147,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     }
 
     public AbstractTaskConfig<?> getTaskConfigurable(String configFileName) {
-        for (Configurable<?> config : singleton.loadedConfigurables.keySet()) {
+        for (Configurable<?> config : selectedCM.loadedConfigurables.keySet()) {
             if (config instanceof AbstractTaskConfig) {
                 AbstractTaskConfig<?> taskConfig = (AbstractTaskConfig<?>) config;
                 if (taskConfig.getTaskConfigFileName().equals(configFileName)) {
@@ -160,7 +170,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     }
 
     public boolean getEnableTaskProperty(String propertyName) {
-        EnableTaskProperty enableProp = singleton.getEnableTaskConfigurable(propertyName);
+        EnableTaskProperty enableProp = selectedCM.getEnableTaskConfigurable(propertyName);
         if (enableProp != null) {
             return enableProp.isEnabled();
         } else {

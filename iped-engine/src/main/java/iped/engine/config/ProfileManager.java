@@ -45,9 +45,11 @@ public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
                 currentProfileDirectory.setName(currentProfile.getName());
                 listOfProfileDirectories.add(currentProfileDirectory);
             }else {
-                SerializedConfigurationDirectory currentProfileDirectory = new SerializedConfigurationDirectory(currentProfile.toPath());
-                currentProfileDirectory.setName(currentProfile.getName().substring(0,currentProfile.getName().lastIndexOf(PROFILE_EXTENSION)));
-                listOfProfileDirectories.add(currentProfileDirectory);
+                if(currentProfile.getName().endsWith(PROFILE_EXTENSION)) {
+                    SerializedConfigurationDirectory currentProfileDirectory = new SerializedConfigurationDirectory(currentProfile.toPath());
+                    currentProfileDirectory.setName(currentProfile.getName().substring(0,currentProfile.getName().lastIndexOf(PROFILE_EXTENSION)));
+                    listOfProfileDirectories.add(currentProfileDirectory);
+                }
             }
         }
     }

@@ -12,10 +12,12 @@ import java.awt.Point;
 import java.awt.Robot;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.table.AbstractTableModel;
@@ -41,22 +43,17 @@ public class TasksTableModel extends AbstractTableModel {
     private final String[] COLLUM_NAME = {"#", " ", "Task", Messages.get("Home.ProcOptions.Table.Options")};
     private ConfigurationManager configurationManager;
     private List<AbstractTask> taskList;
-    private ArrayList<Boolean> enabled = new ArrayList<>();
+    private ArrayList<Boolean> enabled = new ArrayList<Boolean>();
+    private ArrayList<EnabledInterface> enabledConfigurables = new ArrayList<EnabledInterface>();
     MainFrame mainFrame;
-    private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
     private final TaskInstallerConfig taskInstallerConfig;
-
-    private ImageIcon dragIcon;
 
     public TasksTableModel(ConfigurationManager configurationManager, MainFrame mainFrame, List<AbstractTask> taskList) {
         this.configurationManager=configurationManager;
         this.taskInstallerConfig = configurationManager.findObject(TaskInstallerConfig.class);
         this.taskList = taskList;
         this.mainFrame = mainFrame;
-        Image img = (new ImageIcon(IconUtil.class.getResource(resPath + "cursor-hand-icon.png"))).getImage();
-        Image newimg = img.getScaledInstance( 16, 16,  java.awt.Image.SCALE_SMOOTH ) ;
-        this.dragIcon = new ImageIcon(newimg);
     }
 
     public List<AbstractTask> getTaskList() {
@@ -66,17 +63,30 @@ public class TasksTableModel extends AbstractTableModel {
     public void addData(int row, AbstractTask task, Boolean enabled) {
         this.taskList.add(row, task);
         this.enabled.add(row, enabled);
+        List<Configurable<?>> configs = task.getConfigurables();
+        Configurable<?> enableConfigurable = null;
+        Configurable<?> configurable;
+        if(configs!= null && configs.size()>0) {
+            for (Iterator iterator = configs.iterator(); iterator.hasNext();) {
+                configurable = (Configurable<?>) iterator.next();
+                if(configurable instanceof EnabledInterface) {
+                    enableConfigurable=configurable;
+                }
+            }
+        }
+        this.enabledConfigurables.add(row, (EnabledInterface) enableConfigurable);                    
+        
     }
 
     public void addData(AbstractTask task, Boolean enabled) {
-        this.taskList.add(task);
-        this.enabled.add(enabled);        
+        addData(taskList.size()-1, task, enabled);
     }
     
-    public void updateData(ConfigurationManager configurationManager, List<AbstractTask> taskList, ArrayList<Boolean> enabled) {
+    public void updateData(ConfigurationManager configurationManager, List<AbstractTask> taskList, ArrayList<Boolean> enabled, ArrayList<EnabledInterface> enabledConfigurable) {
         this.taskList = taskList;
         this.configurationManager = configurationManager;
         this.enabled = enabled;
+        this.enabledConfigurables=enabledConfigurable;
         this.fireTableDataChanged();
     }
 
@@ -96,7 +106,7 @@ public class TasksTableModel extends AbstractTableModel {
         {
             case 0: return Integer.class;
             case 1: return Boolean.class;
-            case 2: return String.class;
+            case 2: return AbstractTask.class;
             case 3: return JPanel.class;
             default: return String.class;
         }
@@ -106,20 +116,20 @@ public class TasksTableModel extends AbstractTableModel {
     public Object getValueAt(int rowIndex, int columnIndex) {
         if(taskList == null)
             return "";
-        AbstractTask currentTask = taskList.get(rowIndex);
+        List<Configurable<?>> configs;
         switch (columnIndex){
             //Task order column
             case 0: return rowIndex+1;
             //Task checkbox column
             case 1: return enabled.get(rowIndex);
             //task name column
-            case 2: return currentTask.getName();
+            case 2: return taskList.get(rowIndex);
             //options button column
             case 3: return createColumnOptionPanel(rowIndex);
             default: return "";
         }
     }
-
+    
     /**
      * Create a JPanel to change the tasks properties
      */
@@ -128,44 +138,24 @@ public class TasksTableModel extends AbstractTableModel {
         JPanel panel = new JPanel();
         panel.setLayout( new GridBagLayout() );
 
-        if((task instanceof PythonTask)||(task instanceof ScriptTask)) {
-            GridBagConstraints gbc = new GridBagConstraints();
-            JButton taskOptionButton = new JButton(dragIcon);
-            taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
-
-            taskOptionButton.addActionListener( e -> {
-                Robot robot;
-                try {
-                    //simulate mouse click with shift pressed to start dragging
-                    robot = new Robot();
-                    Point point = panel.getLocationOnScreen(); //rect is my custom view
-                    robot.mouseMove(point.x,point.y);
-                    robot.mousePress(InputEvent.BUTTON1_MASK);
-                } catch (AWTException e1) {
-                    e1.printStackTrace();
-                }            
-            });
-
-            panel.add(taskOptionButton, gbc);
-        }else {
-            List<Configurable<?>> configurables = task.getConfigurables();
-            int count = 0;//counts the number of non EnableTaskProperty configurables
-            for (Configurable<?> value : configurables) {
-                if (!(value instanceof EnableTaskProperty)) {
-                    count++;
-                }
-            }
-
-            if(count>0) {
-                GridBagConstraints gbc = new GridBagConstraints();
-                JButton taskOptionButton = new JButton("...");
-
-                taskOptionButton.addActionListener( e -> new TaskConfigDialog(configurationManager, task, mainFrame).setVisible(true));
-
-                taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
-                panel.add(taskOptionButton, gbc);
+        List<Configurable<?>> configurables = task.getConfigurables();
+        int count = 0;//counts the number of non EnableTaskProperty configurables
+        for (Configurable<?> value : configurables) {
+            if (!(value instanceof EnableTaskProperty)) {
+                count++;
             }
         }
+
+        if(count>0) {
+            GridBagConstraints gbc = new GridBagConstraints();
+            JButton taskOptionButton = new JButton("...");
+
+            taskOptionButton.addActionListener( e -> new TaskConfigDialog(configurationManager, task, mainFrame).setVisible(true));
+
+            taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
+            panel.add(taskOptionButton, gbc);
+        }
+
         return panel;
     }
 
@@ -173,8 +163,8 @@ public class TasksTableModel extends AbstractTableModel {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         switch (columnIndex){
             case 0: return false;//task order column
-            case 1: return true; //Checkbox column
-            case 2: return false;//task name column
+            case 1: return enabledConfigurables.get(rowIndex)!=null; //Checkbox column
+            case 2: return true;//task name column
             case 3: return true;//Option button column
             default: return false;
         }
@@ -190,13 +180,9 @@ public class TasksTableModel extends AbstractTableModel {
         //Enable-disable Column
         if (columnIndex == 1) {
             enabled.set(rowIndex, ((boolean) aValue));
-            List<Configurable<?>> configs = taskList.get(rowIndex).getConfigurables();
-            for (Configurable<?> config : configs) {
-                if (config instanceof EnabledInterface) {
-                    ((EnabledInterface) config).setEnabled((boolean) aValue);
-                    configurationManager.notifyUpdate(config);
-                }
-            }
+            EnabledInterface ec = enabledConfigurables.get(rowIndex);
+            ec.setEnabled((boolean) aValue);
+            configurationManager.notifyUpdate((Configurable) ec);
             configurationManager.notifyUpdate(taskInstallerConfig);
         }
     }
@@ -217,17 +203,20 @@ public class TasksTableModel extends AbstractTableModel {
     public void removeRow(int i) {
         enabled.remove(i);
         taskList.remove(i);
+        enabledConfigurables.remove(i);
     }
 
     public void changeOrder(int i, int row) {
         if(i!=row) {
-            this.taskList.add(row, taskList.get(i));
-            this.enabled.add(row, enabled.get(i));
+            taskList.add(row, taskList.get(i));
+            enabled.add(row, enabled.get(i));
+            enabledConfigurables.add(row,enabledConfigurables.get(i));
             if(i>row) {
                 i++;
             }
             enabled.remove(i);
             taskList.remove(i);
+            enabledConfigurables.remove(i);
             configurationManager.notifyUpdate(taskInstallerConfig);
         }
     }

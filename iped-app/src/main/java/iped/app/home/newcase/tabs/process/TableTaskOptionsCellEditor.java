@@ -15,7 +15,7 @@ public class TableTaskOptionsCellEditor extends DefaultCellEditor{
     }
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column)
     {
-        return (JPanel) value;
+        return table.getCellRenderer(row, column).getTableCellRendererComponent(table, value, isSelected, isSelected, row, column);
     }
 
 }

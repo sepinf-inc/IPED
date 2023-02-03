@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -40,13 +41,13 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
     private JTable jtableTasks;
     private TasksTableModel tasksTableModel;
-    private TaskInstallerConfig taskInstallerConfig;
-    private List<AbstractTask> taskArrayList;
+    private TaskInstallerConfig taskInstallerConfig;//referece to current task installer being edited
+    private List<AbstractTask> taskArrayList;//list of tasks being edited
 
     JFileChooser scriptChooser = new JFileChooser();
     private JComboBox<IConfigurationDirectory> profilesCombo;
-    private ConfigurationManager selectedConfigurationManager;
-    private ConfigurationManager defaultConfigurationManager;
+    private ConfigurationManager selectedConfigurationManager;//configuration manager corresponding to the current profile selected
+    private ConfigurationManager defaultConfigurationManager;//configuration manager corresponding to iped default distributed configuration 
     private JPanel selectProfilePanel;
     private JPanel createProfilePanel;
     private JTextField tfProfileName;
@@ -72,6 +73,9 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         showProfilePanel(SELECT_PROFILE_PANEL);
     }
 
+    /**
+     * Executed on tab initialization. Creates some needed object references. 
+     */
     private void createObjectInstances(){
         //create a "default" profile item on profilemanager
         defaultProfile = ProfileManager.get().getDefaultProfile();
@@ -192,30 +196,28 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     }
 
 
-
+    /**
+     * Update selected profile task installer configurable with the tasks states
+     * defined in UI.
+     */    
     private void updateTaskInstallerConfig() {
         List<AbstractTask> tasks = new ArrayList<>();
         for(int i=0; i<tasksTableModel.getRowCount();i++) {
             tasks.add(tasksTableModel.getTaskList().get(i));
-
-            //loop to update enableTaskProperties configurables
-            List<Configurable<?>> configs = tasksTableModel.getTaskList().get(i).getConfigurables();
-            for (Configurable<?> config : configs) {
-                if (config instanceof EnabledInterface) {
-                    ((EnabledInterface) config).setEnabled(tasksTableModel.getEnabled(i));
-                }
-            }
         }
         taskInstallerConfig.update(tasks);
     }
 
     private void loadTasksTables(IConfigurationDirectory selectedDirectory){
         selectedConfigurationManager = new ConfigurationManager(selectedDirectory);
+        ConfigurationManager.setCurrentConfigurationManager(selectedConfigurationManager);
         selectedConfigurationManager.addConfigurableChangeListener(this);
-        Set<Configurable<?>> configs = defaultConfigurationManager.getObjects();
-        for (Configurable<?> config : configs) {
-            //overwrite if already exists
-            selectedConfigurationManager.addObject(config);
+        if(selectedConfigurationManager.getConfigurationDirectory() instanceof ConfigurationDirectory) {
+            Set<Configurable<?>> configs = defaultConfigurationManager.getObjects();
+            for (Configurable<?> config : configs) {
+                //overwrite if already exists
+                selectedConfigurationManager.addObject(config);
+            }
         }
         try {
             selectedConfigurationManager.loadConfigs(true);
@@ -227,30 +229,32 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         //if the selected profile dos not has a TaskInstaller.xml, load it from de CONFDIR location
         if(taskInstallerConfig==null)
             taskInstallerConfig = defaultConfigurationManager.findObject(TaskInstallerConfig.class);
-        //Create a list with all AbstractTask class instance from the TaskInstaller.xml file
+        //Creates a list with all AbstractTask class instance from the TaskInstaller.xml file
         taskArrayList = taskInstallerConfig.getNewTaskInstances();
         ArrayList<Boolean> enabled = new ArrayList<Boolean>();
+        ArrayList<EnabledInterface> enabledConfigurables = new ArrayList<EnabledInterface>();
         for(AbstractTask currentTask : taskArrayList  ){
             List<Configurable<?>> configurableList = currentTask.getConfigurables();
             if (configurableList == null || configurableList.isEmpty()){
-                try {
-                    currentTask.init(selectedConfigurationManager);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                enabledConfigurables.add(null);
                 enabled.add(currentTask.isEnabled());
                 continue;
             }
-
-            if(configurableList.get(0) instanceof EnabledInterface) {
-                EnabledInterface etp = (EnabledInterface) configurableList.get(0);
-                enabled.add(etp.isEnabled());
-                continue;
+            
+            EnabledInterface enabledConfigurable = null;
+            for (Iterator iterator = configurableList.iterator(); iterator.hasNext();) {
+                Configurable<?> configurable = (Configurable<?>) iterator.next();
+                if(configurable instanceof EnabledInterface) {
+                    enabledConfigurable=(EnabledInterface) configurable;
+                }
             }
-            enabled.add(false);
+            enabledConfigurables.add(enabledConfigurable);
+            if(enabledConfigurable!=null) {
+                enabled.add(enabledConfigurable.isEnabled());
+            }
         }
 
-        tasksTableModel.updateData(selectedConfigurationManager, taskArrayList, enabled);
+        tasksTableModel.updateData(selectedConfigurationManager, taskArrayList, enabled, enabledConfigurables);
     }
 
     /**
@@ -274,6 +278,11 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         jtableTasks.setModel(tasksTableModel);
         jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellRenderer( new TableTaskOptionsCellRenderer() );
         jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellEditor( new TableTaskOptionsCellEditor(new JCheckBox()) );
+        
+        jtableTasks.getColumn( jtableTasks.getColumnName(1)).setCellRenderer(new TableTaskEnabledCellRenderer(jtableTasks.getDefaultRenderer(jtableTasks.getColumnClass(1))));
+
+        jtableTasks.getColumn( jtableTasks.getColumnName(2)).setCellRenderer( new TableTaskLabelCellRenderer() );
+        jtableTasks.getColumn( jtableTasks.getColumnName(2)).setCellEditor( new TableTaskOptionsCellEditor(new JCheckBox()) );
 
         jtableTasks.getColumn( jtableTasks.getColumnName(0)).setMaxWidth(30);
         jtableTasks.getColumn( jtableTasks.getColumnName(1)).setMaxWidth(30);
