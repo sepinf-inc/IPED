@@ -1,0 +1,3 @@
+﻿# Define an optional small custom message to be displayed in the analysis application splash screen 
+# (presented during application start up), like the organization name or the case identification.
+customMessage = 

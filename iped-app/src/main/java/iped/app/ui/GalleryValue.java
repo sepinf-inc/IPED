@@ -20,20 +20,19 @@ package iped.app.ui;
 
 import java.awt.image.BufferedImage;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import iped.data.IItemId;
 
 public class GalleryValue {
 
     public String name;
-    public ImageIcon icon;
+    public Icon icon;
     public IItemId id;
-    public int originalW = Integer.MAX_VALUE;
-    public int originalH = Integer.MAX_VALUE;
     public BufferedImage image;
+    public boolean unsupportedType;
 
-    public GalleryValue(String name, ImageIcon icon, IItemId id) {
+    public GalleryValue(String name, Icon icon, IItemId id) {
         this.name = name;
         this.icon = icon;
         this.id = id;

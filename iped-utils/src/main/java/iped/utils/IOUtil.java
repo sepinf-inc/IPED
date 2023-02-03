@@ -355,7 +355,7 @@ public class IOUtil {
         int read = 0;
         while (read < len) {
             int r = is.read(arr, read, len - read);
-            if (r <= 0) break;
+            if (r < 0) break;
             read += r;
         }
         return len == read ? arr : null;
@@ -367,7 +367,7 @@ public class IOUtil {
         int read = 0;
         while (read < len) {
             int r = is.read(arr, read, len - read);
-            if (r <= 0) break;
+            if (r < 0) break;
             read += r;
         }
         if (len != read) return null;

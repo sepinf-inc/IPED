@@ -31,7 +31,7 @@ import iped.search.IItemSearcher;
 /**
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
-class LibraryFolder extends ShareazaEntity {
+public class LibraryFolder extends ShareazaEntity {
 
     private final List<LibraryFolder> folders = new ArrayList<>();
     private final List<LibraryFile> files = new ArrayList<>();
@@ -124,5 +124,9 @@ class LibraryFolder extends ShareazaEntity {
 
     public List<LibraryFile> getLibraryFiles() {
         return files;
+    }
+
+    public String getPath() {
+        return path;
     }
 }

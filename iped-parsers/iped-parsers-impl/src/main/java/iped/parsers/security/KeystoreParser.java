@@ -15,6 +15,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -45,9 +46,10 @@ public class KeystoreParser extends AbstractParser {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-    private static Set<MediaType> SUPPORTED_TYPES = null;
+
 	public static final MediaType PKCS12_MIME = MediaType.application("x-pkcs12");
     public static final MediaType JAVA_KEYSTORE = MediaType.application("x-java-keystore");
+    private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<>(Arrays.asList(PKCS12_MIME, JAVA_KEYSTORE));
     public static final Property PRIVATEKEY = Property.internalText("certificate:privatekey"); //$NON-NLS-1$
 
     static String DEFAULT_JKS_KEYSTORE_PASSWORD = "changeit";
@@ -56,11 +58,6 @@ public class KeystoreParser extends AbstractParser {
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
-        if (SUPPORTED_TYPES == null) {
-            SUPPORTED_TYPES = new HashSet<MediaType>();
-            SUPPORTED_TYPES.add(PKCS12_MIME);
-            SUPPORTED_TYPES.add(JAVA_KEYSTORE);
-        }
 
         if (passwordList == null) {
             passwordList = new ArrayList();

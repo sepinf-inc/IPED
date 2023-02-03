@@ -19,14 +19,17 @@
 package iped.parsers.shareaza;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
-class SharedSource extends ShareazaEntity {
+public class SharedSource extends ShareazaEntity {
 
     private String url;
     private String time;
+    private URI surl;
 
     public SharedSource() {
         super("SHARED SOURCE"); //$NON-NLS-1$
@@ -40,6 +43,11 @@ class SharedSource extends ShareazaEntity {
         } else {
             time = Util.formatDatetime(Util.convertToEpoch(ar.readUInt()));
         }
+        try {
+            surl = new URI(url);
+        } catch (URISyntaxException e) {
+
+        }
     }
 
     @Override
@@ -48,4 +56,64 @@ class SharedSource extends ShareazaEntity {
         f.out("Time: " + time); //$NON-NLS-1$
     }
 
+    public String getUrl() {
+        return url;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public String getHost() {
+        if (surl != null) {
+            return surl.getHost();
+        } else {
+            return null;
+        }
+    }
+
+    public String getUserInfo() {
+        if (surl != null) {
+            return surl.getUserInfo();
+        } else {
+            return null;
+        }
+    }
+
+    public String getProtocol() {
+        if (surl != null) {
+            return surl.getScheme();
+
+        } else {
+            return null;
+        }
+    }
+
+    public String getPort() {
+        if (surl != null) {
+            return Integer.toString(surl.getPort());
+        } else {
+            return null;
+        }
+    }
+
+    public String getUrlPath() {
+        if (surl != null) {
+            return surl.getPath();
+        } else {
+            return null;
+        }
+    }
+
+    public String getName() {
+        if (surl != null) {
+            if (getProtocol().contains("ed2kftp")) {
+                return surl.getPath();
+            } else {
+                return surl.getQuery();
+            }
+        } else {
+            return url;
+        }
+    }
 }

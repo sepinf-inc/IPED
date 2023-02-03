@@ -1,7 +1,6 @@
 package iped.viewers.api;
 
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
@@ -26,6 +25,10 @@ public interface ResultSetViewer {
 
     public void updateSelection();
 
+    public void checkAll(boolean value);
+
     public GUIProvider getGUIProvider();
+
+    public void notifyCaseDataChanged();
 
 }

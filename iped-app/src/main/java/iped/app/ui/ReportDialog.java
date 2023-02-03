@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.app.bootstrap.Bootstrap;
 import iped.app.processing.CmdLineArgsImpl;
+import iped.io.URLUtil;
 
 public class ReportDialog implements ActionListener, TableModelListener {
 
@@ -263,7 +264,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
         String output = this.output.getText().trim();
         logger.info("Generating report to " + output); //$NON-NLS-1$
 
-        URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+        URL url = URLUtil.getURL(this.getClass());
         try {
             String classpath = new File(url.toURI()).getAbsolutePath();
             if (!classpath.endsWith(".jar")) //$NON-NLS-1$

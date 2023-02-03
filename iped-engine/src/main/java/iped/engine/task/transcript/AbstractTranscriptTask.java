@@ -33,9 +33,9 @@ import iped.data.IItem;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.config.LocalConfig;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.video.VideoThumbTask;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
 
@@ -276,8 +276,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         ProcessBuilder pb = new ProcessBuilder();
         String[] cmd = transcriptConfig.getConvertCmd().split(" ");
         if (SystemUtils.IS_OS_WINDOWS) {
-            LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
-            String mplayerWin = localConfig.getMplayerWinPath();
+            String mplayerWin = VideoThumbTask.MPLAYER_WIN_PATH;
             cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + mplayerWin);
         }
         for (int i = 0; i < cmd.length; i++) {
@@ -313,8 +312,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             if (!tmpFile.exists()) {
                 LOGGER.warn("Conversion to wav failed, no wav generated: {} ", itemPath);
                 tmpFile = null;
-            }
-            if (tmpFile.length() == 0) {
+            } else if (tmpFile.length() == 0) {
                 tmpFile.delete();
                 LOGGER.warn("Conversion to wav failed, empty wav generated: {} ", itemPath);
                 tmpFile = null;

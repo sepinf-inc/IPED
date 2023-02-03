@@ -4,27 +4,22 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TimeZone;
-import java.util.TreeMap;
 import java.util.function.Consumer;
 
 import javax.swing.JProgressBar;
 import javax.swing.SortOrder;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.tika.metadata.Metadata;
 
 import iped.data.IItemId;
-import iped.engine.task.index.IndexItem;
 import iped.geo.localization.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
+import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.utils.DateUtil;
 import iped.utils.SimpleHTMLEncoder;
@@ -37,8 +32,7 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
     int contSemCoordenadas = 0, itemsWithGPS = 0;
     Consumer<KMLResult> consumer;
 
-    public GetResultsKMLWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress,
-            Consumer<KMLResult> consumer) {
+    public GetResultsKMLWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress, Consumer<KMLResult> consumer) {
         this.app = app;
         this.colunas = colunas;
         this.progress = progress;
@@ -62,7 +56,7 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
     @Override
     protected KMLResult doInBackground() throws Exception {
         KMLResult kmlResult = new KMLResult();
-    	try {
+        try {
             StringBuilder tourPlayList = new StringBuilder(""); //$NON-NLS-1$
             StringBuilder kml = new StringBuilder(""); //$NON-NLS-1$
 
@@ -99,52 +93,30 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
             if (progress != null) {
                 progress.setMaximum(results.getLength());
             }
-            
-            LeafReader reader = app.getIPEDSource().getLeafReader();
-            SortedSetDocValues docValuesSet = reader.getSortedSetDocValues(IndexItem.GEO_SSDV_PREFIX+ExtraProperties.LOCATIONS);
-            
-            int cont=0;
-            Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
-            
-            class ItemIds{
-            	int luceneId;
-            	IItemId itemId;
-            	
-            	public ItemIds(int luceneId, IItemId itemId) {
-            		this.luceneId = luceneId;
-            		this.itemId = itemId;
-            	}
-            }
-            
-            TreeMap<Integer,ItemIds> sortedItems = new TreeMap<Integer,ItemIds>();
 
-            for (int row = 0; row < results.getLength(); row++) {        	
+            String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
+
+            IIPEDSearcher searcher = app.createNewSearch(query);
+            IMultiSearchResult multiResult = searcher.multiSearch();
+
+            Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
+            for (IItemId item : multiResult.getIterator()) {
+                gpsItems.put(item, null);
+            }
+
+            for (int row = 0; row < results.getLength(); row++) {
+
                 if (progress != null) {
                     progress.setValue(row + 1);
                 }
-                
-                IItemId item = results.getItem(row);
 
-                int luceneId = app.getIPEDSource().getLuceneId(item);
-                
-                if(!docValuesSet.advanceExact(luceneId)) {
-                	continue;
+                IItemId item = results.getItem(app.getResultsTable().convertRowIndexToModel(row));
+
+                if (!gpsItems.containsKey(item)) {
+                    continue;
                 }
 
-                int tableRow = app.getResultsTable().convertRowIndexToView(row);
-                gpsItems.put(item, null);
-                sortedItems.put(tableRow, new ItemIds(luceneId,item));
-            }
-            
-            for (Iterator<Entry<Integer,ItemIds>> iterator = sortedItems.entrySet().iterator(); iterator.hasNext();) {
-            	Entry<Integer, ItemIds> e = iterator.next();
-            	ItemIds itemIds = e.getValue();
-				int luceneId = itemIds.luceneId;
-				IItemId item = itemIds.itemId;
-				int row = e.getKey();
-
-                cont++;
-                //int luceneId = app.getIPEDSource().getLuceneId(item);
+                int luceneId = app.getIPEDSource().getLuceneId(item);
                 doc = app.getIPEDSource().getSearcher().doc(luceneId);
 
                 String lat;
@@ -176,7 +148,6 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
                 }
 
             }
-            System.out.println(cont);
             kml.append("</Folder>"); //$NON-NLS-1$
 
             kml.append("<gx:Tour>"); //$NON-NLS-1$
@@ -194,13 +165,13 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
             kml.append("</kml>"); //$NON-NLS-1$
 
             kmlResult.setResultKML(kml.toString(), itemsWithGPS, gpsItems);
-    		
-    	}catch(Exception e){
-    		e.printStackTrace();
-    	}finally {
-        	//Thread.currentThread().setContextClassLoader(oldCcl);
-		
-		}
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // Thread.currentThread().setContextClassLoader(oldCcl);
+
+        }
 
         return kmlResult;
 
@@ -214,9 +185,8 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
 
     }
 
-    private void generateLocationKML(StringBuilder tourPlayList, StringBuilder kml, String coluna,
-            org.apache.lucene.document.Document doc, SimpleDateFormat df, int row, IItemId item, String lat,
-            String longit, String alt, int subitem) {
+    private void generateLocationKML(StringBuilder tourPlayList, StringBuilder outerKml, String coluna, org.apache.lucene.document.Document doc, SimpleDateFormat df, int row, IItemId item, String lat, String longit, String alt,
+            int subitem) {
         if (progress != null)
             progress.setString(Messages.getString("KMLResult.LoadingGPSData") + ": " + (++itemsWithGPS)); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -228,6 +198,7 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
             gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
 
+        StringBuilder kml = new StringBuilder();
         kml.append("<Placemark>"); //$NON-NLS-1$
         // kml+="<styleUrl>#basico</styleUrl>";
         kml.append("<id>" + gid + "</id>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -289,6 +260,8 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
         kml.append("<TimeSpan><begin>" + dataCriacao + "</begin></TimeSpan>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         kml.append("</Placemark>"); //$NON-NLS-1$
+
+        outerKml.append(kml);
     }
 
     static public String htmlFormat(String html) {
