@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -352,13 +351,11 @@ public class SleuthkitReader extends DataSourceReader {
 
         if (listOnly || embeddedDisk) {
 
-            Properties sysProps = System.getProperties();
-
             if (sleuthCase == null) {
                 synchronized (this.getClass()) {
                     if (sleuthCase == null) {
                         if (new File(dbPath).exists()) {
-                            sleuthCase = SleuthkitCase.openCase(dbPath);
+                            sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(dbPath);
 
                         } else {
                             UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
@@ -370,13 +367,6 @@ public class SleuthkitReader extends DataSourceReader {
                     }
                 }
             }
-
-            // workaround for https://github.com/sepinf-inc/IPED/issues/1176
-            for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
-                sysProps.setProperty(entry.getKey().toString(), entry.getValue().toString());
-            }
-            System.setProperties(sysProps);
-
 
             Manager.getInstance().initSleuthkitServers();
 
