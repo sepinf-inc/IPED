@@ -1,15 +1,10 @@
 package iped.parsers.evtx.model;
 
 import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import org.apache.lucene.util.ArrayUtil;
@@ -34,19 +29,15 @@ public class EvtxFile {
     EvtxRecordConsumer evtxRecordConsumer;
     private InputStream is;
 
-    public EvtxFile(File src) throws FileNotFoundException {
-        this.is = new FileInputStream(src);
-    }
-
     public EvtxFile(InputStream is) {
         this.is = is;
     }
 
     public void processFile() {
         try {
-            DataInputStream dis = new DataInputStream(new BufferedInputStream(is, 64 * 1024));
+            BufferedInputStream bis = new BufferedInputStream(is, 64 * 1024);
 
-            dis.read(header);
+            bis.readNBytes(header, 0, header.length);
 
             ByteBuffer bb = ByteBuffer.wrap(header);
             bb.order(ByteOrder.LITTLE_ENDIAN);
@@ -66,14 +57,10 @@ public class EvtxFile {
                 dirty = true;
             }
 
-            if (name.contains("TerminalServices") && name.contains("Ope")) {
-                System.out.println();
-            }
-
-            boolean available = true;
-            for (int i = 0; available; i++) {
-                int read = dis.read(curChunk);
-                if (read > 0) {
+            boolean eof = false;
+            for (int i = 0; !eof; i++) {
+                int read = bis.readNBytes(curChunk, 0, curChunk.length);
+                if (read == curChunk.length) {
                     try {
                         EvtxChunk chunk = new EvtxChunk(this, curChunk);
                         chunk.processChunk();
@@ -92,14 +79,10 @@ public class EvtxFile {
                             e.printStackTrace();
                         }
                     } finally {
-                        if (i >= chunckCount) {
-                            available = dis.available() > 0;
-                        }
                         templateXmls.clear();
                     }
                 } else {
-                    // eof
-                    available = false;
+                    eof = true;
                 }
             }
         } catch (Exception e) {
@@ -152,21 +135,6 @@ public class EvtxFile {
 
     public EvtxXmlFragment getTemplateXml(int offset) {
         return templateXmls.get(offset);
-    }
-
-    public static void main(String[] args) throws FileNotFoundException {
-        File f = new File("/home/patrick.pdb/multicase/system.out");
-        // System.setOut(new PrintStream(f));
-        File dir = new File("/home/patrick.pdb/multicase/events");
-        File[] files = dir.listFiles();
-        EvtxRecConsumer rc = new EvtxRecConsumer();
-        for (int i = 0; i < files.length; i++) {
-            if (files[i].getName().contains("System.evtx")) {
-                EvtxFile evtxfile = new EvtxFile(files[i]);
-                evtxfile.setEvtxRecordConsumer(rc);
-                evtxfile.processFile();
-            }
-        }
     }
 
     public String getName() {
