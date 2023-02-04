@@ -1,6 +1,7 @@
 package iped.parsers.evtx.model;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -33,60 +34,56 @@ public class EvtxFile {
         this.is = is;
     }
 
-    public void processFile() {
-        try {
-            BufferedInputStream bis = new BufferedInputStream(is, 64 * 1024);
+    public void processFile() throws IOException, EvtxParseExeption {
+        BufferedInputStream bis = new BufferedInputStream(is, 64 * 1024);
 
-            bis.readNBytes(header, 0, header.length);
+        bis.readNBytes(header, 0, header.length);
 
-            ByteBuffer bb = ByteBuffer.wrap(header);
-            bb.order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer bb = ByteBuffer.wrap(header);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
 
-            String sig = new String(ArrayUtil.copyOfSubArray(header, 0, 8));
+        String sig = new String(ArrayUtil.copyOfSubArray(header, 0, 8));
 
-            if (!sig.equals("ElfFile\0")) {
-                throw new EvtxParseExeption("Invalid header signature");
-            }
-            long firstChunckNumber = bb.asLongBuffer().get(1);
-            long lastChunckNumber = bb.asLongBuffer().get(2);
-            long nextRecordIdentifier = bb.asLongBuffer().get(2);
-            int flags = bb.asIntBuffer().get(30);
-            chunckCount = bb.asShortBuffer().get(21);
-            if (flags == 0x0001) {
-                // isDirty (not commited) so try to parse another chunk
-                dirty = true;
-            }
+        if (!sig.equals("ElfFile\0")) {
+            throw new EvtxParseExeption("Invalid header signature");
+        }
+        long firstChunckNumber = bb.asLongBuffer().get(1);
+        long lastChunckNumber = bb.asLongBuffer().get(2);
+        long nextRecordIdentifier = bb.asLongBuffer().get(2);
+        int flags = bb.asIntBuffer().get(30);
+        chunckCount = bb.asShortBuffer().get(21);
+        if (flags == 0x0001) {
+            // isDirty (not commited) so try to parse another chunk
+            dirty = true;
+        }
 
-            boolean eof = false;
-            for (int i = 0; !eof; i++) {
-                int read = bis.readNBytes(curChunk, 0, curChunk.length);
-                if (read == curChunk.length) {
-                    try {
-                        EvtxChunk chunk = new EvtxChunk(this, curChunk);
-                        chunk.processChunk();
-                    } catch (EvtxParseExeption e) {
-                        if (e instanceof EvtxInvalidChunkHeaderException) {
-                            if (i < chunckCount) {
-                                if (!dirty) {
-                                    System.out.println("Invalid chunk header found on non dirty evtx file:" + ((EvtxInvalidChunkHeaderException) e).getHeader());
-                                } else {
-                                    System.out.println("Invalid chunk header found before end of chunckcount on evtx file:" + ((EvtxInvalidChunkHeaderException) e).getHeader());
-                                }
+        boolean eof = false;
+        for (int i = 0; !eof; i++) {
+            int read = bis.readNBytes(curChunk, 0, curChunk.length);
+            if (read == curChunk.length) {
+                try {
+                    EvtxChunk chunk = new EvtxChunk(this, curChunk);
+                    chunk.processChunk();
+                } catch (EvtxParseExeption e) {
+                    if (e instanceof EvtxInvalidChunkHeaderException) {
+                        if (i < chunckCount) {
+                            if (!dirty) {
+                                System.out.println("Invalid chunk header found on non dirty evtx file:" + ((EvtxInvalidChunkHeaderException) e).getHeader());
+                            } else {
+                                System.out.println("Invalid chunk header found before end of chunckcount on evtx file:" + ((EvtxInvalidChunkHeaderException) e).getHeader());
                             }
-                            // if the file is dirty ignores parsing with no error because it can be normal
-                            // to occur
-                        } else {
-                            e.printStackTrace();
                         }
-                    } finally {
-                        templateXmls.clear();
+                        // if the file is dirty ignores parsing with no error because it can be normal
+                        // to occur
+                    } else {
+                        e.printStackTrace();
                     }
-                } else {
-                    eof = true;
+                } finally {
+                    templateXmls.clear();
                 }
+            } else {
+                eof = true;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

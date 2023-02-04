@@ -15,8 +15,6 @@ import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.TemporaryResources;
-import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
@@ -31,6 +29,7 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.evtx.model.EvtxElement;
 import iped.parsers.evtx.model.EvtxFile;
+import iped.parsers.evtx.model.EvtxParseExeption;
 import iped.parsers.evtx.model.EvtxRecord;
 import iped.parsers.evtx.model.EvtxRecordConsumer;
 import iped.parsers.standard.StandardParser;
@@ -203,15 +202,12 @@ public class EvtxGroupedParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
-        TemporaryResources tmp = new TemporaryResources();
 
         String filePath = ""; //$NON-NLS-1$
         ItemInfo itemInfo = context.get(ItemInfo.class);
 
         if (itemInfo != null)
             filePath = itemInfo.getPath();
-
-        final TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
         IntRef maxProviderId = new IntRef();
         IntRef totalRecordCount = new IntRef();
@@ -220,8 +216,6 @@ public class EvtxGroupedParser extends AbstractParser {
         MetadataUtil.setMetadataType(RECID_PROP.getName(), Integer.class);
 
         if (extractor.shouldParseEmbedded(metadata)) {
-            EvtxFile evtxFile = new EvtxFile(tis);
-            evtxFile.setName(filePath);
 
             HashMap<String, ArrayList<EvtxRecord>> subItens = new HashMap<String, ArrayList<EvtxRecord>>();
 
@@ -260,8 +254,15 @@ public class EvtxGroupedParser extends AbstractParser {
                 }
             };
 
+            EvtxFile evtxFile = new EvtxFile(stream);
+            evtxFile.setName(filePath);
             evtxFile.setEvtxRecordConsumer(co);
-            evtxFile.processFile();
+            try {
+                evtxFile.processFile();
+
+            } catch (EvtxParseExeption e) {
+                throw new TikaException(e.getMessage(), e);
+            }
 
             for (Iterator<String> iterator = subItens.keySet().iterator(); iterator.hasNext();) {
                 String subKey = (String) iterator.next();
