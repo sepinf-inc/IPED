@@ -875,7 +875,11 @@ public class Manager {
             // copy non default profile
             File currentProfile = new File(Configuration.getInstance().configPath);
             if (!currentProfile.equals(defaultProfile)) {
-                IOUtil.copyDirectory(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
+                if(currentProfile.isDirectory()) {
+                    IOUtil.copyDirectory(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
+                }else {
+                    IOUtil.copyFile(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR));                    
+                }
             }
 
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
