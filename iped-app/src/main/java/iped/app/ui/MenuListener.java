@@ -88,7 +88,6 @@ public class MenuListener implements ActionListener {
 
     private void setupColumnsSelector() {
         ColumnsSelectUI columnsSelector = ColumnsSelectUI.getInstance();
-        columnsSelector.dialog.setModal(true);
         columnsSelector.setVisible();
     }
 

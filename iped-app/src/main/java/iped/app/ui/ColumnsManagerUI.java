@@ -84,6 +84,7 @@ public class ColumnsManagerUI implements ActionListener {
 
     protected ColumnsManagerUI() {
         columnsManager = ColumnsManager.getInstance();
+        dialog.setModal(true);
 
         dialog.setBounds(new Rectangle(400, 400));
         dialog.setTitle(Messages.getString("ColumnsManager.Title"));
