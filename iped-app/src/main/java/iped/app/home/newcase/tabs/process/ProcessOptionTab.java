@@ -318,7 +318,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
         buttonStartProcess = new JButton(Messages.get("Home.ProcOptions.StartProcessing"));
         buttonStartProcess.addActionListener(e -> {
-            String selectedProfile = ((ConfigurationDirectory) profilesCombo.getSelectedItem()).getName();
+            String selectedProfile = ((IConfigurationDirectory) profilesCombo.getSelectedItem()).getName();
             if(defaultProfile.getName().equalsIgnoreCase(selectedProfile) )
                 NewCaseContainerPanel.getInstance().getIpedProcess().setProfile(null);
             else
