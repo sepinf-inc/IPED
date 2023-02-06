@@ -79,7 +79,7 @@ public class TasksTableModel extends AbstractTableModel {
     }
 
     public void addData(AbstractTask task, Boolean enabled) {
-        addData(taskList.size()-1, task, enabled);
+        addData(taskList.size(), task, enabled);
     }
     
     public void updateData(ConfigurationManager configurationManager, List<AbstractTask> taskList, ArrayList<Boolean> enabled, ArrayList<EnabledInterface> enabledConfigurable) {
