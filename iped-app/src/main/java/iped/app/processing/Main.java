@@ -34,6 +34,7 @@ import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
+import iped.engine.config.ProfileManager;
 import iped.engine.core.Manager;
 import iped.engine.localization.Messages;
 import iped.engine.util.UIPropertyListenerProvider;
@@ -173,7 +174,11 @@ public class Main {
         if(cmdLineParams!=null) {
             String profile = cmdLineParams.getProfile();
             if (profile != null) {
-                configPath = new File(configPath, Configuration.PROFILES_DIR + "/" + profile).getAbsolutePath(); //$NON-NLS-1$
+                File configFile = new File(configPath, Configuration.PROFILES_DIR + "/" + profile);
+                if(!configFile.exists()) {
+                    configFile = new File(configPath, Configuration.PROFILES_DIR + "/" + profile + ProfileManager.PROFILE_EXTENSION);
+                }
+                configPath = configFile.getAbsolutePath(); //$NON-NLS-1$
             }
         }
         if (!new File(configPath).exists())
