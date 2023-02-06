@@ -16,7 +16,7 @@ import iped.configuration.IConfigurationDirectory;
 import iped.configuration.ObjectManager;
 
 public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
-    private static final String PROFILE_EXTENSION = ".ipedprofile";
+    public static final String PROFILE_EXTENSION = ".ipedprofile";
     private static ProfileManager singleton = null;
     Set<IConfigurationDirectory> listOfProfileDirectories = new TreeSet<IConfigurationDirectory>();
     private File profilesDir;
