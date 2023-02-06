@@ -1,6 +1,5 @@
 package iped.app.ui;
 
-import java.awt.Dialog.ModalityType;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -14,7 +13,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
@@ -38,7 +36,6 @@ import iped.engine.util.Util;
 import iped.localization.LocalizedProperties;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.StandardParser;
-import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.viewers.api.IColumnsManager;
 import iped.viewers.util.ProgressDialog;
@@ -50,9 +47,6 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     private static Logger LOGGER = LoggerFactory.getLogger(ColumnsManager.class);
 
     private static final File globalCols = getGlobalColsFile();
-
-    private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 50, 100, 60, 150, 155, 155, 155, 155,
-            155, 155, 250, 2000);
 
     public static final String[] groupNames = { Messages.getString("ColumnsManager.Basic"),
             Messages.getString("ColumnsManager.HashDB"), Messages.getString("ColumnsManager.Advanced"), //$NON-NLS-2$ //$NON-NLS-2$
@@ -74,12 +68,16 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         return new File(System.getProperty("user.home") + "/.iped/" + name); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    private static final String[] defaultFields = { ResultTableModel.SCORE_COL, ResultTableModel.BOOKMARK_COL,
+
+    protected static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 50, 100, 60, 150, 155, 155, 155, 155,
+            155, 155, 250, 2000);
+    
+    protected static final String[] defaultFields = { ResultTableModel.SCORE_COL, ResultTableModel.BOOKMARK_COL,
             IndexItem.NAME, IndexItem.EXT, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.DELETED, IndexItem.CATEGORY, IndexItem.CREATED,
             IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.CHANGED, IndexItem.TIMESTAMP, IndexItem.TIME_EVENT,
             IndexItem.HASH, IndexItem.PATH };
 
-    private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE,
+    protected static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE,
             IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
             IndexItem.PARENTIDs, IndexItem.SUBITEMID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
             IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
@@ -97,6 +95,8 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     public static final String SELECTED_PROPERTIES_FILENAME = "data/selectedProps.dat";
     public static final String SELECTED_REPORT_PROPERTIES_FILENAME = "data/reportProps.dat";
+    public static final String VISIBLE_COLUMNS_FILENAME = "data/visiblecols.dat";
+
 
     String[] indexFields = null;
 
@@ -104,9 +104,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     ColumnState colState = new ColumnState();
 
-    private ArrayList<String> loadedFields = new ArrayList<String>();
-
-    private int firstColsToPin = 7;
+    protected ArrayList<String> loadedFields = new ArrayList<String>();
 
     private boolean autoManageCols;
 
@@ -123,14 +121,6 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         if (instance == null)
             instance = new ColumnsManager();
         return instance;
-    }
-
-    public void setPinnedColumns(int firstColsToPin) {
-        this.firstColsToPin = firstColsToPin;
-    }
-
-    public int getPinnedColumns() {
-        return this.firstColsToPin;
     }
 
     @Override
@@ -195,11 +185,11 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         updateDinamicFields();
 
         loadSavedCols();
-        addAllCheckBoxesState();
+        initializeAllCheckBoxesState();
     }
 
-    private File getColStateFile() {
-        caseCols = new File(moduleDir, "visibleCols.dat"); //$NON-NLS-1$
+    protected File getColStateFile() {
+        caseCols = new File(moduleDir, VISIBLE_COLUMNS_FILENAME);
         File cols = caseCols;
         if (!cols.exists())
             cols = globalCols;
@@ -261,32 +251,8 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         return selectedFields;
     }
 
-    public void updateDinamicCols() {
-        if (!autoManageCols)
-            return;
 
-        if (App.get().ipedResult.getLength() == App.get().appCase.getTotalItems()
-                || App.get().ipedResult.getLength() == 0)
-            return;
-
-        final ProgressDialog progress = new ProgressDialog(App.get(), null, false, 100, ModalityType.TOOLKIT_MODAL);
-        progress.setNote(Messages.getString("ColumnsManager.LoadingCols")); //$NON-NLS-1$
-
-        new Thread() {
-            public void run() {
-                final Set<String> usedCols = getUsedCols(progress);
-
-                SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                        updateDinamicCols(usedCols);
-                        progress.close();
-                    }
-                });
-            }
-        }.start();
-    }
-
-    private Set<String> getUsedCols(ProgressDialog progress) {
+    protected Set<String> getUsedCols(ProgressDialog progress) {
 
         Collator collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
@@ -320,111 +286,6 @@ public class ColumnsManager implements Serializable, IColumnsManager {
             progress.setProgress(++p);
         }
         return dinamicFields;
-    }
-
-    private void updateDinamicCols(Set<String> dinamicFields) {
-
-        if (dinamicFields == null)
-            return;
-
-        Set<String> colNamesToPin = new HashSet<>();
-        for (int i = 2; i < Math.min(firstColsToPin, App.get().resultsTable.getColumnCount()); i++) {
-            colNamesToPin.add(
-                    App.get().resultsTable.getColumnModel().getColumn(i).getHeaderValue().toString().toLowerCase());
-        }
-
-        for (String field : (List<String>) colState.visibleFields.clone()) {
-            if (!dinamicFields.contains(field) && !colNamesToPin.contains(field.toLowerCase())
-                    && !field.equals(BasicProps.LENGTH)) // length header changes to listed items total size info
-            {
-                updateCol(field, false);
-            }
-        }
-
-        int newColStart = App.get().resultsTable.getColumnCount();
-
-        for (String field : dinamicFields) {
-            if (!colState.visibleFields.contains(field))
-                updateCol(field, true);
-        }
-
-        // move important new cols to front
-        int newPosEmail = firstColsToPin;
-        int newPosOther = firstColsToPin;
-        for (int i = newColStart; i < App.get().resultsTable.getColumnCount(); i++) {
-            TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
-            String colName = col.getHeaderValue().toString();
-            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)
-                    || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
-                App.get().resultsTable.moveColumn(i, newPosEmail++);
-                newPosOther++;
-            } else if (colName.toLowerCase().startsWith(ExtraProperties.UFED_META_PREFIX)) {
-                App.get().resultsTable.moveColumn(i, newPosOther++);
-            }
-        }
-
-        // move important old cols to front
-        int lastOldCol = newColStart - 1 + newPosOther - firstColsToPin;
-        newPosEmail = firstColsToPin;
-        for (int i = newPosOther; i <= lastOldCol; i++) {
-            TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
-            String colName = col.getHeaderValue().toString();
-            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)
-                    || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
-                App.get().resultsTable.moveColumn(i, newPosEmail++);
-            }
-        }
-    }
-
-    public void resetToLastLayout() {
-        File cols = this.getColStateFile();
-        try {
-            ColumnState lastState = (ColumnState) Util.readObject(cols.getAbsolutePath());
-            resetColumns(lastState.visibleFields, lastState.initialWidths);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-    }
-
-    public void resetToDefaultLayout() {
-        // resetColumns(Arrays.asList(defaultFields).stream().map(f ->
-        // BasicProps.getLocalizedField(f))
-        // .collect(Collectors.toList()), defaultWidths);
-        resetColumns(Arrays.asList(defaultFields), defaultWidths);
-    }
-
-    public void resetColumns(List<String> newCols, List<Integer> widths) {
-        for (String field : (List<String>) colState.visibleFields.clone())
-            if (!newCols.contains(field) && !field.equals(ResultTableModel.SCORE_COL)
-                    && !field.equals(ResultTableModel.BOOKMARK_COL))
-                updateCol(field, false);
-
-        for (String field : newCols) {
-            if (!colState.visibleFields.contains(field))
-                updateCol(field, true);
-        }
-
-        int newPos = 2;
-        for (String col : newCols) {
-            col = LocalizedProperties.getLocalizedField(col);
-            for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
-                TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
-                if (tc.getHeaderValue() instanceof String && ((String) tc.getHeaderValue())
-                        .startsWith(col.substring(0, 1).toUpperCase() + col.substring(1))) {
-                    App.get().resultsTable.moveColumn(i, newPos++);
-                }
-            }
-        }
-
-        int j = 0;
-        for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
-            TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
-            if (tc.getModelIndex() >= ResultTableModel.fixedCols.length && j < widths.size()) {
-                tc.setPreferredWidth(widths.get(j++));
-            }
-        }
     }
 
     void updateDinamicFields() {
@@ -526,33 +387,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     }
 
-    Map<String, Integer> lastWidths = new HashMap<>();
-    int lastModelIdx; 
-
-    void updateCol(String colName, boolean insert) {
-        colName = LocalizedProperties.getNonLocalizedField(colName);
-        int modelIdx = loadedFields.indexOf(colName);
-        if (insert) {
-            colState.visibleFields.add(colName);
-            if (modelIdx == -1) {
-                loadedFields.add(colName);
-                App.get().resultsModel.updateCols();
-                modelIdx = ResultTableModel.fixedCols.length + loadedFields.size() - 1;
-            } else
-                modelIdx += ResultTableModel.fixedCols.length;
-        } else {
-            colState.visibleFields.remove(colName);
-            modelIdx += ResultTableModel.fixedCols.length;
-            int viewIdx = App.get().resultsTable.convertColumnIndexToView(modelIdx);
-            if (viewIdx > -1) {
-                TableColumn col = App.get().resultsTable.getColumnModel().getColumn(viewIdx);
-                lastWidths.put(colName, col.getWidth());
-            }
-        }
-        lastModelIdx = modelIdx;
-    }
-
-    private void addAllCheckBoxesState() {
+    private void initializeAllCheckBoxesState() {
         for (int i = 0; i < fieldGroups.length; i++) {
             List<String> fieldNames = Arrays.asList(fieldGroups[i]);
             fieldNames.forEach(f -> allCheckBoxesState.putIfAbsent(LocalizedProperties.getNonLocalizedField(f), false));

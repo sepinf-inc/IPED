@@ -326,11 +326,11 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.pinFirstColumns) {
 
-            int pinned = ColumnsManager.getInstance().getPinnedColumns();
+            int pinned = ColumnsManagerUI.getInstance().getPinnedColumns();
             String msg = Messages.getString("MenuListener.PinFirstCols");
             SpinnerDialog dialog = new SpinnerDialog(App.get(), msg, msg + ":", pinned, 2, 12);
             dialog.setVisible(true);
-            ColumnsManager.getInstance().setPinnedColumns(dialog.getSelectedValue());
+            ColumnsManagerUI.getInstance().setPinnedColumns(dialog.getSelectedValue());
 
         } else if (e.getSource() == menu.manageFilters) {
 
@@ -382,13 +382,13 @@ public class MenuListener implements ActionListener {
             new ReportDialog().setVisible();
 
         } else if (e.getSource() == menu.lastColLayout) {
-            ColumnsManager.getInstance().resetToLastLayout();
+            ColumnsManagerUI.getInstance().resetToLastLayout();
 
         } else if (e.getSource() == menu.saveColLayout) {
             ColumnsManager.getInstance().saveColumnsState();
 
         } else if (e.getSource() == menu.resetColLayout) {
-            ColumnsManager.getInstance().resetToDefaultLayout();
+            ColumnsManagerUI.getInstance().resetToDefaultLayout();
         } else if (e.getSource() == menu.addToGraph) {
             int[] rows = App.get().resultsTable.getSelectedRows();
             List<ItemId> items = new ArrayList<>(rows.length);

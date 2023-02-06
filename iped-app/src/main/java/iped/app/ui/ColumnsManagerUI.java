@@ -1,11 +1,16 @@
 package iped.app.ui;
 
+import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.awt.Color;
 import java.awt.Rectangle;
@@ -20,15 +25,20 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumn;
 
+import iped.app.ui.ColumnsManager.ColumnState;
 import iped.app.ui.controls.HintTextField;
+import iped.engine.util.Util;
 import iped.localization.LocalizedProperties;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.utils.StringUtil;
+import iped.viewers.util.ProgressDialog;
 
 
 public class ColumnsManagerUI implements ActionListener {
@@ -43,6 +53,7 @@ public class ColumnsManagerUI implements ActionListener {
     protected static ColumnsManager columnsManager;
     private static ColumnsManagerUI instance;
 
+    protected int firstColsToPin = 7;
 
     public static ColumnsManagerUI getInstance() {
         if (instance == null)
@@ -61,6 +72,14 @@ public class ColumnsManagerUI implements ActionListener {
         updatePanelList();
         dialog.setVisible(true);
         combo.requestFocus();
+    }
+    
+    public void setPinnedColumns(int firstColsToPin) {
+        this.firstColsToPin = firstColsToPin;
+    }
+
+    public int getPinnedColumns() {
+        return this.firstColsToPin;
     }
 
     protected ColumnsManagerUI() {
@@ -139,7 +158,6 @@ public class ColumnsManagerUI implements ActionListener {
             for (int k = 0; k < timeFields.length; k++) {
                 if (colName.equalsIgnoreCase(timeFields[k])) {
                     if (!columnsManager.colState.visibleFields.contains(timeFields[k])) {
-                        columnsManager.updateCol(colName, true);
                         updateGUICol(colName, true);
                     }
                     App.get().resultsTable.moveColumn(i, newPos);
@@ -153,6 +171,137 @@ public class ColumnsManagerUI implements ActionListener {
             }
         }
     }
+
+    public void updateDinamicCols() {
+        if (!columnsManager.isAutoManageCols())
+            return;
+
+        if (App.get().ipedResult.getLength() == App.get().appCase.getTotalItems()
+                || App.get().ipedResult.getLength() == 0)
+            return;
+
+        final ProgressDialog progress = new ProgressDialog(App.get(), null, false, 100, ModalityType.TOOLKIT_MODAL);
+        progress.setNote(Messages.getString("ColumnsManager.LoadingCols")); //$NON-NLS-1$
+
+        new Thread() {
+            public void run() {
+                final Set<String> usedCols = columnsManager.getUsedCols(progress);
+
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        updateDinamicCols(usedCols);
+                        progress.close();
+                    }
+                });
+            }
+        }.start();
+    }
+
+    private void updateDinamicCols(Set<String> dinamicFields) {
+
+        if (dinamicFields == null)
+            return;
+
+        Set<String> colNamesToPin = new HashSet<>();
+        for (int i = 2; i < Math.min(firstColsToPin, App.get().resultsTable.getColumnCount()); i++) {
+            colNamesToPin.add(
+                    App.get().resultsTable.getColumnModel().getColumn(i).getHeaderValue().toString().toLowerCase());
+        }
+
+        for (String field : (List<String>) columnsManager.colState.visibleFields.clone()) {
+            if (!dinamicFields.contains(field) && !colNamesToPin.contains(field.toLowerCase())
+                    && !field.equals(BasicProps.LENGTH)) // length header changes to listed items total size info
+            {
+                updateGUICol(field, false);
+            }
+        }
+
+        int newColStart = App.get().resultsTable.getColumnCount();
+
+        for (String field : dinamicFields) {
+            if (!columnsManager.colState.visibleFields.contains(field))
+                updateGUICol(field, true);
+        }
+
+        // move important new cols to front
+        int newPosEmail = firstColsToPin;
+        int newPosOther = firstColsToPin;
+        for (int i = newColStart; i < App.get().resultsTable.getColumnCount(); i++) {
+            TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
+            String colName = col.getHeaderValue().toString();
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)
+                    || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
+                App.get().resultsTable.moveColumn(i, newPosEmail++);
+                newPosOther++;
+            } else if (colName.toLowerCase().startsWith(ExtraProperties.UFED_META_PREFIX)) {
+                App.get().resultsTable.moveColumn(i, newPosOther++);
+            }
+        }
+
+        // move important old cols to front
+        int lastOldCol = newColStart - 1 + newPosOther - firstColsToPin;
+        newPosEmail = firstColsToPin;
+        for (int i = newPosOther; i <= lastOldCol; i++) {
+            TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
+            String colName = col.getHeaderValue().toString();
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)
+                    || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
+                App.get().resultsTable.moveColumn(i, newPosEmail++);
+            }
+        }
+    }
+
+    public void resetToLastLayout() {
+        File cols = columnsManager.getColStateFile();
+        try {
+            ColumnState lastState = (ColumnState) Util.readObject(cols.getAbsolutePath());
+            resetColumns(lastState.visibleFields, lastState.initialWidths);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+    }
+
+    public void resetToDefaultLayout() {
+        // resetColumns(Arrays.asList(defaultFields).stream().map(f ->
+        // BasicProps.getLocalizedField(f))
+        // .collect(Collectors.toList()), defaultWidths);
+        resetColumns(Arrays.asList(ColumnsManager.defaultFields), ColumnsManager.defaultWidths);
+    }
+
+    public void resetColumns(List<String> newCols, List<Integer> widths) {
+        for (String field : (List<String>) columnsManager.colState.visibleFields.clone())
+            if (!newCols.contains(field) && !field.equals(ResultTableModel.SCORE_COL)
+                    && !field.equals(ResultTableModel.BOOKMARK_COL))
+                updateGUICol(field, false);
+
+        for (String field : newCols) {
+            if (!columnsManager.colState.visibleFields.contains(field))
+                updateGUICol(field, true);
+        }
+
+        int newPos = 2;
+        for (String col : newCols) {
+            col = LocalizedProperties.getLocalizedField(col);
+            for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
+                TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
+                if (tc.getHeaderValue() instanceof String && ((String) tc.getHeaderValue())
+                        .startsWith(col.substring(0, 1).toUpperCase() + col.substring(1))) {
+                    App.get().resultsTable.moveColumn(i, newPos++);
+                }
+            }
+        }
+
+        int j = 0;
+        for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
+            TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
+            if (tc.getModelIndex() >= ResultTableModel.fixedCols.length && j < widths.size()) {
+                tc.setPreferredWidth(widths.get(j++));
+            }
+        }
+    }
+
 
     protected void updatePanelList() {
         listPanel.removeAll();
@@ -185,16 +334,23 @@ public class ColumnsManagerUI implements ActionListener {
             JCheckBox source = (JCheckBox) e.getSource();
             String text = source.getText();
             boolean isSelected = source.isSelected();
-            columnsManager.updateCol(text, isSelected);
-            updateGUICol(source.getText(), isSelected);
+            updateGUICol(text, isSelected);
         }
     }
 
+    Map<String, Integer> lastWidths = new HashMap<>();
     private void updateGUICol(String colName, boolean insert) {
         colName = LocalizedProperties.getNonLocalizedField(colName);
-        Map<String, Integer> lastWidths = columnsManager.lastWidths;
-        int modelIdx = columnsManager.lastModelIdx;
+        int modelIdx = columnsManager.loadedFields.indexOf(colName);
         if (insert) {
+            columnsManager.colState.visibleFields.add(colName);
+            if (modelIdx == -1) {
+                columnsManager.loadedFields.add(colName);
+                App.get().resultsModel.updateCols();
+                modelIdx = ResultTableModel.fixedCols.length + columnsManager.loadedFields.size() - 1;
+            } else
+                modelIdx += ResultTableModel.fixedCols.length;
+
             TableColumn tc = new TableColumn(modelIdx);
             if (lastWidths.containsKey(colName))
                 tc.setPreferredWidth(lastWidths.get(colName));
@@ -203,9 +359,12 @@ public class ColumnsManagerUI implements ActionListener {
             App.get().resultsTable.addColumn(tc);
             setColumnRenderer(tc);
         } else {
+            columnsManager.colState.visibleFields.remove(colName);
+            modelIdx += ResultTableModel.fixedCols.length;
             int viewIdx = App.get().resultsTable.convertColumnIndexToView(modelIdx);
             if (viewIdx > -1) {
                 TableColumn col = App.get().resultsTable.getColumnModel().getColumn(viewIdx);
+                lastWidths.put(colName, col.getWidth());
                 App.get().resultsTable.removeColumn(col);
             }
         }
