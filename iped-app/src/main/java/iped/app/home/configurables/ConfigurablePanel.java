@@ -64,7 +64,16 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
             if(isJson) {
                 result = new JSONConfigurablePanel((Configurable<String>)configurable, mainFrame);
             }else {
-                result = new TextConfigurablePanel((Configurable<String>)configurable, mainFrame);
+                /*try to see if it is a xml object*/
+                try {
+                    if(strConfig.trim().startsWith("<?xml")) {
+                        result = new XMLConfigurablePanel((Configurable<String>)configurable, mainFrame);
+                    }
+                }finally {
+                    if(result==null) {
+                        result = new TextConfigurablePanel((Configurable<String>)configurable, mainFrame);
+                    }
+                }
             }
         }else if(config instanceof XMLCarverConfiguration) {
             result = new XMLCarverConfigurablePanel((Configurable<XMLCarverConfiguration>)configurable, mainFrame);

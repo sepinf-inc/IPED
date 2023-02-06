@@ -43,15 +43,17 @@ public abstract class RegexView extends PlainView {
 
         startMap = new TreeMap<Integer, Integer>();
         colorMap = new TreeMap<Integer, Color>();
+        
+        if(patternColors!=null) {
+            // Match all regexes on this snippet, store positions
+            for (Map.Entry<Pattern, Color> entry : patternColors.entrySet()) {
 
-        // Match all regexes on this snippet, store positions
-        for (Map.Entry<Pattern, Color> entry : patternColors.entrySet()) {
+                Matcher matcher = entry.getKey().matcher(text);
 
-            Matcher matcher = entry.getKey().matcher(text);
-
-            while (matcher.find()) {
-                startMap.put(matcher.start(1), matcher.end());
-                colorMap.put(matcher.start(1), entry.getValue());
+                while (matcher.find()) {
+                    startMap.put(matcher.start(1), matcher.end());
+                    colorMap.put(matcher.start(1), entry.getValue());
+                }
             }
         }
 

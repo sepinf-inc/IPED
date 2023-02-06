@@ -8,8 +8,8 @@ import javax.swing.text.Element;
 
 public class JSONView extends RegexView {
 
-    private static String TAG_PATTERN = "(dados)as";
-    private static String TAG_END_PATTERN = "(dados)as";
+    private static String TAG_PATTERN = "(\"[^\"]*\"\\s*:)";
+    private static String TAG_END_PATTERN = "(\"[^\"]*\"\\s*[,\\}\\]])";
     private static String TAG_COMMENT = "(<!--.*-->)";
 
     protected void configPatterns(){
@@ -24,6 +24,7 @@ public class JSONView extends RegexView {
     }
     public JSONView(Element elem) {
         super(elem);
+        configPatterns();
     }
 
 }

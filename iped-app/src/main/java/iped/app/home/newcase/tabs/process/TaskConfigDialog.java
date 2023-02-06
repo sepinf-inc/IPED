@@ -76,9 +76,11 @@ public class TaskConfigDialog extends JDialog {
     }
 
     private Component createButtonsPanel() {
-        
-        
-        JButton btVoltar = new JButton(Messages.get("Home.Back"));
+        JButton btCancel = new JButton(Messages.get("Home.Cancel"));
+        btCancel.addActionListener( e -> {
+            this.setVisible(false);
+        });
+        JButton btVoltar = new JButton(Messages.get("Home.Save"));
         btVoltar.addActionListener( e -> {
             try {
                 for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
@@ -101,6 +103,7 @@ public class TaskConfigDialog extends JDialog {
         JPanel panelButtons = new JPanel();
         panelButtons.setBackground(Color.white);
         panelButtons.add(btVoltar);
+        panelButtons.add(btCancel);
         return panelButtons;
     }
 
