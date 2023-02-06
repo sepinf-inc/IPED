@@ -62,7 +62,8 @@ public class HashDBTool {
 
     private static final String nsrlDBSelectProducts = "select package_id, name from PKG";
     private static final String nsrlDBSelectHashes = "select sha1, md5, package_id from FILE";
-    private static final String nsrlDBEstimateHashesCount = "select max(rowid) from FILE";
+    private static final String nsrlDBEstimateHashesCountMinimal = "select max(rowid) from FILE";
+    private static final String nsrlDBEstimateHashesCountFull = "select max(rowid) from METADATA";
 
     private static final String caidDataModelKey = "odata.metadata";
     private static final String caidDataModelValue = "http://github.com/ICMEC/ProjectVic/DataModels/1.2.xml#Media";
@@ -874,12 +875,29 @@ public class HashDBTool {
 
             // Estimate the number of rows (count would be too slow)
             int tot = 0;
-            stmt.execute(nsrlDBEstimateHashesCount);
+            stmt.execute(nsrlDBEstimateHashesCountMinimal);
             rs = stmt.getResultSet();
             if (rs.next()) {
                 tot = rs.getInt(1);
             }
             rs.close();
+
+            // If count is zero, we are likely importing a full version of RDS V3
+            if (tot == 0) {
+                try {
+                    stmt.execute(nsrlDBEstimateHashesCountFull);
+                    rs = stmt.getResultSet();
+                    if (rs.next()) {
+                        tot = rs.getInt(1);
+                    }
+                    rs.close();
+                } catch (Exception e) {
+                }
+                // If still no total, do not show percentage but total records read
+                if (tot == 0) {
+                    tot = -1;
+                }
+            }
 
             // NSRL properties
             int setPropertyId = getPropertyId(setPropertyName);
@@ -907,7 +925,7 @@ public class HashDBTool {
 
                 boolean hasHash = false;
                 Arrays.fill(hashes, null);
-                
+
                 byte[] hSha1 = hashes[idxSha1] = hashStrToBytes(sha1, hashBytesLen[idxSha1]);
                 if (hSha1.length == 0) {
                     hashes[idxSha1] = null;
@@ -1393,6 +1411,9 @@ public class HashDBTool {
             bar[bar.length - 1] = ']';
             char[] s = (String.format("%.1f", pct * 100) + "%").toCharArray();
             System.arraycopy(s, 0, bar, (bar.length - s.length) / 2, s.length);
+        } else if (pct < -1) {
+            char[] s = (String.valueOf((int) (-pct)) + " records read").toCharArray();
+            System.arraycopy(s, 0, bar, 1, s.length);
         }
         bar[0] = '\r';
         System.out.print(new String(bar));

@@ -358,7 +358,7 @@ public class SleuthkitReader extends DataSourceReader {
                 synchronized (this.getClass()) {
                     if (sleuthCase == null) {
                         if (new File(dbPath).exists()) {
-                            sleuthCase = SleuthkitCase.openCase(dbPath);
+                            sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(dbPath);
 
                         } else {
                             UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
@@ -376,7 +376,6 @@ public class SleuthkitReader extends DataSourceReader {
                 sysProps.setProperty(entry.getKey().toString(), entry.getValue().toString());
             }
             System.setProperties(sysProps);
-
 
             Manager.getInstance().initSleuthkitServers();
 
