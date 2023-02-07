@@ -5,8 +5,12 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ItemEvent;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -53,6 +57,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     private JTextField tfProfileName;
     private JButton buttonStartProcess;
     ConfigurationDirectory defaultProfile;
+    private JButton deleteProfileBtn;
+    private Object[] profilesArray;
 
     private static final String SELECT_PROFILE_PANEL = "selectProfilePanel";
     private static final String CREATE_PROFILE_PANEL = "createProfilePanel";
@@ -119,17 +125,32 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
      */
     private void setupSelectProfilesPanel(JPanel parentPanel){
         selectProfilePanel =new JPanel();
+        deleteProfileBtn = new JButton("Delete");
         parentPanel.add(selectProfilePanel);
         selectProfilePanel.setBackground(super.getCurrentBackGroundColor());
         selectProfilePanel.add( new JLabel(Messages.get("Home.ProcOptions.ExecProfile")) );
-        profilesCombo = new JComboBox(ProfileManager.get().getObjects().toArray());
+        profilesArray = ProfileManager.get().getObjects().toArray();
+        profilesCombo = new JComboBox(profilesArray);
         profilesCombo.setPreferredSize(new Dimension(200,(int)profilesCombo.getPreferredSize().getHeight()));
         selectProfilePanel.add(profilesCombo);
         profilesCombo.setSelectedItem(defaultProfile);
         profilesCombo.addItemListener(e->{
             if(e.getStateChange()==ItemEvent.SELECTED) {
-                loadTasksTables((IConfigurationDirectory) e.getItem());
+                IConfigurationDirectory configDirectory = (IConfigurationDirectory) e.getItem();
+                loadTasksTables(configDirectory);
+                if(configDirectory instanceof SerializedConfigurationDirectory) {                    
+                    selectProfilePanel.add(deleteProfileBtn);                    
+                }else {
+                    selectProfilePanel.remove(deleteProfileBtn);                    
+                }
+                selectProfilePanel.updateUI();
             }
+        });
+        deleteProfileBtn.addActionListener( e -> {
+            IConfigurationDirectory configDirectory = (IConfigurationDirectory) profilesCombo.getSelectedItem();
+            ProfileManager.get().removeObject(configDirectory);
+            profilesCombo.removeItemAt(profilesCombo.getSelectedIndex());
+            selectProfilePanel.remove(deleteProfileBtn);
         });
     }
 
@@ -208,6 +229,21 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         taskInstallerConfig.update(tasks);
     }
 
+    private Object clone(Object src) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(src);
+            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            return ois.readObject();
+        }catch (IOException | ClassNotFoundException e) {
+            //supposedly impossible to occur
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     private void loadTasksTables(IConfigurationDirectory selectedDirectory){
         selectedConfigurationManager = new ConfigurationManager(selectedDirectory);
         ConfigurationManager.setCurrentConfigurationManager(selectedConfigurationManager);
@@ -215,8 +251,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         if(selectedConfigurationManager.getConfigurationDirectory() instanceof ConfigurationDirectory) {
             Set<Configurable<?>> configs = defaultConfigurationManager.getObjects();
             for (Configurable<?> config : configs) {
-                //overwrite if already exists
-                selectedConfigurationManager.addObject(config);
+                //overwrite if already exists with the clone of default config object
+                selectedConfigurationManager.addObject((Configurable<?>) clone(config));
             }
         }
         try {

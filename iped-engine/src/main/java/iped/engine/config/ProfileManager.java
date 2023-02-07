@@ -82,8 +82,12 @@ public class ProfileManager implements ObjectManager<IConfigurationDirectory>{
     }
 
     @Override
-    public void removeObject(IConfigurationDirectory aObject) {
-
+    public void removeObject(IConfigurationDirectory profileDirectory) {
+        File toDeleteProfile = new File(profilesDir, profileDirectory.getName()+PROFILE_EXTENSION);
+        if(toDeleteProfile.exists()) {
+            toDeleteProfile.delete();
+        }
+        listOfProfileDirectories.remove(profileDirectory);
     }
 
     public IConfigurationDirectory createProfilePath(String profileName, ConfigurationManager configurationManager) throws FileAlreadyExistsException {
