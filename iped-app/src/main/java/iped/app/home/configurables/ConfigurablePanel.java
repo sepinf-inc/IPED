@@ -17,6 +17,7 @@ import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.configurables.bean.BeanConfigurablePanel;
 import iped.configuration.Configurable;
+import iped.engine.config.MakePreviewConfig;
 import iped.engine.config.RegexTaskConfig;
 import iped.engine.task.carver.XMLCarverConfiguration;
 import iped.utils.UTF8Properties;
@@ -75,6 +76,8 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
                     }
                 }
             }
+        }else if(configurable instanceof MakePreviewConfig) {
+            result = new MakePreviewConfigurablePanel((MakePreviewConfig) configurable, mainFrame);
         }else if(config instanceof XMLCarverConfiguration) {
             result = new XMLCarverConfigurablePanel((Configurable<XMLCarverConfiguration>)configurable, mainFrame);
         }else if(configurable.getClass().equals(RegexTaskConfig.class)) {
