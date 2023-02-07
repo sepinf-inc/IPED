@@ -4,7 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -73,8 +75,19 @@ public class MakePreviewConfigurablePanel extends ConfigurablePanel {
 
     @Override
     public void applyChanges() throws ConfigurableValidationException {
-        // TODO Auto-generated method stub
+        Set<String> mimeTypes = previewConfig.getSupportedMimes();
+        mimeTypes.clear();
+        String[] mimeTypesArray =textAreaSupportedMimes.getText().split("\n");
+        for (int i = 0; i < mimeTypesArray.length; i++) {
+            mimeTypes.add(mimeTypesArray[i]);
+        }
         
+        mimeTypes = previewConfig.getSupportedMimesWithLinks();
+        mimeTypes.clear();
+        mimeTypesArray =textAreaSupportedMimesWithLinks.getText().split("\n");
+        for (int i = 0; i < mimeTypesArray.length; i++) {
+            mimeTypes.add(mimeTypesArray[i]);
+        }
     }
 
     
