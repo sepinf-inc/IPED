@@ -56,7 +56,9 @@ public class EvtxBinXml {
             elements = new ArrayList<EvtxElement>();
             for (Iterator<EvtxXmlFragment> iterator = fragments.iterator(); iterator.hasNext();) {
                 EvtxXmlFragment frag = iterator.next();
-                elements.add(frag.getElement());
+                if (frag.getElement() != null) {
+                    elements.add(frag.getElement());
+                }
             }
         }
         return elements;

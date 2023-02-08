@@ -149,7 +149,7 @@ public class EvtxGroupedParser extends AbstractParser {
                     page++;
                 }
                 groupPageCountMap.put(subKey, page);
-                String pageStr = Integer.toString(+page);
+                String pageStr = Integer.toString(page);
                 groupTitle += "_" + "0".repeat(8 - pageStr.length()) + pageStr;
 
                 Metadata recordMetadata = new Metadata();
@@ -229,7 +229,9 @@ public class EvtxGroupedParser extends AbstractParser {
                             if (groupBy[i].contains("@")) {
                                 String[] terms = groupBy[i].split("@");
                                 EvtxElement el = evtxRecord.getElement(terms[0]);
-                                groupValue += groupBy[i] + ":" + el.getAttributeByName(terms[1]);
+                                if (el != null) {
+                                    groupValue += groupBy[i] + ":" + el.getAttributeByName(terms[1]);
+                                }
                             } else {
                                 groupValue += groupBy[i] + ":" + evtxRecord.getElementValue(groupBy[i]);
                             }
