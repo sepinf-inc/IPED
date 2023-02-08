@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -60,6 +61,8 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     protected HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
     protected HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
     private ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
+
+    private int idseq = 0;
     
     public static URL xsdFile=null;
 
@@ -180,7 +183,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
                 NodeList carverTypeEls = carverEls.getElementsByTagName("carverType");
                 for (int j = 0; j < carverTypeEls.getLength(); j++) {
                     Element carverTypeEl = (Element) carverTypeEls.item(j);
-
+                    
                     Element carverClass = XMLUtil.getFirstElement(carverTypeEl, "carverClass");
 
                     Element sigsEl = XMLUtil.getFirstElement(carverTypeEl, "signatures");
@@ -224,13 +227,28 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
                             }
                         }
                         TYPES_TO_CARVE.add(ct.getMimeType());
+                        if("false".equals(carverTypeEl.getAttribute("enabled"))) {
+                            ct.setEnabled(false);
+                        }else {
+                            ct.setEnabled(true);
+                        }
+                        ct.id = idseq++;
                         carverTypesArray.add(ct);
                     } else {
                         Class<?> classe = this.getClass().getClassLoader().loadClass(carverClass.getTextContent());
                         Carver cv = (Carver) classe.getDeclaredConstructor().newInstance();
                         CarverType[] cts = cv.getCarverTypes();
+                        boolean ctEnabled;
+                        int ctid = idseq++;
+                        if("false".equals(carverTypeEl.getAttribute("enabled"))) {
+                            ctEnabled=false;
+                        }else {
+                            ctEnabled=true;
+                        }
                         for (int k = 0; k < cts.length; k++) {
                             configCarverType(cts[k], carverTypeEl, CARVE_DIR_INDIVIDUAIS);
+                            cts[k].setEnabled(ctEnabled);
+                            cts[k].id = ctid;
                             carverTypesArray.add(cts[k]);
                         }
                     }
@@ -255,7 +273,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         Element minLength = XMLUtil.getFirstElement(carverTypeEl, "minLength");
         Element maxLength = XMLUtil.getFirstElement(carverTypeEl, "maxLength");
         Element carverScriptFile = XMLUtil.getFirstElement(carverTypeEl, "carverScriptFile");
-
+        
         if (name != null) {
             ct.setName(name.getTextContent());
         }
@@ -384,6 +402,24 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     public boolean isToIgnoreCorrupted() {
         return this.ignoreCorrupted;
     }
+    
+    public void setEnableCarverType(CarverType ct, boolean enabled) {
+        ct.setEnabled(enabled);
+        
+        NodeList ctNodes = mergedDoc.getElementsByTagName("carverType");
+        for(int i=0; i<ctNodes.getLength(); i++) {
+            Node node = ctNodes.item(i);
+            NodeList childs = node.getChildNodes();
+            for(int j=0; j<childs.getLength(); j++) {
+                Node cnode = childs.item(j);
+                if(cnode.getLocalName()!=null && cnode.getLocalName().equals("name")) {
+                    if(((Element)node).getTextContent()!=null && cnode.getTextContent().equals(ct.getName())) {
+                        ((Element)node).setAttribute("enabled", Boolean.toString(enabled));
+                    }
+                }
+            }
+        }
+    }
 
     public String getXMLString() {
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -406,6 +442,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     }
 
     public void reset() {
+        idseq  = 0;
         originalXmls.clear();
         TYPES_TO_PROCESS.clear();
         TYPES_TO_NOT_PROCESS.clear();

@@ -44,6 +44,7 @@
 						            <element name="lengthSizeBytes" type="int"></element>
 						            <element name="lengthBigEndian" type="boolean"></element>
 						        </choice>
+						        <attribute name="enabled" type="boolean"></attribute>
 						    </complexType>
 			            </element>
 			        </sequence>

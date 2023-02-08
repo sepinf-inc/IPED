@@ -11,6 +11,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.w3c.dom.Document;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -37,12 +38,15 @@ public class XMLConfigurablePanel  extends TextConfigurablePanel {
     @Override
     public void createConfigurableGUI() {
         super.createConfigurableGUI();
+        textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML);
+        textArea.setCodeFoldingEnabled(true);
+        
         XmlEditorKit xek = new XmlEditorKit();
         if(this.schemaUrl!=null) {
             xek.setSchema(schemaUrl);
         }
-        textArea.setEditorKitForContentType("text/xml", xek);
-        textArea.setContentType("text/xml");
+        //textArea.setEditorKitForContentType("text/xml", xek);
+        //textArea.setContentType("text/xml");
         textArea.getDocument().removeDocumentListener(this);
         textArea.setText(xml);
         textArea.getDocument().addDocumentListener(this);

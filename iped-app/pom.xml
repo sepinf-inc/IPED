@@ -21,6 +21,12 @@
             <artifactId>iped-engine</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.fifesoft/rsyntaxtextarea -->
+        <dependency>
+            <groupId>com.fifesoft</groupId>
+            <artifactId>rsyntaxtextarea</artifactId>
+            <version>3.3.2</version>
+        </dependency>        
         <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-geo</artifactId>

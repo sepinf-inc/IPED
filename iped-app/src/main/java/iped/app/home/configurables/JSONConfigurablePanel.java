@@ -1,5 +1,6 @@
 package iped.app.home.configurables;
 
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
@@ -20,8 +21,10 @@ public class JSONConfigurablePanel extends TextConfigurablePanel {
     @Override
     public void createConfigurableGUI() {
         super.createConfigurableGUI();
-        textArea.setEditorKitForContentType("text/xml", new JSONEditorKit());
-        textArea.setContentType("text/xml");
+        textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON_WITH_COMMENTS);
+        //textArea.setCodeFoldingEnabled(true);
+        //textArea.setEditorKitForContentType("text/xml", new JSONEditorKit());
+        //textArea.setContentType("text/xml");
         textArea.getDocument().removeDocumentListener(this);
         textArea.setText(config);
         textArea.getDocument().addDocumentListener(this);

@@ -140,4 +140,12 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
     public boolean hasChanged() {
         return changed;
     }
+
+    public Configurable<?> getConfigurable() {
+        return configurable;
+    }
+
+    public void setConfigurable(Configurable<?> configurable) {
+        this.configurable = configurable;
+    }
 }
