@@ -18,7 +18,11 @@ import iped.properties.ExtraProperties;
 
 public class TimelineResults {
 
-    private static final short MAX_TIMESTAMPS_PER_PROPERTY = 512;
+    /**
+     * One greater than the maximum number of allowed timestamp values in the same
+     * DateTime property.
+     */
+    private static final short MAX_TIMESTAMPS_PER_PROPERTY = 1024;
 
     private SortedSetDocValues timeStampValues = null;
     private SortedSetDocValues timeEventGroupValues = null;
