@@ -60,7 +60,9 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     protected HashSet<MediaType> TYPES_TO_PROCESS= new HashSet<MediaType>();
     protected HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
     protected HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
-    private ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
+    private ArrayList<CarverType> enabledCarverTypes = new ArrayList<CarverType>();
+    
+    private ArrayList<CarverType> availableCarverTypes = new ArrayList<CarverType>();
 
     private int idseq = 0;
     
@@ -230,10 +232,11 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
                         if("false".equals(carverTypeEl.getAttribute("enabled"))) {
                             ct.setEnabled(false);
                         }else {
+                            enabledCarverTypes.add(ct);
                             ct.setEnabled(true);
                         }
                         ct.id = idseq++;
-                        carverTypesArray.add(ct);
+                        availableCarverTypes.add(ct);
                     } else {
                         Class<?> classe = this.getClass().getClassLoader().loadClass(carverClass.getTextContent());
                         Carver cv = (Carver) classe.getDeclaredConstructor().newInstance();
@@ -245,11 +248,16 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
                         }else {
                             ctEnabled=true;
                         }
+                        if(cts.length>0) {
+                            availableCarverTypes.add(cts[0]);
+                        }
                         for (int k = 0; k < cts.length; k++) {
                             configCarverType(cts[k], carverTypeEl, CARVE_DIR_INDIVIDUAIS);
                             cts[k].setEnabled(ctEnabled);
+                            if(ctEnabled) {
+                                enabledCarverTypes.add(cts[k]);
+                            }
                             cts[k].id = ctid;
-                            carverTypesArray.add(cts[k]);
                         }
                     }
 
@@ -343,7 +351,11 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     }
 
     public CarverType[] getCarverTypes() {
-        return carverTypesArray.toArray(new CarverType[0]);
+        return enabledCarverTypes.toArray(new CarverType[0]);
+    }
+
+    public CarverType[] getAvailableCarverTypes() {
+        return availableCarverTypes.toArray(new CarverType[0]);
     }
 
     /**
@@ -353,7 +365,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     synchronized public void configListener(CarvedItemListener carvedItemListener)
             throws CarverConfigurationException {
         try {
-            CarverType[] carverTypes = carverTypesArray.toArray(new CarverType[0]);
+            CarverType[] carverTypes = enabledCarverTypes.toArray(new CarverType[0]);
 
             if (tree == null) {
                 tree = new AhoCorasick();
@@ -445,9 +457,10 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         idseq  = 0;
         originalXmls.clear();
         TYPES_TO_PROCESS.clear();
+        availableCarverTypes.clear();
         TYPES_TO_NOT_PROCESS.clear();
         TYPES_TO_CARVE.clear();
-        carverTypesArray.clear();
+        enabledCarverTypes.clear();
         mergedDoc=null;
    }
 

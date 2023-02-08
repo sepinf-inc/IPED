@@ -1,16 +1,19 @@
 package iped.app.home.configurables;
 
 import java.awt.Color;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import javax.swing.CellRendererPane;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -34,8 +37,8 @@ public class XMLCarverConfigurablePanel extends TextConfigurablePanel {
     XMLCarverConfiguration config;
     private JScrollPane carverListPanel;
     private JList<CarverType> carverTypeList;
-    private HashMap<Integer, HashSet<CarverType>> includedCarverClassType;
-
+    String maxStringToComputeTheWidth;
+    private CarverConfigCellRenderer cellRenderer;
 
     static {
         AbstractTokenMakerFactory atmf = (AbstractTokenMakerFactory)TokenMakerFactory.getDefaultInstance();
@@ -71,6 +74,7 @@ public class XMLCarverConfigurablePanel extends TextConfigurablePanel {
                 if(self.hasChanged()) {
                     try {
                         self.applyChanges();
+                        changed=false;
                     } catch (ConfigurableValidationException e1) {
                     }
                 }
@@ -86,13 +90,26 @@ public class XMLCarverConfigurablePanel extends TextConfigurablePanel {
         textArea.getDocument().addDocumentListener(this);
     }
     
+    class ResizeListener extends ComponentAdapter {
+        public void componentResized(ComponentEvent e) {
+            int ncols = (int) Math.ceil((carverListPanel.getSize().getWidth()-32)/cellRenderer.getMaxStringWidth());
+            int nrows = (int) Math.ceil((double)carverTypeList.getModel().getSize()/(double)ncols);
+            
+            carverTypeList.setVisibleRowCount(nrows);
+            carverListPanel.setViewportView(carverTypeList);
+        }
+    }
+    
     public void createCarverListPanel() {
         carverListPanel = new JScrollPane();
-        carverTypeList = new JList<CarverType>(createCarverTypeSumList(config.getCarverTypes()));
+        carverTypeList = new JList<CarverType>(config.getAvailableCarverTypes());
         carverTypeList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+        carverListPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        carverListPanel.addComponentListener(new ResizeListener());
         carverListPanel.setViewportView(carverTypeList);
         carverListPanel.setAutoscrolls(true);
-        carverTypeList.setCellRenderer(new CarverConfigCellRenderer());
+        cellRenderer = new CarverConfigCellRenderer();
+        carverTypeList.setCellRenderer(cellRenderer);
         carverTypeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         carverTypeList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -113,34 +130,6 @@ public class XMLCarverConfigurablePanel extends TextConfigurablePanel {
                 }
             }
         });
-    }
-    
-    /**
-     * Sumarizes carverTypeArray. There can be carverType tags with classes that register more than
-     * one carver type. This carver class must apear only once in the list.
-     * 
-     * @param carverTypes
-     * @return
-     */
-    private CarverType[] createCarverTypeSumList(CarverType[] carverTypes) {
-        includedCarverClassType = new HashMap<Integer, HashSet<CarverType>>();
-        ArrayList<CarverType> resultTemp = new ArrayList<CarverType>();
-        for (int i = 0; i < carverTypes.length; i++) {
-            CarverType ct = carverTypes[i];
-
-            HashSet<CarverType> cts = includedCarverClassType.get(ct.getId());
-            if(cts==null) {
-                cts = new HashSet<CarverType>();
-                includedCarverClassType.put(ct.getId(), cts);
-                resultTemp.add(ct);
-            }
-            cts.add(ct);
-        }
-        CarverType[] result = new CarverType[resultTemp.size()];
-        for (int i = 0; i < result.length; i++) {
-            result[i]=resultTemp.get(i);
-        }
-        return result;
     }
 
     @Override
