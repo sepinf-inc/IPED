@@ -17,6 +17,8 @@ import iped.properties.ExtraProperties;
 
 public class TimelineResults {
 
+    private static final short MAX_TIMESTAMPS_PER_PROPERTY = 512;
+
     private SortedSetDocValues timeStampValues = null;
     private SortedSetDocValues timeEventGroupValues = null;
     private BinaryDocValues eventsInDocOrdsValues = null;
@@ -40,7 +42,7 @@ public class TimelineResults {
         ArrayList<IItemId> ids = new ArrayList<>();
         ArrayList<Float> scores = new ArrayList<>();
         int[] eventOrd = new int[Short.MAX_VALUE];
-        int[][] eventsInDocOrds = new int[Short.MAX_VALUE][1 << 9];
+        int[][] eventsInDocOrds = new int[Short.MAX_VALUE][MAX_TIMESTAMPS_PER_PROPERTY];
         int idx = 0;
         for (IItemId id : items.getIterator()) {
             int luceneId = ipedCase.getLuceneId(id);
@@ -90,13 +92,16 @@ public class TimelineResults {
     }
 
     private static final void loadOrdsFromStringInner(String string, int len, int[] ret) {
-        int i = 0, j = 0, k = 0;
+        int i = 0, j = 0, k = 0, max_k = ret.length - 1;
         do {
             j = string.indexOf(IndexItem.EVENT_IDX_SEPARATOR2, i);
             if (j == -1) {
                 j = len;
             }
             ret[k++] = Integer.parseInt(string.substring(i, j));
+            if (k == max_k) {
+                break;
+            }
             i = j + 1;
         } while (j < len);
         ret[k] = -1;
