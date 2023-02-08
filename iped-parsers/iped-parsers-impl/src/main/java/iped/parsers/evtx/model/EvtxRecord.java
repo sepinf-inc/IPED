@@ -157,7 +157,7 @@ public class EvtxRecord {
                     if (o instanceof EvtxElement) {
                         evtxElement2 = (EvtxElement) o;
                     }
-                    if (o instanceof EvtxOptionalSubstitution) {
+                    if (o instanceof EvtxOptionalSubstitution && ((EvtxOptionalSubstitution) o).getValue() instanceof EvtxElement) {
                         evtxElement2 = (EvtxElement) ((EvtxOptionalSubstitution) o).getValue();
                     }
                     if (evtxElement2 != null && evtxElement2.getName().equals("EventData")) {
