@@ -4,9 +4,15 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import iped.parsers.evtx.template.TemplateInstance;
 
 public class EvtxBinXml {
+
+    private static final Logger logger = LoggerFactory.getLogger(EvtxBinXml.class);
+
     private EvtxFile evtxFile;
     private ByteBuffer bb;
     private ArrayList<EvtxXmlFragment> fragments = new ArrayList<EvtxXmlFragment>();
@@ -37,13 +43,11 @@ public class EvtxBinXml {
                     if (tstr.startsWith("<RenderingInfo")) {
                         // rendering info. does not contains adittional data
                     } else {
-                        System.out.println("Unexpected token template instance:");
-                        System.out.println(tstr);
+                        logger.warn("Unexpected token template instance: {}", tstr);
                     }
                     break;
                 default:
-                    System.out.print("Unexpected token in file:" + evtxFile.getName());
-                    System.out.println(b.type);
+                    logger.warn("Unexpected token in file {}: {}", evtxFile.getName(), b.type);
                     return;
             }
 

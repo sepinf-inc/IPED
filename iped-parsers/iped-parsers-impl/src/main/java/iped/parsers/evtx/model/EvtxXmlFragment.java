@@ -27,7 +27,6 @@ public class EvtxXmlFragment {
                 fragObj = this.templateInstance;
                 break;
             default:
-                System.out.println();
                 break;
         }
 

@@ -3,7 +3,6 @@ package iped.parsers.evtx.model;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.function.Consumer;
 
 import iped.parsers.evtx.template.TemplateInstance;
 
@@ -41,7 +40,6 @@ public class EvtxElement {
 
         BinXmlToken token = new BinXmlToken(evtxFile, bb);// end token expected
         if ((token.type != BinXmlToken.LIBFWEVT_XML_TOKEN_CLOSE_START_ELEMENT_TAG) && (token.type != BinXmlToken.LIBFWEVT_XML_TOKEN_CLOSE_EMPTY_ELEMENT_TAG)) {
-            System.out.println();
             throw new EvtxParseExeption("Attributes end tag not found");
         }
 
@@ -96,7 +94,6 @@ public class EvtxElement {
                         children.add(osubs);
                         break;
                     default:
-                        System.out.println();
                         break;
                 }
             }

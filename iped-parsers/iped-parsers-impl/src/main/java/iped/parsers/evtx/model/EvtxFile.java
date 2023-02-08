@@ -9,10 +9,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.apache.lucene.util.ArrayUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import iped.parsers.evtx.template.TemplateData;
 
 public class EvtxFile {
+
+    private static final Logger logger = LoggerFactory.getLogger(EvtxFile.class);
+
     HashMap<Integer, TemplateData> templateDatas = new HashMap<Integer, TemplateData>();
     HashMap<Integer, EvtxXmlFragment> templateXmls = new HashMap<Integer, EvtxXmlFragment>();
 
@@ -68,9 +73,9 @@ public class EvtxFile {
                     if (e instanceof EvtxInvalidChunkHeaderException) {
                         if (i < chunckCount) {
                             if (!dirty) {
-                                System.out.println("Invalid chunk header found on non dirty evtx file:" + ((EvtxInvalidChunkHeaderException) e).getHeader());
+                                logger.warn("Invalid chunk header found on non dirty evtx file: {}", ((EvtxInvalidChunkHeaderException) e).getHeader());
                             } else {
-                                System.out.println("Invalid chunk header found before end of chunckcount on evtx file:" + ((EvtxInvalidChunkHeaderException) e).getHeader());
+                                logger.warn("Invalid chunk header found before end of chunckcount on evtx file: {}", ((EvtxInvalidChunkHeaderException) e).getHeader());
                             }
                         }
                         // if the file is dirty ignores parsing with no error because it can be normal
@@ -84,29 +89,6 @@ public class EvtxFile {
             } else {
                 eof = true;
             }
-        }
-    }
-
-    static class EvtxRecConsumer implements EvtxRecordConsumer {
-        ArrayList<Exception> es = new ArrayList<>();
-        int count;
-
-        @Override
-        public void accept(EvtxRecord evtxRecord) {
-            try {
-                System.out.println("ID:" + evtxRecord.id);
-                System.out.println("Written time:" + evtxRecord.writtenTime);
-                System.out.println("---------------------------------------------------");
-
-                EvtxBinXml binXml = evtxRecord.getBinXml();
-                System.out.println(evtxRecord.getEventId());
-                System.out.println(binXml.toString());
-                System.out.println("");
-                count++;
-            } catch (Exception e) {
-                es.add(e);
-            }
-            // throw new NullPointerException();
         }
     }
 

@@ -75,8 +75,8 @@ public class EvtxValue {
             case 0x49:
                 // entity reference
             default:
-                System.out.println();
                 // throw new Exception("Bad attribute type : " + this.type);
+                break;
         }
         this.size += 1;
     }
