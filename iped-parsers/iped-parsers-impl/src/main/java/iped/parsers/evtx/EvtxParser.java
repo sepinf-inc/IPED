@@ -41,8 +41,8 @@ import iped.utils.EmptyInputStream;
 /*
  * Parser that extract event records grouped by EventID  
  */
-public class EvtxGroupedParser extends AbstractParser {
-    private static Logger LOGGER = LoggerFactory.getLogger(EvtxGroupedParser.class);
+public class EvtxParser extends AbstractParser {
+    private static Logger LOGGER = LoggerFactory.getLogger(EvtxParser.class);
 
     private static final long serialVersionUID = 9091294620647570196L;
 

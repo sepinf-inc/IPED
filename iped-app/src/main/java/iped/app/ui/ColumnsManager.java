@@ -56,7 +56,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.task.regex.RegexTask;
 import iped.engine.util.Util;
 import iped.localization.LocalizedProperties;
-import iped.parsers.evtx.EvtxGroupedParser;
+import iped.parsers.evtx.EvtxParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
@@ -571,7 +571,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 communicationFields.add(f);
             else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
                 commonFields.add(f);
-            else if (f.startsWith(EvtxGroupedParser.EVTX_METADATA_PREFIX)) {
+            else if (f.startsWith(EvtxParser.EVTX_METADATA_PREFIX)) {
                 winEvtFields.add(f);
             }
         }
