@@ -16,6 +16,8 @@ User Activities
 GDrive Synced Files
 OLE files
 Georeferenced Files
+Peer-to-peer
+#Event Files
 
 # Generates registry reports:
 Windows Registry

@@ -17,7 +17,7 @@ GDrive Synced Files
 OLE files
 Georeferenced Files
 Peer-to-peer
-#Event Files
+Event Files
 
 # Generates registry reports:
 Windows Registry
