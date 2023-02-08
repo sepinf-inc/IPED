@@ -16,7 +16,7 @@ public class EvtxRecord {
     private EvtxFile evtxFile;
     private EvtxBinXml binXml;
 
-    public EvtxRecord(EvtxFile evtxFile, ByteBuffer bb) throws EvtxParseExeption {
+    public EvtxRecord(EvtxFile evtxFile, ByteBuffer bb) throws EvtxParseException {
         this.evtxFile = evtxFile;
         this.bb = bb;
         this.size = bb.getInt();

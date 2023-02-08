@@ -9,7 +9,7 @@ public class EvtxOptionalSubstitution {
     private byte template_value_type;
     private EvtxElement evtxElement;
 
-    public EvtxOptionalSubstitution(EvtxFile evtxFile, ByteBuffer bb, EvtxElement evtxElement) throws EvtxParseExeption {
+    public EvtxOptionalSubstitution(EvtxFile evtxFile, ByteBuffer bb, EvtxElement evtxElement) throws EvtxParseException {
         template_value_index = bb.getShort();
         template_value_type = bb.get();
         this.evtxElement = evtxElement;

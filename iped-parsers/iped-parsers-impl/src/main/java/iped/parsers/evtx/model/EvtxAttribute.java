@@ -11,7 +11,7 @@ public class EvtxAttribute {
     Object value;
     EvtxElement evtxElement;
 
-    public EvtxAttribute(EvtxFile evtxFile, ByteBuffer bb, EvtxElement evtxElement) throws EvtxParseExeption {
+    public EvtxAttribute(EvtxFile evtxFile, ByteBuffer bb, EvtxElement evtxElement) throws EvtxParseException {
         int nameOffset = bb.getInt();
         size += 4;
         this.evtxElement = evtxElement;

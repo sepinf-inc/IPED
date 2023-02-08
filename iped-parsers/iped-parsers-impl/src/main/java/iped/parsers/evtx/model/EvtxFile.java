@@ -39,7 +39,7 @@ public class EvtxFile {
         this.is = is;
     }
 
-    public void processFile() throws IOException, EvtxParseExeption {
+    public void processFile() throws IOException, EvtxParseException {
         BufferedInputStream bis = new BufferedInputStream(is, 64 * 1024);
 
         bis.readNBytes(header, 0, header.length);
@@ -50,7 +50,7 @@ public class EvtxFile {
         String sig = new String(ArrayUtil.copyOfSubArray(header, 0, 8));
 
         if (!sig.equals("ElfFile\0")) {
-            throw new EvtxParseExeption("Invalid header signature");
+            throw new EvtxParseException("Invalid header signature");
         }
         long firstChunckNumber = bb.asLongBuffer().get(1);
         long lastChunckNumber = bb.asLongBuffer().get(2);
@@ -69,7 +69,7 @@ public class EvtxFile {
                 try {
                     EvtxChunk chunk = new EvtxChunk(this, curChunk);
                     chunk.processChunk();
-                } catch (EvtxParseExeption e) {
+                } catch (EvtxParseException e) {
                     if (e instanceof EvtxInvalidChunkHeaderException) {
                         if (i < chunckCount) {
                             if (!dirty) {

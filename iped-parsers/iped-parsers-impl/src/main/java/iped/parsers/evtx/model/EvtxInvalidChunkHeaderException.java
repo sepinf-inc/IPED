@@ -1,6 +1,6 @@
 package iped.parsers.evtx.model;
 
-public class EvtxInvalidChunkHeaderException extends EvtxParseExeption {
+public class EvtxInvalidChunkHeaderException extends EvtxParseException {
 
     private static final long serialVersionUID = -55008009580772538L;
     String header;

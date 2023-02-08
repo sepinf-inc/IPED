@@ -19,7 +19,7 @@ public class EvtxBinXml {
     private ArrayList<EvtxElement> elements;
     EvtxRecord record;
 
-    public EvtxBinXml(EvtxFile evtxFile, EvtxRecord record, ByteBuffer bb) throws EvtxParseExeption {
+    public EvtxBinXml(EvtxFile evtxFile, EvtxRecord record, ByteBuffer bb) throws EvtxParseException {
         this.evtxFile = evtxFile;
         this.bb = bb;
         this.record = record;

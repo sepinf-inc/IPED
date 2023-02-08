@@ -29,7 +29,7 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.evtx.model.EvtxElement;
 import iped.parsers.evtx.model.EvtxFile;
-import iped.parsers.evtx.model.EvtxParseExeption;
+import iped.parsers.evtx.model.EvtxParseException;
 import iped.parsers.evtx.model.EvtxRecord;
 import iped.parsers.evtx.model.EvtxRecordConsumer;
 import iped.parsers.standard.StandardParser;
@@ -262,7 +262,7 @@ public class EvtxGroupedParser extends AbstractParser {
             try {
                 evtxFile.processFile();
 
-            } catch (EvtxParseExeption e) {
+            } catch (EvtxParseException e) {
                 throw new TikaException(e.getMessage(), e);
             }
 

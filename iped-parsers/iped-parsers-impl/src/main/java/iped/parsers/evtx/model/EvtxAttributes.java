@@ -12,7 +12,7 @@ public class EvtxAttributes {
     private byte type;
     ArrayList<EvtxAttribute> attributes = new ArrayList<EvtxAttribute>();
 
-    public EvtxAttributes(EvtxFile evtxFile, ByteBuffer bb, int size, EvtxElement evtxElement) throws EvtxParseExeption {
+    public EvtxAttributes(EvtxFile evtxFile, ByteBuffer bb, int size, EvtxElement evtxElement) throws EvtxParseException {
         this.evtxFile = evtxFile;
         this.size = size;
 

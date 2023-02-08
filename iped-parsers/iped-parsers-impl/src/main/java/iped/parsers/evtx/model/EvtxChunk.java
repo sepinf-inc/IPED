@@ -23,7 +23,7 @@ public class EvtxChunk {
         this.src = src;
     }
 
-    public void processChunk() throws EvtxParseExeption {
+    public void processChunk() throws EvtxParseException {
         String sig = new String(ArrayUtil.copyOfSubArray(src, 0, 8));
 
         if (!sig.equals("ElfChnk\0")) {

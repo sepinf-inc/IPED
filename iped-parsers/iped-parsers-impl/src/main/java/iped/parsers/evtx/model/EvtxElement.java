@@ -20,7 +20,7 @@ public class EvtxElement {
     private EvtxElement parent;
     private TemplateInstance templateInstance;
 
-    public EvtxElement(EvtxFile evtxFile, ByteBuffer bb, byte mode, EvtxElement parent) throws EvtxParseExeption {
+    public EvtxElement(EvtxFile evtxFile, ByteBuffer bb, byte mode, EvtxElement parent) throws EvtxParseException {
         this.evtxFile = evtxFile;
         this.parent = parent;
         this.mode = mode;
@@ -40,7 +40,7 @@ public class EvtxElement {
 
         BinXmlToken token = new BinXmlToken(evtxFile, bb);// end token expected
         if ((token.type != BinXmlToken.LIBFWEVT_XML_TOKEN_CLOSE_START_ELEMENT_TAG) && (token.type != BinXmlToken.LIBFWEVT_XML_TOKEN_CLOSE_EMPTY_ELEMENT_TAG)) {
-            throw new EvtxParseExeption("Attributes end tag not found");
+            throw new EvtxParseException("Attributes end tag not found");
         }
 
         if ((token.type & 0xbf) == BinXmlToken.LIBFWEVT_XML_TOKEN_CLOSE_START_ELEMENT_TAG) {

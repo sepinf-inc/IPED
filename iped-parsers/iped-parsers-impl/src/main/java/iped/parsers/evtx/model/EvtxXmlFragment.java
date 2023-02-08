@@ -10,7 +10,7 @@ public class EvtxXmlFragment {
     public TemplateInstance templateInstance;
     Object parent;
 
-    public EvtxXmlFragment(EvtxFile evtxFile, Object parent, ByteBuffer bb) throws EvtxParseExeption {
+    public EvtxXmlFragment(EvtxFile evtxFile, Object parent, ByteBuffer bb) throws EvtxParseException {
         bb.position(bb.position() + 3);
         this.parent = parent;
 

@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 import iped.parsers.evtx.model.BinXmlToken;
 import iped.parsers.evtx.model.EvtxFile;
-import iped.parsers.evtx.model.EvtxParseExeption;
+import iped.parsers.evtx.model.EvtxParseException;
 import iped.parsers.evtx.model.EvtxXmlFragment;
 
 public class TemplateInstance {
@@ -12,7 +12,7 @@ public class TemplateInstance {
     TemplateData tdata;
     EvtxXmlFragment fragment;
 
-    public TemplateInstance(EvtxFile evtxFile, ByteBuffer bb) throws EvtxParseExeption {
+    public TemplateInstance(EvtxFile evtxFile, ByteBuffer bb) throws EvtxParseException {
         int pos = bb.position();
         this.tdefinition = new TemplateDefinition(evtxFile, bb);
 

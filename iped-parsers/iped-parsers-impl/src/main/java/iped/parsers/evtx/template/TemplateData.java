@@ -12,7 +12,7 @@ import org.apache.lucene.util.ArrayUtil;
 
 import iped.parsers.evtx.model.BinXmlToken;
 import iped.parsers.evtx.model.EvtxFile;
-import iped.parsers.evtx.model.EvtxParseExeption;
+import iped.parsers.evtx.model.EvtxParseException;
 import iped.parsers.evtx.model.EvtxXmlFragment;
 import iped.parsers.evtx.windows.GUID;
 import iped.parsers.evtx.windows.SID;
@@ -47,7 +47,7 @@ public class TemplateData {
     static final byte HEXINT64_TYPE = 0x15;
     static final byte BINXML_TYPE = 0x21;
 
-    public TemplateData(EvtxFile evtxFile, ByteBuffer bb, TemplateInstance templateInstance) throws EvtxParseExeption {
+    public TemplateData(EvtxFile evtxFile, ByteBuffer bb, TemplateInstance templateInstance) throws EvtxParseException {
         this.evtxFile = evtxFile;
         int tdValuesCount = bb.getInt();
         this.templateInstance = templateInstance;
@@ -242,7 +242,7 @@ public class TemplateData {
                 }
             }
         } catch (BufferUnderflowException e) {
-            throw new EvtxParseExeption("Not enough data to read template value descriptor in " + evtxFile.getName());
+            throw new EvtxParseException("Not enough data to read template value descriptor in " + evtxFile.getName());
         }
 
     }
