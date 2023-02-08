@@ -14,9 +14,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 
 import iped.localization.LocalizedProperties;
 import iped.utils.StringUtil;
@@ -25,10 +23,11 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
     private ColumnsManagerUI columnsManagerUI;
     private static ColumnsSelectUI instance;
 
-    protected JCheckBox selectVisibleCheckBox = new JCheckBox(Messages.getString("ColumnsManager.CheckVisible"));
-    private boolean selectOnlyVisible;
+    protected JCheckBox toggleSelectUnselectAllCheckBox = new JCheckBox(Messages.getString("ColumnsManager.ToggleSelectAll"));
+    protected JButton selectVisibleButton = new JButton(Messages.getString("ColumnsManager.SelectVisible"));
+    protected JButton clearButton = new JButton(Messages.getString("ColumnsManager.ClearButton"));
 
-    private JButton okButton = new JButton("OK");
+    protected JButton okButton = new JButton("OK");
 
     ArrayList<String> loadedSelectedProperties;
 
@@ -52,14 +51,6 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
         return okButtonClicked;
     }
 
-    public boolean isSelectOnlyVisible() {
-        return selectOnlyVisible;
-    }
-    
-    public void setSelectOnlyVisible(boolean selectOnlyVisible) {
-        this.selectOnlyVisible = selectOnlyVisible;
-    }
-
     protected ColumnsSelectUI() {
         super();
         saveFileName = ColumnsManager.SELECTED_PROPERTIES_FILENAME;
@@ -78,33 +69,28 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
         dialog.getContentPane().remove(panel);
         autoManage.removeActionListener(columnsManagerUI);
 
-        combo = new JComboBox<Object>(ColumnsManager.groupNames);
-        combo.setAlignmentX(0);
-
-        selectVisibleCheckBox.setSelected(isSelectOnlyVisible());
-        selectVisibleCheckBox.setAlignmentX(0);
-        selectVisibleCheckBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        selectVisibleCheckBox.addActionListener(this);
+        toggleSelectUnselectAllCheckBox.setAlignmentX(0);
+        toggleSelectUnselectAllCheckBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        toggleSelectUnselectAllCheckBox.addActionListener(this);
 
         Box topPanel = Box.createVerticalBox();
-        topPanel.add(selectVisibleCheckBox);
+        topPanel.add(toggleSelectUnselectAllCheckBox);
         topPanel.add(showColsLabel);
         topPanel.add(combo);
         topPanel.add(textFieldNameFilter);
+        selectVisibleButton.addActionListener(this);
         okButton.addActionListener(this);
         combo.addActionListener(this);
 
         panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         panel.add(topPanel, BorderLayout.NORTH);
-
-        JScrollPane scrollList = new JScrollPane(listPanel);
-        scrollList.getVerticalScrollBar().setUnitIncrement(10);
         panel.add(scrollList, BorderLayout.CENTER);
 
-        JPanel bPanel = new JPanel(new BorderLayout());
-        bPanel.add(okButton, BorderLayout.EAST);
-        panel.add(bPanel, BorderLayout.SOUTH);
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(okButton, BorderLayout.EAST);
+        bottomPanel.add(selectVisibleButton, BorderLayout.WEST);
+        panel.add(bottomPanel, BorderLayout.SOUTH);
 
         dialog.getContentPane().add(panel);
         dialog.setLocationRelativeTo(App.get());
@@ -120,9 +106,21 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource().equals(selectVisibleCheckBox)) {
-            setSelectOnlyVisible(selectVisibleCheckBox.isSelected());
+        if (e.getSource().equals(selectVisibleButton)) {
             columnsManager.enableOnlySelectedProperties(columnsManager.colState.visibleFields);
+            updatePanelList();
+        } else if (e.getSource().equals(clearButton)) {
+            columnsManager.disableAllProperties();
+            okButton.setEnabled(false);
+            updatePanelList();
+        } else if (e.getSource().equals(toggleSelectUnselectAllCheckBox)) {
+            if (toggleSelectUnselectAllCheckBox.isSelected()) {
+                columnsManager.enableAllProperties();
+                okButton.setEnabled(true);
+            } else {
+                columnsManager.disableAllProperties();
+                okButton.setEnabled(false);
+            }
             updatePanelList();
         } else if (e.getSource().equals(combo)) {
             updatePanelList();
@@ -130,13 +128,14 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
             columnsManager.saveSelectedProps(saveFileName);
             okButtonClicked = true;
             dispose();
-        } else {
+        } else {    // checkbox
             JCheckBox source = (JCheckBox) e.getSource();
             String nonLocalizedText = LocalizedProperties.getNonLocalizedField(source.getText());
             boolean isSelected = source.isSelected();
             if (columnsManager.getSelectedProperties().size() == 1 && !isSelected) {
-                updatePanelList();
-                return;
+                okButton.setEnabled(false);
+            } else {
+                okButton.setEnabled(true);
             }
             columnsManager.allCheckBoxesState.put(nonLocalizedText, isSelected);
         }
@@ -159,7 +158,6 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
                     check.setSelected(true);
                 check.addActionListener(this);
                 listPanel.add(check);
-                check.setEnabled(!isSelectOnlyVisible());
             }
         }
         dialog.revalidate();

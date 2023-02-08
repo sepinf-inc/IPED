@@ -44,6 +44,7 @@ import iped.viewers.util.ProgressDialog;
 public class ColumnsManagerUI implements ActionListener {
     protected JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
     protected JComboBox<Object> combo;
+    protected JScrollPane scrollList;
     protected JLabel showColsLabel = new JLabel(Messages.getString("ColumnsManager.ShowCols")); //$NON-NLS-1$
     protected HintTextField textFieldNameFilter;
     protected JDialog dialog = new JDialog(App.get());
@@ -141,7 +142,7 @@ public class ColumnsManagerUI implements ActionListener {
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         panel.add(topPanel, BorderLayout.NORTH);
 
-        JScrollPane scrollList = new JScrollPane(listPanel);
+        scrollList = new JScrollPane(listPanel);
         scrollList.getVerticalScrollBar().setUnitIncrement(10);
         panel.add(scrollList, BorderLayout.CENTER);
 

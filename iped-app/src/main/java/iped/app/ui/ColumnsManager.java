@@ -417,4 +417,12 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         }
     }
 
+    protected void enableAllProperties() {
+        enableOnlySelectedProperties(new ArrayList<String>(allCheckBoxesState.keySet()));
+    }
+
+    protected void disableAllProperties() {
+        enableOnlySelectedProperties(new ArrayList<String>());
+    }
+
 }
