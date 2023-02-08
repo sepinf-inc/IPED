@@ -111,9 +111,9 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         openApp.addActionListener(this);
         openApp.setEnabled(false);
 
-        JPanel buttonPanel = new JPanel();// new BorderLayout());
-        buttonPanel.add(openApp);// , BorderLayout.WEST);
-        buttonPanel.add(pause);// , BorderLayout.EAST);
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(openApp);
+        buttonPanel.add(pause);
 
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
