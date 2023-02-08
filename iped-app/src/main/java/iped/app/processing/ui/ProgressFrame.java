@@ -122,10 +122,11 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         itens = new RestrictedSizeLabel();
         stats = new RestrictedSizeLabel();
         parsers = new RestrictedSizeLabel();
-        tasks.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        stats.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        itens.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        parsers.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        int sz = 8;
+        tasks.setBorder(BorderFactory.createEmptyBorder(sz, sz, sz, sz));
+        stats.setBorder(BorderFactory.createEmptyBorder(sz, sz, sz, sz));
+        itens.setBorder(BorderFactory.createEmptyBorder(sz, sz, sz, sz));
+        parsers.setBorder(BorderFactory.createEmptyBorder(sz, sz, sz, sz));
         stats.setAlignmentY(TOP_ALIGNMENT);
         itens.setAlignmentY(TOP_ALIGNMENT);
         tasks.setAlignmentY(TOP_ALIGNMENT);
