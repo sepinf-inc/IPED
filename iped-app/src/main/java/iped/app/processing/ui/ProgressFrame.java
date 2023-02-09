@@ -85,7 +85,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
         private static final long serialVersionUID = 1L;
 
-		public Dimension getMaximumSize() {
+        public Dimension getMaximumSize() {
             return this.getPreferredSize();
         }
 
@@ -101,7 +101,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     public ProgressFrame(UIPropertyListenerProvider task) {
         super(Version.APP_NAME);
         setIconImages(IconUtil.getIconImages("process", "/iped/app/icon"));
-        
+
         this.setBounds(0, 0, 800, 400);
         this.setLocationRelativeTo(null);
 
@@ -344,63 +344,65 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         StringBuilder msg = new StringBuilder();
         startTable(msg);
         addTitle(msg, 2, Messages.getString("ProgressFrame.Statistics"));
-        
+
         long time = (System.currentTimeMillis() - indexStart.getTime()) / 1000;
         startRow(msg, Messages.getString("ProgressFrame.ProcessingTime"));
         finishRow(msg, time / 3600 + "h " + (time / 60) % 60 + "m " + time % 60 + "s", Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.EstimatedEnd"));
-        finishRow(msg, secsToEnd == 0 ? "-" : secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m " + secsToEnd % 60 + "s", Align.RIGHT);
-        
-        startRow(msg,  Messages.getString("ProgressFrame.MeanSpeed"));
+        finishRow(msg,
+                secsToEnd == 0 ? "-" : secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m " + secsToEnd % 60 + "s",
+                Align.RIGHT);
+
+        startRow(msg, Messages.getString("ProgressFrame.MeanSpeed"));
         finishRow(msg, nf.format(rate) + " GB/h", Align.RIGHT);
 
         startRow(msg, Messages.getString("ProgressFrame.CurrentSpeed"));
         finishRow(msg, nf.format(instantRate) + " GB/h", Align.RIGHT);
-        
-        startRow(msg, Messages.getString("ProgressFrame.VolumeFound")); 
+
+        startRow(msg, Messages.getString("ProgressFrame.VolumeFound"));
         finishRow(msg, nf.format(Statistics.get().getCaseData().getDiscoveredVolume() >>> 20) + " MB", Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.VolumeProcessed"));
         finishRow(msg, nf.format(Statistics.get().getVolume() >>> 20) + " MB", Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.ItemsFound"));
         finishRow(msg, nf.format(Statistics.get().getCaseData().getDiscoveredEvidences()), Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.ItemsProcessed"));
         finishRow(msg, nf.format(Statistics.get().getProcessed()), Align.RIGHT);
-        
-        startRow(msg,  Messages.getString("ProgressFrame.ActiveProcessed"));
+
+        startRow(msg, Messages.getString("ProgressFrame.ActiveProcessed"));
         finishRow(msg, nf.format(Statistics.get().getActiveProcessed()), Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.SubitemsProcessed"));
         finishRow(msg, nf.format(Statistics.get().getSubitemsDiscovered()), Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.Carved"));
         finishRow(msg, nf.format(BaseCarveTask.getItensCarved()), Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.CarvedDiscarded"));
         finishRow(msg, nf.format(Statistics.get().getCorruptCarveIgnored()), Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.Exported"));
         finishRow(msg, nf.format(ExportFileTask.getItensExtracted()), Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.Ignored"));
         finishRow(msg, nf.format(Statistics.get().getIgnored()), Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.ParsingErrors"));
         finishRow(msg, nf.format(StandardParser.parsingErrors), Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.ReadErrors"));
         finishRow(msg, nf.format(Statistics.get().getIoErrors()), Align.RIGHT);
-        
+
         startRow(msg, Messages.getString("ProgressFrame.Timeouts"));
         finishRow(msg, nf.format(Statistics.get().getTimeouts()), Align.RIGHT);
-        
+
         finishTable(msg);
         return msg.toString();
     }
-    
+
     private void startTable(StringBuilder sb) {
         String borderColor = "#DDDDDD";
         String cellColor = "#FAFAFC";
@@ -446,7 +448,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("<tr>");
         addCell(sb, content, Align.LEFT);
     }
-    
+
     private void finishRow(StringBuilder sb, Object content) {
         finishRow(sb, content, Align.LEFT);
         sb.append("</tr>");
@@ -456,7 +458,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         addCell(sb, content, align);
         sb.append("</tr>");
     }
-    
+
     private void addCell(StringBuilder sb, Object content) {
         addCell(sb, content, Align.LEFT);
     }
