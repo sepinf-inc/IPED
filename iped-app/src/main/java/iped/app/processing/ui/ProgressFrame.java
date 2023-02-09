@@ -84,10 +84,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
     private class RestrictedSizeLabel extends JLabel {
 
-        /**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = 1L;
 
 		public Dimension getMaximumSize() {
             return this.getPreferredSize();
