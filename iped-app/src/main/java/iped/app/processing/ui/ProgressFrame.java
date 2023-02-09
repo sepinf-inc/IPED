@@ -319,26 +319,28 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         if (ParsingTask.times.isEmpty())
             return "";
         StringBuilder msg = new StringBuilder();
-        msg.append(Messages.getString("ProgressFrame.ParserTimes")); //$NON-NLS-1$
-        msg.append("<table cellspacing=0 cellpadding=1 border=1>"); //$NON-NLS-1$
+        startTable(msg);
+        addTitle(msg, 3, Messages.getString("ProgressFrame.ParserTimes"));
+
         long totalTime = 0;
         for (Worker worker : workers)
             for (AbstractTask task : worker.tasks)
                 if (task.getClass().equals(ParsingTask.class))
                     totalTime += task.getTaskTime();
-        totalTime = totalTime / (1000000 * workers.length);
-        if (totalTime == 0)
+        if (totalTime < 1) 
             totalTime = 1;
+
         for (Object o : ParsingTask.times.entrySet().toArray()) {
             Entry<String, AtomicLong> e = (Entry<String, AtomicLong>) o;
-            msg.append("<tr><td>"); //$NON-NLS-1$
-            msg.append(e.getKey());
-            msg.append("</td><td>"); //$NON-NLS-1$
-            long sec = e.getValue().get() / (1000000 * workers.length);
-            msg.append(sec + "s (" + (100 * sec) / totalTime + "%)"); //$NON-NLS-1$ //$NON-NLS-2$
-            msg.append("</td></tr>"); //$NON-NLS-1$
+            long time = e.getValue().get();
+            long sec = time / (1000000 * workers.length);
+
+            startRow(msg, e.getKey());
+            addCell(msg, nf.format(sec) + "s", Align.RIGHT);
+            finishRow(msg, (100 * time) / totalTime + "%", Align.RIGHT);
         }
-        msg.append("</table>"); //$NON-NLS-1$
+
+        finishTable(msg);
         return msg.toString();
     }
 
