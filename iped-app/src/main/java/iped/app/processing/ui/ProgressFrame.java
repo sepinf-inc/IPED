@@ -328,101 +328,139 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
     private String getStats() {
         if (Statistics.get() == null) {
-            return ""; //$NON-NLS-1$
+            return "";
         }
         StringBuilder msg = new StringBuilder();
-        msg.append(Messages.getString("ProgressFrame.Statistics")); //$NON-NLS-1$
-        msg.append("<table cellspacing=0 cellpadding=1 border=1>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.ProcessingTime")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
+        startTable(msg);
+        addTitle(msg, 2, Messages.getString("ProgressFrame.Statistics"));
+        
         long time = (System.currentTimeMillis() - indexStart.getTime()) / 1000;
-        msg.append(time / 3600 + "h " + (time / 60) % 60 + "m " + time % 60 + "s"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.EstimatedEnd")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(
-                secsToEnd == 0 ? "-" : secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m " + secsToEnd % 60 + "s"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.MeanSpeed")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(rate + " GB/h"); //$NON-NLS-1$
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.CurrentSpeed")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(instantRate + " GB/h"); //$NON-NLS-1$
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.VolumeFound")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        long discoveredVol = Statistics.get().getCaseData().getDiscoveredVolume() / (1 << 20);
-        msg.append(sizeFormat.format(discoveredVol) + " MB"); //$NON-NLS-1$
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.VolumeProcessed")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(sizeFormat.format(Statistics.get().getVolume() / (1 << 20)) + " MB"); //$NON-NLS-1$
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.ItemsFound")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(Statistics.get().getCaseData().getDiscoveredEvidences());
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.ItemsProcessed")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(Statistics.get().getProcessed());
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.ActiveProcessed")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(Statistics.get().getActiveProcessed());
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.SubitemsProcessed")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(Statistics.get().getSubitemsDiscovered());
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.Carved")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(BaseCarveTask.getItensCarved());
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.CarvedDiscarded")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(Statistics.get().getCorruptCarveIgnored());
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.Exported")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(ExportFileTask.getItensExtracted());
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.Ignored")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(Statistics.get().getIgnored());
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.ParsingErrors")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(StandardParser.parsingErrors);
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.ReadErrors")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(Statistics.get().getIoErrors());
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("<tr><td>"); //$NON-NLS-1$
-        msg.append(Messages.getString("ProgressFrame.Timeouts")); //$NON-NLS-1$
-        msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(Statistics.get().getTimeouts());
-        msg.append("</td></tr>"); //$NON-NLS-1$
-        msg.append("</table>"); //$NON-NLS-1$
+        startRow(msg, Messages.getString("ProgressFrame.ProcessingTime"));
+        finishRow(msg, time / 3600 + "h " + (time / 60) % 60 + "m " + time % 60 + "s", Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.EstimatedEnd"));
+        finishRow(msg, secsToEnd == 0 ? "-" : secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m " + secsToEnd % 60 + "s", Align.RIGHT);
+        
+        startRow(msg,  Messages.getString("ProgressFrame.MeanSpeed"));
+        finishRow(msg, rate + " GB/h", Align.RIGHT);
+
+        startRow(msg, Messages.getString("ProgressFrame.CurrentSpeed"));
+        finishRow(msg, instantRate + " GB/h", Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.VolumeFound")); 
+        finishRow(msg, sizeFormat.format(Statistics.get().getCaseData().getDiscoveredVolume() >>> 20) + " MB", Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.VolumeProcessed"));
+        finishRow(msg, sizeFormat.format(Statistics.get().getVolume() >>> 20) + " MB", Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.ItemsFound"));
+        finishRow(msg, Statistics.get().getCaseData().getDiscoveredEvidences(), Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.ItemsProcessed"));
+        finishRow(msg, Statistics.get().getProcessed(), Align.RIGHT);
+        
+        startRow(msg,  Messages.getString("ProgressFrame.ActiveProcessed"));
+        finishRow(msg, Statistics.get().getActiveProcessed(), Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.SubitemsProcessed"));
+        finishRow(msg, Statistics.get().getSubitemsDiscovered(), Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.Carved"));
+        finishRow(msg, BaseCarveTask.getItensCarved(), Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.CarvedDiscarded"));
+        finishRow(msg, Statistics.get().getCorruptCarveIgnored(), Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.Exported"));
+        finishRow(msg, ExportFileTask.getItensExtracted(), Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.Ignored"));
+        finishRow(msg, Statistics.get().getIgnored(), Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.ParsingErrors"));
+        finishRow(msg, StandardParser.parsingErrors, Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.ReadErrors"));
+        finishRow(msg, Statistics.get().getIoErrors(), Align.RIGHT);
+        
+        startRow(msg, Messages.getString("ProgressFrame.Timeouts"));
+        finishRow(msg, Statistics.get().getTimeouts(), Align.RIGHT);
+        
+        finishTable(msg);
         return msg.toString();
+    }
+    
+    private void startTable(StringBuilder sb) {
+        String borderColor = "#DDDDDD";
+        String cellColor = "#FAFAFC";
+        String titleColor = "#99AADD";
+        sb.append("<html><head><style> ");
+        sb.append("td { ");
+        sb.append("border-bottom: 1px solid ").append(borderColor).append("; ");
+        sb.append("border-right: 1px solid ").append(borderColor).append("; ");
+        sb.append("border-top: 0px; ");
+        sb.append("border-left: 0px; ");
+        sb.append("border-spacing: 0px; ");
+        sb.append("background-color: ").append(cellColor).append("; ");
+        sb.append("padding: 3px; ");
+        sb.append("} ");
+        sb.append("td.t { ");
+        sb.append("border-top: 1px solid ").append(borderColor).append("; ");
+        sb.append("border-left: 1px solid ").append(borderColor).append("; ");
+        sb.append("text-align: center; ");
+        sb.append("background-color: ").append(titleColor).append("; ");
+        sb.append("} ");
+        sb.append("td.s { ");
+        sb.append("border-left: 1px solid ").append(borderColor).append("; ");
+        sb.append("} ");
+        sb.append("td.c { ");
+        sb.append("text-align: center; ");
+        sb.append("} ");
+        sb.append("td.r { ");
+        sb.append("text-align: right; ");
+        sb.append("} ");
+        sb.append("table, tr { ");
+        sb.append("border-spacing: 0px; ");
+        sb.append("} ");
+        sb.append("</style></head><body>");
+        sb.append("<table>");
+    }
+
+    private void addTitle(StringBuilder sb, int colSpan, String title) {
+        sb.append("<tr><td class=t colspan=").append(colSpan);
+        sb.append(">").append(title).append("</td></tr>");
+    }
+
+    private void startRow(StringBuilder sb, Object content) {
+        sb.append("<tr>");
+        addCell(sb, content, Align.LEFT);
+    }
+    
+    private void finishRow(StringBuilder sb, Object content) {
+        finishRow(sb, content, Align.LEFT);
+        sb.append("</tr>");
+    }
+
+    private void finishRow(StringBuilder sb, Object content, Align align) {
+        addCell(sb, content, align);
+        sb.append("</tr>");
+    }
+    
+    private void addCell(StringBuilder sb, Object content) {
+        addCell(sb, content, Align.LEFT);
+    }
+
+    private void addCell(StringBuilder sb, Object content, Align align) {
+        sb.append("<td");
+        if (align == Align.CENTER)
+            sb.append(" class=c");
+        else if (align == Align.RIGHT)
+            sb.append(" class=r");
+        sb.append(">").append(content).append("</td>");
+    }
+
+    private void finishTable(StringBuilder sb) {
+        sb.append("</body></table></html>");
     }
 
     @Override
@@ -492,4 +530,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
     }
 
+    enum Align {
+        LEFT, CENTER, RIGHT;
+    }
 }
