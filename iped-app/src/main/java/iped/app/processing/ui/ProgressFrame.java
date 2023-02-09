@@ -408,9 +408,9 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     private void startTable(StringBuilder sb) {
         //Colors can be adjusted here
         String borderColor = "#CCCCCC";
-        String cellColor = "#FAFAFF";
-        String titleBackColor = "#115577";
-        String titleTextColor = "#FAFAFF";
+        String cellColor = "#FAFAFA";
+        String titleBackColor = "#155575";
+        String titleTextColor = "#FFFFFF";
         
         sb.append("<html><head><style> ");
         sb.append("td { ");
@@ -423,7 +423,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("padding: 1px 3px 1px 3px; ");
         sb.append("} ");
         sb.append("td.t { ");
-        sb.append("border: 1px solid ").append(titleBackColor).append("; ");
+        sb.append("border: 1px solid ").append(borderColor).append("; ");
         sb.append("text-align: center; ");
         sb.append("padding: 3px; ");
         sb.append("background-color: ").append(titleBackColor).append("; ");
@@ -451,8 +451,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private void startRow(StringBuilder sb, Object content) {
-        sb.append("<tr>");
-        addCell(sb, content, Align.LEFT);
+        sb.append("<tr><td class=s>");
+        sb.append(content).append("</td>");
     }
 
     private void finishRow(StringBuilder sb, Object content) {
