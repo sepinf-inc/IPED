@@ -4343,3 +4343,5 @@ Hardware-Wallet-VendorID = java.lang.String
 Hardware-Wallet-ProductID = java.lang.String
 Hardware-Wallet-VendorName = java.lang.String
 Hardware-Wallet-DeviceName = java.lang.String
+WinEvtx:recordCount = java.lang.Integer
+WinEvtx:eventRecordID = java.lang.Integer

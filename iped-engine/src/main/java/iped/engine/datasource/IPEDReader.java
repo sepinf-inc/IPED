@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -659,9 +660,14 @@ public class IPEDReader extends DataSourceReader {
                     } else
                         evidence.setExtraAttribute(f.name(), IndexItem.getCastedValue(c, f));
                 } else {
-                    Object casted = IndexItem.getCastedValue(c, f);
-                    if (casted != null) {
-                        evidence.getMetadata().add(f.name(), casted.toString());
+                    if (Date.class.equals(c) && f.stringValue() != null) {
+                        String val = f.stringValue();
+                        evidence.getMetadata().add(f.name(), val);
+                    } else {
+                        Object casted = IndexItem.getCastedValue(c, f);
+                        if (casted != null) {
+                            evidence.getMetadata().add(f.name(), casted.toString());
+                        }
                     }
                 }
             }

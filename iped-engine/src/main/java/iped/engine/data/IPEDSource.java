@@ -184,7 +184,7 @@ public class IPEDSource implements IIPEDSource {
                     if (!SleuthkitReader.isTSKPatched()) {
                         sleuthFile = SleuthkitInputStreamFactory.getWriteableDBFile(sleuthFile);
                     }
-                    sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
+                    sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(sleuthFile.getAbsolutePath());
                 }
 
                 if (!isReport)
@@ -605,7 +605,7 @@ public class IPEDSource implements IIPEDSource {
             tmpCaseFile = writeableDBFile;
             // causes "case is closed" error in some cases
             // sleuthCase.close();
-            sleuthCase = SleuthkitCase.openCase(tmpCaseFile.getAbsolutePath());
+            sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(tmpCaseFile.getAbsolutePath());
             tskCaseList.add(sleuthCase);
         }
     }

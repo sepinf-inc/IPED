@@ -75,7 +75,7 @@ public class SleuthkitServer {
             cm.loadConfigs();
             Configuration.getInstance().loadNativeLibs();
 
-            SleuthkitCase sleuthCase = SleuthkitCase.openCase(dbPath);
+            SleuthkitCase sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(dbPath);
             HashMap<Long, SleuthkitInputStream> sisMap = new HashMap<>();
 
             java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE); //$NON-NLS-1$

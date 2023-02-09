@@ -35,6 +35,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.video.VideoThumbTask;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
@@ -94,6 +95,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
                 || evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
             return false;
         }
+        if (transcriptConfig.getSkipKnownFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
+            return false;
+        }
+
         boolean supported = false;
         for (String mime : transcriptConfig.getMimesToProcess()) {
             if (evidence.getMediaType().toString().startsWith(mime)) {
