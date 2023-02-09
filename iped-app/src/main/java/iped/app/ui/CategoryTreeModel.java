@@ -31,6 +31,11 @@ public class CategoryTreeModel implements TreeModel {
         }
     }
 
+    public CategoryTreeModel(Category root) {
+        this.root = root;
+        this.root.setName(rootName);
+    }
+
     private CategoryTreeModel() {
         this.root = App.get().appCase.getCategoryTree();
         this.root.setName(rootName);
