@@ -203,6 +203,11 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
             chatMetadata.set(ExtraProperties.DELETED, Boolean.toString(c.isDeleted()));
             chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+            if (c.getOther() != null && c.getOther().keySet() != null) {
+                for (String key : c.getOther().keySet()) {
+                    chatMetadata.set(key, c.getOther().get(key).toString());
+                }
+            }
 
             if (c.isGroup()) {
                 ChatGroup cg = (ChatGroup) c;

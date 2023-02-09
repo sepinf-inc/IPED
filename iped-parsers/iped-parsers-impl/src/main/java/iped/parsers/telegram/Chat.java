@@ -19,6 +19,8 @@
 package iped.parsers.telegram;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeMap;
 
 import dpf.ap.gpinf.interfacetelegram.ChatInterface;
 import dpf.ap.gpinf.interfacetelegram.ContactInterface;
@@ -30,6 +32,9 @@ public class Chat implements ChatInterface {
     private boolean group;
     private boolean deleted = false;
     private long id;
+    private Map<String, Object> other;
+
+    public static final String PREFIX = "chat_";
 
     public ArrayList<Message> getMessages() {
         return messages;
@@ -93,6 +98,22 @@ public class Chat implements ChatInterface {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public Map<String, Object> getOther() {
+        return other;
+    }
+
+    // Set the all other metadata with chat_ prefix
+    public void setOther(Map<String, Object> other) {
+        this.other = new TreeMap<>();
+        for (String k : other.keySet()) {
+            String val = other.get(k).toString();
+            if (!k.startsWith(PREFIX)) {
+                k = PREFIX + k;
+            }
+            this.other.put(k, val);
+        }
     }
 
 }

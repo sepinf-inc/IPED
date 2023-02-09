@@ -134,12 +134,14 @@ public class Extractor {
                 byte[] dados;
                 Chat cg = null;
                 String chatName = null;
+                boolean decoded = false;
                 if ((chatName = rs.getString("chatName")) != null) {
                     dados = rs.getBytes("chatData");
                     Contact cont = getContact(chatId);
                     if (cont.getName() == null) {
                         android_decoder.setDecoderData(dados, DecoderTelegramInterface.USER);
                         android_decoder.getUserData(cont);
+                        decoded = true;
                         if (cont.getAvatar() == null && !android_decoder.getPhotoData().isEmpty()) {
                             searchAvatarFileName(cont, android_decoder.getPhotoData());
                         }
@@ -152,6 +154,7 @@ public class Extractor {
                     android_decoder.setDecoderData(dados, DecoderTelegramInterface.CHAT);
                     Contact cont = getContact(chatId);
                     android_decoder.getChatData(cont);
+                    decoded = true;
 
                     searchAvatarFileName(cont, android_decoder.getPhotoData());
 
@@ -166,7 +169,11 @@ public class Extractor {
                     }
 
                 }
+
                 if (cg != null) {
+                    if (decoded) {
+                        cg.setOther(android_decoder.getAlltMetadata());
+                    }
                     logger.debug("Telegram chat id ", cg.getId());
                     /*
                      * ArrayList<Message> messages=extractMessages(conn, cg); if(messages == null ||
