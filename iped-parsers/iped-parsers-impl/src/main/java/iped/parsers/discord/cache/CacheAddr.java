@@ -2,12 +2,12 @@ package iped.parsers.discord.cache;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
 import iped.data.IItemReader;
+import iped.io.SeekableInputStream;
 
 /**
  * @author PCF Campanini
@@ -104,14 +104,11 @@ public class CacheAddr {
 			throw new InputStreamNotAvailable();
 		}
 		
-		RandomAccessFile raf;
-		
 		switch (fileType) {
 		case 0:
             for (IItemReader extFile : externalFiles)
  				if (extFile.getName().equals(fileNameStr)) {
-                        raf = new RandomAccessFile(extFile.getTempFile(), "r");
- 					return new RandomInputStream(raf, raf.getFilePointer());
+                    return extFile.getBufferedInputStream();
  				}
 			break;
 		case 2:
@@ -119,9 +116,9 @@ public class CacheAddr {
 		case 4:
             for (IItemReader dataFile : dataFiles)
 				if (dataFile.getName().equals(("data_" + fileSelector))) {
-                        raf = new RandomAccessFile(dataFile.getTempFile(), "r");
-					raf.seek(8192 + startBlock * getBlockSize());
-		            return new RandomInputStream(raf, raf.getFilePointer());
+                    SeekableInputStream sis = dataFile.getSeekableInputStream();
+                    sis.seek(8192 + startBlock * getBlockSize());
+                    return sis;
 				}
 		}
 		
