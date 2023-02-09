@@ -301,11 +301,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         for (int i = 0; i < taskTimes.length; i++) {
             AbstractTask task = workers[0].tasks.get(i);
             long sec = taskTimes[i] / (1000000 * workers.length);
-            startRow(msg, task.getName());
             if (task.isEnabled()) {
+                startRow(msg, task.getName());
                 addCell(msg, nf.format(sec) + "s", Align.RIGHT);
                 finishRow(msg, (100 * sec) / totalTime + "%", Align.RIGHT);
             } else {
+                startRow(msg, task.getName(), false);
                 addCell(msg, "-", Align.CENTER);
                 finishRow(msg, "-", Align.CENTER);
             }
@@ -414,6 +415,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         String cellColor = "#FAFAFA";
         String titleBackColor = "#446688";
         String titleTextColor = "#FFFFFF";
+        String disabledColor = "#BBBBBB";
 
         sb.append("<html><head><style> ");
         sb.append("td { ");
@@ -444,6 +446,9 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("table, tr { ");
         sb.append("border-spacing: 0px; ");
         sb.append("} ");
+        sb.append("tr.d { ");
+        sb.append("color: ").append(disabledColor).append("; ");
+        sb.append("} ");
         sb.append("</style></head><body>");
         sb.append("<table>");
     }
@@ -454,7 +459,14 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private void startRow(StringBuilder sb, Object content) {
-        sb.append("<tr><td class=s>");
+        startRow(sb, content, true);
+    }
+
+    private void startRow(StringBuilder sb, Object content, boolean enabled) {
+        sb.append("<tr");
+        if (!enabled)
+            sb.append(" class=d");
+        sb.append("><td class=s>");
         sb.append(content).append("</td>");
     }
 
