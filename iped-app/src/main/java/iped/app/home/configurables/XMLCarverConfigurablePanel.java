@@ -27,7 +27,7 @@ import iped.carvers.api.CarverType;
 import iped.configuration.Configurable;
 import iped.engine.task.carver.XMLCarverConfiguration;
 
-public class XMLCarverConfigurablePanel extends AdvancedTextConfigurable {
+public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
     XMLCarverConfiguration config;
     private JScrollPane carverListPanel;
     private JList<CarverType> carverTypeList;

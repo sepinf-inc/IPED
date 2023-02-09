@@ -17,12 +17,12 @@ import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
 
-public abstract class AdvancedTextConfigurable extends TextConfigurablePanel {
+public abstract class AdvancedTextConfigurablePanel extends TextConfigurablePanel {
     protected JTabbedPane tabbedPane;
     protected JPanel basicPanel;
     private VetoableSingleSelectionModel tabModel;
 
-    protected AdvancedTextConfigurable(Configurable<?> configurable, MainFrame mainFrame) {
+    protected AdvancedTextConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
         tabbedPane = new JTabbedPane(JTabbedPane.BOTTOM);
         tabModel = new VetoableSingleSelectionModel();
@@ -93,7 +93,7 @@ public abstract class AdvancedTextConfigurable extends TextConfigurablePanel {
         
         tabbedPane.getModel().addChangeListener(null);
         
-        AdvancedTextConfigurable self = this;
+        AdvancedTextConfigurablePanel self = this;
         
         tabModel.addVetoableChangeListener(new VetoableChangeListener() {
             
