@@ -237,46 +237,41 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         if (workers == null)
             return "";
         StringBuilder msg = new StringBuilder();
-        msg.append(Messages.getString("ProgressFrame.CurrentItems")); //$NON-NLS-1$
-        msg.append("<table cellspacing=0 cellpadding=1 border=1>"); //$NON-NLS-1$
-        boolean hasWorkerAlive = false;
-        for (int i = 0; i < workers.length; i++) {
-            if (!workers[i].isAlive()) {
-                continue;
-            }
-            hasWorkerAlive = true;
-            msg.append("<tr><td>"); //$NON-NLS-1$
-            msg.append(workers[i].getName());
-            msg.append("</td><td>"); //$NON-NLS-1$
-            AbstractTask task = workers[i].runningTask;
-            if (workers[i].state == STATE.PAUSED) {
-                msg.append(Messages.getString("ProgressFrame.Paused")); //$NON-NLS-1$
-            } else if (workers[i].state == STATE.PAUSING) {
-                msg.append(Messages.getString("ProgressFrame.Pausing")); //$NON-NLS-1$
-            } else if (task != null) {
-                msg.append(task.getName());
-            } else {
-                msg.append("  -  "); //$NON-NLS-1$
-            }
-            msg.append("</td><td>"); //$NON-NLS-1$
-            IItem evidence = workers[i].evidence;
-            if (evidence != null) {
-                String len = ""; //$NON-NLS-1$
-                if (evidence.getLength() != null) {
-                    len = " (" + nf.format(evidence.getLength()) + " bytes)"; //$NON-NLS-1$ //$NON-NLS-2$
-                }
-                msg.append(evidence.getPath() + len);
-            } else {
-                msg.append(Messages.getString("ProgressFrame.WaitingItem")); //$NON-NLS-1$
-            }
-            msg.append("</td></tr>"); //$NON-NLS-1$
-        }
-        msg.append("</table>"); //$NON-NLS-1$
-        if (!hasWorkerAlive) {
-            return ""; //$NON-NLS-1$
-        }
-        return msg.toString();
+        startTable(msg);
+        addTitle(msg, 3, Messages.getString("ProgressFrame.CurrentItems"));
 
+        boolean hasWorkerAlive = false;
+        for (Worker worker : workers) {
+            if (!worker.isAlive())
+                continue;
+            hasWorkerAlive = true;
+            startRow(msg, worker.getName(), worker.state != STATE.PAUSED);
+
+            AbstractTask task = worker.runningTask;
+            if (worker.state == STATE.PAUSED) {
+                addCell(msg, Messages.getString("ProgressFrame.Paused"), Align.CENTER);
+            } else if (worker.state == STATE.PAUSING) {
+                addCell(msg, Messages.getString("ProgressFrame.Pausing"), Align.CENTER);
+            } else if (task != null) {
+                addCell(msg, task.getName());
+            } else {
+                addCell(msg, "-", Align.CENTER);
+            }
+
+            IItem evidence = worker.evidence;
+            if (evidence != null) {
+                String len = "";
+                if (evidence.getLength() != null && evidence.getLength() > 0)
+                    len = " (" + nf.format(evidence.getLength()) + " bytes)";
+                finishRow(msg, evidence.getPath() + len);
+            } else {
+                finishRow(msg, Messages.getString("ProgressFrame.WaitingItem"));
+            }
+        }
+        finishTable(msg);
+        if (!hasWorkerAlive)
+            return "";
+        return msg.toString();
     }
 
     private String getTaskTimes() {
