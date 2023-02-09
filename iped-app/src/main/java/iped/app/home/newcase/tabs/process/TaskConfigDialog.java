@@ -5,6 +5,24 @@ package iped.app.home.newcase.tabs.process;/*
  * @author Thiago S. Figueiredo
  */
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.UIManager;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.plaf.basic.BasicTabbedPaneUI;
+
 import iped.app.home.MainFrame;
 import iped.app.home.configurables.ConfigurablePanel;
 import iped.app.home.configurables.ConfigurableValidationException;
@@ -14,13 +32,6 @@ import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.task.AbstractTask;
-
-import javax.swing.*;
-import javax.swing.plaf.basic.BasicTabbedPaneUI;
-import java.awt.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 
 public class TaskConfigDialog extends JDialog {
     private List<Configurable<?>> configurables;
@@ -67,6 +78,14 @@ public class TaskConfigDialog extends JDialog {
             Configurable<?> configurable = (Configurable<?>) iterator.next();
             if(!(configurable instanceof EnableTaskProperty)) {
                 ConfigurablePanel configPanel = ConfigurablePanel.createConfigurablePanel(configurable, mainFrame);
+
+                configPanel.addChangeListener(new ChangeListener() {
+                    @Override
+                    public void stateChanged(ChangeEvent e) {
+                        configurationManager.notifyUpdate(configurable);
+                    }
+                });
+
                 configPanel.createConfigurableGUI();
                 configurablePanels.put(configurable,configPanel);
                 tabbedPane.addTab(configurable.getClass().getSimpleName(), UIManager.getIcon("FileView.fileIcon"), configPanel, "");
@@ -80,16 +99,16 @@ public class TaskConfigDialog extends JDialog {
         btCancel.addActionListener( e -> {
             this.setVisible(false);
         });
-        JButton btVoltar = new JButton(Messages.get("Home.Save"));
-        btVoltar.addActionListener( e -> {
+        JButton btSave = new JButton(Messages.get("Home.Save"));
+        btSave.addActionListener( e -> {
             try {
                 for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
                     Configurable<?> configurable = (Configurable<?>)iterator.next();
                     if(!(configurable instanceof EnableTaskProperty)) {
                         ConfigurablePanel configPanel = configurablePanels.get(configurable);
                         if(configPanel.hasChanged()) {
-                            configurablePanels.get(configurable).applyChanges();
-                            configurationManager.notifyUpdate(configurable);
+                            configPanel.applyChanges();
+                            configPanel.fireChangeListener(new ChangeEvent(this));
                         }
                     }
                 }
@@ -102,7 +121,7 @@ public class TaskConfigDialog extends JDialog {
 
         JPanel panelButtons = new JPanel();
         panelButtons.setBackground(Color.white);
-        panelButtons.add(btVoltar);
+        panelButtons.add(btSave);
         panelButtons.add(btCancel);
         return panelButtons;
     }

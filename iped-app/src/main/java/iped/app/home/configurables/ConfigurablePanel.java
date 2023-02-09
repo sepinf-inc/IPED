@@ -2,10 +2,15 @@ package iped.app.home.configurables;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.swing.SpringLayout;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -32,6 +37,8 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
     protected Configurable<?> configurable;
     protected SpringLayout layout;
     protected boolean changed=false;
+    
+    List<ChangeListener> changeListeners = new ArrayList<ChangeListener>();    
 
     protected ConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
         super(mainFrame);
@@ -147,5 +154,20 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
 
     public void setConfigurable(Configurable<?> configurable) {
         this.configurable = configurable;
+    }
+    
+    public void fireChangeListener(ChangeEvent e) {
+        for (Iterator iterator = changeListeners.iterator(); iterator.hasNext();) {
+            ChangeListener changeListener = (ChangeListener) iterator.next();
+            changeListener.stateChanged(e);            
+        }
+    }
+    
+    public void addChangeListener(ChangeListener changeListener) {
+        changeListeners.add(changeListener);
+    }
+    
+    public void removeChangeListener(ChangeListener changeListener) {
+        changeListeners.remove(changeListener);
     }
 }

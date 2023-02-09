@@ -2,13 +2,10 @@ package iped.app.home.configurables;
 
 import java.awt.BorderLayout;
 
-import javax.swing.JScrollPane;
-
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import iped.app.home.MainFrame;
-import iped.app.ui.controls.textarea.RegexTextPane;
 import iped.configuration.Configurable;
 
 public class TextConfigurablePanel extends ConfigurablePanel{
@@ -23,9 +20,7 @@ public class TextConfigurablePanel extends ConfigurablePanel{
 
     public void createConfigurableGUI() {
         textArea = new RSyntaxTextArea(20, 60);
-        
-        
-        //textArea = new RegexTextPane();
+
         textArea.setAutoscrolls(true);
         textArea.setText(configurable.getConfiguration().toString());
         textArea.getDocument().addDocumentListener(this);

@@ -1,0 +1,120 @@
+package iped.app.home.configurables;
+
+import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyVetoException;
+import java.beans.VetoableChangeListener;
+import java.beans.VetoableChangeSupport;
+
+import javax.swing.DefaultSingleSelectionModel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.UIManager;
+import javax.swing.event.ChangeEvent;
+import javax.swing.plaf.basic.BasicTabbedPaneUI;
+
+import iped.app.home.MainFrame;
+import iped.configuration.Configurable;
+
+public abstract class AdvancedTextConfigurable extends TextConfigurablePanel {
+    protected JTabbedPane tabbedPane;
+    protected JPanel basicPanel;
+    private VetoableSingleSelectionModel tabModel;
+
+    protected AdvancedTextConfigurable(Configurable<?> configurable, MainFrame mainFrame) {
+        super(configurable, mainFrame);
+        tabbedPane = new JTabbedPane(JTabbedPane.BOTTOM);
+        tabModel = new VetoableSingleSelectionModel();
+        tabbedPane.setModel(tabModel);
+        tabbedPane.setUI(new BasicTabbedPaneUI() {
+            @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 25;}
+
+        });
+    }   
+    
+    /**
+     * selection model that implement tab vetoable change listeners that avoid tab change
+     * if configuration state is not valid. From https://stackoverflow.com/questions/12389801/forbid-tab-change-in-a-jtabbedpane
+     */
+    public static class VetoableSingleSelectionModel extends DefaultSingleSelectionModel {
+        private VetoableChangeSupport vetoableChangeSupport;
+
+        @Override
+        public void setSelectedIndex(int index) {
+            if (getSelectedIndex() == index)
+                return;
+            try {
+                fireVetoableChange(getSelectedIndex(), index);
+            } catch (PropertyVetoException e) {
+                //skips tab change
+                return;
+            }
+            super.setSelectedIndex(index);
+        }
+        
+        private void fireVetoableChange(int oldSelectionIndex,
+                int newSelectionIndex) throws PropertyVetoException {
+            if (!isVetoable())
+                return;
+            vetoableChangeSupport.fireVetoableChange("selectedIndex",
+                    oldSelectionIndex, newSelectionIndex);
+        
+        }
+        
+        private boolean isVetoable() {
+            if (vetoableChangeSupport == null)
+                return false;
+            return vetoableChangeSupport.hasListeners(null);
+        }
+        
+        public void addVetoableChangeListener(VetoableChangeListener l) {
+            if (vetoableChangeSupport == null) {
+                vetoableChangeSupport = new VetoableChangeSupport(this);
+            }
+            vetoableChangeSupport.addVetoableChangeListener(l);
+        }
+        
+        public void removeVetoableChangeListener(VetoableChangeListener l) {
+            if (vetoableChangeSupport == null)
+                return;
+            vetoableChangeSupport.removeVetoableChangeListener(l);
+        }
+    }
+    
+    public void createConfigurableGUI() {
+        super.createConfigurableGUI();
+        
+        this.remove(txtAreaScroll);
+
+        tabbedPane.addTab("Carver type list", UIManager.getIcon("FileView.fileIcon"), createBasicPane(), "");
+        tabbedPane.addTab("Advanced", UIManager.getIcon("FileView.fileIcon"), txtAreaScroll, "");
+        this.add(tabbedPane);
+        
+        tabbedPane.getModel().addChangeListener(null);
+        
+        AdvancedTextConfigurable self = this;
+        
+        tabModel.addVetoableChangeListener(new VetoableChangeListener() {
+            
+            @Override
+            public void vetoableChange(PropertyChangeEvent evt) throws PropertyVetoException {
+                if(self.hasChanged()) {
+                    try {
+                        self.applyChanges();
+                        changed=false;
+                        fireChangeListener(new ChangeEvent(this));
+                    } catch (ConfigurableValidationException cve) {
+                        JOptionPane.showMessageDialog(self, cve.getMessage() + "\n" + cve.getCause(), "", JOptionPane.ERROR_MESSAGE);
+                        PropertyVetoException pve = new PropertyVetoException("Change not valid", evt);
+                        throw pve;
+                    }
+                }
+            }
+        });
+        
+    }
+
+    protected abstract Component createBasicPane();
+
+}

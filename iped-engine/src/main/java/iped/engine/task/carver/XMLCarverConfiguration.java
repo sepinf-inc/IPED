@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -356,6 +357,10 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
 
     public CarverType[] getAvailableCarverTypes() {
         return availableCarverTypes.toArray(new CarverType[0]);
+    }
+
+    public List<CarverType> getAvailableCarverTypesList() {
+        return availableCarverTypes;
     }
 
     /**
