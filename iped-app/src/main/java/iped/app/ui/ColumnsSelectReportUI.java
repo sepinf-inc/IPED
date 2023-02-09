@@ -2,15 +2,23 @@ package iped.app.ui;
 
 import java.util.Arrays;
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JPanel;
+import javax.swing.JOptionPane;
 
 import iped.engine.task.index.IndexItem;
+import iped.localization.LocalizedProperties;
 
 public class ColumnsSelectReportUI extends ColumnsSelectUI {
     private static ColumnsSelectReportUI instance;
+    protected JButton clearButton = new JButton(Messages.getString("ColumnsManager.ClearButton"));
+
+    private final int PROPERTIES_LIMIT_NUM = 100; 
 
     private static final String[] basicReportProps = { IndexItem.NAME, IndexItem.PATH, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.CREATED,
         IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.DELETED, IndexItem.CARVED, IndexItem.HASH, IndexItem.ID_IN_SOURCE };
@@ -67,5 +75,23 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
             columnsManager.enableOnlySelectedProperties(Arrays.asList(basicReportProps));
         }
         updatePanelList();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        super.actionPerformed(e);
+        if (e.getSource().equals(clearButton)) {
+            columnsManager.disableAllProperties();
+            updatePanelList();
+        } else if (e.getSource() instanceof JCheckBox) {
+            if (columnsManager.getSelectedProperties().size() > PROPERTIES_LIMIT_NUM) {
+                JCheckBox source = (JCheckBox) e.getSource();
+                String nonLocalizedText = LocalizedProperties.getNonLocalizedField(source.getText());
+                JOptionPane.showMessageDialog(dialog, Messages.getString("ColumnsManager.LimitReachedMessage", PROPERTIES_LIMIT_NUM),
+                    Messages.getString("ColumnsManager.LimitReachedTitle"), JOptionPane.ERROR_MESSAGE);
+                columnsManager.allCheckBoxesState.put(nonLocalizedText, false);
+                updatePanelList();
+            }
+        }
     }
 }

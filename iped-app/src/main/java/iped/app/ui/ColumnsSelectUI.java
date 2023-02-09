@@ -25,7 +25,6 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
 
     protected JCheckBox toggleSelectUnselectAllCheckBox = new JCheckBox(Messages.getString("ColumnsManager.ToggleSelectAll"));
     protected JButton selectVisibleButton = new JButton(Messages.getString("ColumnsManager.SelectVisible"));
-    protected JButton clearButton = new JButton(Messages.getString("ColumnsManager.ClearButton"));
 
     protected JButton okButton = new JButton("OK");
 
@@ -109,9 +108,6 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
         if (e.getSource().equals(selectVisibleButton)) {
             columnsManager.enableOnlySelectedProperties(columnsManager.colState.visibleFields);
             updatePanelList();
-        } else if (e.getSource().equals(clearButton)) {
-            columnsManager.disableAllProperties();
-            updatePanelList();
         } else if (e.getSource().equals(toggleSelectUnselectAllCheckBox)) {
             if (toggleSelectUnselectAllCheckBox.isSelected()) {
                 columnsManager.enableAllProperties();
@@ -125,7 +121,7 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
             columnsManager.saveSelectedProps(saveFileName);
             okButtonClicked = true;
             dispose();
-        } else {    // checkbox
+        } else if (e.getSource() instanceof JCheckBox) {
             JCheckBox source = (JCheckBox) e.getSource();
             String nonLocalizedText = LocalizedProperties.getNonLocalizedField(source.getText());
             boolean isSelected = source.isSelected();

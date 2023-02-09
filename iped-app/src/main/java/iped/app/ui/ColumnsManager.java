@@ -401,15 +401,15 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     }
 
     public List<String> getSelectedProperties() {
-        List<String> selectedColumns = new ArrayList<>();
+        List<String> selectedProperties = new ArrayList<>();
         for (Map.Entry<String, Boolean> hmEntry : allCheckBoxesState.entrySet()) {
             String fieldName = hmEntry.getKey();
             Boolean checkBoxState = hmEntry.getValue();
             if (checkBoxState == true) {
-                selectedColumns.add(LocalizedProperties.getNonLocalizedField(fieldName));
+                selectedProperties.add(LocalizedProperties.getNonLocalizedField(fieldName));
             }
         }
-        return selectedColumns;
+        return selectedProperties;
     }
     
     protected void enableOnlySelectedProperties(List<String> props) {
