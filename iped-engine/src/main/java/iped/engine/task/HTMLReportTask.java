@@ -767,7 +767,7 @@ public class HTMLReportTask extends AbstractTask {
                 }
             }
 
-            // // Fill Basic Properties if present
+            // Fill Basic Properties if present
             if (selectedProperties.contains(BasicProps.NAME))
                 fillItemProperty(it, "Name", "<b>" + reg.name + "</b>");
             if (selectedProperties.contains(BasicProps.PATH))
@@ -788,17 +788,16 @@ public class HTMLReportTask extends AbstractTask {
                 fillItemProperty(it, "Carved", String.valueOf(reg.carved));
             if (selectedProperties.contains(BasicProps.HASH))
                 fillItemProperty(it, "Hash", reg.hash);
-            if (selectedProperties.contains(IndexItem.ID_IN_SOURCE)) {
-                String export = reg.export == null ? "-" : "<b><a href=\"../" + reg.export + "\">" + reg.export + "</a></b>";
-                fillItemProperty(it, "Exported as", export);
-            }
             for (String property : selectedProperties) {
-                if (!basicReportProps.contains(property)) {
+                if (!basicReportProps.contains(property)) {     // filter for additional properties selected by the user
                     String propertyValue = ipedCase.getItemProperty(reg.evidenceId, property);
                     fillItemProperty(it, property, propertyValue);
                 }
             }
-
+            if (selectedProperties.contains(IndexItem.ID_IN_SOURCE)) {
+                String export = reg.export == null ? "-" : "<b><a href=\"../" + reg.export + "\">" + reg.export + "</a></b>";
+                fillItemProperty(it, "Exported as", export);
+            }
             items.append(it);
         }
 

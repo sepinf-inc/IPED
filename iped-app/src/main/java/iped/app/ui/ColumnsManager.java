@@ -418,11 +418,11 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     }
 
     protected void enableAllProperties() {
-        enableOnlySelectedProperties(new ArrayList<String>(allCheckBoxesState.keySet()));
+        allCheckBoxesState.replaceAll((name, state) -> state = true);
     }
 
     protected void disableAllProperties() {
-        enableOnlySelectedProperties(new ArrayList<String>());
+        allCheckBoxesState.replaceAll((name, state) -> state = false);
     }
 
 }
