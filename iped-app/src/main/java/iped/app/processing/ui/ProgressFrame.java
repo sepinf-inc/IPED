@@ -128,7 +128,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         itens = new RestrictedSizeLabel();
         stats = new RestrictedSizeLabel();
         parsers = new RestrictedSizeLabel();
-        
+
         int sz = 10;
         stats.setBorder(BorderFactory.createEmptyBorder(sz, sz, sz, sz));
         tasks.setBorder(BorderFactory.createEmptyBorder(sz, 0, sz, sz));
@@ -282,11 +282,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
     private String getTaskTimes() {
         if (workers == null) {
-            return ""; //$NON-NLS-1$
+            return "";
         }
         StringBuilder msg = new StringBuilder();
-        msg.append(Messages.getString("ProgressFrame.TaskTimes")); //$NON-NLS-1$
-        msg.append("<table cellspacing=0 cellpadding=1 border=1>"); //$NON-NLS-1$
+        startTable(msg);
+        addTitle(msg, 3, Messages.getString("ProgressFrame.TaskTimes"));
+
         long totalTime = 0;
         long[] taskTimes = new long[workers[0].tasks.size()];
         for (Worker worker : workers) {
@@ -295,20 +296,22 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
                 totalTime += worker.tasks.get(i).getTaskTime();
             }
         }
-        totalTime = totalTime / (1000000 * workers.length);
-        if (totalTime == 0) {
-            totalTime = 1;
-        }
+        totalTime = Math.max(1, totalTime / (1000000 * workers.length));
+
         for (int i = 0; i < taskTimes.length; i++) {
             AbstractTask task = workers[0].tasks.get(i);
             long sec = taskTimes[i] / (1000000 * workers.length);
-            msg.append("<tr><td>"); //$NON-NLS-1$
-            msg.append(task.getName());
-            msg.append("</td><td>"); //$NON-NLS-1$
-            msg.append(task.isEnabled() ? sec + "s (" + (100 * sec) / totalTime + "%)" : "-"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            msg.append("</td></tr>"); //$NON-NLS-1$
+            startRow(msg, task.getName());
+            if (task.isEnabled()) {
+                addCell(msg, nf.format(sec) + "s", Align.RIGHT);
+                finishRow(msg, (100 * sec) / totalTime + "%", Align.RIGHT);
+            } else {
+                addCell(msg, "-", Align.CENTER);
+                finishRow(msg, "-", Align.CENTER);
+            }
         }
-        msg.append("</table>"); //$NON-NLS-1$
+
+        finishTable(msg);
         return msg.toString();
     }
 
@@ -406,12 +409,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private void startTable(StringBuilder sb) {
-        //Colors can be adjusted here
+        // Colors can be adjusted here
         String borderColor = "#CCCCCC";
         String cellColor = "#FAFAFA";
-        String titleBackColor = "#155575";
+        String titleBackColor = "#446688";
         String titleTextColor = "#FFFFFF";
-        
+
         sb.append("<html><head><style> ");
         sb.append("td { ");
         sb.append("border-bottom: 1px solid ").append(borderColor).append("; ");
