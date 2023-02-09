@@ -193,7 +193,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             tasks.setText(getTaskTimes());
             itens.setText(getItemList());
             stats.setText(getStats());
-            parsers.setText(getParsersTime());
+            parsers.setText(getParserTimes());
             if (indexed > 0)
                 openApp.setEnabled(true);
 
@@ -213,7 +213,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             tasks.setText(getTaskTimes());
             itens.setText(getItemList());
             stats.setText(getStats());
-            parsers.setText(getParsersTime());
+            parsers.setText(getParserTimes());
 
         } else if ("progresso".equals(evt.getPropertyName())) { //$NON-NLS-1$
             long prevVolume = volume;
@@ -234,9 +234,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private String getItemList() {
-        if (workers == null) {
-            return ""; //$NON-NLS-1$
-        }
+        if (workers == null)
+            return "";
         StringBuilder msg = new StringBuilder();
         msg.append(Messages.getString("ProgressFrame.CurrentItems")); //$NON-NLS-1$
         msg.append("<table cellspacing=0 cellpadding=1 border=1>"); //$NON-NLS-1$
@@ -316,9 +315,9 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         return msg.toString();
     }
 
-    private String getParsersTime() {
+    private String getParserTimes() {
         if (ParsingTask.times.isEmpty())
-            return ""; //$NON-NLS-1$
+            return "";
         StringBuilder msg = new StringBuilder();
         msg.append(Messages.getString("ProgressFrame.ParserTimes")); //$NON-NLS-1$
         msg.append("<table cellspacing=0 cellpadding=1 border=1>"); //$NON-NLS-1$
@@ -344,9 +343,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private String getStats() {
-        if (Statistics.get() == null) {
+        if (Statistics.get() == null)
             return "";
-        }
         StringBuilder msg = new StringBuilder();
         startTable(msg);
         addTitle(msg, 2, Messages.getString("ProgressFrame.Statistics"));
