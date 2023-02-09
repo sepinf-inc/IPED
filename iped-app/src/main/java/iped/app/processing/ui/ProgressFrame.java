@@ -29,6 +29,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
 import java.text.NumberFormat;
 import java.util.Date;
 import java.util.Map.Entry;
@@ -406,15 +409,72 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         startRow(msg, Messages.getString("ProgressFrame.Timeouts"));
         finishRow(msg, nf.format(Statistics.get().getTimeouts()), Align.RIGHT);
 
+        // Some environment information
+        skipRow(msg, 2);
+        addTitle(msg, 2, Messages.getString("ProgressFrame.Environment"));
+        addEnvironmentInfo(msg);
+
         finishTable(msg);
         return msg.toString();
+    }
+
+    private void addEnvironmentInfo(StringBuilder msg) {
+        startRow(msg, Messages.getString("ProgressFrame.JavaVersion"));
+        finishRow(msg, Runtime.version(), Align.RIGHT);
+
+        startRow(msg, Messages.getString("ProgressFrame.FreeMemory"));
+        finishRow(msg, nf.format(Runtime.getRuntime().freeMemory() >>> 20) + " MB", Align.RIGHT);
+
+        startRow(msg, Messages.getString("ProgressFrame.TotalMemory"));
+        finishRow(msg, nf.format(Runtime.getRuntime().totalMemory() >>> 20) + " MB", Align.RIGHT);
+
+        startRow(msg, Messages.getString("ProgressFrame.MaxMemory"));
+        finishRow(msg, nf.format(Runtime.getRuntime().maxMemory() >>> 20) + " MB", Align.RIGHT);
+
+        if (workers != null) {
+            try {
+                FileStore outputVolume = Files.getFileStore(workers[0].output.getCanonicalFile().toPath());
+                FileStore tempVolume = Files
+                        .getFileStore(new File(System.getProperty("java.io.tmpdir")).getCanonicalFile().toPath());
+
+                if (outputVolume.equals(tempVolume)) {
+                    startRow(msg, Messages.getString("ProgressFrame.OutputTempVolume"));
+                    finishRow(msg, outputVolume.toString(), Align.RIGHT);
+
+                    startRow(msg, Messages.getString("ProgressFrame.OutputTempFree"));
+                    finishRow(msg,
+                            nf.format(outputVolume.getUsableSpace() >>> 30) + " GB ("
+                                    + outputVolume.getUsableSpace() * 100 / outputVolume.getTotalSpace() + "%)",
+                            Align.RIGHT);
+                } else {
+                    startRow(msg, Messages.getString("ProgressFrame.OutputVolume"));
+                    finishRow(msg, outputVolume.toString(), Align.RIGHT);
+
+                    startRow(msg, Messages.getString("ProgressFrame.OutputFree"));
+                    finishRow(msg,
+                            nf.format(outputVolume.getUsableSpace() >>> 30) + " GB ("
+                                    + outputVolume.getUsableSpace() * 100 / outputVolume.getTotalSpace() + "%)",
+                            Align.RIGHT);
+
+                    startRow(msg, Messages.getString("ProgressFrame.TempVolume"));
+                    finishRow(msg, tempVolume.toString(), Align.RIGHT);
+
+                    startRow(msg, Messages.getString("ProgressFrame.TempFree"));
+                    finishRow(msg,
+                            nf.format(tempVolume.getUsableSpace() >>> 30) + " GB ("
+                                    + tempVolume.getUsableSpace() * 100 / tempVolume.getTotalSpace() + "%)",
+                            Align.RIGHT);
+                }
+            } catch (Exception e) {
+            }
+        }
     }
 
     private void startTable(StringBuilder sb) {
         // Colors can be adjusted here
         String borderColor = "#CCCCCC";
-        String cellColor = "#FAFAFA";
-        String titleBackColor = "#446688";
+        String cellColor = "#FCFCFC";
+        String titleBackColor = "#557799";
         String titleTextColor = "#FFFFFF";
         String disabledColor = "#BBBBBB";
 
@@ -427,9 +487,13 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("border-spacing: 0px; ");
         sb.append("padding: 1px 3px 1px 3px; ");
         sb.append("} ");
+        sb.append("td.e { ");
+        sb.append("border-top: 0px; ");
+        sb.append("border-right: 0px; ");
+        sb.append("} ");
         sb.append("td.t { ");
         sb.append("border: 1px solid ").append(borderColor).append("; ");
-        sb.append("padding: 3px; ");
+        sb.append("padding: 2px 3px 2px 3px; ");
         sb.append("background-color: ").append(titleBackColor).append("; ");
         sb.append("color: ").append(titleTextColor).append("; ");
         sb.append("} ");
@@ -445,10 +509,11 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("table, tr { ");
         sb.append("border-spacing: 0px; ");
         sb.append("} ");
-        sb.append("tr { ");
+        sb.append("tr.a { ");
         sb.append("background-color: ").append(cellColor).append("; ");
         sb.append("} ");
         sb.append("tr.d { ");
+        sb.append("background-color: ").append(cellColor).append("; ");
         sb.append("color: ").append(disabledColor).append("; ");
         sb.append("} ");
         sb.append("</style></head><body>");
@@ -458,6 +523,11 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     private void addTitle(StringBuilder sb, int colSpan, String title) {
         sb.append("<tr><td class=t colspan=").append(colSpan);
         sb.append(">").append(title).append("</td></tr>");
+    }
+
+    private void skipRow(StringBuilder sb, int colSpan) {
+        sb.append("<tr><td class=e colspan=").append(colSpan);
+        sb.append("> </td></tr>");
     }
 
     private void startRow(StringBuilder sb, Object content) {
@@ -479,8 +549,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             int c = pct == 0 ? 255 : 245 - pct * 3 / 2;
             sb.append(" bgcolor=#").append(String.format("%02X%02X%02X", c, c, 255));
         }
-        if (!enabled)
-            sb.append(" class=d");
+        sb.append(" class=").append(enabled ? "a" : "d");
         sb.append("><td class=s>");
         sb.append(content).append("</td>");
     }
