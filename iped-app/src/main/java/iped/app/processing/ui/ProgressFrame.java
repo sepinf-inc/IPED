@@ -427,7 +427,6 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("} ");
         sb.append("td.t { ");
         sb.append("border: 1px solid ").append(borderColor).append("; ");
-        sb.append("text-align: center; ");
         sb.append("padding: 3px; ");
         sb.append("background-color: ").append(titleBackColor).append("; ");
         sb.append("color: ").append(titleTextColor).append("; ");
