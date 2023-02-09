@@ -78,7 +78,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     private UIPropertyListenerProvider task;
     private Date indexStart;
     private Worker[] workers;
-    private NumberFormat sizeFormat = LocalizedFormat.getNumberInstance();
+    private NumberFormat nf = LocalizedFormat.getNumberInstance();
     private boolean paused = false;
     private String decodingDir = null;
 
@@ -264,7 +264,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             if (evidence != null) {
                 String len = ""; //$NON-NLS-1$
                 if (evidence.getLength() != null) {
-                    len = " (" + sizeFormat.format(evidence.getLength()) + " bytes)"; //$NON-NLS-1$ //$NON-NLS-2$
+                    len = " (" + nf.format(evidence.getLength()) + " bytes)"; //$NON-NLS-1$ //$NON-NLS-2$
                 }
                 msg.append(evidence.getPath() + len);
             } else {
@@ -361,10 +361,10 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         finishRow(msg, instantRate + " GB/h", Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.VolumeFound")); 
-        finishRow(msg, sizeFormat.format(Statistics.get().getCaseData().getDiscoveredVolume() >>> 20) + " MB", Align.RIGHT);
+        finishRow(msg, nf.format(Statistics.get().getCaseData().getDiscoveredVolume() >>> 20) + " MB", Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.VolumeProcessed"));
-        finishRow(msg, sizeFormat.format(Statistics.get().getVolume() >>> 20) + " MB", Align.RIGHT);
+        finishRow(msg, nf.format(Statistics.get().getVolume() >>> 20) + " MB", Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.ItemsFound"));
         finishRow(msg, Statistics.get().getCaseData().getDiscoveredEvidences(), Align.RIGHT);
