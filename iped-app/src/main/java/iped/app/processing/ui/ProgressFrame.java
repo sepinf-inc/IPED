@@ -291,19 +291,22 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         long[] taskTimes = new long[workers[0].tasks.size()];
         for (Worker worker : workers) {
             for (int i = 0; i < taskTimes.length; i++) {
-                taskTimes[i] += worker.tasks.get(i).getTaskTime();
-                totalTime += worker.tasks.get(i).getTaskTime();
+                long time = worker.tasks.get(i).getTaskTime();
+                taskTimes[i] += time;
+                totalTime += time;
             }
         }
-        totalTime = Math.max(1, totalTime / (1000000 * workers.length));
+        if (totalTime < 1)
+            totalTime = 1;
 
         for (int i = 0; i < taskTimes.length; i++) {
             AbstractTask task = workers[0].tasks.get(i);
-            long sec = taskTimes[i] / (1000000 * workers.length);
             if (task.isEnabled()) {
+                long time = taskTimes[i];
+                long sec = time / (1000000 * workers.length);
                 startRow(msg, task.getName());
                 addCell(msg, nf.format(sec) + "s", Align.RIGHT);
-                finishRow(msg, (100 * sec) / totalTime + "%", Align.RIGHT);
+                finishRow(msg, (100 * time) / totalTime + "%", Align.RIGHT);
             } else {
                 startRow(msg, task.getName(), false);
                 addCell(msg, "-", Align.CENTER);
@@ -327,7 +330,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             for (AbstractTask task : worker.tasks)
                 if (task.getClass().equals(ParsingTask.class))
                     totalTime += task.getTaskTime();
-        if (totalTime < 1) 
+        if (totalTime < 1)
             totalTime = 1;
 
         for (Object o : ParsingTask.times.entrySet().toArray()) {
