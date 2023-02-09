@@ -75,7 +75,6 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     long rate = 0, instantRate;
     int volume, taskSize;
     long secsToEnd;
-    private UIPropertyListenerProvider task;
     private Date indexStart;
     private Worker[] workers;
     private NumberFormat nf = LocalizedFormat.getNumberInstance();
@@ -105,7 +104,6 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         
         this.setBounds(0, 0, 800, 400);
         this.setLocationRelativeTo(null);
-        this.task = task;
 
         progressBar = new JProgressBar(0, 1);
         progressBar.setPreferredSize(new Dimension(600, 40));
