@@ -26,6 +26,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     public static final String WAV2VEC2_SERVICE = "wav2vec2Service";
     private static final String GOOGLE_MODEL = "googleModel";
     private static final String LANG_AUTO_VAL = "auto";
+    private static final String SKIP_KNOWN_FILES = "skipKnownFiles";
 
     private List<String> languages = new ArrayList<>();
     private List<String> mimesToProcess = new ArrayList<>();
@@ -39,6 +40,11 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private String huggingFaceModel;
     private String wav2vec2Service;
     private String googleModel;
+    private boolean skipKnownFiles = true;
+
+    public boolean getSkipKnownFiles() {
+        return this.skipKnownFiles;
+    }
 
     public String getServiceRegion() {
         return serviceRegion;
@@ -133,6 +139,11 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         googleModel = properties.getProperty(GOOGLE_MODEL);
         if (googleModel != null) {
             googleModel = googleModel.trim();
+        }
+
+        String skipKnown = properties.getProperty(SKIP_KNOWN_FILES);
+        if (skipKnown != null) {
+            this.skipKnownFiles = Boolean.valueOf(skipKnown.trim());
         }
 
     }
