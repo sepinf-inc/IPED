@@ -25,8 +25,8 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
@@ -65,7 +65,7 @@ import iped.utils.LocalizedFormat;
  * Dialog de progresso do processamento, fornecendo previsão de término,
  * velocidade e lista dos itens sendo processados.
  */
-public class ProgressFrame extends JFrame implements PropertyChangeListener, WindowListener, ActionListener {
+public class ProgressFrame extends JFrame implements PropertyChangeListener, ActionListener {
 
     private static final long serialVersionUID = -1130342847618772236L;
     private JProgressBar progressBar;
@@ -153,7 +153,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
         this.getContentPane().add(topPanel, BorderLayout.NORTH);
         this.getContentPane().add(scrollPane, BorderLayout.CENTER);
-        this.addWindowListener(this);
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent arg0) {
+                task.cancel(true);
+            }
+        });
     }
 
     private void updateString() {
@@ -469,47 +474,6 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
     private void finishTable(StringBuilder sb) {
         sb.append("</body></table></html>");
-    }
-
-    @Override
-    public void windowActivated(WindowEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void windowClosed(WindowEvent arg0) {
-
-    }
-
-    @Override
-    public void windowClosing(WindowEvent arg0) {
-        task.cancel(true);
-
-    }
-
-    @Override
-    public void windowDeactivated(WindowEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void windowDeiconified(WindowEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void windowIconified(WindowEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void windowOpened(WindowEvent arg0) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
