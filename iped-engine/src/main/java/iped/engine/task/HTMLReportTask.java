@@ -57,7 +57,6 @@ import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,8 +96,8 @@ public class HTMLReportTask extends AbstractTask {
 
     private IPEDSource ipedCase;
 
-    private static final String propNamePlaceHolder = "%PROPERTY_NAME%";
-    private static final String propValuePlaceHolder = "%PROPERTY_VALUE%";
+    private static final String PROP_NAME_PLACEHOLDER = "%PROPERTY_NAME%";
+    private static final String PROP_VALUE_PLACEHOLDER = "%PROPERTY_VALUE%";
 
     private static final String SELECTED_PROPERTIES_FILENAME = "data/reportProps.dat";
     
@@ -835,14 +834,14 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private void fillItemProperty(StringBuilder it, String propertyName, String propertyValue) {
-        Boolean boolProperty = BooleanUtils.toBooleanObject(propertyValue);
-        if (boolProperty != null) {
+        if (propertyValue != null && (propertyValue.equals(Boolean.TRUE.toString()) || propertyValue.equals(Boolean.FALSE.toString()))) {
+            boolean boolProperty = Boolean.parseBoolean(propertyValue);
             propertyValue = boolProperty ? Messages.getString("HTMLReportTask.Yes")
                 : Messages.getString("HTMLReportTask.No");
         }
 
-        replaceFirst(it, propNamePlaceHolder, propertyName);
-        replaceFirst(it, propValuePlaceHolder, propertyValue);
+        replaceFirst(it, PROP_NAME_PLACEHOLDER, propertyName);
+        replaceFirst(it, PROP_VALUE_PLACEHOLDER, propertyValue);
     }
 
     private String getComments(String bookmark) {
