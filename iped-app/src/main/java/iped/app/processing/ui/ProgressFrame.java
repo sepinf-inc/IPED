@@ -353,10 +353,10 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         finishRow(msg, secsToEnd == 0 ? "-" : secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m " + secsToEnd % 60 + "s", Align.RIGHT);
         
         startRow(msg,  Messages.getString("ProgressFrame.MeanSpeed"));
-        finishRow(msg, rate + " GB/h", Align.RIGHT);
+        finishRow(msg, nf.format(rate) + " GB/h", Align.RIGHT);
 
         startRow(msg, Messages.getString("ProgressFrame.CurrentSpeed"));
-        finishRow(msg, instantRate + " GB/h", Align.RIGHT);
+        finishRow(msg, nf.format(instantRate) + " GB/h", Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.VolumeFound")); 
         finishRow(msg, nf.format(Statistics.get().getCaseData().getDiscoveredVolume() >>> 20) + " MB", Align.RIGHT);
@@ -365,37 +365,37 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         finishRow(msg, nf.format(Statistics.get().getVolume() >>> 20) + " MB", Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.ItemsFound"));
-        finishRow(msg, Statistics.get().getCaseData().getDiscoveredEvidences(), Align.RIGHT);
+        finishRow(msg, nf.format(Statistics.get().getCaseData().getDiscoveredEvidences()), Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.ItemsProcessed"));
-        finishRow(msg, Statistics.get().getProcessed(), Align.RIGHT);
+        finishRow(msg, nf.format(Statistics.get().getProcessed()), Align.RIGHT);
         
         startRow(msg,  Messages.getString("ProgressFrame.ActiveProcessed"));
-        finishRow(msg, Statistics.get().getActiveProcessed(), Align.RIGHT);
+        finishRow(msg, nf.format(Statistics.get().getActiveProcessed()), Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.SubitemsProcessed"));
-        finishRow(msg, Statistics.get().getSubitemsDiscovered(), Align.RIGHT);
+        finishRow(msg, nf.format(Statistics.get().getSubitemsDiscovered()), Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.Carved"));
-        finishRow(msg, BaseCarveTask.getItensCarved(), Align.RIGHT);
+        finishRow(msg, nf.format(BaseCarveTask.getItensCarved()), Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.CarvedDiscarded"));
-        finishRow(msg, Statistics.get().getCorruptCarveIgnored(), Align.RIGHT);
+        finishRow(msg, nf.format(Statistics.get().getCorruptCarveIgnored()), Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.Exported"));
-        finishRow(msg, ExportFileTask.getItensExtracted(), Align.RIGHT);
+        finishRow(msg, nf.format(ExportFileTask.getItensExtracted()), Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.Ignored"));
-        finishRow(msg, Statistics.get().getIgnored(), Align.RIGHT);
+        finishRow(msg, nf.format(Statistics.get().getIgnored()), Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.ParsingErrors"));
-        finishRow(msg, StandardParser.parsingErrors, Align.RIGHT);
+        finishRow(msg, nf.format(StandardParser.parsingErrors), Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.ReadErrors"));
-        finishRow(msg, Statistics.get().getIoErrors(), Align.RIGHT);
+        finishRow(msg, nf.format(Statistics.get().getIoErrors()), Align.RIGHT);
         
         startRow(msg, Messages.getString("ProgressFrame.Timeouts"));
-        finishRow(msg, Statistics.get().getTimeouts(), Align.RIGHT);
+        finishRow(msg, nf.format(Statistics.get().getTimeouts()), Align.RIGHT);
         
         finishTable(msg);
         return msg.toString();
