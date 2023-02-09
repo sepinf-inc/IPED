@@ -404,9 +404,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private void startTable(StringBuilder sb) {
-        String borderColor = "#DDDDDD";
-        String cellColor = "#FAFAFC";
-        String titleColor = "#99AADD";
+        //Colors can be adjusted here
+        String borderColor = "#CCCCCC";
+        String cellColor = "#FAFAFF";
+        String titleBackColor = "#115577";
+        String titleTextColor = "#FAFAFF";
+        
         sb.append("<html><head><style> ");
         sb.append("td { ");
         sb.append("border-bottom: 1px solid ").append(borderColor).append("; ");
@@ -415,13 +418,14 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("border-left: 0px; ");
         sb.append("border-spacing: 0px; ");
         sb.append("background-color: ").append(cellColor).append("; ");
-        sb.append("padding: 3px; ");
+        sb.append("padding: 1px 3px 1px 3px; ");
         sb.append("} ");
         sb.append("td.t { ");
-        sb.append("border-top: 1px solid ").append(borderColor).append("; ");
-        sb.append("border-left: 1px solid ").append(borderColor).append("; ");
+        sb.append("border: 1px solid ").append(titleBackColor).append("; ");
         sb.append("text-align: center; ");
-        sb.append("background-color: ").append(titleColor).append("; ");
+        sb.append("padding: 3px; ");
+        sb.append("background-color: ").append(titleBackColor).append("; ");
+        sb.append("color: ").append(titleTextColor).append("; ");
         sb.append("} ");
         sb.append("td.s { ");
         sb.append("border-left: 1px solid ").append(borderColor).append("; ");
