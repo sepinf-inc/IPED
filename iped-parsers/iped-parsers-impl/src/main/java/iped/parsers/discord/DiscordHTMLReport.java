@@ -187,7 +187,7 @@ public class DiscordHTMLReport {
                                     + "' width='400px' height=''>");
                             out.println("	</video controls>");
                         } else {
-                            out.println("		<img onclick\"app.open('hash:" + att.getMediaHash() + "'"
+                            out.println("		<img onclick=\"app.open('hash:" + att.getMediaHash() + "')\""
                                     + " src=\"data:" + att.getContent_type() + ";base64," + att.getUrl() + "\" alt=\""
                                     + att.getFilename() + "\" width=\"400px\" height=\"\">");
                         }
