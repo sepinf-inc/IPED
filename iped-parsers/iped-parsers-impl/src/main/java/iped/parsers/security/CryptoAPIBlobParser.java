@@ -3,7 +3,7 @@ package iped.parsers.security;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -23,18 +23,13 @@ public class CryptoAPIBlobParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
 	public static final MediaType CAPI_MIME = MediaType.application("crypto-api-file");
-    private static Set<MediaType> SUPPORTED_TYPES = null;
+    private static Set<MediaType> SUPPORTED_TYPES = Collections.singleton(CAPI_MIME);
     public static final String ALIAS = "capi:alias"; //$NON-NLS-1$
     public static final Property HASPRIVATEKEY = Property.internalBoolean("capi:hasPrivateKey"); //$NON-NLS-1$
     public static final Property HASPUBLICKEY = Property.internalBoolean("capi:hasPublicKey"); //$NON-NLS-1$
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-        if (SUPPORTED_TYPES == null) {
-            SUPPORTED_TYPES = new HashSet<MediaType>();
-            SUPPORTED_TYPES.add(CAPI_MIME);
-        }
-
         return SUPPORTED_TYPES;
     }
 

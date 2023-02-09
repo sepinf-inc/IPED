@@ -8,9 +8,9 @@ import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
 public class ImageSimilarity {
-    public static final int maxDim = 160;
+    public static final int maxDim = 256;
 
-    private static final int numFeatures = 1044;
+    public static final int numFeatures = 1044;
     private static final int maxPixels = maxDim * maxDim;
     private static final int trimTolerance = 16;
     private static final short[] sqrt = new short[1 << 20];

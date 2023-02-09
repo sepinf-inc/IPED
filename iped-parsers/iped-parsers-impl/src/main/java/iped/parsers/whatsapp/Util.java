@@ -10,7 +10,7 @@ import iped.utils.IOUtil;
 
 /**
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class Util {
 

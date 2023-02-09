@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -56,6 +57,8 @@ import iped.engine.config.IndexTaskConfig;
 import iped.engine.io.FragmentingReader;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.MinIOTask.MinIODataRef;
+import iped.engine.task.similarity.ImageSimilarity;
+import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.engine.util.SSLFix;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
@@ -64,6 +67,7 @@ import iped.io.ISeekableInputStreamFactory;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
+import jep.NDArray;
 
 public class ElasticSearchIndexTask extends AbstractTask {
 
@@ -83,6 +87,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
     public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
     public static final String KEY_VAL_SEPARATOR = ":";
     
+    public static final int FACE_SIZE = 128;
+
     private static boolean isEnabled = false;
 
     private ElasticSearchTaskConfig elasticConfig;
@@ -213,7 +219,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
         CreateIndexRequest request = new CreateIndexRequest(indexName);
         Builder builder = Settings.builder().put(MAX_FIELDS_KEY, elasticConfig.getMax_fields())
                 .put(INDEX_SHARDS_KEY, elasticConfig.getIndex_shards())
-                .put(INDEX_REPLICAS_KEY, elasticConfig.getIndex_replicas()).put(IGNORE_MALFORMED, true);
+                .put(INDEX_REPLICAS_KEY, elasticConfig.getIndex_replicas()).put(IGNORE_MALFORMED, true)
+                .put("index.knn", true);
 
         if (!elasticConfig.getIndex_policy().isEmpty()) {
             builder.put(INDEX_POLICY_KEY, elasticConfig.getIndex_policy());
@@ -265,6 +272,24 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
         properties.put(ExtraProperties.LOCATIONS, Collections.singletonMap("type", "geo_point"));
+        properties.put("extraAttributes." + ImageSimilarityTask.IMAGE_FEATURES,
+                Map.of("type", "knn_vector", "dimension", ImageSimilarity.numFeatures, "method",
+                        Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+
+        // mapping faces as nested field
+        var faces_mapping = new HashMap<String, Object>();
+        faces_mapping.put("face_encoding", Map.of("type", "knn_vector", "dimension", FACE_SIZE, "method",
+                Map.of("name", "hnsw", "space_type", "l2", "engine", "nmslib")));
+        faces_mapping.put("face_location", Collections.singletonMap("type", "short"));
+        properties.put("faces", Map.of("type", "nested", "properties", faces_mapping));
+
+        Map<String, String> contentMapping = new HashMap<>(Map.of("type", "text"));
+
+        if (elasticConfig.isTermVector()) {
+            contentMapping.put("term_vector", "with_positions_offsets");
+        }
+
+        properties.put(BasicProps.CONTENT, contentMapping);
 
         // mapping the parent-child relation
         /*
@@ -480,6 +505,14 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     }
 
+    public static final int[] convArrayListLongToInt(ArrayList<Long> nd) {
+        int[] result = new int[nd.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = nd.get(i).intValue();
+        }
+        return result;
+    }
+
     private XContentBuilder getJsonMetadataBuilder(IItem item) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
@@ -499,7 +532,39 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.DELETED, item.isDeleted()).field(BasicProps.HASCHILD, item.hasChildren())
                 .field(BasicProps.ISDIR, item.isDir()).field(BasicProps.ISROOT, item.isRoot())
                 .field(BasicProps.CARVED, item.isCarved()).field(BasicProps.SUBITEM, item.isSubItem())
-                .field(BasicProps.OFFSET, item.getFileOffset()).field("extraAttributes", item.getExtraAttributeMap());
+                .field(BasicProps.OFFSET, item.getFileOffset());
+
+        var extraAttributes = new HashMap<String, Object>();
+        extraAttributes.putAll(item.getExtraAttributeMap());
+        if (extraAttributes.containsKey(ImageSimilarityTask.IMAGE_FEATURES)) {
+            float v[] = new float[ImageSimilarity.numFeatures];
+            byte vet[] = (byte[]) extraAttributes.get(ImageSimilarityTask.IMAGE_FEATURES);
+            for (int i = 0; i < ImageSimilarity.numFeatures; i++) {
+                v[i] = vet[i];
+            }
+            extraAttributes.put(ImageSimilarityTask.IMAGE_FEATURES, v);
+        }
+
+        if (extraAttributes.containsKey(ExtraProperties.FACE_ENCODINGS) && extraAttributes.containsKey(ExtraProperties.FACE_LOCATIONS)) {
+            ArrayList<NDArray> face_encodings = (ArrayList<NDArray>) extraAttributes.get(ExtraProperties.FACE_ENCODINGS);
+            ArrayList<ArrayList<Long>> face_locations = (ArrayList) extraAttributes.get(ExtraProperties.FACE_LOCATIONS);
+            ArrayList<Map<String, Object>> faces = new ArrayList<>();
+            for (int i = 0; i < face_encodings.size(); i++) {
+                float encoding[] = IndexItem.convNDArrayToFloatArray(face_encodings.get(i));
+                int location[] = convArrayListLongToInt(face_locations.get(i));
+                Map<String, Object> map = new HashMap<>();
+                map.put("face_encoding", encoding);
+                map.put("face_location", location);
+                faces.add(map);
+            }
+
+            builder.field("faces", faces.toArray());
+
+            extraAttributes.remove(ExtraProperties.FACE_ENCODINGS);
+            extraAttributes.remove(ExtraProperties.FACE_LOCATIONS);
+        }
+
+        builder.field("extraAttributes", extraAttributes);
 
         ISeekableInputStreamFactory isisf = item.getInputStreamFactory();
         String idInSource = item.getIdInDataSource();

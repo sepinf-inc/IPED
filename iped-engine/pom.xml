@@ -36,7 +36,7 @@
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
-            <version>3.5.0</version>
+            <version>3.5.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.zxing</groupId>
@@ -52,6 +52,7 @@
             <groupId>com.microsoft.cognitiveservices.speech</groupId>
             <artifactId>client-sdk</artifactId>
             <version>1.19.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.cloud</groupId>
@@ -170,7 +171,7 @@
         <dependency>
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-rest-high-level-client</artifactId>
-            <version>2.0.0</version>
+            <version>2.1.0</version>
         </dependency>
         <dependency>
             <groupId>io.minio</groupId>
@@ -263,7 +264,7 @@
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcpkix-jdk15on</artifactId>
-			<version>1.64</version>
+			<version>1.70</version>
 		</dependency>
 		<dependency>
             <groupId>de.ruedigermoeller</groupId>

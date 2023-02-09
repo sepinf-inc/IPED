@@ -24,8 +24,9 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String MIN_WORD_SCORE = "minWordScore";
     public static final String HUGGING_FACE_MODEL = "huggingFaceModel";
     public static final String WAV2VEC2_SERVICE = "wav2vec2Service";
-
+    private static final String GOOGLE_MODEL = "googleModel";
     private static final String LANG_AUTO_VAL = "auto";
+    private static final String SKIP_KNOWN_FILES = "skipKnownFiles";
 
     private List<String> languages = new ArrayList<>();
     private List<String> mimesToProcess = new ArrayList<>();
@@ -38,6 +39,12 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private float minWordScore = 0.7f;
     private String huggingFaceModel;
     private String wav2vec2Service;
+    private String googleModel;
+    private boolean skipKnownFiles = true;
+
+    public boolean getSkipKnownFiles() {
+        return this.skipKnownFiles;
+    }
 
     public String getServiceRegion() {
         return serviceRegion;
@@ -93,6 +100,10 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         return wav2vec2Service;
     }
 
+    public String getGoogleModel() {
+        return googleModel;
+    }
+
     @Override
     public void processProperties(UTF8Properties properties) {
 
@@ -124,6 +135,15 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         wav2vec2Service = properties.getProperty(WAV2VEC2_SERVICE);
         if (wav2vec2Service != null) {
             wav2vec2Service = wav2vec2Service.trim();
+        }
+        googleModel = properties.getProperty(GOOGLE_MODEL);
+        if (googleModel != null) {
+            googleModel = googleModel.trim();
+        }
+
+        String skipKnown = properties.getProperty(SKIP_KNOWN_FILES);
+        if (skipKnown != null) {
+            this.skipKnownFiles = Boolean.valueOf(skipKnown.trim());
         }
 
     }

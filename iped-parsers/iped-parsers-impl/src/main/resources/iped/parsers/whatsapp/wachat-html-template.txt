@@ -20,11 +20,11 @@
     <body>
         <div id="topbar">
           <span class="left">
-            <img src="${avatar}" width="40" height="40" />
+            <img src="${avatar}" width="64" height="64" />
             ${title}
           </span>
         </div>
-        <div id="conversation"><br><br><br>
+        <div id="conversation"><br><br><br><br><br>
         ${deleted}
         ${messages}
         <br><br><br>

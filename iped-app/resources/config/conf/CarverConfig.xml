@@ -67,6 +67,16 @@
             <mediaType>application/pkix-cert</mediaType>
             <carverClass>iped.carvers.custom.DERCarver</carverClass>
         </carverType-->
+        
+        <carverType>
+            <name>CER</name>
+            <mediaType>application/x-pem-file</mediaType>
+            <signatures>
+            	<headerSignature>-----BEGIN CERTIFICATE-----</headerSignature>
+            	<footerSignature>-----END CERTIFICATE-----</footerSignature>
+            </signatures>
+            <maxLength>30000</maxLength>
+        </carverType>
 
         <carverType>
             <name>EML</name>

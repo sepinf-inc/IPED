@@ -73,4 +73,14 @@
 #IP Connections
 #Recordings
 #Mobile Cards
-#Application Usage
+#Applications Usage
+#Device Information
+#Activities Sensor
+#Credit Cards
+#Device Connectivity
+#Device Events
+#File Downloads
+#Journeys
+#Networks Usage
+#Recognized Devices
+#Social Media Activities

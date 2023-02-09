@@ -79,6 +79,13 @@ public class GalleryTable extends JTable {
         super.changeSelection(rowIndex, columnIndex, toggle, extend);
     }
 
+    public int getLeadSelectionIndex() {
+        if (selectedCells.get(lead)) {
+            return lead;
+        }
+        return -1;
+    }
+
     public void setCellSelectionInterval(int minCell, int maxCell) {
         selectedCells.set(minCell, maxCell + 1);
         this.repaint();

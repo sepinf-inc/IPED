@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+﻿﻿<?xml version="1.0" encoding="UTF-8"?>
 
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
@@ -29,6 +29,12 @@
         <parser class="org.apache.tika.parser.audio.MidiParser"></parser>
         <!--throws exception on most files
         <parser class="org.apache.tika.parser.crypto.Pkcs7Parser"></parser-->
+        <parser class="iped.parsers.evtx.EvtxParser">
+            <params>
+                <param name="groupBy" type="string">Event/System/EventID;Event/System/Computer</param>
+                <param name="maxEventPerItem" type="int">100</param>
+            </params>
+        </parser>
         <parser class="org.apache.tika.parser.crypto.TSDParser"></parser>
         <parser class="org.apache.tika.parser.csv.TextAndCSVParser"></parser>
         <parser class="org.apache.tika.parser.dwg.DWGParser"></parser>
@@ -254,7 +260,7 @@
         <parser class="iped.parsers.browsers.safari.SafariSqliteParser"></parser>
         <parser class="iped.parsers.browsers.safari.SafariPlistParser"></parser>
         
-           <parser class="iped.parsers.database.EDBParser"></parser>
+        <parser class="iped.parsers.database.EDBParser"></parser>
         <parser class="iped.parsers.registry.RegRipperParser"></parser>
         <parser class="iped.parsers.browsers.ie.IndexDatParser"></parser>
         <parser class="iped.parsers.compress.PackageParser"></parser>    
@@ -303,12 +309,28 @@
             <!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
         </parser>
         
-        <parser class="iped.parsers.emule.KnownMetParser"></parser>
-        <parser class="iped.parsers.emule.PartMetParser"></parser>
+        <parser class="iped.parsers.emule.KnownMetParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
+        <parser class="iped.parsers.emule.PartMetParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.emule.PreferencesDatParser"></parser>
-        <parser class="iped.parsers.ares.AresParser"></parser>
+        <parser class="iped.parsers.ares.AresParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.shareaza.ShareazaSearchesDatParser"></parser>
-        <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser"></parser>
+        <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.bittorrent.BitTorrentResumeDatParser"></parser>
         <parser class="iped.parsers.bittorrent.TorrentFileParser"></parser>
         <parser class="iped.parsers.lnk.LNKShortcutParser"></parser>
@@ -327,7 +349,7 @@
         <parser class="iped.parsers.browsers.firefox.FirefoxSavedSessionParser"></parser>
         
         <parser class="iped.parsers.python.PythonParser"></parser>
-
+        <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
         <parser class="iped.parsers.discord.DiscordParser"></parser>
 
     </parsers>

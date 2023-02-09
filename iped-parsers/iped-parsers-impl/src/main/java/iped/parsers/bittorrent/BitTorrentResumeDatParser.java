@@ -24,7 +24,7 @@ import iped.parsers.util.Messages;
 /**
  * Parser for BitTorrent Client Artifacts
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class BitTorrentResumeDatParser extends AbstractParser {
 

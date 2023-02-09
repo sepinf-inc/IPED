@@ -45,7 +45,7 @@ import iped.utils.EmptyInputStream;
  * https://www.acquireforensics.com/blog/google-chrome-browser-forensics.html
  * http://paper.ijcsns.org/07_book/201609/20160919.pdf
  * 
- * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
+ * @author Paulo César Herrmann Wanner <herrmann.pchw@pf.gov.br>
  */
 public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
 

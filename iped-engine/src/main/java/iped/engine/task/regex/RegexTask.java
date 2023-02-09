@@ -149,11 +149,11 @@ public class RegexTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
 
         regexConfig = configurationManager.findObject(RegexTaskConfig.class);
-        logger.info("Loaded {} regexes from configuration.", regexConfig.getRegexList().size());
-
         ExportByKeywordsConfig exportConfig = configurationManager.findObject(ExportByKeywordsConfig.class);
 
         if (regexConfig.isEnabled() && regexList == null) {
+
+            logger.info("Loaded {} regexes from configuration.", regexConfig.getRegexList().size());
 
             if (loadCache(regexConfig, exportConfig)) {
                 logger.info("Regex cache loaded from {}", cacheFile.getAbsolutePath());
@@ -186,7 +186,7 @@ public class RegexTask extends AbstractTask {
                 logger.info("Regex cache saved to {}", cacheFile.getAbsolutePath());
             }
 
-            initValidators(new File(output, "conf"));
+            initValidators(new File(output, "scripts"));
         }
 
     }

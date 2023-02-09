@@ -23,11 +23,9 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 
 import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -35,8 +33,6 @@ import javax.swing.JTable;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellEditor;
-
-import iped.utils.ImageUtil;
 
 public class GalleryCellEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {
 
@@ -106,29 +102,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
         check.setSelected(App.get().appCase.getMultiBookmarks().isChecked(cellValue.id));
         cLabel.setText(cellValue.name);
 
-        if (cellValue.icon == null && cellValue.image == null) {
-            label.setForeground(null);
-            label.setText("..."); //$NON-NLS-1$
-            label.setIcon(null);
-        } else if (cellValue.icon != null && cellValue.icon == GalleryModel.unsupportedIcon) {
-            label.setForeground(warningColor);
-            label.setText(GalleryCellRenderer.unsupportedIconText);
-            label.setIcon(null);
-        } else {
-            label.setText(null);
-            if (cellValue.image != null) {
-                int labelW = table.getWidth() / table.getColumnCount() - 2;
-                int labelH = GalleryCellRenderer.labelH;
-                BufferedImage image = cellValue.image;
-                int w = Math.min(cellValue.originalW, labelW);
-                int h = Math.min(cellValue.originalH, labelH);
-                image = ImageUtil.resizeImage(image, w, h);
-
-                label.setIcon(new ImageIcon(image));
-            } else {
-                label.setIcon(cellValue.icon);
-            }
-        }
+        GalleryCellRenderer.adjustGalleryCellContent(cellValue, label, warningColor, table);
 
         panel.setBackground(selColor);
         top.setBackground(selColor);
