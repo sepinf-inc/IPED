@@ -299,9 +299,11 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             if (task.isEnabled()) {
                 long time = taskTimes[i];
                 long sec = time / (1000000 * workers.length);
-                startRow(msg, task.getName());
+                int pct = (int) ((100 * time) / totalTime);
+
+                startRow(msg, task.getName(), pct);
                 addCell(msg, nf.format(sec) + "s", Align.RIGHT);
-                finishRow(msg, (100 * time) / totalTime + "%", Align.RIGHT);
+                finishRow(msg, pct + "%", Align.RIGHT);
             } else {
                 startRow(msg, task.getName(), false);
                 addCell(msg, "-", Align.CENTER);
@@ -332,10 +334,11 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             Entry<String, AtomicLong> e = (Entry<String, AtomicLong>) o;
             long time = e.getValue().get();
             long sec = time / (1000000 * workers.length);
+            int pct = (int) ((100 * time) / totalTime);
 
-            startRow(msg, e.getKey());
+            startRow(msg, e.getKey(), pct);
             addCell(msg, nf.format(sec) + "s", Align.RIGHT);
-            finishRow(msg, (100 * time) / totalTime + "%", Align.RIGHT);
+            finishRow(msg, pct + "%", Align.RIGHT);
         }
 
         finishTable(msg);
@@ -422,7 +425,6 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("border-top: 0px; ");
         sb.append("border-left: 0px; ");
         sb.append("border-spacing: 0px; ");
-        sb.append("background-color: ").append(cellColor).append("; ");
         sb.append("padding: 1px 3px 1px 3px; ");
         sb.append("} ");
         sb.append("td.t { ");
@@ -443,6 +445,9 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("table, tr { ");
         sb.append("border-spacing: 0px; ");
         sb.append("} ");
+        sb.append("tr { ");
+        sb.append("background-color: ").append(cellColor).append("; ");
+        sb.append("} ");
         sb.append("tr.d { ");
         sb.append("color: ").append(disabledColor).append("; ");
         sb.append("} ");
@@ -460,7 +465,20 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private void startRow(StringBuilder sb, Object content, boolean enabled) {
+        startRow(sb, content, enabled, -1);
+    }
+
+    private void startRow(StringBuilder sb, Object content, int pct) {
+        startRow(sb, content, true, pct);
+    }
+
+    private void startRow(StringBuilder sb, Object content, boolean enabled, int pct) {
         sb.append("<tr");
+        if (pct >= 0) {
+            // Color based on percentage can be adjusted here
+            int c = pct == 0 ? 255 : 245 - pct * 3 / 2;
+            sb.append(" bgcolor=#").append(String.format("%02X%02X%02X", c, c, 255));
+        }
         if (!enabled)
             sb.append(" class=d");
         sb.append("><td class=s>");
@@ -469,7 +487,6 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
     private void finishRow(StringBuilder sb, Object content) {
         finishRow(sb, content, Align.LEFT);
-        sb.append("</tr>");
     }
 
     private void finishRow(StringBuilder sb, Object content, Align align) {
@@ -520,7 +537,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
     }
 
-    enum Align {
+    private enum Align {
         LEFT, CENTER, RIGHT;
     }
 }
