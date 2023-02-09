@@ -111,15 +111,12 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
             updatePanelList();
         } else if (e.getSource().equals(clearButton)) {
             columnsManager.disableAllProperties();
-            okButton.setEnabled(false);
             updatePanelList();
         } else if (e.getSource().equals(toggleSelectUnselectAllCheckBox)) {
             if (toggleSelectUnselectAllCheckBox.isSelected()) {
                 columnsManager.enableAllProperties();
-                okButton.setEnabled(true);
             } else {
                 columnsManager.disableAllProperties();
-                okButton.setEnabled(false);
             }
             updatePanelList();
         } else if (e.getSource().equals(combo)) {
@@ -132,12 +129,13 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
             JCheckBox source = (JCheckBox) e.getSource();
             String nonLocalizedText = LocalizedProperties.getNonLocalizedField(source.getText());
             boolean isSelected = source.isSelected();
-            if (columnsManager.getSelectedProperties().size() == 1 && !isSelected) {
-                okButton.setEnabled(false);
-            } else {
-                okButton.setEnabled(true);
-            }
             columnsManager.allCheckBoxesState.put(nonLocalizedText, isSelected);
+        }
+
+        if (columnsManager.getSelectedProperties().size() == 0) {
+            okButton.setEnabled(false);
+        } else {
+            okButton.setEnabled(true);
         }
     }
 
