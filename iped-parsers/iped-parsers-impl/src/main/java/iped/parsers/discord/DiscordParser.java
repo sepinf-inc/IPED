@@ -3,7 +3,6 @@ package iped.parsers.discord;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -81,10 +80,8 @@ public class DiscordParser extends AbstractParser {
 
         if (searcher != null && item != null) {
 
-            String parentPath = Paths.get(item.getPath()).getParent().toString().replace("\\", "\\\\");
-
             String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND "
-                    + BasicProps.PATH + ":\"" + parentPath + "\" AND " + BasicProps.CARVED + ":false AND NOT "
+                    + BasicProps.PARENTID + ":" + item.getParentId() + " AND " + BasicProps.CARVED + ":false AND NOT "
                     + BasicProps.TYPE + ":slack AND NOT " + BasicProps.TYPE + ":fileslack AND NOT " + BasicProps.NAME + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR
                     + ":true AND NOT " + BasicProps.PATH + ":gpucache" ;
 
@@ -198,7 +195,7 @@ public class DiscordParser extends AbstractParser {
                     } catch (Exception ex) {
                         ex.printStackTrace();
                         if (exception == null) {
-                            exception = new TikaException("DiscordParser parsing error.");
+                            exception = new TikaException("DiscordParser parsing error.", ex);
                         }
                         exception.addSuppressed(ex);
                     }
