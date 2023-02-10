@@ -22,6 +22,8 @@ import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.configurables.bean.BeanConfigurablePanel;
 import iped.configuration.Configurable;
+import iped.engine.config.CategoryConfig;
+import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.MakePreviewConfig;
 import iped.engine.config.RegexTaskConfig;
 import iped.engine.task.carver.XMLCarverConfiguration;
@@ -56,6 +58,8 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
 
         if(config instanceof UTF8Properties) {
             result = new UTF8PropertiesConfigurablePanel((Configurable<UTF8Properties>)configurable, mainFrame);
+        }else if(configurable instanceof CategoryConfig) {
+            result = new SetCategoryConfigurablePanel((CategoryConfig) configurable, mainFrame);
         }else if(config instanceof String) {
             /*try to see if it is a json object*/
             boolean isJson = false;
@@ -83,6 +87,8 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
                     }
                 }
             }
+        }else if(configurable instanceof CategoryToExpandConfig) {
+            result = new CategoryToExpandConfigPanel((CategoryToExpandConfig) configurable, mainFrame);
         }else if(configurable instanceof MakePreviewConfig) {
             result = new MakePreviewConfigurablePanel((MakePreviewConfig) configurable, mainFrame);
         }else if(config instanceof XMLCarverConfiguration) {
