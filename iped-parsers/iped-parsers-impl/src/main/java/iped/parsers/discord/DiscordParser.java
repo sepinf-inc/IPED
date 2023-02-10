@@ -224,20 +224,16 @@ public class DiscordParser extends AbstractParser {
             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(chatVirtualId));
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, d.getAuthor().getFullUsername());
 
-            // Build "Message TO" field
-            String messageTO = "";
+            // Add "Message-TO" field
             for (String participant : participants) {
                 if (participant.length() <= 1) {
                     // In cases where only one participant sends messages, it is not possible to
                     // determine the participants as only the participant list of the calls are
                     // cached.
-                    messageTO += "-";
-                }
-                if (!participant.equals(d.getAuthor().getFullUsername())) {
-                    messageTO += "[" + participant + "]";
+                } else if (!participant.equals(d.getAuthor().getFullUsername())) {
+                    meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, participant);
                 }
             }
-            meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, messageTO);
 
             for (DiscordAttachment da : d.getAttachments()) {
                 if (da.getMediaHash() != null) {
