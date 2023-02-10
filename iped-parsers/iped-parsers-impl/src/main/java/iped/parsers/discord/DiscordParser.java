@@ -169,6 +169,14 @@ public class DiscordParser extends AbstractParser {
                         	chatMeta.set(entry.getKey(), entry.getValue());
                         }
 
+                        for (DiscordRoot dr : discordRoot) {
+                            for (DiscordAttachment da : dr.getAttachments()) {
+                                if (da.getMediaHash() != null) {
+                                    chatMeta.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + da.getMediaHash());
+                                }
+                            }
+                        }
+
                         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, chatMeta);
                         byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml, searcher);
 
