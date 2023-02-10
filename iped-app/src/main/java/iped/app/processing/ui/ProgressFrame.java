@@ -60,6 +60,7 @@ import iped.engine.task.ExportFileTask;
 import iped.engine.task.ParsingTask;
 import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.UIPropertyListenerProvider;
+import iped.engine.util.Util;
 import iped.parsers.standard.StandardParser;
 import iped.utils.IconUtil;
 import iped.utils.LocalizedFormat;
@@ -83,6 +84,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     private NumberFormat nf = LocalizedFormat.getNumberInstance();
     private boolean paused = false;
     private String decodingDir = null;
+    private long physicalMemory;
 
     private class RestrictedSizeLabel extends JLabel {
 
@@ -188,6 +190,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     public void propertyChange(PropertyChangeEvent evt) {
         if (indexStart == null) {
             indexStart = new Date();
+            physicalMemory = Util.getPhysicalMemorySize();
         }
 
         if ("processed".equals(evt.getPropertyName())) { //$NON-NLS-1$
@@ -428,8 +431,16 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         startRow(msg, Messages.getString("ProgressFrame.TotalMemory"));
         finishRow(msg, nf.format(Runtime.getRuntime().totalMemory() >>> 20) + " MB", Align.RIGHT);
 
-        startRow(msg, Messages.getString("ProgressFrame.MaxMemory"));
-        finishRow(msg, nf.format(Runtime.getRuntime().maxMemory() >>> 20) + " MB", Align.RIGHT);
+        long maxMemory = Runtime.getRuntime().maxMemory();
+        if (maxMemory < Long.MAX_VALUE) {
+            startRow(msg, Messages.getString("ProgressFrame.MaxMemory"));
+            finishRow(msg, nf.format(maxMemory >>> 20) + " MB", Align.RIGHT);
+        }
+        
+        if (physicalMemory != 0) {
+            startRow(msg, Messages.getString("ProgressFrame.PhysicalMemory"));
+            finishRow(msg, nf.format(physicalMemory >>> 20) + " MB", Align.RIGHT);
+        }
 
         if (workers != null) {
             try {
@@ -471,7 +482,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private void startTable(StringBuilder sb) {
-        // Colors can be adjusted here
+        // Table colors can be adjusted here
         String borderColor = "#CCCCCC";
         String cellColor = "#FCFCFC";
         String titleBackColor = "#557799";
