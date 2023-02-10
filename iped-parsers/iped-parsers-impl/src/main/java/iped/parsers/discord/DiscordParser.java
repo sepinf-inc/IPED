@@ -140,9 +140,7 @@ public class DiscordParser extends AbstractParser {
                                                 for (IItemReader ib : externalFiles) {
                                                     if (ib.getName() != null && ib.getName().equals(ce2.getName())) {
                                                         att.setMediaHash(ib.getHash());
-                                                        att.setContent_type(getAttExtension(att.getUrl()));
-                                                        att.setUrl(Base64.getEncoder().encodeToString(
-                                                                IOUtils.toByteArray(ib.getBufferedInputStream())));
+                                                        att.setContent_type(ib.getMediaType().toString());
                                                         break;
                                                     }
                                                 }
@@ -166,7 +164,7 @@ public class DiscordParser extends AbstractParser {
                         }
 
                         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, chatMeta);
-                        byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml);
+                        byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml, searcher);
 
                         InputStream targetStream = new ByteArrayInputStream(relatorio);
                         extractor.parseEmbedded(targetStream, handler, chatMeta, true);
@@ -254,10 +252,4 @@ public class DiscordParser extends AbstractParser {
         }
     }
 
-    private String getAttExtension(String ext) {
-        return ext.contains(".png") ? "image/png"
-                : (ext.contains(".webp") ? "image/webp"
-                        : (ext.contains(".jpg") ? "image/jpg"
-                                : (ext.contains(".mp4") ? "video/mp4" : (ext.contains(".webm") ? "video/webm" : ""))));
-    }
 }

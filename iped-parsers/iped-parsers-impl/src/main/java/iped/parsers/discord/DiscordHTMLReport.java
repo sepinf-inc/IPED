@@ -7,17 +7,23 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.sax.XHTMLContentHandler;
 
+import iped.data.IItemReader;
 import iped.parsers.discord.json.DiscordAttachment;
 import iped.parsers.discord.json.DiscordMention;
 import iped.parsers.discord.json.DiscordReaction;
 import iped.parsers.discord.json.DiscordRoot;
 import iped.parsers.util.Messages;
+import iped.parsers.util.Util;
+import iped.properties.BasicProps;
+import iped.search.IItemSearcher;
 import iped.utils.SimpleHTMLEncoder;
 
 /***
@@ -31,7 +37,7 @@ public class DiscordHTMLReport {
 
     }
 
-    public byte[] convertToHTML(List<DiscordRoot> drl, XHTMLContentHandler xhtml) throws IOException {
+    public byte[] convertToHTML(List<DiscordRoot> drl, XHTMLContentHandler xhtml, IItemSearcher searcher) throws IOException {
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
@@ -58,6 +64,7 @@ public class DiscordHTMLReport {
                 + ".c { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word;  width: 110px; } "
                 + ".h { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; }"
                 + ".check {vertical-align: top; }" + " TD:hover[onclick]{background-color:#F0F0F0; cursor:pointer} "
+                + ".img {height: 256px}"
                 + "</style>");
         out.println("</HEAD>");
         out.println("<BODY>");
@@ -178,24 +185,25 @@ public class DiscordHTMLReport {
                     for (DiscordAttachment att : dr.getAttachments()) {
                         out.println("<TR>");
                         out.println("	<TD>");
-                        printCheckbox(out, att.getMediaHash());
-                        if (att.getContent_type() != null && (att.getContent_type().equals("video/mp4")
-                                || att.getContent_type().equals("video/webm"))) {
-                            out.println("	<video controls>");
-                            out.println("		<source type=\"" + att.getContent_type() + "\" src='data:"
-                                    + att.getContent_type() + ";base64," + att.getUrl() + "' alt='" + att.getFilename()
-                                    + "' width='400px' height=''>");
-                            out.println("	</video controls>");
+                        if (att.getMediaHash() != null) {
+                            String query = BasicProps.HASH + ":" + att.getMediaHash();
+                            Iterator<IItemReader> it = searcher.searchIterable(query).iterator();
+                            // if hash exists, at least 1 item will be returned
+                            IItemReader item = it.next();
+                            printCheckbox(out, att.getMediaHash());
+                            out.println("       <a onclick=\"app.open('hash:" + att.getMediaHash() + "')\" href='" + Util.getExportPath(item) + "'>");
+                            if (item.getThumb() != null) {
+                                out.println("       <img src=\"data:image/jpeg;base64," + Base64.getEncoder().encodeToString(item.getThumb()) + "\" title=\"" + att.getFilename() + "\">");
+                            }
+                            out.println("       <BR/>");
+                            out.println("       <DIV>" + att.getFilename() + "</DIV>");
+                            out.println("       </a>");
+                            
                         } else {
-                            out.println("		<img onclick=\"app.open('hash:" + att.getMediaHash() + "')\""
-                                    + " src=\"data:" + att.getContent_type() + ";base64," + att.getUrl() + "\" alt=\""
-                                    + att.getFilename() + "\" width=\"400px\" height=\"\">");
+                            out.println("       <DIV>" + att.getFilename() + "</DIV>");
                         }
-
-                        out.println("		<BR/>");
-                        out.println("		<a href='" + att.getUrl() + "'>" + att.getFilename() + "</a>");
-                        out.println("		<BR/>");
                         if (!att.getChildPornSets().isEmpty()) {
+                            out.println("       <BR/>");
                             out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
                                     + format(att.getChildPornSets().toString()) + "</i></p>");
                         }
