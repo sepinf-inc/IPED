@@ -65,6 +65,11 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
             carverTypeList.setVisibleRowCount(nrows);
             carverListPanel.setViewportView(carverTypeList);
         }
+
+        @Override
+        public void componentShown(ComponentEvent e) {
+            componentResized(e);
+        }
     }
 
     public void createCarverListPanel() {
