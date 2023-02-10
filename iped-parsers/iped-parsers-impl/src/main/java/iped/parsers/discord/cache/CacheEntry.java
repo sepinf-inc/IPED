@@ -3,7 +3,6 @@ package iped.parsers.discord.cache;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -185,7 +184,6 @@ public class CacheEntry {
 	public InputStream getResponseDataStream(String contentEncoding) throws Exception, ZipException {
 
 		BufferedInputStream bis = new BufferedInputStream(getResponseRawDataStream());
-		bis.mark(1 << 14);
 			
 		if (contentEncoding == null) {
 			return bis;
@@ -210,12 +208,9 @@ public class CacheEntry {
 	 */
 	public Map<String, String> getHttpResponse() {
 
-		InputStream is;
 		Map<String, String> httpResponse = new HashMap<>();
 
-		try {
-
-			is = dataStreamAdresses[0].getInputStream(dataFiles, externalFiles);
+        try (InputStream is = dataStreamAdresses[0].getInputStream(dataFiles, externalFiles)) {
 
 			httpResponse.put("payload_size", String.valueOf(read4bytes(is)));
 			httpResponse.put("flags", String.valueOf(read4bytes(is)));
