@@ -1,6 +1,7 @@
-package iped.app.ui;
+package iped.app.ui.columns;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 
@@ -11,6 +12,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JOptionPane;
 
+import iped.app.ui.App;
+import iped.app.ui.Messages;
 import iped.engine.task.index.IndexItem;
 import iped.localization.LocalizedProperties;
 
@@ -46,15 +49,12 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
         topPanel.add(showColsLabel);
         topPanel.add(combo);
         topPanel.add(textFieldNameFilter);
-        selectVisibleButton.addActionListener(this);
-        combo.addActionListener(this);
 
         panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(scrollList, BorderLayout.CENTER);
 
-        okButton.addActionListener(this);
         clearButton.addActionListener(this);
         JPanel leftBottomPanel = new JPanel(new BorderLayout());
         leftBottomPanel.add(selectVisibleButton, BorderLayout.WEST);
@@ -83,13 +83,20 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
         if (e.getSource().equals(clearButton)) {
             columnsManager.disableAllProperties();
             updatePanelList();
-        } else if (e.getSource() instanceof JCheckBox) {
+        } else if (e.getSource() instanceof JCheckBox || e.getSource().equals(selectVisibleButton)) {
             if (columnsManager.getSelectedProperties().size() > PROPERTIES_LIMIT_NUM) {
-                JCheckBox source = (JCheckBox) e.getSource();
-                String nonLocalizedText = LocalizedProperties.getNonLocalizedField(source.getText());
-                JOptionPane.showMessageDialog(dialog, Messages.getString("ColumnsManager.LimitReachedMessage", PROPERTIES_LIMIT_NUM),
-                    Messages.getString("ColumnsManager.LimitReachedTitle"), JOptionPane.ERROR_MESSAGE);
-                columnsManager.allCheckBoxesState.put(nonLocalizedText, false);
+                if (e.getSource() instanceof JCheckBox) {
+                    JCheckBox source = (JCheckBox) e.getSource();
+                    String nonLocalizedText = LocalizedProperties.getNonLocalizedField(source.getText());
+                    JOptionPane.showMessageDialog(dialog, Messages.getString("ColumnsManager.LimitReachedMessage", PROPERTIES_LIMIT_NUM),
+                        Messages.getString("ColumnsManager.LimitReachedTitle"), JOptionPane.ERROR_MESSAGE);
+                    columnsManager.allCheckBoxesState.put(nonLocalizedText, false);
+                } else {
+                    JOptionPane.showMessageDialog(dialog, Messages.getString("ColumnsManager.LimitReachedVisibleMessage", PROPERTIES_LIMIT_NUM),
+                        Messages.getString("ColumnsManager.LimitReachedTitle"), JOptionPane.ERROR_MESSAGE);
+                    columnsManager.enableOnlySelectedProperties(
+                        columnsManager.colState.visibleFields.stream().limit(PROPERTIES_LIMIT_NUM).collect(Collectors.toList()));
+                }
                 updatePanelList();
             }
         }

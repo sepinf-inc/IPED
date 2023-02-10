@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.graph.FilterSelectedEdges;
+import iped.app.ui.columns.ColumnsManagerUI;
 import iped.data.IItemId;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;

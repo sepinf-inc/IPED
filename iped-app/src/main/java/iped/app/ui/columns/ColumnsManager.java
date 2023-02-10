@@ -1,4 +1,4 @@
-package iped.app.ui;
+package iped.app.ui.columns;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +20,9 @@ import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.App;
+import iped.app.ui.Messages;
+import iped.app.ui.ResultTableModel;
 import iped.data.IItemId;
 import iped.engine.config.AnalysisConfig;
 import iped.engine.config.ConfigurationManager;
@@ -104,7 +107,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     public String[][] fieldGroups;
 
-    ColumnState colState = new ColumnState();
+    public ColumnState colState = new ColumnState();
 
     protected ArrayList<String> loadedFields = new ArrayList<String>();
 
@@ -112,17 +115,17 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     protected Map<String, Boolean> allCheckBoxesState = new HashMap<>();
 
+    public static ColumnsManager getInstance() {
+        if (instance == null)
+            instance = new ColumnsManager();
+        return instance;
+    }
+
     public boolean isAutoManageCols() {
         return autoManageCols;
     }
     public void  setAutoManageCols(boolean autoManageCOls) {
         this.autoManageCols = autoManageCOls;
-    }
-
-    public static ColumnsManager getInstance() {
-        if (instance == null)
-            instance = new ColumnsManager();
-        return instance;
     }
 
     @Override
@@ -135,11 +138,25 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         return loadedFields;
     }
 
-    static class ColumnState implements Serializable {
+    public static class ColumnState implements Serializable {
 
         private static final long serialVersionUID = 1L;
-        List<Integer> initialWidths = new ArrayList<Integer>();
-        ArrayList<String> visibleFields = new ArrayList<String>();
+        public List<Integer> initialWidths = new ArrayList<Integer>();
+        public ArrayList<String> visibleFields = new ArrayList<String>();
+    }
+
+    protected ColumnsManager() {
+        allCheckBoxesState = new HashMap<>();
+
+        AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
+        autoManageCols = analysisConfig.isAutoManageCols();
+
+        moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+
+        updateDinamicFields();
+
+        loadSavedCols();
+        initializeAllCheckBoxesState();
     }
 
     protected void saveSelectedProps(String propsFileName) {
@@ -158,8 +175,8 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     public void saveColumnsState() {
         try {
             ColumnState cs = new ColumnState();
-            for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
-                TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
+            for (int i = 0; i < App.get().getResultsTable().getColumnModel().getColumnCount(); i++) {
+                TableColumn tc = App.get().getResultsTable().getColumnModel().getColumn(i);
                 if (tc.getModelIndex() >= ResultTableModel.fixedCols.length) {
                     int idx = tc.getModelIndex() - ResultTableModel.fixedCols.length;
                     cs.visibleFields.add(loadedFields.get(idx));
@@ -174,20 +191,6 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         } catch (Exception e1) {
             e1.printStackTrace();
         }
-    }
-
-    protected ColumnsManager() {
-        allCheckBoxesState = new HashMap<>();
-
-        AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
-        autoManageCols = analysisConfig.isAutoManageCols();
-
-        moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
-
-        updateDinamicFields();
-
-        loadSavedCols();
-        initializeAllCheckBoxesState();
     }
 
     protected File getColStateFile() {
@@ -255,14 +258,13 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
 
     protected Set<String> getUsedCols(ProgressDialog progress) {
-
         Collator collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
         TreeSet<String> dinamicFields = new TreeSet<>(collator);
 
-        int[] docs = new int[App.get().ipedResult.getLength()];
+        int[] docs = new int[App.get().getResults().getLength()];
         int i = 0;
-        for (IItemId item : App.get().ipedResult.getIterator())
+        for (IItemId item : App.get().getResults().getIterator())
             docs[i++] = App.get().appCase.getLuceneId(item);
 
         int MAX_ITEMS_TO_CHECK = 50;

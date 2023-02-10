@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.app.bootstrap.Bootstrap;
 import iped.app.processing.CmdLineArgsImpl;
+import iped.app.ui.columns.ColumnsSelectReportUI;
 import iped.io.URLUtil;
 
 public class ReportDialog implements ActionListener, TableModelListener {

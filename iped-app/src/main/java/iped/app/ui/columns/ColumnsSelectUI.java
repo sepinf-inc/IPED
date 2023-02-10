@@ -1,4 +1,4 @@
-package iped.app.ui;
+package iped.app.ui.columns;
 
 import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
@@ -16,6 +16,9 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 
+import iped.app.ui.App;
+import iped.app.ui.Messages;
+import iped.app.ui.ResultTableModel;
 import iped.localization.LocalizedProperties;
 import iped.utils.StringUtil;
 
@@ -79,7 +82,6 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
         topPanel.add(textFieldNameFilter);
         selectVisibleButton.addActionListener(this);
         okButton.addActionListener(this);
-        combo.addActionListener(this);
 
         panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));

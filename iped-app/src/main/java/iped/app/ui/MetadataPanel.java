@@ -53,6 +53,7 @@ import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.columns.ColumnsManager;
 import iped.app.ui.controls.HintTextField;
 import iped.app.ui.controls.HoverButton;
 import iped.data.IItemId;

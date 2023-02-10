@@ -30,6 +30,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.columns.ColumnsManagerUI;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.Manager;
 import iped.engine.data.IPEDMultiSource;

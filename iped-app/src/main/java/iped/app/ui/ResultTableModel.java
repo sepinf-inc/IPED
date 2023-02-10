@@ -38,6 +38,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.util.BytesRef;
 
+import iped.app.ui.columns.ColumnsManager;
+import iped.app.ui.columns.ColumnsManagerUI;
 import iped.data.IItemId;
 import iped.engine.datasource.SleuthkitReader;
 import iped.engine.localization.CategoryLocalization;

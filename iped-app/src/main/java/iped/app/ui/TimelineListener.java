@@ -11,6 +11,7 @@ import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 
 import bibliothek.gui.dock.common.action.CButton;
+import iped.app.ui.columns.ColumnsManagerUI;
 import iped.properties.BasicProps;
 
 public class TimelineListener implements ActionListener, ClearFilterListener {
