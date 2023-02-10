@@ -40,6 +40,7 @@ import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
+import iped.utils.DateUtil;
 import iped.utils.EmptyInputStream;
 
 /***
@@ -55,6 +56,7 @@ public class DiscordParser extends AbstractParser {
     public static final String INDEX_MIME_TYPE = "application/x-discord-index";
     public static final String CHAT_MIME_TYPE = "application/x-discord-chat";
     public static final String MSG_MIME_TYPE = "message/x-discord-message";
+    public static final String CALL_MIME_TYPE = "message/x-discord-call";
 
     public static final String DATA_MIME_TYPE_V2_0 = "data-v20/x-discord-chat";
     public static final String DATA_MIME_TYPE_V2_1 = "data-v21/x-discord-chat";
@@ -242,8 +244,11 @@ public class DiscordParser extends AbstractParser {
             }
 
             if (d.getCall() != null) {
-                meta.set(StandardParser.INDEXER_CONTENT_TYPE, d.getCall().toString());
-                meta.set("ended_timestamp", d.getCall().getEndedTimestamp().toString()); //$NON-NLS-1$
+                meta.set(StandardParser.INDEXER_CONTENT_TYPE, CALL_MIME_TYPE);
+                meta.set("CallDetails", d.getCall().toString());
+                if (d.getCall().getEndedTimestamp() != null) {
+                    meta.set("EndTime", DateUtil.dateToString(d.getCall().getEndedTimestamp()));
+                }
             }
 
             meta.set(BasicProps.LENGTH, ""); //$NON-NLS-1$
