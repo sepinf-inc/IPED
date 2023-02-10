@@ -12,7 +12,6 @@ import iped.carvers.api.CarverType;
 
 public class CarverConfigCellRenderer extends JPanel implements ListCellRenderer<CarverType> {
     JCheckBox enabledCheckBox = new JCheckBox();
-    private Object actionList;
     int maxStringWidth = 0;
     
     public CarverConfigCellRenderer() {
@@ -25,7 +24,7 @@ public class CarverConfigCellRenderer extends JPanel implements ListCellRenderer
             boolean isSelected, boolean cellHasFocus) {
         enabledCheckBox.setSelected(ct.isEnabled());
         enabledCheckBox.setText(ct.getName());
-        
+
         this.add(enabledCheckBox, BorderLayout.CENTER);
         
         return this;
