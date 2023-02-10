@@ -164,6 +164,7 @@ public class DiscordParser extends AbstractParser {
                         chatMeta.set(TikaCoreProperties.TITLE, chatName);
                         chatMeta.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
                         chatMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
+                        chatMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                         for (Map.Entry<String,String> entry : httpResponse.entrySet()) {
                         	chatMeta.set(entry.getKey(), entry.getValue());
                         }
