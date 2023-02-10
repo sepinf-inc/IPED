@@ -574,8 +574,7 @@ public class HTMLReportTask extends AbstractTask {
         sortRegs();
         StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "arq.html"), StandardCharsets.UTF_8).content; //$NON-NLS-1$//$NON-NLS-2$
         replace(modelo, "%THUMBSIZE%", String.valueOf(htmlReportConfig.getThumbSize())); //$NON-NLS-1$
-        // StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "item.html"), StandardCharsets.UTF_8).content; //$NON-NLS-1$//$NON-NLS-2$
-        StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "singleitem.html"), StandardCharsets.UTF_8).content;
+        StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "item.html"), StandardCharsets.UTF_8).content; //$NON-NLS-1$//$NON-NLS-2$
         int idx = 1;
         for (String marcador : entriesByLabel.keySet()) {
             String id = String.format("arq%06d", idx); //$NON-NLS-1$
@@ -768,25 +767,25 @@ public class HTMLReportTask extends AbstractTask {
 
             // Fill Basic Properties if present
             if (selectedProperties.contains(BasicProps.NAME))
-                fillItemProperty(it, "Name", "<b>" + reg.name + "</b>");
+                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemName"), "<b>" + reg.name + "</b>");
             if (selectedProperties.contains(BasicProps.PATH))
-                fillItemProperty(it, "Path", reg.path);
+                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemPath"), reg.path);
             if (selectedProperties.contains(BasicProps.TYPE))
-                fillItemProperty(it, "File Type", reg.category);
+                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemType"), reg.category);
             if (selectedProperties.contains(BasicProps.LENGTH))
-                fillItemProperty(it, "Logical Size", formatNumber(reg.length, longFormat) + " Bytes");
+                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemSize"), formatNumber(reg.length, longFormat) + " Bytes");
             if (selectedProperties.contains(BasicProps.CREATED))
-                fillItemProperty(it, "Created Date", formatDate(reg.created, dateFormat));
+                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemCreated"), formatDate(reg.created, dateFormat));
             if (selectedProperties.contains(BasicProps.MODIFIED))
-                fillItemProperty(it, "Modified Date", formatDate(reg.modified, dateFormat));
+                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemModified"), formatDate(reg.modified, dateFormat));
             if (selectedProperties.contains(BasicProps.ACCESSED))
-                fillItemProperty(it, "Last Accessed Date", formatDate(reg.accessed, dateFormat));
+                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemAccessed"), formatDate(reg.accessed, dateFormat));
             if (selectedProperties.contains(BasicProps.DELETED))
-                fillItemProperty(it, "Deleted", String.valueOf(reg.deleted));
+                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemDeleted"), String.valueOf(reg.deleted));
             if (selectedProperties.contains(BasicProps.CARVED))
-                fillItemProperty(it, "Carved", String.valueOf(reg.carved));
+                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemCarved"), String.valueOf(reg.carved));
             if (selectedProperties.contains(BasicProps.HASH))
-                fillItemProperty(it, "Hash", reg.hash);
+                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemHash"), reg.hash);
             for (String property : selectedProperties) {
                 if (!basicReportProps.contains(property)) {     // filter for additional properties selected by the user
                     String propertyValue = ipedCase.getItemProperty(reg.evidenceId, property);
@@ -795,7 +794,7 @@ public class HTMLReportTask extends AbstractTask {
             }
             if (selectedProperties.contains(IndexItem.ID_IN_SOURCE)) {
                 String export = reg.export == null ? "-" : "<b><a href=\"../" + reg.export + "\">" + reg.export + "</a></b>";
-                fillItemProperty(it, "Exported as", export);
+                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemIdInSource"), export);
             }
             items.append(it);
         }
