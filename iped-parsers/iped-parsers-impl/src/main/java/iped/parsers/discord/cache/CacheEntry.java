@@ -13,6 +13,8 @@ import java.util.zip.ZipException;
 
 import org.apache.commons.io.IOUtils;
 import org.brotli.dec.BrotliInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import iped.data.IItemReader;
 
@@ -21,6 +23,8 @@ import iped.data.IItemReader;
  *
  */
 public class CacheEntry {
+
+    private static Logger logger = LoggerFactory.getLogger(CacheEntry.class);
 
 	private long hash;
 	private CacheAddr nextEntry;
@@ -191,9 +195,17 @@ public class CacheEntry {
 		
 		switch (contentEncoding) {
 			case "br":
-				return new BrotliInputStream(bis);
+                try {
+                    return new BrotliInputStream(bis);
+                } catch (IOException e) {
+                    logger.warn("Brotli decoder failed, trying Gzip", e);
+                }
 			case "gzip":
-				return new GZIPInputStream(bis);
+                try {
+                    return new GZIPInputStream(bis);
+                } catch (IOException e) {
+                    logger.warn("Gzip decoder failed, trying default", e);
+                }
 			default:
 				return bis;	
 		}
