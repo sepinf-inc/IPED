@@ -46,12 +46,35 @@ public class ParsersConfig implements Configurable<String> {
     public void setConfiguration(String config) {
         parserConfigXml = config;
     }
+    
+    public String removeDisabledParsers(String parserConfigXml) {
+        String[] slices = parserConfigXml.split("iped:disabled=\"true\"");
+        StringBuffer result=new StringBuffer();
+        for (int i = 0; i < slices.length; i++) {
+            String part = slices[i];
+            if(i>0) {
+                int disabledParserEndIndex = part.indexOf(">");
+                if(disabledParserEndIndex==0 || part.charAt(disabledParserEndIndex-1)!='/') {
+                    disabledParserEndIndex = part.indexOf("</parser>");
+                }
+                part=part.substring(disabledParserEndIndex+1);
+            }
+            if(i<slices.length-1) {
+                int disabledParserIndex = part.lastIndexOf("<parser");
+                result.append(part.substring(0, disabledParserIndex));
+            }else {
+                result.append(part);
+            }
+        }
+        return result.toString();
+    }
 
     public synchronized File getTmpConfigFile() {
         if (tmp == null) {
             try {
                 tmp = Files.createTempFile("parser-config", ".xml");
-                Files.write(tmp, parserConfigXml.getBytes(StandardCharsets.UTF_8));
+                
+                Files.write(tmp, removeDisabledParsers(parserConfigXml).getBytes(StandardCharsets.UTF_8));
                 tmp.toFile().deleteOnExit();
 
             } catch (IOException e) {
