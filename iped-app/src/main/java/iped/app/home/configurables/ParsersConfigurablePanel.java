@@ -53,7 +53,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
     private JScrollPane parserListPanel;
     private JList<String> parserTypeList;
     private CheckboxListCellRenderer<String> cellRenderer;
-    private HashMap<String, Element> parserNames = new HashMap<String,Element>();
+    private HashMap<String, Element> parserElements = new HashMap<String,Element>();
     private HashSet<Element> parsers = new HashSet<Element>();
     private Document doc;
 
@@ -106,20 +106,20 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         this.addComponentListener(new ResizeListener());
         parserListPanel.setViewportView(parserTypeList);
         parserListPanel.setAutoscrolls(true);
-        cellRenderer = new CheckboxListCellRenderer<String>(new Predicate<String>() {
+        cellRenderer = new CheckboxListCellRenderer<String>(new Predicate<Integer>() {
             @Override
-            public boolean apply(String input) {
-                String attr = parserNames.get(input).getAttribute(ParsersConfig.PARSER_DISABLED_ATTR);
+            public boolean apply(Integer input) {
+                String attr = parserElements.get(String.valueOf(input)).getAttribute(ParsersConfig.PARSER_DISABLED_ATTR);
                 return !attr.equals("true");
             }
-        });
+        }, true);
         parserTypeList.setCellRenderer(cellRenderer);
         parserTypeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         parserTypeList.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if(!parserTypeList.getValueIsAdjusting() && parserTypeList.getSelectedValue()!=null) {
-                    Element elem = parserNames.get(parserTypeList.getSelectedValue());
+                    Element elem = parserElements.get(String.valueOf(parserTypeList.getSelectedIndex()));
                     Attr attr = (Attr)elem.getAttributes().getNamedItem(ParsersConfig.PARSER_DISABLED_ATTR);
                     
                     if(attr==null) {
@@ -171,7 +171,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
             BOMInputStream bis = new BOMInputStream(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
             DocumentBuilder docBuilder = getDocBuilder();
             parsers.clear();
-            parserNames.clear();
+            parserElements.clear();
             doc = docBuilder.parse(new InputSource(bis));
             NodeList nl = doc.getElementsByTagName("parser");
             for(int i=0; i<nl.getLength(); i++) {
@@ -179,7 +179,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
                 String parserName = nl.item(i).getAttributes().getNamedItem("class").getNodeValue();
                 result.add(parserName);
                 parsers.add(e);
-                parserNames.put(parserName, e);
+                parserElements.put(String.valueOf(i), e);
             }
         } catch (SAXException | IOException | ParserConfigurationException e) {
             e.printStackTrace();

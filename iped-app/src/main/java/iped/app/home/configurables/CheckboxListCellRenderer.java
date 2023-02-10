@@ -12,19 +12,29 @@ import com.google.common.base.Predicate;
 
 public class CheckboxListCellRenderer<E> extends JPanel implements ListCellRenderer<E> {
     JCheckBox enabledCheckBox = new JCheckBox();
-    Predicate<E> isEnabled;
+    Predicate isEnabled;
     int maxStringWidth = 0;
+    boolean indexedPredicate=false;
 
-    public CheckboxListCellRenderer(Predicate<E> isEnabled) {
+    public CheckboxListCellRenderer(Predicate isEnabled) {
         this.setLayout(new BorderLayout());
         this.isEnabled = isEnabled;
         add(enabledCheckBox, BorderLayout.CENTER);
+    }
+    
+    public CheckboxListCellRenderer(Predicate<Integer> isEnabled, boolean indexedPredicate) {
+        this(isEnabled);
+        this.indexedPredicate=indexedPredicate;        
     }
 
     @Override
     public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected,
             boolean cellHasFocus) {
-        enabledCheckBox.setSelected(isEnabled.apply(value));
+        if(indexedPredicate) {
+            enabledCheckBox.setSelected(isEnabled.apply(index));
+        }else {
+            enabledCheckBox.setSelected(isEnabled.apply(value));
+        }
         enabledCheckBox.setText(value.toString());
 
         this.add(enabledCheckBox, BorderLayout.CENTER);
