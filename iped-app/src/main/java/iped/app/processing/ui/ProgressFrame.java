@@ -81,7 +81,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     long secsToEnd;
     private Date indexStart;
     private Worker[] workers;
-    private NumberFormat nf = LocalizedFormat.getNumberInstance();
+    private static final NumberFormat nf = LocalizedFormat.getNumberInstance();
     private boolean paused = false;
     private String decodingDir = null;
     private long physicalMemory;
@@ -619,11 +619,11 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private static String formatMB(long value) {
-        return (value >>> 20) + " MB";
+        return nf.format(value >>> 20) + " MB";
     }
 
     private static String formatGB(long value) {
-        return (value >>> 30) + " GB";
+        return nf.format(value >>> 30) + " GB";
     }
 
     private enum Align {
