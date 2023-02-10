@@ -57,6 +57,7 @@ public class DiscordParser extends AbstractParser {
     public static final String CHAT_MIME_TYPE = "application/x-discord-chat";
     public static final String MSG_MIME_TYPE = "message/x-discord-message";
     public static final String CALL_MIME_TYPE = "call/x-discord-call";
+    public static final String ATTACH_MIME_TYPE = "message/x-discord-attachment";
 
     public static final String DATA_MIME_TYPE_V2_0 = "data-v20/x-discord-chat";
     public static final String DATA_MIME_TYPE_V2_1 = "data-v21/x-discord-chat";
@@ -249,6 +250,7 @@ public class DiscordParser extends AbstractParser {
             for (DiscordAttachment da : d.getAttachments()) {
                 if (da.getMediaHash() != null) {
                     meta.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + da.getMediaHash());
+                    meta.set(StandardParser.INDEXER_CONTENT_TYPE, ATTACH_MIME_TYPE);
                     // if (m.isFromMe())
                     // meta.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
                 }
