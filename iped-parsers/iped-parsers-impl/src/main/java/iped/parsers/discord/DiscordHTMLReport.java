@@ -115,117 +115,111 @@ public class DiscordHTMLReport {
 
             }
 
+            out.println("<TR class='" + colorClass + "' id='" + dr.getId() + "'>");
+
+            // message sending time
+            out.println("	<TD class='td-timestamp'>");
+            out.println("<P>" + (dr.getTimestamp() == null ? "" : formatDate(dr.getTimestamp())) + "</P>");
+            out.println("<P>" + (dr.getEditedTimestamp() == null ? "" : "(" + Messages.getString("DiscordParser.EditTime") + dateFormat.format(dr.getEditedTimestamp()) + ")") + "</P>");
+            out.println("	</TD>");
+
+            // message body
+            out.println("	<TD>");
+
+            // used for debug
+            // out.println("<TABLE><TR><TD>" + dr.toString() + "</TD></TR></TABLE>");
+
+            // rule for calls
+            if (dr.getCall() != null) {
+                out.println("<TABLE>");
+                out.println("	<TR>");
+                out.println("		<TD colspan='2'>Call</TD>");
+                out.println("	</TR>");
+                out.println("	<TR>");
+                out.println("		<TD>" + Messages.getString("DiscordParser.Start") + "</TD>)");
+                out.println("		<TD>" + (dr.getTimestamp() == null ? "" : dateFormat.format(dr.getTimestamp())) + "</TD>");
+                out.println("	</TR>");
+                out.println("	<TR>");
+                out.println("		<TD>" + Messages.getString("DiscordParser.End") + "</TD>");
+                out.println("		<TD>" + (dr.getCall().getEndedTimestamp() == null ? "" : dateFormat.format(dr.getCall().getEndedTimestamp())) + "</TD>");
+                out.println("	</TR>");
+                out.println("	<TR>");
+                out.println("		<TD>" + Messages.getString("DiscordParser.Participants") + "</TD>");
+                out.println("		<TD>" + dr.getCall().getParticipantsNames(drl) + "</TD>");
+                out.println("	</TR>");
+                out.println("</TABLE>");
+            }
+
+            // rule for reactions
+            if (dr.getReactions() != null) {
+
+                List<String> reactions = new ArrayList<String>();
+
+                for (DiscordReaction reaction : dr.getReactions()) {
+                    reactions.add(reaction.getEmoji().getName());
+                }
+
+                out.println("<TABLE>");
+                out.println("	<TR>");
+                out.println("		<TD>" + Messages.getString("DiscordParser.Reactions") + String.join(", ", reactions) + "</TD>");
+                out.println("	</TR>");
+                out.println("</TABLE>");
+            }
+
+            // rule for attachments
+            if (dr.getAttachments() != null && dr.getAttachments().size() > 0) {
+
+                out.println("<TABLE>");
+                out.println("	<TR>");
+                out.println("		<TD colspan='2'>" + Messages.getString("DiscordParser.Attachments") + "</TD>");
+                out.println("	</TR>");
+
+                for (DiscordAttachment att : dr.getAttachments()) {
+                    out.println("<TR>");
+                    out.println("	<TD>");
+                    if (att.getMediaHash() != null) {
+                        String query = BasicProps.HASH + ":" + att.getMediaHash();
+                        Iterator<IItemReader> it = searcher.searchIterable(query).iterator();
+                        // if hash exists, at least 1 item will be returned
+                        IItemReader item = it.next();
+                        printCheckbox(out, att.getMediaHash());
+                        out.println("       <a onclick=\"app.open('hash:" + att.getMediaHash() + "')\" href='" + Util.getExportPath(item) + "'>");
+                        if (item.getThumb() != null) {
+                            out.println("       <img src=\"data:image/jpeg;base64," + Base64.getEncoder().encodeToString(item.getThumb()) + "\" title=\"" + att.getFilename() + "\">");
+                        }
+                        out.println("       <BR/>");
+                        out.println("       <DIV>" + att.getFilename() + "</DIV>");
+                        out.println("       </a>");
+
+                    } else {
+                        out.println("       <DIV>" + att.getFilename() + "</DIV>");
+                    }
+                    if (!att.getChildPornSets().isEmpty()) {
+                        out.println("       <BR/>");
+                        out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " " + format(att.getChildPornSets().toString()) + "</i></p>");
+                    }
+                    out.println("	</TD>");
+                    out.println("</TR>");
+                }
+                out.println("</TABLE>");
+            }
+
             if (dr.getMessageContent() != null && !dr.getMessageContent().isEmpty()) {
-
-                out.println("<TR class='" + colorClass + "' id='" + dr.getId() + "'>");
-
-                // message sending time
-                out.println("	<TD class='td-timestamp'>");
-                out.println("<P>" + (dr.getTimestamp() == null ? "" : formatDate(dr.getTimestamp())) + "</P>");
-                out.println("<P>" + (dr.getEditedTimestamp() == null ? ""
-                        : "(" + Messages.getString("DiscordParser.EditTime")
-                                + dateFormat.format(dr.getEditedTimestamp()) + ")")
-                        + "</P>");
-                out.println("	</TD>");
-
-                // message body
-                out.println("	<TD>");
-
-                // used for debug
-                // out.println("<TABLE><TR><TD>" + dr.toString() + "</TD></TR></TABLE>");
-
-                // rule for calls
-                if (dr.getCall() != null) {
-                    out.println("<TABLE>");
-                    out.println("	<TR>");
-                    out.println("		<TD colspan='2'>Call</TD>");
-                    out.println("	</TR>");
-                    out.println("	<TR>");
-                    out.println("		<TD>" + Messages.getString("DiscordParser.Start") + "</TD>)");
-                    out.println("		<TD>" + (dr.getTimestamp() == null ? "" : dateFormat.format(dr.getTimestamp()))
-                            + "</TD>");
-                    out.println("	</TR>");
-                    out.println("	<TR>");
-                    out.println("		<TD>" + Messages.getString("DiscordParser.End") + "</TD>");
-                    out.println("		<TD>" + (dr.getCall().getEndedTimestamp() == null ? ""
-                            : dateFormat.format(dr.getCall().getEndedTimestamp())) + "</TD>");
-                    out.println("	</TR>");
-                    out.println("	<TR>");
-                    out.println("		<TD>" + Messages.getString("DiscordParser.Participants") + "</TD>");
-                    out.println("		<TD>" + dr.getCall().getParticipantsNames(drl) + "</TD>");
-                    out.println("	</TR>");
-                    out.println("</TABLE>");
-                }
-
-                // rule for reactions
-                if (dr.getReactions() != null) {
-
-                    List<String> reactions = new ArrayList<String>();
-
-                    for (DiscordReaction reaction : dr.getReactions()) {
-                        reactions.add(reaction.getEmoji().getName());
-                    }
-
-                    out.println("<TABLE>");
-                    out.println("	<TR>");
-                    out.println("		<TD>" + Messages.getString("DiscordParser.Reactions")
-                            + String.join(", ", reactions) + "</TD>");
-                    out.println("	</TR>");
-                    out.println("</TABLE>");
-                }
-
-                // rule for attachments
-                if (dr.getAttachments() != null && dr.getAttachments().size() > 0) {
-
-                    out.println("<TABLE>");
-                    out.println("	<TR>");
-                    out.println("		<TD colspan='2'>" + Messages.getString("DiscordParser.Attachments") + "</TD>");
-                    out.println("	</TR>");
-
-                    for (DiscordAttachment att : dr.getAttachments()) {
-                        out.println("<TR>");
-                        out.println("	<TD>");
-                        if (att.getMediaHash() != null) {
-                            String query = BasicProps.HASH + ":" + att.getMediaHash();
-                            Iterator<IItemReader> it = searcher.searchIterable(query).iterator();
-                            // if hash exists, at least 1 item will be returned
-                            IItemReader item = it.next();
-                            printCheckbox(out, att.getMediaHash());
-                            out.println("       <a onclick=\"app.open('hash:" + att.getMediaHash() + "')\" href='" + Util.getExportPath(item) + "'>");
-                            if (item.getThumb() != null) {
-                                out.println("       <img src=\"data:image/jpeg;base64," + Base64.getEncoder().encodeToString(item.getThumb()) + "\" title=\"" + att.getFilename() + "\">");
-                            }
-                            out.println("       <BR/>");
-                            out.println("       <DIV>" + att.getFilename() + "</DIV>");
-                            out.println("       </a>");
-                            
-                        } else {
-                            out.println("       <DIV>" + att.getFilename() + "</DIV>");
-                        }
-                        if (!att.getChildPornSets().isEmpty()) {
-                            out.println("       <BR/>");
-                            out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
-                                    + format(att.getChildPornSets().toString()) + "</i></p>");
-                        }
-                        out.println("	</TD>");
-                        out.println("</TR>");
-                    }
-                    out.println("</TABLE>");
-                }
 
                 String message = dr.getMessageContent();
 
                 // rule for mentions
-                if (dr.getMentions() != null && dr.getMentions().size() > 0)
-                    for (DiscordMention dm : dr.getMentions())
-                        message = StringUtils.replace(message, "<@" + dm.getId() + ">",
-                                "<span title='UserID=" + dm.getId() + "'>" + "<B style='color:#0099FF'>@"
-                                        + dm.getFullUsername() + "</B>" + "</span>");
+                if (dr.getMentions() != null && dr.getMentions().size() > 0) {
+                    for (DiscordMention dm : dr.getMentions()) {
+                        message = StringUtils.replace(message, "<@" + dm.getId() + ">", "<span title='UserID=" + dm.getId() + "'>" + "<B style='color:#0099FF'>@" + dm.getFullUsername() + "</B>" + "</span>");
+                    }
+                }
 
                 out.println(message);
-                out.println("	</TD>");
-                out.println("</TR>");
             }
+
+            out.println("	</TD>");
+            out.println("</TR>");
         }
 
         out.println("</TABLE>");

@@ -224,11 +224,6 @@ public class DiscordParser extends AbstractParser {
         // Set metadata
         for (DiscordRoot d : discordRoot) {
 
-            // just extract the same messages rendered in chat html report
-            if (d.getMessageContent() == null || d.getMessageContent().isEmpty()) {
-                continue;
-            }
-
             Metadata meta = new Metadata();
             meta.set(TikaCoreProperties.TITLE, chatName + "_message_" + msgCount++);
             meta.set(StandardParser.INDEXER_CONTENT_TYPE, MSG_MIME_TYPE);
