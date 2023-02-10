@@ -19,6 +19,8 @@ public class ParsersConfig implements Configurable<String> {
 
     private static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
 
+    public static final String PARSER_DISABLED_ATTR = "iped:disabled";
+
     private String parserConfigXml;
     private transient Path tmp;
 
@@ -48,7 +50,7 @@ public class ParsersConfig implements Configurable<String> {
     }
     
     public String removeDisabledParsers(String parserConfigXml) {
-        String[] slices = parserConfigXml.split("iped:disabled=\"true\"");
+        String[] slices = parserConfigXml.split(PARSER_DISABLED_ATTR+"=\"true\"");
         StringBuffer result=new StringBuffer();
         for (int i = 0; i < slices.length; i++) {
             String part = slices[i];
