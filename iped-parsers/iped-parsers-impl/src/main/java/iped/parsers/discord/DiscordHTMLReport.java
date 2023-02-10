@@ -115,9 +115,9 @@ public class DiscordHTMLReport {
 
             }
 
-            if (dr.getMessageContent() != null && !dr.getMessageContent().equals("")) {
+            if (dr.getMessageContent() != null && !dr.getMessageContent().isEmpty()) {
 
-                out.println("<TR class='" + colorClass + "'>");
+                out.println("<TR class='" + colorClass + "' id='" + dr.getId() + "'>");
 
                 // message sending time
                 out.println("	<TD class='td-timestamp'>");

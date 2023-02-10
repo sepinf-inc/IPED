@@ -1383,11 +1383,11 @@
     </mime-type>
     
     <mime-type type="message/x-discord-message">
-    	<sub-class-of type="application/x-metadata-entry"/>
+    	<sub-class-of type="message/x-chat-message"/>
     </mime-type>
     
     <mime-type type="call/x-discord-call">
-    	<sub-class-of type="application/x-metadata-entry"/>
+    	<sub-class-of type="message/x-chat-message"/>
     </mime-type>
 
 </mime-info>

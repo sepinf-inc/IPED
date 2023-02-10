@@ -214,6 +214,12 @@ public class DiscordParser extends AbstractParser {
 
         // Set metadata
         for (DiscordRoot d : discordRoot) {
+
+            // just extract the same messages rendered in chat html report
+            if (d.getMessageContent() == null || d.getMessageContent().isEmpty()) {
+                continue;
+            }
+
             Metadata meta = new Metadata();
             meta.set(TikaCoreProperties.TITLE, chatName + "_message_" + msgCount++);
             meta.set(StandardParser.INDEXER_CONTENT_TYPE, MSG_MIME_TYPE);
@@ -222,6 +228,7 @@ public class DiscordParser extends AbstractParser {
             meta.set(ExtraProperties.USER_NAME, d.getAuthor().getFullUsername());
             meta.add(ExtraProperties.PARTICIPANTS, participants.toString());
             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(chatVirtualId));
+            meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(d.getId()));
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, d.getAuthor().getFullUsername());
 
             // Add "Message-TO" field
