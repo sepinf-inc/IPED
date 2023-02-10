@@ -97,6 +97,8 @@ public class DiscordParser extends AbstractParser {
             CharSequence seq = "messages?limit=50";
             TikaException exception = null;
 
+            int chatVirtualId = 0;
+
             for (CacheEntry ce : index.getLst()) {
                 if (ce.getKey() != null && ce.getKey().contains(seq)) {
                 	
@@ -161,6 +163,7 @@ public class DiscordParser extends AbstractParser {
                         chatMeta.set("URL", ce.getRequestURL());
                         chatMeta.set(TikaCoreProperties.TITLE, chatName);
                         chatMeta.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
+                        chatMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
                         for (Map.Entry<String,String> entry : httpResponse.entrySet()) {
                         	chatMeta.set(entry.getKey(), entry.getValue());
                         }
@@ -171,7 +174,7 @@ public class DiscordParser extends AbstractParser {
                         InputStream targetStream = new ByteArrayInputStream(relatorio);
                         extractor.parseEmbedded(targetStream, handler, chatMeta, true);
 
-                        extractMessages(chatName, discordRoot, handler, extractor);
+                        extractMessages(chatName, discordRoot, handler, extractor, chatVirtualId++);
 
                     } catch (IllegalArgumentException ex) {
                     	LOGGER.error("IllegalArgument found in file, go to next JSON. key"  + ce.toString());
@@ -199,7 +202,7 @@ public class DiscordParser extends AbstractParser {
     }
 
     private void extractMessages(String chatName, List<DiscordRoot> discordRoot, ContentHandler handler,
-            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+            EmbeddedDocumentExtractor extractor, int chatVirtualId) throws SAXException, IOException {
         int msgCount = 0;
 
         // Checking Participants
@@ -218,6 +221,7 @@ public class DiscordParser extends AbstractParser {
             meta.set(ExtraProperties.MESSAGE_BODY, d.getMessageContent());
             meta.set(ExtraProperties.USER_NAME, d.getAuthor().getFullUsername());
             meta.add(ExtraProperties.PARTICIPANTS, participants.toString());
+            meta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(chatVirtualId));
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, d.getAuthor().getFullUsername());
 
             // Build "Message TO" field
