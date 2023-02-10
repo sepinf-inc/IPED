@@ -166,6 +166,7 @@ public class DiscordParser extends AbstractParser {
                         chatMeta.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
                         chatMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
                         chatMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
+                        chatMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                         for (Map.Entry<String,String> entry : httpResponse.entrySet()) {
                         	chatMeta.set(entry.getKey(), entry.getValue());
                         }
@@ -235,6 +236,7 @@ public class DiscordParser extends AbstractParser {
             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(chatVirtualId));
             meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(d.getId()));
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, d.getAuthor().getFullUsername());
+            meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
             // Add "Message-TO" field
             for (String participant : participants) {
