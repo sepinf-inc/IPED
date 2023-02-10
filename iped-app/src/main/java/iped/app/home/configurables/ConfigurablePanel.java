@@ -25,6 +25,7 @@ import iped.configuration.Configurable;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.MakePreviewConfig;
+import iped.engine.config.ParsersConfig;
 import iped.engine.config.RegexTaskConfig;
 import iped.engine.task.carver.XMLCarverConfiguration;
 import iped.utils.UTF8Properties;
@@ -55,9 +56,11 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
     public static ConfigurablePanel createConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
         Object config = configurable.getConfiguration();
         ConfigurablePanel result=null;
-
+        
         if(config instanceof UTF8Properties) {
             result = new UTF8PropertiesConfigurablePanel((Configurable<UTF8Properties>)configurable, mainFrame);
+        }else if(configurable instanceof ParsersConfig) {
+            result = new ParsersConfigurablePanel((ParsersConfig) configurable, mainFrame);
         }else if(configurable instanceof CategoryConfig) {
             result = new SetCategoryConfigurablePanel((CategoryConfig) configurable, mainFrame);
         }else if(config instanceof String) {
