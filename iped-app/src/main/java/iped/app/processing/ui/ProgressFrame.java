@@ -375,10 +375,10 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         finishRow(msg, nf.format(instantRate) + " GB/h", Align.RIGHT);
 
         startRow(msg, Messages.getString("ProgressFrame.VolumeFound"));
-        finishRow(msg, nf.format(Statistics.get().getCaseData().getDiscoveredVolume() >>> 20) + " MB", Align.RIGHT);
+        finishRow(msg, formatMB(Statistics.get().getCaseData().getDiscoveredVolume()), Align.RIGHT);
 
         startRow(msg, Messages.getString("ProgressFrame.VolumeProcessed"));
-        finishRow(msg, nf.format(Statistics.get().getVolume() >>> 20) + " MB", Align.RIGHT);
+        finishRow(msg, formatMB(Statistics.get().getVolume()), Align.RIGHT);
 
         startRow(msg, Messages.getString("ProgressFrame.ItemsFound"));
         finishRow(msg, nf.format(Statistics.get().getCaseData().getDiscoveredEvidences()), Align.RIGHT);
@@ -427,20 +427,20 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         finishRow(msg, Runtime.version(), Align.RIGHT);
 
         startRow(msg, Messages.getString("ProgressFrame.FreeMemory"));
-        finishRow(msg, nf.format(Runtime.getRuntime().freeMemory() >>> 20) + " MB", Align.RIGHT);
+        finishRow(msg, formatMB(Runtime.getRuntime().freeMemory()), Align.RIGHT);
 
         startRow(msg, Messages.getString("ProgressFrame.TotalMemory"));
-        finishRow(msg, nf.format(Runtime.getRuntime().totalMemory() >>> 20) + " MB", Align.RIGHT);
+        finishRow(msg, formatMB(Runtime.getRuntime().totalMemory()), Align.RIGHT);
 
         long maxMemory = Runtime.getRuntime().maxMemory();
         if (maxMemory < Long.MAX_VALUE) {
             startRow(msg, Messages.getString("ProgressFrame.MaxMemory"));
-            finishRow(msg, nf.format(maxMemory >>> 20) + " MB", Align.RIGHT);
+            finishRow(msg, formatMB(maxMemory), Align.RIGHT);
         }
-        
+
         if (physicalMemory != 0) {
             startRow(msg, Messages.getString("ProgressFrame.PhysicalMemory"));
-            finishRow(msg, nf.format(physicalMemory >>> 20) + " MB", Align.RIGHT);
+            finishRow(msg, formatMB(physicalMemory), Align.RIGHT);
         }
 
         if (workers != null) {
@@ -455,7 +455,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
                     startRow(msg, Messages.getString("ProgressFrame.OutputTempFree"));
                     finishRow(msg,
-                            nf.format(outputVolume.getUsableSpace() >>> 30) + " GB ("
+                            formatGB(outputVolume.getUsableSpace()) + " ("
                                     + outputVolume.getUsableSpace() * 100 / outputVolume.getTotalSpace() + "%)",
                             Align.RIGHT);
                 } else {
@@ -464,7 +464,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
                     startRow(msg, Messages.getString("ProgressFrame.OutputFree"));
                     finishRow(msg,
-                            nf.format(outputVolume.getUsableSpace() >>> 30) + " GB ("
+                            formatGB(outputVolume.getUsableSpace()) + " ("
                                     + outputVolume.getUsableSpace() * 100 / outputVolume.getTotalSpace() + "%)",
                             Align.RIGHT);
 
@@ -473,7 +473,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
                     startRow(msg, Messages.getString("ProgressFrame.TempFree"));
                     finishRow(msg,
-                            nf.format(tempVolume.getUsableSpace() >>> 30) + " GB ("
+                            formatGB(tempVolume.getUsableSpace()) + " ("
                                     + tempVolume.getUsableSpace() * 100 / tempVolume.getTotalSpace() + "%)",
                             Align.RIGHT);
                 }
@@ -616,6 +616,14 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
                 JOptionPane.showMessageDialog(this, Messages.getString("ProgressFrame.AlreadyOpen")); //$NON-NLS-1$
         }
 
+    }
+
+    private static String formatMB(long value) {
+        return (value >>> 20) + " MB";
+    }
+
+    private static String formatGB(long value) {
+        return (value >>> 30) + " GB";
     }
 
     private enum Align {
