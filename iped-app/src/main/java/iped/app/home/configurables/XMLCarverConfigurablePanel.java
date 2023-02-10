@@ -66,13 +66,13 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
             carverListPanel.setViewportView(carverTypeList);
         }
     }
-    
+
     public void createCarverListPanel() {
         carverListPanel = new JScrollPane();
         carverTypeList = new JList<CarverType>(config.getAvailableCarverTypes());
         carverTypeList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         carverListPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        carverListPanel.addComponentListener(new ResizeListener());
+        this.addComponentListener(new ResizeListener());
         carverListPanel.setViewportView(carverTypeList);
         carverListPanel.setAutoscrolls(true);
         cellRenderer = new CarverConfigCellRenderer();
@@ -98,14 +98,14 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
             }
         });
     }
-    
+
     class CarverTypeListModel extends AbstractListModel<CarverType>{
         List<CarverType> source;
-        
+
         public CarverTypeListModel(List<CarverType> source) {
             this.source = source;
         }
-        
+
         @Override
         public int getSize() {
             return source.size();
@@ -115,7 +115,6 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
         public CarverType getElementAt(int index) {
             return source.get(index);
         }
-        
     }
 
     @Override
@@ -127,8 +126,6 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
             throw new ConfigurableValidationException("Erro de sintaxe no XML", e);
         }        
     }
-
-
 
     @Override
     protected Component createBasicPane() {
