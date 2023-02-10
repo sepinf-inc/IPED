@@ -337,6 +337,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             totalTime = 1;
 
         for (Object o : ParsingTask.times.entrySet().toArray()) {
+            @SuppressWarnings("unchecked")
             Entry<String, AtomicLong> e = (Entry<String, AtomicLong>) o;
             long time = e.getValue().get();
             long sec = time / (1000000 * workers.length);
