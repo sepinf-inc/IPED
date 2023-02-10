@@ -100,6 +100,7 @@ public class SleuthkitReader extends DataSourceReader {
     private static final String PASSWORD_PER_IMAGE = "data/PasswordPerImage.txt";
 
     // TODO update @deleteDatasource() when updating TSK
+    // TODO update SleuthkitInputStream.read() when fixed, see https://github.com/sepinf-inc/IPED/issues/1510
     public static final String MIN_TSK_VER = "4.11.0";
 
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
