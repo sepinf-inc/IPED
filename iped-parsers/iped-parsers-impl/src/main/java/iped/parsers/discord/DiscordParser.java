@@ -1,16 +1,19 @@
 package iped.parsers.discord;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.io.IOUtils;
+import javax.imageio.ImageIO;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -31,6 +34,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import iped.data.IItemReader;
+import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
 import iped.parsers.discord.cache.CacheEntry;
 import iped.parsers.discord.cache.Index;
 import iped.parsers.discord.json.DiscordAttachment;
@@ -41,6 +45,7 @@ import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.DateUtil;
 import iped.utils.EmptyInputStream;
+import iped.utils.ImageUtil;
 
 /***
  * 
@@ -119,40 +124,49 @@ public class DiscordParser extends AbstractParser {
                         if (discordRoot.isEmpty())
                             continue;
 
-                        try {
-                            // Checking if the image file is cached, to do so, iterates through all authors
-                            // and attachments to check if they are in the case, comparing their attributes
-                            for (DiscordRoot dr : discordRoot) {
-
-                                for (CacheEntry ce2 : index.getLst()) {
-                                    if (ce2.getKey() != null) {
-                                        // Checking avatar image
-                                        if (dr.getAuthor().getAvatar() != null
-                                                && ce2.getKey().contains(dr.getAuthor().getAvatar())
-                                                && !ce2.getName().contains("data")) {
-                                            dr.getAuthor().setURLAvatar(Base64.getEncoder()
-                                                    .encodeToString(IOUtils.toByteArray(ce2.getResponseDataStream(""))));
+                        HashMap<String, byte[]> avatarCache = new HashMap<>();
+                        // Checking if the image file is cached, to do so, iterates through all authors
+                        // and attachments to check if they are in the case, comparing their attributes
+                        for (DiscordRoot dr : discordRoot) {
+                            for (CacheEntry ce2 : index.getLst()) {
+                                if (ce2.getKey() != null) {
+                                    // Checking avatar image
+                                    if (dr.getAuthor().getAvatar() != null && dr.getAuthor().getAvatarBytes() == null && ce2.getKey().contains(dr.getAuthor().getAvatar()) && !ce2.getName().contains("data")) {
+                                        byte[] avatar = avatarCache.get(dr.getAuthor().getAvatar());
+                                        if (avatar != null) {
+                                            dr.getAuthor().setAvatarBytes(avatar);
                                             break;
                                         }
+                                        try (InputStream is2 = ce2.getResponseDataStream("")) {
+                                            BufferedImage img = ImageUtil.getSubSampledImage(is2, 64, 64);
+                                            img = ImageUtil.getOpaqueImage(img);
+                                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                            ImageIO.write(img, "jpg", baos);
+                                            avatar = baos.toByteArray();
+                                            dr.getAuthor().setAvatarBytes(avatar);
+                                            avatarCache.put(dr.getAuthor().getAvatar(), avatar);
+                                            break;
+                                        } catch (InputStreamNotAvailable e) {
+                                            // ignore
+                                        } catch (Exception e) {
+                                            LOGGER.warn("Exception decoding Discord avatar", e);
+                                        }
+                                    }
 
-                                        // Checking attachments image
-                                        for (DiscordAttachment att : dr.getAttachments()) {
-                                            if (ce2.getKey().contains(att.getFilename())
-                                                    && !ce2.getName().contains("data")) {
-                                                for (IItemReader ib : externalFiles) {
-                                                    if (ib.getName() != null && ib.getName().equals(ce2.getName())) {
-                                                        att.setMediaHash(ib.getHash());
-                                                        att.setContent_type(ib.getMediaType().toString());
-                                                        break;
-                                                    }
+                                    // Checking attachments image
+                                    for (DiscordAttachment att : dr.getAttachments()) {
+                                        if (ce2.getKey().contains(att.getFilename()) && !ce2.getName().contains("data")) {
+                                            for (IItemReader ib : externalFiles) {
+                                                if (ib.getName() != null && ib.getName().equals(ce2.getName())) {
+                                                    att.setMediaHash(ib.getHash());
+                                                    att.setContent_type(ib.getMediaType().toString());
+                                                    break;
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        } catch (Exception ex) {
-                            new TikaException(ex.getMessage());
                         }
 
                         String chatName = "DiscordChat id(" + discordRoot.get(0).getId() + ")";

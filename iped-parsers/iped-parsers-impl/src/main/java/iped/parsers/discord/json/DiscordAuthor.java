@@ -17,7 +17,7 @@ public class DiscordAuthor {
     @JsonProperty("avatar")
     private String avatar;
 
-    private String URLAvatar;
+    private byte[] avatarBytes;
 
     @JsonProperty("discriminator")
     private String discriminator;
@@ -68,12 +68,12 @@ public class DiscordAuthor {
         this.avatar = avatar;
     }
 
-    public String getURLAvatar() {
-        return URLAvatar;
+    public byte[] getAvatarBytes() {
+        return avatarBytes;
     }
 
-    public void setURLAvatar(String URLAvatar) {
-        this.URLAvatar = URLAvatar;
+    public void setAvatarBytes(byte[] avatar) {
+        this.avatarBytes = avatar;
     }
 
     public String getDiscriminator() {

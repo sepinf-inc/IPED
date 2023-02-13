@@ -91,11 +91,11 @@ public class DiscordHTMLReport {
                 out.println("		<TABLE class='title'>");
                 out.println("			<TR>");
                 out.println("				<TD>");
-                if (dr.getAuthor().getURLAvatar() == null) {
+                if (dr.getAuthor().getAvatarBytes() == null) {
                     out.println("					<img src='https://cdn.discordapp.com/avatars/" + dr.getAuthor().getId()
                             + "/" + dr.getAuthor().getAvatar() + ".png' alt='' width='50' height='50'>");
                 } else {
-                    out.println("					<img src='data:image/png;base64, " + dr.getAuthor().getURLAvatar()
+                    out.println("					<img src='data:image/jpeg;base64, " + Base64.getEncoder().encodeToString(dr.getAuthor().getAvatarBytes())
                             + "' alt='' width='50' height='50'>");
                 }
 
