@@ -2,6 +2,7 @@ package iped.parsers.discord.json;
 
 import java.util.Date;
 import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /***
@@ -9,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author PCF Campanini
  *
  */
-public class DiscordRoot {
+public class DiscordRoot implements Comparable<DiscordRoot> {
 
     @JsonProperty("id")
     private String id;
@@ -262,6 +263,20 @@ public class DiscordRoot {
                 + mention_everyone + ", pinned=" + pinned + ", tts=" + tts + ", timestamp=" + timestamp
                 + ", editedTimestamp=" + editedTimestamp + ", flags=" + flags + ", reactions=" + reactions + ", call="
                 + call + ", webhookId=" + webhookId + ", components=" + components + "]";
+    }
+
+    @Override
+    public int compareTo(DiscordRoot o) {
+        if (this.timestamp == null) {
+            if (o.timestamp == null) {
+                return 0;
+            } else {
+                return -1;
+            }
+        } else if (o.timestamp == null) {
+            return 1;
+        }
+        return this.timestamp.compareTo(o.timestamp);
     }
 
 }

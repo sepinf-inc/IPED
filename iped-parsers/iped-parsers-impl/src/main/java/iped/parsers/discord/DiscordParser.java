@@ -176,6 +176,9 @@ public class DiscordParser extends AbstractParser {
                             }
                         }
 
+                        // Sort messages by timestamp in ascending order
+                        Collections.sort(discordRoot);
+
                         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, chatMeta);
                         byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml, searcher);
 
