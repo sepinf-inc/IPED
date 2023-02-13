@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IItemReader;
+import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
 
 /**
  * @author PCF Campanini
@@ -150,7 +151,11 @@ public class CacheEntry {
 		paddings[3] = read4bytes(is);
 
 		selfHash = readUnsignedInt(is);
-		keyData = IOUtils.readFully(is, 256 - 24 * 4);
+        if (keyDataSize > 0) {
+            keyData = IOUtils.readFully(is, Math.min(256 - 24 * 4, keyDataSize));
+        } else {
+            keyData = new byte[0];
+        }
 		
 	}
 
@@ -178,7 +183,7 @@ public class CacheEntry {
 		if (keyDataSize < 0) {
 			return null;
 		}
-		return new String(keyData, 0, keyDataSize > keyData.length ? keyData.length : keyDataSize);
+        return new String(keyData);
 	}
 
 	public String getRequestMethod() {
@@ -252,6 +257,8 @@ public class CacheEntry {
 
 				}
 			}
+        } catch (InputStreamNotAvailable e) {
+            // ignore
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
