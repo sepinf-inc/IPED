@@ -76,19 +76,14 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
         } else {
             columnsManager.checkOnlySelectedProperties(Arrays.asList(basicReportProps));
         }
-        disableRequiredPropertiesCheckBoxes();
         updatePanelList();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
-        if (e.getSource().equals(selectVisibleButton)) {
-            disableRequiredPropertiesCheckBoxes();
-            updatePanelList();
-        } else if (e.getSource().equals(clearButton)) {
+        if (e.getSource().equals(clearButton)) {
             columnsManager.uncheckAllProperties();
-            disableRequiredPropertiesCheckBoxes();
             updatePanelList();
         } else if (e.getSource() instanceof JCheckBox || e.getSource().equals(selectVisibleButton)) {
             if (columnsManager.getSelectedProperties().size() > PROPERTIES_LIMIT_NUM) {
@@ -108,6 +103,13 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
             }
         }
     }
+
+    @Override
+    protected void updatePanelList() {
+        disableRequiredPropertiesCheckBoxes();
+        super.updatePanelList();        
+    }
+
 
     public void disableRequiredPropertiesCheckBoxes() {
         columnsManager.allCheckBoxesState.put(IndexItem.ID_IN_SOURCE, new CheckBoxState(true, false));
