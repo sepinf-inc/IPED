@@ -37,8 +37,12 @@ public class SleuthkitInputStream extends SeekableInputStream {
         if (closed) {
             throw new IOException("Stream was closed."); //$NON-NLS-1$
         }
-        // update when ReadContentInputStream.read() is fixed
-        return rcis.read() & 0xFF;
+        byte[] b = rcis.readNBytes(1);
+        if (b != null && b.length == 1) {
+            return b[0] & 0xFF;
+        } else {
+            return -1;
+        }
     }
 
     @Override
