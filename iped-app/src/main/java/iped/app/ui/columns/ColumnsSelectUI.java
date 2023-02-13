@@ -99,9 +99,9 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
 
         loadedSelectedProperties = ColumnsManager.loadSelectedFields(saveFileName);
         if (loadedSelectedProperties != null) {
-            columnsManager.enableOnlySelectedProperties(loadedSelectedProperties);
+            columnsManager.checkOnlySelectedProperties(loadedSelectedProperties);
         } else {
-            columnsManager.enableOnlySelectedProperties(new ArrayList<String>(Arrays.asList(ResultTableModel.fields)));
+            columnsManager.checkOnlySelectedProperties(new ArrayList<String>(Arrays.asList(ResultTableModel.fields)));
         }
         updatePanelList();
     }
@@ -109,13 +109,13 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(selectVisibleButton)) {
-            columnsManager.enableOnlySelectedProperties(columnsManager.colState.visibleFields);
+            columnsManager.checkOnlySelectedProperties(columnsManager.colState.visibleFields);
             updatePanelList();
         } else if (e.getSource().equals(toggleSelectUnselectAllCheckBox)) {
             if (toggleSelectUnselectAllCheckBox.isSelected()) {
-                columnsManager.enableAllProperties();
+                columnsManager.checkAllProperties();
             } else {
-                columnsManager.disableAllProperties();
+                columnsManager.uncheckAllProperties();
             }
             updatePanelList();
         } else if (e.getSource().equals(combo)) {
@@ -151,8 +151,7 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
                 JCheckBox check = new JCheckBox();
                 check.setText(fieldName);
                 CheckBoxState checkBoxState = columnsManager.allCheckBoxesState.get(LocalizedProperties.getNonLocalizedField(fieldName));
-                if (checkBoxState.isSelected)
-                    check.setSelected(checkBoxState.isSelected);
+                check.setSelected(checkBoxState.isSelected);
                 check.setEnabled(checkBoxState.isEnabled);
                 check.addActionListener(this);
                 listPanel.add(check);

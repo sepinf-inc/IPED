@@ -431,7 +431,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         return selectedProperties;
     }
     
-    protected void enableOnlySelectedProperties(List<String> props) {
+    protected void checkOnlySelectedProperties(List<String> props) {
         for (Map.Entry<String, CheckBoxState> hmEntry : allCheckBoxesState.entrySet()) {
             String nonLocalizedKey = LocalizedProperties.getNonLocalizedField(hmEntry.getKey());
             if (props.contains(nonLocalizedKey)) {
@@ -442,11 +442,11 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         }
     }
 
-    protected void enableAllProperties() {
+    protected void checkAllProperties() {
         allCheckBoxesState.replaceAll((name, state) -> state = new CheckBoxState(true));
     }
 
-    protected void disableAllProperties() {
+    protected void uncheckAllProperties() {
         allCheckBoxesState.replaceAll((name, state) -> state = new CheckBoxState(false));
     }
 

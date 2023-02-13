@@ -72,20 +72,23 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
 
         loadedSelectedProperties = ColumnsManager.loadSelectedFields(saveFileName);
         if (loadedSelectedProperties != null) {
-            columnsManager.enableOnlySelectedProperties(loadedSelectedProperties);
+            columnsManager.checkOnlySelectedProperties(loadedSelectedProperties);
         } else {
-            columnsManager.enableOnlySelectedProperties(Arrays.asList(basicReportProps));
+            columnsManager.checkOnlySelectedProperties(Arrays.asList(basicReportProps));
         }
-        disableRequiredProperties();
+        disableRequiredPropertiesCheckBoxes();
         updatePanelList();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
-        if (e.getSource().equals(clearButton)) {
-            columnsManager.disableAllProperties();
-            disableRequiredProperties();
+        if (e.getSource().equals(selectVisibleButton)) {
+            disableRequiredPropertiesCheckBoxes();
+            updatePanelList();
+        } else if (e.getSource().equals(clearButton)) {
+            columnsManager.uncheckAllProperties();
+            disableRequiredPropertiesCheckBoxes();
             updatePanelList();
         } else if (e.getSource() instanceof JCheckBox || e.getSource().equals(selectVisibleButton)) {
             if (columnsManager.getSelectedProperties().size() > PROPERTIES_LIMIT_NUM) {
@@ -98,7 +101,7 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
                 } else {
                     JOptionPane.showMessageDialog(dialog, Messages.getString("ColumnsManager.LimitReachedVisibleMessage", PROPERTIES_LIMIT_NUM),
                         Messages.getString("ColumnsManager.LimitReachedTitle"), JOptionPane.ERROR_MESSAGE);
-                    columnsManager.enableOnlySelectedProperties(
+                    columnsManager.checkOnlySelectedProperties(
                         columnsManager.colState.visibleFields.stream().limit(PROPERTIES_LIMIT_NUM).collect(Collectors.toList()));
                 }
                 updatePanelList();
@@ -106,7 +109,7 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
         }
     }
 
-    public void disableRequiredProperties() {
+    public void disableRequiredPropertiesCheckBoxes() {
         columnsManager.allCheckBoxesState.put(IndexItem.ID_IN_SOURCE, new CheckBoxState(true, false));
         columnsManager.allCheckBoxesState.put(BasicProps.PATH, new CheckBoxState(true, false));
     }
