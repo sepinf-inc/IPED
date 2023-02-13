@@ -48,23 +48,17 @@ public class DiscordHTMLReport {
         out.println("<HTML>");
         out.println("<HEAD>");
         out.println(" <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n");
-        out.println("<style>" + "TABLE {  border-collapse: collapse; font-family: Arial, sans-serif; } "
-                + ".title tr td {border: none;}" + ".td-timestamp p {font-size: 10px;text-align:center}"
-                + ".black {background-color: #383838; color:#E0E0E0;}"
-                + ".gray {background-color: #585858; color:#E0E0E0;}"
-                + "TH { border: solid; font-weight: bold; text-align: center; background-color:#AAAAAA; foreground-color:#FFFFFF; } "
-                + "TR { vertical-align: middle; } " + ".rb { background-color:#E7E7E7; vertical-align: middle; } "
-                + ".rr {  background-color:#FFFFFF; vertical-align: middle; } "
-                + "TD { border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; } "
+        out.println("<style>" + "TABLE {  border-collapse: collapse; font-family: Arial, sans-serif; } " + ".title tr td {border: none;}" + ".td-timestamp p {font-size: 10px;text-align:center}"
+                + ".black {background-color: #383838; color:#E0E0E0;}" + ".gray {background-color: #585858; color:#E0E0E0;}"
+                + "TH { border: solid; font-weight: bold; text-align: center; background-color:#AAAAAA; foreground-color:#FFFFFF; } " + "TR { vertical-align: middle; } " + ".rb { background-color:#E7E7E7; vertical-align: middle; } "
+                + ".rr {  background-color:#FFFFFF; vertical-align: middle; } " + "TD { border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; } "
                 + ".e { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 150px; font-family: monospace; } "
                 + ".a { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; } "
                 + ".b { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; width: 450px; } "
                 + ".z { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; width: 160px; } "
                 + ".c { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word;  width: 110px; } "
-                + ".h { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; }"
-                + ".check {vertical-align: top; }" + " TD:hover[onclick]{background-color:#F0F0F0; cursor:pointer} "
-                + ".img {height: 256px}"
-                + "</style>");
+                + ".h { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; }" + ".check {vertical-align: top; }"
+                + " TD:hover[onclick]{background-color:#F0F0F0; cursor:pointer} " + ".img {height: 256px}" + "</style>");
         out.println("</HEAD>");
         out.println("<BODY>");
 
@@ -93,15 +87,13 @@ public class DiscordHTMLReport {
                 if (dr.getAuthor().getAvatarBytes() == null) {
                     out.println("					<img src='https://cdn.discordapp.com/avatars/" + format(dr.getAuthor().getId()) + "/" + format(dr.getAuthor().getAvatar()) + ".png' alt='' width='50' height='50'>");
                 } else {
-                    out.println("					<img src='data:image/jpeg;base64, " + Base64.getEncoder().encodeToString(dr.getAuthor().getAvatarBytes())
-                            + "' alt='' width='50' height='50'>");
+                    out.println("					<img src='data:image/jpeg;base64, " + Base64.getEncoder().encodeToString(dr.getAuthor().getAvatarBytes()) + "' alt='' width='50' height='50'>");
                 }
 
                 out.println("				</TD>");
                 out.println("				<TD>");
-                out.println(
-                        "					<span title='Channel ID=" + format(dr.getChannel_id()) + ", UserID=" + format(dr.getAuthor().getId()) + "'>" + format(dr.getAuthor().getName()) + "<b>" + format(dr.getAuthor().getFullUsername())
-                        + "</b></span>");
+                out.println("					<span title='Channel ID=" + format(dr.getChannel_id()) + ", UserID=" + format(dr.getAuthor().getId()) + "'>" + format(dr.getAuthor().getName()) + "<b>"
+                        + format(dr.getAuthor().getFullUsername()) + "</b></span>");
                 out.println("				</TD>");
                 out.println("				<TD>");
                 out.println((dr.getTimestamp() == null ? "" : dateFormat.format(dr.getTimestamp())));
@@ -239,8 +231,7 @@ public class DiscordHTMLReport {
     }
 
     private void printCheckbox(PrintWriter out, String hash) {
-        out.println("<input class=\"check\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
-                + "', this.checked)\" name=\"" + hash + "\" />");
+        out.println("<input class=\"check\" type=\"checkbox\" onclick=\"app.check('hash:" + hash + "', this.checked)\" name=\"" + hash + "\" />");
     }
 
     private static final String format(String s) {

@@ -74,25 +74,20 @@ public class DiscordParser extends AbstractParser {
     }
 
     @Override
-    public void parse(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context)
-            throws IOException, SAXException, TikaException {
+    public void parse(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
         IItemReader item = context.get(IItemReader.class);
 
         if (searcher != null && item != null) {
 
-            String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND "
-                    + BasicProps.PARENTID + ":" + item.getParentId() + " AND " + BasicProps.CARVED + ":false AND NOT "
-                    + BasicProps.TYPE + ":slack AND NOT " + BasicProps.TYPE + ":fileslack AND NOT " + BasicProps.NAME + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR
-                    + ":true AND NOT " + BasicProps.PATH + ":gpucache" ;
+            String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND " + BasicProps.PARENTID + ":" + item.getParentId() + " AND " + BasicProps.CARVED + ":false AND NOT " + BasicProps.TYPE
+                    + ":slack AND NOT " + BasicProps.TYPE + ":fileslack AND NOT " + BasicProps.NAME + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR + ":true AND NOT " + BasicProps.PATH + ":gpucache";
 
             List<IItemReader> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
-            List<IItemReader> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME
-                    + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\")");
+            List<IItemReader> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\")");
 
             Index index = new Index(indexFile, item.getPath(), dataFiles, externalFiles);
 
@@ -104,20 +99,20 @@ public class DiscordParser extends AbstractParser {
 
             for (CacheEntry ce : index.getLst()) {
                 if (ce.getKey() != null && ce.getKey().contains(seq)) {
-                	
-                	Map<String, String> httpResponse = ce.getHttpResponse();
-                	
-                	String contentEncoding = httpResponse.get("content-encoding");
-                	
-                	if (contentEncoding == null || contentEncoding == "") {
-                		continue;
-                	} 
-                	                	
-                	try (InputStream is = ce.getResponseDataStream(contentEncoding)) {
+
+                    Map<String, String> httpResponse = ce.getHttpResponse();
+
+                    String contentEncoding = httpResponse.get("content-encoding");
+
+                    if (contentEncoding == null || contentEncoding == "") {
+                        continue;
+                    }
+
+                    try (InputStream is = ce.getResponseDataStream(contentEncoding)) {
 
                         ObjectMapper mapper = new ObjectMapper();
                         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                        
+
                         List<DiscordRoot> discordRoot = mapper.readValue(is, new TypeReference<List<DiscordRoot>>() {
                         });
 
@@ -178,8 +173,8 @@ public class DiscordParser extends AbstractParser {
                         chatMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
                         chatMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                         chatMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-                        for (Map.Entry<String,String> entry : httpResponse.entrySet()) {
-                        	chatMeta.set(entry.getKey(), entry.getValue());
+                        for (Map.Entry<String, String> entry : httpResponse.entrySet()) {
+                            chatMeta.set(entry.getKey(), entry.getValue());
                         }
 
                         for (DiscordRoot dr : discordRoot) {
@@ -202,13 +197,13 @@ public class DiscordParser extends AbstractParser {
                         extractMessages(chatName, discordRoot, handler, extractor, chatVirtualId++);
 
                     } catch (IllegalArgumentException ex) {
-                    	LOGGER.error("IllegalArgument found in file, go to next JSON. key"  + ce.toString());
-                    	ex.printStackTrace();
-                    	continue;
-                    } catch(JsonProcessingException ex){
-                    	LOGGER.error("JSON is invalid, go to next JSON. " + ce.toString());
-                    	ex.printStackTrace();
-                    	continue;
+                        LOGGER.error("IllegalArgument found in file, go to next JSON. key" + ce.toString());
+                        ex.printStackTrace();
+                        continue;
+                    } catch (JsonProcessingException ex) {
+                        LOGGER.error("JSON is invalid, go to next JSON. " + ce.toString());
+                        ex.printStackTrace();
+                        continue;
                     } catch (Exception ex) {
                         ex.printStackTrace();
                         if (exception == null) {
@@ -226,8 +221,7 @@ public class DiscordParser extends AbstractParser {
 
     }
 
-    private void extractMessages(String chatName, List<DiscordRoot> discordRoot, ContentHandler handler,
-            EmbeddedDocumentExtractor extractor, int chatVirtualId) throws SAXException, IOException {
+    private void extractMessages(String chatName, List<DiscordRoot> discordRoot, ContentHandler handler, EmbeddedDocumentExtractor extractor, int chatVirtualId) throws SAXException, IOException {
         int msgCount = 0;
 
         // Checking Participants

@@ -134,9 +134,8 @@ public class DiscordAuthor {
 
     @Override
     public String toString() {
-        return "DiscordAuthor [id=" + id + ", username=" + username + ", avatar=" + avatar + ", discriminator="
-                + discriminator + ", public_flags=" + public_flags + ", bot=" + bot + ", name=" + name + ", url=" + url
-                + ", icon_url=" + icon_url + ", proxy_icon_url=" + proxy_icon_url + "]";
+        return "DiscordAuthor [id=" + id + ", username=" + username + ", avatar=" + avatar + ", discriminator=" + discriminator + ", public_flags=" + public_flags + ", bot=" + bot + ", name=" + name + ", url=" + url + ", icon_url="
+                + icon_url + ", proxy_icon_url=" + proxy_icon_url + "]";
     }
 
 }

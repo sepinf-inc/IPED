@@ -2,7 +2,9 @@ package iped.parsers.discord.json;
 
 import java.util.HashSet;
 import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import iped.parsers.util.ChildPornHashLookup;
 
 /***
@@ -133,10 +135,8 @@ public class DiscordAttachment {
 
     @Override
     public String toString() {
-        return "DiscordAttachment [id=" + id + ", filename=" + filename + ", size=" + size + ", url=" + url
-                + ", proxy_url=" + proxy_url + ", width=" + width + ", height=" + height + ", ephemeral=" + ephemeral
-                + ", content_type=" + content_type + ", mediaHash=" + mediaHash + ", childPornSets=" + childPornSets
-                + "]";
+        return "DiscordAttachment [id=" + id + ", filename=" + filename + ", size=" + size + ", url=" + url + ", proxy_url=" + proxy_url + ", width=" + width + ", height=" + height + ", ephemeral=" + ephemeral + ", content_type="
+                + content_type + ", mediaHash=" + mediaHash + ", childPornSets=" + childPornSets + "]";
     }
 
 }

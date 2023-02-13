@@ -256,13 +256,9 @@ public class DiscordRoot implements Comparable<DiscordRoot> {
 
     @Override
     public String toString() {
-        return "DiscordRoot [id=" + id + ", type=" + type + ", messageContent=" + messageContent + ", channel_id="
-                + channel_id + ", author=" + author + ", referencedMessage=" + referencedMessage + ", messageReference="
-                + messageReference + ", activity=" + activity + ", attachments=" + attachments + ", embeds=" + embeds
-                + ", mentions=" + mentions + ", mention_roles=" + mention_roles + ", mention_everyone="
-                + mention_everyone + ", pinned=" + pinned + ", tts=" + tts + ", timestamp=" + timestamp
-                + ", editedTimestamp=" + editedTimestamp + ", flags=" + flags + ", reactions=" + reactions + ", call="
-                + call + ", webhookId=" + webhookId + ", components=" + components + "]";
+        return "DiscordRoot [id=" + id + ", type=" + type + ", messageContent=" + messageContent + ", channel_id=" + channel_id + ", author=" + author + ", referencedMessage=" + referencedMessage + ", messageReference=" + messageReference
+                + ", activity=" + activity + ", attachments=" + attachments + ", embeds=" + embeds + ", mentions=" + mentions + ", mention_roles=" + mention_roles + ", mention_everyone=" + mention_everyone + ", pinned=" + pinned + ", tts="
+                + tts + ", timestamp=" + timestamp + ", editedTimestamp=" + editedTimestamp + ", flags=" + flags + ", reactions=" + reactions + ", call=" + call + ", webhookId=" + webhookId + ", components=" + components + "]";
     }
 
     @Override

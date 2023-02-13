@@ -81,8 +81,7 @@ public class DiscordMention {
 
     @Override
     public String toString() {
-        return "DiscordMention [id=" + id + ", username=" + username + ", avatar=" + avatar + ", discriminator="
-                + discriminator + ", public_flags=" + public_flags + ", bot=" + bot + "]";
+        return "DiscordMention [id=" + id + ", username=" + username + ", avatar=" + avatar + ", discriminator=" + discriminator + ", public_flags=" + public_flags + ", bot=" + bot + "]";
     }
 
 }

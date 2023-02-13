@@ -23,16 +23,16 @@ public class DiscordReferencedMessage {
 
     @JsonProperty("message_reference")
     public DiscordMessageReference messageReference;
-    
+
     public DiscordMessageReference getMessageReference() {
-		return messageReference;
-	}
+        return messageReference;
+    }
 
-	public void setMessageReference(DiscordMessageReference messageReference) {
-		this.messageReference = messageReference;
-	}
+    public void setMessageReference(DiscordMessageReference messageReference) {
+        this.messageReference = messageReference;
+    }
 
-	@JsonProperty("attachments")
+    @JsonProperty("attachments")
     public List<DiscordAttachment> attachments;
 
     @JsonProperty("embeds")
@@ -70,19 +70,19 @@ public class DiscordReferencedMessage {
 
     @JsonProperty("webhook_id")
     public String webhookId;
-    
+
     @JsonProperty("components")
     public List<Object> components;
 
     public List<Object> getComponents() {
-		return components;
-	}
+        return components;
+    }
 
-	public void setComponents(List<Object> components) {
-		this.components = components;
-	}
+    public void setComponents(List<Object> components) {
+        this.components = components;
+    }
 
-	public String getWebhookId() {
+    public String getWebhookId() {
         return webhookId;
     }
 
@@ -228,12 +228,9 @@ public class DiscordReferencedMessage {
 
     @Override
     public String toString() {
-        return "DiscordReferencedMessage [" + "id=" + id + ", type=" + type + ", messageContent=" + messageContent + ", channel_id="
-                + channel_id + ", author=" + author.toString() + ", attachments=" + attachments.toString() + ", embeds="
-                + embeds.toString() + ", mentions=" + mentions.toString() + ", mention_roles="
-                + mention_roles.toString() + ", pinned=" + pinned + ", mention_everyone=" + mention_everyone + ", tts="
-                + tts + ", timestamp=" + timestamp + ", editedTimestamp=" + editedTimestamp + ", flags=" + flags
-                + ", reactions=" + reactions.toString() + ", call=" + call.toString() + "]";
+        return "DiscordReferencedMessage [" + "id=" + id + ", type=" + type + ", messageContent=" + messageContent + ", channel_id=" + channel_id + ", author=" + author.toString() + ", attachments=" + attachments.toString() + ", embeds="
+                + embeds.toString() + ", mentions=" + mentions.toString() + ", mention_roles=" + mention_roles.toString() + ", pinned=" + pinned + ", mention_everyone=" + mention_everyone + ", tts=" + tts + ", timestamp=" + timestamp
+                + ", editedTimestamp=" + editedTimestamp + ", flags=" + flags + ", reactions=" + reactions.toString() + ", call=" + call.toString() + "]";
     }
 
 }
