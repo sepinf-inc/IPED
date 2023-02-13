@@ -89,7 +89,7 @@ public class DiscordParser extends AbstractParser {
             List<IItemReader> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME
                     + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\")");
 
-            Index index = new Index(indexFile, dataFiles, externalFiles);
+            Index index = new Index(indexFile, item.getPath(), dataFiles, externalFiles);
 
             // Used to identify JSON files containing Discord chats
             CharSequence seq = "messages?limit=50";

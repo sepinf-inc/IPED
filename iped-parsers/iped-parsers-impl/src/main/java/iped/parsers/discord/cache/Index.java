@@ -5,6 +5,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import iped.data.IItemReader;
 import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
 
@@ -19,6 +22,8 @@ import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
  *
  */
 public class Index {
+
+    private static Logger logger = LoggerFactory.getLogger(Index.class);
 
     private final long magicNumber;
     private final long version;
@@ -135,7 +140,7 @@ public class Index {
         this.lst = lst;
     }
 
-    public Index(InputStream is, List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException {
+    public Index(InputStream is, String path, List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException {
 
         magicNumber = readUnsignedInt(is);
         version = readUnsignedInt(is);
@@ -201,7 +206,7 @@ public class Index {
             } catch (InputStreamNotAvailable e) {
                 continue;
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.warn("Exception reading CacheEntry of Discord Index " + path, e);
             }
         }
 
