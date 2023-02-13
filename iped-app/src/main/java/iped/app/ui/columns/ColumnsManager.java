@@ -17,6 +17,7 @@ import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Message;
+import org.neo4j.internal.kernel.api.security.AccessMode.Static;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,7 +114,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
 
     private boolean autoManageCols;
 
-    protected Map<String, Boolean> allCheckBoxesState = new HashMap<>();
+    protected Map<String, CheckBoxState> allCheckBoxesState = new HashMap<>();
 
     public static ColumnsManager getInstance() {
         if (instance == null)
@@ -144,6 +145,21 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         public List<Integer> initialWidths = new ArrayList<Integer>();
         public ArrayList<String> visibleFields = new ArrayList<String>();
     }
+
+    public static class CheckBoxState {
+        boolean isSelected;
+        boolean isEnabled;
+
+        public CheckBoxState(boolean isSelected) {
+            this.isSelected = isSelected;
+            this.isEnabled = true;
+        }
+
+        public CheckBoxState(boolean isSelected, boolean isEnabled) {
+            this.isSelected = isSelected;
+            this.isEnabled = isEnabled;
+        }
+    };
 
     protected ColumnsManager() {
         allCheckBoxesState = new HashMap<>();
@@ -398,16 +414,17 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     private void initializeAllCheckBoxesState() {
         for (int i = 0; i < fieldGroups.length; i++) {
             List<String> fieldNames = Arrays.asList(fieldGroups[i]);
-            fieldNames.forEach(f -> allCheckBoxesState.putIfAbsent(LocalizedProperties.getNonLocalizedField(f), false));
+            fieldNames.forEach(
+                f -> allCheckBoxesState.putIfAbsent(LocalizedProperties.getNonLocalizedField(f), new CheckBoxState(false)));
         }
     }
 
     public List<String> getSelectedProperties() {
         List<String> selectedProperties = new ArrayList<>();
-        for (Map.Entry<String, Boolean> hmEntry : allCheckBoxesState.entrySet()) {
+        for (Map.Entry<String, CheckBoxState> hmEntry : allCheckBoxesState.entrySet()) {
             String fieldName = hmEntry.getKey();
-            Boolean checkBoxState = hmEntry.getValue();
-            if (checkBoxState == true) {
+            Boolean isCheckBoxSelected = hmEntry.getValue().isSelected;
+            if (isCheckBoxSelected == true) {
                 selectedProperties.add(LocalizedProperties.getNonLocalizedField(fieldName));
             }
         }
@@ -415,22 +432,22 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     }
     
     protected void enableOnlySelectedProperties(List<String> props) {
-        for (Map.Entry<String, Boolean> hmEntry : allCheckBoxesState.entrySet()) {
+        for (Map.Entry<String, CheckBoxState> hmEntry : allCheckBoxesState.entrySet()) {
             String nonLocalizedKey = LocalizedProperties.getNonLocalizedField(hmEntry.getKey());
             if (props.contains(nonLocalizedKey)) {
-                allCheckBoxesState.put(nonLocalizedKey, true);
+                allCheckBoxesState.put(nonLocalizedKey, new CheckBoxState(true));
             } else {
-                allCheckBoxesState.put(nonLocalizedKey, false);
+                allCheckBoxesState.put(nonLocalizedKey, new CheckBoxState(false));
             }
         }
     }
 
     protected void enableAllProperties() {
-        allCheckBoxesState.replaceAll((name, state) -> state = true);
+        allCheckBoxesState.replaceAll((name, state) -> state = new CheckBoxState(true));
     }
 
     protected void disableAllProperties() {
-        allCheckBoxesState.replaceAll((name, state) -> state = false);
+        allCheckBoxesState.replaceAll((name, state) -> state = new CheckBoxState(false));
     }
 
 }

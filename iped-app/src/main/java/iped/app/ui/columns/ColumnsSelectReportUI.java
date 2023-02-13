@@ -14,8 +14,10 @@ import javax.swing.JOptionPane;
 
 import iped.app.ui.App;
 import iped.app.ui.Messages;
+import iped.app.ui.columns.ColumnsManager.CheckBoxState;
 import iped.engine.task.index.IndexItem;
 import iped.localization.LocalizedProperties;
+import iped.properties.BasicProps;
 
 public class ColumnsSelectReportUI extends ColumnsSelectUI {
     private static ColumnsSelectReportUI instance;
@@ -74,6 +76,7 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
         } else {
             columnsManager.enableOnlySelectedProperties(Arrays.asList(basicReportProps));
         }
+        disableRequiredProperties();
         updatePanelList();
     }
 
@@ -82,6 +85,7 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
         super.actionPerformed(e);
         if (e.getSource().equals(clearButton)) {
             columnsManager.disableAllProperties();
+            disableRequiredProperties();
             updatePanelList();
         } else if (e.getSource() instanceof JCheckBox || e.getSource().equals(selectVisibleButton)) {
             if (columnsManager.getSelectedProperties().size() > PROPERTIES_LIMIT_NUM) {
@@ -90,7 +94,7 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
                     String nonLocalizedText = LocalizedProperties.getNonLocalizedField(source.getText());
                     JOptionPane.showMessageDialog(dialog, Messages.getString("ColumnsManager.LimitReachedMessage", PROPERTIES_LIMIT_NUM),
                         Messages.getString("ColumnsManager.LimitReachedTitle"), JOptionPane.ERROR_MESSAGE);
-                    columnsManager.allCheckBoxesState.put(nonLocalizedText, false);
+                    columnsManager.allCheckBoxesState.put(nonLocalizedText, new CheckBoxState(false));
                 } else {
                     JOptionPane.showMessageDialog(dialog, Messages.getString("ColumnsManager.LimitReachedVisibleMessage", PROPERTIES_LIMIT_NUM),
                         Messages.getString("ColumnsManager.LimitReachedTitle"), JOptionPane.ERROR_MESSAGE);
@@ -100,5 +104,10 @@ public class ColumnsSelectReportUI extends ColumnsSelectUI {
                 updatePanelList();
             }
         }
+    }
+
+    public void disableRequiredProperties() {
+        columnsManager.allCheckBoxesState.put(IndexItem.ID_IN_SOURCE, new CheckBoxState(true, false));
+        columnsManager.allCheckBoxesState.put(BasicProps.PATH, new CheckBoxState(true, false));
     }
 }

@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.app.ui.ResultTableModel;
+import iped.app.ui.columns.ColumnsManager.CheckBoxState;
 import iped.localization.LocalizedProperties;
 import iped.utils.StringUtil;
 
@@ -127,7 +128,7 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
             JCheckBox source = (JCheckBox) e.getSource();
             String nonLocalizedText = LocalizedProperties.getNonLocalizedField(source.getText());
             boolean isSelected = source.isSelected();
-            columnsManager.allCheckBoxesState.put(nonLocalizedText, isSelected);
+            columnsManager.allCheckBoxesState.put(nonLocalizedText, new CheckBoxState(isSelected));
         }
 
         if (columnsManager.getSelectedProperties().size() == 0) {
@@ -149,9 +150,10 @@ public class ColumnsSelectUI extends ColumnsManagerUI {
             if (filter.isEmpty() || fieldName.toLowerCase().indexOf(filter) >= 0) {
                 JCheckBox check = new JCheckBox();
                 check.setText(fieldName);
-                Boolean checkBoxState = columnsManager.allCheckBoxesState.get(LocalizedProperties.getNonLocalizedField(fieldName));
-                if (checkBoxState != null && checkBoxState == true)
-                    check.setSelected(true);
+                CheckBoxState checkBoxState = columnsManager.allCheckBoxesState.get(LocalizedProperties.getNonLocalizedField(fieldName));
+                if (checkBoxState.isSelected)
+                    check.setSelected(checkBoxState.isSelected);
+                check.setEnabled(checkBoxState.isEnabled);
                 check.addActionListener(this);
                 listPanel.add(check);
             }
