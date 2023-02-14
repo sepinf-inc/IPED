@@ -53,7 +53,6 @@ public class ParsersTreeModel implements TreeModel {
     ParsersConfig configurable;
     final static String ROOT = "Parsers";
     final static String MIME_NODE = "myme-types";
-    private HashMap<String, Element> parserElements = new HashMap<String,Element>();
     private HashMap<Element, Set<MediaType>> parsersMediaType = new HashMap<Element, Set<MediaType>>();
     private HashSet<Element> parsers = new HashSet<Element>();
     private HashMap<Category, Set<String>> categoryMediaType = new HashMap<Category, Set<String>>();
@@ -90,7 +89,6 @@ public class ParsersTreeModel implements TreeModel {
     public ParsersTreeModel copy() {
         ParsersTreeModel copy = new ParsersTreeModel();
         copy.configurable = configurable;
-        copy.parserElements = parserElements;
         copy.parsers = parsers;
         copy.parsersMediaType=parsersMediaType;
         copy.categoryMediaType = categoryMediaType;
@@ -128,7 +126,7 @@ public class ParsersTreeModel implements TreeModel {
             }
 
             /*else return parser class name*/
-            String className = el.getAttributes().getNamedItem("class").getNodeValue();            
+            String className = el.getAttributes().getNamedItem("class").getNodeValue();
             return className;
         }
 
@@ -255,7 +253,6 @@ public class ParsersTreeModel implements TreeModel {
         ArrayList<String> result = new ArrayList<String>();
         try {
             parsers.clear();
-            parserElements.clear();
             String xml = (String) configurable.getConfiguration();
             BOMInputStream bis = new BOMInputStream(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
 
@@ -275,7 +272,6 @@ public class ParsersTreeModel implements TreeModel {
 
                 result.add(parserClass);
                 parsers.add(e);
-                parserElements.put(String.valueOf(i), e);
             }
         } catch (SAXException | IOException e) {
             e.printStackTrace();
@@ -404,10 +400,6 @@ public class ParsersTreeModel implements TreeModel {
         categoryParsers.put(category, filteredParsers);
         Collections.sort((List) filteredParsers);
         return filteredParsers;        
-    }
-
-    public Element getElement(String lastSelectedPathComponent) {
-        return parserElements.get(lastSelectedPathComponent);
     }
     
 }
