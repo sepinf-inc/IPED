@@ -61,6 +61,8 @@ public class ParsersTreeModel implements TreeModel {
     Category category = null;
     Document doc;
     private CategoryConfig categoryConfig;
+    
+    boolean toListParameters = false;
 
     private ParsersTreeModel() {
     }
@@ -171,12 +173,14 @@ public class ParsersTreeModel implements TreeModel {
                 Element el = ((ParserElementName)parent).getElement();
                 Set<MediaType> mimes = parsersMediaType.get(el);
                 int result=0;
-                List fs= parserFields.get(el);
                 if(mimes!=null) {
                     result+=mimes.size();
                 }
-                if(fs!=null) {
-                    result+=fs.size();
+                if(toListParameters) {
+                    List fs= parserFields.get(el);
+                    if(fs!=null) {
+                        result+=fs.size();
+                    }
                 }
                 return result;
             }
