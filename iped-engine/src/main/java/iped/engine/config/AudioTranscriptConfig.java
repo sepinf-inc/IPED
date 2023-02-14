@@ -1,5 +1,8 @@
 package iped.engine.config;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -146,6 +149,27 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
             this.skipKnownFiles = Boolean.valueOf(skipKnown.trim());
         }
 
+    }
+
+    /**
+     * Avoid leaking the transcription service address (host:port)
+     * 
+     * @param moduleOutput
+     * @throws IOException
+     */
+    public void clearTranscriptionServiceAddress(File moduleOutput) throws IOException {
+        File config = new File(moduleOutput, "conf/" + CONF_FILE);
+        if (config.exists() && config.canWrite()) {
+            List<String> lines = Files.readAllLines(config.toPath());
+            List<String> outLines = new ArrayList<>();
+            for (String line : lines) {
+                if (!line.isEmpty() && (line.trim().startsWith(WAV2VEC2_SERVICE) || line.substring(1).trim().startsWith(WAV2VEC2_SERVICE))) {
+                    line = "# " + WAV2VEC2_SERVICE + " = 127.0.0.1:11111";
+                }
+                outLines.add(line);
+            }
+            Files.write(config.toPath(), outLines);
+        }
     }
 
 }

@@ -92,7 +92,7 @@ minWordScore = 0.5
 #########################################
 
 # IP:PORT of the service/central node used by the RemoteWav2Vec2TranscriptTask implementation.
-# wav2vec2Service = 127.0.0.1:54321
+# wav2vec2Service = 127.0.0.1:11111
 
 #########################################
 # MicrosoftTranscriptTask options
