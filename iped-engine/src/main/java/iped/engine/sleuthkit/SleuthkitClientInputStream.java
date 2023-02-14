@@ -241,7 +241,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
             return -1;
         }
 
-        return b[0];
+        return b[0] & 0xFF;
     }
 
     @Override

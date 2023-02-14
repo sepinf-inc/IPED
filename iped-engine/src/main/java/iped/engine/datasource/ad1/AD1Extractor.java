@@ -461,7 +461,7 @@ public class AD1Extractor implements Closeable {
             if (i == -1)
                 return -1;
             else
-                return b[0];
+                return b[0] & 0xFF;
         }
 
         public long skip(long n) throws IOException {
