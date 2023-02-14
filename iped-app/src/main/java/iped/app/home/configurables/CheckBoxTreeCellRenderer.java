@@ -33,7 +33,7 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
             public void valueChanged(TreeSelectionEvent e) {
                 if(e.isAddedPath()) {
                     Object value = e.getNewLeadSelectionPath().getLastPathComponent();
-                    if(visiblePredicate!=null && visiblePredicate.apply(value)) {
+                    if(visiblePredicate==null || visiblePredicate.apply(value)) {
                         checkbox.setSelected(!checkbox.isSelected());
                         tree.getSelectionModel().clearSelection();
                     }
@@ -55,7 +55,7 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
             return label;
         }
         TreePath tp = tree.getPathForRow(row);
-        if(visiblePredicate!=null && visiblePredicate.apply(value)) {
+        if(visiblePredicate==null || visiblePredicate.apply(value)) {
             checkbox.setText(value.toString());
             checkbox.setSelected(checkedPredicate.apply(value));
 
