@@ -1,80 +1,54 @@
 package iped.app.home.configurables;
 
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import javax.swing.JList;
 import javax.swing.JScrollPane;
-import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.validation.SchemaFactory;
+import javax.swing.JSplitPane;
+import javax.swing.JTree;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreeSelectionModel;
 
-import org.apache.commons.io.input.BOMInputStream;
-import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 import com.google.common.base.Predicate;
 
 import iped.app.home.MainFrame;
-import iped.app.ui.controls.textarea.XMLXSDTokenMaker;
+import iped.app.home.configurables.ParsersTreeModel.ParserElementName;
+import iped.app.ui.CategoryMimeTreeModel;
+import iped.engine.config.CategoryConfig;
+import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ParsersConfig;
-import iped.utils.XMLUtil;
+import iped.engine.data.Category;
 
 public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
     ParsersConfig parsersConfig;
     private JScrollPane parserListPanel;
-    private JList<String> parserTypeList;
-    private CheckboxListCellRenderer<String> cellRenderer;
-    private HashMap<String, Element> parserElements = new HashMap<String,Element>();
-    private HashSet<Element> parsers = new HashSet<Element>();
+    private JTree parsersTree;
     private Document doc;
+    private JTree categoryTree;
+    private JSplitPane splitPane;
+    private CategoryConfig cc;
+    private ParsersTreeModel parsersModel;
+    private CheckBoxTreeCellRenderer cellRenderer;
+    private ParserTreeCellEditor cellEditor;
+    private JScrollPane categoryPanel;
+    private CategoryMimeTreeModel categoryTreeModel;
+    private Category categoryRoot;
 
     protected ParsersConfigurablePanel(ParsersConfig configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
         this.parsersConfig=configurable;
-    }
-    
-    class ResizeListener extends ComponentAdapter {
-        public void componentResized(ComponentEvent e) {
-            int ncols = (int) Math.ceil((parserListPanel.getSize().getWidth()-32)/cellRenderer.getMaxStringWidth());
-            int nrows = (int) Math.ceil((double)parserTypeList.getModel().getSize()/(double)ncols);
-            
-            parserTypeList.setVisibleRowCount(nrows);
-            parserListPanel.setViewportView(parserTypeList);
-        }
-
-        @Override
-        public void componentShown(ComponentEvent e) {
-            componentResized(e);
-        }
+        cc = ConfigurationManager.get().findObject(CategoryConfig.class);
+        categoryRoot = cc.getRoot().clone();
     }
 
     @Override
@@ -82,137 +56,117 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         super.createConfigurableGUI();
 
         textArea.getDocument().removeDocumentListener(this);
-        textArea.setSyntaxEditingStyle(XMLXSDTokenMaker.SYNTAX_STYLE_XMLXSD);
-        SyntaxScheme scheme = textArea.getSyntaxScheme();
-        scheme.getStyle(XMLXSDTokenMaker.RESERVED_WORD).background = Color.pink;
-        scheme.getStyle(XMLXSDTokenMaker.RESERVED_WORD).underline = true;
+        textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML);
         textArea.setText(parsersConfig.getConfiguration());
         textArea.getDocument().addDocumentListener(this);
     }
 
     @Override
     protected Component createBasicPane() {
-        if(parserListPanel==null) {
+        if(splitPane==null) {
             createParserListPanel();
         }
-        return parserListPanel;
+        return splitPane;
     }
 
     public void createParserListPanel() {
         parserListPanel = new JScrollPane();
-        parserTypeList = new JList<String>(getAvailableParsers().toArray(new String[0]));
-        parserTypeList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
-        parserListPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        this.addComponentListener(new ResizeListener());
-        parserListPanel.setViewportView(parserTypeList);
+        parsersModel = new ParsersTreeModel(parsersConfig, categoryRoot);
+        parsersTree = new JTree(parsersModel);
+        parsersTree.setRootVisible(false);
+        parserListPanel.setViewportView(parsersTree);
         parserListPanel.setAutoscrolls(true);
-        cellRenderer = new CheckboxListCellRenderer<String>(new Predicate<Integer>() {
+        parsersTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);        
+        cellRenderer = new CheckBoxTreeCellRenderer(parsersTree, new Predicate<Object>() {
             @Override
-            public boolean apply(Integer input) {
-                String attr = parserElements.get(String.valueOf(input)).getAttribute(ParsersConfig.PARSER_DISABLED_ATTR);
-                return !attr.equals("true");
-            }
-        }, true);
-        parserTypeList.setCellRenderer(cellRenderer);
-        parserTypeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        parserTypeList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if(!parserTypeList.getValueIsAdjusting() && parserTypeList.getSelectedValue()!=null) {
-                    Element elem = parserElements.get(String.valueOf(parserTypeList.getSelectedIndex()));
+            public boolean apply(Object input) {
+                boolean result=false;
+                if(input instanceof ParserElementName) {
+                    Element elem = ((ParserElementName)input).getElement();                    
                     Attr attr = (Attr)elem.getAttributes().getNamedItem(ParsersConfig.PARSER_DISABLED_ATTR);
                     
                     if(attr==null) {
-                        elem.setAttribute(ParsersConfig.PARSER_DISABLED_ATTR, "true");
-                    }else {
-                        elem.removeAttribute(ParsersConfig.PARSER_DISABLED_ATTR);
+                        result=true;
                     }
+                }
+                return result;
+            }
+        }, new Predicate<Object>() {
+            @Override
+            public boolean apply(@Nullable Object input) {
+                return input instanceof ParserElementName;
+            }
+        });
+        cellRenderer.checkbox.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                Object o = parsersTree.getLastSelectedPathComponent();                
+                if(o!=null) {
+                    if(o instanceof ParserElementName) {
+                        Element elem = ((ParserElementName)o).getElement();
+                        if(elem!=null) {
+                            Attr attr = (Attr)elem.getAttributes().getNamedItem(ParsersConfig.PARSER_DISABLED_ATTR);
+                            
+                            if(attr==null) {
+                                elem.setAttribute(ParsersConfig.PARSER_DISABLED_ATTR, "true");
+                            }else {
+                                elem.removeAttribute(ParsersConfig.PARSER_DISABLED_ATTR);
+                            }
 
-                    textArea.setText(getXMLString());
+                            textArea.setText(parsersModel.getXMLString());
+                            
+                            try {
+                                //moves the caret to the line of the changed parser declaration
+                                int lineNumber = Integer.parseInt((String) elem.getUserData(PositionalXMLReader.LINE_NUMBER_KEY_NAME))-1;
+                                int offset = textArea.getDocument().getDefaultRootElement().getElement(lineNumber).getStartOffset();
+                                textArea.setCaretPosition(offset);
+                            }catch(Exception ex) {
+                                ex.printStackTrace();                            
+                            }
 
-                    changed=true;
-                    parserTypeList.setValueIsAdjusting(true);
-                    try {
-                        parserTypeList.clearSelection();
-                    }finally {
-                        parserTypeList.setValueIsAdjusting(false);
+                            changed=true;
+                        }
                     }
                 }
             }
         });
-    }
-
-    public String getXMLString() {
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        try {
-            Transformer transformer = transformerFactory.newTransformer();
-            Element documentElement = doc.getDocumentElement();
-            documentElement.setAttribute("xmlns:"+ParsersConfig.PARSER_DISABLED_ATTR.split(":")[0], XMLUtil.IPED_NAMESAPCE);
-            DOMSource source = new DOMSource(doc);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            StreamResult result = new StreamResult(bos);
-            transformer.transform(source, result);
-            String strResult = bos.toString();
-            if(strResult.endsWith("?>")) {
-                return null;
-            }
-            return strResult;
-        } catch (TransformerException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    private List<String> getAvailableParsers() {        
-        ArrayList<String> result = new ArrayList<String>();
-        try {
-            String xml = (String) configurable.getConfiguration();
-            BOMInputStream bis = new BOMInputStream(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
-            DocumentBuilder docBuilder = getDocBuilder();
-            parsers.clear();
-            parserElements.clear();
-            doc = docBuilder.parse(new InputSource(bis));
-            NodeList nl = doc.getElementsByTagName("parser");
-            for(int i=0; i<nl.getLength(); i++) {
-                Element e =(Element) nl.item(i);
-                String parserName = nl.item(i).getAttributes().getNamedItem("class").getNodeValue();
-                result.add(parserName);
-                parsers.add(e);
-                parserElements.put(String.valueOf(i), e);
-            }
-        } catch (SAXException | IOException | ParserConfigurationException e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
-
-    public DocumentBuilder getDocBuilder() throws SAXException, ParserConfigurationException {
-        SchemaFactory factory = 
-                SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(false);
-        DocumentBuilder docBuilder = dbf.newDocumentBuilder();
-        docBuilder.setErrorHandler(new ErrorHandler() {
+        parsersTree.setCellRenderer(cellRenderer);
+        
+        categoryTreeModel = new CategoryMimeTreeModel(categoryRoot);
+        categoryTreeModel.hideCategories(new java.util.function.Predicate<Category>() {
             @Override
-            public void warning(SAXParseException exception) throws SAXException {
-            }
-            
-            @Override
-            public void fatalError(SAXParseException exception) throws SAXException {
-            }
-            
-            @Override
-            public void error(SAXParseException exception) throws SAXException {
-                throw exception;                
+            public boolean test(Category cat) {
+                if(cat.equals(categoryRoot)) {
+                    return false;
+                }else {
+                    List<ParserElementName> parsers = parsersModel.getCategoryMediaTypesNames(cat);
+                    return parsers!=null && parsers.size()<=0;
+                }
             }
         });
-        return docBuilder;
+        categoryTree = new JTree(categoryTreeModel);
+        categoryTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        categoryTree.addTreeSelectionListener(new TreeSelectionListener() {
+            @Override
+            public void valueChanged(TreeSelectionEvent e) {
+                Object cat = e.getNewLeadSelectionPath().getLastPathComponent();
+                if(cat instanceof Category) {
+                    parsersModel.setCategory((Category) cat);
+                    parsersTree.setModel(parsersModel.copy());
+                }
+            }
+        });
+        categoryPanel = new JScrollPane();
+        categoryPanel.setViewportView(categoryTree);
+        categoryPanel.setAutoscrolls(true);
+
+        splitPane = new JSplitPane();
+        splitPane.setRightComponent(parserListPanel);
+        splitPane.setLeftComponent(categoryPanel);
     }
 
     @Override
     public void applyChanges() throws ConfigurableValidationException {
         super.applyChanges();
-        parserTypeList.setListData(getAvailableParsers().toArray(new String[0]));
     }
 }

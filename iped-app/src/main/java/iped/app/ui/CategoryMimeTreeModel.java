@@ -1,27 +1,20 @@
 package iped.app.ui;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 
-import javax.swing.SwingUtilities;
-import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import iped.engine.data.Category;
 
 public class CategoryMimeTreeModel implements TreeModel{
-
     public static String rootName = Messages.getString("CategoryTreeModel.RootName"); //$NON-NLS-1$
-    
+
     public Category root;
-    private boolean toShowMimetypes=false; 
+    private boolean toShowMimetypes=false;
 
     private List<TreeModelListener> listeners = new ArrayList<TreeModelListener>();
 
@@ -34,6 +27,23 @@ public class CategoryMimeTreeModel implements TreeModel{
         this.root = root;
         this.root.setName(rootName);
         this.toShowMimetypes = toShowMimetypes;
+    }
+    
+    public void hideCategories(Predicate<Category> isToHide) {
+        hideCategories(root, isToHide);        
+    }
+
+    private void hideCategories(Category cat, Predicate<Category> isToHide) {
+        if(isToHide.test(cat)) {
+            if(cat.getParent()!=null) {
+                cat.getParent().getChildren().remove(cat);
+            }
+        }else {
+            Category[] cats = cat.getChildren().toArray(new Category[0]);
+            for (int i=0;i<cats.length;i++) {
+                hideCategories(cats[i], isToHide);                
+            }
+        }
     }
 
     @Override
@@ -58,13 +68,14 @@ public class CategoryMimeTreeModel implements TreeModel{
             return ((Category) parent).getChildren().toArray()[index];
         }
     }
-
+    
     @Override
     public int getChildCount(Object parent) {
         if(parent instanceof String) {
             return 0;
-        }
+        }        
         int size = ((Category) parent).getChildren().size();
+        
         if(toShowMimetypes) {
             size+=((Category) parent).getMimes().size();
         }
