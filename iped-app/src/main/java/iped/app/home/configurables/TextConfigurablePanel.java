@@ -27,6 +27,7 @@ public class TextConfigurablePanel extends ConfigurablePanel{
         txtAreaScroll = new RTextScrollPane();
         txtAreaScroll.setViewportView(textArea);
         txtAreaScroll.setAutoscrolls(true);
+        txtAreaScroll.setLineNumbersEnabled(true);
         this.setLayout(new BorderLayout());
         this.add(txtAreaScroll,BorderLayout.CENTER);
     }
