@@ -11,26 +11,29 @@ import javax.swing.tree.TreePath;
 import iped.engine.data.Category;
 
 public class CategoryMimeTreeModel implements TreeModel{
+    private static final String ROOT = "ROOT";
     public static String rootName = Messages.getString("CategoryTreeModel.RootName"); //$NON-NLS-1$
+    public static String uncategorizableName = "Uncategorizables"; //$NON-NLS-1$
+    public boolean toShowUncategorizable=false;
 
-    public Category root;
+    public Category rootCategory;
     private boolean toShowMimetypes=false;
 
     private List<TreeModelListener> listeners = new ArrayList<TreeModelListener>();
 
     public CategoryMimeTreeModel(Category root) {
-        this.root = root;
-        this.root.setName(rootName);
+        this.rootCategory = root;
+        this.rootCategory.setName(rootName);
     }
 
     public CategoryMimeTreeModel(Category root, boolean toShowMimetypes) {
-        this.root = root;
-        this.root.setName(rootName);
+        this.rootCategory = root;
+        this.rootCategory.setName(rootName);
         this.toShowMimetypes = toShowMimetypes;
     }
     
     public void hideCategories(Predicate<Category> isToHide) {
-        hideCategories(root, isToHide);        
+        hideCategories(rootCategory, isToHide);        
     }
 
     private void hideCategories(Category cat, Predicate<Category> isToHide) {
@@ -48,14 +51,25 @@ public class CategoryMimeTreeModel implements TreeModel{
 
     @Override
     public Object getRoot() {
-        return root;
+        if(toShowUncategorizable) {
+            return ROOT;
+        }else {
+            return rootCategory;
+        }
     }
 
     @Override
     public Object getChild(Object parent, int index) {
+        if(parent==ROOT) {
+            if(index==0) {
+                return uncategorizableName;
+            }else {
+                return rootCategory;
+            }
+        }
         if(parent instanceof String) {
             return null;
-        }
+        }        
         if(toShowMimetypes) {
             int subCatsListSize = ((Category) parent).getChildren().size();
             if(index >= subCatsListSize) {
@@ -71,6 +85,9 @@ public class CategoryMimeTreeModel implements TreeModel{
     
     @Override
     public int getChildCount(Object parent) {
+        if(parent==ROOT) {
+            return 2;//uncategorizables and categories
+        }
         if(parent instanceof String) {
             return 0;
         }        
@@ -84,6 +101,9 @@ public class CategoryMimeTreeModel implements TreeModel{
 
     @Override
     public boolean isLeaf(Object node) {
+        if(node==ROOT) {
+            return false;
+        }
         if(node instanceof String) {
             return true;
         }
@@ -117,6 +137,14 @@ public class CategoryMimeTreeModel implements TreeModel{
     public void updateModel() {
         
         
+    }
+
+    public boolean isToShowUncategorizable() {
+        return toShowUncategorizable;
+    }
+
+    public void setToShowUncategorizable(boolean showUncategorizable) {
+        this.toShowUncategorizable = showUncategorizable;
     }
 
 }

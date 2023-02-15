@@ -42,6 +42,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import iped.configuration.Configurable;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ParsersConfig;
@@ -50,7 +51,7 @@ import iped.parsers.misc.MultipleParser;
 import iped.utils.XMLUtil;
 
 public class ParsersTreeModel implements TreeModel {
-    ParsersConfig configurable;
+    Configurable<String> configurable;
     final static String ROOT = "Parsers";
     final static String MIME_NODE = "myme-types";
     private HashMap<Element, Set<MediaType>> parsersMediaType = new HashMap<Element, Set<MediaType>>();
@@ -63,20 +64,46 @@ public class ParsersTreeModel implements TreeModel {
     private CategoryConfig categoryConfig;
     
     boolean toListParameters = false;
+    private boolean externalParsers;
+    private ArrayList<ParserElementName> categorizableParsers;
+    private ArrayList<ParserElementName> uncategorizableParsers;
 
     private ParsersTreeModel() {
     }
-    
-    public ParsersTreeModel(ParsersConfig configurable, Category root) {
+
+    public ParsersTreeModel(Configurable<String> configurable, Category cat, Document doc) {
+        this.configurable = configurable;
+        this.doc=doc;
+        categoryConfig = ConfigurationManager.get().findObject(CategoryConfig.class);
+        loadModel(cat);
+    }
+
+    public ParsersTreeModel(Configurable<String> configurable, Category cat) {
         this.configurable = configurable;
         categoryConfig = ConfigurationManager.get().findObject(CategoryConfig.class);
+        loadModel(cat);
+    }
+    
+    private void loadModel(Category cat) {
+        getDocument();
         populateAvailableParsers();
-        if(root!=null) {
-            populatesCategoryMimes(root);
+        if(cat!=null) {
+            populatesCategoryMimes(cat);
         }
-        updateFilteredParsers(root);
-        category = root;
-        updateParsersFields();
+        categorizableParsers = updateFilteredParsers(cat);
+        uncategorizableParsers = new ArrayList<ParserElementName>();
+        for (Iterator iterator = parsers.iterator(); iterator.hasNext();) {
+            Element el = (Element) iterator.next();
+            ParserElementName parserElementName = new ParserElementName(el);
+            if(!categorizableParsers.contains(parserElementName)) {
+                uncategorizableParsers.add(parserElementName);
+            }
+        }
+        categoryParsers.put(null, uncategorizableParsers);
+        category = cat;
+        if(!externalParsers) {
+            updateParsersFields();
+        }
     }
     
     public ParsersTreeModel(ParsersConfig configurable) {
@@ -115,26 +142,35 @@ public class ParsersTreeModel implements TreeModel {
 
         @Override
         public String toString() {
-            /*if there is a param named parserName returns its content*/
-            Element paramsList = (Element) el.getElementsByTagName("params").item(0);
-            if(paramsList!=null) {
-                NodeList params = paramsList.getElementsByTagName("param");
-                Set<MediaType> result = new TreeSet<MediaType>();
-                for(int i=0; i<params.getLength(); i++) {
-                    if(((Element) params.item(i)).getAttribute("name").equals("parserName")) {
-                        return ((Element) params.item(i)).getTextContent();
+            if(externalParsers) {
+                return ((Element) el.getElementsByTagName("name").item(0)).getTextContent();
+            }else {
+                /*if there is a param named parserName returns its content*/
+                Element paramsList = (Element) el.getElementsByTagName("params").item(0);
+                if(paramsList!=null) {
+                    NodeList params = paramsList.getElementsByTagName("param");
+                    Set<MediaType> result = new TreeSet<MediaType>();
+                    for(int i=0; i<params.getLength(); i++) {
+                        if(((Element) params.item(i)).getAttribute("name").equals("parserName")) {
+                            return ((Element) params.item(i)).getTextContent();
+                        }
                     }
                 }
-            }
 
-            /*else return parser class name*/
-            String className = el.getAttributes().getNamedItem("class").getNodeValue();
-            return className;
+                /*else return parser class name*/
+                String className = el.getAttributes().getNamedItem("class").getNodeValue();
+                return className;
+            }
         }
 
         @Override
         public int compareTo(ParserElementName o) {
             return o.toString().compareTo(this.toString());
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof ParserElementName)&&((ParserElementName)obj).el==this.el;
         }
     }
     
@@ -253,52 +289,63 @@ public class ParsersTreeModel implements TreeModel {
         
     }
     
-    private List<String> populateAvailableParsers() {        
-        ArrayList<String> result = new ArrayList<String>();
-        try {
-            parsers.clear();
-            String xml = (String) configurable.getConfiguration();
-            BOMInputStream bis = new BOMInputStream(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
-
-            doc = PositionalXMLReader.readXML(bis);
-
-            NodeList nl = doc.getElementsByTagName("parser");
-            for(int i=0; i<nl.getLength(); i++) {
-                Element e =(Element) nl.item(i);
-                String parserClass = nl.item(i).getAttributes().getNamedItem("class").getNodeValue();
-                
+    private void populateAvailableParsers() {        
+        parsers.clear();
+        doc = getDocument();
+        
+        externalParsers = doc.getDocumentElement().getTagName().equals("external-parsers");
+        
+        NodeList nl = doc.getElementsByTagName("parser");
+        for(int i=0; i<nl.getLength(); i++) {
+            Element e =(Element) nl.item(i);
+            if(externalParsers) {
                 Set<MediaType> supportedMimes=null;
 
                 supportedMimes = getSupportedMimeTypes(e);
                 if(supportedMimes!=null) {
                     parsersMediaType.put(e, supportedMimes);
                 }
+            }else {
+                Set<MediaType> supportedMimes=null;
 
-                result.add(parserClass);
-                parsers.add(e);
+                supportedMimes = getSupportedMimeTypes(e);
+                if(supportedMimes!=null) {
+                    parsersMediaType.put(e, supportedMimes);
+                }
             }
-        } catch (SAXException | IOException e) {
-            e.printStackTrace();
+
+            parsers.add(e);
         }
-        return result;
     }
 
     private Set<MediaType> getSupportedMimeTypes(Element el){
         try {
-            String parserClass = el.getAttributes().getNamedItem("class").getNodeValue();
-            Class<?> clazz = Class.forName((java.lang.String) parserClass);
-            Parser parser = (Parser) clazz.newInstance();
-            if(parser instanceof MultipleParser) {
-                MultipleParser mparser = ((MultipleParser)parser);
-                NodeList mimes = el.getElementsByTagName("mime");
+            if(externalParsers) {
+                Element mimeTypes = (Element) el.getElementsByTagName("mime-types").item(0);
+                NodeList mimes = mimeTypes.getElementsByTagName("mime-type");
                 Set<MediaType> result = new TreeSet<MediaType>();
                 for(int i=0; i<mimes.getLength(); i++) {
-                    String[] mime = ((Element) mimes.item(i)).getTextContent().split("/");
+                    Element mimeType = (Element)mimes.item(i);
+                    String[] mime = mimeType.getTextContent().split("/");
                     result.add(new MediaType(mime[0], mime[1]));
                 }
-                return result;
+                return result;                
             }else {
-                return parser.getSupportedTypes(null);
+                String parserClass = el.getAttributes().getNamedItem("class").getNodeValue();
+                Class<?> clazz = Class.forName((java.lang.String) parserClass);
+                Parser parser = (Parser) clazz.newInstance();
+                if(parser instanceof MultipleParser) {
+                    MultipleParser mparser = ((MultipleParser)parser);
+                    NodeList mimes = el.getElementsByTagName("mime");
+                    Set<MediaType> result = new TreeSet<MediaType>();
+                    for(int i=0; i<mimes.getLength(); i++) {
+                        String[] mime = ((Element) mimes.item(i)).getTextContent().split("/");
+                        result.add(new MediaType(mime[0], mime[1]));
+                    }
+                    return result;
+                }else {
+                    return parser.getSupportedTypes(null);
+                }
             }
         }catch(Exception e) {
             e.printStackTrace();
@@ -375,9 +422,9 @@ public class ParsersTreeModel implements TreeModel {
     
     private ArrayList<ParserElementName> updateFilteredParsers(Category category) {
         ArrayList<ParserElementName> filteredParsers = new ArrayList<ParserElementName>();
+        
         for (Iterator iterator = parsers.iterator(); iterator.hasNext();) {
             Element element = (Element) iterator.next();
-            String parserClass = element.getAttributes().getNamedItem("class").getNodeValue();
             if(category!=null) {
                 Set<MediaType> mts = parsersMediaType.get(element);
                 if(mts!=null) {
@@ -402,8 +449,26 @@ public class ParsersTreeModel implements TreeModel {
         }
 
         categoryParsers.put(category, filteredParsers);
+        
         Collections.sort((List) filteredParsers);
         return filteredParsers;        
+    }
+
+    public boolean isExternalParsers() {
+        return externalParsers;
+    }
+
+    public Document getDocument() {
+        if(doc==null) {
+            String xml = (String) configurable.getConfiguration();
+            BOMInputStream bis = new BOMInputStream(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
+            try {
+                doc = PositionalXMLReader.readXML(bis);
+            } catch (IOException | SAXException e) {
+                e.printStackTrace();
+            }
+        }
+        return doc;
     }
     
 }
