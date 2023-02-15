@@ -1,10 +1,11 @@
 package iped.app.home.configurables;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -21,26 +22,26 @@ import java.util.SortedSet;
 import java.util.function.Predicate;
 
 import javax.swing.DropMode;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTree;
 import javax.swing.ListModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.event.ListDataListener;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MediaTypeRegistry;
 import org.eclipse.collections.impl.set.sorted.mutable.TreeSortedSet;
 import org.fife.ui.autocomplete.AutoCompletion;
 import org.fife.ui.autocomplete.CompletionProvider;
@@ -52,8 +53,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import iped.app.home.MainFrame;
-import iped.app.home.configurables.autocompletion.CategoryCompletionProvider;
-import iped.app.home.configurables.autocompletion.CharsetCompletionProvider;
 import iped.app.home.configurables.autocompletion.MimetypeAutoCompletionProvider;
 import iped.app.home.configurables.popups.CategoryTreePopup;
 import iped.app.ui.CategoryMimeTreeModel;
@@ -75,6 +74,7 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
     private JPanel mimelistPanel;
     private RTextAreaBase txMimeFilter;
     private CompletionProvider cp;
+    private JCheckBox ckShowTika;
     static final String PATHARRAY_FLAVOR_NAME = "PATHARRAY";
     static final DataFlavor PATHARRAY_FLAVOR = new DataFlavor(int[].class, PATHARRAY_FLAVOR_NAME);
 
@@ -186,6 +186,20 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
         mimeList.setDropMode(DropMode.ON);
         mimeList.setTransferHandler(new MimeListTransferHandler());
         mimelistPanel.add(mimeListScrollPanel, BorderLayout.CENTER);
+        ckShowTika = new JCheckBox();
+        ckShowTika.setText("Show Tika mime-types");
+        ckShowTika.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    getAvailableMimetypes();
+                } catch (ParserConfigurationException | SAXException | IOException e1) {
+                    e1.printStackTrace();
+                }
+                mimeList.setModel(new MimeListModel());
+            }
+        });
+        mimelistPanel.add(ckShowTika,BorderLayout.SOUTH);
         this.add(mimelistPanel, BorderLayout.WEST);
         
         mimeList.setDragEnabled(true);
@@ -416,6 +430,16 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
             String mime = nl.item(i).getAttributes().getNamedItem("type").getNodeValue();
             if(!isIncluded(cc.getRoot(), mime)) {
                 mimes.add(mime);
+            }
+        }
+        
+        if(ckShowTika!=null && ckShowTika.isSelected()) {
+            SortedSet<MediaType> mts = MediaTypeRegistry.getDefaultRegistry().getTypes();
+            for (Iterator iterator = mts.iterator(); iterator.hasNext();) {
+                MediaType mediaType = (MediaType) iterator.next();
+                if(!isIncluded(cc.getRoot(), mediaType.toString())) {
+                    mimes.add(mediaType.toString());
+                }
             }
         }
         
