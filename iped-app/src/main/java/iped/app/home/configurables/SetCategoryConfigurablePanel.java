@@ -5,6 +5,8 @@ import java.awt.Component;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
@@ -16,40 +18,49 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.function.Predicate;
 
 import javax.swing.DropMode;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTree;
 import javax.swing.ListModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
-import javax.swing.UIManager;
 import javax.swing.event.ListDataListener;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.collections.impl.set.sorted.mutable.TreeSortedSet;
+import org.fife.ui.autocomplete.AutoCompletion;
+import org.fife.ui.autocomplete.CompletionProvider;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rtextarea.RTextAreaBase;
+import org.fife.ui.rtextarea.RTextScrollPane;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import iped.app.home.MainFrame;
+import iped.app.home.configurables.autocompletion.CategoryCompletionProvider;
+import iped.app.home.configurables.autocompletion.CharsetCompletionProvider;
+import iped.app.home.configurables.autocompletion.MimetypeAutoCompletionProvider;
 import iped.app.home.configurables.popups.CategoryTreePopup;
 import iped.app.ui.CategoryMimeTreeModel;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SignatureConfig;
 import iped.engine.data.Category;
-import iped.engine.task.AbstractTask;
 
 public class SetCategoryConfigurablePanel extends ConfigurablePanel {
     CategoryConfig cc;
@@ -61,6 +72,9 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
     private List<String> availableMimes;
     private CategoryTreePopup categoryTreePopupMenu;
     private MouseAdapter popupMa;
+    private JPanel mimelistPanel;
+    private RTextAreaBase txMimeFilter;
+    private CompletionProvider cp;
     static final String PATHARRAY_FLAVOR_NAME = "PATHARRAY";
     static final DataFlavor PATHARRAY_FLAVOR = new DataFlavor(int[].class, PATHARRAY_FLAVOR_NAME);
 
@@ -72,11 +86,21 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
     class MimeListModel implements ListModel<String>{
         @Override
         public int getSize() {
-            return availableMimes.size();
+            return (int) availableMimes.stream().filter(new Predicate<String>() {
+                @Override
+                public boolean test(String t) {
+                    return t.contains(txMimeFilter.getText());
+                }
+            }).count();
         }
         @Override
         public String getElementAt(int index) {
-            return availableMimes.get(index);
+            return (String) availableMimes.stream().filter(new Predicate<String>() {
+                @Override
+                public boolean test(String t) {
+                    return t.contains(txMimeFilter.getText());
+                }
+            }).toArray()[index];
         }
         @Override
         public void addListDataListener(ListDataListener l) {
@@ -85,21 +109,11 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
         @Override
         public void removeListDataListener(ListDataListener l) {
         }
-    }
-    
-    class CategoryTreeCellRenderer extends DefaultTreeCellRenderer{
-        @Override
-        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
-                boolean leaf, int row, boolean hasFocus) {
-            super.getTreeCellRendererComponent(tree, value, selected,expanded, leaf, row, hasFocus);
-            if(value instanceof Category) {
-                setIcon(getClosedIcon());
-                this.setComponentPopupMenu(categoryTreePopupMenu);
-            }
-            return this;
+        public Object getViewToModelIndex(int i) {
+            // TODO Auto-generated method stub
+            return null;
         }
     }
-    
 
     @Override
     public void createConfigurableGUI() {
@@ -121,7 +135,12 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
         };
         categoryTree.addMouseListener(popupMa);
         
-        categoryTree.setCellRenderer(new CategoryTreeCellRenderer());
+        categoryTree.setCellRenderer(new CheckBoxTreeCellRenderer(categoryTree, null, new Predicate<Object>() {
+            @Override
+            public boolean test(Object t) {
+                return false;
+            }
+        }));
 
         treeScrollPanel = new JScrollPane();
         treeScrollPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -138,14 +157,36 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
             e.printStackTrace();
         }        
         JLabel mimesLabel = new JLabel("Available mime-types:");
+        txMimeFilter = new RSyntaxTextArea(1,20);
+        txMimeFilter.setHighlightCurrentLine(false);
+        txMimeFilter.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                mimeList.setModel(new MimeListModel());
+            }
+            @Override public void keyReleased(KeyEvent e) {
+            }
+            @Override public void keyPressed(KeyEvent e) {}
+        });
+        cp = new MimetypeAutoCompletionProvider();
+        AutoCompletion ac = new AutoCompletion(cp);
+        ac.install(txMimeFilter);
+        
+        mimelistPanel = new JPanel(new BorderLayout());
+        mimelistPanel.setBackground(this.getBackground());
+        //mimelistPanel.add(mimesLabel,BorderLayout.BEFORE_FIRST_LINE);
+        RTextScrollPane tsMimeFilter = new RTextScrollPane(txMimeFilter);
+        tsMimeFilter.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        tsMimeFilter.setLineNumbersEnabled(false);
+        mimelistPanel.add(tsMimeFilter,BorderLayout.NORTH);
         mimeListScrollPanel = new JScrollPane();
         mimeListScrollPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         mimeListScrollPanel.setViewportView(mimeList);
         mimeListScrollPanel.setAutoscrolls(true);
         mimeList.setDropMode(DropMode.ON);
         mimeList.setTransferHandler(new MimeListTransferHandler());
-        this.add(mimesLabel, BorderLayout.NORTH);
-        this.add(mimeListScrollPanel, BorderLayout.WEST);
+        mimelistPanel.add(mimeListScrollPanel, BorderLayout.CENTER);
+        this.add(mimelistPanel, BorderLayout.WEST);
         
         mimeList.setDragEnabled(true);
         categoryTree.setDropMode(DropMode.ON);
@@ -180,7 +221,7 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
                     int[] selind = mimeList.getSelectedIndices();
                     for (int i = 0; i < selind.length; i++) {
                         String mime = mimeList.getModel().getElementAt(selind[i]);
-                        availableMimes.remove(selind[i]);
+                        availableMimes.remove(mimeList.getModel().getElementAt(selind[i]));
                         cat.getMimes().add(mime);
                     }
                     

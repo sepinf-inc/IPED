@@ -1,6 +1,7 @@
 package iped.app.home.configurables;
 
 import java.awt.Component;
+import java.util.function.Predicate;
 
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
@@ -14,8 +15,6 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import org.apache.tika.mime.MediaType;
-
-import com.google.common.base.Predicate;
 
 import iped.app.ui.IconManager;
 import iped.engine.data.Category;
@@ -40,7 +39,7 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
             public void valueChanged(TreeSelectionEvent e) {
                 if(e.isAddedPath()) {
                     Object value = e.getNewLeadSelectionPath().getLastPathComponent();
-                    if(visiblePredicate==null || visiblePredicate.apply(value)) {
+                    if(visiblePredicate==null || visiblePredicate.test(value)) {
                         checkbox.setSelected(!checkbox.isSelected());
                         tree.getSelectionModel().clearSelection();
                     }
@@ -74,9 +73,9 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
 
         TreePath tp = tree.getPathForRow(row);
 
-        if(visiblePredicate==null || visiblePredicate.apply(value)) {
+        if(visiblePredicate==null || visiblePredicate.test(value)) {
             checkbox.setText(value.toString());
-            checkbox.setSelected(checkedPredicate.apply(value));
+            checkbox.setSelected(checkedPredicate.test(value));
             checkbox.setIcon(icon);
 
             result = checkbox;
