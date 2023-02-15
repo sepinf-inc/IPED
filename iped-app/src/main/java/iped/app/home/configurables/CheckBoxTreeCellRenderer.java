@@ -2,7 +2,9 @@ package iped.app.home.configurables;
 
 import java.awt.Component;
 
+import javax.swing.Icon;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
@@ -11,7 +13,12 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import org.apache.tika.mime.MediaType;
+
 import com.google.common.base.Predicate;
+
+import iped.app.ui.IconManager;
+import iped.engine.data.Category;
 
 public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
     JCheckBox checkbox=new JCheckBox();
@@ -54,15 +61,31 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
             label.setText("");
             return label;
         }
+        
+        JComponent result = null;
+
+        Icon icon = null;
+        if(value instanceof MediaType) {
+            icon = IconManager.getFileIcon(value.toString().split("/")[0], "");
+        }
+        if(value instanceof Category) {
+            icon = IconManager.getCategoryIcon(((Category)value).getName().toLowerCase());
+        }
+
         TreePath tp = tree.getPathForRow(row);
+
         if(visiblePredicate==null || visiblePredicate.apply(value)) {
             checkbox.setText(value.toString());
             checkbox.setSelected(checkedPredicate.apply(value));
+            checkbox.setIcon(icon);
 
-            return checkbox;
+            result = checkbox;
         }else{
             label.setText(value.toString());
-            return label;
+            label.setIcon(icon);
+            result = label;
         }
+
+        return result;
     }
 }

@@ -366,6 +366,12 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
             }
         });
         categoryTree = new JTree(categoryTreeModel);
+        categoryTree.setCellRenderer(new CheckBoxTreeCellRenderer(categoryTree, null, new Predicate<Object>() {
+            @Override
+            public boolean apply(@Nullable Object input) {
+                return false;//never shows checkbox
+            }
+        }));
         categoryTree.setRootVisible(false);
         categoryTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         categoryTree.addTreeSelectionListener(new TreeSelectionListener() {
