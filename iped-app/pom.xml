@@ -28,6 +28,11 @@
             <version>3.3.2</version>
         </dependency>        
         <dependency>
+          <groupId>com.fifesoft</groupId>
+          <artifactId>autocomplete</artifactId>
+          <version>3.3.1</version>
+        </dependency>        
+        <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-geo</artifactId>
             <version>${project.version}</version>

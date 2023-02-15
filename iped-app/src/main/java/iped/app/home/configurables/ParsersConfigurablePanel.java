@@ -1,15 +1,29 @@
 package iped.app.home.configurables;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyVetoException;
+import java.beans.VetoableChangeListener;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.SortedSet;
 
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTextField;
 import javax.swing.JTree;
+import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -18,8 +32,15 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MediaTypeRegistry;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.fife.ui.autocomplete.AutoCompletion;
+import org.fife.ui.autocomplete.Completion;
+import org.fife.ui.autocomplete.DefaultCompletionProvider;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rtextarea.RTextScrollPane;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -28,6 +49,8 @@ import com.google.common.base.Predicate;
 
 import iped.app.home.MainFrame;
 import iped.app.home.configurables.ParsersTreeModel.ParserElementName;
+import iped.app.home.configurables.autocompletion.CharsetCompletionProvider;
+import iped.app.home.configurables.autocompletion.MimetypeAutoCompletionProvider;
 import iped.app.home.configurables.popups.ExternalParserPopup;
 import iped.app.ui.CategoryMimeTreeModel;
 import iped.configuration.Configurable;
@@ -40,7 +63,6 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
     protected Configurable<String> parsersConfig;
     private JScrollPane parserListPanel;
     private JTree parsersTree;
-    private Document document;
     private JTree categoryTree;
     private JSplitPane splitPane;
     private CategoryConfig cc;
@@ -52,6 +74,23 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
     private Category categoryRoot;
     private ExternalParserPopup externalParserPopup;
     private MouseAdapter popupMouseAdapter;
+    private JPanel createExternalParserPanel;
+    private SpringLayout panelLayout;
+    private int max;
+    private JLabel largestLabel;
+    private ArrayList<Component> comps = new ArrayList<Component>();
+    private Component lastLabel;
+    private JTextField txName;
+    private JTextField txCheckCommand;
+    private JTextField txCheckErroCodes;
+    private JTextField txCommand;
+    private RSyntaxTextArea txMimetypes;
+    private RSyntaxTextArea txCharset;
+    private JTextField txLines;
+    private DefaultCompletionProvider mimeCompletionProvider;
+    private MimetypeAutoCompletionProvider mtac;
+    private CharsetCompletionProvider csac;
+    private VetoableChangeListener externalParserEditingVeto;
 
     protected ParsersConfigurablePanel(Configurable<String> configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
@@ -68,6 +107,10 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML);
         textArea.setText(parsersConfig.getConfiguration());
         textArea.getDocument().addDocumentListener(this);
+        
+        if(parsersModel.isExternalParsers()) {
+            createNewExternalParserPanel();
+        }
     }
 
     @Override
@@ -76,6 +119,173 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
             createParserListPanel();
         }
         return splitPane;
+    }
+    
+    public void installField(String textLabel, Component component) {
+        JLabel label = new JLabel(textLabel);
+        if(lastLabel!=null) {
+            panelLayout.putConstraint(SpringLayout.NORTH, label, 15, SpringLayout.SOUTH, lastLabel);
+        }else {
+            panelLayout.putConstraint(SpringLayout.NORTH, label, 15, SpringLayout.NORTH, createExternalParserPanel);
+        }
+        int width = label.getText().length();
+        if(max<width) {
+            max=width;
+            largestLabel=label;
+        }
+        comps.add(label);
+        Component uiField;
+        if(component instanceof JTextField) {
+            panelLayout.putConstraint(SpringLayout.VERTICAL_CENTER, component, 0, SpringLayout.VERTICAL_CENTER, label);
+        }else {
+            panelLayout.putConstraint(SpringLayout.NORTH, component, 0, SpringLayout.NORTH, label);
+        }
+        comps.add(component);
+        lastLabel=component;
+    }
+    
+
+    public void createNewExternalParserPanel() {
+        createExternalParserPanel = new JPanel();
+        createExternalParserPanel.setBackground(Color.white);
+        JLabel lastLabel = null;
+        panelLayout = new SpringLayout();
+        createExternalParserPanel.setLayout(panelLayout);
+
+        txName= new JTextField("");
+        installField("Parser name:", txName);        
+        txCheckCommand=new JTextField();
+        installField("Check command:",txCheckCommand);
+        
+        txCheckErroCodes=new JTextField("1");
+        installField("Check error codes:",txCheckErroCodes);
+        
+        txCommand=new JTextField("${INPUT}");
+        installField("Command:",txCommand);
+        
+        txMimetypes=new RSyntaxTextArea(5,80);
+        txMimetypes.setHighlightCurrentLine(false);
+        mtac = new MimetypeAutoCompletionProvider();
+        AutoCompletion ac = new AutoCompletion(mtac);
+        ac.install(txMimetypes);
+        installField("Mime-types:",new RTextScrollPane(txMimetypes));
+        
+        txCharset = new RSyntaxTextArea();
+        txCharset.setHighlightCurrentLine(false);
+        RTextScrollPane charsetPanel = new RTextScrollPane(txCharset);
+        charsetPanel.setLineNumbersEnabled(false);
+        charsetPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        installField("Charset:",charsetPanel );
+        csac = new CharsetCompletionProvider();
+        ac = new AutoCompletion(csac);
+        ac.install(txCharset);
+        
+        txLines= new JTextField("0");
+        installField("First lines to ignore:",txLines);
+
+        for (Iterator iterator = comps.iterator(); iterator.hasNext();) {
+            Component component = (Component) iterator.next();
+            if(component!=largestLabel) {
+                if(component instanceof JLabel) {
+                    panelLayout.putConstraint(SpringLayout.EAST, component, 0, SpringLayout.EAST, largestLabel);
+                }else {
+                    panelLayout.putConstraint(SpringLayout.WEST, component, 5,SpringLayout.EAST, largestLabel);
+                    panelLayout.putConstraint(SpringLayout.EAST, component, -15,SpringLayout.EAST, createExternalParserPanel);
+                }
+            }
+            createExternalParserPanel.add(component);
+        }
+        
+        JButton cancelExternalParserBtn = new JButton("Cancel");
+        cancelExternalParserBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ((VetoableSingleSelectionModel)tabbedPane.getModel()).removeVetoableChangeListener(externalParserEditingVeto);
+                tabbedPane.setSelectedIndex(0);
+                tabbedPane.removeTabAt(2);
+            }
+        });
+        JButton createExternalParserBtn = new JButton("Create external parser");
+        createExternalParserBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(txName.getText().trim().equals("")) {
+                    JOptionPane.showMessageDialog(createExternalParserPanel, "Parser name field empty.");
+                    return;
+                }
+                if(txCommand.getText().trim().equals("${INPUT}")) {
+                    JOptionPane.showMessageDialog(createExternalParserPanel, "Command field empty.");
+                    return;
+                }
+                if(txMimetypes.getText().trim().equals("")) {
+                    JOptionPane.showMessageDialog(createExternalParserPanel, "Mime-types field empty.");
+                }
+                SortedSet<MediaType> mts = MediaTypeRegistry.getDefaultRegistry().getTypes();
+                String[] mimetypes= txMimetypes.getText().split("\n");
+                for (int i = 0; i < mimetypes.length; i++) {
+                    String[] mimeparts=mimetypes[i].trim().split("/");
+                    if(mimeparts.length<2) {
+                        JOptionPane.showMessageDialog(createExternalParserPanel, "Invalid mimetype: "+mimetypes[i]+".");
+                    }
+                    MediaType mt = new MediaType(mimeparts[0], mimeparts[1]);
+                    if(!mtac.containsKeyword(mt.toString())) {
+                        JOptionPane.showMessageDialog(createExternalParserPanel, "Mime type specified is not registered: "+mimetypes[i]+".");
+                        return;
+                    }
+                }
+                if(txCharset.getText().trim().equals("")) {
+                    JOptionPane.showMessageDialog(createExternalParserPanel, "Charset field empty.");
+                    return;
+                }
+                
+                try{
+                    Integer.parseInt(txLines.getText().trim());
+                }catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(createExternalParserPanel, "Invalid value informed as number of first lines to skip.");
+                }
+                
+                List<Completion> cs = csac.getCompletionByInputText(txCharset.getText().trim());
+                if(cs==null || cs.size()!=1) {
+                    JOptionPane.showMessageDialog(createExternalParserPanel, "Invalid charset.");
+                    return;
+                }
+                createExternalParserElement();
+                ((VetoableSingleSelectionModel)tabbedPane.getModel()).removeVetoableChangeListener(externalParserEditingVeto);
+                tabbedPane.setSelectedIndex(0);
+                tabbedPane.remove(createExternalParserPanel);
+                                
+            }
+        });
+        JPanel btnPanel = new JPanel();
+        btnPanel.setBackground(this.getBackground());
+        btnPanel.add(createExternalParserBtn);
+        btnPanel.add(cancelExternalParserBtn);
+        panelLayout.putConstraint(SpringLayout.SOUTH, btnPanel, -30,SpringLayout.SOUTH, createExternalParserPanel);
+        panelLayout.putConstraint(SpringLayout.HORIZONTAL_CENTER, btnPanel, 0,SpringLayout.HORIZONTAL_CENTER, createExternalParserPanel);
+        createExternalParserPanel.add(btnPanel);
+    }
+    
+    public void createExternalParserElement() {
+        Document doc = parsersModel.getDocument();
+        doc.getDocumentElement().getChildNodes().getLength();
+
+        Element parserEl = doc.createElement("parser");
+        Element parserNameEl = (Element) parserEl.appendChild(doc.createElement("name"));
+        parserNameEl.setTextContent(txName.getText());
+        Element checkEl = (Element) parserEl.appendChild(doc.createElement("check"));
+        checkEl.appendChild(doc.createElement("command")).setTextContent(txCheckCommand.getText());;
+        checkEl.appendChild(doc.createElement("error-codes")).setTextContent(txCheckErroCodes.getText());
+        parserEl.appendChild(doc.createElement("command")).setTextContent(txCommand.getText());
+        parserEl.appendChild(doc.createElement("output-charset")).setTextContent(txCharset.getText());
+        parserEl.appendChild(doc.createElement("firstLinesToIgnore")).setTextContent(txLines.getText());
+        String[] mimetypes= txMimetypes.getText().split("\n");
+        Element mimeTypesEl = (Element) parserEl.appendChild(doc.createElement("mime-types"));
+        for (int i = 0; i < mimetypes.length; i++) {
+            mimeTypesEl.appendChild(doc.createElement("mime")).setTextContent(mimetypes[i]);
+        }
+        doc.getDocumentElement().appendChild(parserEl);
+        
+        refreshParsersModel();
     }
 
     public void createParserListPanel() {
@@ -220,5 +430,26 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
 
     public Document getDocument() {
         return parsersModel.getDocument();
+    }
+
+    public void startExternalParserCreation() {
+        txName.setText("");
+        txCheckCommand.setText("");
+        txMimetypes.setText("");
+        txCommand.setText("");
+        txCheckErroCodes.setText("1");
+        txCharset.setText("");
+        txLines.setText("0");
+
+        tabbedPane.addTab("New external Parser", createExternalParserPanel);
+        tabbedPane.setSelectedComponent(createExternalParserPanel);
+        externalParserEditingVeto = new VetoableChangeListener() {
+            @Override
+            public void vetoableChange(PropertyChangeEvent evt) throws PropertyVetoException {
+                PropertyVetoException pve = new PropertyVetoException("Edition of external parse in course.", evt);
+                throw pve;
+            }
+        };
+        ((VetoableSingleSelectionModel)tabbedPane.getModel()).addVetoableChangeListener(externalParserEditingVeto);
     }
 }
