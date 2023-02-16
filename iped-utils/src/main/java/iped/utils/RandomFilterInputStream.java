@@ -69,7 +69,7 @@ public class RandomFilterInputStream extends FilterInputStream {
         while (i == 0)
             i = read(b);
         if (i != -1)
-            return b[0];
+            return b[0] & 0xFF;
         else
             return -1;
     }

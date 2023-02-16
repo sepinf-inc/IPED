@@ -1346,8 +1346,8 @@
     <mime-type type="application/x-ios-locations-db">
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
- 	
- 	<mime-type type="application/x-tor-tc-fragment">
+    
+    <mime-type type="application/x-tor-tc-fragment">
 	</mime-type>
 
     <mime-type type="application/x-win10-mail-db">
@@ -1371,4 +1371,28 @@
         <sub-class-of type="text/html"/>
     </mime-type>
     
+    <mime-type type="application/x-chrome-cache-index">
+        <_comment>Chrome Cache Index file </_comment>
+        <magic priority="50">
+            <match value="0xC3CA03C1" type="string" offset="0"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-discord-chat">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="message/x-discord-message">
+    	<sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+    
+    <mime-type type="message/x-discord-attachment">
+    	<sub-class-of type="message/x-discord-message"/>
+    </mime-type>
+    
+    <mime-type type="call/x-discord-call">
+    	<sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+
 </mime-info>
+

@@ -26,7 +26,7 @@ public class ExternalFileOpen {
                 IItem item = App.get().appCase.getItemByLuceneID(luceneId);
                 String itemReferenceQuery = item.getMetadata().get(ExtraProperties.LINKED_ITEMS);
                 if (itemReferenceQuery != null
-                        && (MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME)
+                        && (MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.METADATA_ENTRY)
                             || MediaTypes.isInstanceOf(item.getMediaType(), Win10MailParser.WIN10_MAIL_ATTACH))) {
                     item = new AttachmentSearcherImpl().getItem(itemReferenceQuery);
                     if (item == null)

@@ -203,6 +203,11 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
         transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
 
+        // clear default config service address in output
+        this.transcriptConfig.clearTranscriptionServiceAddress(output);
+        // clear profile config service address in output
+        this.transcriptConfig.clearTranscriptionServiceAddress(new File(output, "profile"));
+
         if (conn == null && transcriptConfig.isEnabled()) {
             createConnection();
         }
