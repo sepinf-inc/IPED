@@ -31,11 +31,6 @@
             <artifactId>tika-core</artifactId>
             <version>${tika.core.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.sleuthkit</groupId>
-            <artifactId>sleuthkit</artifactId>
-            <version>${sleuthkit.version}</version>
-        </dependency>
     </dependencies>
     
     <build>
