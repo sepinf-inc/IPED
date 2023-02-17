@@ -210,6 +210,21 @@
             <artifactId>c3p0</artifactId>
             <version>0.9.5.5</version>
         </dependency>
+        <dependency>
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>pdfbox</artifactId>
+  			<version>${pdfbox.version}</version>
+		</dependency>
+		<dependency>
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>pdfbox-tools</artifactId>
+  			<version>${pdfbox.version}</version>
+		</dependency>
+		<dependency>
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>xmpbox</artifactId>
+  			<version>${pdfbox.version}</version>
+		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>jbig2-imageio</artifactId>
