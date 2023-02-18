@@ -189,7 +189,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     @Test
     public void testRecycleBin() throws IOException, TikaException, SAXException, TransformerException {
 
-        ContentHandler handler = new BodyContentHandler();
+        ContentHandler handler = new BodyContentHandler(1 << 20);
         ParseContext context = new ParseContext();
         Metadata metadata = new Metadata();
         String fileName = "test_recyclebin.png";
@@ -209,7 +209,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     @Test
     public void testRecycleBinInfo2() throws IOException, TikaException, SAXException, TransformerException {
 
-        ContentHandler handler = new BodyContentHandler();
+        ContentHandler handler = new BodyContentHandler(1 << 20);
         ParseContext context = new ParseContext();
         Metadata metadata = new Metadata();
         String fileName = "test_recyclebinINFO2";
