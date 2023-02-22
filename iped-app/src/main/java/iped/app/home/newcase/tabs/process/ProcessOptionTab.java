@@ -312,7 +312,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         jtableTasks.setFillsViewportHeight(true);
         jtableTasks.setRowHeight(30);
         jtableTasks.setModel(tasksTableModel);
-        jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellRenderer( new TableTaskOptionsCellRenderer() );
+        jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellRenderer( new TaskTableConfigurablesCellRenderer(selectedConfigurationManager, mainFrame));
         jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellEditor( new TableTaskOptionsCellEditor(new JCheckBox()) );
         
         jtableTasks.getColumn( jtableTasks.getColumnName(1)).setCellRenderer(new TableTaskEnabledCellRenderer(jtableTasks.getDefaultRenderer(jtableTasks.getColumnClass(1))));

@@ -4,36 +4,19 @@ package iped.app.home.newcase.tabs.process;/*
  * @author Thiago S. Figueiredo
  */
 
-import java.awt.AWTException;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Robot;
-import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.table.AbstractTableModel;
 
 import iped.app.home.MainFrame;
-import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.configuration.Configurable;
 import iped.configuration.EnabledInterface;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.config.EnableTaskProperty;
 import iped.engine.config.TaskInstallerConfig;
 import iped.engine.task.AbstractTask;
-import iped.engine.task.PythonTask;
-import iped.engine.task.ScriptTask;
-import iped.utils.IconUtil;
 
 public class TasksTableModel extends AbstractTableModel {
 
@@ -107,7 +90,7 @@ public class TasksTableModel extends AbstractTableModel {
             case 0: return Integer.class;
             case 1: return Boolean.class;
             case 2: return AbstractTask.class;
-            case 3: return JPanel.class;
+            case 3: return AbstractTask.class;
             default: return String.class;
         }
     }
@@ -125,38 +108,11 @@ public class TasksTableModel extends AbstractTableModel {
             //task name column
             case 2: return taskList.get(rowIndex);
             //options button column
-            case 3: return createColumnOptionPanel(rowIndex);
+            case 3: {
+                return taskList.get(rowIndex);
+            }
             default: return "";
         }
-    }
-    
-    /**
-     * Create a JPanel to change the tasks properties
-     */
-    private JPanel createColumnOptionPanel(int rowIndex){
-        AbstractTask task = taskList.get(rowIndex);
-        JPanel panel = new JPanel();
-        panel.setLayout( new GridBagLayout() );
-
-        List<Configurable<?>> configurables = task.getConfigurables();
-        int count = 0;//counts the number of non EnableTaskProperty configurables
-        for (Configurable<?> value : configurables) {
-            if (!(value instanceof EnableTaskProperty)) {
-                count++;
-            }
-        }
-
-        if(count>0) {
-            GridBagConstraints gbc = new GridBagConstraints();
-            JButton taskOptionButton = new JButton("...");
-
-            taskOptionButton.addActionListener( e -> new TaskConfigDialog(configurationManager, task, mainFrame).setVisible(true));
-
-            taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
-            panel.add(taskOptionButton, gbc);
-        }
-
-        return panel;
     }
 
     @Override

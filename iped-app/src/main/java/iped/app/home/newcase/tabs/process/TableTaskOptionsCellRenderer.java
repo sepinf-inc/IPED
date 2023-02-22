@@ -2,6 +2,7 @@ package iped.app.home.newcase.tabs.process;/*
  * @created 13/09/2022
  * @project IPED
  * @author Thiago S. Figueiredo
+ * @author Patrick Dalla Bernardina
  */
 
 import javax.swing.*;
@@ -15,6 +16,4 @@ public class TableTaskOptionsCellRenderer extends DefaultTableCellRenderer {
         panel.setOpaque(false);
         return panel;
     }
-
-
 }
