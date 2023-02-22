@@ -3,7 +3,11 @@ package iped.utils;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +25,8 @@ public class UTF8Properties extends Properties {
 
     boolean cumulative = false;
     String cumulativeSeparator=";";
+    
+    LinkedHashSet<Object> insertionOrder = new LinkedHashSet<Object>(); 
 
     public synchronized void load(File file) throws IOException {
         try {
@@ -46,6 +52,8 @@ public class UTF8Properties extends Properties {
                     }else {
                         super.put(key, val);
                     }
+
+                    insertionOrder.add(key);
                 }
             }
             in.close();
@@ -190,4 +198,12 @@ public class UTF8Properties extends Properties {
     public void setCumulativeSeparator(String cumulativeSeparator) {
         this.cumulativeSeparator = cumulativeSeparator;
     }
+
+    public Set<Object> orderedKeySet() {
+        if(insertionOrder.size()!=this.size()) {
+            return super.keySet();
+        }
+        return insertionOrder;
+    }
+
 }

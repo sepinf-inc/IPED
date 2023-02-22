@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import javax.swing.*;
@@ -14,7 +15,7 @@ import iped.configuration.Configurable;
 import iped.utils.UTF8Properties;
 
 public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
-    HashMap<Object, JTextField> textFieldList = new HashMap<Object, JTextField>();
+    TreeMap<Object, JTextField> textFieldList = new TreeMap<Object, JTextField>();
 
     public UTF8PropertiesConfigurablePanel(Configurable<UTF8Properties> configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
@@ -26,16 +27,17 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
         UTF8Properties config = (UTF8Properties) configurable.getConfiguration();
         int currentLine = 0;
         if(config!=null) {
-            for(Entry<Object, Object> propertie : config.entrySet()){
-                String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName()+"."+propertie.getKey(), propertie.getKey().toString());
+            for(Object propertie : config.orderedKeySet()){
+                Object value = config.get(propertie);
+                String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName()+"."+propertie, propertie.toString());
                 //create label
                 contentPanel.add(new JLabel(localizedName +":"), getGridBagConstraints(0, currentLine, 1, 0));
                 //create input
-                JTextField textField = new JTextField( (propertie.getValue() != null) ? propertie.getValue().toString() : "" );
+                JTextField textField = new JTextField( (value != null) ? value.toString() : "" );
                 textField.getDocument().addDocumentListener(this);
                 contentPanel.add(textField, getGridBagConstraints(1, currentLine, 1, 1));
                 //
-                textFieldList.put(propertie.getKey(), textField);
+                textFieldList.put(propertie, textField);
                 currentLine++;
             }
         }else {
