@@ -80,6 +80,7 @@
 #Device Connectivity
 #Device Events
 #File Downloads
+#File Uploads
 #Journeys
 #Networks Usage
 #Recognized Devices
