@@ -2,6 +2,7 @@ package iped.app.home.configurables.uicomponents;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.dnd.DropTarget;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -13,7 +14,6 @@ import javax.swing.DropMode;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.TransferHandler;
@@ -29,6 +29,8 @@ public class IPEDSearchList extends JPanel {
         protected JScrollPane listScrollPanel;
         protected JList<String> list;
         protected Predicate<String> checkTypedContent;
+        protected int paintRef;
+        protected int paintSize;
 
         protected IPEDSearchList() {
             this(null);
@@ -45,9 +47,11 @@ public class IPEDSearchList extends JPanel {
             };
         }
         
-        public void createGUI(ListModel m) {
+        public void createGUI(IPEDFilterableListModel m) {
             list = new JList<String>(m);
-            
+
+            m.setFilter(checkTypedContent);
+
             txFilter = new RSyntaxTextArea(1,20);
             txFilter.setHighlightCurrentLine(false);
             txFilter.addKeyListener(new KeyListener() {
@@ -190,5 +194,25 @@ public class IPEDSearchList extends JPanel {
 
         public JList<String> getListComponent() {
             return list;
+        }
+        
+        @Override
+        public void paintImmediately(int x, int y, int w, int h) {
+            paintRef++;
+            if(paintRef>=1000000) {
+                paintRef=1;
+            }
+            paintSize=list.getModel().getSize();
+            super.paintImmediately(x, y, w, h);
+        }
+
+        @Override
+        protected void paintChildren(Graphics g) {
+            paintRef++;
+            if(paintRef>=1000000) {
+                paintRef=1;
+            }
+            paintSize=list.getModel().getSize();
+            super.paintChildren(g);
         }
 }
