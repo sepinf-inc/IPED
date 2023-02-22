@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -34,6 +35,7 @@ import iped.configuration.IConfigurationDirectory;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.PythonTask;
 import iped.engine.task.ScriptTask;
+import iped.utils.IOUtil;
 
 /*
  * @created 13/09/2022
@@ -342,13 +344,26 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 File selectedFile = scriptChooser.getSelectedFile();
 
                 AbstractTask task;
-                if (selectedFile.getName().endsWith(".py")) {
-                    task = new PythonTask(selectedFile);
-                } else {
-                    task = new ScriptTask(selectedFile);
+                try {
+                    File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE).toFile();
+                    File destFile = new File(scriptDir,selectedFile.getName());
+                    
+                    if(destFile.exists()) {
+                        JOptionPane.showMessageDialog(this, Messages.get("Home.ProcOptions.ScriptAlreadyExists"));
+                    }else {
+                        IOUtil.copyFile(selectedFile, destFile);
+                        
+                        if (selectedFile.getName().endsWith(".py")) {
+                            task = new PythonTask(destFile);
+                        } else {
+                            task = new ScriptTask(destFile);
+                        }
+                        tasksTableModel.addData(task, true);
+                        tasksTableModel.fireTableRowsInserted(taskArrayList.size()-1, taskArrayList.size()-1);
+                    }
+                }catch(Exception ex) {
+                    JOptionPane.showMessageDialog(this, ex.getLocalizedMessage());
                 }
-                tasksTableModel.addData(task, true);
-                tasksTableModel.fireTableRowsInserted(taskArrayList.size()-1, taskArrayList.size()-1);
             }
         });
 
