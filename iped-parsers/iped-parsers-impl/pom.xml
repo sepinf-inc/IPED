@@ -109,6 +109,10 @@
                     <groupId>org.bouncycastle</groupId>
                     <artifactId>bcprov-ext-jdk15on</artifactId>
                 </exclusion>
+				<exclusion>
+					<groupId>com.twelvemonkeys.imageio</groupId>
+					<artifactId>imageio-tiff</artifactId>
+				</exclusion>
             </exclusions>
         </dependency>
         <dependency>
