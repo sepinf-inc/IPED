@@ -46,7 +46,8 @@ public class TaskConfigDialog extends JDialog {
         configurables = task.getConfigurables();
         setModal(true);
         JPanel formPanel = new JPanel(new BorderLayout());
-        formPanel.add(createTitlePanel(task.getName()), BorderLayout.NORTH);
+        String localizedName = iped.engine.localization.Messages.getString(this.getClass().getName(), task.getName());
+        formPanel.add(createTitlePanel(localizedName), BorderLayout.NORTH);
         formPanel.add(createTabbedPanel(), BorderLayout.CENTER);
         formPanel.add(createButtonsPanel(), BorderLayout.SOUTH);
         this.getContentPane().add(formPanel);
