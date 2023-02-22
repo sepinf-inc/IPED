@@ -456,6 +456,11 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-dictionaryword", icon);
         }
 
+        icon = availableIconsMap.get("financial-account");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-financialaccount", icon);
+        }
+        
         return mimeIconMap;
     }
 
