@@ -88,7 +88,8 @@ public class TaskConfigDialog extends JDialog {
 
                 configPanel.createConfigurableGUI();
                 configurablePanels.put(configurable,configPanel);
-                tabbedPane.addTab(configurable.getClass().getSimpleName(), UIManager.getIcon("FileView.fileIcon"), configPanel, "");
+                String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName(), configurable.getClass().getSimpleName());
+                tabbedPane.addTab(localizedName, UIManager.getIcon("FileView.fileIcon"), configPanel, "");
             }
         }
         return  tabbedPane;
