@@ -36,7 +36,8 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
                 JTextField textField = new JTextField( (value != null) ? value.toString() : "" );
                 textField.getDocument().addDocumentListener(this);
                 contentPanel.add(textField, getGridBagConstraints(1, currentLine, 1, 1));
-                String toolTipText = config.getComments(propertie);
+                String tooltipKey = configurable.getClass().getName()+"."+propertie+".tooltip";
+                String toolTipText = iped.engine.localization.Messages.getString(tooltipKey ,config.getComments(propertie));
                 if(toolTipText!=null) {
                     textField.setToolTipText("<html>"+toolTipText.replace("\n", "<br>")+"</html>");
                 }
