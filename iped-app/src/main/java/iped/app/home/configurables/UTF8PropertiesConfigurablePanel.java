@@ -27,8 +27,9 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
         int currentLine = 0;
         if(config!=null) {
             for(Entry<Object, Object> propertie : config.entrySet()){
+                String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName()+"."+propertie.getKey(), propertie.getKey().toString());
                 //create label
-                contentPanel.add(new JLabel(propertie.getKey() +":"), getGridBagConstraints(0, currentLine, 1, 0));
+                contentPanel.add(new JLabel(localizedName +":"), getGridBagConstraints(0, currentLine, 1, 0));
                 //create input
                 JTextField textField = new JTextField( (propertie.getValue() != null) ? propertie.getValue().toString() : "" );
                 textField.getDocument().addDocumentListener(this);
