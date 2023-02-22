@@ -3,6 +3,7 @@ package iped.utils;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
@@ -26,14 +27,24 @@ public class UTF8Properties extends Properties {
     boolean cumulative = false;
     String cumulativeSeparator=";";
     
-    LinkedHashSet<Object> insertionOrder = new LinkedHashSet<Object>(); 
+    LinkedHashSet<Object> insertionOrder = new LinkedHashSet<Object>();
+    HashMap<Object, String> comments = new HashMap<Object,String>();
 
     public synchronized void load(File file) throws IOException {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
             String str = null;
+            String lastComment="";
+            boolean lastCommentSaved=false;
             while ((str = in.readLine()) != null) {
-                if (str.isEmpty() || str.charAt(0) == '#') {
+                if (str.trim().isEmpty() || str.trim().charAt(0) == '#') {
+                    if(!str.trim().isEmpty()) {
+                        if(lastCommentSaved) {
+                            lastComment="";
+                            lastCommentSaved=false;
+                        }
+                        lastComment+=str.trim().substring(1)+"\n";
+                    }
                     continue;
                 }
                 int pos = str.indexOf('=');
@@ -51,6 +62,8 @@ public class UTF8Properties extends Properties {
                         super.put(key, val);
                     }else {
                         super.put(key, val);
+                        comments.put(key, lastComment);
+                        lastCommentSaved=true;
                     }
 
                     insertionOrder.add(key);
@@ -204,6 +217,10 @@ public class UTF8Properties extends Properties {
             return super.keySet();
         }
         return insertionOrder;
+    }
+    
+    public String getComments(Object key) {
+        return comments.get(key);
     }
 
 }
