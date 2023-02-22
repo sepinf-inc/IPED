@@ -4,10 +4,14 @@ package iped.app.home.newcase.tabs.process;/*
  * @author Thiago S. Figueiredo
  */
 
+import java.beans.PropertyVetoException;
+import java.beans.VetoableChangeListener;
+import java.beans.VetoableChangeSupport;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
 
 import iped.app.home.MainFrame;
@@ -15,8 +19,10 @@ import iped.app.ui.Messages;
 import iped.configuration.Configurable;
 import iped.configuration.EnabledInterface;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.LocalConfig;
 import iped.engine.config.TaskInstallerConfig;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.HashDBLookupTask;
 
 public class TasksTableModel extends AbstractTableModel {
 
@@ -29,7 +35,7 @@ public class TasksTableModel extends AbstractTableModel {
     private ArrayList<Boolean> enabled = new ArrayList<Boolean>();
     private ArrayList<EnabledInterface> enabledConfigurables = new ArrayList<EnabledInterface>();
     MainFrame mainFrame;
-
+    
     private final TaskInstallerConfig taskInstallerConfig;
 
     public TasksTableModel(ConfigurationManager configurationManager, MainFrame mainFrame, List<AbstractTask> taskList) {
@@ -37,6 +43,7 @@ public class TasksTableModel extends AbstractTableModel {
         this.taskInstallerConfig = configurationManager.findObject(TaskInstallerConfig.class);
         this.taskList = taskList;
         this.mainFrame = mainFrame;
+        
     }
 
     public List<AbstractTask> getTaskList() {
@@ -135,7 +142,16 @@ public class TasksTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         //Enable-disable Column
         if (columnIndex == 1) {
-            enabled.set(rowIndex, ((boolean) aValue));
+            if(taskList.get(rowIndex) instanceof HashDBLookupTask) {
+                if(((boolean) aValue)) {
+                    LocalConfig lc = (LocalConfig) configurationManager.findObject(LocalConfig.class);
+                    if(lc.getHashDbFile()==null) {
+                        JOptionPane.showMessageDialog(mainFrame, "The local hash database file must be configured first in Local environment configuration to enable this task.", "HashDB task", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+            }
+            enabled.set(rowIndex, ((boolean) aValue));            
             EnabledInterface ec = enabledConfigurables.get(rowIndex);
             ec.setEnabled((boolean) aValue);
             configurationManager.notifyUpdate((Configurable) ec);
