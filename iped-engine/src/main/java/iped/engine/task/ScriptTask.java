@@ -65,8 +65,12 @@ public class ScriptTask extends AbstractTask implements IScriptTask {
             ScriptEngineManager manager = new ScriptEngineManager();
             String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1); // $NON-NLS-1$
             engine = manager.getEngineByExtension(ext); // $NON-NLS-1$
-            engine.eval(reader);
-            inv = (Invocable) engine;
+            if(engine==null) {
+                throw new ScriptException("No engine configured for this file type."); 
+            }else {
+                engine.eval(reader);
+                inv = (Invocable) engine;
+            }
         }
 
     }
