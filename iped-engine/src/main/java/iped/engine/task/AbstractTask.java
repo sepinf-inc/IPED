@@ -321,7 +321,8 @@ public abstract class AbstractTask {
     }
 
     public String getName() {
-        return this.getClass().getSimpleName();
+        String localizedName = iped.engine.localization.Messages.getString(this.getClass().getName(), this.getClass().getSimpleName());
+        return localizedName;
     }
     
     /**
