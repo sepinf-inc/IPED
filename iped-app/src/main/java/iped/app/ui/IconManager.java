@@ -390,6 +390,11 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-filedownload", icon);
         }
 
+        icon = availableIconsMap.get("upload");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-fileupload", icon);
+        }
+        
         icon = availableIconsMap.get("log");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-logentry", icon);
