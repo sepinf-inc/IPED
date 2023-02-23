@@ -460,6 +460,16 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-financialaccount", icon);
         }
+
+        icon = availableIconsMap.get("fuzzy-object");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-fuzzyentitymodel", icon);
+        }
+
+        icon = availableIconsMap.get("fuzzy-event");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-fuzzytimelinemodel", icon);
+        }
         
         return mimeIconMap;
     }
