@@ -180,7 +180,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 response = reader.readLine();
                 if (MESSAGES.WARN.toString().equals(response)) {
                     String warn = reader.readLine();
-                    logger.warn("Fail to transcribe on server:{} audio:{} error:{}", server, evidence.getPath(), warn);
+                    logger.warn("Fail to transcribe on server: {} audio: {} error: {}", server, evidence.getPath(), warn);
                     if (warn.contains(TimeoutException.class.getName())) {
                         evidence.setTimeOut(true);
                         stats.incTimeouts();
@@ -215,7 +215,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                     sleepBeforeRetry(requestTime);
                     requestServers(true);
                 } else {
-                    e.printStackTrace();
+                    logger.warn("Network error communicating to server: " + server + ", retrying audio: " + evidence.getPath(), e);
                 }
             }
         }
