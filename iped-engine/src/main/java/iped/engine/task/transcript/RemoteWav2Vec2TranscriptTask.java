@@ -184,6 +184,8 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                     if (warn.contains(TimeoutException.class.getName())) {
                         evidence.setTimeOut(true);
                         stats.incTimeouts();
+                    } else if (warn.contains(SocketTimeoutException.class.getName()) || warn.contains(SocketException.class.getName())) {
+                        continue;
                     }
                     return null;
                 }
