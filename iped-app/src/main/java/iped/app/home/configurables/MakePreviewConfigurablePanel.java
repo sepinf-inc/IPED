@@ -30,6 +30,7 @@ import iped.app.home.configurables.uicomponents.IPEDMimeSearchList;
 import iped.app.home.configurables.uicomponents.MimeListTransferHandler;
 import iped.app.ui.controls.textarea.RegexTextPane;
 import iped.engine.config.MakePreviewConfig;
+import iped.engine.localization.Messages;
 
 public class MakePreviewConfigurablePanel extends ConfigurablePanel {
     MakePreviewConfig previewConfig;
@@ -164,7 +165,7 @@ public class MakePreviewConfigurablePanel extends ConfigurablePanel {
         listSupportedMimes = new JList<String>(supportedMimes.toArray(new String[0]));
         JPanel textPanel = new JPanel(new BorderLayout());
         textPanel.setBackground(this.getBackground());
-        textPanel.add(new JLabel("Supported Mimetypes:"),BorderLayout.NORTH);
+        textPanel.add(new JLabel(Messages.getString(configurable.getClass().getName()+".supportedMimeTypes")),BorderLayout.NORTH);
         JScrollPane sp = new JScrollPane(listSupportedMimes);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         textPanel.add(sp,BorderLayout.CENTER);
@@ -184,7 +185,7 @@ public class MakePreviewConfigurablePanel extends ConfigurablePanel {
         listSupportedMimesWithLinks.setAutoscrolls(true);
         textPanel = new JPanel(new BorderLayout());
         textPanel.setBackground(this.getBackground());
-        textPanel.add(new JLabel("Supported Mimetypes with links:"),BorderLayout.NORTH);
+        textPanel.add(new JLabel(Messages.getString(configurable.getClass().getName()+".supportedMimeTypesWithLinks")),BorderLayout.NORTH);
         sp = new JScrollPane(listSupportedMimesWithLinks);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         textPanel.add(sp,BorderLayout.CENTER);

@@ -46,7 +46,7 @@ public class TaskConfigDialog extends JDialog {
         configurables = task.getConfigurables();
         setModal(true);
         JPanel formPanel = new JPanel(new BorderLayout());
-        String localizedName = iped.engine.localization.Messages.getString(this.getClass().getName(), task.getName());
+        String localizedName = iped.engine.localization.Messages.getString(task.getClass().getName(), task.getName());
         formPanel.add(createTitlePanel(localizedName), BorderLayout.NORTH);
         formPanel.add(createTabbedPanel(), BorderLayout.CENTER);
         formPanel.add(createButtonsPanel(), BorderLayout.SOUTH);
@@ -90,7 +90,8 @@ public class TaskConfigDialog extends JDialog {
                 configPanel.createConfigurableGUI();
                 configurablePanels.put(configurable,configPanel);
                 String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName(), configurable.getClass().getSimpleName());
-                tabbedPane.addTab(localizedName, UIManager.getIcon("FileView.fileIcon"), configPanel, "");
+                String localizedTooltip = iped.engine.localization.Messages.getString(configurable.getClass().getName()+iped.engine.localization.Messages.TOOLTIP_SUFFIX, "");
+                tabbedPane.addTab(localizedName, UIManager.getIcon("FileView.fileIcon"), configPanel, localizedTooltip);
             }
         }
         return  tabbedPane;

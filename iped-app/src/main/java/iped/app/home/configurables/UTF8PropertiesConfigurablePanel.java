@@ -12,6 +12,7 @@ import javax.swing.*;
 
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
+import iped.engine.localization.Messages;
 import iped.utils.UTF8Properties;
 
 public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
@@ -29,17 +30,17 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
         if(config!=null) {
             for(Object propertie : config.orderedKeySet()){
                 Object value = config.get(propertie);
-                String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName()+"."+propertie, propertie.toString());
+                String localizedName = Messages.getString(configurable.getClass().getName()+"."+propertie, propertie.toString());
                 //create label
                 contentPanel.add(new JLabel(localizedName +":"), getGridBagConstraints(0, currentLine, 1, 0));
                 //create input
                 JTextField textField = new JTextField( (value != null) ? value.toString() : "" );
                 textField.getDocument().addDocumentListener(this);
                 contentPanel.add(textField, getGridBagConstraints(1, currentLine, 1, 1));
-                String tooltipKey = configurable.getClass().getName()+"."+propertie+".tooltip";
-                String toolTipText = iped.engine.localization.Messages.getString(tooltipKey ,config.getComments(propertie));
+                String tooltipKey = configurable.getClass().getName()+"."+propertie+Messages.TOOLTIP_SUFFIX;
+                String toolTipText = Messages.getString(tooltipKey ,config.getComments(propertie));
                 if(toolTipText!=null) {
-                    textField.setToolTipText("<html>"+toolTipText.replace("\n", "<br>")+"</html>");
+                    textField.setToolTipText(toolTipText);
                 }
                 //
                 textFieldList.put(propertie, textField);

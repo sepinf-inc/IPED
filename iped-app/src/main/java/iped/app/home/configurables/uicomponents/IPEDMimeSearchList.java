@@ -23,6 +23,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import iped.app.ui.Messages;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SignatureConfig;
 
@@ -82,7 +83,7 @@ public class IPEDMimeSearchList extends IPEDSearchList {
         super.createGUI(new MimeListModel(availableItems, checkTypedContent));
 
         ckShowTika = new JCheckBox();
-        ckShowTika.setText("Show Tika mime-types");
+        ckShowTika.setText(Messages.get("Home.IPEDMimeSeachList.showTikaMimeTypes"));
         ckShowTika.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

@@ -14,6 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
 import iped.engine.config.RegexTaskConfig.RegexEntry;
+import iped.engine.localization.Messages;
 
 public class RegexConfigurablePanel extends ConfigurablePanel{
     protected JTextPane textArea;
@@ -32,7 +33,8 @@ public class RegexConfigurablePanel extends ConfigurablePanel{
     public void createConfigurableGUI() {
         JCheckBox checkField = new JCheckBox();
         Boolean b = ((Pair<Boolean,?>)configurable.getConfiguration()).getKey();
-        checkField.setText("Format matches.");
+        checkField.setText(Messages.getString(configurable.getClass().getName()+".formatMatches", ""));
+        checkField.setToolTipText(Messages.getString(configurable.getClass().getName()+".formatMatches.tooltip", ""));
         checkField.addChangeListener(e->{
             changed=true;
         });

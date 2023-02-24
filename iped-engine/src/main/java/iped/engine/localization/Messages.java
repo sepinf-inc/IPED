@@ -14,6 +14,8 @@ public class Messages {
     private static Logger LOGGER = LoggerFactory.getLogger(Messages.class);
 
     private static ResourceBundle RESOURCE_BUNDLE;
+    public static String TOOLTIP_SUFFIX=".tooltip";
+    
 
     private Messages() {
     }
@@ -51,10 +53,18 @@ public class Messages {
                 LOGGER.error("Bundle for Locale '" + locale.toLanguageTag() //$NON-NLS-1$
                         + "' not found. Using bundle for " + finalLocale); //$NON-NLS-1$
         }
+        String result;
         try {
-            return RESOURCE_BUNDLE.getString(key);
+            result = RESOURCE_BUNDLE.getString(key);
+            
         } catch (MissingResourceException e) {
-            return defaultValue;
+            result = defaultValue;
         }
+        
+        //prepares html formating for tooltips if not already formated as such 
+        if(key.endsWith(TOOLTIP_SUFFIX) && !result.startsWith("<html>")) {
+            result = "<html>"+result.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")+"</html>";
+        }
+        return result;
     }
 }
