@@ -53,6 +53,7 @@ import iped.app.home.configurables.autocompletion.CharsetCompletionProvider;
 import iped.app.home.configurables.autocompletion.MimetypeAutoCompletionProvider;
 import iped.app.home.configurables.popups.ExternalParserPopup;
 import iped.app.ui.CategoryMimeTreeModel;
+import iped.app.ui.Messages;
 import iped.configuration.Configurable;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
@@ -114,7 +115,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
     }
 
     @Override
-    protected Component createBasicPane() {
+    protected Component getBasicPane() {
         if(splitPane==null) {
             createParserListPanel();
         }
@@ -458,4 +459,9 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         };
         ((VetoableSingleSelectionModel)tabbedPane.getModel()).addVetoableChangeListener(externalParserEditingVeto);
     }
+
+    protected String getBasicPaneTitle() {
+        return Messages.get("Home.configurables.BasicParsersPanelLabel");
+    }
+
 }

@@ -15,6 +15,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 
 import iped.app.home.MainFrame;
+import iped.app.ui.Messages;
 import iped.configuration.Configurable;
 
 public abstract class AdvancedTextConfigurablePanel extends TextConfigurablePanel {
@@ -87,8 +88,8 @@ public abstract class AdvancedTextConfigurablePanel extends TextConfigurablePane
         
         this.remove(txtAreaScroll);
 
-        tabbedPane.addTab("Carver type list", UIManager.getIcon("FileView.fileIcon"), createBasicPane(), "");
-        tabbedPane.addTab("Advanced", UIManager.getIcon("FileView.fileIcon"), txtAreaScroll, "");
+        tabbedPane.addTab(getBasicPaneTitle(), UIManager.getIcon("FileView.fileIcon"), getBasicPane(), "");
+        tabbedPane.addTab(Messages.get("Home.configurables.AdvancedPanelLabel"), UIManager.getIcon("FileView.fileIcon"), txtAreaScroll, "");
         this.add(tabbedPane);
         
         tabbedPane.getModel().addChangeListener(null);
@@ -114,7 +115,10 @@ public abstract class AdvancedTextConfigurablePanel extends TextConfigurablePane
         });
         
     }
+    
+    protected String getBasicPaneTitle() {
+        return Messages.get("Home.configurables.BasicPanelLabel");
+    }
 
-    protected abstract Component createBasicPane();
-
+    protected abstract Component getBasicPane();
 }

@@ -22,6 +22,7 @@ import org.fife.ui.rsyntaxtextarea.TokenMakerFactory;
 import org.xml.sax.SAXException;
 
 import iped.app.home.MainFrame;
+import iped.app.ui.Messages;
 import iped.app.ui.controls.textarea.XMLXSDTokenMaker;
 import iped.carvers.api.CarverType;
 import iped.configuration.Configurable;
@@ -71,7 +72,7 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
             componentResized(e);
         }
     }
-
+    
     public void createCarverListPanel() {
         carverListPanel = new JScrollPane();
         carverTypeList = new JList<CarverType>(config.getAvailableCarverTypes());
@@ -132,8 +133,12 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
         }        
     }
 
+    protected String getBasicPaneTitle() {
+        return Messages.get("Home.configurables.BasicCarverPanelLabel");
+    }
+
     @Override
-    protected Component createBasicPane() {
+    protected Component getBasicPane() {
         if(carverListPanel==null) {
             createCarverListPanel();
         }
