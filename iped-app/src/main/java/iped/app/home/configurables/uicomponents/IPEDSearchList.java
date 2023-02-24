@@ -22,13 +22,13 @@ import javax.swing.event.ListSelectionListener;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
-public class IPEDSearchList extends JPanel {
+public class IPEDSearchList<E> extends JPanel {
         protected RSyntaxTextArea txFilter;
-        Predicate<String> availablePredicate;
-        protected List<String> availableItems;
+        Predicate<E> availablePredicate;
+        protected List<E> availableItems;
         protected JScrollPane listScrollPanel;
-        protected JList<String> list;
-        protected Predicate<String> checkTypedContent;
+        protected JList<E> list;
+        protected Predicate<E> checkTypedContent;
         protected int paintRef;
         protected int paintSize;
 
@@ -36,19 +36,24 @@ public class IPEDSearchList extends JPanel {
             this(null);
         }
 
-        protected IPEDSearchList(Predicate<String> availablePredicate) {
+        protected IPEDSearchList(Predicate<E> availablePredicate) {
             super(new BorderLayout());
             this.availablePredicate=availablePredicate;
-            checkTypedContent = new Predicate<String>() {
+            checkTypedContent = new Predicate<E>() {
                 @Override
-                public boolean test(String t) {
-                    return !txFilter.getText().trim().equals("") && !t.contains(txFilter.getText());
+                public boolean test(E t) {
+                    if(!txFilter.getText().trim().equals("")) {
+                        return !t.toString().contains(txFilter.getText());
+                    }else {
+                        return false;
+                    }
+                        
                 }
             };
         }
         
         public void createGUI(IPEDFilterableListModel m) {
-            list = new JList<String>(m);
+            list = new JList<E>(m);
 
             m.setFilter(checkTypedContent);
 
@@ -57,6 +62,7 @@ public class IPEDSearchList extends JPanel {
             txFilter.addKeyListener(new KeyListener() {
                 @Override
                 public void keyTyped(KeyEvent e) {
+                    list.clearSelection();
                     list.updateUI();
                 }
                 @Override public void keyReleased(KeyEvent e) {
@@ -168,7 +174,7 @@ public class IPEDSearchList extends JPanel {
         }
 
 
-        public List<String> getSelectedValuesList() {
+        public List<E> getSelectedValuesList() {
             return list.getSelectedValuesList();
         }
 
@@ -178,7 +184,7 @@ public class IPEDSearchList extends JPanel {
         }
 
 
-        public String getSelectedValue() {
+        public E getSelectedValue() {
             return list.getSelectedValue();
         }
 
@@ -192,10 +198,10 @@ public class IPEDSearchList extends JPanel {
             list.addVetoableChangeListener(listener);
         }
 
-        public JList<String> getListComponent() {
+        public JList<E> getListComponent() {
             return list;
         }
-        
+
         @Override
         public void paintImmediately(int x, int y, int w, int h) {
             paintRef++;
