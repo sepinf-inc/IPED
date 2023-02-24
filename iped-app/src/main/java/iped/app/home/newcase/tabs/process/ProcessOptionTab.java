@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ItemEvent;
+import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -303,7 +304,24 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         //Create the table model
         tasksTableModel = new TasksTableModel(selectedConfigurationManager, mainFrame, taskArrayList);
         tasksTableModel.addTableModelListener(this);
-        jtableTasks = new JTable();
+        jtableTasks = new JTable() {
+            @Override
+            public String getToolTipText(MouseEvent event) {
+                String tip = null;
+                java.awt.Point p = event.getPoint();
+                int rowIndex = rowAtPoint(p);
+                try {
+                    if(rowIndex != 0){
+                      AbstractTask task = (AbstractTask) getValueAt(rowIndex, 2);
+                      tip = iped.engine.localization.Messages.getString(task.getClass().getName()+iped.engine.localization.Messages.TOOLTIP_SUFFIX, task.getName());
+                    }
+                } catch (RuntimeException e1) {
+                }
+
+                return tip;
+            }
+            
+        };
         setupTableLayout();
         JScrollPane scrollTablePane = new JScrollPane();
         scrollTablePane.setViewportView(jtableTasks);
