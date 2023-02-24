@@ -14,7 +14,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
@@ -29,7 +28,6 @@ import iped.engine.config.MakePreviewConfig;
 import iped.engine.config.ParsersConfig;
 import iped.engine.config.RegexTaskConfig;
 import iped.engine.task.carver.XMLCarverConfiguration;
-import iped.parsers.external.ExternalParser;
 import iped.utils.UTF8Properties;
 
 /**
