@@ -378,6 +378,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                         }
                         tasksTableModel.addData(task, true);
                         tasksTableModel.fireTableRowsInserted(taskArrayList.size()-1, taskArrayList.size()-1);
+                        selectedConfigurationManager.notifyUpdate(taskInstallerConfig);
                     }
                 }catch(Exception ex) {
                     JOptionPane.showMessageDialog(this, ex.getLocalizedMessage());
