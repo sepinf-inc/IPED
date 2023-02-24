@@ -13,7 +13,7 @@ import iped.engine.data.Category;
 public class CategoryMimeTreeModel implements TreeModel{
     private static final String ROOT = "ROOT";
     public static String rootName = Messages.getString("CategoryTreeModel.RootName"); //$NON-NLS-1$
-    public static String uncategorizableName = "Uncategorizables"; //$NON-NLS-1$
+    public static String uncategorizableName = Messages.getString("CategoryTreeModel.Uncategorizables"); //$NON-NLS-1$
     public boolean toShowUncategorizable=false;
 
     public Category rootCategory;
