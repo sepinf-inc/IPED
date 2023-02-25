@@ -213,14 +213,13 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
     }
 
-    protected static Collection<File> getAudioSplits(File inFile, String itemPath) throws IOException {
-        File outFile = File.createTempFile("iped", "");
-        outFile.delete();
-
+    protected static Collection<File> getAudioSplits(File inFile, String itemPath) {
         List<File> splitFiles = new ArrayList<File>();
         AudioInputStream aIn = null;
         AudioInputStream aOut = null;
         try {
+            File outFile = File.createTempFile("iped", "");
+            outFile.delete();
             aIn = AudioSystem.getAudioInputStream(inFile);
             int bytesPerFrame = aIn.getFormat().getFrameSize();
             int framesPerPart = Math.round(aIn.getFormat().getFrameRate() * MAX_WAV_TIME);
