@@ -23,6 +23,8 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Taskbar;
+import java.awt.Taskbar.State;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -191,6 +193,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         if (indexStart == null) {
             indexStart = new Date();
             physicalMemory = Util.getPhysicalMemorySize();
+            updateTaskBar();
         }
 
         if ("processed".equals(evt.getPropertyName())) { //$NON-NLS-1$
@@ -225,13 +228,15 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             long prevVolume = volume;
             volume = (Integer) evt.getNewValue();
             if (taskSize != 0) {
-                progressBar.setValue((volume));
+                progressBar.setValue(volume);
             }
 
             Date now = new Date();
             long interval = (now.getTime() - indexStart.getTime()) / 1000 + 1;
             rate = (long) volume * 1000000L * 3600L / ((1 << 30) * interval);
             instantRate = (long) (volume - prevVolume) * 1000000L * 3600L / (1 << 30) + 1;
+
+            updateTaskBar();
 
         } else if ("workers".equals(evt.getPropertyName())) { //$NON-NLS-1$
             workers = (Worker[]) evt.getNewValue();
@@ -618,6 +623,22 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
     }
 
+    /**
+     * Show the current progress and state in system task bar.
+     */
+    private void updateTaskBar() {
+        if (Taskbar.isTaskbarSupported()) {
+            Taskbar taskbar = Taskbar.getTaskbar();
+            taskbar.setWindowProgressState(this,
+                    paused ? State.PAUSED : taskSize == 0 ? State.INDETERMINATE : State.NORMAL);
+            if (taskSize != 0) {
+                // Start from 10%, otherwise "paused" in earlier stages would be hard to see
+                int pct = (int) Math.min(100, 10 + Math.round(90.0 * volume / taskSize));
+                taskbar.setWindowProgressValue(this, pct);
+            }
+        }
+    }
+    
     private static String formatMB(long value) {
         return nf.format(value >>> 20) + " MB";
     }
