@@ -232,10 +232,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
                 File splitFile = new File(String.format("%s%03d.wav", outFile.getAbsolutePath(), ++seq));
                 splitFiles.add(splitFile);
                 AudioSystem.write(aOut, AudioFileFormat.Type.WAVE, splitFile);
-                aOut.close();
+                IOUtil.closeQuietly(aOut);
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to split audio file: " + itemPath, e);
+            LOGGER.warn("Failed to split audio file: " + itemPath, e);
         } finally {
             IOUtil.closeQuietly(aOut);
             IOUtil.closeQuietly(aIn);
