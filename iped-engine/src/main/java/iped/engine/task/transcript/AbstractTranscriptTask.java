@@ -1,8 +1,8 @@
 package iped.engine.task.transcript;
 
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.Connection;
@@ -10,15 +10,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
 
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.mime.MediaType;
@@ -44,8 +47,6 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(AbstractTranscriptTask.class);
 
-    private static final String TEST_FFMPEG = "ffmpeg -version";
-
     protected static final MediaType wav = MediaType.audio("vnd.wave");
 
     private static final String TEXT_STORAGE = "text/transcriptions.db"; //$NON-NLS-1$
@@ -64,10 +65,6 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     private static final int MAX_WAV_TIME = 59;
     private static final int MAX_WAV_SIZE = 16000 * 2 * MAX_WAV_TIME;
-    private static final String SPLIT_CMD = "ffmpeg -i $INPUT -f segment -segment_time " + MAX_WAV_TIME
-            + " -c copy $OUTPUT%03d.wav";
-
-    private static Boolean ffmpegDetected;
 
     protected AudioTranscriptConfig transcriptConfig;
     
@@ -107,29 +104,6 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
         }
         return supported;
-    }
-
-    protected static synchronized boolean checkFFmpeg() {
-        if (ffmpegDetected == null) {
-            try {
-                ProcessBuilder pb = new ProcessBuilder();
-                pb.command(TEST_FFMPEG.split(" "));
-                pb.redirectErrorStream(true);
-                Process p = pb.start();
-                IOUtil.ignoreInputStream(p.getInputStream());
-                int exit = p.waitFor();
-                if (exit == 0) {
-                    ffmpegDetected = true;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (ffmpegDetected == null) {
-                ffmpegDetected = false;
-                LOGGER.error("Error testing FFmpeg, is it on path? Audios longer than 1min need it to be transcribed.");
-            }
-        }
-        return ffmpegDetected;
     }
 
     private void createConnection() {
@@ -212,13 +186,11 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             createConnection();
         }
 
-        // testFfmpeg();
-
     }
 
     public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath,
             Function<File, TextAndScore> transcribeWavPart) throws Exception {
-        if (tmpFile.length() <= MAX_WAV_SIZE || !checkFFmpeg()) {
+        if (tmpFile.length() <= MAX_WAV_SIZE) {
             return transcribeWavPart.apply(tmpFile);
         } else {
             Collection<File> parts = getAudioSplits(tmpFile, itemPath);
@@ -241,42 +213,34 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
     }
 
-    protected static Collection<File> getAudioSplits(File tmpFile, String itemPath)
-            throws InterruptedException, IOException {
-        ProcessBuilder pb = new ProcessBuilder();
-        File outFile = File.createTempFile("iped", "");
-        outFile.delete();
-        String cmd[] = SPLIT_CMD.split(" ");
-        for (int i = 0; i < cmd.length; i++) {
-            cmd[i] = cmd[i].replace("$INPUT", tmpFile.getAbsolutePath());
-            cmd[i] = cmd[i].replace("$OUTPUT", outFile.getAbsolutePath());
+    protected static Collection<File> getAudioSplits(File inFile, String itemPath) {
+        List<File> splitFiles = new ArrayList<File>();
+        AudioInputStream aIn = null;
+        AudioInputStream aOut = null;
+        try {
+            File outFile = File.createTempFile("iped", "");
+            outFile.delete();
+            aIn = AudioSystem.getAudioInputStream(inFile);
+            int bytesPerFrame = aIn.getFormat().getFrameSize();
+            int framesPerPart = Math.round(aIn.getFormat().getFrameRate() * MAX_WAV_TIME);
+            byte[] partBytes = new byte[framesPerPart * bytesPerFrame];
+            int numBytesRead = 0;
+            int seq = 0;
+            while ((numBytesRead = aIn.readNBytes(partBytes, 0, partBytes.length)) > 0) {
+                ByteArrayInputStream bais = new ByteArrayInputStream(partBytes, 0, numBytesRead);
+                aOut = new AudioInputStream(bais, aIn.getFormat(), numBytesRead);
+                File splitFile = new File(String.format("%s%03d.wav", outFile.getAbsolutePath(), ++seq));
+                splitFiles.add(splitFile);
+                AudioSystem.write(aOut, AudioFileFormat.Type.WAVE, splitFile);
+                IOUtil.closeQuietly(aOut);
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to split audio file: " + itemPath, e);
+        } finally {
+            IOUtil.closeQuietly(aOut);
+            IOUtil.closeQuietly(aIn);
         }
-        pb.command(cmd);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        IOUtil.ignoreInputStream(p.getInputStream());
-        int exit = p.waitFor();
-        if (exit == 0) {
-            File[] files = outFile.getParentFile().listFiles(new PrefixFilter(outFile.getName()));
-            return new TreeSet<>(Arrays.asList(files));
-        } else {
-            LOGGER.error("Failed to split audio file " + itemPath);
-            return Collections.emptyList();
-        }
-    }
-
-    private static class PrefixFilter implements FilenameFilter {
-
-        private String prefix;
-
-        PrefixFilter(String prefix) {
-            this.prefix = prefix;
-        }
-
-        @Override
-        public boolean accept(File dir, String name) {
-            return name.startsWith(prefix);
-        }
+        return splitFiles;
     }
 
     protected File getWavFile(File itemFile, String itemPath) throws IOException, InterruptedException {
