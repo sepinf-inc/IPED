@@ -149,11 +149,6 @@ public class EventTranscriptParser extends SQLite3DBParser {
                         String[] rowValues = new String[] { String.join("; ", historyEntry.getPageTitles()), historyEntry.getTimestampStr(), historyEntry.getLocalTime(), historyEntry.getTimezone(), historyEntry.getReferUrl(),
                                 historyEntry.getUrl(), historyEntry.getAppName() };
                         emitEntry(xHandler, ++i, rowValues);
-
-                        if (extractEntries) {
-                            Metadata historySubitem = getHistoryEntryMetadata(historyEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), historySubitem, true);
-                        }
                     }
 
                     xHandler.endElement("table");
@@ -161,6 +156,16 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                     try (FileInputStream fis = new FileInputStream(browserHistoryFile)) {
                         extractor.parseEmbedded(fis, handler, metadataHistory, true);
+                    }
+                }
+            }
+            if (extractEntries) {
+                try (HistoryIterator historyEntriesIterator = new HistoryIterator(connection, DBQueries.HISTORY)) {
+                    int i = 0;
+                    while (historyEntriesIterator.hasNext()) {
+                        BrowserHistoryEntry historyEntry = historyEntriesIterator.next();
+                        Metadata historySubitem = getHistoryEntryMetadata(historyEntry, i);
+                        extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), historySubitem, true);
                     }
                 }
             }
@@ -185,17 +190,22 @@ public class EventTranscriptParser extends SQLite3DBParser {
                         String[] values = new String[] { appInvEntry.getName(), appInvEntry.getTimestampStr(), appInvEntry.getLocalTime(), appInvEntry.getTimezone(), appInvEntry.getVersion(), appInvEntry.getPublisher(),
                                 appInvEntry.getRootDirPath(), appInvEntry.getInstallDateStr() };
                         emitEntry(xHandler, ++i, values);
-
-                        if (extractEntries) {
-                            Metadata inventorySubitem = getInventoryEntryMetadata(appInvEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), inventorySubitem, true);
-                        }
                     }
                     xHandler.endElement("table");
                     xHandler.endDocument();
 
                     try (FileInputStream fis = new FileInputStream(inventoryAppsFile)) {
                         extractor.parseEmbedded(fis, handler, inventoryAppsMeta, true);
+                    }
+                }
+            }
+            if (extractEntries) {
+                try (InventoryAppsIterator inventoryAppsIterator = new InventoryAppsIterator(connection, DBQueries.INVENTORY_APPS)) {
+                    int i = 0;
+                    while (inventoryAppsIterator.hasNext()) {
+                        InventoryAppsEntry appInvEntry = inventoryAppsIterator.next();
+                        Metadata inventorySubitem = getInventoryEntryMetadata(appInvEntry, i);
+                        extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), inventorySubitem, true);
                     }
                 }
             }
@@ -220,17 +230,22 @@ public class EventTranscriptParser extends SQLite3DBParser {
                         String[] values = new String[] { appIntEntry.getApp(), appIntEntry.getTimestampStr(), appIntEntry.getLocalTime(), appIntEntry.getTimezone(), appIntEntry.getType(), appIntEntry.getWindowSize(),
                                 appIntEntry.getMouseInputSec(), appIntEntry.getInFocusDuration(), appIntEntry.getUserActiveDuration() };
                         emitEntry(xHandler, ++i, values);
-
-                        if (extractEntries) {
-                            Metadata appInteractSubitem = getAppInteractEntryMetadata(appIntEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), appInteractSubitem, true);
-                        }
                     }
                     xHandler.endElement("table");
                     xHandler.endDocument();
 
                     try (FileInputStream fis = new FileInputStream(appInteractivityFile)) {
                         extractor.parseEmbedded(fis, handler, appInteractMeta, true);
+                    }
+                }
+            }
+            if (extractEntries) {
+                try (AppInteractivityIterator appInteractivityIterator = new AppInteractivityIterator(connection, DBQueries.APP_INTERACTIVITY)) {
+                    int i = 0;
+                    while (appInteractivityIterator.hasNext()) {
+                        AppInteractivityEntry appIntEntry = appInteractivityIterator.next();
+                        Metadata appInteractSubitem = getAppInteractEntryMetadata(appIntEntry, i);
+                        extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), appInteractSubitem, true);
                     }
                 }
             }
@@ -255,17 +270,22 @@ public class EventTranscriptParser extends SQLite3DBParser {
                         String[] values = new String[] { deviceEntry.getModel(), deviceEntry.getTimestampStr(), deviceEntry.getLocalTime(), deviceEntry.getTimezone(), deviceEntry.getInstanceId(), deviceEntry.getProvider(),
                                 deviceEntry.getManufacturer(), deviceEntry.getInstallDateStr(), deviceEntry.getEnumerator() };
                         emitEntry(xHandler, ++i, values);
-
-                        if (extractEntries) {
-                            Metadata deviceSubitem = getDevicesMetadata(deviceEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), deviceSubitem, true);
-                        }
                     }
                     xHandler.endElement("table");
                     xHandler.endDocument();
 
                     try (FileInputStream fis = new FileInputStream(devicesFile)) {
                         extractor.parseEmbedded(fis, handler, devicesMeta, true);
+                    }
+                }
+            }
+            if (extractEntries) {
+                try (DevicesIterator devicesIterator = new DevicesIterator(connection, DBQueries.DEVICES)) {
+                    int i = 0;
+                    while (devicesIterator.hasNext()) {
+                        DevicesEntry deviceEntry = devicesIterator.next();
+                        Metadata deviceSubitem = getDevicesMetadata(deviceEntry, i);
+                        extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), deviceSubitem, true);
                     }
                 }
             }
@@ -285,7 +305,6 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     XHTMLContentHandler xHandler = emitHeader(censusHandler, censusMeta, title, CENSUS_COLUMN_NAMES);
 
                     int i = 0;
-                    // no entry extraction
                     while (censusIterator.hasNext()) {
                         CensusEntry censusEntry = censusIterator.next();
                         String[] values = new String[] { censusEntry.getTimestampStr(), censusEntry.getLocalTime(), censusEntry.getTimezone(), censusEntry.getEventName(), censusEntry.getDataJSON() };
@@ -299,6 +318,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     }
                 }
             }
+            // no entry extraction
 
             try (FileOutputStream tmpNetworkingFile = new FileOutputStream(networkingFile)) {
                 ToXMLContentHandler networkingHandler = new ToXMLContentHandler(tmpNetworkingFile, "UTF-8");
@@ -320,16 +340,22 @@ public class EventTranscriptParser extends SQLite3DBParser {
                         String[] values = new String[] { netEntry.getUTCTimestampStr(), netEntry.getLocalTime(), netEntry.getTimezone(), netEntry.getEventName(), netEntry.getEventSource(), netEntry.getEventReason(),
                                 netEntry.getDataJSON() };
                         emitEntry(xHandler, ++i, values);
-                        if (extractEntries) {
-                            Metadata networkingSubitem = getNetworkingMetadata(netEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), networkingSubitem, true);
-                        }
                     }
                     xHandler.endElement("table");
                     xHandler.endDocument();
 
                     try (FileInputStream fis = new FileInputStream(networkingFile)) {
                         extractor.parseEmbedded(fis, handler, networkingMeta, true);
+                    }
+                }
+            }
+            if (extractEntries) {
+                try (NetworkingIterator networkingIterator = new NetworkingIterator(connection, DBQueries.NETWORKING)) {
+                    int i = 0;
+                    while (networkingIterator.hasNext()) {
+                        NetworkingEntry netEntry = networkingIterator.next();
+                        Metadata networkingSubitem = getNetworkingMetadata(netEntry, i);
+                        extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), networkingSubitem, true);
                     }
                 }
             }
