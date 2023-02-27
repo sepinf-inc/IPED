@@ -3,6 +3,7 @@ package iped.app.home.newcase.tabs.process;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
@@ -34,6 +35,7 @@ import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.IScriptTask;
 import iped.engine.task.PythonTask;
 import iped.engine.task.ScriptTask;
 import iped.utils.IOUtil;
@@ -357,32 +359,16 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
         JButton buttoAddScriptTask = new JButton(Messages.get("Home.ProcOptions.AddScriptTask"));
         buttoAddScriptTask.addActionListener( e -> {
-            int result = scriptChooser.showOpenDialog(mainFrame);
-            if(result == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = scriptChooser.getSelectedFile();
-
-                AbstractTask task;
-                try {
-                    File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE).toFile();
-                    File destFile = new File(scriptDir,selectedFile.getName());
-                    
-                    if(destFile.exists()) {
-                        JOptionPane.showMessageDialog(this, Messages.get("Home.ProcOptions.ScriptAlreadyExists"));
-                    }else {
-                        IOUtil.copyFile(selectedFile, destFile);
-                        
-                        if (selectedFile.getName().endsWith(".py")) {
-                            task = new PythonTask(destFile);
-                        } else {
-                            task = new ScriptTask(destFile);
-                        }
-                        tasksTableModel.addData(task, true);
-                        tasksTableModel.fireTableRowsInserted(taskArrayList.size()-1, taskArrayList.size()-1);
-                        selectedConfigurationManager.notifyUpdate(taskInstallerConfig);
-                    }
-                }catch(Exception ex) {
-                    JOptionPane.showMessageDialog(this, ex.getLocalizedMessage());
-                }
+            File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE).toFile();
+            File exampleScriptFile = new File(scriptDir, ScriptEditPanel.TEMPLATE_SCRIPT_NAME);
+            TaskConfigDialog tcd = new TaskConfigDialog(selectedConfigurationManager, new ScriptTask(exampleScriptFile), mainFrame);
+            tcd.setModalityType(ModalityType.APPLICATION_MODAL);
+            tcd.setVisible(true);
+            
+            if(tcd.getScriptTask()!=null) {
+                tasksTableModel.addData((AbstractTask) tcd.getScriptTask(), true);
+                tasksTableModel.fireTableRowsInserted(taskArrayList.size()-1, taskArrayList.size()-1);
+                selectedConfigurationManager.notifyUpdate(taskInstallerConfig);
             }
         });
 
@@ -405,7 +391,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     @Override
     public void tableChanged(TableModelEvent e) {
         if(e.getType()==TableModelEvent.INSERT) {
-            jtableTasks.getSelectionModel().setLeadSelectionIndex(e.getLastRow());            
+            jtableTasks.getSelectionModel().setLeadSelectionIndex(e.getLastRow());
             AbstractTask task = ((TasksTableModel)jtableTasks.getModel()).getTaskList().get(e.getLastRow());
             List<Configurable<?>> configurables = task.getConfigurables();
             if(configurables != null && configurables.size()>0) {
@@ -413,8 +399,6 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             }
         }
     }
-
-
 
     /**
      * A listener for task table item selection

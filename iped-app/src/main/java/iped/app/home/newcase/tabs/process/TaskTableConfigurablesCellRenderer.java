@@ -18,6 +18,8 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.config.HashDBLookupConfig;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.IScriptTask;
+import iped.engine.task.PythonTask;
 
 public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
     ConfigurationManager configurationManager;
@@ -46,7 +48,7 @@ public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
             if (!(value instanceof EnableTaskProperty)
                     && !(value instanceof HashDBLookupConfig)) {
                 count++;
-            }            
+            }
         }
 
         if(count>0) {
@@ -63,8 +65,22 @@ public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
             panel.add(taskOptionButton, gbc);
             return panel;
         }else {
-            return null;
+            if(task instanceof IScriptTask) {
+                JPanel panel = new JPanel();
+                panel.setLayout( new GridBagLayout() );
+                panel.setBackground(Color.WHITE);
+
+                GridBagConstraints gbc = new GridBagConstraints();
+                JButton taskOptionButton = new JButton("...");
+
+                taskOptionButton.addActionListener( e -> new TaskConfigDialog(configurationManager, task, mainFrame).setVisible(true));
+
+                taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
+                panel.add(taskOptionButton, gbc);
+                return panel;
+            }else {
+                return null;
+            }
         }
     }
-
 }

@@ -57,11 +57,8 @@ public class ScriptTask extends AbstractTask implements IScriptTask {
         }
     }
 
-    public void loadScript(File file)
-            throws IOException, ScriptException, UnsupportedEncodingException, NoSuchMethodException {
-
+    public void loadScript(File file) throws IOException, ScriptException, UnsupportedEncodingException, NoSuchMethodException {
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")) { //$NON-NLS-1$
-
             ScriptEngineManager manager = new ScriptEngineManager();
             String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1); // $NON-NLS-1$
             engine = manager.getEngineByExtension(ext); // $NON-NLS-1$
@@ -72,7 +69,6 @@ public class ScriptTask extends AbstractTask implements IScriptTask {
                 inv = (Invocable) engine;
             }
         }
-
     }
 
     @Override
@@ -139,6 +135,11 @@ public class ScriptTask extends AbstractTask implements IScriptTask {
     @Override
     public String getScriptFileName() {
         return scriptFile.getName();
+    }
+
+    @Override
+    public Class<? extends AbstractTask> checkTaskCompliance() throws ScriptTaskComplianceException {
+        return null;        
     }
 
 }

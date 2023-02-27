@@ -2,7 +2,6 @@ package iped.app.home.newcase.tabs.process;
 
 import java.awt.AWTException;
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -21,7 +20,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 import iped.app.ui.App;
 import iped.engine.task.AbstractTask;
-import iped.engine.task.PythonTask;
+import iped.engine.task.IScriptTask;
 import iped.utils.IconUtil;
 
 public class TableTaskLabelCellRenderer extends DefaultTableCellRenderer {
@@ -46,8 +45,7 @@ public class TableTaskLabelCellRenderer extends DefaultTableCellRenderer {
         nameLabel.setText(localizedName);
         panel.add(nameLabel, BorderLayout.WEST);
         
-        if(currentTask instanceof PythonTask) {
-
+        if((currentTask instanceof IScriptTask)) {
             JButton taskStartDragButton = new JButton(dragIcon);
             taskStartDragButton.setVerticalAlignment(SwingConstants.CENTER);
 

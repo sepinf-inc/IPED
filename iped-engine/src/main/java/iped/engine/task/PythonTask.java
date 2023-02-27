@@ -1,6 +1,9 @@
 package iped.engine.task;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -325,6 +328,54 @@ public class PythonTask extends AbstractTask implements IScriptTask {
     @Override
     public String getScriptFileName() {
         return scriptFile.getName();
+    }
+
+    @Override
+    public Class<? extends AbstractTask> checkTaskCompliance() throws ScriptTaskComplianceException {
+        try {
+            BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(scriptFile), "UTF-8")); //$NON-NLS-1$
+            String str = null;
+            boolean processMethodFound=false;
+            boolean initMethodFound=false;
+            boolean isEnabledMethodFound=false;
+            boolean getConfigurablesMethodFound=false;
+            while ((str = in.readLine()) != null) {
+                str=str.trim();
+                if(str.startsWith("def")) {
+                    str=str.substring(3).trim();
+                    if(str.startsWith("process")) {
+                        processMethodFound=true;
+                    }
+                    if(str.startsWith("isEnabled")) {
+                        isEnabledMethodFound=true;
+                    }
+                    if(str.startsWith("initMethodFound")) {
+                        initMethodFound=true;
+                    }
+                    if(str.startsWith("getConfigurables")) {
+                        getConfigurablesMethodFound=true;
+                    }
+                }
+                if(processMethodFound && initMethodFound && isEnabledMethodFound && getConfigurablesMethodFound) break;
+            }
+            in.close();
+            if(!processMethodFound) {
+                throw new ScriptTaskComplianceException("No 'process' method implementation found on script.");
+            }
+            if(!initMethodFound) {
+                throw new ScriptTaskComplianceException("No 'init' method implementation found on script.");
+            }
+            if(!isEnabledMethodFound) {
+                throw new ScriptTaskComplianceException("No 'isEnabled' method implementation found on script.");
+            }
+            if(!getConfigurablesMethodFound) {
+                throw new ScriptTaskComplianceException("No 'getConfigurables' method implementation found on script.");
+            }
+            in.close();
+        }catch(Exception e) {
+            throw new ScriptTaskComplianceException(e);
+        }
+        return null;
     }
 
 }

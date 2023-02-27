@@ -32,20 +32,24 @@ import iped.configuration.Configurable;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.IScriptTask;
 
 public class TaskConfigDialog extends JDialog {
     private List<Configurable<?>> configurables;
     private HashMap<Configurable<?>, ConfigurablePanel> configurablePanels = new HashMap<Configurable<?>, ConfigurablePanel>();
+    AbstractTask task;
     ConfigurationManager configurationManager;
     MainFrame mainFrame;
+    private ScriptEditPanel scriptPanel;
 
     public TaskConfigDialog(ConfigurationManager configurationManager, AbstractTask task, MainFrame mainFrame) {
         super(mainFrame);
         this.mainFrame = mainFrame;
         this.configurationManager=configurationManager;
-        configurables = task.getConfigurables();
+        this.task = task;
         setModal(true);
         JPanel formPanel = new JPanel(new BorderLayout());
+        configurables = task.getConfigurables();
         String localizedName = iped.engine.localization.Messages.getString(task.getClass().getName(), task.getName());
         formPanel.add(createTitlePanel(localizedName), BorderLayout.NORTH);
         formPanel.add(createTabbedPanel(), BorderLayout.CENTER);
@@ -75,24 +79,31 @@ public class TaskConfigDialog extends JDialog {
             @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 25;}
 
         });
-        for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
-            Configurable<?> configurable = (Configurable<?>) iterator.next();
-            if(!(configurable instanceof EnableTaskProperty)) {
-                ConfigurablePanel configPanel = ConfigurablePanel.createConfigurablePanel(configurable, mainFrame);
+        if(configurables!=null) {
+            for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
+                Configurable<?> configurable = (Configurable<?>) iterator.next();
+                if(!(configurable instanceof EnableTaskProperty)) {
+                    ConfigurablePanel configPanel = ConfigurablePanel.createConfigurablePanel(configurable, mainFrame);
 
-                configPanel.addChangeListener(new ChangeListener() {
-                    @Override
-                    public void stateChanged(ChangeEvent e) {
-                        configurationManager.notifyUpdate(configurable);
-                    }
-                });
+                    configPanel.addChangeListener(new ChangeListener() {
+                        @Override
+                        public void stateChanged(ChangeEvent e) {
+                            configurationManager.notifyUpdate(configurable);
+                        }
+                    });
 
-                configPanel.createConfigurableGUI();
-                configurablePanels.put(configurable,configPanel);
-                String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName(), configurable.getClass().getSimpleName());
-                String localizedTooltip = iped.engine.localization.Messages.getString(configurable.getClass().getName()+iped.engine.localization.Messages.TOOLTIP_SUFFIX, "");
-                tabbedPane.addTab(localizedName, UIManager.getIcon("FileView.fileIcon"), configPanel, localizedTooltip);
+                    configPanel.createConfigurableGUI();
+                    configurablePanels.put(configurable,configPanel);
+                    String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName(), configurable.getClass().getSimpleName());
+                    String localizedTooltip = iped.engine.localization.Messages.getString(configurable.getClass().getName()+iped.engine.localization.Messages.TOOLTIP_SUFFIX, "");
+                    tabbedPane.addTab(localizedName, UIManager.getIcon("FileView.fileIcon"), configPanel, localizedTooltip);
+                }
             }
+        }
+        if(task instanceof IScriptTask) {
+            scriptPanel = new ScriptEditPanel(mainFrame, (IScriptTask) task);
+            scriptPanel.createAndShowGUI();
+            tabbedPane.addTab("Script", UIManager.getIcon("FileView.fileIcon"), scriptPanel, "");
         }
         return  tabbedPane;
     }
@@ -115,6 +126,9 @@ public class TaskConfigDialog extends JDialog {
                         }
                     }
                 }
+                if(task instanceof IScriptTask) {
+                    scriptPanel.applyChanges();
+                }
                 this.setVisible(false);
             }catch(ConfigurableValidationException cve) {
                 JOptionPane.showMessageDialog(this, cve.getMessage() + "\n" + cve.getCause(), "", JOptionPane.WARNING_MESSAGE);
@@ -127,6 +141,10 @@ public class TaskConfigDialog extends JDialog {
         panelButtons.add(btSave);
         panelButtons.add(btCancel);
         return panelButtons;
+    }
+
+    public IScriptTask getScriptTask() {
+        return scriptPanel.getScriptTask();
     }
 
 }
