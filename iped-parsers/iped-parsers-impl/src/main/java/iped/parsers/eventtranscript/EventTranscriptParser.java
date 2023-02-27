@@ -33,6 +33,7 @@ import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.sqlite.detector.SQLiteContainerDetector;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.IgnoreContentHandler;
+import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.ToXMLContentHandler;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -98,6 +99,16 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
     // Fallback parser
     private SQLite3Parser sqliteParser = new SQLite3Parser();
+
+    static {
+        MetadataUtil.setMetadataType("aggregationDuration", Long.class);
+        MetadataUtil.setMetadataType("userActiveDuration", Long.class);
+        MetadataUtil.setMetadataType("userOrDisplayActiveDuration", Long.class);
+        MetadataUtil.setMetadataType("inFocusDurationMS", Long.class);
+        MetadataUtil.setMetadataType("installDate", Date.class);
+        MetadataUtil.setMetadataType("firstInstallDate", Date.class);
+        MetadataUtil.setMetadataType("TranscriptDBEvent", Date.class);
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -551,7 +562,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
     private static String getEventName(String eventName) {
         if (eventName != null && !eventName.trim().isEmpty()) {
-            return eventName.trim() + "Event";
+            eventName = eventName.trim() + "Event";
+            MetadataUtil.setMetadataType(eventName, Date.class);
+            return eventName;
         }
         return "TranscriptDBEvent";
     }
