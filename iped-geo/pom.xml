@@ -7,7 +7,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.0.2</version>
+        <version>4.2-snapshot</version>
     </parent>
 
     <artifactId>iped-geo</artifactId>
@@ -73,9 +73,14 @@
             <artifactId>gt-main</artifactId>
             <version>19.2</version>
         </dependency>
-		<dependency>
+        <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-opengis</artifactId>
+            <version>19.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-geojson</artifactId>
             <version>19.2</version>
         </dependency>
 

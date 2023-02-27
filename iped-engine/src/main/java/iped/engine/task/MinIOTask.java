@@ -252,7 +252,9 @@ public class MinIOTask extends AbstractTask {
         }
 
         if (checkIfExists(bucketPath)) {
-            updateDataSource(i, fullPath);
+            if (!preview) {
+                updateDataSource(i, fullPath);
+            }
             return fullPath;
         }
 
@@ -574,7 +576,7 @@ public class MinIOTask extends AbstractTask {
             if (i == -1)
                 return -1;
             else
-                return b[0];
+                return b[0] & 0xFF;
         }
 
         @Override

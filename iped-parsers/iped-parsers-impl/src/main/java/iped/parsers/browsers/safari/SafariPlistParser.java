@@ -47,7 +47,7 @@ import iped.utils.EmptyInputStream;
  * https://medium.com/@karaiskc/understanding-apples-binary-property-list-format-281e6da00dbd
  * https://github.com/3breadt/dd-plist
  * 
- * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
+ * @author Paulo César Herrmann Wanner <herrmann.pchw@pf.gov.br>
  */
 public class SafariPlistParser extends AbstractParser {
 

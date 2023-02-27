@@ -4,13 +4,22 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.csv.TextAndCSVParser;
+import org.apache.tika.parser.image.ImageParser;
+import org.apache.tika.parser.microsoft.OfficeParser;
+import org.apache.tika.parser.pdf.PDFParser;
+import org.apache.tika.parser.pkg.RarParser;
+import org.apache.tika.parser.video.FLVParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.compress.SevenZipParser;
 import iped.properties.ExtraProperties;
 import junit.framework.TestCase;
 
@@ -20,6 +29,7 @@ public class StandardParserTest extends TestCase {
     // Package, PDF and an Unknown file type.
 
     private static final String PARSED_BY = ExtraProperties.TIKA_PARSER_USED;
+    private static final String INDEXER_CONTENT_TYPE = StandardParser.INDEXER_CONTENT_TYPE;
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
@@ -56,20 +66,19 @@ public class StandardParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("Indexer-Content-Type: image/png"));
-            assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.image.ImageParser"));
+            assertTrue(hts.contains(PARSED_BY + ": " + ImageParser.class.getName()));
             assertTrue(hts.contains(
                     "image:IHDR: width=512, height=512, bitDepth=8, colorType=RGB, compressionMethod=deflate, filterMethod=adaptive"));
             assertTrue(hts.contains("image:tiff:BitsPerSample: 8 8 8"));
             assertTrue(hts.contains("image:Height: 512"));
             assertTrue(hts.contains("image:Width: 512"));
 
-            assertTrue(mts.contains("Content-Type=image/png"));
-            assertTrue(mts.contains("image:Height=512"));
-            assertTrue(mts.contains("image:Width=512"));
-            assertTrue(mts.contains("image:tiff:BitsPerSample=8 8 8"));
+            assertEquals("image/png", metadata.get(Metadata.CONTENT_TYPE));
+            assertEquals("512", metadata.get("image:Height"));
+            assertEquals("512", metadata.get("image:Width"));
+            assertEquals("8 8 8", metadata.get("image:tiff:BitsPerSample"));
 
         }
     }
@@ -86,10 +95,9 @@ public class StandardParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("Indexer-Content-Type: video/x-flv"));
-            assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.video.FLVParser"));
+            assertTrue(hts.contains(PARSED_BY + ": " +  FLVParser.class.getName()));
             assertTrue(hts.contains("video:audiocodecid: 2.0"));
             assertTrue(hts.contains("video:audiodatarate: 0.0"));
             assertTrue(hts.contains("video:audiosamplerate: 44100.0"));
@@ -109,10 +117,10 @@ public class StandardParserTest extends TestCase {
             assertTrue(hts.contains("video:videodatarate: 195.3125"));
             assertTrue(hts.contains("video:Width: 256.0"));
 
-            assertTrue(mts.contains("Content-Type=video/x-flv"));
-            assertTrue(mts.contains("video:Height=144.0"));
-            assertTrue(mts.contains("video:Width=256.0"));
-            assertTrue(mts.contains("video:framerate=29.97002997002997"));
+            assertEquals("video/x-flv", metadata.get(Metadata.CONTENT_TYPE));
+            assertEquals("144.0", metadata.get("video:Height"));
+            assertEquals("256.0", metadata.get("video:Width"));
+            assertEquals("29.97002997002997", metadata.get("video:framerate"));
 
         }
     }
@@ -129,7 +137,6 @@ public class StandardParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("Mockdoc1:"));
             assertTrue(hts.contains("· Lorem ipsum dolor sit amet, consectetur adipiscing elit."));
@@ -155,10 +162,10 @@ public class StandardParserTest extends TestCase {
             assertTrue(hts.contains("office:meta:word-count: 504"));
             assertTrue(hts.contains("office:xmpTPg:NPages: 1"));
 
-            assertTrue(mts
-                    .contains("Content-Type=application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
-            assertTrue(mts.contains("office:meta:character-count=2724"));
-            assertTrue(mts.contains("common:dc:creator=Guilherme Andreúce Sobreira Monteiro"));
+            assertEquals(metadata.get(Metadata.CONTENT_TYPE),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            assertEquals("2724", metadata.get("office:meta:character-count"));
+            assertEquals("Guilherme Andreúce Sobreira Monteiro", metadata.get("common:dc:creator"));
 
         }
     }
@@ -175,7 +182,6 @@ public class StandardParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("issO é OUTR4 stRin8888"));
             assertTrue(hts.contains("codificada em UTF8"));
@@ -183,11 +189,10 @@ public class StandardParserTest extends TestCase {
 
             assertTrue(hts.contains("Content-Encoding: UTF-8"));
             assertTrue(hts.contains("Indexer-Content-Type: text/plain"));
-            assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.csv.TextAndCSVParser"));
+            assertTrue(hts.contains(PARSED_BY + ": " + TextAndCSVParser.class.getName()));
 
-            assertTrue(mts.contains("Content-Type=text/plain"));
-            assertTrue(mts.contains(PARSED_BY + "=org.apache.tika.parser.csv.TextAndCSVParser"));
-            assertTrue(mts.contains("charset=UTF-8"));
+            assertEquals("text/plain; charset=UTF-8", metadata.get(Metadata.CONTENT_TYPE));
+            assertEquals(TextAndCSVParser.class.getName(), metadata.get(PARSED_BY));
 
         }
 
@@ -205,7 +210,6 @@ public class StandardParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("mocktext1.txt"));
             assertTrue(hts.contains("mocktext2.txt"));
@@ -226,12 +230,12 @@ public class StandardParserTest extends TestCase {
             assertTrue(hts.contains("mockdoc4.docx"));
             assertTrue(hts.contains("mockdoc5.docx"));
 
-            assertTrue(hts.contains("Indexer-Content-Type: application/x-rar-compressed; version=4"));
-            assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.pkg.RarParser"));
+            assertTrue(hts.contains("Indexer-Content-Type: " + SevenZipParser.RAR.toString() + "; version=4"));
+            assertTrue(hts.contains(PARSED_BY + ": " + RarParser.class.getName()));
 
-            assertTrue(mts.contains("Indexer-Content-Type=application/x-rar-compressed; version=4"));
-            assertTrue(mts.contains(PARSED_BY + "=org.apache.tika.parser.pkg.RarParser"));
-            assertTrue(mts.contains("Content-Type=application/x-rar-compressed; version=4"));
+            assertEquals(SevenZipParser.RAR.toString() + "; version=4", metadata.get(INDEXER_CONTENT_TYPE));
+            assertEquals(RarParser.class.getName(), metadata.get(PARSED_BY));
+            assertEquals(SevenZipParser.RAR.toString() + "; version=4", metadata.get(Metadata.CONTENT_TYPE));
 
         }
     }
@@ -248,14 +252,13 @@ public class StandardParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("Freshman Resume"));
             assertTrue(hts.contains("Education Massachusetts Institute of Technology (MIT) Cambridge, MA"));
             assertTrue(hts.contains("UROP-Diabetes Management Project February 2016-Present"));
 
             assertTrue(hts.contains("Indexer-Content-Type: application/pdf"));
-            assertTrue(hts.contains(PARSED_BY + ": org.apache.tika.parser.pdf.PDFParser"));
+            assertTrue(hts.contains(PARSED_BY + ": " + PDFParser.class.getName()));
             assertTrue(hts.contains("pdf:PDFExtensionVersion: 1.7 Adobe Extension Level 8"));
             assertTrue(hts.contains("pdf:PDFVersion: 1.7"));
             assertTrue(hts.contains("pdf:access_permission:assemble_document: true"));
@@ -291,9 +294,9 @@ public class StandardParserTest extends TestCase {
             assertTrue(hts.contains("pdf:xmpMM:DocumentID: xmp.id:53055f1a-dc31-4555-871e-832d1d70ed0e"));
             assertTrue(hts.contains("pdf:xmpTPg:NPages: 14"));
 
-            assertTrue(mts.contains("Content-Type=application/pdf"));
-            assertTrue(mts.contains(PARSED_BY + "=org.apache.tika.parser.pdf.PDFParser"));
-            assertTrue(mts.contains("pdf:PDFVersion=1.7"));
+            assertEquals("application/pdf", metadata.get(HttpHeaders.CONTENT_TYPE));
+            assertEquals(PDFParser.class.getName(), metadata.get(PARSED_BY));
+            assertEquals("1.7", metadata.get("pdf:PDFVersion"));
 
         }
 
@@ -311,14 +314,13 @@ public class StandardParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
-            String mts = metadata.toString();
 
             assertTrue(hts.contains("function"));
             assertTrue(hts.contains("OnATTACK_OBJECT_CMD (id)"));
 
-            assertTrue(mts.contains("Content-Type=text/plain; charset=EUC-KR"));
-            assertTrue(mts.contains(PARSED_BY + "=org.apache.tika.parser.csv.TextAndCSVParser"));
-            assertTrue(mts.contains("Content-Encoding=EUC-KR"));
+            assertEquals("text/plain; charset=EUC-KR", metadata.get(Metadata.CONTENT_TYPE));
+            assertEquals(TextAndCSVParser.class.getName(), metadata.get(PARSED_BY));
+            assertEquals("EUC-KR", metadata.get(Metadata.CONTENT_ENCODING));
 
         }
 
@@ -336,15 +338,13 @@ public class StandardParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_unknownFile")) {
             parser.parse(stream, handler, metadata, context);
 
-            String mts = metadata.toString();
-
             assertEquals("iped.parsers.standard.RawStringParser", metadata.get(PARSED_BY));
-            assertTrue(mts.contains("compressRatioLZ4=0.5720935240387917"));
-            assertTrue(mts.contains("Content-Type=application/octet-stream"));
+            assertEquals("0.5720935240387917", metadata.get(RawStringParser.COMPRESS_RATIO));
+            assertEquals(MediaType.OCTET_STREAM.toString(), metadata.get(Metadata.CONTENT_TYPE));
 
         }
     }
-
+    
     @Test
     public void testIndexerDefaultParserParsingEncryptedDoc() throws IOException, SAXException, TikaException {
 
@@ -356,11 +356,10 @@ public class StandardParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_cryptoDoc.docx")) {
             parser.parse(stream, handler, metadata, context);
 
-            String mts = metadata.toString();
-            assertTrue(mts.contains(PARSED_BY + "=org.apache.tika.parser.microsoft.OfficeParser"));
-            assertTrue(mts.contains("Indexer-Content-Type=application/x-tika-ooxml-protected"));
-            assertTrue(mts.contains("encryptedDocument=true"));
-            assertTrue(mts.contains("Content-Type=application/x-tika-ooxml-protected"));
+            assertEquals(OfficeParser.class.getName(), metadata.get(PARSED_BY));
+            assertEquals("application/x-tika-ooxml-protected", metadata.get(INDEXER_CONTENT_TYPE));
+            assertEquals("true", metadata.get(StandardParser.ENCRYPTED_DOCUMENT));
+            assertEquals("application/x-tika-ooxml-protected", metadata.get(Metadata.CONTENT_TYPE));
 
         }
     }

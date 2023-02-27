@@ -49,7 +49,7 @@ public class CertificateParser extends AbstractParser {
 	public static final MediaType PEM_MIME = MediaType.application("x-pem-file");
     public static final MediaType DER_MIME = MediaType.application("pkix-cert");
     private static final MediaType PKCS7_MIME = MediaType.application("pkcs7-mime");
-    private static final MediaType PKCS7_SIGNATURE = MediaType.application("pkcs7-signature");
+    public static final MediaType PKCS7_SIGNATURE = MediaType.application("pkcs7-signature");
     private static Set<MediaType> SUPPORTED_TYPES = null;
 
     public static final Property NOTBEFORE = Property.internalDate("certificate:notbefore"); //$NON-NLS-1$
@@ -62,11 +62,12 @@ public class CertificateParser extends AbstractParser {
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         if (SUPPORTED_TYPES == null) {
-            SUPPORTED_TYPES = new HashSet<MediaType>();
-            SUPPORTED_TYPES.add(PEM_MIME);
-            SUPPORTED_TYPES.add(DER_MIME);
-            SUPPORTED_TYPES.add(PKCS7_MIME);
-            SUPPORTED_TYPES.add(PKCS7_SIGNATURE);
+            Set<MediaType> set = new HashSet<>();
+            set.add(PEM_MIME);
+            set.add(DER_MIME);
+            set.add(PKCS7_MIME);
+            set.add(PKCS7_SIGNATURE);
+            SUPPORTED_TYPES = set;
         }
 
         return SUPPORTED_TYPES;

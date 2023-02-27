@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
@@ -44,6 +45,7 @@ import org.xml.sax.helpers.AttributesImpl;
 
 import iped.data.IItemReader;
 import iped.parsers.emule.KnownMetParser;
+import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.properties.ExtraProperties;
@@ -60,7 +62,8 @@ public class AresParser extends AbstractParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-ares-galaxy")); //$NON-NLS-1$
     public static final String ARES_MIME_TYPE = "application/x-ares-galaxy"; //$NON-NLS-1$
-    private static final String[] header = new String[] { Messages.getString("AresParser.Seq"), //$NON-NLS-1$
+    public static final String ARES_ENTRY_MIME_TYPE = "application/x-ares-galaxy-entry"; //$NON-NLS-1$
+    public static final String[] header = new String[] { Messages.getString("AresParser.Seq"), //$NON-NLS-1$
             Messages.getString("AresParser.Title"), Messages.getString("AresParser.Path"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.HashSha1"), Messages.getString("AresParser.FileDate"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.Size"), Messages.getString("AresParser.Shared"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -69,9 +72,16 @@ public class AresParser extends AbstractParser {
             Messages.getString("AresParser.URL"), Messages.getString("AresParser.Comments"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.FoundInPedoHashDB"), Messages.getString("AresParser.FoundInCase")}; //$NON-NLS-1$ //$NON-NLS-2$
 
-    private static final String strYes = Messages.getString("AresParser.Yes"); //$NON-NLS-1$
-    private static final String strNo = Messages.getString("AresParser.No"); //$NON-NLS-1$
-    
+    public static final String strYes = Messages.getString("AresParser.Yes"); //$NON-NLS-1$
+    public static final String strNo = Messages.getString("AresParser.No"); //$NON-NLS-1$
+
+    private boolean extractEntries = false;
+
+    @Field
+    public void setExtractEntries(boolean value) {
+        this.extractEntries = value;
+    }
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -83,6 +93,19 @@ public class AresParser extends AbstractParser {
         final DecimalFormat nf = LocalizedFormat.getDecimalInstance("#,##0"); //$NON-NLS-1$
         final DateFormat df = new SimpleDateFormat(Messages.getString("AresParser.DateFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
+
+        BeanMetadataExtraction bme = null;
+
+        if (extractEntries) {
+            bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, ARES_ENTRY_MIME_TYPE);
+            bme.setNameProperty("title");
+            // normalization to use same property name of other p2p parsers
+            bme.registerPropertyNameMapping(AresEntry.class, "title", "name");
+            bme.registerPropertyNameMapping(AresEntry.class, "hash", "sha1");
+            bme.registerTransformationMapping(AresEntry.class, ExtraProperties.LINKED_ITEMS, "sha-1:${hash}");
+            bme.registerTransformationMapping(AresEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+            bme.setLocalTime(true);
+        }
 
         metadata.set(HttpHeaders.CONTENT_TYPE, ARES_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
@@ -160,7 +183,7 @@ public class AresParser extends AbstractParser {
         String[] colClass = new String[header.length];
         Arrays.fill(colClass, "a"); //$NON-NLS-1$        
         colClass[0] = "s"; //$NON-NLS-1$
-        
+
         for (int i = -1; i < l.size(); i++) {
             cells.clear();
             String trClass = ""; //$NON-NLS-1$
@@ -199,11 +222,14 @@ public class AresParser extends AbstractParser {
                 cells.add(e.getComment());
                 cells.add(!hashSets.isEmpty() ? hashSets.toString() : ""); // $NON-NLS-1$
                 cells.add(" "); //$NON-NLS-1$
-
                 colClass[1] = colClass[2] = "b"; //$NON-NLS-1$
                 colClass[3] = "e";
                 colClass[5] = "c";
                 Arrays.fill(colClass, 8, 13, "z");
+
+                if (extractEntries) {
+                    bme.extractEmbedded(i, context, metadata, handler, e);
+                }
             }
 
             AttributesImpl attributes = new AttributesImpl();
@@ -231,7 +257,7 @@ public class AresParser extends AbstractParser {
                             xhtml.characters(s);
                         }
                     }
-                    
+
                     if (i < 0 || i >= l.size())
                         xhtml.endElement("b"); //$NON-NLS-1$
                     xhtml.endElement("td"); //$NON-NLS-1$
@@ -239,6 +265,7 @@ public class AresParser extends AbstractParser {
             }
             xhtml.endElement("tr"); //$NON-NLS-1$
             xhtml.newline();
+
         }
 
         if (hashAlertHits > 0)

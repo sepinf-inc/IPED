@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -72,6 +73,7 @@ import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.mail.OutlookPSTParser;
+import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
@@ -211,7 +213,7 @@ public class IPEDReader extends DataSourceReader {
 
         insertIntoProcessQueue(result, false);
 
-        // Inclui anexos de emails de PST
+        // Add attachments of emails from PST, OST, UFED decoding, Win10Mail
         insertEmailAttachs(result);
 
         // insert items referenced by bookmarked items
@@ -292,7 +294,8 @@ public class IPEDReader extends DataSourceReader {
             for (int docID : result.getLuceneIds()) {
                 String mimetype = ipedCase.getReader().document(docID).get(IndexItem.CONTENTTYPE);
                 if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype)
-                        || UfedXmlReader.UFED_EMAIL_MIME.equals(mimetype)) {
+                        || UfedXmlReader.UFED_EMAIL_MIME.equals(mimetype)
+                        || Win10MailParser.WIN10_MAIL_MSG.toString().equals(mimetype)) {
                     hasEmail = true;
                     isSelectedEmail[Integer.parseInt(ipedCase.getReader().document(docID).get(IndexItem.ID))] = true;
                 }
@@ -336,6 +339,7 @@ public class IPEDReader extends DataSourceReader {
                     IIPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query.build());
                     LuceneSearchResult attachs = LuceneSearchResult.get(ipedCase, searchAttachs.search());
                     insertIntoProcessQueue(attachs, false);
+                    insertLinkedItems(attachs);
                     query = new BooleanQuery.Builder();
                     num = 0;
                 }
@@ -606,13 +610,6 @@ public class IPEDReader extends DataSourceReader {
                     evidence.setExtraAttribute(hash.toString(), value);
             }
 
-            // armazena metadados de emails, necessário para emails de PST
-            if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))
-                for (String key : ExtraProperties.COMMUNICATION_BASIC_PROPS) {
-                    for (String val : doc.getValues(key))
-                        evidence.getMetadata().add(key, val);
-                }
-
             value = doc.get(IndexItem.DELETED);
             evidence.setDeleted(Boolean.parseBoolean(value));
 
@@ -663,9 +660,14 @@ public class IPEDReader extends DataSourceReader {
                     } else
                         evidence.setExtraAttribute(f.name(), IndexItem.getCastedValue(c, f));
                 } else {
-                    Object casted = IndexItem.getCastedValue(c, f);
-                    if (casted != null) {
-                        evidence.getMetadata().add(f.name(), casted.toString());
+                    if (Date.class.equals(c) && f.stringValue() != null) {
+                        String val = f.stringValue();
+                        evidence.getMetadata().add(f.name(), val);
+                    } else {
+                        Object casted = IndexItem.getCastedValue(c, f);
+                        if (casted != null) {
+                            evidence.getMetadata().add(f.name(), casted.toString());
+                        }
                     }
                 }
             }

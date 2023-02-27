@@ -337,6 +337,9 @@
         <parser class="iped.parsers.browsers.firefox.FirefoxSavedSessionParser"></parser>
         
         <!-- parser class="iped.parsers.python.PythonParser"></parser-->
+        <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
+        <parser class="iped.parsers.discord.DiscordParser"></parser>
+
     </parsers>
 
     <encodingDetectors>

@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.mime.MediaType;
@@ -20,11 +21,13 @@ import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
+import iped.engine.core.Manager;
 import iped.engine.data.Item;
 import iped.engine.datasource.SleuthkitReader;
 import iped.engine.search.ItemSearcher;
 import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.TextCache;
+import iped.exception.IPEDException;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.MediaTypes;
@@ -47,6 +50,8 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     private static Set<File> exportedDisks = Collections.synchronizedSet(new HashSet<>());
 
+    private static AtomicBoolean embeddedDiskBeingExpanded = new AtomicBoolean();
+
     private boolean enabled = true;
 
     @Override
@@ -62,6 +67,11 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         enabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
+
+        if (enabled && Manager.getInstance().getNumWorkers() == 1) {
+            // abort and warn user because this can cause a deadlock
+            throw new IPEDException("To enable '" + ENABLE_PARAM + "' you should have more than 1 Worker thread!");
+        }
     }
 
     @Override
@@ -78,7 +88,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 && item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) == null;
     }
 
-    private static boolean isFirstOrUniqueImagePart(IItem item) {
+    public static boolean isFirstOrUniqueImagePart(IItem item) {
         return MediaTypes.E01_IMAGE.equals(item.getMediaType())
                 || MediaTypes.EX01_IMAGE.equals(item.getMediaType())
                 || MediaTypes.RAW_IMAGE.equals(item.getMediaType())
@@ -124,6 +134,11 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
         // export first part if not done
         File imageFile = exportItem(item);
 
+        if (embeddedDiskBeingExpanded.getAndSet(true)) {
+            super.reEnqueueItem(item);
+            return;
+        }
+
         try (SleuthkitReader reader = new SleuthkitReader(true, caseData, output)) {
             logger.info("Decoding embedded disk image {} -> {}", item.getPath(), imageFile.getAbsolutePath());
             reader.read(imageFile, (Item) item);
@@ -139,6 +154,8 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             } else {
                 ((Item) item).setParsedTextCache(new TextCache());
             }
+        } finally {
+            embeddedDiskBeingExpanded.set(false);
         }
 
     }

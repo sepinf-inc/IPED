@@ -4,7 +4,7 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.0.2</version>
+        <version>4.2-snapshot</version>
     </parent>
     
     <artifactId>iped-api</artifactId>
@@ -30,11 +30,6 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
             <version>${tika.core.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.sleuthkit</groupId>
-            <artifactId>sleuthkit</artifactId>
-            <version>${sleuthkit.version}</version>
         </dependency>
     </dependencies>
     

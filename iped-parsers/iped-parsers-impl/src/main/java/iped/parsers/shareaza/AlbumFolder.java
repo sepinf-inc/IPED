@@ -31,7 +31,7 @@ import iped.search.IItemSearcher;
 /**
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
-class AlbumFolder extends ShareazaEntity {
+public class AlbumFolder extends ShareazaEntity {
 
     private final XMLElement xml = new XMLElement();
     private final List<AlbumFolder> albumFolders = new ArrayList<>();
@@ -79,8 +79,7 @@ class AlbumFolder extends ShareazaEntity {
         }
     }
 
-    public void printTable(XHTMLContentHandler html, IItemSearcher searcher, Map<Integer, 
-            LibraryFile> fileByIndex, Map<Integer, List<String>> albunsForFiles) throws SAXException {
+    public void printTable(XHTMLContentHandler html, IItemSearcher searcher, Map<Integer, LibraryFile> fileByIndex, Map<Integer, List<String>> albunsForFiles) throws SAXException {
         for (AlbumFolder folder : albumFolders) {
             folder.printTable(html, searcher, fileByIndex, albunsForFiles);
         }
@@ -120,7 +119,7 @@ class AlbumFolder extends ShareazaEntity {
     public List<Integer> getAlbumFileIndexes() {
         return albumFileIndexes;
     }
-    
+
     public void collectAlbunsForFiles(Map<Integer, List<String>> albunsForFiles, String path) {
         if (path == null) {
             path = name;
@@ -138,7 +137,15 @@ class AlbumFolder extends ShareazaEntity {
         for (AlbumFolder folder : albumFolders) {
             folder.collectAlbunsForFiles(albunsForFiles, path);
         }
-        
+
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
 }

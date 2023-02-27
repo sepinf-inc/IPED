@@ -29,6 +29,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
@@ -119,13 +120,13 @@ public class IPEDSource implements IIPEDSource {
 
     int totalItens = 0;
 
-    private int lastId = 0;
+    private int lastId = -1;
 
     LinkedHashSet<String> keywords = new LinkedHashSet<String>();
 
     Set<String> extraAttributes = new HashSet<String>();
 
-    Set<String> evidenceUUIDs = new HashSet<String>();
+    Set<String> evidenceUUIDs = new TreeSet<String>();
 
     boolean isReport = false;
 
@@ -183,7 +184,7 @@ public class IPEDSource implements IIPEDSource {
                     if (!SleuthkitReader.isTSKPatched()) {
                         sleuthFile = SleuthkitInputStreamFactory.getWriteableDBFile(sleuthFile);
                     }
-                    sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
+                    sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(sleuthFile.getAbsolutePath());
                 }
 
                 if (!isReport)
@@ -230,6 +231,28 @@ public class IPEDSource implements IIPEDSource {
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    /**
+     * Clear bookmarks to items removed from the case.
+     */
+    public void clearOldBookmarks() {
+        ArrayList<Integer> idsToRemove = new ArrayList<>();
+        for (int id = 0; id <= lastId; id++) {
+            if (docs[id] == -1) {
+                idsToRemove.add(id);
+            }
+        }
+        for (int bookmarkId : bookmarks.getBookmarkMap().keySet().toArray(new Integer[0])) {
+            bookmarks.removeBookmark(idsToRemove, bookmarkId);
+            if (bookmarks.getBookmarkCount(bookmarkId) == 0) {
+                bookmarks.delBookmark(bookmarkId);
+            }
+        }
+        for (int id : idsToRemove) {
+            bookmarks.setChecked(false, id);
+        }
+        bookmarks.saveState(true);
     }
 
     public void populateLuceneIdToIdMap() throws IOException {
@@ -317,7 +340,7 @@ public class IPEDSource implements IIPEDSource {
 
     protected void loadCategoryTree() {
         CategoryConfig config = ConfigurationManager.get().findObject(CategoryConfig.class);
-        Category root = config.getConfiguration().clone();
+        Category root = config.getRootCategory().clone();
         // root.setName(rootName);
         ArrayList<Category> leafs = getLeafCategories(root);
         leafs.stream().forEach(l -> checkAndAddMissingCategory(root, l));
@@ -582,7 +605,7 @@ public class IPEDSource implements IIPEDSource {
             tmpCaseFile = writeableDBFile;
             // causes "case is closed" error in some cases
             // sleuthCase.close();
-            sleuthCase = SleuthkitCase.openCase(tmpCaseFile.getAbsolutePath());
+            sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(tmpCaseFile.getAbsolutePath());
             tskCaseList.add(sleuthCase);
         }
     }

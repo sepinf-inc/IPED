@@ -35,12 +35,14 @@ public class PythonTask extends AbstractTask {
     private static volatile IPEDSource ipedCase;
     private static volatile int numInstances = 0;
 
+    private Map<Long, Boolean> scriptLoaded = new ConcurrentHashMap<>();
+    private Map<Long, String> instanceName = new ConcurrentHashMap<>();
+
     private ArrayList<String> globals = new ArrayList<>();
     private File scriptFile;
-    private String moduleName, instanceName;
+    private String moduleName;
     private Boolean processQueueEnd;
     private boolean isEnabled = true;
-    private boolean scriptLoaded = false;
     private boolean sendToNextTaskExists = true;
     private boolean throwExceptionInsteadOfLogging = false;
 
@@ -96,9 +98,10 @@ public class PythonTask extends AbstractTask {
 
     private Jep getJep(boolean init) throws JepException {
         Jep jep = PythonParser.getJep();
-        if (!scriptLoaded) {
+        long threadId = Thread.currentThread().getId();
+        if (scriptLoaded.get(threadId) == null) {
             loadScript(jep, init);
-            scriptLoaded = true;
+            scriptLoaded.put(threadId, true);
         }
         return jep;
     }
@@ -142,8 +145,10 @@ public class PythonTask extends AbstractTask {
 
         jep.eval("import " + moduleName);
 
-        instanceName = className.toLowerCase() + "_thread_" + Thread.currentThread().getId();
+        long threadId = Thread.currentThread().getId();
+        String instanceName = className.toLowerCase() + "_thread_" + threadId;
         jep.eval(instanceName + " = " + moduleName + "." + className + "()");
+        this.instanceName.put(threadId, instanceName);
 
         for (String global : globals) {
             jep.eval(moduleName + "." + global + " = " + global);
@@ -186,7 +191,7 @@ public class PythonTask extends AbstractTask {
     }
 
     private String getInstanceMethod(String function) {
-        return instanceName + "." + function;
+        return this.instanceName.get(Thread.currentThread().getId()) + "." + function;
     }
 
     @Override

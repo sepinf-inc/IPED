@@ -1,5 +1,6 @@
 package iped.parsers.registry.model;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public abstract class CellContent {
@@ -17,5 +18,9 @@ public abstract class CellContent {
 
     public RegistryFile getRegistryFile() {
         return reg;
+    }
+
+    public ArrayList<Integer> getSubCellsOffsets() {
+        return new ArrayList<Integer>();
     }
 }

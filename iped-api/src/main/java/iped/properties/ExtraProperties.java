@@ -53,8 +53,6 @@ public class ExtraProperties {
 
     public static final String GROUP_ID = "GroupID";
 
-    public static final String CHAT_RECOVERED = "ChatRecovered";
-
     public static final String MESSAGE_BODY = MESSAGE_PREFIX + "Body"; //$NON-NLS-1$
 
     public static final String MESSAGE_IS_ATTACHMENT = Message.MESSAGE_PREFIX + "IsEmailAttachment"; //$NON-NLS-1$
@@ -88,6 +86,8 @@ public class ExtraProperties {
     public static final String OFFICE_META_PREFIX = "office:"; //$NON-NLS-1$
 
     public static final String UFED_META_PREFIX = "ufed:"; //$NON-NLS-1$
+
+    public static final String P2P_META_PREFIX = "p2p:"; //$NON-NLS-1$
 
     public static final String ITEM_VIRTUAL_ID = "itemVirtualIdentifier"; //$NON-NLS-1$
 
@@ -140,6 +140,12 @@ public class ExtraProperties {
     public static final String DECODED_DATA = "isDecodedData";
 
     public static final String DOWNLOADED_DATA = "downloadedData";
+
+    public static final String FACE_COUNT = "face_count";
+
+    public static final String FACE_LOCATIONS = "face_locations";
+
+    public static final String FACE_ENCODINGS = "face_encodings";
 
     public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, COMMUNICATION_DATE.getName(),
             MESSAGE_BODY, COMMUNICATION_FROM, COMMUNICATION_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,

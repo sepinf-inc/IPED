@@ -201,7 +201,7 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(TikaCoreProperties.TITLE, chatName);
             chatMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
-            chatMetadata.set(ExtraProperties.CHAT_RECOVERED, Boolean.toString(c.isDeleted()));
+            chatMetadata.set(ExtraProperties.DELETED, Boolean.toString(c.isDeleted()));
             chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
             if (c.isGroup()) {
@@ -363,19 +363,21 @@ public class TelegramParser extends SQLite3DBParser {
     }
 
     private Contact searchAndroidAccount(IItemSearcher searcher, String dbPath) {
-        String query = BasicProps.CONTENTTYPE + ":\"" + TELEGRAM_USER_CONF.toString() + "\"";
-        List<IItemReader> result = searcher.search(query);
-        IItemReader item = getBestItem(result, dbPath);
-        if (item != null) {
-            try (InputStream is = item.getBufferedInputStream()) {
-                Contact account = decodeAndroidAccount(is);
-                if (account != null)
-                    return account;
+        if (searcher != null) {
+            String query = BasicProps.CONTENTTYPE + ":\"" + TELEGRAM_USER_CONF.toString() + "\"";
+            List<IItemReader> result = searcher.search(query);
+            IItemReader item = getBestItem(result, dbPath);
+            if (item != null) {
+                try (InputStream is = item.getBufferedInputStream()) {
+                    Contact account = decodeAndroidAccount(is);
+                    if (account != null)
+                        return account;
 
-            } catch (Exception e) {
-                e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
             }
-
         }
         Contact account = new Contact(0);
         // TODO externalize to locale properties

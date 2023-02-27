@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright 2011-2014, Luis Filipe da Cruz Nassif
- 
  This file is part of Indexador e Processador de Evidências Digitais (IPED).
 
  IPED is free software: you can redistribute it and/or modify
@@ -399,6 +397,10 @@
         <glob pattern="Library2.dat" />
     </mime-type>
     
+    <mime-type type="application/x-shareaza-library-dat-entry">
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
     <mime-type type="application/x-bittorrent-resume-dat">
         <_comment>BitTorrent Client Resume.dat file</_comment>
         <sub-class-of type="application/x-p2p"/>
@@ -534,6 +536,45 @@
             <match value="regf" type="string" offset="0"/>
             <match value="CREG" type="string" offset="0"/>
         </magic> 
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-main">
+        <sub-class-of type="application/x-windows-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-sam">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SAM"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-software">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SOFTWARE"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-system">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SYSTEM"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-security">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="SECURITY"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-ntuser">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="NTUSER.DAT"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-usrclass">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="UsrClass.dat"/>
+    </mime-type>
+    
+    <mime-type type="application/x-windows-registry-amcache">
+        <sub-class-of type="application/x-windows-registry-main"/>
+        <glob pattern="Amcache.hve"/>
     </mime-type>
     
     <mime-type type="application/x-incredimail">
@@ -745,6 +786,14 @@
         <glob pattern=".*\.part\.met( \([1-9]\))?\.bak" isregex="true"/>
     </mime-type>
     
+    <mime-type type="application/x-emule-known-met-entry">
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-emule-part-met-entry">
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
     <mime-type type="application/x-emule-searches">
         <sub-class-of type="text/plain"/>
         <glob pattern="AC_SearchStrings.dat"/>
@@ -768,6 +817,10 @@
             <match value="__ARESDB1.04L_" type="string" offset="0"/>
         </magic>
         <glob pattern="*.ares"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ares-galaxy-entry">
+        <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
     
     <mime-type type="application/x-msie-cache">
@@ -1342,8 +1395,53 @@
     <mime-type type="application/x-ios-locations-db">
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
- 	
- 	<mime-type type="application/x-tor-tc-fragment">
-	</mime-type>
     
+    <mime-type type="application/x-tor-tc-fragment">
+	</mime-type>
+
+    <mime-type type="application/x-win10-mail-db">
+        <sub-class-of type="application/x-edb"/>
+        <glob pattern="store.vol"/>
+    </mime-type>
+
+    <mime-type type="message/x-win10-mail-msg">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-appointment">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-contact">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-store">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-chrome-cache-index">
+        <_comment>Chrome Cache Index file </_comment>
+        <magic priority="50">
+            <match value="0xC3CA03C1" type="string" offset="0"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-discord-chat">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="message/x-discord-message">
+    	<sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+    
+    <mime-type type="message/x-discord-attachment">
+    	<sub-class-of type="message/x-discord-message"/>
+    </mime-type>
+    
+    <mime-type type="call/x-discord-call">
+    	<sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+
 </mime-info>
+

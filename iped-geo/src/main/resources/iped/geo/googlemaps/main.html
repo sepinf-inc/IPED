@@ -13,6 +13,19 @@
 		body { margin:0px;padding:0px }
 		</style>		
 
+        <script>
+        function applyDarkTheme(){
+            document.documentElement.style.background = 'black';
+            document.body.style.background = 'black';
+        }
+        
+        function applyLightTheme(){
+            document.documentElement.style.background = '';
+            document.body.style.background = '';
+        }
+        </script>
+
+
         <script type="text/javascript" src= "http://maps.google.com/maps/api/js?sensor=false&libraries=geometry"></script>
         <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{GOOGLE_API_KEY}}&callback=initMap"></script>
         <script type="text/javascript">
@@ -28,10 +41,14 @@
 		{{load_extensions}}
 		</script>
     <script>
+    var mpos=-1;
     var mapImpl = "GOOGLE";
     var map;
 	var gxml;
 	var proxy = "/cgi-bin/proxy.php?"
+
+	{{applyTheme}}
+	
     function initialize() {
         var kmlUrl = '';
         var myOptions = {
@@ -47,17 +64,16 @@
 			iwwidth:280
 		});
 
-	    gxml.icone_marcador = "{{icone_base64}}"; 
-	    gxml.icone_marcador_selecionado = "{{icone_selecionado_base64}}"; 
-	    gxml.icone_marcador_selecionado_m = "{{icone_selecionado_m_base64}}";
-	    gxml.icone_marcador_m = "{{icone_m_base64}}";
+        gxml.setIcon("{{icone_base64}}"); 
+        gxml.setHighlightedIcon("{{icone_selecionado_base64}}"); 
+        gxml.setHighlightedCheckedIcon("{{icone_selecionado_m_base64}}");
+        gxml.setCheckedIcon("{{icone_m_base64}}");
 
-		gxml.processString('{{kml}}', 'Results'); 
 		map.enableKeyDragSelect();
-		
+
 		document.getElementById('ordem_descr').innerHTML = gxml.tourOrder;
 		document.getElementById('resultsinfo').innerHTML = 'Mapped Items:'+gxml.overlayman.markers.length; 
-		
+
 	    map.addListener('dragend_rect', function(rect, proj) {
 	    	var ms = gxml.selecionaRetangulo(rect, proj);
 	    	window.app.selectMarkerBF(ms);
@@ -68,23 +84,46 @@
     	  });
     }
 
-    function navega(mpos){
-    	if(mpos<0){
-    		alert('The navigation already is on the first item.');
-    		return false;
+    
+    function updateLeadMarker(marker){
+		var i=0;
+       	for (var ind in gxml.overlayman.markers){
+       		if(gxml.overlayman.markers[ind].extendedData.id==marker){
+    			mpos=i;
+       			break;
+       		}
+       		i++;
+       	}
+       	return mpos;
+    }
+
+    function moveToMarkerPos(pos){    
+    	if(pos<0){
+    	   if(mpos==0){
+	           alert('The navigation already is on the first item.');
+	           return false;
+    	   }else{
+    	       pos = 0;
+    	   }
     	}
-    	if(mpos>=gxml.overlayman.markers.length){
+    	if(pos>=gxml.overlayman.markers.length){
     		alert('The navigation already is on the last item.')
     		return false;
     	}
+		mpos=pos;
     	google.maps.event.trigger(gxml.overlayman.markers[mpos],"click");
     	map.setCenter(gxml.overlayman.markers[mpos].getPosition());
     	gxml.navigationPos = mpos;
     	return false;
     }
     
+    function moveToLastMarker(){
+    	moveToMarkerPos(gxml.overlayman.markers.length-1);
+    }    
+    
     function zoomOut(){
     	var markers = gxml.overlayman.markers;
+        alert(markers.length);
     	var bounds = new google.maps.LatLngBounds();
     	for (var i = 0; i < markers.length; i++) {
     	 bounds.extend(markers[i].getPosition());

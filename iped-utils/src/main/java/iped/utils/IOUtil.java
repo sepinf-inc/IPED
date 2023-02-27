@@ -335,6 +335,11 @@ public class IOUtil {
         copyDirectory(origem, destino, true);
     }
 
+    /**
+     * Use this method with CAUTION, it buffers all input stream data on memory and
+     * could cause OOME.
+     * 
+     */
     public static byte[] loadInputStream(InputStream is) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         byte[] buf = new byte[8192];
@@ -350,7 +355,7 @@ public class IOUtil {
         int read = 0;
         while (read < len) {
             int r = is.read(arr, read, len - read);
-            if (r <= 0) break;
+            if (r < 0) break;
             read += r;
         }
         return len == read ? arr : null;
@@ -362,7 +367,7 @@ public class IOUtil {
         int read = 0;
         while (read < len) {
             int r = is.read(arr, read, len - read);
-            if (r <= 0) break;
+            if (r < 0) break;
             read += r;
         }
         if (len != read) return null;

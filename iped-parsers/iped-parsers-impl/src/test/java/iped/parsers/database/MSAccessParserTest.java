@@ -52,7 +52,7 @@ public class MSAccessParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
             assertEquals("Arial Software", metadata.get("Company"));
             assertEquals("Arial Software", metadata.get("Author"));
-            assertEquals("application/x-msaccess", metadata.get(metadata.CONTENT_TYPE));
+            assertEquals(MSAccessParser.ACCESS_MIME_TYPE.toString(), metadata.get(metadata.CONTENT_TYPE));
             assertEquals("Campaign_Template", metadata.get("Title"));
 
         }

@@ -1,3 +1,142 @@
+17/02/2023: IPED-4.1.0:
+News:
+#306:  Timeline chart to show item counts and filter items based on date ranges (@patrickdalla, @lfcnassif, @FelipeFCosta, @paulobreim)
+#1214: New local/remote audio transcription using Facebook wav2vec2 and transcription cluster service (@lfcnassif)
+#1183: Restrict audio transcription to some mimeTypes and skip known audios by default (@lfcnassif, @aberenguel)
+#1286: Parser for Windows 10 Mail App (@FelipeFcosta, @lfcnassif)
+#390:  Discord cache files parser (@felipecampanini, @lfcnassif)
+#1322: New Windows EVTX parser to extract events timestamps (@patrickdalla, @lfcnassif)
+#281:  Extract P2P (Emule, Shareaza, Ares) history entries as separate items in case (@patrickdalla, @lfcnassif)
+#1461: Support importing new NIST NSRL RDS version 3 format (@tc-wleite)
+#1202: Image blur and gray filters in gallery and image viewer (@abdalla-mar, @lfcnassif, @tc-wleite)
+#1201: Support rendering tracks on Map tab (@patrickdalla)
+#1480: Create toggle button to show plotted items on map as a track (@patrickdalla)
+#1460: Extract features from kml (@patrickdalla)
+#1107: Option to extract a number of video frames as a function of video duration (@lfcnassif)
+#1371: Search for Vendors and Products Identifiers for Hardware Wallets (@mobab-th, @lfcnassif)
+#1092: Spanish Translation (@AburtoArielPM, @lfcnassif)
+#1513: Include Tesseract fast language models for Italian, German and Spanish (@lfcnassif)
+#1370: Create categories for other types extracted from UFDRs (@tc-wleite)
+#1282: Extract telegram deleted groups (@hauck-jvsh, @lfcnassif)
+#1426: Improve PDF rendering quality (@tc-wleite)
+#1383: Render ICO files (@tc-wleite)
+#1474: Increase the image thumbnail resolution (@tc-wleite)
+#1378: Faster WEBP images rendering using a Java ImageIO plugin (@tc-wleite)
+#1291: Render file type icons on table user interface (@gfd2020, @lfcnassif, @tc-wleite)
+#1356: Add file type icons rendering on more panels (@lfcnassif)
+#1359: Add icons for mime types and option to change size (@tc-wleite)
+#1300: Continuous navigation with left/right arrows in the gallery (@tc-wleite, @lfcnassif)
+#1085: Change gallery multiple selection behavior to display last clicked file in the viewer (@lfcnassif)
+#1453: Run KnownMetCarveTask on the same areas as LEDCarveTask (@lfcnassif)
+#1451: Disable LED carving on VHDX virtual disks (@lfcnassif)
+#1325: Maps the image features as knn vector when indexing to opensearch (@hauck-jvsh)
+#1408: Export the extracted faces to opensearch (@hauck-jvsh, @lfcnassif)
+#1216: Fixes the content type in the elasticsearch index (@hauck-jvsh, @lfcnassif)
+#1511: Visual Enhancements in Processing UI (@tc-wleite)
+#1416: Splash Screen (@tc-wleite, @lfcnassif)
+#1494: Set an icon for processing UI (@tc-wleite)
+#1413: "Wait..." dialog hidden behind main window (@tc-wleite, @lfcnassif)
+#1410: Copy embedded JRE to user home and reuse it (@tc-wleite, @lfcnassif)
+#1319: Move scripts code from conf folder to root (@lfcnassif)
+#1320: Move mplayer to iped/tools folder (@lfcnassif)
+#1261: Parameterize Google Speech-To-Text transcription model (@lfcnassif)
+#1504: Make Microsoft speech client SDK a plugin module (@lfcnassif)
+#1377: Try to load scripts first from profiles/X/scripts/tasks then from root scripts/tasks folder (@lfcnassif)
+#1206: New methods to configure new metadata prefixes and data types from parsers (@lfcnassif)
+#1463: Unable to use VisualVM to monitor IPED process (@tc-wleite)
+#897:  Log all Configurables settings (@lfcnassif)
+#1279: Regripper Custom Reports (@DHoelz, @lfcnassif)
+#1432: Support comments in Multicase TXT files (@lfcnassif)
+#1493: Update DIE nudity detection model (@tc-wleite)
+#331:  Upgrade to RegRipper-3.0 and move it to tools folder (@lfcnassif)
+#1462: Update index search quick help (@lfcnassif)
+#1434: Update localization files to Italian, German & Spanish (@flates, @mobab-th, @AburtoArielPM, @lfcnassif)
+#1524: Upgrade to PDFBox-2.0.27 (@lfcnassif)
+#1340: Upgrade to Sleuthkit-4.12.0: Linux LVM support (@lfcnassif)
+Fixes:
+#1427: Maps with lot of items not being plotted (@patrickdalla, @lfcnassif)
+#1485: Thread leak in Face recognition python task causing performance degradation (@hauck-jvsh)
+#1476: The --restart and -remove evidence options are not cleaning the bookmarks (@lfcnassif)
+#1281: Aborting ArrayIndexOutOfBoundsException while indexing huge files (@lfcnassif)
+#1499: Email dates in portable case reports being formatted to a bad string (@lfcnassif)
+#1176: System properties not copied to parsing process affecting externalParsing [TSK-4.11.1 bug] (@lfcnassif)
+#1505: AIOOBE in Timeline table view causing no results returned (@lfcnassif)
+#1458: Fix incorrect usage of InputStream.read(byte[]) through code (@lfcnassif)
+#1510: Fix incorrect implementations of InputStream.read() through code (@lfcnassif)
+#1497: Fix non thread safe parsers, they can return inconsistent results (@lfcnassif)
+
+
+21/12/2022: IPED-4.0.7:
+Fixes:
+#1336: Makes analysis UI to work from an unmounted network path again (@tc-wleite)
+#1446: Map tab not working with http(s) system proxy (@lfcnassif)
+#1403: OutOfMemoryError caused by com.dd.plist library (@lfcnassif)
+#1421: Aborting StackOverflow exception thrown by QRCodeTask (@lfcnassif)
+#1415: QRCodeTask hangs for hours (@hauck-jvsh @lfcnassif)
+#1392: Error applying user defined filters with colon in property name after reopening the case (@lfcnassif)
+#1441: DocThumbTask not working on 4.0.x if enableExternalParsing is enabled (@lfcnassif)
+#1433: Common properties of items coming from UFED decoding not exported to reports (@lfcnassif)
+#1307: FaceRecognition module not detecting large faces full filling some high resolution images (@lfcnassif)
+#1409: Items with "thumbsOnly" option don't display properly in the generated report (@tc-wleite)
+#1452: LedCarveTask might miss a lot of items (@lfcnassif)
+#1451: Disable LED carving on VHDX virtual disks (@lfcnassif)
+#1394: Error opening subitems on Linux inside a case processed on Windows (@lfcnassif)
+#1439: The IdInDataSource in MinIO is being changed to the preview item (@hauck-jvsh)
+#1428: On Linux v.4.0.6. fails to decrypt APFS partition that v.3.17.1 could decrypt - Sleuthkit 4.11.1 issue (@arisjr)
+#1454: Remove "<br/> Empty media" from Telegram messages (@lfcnassif)
+
+
+19/10/2022: IPED-4.0.6
+Fixes:
+#1374: Vulnerability in WhatsAppParser caused by Apache Commons Text 1.8 dependency [affects 3.18.1 to 4.0.5] (@lfcnassif)
+#1379: DBX parser not working [4.0 regression] (@lfcnassif)
+#1358: OutOfMemoryError caused by processing queue growing too much (@lfcnassif)
+#1368: User interface scaling is not working in some environments (@tc-wleite)
+#1357: Any zero sized file rendered as X icon in gallery (@lfcnassif)
+#1387: Unneeded network dependency slowing down application start up (@lfcnassif, @tc-wleite)
+#1381: Sometimes autocomplete (TAB) does not find certain properties (@tc-wleite)
+#1365: Minor UI glitch in similar image search panel (@tc-wleite)
+#471:  Log Console Error (@tc-wleite)
+
+
+04/10/2022: IPED-4.0.5
+Fixes:
+#1350: Several folders and files missed by TSK-4.11.1 when processing an evidence with files owned by IIS default account (@lfcnassif)
+#1338: UFED chat messages with unknown sender (@hauck-jvsh, @lfcnassif)
+#1349: Timeouts while transcribing small audios - 4.0.4 regression (@lfcnassif)
+#1328: IgnoreFilesByPathTask.js not being executed by triage profile (@lfcnassif)
+#1327: Aborting IndexOutOfBoundsException caused by carved file with negative size (@lfcnassif)
+#1332: Databases classified in categories other than 'Databases' are showing all table content on HTMLViewer - affects 3.18.x (@lfcnassif, @patrickdalla)
+#1353: Table column parallel sorting may not be visible to other threads - affects 3.18.x (@lfcnassif, @patrickdalla)
+#1348: Check/Uncheck all items action not propagated to Map tab - affects 3.18.x (@lfcnassif)
+#697:  Map previous/next buttons first click after sorting change are considering previous sorting order - affects 3.18.x (@patrickdalla, @lfcnassif)
+#1352: If processing aborts, sometimes a different exception than the cause is printed in the Console - affects 3.18.x (@lfcnassif)
+
+
+16/09/2022: IPED-4.0.4
+Fixes:
+#1293: Errors in multicases: rendering chats with attachments, bookmarking duplicates and exporting file properties (@lfcnassif)
+#1321: Inconsistent behavior of enableAutomaticExportFiles and CategoriesToExport/KeywordsToExport (@lfcnassif)
+#1288: Error generating multicase graph depending on current directory (@lfcnassif)
+#1292: Processing can hang in AudioTranscriptTask (@lfcnassif)
+#1290: HexViewerPlus search for big hexadecimals not working (@gfd2020)
+#1324: Fix audio:transcriptConfidence type as double (@lfcnassif)
+#1299: Clicking on an item in the gallery, sometimes trigger multiple events (@tc-wleite)
+#1323: Rare mplayer processes left behind on Windows after processing finished (@lfcnassif)
+
+
+25/08/2022: IPED-4.0.3
+Fixes:
+#661:  Fix dynamic metadata types detection divergences in multicases (@lfcnassif)
+#1281: Aborting ArrayIndexOutOfBoundsException while indexing embedded virtual disk segments or huge files (@lfcnassif)
+#1278: Processing rarely aborting by ArrayIndexOutOfBoundsException from QRCodeTask (@lfcnassif)
+#1277: Searching in Hex Viewer not working (@lfcnassif)
+#1274: Error creating bookmarks from python scripts (@lfcnassif)
+#1288: Error generating multicase graph depending on current directory (@lfcnassif)
+#1273: Fix PythonScriptTask.py example and ExampleScriptTask.js (@lfcnassif)
+#1276: Fix ending white spaces in some localization strings (@lfcnassif)
+
+
 08/08/2022: IPED-4.0.2
 Fixes:
 #1262: Preview of device info, contacts & emails from UFDR evidences can be overridden with --append - also affects 3.18.x (@lfcnassif)
