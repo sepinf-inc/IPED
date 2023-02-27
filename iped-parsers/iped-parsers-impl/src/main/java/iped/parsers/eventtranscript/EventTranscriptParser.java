@@ -165,7 +165,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     while (historyEntriesIterator.hasNext()) {
                         BrowserHistoryEntry historyEntry = historyEntriesIterator.next();
-                        Metadata historySubitem = getHistoryEntryMetadata(historyEntry, i);
+                        Metadata historySubitem = getHistoryEntryMetadata(historyEntry, ++i);
                         extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), historySubitem, true);
                     }
                 }
@@ -203,7 +203,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     while (inventoryAppsIterator.hasNext()) {
                         InventoryAppsEntry appInvEntry = inventoryAppsIterator.next();
-                        Metadata inventorySubitem = getInventoryEntryMetadata(appInvEntry, i);
+                        Metadata inventorySubitem = getInventoryEntryMetadata(appInvEntry, ++i);
                         extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), inventorySubitem, true);
                     }
                 }
@@ -241,7 +241,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     while (appInteractivityIterator.hasNext()) {
                         AppInteractivityEntry appIntEntry = appInteractivityIterator.next();
-                        Metadata appInteractSubitem = getAppInteractEntryMetadata(appIntEntry, i);
+                        Metadata appInteractSubitem = getAppInteractEntryMetadata(appIntEntry, ++i);
                         extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), appInteractSubitem, true);
                     }
                 }
@@ -279,7 +279,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     while (devicesIterator.hasNext()) {
                         DevicesEntry deviceEntry = devicesIterator.next();
-                        Metadata deviceSubitem = getDevicesMetadata(deviceEntry, i);
+                        Metadata deviceSubitem = getDevicesMetadata(deviceEntry, ++i);
                         extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), deviceSubitem, true);
                     }
                 }
@@ -316,7 +316,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     while (censusIterator.hasNext()) {
                         CensusEntry censusEntry = censusIterator.next();
-                        Metadata censusSubitem = getCensusEntryMetadata(censusEntry, i);
+                        Metadata censusSubitem = getCensusEntryMetadata(censusEntry, ++i);
                         extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), censusSubitem, true);
                     }
                 }
@@ -354,7 +354,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     int i = 0;
                     while (networkingIterator.hasNext()) {
                         NetworkingEntry netEntry = networkingIterator.next();
-                        Metadata networkingSubitem = getNetworkingMetadata(netEntry, i);
+                        Metadata networkingSubitem = getNetworkingMetadata(netEntry, ++i);
                         extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), networkingSubitem, true);
                     }
                 }
