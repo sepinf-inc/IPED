@@ -35,6 +35,7 @@ import iped.parsers.util.IgnoreContentHandler;
 import iped.parsers.util.ToXMLContentHandler;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
+import iped.utils.DateUtil;
 import iped.utils.EmptyInputStream;
 
 /**
@@ -310,7 +311,16 @@ public class EventTranscriptParser extends SQLite3DBParser {
             try (InputStream fis = new BufferedInputStream(new FileInputStream(censusFile))) {
                 extractor.parseEmbedded(fis, handler, censusMeta, true);
             }
-            // no entry extraction
+            if (extractEntries) {
+                try (CensusIterator censusIterator = new CensusIterator(connection, DBQueries.CENSUS)) {
+                    int i = 0;
+                    while (censusIterator.hasNext()) {
+                        CensusEntry censusEntry = censusIterator.next();
+                        Metadata censusSubitem = getCensusEntryMetadata(censusEntry, i);
+                        extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), censusSubitem, true);
+                    }
+                }
+            }
 
             Metadata networkingMeta = new Metadata();
             try (BufferedOutputStream tmpNetworkingFile = new BufferedOutputStream(new FileOutputStream(networkingFile))) {
@@ -496,6 +506,22 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add("originalPayload", entry.getJSONPayload());
 
         return metadataEntry;
+    }
+
+    private Metadata getCensusEntryMetadata(CensusEntry censusEntry, int i) throws ParseException {
+        Metadata metadataCensusEntry = new Metadata();
+
+        metadataCensusEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST_REG.toString());
+        metadataCensusEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Census Entry " + i);
+        metadataCensusEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+        metadataCensusEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(4));
+        metadataCensusEntry.set(BasicProps.LENGTH, "");
+
+        metadataCensusEntry.add("timeStamp", DateUtil.dateToString(censusEntry.getTimestamp()));
+        metadataCensusEntry.add("eventName", censusEntry.getEventName());
+        metadataCensusEntry.add("jsonData", censusEntry.getDataJSON());
+
+        return metadataCensusEntry;
     }
 
     private Metadata getNetworkingMetadata(NetworkingEntry entry, int i) throws ParseException {
