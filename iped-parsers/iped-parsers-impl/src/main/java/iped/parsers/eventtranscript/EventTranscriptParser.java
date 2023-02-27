@@ -129,11 +129,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
         try (Connection connection = getConnection(tis, metadata, context)) {
 
+            Metadata metadataHistory = new Metadata();
             try (FileOutputStream tmpHistoryFile = new FileOutputStream(browserHistoryFile)) {
                 ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-8");
                 String title = "Event Transcript Browser History";
-
-                Metadata metadataHistory = new Metadata();
                 metadataHistory.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST.toString());
                 metadataHistory.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
                 metadataHistory.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
@@ -153,11 +152,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                     xHandler.endElement("table");
                     xHandler.endDocument();
-
-                    try (FileInputStream fis = new FileInputStream(browserHistoryFile)) {
-                        extractor.parseEmbedded(fis, handler, metadataHistory, true);
-                    }
                 }
+            }
+            try (FileInputStream fis = new FileInputStream(browserHistoryFile)) {
+                extractor.parseEmbedded(fis, handler, metadataHistory, true);
             }
             if (extractEntries) {
                 try (HistoryIterator historyEntriesIterator = new HistoryIterator(connection, DBQueries.HISTORY)) {
@@ -170,11 +168,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 }
             }
 
+            Metadata inventoryAppsMeta = new Metadata();
             try (FileOutputStream tmpInventoryAppFile = new FileOutputStream(inventoryAppsFile)) {
                 ToXMLContentHandler inventoryAppHandler = new ToXMLContentHandler(tmpInventoryAppFile, "UTF-8");
                 String title = "Event Transcript Inventory Apps";
-
-                Metadata inventoryAppsMeta = new Metadata();
                 inventoryAppsMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_INVENTORY_APP.toString());
                 inventoryAppsMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
                 inventoryAppsMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
@@ -193,11 +190,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     }
                     xHandler.endElement("table");
                     xHandler.endDocument();
-
-                    try (FileInputStream fis = new FileInputStream(inventoryAppsFile)) {
-                        extractor.parseEmbedded(fis, handler, inventoryAppsMeta, true);
-                    }
                 }
+            }
+            try (FileInputStream fis = new FileInputStream(inventoryAppsFile)) {
+                extractor.parseEmbedded(fis, handler, inventoryAppsMeta, true);
             }
             if (extractEntries) {
                 try (InventoryAppsIterator inventoryAppsIterator = new InventoryAppsIterator(connection, DBQueries.INVENTORY_APPS)) {
@@ -210,11 +206,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 }
             }
 
+            Metadata appInteractMeta = new Metadata();
             try (FileOutputStream tmpAppInteractFile = new FileOutputStream(appInteractivityFile)) {
                 ToXMLContentHandler appInteractivityHandler = new ToXMLContentHandler(tmpAppInteractFile, "UTF-8");
                 String title = "Event Transcript App Interactivity";
-
-                Metadata appInteractMeta = new Metadata();
                 appInteractMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_APP_INTERACT.toString());
                 appInteractMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
                 appInteractMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(2));
@@ -233,11 +228,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     }
                     xHandler.endElement("table");
                     xHandler.endDocument();
-
-                    try (FileInputStream fis = new FileInputStream(appInteractivityFile)) {
-                        extractor.parseEmbedded(fis, handler, appInteractMeta, true);
-                    }
                 }
+            }
+            try (FileInputStream fis = new FileInputStream(appInteractivityFile)) {
+                extractor.parseEmbedded(fis, handler, appInteractMeta, true);
             }
             if (extractEntries) {
                 try (AppInteractivityIterator appInteractivityIterator = new AppInteractivityIterator(connection, DBQueries.APP_INTERACTIVITY)) {
@@ -250,11 +244,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 }
             }
 
+            Metadata devicesMeta = new Metadata();
             try (FileOutputStream tmpDevicesFile = new FileOutputStream(devicesFile)) {
                 ToXMLContentHandler devicesHandler = new ToXMLContentHandler(tmpDevicesFile, "UTF-8");
                 String title = "Event Transcript Devices Inventory";
-
-                Metadata devicesMeta = new Metadata();
                 devicesMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_DEVICES.toString());
                 devicesMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
                 devicesMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(3));
@@ -273,11 +266,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     }
                     xHandler.endElement("table");
                     xHandler.endDocument();
-
-                    try (FileInputStream fis = new FileInputStream(devicesFile)) {
-                        extractor.parseEmbedded(fis, handler, devicesMeta, true);
-                    }
                 }
+            }
+            try (FileInputStream fis = new FileInputStream(devicesFile)) {
+                extractor.parseEmbedded(fis, handler, devicesMeta, true);
             }
             if (extractEntries) {
                 try (DevicesIterator devicesIterator = new DevicesIterator(connection, DBQueries.DEVICES)) {
@@ -290,11 +282,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 }
             }
 
+            Metadata censusMeta = new Metadata();
             try (FileOutputStream tmpCensusFile = new FileOutputStream(censusFile)) {
                 ToXMLContentHandler censusHandler = new ToXMLContentHandler(tmpCensusFile, "UTF-8");
                 String title = "Event Transcript Census";
-
-                Metadata censusMeta = new Metadata();
                 censusMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_CENSUS.toString());
                 censusMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
                 censusMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(4));
@@ -312,19 +303,17 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     }
                     xHandler.endElement("table");
                     xHandler.endDocument();
-
-                    try (FileInputStream fis = new FileInputStream(censusFile)) {
-                        extractor.parseEmbedded(fis, handler, censusMeta, true);
-                    }
                 }
+            }
+            try (FileInputStream fis = new FileInputStream(censusFile)) {
+                extractor.parseEmbedded(fis, handler, censusMeta, true);
             }
             // no entry extraction
 
+            Metadata networkingMeta = new Metadata();
             try (FileOutputStream tmpNetworkingFile = new FileOutputStream(networkingFile)) {
                 ToXMLContentHandler networkingHandler = new ToXMLContentHandler(tmpNetworkingFile, "UTF-8");
                 String title = "Event Transcript Networking";
-
-                Metadata networkingMeta = new Metadata();
                 networkingMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_NETWORKING.toString());
                 networkingMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
                 networkingMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(5));
@@ -343,11 +332,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     }
                     xHandler.endElement("table");
                     xHandler.endDocument();
-
-                    try (FileInputStream fis = new FileInputStream(networkingFile)) {
-                        extractor.parseEmbedded(fis, handler, networkingMeta, true);
-                    }
                 }
+            }
+            try (FileInputStream fis = new FileInputStream(networkingFile)) {
+                extractor.parseEmbedded(fis, handler, networkingMeta, true);
             }
             if (extractEntries) {
                 try (NetworkingIterator networkingIterator = new NetworkingIterator(connection, DBQueries.NETWORKING)) {
