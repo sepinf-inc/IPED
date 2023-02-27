@@ -130,7 +130,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         try (Connection connection = getConnection(tis, metadata, context)) {
 
             try (FileOutputStream tmpHistoryFile = new FileOutputStream(browserHistoryFile)) {
-                ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-16");
+                ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-8");
                 String title = "Event Transcript Browser History";
 
                 Metadata metadataHistory = new Metadata();
@@ -166,7 +166,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
             }
 
             try (FileOutputStream tmpInventoryAppFile = new FileOutputStream(inventoryAppsFile)) {
-                ToXMLContentHandler inventoryAppHandler = new ToXMLContentHandler(tmpInventoryAppFile, "UTF-16");
+                ToXMLContentHandler inventoryAppHandler = new ToXMLContentHandler(tmpInventoryAppFile, "UTF-8");
                 String title = "Event Transcript Inventory Apps";
 
                 Metadata inventoryAppsMeta = new Metadata();
@@ -201,7 +201,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
             }
 
             try (FileOutputStream tmpAppInteractFile = new FileOutputStream(appInteractivityFile)) {
-                ToXMLContentHandler appInteractivityHandler = new ToXMLContentHandler(tmpAppInteractFile, "UTF-16");
+                ToXMLContentHandler appInteractivityHandler = new ToXMLContentHandler(tmpAppInteractFile, "UTF-8");
                 String title = "Event Transcript App Interactivity";
 
                 Metadata appInteractMeta = new Metadata();
@@ -236,7 +236,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
             }
 
             try (FileOutputStream tmpDevicesFile = new FileOutputStream(devicesFile)) {
-                ToXMLContentHandler devicesHandler = new ToXMLContentHandler(tmpDevicesFile, "UTF-16");
+                ToXMLContentHandler devicesHandler = new ToXMLContentHandler(tmpDevicesFile, "UTF-8");
                 String title = "Event Transcript Devices Inventory";
 
                 Metadata devicesMeta = new Metadata();
@@ -271,7 +271,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
             }
 
             try (FileOutputStream tmpCensusFile = new FileOutputStream(censusFile)) {
-                ToXMLContentHandler censusHandler = new ToXMLContentHandler(tmpCensusFile, "UTF-16");
+                ToXMLContentHandler censusHandler = new ToXMLContentHandler(tmpCensusFile, "UTF-8");
                 String title = "Event Transcript Census";
 
                 Metadata censusMeta = new Metadata();
@@ -301,7 +301,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
             }
 
             try (FileOutputStream tmpNetworkingFile = new FileOutputStream(networkingFile)) {
-                ToXMLContentHandler networkingHandler = new ToXMLContentHandler(tmpNetworkingFile, "UTF-16");
+                ToXMLContentHandler networkingHandler = new ToXMLContentHandler(tmpNetworkingFile, "UTF-8");
                 String title = "Event Transcript Networking";
 
                 Metadata networkingMeta = new Metadata();
