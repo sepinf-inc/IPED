@@ -66,9 +66,10 @@ public class IPEDSearcher implements IIPEDSearcher {
         setQuery(query);
     }
 
-    public IPEDSearcher(IPEDSource ipedCase, String query, String[] sort) {
+    public IPEDSearcher(IPEDSource ipedCase, String query, String... sort) {
         SortField[] fields = new SortField[sort.length];
         for (int i = 0; i < fields.length; i++) {
+            // TODO improve this to handle other field types
             fields[i] = new SortField(sort[i], SortField.Type.STRING);
         }
         this.sort = new Sort(fields);
