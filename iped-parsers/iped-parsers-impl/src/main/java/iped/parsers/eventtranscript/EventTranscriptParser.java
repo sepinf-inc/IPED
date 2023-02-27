@@ -256,8 +256,6 @@ public class EventTranscriptParser extends SQLite3DBParser {
                                 deviceEntry.getManufacturer(), deviceEntry.getInstallDateStr(), deviceEntry.getEnumerator() };
                         emitEntry(xHandler, ++i, values);
 
-                        System.out.println(values[0]);
-
                         if (extractEntries) {
                             Metadata deviceSubitem = getDevicesMetadata(deviceEntry, i);
                             extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), deviceSubitem, true);
