@@ -210,8 +210,6 @@ public class IndexItem extends BasicProps {
     }
 
     public static void loadMetadataTypes(File confDir) throws IOException, ClassNotFoundException {
-        if (typesMap.size() > 0)
-            return;
         File metadataTypesFile = new File(confDir, attrTypesFilename);
         if (metadataTypesFile.exists()) {
             UTF8Properties props = new UTF8Properties();
