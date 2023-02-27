@@ -435,7 +435,11 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataHistoryEntry.set(ExtraProperties.VISIT_DATE, historyEntry.getTimestamp());
         metadataHistoryEntry.add(ExtraProperties.URL, historyEntry.getUrl());
         metadataHistoryEntry.add("referUrl", historyEntry.getReferUrl());
-        metadataHistoryEntry.add("eventNames", String.join("; ", historyEntry.getEventNames()));
+        if (historyEntry.getEventNames() != null) {
+            for (String eventName : historyEntry.getEventNames()) {
+                metadataHistoryEntry.add("eventName", eventName);
+            }
+        }
         metadataHistoryEntry.add("originalPayload", historyEntry.getJSONPayload());
 
         return metadataHistoryEntry;
