@@ -81,6 +81,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
     public static final MediaType EVENT_TRANSCRIPT_DEVICES_REG = MediaType.application("x-event-transcript-devices-registry");
 
     public static final MediaType EVENT_TRANSCRIPT_CENSUS = MediaType.application("x-event-transcript-census");
+    public static final MediaType EVENT_TRANSCRIPT_CENSUS_REG = MediaType.application("x-event-transcript-census-registry");
 
     public static final MediaType EVENT_TRANSCRIPT_NETWORKING = MediaType.application("x-event-transcript-networking");
     public static final MediaType EVENT_TRANSCRIPT_NETWORKING_REG = MediaType.application("x-event-transcript-networking-registry");
@@ -528,7 +529,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
     private Metadata getCensusEntryMetadata(CensusEntry entry, int i) throws ParseException {
         Metadata metadataCensusEntry = new Metadata();
 
-        metadataCensusEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST_REG.toString());
+        metadataCensusEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_CENSUS_REG.toString());
         metadataCensusEntry.add(TikaCoreProperties.RESOURCE_NAME_KEY, "Event Transcript Census Entry " + i);
         metadataCensusEntry.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         metadataCensusEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(4));
