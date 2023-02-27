@@ -1,5 +1,7 @@
 package iped.parsers.eventtranscript;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -130,7 +132,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         try (Connection connection = getConnection(tis, metadata, context)) {
 
             Metadata metadataHistory = new Metadata();
-            try (FileOutputStream tmpHistoryFile = new FileOutputStream(browserHistoryFile)) {
+            try (BufferedOutputStream tmpHistoryFile = new BufferedOutputStream(new FileOutputStream(browserHistoryFile))) {
                 ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-8");
                 String title = "Event Transcript Browser History";
                 metadataHistory.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST.toString());
@@ -154,7 +156,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     xHandler.endDocument();
                 }
             }
-            try (FileInputStream fis = new FileInputStream(browserHistoryFile)) {
+            try (InputStream fis = new BufferedInputStream(new FileInputStream(browserHistoryFile))) {
                 extractor.parseEmbedded(fis, handler, metadataHistory, true);
             }
             if (extractEntries) {
@@ -169,7 +171,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
             }
 
             Metadata inventoryAppsMeta = new Metadata();
-            try (FileOutputStream tmpInventoryAppFile = new FileOutputStream(inventoryAppsFile)) {
+            try (BufferedOutputStream tmpInventoryAppFile = new BufferedOutputStream(new FileOutputStream(inventoryAppsFile))) {
                 ToXMLContentHandler inventoryAppHandler = new ToXMLContentHandler(tmpInventoryAppFile, "UTF-8");
                 String title = "Event Transcript Inventory Apps";
                 inventoryAppsMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_INVENTORY_APP.toString());
@@ -192,7 +194,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     xHandler.endDocument();
                 }
             }
-            try (FileInputStream fis = new FileInputStream(inventoryAppsFile)) {
+            try (InputStream fis = new BufferedInputStream(new FileInputStream(inventoryAppsFile))) {
                 extractor.parseEmbedded(fis, handler, inventoryAppsMeta, true);
             }
             if (extractEntries) {
@@ -207,7 +209,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
             }
 
             Metadata appInteractMeta = new Metadata();
-            try (FileOutputStream tmpAppInteractFile = new FileOutputStream(appInteractivityFile)) {
+            try (BufferedOutputStream tmpAppInteractFile = new BufferedOutputStream(new FileOutputStream(appInteractivityFile))) {
                 ToXMLContentHandler appInteractivityHandler = new ToXMLContentHandler(tmpAppInteractFile, "UTF-8");
                 String title = "Event Transcript App Interactivity";
                 appInteractMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_APP_INTERACT.toString());
@@ -230,7 +232,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     xHandler.endDocument();
                 }
             }
-            try (FileInputStream fis = new FileInputStream(appInteractivityFile)) {
+            try (InputStream fis = new BufferedInputStream(new FileInputStream(appInteractivityFile))) {
                 extractor.parseEmbedded(fis, handler, appInteractMeta, true);
             }
             if (extractEntries) {
@@ -245,7 +247,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
             }
 
             Metadata devicesMeta = new Metadata();
-            try (FileOutputStream tmpDevicesFile = new FileOutputStream(devicesFile)) {
+            try (BufferedOutputStream tmpDevicesFile = new BufferedOutputStream(new FileOutputStream(devicesFile))) {
                 ToXMLContentHandler devicesHandler = new ToXMLContentHandler(tmpDevicesFile, "UTF-8");
                 String title = "Event Transcript Devices Inventory";
                 devicesMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_DEVICES.toString());
@@ -268,7 +270,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     xHandler.endDocument();
                 }
             }
-            try (FileInputStream fis = new FileInputStream(devicesFile)) {
+            try (InputStream fis = new BufferedInputStream(new FileInputStream(devicesFile))) {
                 extractor.parseEmbedded(fis, handler, devicesMeta, true);
             }
             if (extractEntries) {
@@ -283,7 +285,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
             }
 
             Metadata censusMeta = new Metadata();
-            try (FileOutputStream tmpCensusFile = new FileOutputStream(censusFile)) {
+            try (BufferedOutputStream tmpCensusFile = new BufferedOutputStream(new FileOutputStream(censusFile))) {
                 ToXMLContentHandler censusHandler = new ToXMLContentHandler(tmpCensusFile, "UTF-8");
                 String title = "Event Transcript Census";
                 censusMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_CENSUS.toString());
@@ -305,13 +307,13 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     xHandler.endDocument();
                 }
             }
-            try (FileInputStream fis = new FileInputStream(censusFile)) {
+            try (InputStream fis = new BufferedInputStream(new FileInputStream(censusFile))) {
                 extractor.parseEmbedded(fis, handler, censusMeta, true);
             }
             // no entry extraction
 
             Metadata networkingMeta = new Metadata();
-            try (FileOutputStream tmpNetworkingFile = new FileOutputStream(networkingFile)) {
+            try (BufferedOutputStream tmpNetworkingFile = new BufferedOutputStream(new FileOutputStream(networkingFile))) {
                 ToXMLContentHandler networkingHandler = new ToXMLContentHandler(tmpNetworkingFile, "UTF-8");
                 String title = "Event Transcript Networking";
                 networkingMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_NETWORKING.toString());
@@ -334,7 +336,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     xHandler.endDocument();
                 }
             }
-            try (FileInputStream fis = new FileInputStream(networkingFile)) {
+            try (InputStream fis = new BufferedInputStream(new FileInputStream(networkingFile))) {
                 extractor.parseEmbedded(fis, handler, networkingMeta, true);
             }
             if (extractEntries) {
