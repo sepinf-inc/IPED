@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Set;
 
 import org.apache.tika.config.Field;
@@ -174,7 +175,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
             Metadata inventoryAppsMeta = new Metadata();
             try (BufferedOutputStream tmpInventoryAppFile = new BufferedOutputStream(new FileOutputStream(inventoryAppsFile))) {
                 ToXMLContentHandler inventoryAppHandler = new ToXMLContentHandler(tmpInventoryAppFile, "UTF-8");
-                String title = "Event Transcript Inventory Apps";
+                String title = "Event Transcript Apps Inventory";
                 inventoryAppsMeta.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_INVENTORY_APP.toString());
                 inventoryAppsMeta.add(TikaCoreProperties.RESOURCE_NAME_KEY, title);
                 inventoryAppsMeta.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
@@ -449,10 +450,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
         metadataEntry.set(BasicProps.LENGTH, "");
 
-        metadataEntry.set(TikaCoreProperties.CREATED, entry.getTimestamp());
         metadataEntry.add(TikaCoreProperties.TITLE, entry.getName());
-        metadataEntry.set(ExtraProperties.DOWNLOAD_DATE, entry.getInstallDate());
         metadataEntry.set(TikaCoreProperties.SOURCE_PATH, entry.getRootDirPath());
+        metadataEntry.set(getEventName(entry.getEventName()), format(entry.getTimestamp()));
+        metadataEntry.set("installDate", format(entry.getInstallDate()));
         metadataEntry.set("version", entry.getVersion());
         metadataEntry.set("publisher", entry.getPublisher());
         metadataEntry.set("eventName", entry.getEventName());
@@ -470,8 +471,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(2));
         metadataEntry.set(BasicProps.LENGTH, "");
 
-        metadataEntry.set(TikaCoreProperties.CREATED, entry.getTimestamp());
         metadataEntry.add(TikaCoreProperties.TITLE, entry.getApp());
+        metadataEntry.set(getEventName(entry.getEventName()), format(entry.getTimestamp()));
+        metadataEntry.set("eventName", entry.getEventName());
         metadataEntry.add("aggregationDuration", entry.getAggregationDuration());
         metadataEntry.add("userActiveDuration", entry.getUserActiveDuration());
         metadataEntry.add("userOrDisplayActiveDuration", entry.getUserOrDisplayActiveDuration());
@@ -493,11 +495,11 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(3));
         metadataEntry.set(BasicProps.LENGTH, "");
 
-        metadataEntry.set(TikaCoreProperties.CREATED, entry.getTimestamp());
         metadataEntry.add(TikaCoreProperties.TITLE, entry.getModel());
+        metadataEntry.set(getEventName(entry.getEventName()), format(entry.getTimestamp()));
         metadataEntry.add("instanceId", entry.getInstanceId());
-        metadataEntry.set(ExtraProperties.DOWNLOAD_DATE, entry.getInstallDate());
-        metadataEntry.add("firstInstallDate", entry.getFirstInstallDateStr());
+        metadataEntry.set("installDate", format(entry.getInstallDate()));
+        metadataEntry.add("firstInstallDate", format(entry.getFirstInstallDate()));
         metadataEntry.set("manufacturer", entry.getManufacturer());
         metadataEntry.set("provider", entry.getProvider());
         metadataEntry.set("eventName", entry.getEventName());
@@ -508,7 +510,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         return metadataEntry;
     }
 
-    private Metadata getCensusEntryMetadata(CensusEntry censusEntry, int i) throws ParseException {
+    private Metadata getCensusEntryMetadata(CensusEntry entry, int i) throws ParseException {
         Metadata metadataCensusEntry = new Metadata();
 
         metadataCensusEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST_REG.toString());
@@ -517,9 +519,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataCensusEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(4));
         metadataCensusEntry.set(BasicProps.LENGTH, "");
 
-        metadataCensusEntry.add("timeStamp", DateUtil.dateToString(censusEntry.getTimestamp()));
-        metadataCensusEntry.add("eventName", censusEntry.getEventName());
-        metadataCensusEntry.add("jsonData", censusEntry.getDataJSON());
+        metadataCensusEntry.add(getEventName(entry.getEventName()), format(entry.getTimestamp()));
+        metadataCensusEntry.add("eventName", entry.getEventName());
+        metadataCensusEntry.add("jsonData", entry.getDataJSON());
 
         return metadataCensusEntry;
     }
@@ -533,9 +535,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(5));
         metadataEntry.set(BasicProps.LENGTH, "");
 
-        metadataEntry.set(TikaCoreProperties.CREATED, entry.getUTCTimestamp());
-        metadataEntry.set("localTimestamp", entry.getLocalTime());
-        metadataEntry.set("Timezone", entry.getTimezone());
+        metadataEntry.set(getEventName(entry.getEventName()), format(entry.getUTCTimestamp()));
         metadataEntry.set("seq", entry.getSeq());
         metadataEntry.add("eventName", entry.getEventName());
         metadataEntry.add("eventSource", entry.getEventSource());
@@ -543,6 +543,20 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataEntry.add("originalPayload", entry.getJSONPayload());
 
         return metadataEntry;
+    }
+
+    private static String getEventName(String eventName) {
+        if (eventName != null && !eventName.trim().isEmpty()) {
+            return eventName.trim() + "Event";
+        }
+        return "TranscriptDBEvent";
+    }
+
+    private static String format(Date date) {
+        if (date != null) {
+            return DateUtil.dateToString(date);
+        }
+        return null;
     }
 
     // iterators
