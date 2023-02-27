@@ -26,7 +26,7 @@ public class CensusEntry {
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
     }
-    
+
     public String getTimestampStr() {
         return this.timestampStr;
     }
@@ -61,7 +61,7 @@ public class CensusEntry {
     public void setEventName(String eventName) {
         this.eventName = eventName;
     }
-    
+
     public String getTagName() {
         return this.tagName;
     }

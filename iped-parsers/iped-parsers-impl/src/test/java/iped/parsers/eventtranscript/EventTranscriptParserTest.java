@@ -25,7 +25,6 @@ import org.xml.sax.SAXException;
 import iped.parsers.standard.StandardParser;
 import iped.properties.ExtraProperties;
 
-
 public class EventTranscriptParserTest {
 
     private static EventTranscriptParser parser;
@@ -51,7 +50,7 @@ public class EventTranscriptParserTest {
 
         // missing sample file
         try (InputStream stream = getStream("test-files/test_eventTranscript.db")) {
-            //parser.parse(stream, handler, metadata, context);
+            // parser.parse(stream, handler, metadata, context);
         }
     }
 
@@ -73,7 +72,6 @@ public class EventTranscriptParserTest {
         // assertTrue(tracker.versions.size() > 0);
         // assertTrue(tracker.invEventNames.size() > 0);
     }
-
 
     @SuppressWarnings("serial")
     private static class EmbeddedEventTranscriptParser extends AbstractParser {
@@ -102,13 +100,11 @@ public class EventTranscriptParserTest {
         public List<String> netEventSources = new ArrayList<String>();
         public List<String> netEventReasons = new ArrayList<String>();
 
-
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
         }
 
-        public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-                throws IOException, SAXException, TikaException {
+        public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
             if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_HIST_REG.toString())) {
                 pageTitles.add(metadata.get(TikaCoreProperties.TITLE));

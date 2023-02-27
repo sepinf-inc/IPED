@@ -8,13 +8,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Iterator;
 
-
 /**
  * Closeable iterator for a database
  * <p>
- * next() method needs to be implemented by the subclass, it should return a T object representing
- * the current row in the ResultSet (rs variable)
-*/
+ * next() method needs to be implemented by the subclass, it should return a T
+ * object representing the current row in the ResultSet (rs variable)
+ */
 public class DBIterator<T> implements Iterator<T>, Closeable {
     protected ResultSet rs;
     private Statement statement;
@@ -50,7 +49,7 @@ public class DBIterator<T> implements Iterator<T>, Closeable {
             statement.close();
         } catch (SQLException e) {
             // swallow
-        }            
+        }
     }
 
 }

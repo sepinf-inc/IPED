@@ -25,7 +25,6 @@ public class DevicesEntry {
     private String userId;
     private String JSONPayload;
 
-
     public Date getTimestamp() {
         return this.timestamp;
     }
@@ -124,7 +123,7 @@ public class DevicesEntry {
     public void setInstallDate(Date installDate) {
         this.installDate = installDate;
     }
-    
+
     public void setInstallDate(String installDate) throws ParseException {
         this.installDateStr = installDate != null ? installDate : "";
         if (!installDateStr.isEmpty()) {
@@ -141,7 +140,7 @@ public class DevicesEntry {
     public Date getFirstInstallDate() {
         return this.firstInstallDate;
     }
-    
+
     public String getFirstInstallDateStr() {
         return this.firstInstallDateStr;
     }
@@ -149,7 +148,7 @@ public class DevicesEntry {
     public void setFirstInstallDate(Date firstInstallDate) {
         this.firstInstallDate = firstInstallDate;
     }
-    
+
     public void setFirstInstallDate(String firstInstallDate) throws ParseException {
         this.firstInstallDateStr = firstInstallDate != null ? firstInstallDate : "";
         if (!firstInstallDateStr.isEmpty()) {

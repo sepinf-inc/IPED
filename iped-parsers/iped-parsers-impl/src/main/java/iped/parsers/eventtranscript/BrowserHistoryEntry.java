@@ -50,7 +50,7 @@ public class BrowserHistoryEntry {
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         setTimestamp(format.parse(timestamp));
     }
- 
+
     public String getLocalTime() {
         return this.localTime;
     }
@@ -118,7 +118,6 @@ public class BrowserHistoryEntry {
     public void setAppName(String appName) {
         this.appName = appName;
     }
-
 
     public String getJSONPayload() {
         return this.JSONPayload;

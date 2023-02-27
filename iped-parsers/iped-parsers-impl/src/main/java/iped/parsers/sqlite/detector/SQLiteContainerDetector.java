@@ -169,8 +169,7 @@ public class SQLiteContainerDetector implements Detector {
                 tableNames.contains("downloads_url_chains")) //$NON-NLS-1$
             return ChromeSqliteParser.CHROME_SQLITE;
 
-        if (tableNames.contains("Activity") && tableNames.contains("Activity_PackageId")
-                && tableNames.contains("ActivityOperation"))
+        if (tableNames.contains("Activity") && tableNames.contains("Activity_PackageId") && tableNames.contains("ActivityOperation"))
             return WinXTimelineParser.WIN10_TIMELINE;
 
         if (tableNames.contains("events_persisted") && tableNames.contains("tag_descriptions")

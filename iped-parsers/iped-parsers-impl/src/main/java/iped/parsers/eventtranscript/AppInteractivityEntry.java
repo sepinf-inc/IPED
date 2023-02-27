@@ -31,7 +31,6 @@ public class AppInteractivityEntry {
     private String userSID;
     private String JSONPayload;
 
-
     public Date getTimestamp() {
         return this.timestamp;
     }
@@ -46,7 +45,7 @@ public class AppInteractivityEntry {
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         setTimestamp(format.parse(timestamp));
     }
-    
+
     public String getLocalTime() {
         return this.localTime;
     }
@@ -66,6 +65,7 @@ public class AppInteractivityEntry {
     public String getTimestampStr() {
         return this.timestampStr;
     }
+
     public String getTagName() {
         return this.tagName;
     }
@@ -110,7 +110,6 @@ public class AppInteractivityEntry {
     public void setAggregationDuration(String aggregationDuration) {
         this.aggregationDuration = aggregationDuration;
     }
-
 
     public String getApp() {
         return this.app;
@@ -200,7 +199,6 @@ public class AppInteractivityEntry {
         this.focusLostCount = focusLostCount;
     }
 
-
     public String getProgramID() {
         return this.programID;
     }
@@ -209,7 +207,6 @@ public class AppInteractivityEntry {
         this.programID = programID;
     }
 
-    
     public String getUserID() {
         return this.userID;
     }
@@ -233,6 +230,5 @@ public class AppInteractivityEntry {
     public void setJSONPayload(String JSONPayload) {
         this.JSONPayload = JSONPayload;
     }
-
 
 }

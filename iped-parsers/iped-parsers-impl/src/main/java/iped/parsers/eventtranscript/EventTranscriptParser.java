@@ -80,13 +80,11 @@ public class EventTranscriptParser extends SQLite3DBParser {
     public static final MediaType EVENT_TRANSCRIPT_NETWORKING = MediaType.application("x-event-transcript-networking");
     public static final MediaType EVENT_TRANSCRIPT_NETWORKING_REG = MediaType.application("x-event-transcript-networking-registry");
 
-
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(EVENT_TRANSCRIPT);
-    
+
     private static final String[] HISTORY_COLUMN_NAMES = new String[] { "Page Titles", "Visit Date (UTC)", "Local Time", "Timezone", "Referrer URL", "URL", "App" };
     private static final String[] INVENTORY_APPS_COLUMN_NAMES = new String[] { "Name", "Timestamp (UTC)", "Local Time", "Timezone", "Version", "Publisher", "Root Directory Path", "Install Date" };
-    private static final String[] APP_INTERACT_COLUMN_NAMES = new String[] {"App", "Timestamp (UTC)", "Local Time", "Timezone", "Type", "Window size (WxH)", "MouseInput (sec)",
-    "InFocusDuration (ms)", "UserActiveDuration (ms)"};
+    private static final String[] APP_INTERACT_COLUMN_NAMES = new String[] { "App", "Timestamp (UTC)", "Local Time", "Timezone", "Type", "Window size (WxH)", "MouseInput (sec)", "InFocusDuration (ms)", "UserActiveDuration (ms)" };
     private static final String[] DEVICES_COLUMN_NAMES = new String[] { "Model", "Timestamp (UTC)", "Local Time", "Timezone", "InstanceId", "Provider", "Manufacturer", "Install Date", "Enumerator" };
     private static final String[] CENSUS_COLUMN_NAMES = new String[] { "Timestamp (UTC)", "Local Time", "Timezone", "Event", "State \\ Settings" };
     private static final String[] NETWORK_COLUMN_NAMES = new String[] { "Timestamp (UTC)", "Local Time", "Timezone", "Event", "Event Source", "Event Reason", "JSON Data" };
@@ -107,17 +105,14 @@ public class EventTranscriptParser extends SQLite3DBParser {
         this.extractEntries = extractEntries;
     }
 
-
     /**
      * Parses EventTranscript.db files
      */
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-            throws IOException, SAXException, TikaException {
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
-        
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
+
         TemporaryResources tmp = new TemporaryResources();
         TikaInputStream tis = TikaInputStream.get(stream, tmp);
         File browserHistoryFile = tmp.createTemporaryFile();
@@ -149,15 +144,15 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     XHTMLContentHandler xHandler = emitHeader(historyHandler, metadataHistory, title, HISTORY_COLUMN_NAMES);
 
                     int i = 0;
-                    while(historyEntriesIterator.hasNext()) {
+                    while (historyEntriesIterator.hasNext()) {
                         BrowserHistoryEntry historyEntry = historyEntriesIterator.next();
-                        String[] rowValues = new String[] { String.join("; ", historyEntry.getPageTitles()), historyEntry.getTimestampStr(),
-                            historyEntry.getLocalTime(), historyEntry.getTimezone(), historyEntry.getReferUrl(), historyEntry.getUrl(), historyEntry.getAppName() };
+                        String[] rowValues = new String[] { String.join("; ", historyEntry.getPageTitles()), historyEntry.getTimestampStr(), historyEntry.getLocalTime(), historyEntry.getTimezone(), historyEntry.getReferUrl(),
+                                historyEntry.getUrl(), historyEntry.getAppName() };
                         emitEntry(xHandler, ++i, rowValues);
 
                         if (extractEntries) {
                             Metadata historySubitem = getHistoryEntryMetadata(historyEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  historySubitem, true);
+                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), historySubitem, true);
                         }
                     }
 
@@ -185,15 +180,15 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     XHTMLContentHandler xHandler = emitHeader(inventoryAppHandler, inventoryAppsMeta, title, INVENTORY_APPS_COLUMN_NAMES);
 
                     int i = 0;
-                    while(inventoryAppsIterator.hasNext()) {
+                    while (inventoryAppsIterator.hasNext()) {
                         InventoryAppsEntry appInvEntry = inventoryAppsIterator.next();
-                        String[] values = new String[] { appInvEntry.getName(), appInvEntry.getTimestampStr(), appInvEntry.getLocalTime(), appInvEntry.getTimezone(),
-                            appInvEntry.getVersion(), appInvEntry.getPublisher(), appInvEntry.getRootDirPath(), appInvEntry.getInstallDateStr() };
+                        String[] values = new String[] { appInvEntry.getName(), appInvEntry.getTimestampStr(), appInvEntry.getLocalTime(), appInvEntry.getTimezone(), appInvEntry.getVersion(), appInvEntry.getPublisher(),
+                                appInvEntry.getRootDirPath(), appInvEntry.getInstallDateStr() };
                         emitEntry(xHandler, ++i, values);
 
                         if (extractEntries) {
                             Metadata inventorySubitem = getInventoryEntryMetadata(appInvEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  inventorySubitem, true);
+                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), inventorySubitem, true);
                         }
                     }
                     xHandler.endElement("table");
@@ -220,15 +215,15 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     XHTMLContentHandler xHandler = emitHeader(appInteractivityHandler, appInteractMeta, title, APP_INTERACT_COLUMN_NAMES);
 
                     int i = 0;
-                    while(appInteractivityIterator.hasNext()) {
+                    while (appInteractivityIterator.hasNext()) {
                         AppInteractivityEntry appIntEntry = appInteractivityIterator.next();
-                        String[] values = new String[] { appIntEntry.getApp(), appIntEntry.getTimestampStr(), appIntEntry.getLocalTime(), appIntEntry.getTimezone(), appIntEntry.getType(),
-                            appIntEntry.getWindowSize(), appIntEntry.getMouseInputSec(), appIntEntry.getInFocusDuration(), appIntEntry.getUserActiveDuration() };
+                        String[] values = new String[] { appIntEntry.getApp(), appIntEntry.getTimestampStr(), appIntEntry.getLocalTime(), appIntEntry.getTimezone(), appIntEntry.getType(), appIntEntry.getWindowSize(),
+                                appIntEntry.getMouseInputSec(), appIntEntry.getInFocusDuration(), appIntEntry.getUserActiveDuration() };
                         emitEntry(xHandler, ++i, values);
 
                         if (extractEntries) {
                             Metadata appInteractSubitem = getAppInteractEntryMetadata(appIntEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  appInteractSubitem, true);
+                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), appInteractSubitem, true);
                         }
                     }
                     xHandler.endElement("table");
@@ -239,7 +234,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     }
                 }
             }
-            
+
             try (FileOutputStream tmpDevicesFile = new FileOutputStream(devicesFile)) {
                 ToXMLContentHandler devicesHandler = new ToXMLContentHandler(tmpDevicesFile, "UTF-16");
                 String title = "Event Transcript Devices Inventory";
@@ -255,17 +250,17 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     XHTMLContentHandler xHandler = emitHeader(devicesHandler, devicesMeta, title, DEVICES_COLUMN_NAMES);
 
                     int i = 0;
-                    while(devicesIterator.hasNext()) {
-                            DevicesEntry deviceEntry = devicesIterator.next();
-                        String[] values = new String[] { deviceEntry.getModel(), deviceEntry.getTimestampStr(), deviceEntry.getLocalTime(), deviceEntry.getTimezone(), 
-                            deviceEntry.getInstanceId(), deviceEntry.getProvider(), deviceEntry.getManufacturer(), deviceEntry.getInstallDateStr(), deviceEntry.getEnumerator() };
+                    while (devicesIterator.hasNext()) {
+                        DevicesEntry deviceEntry = devicesIterator.next();
+                        String[] values = new String[] { deviceEntry.getModel(), deviceEntry.getTimestampStr(), deviceEntry.getLocalTime(), deviceEntry.getTimezone(), deviceEntry.getInstanceId(), deviceEntry.getProvider(),
+                                deviceEntry.getManufacturer(), deviceEntry.getInstallDateStr(), deviceEntry.getEnumerator() };
                         emitEntry(xHandler, ++i, values);
 
                         System.out.println(values[0]);
 
                         if (extractEntries) {
                             Metadata deviceSubitem = getDevicesMetadata(deviceEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  deviceSubitem, true);
+                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), deviceSubitem, true);
                         }
                     }
                     xHandler.endElement("table");
@@ -293,10 +288,9 @@ public class EventTranscriptParser extends SQLite3DBParser {
 
                     int i = 0;
                     // no entry extraction
-                    while(censusIterator.hasNext()) {
+                    while (censusIterator.hasNext()) {
                         CensusEntry censusEntry = censusIterator.next();
-                        String[] values = new String[] { censusEntry.getTimestampStr(), censusEntry.getLocalTime(), censusEntry.getTimezone(),
-                            censusEntry.getEventName(), censusEntry.getDataJSON() };
+                        String[] values = new String[] { censusEntry.getTimestampStr(), censusEntry.getLocalTime(), censusEntry.getTimezone(), censusEntry.getEventName(), censusEntry.getDataJSON() };
                         emitEntry(xHandler, ++i, values);
                     }
                     xHandler.endElement("table");
@@ -323,14 +317,14 @@ public class EventTranscriptParser extends SQLite3DBParser {
                     XHTMLContentHandler xHandler = emitHeader(networkingHandler, networkingMeta, title, NETWORK_COLUMN_NAMES);
 
                     int i = 0;
-                    while(networkingIterator.hasNext()) {
+                    while (networkingIterator.hasNext()) {
                         NetworkingEntry netEntry = networkingIterator.next();
-                        String[] values = new String[] { netEntry.getUTCTimestampStr(), netEntry.getLocalTime(), netEntry.getTimezone(),
-                            netEntry.getEventName(), netEntry.getEventSource(), netEntry.getEventReason(), netEntry.getDataJSON() };
+                        String[] values = new String[] { netEntry.getUTCTimestampStr(), netEntry.getLocalTime(), netEntry.getTimezone(), netEntry.getEventName(), netEntry.getEventSource(), netEntry.getEventReason(),
+                                netEntry.getDataJSON() };
                         emitEntry(xHandler, ++i, values);
                         if (extractEntries) {
                             Metadata networkingSubitem = getNetworkingMetadata(netEntry, i);
-                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(),  networkingSubitem, true);
+                            extractor.parseEmbedded(new EmptyInputStream(), new IgnoreContentHandler(), networkingSubitem, true);
                         }
                     }
                     xHandler.endElement("table");
@@ -351,18 +345,15 @@ public class EventTranscriptParser extends SQLite3DBParser {
         }
     }
 
-    private XHTMLContentHandler emitHeader(ContentHandler handler, Metadata metadata, String title, String[] colnames)
-        throws SAXException {
+    private XHTMLContentHandler emitHeader(ContentHandler handler, Metadata metadata, String title, String[] colnames) throws SAXException {
         XHTMLContentHandler xHandler = null;
-        
+
         xHandler = new XHTMLContentHandler(handler, metadata);
         xHandler.startDocument();
 
         xHandler.startElement("head");
         xHandler.startElement("style");
-        xHandler.characters("table {border-collapse: collapse;}"
-            + " table, td, th {border: 1px solid black; max-width:500px; word-wrap: break-word;}"
-            + " th {white-space: nowrap; padding: 5px;}");
+        xHandler.characters("table {border-collapse: collapse;}" + " table, td, th {border: 1px solid black; max-width:500px; word-wrap: break-word;}" + " th {white-space: nowrap; padding: 5px;}");
         xHandler.endElement("style");
         xHandler.endElement("head");
 
@@ -376,7 +367,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         xHandler.startElement("tr");
 
         xHandler.startElement("th");
-        xHandler.characters("");    // idx
+        xHandler.characters(""); // idx
         xHandler.endElement("th");
 
         for (String colname : colnames) {
@@ -389,25 +380,23 @@ public class EventTranscriptParser extends SQLite3DBParser {
         return xHandler;
     }
 
-    private void emitEntry(XHTMLContentHandler xHandler, int idx, String[] values)
-        throws SQLException, TikaException, SAXException {
+    private void emitEntry(XHTMLContentHandler xHandler, int idx, String[] values) throws SQLException, TikaException, SAXException {
         xHandler.startElement("tr");
         xHandler.startElement("td");
         xHandler.characters(String.valueOf(idx));
-        xHandler.endElement("td");  
+        xHandler.endElement("td");
 
         for (String value : values) {
             xHandler.startElement("td");
             xHandler.characters(value);
-            xHandler.endElement("td");    
+            xHandler.endElement("td");
         }
-        xHandler.endElement("tr");   
+        xHandler.endElement("tr");
     }
 
     // subitems
 
-    private Metadata getHistoryEntryMetadata(BrowserHistoryEntry historyEntry, int i)
-        throws ParseException {
+    private Metadata getHistoryEntryMetadata(BrowserHistoryEntry historyEntry, int i) throws ParseException {
         Metadata metadataHistoryEntry = new Metadata();
 
         metadataHistoryEntry.add(StandardParser.INDEXER_CONTENT_TYPE, EVENT_TRANSCRIPT_HIST_REG.toString());
@@ -538,10 +527,10 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 historyEntry.setReferUrl(rs.getString("ReferURL"));
                 historyEntry.setUrl(rs.getString("URL"));
                 String pageTitlesStr = rs.getString("PageTitles");
-                historyEntry.setPageTitles(pageTitlesStr != null ? pageTitlesStr.split(";") : new String[] {""});
+                historyEntry.setPageTitles(pageTitlesStr != null ? pageTitlesStr.split(";") : new String[] { "" });
                 historyEntry.setAppName(rs.getString("App"));
                 historyEntry.setJSONPayload(rs.getString("JSONPayload"));
-            } catch (SQLException | ParseException e ) {
+            } catch (SQLException | ParseException e) {
                 throw new RuntimeException(e);
             }
             return historyEntry;
@@ -575,7 +564,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 inventoryAppsEntry.setUserSID(rs.getString("UserSID"));
                 inventoryAppsEntry.setUserID(rs.getString("UserID"));
                 inventoryAppsEntry.setJSONPayload(rs.getString("JSONPayload"));
-            } catch (SQLException | ParseException e ) {
+            } catch (SQLException | ParseException e) {
                 throw new RuntimeException(e);
             }
             return inventoryAppsEntry;
@@ -611,13 +600,13 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 appInteractivityEntry.setUserSID(rs.getString("UserSID"));
                 appInteractivityEntry.setUserID(rs.getString("UserID"));
                 appInteractivityEntry.setJSONPayload(rs.getString("JSONPayload"));
-            } catch (SQLException | ParseException e ) {
+            } catch (SQLException | ParseException e) {
                 throw new RuntimeException(e);
             }
             return appInteractivityEntry;
         }
     }
-    
+
     private class DevicesIterator extends DBIterator<DevicesEntry> {
 
         public DevicesIterator(Connection connection, String query) throws SQLException {
@@ -642,7 +631,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 devicesEntry.setFirstInstallDate(rs.getString("FirstInstallDate"));
                 devicesEntry.setUserSID(rs.getString("UserSID"));
                 devicesEntry.setJSONPayload(rs.getString("JSONPayload"));
-            } catch (SQLException | ParseException e ) {
+            } catch (SQLException | ParseException e) {
                 throw new RuntimeException(e);
             }
             return devicesEntry;
@@ -668,7 +657,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 censusEntry.setUserID(rs.getString("UserId"));
                 censusEntry.setUserSID(rs.getString("UserSID"));
                 censusEntry.setJSONPayload(rs.getString("JSONPayload"));
-            } catch (SQLException | ParseException e ) {
+            } catch (SQLException | ParseException e) {
                 throw new RuntimeException(e);
             }
             return censusEntry;
@@ -694,7 +683,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
                 networkingEntry.setSeq(rs.getString("seq"));
                 networkingEntry.setDataJSON(rs.getString("dataJSON"));
                 networkingEntry.setJSONPayload(rs.getString("JSONPayload"));
-            } catch (SQLException | ParseException e ) {
+            } catch (SQLException | ParseException e) {
                 throw new RuntimeException(e);
             }
             return networkingEntry;

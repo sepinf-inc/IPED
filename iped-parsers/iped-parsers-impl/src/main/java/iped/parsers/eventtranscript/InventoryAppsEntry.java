@@ -141,7 +141,7 @@ public class InventoryAppsEntry {
     public void setInstallDate(Date installDate) {
         this.installDate = installDate;
     }
-    
+
     public void setInstallDate(String installDate) throws ParseException {
         this.installDateStr = installDate != null ? installDate : "";
         if (!installDateStr.isEmpty()) {

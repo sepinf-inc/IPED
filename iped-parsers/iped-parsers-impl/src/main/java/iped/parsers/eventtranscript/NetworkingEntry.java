@@ -17,7 +17,6 @@ public class NetworkingEntry {
     private String dataJSON;
     private String JSONPayload;
 
-
     public Date getUTCTimestamp() {
         return this.UTCTimestamp;
     }
