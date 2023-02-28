@@ -43,7 +43,7 @@ import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
-public class ReferencesTableModel extends AbstractTableModel
+public class ReferencedByTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
     /**
@@ -210,7 +210,7 @@ public class ReferencesTableModel extends AbstractTableModel
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            App.get().referencesDock.setTitleText(length + Messages.getString("ReferencesTab.Title"));
+                            App.get().referencedByDock.setTitleText(Messages.getString("ReferencedByTab.Title") + " " + length);
                         }
                     });
                     refDoc = doc;
