@@ -49,7 +49,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
 
     public static final String UFED_HTML_REPORT_MIME = "application/x-ufed-html-report"; //$NON-NLS-1$
 
-    private AttachmentSearcher attachSearcher;
+    protected AttachmentSearcher attachSearcher;
 
     private HashSet<String> mediaHashesInView = new HashSet<>();
 

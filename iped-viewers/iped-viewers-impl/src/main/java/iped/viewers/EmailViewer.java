@@ -53,22 +53,29 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 
+import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.io.IStreamSource;
 import iped.parsers.mail.RFC822Parser;
 import iped.parsers.util.Util;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.utils.FileContentSource;
 import iped.utils.IOUtil;
+import iped.viewers.api.AttachmentSearcher;
 import iped.viewers.localization.Messages;
 import iped.viewers.util.LuceneSimpleHTMLEncoder;
 
-public class EmailViewer extends HtmlViewer {
+public class EmailViewer extends HtmlLinkViewer {
 
     MailContentHandler mch;
     MimeStreamParser parser;
 
-    public EmailViewer() {
+    private boolean externalAttach;
+    private String externalAttachFolder;
+
+    public EmailViewer(AttachmentSearcher attachSearcher) {
+        super(attachSearcher);
         this.fileHandler = new AttachmentOpen();
         this.enableJavascript = true;
     }
@@ -90,6 +97,9 @@ public class EmailViewer extends HtmlViewer {
             super.loadFile(null, null);
             return;
         }
+
+        externalAttach = ((IItem) content).getName().contains("partial.emlx");
+        externalAttachFolder = ((IItem) content).getName().split("\\.")[0];
 
         if (mch != null) {
             mch.deleteFiles();
@@ -127,13 +137,25 @@ public class EmailViewer extends HtmlViewer {
 
     public class AttachmentOpen extends FileHandler {
 
-        public void open(int attNum) {
+        public void open(String item) {
+            if (externalAttach)
+                externalOpen(item);
+            else {
+                internalOpen(Integer.parseInt(item));
+            }
+        }
+
+        public void internalOpen(int attNum) {
             AttachInfo info = mch.attachments.values().toArray(new AttachInfo[0])[attNum];
             String ext = Util.getTrueExtension(info.tmpFile);
             info.tmpFile = Util.getFileRenamedToExt(info.tmpFile, ext);
             if (IOUtil.isToOpenExternally(info.name, ext)) {
                 this.openFile(info.tmpFile);
             }
+        }
+
+        public void externalOpen(final String luceneQuery) {
+            new AttachmentHandler().open(luceneQuery);
         }
     }
 
@@ -282,23 +304,30 @@ public class EmailViewer extends HtmlViewer {
                 }
             }
 
-            boolean firstAtt = true;
             int i = 0, count = 0;
             text = ""; //$NON-NLS-1$
             for (AttachInfo attach : attachments.values()) {
                 if (attach.name != null) {
-                    if (!firstAtt) {
-                        text += ", "; //$NON-NLS-1$
+                    String query;
+                    boolean attachNotFound;
+                    if (externalAttach) {
+                        query = BasicProps.PATH + ":\"Attachments/" + externalAttachFolder + "\" && " + BasicProps.NAME + ":\"" + attach.name + "\"";
+                        attachNotFound = attachSearcher.getItem(query) != null;
+                        if (attachNotFound) {
+                            text += "<a href=\"\" onclick=\"app.open('" + LuceneSimpleHTMLEncoder.htmlEncode(query) + "')\">" + attach.name + "</a><br>";
+                        } else {
+                            text += attach.name + " <em>(" + Messages.getString("EmailViewer.NotFound") + ")</em><br>";
+                        }    
+                    } else {
+                        text += "<a href=\"\" onclick=\"app.open(" + i + ")\">" + attach.name + "</a><br>";
                     }
-                    text += "<a href=\"\" onclick=\"app.open(" + i + ")\">" + attach.name + "</a>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    firstAtt = false;
                     count++;
                 }
                 i++;
             }
             if (count > 0) {
                 text = "<b style=\"font-weight:bold\">" + Messages.getString("EmailViewer.Attachments") + ": (" + count //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        + ")</b> " + text; //$NON-NLS-1$
+                        + ")</b><br>" + text; //$NON-NLS-1$
                 writer.write(text);
             }
 
