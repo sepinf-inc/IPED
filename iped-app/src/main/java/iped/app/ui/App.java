@@ -38,7 +38,6 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -49,7 +48,6 @@ import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -182,7 +180,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public HitsTable hitsTable;
     AppGraphAnalytics appGraphAnalytics;
 
-    HitsTable subItemTable, duplicatesTable, referencesTable;
+    HitsTable subItemTable, duplicatesTable;
     JTree tree, bookmarksTree, categoryTree;
     MetadataPanel metadataPanel;
     JScrollPane categoriesPanel, bookmarksPanel;
@@ -197,7 +195,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
 
     DefaultSingleCDockable tableTabDock, galleryTabDock, graphDock;
-    public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock, referencesDock;
+    public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock, referencesDock, referencedByDock;
     DefaultSingleCDockable compositeViewerDock;
 
     private List<DefaultSingleCDockable> viewerDocks;
@@ -210,7 +208,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color defaultColor;
     Color defaultFocusedColor;
     Color defaultSelectedColor;
-    private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll, referencesScroll;
+    private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll, referencesScroll, referencedByScroll;
     JScrollPane viewerScroll, resultsScroll, galleryScroll;
     JPanel topPanel;
     ClearFilterButton clearAllFilters;
@@ -222,7 +220,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     SubitemTableModel subItemModel = new SubitemTableModel();
     ParentTableModel parentItemModel = new ParentTableModel();
     DuplicatesTableModel duplicatesModel = new DuplicatesTableModel();
-    ReferencesTableModel referencesModel = new ReferencesTableModel();
+    ReferencingTableModel referencesModel = new ReferencingTableModel();
+    ReferencedByTableModel referencedByModel = new ReferencedByTableModel();
 
     GalleryModel galleryModel = new GalleryModel();
 
@@ -607,7 +606,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         parentItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         parentItemTable.setShowGrid(false);
 
-        referencesTable = new HitsTable(referencesModel);
+        HitsTable referencesTable = new HitsTable(referencesModel);
         referencesTable.setFillsViewportHeight(true);
         referencesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         referencesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
@@ -618,6 +617,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencesTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         referencesTable.setShowGrid(false);
         referencesScroll = new JScrollPane(referencesTable);
+
+        HitsTable referencedByTable = new HitsTable(referencedByModel);
+        referencedByTable.setFillsViewportHeight(true);
+        referencedByTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        referencedByTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+        referencedByTable.getColumnModel().getColumn(1).setPreferredWidth(20);
+        referencedByTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
+        referencedByTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        referencedByTable.setDefaultRenderer(String.class, new TableCellRenderer());
+        referencedByTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
+        referencedByTable.setShowGrid(false);
+        referencedByScroll = new JScrollPane(referencedByTable);
 
         categoryTree = new JTree(new Object[0]);
         categoryTree.setCellRenderer(new CategoryTreeCellRenderer());
@@ -782,6 +793,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         duplicatesTable.getSelectionModel().addListSelectionListener(duplicatesModel);
         referencesTable.addMouseListener(referencesModel);
         referencesTable.getSelectionModel().addListSelectionListener(referencesModel);
+        referencedByTable.addMouseListener(referencedByModel);
+        referencedByTable.getSelectionModel().addListSelectionListener(referencedByModel);
 
         hitsTable.addMouseListener(appletListener);
         // filterComboBox.addMouseListener(appletListener);
@@ -969,8 +982,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 parentItemScroll);
         duplicateDock = createDockable("duplicatestab", Messages.getString("DuplicatesTableModel.Duplicates"), //$NON-NLS-1$ //$NON-NLS-2$
                 duplicatesScroll);
-        referencesDock = createDockable("referencedbytab", Messages.getString("ReferencesTab.Title"),
-                referencesScroll);
+        referencesDock = createDockable("referencestab", Messages.getString("ReferencesTab.Title"), referencesScroll);
+        referencedByDock = createDockable("referencedbytab", Messages.getString("ReferencedByTab.Title"), referencedByScroll);
 
         dockingControl.addDockable(categoriesTabDock);
         dockingControl.addDockable(metadataTabDock);
@@ -994,6 +1007,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dockingControl.addDockable(duplicateDock);
         dockingControl.addDockable(parentDock);
         dockingControl.addDockable(referencesDock);
+        dockingControl.addDockable(referencedByDock);
 
         List<AbstractViewer> viewers = viewerController.getViewers();
         viewerDocks = new ArrayList<DefaultSingleCDockable>();
@@ -1134,7 +1148,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         List<DefaultSingleCDockable> docks = new ArrayList<>();
         docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
-                bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock, referencesDock));
+                bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock, referencesDock, referencedByDock));
         docks.addAll(viewerDocks);
         docks.addAll(rsTabDock);
         rsTabDock.clear();
@@ -1312,6 +1326,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
             referencesDock.setLocation(nextLocation);
             referencesDock.setVisible(true);
+            nextLocation = referencesDock.getBaseLocation().aside();
+
+            referencedByDock.setLocation(nextLocation);
+            referencedByDock.setVisible(true);
 
             for (int i = 0; i < viewerDocks.size(); i++) {
                 DefaultSingleCDockable dock = viewerDocks.get(i);
@@ -1389,6 +1407,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
             referencesDock.setLocation(nextLocation);
             referencesDock.setVisible(true);
+            nextLocation = referencesDock.getBaseLocation().aside();
+
+            referencedByDock.setLocation(nextLocation);
+            referencedByDock.setVisible(true);
 
             categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
             categoriesTabDock.setVisible(true);

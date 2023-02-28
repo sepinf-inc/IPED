@@ -127,6 +127,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 App.get().duplicateDock.setTitleText(Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
                 App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
                 App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title")); //$NON-NLS-1$
+                App.get().referencedByDock.setTitleText(Messages.getString("ReferencedByTab.Title")); //$NON-NLS-1$
 
                 lastTableDoc = docId;
                 FileProcessor parsingTask = new FileProcessor(docId, true);
