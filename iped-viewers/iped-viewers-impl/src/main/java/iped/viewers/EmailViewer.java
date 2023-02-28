@@ -139,13 +139,13 @@ public class EmailViewer extends HtmlLinkViewer {
 
         public void open(String item) {
             if (externalAttach)
-                externalOpen(item);
+                externalAttachOpen(item);
             else {
-                internalOpen(Integer.parseInt(item));
+                internalAttachOpen(Integer.parseInt(item));
             }
         }
 
-        public void internalOpen(int attNum) {
+        public void internalAttachOpen(int attNum) {
             AttachInfo info = mch.attachments.values().toArray(new AttachInfo[0])[attNum];
             String ext = Util.getTrueExtension(info.tmpFile);
             info.tmpFile = Util.getFileRenamedToExt(info.tmpFile, ext);
@@ -154,7 +154,7 @@ public class EmailViewer extends HtmlLinkViewer {
             }
         }
 
-        public void externalOpen(final String luceneQuery) {
+        public void externalAttachOpen(final String luceneQuery) {
             new AttachmentHandler().open(luceneQuery);
         }
     }
@@ -316,7 +316,7 @@ public class EmailViewer extends HtmlLinkViewer {
                         if (attachNotFound) {
                             text += "<a href=\"\" onclick=\"app.open('" + LuceneSimpleHTMLEncoder.htmlEncode(query) + "')\">" + attach.name + "</a><br>";
                         } else {
-                            text += attach.name + " <em>(" + Messages.getString("EmailViewer.NotFound") + ")</em><br>";
+                            text += attach.name + " <em>" + Messages.getString("EmailViewer.NotFound") + "</em><br>";
                         }    
                     } else {
                         text += "<a href=\"\" onclick=\"app.open(" + i + ")\">" + attach.name + "</a><br>";
