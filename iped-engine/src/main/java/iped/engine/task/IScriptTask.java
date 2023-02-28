@@ -9,5 +9,5 @@ public interface IScriptTask {
      * @return suggested class to position this task before in execution pipeline
      * @throws ScriptTaskComplianceException
      */
-    public Class<? extends AbstractTask> checkTaskCompliance()throws ScriptTaskComplianceException;        
+    Class<? extends AbstractTask> checkTaskCompliance(String src) throws ScriptTaskComplianceException;        
 }

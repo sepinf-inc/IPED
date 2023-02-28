@@ -33,6 +33,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.IScriptTask;
+import iped.engine.task.ScriptTaskComplianceException;
 
 public class TaskConfigDialog extends JDialog {
     private List<Configurable<?>> configurables;
@@ -130,9 +131,8 @@ public class TaskConfigDialog extends JDialog {
                     scriptPanel.applyChanges();
                 }
                 this.setVisible(false);
-            }catch(ConfigurableValidationException cve) {
+            }catch(ConfigurableValidationException | ScriptTaskComplianceException cve) {
                 JOptionPane.showMessageDialog(this, cve.getMessage() + "\n" + cve.getCause(), "", JOptionPane.WARNING_MESSAGE);
-                cve.printStackTrace();
             }
         });
 

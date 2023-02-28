@@ -2,8 +2,7 @@ package iped.engine.task;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -331,9 +330,9 @@ public class PythonTask extends AbstractTask implements IScriptTask {
     }
 
     @Override
-    public Class<? extends AbstractTask> checkTaskCompliance() throws ScriptTaskComplianceException {
+    public Class<? extends AbstractTask> checkTaskCompliance(String src) throws ScriptTaskComplianceException {
         try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(scriptFile), "UTF-8")); //$NON-NLS-1$
+            BufferedReader in = new BufferedReader(new StringReader(src)); //$NON-NLS-1$
             String str = null;
             boolean processMethodFound=false;
             boolean initMethodFound=false;
@@ -349,7 +348,7 @@ public class PythonTask extends AbstractTask implements IScriptTask {
                     if(str.startsWith("isEnabled")) {
                         isEnabledMethodFound=true;
                     }
-                    if(str.startsWith("initMethodFound")) {
+                    if(str.startsWith("init")) {
                         initMethodFound=true;
                     }
                     if(str.startsWith("getConfigurables")) {

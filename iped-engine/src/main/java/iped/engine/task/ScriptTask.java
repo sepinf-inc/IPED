@@ -22,6 +22,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringBufferInputStream;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.List;
@@ -136,10 +139,35 @@ public class ScriptTask extends AbstractTask implements IScriptTask {
     public String getScriptFileName() {
         return scriptFile.getName();
     }
+    
+    /**
+     * Stub interface to validate script code
+     * @author patrick.pdb
+     *
+     */
+    public interface ITask{
+        public abstract List<Configurable<?>> getConfigurables();
+        public abstract void init(ConfigurationManager configurationManager) throws Exception;
+        abstract public void finish() throws Exception;
+        abstract public void process(IItem evidence) throws Exception;        
+    }
 
     @Override
-    public Class<? extends AbstractTask> checkTaskCompliance() throws ScriptTaskComplianceException {
-        return null;        
+    public Class<? extends AbstractTask> checkTaskCompliance(String src) throws ScriptTaskComplianceException {
+        ITask task = null;
+        try {
+            ScriptEngineManager manager = new ScriptEngineManager();
+            engine = manager.getEngineByExtension("js"); // $NON-NLS-1$
+            engine.eval(new StringReader(src));
+            inv = (Invocable) engine;
+            task = inv.getInterface(ITask.class);
+        }catch (Exception e) {
+            throw new ScriptTaskComplianceException(e);
+        }
+        if(task==null) {
+            throw new ScriptTaskComplianceException("Not all methods implementations found. Required methods are: getConfigurables, init, finish and process.");
+        }
+        return null;
     }
 
 }
