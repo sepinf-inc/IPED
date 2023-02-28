@@ -38,6 +38,7 @@ import iped.engine.task.IScriptTask;
 import iped.engine.task.PythonTask;
 import iped.engine.task.ScriptTask;
 import iped.engine.task.ScriptTaskComplianceException;
+import iped.parsers.whatsapp.Message;
 import iped.utils.IOUtil;
 
 public class ScriptEditPanel extends JPanel implements DocumentListener{
@@ -57,6 +58,8 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
     private JButton btSelectTemplate;
     private JPanel scriptLanguagePanel;
     static final String TEMPLATE_SCRIPT_NAME = "ExampleScriptTask.js";
+    private static final String JAVASCRIPT_TEMPLATE_DIR = "/jstemplates";
+    private static final String PYTHON_TEMPLATE_DIR = "/pythontemplates";
 
     public ScriptEditPanel(MainFrame mainFrame, IScriptTask scriptTask) {
         super();
@@ -107,8 +110,8 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
         titlePanel = new JPanel(new BorderLayout());
 
         titleText = new JTextField();
-        fileButton = new JButton("Import script");
-        fileButton.setToolTipText("Load script from file");
+        fileButton = new JButton(Messages.get("ScriptEditPanel.ImportScript"));
+        fileButton.setToolTipText(Messages.get("ScriptEditPanel.ImportScript.tooltip"));
 
         ScriptEditPanel self = this;
         fileButton.addActionListener(new ActionListener() {
@@ -141,7 +144,7 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
             }
         });
 
-        titlePanel.add(new JLabel("File:"), BorderLayout.WEST);
+        titlePanel.add(new JLabel(Messages.get("ScriptEditPanel.File")), BorderLayout.WEST);
         titlePanel.add(titleText, BorderLayout.CENTER);
 
         templatePanel = new JPanel(new BorderLayout());
@@ -207,11 +210,11 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
     }
 
     private void changeToJavascript() {
-        changeTo("/jstemplates");
+        changeTo(ScriptEditPanel.JAVASCRIPT_TEMPLATE_DIR);
     }
 
     private void changeToPython() {
-        changeTo("/pythontemplates");
+        changeTo(ScriptEditPanel.PYTHON_TEMPLATE_DIR);
     }
 
     private void changeTo(String folderName) {
@@ -223,7 +226,7 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
             if(files!=null) {
                 cbTemplate = new JComboBox<File>(files);
                 cbTemplate.setSelectedIndex(-1);
-                templatePanel.add(new JLabel("Select template:"), BorderLayout.WEST);
+                templatePanel.add(new JLabel(Messages.get("ScriptEditPanel.SelectTemplateLabel")), BorderLayout.WEST);
                 templatePanel.add(cbTemplate, BorderLayout.CENTER);
                 cbTemplate.setRenderer(new ListCellRenderer<File>() {
                     JLabel result = new JLabel();
@@ -249,8 +252,8 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
                     }
                 });
             }
-            templatePanel.add(new JLabel("Preview:"), BorderLayout.SOUTH);
-            btSelectTemplate = new JButton("Start editing");
+            templatePanel.add(new JLabel(Messages.get("ScriptEditPanel.Preview")), BorderLayout.SOUTH);
+            btSelectTemplate = new JButton(Messages.get("ScriptEditPanel.StartEditing"));
             btSelectTemplate.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
