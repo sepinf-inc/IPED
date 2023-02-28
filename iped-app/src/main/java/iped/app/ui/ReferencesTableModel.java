@@ -201,7 +201,7 @@ public class ReferencesTableModel extends AbstractTableModel
             textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
     
             try {
-                IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+                IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.NAME);
                 results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
     
                 final int length = results.getLength();
