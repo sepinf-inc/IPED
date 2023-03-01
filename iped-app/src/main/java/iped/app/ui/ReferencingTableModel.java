@@ -168,6 +168,10 @@ public class ReferencingTableModel extends AbstractTableModel
 
     public void listReferencingItems(Document doc) {
 
+        // clear table, searching for refs can take some time if they are thousands
+        results = new LuceneSearchResult(0);
+        fireTableDataChanged();
+
         StringBuilder textQuery = null;
         Query query = null;
 
