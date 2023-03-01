@@ -32,6 +32,7 @@ import org.apache.lucene.document.Document;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
+import iped.engine.task.HashTask;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -159,17 +160,25 @@ public class ReferencingTableModel extends AbstractTableModel
 
     public void listReferencingItems(Document doc) {
 
-        String[] linkedItems = doc.getValues(ExtraProperties.LINKED_ITEMS);
-        
-        if (linkedItems == null || linkedItems.length == 0) {
-            results = new LuceneSearchResult(0);
-        } else {
+        StringBuilder textQuery = new StringBuilder();
 
-            StringBuilder textQuery = new StringBuilder();
+        String[] linkedItems = doc.getValues(ExtraProperties.LINKED_ITEMS);
+        if (linkedItems != null && linkedItems.length > 0) {
             for (String q : linkedItems) {
                 textQuery.append("(").append(q).append(") ");
             }
-    
+        } else {
+            linkedItems = doc.getValues(ExtraProperties.SHARED_HASHES);
+            if (linkedItems != null && linkedItems.length > 0) {
+                String hashes = String.join(" ", linkedItems);
+                textQuery.append(HashTask.HASH.MD5.toString()).append(":(").append(hashes).append(") ");
+                textQuery.append(HashTask.HASH.SHA1.toString()).append(":(").append(hashes).append(") ");
+                textQuery.append(HashTask.HASH.SHA256.toString()).append(":(").append(hashes).append(") ");
+                textQuery.append(HashTask.HASH.EDONKEY.toString()).append(":(").append(hashes).append(")");
+            }
+        }
+
+        if (textQuery.length() > 0) {
             try {
                 IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery.toString(), BasicProps.NAME);
                 results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
