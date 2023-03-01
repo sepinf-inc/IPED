@@ -26,6 +26,7 @@ import javax.swing.JSplitPane;
 import javax.swing.ScrollPaneConstants;
 
 import iped.app.home.MainFrame;
+import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.home.configurables.uicomponents.IPEDMimeSearchList;
 import iped.app.home.configurables.uicomponents.MimeListTransferHandler;
 import iped.app.ui.controls.textarea.RegexTextPane;

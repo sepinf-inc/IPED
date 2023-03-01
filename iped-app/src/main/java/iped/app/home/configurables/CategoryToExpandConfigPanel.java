@@ -14,6 +14,7 @@ import javax.swing.event.ChangeListener;
 import com.google.common.base.Predicate;
 
 import iped.app.home.MainFrame;
+import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.ui.CategoryMimeTreeModel;
 import iped.configuration.Configurable;
 import iped.engine.config.CategoryConfig;

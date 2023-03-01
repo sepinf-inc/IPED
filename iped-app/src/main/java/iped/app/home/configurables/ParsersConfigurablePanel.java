@@ -49,6 +49,7 @@ import com.google.common.base.Predicate;
 
 import iped.app.home.MainFrame;
 import iped.app.home.configurables.ParsersTreeModel.ParserElementName;
+import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.home.configurables.autocompletion.CharsetCompletionProvider;
 import iped.app.home.configurables.autocompletion.MimetypeAutoCompletionProvider;
 import iped.app.home.configurables.popups.ExternalParserPopup;

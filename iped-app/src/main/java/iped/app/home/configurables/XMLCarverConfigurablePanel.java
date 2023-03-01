@@ -22,6 +22,7 @@ import org.fife.ui.rsyntaxtextarea.TokenMakerFactory;
 import org.xml.sax.SAXException;
 
 import iped.app.home.MainFrame;
+import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.ui.Messages;
 import iped.app.ui.controls.textarea.XMLXSDTokenMaker;
 import iped.carvers.api.CarverType;

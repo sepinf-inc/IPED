@@ -53,6 +53,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import iped.app.home.MainFrame;
+import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.home.configurables.autocompletion.MimetypeAutoCompletionProvider;
 import iped.app.home.configurables.popups.CategoryTreePopup;
 import iped.app.ui.CategoryMimeTreeModel;

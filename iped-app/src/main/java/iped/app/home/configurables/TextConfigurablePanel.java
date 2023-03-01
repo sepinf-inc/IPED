@@ -6,6 +6,7 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import iped.app.home.MainFrame;
+import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.configuration.Configurable;
 
 public class TextConfigurablePanel extends ConfigurablePanel{

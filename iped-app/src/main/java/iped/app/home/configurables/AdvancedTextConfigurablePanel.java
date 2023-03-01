@@ -15,6 +15,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 
 import iped.app.home.MainFrame;
+import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.ui.Messages;
 import iped.configuration.Configurable;
 

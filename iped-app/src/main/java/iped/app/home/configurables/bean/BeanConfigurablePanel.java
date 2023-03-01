@@ -71,7 +71,8 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
             if(pd.getName().equals("class")) {
                 continue property;
             }
-            JLabel label = new JLabel(pd.getDisplayName()+":");
+            String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName()+"."+pd.getDisplayName(), pd.getDisplayName());
+            JLabel label = new JLabel(localizedName+":");
             int width = pd.getDisplayName().length();
             if(max<width) {
                 max=width;

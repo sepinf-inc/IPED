@@ -1,4 +1,4 @@
-package iped.app.home.configurables;
+package iped.app.home.configurables.api;
 
 public class ConfigurableValidationException extends Exception {
     

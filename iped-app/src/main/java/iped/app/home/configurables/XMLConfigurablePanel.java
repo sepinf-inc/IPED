@@ -18,6 +18,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import iped.app.home.MainFrame;
+import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.ui.controls.textarea.XmlEditorKit;
 import iped.configuration.Configurable;
 

@@ -25,7 +25,10 @@ import javax.swing.plaf.basic.BasicTabbedPaneUI;
 
 import iped.app.home.MainFrame;
 import iped.app.home.configurables.ConfigurablePanel;
-import iped.app.home.configurables.ConfigurableValidationException;
+import iped.app.home.configurables.ConfigurablePanelFactory;
+import iped.app.home.configurables.api.ConfigurableValidationException;
+import iped.app.home.configurables.api.IConfigurablePanel;
+import iped.app.home.configurables.api.IConfigurablePanelFactory;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
 import iped.configuration.Configurable;
@@ -37,11 +40,12 @@ import iped.engine.task.ScriptTaskComplianceException;
 
 public class TaskConfigDialog extends JDialog {
     private List<Configurable<?>> configurables;
-    private HashMap<Configurable<?>, ConfigurablePanel> configurablePanels = new HashMap<Configurable<?>, ConfigurablePanel>();
+    private HashMap<Configurable<?>, IConfigurablePanel> configurablePanels = new HashMap<Configurable<?>, IConfigurablePanel>();
     AbstractTask task;
     ConfigurationManager configurationManager;
     MainFrame mainFrame;
     private ScriptEditPanel scriptPanel;
+    IConfigurablePanelFactory configPanelFactory = new ConfigurablePanelFactory();
 
     public TaskConfigDialog(ConfigurationManager configurationManager, AbstractTask task, MainFrame mainFrame) {
         super(mainFrame);
@@ -84,7 +88,7 @@ public class TaskConfigDialog extends JDialog {
             for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
                 Configurable<?> configurable = (Configurable<?>) iterator.next();
                 if(!(configurable instanceof EnableTaskProperty)) {
-                    ConfigurablePanel configPanel = ConfigurablePanel.createConfigurablePanel(configurable, mainFrame);
+                    IConfigurablePanel configPanel = configPanelFactory.createConfigurablePanel(task, configurable, mainFrame);
 
                     configPanel.addChangeListener(new ChangeListener() {
                         @Override
@@ -97,7 +101,7 @@ public class TaskConfigDialog extends JDialog {
                     configurablePanels.put(configurable,configPanel);
                     String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName(), configurable.getClass().getSimpleName());
                     String localizedTooltip = iped.engine.localization.Messages.getString(configurable.getClass().getName()+iped.engine.localization.Messages.TOOLTIP_SUFFIX, "");
-                    tabbedPane.addTab(localizedName, UIManager.getIcon("FileView.fileIcon"), configPanel, localizedTooltip);
+                    tabbedPane.addTab(localizedName, UIManager.getIcon("FileView.fileIcon"), configPanel.getPanel(), localizedTooltip);
                 }
             }
         }
@@ -120,7 +124,7 @@ public class TaskConfigDialog extends JDialog {
                 for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
                     Configurable<?> configurable = (Configurable<?>)iterator.next();
                     if(!(configurable instanceof EnableTaskProperty)) {
-                        ConfigurablePanel configPanel = configurablePanels.get(configurable);
+                        IConfigurablePanel configPanel = configurablePanels.get(configurable);
                         if(configPanel.hasChanged()) {
                             configPanel.applyChanges();
                             configPanel.fireChangeListener(new ChangeEvent(this));
