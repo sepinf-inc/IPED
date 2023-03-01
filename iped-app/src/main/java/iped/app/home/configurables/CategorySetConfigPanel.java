@@ -18,20 +18,19 @@ import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.ui.CategoryMimeTreeModel;
 import iped.configuration.Configurable;
 import iped.engine.config.CategoryConfig;
-import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.data.Category;
 
-public class CategoryToExpandConfigPanel extends ConfigurablePanel {
+public class CategorySetConfigPanel extends ConfigurablePanel {
     private JTree categoryTree;
-    CategoryToExpandConfig ceConfig;
+    Configurable<Set<String>> ceConfig;
     private JScrollPane treeScrollPanel;
     private CheckBoxTreeCellRenderer cellRenderer;
     Set<String> tempCatNames;
 
-    protected CategoryToExpandConfigPanel(Configurable<?> configurable, MainFrame mainFrame) {
+    protected CategorySetConfigPanel(Configurable<Set<String>> configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
-        ceConfig = (CategoryToExpandConfig) configurable;
+        ceConfig = configurable;
         tempCatNames = new HashSet<String>();
         Set<String> configCatNames = ceConfig.getConfiguration();
         for (Iterator<String> iterator = configCatNames.iterator(); iterator.hasNext();) {
