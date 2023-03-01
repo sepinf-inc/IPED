@@ -28,12 +28,20 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.HashTask;
 import iped.engine.task.index.IndexItem;
+import iped.parsers.ares.AresParser;
+import iped.parsers.emule.KnownMetParser;
+import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
@@ -160,27 +168,41 @@ public class ReferencingTableModel extends AbstractTableModel
 
     public void listReferencingItems(Document doc) {
 
-        StringBuilder textQuery = new StringBuilder();
+        StringBuilder textQuery = null;
+        Query query = null;
 
         String[] linkedItems = doc.getValues(ExtraProperties.LINKED_ITEMS);
         if (linkedItems != null && linkedItems.length > 0) {
+            textQuery = new StringBuilder();
             for (String q : linkedItems) {
                 textQuery.append("(").append(q).append(") ");
             }
         } else {
             linkedItems = doc.getValues(ExtraProperties.SHARED_HASHES);
             if (linkedItems != null && linkedItems.length > 0) {
-                String hashes = String.join(" ", linkedItems);
-                textQuery.append(HashTask.HASH.MD5.toString()).append(":(").append(hashes).append(") ");
-                textQuery.append(HashTask.HASH.SHA1.toString()).append(":(").append(hashes).append(") ");
-                textQuery.append(HashTask.HASH.SHA256.toString()).append(":(").append(hashes).append(") ");
-                textQuery.append(HashTask.HASH.EDONKEY.toString()).append(":(").append(hashes).append(")");
+                String term;
+                String mediaType = doc.get(BasicProps.CONTENTTYPE);
+                if (KnownMetParser.EMULE_MIME_TYPE.equals(mediaType)) {
+                    term = HashTask.HASH.EDONKEY.toString();
+                } else if (AresParser.ARES_MIME_TYPE.equals(mediaType)) {
+                    term = HashTask.HASH.SHA1.toString();
+                } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(mediaType)) {
+                    term = HashTask.HASH.MD5.toString();
+                } else {
+                    term = BasicProps.HASH;
+                }
+                BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                for (String hash : linkedItems) {
+                    builder.add(new TermQuery(new Term(term, hash)), Occur.SHOULD);
+                }
+                query = builder.build();
             }
         }
 
-        if (textQuery.length() > 0) {
+        if (textQuery != null || query != null) {
             try {
-                IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery.toString(), BasicProps.NAME);
+                IPEDSearcher task = query != null ? new IPEDSearcher(App.get().appCase, query, BasicProps.NAME) : new IPEDSearcher(App.get().appCase, textQuery.toString(), BasicProps.NAME);
+                task.setRewritequery(false);
                 results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
     
                 final int length = results.getLength();
