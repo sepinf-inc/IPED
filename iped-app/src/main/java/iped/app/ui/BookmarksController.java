@@ -85,7 +85,7 @@ public class BookmarksController {
                                 + LocalizedFormat.format(App.get().appCase.getTotalItems()));
                 App.get().checkBox.setSelected(App.get().appCase.getMultiBookmarks().getTotalChecked() > 0);
                 App.get().bookmarksListener.updateModelAndSelection();
-                App.get().resultsTable.repaint();
+                App.get().repaintAllTableViews();
                 BookmarksManager.updateCounters();
             }
         });
