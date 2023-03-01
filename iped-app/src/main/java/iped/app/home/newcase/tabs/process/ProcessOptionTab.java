@@ -35,10 +35,7 @@ import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.task.AbstractTask;
-import iped.engine.task.IScriptTask;
-import iped.engine.task.PythonTask;
 import iped.engine.task.ScriptTask;
-import iped.utils.IOUtil;
 
 /*
  * @created 13/09/2022
@@ -120,7 +117,17 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         setupCreateProfilePanel(panelForm);
         panelForm.add( Box.createRigidArea( new Dimension(10, 10) ) );
         setupTasksTables(panelForm);
-        loadTasksTables(defaultProfile);
+
+        
+        for(int i=0; i<profilesArray.length;i++) {
+            if(((IConfigurationDirectory) profilesArray[i]).getName().equals("default")) {
+                profilesCombo.setSelectedItem((IConfigurationDirectory) profilesArray[i]);
+                break;
+            }
+        }
+
+        loadTasksTables((IConfigurationDirectory) profilesCombo.getSelectedItem());
+
         return panelForm;
     }
 
@@ -229,7 +236,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     private void updateTaskInstallerConfig() {
         List<AbstractTask> tasks = new ArrayList<>();
         for(int i=0; i<tasksTableModel.getRowCount();i++) {
-            tasks.add(tasksTableModel.getTaskList().get(i));
+            AbstractTask currentTask = tasksTableModel.getTaskList().get(i);
+            tasks.add(currentTask);
         }
         taskInstallerConfig.update(tasks);
     }
@@ -251,15 +259,16 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     
     private void loadTasksTables(IConfigurationDirectory selectedDirectory){
         selectedConfigurationManager = new ConfigurationManager(selectedDirectory);
+
         ConfigurationManager.setCurrentConfigurationManager(selectedConfigurationManager);
         selectedConfigurationManager.addConfigurableChangeListener(this);
-        if(selectedConfigurationManager.getConfigurationDirectory() instanceof ConfigurationDirectory) {
-            Set<Configurable<?>> configs = defaultConfigurationManager.getObjects();
-            for (Configurable<?> config : configs) {
-                //overwrite if already exists with the clone of default config object
-                selectedConfigurationManager.addObject((Configurable<?>) clone(config));
-            }
+
+        Set<Configurable<?>> configs = defaultConfigurationManager.getObjects();
+        for (Configurable<?> config : configs) {
+            //overwrite if already exists with the clone of default config object
+            selectedConfigurationManager.addObject((Configurable<?>) clone(config));
         }
+
         try {
             selectedConfigurationManager.loadConfigs(true);
         } catch (IOException e1) {
@@ -274,6 +283,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         taskArrayList = taskInstallerConfig.getNewTaskInstances();
         ArrayList<Boolean> enabled = new ArrayList<Boolean>();
         ArrayList<EnabledInterface> enabledConfigurables = new ArrayList<EnabledInterface>();
+        
+        
         for(AbstractTask currentTask : taskArrayList  ){
             List<Configurable<?>> configurableList = currentTask.getConfigurables();
             if (configurableList == null || configurableList.isEmpty()){
@@ -287,6 +298,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 Configurable<?> configurable = (Configurable<?>) iterator.next();
                 if(configurable instanceof EnabledInterface) {
                     enabledConfigurable=(EnabledInterface) configurable;
+                    break;//uses the first EnabledInterface found as the main EnabledInterface for task enabling
                 }
             }
             enabledConfigurables.add(enabledConfigurable);
@@ -296,6 +308,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         }
 
         tasksTableModel.updateData(selectedConfigurationManager, taskArrayList, enabled, enabledConfigurables);
+        jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellRenderer(new TaskTableConfigurablesCellRenderer(selectedConfigurationManager, mainFrame));
     }
 
     /**
@@ -334,8 +347,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         jtableTasks.setFillsViewportHeight(true);
         jtableTasks.setRowHeight(30);
         jtableTasks.setModel(tasksTableModel);
-        jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellRenderer( new TaskTableConfigurablesCellRenderer(selectedConfigurationManager, mainFrame));
-        jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellEditor( new TableTaskOptionsCellEditor(new JCheckBox()) );
+        jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellRenderer(new TaskTableConfigurablesCellRenderer(selectedConfigurationManager, mainFrame));
+        jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellEditor(new TableTaskOptionsCellEditor(new JCheckBox()) );
         
         jtableTasks.getColumn( jtableTasks.getColumnName(1)).setCellRenderer(new TableTaskEnabledCellRenderer(jtableTasks.getDefaultRenderer(jtableTasks.getColumnClass(1))));
 

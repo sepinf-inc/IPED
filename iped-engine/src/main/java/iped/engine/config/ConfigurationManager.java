@@ -97,7 +97,6 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
                 configurable.processConfigs(resources);
             }
         }else if(directory instanceof SerializedConfigurationDirectory) {
-            loadedConfigurables = new HashMap<Configurable<?>, Boolean>();
             ObjectInputStream ois = ((SerializedConfigurationDirectory) directory).openInputStream();
             try {
                 Configurable configurable=(Configurable)ois.readObject();
@@ -129,7 +128,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
 
         for (Iterator<Configurable<?>> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
             Configurable<?> configurable = iterator.next();
-            if (configurable.getClass().equals(clazz)) {
+            if (clazz.isInstance(configurable)) {
                 result.add(configurable);
             }
         }
@@ -138,7 +137,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     }
 
     public <T extends Configurable<?>> T findObject(Class<? extends Configurable<?>> clazz) {
-        for (Configurable<?> configurable : selectedCM.loadedConfigurables.keySet()) {
+        for (Configurable<?> configurable : loadedConfigurables.keySet()) {
             if (configurable.getClass().equals(clazz)) {
                 return (T) configurable;
             }
@@ -147,7 +146,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     }
 
     public AbstractTaskConfig<?> getTaskConfigurable(String configFileName) {
-        for (Configurable<?> config : selectedCM.loadedConfigurables.keySet()) {
+        for (Configurable<?> config : loadedConfigurables.keySet()) {
             if (config instanceof AbstractTaskConfig) {
                 AbstractTaskConfig<?> taskConfig = (AbstractTaskConfig<?>) config;
                 if (taskConfig.getTaskConfigFileName().equals(configFileName)) {
@@ -170,12 +169,16 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     }
 
     public boolean getEnableTaskProperty(String propertyName) {
-        EnableTaskProperty enableProp = selectedCM.getEnableTaskConfigurable(propertyName);
+        EnableTaskProperty enableProp = getEnableTaskConfigurable(propertyName);
         if (enableProp != null) {
             return enableProp.isEnabled();
         } else {
             return false;
         }
+    }
+
+    public EnableTaskProperty getEnableTaskPropertyObject(String propertyName) {
+        return getEnableTaskConfigurable(propertyName);
     }
 
     @Override

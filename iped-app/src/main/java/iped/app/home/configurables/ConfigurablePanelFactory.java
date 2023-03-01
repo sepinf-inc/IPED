@@ -4,6 +4,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -20,13 +21,14 @@ import iped.engine.config.MakePreviewConfig;
 import iped.engine.config.ParsersConfig;
 import iped.engine.config.RegexTaskConfig;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.ExportFileTask;
 import iped.engine.task.carver.XMLCarverConfiguration;
 import iped.utils.UTF8Properties;
 
 public class ConfigurablePanelFactory implements IConfigurablePanelFactory{
 
     /**
-     * Factory method to instantiate an ConfigurablePanel suitable to the configurable object
+     * Hard coded factory to instantiate IConfigurablePanel suitable to the configurable object.
      * @param configurable - the configurable object that the created ConfigurablePanel will handle.
      * @param mainFrame - the main frame of the panel.
      */
@@ -72,7 +74,7 @@ public class ConfigurablePanelFactory implements IConfigurablePanelFactory{
                 }
             }
         }else if(configurable instanceof CategoryToExpandConfig) {
-            result = new CategoryToExpandConfigPanel((CategoryToExpandConfig) configurable, mainFrame);
+            result = new CategorySetConfigPanel((CategoryToExpandConfig) configurable, mainFrame);
         }else if(configurable instanceof MakePreviewConfig) {
             result = new MakePreviewConfigurablePanel((MakePreviewConfig) configurable, mainFrame);
         }else if(config instanceof XMLCarverConfiguration) {
@@ -80,18 +82,22 @@ public class ConfigurablePanelFactory implements IConfigurablePanelFactory{
         }else if(configurable.getClass().equals(RegexTaskConfig.class)) {
             result = new RegexConfigurablePanel((Configurable<?>)configurable, mainFrame);
         }else if(config instanceof Collection<?>) {
-            Type type;
-            try {
-                type = configurable.getClass().getMethod("getConfiguration").getGenericReturnType();
-                if(type instanceof ParameterizedType) {
-                    ParameterizedType ptype = (ParameterizedType) type;
-                    Type[] typeArguments = ptype.getActualTypeArguments();
-                    if(typeArguments[0].getTypeName().equals(String.class.getCanonicalName())) {
-                        result = new StringSetConfigurablePanel((Configurable<HashSet<String>>)configurable, mainFrame);
+            if(task instanceof ExportFileTask && config instanceof Set<?>) {
+                result = new CategorySetConfigPanel((Configurable<Set<String>>) configurable, mainFrame);
+            }else {
+                Type type;
+                try {
+                    type = configurable.getClass().getMethod("getConfiguration").getGenericReturnType();
+                    if(type instanceof ParameterizedType) {
+                        ParameterizedType ptype = (ParameterizedType) type;
+                        Type[] typeArguments = ptype.getActualTypeArguments();
+                        if(typeArguments[0].getTypeName().equals(String.class.getCanonicalName())) {
+                            result = new StringSetConfigurablePanel((Configurable<HashSet<String>>)configurable, mainFrame);
+                        }
                     }
+                } catch (NoSuchMethodException | SecurityException e) {
+                    e.printStackTrace();
                 }
-            } catch (NoSuchMethodException | SecurityException e) {
-                e.printStackTrace();
             }
         }
         if(result==null) {

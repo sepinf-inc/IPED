@@ -52,7 +52,7 @@ public class ImageSimilarityTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        EnableTaskProperty result = ConfigurationManager.get().findObject(EnableTaskProperty.class);
+        EnableTaskProperty result = ConfigurationManager.get().getEnableTaskPropertyObject(enableParam);
         if(result == null) {
             result = new EnableTaskProperty(enableParam);
         }
