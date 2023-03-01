@@ -1,5 +1,7 @@
 package iped.app.home.configurables;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.util.function.Predicate;
 
@@ -7,6 +9,7 @@ import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -25,6 +28,7 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
     private JTree tree;
     Predicate<Object> checkedPredicate;
     Predicate<Object> visiblePredicate;
+    private JPanel ckPanel = new JPanel(new BorderLayout());
 
     public CheckBoxTreeCellRenderer(JTree tree, Predicate<Object> checkedPredicate) {
         this.tree = tree;
@@ -46,11 +50,15 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
                 }
             }
         });        
+
+        ckPanel.setBackground(Color.white);
+        ckPanel.add(checkbox, BorderLayout.WEST);
+        ckPanel.add(label, BorderLayout.CENTER);
     }
 
     public CheckBoxTreeCellRenderer(JTree tree, Predicate<Object> checkedPredicate, Predicate<Object> visiblePredicate) {
         this(tree, checkedPredicate);
-        this.visiblePredicate = visiblePredicate;        
+        this.visiblePredicate = visiblePredicate;
     }
 
     @Override
@@ -73,15 +81,13 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
 
         TreePath tp = tree.getPathForRow(row);
 
-        if(visiblePredicate==null || visiblePredicate.test(value)) {
-            checkbox.setText(value.toString());
-            checkbox.setSelected(checkedPredicate.test(value));
-            checkbox.setIcon(icon);
+        label.setText(value.toString());
+        label.setIcon(icon);
 
-            result = checkbox;
+        if(visiblePredicate==null || visiblePredicate.test(value)) {
+            checkbox.setSelected(checkedPredicate.test(value));
+            result = ckPanel;
         }else{
-            label.setText(value.toString());
-            label.setIcon(icon);
             result = label;
         }
 
