@@ -71,8 +71,9 @@ public class BookmarksController {
     }
 
     public void updateUISelection() {
-        // MapaModelUpdateListener.updatingSelection = true;
-        updateUI();
+        if (!multiSetting) {
+            updateUI();
+        }
     }
 
     public void updateUI() {
