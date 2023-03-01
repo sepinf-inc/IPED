@@ -181,7 +181,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public HitsTable hitsTable;
     AppGraphAnalytics appGraphAnalytics;
 
-    HitsTable subItemTable, duplicatesTable;
+    HitsTable subItemTable, parentItemTable, duplicatesTable, referencesTable, referencedByTable;
     JTree tree, bookmarksTree, categoryTree;
     MetadataPanel metadataPanel;
     JScrollPane categoriesPanel, bookmarksPanel;
@@ -190,7 +190,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     CategoryTreeListener categoryListener;
     BookmarksTreeListener bookmarksListener;
     TimelineListener timelineListener;
-    HitsTable parentItemTable;
     public CControl dockingControl;
     DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
     List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
@@ -610,7 +609,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         parentItemTable.setShowGrid(false);
         parentItemTable.addKeyListener(new SpaceKeyListener());
 
-        HitsTable referencesTable = new HitsTable(referencesModel);
+        referencesTable = new HitsTable(referencesModel);
         referencesTable.setFillsViewportHeight(true);
         referencesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         referencesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
@@ -623,7 +622,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencesTable.addKeyListener(new SpaceKeyListener());
         referencesScroll = new JScrollPane(referencesTable);
 
-        HitsTable referencedByTable = new HitsTable(referencedByModel);
+        referencedByTable = new HitsTable(referencedByModel);
         referencedByTable.setFillsViewportHeight(true);
         referencedByTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         referencedByTable.getColumnModel().getColumn(0).setPreferredWidth(40);
@@ -1583,6 +1582,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             searcher = new IPEDSearcher(appCase, query, sortFields);
         }
         return searcher;
+    }
+
+    // TODO implement this for HTML views with checkboxes (Map and HtmlLinkViewer).
+    // May need to call javascript functions to update the DOM internal checkboxes.
+    public void repaintAllTableViews() {
+        resultsTable.repaint();
+        gallery.repaint();
+        subItemTable.repaint();
+        parentItemTable.repaint();
+        duplicatesTable.repaint();
+        referencesTable.repaint();
+        referencedByTable.repaint();
     }
 
     private class SpaceKeyListener implements KeyListener {
