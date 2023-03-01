@@ -34,6 +34,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -561,7 +562,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         hitsTable = new HitsTable(new HitsTableModel(viewerController.getTextViewer()));
         hitsScroll = new JScrollPane(hitsTable);
         hitsTable.setFillsViewportHeight(true);
-        hitsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        hitsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         hitsTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         hitsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         hitsTable.getColumnModel().getColumn(1).setPreferredWidth(largeColWidth);
@@ -573,7 +574,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         subItemTable = new HitsTable(subItemModel);
         subItemScroll = new JScrollPane(subItemTable);
         subItemTable.setFillsViewportHeight(true);
-        subItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        subItemTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         subItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         subItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
         subItemTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
@@ -581,11 +582,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         subItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
         subItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         subItemTable.setShowGrid(false);
+        subItemTable.addKeyListener(new SpaceKeyListener());
 
         duplicatesTable = new HitsTable(duplicatesModel);
         duplicatesScroll = new JScrollPane(duplicatesTable);
         duplicatesTable.setFillsViewportHeight(true);
-        duplicatesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        duplicatesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         duplicatesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         duplicatesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
         duplicatesTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
@@ -593,11 +595,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         duplicatesTable.setDefaultRenderer(String.class, new TableCellRenderer());
         duplicatesTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         duplicatesTable.setShowGrid(false);
+        duplicatesTable.addKeyListener(new SpaceKeyListener());
 
         parentItemTable = new HitsTable(parentItemModel);
         parentItemScroll = new JScrollPane(parentItemTable);
         parentItemTable.setFillsViewportHeight(true);
-        parentItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        parentItemTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         parentItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
         parentItemTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
@@ -605,10 +608,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         parentItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
         parentItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         parentItemTable.setShowGrid(false);
+        parentItemTable.addKeyListener(new SpaceKeyListener());
 
         HitsTable referencesTable = new HitsTable(referencesModel);
         referencesTable.setFillsViewportHeight(true);
-        referencesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        referencesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         referencesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         referencesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
         referencesTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
@@ -616,11 +620,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencesTable.setDefaultRenderer(String.class, new TableCellRenderer());
         referencesTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         referencesTable.setShowGrid(false);
+        referencesTable.addKeyListener(new SpaceKeyListener());
         referencesScroll = new JScrollPane(referencesTable);
 
         HitsTable referencedByTable = new HitsTable(referencedByModel);
         referencedByTable.setFillsViewportHeight(true);
-        referencedByTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        referencedByTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         referencedByTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         referencedByTable.getColumnModel().getColumn(1).setPreferredWidth(20);
         referencedByTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
@@ -628,6 +633,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencedByTable.setDefaultRenderer(String.class, new TableCellRenderer());
         referencedByTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         referencedByTable.setShowGrid(false);
+        referencedByTable.addKeyListener(new SpaceKeyListener());
         referencedByScroll = new JScrollPane(referencedByTable);
 
         categoryTree = new JTree(new Object[0]);
@@ -1577,6 +1583,40 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             searcher = new IPEDSearcher(appCase, query, sortFields);
         }
         return searcher;
+    }
+
+    private class SpaceKeyListener implements KeyListener {
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                JTable table = (JTable) e.getComponent();
+                int col = table.convertColumnIndexToView(1);
+                int firstRow = table.getSelectedRow();
+                boolean value = true;
+                if (firstRow != -1 && (Boolean) table.getValueAt(firstRow, col)) {
+                    value = false;
+                }
+                int[] selectedRows = table.getSelectedRows();
+                BookmarksController.get().setMultiSetting(true);
+                for (int i = 0; i < selectedRows.length; i++) {
+                    table.setValueAt(value, selectedRows[i], col);
+                }
+                table.repaint();
+                BookmarksController.get().setMultiSetting(false);
+                BookmarksController.get().updateUISelection();
+                appCase.getMultiBookmarks().saveState();
+            }
+        }
+
+        @Override
+        public void keyTyped(KeyEvent e) {
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+        }
+
     }
 
 }
