@@ -53,14 +53,26 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     JFileChooser scriptChooser = new JFileChooser();
     private JComboBox<IConfigurationDirectory> profilesCombo;
     private ConfigurationManager selectedConfigurationManager;//configuration manager corresponding to the current profile selected
-    private ConfigurationManager defaultConfigurationManager;//configuration manager corresponding to iped default distributed configuration 
+    
+    /**
+     * The default config manager will be used as the base line to create the task list.
+     * Other profiles will only enable or disable these tasks, or add delete Script tasks. 
+     */
+    private ConfigurationManager defaultConfigurationManager;//configuration manager corresponding to iped default distributed configuration
+    
     private JPanel selectProfilePanel;
     private JPanel createProfilePanel;
     private JTextField tfProfileName;
     private JButton buttonStartProcess;
-    ConfigurationDirectory defaultProfile;
+    
+    /**
+     * Profile representing the configs in "conf" folder.
+     */
+    ConfigurationDirectory baselineProfile;
+    
     private JButton deleteProfileBtn;
     private Object[] profilesArray;
+    private boolean isInsertingProfile;
 
     private static final String SELECT_PROFILE_PANEL = "selectProfilePanel";
     private static final String CREATE_PROFILE_PANEL = "createProfilePanel";
@@ -85,14 +97,16 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
      * Executed on tab initialization. Creates some needed object references. 
      */
     private void createObjectInstances(){
-        //create a "default" profile item on profilemanager
-        defaultProfile = ProfileManager.get().getDefaultProfile();
-        ProfileManager.get().addObject(defaultProfile);
+        //create the baseline profile item on profilemanager
+        baselineProfile = ProfileManager.get().getDefaultProfile();
+        ProfileManager.get().addObject(baselineProfile);
 
         defaultConfigurationManager = ConfigurationManager.get();
+
         //for the first time, the selected configuration is the default
-        selectedConfigurationManager = new ConfigurationManager(defaultProfile);
-        defaultConfigurationManager.addConfigurableChangeListener(this);
+        selectedConfigurationManager = new ConfigurationManager(baselineProfile);
+        selectedConfigurationManager.addConfigurableChangeListener(this);
+
         try {
             defaultConfigurationManager.loadConfigs(true);
         } catch (IOException e) {
@@ -145,18 +159,18 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         profilesCombo = new JComboBox(profilesArray);
         profilesCombo.setPreferredSize(new Dimension(200,(int)profilesCombo.getPreferredSize().getHeight()));
         selectProfilePanel.add(profilesCombo);
-        profilesCombo.setSelectedItem(defaultProfile);
+        profilesCombo.setSelectedItem(baselineProfile);
         profilesCombo.addItemListener(e->{
-            if(e.getStateChange()==ItemEvent.SELECTED) {
-                IConfigurationDirectory configDirectory = (IConfigurationDirectory) e.getItem();
+            IConfigurationDirectory configDirectory = (IConfigurationDirectory) e.getItem();
+            if((e.getStateChange()==ItemEvent.SELECTED)&&(!isInsertingProfile)) {
                 loadTasksTables(configDirectory);
-                if(configDirectory instanceof SerializedConfigurationDirectory) {                    
-                    selectProfilePanel.add(deleteProfileBtn);                    
-                }else {
-                    selectProfilePanel.remove(deleteProfileBtn);                    
-                }
-                selectProfilePanel.updateUI();
             }
+            if(configDirectory instanceof SerializedConfigurationDirectory) {                    
+                selectProfilePanel.add(deleteProfileBtn);                    
+            }else {
+                selectProfilePanel.remove(deleteProfileBtn);                    
+            }
+            selectProfilePanel.updateUI();
         });
         deleteProfileBtn.addActionListener( e -> {
             IConfigurationDirectory configDirectory = (IConfigurationDirectory) profilesCombo.getSelectedItem();
@@ -186,6 +200,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         createProfilePanel.add(btInsertProfile);
         btInsertProfile.addActionListener(e -> {
             try {
+                isInsertingProfile=true;
                 updateTaskInstallerConfig();
                 IConfigurationDirectory dir = ProfileManager.get().createProfile(tfProfileName.getText(), selectedConfigurationManager);
                 profilesCombo.addItem(dir);
@@ -193,6 +208,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 profilesCombo.setSelectedItem(dir);
             } catch (FileAlreadyExistsException e1) {
                 JOptionPane.showMessageDialog(this, e1.getMessage(), "", JOptionPane.WARNING_MESSAGE);
+            }finally {
+                isInsertingProfile=false;
             }
         });
 
@@ -388,7 +405,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         buttonStartProcess = new JButton(Messages.get("Home.ProcOptions.StartProcessing"));
         buttonStartProcess.addActionListener(e -> {
             String selectedProfile = ((IConfigurationDirectory) profilesCombo.getSelectedItem()).getName();
-            if(defaultProfile.getName().equalsIgnoreCase(selectedProfile) )
+            if(baselineProfile.getName().equalsIgnoreCase(selectedProfile) )
                 NewCaseContainerPanel.getInstance().getIpedProcess().setProfile(null);
             else
                 NewCaseContainerPanel.getInstance().getIpedProcess().setProfile(selectedProfile);

@@ -8,16 +8,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import iped.configuration.Configurable;
@@ -29,8 +29,33 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     List<ConfigurableChangeListener> configurableChangeListeners = new ArrayList<ConfigurableChangeListener>();
 
     private IConfigurationDirectory directory;
+    
+    class ConfigurableWrapper{
+        Configurable<?> c;
 
-    private Map<Configurable<?>, Boolean> loadedConfigurables = new LinkedHashMap<>();
+        public ConfigurableWrapper(Configurable<?> config) {
+            this.c = config;
+        }
+
+        @Override
+        public int hashCode() {
+            if(c instanceof EnableTaskProperty) {
+                return Objects.hash(c.getClass(), ((EnableTaskProperty)c).getPropertyName());
+            }
+            return c.getClass().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if(c instanceof EnableTaskProperty) {
+                return c.getClass().equals(((ConfigurableWrapper)o).c.getClass()) && ((EnableTaskProperty) c).getPropertyName().equals(((EnableTaskProperty) ((ConfigurableWrapper)o).c).getPropertyName());
+            }
+            return c.getClass().equals(((ConfigurableWrapper)o).c.getClass());
+        }
+        
+    }
+
+    private Map<ConfigurableWrapper, Boolean> loadedConfigurablesState = new LinkedHashMap<>();
     private List<Configurable<?>> changedConfigurables = new ArrayList<Configurable<?>>();
 
     boolean changed=false;
@@ -66,28 +91,30 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
 
     @Override
     public void addObject(Configurable<?> config) {
-        loadedConfigurables.put(config, false);
+        loadedConfigurablesState.put(new ConfigurableWrapper(config), false);
     }
 
     public void loadConfigs() throws IOException {
-        for (Iterator<Configurable<?>> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
-            Configurable<?> configurable = iterator.next();
+        ConfigurableWrapper[] array = loadedConfigurablesState.keySet().toArray(new ConfigurableWrapper[0]);
+        for (int i=0; i< array.length; i++) {
+            Configurable<?> configurable = array[i].c;
             loadConfig(configurable);
         }
     }
 
     public void loadConfig(Configurable<?> configurable) throws IOException {
-        if (loadedConfigurables.get(configurable) == false) {
+        Boolean loaded = loadedConfigurablesState.get(new ConfigurableWrapper(configurable)); 
+        if (loaded==null || loaded == false) {
             List<Path> resources = directory.lookUpResource(configurable);
             configurable.processConfigs(resources);
-            loadedConfigurables.put(configurable, true);
+            loadedConfigurablesState.put(new ConfigurableWrapper(configurable) , true);
         }
     }
 
     public void loadConfigs(boolean forceReload) throws IOException {
         if(directory instanceof ConfigurationDirectory) {
-            for (Iterator<Configurable<?>> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
-                Configurable<?> configurable = iterator.next();
+            for (Iterator<ConfigurableWrapper> iterator = loadedConfigurablesState.keySet().iterator(); iterator.hasNext();) {
+                Configurable<?> configurable = iterator.next().c;
                 if(forceReload) {
                     configurable.reset();
                 }
@@ -101,7 +128,9 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
             try {
                 Configurable configurable=(Configurable)ois.readObject();
                 while(configurable!=null) {
-                    loadedConfigurables.put(configurable, true);
+                    ConfigurableWrapper cw = new ConfigurableWrapper(configurable);
+                    loadedConfigurablesState.remove(cw);
+                    loadedConfigurablesState.put(cw, true);
                     try {
                         configurable=(Configurable)ois.readObject();
                     }catch (EOFException e) {
@@ -126,8 +155,8 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     public Set<Configurable<?>> findObjects(Class<? extends Configurable<?>> clazz) {
         Set<Configurable<?>> result = new HashSet<>();
 
-        for (Iterator<Configurable<?>> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
-            Configurable<?> configurable = iterator.next();
+        for (Iterator<ConfigurableWrapper> iterator = loadedConfigurablesState.keySet().iterator(); iterator.hasNext();) {
+            Configurable<?> configurable = iterator.next().c;
             if (clazz.isInstance(configurable)) {
                 result.add(configurable);
             }
@@ -137,18 +166,18 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     }
 
     public <T extends Configurable<?>> T findObject(Class<? extends Configurable<?>> clazz) {
-        for (Configurable<?> configurable : loadedConfigurables.keySet()) {
-            if (configurable.getClass().equals(clazz)) {
-                return (T) configurable;
+        for (ConfigurableWrapper configurablew : loadedConfigurablesState.keySet()) {
+            if (configurablew.c.getClass().equals(clazz)) {
+                return (T) configurablew.c;
             }
         }
         return null;
     }
 
     public AbstractTaskConfig<?> getTaskConfigurable(String configFileName) {
-        for (Configurable<?> config : loadedConfigurables.keySet()) {
-            if (config instanceof AbstractTaskConfig) {
-                AbstractTaskConfig<?> taskConfig = (AbstractTaskConfig<?>) config;
+        for (ConfigurableWrapper configw : loadedConfigurablesState.keySet()) {
+            if (configw.c instanceof AbstractTaskConfig) {
+                AbstractTaskConfig<?> taskConfig = (AbstractTaskConfig<?>) configw.c;
                 if (taskConfig.getTaskConfigFileName().equals(configFileName)) {
                     return taskConfig;
                 }
@@ -185,8 +214,8 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     public Set<Configurable<?>> findObjects(String className) {
         Set<Configurable<?>> result = new HashSet<>();
 
-        for (Iterator<Configurable<?>> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
-            Configurable<?> configurable = iterator.next();
+        for (Iterator<ConfigurableWrapper> iterator = loadedConfigurablesState.keySet().iterator(); iterator.hasNext();) {
+            Configurable<?> configurable = iterator.next().c;
             if (configurable.getClass().getName().equals(className)) {
                 result.add(configurable);
             }
@@ -197,18 +226,24 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
 
     @Override
     public Set<Configurable<?>> getObjects() {
-        return loadedConfigurables.keySet();
+        LinkedHashSet<Configurable<?>> result = new LinkedHashSet<Configurable<?>>();
+        for (Iterator iterator = loadedConfigurablesState.keySet().iterator(); iterator.hasNext();) {
+            ConfigurableWrapper configurablew = (ConfigurableWrapper) iterator.next();
+            result.add(configurablew.c);
+            
+        }
+        return result;
     }
 
     @Override
     public void removeObject(Configurable<?> aObject) {
-        loadedConfigurables.remove(aObject);
+        loadedConfigurablesState.remove(aObject);
     }
 
     public void saveSerializedConfig(File file) throws FileNotFoundException, IOException {
         try(FileOutputStream fos = new FileOutputStream(file);
                 ObjectOutputStream oos = new ObjectOutputStream(fos)){
-            oos.writeObject(loadedConfigurables);
+            oos.writeObject(loadedConfigurablesState);
         }
     }
 
@@ -216,7 +251,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     public void loadSerializedConfig(File file)
             throws FileNotFoundException, IOException, ClassNotFoundException {
         try (FileInputStream fis = new FileInputStream(file); ObjectInputStream ois = new ObjectInputStream(fis)) {
-            loadedConfigurables = (Map<Configurable<?>, Boolean>) ois.readObject();
+            loadedConfigurablesState = (Map<ConfigurableWrapper, Boolean>) ois.readObject();
         }
     }
 /*
