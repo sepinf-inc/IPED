@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -306,17 +307,30 @@ public class EmailViewer extends HtmlLinkViewer {
 
             int i = 0, count = 0;
             text = ""; //$NON-NLS-1$
+            List<String> sameNamePaths = new ArrayList<>();
             for (AttachInfo attach : attachments.values()) {
                 if (attach.name != null) {
                     String query;
                     boolean attachNotFound;
                     if (externalAttach) {
                         query = BasicProps.PATH + ":\"Attachments/" + externalAttachFolder + "\" && " + BasicProps.NAME + ":\"" + attach.name + "\"";
-                        attachNotFound = attachSearcher.getItem(query) != null;
+                        List<IItem> items = attachSearcher.getItems(query);
+                        attachNotFound = items == null;
                         if (attachNotFound) {
-                            text += "<a href=\"\" onclick=\"app.open('" + LuceneSimpleHTMLEncoder.htmlEncode(query) + "')\">" + attach.name + "</a><br>";
-                        } else {
                             text += attach.name + " <em>" + Messages.getString("EmailViewer.NotFound") + "</em><br>";
+                        } else {
+                            // handle multiple attachments with same name
+                            if (items.size() > 1) {
+                                for (int j = 0; j < items.size(); j++) {
+                                    String itemPath = items.get(j).getPath();
+                                    if (itemPath.endsWith(attach.name) && !sameNamePaths.contains(itemPath)) {
+                                        query = BasicProps.PATH + ":\"" + itemPath + "\"";
+                                        sameNamePaths.add(itemPath);
+                                        break;
+                                    }
+                                }
+                            }
+                            text += "<a href=\"\" onclick=\"app.open('" + LuceneSimpleHTMLEncoder.htmlEncode(query) + "')\">" + attach.name + "</a><br>";
                         }    
                     } else {
                         text += "<a href=\"\" onclick=\"app.open(" + i + ")\">" + attach.name + "</a><br>";
