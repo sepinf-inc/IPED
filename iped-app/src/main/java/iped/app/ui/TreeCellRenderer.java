@@ -51,7 +51,7 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
             Document doc = node.getDoc();
             String type = doc.get(BasicProps.TYPE);
             String contentType = doc.get(BasicProps.CONTENTTYPE);
-            Icon icon = IconManager.getFileIcon(contentType, type);
+            Icon icon = IconManager.getFileIconSmall(contentType, type);
             result.setIcon(icon);
         }
 

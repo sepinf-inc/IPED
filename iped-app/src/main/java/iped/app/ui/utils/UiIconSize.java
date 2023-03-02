@@ -16,7 +16,7 @@ public class UiIconSize {
     public static int loadUserSetting() {
         try {
             if (!file.exists()) {
-                saveUserSetting(IconManager.defaultSize);
+                saveUserSetting(IconManager.smallSize);
             } else {
                 UTF8Properties prop = new UTF8Properties();
                 prop.load(file);
@@ -29,7 +29,7 @@ public class UiIconSize {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return IconManager.defaultSize;
+        return IconManager.smallSize;
     }
 
     public static void saveUserSetting(int size) {

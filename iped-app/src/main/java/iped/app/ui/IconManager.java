@@ -42,22 +42,25 @@ import iped.utils.QualityIcon;
  */
 public class IconManager {
 
-    public static final Icon FOLDER_ICON = UIManager.getIcon("FileView.directoryIcon"); //$NON-NLS-1$
-    public static final Icon DISK_ICON = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
-
-    public static final int defaultSize = 16;
+    public static final int smallSize = 16;
+    private static final int mediumSize = 24;
 
     private static final String ICON_EXTENSION = ".png";
 
-    private static final Map<String, Icon> extIconMap = loadIconsFromJar("file", defaultSize);
-    private static final Map<String, Icon> catIconMap = loadIconsFromJar("cat", UiIconSize.loadUserSetting());
-    private static final Map<String, Icon> mimeIconMap = initMimeToIconMap();
+    private static final Map<String, QualityIcon> catIconMap = loadIconsFromJar("cat", UiIconSize.loadUserSetting());
+    private static final Map<String, QualityIcon> extIconMapSmall = loadIconsFromJar("file", smallSize);
+    private static final Map<String, QualityIcon> mimeIconMapSmall = initMimeToIconMap();
+    private static final Map<String, QualityIcon> extIconMapMedium = initIconsMapSize(extIconMapSmall, mediumSize);
+    private static final Map<String, QualityIcon> mimeIconMapMedium = initIconsMapSize(mimeIconMapSmall, mediumSize);
 
-    private static final Icon DEFAULT_FILE_ICON = UIManager.getIcon("FileView.fileIcon"); //$NON-NLS-1$
-    private static final Icon DEFAULT_CATEGORY_ICON = catIconMap.get("blank"); //$NON-NLS-1$
+    public static final QualityIcon FOLDER_ICON = getUIManagerIcon("FileView.directoryIcon");
+    public static final QualityIcon DISK_ICON = getUIManagerIcon("FileView.hardDriveIcon");
 
-    private static Map<String, Icon> loadIconsFromJar(String iconPath, int size) {
-        Map<String, Icon> map = new HashMap<>();
+    private static final QualityIcon DEFAULT_CATEGORY_ICON = catIconMap.get("blank");
+    private static final QualityIcon DEFAULT_FILE_ICON = getUIManagerIcon("FileView.fileIcon");
+
+    private static Map<String, QualityIcon> loadIconsFromJar(String iconPath, int size) {
+        Map<String, QualityIcon> map = new HashMap<>();
         try {
             String separator = "/";
             CodeSource src = IconManager.class.getProtectionDomain().getCodeSource();
@@ -76,8 +79,7 @@ public class IconManager {
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
                             BufferedImage img = ImageIO
                                     .read(IconManager.class.getResource(iconPath + separator + name));
-                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(),
-                                    new QualityIcon(new ImageIcon(img), size));
+                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), new QualityIcon(img, size));
                         }
                     }
                 }
@@ -85,10 +87,20 @@ public class IconManager {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
         return map;
     }
 
-    public static Icon getFileIcon(String mimeType, String extension) {
+    public static Icon getFileIconMedium(String mimeType, String extension) {
+        return getFileIcon(mimeType, extension, mimeIconMapMedium, extIconMapMedium);
+    }
+
+    public static Icon getFileIconSmall(String mimeType, String extension) {
+        return getFileIcon(mimeType, extension, mimeIconMapSmall, extIconMapSmall);
+    }
+
+    private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap,
+            Map<String, QualityIcon> extIconMap) {
         if (mimeType != null && !mimeType.isBlank()) {
             Icon icon = mimeIconMap.get(mimeType.strip());
             if (icon != null) {
@@ -96,9 +108,12 @@ public class IconManager {
             }
         }
         if (extension != null && !extension.isBlank()) {
-            return extIconMap.getOrDefault(extension.strip(), DEFAULT_FILE_ICON);
+            Icon icon = extIconMap.get(extension.strip());
+            if (icon != null) {
+                return icon;
+            }
         }
-        return DEFAULT_FILE_ICON;
+        return extIconMap.getOrDefault("file", DEFAULT_FILE_ICON);
     }
 
     public static Icon getCategoryIcon(String category) {
@@ -111,11 +126,11 @@ public class IconManager {
     /**
      * Icons associated to one or more mime types should be added here.
      */
-    private static Map<String, Icon> initMimeToIconMap() {
-        Map<String, Icon> availableIconsMap = loadIconsFromJar("mime", defaultSize);
-        Map<String, Icon> mimeIconMap = new HashMap<String, Icon>();
+    private static Map<String, QualityIcon> initMimeToIconMap() {
+        Map<String, QualityIcon> availableIconsMap = loadIconsFromJar("mime", smallSize);
+        Map<String, QualityIcon> mimeIconMap = new HashMap<>();
 
-        Icon icon = availableIconsMap.get("emule");
+        QualityIcon icon = availableIconsMap.get("emule");
         if (icon != null) {
             mimeIconMap.put("application/x-emule", icon);
             mimeIconMap.put("application/x-emule-part-met", icon);
@@ -225,6 +240,7 @@ public class IconManager {
             mimeIconMap.put("application/windows-adress-book", icon);
             mimeIconMap.put("application/outlook-contact", icon);
             mimeIconMap.put("contact/x-skype-account", icon);
+            mimeIconMap.put("contact/x-skype-contact", icon);
         }
 
         icon = availableIconsMap.get("user-telegram");
@@ -257,6 +273,7 @@ public class IconManager {
             mimeIconMap.put("call/x-telegram-call", icon);
             mimeIconMap.put("application/x-ios-calllog-db", icon);
             mimeIconMap.put("application/x-ios8-calllog-db", icon);
+            mimeIconMap.put("call/x-discord-call", icon);
         }
 
         icon = availableIconsMap.get("web");
@@ -302,6 +319,7 @@ public class IconManager {
             mimeIconMap.put("message/x-ufed-attachment", icon);
             mimeIconMap.put("application/x-ufed-chat-preview", icon);
             mimeIconMap.put("message/x-chat-message", icon);
+            mimeIconMap.put("message/x-discord-message", icon);
         }
 
         icon = availableIconsMap.get("message-whatsapp");
@@ -394,7 +412,7 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-fileupload", icon);
         }
-        
+
         icon = availableIconsMap.get("log");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-logentry", icon);
@@ -431,16 +449,6 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-bluetoothdevice", icon);
         }
 
-        icon = availableIconsMap.get("video");
-        if (icon != null) {
-            mimeIconMap.put("video/quicktime", icon);
-            mimeIconMap.put("video/ts", icon);
-            mimeIconMap.put("video/webm", icon);
-            mimeIconMap.put("video/3gpp", icon);
-            mimeIconMap.put("video/mpeg", icon);
-            mimeIconMap.put("video/x-m4v", icon);
-        }
-
         icon = availableIconsMap.get("journey");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-journey", icon);
@@ -450,7 +458,7 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-poweringevent", icon);
         }
-        
+
         icon = availableIconsMap.get("dictionary");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-dictionaryword", icon);
@@ -470,8 +478,31 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-fuzzytimelinemodel", icon);
         }
+
+        icon = availableIconsMap.get("discord");
+        if (icon != null) {
+            mimeIconMap.put("application/x-discord-index", icon);
+            mimeIconMap.put("application/x-discord-chat", icon);
+        }
         
         return mimeIconMap;
+    }
+
+    /**
+     * Create a new icons map, based on an existing map, for a different size.
+     */
+    private static Map<String, QualityIcon> initIconsMapSize(Map<String, QualityIcon> map, int size) {
+        Map<String, QualityIcon> newMap = new HashMap<>();
+        for (String key : map.keySet()) {
+            QualityIcon icon = map.get(key);
+            newMap.put(key, icon.getIconWidth() == size ? icon : new QualityIcon(icon, size));
+        }
+        return newMap;
+    }
+
+    private static QualityIcon getUIManagerIcon(String key) {
+        Icon icon = UIManager.getIcon(key);
+        return new QualityIcon(icon, smallSize);
     }
 
     public static void setCategoryIconSize(int size) {
