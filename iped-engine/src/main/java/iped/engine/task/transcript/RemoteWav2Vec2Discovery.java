@@ -137,7 +137,7 @@ public class RemoteWav2Vec2Discovery {
 
         int totalJobs = concurrentJobs.values().stream().reduce(0, Integer::sum);
 
-        conversionTimeReal.addAndGet(convTime / totalJobs);
+        // conversionTimeReal.addAndGet(convTime / totalJobs);
         transcriptionTimeReal.addAndGet(transcriptTime / totalJobs);
     }
 
@@ -153,7 +153,7 @@ public class RemoteWav2Vec2Discovery {
         value = lines.get(2).split("=")[1];
         conversionTimeCpu.set(Long.valueOf(value));
         value = lines.get(3).split("=")[1];
-        conversionTimeReal.set(Long.valueOf(value));
+        // conversionTimeReal.set(Long.valueOf(value));
         value = lines.get(4).split("=")[1];
         transcriptionTimeCpu.set(Long.valueOf(value));
         value = lines.get(5).split("=")[1];
@@ -204,7 +204,8 @@ public class RemoteWav2Vec2Discovery {
                         System.out.println("Transcription Time (cpu): " + df.format(transcriptionTimeCpu.get() / 1000) + "s");
                         System.out.println("Transcription Time (real): " + df.format(transcriptionTimeReal.get() / 1000) + "s");
                         System.out.println("Wav Conversion Time (cpu): " + df.format(conversionTimeCpu.get() / 1000) + "s");
-                        System.out.println("Wav Conversion Time (real): " + df.format(conversionTimeReal.get() / 1000) + "s");
+                        // TODO Fix Wav real time computation, it is not correct
+                        //System.out.println("Wav Conversion Time (real): " + df.format(conversionTimeReal.get() / 1000) + "s");
                         System.out.println("Received Requets: " + df.format(requestsReceived));
                         System.out.println("Accepted Requests: " + df.format(requestsAccepted));
                         System.out.println("-------------------------------------------------------");
