@@ -8,11 +8,15 @@ package iped.app.home.newcase.tabs.process;/*
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -31,6 +35,7 @@ import iped.app.home.configurables.api.IConfigurablePanelFactory;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
 import iped.configuration.Configurable;
+import iped.configuration.EnabledInterface;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.task.AbstractTask;
@@ -45,6 +50,9 @@ public class TaskConfigDialog extends JDialog {
     MainFrame mainFrame;
     private ScriptEditPanel scriptPanel;
     IConfigurablePanelFactory configPanelFactory = new ConfigurablePanelFactory();
+    HashSet<EnableTaskProperty> enableTaskProperties = new HashSet<EnableTaskProperty>();
+    private JTabbedPane tabbedPane;
+    private HashMap<EnabledInterface, JCheckBox> changedEnabledProperties=new HashMap<EnabledInterface, JCheckBox>(); 
 
     public TaskConfigDialog(ConfigurationManager configurationManager, AbstractTask task, MainFrame mainFrame) {
         super(mainFrame);
@@ -55,8 +63,9 @@ public class TaskConfigDialog extends JDialog {
         JPanel formPanel = new JPanel(new BorderLayout());
         configurables = task.getConfigurables();
         String localizedName = iped.engine.localization.Messages.getString(task.getClass().getName(), task.getName());
+        createTabbedPanel();
         formPanel.add(createTitlePanel(localizedName), BorderLayout.NORTH);
-        formPanel.add(createTabbedPanel(), BorderLayout.CENTER);
+        formPanel.add(tabbedPane, BorderLayout.CENTER);
         formPanel.add(createButtonsPanel(), BorderLayout.SOUTH);
         this.getContentPane().add(formPanel);
         this.setBounds(0, 0, (mainFrame.getWidth()), (mainFrame.getHeight() - 50));
@@ -68,7 +77,8 @@ public class TaskConfigDialog extends JDialog {
         JLabel labelTitle = new JLabel(titleText);
         labelTitle.setFont(StyleManager.getPageTitleFont());
         panelTitle.setBackground(Color.white);
-        panelTitle.add(labelTitle);
+        panelTitle.add(labelTitle, BorderLayout.CENTER);
+        
         return panelTitle;
     }
 
@@ -78,7 +88,7 @@ public class TaskConfigDialog extends JDialog {
      * @return JTabbedPane
      */
     private JTabbedPane createTabbedPanel(){
-        JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+        tabbedPane = new JTabbedPane(JTabbedPane.TOP);
         tabbedPane.setUI(new BasicTabbedPaneUI() {
             @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 25;}
 
@@ -101,6 +111,24 @@ public class TaskConfigDialog extends JDialog {
                     String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName(), configurable.getClass().getSimpleName());
                     String localizedTooltip = iped.engine.localization.Messages.getString(configurable.getClass().getName()+iped.engine.localization.Messages.TOOLTIP_SUFFIX, "");
                     tabbedPane.addTab(localizedName, UIManager.getIcon("FileView.fileIcon"), configPanel.getPanel(), localizedTooltip);
+                    if(configurable instanceof EnabledInterface) {
+                        JPanel ckPanel = new JPanel();
+                        ckPanel.setOpaque(false);
+                        JCheckBox ck = new JCheckBox();
+                        ckPanel.add(ck);
+                        ck.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                changedEnabledProperties.put((EnabledInterface)configurable, ck);
+                            }
+                        });
+                        ckPanel.add(new JLabel(localizedName));
+                        ck.setSelected(((EnabledInterface)configurable).isEnabled());
+                        tabbedPane.setTabComponentAt(tabbedPane.getTabCount()-1, ckPanel);
+                    }
+                }
+                if(configurable instanceof EnableTaskProperty) {
+                    enableTaskProperties.add((EnableTaskProperty)configurable);
                 }
             }
         }
@@ -128,6 +156,14 @@ public class TaskConfigDialog extends JDialog {
                             configPanel.applyChanges();
                             configPanel.fireChangeListener(new ChangeEvent(this));
                         }
+                    }
+                }
+                if(changedEnabledProperties.size()>0) {
+                    // apply checkbox states to respective configurables
+                    for (Iterator iterator = changedEnabledProperties.keySet().iterator(); iterator.hasNext();) {
+                        EnabledInterface enabledInterface = (EnabledInterface) iterator.next();
+                        enabledInterface.setEnabled(changedEnabledProperties.get(enabledInterface).isSelected());
+                        configurationManager.notifyUpdate((Configurable<?>)enabledInterface);
                     }
                 }
                 if(task instanceof IScriptTask) {
