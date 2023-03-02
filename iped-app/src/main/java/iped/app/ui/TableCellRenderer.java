@@ -59,7 +59,7 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                 } else {
                     String type = doc.get(IndexItem.TYPE);
                     String contentType = doc.get(IndexItem.CONTENTTYPE);
-                    Icon icon = IconManager.getFileIcon(contentType, type);
+                    Icon icon = IconManager.getFileIconSmall(contentType, type);
                     result.setIcon(icon);
                 }
 

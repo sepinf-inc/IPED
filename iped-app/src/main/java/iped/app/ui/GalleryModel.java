@@ -235,7 +235,7 @@ public class GalleryModel extends AbstractTableModel {
                         value.unsupportedType = true;
                         String type = doc.get(IndexItem.TYPE);
                         String contentType = doc.get(IndexItem.CONTENTTYPE);
-                        value.icon = IconManager.getFileIcon(contentType, type);
+                        value.icon = IconManager.getFileIconMedium(contentType, type);
                     }
 
                     if (image == null && value.icon == null && stream == null && isSupportedImage(mediaType)) {
