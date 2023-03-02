@@ -19,4 +19,6 @@ public interface AttachmentSearcher {
 
     void updateSelectionCache();
 
+    String escapeQuery(String query);
+
 }

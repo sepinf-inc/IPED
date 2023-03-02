@@ -17,6 +17,7 @@ import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
 import iped.properties.BasicProps;
 import iped.viewers.api.AttachmentSearcher;
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 
 public class AttachmentSearcherImpl implements AttachmentSearcher {
 
@@ -120,6 +121,12 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
                 }
             }
         });
+    }
+
+    @Override
+    public String escapeQuery(String string) {
+        string = string.replace('“', '"').replace('”', '"');
+        return QueryParserUtil.escape(string);
     }
 
 }
