@@ -484,7 +484,7 @@ public class IconManager {
             mimeIconMap.put("application/x-discord-index", icon);
             mimeIconMap.put("application/x-discord-chat", icon);
         }
-        
+
         return mimeIconMap;
     }
 
