@@ -43,6 +43,12 @@
      	</magic>
     </mime-type>
     
+    <mime-type type="image/vnd.radiance">
+    	<magic priority="40">
+          <match value="#?RADIANCE" type="string" offset="0" />
+     	</magic>
+    </mime-type>
+        
 	<mime-type type="application/x-superfetch">
 		<_comment>Windows EVT Log</_comment>
     	<magic priority="40">
