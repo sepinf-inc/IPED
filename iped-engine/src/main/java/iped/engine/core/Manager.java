@@ -881,12 +881,14 @@ public class Manager {
             IOUtil.copyDirectory(new File(defaultProfile, "conf"), new File(output, "conf"));
             IOUtil.copyFile(new File(defaultProfile, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
             IOUtil.copyFile(new File(defaultProfile, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
+            resetLocalConfigToPortable(new File(output, Configuration.LOCAL_CONFIG));
             setSplashMessage(output);
 
             // copy non default profile
             File currentProfile = new File(Configuration.getInstance().configPath);
             if (!currentProfile.equals(defaultProfile)) {
                 IOUtil.copyDirectory(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
+                resetLocalConfigToPortable(new File(output, Configuration.CASE_PROFILE_DIR + "/" + Configuration.LOCAL_CONFIG));
             }
 
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
@@ -910,6 +912,13 @@ public class Manager {
             }
         }
 
+    }
+
+    // See https://github.com/sepinf-inc/IPED/issues/1142
+    private void resetLocalConfigToPortable(File localConfig) throws IOException {
+        if (localConfig.exists() && (caseData.isIpedReport() || args.isPortable())) {
+            LocalConfig.clearLocalParameters(localConfig);
+        }
     }
 
     public boolean isSearchAppOpen() {
