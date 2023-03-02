@@ -49,7 +49,7 @@ public class EventTranscriptParserTest {
         parser.setExtractEntries(true);
         context.set(Parser.class, tracker);
 
-        try (InputStream stream = getStream("test-files/test_eventTranscript.db")) {
+        try (InputStream stream = getStream("test-files/test_EventTranscript.db")) {
             parser.parse(stream, handler, metadata, context);
         }
     }
@@ -145,11 +145,11 @@ public class EventTranscriptParserTest {
 
     @Test
     public void testEventTranscriptCensus() throws IOException, SAXException, TikaException {
-        assertEquals(1, tracker.censusEventName.size());
+        assertEquals(1, tracker.censusEventNames.size());
         assertEquals(1, tracker.censusTimesTamp.size());
         assertEquals(1, tracker.censusJSONPayload.size());
 
-        assertEquals("App", tracker.censusEventName.get(0));
+        assertEquals("App", tracker.censusEventNames.get(0));
         assertEquals("2022-08-25T16:20:19Z", tracker.censusTimesTamp.get(0));
         assertTrue(tracker.censusJSONPayload.get(0).contains("\"devModel\":\"HP Z8 G4 Workstation\""));
     }
@@ -176,10 +176,11 @@ public class EventTranscriptParserTest {
         public List<String> manufacturer = new ArrayList<String>();
         // app interactions
         public List<String> intAppNames = new ArrayList<String>();
+        public List<String> intEventNames = new ArrayList<String>();
         public List<String> intTimestamps = new ArrayList<String>();
         public List<String> inFocusDuration = new ArrayList<String>();
         // census
-        public List<String> censusEventName = new ArrayList<String>();
+        public List<String> censusEventNames = new ArrayList<String>();
         public List<String> censusTimesTamp = new ArrayList<String>();
         public List<String> censusJSONPayload = new ArrayList<String>();
 
@@ -204,7 +205,8 @@ public class EventTranscriptParserTest {
             }
             if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_APP_INTERACT_REG.toString())) {
                 intAppNames.add(metadata.get(TikaCoreProperties.TITLE));
-                intTimestamps.add(metadata.get("AppInteractivitySummaryEvent"));
+                intEventNames.add(metadata.get("eventName"));
+                intTimestamps.add(metadata.get(intEventNames.get(intEventNames.size()-1) + "Event"));
                 inFocusDuration.add(metadata.get("inFocusDurationMS"));
             }
             if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_DEVICES_REG.toString())) {
@@ -214,8 +216,8 @@ public class EventTranscriptParserTest {
                 pnpInstallDates.add(metadata.get("installDate"));
             }
             if (metadata.get(StandardParser.INDEXER_CONTENT_TYPE).equals(EventTranscriptParser.EVENT_TRANSCRIPT_CENSUS_REG.toString())) {
-                censusEventName.add(metadata.get("eventName"));
-                censusTimesTamp.add(metadata.get("AppEvent"));
+                censusEventNames.add(metadata.get("eventName"));
+                censusTimesTamp.add(metadata.get(censusEventNames.get(censusEventNames.size()-1) + "Event"));
                 censusJSONPayload.add(metadata.get("originalPayload"));
             }
         }
