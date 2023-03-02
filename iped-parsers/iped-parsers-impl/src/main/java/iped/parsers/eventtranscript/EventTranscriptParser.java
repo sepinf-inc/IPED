@@ -538,6 +538,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         metadataCensusEntry.add(getEventName(entry.getEventName()), format(entry.getTimestamp()));
         metadataCensusEntry.add("eventName", entry.getEventName());
         metadataCensusEntry.add("jsonData", entry.getDataJSON());
+        metadataCensusEntry.add("originalPayload", entry.getJSONPayload());
 
         return metadataCensusEntry;
     }
