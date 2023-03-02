@@ -247,33 +247,34 @@ public class RemoteWav2Vec2Service {
 
                             long t0 = System.currentTimeMillis();
 
-                            // see https://github.com/sepinf-inc/IPED/issues/1400
-                            // now audios are already received as WAV 16Khz 16 bits LE per sample
-                            // wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
-                            File wavFile = tmpFile.toFile();
+                            // Now we are converting to WAV on server side again, see
+                            // https://github.com/sepinf-inc/IPED/issues/1561
+                            File wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
 
                             long t1 = System.currentTimeMillis();
 
                             if (wavFile == null) {
                                 throw new IOException("Failed to convert audio to wav");
                             } else {
-                                // logger.info(prefix + "Audio converted to wav.");
+                                logger.info(prefix + "Audio converted to wav.");
                             }
                             long durationMillis = 1000 * wavFile.length() / (16000 * 2);
 
                             TextAndScore result;
+                            long t2, t3;
                             try {
                                 semaphore.acquire();
+                                t2 = System.currentTimeMillis();
                                 result = task.transcribeAudio(wavFile);
+                                t3 = System.currentTimeMillis();
                             } finally {
                                 semaphore.release();
                             }
-                            long t2 = System.currentTimeMillis();
 
                             audiosTranscripted.incrementAndGet();
                             audiosDuration.addAndGet(durationMillis);
                             conversionTime.addAndGet(t1 - t0);
-                            transcriptionTime.addAndGet(t2 - t1);
+                            transcriptionTime.addAndGet(t3 - t2);
                             logger.info(prefix + "Transcritpion done.");
 
                             writer.println(Double.toString(result.score));
