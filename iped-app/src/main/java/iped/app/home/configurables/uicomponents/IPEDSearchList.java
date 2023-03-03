@@ -54,7 +54,7 @@ public class IPEDSearchList<E> extends JPanel {
         
         public void createGUI(IPEDFilterableListModel m) {
             list = new JList<E>(m);
-
+            
             m.setFilter(checkTypedContent);
 
             txFilter = new RSyntaxTextArea(1,20);
@@ -71,10 +71,12 @@ public class IPEDSearchList<E> extends JPanel {
             });
             
             RTextScrollPane tsFilter = new RTextScrollPane(txFilter);
+            tsFilter.setBackground(this.getBackground());
             tsFilter.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
             tsFilter.setLineNumbersEnabled(false);
             this.add(tsFilter,BorderLayout.NORTH);
             listScrollPanel = new JScrollPane();
+            listScrollPanel.setBackground(this.getBackground());
             listScrollPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             listScrollPanel.setViewportView(list);
             listScrollPanel.setAutoscrolls(true);
