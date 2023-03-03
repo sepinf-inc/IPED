@@ -134,8 +134,9 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-emule", icon);
             mimeIconMap.put("application/x-emule-part-met", icon);
-            mimeIconMap.put("application/x-emule-emule-searches", icon);
-            mimeIconMap.put("application/x-emule-emule-preferences-ini", icon);
+            mimeIconMap.put("application/x-emule-searches", icon);
+            mimeIconMap.put("application/x-emule-preferences-ini", icon);
+            mimeIconMap.put("application/x-emule-preferences-dat", icon);
         }
 
         icon = availableIconsMap.get("ares");
