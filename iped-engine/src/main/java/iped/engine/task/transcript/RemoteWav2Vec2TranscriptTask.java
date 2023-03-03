@@ -104,10 +104,11 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 lastUpdateServersTime = System.currentTimeMillis();
             }
         } catch (ConnectException e) {
+            String msg = "Central transcription node refused connection, is it online? " + e.toString();
             if (servers.isEmpty()) {
-                throw new IPEDException("Transcription server refused connection, is it online?");
+                throw new IPEDException(msg);
             } else {
-                logger.error("Transcription server refused connection, is it online?");
+                logger.warn(msg);
             }
         }
     }
@@ -171,7 +172,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                     continue;
                 }
                 if (!MESSAGES.ACCEPTED.toString().equals(response)) {
-                    logger.error("Error 0 in communication channel with {}.", server);
+                    logger.error("Error 0 in communication with {}. The audio will be retried.", server);
                     continue;
                 }
 
@@ -190,19 +191,24 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 response = reader.readLine();
                 if (MESSAGES.WARN.toString().equals(response)) {
                     String warn = reader.readLine();
-                    logger.warn("Fail to transcribe on server: {} audio: {} error: {}", server, evidence.getPath(), warn);
+                    boolean tryAgain = false;
                     if (warn.contains(TimeoutException.class.getName())) {
+                        // Timeout converting audio to wav, possibly it's corrupted
                         evidence.setTimeOut(true);
                         stats.incTimeouts();
                     } else if (warn.contains(SocketTimeoutException.class.getName()) || warn.contains(SocketException.class.getName())) {
+                        tryAgain = true;
+                    }
+                    logger.warn("Fail to transcribe on server: {} audio: {} error: {}.{}", server, evidence.getPath(), warn, (tryAgain ? " The audio will be retried." : ""));
+                    if (tryAgain) {
                         continue;
                     }
                     return null;
                 }
                 if (MESSAGES.ERROR.toString().equals(response) || response == null) {
-                    String error = response != null ? reader.readLine() : "Remote server process possibly crashed!";
-                    logger.error("Error 1 in communication channel with {}: {}", server, error);
-                    throw new IOException(error);
+                    String error = response != null ? reader.readLine() : "Remote server process crashed or node was turned off!";
+                    logger.error("Error 1 in communication with {}: {}. The audio will be retried.", server, error);
+                    throw new SocketException(error);
                 }
 
                 TextAndScore textAndScore = new TextAndScore();
@@ -210,8 +216,8 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 textAndScore.text = reader.readLine();
 
                 if (!MESSAGES.DONE.toString().equals(reader.readLine())) {
-                    logger.error("Error 2 in communication channel with {}.", server);
-                    throw new IOException("Error receiving transcription.");
+                    logger.error("Error 2 in communication with {}. The audio will be retried.", server);
+                    throw new SocketException("Error receiving transcription.");
                 }
 
                 return textAndScore;
