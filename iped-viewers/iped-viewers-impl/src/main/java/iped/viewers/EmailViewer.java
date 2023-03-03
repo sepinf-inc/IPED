@@ -99,7 +99,7 @@ public class EmailViewer extends HtmlLinkViewer {
             return;
         }
 
-        externalAttach = ((IItem) content).getName().contains("partial.emlx");
+        externalAttach = ((IItem) content).getName().endsWith("partial.emlx");
         externalAttachFolder = ((IItem) content).getName().split("\\.")[0];
 
         if (mch != null) {

@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -66,6 +67,7 @@ import iped.parsers.standard.StandardParser;
 import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.Util;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
 /**
@@ -205,7 +207,16 @@ public class RFC822Parser extends AbstractParser {
                     if (extractor.shouldParseEmbedded(submd)) {
                         attachmentCount++;
                         submd.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
-                        extractor.parseEmbedded(is, handler, submd, true);
+
+                        boolean externalAttach = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).endsWith("partial.emlx");
+                        if (externalAttach) {
+                            String externalAttachFolder = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).split("\\.")[0];
+
+                            String query = BasicProps.PATH + ":\"Attachments/" + externalAttachFolder + "\" && " + BasicProps.NAME + ":\"" + attachName + "\"";
+                            metadata.add(ExtraProperties.LINKED_ITEMS, query);
+                        } else {
+                            extractor.parseEmbedded(is, handler, submd, true);
+                        }
                     }
                 } else {
                     if (metadata.get(ExtraProperties.MESSAGE_BODY) == null) {
