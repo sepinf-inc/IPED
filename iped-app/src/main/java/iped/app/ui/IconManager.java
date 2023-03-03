@@ -270,6 +270,7 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-calendarentry", icon);
             mimeIconMap.put("application/x-ios-calendar-db", icon);
             mimeIconMap.put("application/x-ufed-html-calendar", icon);
+            mimeIconMap.put("application/x-win10-mail-appointment", icon);
         }
 
         icon = availableIconsMap.get("call");
