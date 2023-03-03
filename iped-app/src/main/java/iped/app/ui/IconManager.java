@@ -296,6 +296,13 @@ public class IconManager {
             mimeIconMap.put("application/x-chrome-sqlite", icon);
         }
 
+        icon = availableIconsMap.get("edge");
+        if (icon != null) {
+            mimeIconMap.put("application/x-edge-history", icon);
+            mimeIconMap.put("application/x-edge-history-registry", icon);
+            mimeIconMap.put("application/x-edge-web-cache", icon);
+        }
+
         icon = availableIconsMap.get("package");
         if (icon != null) {
             mimeIconMap.put("application/vnd.android.package-archive", icon);
