@@ -49,6 +49,7 @@ public class IconManager {
 
     private static final Map<String, QualityIcon> catIconMap = loadIconsFromJar("cat", UiIconSize.loadUserSetting());
     private static final Map<String, QualityIcon> extIconMapSmall = loadIconsFromJar("file", smallSize);
+    private static final Map<String, QualityIcon> treeIconMapSmall = loadIconsFromJar("tree", smallSize);
     private static final Map<String, QualityIcon> mimeIconMapSmall = initMimeToIconMap();
     private static final Map<String, QualityIcon> extIconMapMedium = initIconsMapSize(extIconMapSmall, mediumSize);
     private static final Map<String, QualityIcon> mimeIconMapMedium = initIconsMapSize(mimeIconMapSmall, mediumSize);
@@ -121,6 +122,10 @@ public class IconManager {
             return catIconMap.getOrDefault(category.strip(), DEFAULT_CATEGORY_ICON);
         }
         return DEFAULT_CATEGORY_ICON;
+    }
+
+    public static QualityIcon getTreeIconSmall(String key) {
+        return treeIconMapSmall.getOrDefault(key, DEFAULT_FILE_ICON);
     }
 
     /**
