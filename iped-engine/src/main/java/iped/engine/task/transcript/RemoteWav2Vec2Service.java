@@ -62,7 +62,12 @@ public class RemoteWav2Vec2Service {
     /**
      * Controls max number of simultaneous transcriptions
      */
-    private static Semaphore semaphore;
+    private static Semaphore transcriptSemaphore;
+
+    /**
+     * Control number of simultaneous audio conversions to WAV.
+     */
+    private static Semaphore wavConvSemaphore;
 
     private static final AtomicLong audiosTranscripted = new AtomicLong();
     private static final AtomicLong audiosDuration = new AtomicLong();
@@ -121,8 +126,10 @@ public class RemoteWav2Vec2Service {
         task.init(cm);
 
         int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
+        int numLogicalCoresPerProcess = Wav2Vec2TranscriptTask.getNumLogicalCoresPerProcess();
 
-        semaphore = new Semaphore(numConcurrentTranscriptions);
+        transcriptSemaphore = new Semaphore(numConcurrentTranscriptions);
+        wavConvSemaphore = new Semaphore(numLogicalCoresPerProcess);
 
         try (ServerSocket server = new ServerSocket(localPort, MAX_CONNECTIONS)) {
 
@@ -245,13 +252,18 @@ public class RemoteWav2Vec2Service {
                                 logger.info(prefix + "Received " + size + " audio bytes to transcribe.");
                             }
 
-                            long t0 = System.currentTimeMillis();
-
                             // Now we are converting to WAV on server side again, see
                             // https://github.com/sepinf-inc/IPED/issues/1561
-                            File wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
-
-                            long t1 = System.currentTimeMillis();
+                            File wavFile;
+                            long t0, t1;
+                            try {
+                                wavConvSemaphore.acquire();
+                                t0 = System.currentTimeMillis();
+                                wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+                                t1 = System.currentTimeMillis();
+                            } finally {
+                                wavConvSemaphore.release();
+                            }
 
                             if (wavFile == null) {
                                 throw new IOException("Failed to convert audio to wav");
@@ -263,12 +275,12 @@ public class RemoteWav2Vec2Service {
                             TextAndScore result;
                             long t2, t3;
                             try {
-                                semaphore.acquire();
+                                transcriptSemaphore.acquire();
                                 t2 = System.currentTimeMillis();
                                 result = task.transcribeAudio(wavFile);
                                 t3 = System.currentTimeMillis();
                             } finally {
-                                semaphore.release();
+                                transcriptSemaphore.release();
                             }
 
                             audiosTranscripted.incrementAndGet();
