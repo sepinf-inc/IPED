@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +63,7 @@ public class RemoteWav2Vec2Discovery {
 
             server.setSoTimeout(0);
 
-            System.out.println("Service discovery running on " + server.getInetAddress().getHostAddress() + ":" + port);
+            System.out.println(new Date() + " Service discovery running on " + server.getInetAddress().getHostAddress() + ":" + port);
             startTime = System.currentTimeMillis();
 
             loadStats();
@@ -101,7 +102,7 @@ public class RemoteWav2Vec2Discovery {
         String nodeJobs = reader.readLine();
         writer.println(MESSAGES.DONE);
         if (servers.put(address, System.currentTimeMillis()) == null) {
-            System.out.println("Server registered: " + address);
+            System.out.println(new Date() + " Server registered: " + address);
             concurrentJobs.put(address, Integer.valueOf(nodeJobs));
         }
     }
@@ -131,13 +132,13 @@ public class RemoteWav2Vec2Discovery {
         writer.println(MESSAGES.DONE);
 
         if (servers.put(address, System.currentTimeMillis()) == null) {
-            System.out.println("Server registered: " + address);
+            System.out.println(new Date() + " Server registered: " + address);
             concurrentJobs.put(address, Integer.valueOf(nodeJobs));
         }
 
         int totalJobs = concurrentJobs.values().stream().reduce(0, Integer::sum);
 
-        conversionTimeReal.addAndGet(convTime / totalJobs);
+        // conversionTimeReal.addAndGet(convTime / totalJobs);
         transcriptionTimeReal.addAndGet(transcriptTime / totalJobs);
     }
 
@@ -153,7 +154,7 @@ public class RemoteWav2Vec2Discovery {
         value = lines.get(2).split("=")[1];
         conversionTimeCpu.set(Long.valueOf(value));
         value = lines.get(3).split("=")[1];
-        conversionTimeReal.set(Long.valueOf(value));
+        // conversionTimeReal.set(Long.valueOf(value));
         value = lines.get(4).split("=")[1];
         transcriptionTimeCpu.set(Long.valueOf(value));
         value = lines.get(5).split("=")[1];
@@ -196,15 +197,18 @@ public class RemoteWav2Vec2Discovery {
                     if (seconds == 30) {
                         seconds = 0;
                         DecimalFormat df = new DecimalFormat();
+                        int totalJobs = concurrentJobs.values().stream().reduce(0, Integer::sum);
                         System.out.println("Statistics:");
                         System.out.println("Online Nodes: " + servers.size());
+                        System.out.println("Concurrent Jobs: " + totalJobs);
                         System.out.println("Online Time: " + df.format((System.currentTimeMillis() - startTime) / 1000) + "s");
                         System.out.println("Transcribed Audios: " + df.format(audiosTranscripted));
                         System.out.println("Transcribed Audios Duration: " + df.format(audiosDuration.get() / 1000) + "s");
                         System.out.println("Transcription Time (cpu): " + df.format(transcriptionTimeCpu.get() / 1000) + "s");
                         System.out.println("Transcription Time (real): " + df.format(transcriptionTimeReal.get() / 1000) + "s");
                         System.out.println("Wav Conversion Time (cpu): " + df.format(conversionTimeCpu.get() / 1000) + "s");
-                        System.out.println("Wav Conversion Time (real): " + df.format(conversionTimeReal.get() / 1000) + "s");
+                        // TODO Fix Wav real time computation, it is not correct
+                        //System.out.println("Wav Conversion Time (real): " + df.format(conversionTimeReal.get() / 1000) + "s");
                         System.out.println("Received Requets: " + df.format(requestsReceived));
                         System.out.println("Accepted Requests: " + df.format(requestsAccepted));
                         System.out.println("-------------------------------------------------------");
@@ -215,7 +219,7 @@ public class RemoteWav2Vec2Discovery {
                     while (it.hasNext()) {
                         String server = it.next();
                         if (System.currentTimeMillis() - servers.get(server) >= PING_TIMEOUT * 1000) {
-                            System.out.println("No PING received for the last " + PING_TIMEOUT
+                            System.out.println(new Date() + " No PING received for the last " + PING_TIMEOUT
                                     + "s, removing server from list: " + server);
                             it.remove();
                             concurrentJobs.remove(server);

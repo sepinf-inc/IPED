@@ -21,7 +21,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tika.io.TemporaryResources;
 
+import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.transcript.RemoteWav2Vec2Service.MESSAGES;
@@ -137,6 +139,14 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         return servers.get(currentServer);
     }
 
+    /**
+     * Don't convert to WAV on client side, return the audio as is.
+     */
+    @Override
+    protected File getTempFileToTranscript(IItem evidence, TemporaryResources tmp) throws IOException, InterruptedException {
+        return evidence.getTempFile();
+    }
+
     @Override
     protected TextAndScore transcribeAudio(File tmpFile) throws Exception {
 
@@ -180,10 +190,12 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 response = reader.readLine();
                 if (MESSAGES.WARN.toString().equals(response)) {
                     String warn = reader.readLine();
-                    logger.warn("Fail to transcribe on server:{} audio:{} error:{}", server, evidence.getPath(), warn);
+                    logger.warn("Fail to transcribe on server: {} audio: {} error: {}", server, evidence.getPath(), warn);
                     if (warn.contains(TimeoutException.class.getName())) {
                         evidence.setTimeOut(true);
                         stats.incTimeouts();
+                    } else if (warn.contains(SocketTimeoutException.class.getName()) || warn.contains(SocketException.class.getName())) {
+                        continue;
                     }
                     return null;
                 }
@@ -213,7 +225,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                     sleepBeforeRetry(requestTime);
                     requestServers(true);
                 } else {
-                    e.printStackTrace();
+                    logger.warn("Network error communicating to server: " + server + ", retrying audio: " + evidence.getPath(), e);
                 }
             }
         }

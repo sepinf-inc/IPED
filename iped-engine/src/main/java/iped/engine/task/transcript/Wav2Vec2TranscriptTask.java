@@ -56,6 +56,13 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         return cpu.getPhysicalPackageCount();
     }
 
+    public static int getNumLogicalCoresPerProcess() {
+        SystemInfo si = new SystemInfo();
+        HardwareAbstractionLayer hal = si.getHardware();
+        CentralProcessor cpu = hal.getProcessor();
+        return cpu.getLogicalProcessorCount() / numProcesses;
+    }
+
     protected static int getNumConcurrentTranscriptions() {
         if (numProcesses == null) {
             throw new RuntimeException("'numProcesses' variable still not initialized");
@@ -75,8 +82,6 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         if (!deque.isEmpty())
             return;
         
-        checkFFmpeg();
-
         Server server;
         int device = 0;
         while ((server = startServer(device++)) != null) {

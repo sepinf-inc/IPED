@@ -182,6 +182,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
             App.get().duplicatesModel.listDuplicates(doc);
 
+            App.get().referencedByModel.listReferencingItems(doc);
+
             App.get().referencesModel.listReferencingItems(doc);
         }
     }

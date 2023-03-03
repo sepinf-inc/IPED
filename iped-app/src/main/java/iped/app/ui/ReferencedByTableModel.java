@@ -43,7 +43,7 @@ import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
-public class ReferencesTableModel extends AbstractTableModel
+public class ReferencedByTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
     /**
@@ -100,7 +100,7 @@ public class ReferencesTableModel extends AbstractTableModel
     public void setValueAt(Object value, int row, int col) {
         App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
                 App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        BookmarksController.get().updateUI();
+        BookmarksController.get().updateUISelection();
     }
 
     @Override
@@ -201,7 +201,7 @@ public class ReferencesTableModel extends AbstractTableModel
             textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
     
             try {
-                IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+                IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.NAME);
                 results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
     
                 final int length = results.getLength();
@@ -210,7 +210,7 @@ public class ReferencesTableModel extends AbstractTableModel
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            App.get().referencesDock.setTitleText(length + Messages.getString("ReferencesTab.Title"));
+                            App.get().referencedByDock.setTitleText(Messages.getString("ReferencedByTab.Title") + " " + length);
                         }
                     });
                     refDoc = doc;

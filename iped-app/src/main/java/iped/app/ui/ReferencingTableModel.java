@@ -18,7 +18,6 @@
  */
 package iped.app.ui;
 
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -29,16 +28,24 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
+import iped.engine.task.HashTask;
 import iped.engine.task.index.IndexItem;
+import iped.parsers.ares.AresParser;
+import iped.parsers.emule.KnownMetParser;
+import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.properties.BasicProps;
-import iped.search.IIPEDSearcher;
-import iped.search.IMultiSearchResult;
+import iped.properties.ExtraProperties;
 
-public class DuplicatesTableModel extends AbstractTableModel
+public class ReferencingTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
     /**
@@ -46,8 +53,13 @@ public class DuplicatesTableModel extends AbstractTableModel
      */
     private static final long serialVersionUID = 1L;
 
-    LuceneSearchResult results = new LuceneSearchResult(0);
-    int selectedIndex = -1;
+    private LuceneSearchResult results = new LuceneSearchResult(0);
+    private int selectedIndex = -1;
+
+    public void clear() {
+        results = new LuceneSearchResult(0);
+        fireTableDataChanged();
+    }
 
     @Override
     public int getColumnCount() {
@@ -62,7 +74,7 @@ public class DuplicatesTableModel extends AbstractTableModel
     @Override
     public String getColumnName(int col) {
         if (col == 2)
-            return IndexItem.PATH;
+            return IndexItem.NAME;
 
         return ""; //$NON-NLS-1$
     }
@@ -104,8 +116,7 @@ public class DuplicatesTableModel extends AbstractTableModel
         } else {
             try {
                 Document doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[row]);
-                return doc.get(IndexItem.PATH);
-
+                return doc.get(IndexItem.NAME);
             } catch (Exception e) {
                 // e.printStackTrace();
             }
@@ -135,6 +146,7 @@ public class DuplicatesTableModel extends AbstractTableModel
             int docId = results.getLuceneIds()[selectedIndex];
             ExternalFileOpen.open(docId);
         }
+
     }
 
     @Override
@@ -147,47 +159,71 @@ public class DuplicatesTableModel extends AbstractTableModel
         }
 
         selectedIndex = lsm.getMinSelectionIndex();
-        App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
+        int id = results.getLuceneIds()[selectedIndex];
 
-        FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);
+        FileProcessor parsingTask = new FileProcessor(id, false);
         parsingTask.execute();
 
-        App.get().parentItemModel.fireTableDataChanged();
     }
 
-    public void listDuplicates(Document doc) {
+    public void listReferencingItems(Document doc) {
 
-        String hash = doc.get(IndexItem.HASH);
-        if (hash == null || hash.trim().isEmpty())
-            return;
+        // clear table, searching for refs can take some time if they are thousands
+        results = new LuceneSearchResult(0);
+        fireTableDataChanged();
 
-        String textQuery = IndexItem.HASH + ":" + hash;
+        StringBuilder textQuery = null;
+        Query query = null;
 
-        String id = doc.get(IndexItem.ID);
-        String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-
-        textQuery += " && NOT (" + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$
-        textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-
-        try {
-            IIPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.PATH);
-            results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
-
-            final int duplicates = results.getLength();
-
-            if (duplicates > 0) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        App.get().duplicateDock
-                                .setTitleText(duplicates + Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
-                    }
-                });
+        String[] linkedItems = doc.getValues(ExtraProperties.LINKED_ITEMS);
+        if (linkedItems != null && linkedItems.length > 0) {
+            textQuery = new StringBuilder();
+            for (String q : linkedItems) {
+                textQuery.append("(").append(q).append(") ");
             }
+        } else {
+            linkedItems = doc.getValues(ExtraProperties.SHARED_HASHES);
+            if (linkedItems != null && linkedItems.length > 0) {
+                String term;
+                String mediaType = doc.get(BasicProps.CONTENTTYPE);
+                if (KnownMetParser.EMULE_MIME_TYPE.equals(mediaType)) {
+                    term = HashTask.HASH.EDONKEY.toString();
+                } else if (AresParser.ARES_MIME_TYPE.equals(mediaType)) {
+                    term = HashTask.HASH.SHA1.toString();
+                } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(mediaType)) {
+                    term = HashTask.HASH.MD5.toString();
+                } else {
+                    term = BasicProps.HASH;
+                }
+                BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                for (String hash : linkedItems) {
+                    builder.add(new TermQuery(new Term(term, hash)), Occur.SHOULD);
+                }
+                query = builder.build();
+            }
+        }
 
-        } catch (Exception e) {
-            results = new LuceneSearchResult(0);
-            e.printStackTrace();
+        if (textQuery != null || query != null) {
+            try {
+                IPEDSearcher task = query != null ? new IPEDSearcher(App.get().appCase, query, BasicProps.NAME) : new IPEDSearcher(App.get().appCase, textQuery.toString(), BasicProps.NAME);
+                task.setRewritequery(false);
+                results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
+    
+                final int length = results.getLength();
+    
+                if (length > 0) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title") + " " + length);
+                        }
+                    });
+                }
+    
+            } catch (Exception e) {
+                results = new LuceneSearchResult(0);
+                e.printStackTrace();
+            }
         }
 
         fireTableDataChanged();
@@ -195,7 +231,7 @@ public class DuplicatesTableModel extends AbstractTableModel
     }
 
     @Override
-    public IMultiSearchResult getSearchResult() {
+    public MultiSearchResult getSearchResult() {
         return MultiSearchResult.get(App.get().appCase, results);
     }
 

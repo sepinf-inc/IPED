@@ -414,7 +414,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "KeyValueModel", //$NON-NLS-1$
                 "MessageLabel", //$NON-NLS-1$
                 "ProfilePicture", //$NON-NLS-1$
-                "WebAddress" //$NON-NLS-1$
+                "WebAddress", //$NON-NLS-1$
+                "Reaction" //$NON-NLS-1$
         ));
 
         @Override
@@ -972,6 +973,17 @@ public class UfedXmlReader extends DataSourceReader {
                                 value += " (" + category + ")";
                             }
                             parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
+                        }
+                    } else if ("Reaction".equals(type)) {
+                        XmlNode prevNode = nodeSeq.get(nodeSeq.size() - 2);
+                        String prevType = prevNode.atts.get("type");
+                        if ("Party".equals(prevType) && itemSeq.size() > 1) {
+                            // If previous is a Party, go one node back to get the parent
+                            parentItem = itemSeq.get(itemSeq.size() - 2);
+                        }
+                        String reaction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ReactionType");
+                        if (reaction != null) {
+                            parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "Reaction", reaction);
                         }
                     }
                 } else {

@@ -1,9 +1,9 @@
-XX/02/2023: IPED-4.1-snapshot:
+17/02/2023: IPED-4.1.0:
 News:
 #306:  Timeline chart to show item counts and filter items based on date ranges (@patrickdalla, @lfcnassif, @FelipeFCosta, @paulobreim)
 #1214: New local/remote audio transcription using Facebook wav2vec2 and transcription cluster service (@lfcnassif)
 #1183: Restrict audio transcription to some mimeTypes and skip known audios by default (@lfcnassif, @aberenguel)
-#1286: Parser for Windows 10 Mail app (@FelipeFcosta, @lfcnassif)
+#1286: Parser for Windows 10 Mail App (@FelipeFcosta, @lfcnassif)
 #390:  Discord cache files parser (@felipecampanini, @lfcnassif)
 #1322: New Windows EVTX parser to extract events timestamps (@patrickdalla, @lfcnassif)
 #281:  Extract P2P (Emule, Shareaza, Ares) history entries as separate items in case (@patrickdalla, @lfcnassif)
@@ -51,6 +51,8 @@ News:
 #331:  Upgrade to RegRipper-3.0 and move it to tools folder (@lfcnassif)
 #1462: Update index search quick help (@lfcnassif)
 #1434: Update localization files to Italian, German & Spanish (@flates, @mobab-th, @AburtoArielPM, @lfcnassif)
+#1524: Upgrade to PDFBox-2.0.27 (@lfcnassif)
+#1340: Upgrade to Sleuthkit-4.12.0: Linux LVM support (@lfcnassif)
 Fixes:
 #1427: Maps with lot of items not being plotted (@patrickdalla, @lfcnassif)
 #1485: Thread leak in Face recognition python task causing performance degradation (@hauck-jvsh)
