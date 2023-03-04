@@ -43,7 +43,7 @@ public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
 
         if (row == 0 && category.equals("root")) {
             category = "Categories";
-            setText(category);
+            setText(getLocalizedCategory(category));
         }
 
         Icon icon = IconManager.getCategoryIcon(category.toLowerCase());
@@ -57,4 +57,7 @@ public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
         return CategoryLocalization.getInstance().getNonLocalizedCategory(category);
     }
 
+    private String getLocalizedCategory(String category) {
+        return CategoryLocalization.getInstance().getLocalizedCategory(category);
+    }
 }
