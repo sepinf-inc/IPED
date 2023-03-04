@@ -15,9 +15,12 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,6 +47,12 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static int currentServer = -1;
 
     private static AtomicInteger numConnectErrors = new AtomicInteger();
+
+    private static AtomicLong audioSendingTime = new AtomicLong();
+
+    private static AtomicLong transcriptReceiveTime = new AtomicLong();
+
+    private static AtomicBoolean statsPrinted = new AtomicBoolean();
 
     private static long lastUpdateServersTime = 0;
 
@@ -121,6 +130,12 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
     @Override
     public void finish() throws Exception {
         super.finish();
+        if (!statsPrinted.getAndSet(true)) {
+            int numWorkers = this.worker.manager.getNumWorkers();
+            DecimalFormat df = new DecimalFormat();
+            logger.info("Time spent to send audios: {}s", df.format(audioSendingTime.get() / (1000 * numWorkers)));
+            logger.info("Time spent to receive transcriptions: {}s", df.format(transcriptReceiveTime.get() / (1000 * numWorkers)));
+        }
     }
 
     /**
@@ -176,7 +191,9 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                     continue;
                 }
 
-                logger.info("Transcription server {} accepted connection", server);
+                logger.debug("Transcription server {} accepted connection", server);
+
+                long t0 = System.currentTimeMillis();
 
                 bos.write(MESSAGES.AUDIO_SIZE.toString().getBytes());
 
@@ -187,6 +204,8 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
                 Files.copy(tmpFile.toPath(), bos);
                 bos.flush();
+
+                long t1 = System.currentTimeMillis();
 
                 response = reader.readLine();
                 if (MESSAGES.WARN.toString().equals(response)) {
@@ -215,10 +234,15 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 textAndScore.score = Double.parseDouble(response);
                 textAndScore.text = reader.readLine();
 
+                long t2 = System.currentTimeMillis();
+
                 if (!MESSAGES.DONE.toString().equals(reader.readLine())) {
                     logger.error("Error 2 in communication with {}. The audio will be retried.", server);
                     throw new SocketException("Error receiving transcription.");
                 }
+
+                audioSendingTime.addAndGet(t1 - t0);
+                transcriptReceiveTime.addAndGet(t2 - t1);
 
                 return textAndScore;
 
