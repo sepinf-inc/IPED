@@ -40,7 +40,7 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 
-        DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
         int idx = table.convertRowIndexToModel(row);
         int col = table.convertColumnIndexToModel(column);
@@ -53,25 +53,25 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                 int docId = App.get().appCase.getLuceneId(item);
                 Document doc = App.get().appCase.getSearcher().doc(docId);
                 if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
-                    result.setIcon(IconManager.FOLDER_ICON);
+                    setIcon(IconManager.FOLDER_ICON);
                 } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
-                    result.setIcon(IconManager.DISK_ICON);
+                    setIcon(IconManager.DISK_ICON);
                 } else {
                     String type = doc.get(IndexItem.TYPE);
                     String contentType = doc.get(IndexItem.CONTENTTYPE);
                     Icon icon = IconManager.getFileIconSmall(contentType, type);
-                    result.setIcon(icon);
+                    setIcon(icon);
                 }
 
             } catch (IOException e) {
-                result.setIcon(null);
+                setIcon(null);
             }
 
         } else {
-            result.setIcon(null);
+            setIcon(null);
         }
 
-        return result;
+        return this;
     }
 
 }
