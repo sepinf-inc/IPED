@@ -38,7 +38,7 @@ public class BookmarkTreeCellRenderer extends DefaultTreeCellRenderer {
                 setIcon(bookmarkIcon);
                 int count = App.get().appCase.getMultiBookmarks().getBookmarkCount(name);
                 if (count > 0) {
-                    value = value.toString() + " (" + LocalizedFormat.format(count) + ")";
+                    setText(value + " (" + LocalizedFormat.format(count) + ")");
                 }
             }
         }
