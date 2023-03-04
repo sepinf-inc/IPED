@@ -42,20 +42,19 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
 
         Node node = (Node) value;
         boolean notDir = !Boolean.valueOf(node.getDoc().get(IndexItem.ISDIR)) && node.docId != -1;
-        DefaultTreeCellRenderer result = (DefaultTreeCellRenderer) super.getTreeCellRendererComponent(tree, value,
-                selected, expanded, notDir, row, hasFocus);
+        super.getTreeCellRendererComponent(tree, value, selected, expanded, notDir, row, hasFocus);
 
         if (notDir && Boolean.valueOf(node.getDoc().get(IndexItem.ISROOT))) {
-            result.setIcon(diskIcon);
+            setIcon(diskIcon);
         } else if (notDir) {
             Document doc = node.getDoc();
             String type = doc.get(BasicProps.TYPE);
             String contentType = doc.get(BasicProps.CONTENTTYPE);
             Icon icon = IconManager.getFileIconSmall(contentType, type);
-            result.setIcon(icon);
+            setIcon(icon);
         }
 
-        return result;
+        return this;
 
     }
 
