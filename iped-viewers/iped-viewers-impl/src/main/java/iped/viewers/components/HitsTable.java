@@ -18,7 +18,10 @@
  */
 package iped.viewers.components;
 
+import java.awt.Dimension;
+
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 
 public class HitsTable extends JTable {
@@ -27,6 +30,11 @@ public class HitsTable extends JTable {
 
     public HitsTable(AbstractTableModel tableModel) {
         super(tableModel);
+        setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        setFillsViewportHeight(true);
+        setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        getTableHeader().setPreferredSize(new Dimension(0, 0));
+        setShowGrid(false);
     }
 
     @Override
