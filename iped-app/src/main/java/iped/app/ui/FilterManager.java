@@ -189,7 +189,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         main.add(right, BorderLayout.CENTER);
         dialog.setContentPane(main);
 
-        main.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        main.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         populateList();
 
