@@ -35,11 +35,16 @@ public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
             int row, boolean hasFocus) {
 
         super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-        
+
         String category = value != null ? value.toString() : "";
         category = category.replaceAll("\\((\\d*,*)*(\\d*.*)*\\)", "").trim();
         category = getNonLocalizedCategory(category);
         category = category != null ? category : "";
+
+        if (row == 0 && category.equals("root")) {
+            category = "Categories";
+            setText(category);
+        }
 
         Icon icon = IconManager.getCategoryIcon(category.toLowerCase());
         setIcon(icon);
