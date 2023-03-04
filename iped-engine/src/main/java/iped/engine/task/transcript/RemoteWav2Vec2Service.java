@@ -126,10 +126,10 @@ public class RemoteWav2Vec2Service {
         task.init(cm);
 
         int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
-        int numLogicalCoresPerProcess = Wav2Vec2TranscriptTask.getNumLogicalCoresPerProcess();
+        int numLogicalCores = Runtime.getRuntime().availableProcessors();
 
         transcriptSemaphore = new Semaphore(numConcurrentTranscriptions);
-        wavConvSemaphore = new Semaphore(numLogicalCoresPerProcess);
+        wavConvSemaphore = new Semaphore(numLogicalCores);
 
         try (ServerSocket server = new ServerSocket(localPort, MAX_CONNECTIONS)) {
 
