@@ -154,7 +154,6 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         dialog.setLayout(null);
         dialog.setTitle(Messages.getString("FilterManager.Title")); //$NON-NLS-1$
         dialog.setBounds(0, 0, 680, 450);
-        dialog.setAlwaysOnTop(true);
 
         expression.setLineWrap(true);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
