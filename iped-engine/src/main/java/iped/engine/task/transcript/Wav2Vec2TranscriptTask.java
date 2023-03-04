@@ -56,13 +56,6 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         return cpu.getPhysicalPackageCount();
     }
 
-    public static int getNumLogicalCoresPerProcess() {
-        SystemInfo si = new SystemInfo();
-        HardwareAbstractionLayer hal = si.getHardware();
-        CentralProcessor cpu = hal.getProcessor();
-        return cpu.getLogicalProcessorCount() / numProcesses;
-    }
-
     protected static int getNumConcurrentTranscriptions() {
         if (numProcesses == null) {
             throw new RuntimeException("'numProcesses' variable still not initialized");
