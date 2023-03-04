@@ -214,7 +214,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     boolean verticalLayout = false;
 
     public ResultTableModel resultsModel;
-    List resultSortKeys;
+    List<? extends SortKey> resultSortKeys;
 
     SubitemTableModel subItemModel = new SubitemTableModel();
     ParentTableModel parentItemModel = new ParentTableModel();
