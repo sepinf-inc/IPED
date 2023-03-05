@@ -28,7 +28,6 @@ import java.util.zip.ZipInputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 
 import iped.app.ui.utils.UiIconSize;
@@ -497,6 +496,11 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-discord-index", icon);
             mimeIconMap.put("application/x-discord-chat", icon);
+        }
+
+        icon = availableIconsMap.get("ebd-table");
+        if (icon != null) {
+            mimeIconMap.put("application/x-edb-table", icon);
         }
 
         return mimeIconMap;
