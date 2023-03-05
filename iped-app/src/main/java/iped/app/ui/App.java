@@ -208,7 +208,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color defaultColor;
     Color defaultFocusedColor;
     Color defaultSelectedColor;
-    private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll, referencesScroll, referencedByScroll;
+    private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll, referencesScroll,
+            referencedByScroll;
     JScrollPane viewerScroll, resultsScroll, galleryScroll;
     JPanel topPanel;
     ClearFilterButton clearAllFilters;
@@ -331,13 +332,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         LOGGER = LoggerFactory.getLogger(App.class);
         LOGGER.info("Starting..."); //$NON-NLS-1$
 
-        // Force initialization of ImageThumbTask to load external conversion configuration
+        // Force initialization of ImageThumbTask to load external conversion
+        // configuration
         try {
             new ImageThumbTask().init(ConfigurationManager.get());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
         if (SwingUtilities.isEventDispatchThread()) {
             createGUI();
             LOGGER.info("GUI created"); //$NON-NLS-1$
@@ -435,9 +437,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         dockingControl = new CControl(this);
 
-        // Set the locale used for docking frames, so texts and tool tips are localized (if available)
+        // Set the locale used for docking frames, so texts and tool tips are localized
+        // (if available)
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
-        dockingControl.setLanguage(localeConfig.getLocale());        
+        dockingControl.setLanguage(localeConfig.getLocale());
 
         // Set the locale used by JFileChooser's
         JFileChooser.setDefaultLocale(localeConfig.getLocale());
@@ -549,7 +552,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
 
-        int largeColWidth = 4096; 
+        int largeColWidth = 4096;
 
         appGraphAnalytics = new AppGraphAnalytics();
 
@@ -701,12 +704,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
 
-        // Customize appearance of buttons and check boxes shown in docking frames title bar,
-        // so focus is not painted (avoiding intersection with buttons icons) and more clear 
-        // indication when a CCheckBox is selected. 
+        // Customize appearance of buttons and check boxes shown in docking frames title
+        // bar, so focus is not painted (avoiding intersection with buttons icons) and
+        // more clear indication when a CCheckBox is selected.
         dockingControl.getController().getActionViewConverter().putClient(ActionType.BUTTON, ViewTarget.TITLE,
                 new ViewGenerator<ButtonDockAction, BasicTitleViewItem<JComponent>>() {
-                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter, ButtonDockAction action, Dockable dockable) {
+                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter, ButtonDockAction action,
+                            Dockable dockable) {
                         BasicButtonHandler handler = new BasicButtonHandler(action, dockable);
                         CustomButton button = new CustomButton(handler, handler);
                         handler.setModel(button.getModel());
@@ -715,7 +719,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 });
         dockingControl.getController().getActionViewConverter().putTheme(ActionType.CHECK, ViewTarget.TITLE,
                 new ViewGenerator<SelectableDockAction, BasicTitleViewItem<JComponent>>() {
-                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter, SelectableDockAction action, Dockable dockable) {
+                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter,
+                            SelectableDockAction action, Dockable dockable) {
                         BasicSelectableHandler.Check handler = new BasicSelectableHandler.Check(action, dockable);
                         CustomButton button = new CustomButton(handler, handler);
                         handler.setModel(button.getModel());
@@ -757,7 +762,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         status = new JLabel(" "); //$NON-NLS-1$
 
         this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-        // this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
         this.getContentPane().add(status, BorderLayout.PAGE_END);
 
         appletListener = new AppListener();
@@ -784,7 +788,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         clearAllFilters.addClearListener(similarImageFilterPanel);
         clearAllFilters.addClearListener(similarFacesFilterPanel);
         clearAllFilters.addClearListener(timelineListener);
-
 
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
         subItemTable.addMouseListener(subItemModel);
@@ -963,8 +966,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
             resultSetViewer.setDockableContainer(tabDock);
 
-            if(resultSetViewer instanceof ClearFilterListener) {
-                clearAllFilters.addClearListener((ClearFilterListener)resultSetViewer);
+            if (resultSetViewer instanceof ClearFilterListener) {
+                clearAllFilters.addClearListener((ClearFilterListener) resultSetViewer);
             }
 
             rsTabDock.add(tabDock);
@@ -985,7 +988,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         duplicateDock = createDockable("duplicatestab", Messages.getString("DuplicatesTableModel.Duplicates"), //$NON-NLS-1$ //$NON-NLS-2$
                 duplicatesScroll);
         referencesDock = createDockable("referencestab", Messages.getString("ReferencesTab.Title"), referencesScroll);
-        referencedByDock = createDockable("referencedbytab", Messages.getString("ReferencedByTab.Title"), referencedByScroll);
+        referencedByDock = createDockable("referencedbytab", Messages.getString("ReferencedByTab.Title"),
+                referencedByScroll);
 
         dockingControl.addDockable(categoriesTabDock);
         dockingControl.addDockable(metadataTabDock);
@@ -1081,7 +1085,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             if (toolbarSupport >= 0) {
                 Icon downIcon = IconUtil.getToolbarIcon("down", resPath);
                 Icon upIcon = IconUtil.getToolbarIcon("up", resPath);
-                CSelButton butToolbar = new CSelButton(Messages.getString("ViewerController.ShowToolBar"), upIcon, downIcon);
+                CSelButton butToolbar = new CSelButton(Messages.getString("ViewerController.ShowToolBar"), upIcon,
+                        downIcon);
                 butToolbar.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         butToolbar.toggle();
@@ -1150,7 +1155,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         List<DefaultSingleCDockable> docks = new ArrayList<>();
         docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
-                bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock, referencesDock, referencedByDock));
+                bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock, referencesDock,
+                referencedByDock));
         docks.addAll(viewerDocks);
         docks.addAll(rsTabDock);
         rsTabDock.clear();
@@ -1328,7 +1334,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencedByDock.setLocationsAside(referencesDock);
         referencedByDock.setVisible(true);
 
-        if (!verticalLayout) 
+        if (!verticalLayout)
             adjustViewerLayout();
 
         categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
@@ -1345,9 +1351,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         metadataTabDock.setLocationsAside(bookmarksTabDock);
         metadataTabDock.setVisible(true);
 
-        if (verticalLayout) 
+        if (verticalLayout)
             adjustViewerLayout();
-        
+
         selectDockableTab(viewerDocks.get(viewerDocks.size() - 1));
         selectDockableTab(categoriesTabDock);
         selectDockableTab(bookmarksTabDock);
@@ -1359,7 +1365,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         if (isReset)
             setGalleryColCount(GalleryModel.defaultColCount);
     }
-    
+
     private void adjustViewerLayout() {
         DefaultSingleCDockable prevDock = viewerDocks.get(0);
         prevDock.setLocation(
@@ -1461,8 +1467,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.butSimSearch.setEnabled(enabled);
     }
 
-
-    public List<ResultSetViewer> getResultSetViewers(){
+    public List<ResultSetViewer> getResultSetViewers() {
         return getResultSetViewerConfiguration().getResultSetViewers();
     }
 
