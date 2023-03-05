@@ -498,11 +498,16 @@ public class IconManager {
             mimeIconMap.put("application/x-discord-chat", icon);
         }
 
+        icon = availableIconsMap.get("discord-attachment");
+        if (icon != null) {
+            mimeIconMap.put("message/x-discord-attachment", icon);
+        }
+
         icon = availableIconsMap.get("edb-table");
         if (icon != null) {
             mimeIconMap.put("application/x-edb-table", icon);
         }
-        
+
         icon = availableIconsMap.get("live");
         if (icon != null) {
             mimeIconMap.put("application/x-livecontacts-table", icon);
