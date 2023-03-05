@@ -192,12 +192,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     BookmarksTreeListener bookmarksListener;
     TimelineListener timelineListener;
     public CControl dockingControl;
-    DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
-    List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
+    private DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
+    private List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
 
-    DefaultSingleCDockable tableTabDock, galleryTabDock, graphDock;
+    private DefaultSingleCDockable tableTabDock, galleryTabDock, graphDock;
     public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock, referencesDock, referencedByDock;
-    DefaultSingleCDockable compositeViewerDock;
+    private DefaultSingleCDockable compositeViewerDock;
 
     private List<DefaultSingleCDockable> viewerDocks;
     private ViewerController viewerController;
