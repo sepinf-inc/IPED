@@ -502,6 +502,11 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-edb-table", icon);
         }
+        
+        icon = availableIconsMap.get("live");
+        if (icon != null) {
+            mimeIconMap.put("application/x-livecontacts-table", icon);
+        }
 
         return mimeIconMap;
     }
