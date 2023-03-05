@@ -508,6 +508,11 @@ public class IconManager {
             mimeIconMap.put("application/x-livecontacts-table", icon);
         }
 
+        icon = availableIconsMap.get("elf");
+        if (icon != null) {
+            mimeIconMap.put("application/x-elf-record", icon);
+        }
+
         return mimeIconMap;
     }
 
