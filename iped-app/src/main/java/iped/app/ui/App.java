@@ -264,8 +264,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public int lastSelectedDoc = -1;
 
-    private String codePath;
-
     private StandardParser autoDetectParser;
 
     private String fontStartTag = null;
@@ -330,7 +328,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         if (processingManager != null) {
             processingManager.setSearchAppOpen(true);
         }
-        this.codePath = codePath;
 
         LOGGER = LoggerFactory.getLogger(App.class);
         LOGGER.info("Starting..."); //$NON-NLS-1$
