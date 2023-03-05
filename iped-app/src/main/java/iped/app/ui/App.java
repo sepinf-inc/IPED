@@ -1289,132 +1289,64 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             removeAllDockables();
         createAllDockables();
 
-        if (!verticalLayout) {
-            tableTabDock.setLocation(CLocation.base().normalNorth(0.5));
-            tableTabDock.setVisible(true);
+        tableTabDock
+                .setLocation(verticalLayout ? CLocation.base().normalNorth(0.7) : CLocation.base().normalNorth(0.5));
+        tableTabDock.setVisible(true);
 
-            galleryTabDock.setLocationsAside(tableTabDock);
-            galleryTabDock.setVisible(true);
+        galleryTabDock.setLocationsAside(tableTabDock);
+        galleryTabDock.setVisible(true);
 
-            CDockable prevDock = galleryTabDock;
-            for (Iterator<DefaultSingleCDockable> iterator = rsTabDock.iterator(); iterator.hasNext();) {
-                DefaultSingleCDockable tabDock = iterator.next();
-                tabDock.setLocationsAside(prevDock);
-                tabDock.setVisible(true);
-                prevDock = tabDock;
-            }
-
-            if (graphDock != null) {
-                graphDock.setLocationsAside(prevDock);
-                graphDock.setVisible(true);
-            }
-
-            hitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.4));
-            hitsDock.setVisible(true);
-
-            subitemDock.setLocationsAside(hitsDock);
-            subitemDock.setVisible(true);
-
-            parentDock.setLocationsAside(subitemDock);
-            parentDock.setVisible(true);
-
-            duplicateDock.setLocationsAside(parentDock);
-            duplicateDock.setVisible(true);
-
-            referencesDock.setLocationsAside(duplicateDock);
-            referencesDock.setVisible(true);
-
-            referencedByDock.setLocationsAside(referencesDock);
-            referencedByDock.setVisible(true);
-
-            for (int i = 0; i < viewerDocks.size(); i++) {
-                DefaultSingleCDockable dock = viewerDocks.get(i);
-                if (i == 0) {
-                    dock.setLocation(CLocation.base().normalSouth(0.5).east(0.6));
-                } else {
-                    dock.setLocationsAside(prevDock);
-                }
-                prevDock = dock;
-                dock.setVisible(true);
-            }
-
-            categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
-            categoriesTabDock.setVisible(true);
-
-            if (evidenceTabDock != null) {
-                evidenceTabDock.setLocationsAside(categoriesTabDock);
-                evidenceTabDock.setVisible(true);
-            }
-
-            bookmarksTabDock.setLocation(CLocation.base().normalWest(0.20).south(0.5));
-            bookmarksTabDock.setVisible(true);
-
-            metadataTabDock.setLocationsAside(bookmarksTabDock);
-            metadataTabDock.setVisible(true);
-
-        } else {
-            tableTabDock.setLocation(CLocation.base().normalNorth(0.7));
-            tableTabDock.setVisible(true);
-
-            galleryTabDock.setLocationsAside(tableTabDock);
-            galleryTabDock.setVisible(true);
-
-            CDockable prevDock = galleryTabDock;
-            for (Iterator<DefaultSingleCDockable> iterator = rsTabDock.iterator(); iterator.hasNext();) {
-                DefaultSingleCDockable tabDock = iterator.next();
-                tabDock.setLocationsAside(prevDock);
-                tabDock.setVisible(true);
-                prevDock = tabDock;
-            }
-
-            if (graphDock != null) {
-                graphDock.setLocationsAside(prevDock);
-                graphDock.setVisible(true);
-            }
-
-            hitsDock.setLocation(CLocation.base().normalSouth(0.3));
-            hitsDock.setVisible(true);
-
-            subitemDock.setLocationsAside(hitsDock);
-            subitemDock.setVisible(true);
-
-            parentDock.setLocationsAside(subitemDock);
-            parentDock.setVisible(true);
-
-            duplicateDock.setLocationsAside(parentDock);
-            duplicateDock.setVisible(true);
-
-            referencesDock.setLocationsAside(duplicateDock);
-            referencesDock.setVisible(true);
-
-            referencedByDock.setLocationsAside(referencesDock);
-            referencedByDock.setVisible(true);
-
-            categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
-            categoriesTabDock.setVisible(true);
-
-            if (evidenceTabDock != null) {
-                evidenceTabDock.setLocationsAside(categoriesTabDock);
-                evidenceTabDock.setVisible(true);
-            }
-
-            bookmarksTabDock.setLocation(CLocation.base().normalWest(0.20).south(0.5));
-            bookmarksTabDock.setVisible(true);
-
-            metadataTabDock.setLocationsAside(bookmarksTabDock);
-            metadataTabDock.setVisible(true);
-
-            for (int i = 0; i < viewerDocks.size(); i++) {
-                DefaultSingleCDockable dock = viewerDocks.get(i);
-                if (i == 0) {
-                    dock.setLocation(CLocation.base().normalEast(0.35));
-                } else {
-                    dock.setLocationsAside(prevDock);
-                }
-                prevDock = dock;
-                dock.setVisible(true);
-            }
+        CDockable prevDock = galleryTabDock;
+        for (Iterator<DefaultSingleCDockable> iterator = rsTabDock.iterator(); iterator.hasNext();) {
+            DefaultSingleCDockable tabDock = iterator.next();
+            tabDock.setLocationsAside(prevDock);
+            tabDock.setVisible(true);
+            prevDock = tabDock;
         }
+
+        if (graphDock != null) {
+            graphDock.setLocationsAside(prevDock);
+            graphDock.setVisible(true);
+        }
+
+        hitsDock.setLocation(
+                verticalLayout ? CLocation.base().normalSouth(0.3) : CLocation.base().normalSouth(0.5).west(0.4));
+        hitsDock.setVisible(true);
+
+        subitemDock.setLocationsAside(hitsDock);
+        subitemDock.setVisible(true);
+
+        parentDock.setLocationsAside(subitemDock);
+        parentDock.setVisible(true);
+
+        duplicateDock.setLocationsAside(parentDock);
+        duplicateDock.setVisible(true);
+
+        referencesDock.setLocationsAside(duplicateDock);
+        referencesDock.setVisible(true);
+
+        referencedByDock.setLocationsAside(referencesDock);
+        referencedByDock.setVisible(true);
+
+        if (!verticalLayout) 
+            adjustViewerLayout();
+
+        categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
+        categoriesTabDock.setVisible(true);
+
+        if (evidenceTabDock != null) {
+            evidenceTabDock.setLocationsAside(categoriesTabDock);
+            evidenceTabDock.setVisible(true);
+        }
+
+        bookmarksTabDock.setLocation(CLocation.base().normalWest(0.20).south(0.5));
+        bookmarksTabDock.setVisible(true);
+
+        metadataTabDock.setLocationsAside(bookmarksTabDock);
+        metadataTabDock.setVisible(true);
+
+        if (verticalLayout) 
+            adjustViewerLayout();
         
         selectDockableTab(viewerDocks.get(viewerDocks.size() - 1));
         selectDockableTab(categoriesTabDock);
@@ -1426,6 +1358,19 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         if (isReset)
             setGalleryColCount(GalleryModel.defaultColCount);
+    }
+    
+    private void adjustViewerLayout() {
+        DefaultSingleCDockable prevDock = viewerDocks.get(0);
+        prevDock.setLocation(
+                verticalLayout ? CLocation.base().normalEast(0.35) : CLocation.base().normalSouth(0.5).east(0.6));
+        prevDock.setVisible(true);
+        for (int i = 1; i < viewerDocks.size(); i++) {
+            DefaultSingleCDockable dock = viewerDocks.get(i);
+            dock.setLocationsAside(prevDock);
+            dock.setVisible(true);
+            prevDock = dock;
+        }
     }
 
     public void toggleHorizontalVerticalLayout() {
