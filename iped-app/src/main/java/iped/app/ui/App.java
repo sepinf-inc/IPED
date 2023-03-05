@@ -107,6 +107,7 @@ import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
+import bibliothek.gui.dock.common.intern.CDockable;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
 import bibliothek.gui.dock.themes.basic.action.BasicButtonHandler;
@@ -1288,52 +1289,46 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     public void adjustLayout(boolean isReset) {
-        if (!verticalLayout) {
-            if (isReset)
-                removeAllDockables();
-            createAllDockables();
+        if (isReset)
+            removeAllDockables();
+        createAllDockables();
 
+        if (!verticalLayout) {
             tableTabDock.setLocation(CLocation.base().normalNorth(0.5));
             tableTabDock.setVisible(true);
-            CLocation nextLocation = tableTabDock.getBaseLocation().aside();
 
-            galleryTabDock.setLocation(nextLocation);
+            galleryTabDock.setLocationsAside(tableTabDock);
             galleryTabDock.setVisible(true);
-            nextLocation = galleryTabDock.getBaseLocation().aside();
 
+            CDockable prevDock = galleryTabDock;
             for (Iterator<DefaultSingleCDockable> iterator = rsTabDock.iterator(); iterator.hasNext();) {
                 DefaultSingleCDockable tabDock = iterator.next();
-                tabDock.setLocation(nextLocation);
+                tabDock.setLocationsAside(prevDock);
                 tabDock.setVisible(true);
-                nextLocation = tabDock.getBaseLocation().aside();
+                prevDock = tabDock;
             }
 
             if (graphDock != null) {
-                graphDock.setLocation(nextLocation);
+                graphDock.setLocationsAside(prevDock);
                 graphDock.setVisible(true);
             }
 
             hitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.4));
             hitsDock.setVisible(true);
-            nextLocation = hitsDock.getBaseLocation().aside();
 
-            subitemDock.setLocation(nextLocation);
+            subitemDock.setLocationsAside(hitsDock);
             subitemDock.setVisible(true);
-            nextLocation = subitemDock.getBaseLocation().aside();
 
-            parentDock.setLocation(nextLocation);
+            parentDock.setLocationsAside(subitemDock);
             parentDock.setVisible(true);
-            nextLocation = parentDock.getBaseLocation().aside();
 
-            duplicateDock.setLocation(nextLocation);
+            duplicateDock.setLocationsAside(parentDock);
             duplicateDock.setVisible(true);
-            nextLocation = duplicateDock.getBaseLocation().aside();
 
-            referencesDock.setLocation(nextLocation);
+            referencesDock.setLocationsAside(duplicateDock);
             referencesDock.setVisible(true);
-            nextLocation = referencesDock.getBaseLocation().aside();
 
-            referencedByDock.setLocation(nextLocation);
+            referencedByDock.setLocationsAside(referencesDock);
             referencedByDock.setVisible(true);
 
             for (int i = 0; i < viewerDocks.size(); i++) {
@@ -1341,9 +1336,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 if (i == 0) {
                     dock.setLocation(CLocation.base().normalSouth(0.5).east(0.6));
                 } else {
-                    dock.setLocation(nextLocation);
+                    dock.setLocationsAside(prevDock);
                 }
-                nextLocation = dock.getBaseLocation().aside();
+                prevDock = dock;
                 dock.setVisible(true);
             }
 
@@ -1351,86 +1346,66 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             categoriesTabDock.setVisible(true);
 
             if (evidenceTabDock != null) {
-                nextLocation = categoriesTabDock.getBaseLocation().aside();
-                evidenceTabDock.setLocation(nextLocation);
+                evidenceTabDock.setLocationsAside(categoriesTabDock);
                 evidenceTabDock.setVisible(true);
             }
 
             bookmarksTabDock.setLocation(CLocation.base().normalWest(0.20).south(0.5));
             bookmarksTabDock.setVisible(true);
 
-            nextLocation = bookmarksTabDock.getBaseLocation().aside();
-            metadataTabDock.setLocation(nextLocation);
+            metadataTabDock.setLocationsAside(bookmarksTabDock);
             metadataTabDock.setVisible(true);
 
-            selectDockableTab(viewerDocks.get(viewerDocks.size() - 1));
-            selectDockableTab(categoriesTabDock);
-            selectDockableTab(bookmarksTabDock);
-            selectDockableTab(tableTabDock);
-
         } else {
-            if (isReset)
-                removeAllDockables();
-            createAllDockables();
-
             tableTabDock.setLocation(CLocation.base().normalNorth(0.7));
             tableTabDock.setVisible(true);
 
-            CLocation nextLocation = tableTabDock.getBaseLocation().aside();
-
-            galleryTabDock.setLocation(nextLocation);
+            galleryTabDock.setLocationsAside(galleryTabDock);
             galleryTabDock.setVisible(true);
-            nextLocation = galleryTabDock.getBaseLocation().aside();
 
+            CDockable prevDock = galleryTabDock;
             for (Iterator<DefaultSingleCDockable> iterator = rsTabDock.iterator(); iterator.hasNext();) {
                 DefaultSingleCDockable tabDock = iterator.next();
-                tabDock.setLocation(nextLocation);
+                tabDock.setLocationsAside(prevDock);
                 tabDock.setVisible(true);
-                nextLocation = tabDock.getBaseLocation().aside();
+                prevDock = tabDock;
             }
 
             if (graphDock != null) {
-                graphDock.setLocation(nextLocation);
+                graphDock.setLocationsAside(prevDock);
                 graphDock.setVisible(true);
             }
 
             hitsDock.setLocation(CLocation.base().normalSouth(0.3));
             hitsDock.setVisible(true);
-            nextLocation = hitsDock.getBaseLocation().aside();
 
-            subitemDock.setLocation(nextLocation);
+            subitemDock.setLocationsAside(hitsDock);
             subitemDock.setVisible(true);
-            nextLocation = subitemDock.getBaseLocation().aside();
 
-            parentDock.setLocation(nextLocation);
+            parentDock.setLocationsAside(subitemDock);
             parentDock.setVisible(true);
-            nextLocation = parentDock.getBaseLocation().aside();
 
-            duplicateDock.setLocation(nextLocation);
+            duplicateDock.setLocationsAside(parentDock);
             duplicateDock.setVisible(true);
-            nextLocation = duplicateDock.getBaseLocation().aside();
 
-            referencesDock.setLocation(nextLocation);
+            referencesDock.setLocationsAside(duplicateDock);
             referencesDock.setVisible(true);
-            nextLocation = referencesDock.getBaseLocation().aside();
 
-            referencedByDock.setLocation(nextLocation);
+            referencedByDock.setLocationsAside(referencesDock);
             referencedByDock.setVisible(true);
 
             categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
             categoriesTabDock.setVisible(true);
 
             if (evidenceTabDock != null) {
-                nextLocation = categoriesTabDock.getBaseLocation().aside();
-                evidenceTabDock.setLocation(nextLocation);
+                evidenceTabDock.setLocationsAside(categoriesTabDock);
                 evidenceTabDock.setVisible(true);
             }
 
             bookmarksTabDock.setLocation(CLocation.base().normalWest(0.20).south(0.5));
             bookmarksTabDock.setVisible(true);
 
-            nextLocation = bookmarksTabDock.getBaseLocation().aside();
-            metadataTabDock.setLocation(nextLocation);
+            metadataTabDock.setLocationsAside(bookmarksTabDock);
             metadataTabDock.setVisible(true);
 
             for (int i = 0; i < viewerDocks.size(); i++) {
@@ -1438,17 +1413,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 if (i == 0) {
                     dock.setLocation(CLocation.base().normalEast(0.35));
                 } else {
-                    dock.setLocation(nextLocation);
+                    dock.setLocationsAside(prevDock);
                 }
-                nextLocation = dock.getBaseLocation().aside();
+                prevDock = dock;
                 dock.setVisible(true);
             }
-
-            selectDockableTab(viewerDocks.get(viewerDocks.size() - 1));
-            selectDockableTab(categoriesTabDock);
-            selectDockableTab(bookmarksTabDock);
-            selectDockableTab(tableTabDock);
         }
+        
+        selectDockableTab(viewerDocks.get(viewerDocks.size() - 1));
+        selectDockableTab(categoriesTabDock);
+        selectDockableTab(bookmarksTabDock);
+        selectDockableTab(tableTabDock);
 
         setupViewerDocks();
         viewerController.validateViewers();
