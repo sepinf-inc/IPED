@@ -197,7 +197,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private DefaultSingleCDockable tableTabDock, galleryTabDock, graphDock;
     public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock, referencesDock, referencedByDock;
-    private DefaultSingleCDockable compositeViewerDock;
 
     private List<DefaultSingleCDockable> viewerDocks;
     private ViewerController viewerController;
