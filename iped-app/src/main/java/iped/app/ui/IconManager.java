@@ -498,7 +498,7 @@ public class IconManager {
             mimeIconMap.put("application/x-discord-chat", icon);
         }
 
-        icon = availableIconsMap.get("ebd-table");
+        icon = availableIconsMap.get("edb-table");
         if (icon != null) {
             mimeIconMap.put("application/x-edb-table", icon);
         }
