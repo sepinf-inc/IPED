@@ -1356,7 +1356,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             tableTabDock.setLocation(CLocation.base().normalNorth(0.7));
             tableTabDock.setVisible(true);
 
-            galleryTabDock.setLocationsAside(galleryTabDock);
+            galleryTabDock.setLocationsAside(tableTabDock);
             galleryTabDock.setVisible(true);
 
             CDockable prevDock = galleryTabDock;
