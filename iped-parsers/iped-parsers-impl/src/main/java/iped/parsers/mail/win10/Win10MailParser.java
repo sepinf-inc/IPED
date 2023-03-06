@@ -707,6 +707,7 @@ public class Win10MailParser extends AbstractParser {
                     attach.setOriginalFileName(StringUtils.substringAfterLast(contentPath, "/"));
                     Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, attach.getAttachSize(), params);
                     attach.setCaseQuery(itemQueryPair.getRight());
+                    emailMetadata.add(ExtraProperties.LINKED_ITEMS, attach.getCaseQuery());
                     IItemReader item = itemQueryPair.getLeft();
                     if (item != null) {
                         attach.setCaseItem(item);
