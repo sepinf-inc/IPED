@@ -517,6 +517,11 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-elf-record", icon);
         }
+        
+        icon = availableIconsMap.get("plist");
+        if (icon != null) {
+            mimeIconMap.put("application/x-bplist", icon);
+        }
 
         return mimeIconMap;
     }
