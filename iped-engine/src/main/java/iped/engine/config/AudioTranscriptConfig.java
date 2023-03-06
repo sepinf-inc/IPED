@@ -36,7 +36,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private List<String> mimesToProcess = new ArrayList<>();
     private String className;
     private String serviceRegion;
-    private int minTimeout = 60; // seconds
+    private int minTimeout = 180; // seconds
     private int timeoutPerSec = 3; // seconds
     private String convertCmd;
     private int requestIntervalMillis = 0;
