@@ -32,13 +32,11 @@ import iped.engine.task.index.IndexItem;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+            int row, int column) {
 
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
@@ -47,19 +45,20 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
         String localizedNameProp = iped.localization.LocalizedProperties.getLocalizedField(IndexItem.NAME);
         String colName = table.getModel().getColumnName(col);
 
-        if (table.getModel() instanceof SearchResultTableModel && (colName.equalsIgnoreCase(IndexItem.NAME) || colName.equalsIgnoreCase(localizedNameProp))) {
+        if (table.getModel() instanceof SearchResultTableModel
+                && (colName.equalsIgnoreCase(IndexItem.NAME) || colName.equalsIgnoreCase(localizedNameProp))) {
             try {
                 IItemId item = ((SearchResultTableModel) table.getModel()).getSearchResult().getItem(idx);
                 int docId = App.get().appCase.getLuceneId(item);
                 Document doc = App.get().appCase.getSearcher().doc(docId);
                 if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
-                    setIcon(IconManager.FOLDER_ICON);
-                } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
-                    setIcon(IconManager.DISK_ICON);
+                    setIcon(IconManager.getFolderIconSmall());
                 } else {
                     String type = doc.get(IndexItem.TYPE);
                     String contentType = doc.get(IndexItem.CONTENTTYPE);
-                    Icon icon = IconManager.getFileIconSmall(contentType, type);
+                    Icon icon = Boolean.valueOf(doc.get(IndexItem.ISROOT))
+                            ? IconManager.getFileIconSmall(contentType, type, IconManager.getDiskIconSmall())
+                            : IconManager.getFileIconSmall(contentType, type);
                     setIcon(icon);
                 }
 

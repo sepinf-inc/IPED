@@ -229,7 +229,7 @@ public class GalleryModel extends AbstractTableModel {
 
                     if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
                         value.unsupportedType = true;
-                        value.icon = IconManager.FOLDER_ICON;
+                        value.icon = IconManager.getFolderIconMedium();
 
                     } else if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
                         value.unsupportedType = true;

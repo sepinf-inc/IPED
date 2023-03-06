@@ -28,7 +28,6 @@ import java.util.zip.ZipInputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
-import javax.swing.UIManager;
 
 import iped.app.ui.utils.UiIconSize;
 import iped.utils.QualityIcon;
@@ -52,12 +51,14 @@ public class IconManager {
     private static final Map<String, QualityIcon> mimeIconMapSmall = initMimeToIconMap();
     private static final Map<String, QualityIcon> extIconMapMedium = initIconsMapSize(extIconMapSmall, mediumSize);
     private static final Map<String, QualityIcon> mimeIconMapMedium = initIconsMapSize(mimeIconMapSmall, mediumSize);
+    private static final Map<String, QualityIcon> treeIconMapMedium = initIconsMapSize(treeIconMapSmall, mediumSize);
 
-    public static final QualityIcon FOLDER_ICON = getUIManagerIcon("FileView.directoryIcon");
-    public static final QualityIcon DISK_ICON = getUIManagerIcon("FileView.hardDriveIcon");
+    private static final String folderOpenedKey = "folder-opened";
+    private static final String folderClosedKey = "folder-closed";
+    private static final String diskKey = "drive";
+    private static final QualityIcon fileIcon = extIconMapSmall.get("file");
 
-    private static final QualityIcon DEFAULT_CATEGORY_ICON = catIconMap.get("blank");
-    private static final QualityIcon DEFAULT_FILE_ICON = getUIManagerIcon("FileView.fileIcon");
+    private static final QualityIcon defaultCategoryIcon = catIconMap.get("blank");
 
     private static Map<String, QualityIcon> loadIconsFromJar(String iconPath, int size) {
         Map<String, QualityIcon> map = new HashMap<>();
@@ -91,16 +92,44 @@ public class IconManager {
         return map;
     }
 
+    public static Icon getDiskIconSmall() {
+        return getTreeIconSmall(diskKey);
+    }
+
+    public static Icon getDiskIconMedium() {
+        return getTreeIconMedium(diskKey);
+    }
+
+    public static Icon getFolderIconSmall() {
+        return getFolderIconSmall(false);
+    }
+
+    public static Icon getFolderIconSmall(boolean isOpened) {
+        return getTreeIconSmall(isOpened ? folderOpenedKey : folderClosedKey);
+    }
+
+    public static Icon getFolderIconMedium() {
+        return getFolderIconMedium(false);
+    }
+
+    public static Icon getFolderIconMedium(boolean isOpened) {
+        return getTreeIconMedium(isOpened ? folderOpenedKey : folderClosedKey);
+    }
+
     public static Icon getFileIconMedium(String mimeType, String extension) {
-        return getFileIcon(mimeType, extension, mimeIconMapMedium, extIconMapMedium);
+        return getFileIcon(mimeType, extension, mimeIconMapMedium, extIconMapMedium, fileIcon);
     }
 
     public static Icon getFileIconSmall(String mimeType, String extension) {
-        return getFileIcon(mimeType, extension, mimeIconMapSmall, extIconMapSmall);
+        return getFileIconSmall(mimeType, extension, fileIcon);
+    }
+
+    public static Icon getFileIconSmall(String mimeType, String extension, Icon defaultIcon) {
+        return getFileIcon(mimeType, extension, mimeIconMapSmall, extIconMapSmall, defaultIcon);
     }
 
     private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap,
-            Map<String, QualityIcon> extIconMap) {
+            Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
         if (mimeType != null && !mimeType.isBlank()) {
             Icon icon = mimeIconMap.get(mimeType.strip());
             if (icon != null) {
@@ -113,18 +142,22 @@ public class IconManager {
                 return icon;
             }
         }
-        return extIconMap.getOrDefault("file", DEFAULT_FILE_ICON);
+        return defaultIcon;
     }
 
     public static Icon getCategoryIcon(String category) {
         if (category != null && !category.isBlank()) {
-            return catIconMap.getOrDefault(category.strip(), DEFAULT_CATEGORY_ICON);
+            return catIconMap.getOrDefault(category.strip(), defaultCategoryIcon);
         }
-        return DEFAULT_CATEGORY_ICON;
+        return defaultCategoryIcon;
     }
 
     public static QualityIcon getTreeIconSmall(String key) {
-        return treeIconMapSmall.getOrDefault(key, DEFAULT_FILE_ICON);
+        return treeIconMapSmall.get(key);
+    }
+
+    public static QualityIcon getTreeIconMedium(String key) {
+        return treeIconMapMedium.get(key);
     }
 
     /**
@@ -517,10 +550,20 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-elf-record", icon);
         }
-        
+
         icon = availableIconsMap.get("plist");
         if (icon != null) {
             mimeIconMap.put("application/x-bplist", icon);
+        }
+
+        icon = availableIconsMap.get("drive");
+        if (icon != null) {
+            mimeIconMap.put("application/x-e01-image", icon);
+            mimeIconMap.put("application/x-ewf-image", icon);
+            mimeIconMap.put("application/x-ewf2-image", icon);
+            mimeIconMap.put("application/x-ex01-image", icon);
+            mimeIconMap.put("application/x-disk-image", icon);
+            mimeIconMap.put("application/x-raw-image", icon);
         }
 
         return mimeIconMap;
@@ -536,11 +579,6 @@ public class IconManager {
             newMap.put(key, icon.getIconWidth() == size ? icon : new QualityIcon(icon, size));
         }
         return newMap;
-    }
-
-    private static QualityIcon getUIManagerIcon(String key) {
-        Icon icon = UIManager.getIcon(key);
-        return new QualityIcon(icon, smallSize);
     }
 
     public static void setCategoryIconSize(int size) {
