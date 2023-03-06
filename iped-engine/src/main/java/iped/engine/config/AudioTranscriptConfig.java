@@ -133,7 +133,6 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         className = properties.getProperty(IMPL_CLASS_KEY).trim();
         serviceRegion = properties.getProperty(REGION_KEY).trim();
         convertCmd = properties.getProperty(CONVERT_CMD_KEY).trim();
-        timeoutPerSec = Integer.valueOf(properties.getProperty(TIMEOUT_PER_SEC_KEY).trim());
         requestIntervalMillis = Integer.valueOf(properties.getProperty(REQUEST_INTERVAL_KEY).trim());
         maxConcurrentRequests = Integer.valueOf(properties.getProperty(MAX_REQUESTS_KEY).trim());
         minWordScore = Float.valueOf(properties.getProperty(MIN_WORD_SCORE).trim());
@@ -157,6 +156,10 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         String value = properties.getProperty(MIN_TIMEOUT_KEY);
         if (value != null) {
             minTimeout = Integer.valueOf(value.trim());
+        }
+        value = properties.getProperty(TIMEOUT_PER_SEC_KEY);
+        if (value != null) {
+            timeoutPerSec = Integer.valueOf(value.trim());
         }
     }
 
