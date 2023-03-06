@@ -208,8 +208,14 @@ public class RFC822Parser extends AbstractParser {
                         attachmentCount++;
                         submd.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
 
-                        String mailPath = context.get(ItemInfo.class).getPath();
-                        boolean externalAttach = mailPath.endsWith("partial.emlx");
+                        ItemInfo itemInfo = context.get(ItemInfo.class);
+                        boolean externalAttach = false;
+                        String mailPath = "";
+                        if (itemInfo != null) {
+                            mailPath = itemInfo.getPath();
+                            mailPath = mailPath.replaceAll("\\\\", "/").toLowerCase();
+                            externalAttach = mailPath.endsWith("partial.emlx");
+                        }
                         if (externalAttach) {
                             String externalAttachFolder = mailPath.split("/")[mailPath.split("/").length - 1].split("\\.")[0];
 
