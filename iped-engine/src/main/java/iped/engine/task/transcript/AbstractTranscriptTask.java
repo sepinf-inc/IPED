@@ -40,6 +40,7 @@ import iped.engine.io.TimeoutException;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.video.VideoThumbTask;
+import iped.exception.IPEDException;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
 
@@ -59,7 +60,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     protected static final int TIMEOUT_PER_MB = 100;
 
-    protected static final int MIN_TIMEOUT = 10;
+    protected static int MIN_TIMEOUT = 60;
 
     protected static final int WAV_BYTES_PER_SEC = 16000 * 2; // 16khz sample rate and 16bits per sample
 
@@ -176,6 +177,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
 
         transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
+        MIN_TIMEOUT = transcriptConfig.getMinTimeout();
 
         // clear default config service address in output
         this.transcriptConfig.clearTranscriptionServiceAddress(output);
@@ -293,7 +295,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
         }
         if (!finished) {
-            throw new TimeoutException();
+            throw new TimeoutException("Timeout while converting audio to wav.");
         }
         return tmpFile;
     }
@@ -396,7 +398,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
 
         } catch (Exception e) {
-            if (e instanceof TooManyConnectException) {
+            if (e instanceof TooManyConnectException || e instanceof IPEDException) {
                 throw e;
             }
             LOGGER.warn("Unexpected exception while transcribing: " + evidence.getPath(), e);
