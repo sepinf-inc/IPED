@@ -323,8 +323,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             LOGGER.info("Successful transcriptions: " + transcriptionSuccess.intValue());
             LOGGER.info("Failed transcriptions: " + transcriptionFail.intValue());
             LOGGER.info("Total transcription output characters: " + transcriptionChars.longValue());
-            LOGGER.info(
-                    "Average transcription time (ms/audio): " + (transcriptionTime.longValue() / totTranscriptions));
+            LOGGER.info("Average transcription time (ms/audio): " + (transcriptionTime.longValue() / (totTranscriptions)));
+            LOGGER.info("Total transcription throughput (audios/s): " + (1000 * this.worker.manager.getNumWorkers() * totTranscriptions / transcriptionTime.longValue()));
             transcriptionSuccess.set(0);
             transcriptionFail.set(0);
         }
