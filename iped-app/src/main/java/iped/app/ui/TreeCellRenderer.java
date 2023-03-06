@@ -34,7 +34,7 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Icon rootIcon = IconManager.getTreeIconSmall("evidences-root");
+    private static final Icon rootIcon = IconManager.getTreeIcon("evidences-root");
 
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
             boolean leaf, int row, boolean hasFocus) {
@@ -46,14 +46,14 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
         if (row == 0) {
             setIcon(rootIcon);
         } else if (isDir) {
-            setIcon(IconManager.getFolderIconSmall(expanded));
+            setIcon(IconManager.getFolderIcon(expanded));
         } else {
             Document doc = node.getDoc();
             String type = doc.get(BasicProps.TYPE);
             String contentType = doc.get(BasicProps.CONTENTTYPE);
             Icon icon = Boolean.valueOf(doc.get(IndexItem.ISROOT))
-                    ? IconManager.getFileIconSmall(contentType, type, IconManager.getDiskIconSmall())
-                    : IconManager.getFileIconSmall(contentType, type);
+                    ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon())
+                    : IconManager.getFileIcon(contentType, type);
             setIcon(icon);
         }
 

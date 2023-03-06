@@ -227,13 +227,13 @@ public class GalleryModel extends AbstractTableModel {
 
                     if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
                         value.unsupportedType = true;
-                        value.icon = IconManager.getFolderIconMedium();
+                        value.icon = IconManager.getFolderIconGallery();
 
                     } else if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
                         value.unsupportedType = true;
                         String type = doc.get(IndexItem.TYPE);
                         String contentType = doc.get(IndexItem.CONTENTTYPE);
-                        value.icon = IconManager.getFileIconMedium(contentType, type);
+                        value.icon = IconManager.getFileIconGallery(contentType, type);
                     }
 
                     if (image == null && value.icon == null && stream == null && isSupportedImage(mediaType)) {

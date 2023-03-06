@@ -11,9 +11,9 @@ import iped.utils.LocalizedFormat;
 public class BookmarkTreeCellRenderer extends DefaultTreeCellRenderer {
     private static final long serialVersionUID = 1L;
 
-    private static final Icon rootIcon = IconManager.getTreeIconSmall("bookmarks-root");
-    private static final Icon noBookmarksIcon = IconManager.getTreeIconSmall("no-bookmarks");
-    private static final Icon bookmarkIcon = IconManager.getTreeIconSmall("bookmark");
+    private static final Icon rootIcon = IconManager.getTreeIcon("bookmarks-root");
+    private static final Icon noBookmarksIcon = IconManager.getTreeIcon("no-bookmarks");
+    private static final Icon bookmarkIcon = IconManager.getTreeIcon("bookmark");
 
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf,

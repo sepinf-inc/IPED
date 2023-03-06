@@ -40,24 +40,30 @@ import iped.utils.QualityIcon;
  */
 public class IconManager {
 
-    public static final int smallSize = 16;
-    private static final int mediumSize = 24;
+    public static final int defaultSize = 16;
+    public static final int defaultGallerySize = 24;
+    public static final int defaultCategorySize = 20;
 
     private static final String ICON_EXTENSION = ".png";
 
-    private static final Map<String, QualityIcon> catIconMap = loadIconsFromJar("cat", UiIconSize.loadUserSetting());
-    private static final Map<String, QualityIcon> extIconMapSmall = loadIconsFromJar("file", smallSize);
-    private static final Map<String, QualityIcon> treeIconMapSmall = loadIconsFromJar("tree", smallSize);
-    private static final Map<String, QualityIcon> mimeIconMapSmall = initMimeToIconMap();
-    private static final Map<String, QualityIcon> extIconMapMedium = initIconsMapSize(extIconMapSmall, mediumSize);
-    private static final Map<String, QualityIcon> mimeIconMapMedium = initIconsMapSize(mimeIconMapSmall, mediumSize);
-    private static final Map<String, QualityIcon> treeIconMapMedium = initIconsMapSize(treeIconMapSmall, mediumSize);
+    private static final int[] initialSizes = UiIconSize.loadUserSetting();
+    private static int currentIconSize = initialSizes[2];
+
+    private static final Map<String, QualityIcon> catIconMap = loadIconsFromJar("cat", initialSizes[0]);
+
+    private static final Map<String, QualityIcon> extIconMap = loadIconsFromJar("file", currentIconSize);
+    private static final Map<String, QualityIcon> treeIconMap = loadIconsFromJar("tree", currentIconSize);
+    private static final Map<String, QualityIcon> mimeIconMap = initMimeToIconMap(currentIconSize);
+
+    private static final Map<String, QualityIcon> extIconMapGallery = initIconsMapSize(extIconMap, initialSizes[1]);
+    private static final Map<String, QualityIcon> mimeIconMapGallery = initIconsMapSize(mimeIconMap, initialSizes[1]);
+    private static final Map<String, QualityIcon> treeIconMapGallery = initIconsMapSize(treeIconMap, initialSizes[1]);
 
     private static final String folderOpenedKey = "folder-opened";
     private static final String folderClosedKey = "folder-closed";
     private static final String diskKey = "drive";
-    private static final QualityIcon fileIcon = extIconMapSmall.get("file");
 
+    private static final QualityIcon fileIcon = extIconMap.get("file");
     private static final QualityIcon defaultCategoryIcon = catIconMap.get("blank");
 
     private static Map<String, QualityIcon> loadIconsFromJar(String iconPath, int size) {
@@ -92,40 +98,40 @@ public class IconManager {
         return map;
     }
 
-    public static Icon getDiskIconSmall() {
-        return getTreeIconSmall(diskKey);
+    public static Icon getDiskIcon() {
+        return getTreeIcon(diskKey);
     }
 
-    public static Icon getDiskIconMedium() {
-        return getTreeIconMedium(diskKey);
+    public static Icon getDiskIconGallery() {
+        return getTreeIconGallery(diskKey);
     }
 
-    public static Icon getFolderIconSmall() {
-        return getFolderIconSmall(false);
+    public static Icon getFolderIcon() {
+        return getFolderIcon(false);
     }
 
-    public static Icon getFolderIconSmall(boolean isOpened) {
-        return getTreeIconSmall(isOpened ? folderOpenedKey : folderClosedKey);
+    public static Icon getFolderIcon(boolean isOpened) {
+        return getTreeIcon(isOpened ? folderOpenedKey : folderClosedKey);
     }
 
-    public static Icon getFolderIconMedium() {
-        return getFolderIconMedium(false);
+    public static Icon getFolderIconGallery() {
+        return getFolderIconGallery(false);
     }
 
-    public static Icon getFolderIconMedium(boolean isOpened) {
-        return getTreeIconMedium(isOpened ? folderOpenedKey : folderClosedKey);
+    public static Icon getFolderIconGallery(boolean isOpened) {
+        return getTreeIconGallery(isOpened ? folderOpenedKey : folderClosedKey);
     }
 
-    public static Icon getFileIconMedium(String mimeType, String extension) {
-        return getFileIcon(mimeType, extension, mimeIconMapMedium, extIconMapMedium, fileIcon);
+    public static Icon getFileIconGallery(String mimeType, String extension) {
+        return getFileIcon(mimeType, extension, mimeIconMapGallery, extIconMapGallery, fileIcon);
     }
 
-    public static Icon getFileIconSmall(String mimeType, String extension) {
-        return getFileIconSmall(mimeType, extension, fileIcon);
+    public static Icon getFileIcon(String mimeType, String extension) {
+        return getFileIcon(mimeType, extension, fileIcon);
     }
 
-    public static Icon getFileIconSmall(String mimeType, String extension, Icon defaultIcon) {
-        return getFileIcon(mimeType, extension, mimeIconMapSmall, extIconMapSmall, defaultIcon);
+    public static Icon getFileIcon(String mimeType, String extension, Icon defaultIcon) {
+        return getFileIcon(mimeType, extension, mimeIconMap, extIconMap, defaultIcon);
     }
 
     private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap,
@@ -152,19 +158,19 @@ public class IconManager {
         return defaultCategoryIcon;
     }
 
-    public static QualityIcon getTreeIconSmall(String key) {
-        return treeIconMapSmall.get(key);
+    public static QualityIcon getTreeIcon(String key) {
+        return treeIconMap.get(key);
     }
 
-    public static QualityIcon getTreeIconMedium(String key) {
-        return treeIconMapMedium.get(key);
+    public static QualityIcon getTreeIconGallery(String key) {
+        return treeIconMapGallery.get(key);
     }
 
     /**
      * Icons associated to one or more mime types should be added here.
      */
-    private static Map<String, QualityIcon> initMimeToIconMap() {
-        Map<String, QualityIcon> availableIconsMap = loadIconsFromJar("mime", smallSize);
+    private static Map<String, QualityIcon> initMimeToIconMap(int size) {
+        Map<String, QualityIcon> availableIconsMap = loadIconsFromJar("mime", size);
         Map<String, QualityIcon> mimeIconMap = new HashMap<>();
 
         QualityIcon icon = availableIconsMap.get("emule");
@@ -581,11 +587,32 @@ public class IconManager {
         return newMap;
     }
 
-    public static void setCategoryIconSize(int size) {
-        for (Icon icon : catIconMap.values()) {
+    private static void setMapIconSize(Map<String, QualityIcon> map, int size) {
+        for (Icon icon : map.values()) {
             if (icon instanceof QualityIcon) {
                 ((QualityIcon) icon).setSize(size);
             }
         }
+    }
+
+    public static void setCategoryIconSize(int size) {
+        setMapIconSize(catIconMap, size);
+    }
+
+    public static void setGalleryIconSize(int size) {
+        setMapIconSize(extIconMapGallery, size);
+        setMapIconSize(mimeIconMapGallery, size);
+        setMapIconSize(treeIconMapGallery, size);
+    }
+
+    public static void setIconSize(int size) {
+        currentIconSize = size;
+        setMapIconSize(extIconMap, size);
+        setMapIconSize(mimeIconMap, size);
+        setMapIconSize(treeIconMap, size);
+    }
+
+    public static int getIconSize() {
+        return currentIconSize;
     }
 }

@@ -780,6 +780,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // filterComboBox.addMouseListener(appletListener);
         // filterComboBox.getComponent(0).addMouseListener(appletListener);
         updateUI(false);
+        updateIconContainersUI(IconManager.getIconSize(), false);
 
         setupKeyboardShortcuts();
     }
@@ -1479,7 +1480,28 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public TreeListener getTreeListener() {
         return treeListener;
     }
+    
+    public void updateIconContainersUI(int size, boolean updateUI) {
+        updateIconContainerUI(tree, size, updateUI);
+        updateIconContainerUI(bookmarksTree, size, updateUI);
 
+        updateIconContainerUI(resultsTable, size, updateUI);
+        updateIconContainerUI(subItemTable, size, updateUI);
+        updateIconContainerUI(parentItemTable, size, updateUI);
+        updateIconContainerUI(duplicatesTable, size, updateUI);
+        updateIconContainerUI(referencesTable, size, updateUI);
+        updateIconContainerUI(referencedByTable, size, updateUI);
+    }
+
+    private void updateIconContainerUI(JComponent comp, int size, boolean updateUI) {
+        if (comp instanceof JTable) {
+            ((JTable) comp).setRowHeight(size);
+        }
+        if (updateUI) {
+            comp.updateUI();
+        }
+    }
+    
     @Override
     public String getSortColumn() {
         SortKey ordem = resultsTable.getRowSorter().getSortKeys().get(0);
