@@ -208,9 +208,10 @@ public class RFC822Parser extends AbstractParser {
                         attachmentCount++;
                         submd.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
 
-                        boolean externalAttach = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).endsWith("partial.emlx");
+                        String mailPath = context.get(ItemInfo.class).getPath();
+                        boolean externalAttach = mailPath.endsWith("partial.emlx");
                         if (externalAttach) {
-                            String externalAttachFolder = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).split("\\.")[0];
+                            String externalAttachFolder = mailPath.split("/")[mailPath.split("/").length - 1].split("\\.")[0];
 
                             String query = BasicProps.PATH + ":\"Attachments/" + externalAttachFolder + "\" && " + BasicProps.NAME + ":\"" + attachName + "\"";
                             metadata.add(ExtraProperties.LINKED_ITEMS, query);
