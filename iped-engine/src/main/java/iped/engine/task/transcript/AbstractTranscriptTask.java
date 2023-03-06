@@ -60,7 +60,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     protected static final int TIMEOUT_PER_MB = 100;
 
-    protected static int MIN_TIMEOUT = 60;
+    protected static int MIN_TIMEOUT = 180;
 
     protected static final int WAV_BYTES_PER_SEC = 16000 * 2; // 16khz sample rate and 16bits per sample
 
@@ -266,7 +266,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         pb.redirectErrorStream(true);
         Process p = pb.start();
         IOUtil.ignoreInputStream(p.getInputStream());
-        long timeoutSecs = MIN_TIMEOUT + TIMEOUT_PER_MB * input.length() / (1 << 20);
+        long timeoutSecs = MIN_TIMEOUT / 3 + TIMEOUT_PER_MB * input.length() / (1 << 20);
         boolean finished = p.waitFor(timeoutSecs, TimeUnit.SECONDS);
         if (!finished) {
             LOGGER.warn("Timeout after {}s converting to wav: {}", timeoutSecs, itemPath);

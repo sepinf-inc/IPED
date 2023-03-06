@@ -51,7 +51,7 @@ mimesToProcess = audio/3gpp; audio/3gpp2; audio/vnd.3gpp.iufp; audio/x-aac; audi
 skipKnownFiles = true
 
 # Minimum number of seconds to wait for each audio transcription.
-minTimeout = 60
+minTimeout = 180
 
 # Number of seconds to wait for each audio second transcription. 'minTimeout' param above is added to this.
 timeoutPerSec = 3
