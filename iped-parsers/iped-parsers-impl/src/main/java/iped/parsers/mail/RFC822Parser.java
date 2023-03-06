@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -64,6 +63,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.Util;
@@ -296,7 +296,8 @@ public class RFC822Parser extends AbstractParser {
 
                 } else if (fieldname.equalsIgnoreCase("Content-Type")) { //$NON-NLS-1$
                     ContentTypeField ctField = (ContentTypeField) parsedField;
-                    attachName = ctField.getParameter("name"); //$NON-NLS-1$
+                    if (attachName == null)
+                        attachName = ctField.getParameter("name"); //$NON-NLS-1$
 
                     if (attachName == null)
                         attachName = getRFC2231Value("name", ctField.getParameters()); //$NON-NLS-1$
@@ -313,11 +314,11 @@ public class RFC822Parser extends AbstractParser {
                     ContentDispositionField ctField = (ContentDispositionField) parsedField;
                     isAttach = ctField.isAttachment();
                     if (isAttach || ctField.isInline()) {
-                        String attachName = ctField.getFilename();
+                        String fileName = ctField.getFilename();
+                        if (fileName == null)
+                            fileName = getRFC2231Value("filename", ctField.getParameters()); //$NON-NLS-1$
                         if (attachName == null)
-                            attachName = getRFC2231Value("filename", ctField.getParameters()); //$NON-NLS-1$
-                        if (this.attachName == null)
-                            this.attachName = attachName;
+                            attachName = fileName;
 
                     }
                 } else if (!inPart && MetadataUtil.isToAddRawMailHeader(parsedField.getName())) {
