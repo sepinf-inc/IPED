@@ -199,7 +199,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private List<DefaultSingleCDockable> viewerDocks;
     private ViewerController viewerController;
-    private CButton timelineButton;
+    private CCheckBox timelineButton;
     private CButton butSimSearch;
     private CCheckBox galleryGrayButton;
     private CCheckBox galleryBlurButton;
@@ -704,9 +704,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         defaultSelectedColor = dockingControl.getController().getColors()
                 .get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
 
-        timelineButton = new CButton(Messages.get("App.ToggleTimelineView"), IconUtil.getToolbarIcon("time", resPath));
+        timelineButton = new CCheckBox(Messages.get("App.ToggleTimelineView"), IconUtil.getToolbarIcon("time", resPath)) {
+            protected void changed() {
+                if (timelineListener != null)
+                    timelineListener.setTimelineTableView(isSelected());                
+            }            
+        };
         timelineListener = new TimelineListener(timelineButton, IconUtil.getToolbarIcon("timeon", resPath));
-        timelineButton.addActionListener(timelineListener);
 
         if (triageGui) {
             verticalLayout = true;
