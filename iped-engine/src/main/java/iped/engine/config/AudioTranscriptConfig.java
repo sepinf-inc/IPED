@@ -18,7 +18,8 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String ENABLE_KEY = "enableAudioTranscription";
     private static final String IMPL_CLASS_KEY = "implementationClass";
     private static final String REGION_KEY = "serviceRegion";
-    private static final String TIMEOUT_KEY = "timeout";
+    private static final String MIN_TIMEOUT_KEY = "minTimeout";
+    private static final String TIMEOUT_PER_SEC_KEY = "timeoutPerSec";
     private static final String LANG_KEY = "language";
     private static final String MIMES_KEY = "mimesToProcess";
     private static final String CONVERT_CMD_KEY = "convertCommand";
@@ -35,7 +36,8 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private List<String> mimesToProcess = new ArrayList<>();
     private String className;
     private String serviceRegion;
-    private int timeoutPerSec;
+    private int minTimeout = 60; // seconds
+    private int timeoutPerSec = 3; // seconds
     private String convertCmd;
     private int requestIntervalMillis = 0;
     private int maxConcurrentRequests;
@@ -75,6 +77,10 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
     public int getTimeoutPerSec() {
         return timeoutPerSec;
+    }
+
+    public int getMinTimeout() {
+        return minTimeout;
     }
 
     public String getConvertCmd() {
@@ -127,7 +133,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         className = properties.getProperty(IMPL_CLASS_KEY).trim();
         serviceRegion = properties.getProperty(REGION_KEY).trim();
         convertCmd = properties.getProperty(CONVERT_CMD_KEY).trim();
-        timeoutPerSec = Integer.valueOf(properties.getProperty(TIMEOUT_KEY).trim());
+        timeoutPerSec = Integer.valueOf(properties.getProperty(TIMEOUT_PER_SEC_KEY).trim());
         requestIntervalMillis = Integer.valueOf(properties.getProperty(REQUEST_INTERVAL_KEY).trim());
         maxConcurrentRequests = Integer.valueOf(properties.getProperty(MAX_REQUESTS_KEY).trim());
         minWordScore = Float.valueOf(properties.getProperty(MIN_WORD_SCORE).trim());
@@ -148,7 +154,10 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         if (skipKnown != null) {
             this.skipKnownFiles = Boolean.valueOf(skipKnown.trim());
         }
-
+        String value = properties.getProperty(MIN_TIMEOUT_KEY);
+        if (value != null) {
+            minTimeout = Integer.valueOf(value.trim());
+        }
     }
 
     /**
