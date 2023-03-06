@@ -60,7 +60,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     protected static final int TIMEOUT_PER_MB = 100;
 
-    protected static final int MIN_TIMEOUT = 10;
+    protected static int MIN_TIMEOUT = 60;
 
     protected static final int WAV_BYTES_PER_SEC = 16000 * 2; // 16khz sample rate and 16bits per sample
 
@@ -177,6 +177,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
 
         transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
+        MIN_TIMEOUT = transcriptConfig.getMinTimeout();
 
         // clear default config service address in output
         this.transcriptConfig.clearTranscriptionServiceAddress(output);
