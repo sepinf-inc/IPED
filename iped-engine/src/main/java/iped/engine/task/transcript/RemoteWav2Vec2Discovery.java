@@ -98,6 +98,7 @@ public class RemoteWav2Vec2Discovery {
 
     private static void register(Socket client, BufferedReader reader, PrintWriter writer) throws IOException {
         String ip = client.getInetAddress().getHostAddress();
+        System.out.println(new Date() + " Receiving registration from: " + ip);
         String port = reader.readLine();
         String address = ip + ":" + port;
         String nodeJobs = reader.readLine();
