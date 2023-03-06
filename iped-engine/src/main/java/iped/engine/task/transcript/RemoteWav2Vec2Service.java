@@ -128,8 +128,11 @@ public class RemoteWav2Vec2Service {
         int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
         int numLogicalCores = Runtime.getRuntime().availableProcessors();
 
-        transcriptSemaphore = new Semaphore(numConcurrentTranscriptions);
-        wavConvSemaphore = new Semaphore(numLogicalCores);
+        // We already use a BlockingDeque to get an available transcription process,
+        // this Semaphore wouldn't be needed, but it guarantees a fairness policy.
+        transcriptSemaphore = new Semaphore(numConcurrentTranscriptions, true);
+
+        wavConvSemaphore = new Semaphore(numLogicalCores, true);
 
         try (ServerSocket server = new ServerSocket(localPort, MAX_CONNECTIONS)) {
 
