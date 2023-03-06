@@ -56,12 +56,9 @@ import iped.viewers.util.ImageMetadataUtil;
 
 public class GalleryModel extends AbstractTableModel {
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private static Logger LOGGER = LoggerFactory.getLogger(GalleryModel.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(GalleryModel.class);
 
     /**
      * Max Sleuthkit connection pool size. Using more threads than this sometimes
@@ -70,7 +67,7 @@ public class GalleryModel extends AbstractTableModel {
     private static final int MAX_TSK_POOL_SIZE = 20;
 
     public static final int defaultColCount = 10;
-    
+
     private static final double blurIntensity = 0.02d;
 
     private int colCount = defaultColCount;
@@ -131,8 +128,7 @@ public class GalleryModel extends AbstractTableModel {
     }
 
     private boolean isAnimationImage(Document doc, String mediaType) {
-        return VideoThumbTask.isImageSequence(mediaType) || 
-                doc.get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
+        return VideoThumbTask.isImageSequence(mediaType) || doc.get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
     }
 
     private boolean isSupportedVideo(String mediaType) {
@@ -213,7 +209,8 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     BytesRef bytesRef = doc.getBinaryValue(IndexItem.THUMB);
-                    if (bytesRef != null && ((!isSupportedVideo(mediaType) && !isAnimationImage(doc, mediaType)) || App.get().useVideoThumbsInGallery)) {
+                    if (bytesRef != null && ((!isSupportedVideo(mediaType) && !isAnimationImage(doc, mediaType))
+                            || App.get().useVideoThumbsInGallery)) {
                         byte[] thumb = bytesRef.bytes;
                         if (thumb.length > 0) {
                             image = ImageIO.read(new ByteArrayInputStream(thumb));
@@ -224,7 +221,8 @@ public class GalleryModel extends AbstractTableModel {
 
                     String hash = doc.get(IndexItem.HASH);
                     if (image == null && hash != null && !hash.isEmpty()) {
-                        image = getViewImage(docId, hash, isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
+                        image = getViewImage(docId, hash,
+                                isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
                     }
 
                     if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
@@ -271,7 +269,7 @@ public class GalleryModel extends AbstractTableModel {
                         if (image.getWidth() > thumbSize * 2 || image.getHeight() > thumbSize * 2) {
                             image = ImageUtil.resizeImage(image, thumbSize, thumbSize);
                         }
-                        
+
                         if (blurFilter) {
                             image = ImageUtil.blur(image, thumbSize, blurIntensity);
                         }
