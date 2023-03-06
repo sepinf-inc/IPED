@@ -33,6 +33,10 @@ public class TimelineListener implements ClearFilterListener {
         timelineButton.setSelected(false);
     }
 
+    public void toggleTimelineTableView() {
+        timelineButton.setSelected(!timelineViewEnabled);
+    }
+    
     public void setTimelineTableView(boolean isEnabled) {
         if (timelineViewEnabled != isEnabled) {
             timelineViewEnabled = isEnabled;
