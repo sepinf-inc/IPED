@@ -62,8 +62,8 @@ public class IconManager {
     private static final String folderOpenedKey = "folder-opened";
     private static final String folderClosedKey = "folder-closed";
     private static final String diskKey = "drive";
+    private static final String fileKey = "file";
 
-    private static final QualityIcon fileIcon = extIconMap.get("file");
     private static final QualityIcon defaultCategoryIcon = catIconMap.get("blank");
 
     private static Map<String, QualityIcon> loadIconsFromJar(String iconPath, int size) {
@@ -123,11 +123,11 @@ public class IconManager {
     }
 
     public static Icon getFileIconGallery(String mimeType, String extension) {
-        return getFileIcon(mimeType, extension, mimeIconMapGallery, extIconMapGallery, fileIcon);
+        return getFileIcon(mimeType, extension, mimeIconMapGallery, extIconMapGallery, extIconMapGallery.get(fileKey));
     }
 
     public static Icon getFileIcon(String mimeType, String extension) {
-        return getFileIcon(mimeType, extension, fileIcon);
+        return getFileIcon(mimeType, extension, extIconMap.get(fileKey));
     }
 
     public static Icon getFileIcon(String mimeType, String extension, Icon defaultIcon) {
