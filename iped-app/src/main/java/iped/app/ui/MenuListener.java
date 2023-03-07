@@ -431,9 +431,9 @@ public class MenuListener implements ActionListener {
             }
         } else if (e.getSource() == menu.catIconSize) {
             JPanel panel = new JPanel(new GridLayout(2, 3, 5, 5));
-            panel.add(new JLabel("Categorias")); //TODO Use Messages.getString 
-            panel.add(new JLabel("Galeria"));
-            panel.add(new JLabel("Tabelas e Outros"));
+            panel.add(new JLabel(Messages.getString("CategoryTreeModel.RootName"))); 
+            panel.add(new JLabel(Messages.getString("App.Gallery")));
+            panel.add(new JLabel(Messages.getString("MenuListener.TableAndOthers")));
             int[] sizes = UiIconSize.loadUserSetting();
             JSpinner[] spinners = new JSpinner[3];
             for (int i = 0; i < 3; i++) {
