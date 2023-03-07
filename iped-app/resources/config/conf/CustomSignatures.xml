@@ -1223,6 +1223,59 @@
     <mime-type type="application/x-win10-timeline-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
+
+    <mime-type type="application/x-event-transcript">     
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="EventTranscript.db"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-history">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-history-registry">     
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-inventory-app">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-inventory-app-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-app-interactivity">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-app-interactivity-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-devices">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-devices-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-census">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-event-transcript-census-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-networking">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-networking-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
     
     <mime-type type="application/x-gdrive-cloud-graph-registry">     
         <sub-class-of type="application/x-metadata-entry"/>

@@ -332,6 +332,7 @@
         </parser>
         <!--parser class="iped.geo.parsers.GeofileParser"></parser-->
         <parser class="iped.parsers.winx.WinXTimelineParser"></parser>
+        <parser class="iped.parsers.eventtranscript.EventTranscriptParser"></parser>
         <parser class="iped.parsers.gdrive.GDriveMainParser"></parser>
         <parser class="iped.parsers.browsers.firefox.FirefoxSavedSessionParser"></parser>
         
