@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.app.bootstrap.Bootstrap;
 import iped.app.processing.CmdLineArgsImpl;
+import iped.app.ui.columns.ColumnsSelectReportUI;
 import iped.io.URLUtil;
 
 public class ReportDialog implements ActionListener, TableModelListener {
@@ -59,6 +60,8 @@ public class ReportDialog implements ActionListener, TableModelListener {
     JTextField keywords = new JTextField();
     JButton outButton = new JButton("..."); //$NON-NLS-1$
     JButton infoButton = new JButton(Messages.getString("ReportDialog.FillInfo")); //$NON-NLS-1$
+    JButton propertiesButton = new JButton(Messages.getString("ReportDialog.PropertiesButton"));
+    JButton propertiesLabel = new JButton(Messages.getString("ReportDialog.PropertiesLabel"));
     JButton keywordsButton = new JButton("..."); //$NON-NLS-1$
     JButton generate = new JButton(Messages.getString("ReportDialog.Create")); //$NON-NLS-1$
     JCheckBox noAttachs = new JCheckBox(Messages.getString("ReportDialog.NoAttachments")); //$NON-NLS-1$
@@ -87,6 +90,13 @@ public class ReportDialog implements ActionListener, TableModelListener {
         bpanel.add(infoButton, BorderLayout.WEST);
         footer2.add(bpanel, BorderLayout.SOUTH);
 
+        JPanel propertiesFooter = new JPanel(new BorderLayout());
+        propertiesFooter.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        propertiesFooter.add(new JLabel(Messages.getString("ReportDialog.PropertiesLabel")), BorderLayout.CENTER); //$NON-NLS-1$
+        bpanel = new JPanel(new BorderLayout());
+        bpanel.add(propertiesButton, BorderLayout.WEST);
+        propertiesFooter.add(bpanel, BorderLayout.SOUTH);
+
         JPanel footer3 = new JPanel(new BorderLayout());
         footer3.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         footer3.add(new JLabel(Messages.getString("ReportDialog.KeywordsFile")), BorderLayout.NORTH); //$NON-NLS-1$
@@ -106,6 +116,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
         footer.add(append);
         footer.add(footer3);
         footer.add(footer2);
+        footer.add(propertiesFooter);
         footer.add(okPanel);
 
         for (Component c : footer.getComponents())
@@ -119,6 +130,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
         panel.add(footer, BorderLayout.SOUTH);
 
         outButton.addActionListener(this);
+        propertiesButton.addActionListener(this);
         infoButton.addActionListener(this);
         keywordsButton.addActionListener(this);
         generate.addActionListener(this);
@@ -217,6 +229,10 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
         if (e.getSource() == infoButton) {
             caseInfo.setVisible(true);
+        }
+        
+        if (e.getSource() == propertiesButton) {
+            ColumnsSelectReportUI.getInstance().setVisible();
         }
 
         if (e.getSource() == keywordsButton) {

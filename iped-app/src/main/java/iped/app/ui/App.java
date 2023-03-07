@@ -115,6 +115,8 @@ import bibliothek.gui.dock.themes.basic.action.BasicTitleViewItem;
 import iped.app.config.LogConfiguration;
 import iped.app.config.XMLResultSetViewerConfiguration;
 import iped.app.graph.AppGraphAnalytics;
+import iped.app.ui.columns.ColumnsManager;
+import iped.app.ui.columns.ColumnsManagerUI;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
 import iped.app.ui.themes.ThemeManager;
@@ -396,7 +398,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 viewerController.dispose();
             }
             if (this.resultsTable != null) {
-                ColumnsManager.getInstance().dispose();
+                ColumnsManagerUI.getInstance().dispose();
             }
 
             appCase.close();

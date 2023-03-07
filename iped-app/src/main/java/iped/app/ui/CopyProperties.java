@@ -41,13 +41,15 @@ import iped.utils.DateUtil;
 public class CopyProperties extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
     ArrayList<Integer> uniqueIds;
+    ArrayList<String> fields;
     ProgressMonitor progressMonitor;
     File file;
     int total;
-
-    public CopyProperties(File file, ArrayList<Integer> uniqueIds) {
+    
+    public CopyProperties(File file, ArrayList<Integer> uniqueIds, ArrayList<String> fields) {
         this.file = file;
         this.uniqueIds = uniqueIds;
+        this.fields = fields;
         this.total = uniqueIds.size();
 
         progressMonitor = new ProgressMonitor(App.get(), "", "", 0, total); //$NON-NLS-1$ //$NON-NLS-2$
@@ -62,9 +64,11 @@ public class CopyProperties extends SwingWorker<Boolean, Integer> implements Pro
         byte[] utf8bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
         fos.write(utf8bom);
 
-        ArrayList<String> fields = new ArrayList<String>();
-        for (String field : ResultTableModel.fields) {
-            fields.add(field);
+        if (fields == null || fields.isEmpty()) {
+            fields = new ArrayList<String>();
+            for (String field : ResultTableModel.fields) {
+                fields.add(field);
+            }
         }
 
         for (int col = 0; col < fields.size(); col++) {
