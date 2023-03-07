@@ -128,8 +128,11 @@ public class RemoteWav2Vec2Service {
         int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
         int numLogicalCores = Runtime.getRuntime().availableProcessors();
 
-        transcriptSemaphore = new Semaphore(numConcurrentTranscriptions);
-        wavConvSemaphore = new Semaphore(numLogicalCores);
+        // We already use a BlockingDeque to get an available transcription process,
+        // this Semaphore wouldn't be needed, but it guarantees a fairness policy.
+        transcriptSemaphore = new Semaphore(numConcurrentTranscriptions, true);
+
+        wavConvSemaphore = new Semaphore(numLogicalCores, true);
 
         try (ServerSocket server = new ServerSocket(localPort, MAX_CONNECTIONS)) {
 
@@ -139,12 +142,12 @@ public class RemoteWav2Vec2Service {
 
             localPort = server.getLocalPort();
 
-            registerThis(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions);
+            registerThis(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions, numLogicalCores);
 
             logger.info("Transcription server listening on port: " + localPort);
             logger.info("Ready to work!");
 
-            startSendStatsThread(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions);
+            startSendStatsThread(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions, numLogicalCores);
 
             waitRequests(server, task, discoveryIp);
 
@@ -152,7 +155,7 @@ public class RemoteWav2Vec2Service {
 
     }
 
-    private static void registerThis(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs) throws Exception {
+    private static void registerThis(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs, int concurrentWavConvs) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -162,6 +165,7 @@ public class RemoteWav2Vec2Service {
             writer.println(MESSAGES.REGISTER);
             writer.println(localPort);
             writer.println(concurrentJobs);
+            writer.println(concurrentWavConvs);
 
             if (!MESSAGES.DONE.toString().equals(reader.readLine())) {
                 throw new Exception("Registration failed!");
@@ -169,7 +173,7 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void sendStats(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs) throws Exception {
+    private static void sendStats(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs, int concurrentWavConvs) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -178,6 +182,7 @@ public class RemoteWav2Vec2Service {
             writer.println(MESSAGES.STATS);
             writer.println(localPort);
             writer.println(concurrentJobs);
+            writer.println(concurrentWavConvs);
             writer.println(audiosTranscripted.getAndSet(0));
             writer.println(audiosDuration.getAndSet(0));
             writer.println(conversionTime.getAndSet(0));
@@ -320,14 +325,14 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void startSendStatsThread(String ip, int port, int localPort, int concurrentJobs) {
+    private static void startSendStatsThread(String ip, int port, int localPort, int concurrentJobs, int concurrentWavConvs) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 while (true) {
                     try {
                         Thread.sleep(1000);
-                        sendStats(ip, port, localPort, concurrentJobs);
+                        sendStats(ip, port, localPort, concurrentJobs, concurrentWavConvs);
 
                     } catch (Exception e) {
                         e.printStackTrace();

@@ -29,6 +29,7 @@ public class RemoteWav2Vec2Discovery {
     private static final int PING_TIMEOUT = 10;
     private static Map<String, Long> servers = new ConcurrentHashMap<>();
     private static Map<String, Integer> concurrentJobs = new ConcurrentHashMap<>();
+    private static Map<String, Integer> concurrentWavConvs = new ConcurrentHashMap<>();
     private static int port;
     private static long startTime = 0;
 
@@ -97,13 +98,16 @@ public class RemoteWav2Vec2Discovery {
 
     private static void register(Socket client, BufferedReader reader, PrintWriter writer) throws IOException {
         String ip = client.getInetAddress().getHostAddress();
+        System.out.println(new Date() + " Receiving registration from: " + ip);
         String port = reader.readLine();
         String address = ip + ":" + port;
         String nodeJobs = reader.readLine();
+        String nodeWavConvs = reader.readLine();
         writer.println(MESSAGES.DONE);
         if (servers.put(address, System.currentTimeMillis()) == null) {
             System.out.println(new Date() + " Server registered: " + address);
             concurrentJobs.put(address, Integer.valueOf(nodeJobs));
+            concurrentWavConvs.put(address, Integer.valueOf(nodeWavConvs));
         }
     }
 
@@ -119,6 +123,7 @@ public class RemoteWav2Vec2Discovery {
         String port = reader.readLine();
         String address = ip + ":" + port;
         String nodeJobs = reader.readLine();
+        String nodeWavConvs = reader.readLine();
 
         audiosTranscripted.addAndGet(Long.parseLong(reader.readLine()));
         audiosDuration.addAndGet(Long.parseLong(reader.readLine()));
@@ -134,12 +139,14 @@ public class RemoteWav2Vec2Discovery {
         if (servers.put(address, System.currentTimeMillis()) == null) {
             System.out.println(new Date() + " Server registered: " + address);
             concurrentJobs.put(address, Integer.valueOf(nodeJobs));
+            concurrentWavConvs.put(address, Integer.valueOf(nodeWavConvs));
         }
 
         int totalJobs = concurrentJobs.values().stream().reduce(0, Integer::sum);
+        int totalWavConvs = concurrentWavConvs.values().stream().reduce(0, Integer::sum);
 
-        // conversionTimeReal.addAndGet(convTime / totalJobs);
         transcriptionTimeReal.addAndGet(transcriptTime / totalJobs);
+        conversionTimeReal.addAndGet(convTime / totalWavConvs);
     }
 
     private static void loadStats() throws IOException {
@@ -154,7 +161,7 @@ public class RemoteWav2Vec2Discovery {
         value = lines.get(2).split("=")[1];
         conversionTimeCpu.set(Long.valueOf(value));
         value = lines.get(3).split("=")[1];
-        // conversionTimeReal.set(Long.valueOf(value));
+        conversionTimeReal.set(Long.valueOf(value));
         value = lines.get(4).split("=")[1];
         transcriptionTimeCpu.set(Long.valueOf(value));
         value = lines.get(5).split("=")[1];
@@ -198,17 +205,18 @@ public class RemoteWav2Vec2Discovery {
                         seconds = 0;
                         DecimalFormat df = new DecimalFormat();
                         int totalJobs = concurrentJobs.values().stream().reduce(0, Integer::sum);
+                        int totalWavConvs = concurrentWavConvs.values().stream().reduce(0, Integer::sum);
                         System.out.println("Statistics:");
                         System.out.println("Online Nodes: " + servers.size());
-                        System.out.println("Concurrent Jobs: " + totalJobs);
+                        System.out.println("Concurrent Transcriptions: " + totalJobs);
+                        System.out.println("Concurrent WAV Conversions: " + totalWavConvs);
                         System.out.println("Online Time: " + df.format((System.currentTimeMillis() - startTime) / 1000) + "s");
                         System.out.println("Transcribed Audios: " + df.format(audiosTranscripted));
                         System.out.println("Transcribed Audios Duration: " + df.format(audiosDuration.get() / 1000) + "s");
                         System.out.println("Transcription Time (cpu): " + df.format(transcriptionTimeCpu.get() / 1000) + "s");
                         System.out.println("Transcription Time (real): " + df.format(transcriptionTimeReal.get() / 1000) + "s");
                         System.out.println("Wav Conversion Time (cpu): " + df.format(conversionTimeCpu.get() / 1000) + "s");
-                        // TODO Fix Wav real time computation, it is not correct
-                        //System.out.println("Wav Conversion Time (real): " + df.format(conversionTimeReal.get() / 1000) + "s");
+                        System.out.println("Wav Conversion Time (real): " + df.format(conversionTimeReal.get() / 1000) + "s");
                         System.out.println("Received Requets: " + df.format(requestsReceived));
                         System.out.println("Accepted Requests: " + df.format(requestsAccepted));
                         System.out.println("-------------------------------------------------------");
@@ -223,6 +231,7 @@ public class RemoteWav2Vec2Discovery {
                                     + "s, removing server from list: " + server);
                             it.remove();
                             concurrentJobs.remove(server);
+                            concurrentWavConvs.remove(server);
                         }
                     }
                 }
