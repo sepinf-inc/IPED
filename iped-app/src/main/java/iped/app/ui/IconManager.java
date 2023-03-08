@@ -572,6 +572,11 @@ public class IconManager {
             mimeIconMap.put("application/x-raw-image", icon);
         }
 
+        icon = availableIconsMap.get("rfb");
+        if (icon != null) {
+            mimeIconMap.put("application/irpf", icon);
+        }
+        
         return mimeIconMap;
     }
 
