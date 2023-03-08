@@ -577,6 +577,11 @@ public class IconManager {
             mimeIconMap.put("application/irpf", icon);
         }
         
+        icon = availableIconsMap.get("usnjournal");
+        if (icon != null) {
+            mimeIconMap.put("application/x-usnjournal-$j", icon);
+        }
+        
         return mimeIconMap;
     }
 
