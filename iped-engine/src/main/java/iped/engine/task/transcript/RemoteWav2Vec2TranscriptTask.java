@@ -28,6 +28,7 @@ import org.apache.tika.io.TemporaryResources;
 
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.core.Manager;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.transcript.RemoteWav2Vec2Service.MESSAGES;
 import iped.exception.IPEDException;
@@ -37,8 +38,6 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static Logger logger = LogManager.getLogger(Wav2Vec2TranscriptTask.class);
 
     private static final int MAX_CONNECT_ERRORS = 60;
-
-    private static final int RETRY_INTERVAL_MILLIS = 100;
 
     private static final int UPDATE_SERVERS_INTERVAL_MILLIS = 60000;
 
@@ -64,6 +63,14 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         public String toString() {
             return ip + ":" + port;
         }
+    }
+
+    // See https://github.com/sepinf-inc/IPED/issues/1576
+    private int getRetryIntervalMillis() {
+        // This depends on how much time worker nodes need to consume their queue.
+        // Of course audios duration, nodes queue size and performance affect this.
+        // This tries to be fair with clients independent of their number of threads.
+        return Manager.getInstance().getNumWorkers() * 100;
     }
 
     @Override
@@ -259,8 +266,8 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     }
 
-    private static void sleepBeforeRetry(long lastRequestTime) throws InterruptedException {
-        long sleep = RETRY_INTERVAL_MILLIS - (System.currentTimeMillis() - lastRequestTime);
+    private void sleepBeforeRetry(long lastRequestTime) throws InterruptedException {
+        long sleep = getRetryIntervalMillis() - (System.currentTimeMillis() - lastRequestTime);
         if (sleep > 0) {
             Thread.sleep(sleep);
         }
