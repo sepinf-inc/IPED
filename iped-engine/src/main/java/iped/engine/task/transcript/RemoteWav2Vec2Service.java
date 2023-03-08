@@ -162,6 +162,7 @@ public class RemoteWav2Vec2Service {
                 PrintWriter writer = new PrintWriter(
                         new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
 
+            client.setSoTimeout(10000);
             writer.println(MESSAGES.REGISTER);
             writer.println(localPort);
             writer.println(concurrentJobs);
@@ -179,6 +180,7 @@ public class RemoteWav2Vec2Service {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                 PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
 
+            client.setSoTimeout(10000);
             writer.println(MESSAGES.STATS);
             writer.println(localPort);
             writer.println(concurrentJobs);
