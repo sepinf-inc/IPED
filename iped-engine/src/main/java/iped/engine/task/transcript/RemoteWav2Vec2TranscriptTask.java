@@ -107,10 +107,8 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 servers.add(server);
                 logger.info("Transcription server discovered: {}:{}", server.ip, server.port);
             }
-            if (!servers.isEmpty()) {
-                RemoteWav2Vec2TranscriptTask.servers = servers;
-                lastUpdateServersTime = System.currentTimeMillis();
-            }
+            RemoteWav2Vec2TranscriptTask.servers = servers;
+            lastUpdateServersTime = System.currentTimeMillis();
         } catch (ConnectException e) {
             String msg = "Central transcription node refused connection, is it online? " + e.toString();
             if (servers.isEmpty()) {
