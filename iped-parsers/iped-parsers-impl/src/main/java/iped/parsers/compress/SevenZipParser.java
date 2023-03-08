@@ -8,9 +8,11 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
@@ -37,11 +39,13 @@ import iped.parsers.util.RawISOConverter;
 import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
+import iped.utils.LocalizedFormat;
 import net.sf.sevenzipjbinding.ExtractAskMode;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
 import net.sf.sevenzipjbinding.IArchiveExtractCallback;
 import net.sf.sevenzipjbinding.IInArchive;
 import net.sf.sevenzipjbinding.ISequentialOutStream;
+import net.sf.sevenzipjbinding.PropID;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
@@ -141,8 +145,10 @@ public class SevenZipParser extends AbstractParser {
             ArrayList<Integer> itemsToExtract = new ArrayList<Integer>();
             for (int i = 0; i < simpleInArchive.getNumberOfItems(); i++) {
                 ISimpleInArchiveItem item = simpleInArchive.getArchiveItem(i);
-                if (item.isEncrypted())
+                if (item.isEncrypted()) {
+                    listArchiveContent(inArchive, xhtml);
                     throw new EncryptedDocumentException();
+                }
                 if (item.isFolder())
                     folderMap.put(item.getPath(), i);
                 else
@@ -173,6 +179,44 @@ public class SevenZipParser extends AbstractParser {
             xhtml.endDocument();
         }
 
+    }
+    
+    private void listArchiveContent(IInArchive inArchive, XHTMLContentHandler xhtml) {
+        int maxNumEntries = 1 << 24;
+        List<String> entries = new ArrayList<String>();
+        try {
+            int numEntries = Math.min(maxNumEntries, inArchive.getNumberOfItems());
+            DecimalFormat nf = LocalizedFormat.getDecimalInstance("#,##0");
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < numEntries; i++) {
+                sb.append((String) inArchive.getProperty(i, PropID.PATH));
+                Boolean isFolder = (Boolean) inArchive.getProperty(i, PropID.IS_FOLDER);
+                if (isFolder != null && isFolder.booleanValue()) {
+                    sb.append(" [FOLDER]");
+                } else {
+                    Long size = (Long) inArchive.getProperty(i, PropID.SIZE);
+                    if (size != null && size > 0) {
+                        sb.append(" [").append(nf.format(size)).append(" bytes]");
+                    }
+                }
+                entries.add(sb.toString());
+                sb.delete(0, sb.length());
+            }
+        } catch (Exception e) {
+        } finally {
+            try {
+                if (!entries.isEmpty()) {
+                    Collections.sort(entries);
+                    xhtml.startElement("pre");
+                    for (String entry : entries) {
+                        xhtml.characters(entry);
+                        xhtml.newline();
+                    }
+                    xhtml.endElement("pre");
+                }
+            } catch (Exception e) {
+            }
+        }
     }
 
     public class MyExtractCallback implements IArchiveExtractCallback {
