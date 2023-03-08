@@ -75,8 +75,8 @@ public class RemoteWav2Vec2Discovery {
                 try (Socket client = server.accept();
                         InputStream is = client.getInputStream();
                         BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-                        PrintWriter writer = new PrintWriter(
-                                new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
+                        PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
+                    client.setSoTimeout(10000);
                     String cmd = reader.readLine();
                     if (MESSAGES.REGISTER.toString().equals(cmd)) {
                         register(client, reader, writer);
@@ -87,6 +87,8 @@ public class RemoteWav2Vec2Discovery {
                     if (MESSAGES.STATS.toString().equals(cmd)) {
                         getStats(client, reader, writer);
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
 

@@ -93,11 +93,10 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         try (Socket client = new Socket(ip, port);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-                PrintWriter writer = new PrintWriter(
-                        new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
+                PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
 
+            client.setSoTimeout(10000);
             writer.println(MESSAGES.DISCOVER);
-
             int numServers = Integer.parseInt(reader.readLine());
             List<Server> servers = new ArrayList<>();
             for (int i = 0; i < numServers; i++) {
