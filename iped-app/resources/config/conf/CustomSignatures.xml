@@ -327,7 +327,7 @@
     
     <mime-type type="application/x-whatsapp-wadb">
         <sub-class-of type="application/x-sqlite3"/>
-        <glob pattern="wa*.db"/>
+        <glob pattern="wa.db"/>
     </mime-type>
     
     <mime-type type="application/x-whatsapp-contactsv2">
