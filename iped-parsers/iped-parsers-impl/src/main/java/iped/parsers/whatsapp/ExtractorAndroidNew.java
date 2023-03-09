@@ -121,7 +121,6 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setLocalResource(account.getId());
                 int type = rs.getInt("messageType"); //$NON-NLS-1$
                 int status = rs.getInt("status"); //$NON-NLS-1$
-                String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
                 Integer edit_version;
                 try {
                     edit_version = Integer.parseInt(SQLite3DBParser.getStringIfExists(rs, "edit_version"));
@@ -139,6 +138,10 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(status); // $NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "text_data")); //$NON-NLS-1$
+                String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
+                if (caption == null || caption.isBlank()) {
+                    caption = m.getData();
+                }
                 m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
                 m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
                 m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
@@ -308,7 +311,7 @@ public class ExtractorAndroidNew extends Extractor {
             + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
             + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
             + " m.message_type as messageType,   latitude,  longitude, mm.media_duration,"
-            + " null as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData, ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
+            + " mm.media_caption as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData, ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
             + " from message m  inner join chat_view cv on m.chat_row_id=cv._id left join message_media mm on mm.message_row_id=m._id"
             + " left join jid on jid._id=m.sender_jid_row_id left join message_location ml on m._id=ml.message_row_id "
             + " left join message_system ms on m._id=ms.message_row_id"
