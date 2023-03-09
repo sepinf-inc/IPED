@@ -19,6 +19,7 @@
 package iped.app.ui;
 
 import java.awt.Component;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -28,7 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
@@ -124,7 +127,7 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.loadPanelsLayout) {
             App.get().loadPanelLayout();
-            
+
         } else if (e.getSource() == menu.checkHighlighted) {
             BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(1);
@@ -427,19 +430,37 @@ public class MenuListener implements ActionListener {
                 UiScale.saveUserSetting(value);
             }
         } else if (e.getSource() == menu.catIconSize) {
-            int size = UiIconSize.loadUserSetting();
-            SpinnerNumberModel sModel = new SpinnerNumberModel(size, 16, 32, 2);
-            JSpinner spinner = new JSpinner(sModel);
-            spinner.setEditor(new JSpinner.DefaultEditor(spinner));
-            spinner.addChangeListener(new ChangeListener() {
-                public void stateChanged(ChangeEvent e) {
-                    int size = (int) spinner.getValue();
-                    IconManager.setCategoryIconSize(size);
-                    App.get().categoryTree.updateUI();
-                    UiIconSize.saveUserSetting(size);
-                }
-            });
-            JOptionPane.showMessageDialog(App.get(), spinner, menu.catIconSize.getText(), JOptionPane.QUESTION_MESSAGE);
+            JPanel panel = new JPanel(new GridLayout(2, 3, 5, 5));
+            panel.add(new JLabel(Messages.getString("CategoryTreeModel.RootName"))); 
+            panel.add(new JLabel(Messages.getString("App.Gallery")));
+            panel.add(new JLabel(Messages.getString("MenuListener.TableAndOthers")));
+            int[] sizes = UiIconSize.loadUserSetting();
+            JSpinner[] spinners = new JSpinner[3];
+            for (int i = 0; i < 3; i++) {
+                int idx = i;
+                SpinnerNumberModel sModel = new SpinnerNumberModel(sizes[idx], 16, 32, 2);
+                JSpinner spinner = spinners[idx] = new JSpinner(sModel);
+                panel.add(spinner);
+                spinner.setEditor(new JSpinner.DefaultEditor(spinner));
+                spinner.addChangeListener(new ChangeListener() {
+                    public void stateChanged(ChangeEvent e) {
+                        int size = (int) spinner.getValue();
+                        if (idx == 0) {
+                            IconManager.setCategoryIconSize(size);
+                            App.get().categoryTree.updateUI();
+                        } else if (idx == 1) {
+                            IconManager.setGalleryIconSize(size);
+                            App.get().gallery.updateUI();
+                        } else if (idx == 2) {
+                            IconManager.setIconSize(size);
+                            App.get().updateIconContainersUI(size, true);
+                        }
+                        sizes[idx] = size;
+                        UiIconSize.saveUserSetting(sizes);
+                    }
+                });
+            }
+            JOptionPane.showMessageDialog(App.get(), panel, menu.catIconSize.getText(), JOptionPane.QUESTION_MESSAGE);
         }
     }
 

@@ -6,7 +6,7 @@
       {"name": "PDF Documents", "mimes": ["application/pdf"]},
       {"name": "HTML Documents", "mimes": ["text/html", "application/xhtml+xml", "application/vnd.wap.xhtml+xml", "application/x-asp", "text/asp", "text/aspdotnet"]},
       {"name": "Text Documents", "mimes": ["application/vnd.ms-wordml", "application/x-tika-ooxml-protected-docx", "application/vnd.apple.pages", "application/msword", "application/msword2", "application/msword5", "application/vnd.ms-word.document.macroenabled.12", "application/vnd.ms-word.template.macroenabled.12", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.wordprocessingml.template", "application/vnd.oasis.opendocument.text", "application/vnd.oasis.opendocument.text-master", "application/vnd.oasis.opendocument.text-template", "application/vnd.oasis.opendocument.text-web", "application/vnd.sun.xml.writer", "application/vnd.sun.xml.writer.global", "application/vnd.sun.xml.writer.template", "application/vnd.stardivision.writer", "application/vnd.oasis.opendocument.flat.text"]},
-      {"name": "Other Documents", "mimes": ["application/vnd.ms-xpsdocument", "application/vnd.visio", "application/vnd.ms-project", "application/x-project", "application/vnd.ms-works", "application/x-quattro-pro", "application/sldworks", "application/x-tika-ooxml-protected", "application/onenote", "application/x-msmoney", "application/x-mspublisher", "application/x-ms-owner", "model/vnd.dwfx+xps", "application/vnd.ms-graph"]}
+      {"name": "Other Documents", "mimes": ["application/vnd.ms-xpsdocument", "application/vnd.visio", "application/vnd.ms-visio.drawing", "application/vnd.ms-project", "application/x-project", "application/vnd.ms-works", "application/x-quattro-pro", "application/sldworks", "application/x-tika-ooxml-protected", "application/onenote", "application/x-msmoney", "application/x-mspublisher", "application/x-ms-owner", "model/vnd.dwfx+xps", "application/vnd.ms-graph", "application/postscript"]}
     ]},
     {"name": "XML Files", "mimes": ["application/xml", "application/rdf+xml", "application/rss+xml"]},
     {"name": "Georeferenced Files", "mimes": ["application/vnd.google-earth.kml+xml", "application/gpx"]},
@@ -21,7 +21,7 @@
       {"name": "Mailboxes", "mimes": ["application/vnd.ms-outlook-pst", "application/outlook-dbx", "application/mbox", "application/x-incredimail", "application/vnd.lotus-notes", "application/x-win10-mail-db"]},
       {"name": "Emails", "mimes": ["message/rfc822", "message/x-emlx", "application/vnd.ms-outlook", "message/outlook-pst", "application/x-ufed-html-mails", "message/x-ufed-email", "message/x-win10-mail-msg"]},
       {"name": "Appointments", "mimes": ["application/x-win10-mail-appointment"]},
-      {"name": "Win10 Mail App Additional Info", "mimes": ["application/x-win10-mail-store"]}
+      {"name": "Win10 Mail Info", "mimes": ["application/x-win10-mail-store"]}
     ]},
     {"name": "Multimedia", "categories":[
       {"name": "Audios", "mimes": ["audio"]},
