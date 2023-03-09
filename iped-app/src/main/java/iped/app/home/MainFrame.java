@@ -6,7 +6,6 @@ import iped.app.home.opencase.OpenCasePanel;
 import iped.app.home.processmanager.ProcessManagerContainer;
 import iped.app.home.style.StyleManager;
 import iped.app.home.utils.CasePathManager;
-import iped.app.processing.Main;
 import iped.app.ui.Messages;
 import iped.app.ui.themes.ThemeManager;
 import iped.app.ui.utils.UiScale;
@@ -82,11 +81,9 @@ public class MainFrame extends JFrame {
         this.add(cardsContentPanel, gbc);
 
         //Load configurables files
-        Main iped = new Main();
-        iped.setConfigPath();
+        Configuration configuration = Configuration.getInstance();
+        configuration.loadConfigurables(CasePathManager.getInstance().getConfigPath().getAbsolutePath(), true);
 
-        Configuration configuration = new Configuration();
-        configuration.loadConfigurables(iped.getConfigPath(), true);
 
 
         //Add panels to cardlayout
