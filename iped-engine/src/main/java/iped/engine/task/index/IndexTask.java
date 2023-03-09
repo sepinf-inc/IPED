@@ -88,8 +88,8 @@ public class IndexTask extends AbstractTask {
     }
 
     public static void configureTreeNodeAttributes(IItem item) {
-        if (item.isSubItem()) {
-            item.dispose();
+        if (item.isSubItem() && item instanceof Item) {
+            ((Item) item).dispose(false);
         }
         item.setIdInDataSource(null);
         item.setInputStreamFactory(null);
