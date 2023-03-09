@@ -1,6 +1,7 @@
 package iped.app.home.utils;
 
 import iped.app.home.MainFrame;
+import iped.data.IIPEDSource;
 import iped.io.URLUtil;
 
 import java.io.File;
@@ -19,9 +20,10 @@ import java.util.Map;
 public class CasePathManager {
 
     private static CasePathManager casePathManager;
-    private final File testPath = null; //new File("");
+    private final File testPath = new File("/home/patrick.pdb/ipedtimeline-workspace/iped-parent/target/release/iped-4.1-snapshot"); //new File("");
     private File casePath;
     private File libDir;
+    static String IPED_MODULE_DIR = IIPEDSource.MODULE_DIR;
 
     private CasePathManager() {
         try {
@@ -41,23 +43,23 @@ public class CasePathManager {
     private void detectCasePath() throws URISyntaxException {
         if (testPath != null) {
             casePath = testPath;
-            libDir = new File(casePath + "/iped/lib");
+            libDir = new File(casePath + "/"+IPED_MODULE_DIR+"/lib");
         }else {
             URL url = URLUtil.getURL(MainFrame.class);
             String rootPath = new File(url.toURI()).getParent();
             // test for report generation from case folder
-            if (rootPath.endsWith("iped" + File.separator + "lib")) { //$NON-NLS-1$ //$NON-NLS-2$
+            if (rootPath.endsWith(IPED_MODULE_DIR + File.separator + "lib")) { //$NON-NLS-1$ //$NON-NLS-2$
                 rootPath = new File(url.toURI()).getParentFile().getParent();
             }
-            if (rootPath.endsWith("iped")) { //$NON-NLS-1$ //$NON-NLS-2$
+            if (rootPath.endsWith(IPED_MODULE_DIR)) { //$NON-NLS-1$ //$NON-NLS-2$
                 rootPath = new File(url.toURI()).getParentFile().getParent();
             }
             casePath = new File(rootPath);
-            libDir = new File(casePath + "/iped/lib");
+            libDir = new File(casePath + "/"+IPED_MODULE_DIR+"/lib");
         }
 
-        System.out.println(new File(casePath, "iped").toPath());
-        if (!new File(casePath, "iped").exists()) //$NON-NLS-1$
+        System.out.println(new File(casePath, IPED_MODULE_DIR).toPath());
+        if (!new File(casePath, IPED_MODULE_DIR).exists()) //$NON-NLS-1$
             casePath = null;
     }
 
@@ -93,12 +95,12 @@ public class CasePathManager {
     }
 
     public File getConfigPath() {
-        return Paths.get(casePath.getAbsolutePath(), "/iped").toFile();
+        return Paths.get(casePath.getAbsolutePath(), IPED_MODULE_DIR).toFile();
     }
 
     public File getLocalConfigFile(){
         String LOCAL_CONFIG = "LocalConfig.txt";
-        return Paths.get(casePath.getAbsolutePath(), "/iped", LOCAL_CONFIG).toFile();
+        return Paths.get(casePath.getAbsolutePath(), IPED_MODULE_DIR, LOCAL_CONFIG).toFile();
     }
 
 }
