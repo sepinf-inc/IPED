@@ -988,17 +988,28 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 } else {
                     if (!ignoreItems) {
-                        // process seen attachments later
+                        // Process seen ATTACHMENTS later and other item types now
                         if (!seenAttachment) {
                             processItem(item);
+                            // If item is a MESSAGE with seen attachments, try to process them
                             List<Item> seenAttachs = seenAttachsPerId.get(item.getId());
                             if (seenAttachs != null && numInstantMsgAttachs > 1) {
+                                // If msg has more than 1 (seen/added) attach, add all of them to the case again for now.
+                                // This duplicates those attachs, but today we can't update indexed items to update their properties.
                                 for (Item attach : seenAttachs) {
                                     processItem(attach);
                                 }
-                            } else if (seenAttachs != null) {
-                                item.getMetadata().set(ExtraProperties.LINKED_ITEMS,
-                                        ESCAPED_UFED_ID + ":" + prevUfedId);
+                            } else if (seenAttachs != null && seenAttachs.size() == 1) {
+                                Item attach = seenAttachs.get(0);
+                                item.getMetadata().set(ExtraProperties.LINKED_ITEMS, ESCAPED_UFED_ID + ":" + prevUfedId);
+                                // Since this attach was already seen/added to case, skip it, but copy its props to parent message
+                                for (String key : attach.getMetadata().names()) {
+                                    if (key.startsWith(ExtraProperties.UFED_META_PREFIX) && item.getMetadata().get(key) == null) {
+                                        for (String value : attach.getMetadata().getValues(key)) {
+                                            item.getMetadata().add(key, value);
+                                        }
+                                    }
+                                }
                                 caseData.incDiscoveredEvidences(-1);
                             }
                             seenAttachsPerId.remove(item.getId());
