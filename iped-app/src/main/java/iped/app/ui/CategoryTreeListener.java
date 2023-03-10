@@ -1,6 +1,9 @@
 package iped.app.ui;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -17,10 +20,15 @@ import org.apache.lucene.search.TermQuery;
 
 import iped.engine.data.Category;
 import iped.engine.task.index.IndexItem;
+import iped.viewers.api.IFilter;
+import iped.viewers.api.IQueryFilter;
+import iped.viewers.api.IQueryFilterer;
 
-public class CategoryTreeListener implements TreeSelectionListener, TreeExpansionListener, ClearFilterListener {
+public class CategoryTreeListener implements TreeSelectionListener, TreeExpansionListener, ClearFilterListener, IQueryFilterer {
 
     private BooleanQuery query;
+    private LinkedHashSet<Category> categoryList = new LinkedHashSet<Category>();
+    private String queryStr;
     private HashSet<TreePath> selection = new HashSet<TreePath>();
     private TreePath root;
     private long collapsed = 0;
@@ -52,12 +60,16 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
 
         if (selection.contains(root) || selection.isEmpty()) {
             App.get().setCategoriesDefaultColor(true);
+            categoryList.clear();
             query = null;
+            queryStr = null;
 
         } else {
             App.get().setCategoriesDefaultColor(false);
+            queryStr="";
 
             Builder builder = new Builder();
+            categoryList.clear();
             for (TreePath path : selection) {
                 Category category = (Category) path.getLastPathComponent();
                 addCategoryToQuery(category, builder);
@@ -73,6 +85,9 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     private void addCategoryToQuery(Category category, Builder builder) {
         String name = IndexItem.normalize(category.getName(), true);
         builder.add(new TermQuery(new Term(IndexItem.CATEGORY, name)), Occur.SHOULD);
+        queryStr+=" category:\""+name+"\"";
+
+        categoryList.add(category);
 
         for (Category subcat : category.getChildren()) {
             addCategoryToQuery(subcat, builder);
@@ -95,11 +110,54 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     public void clearFilter() {
         clearing = true;
         App.get().categoryTree.clearSelection();
+        categoryList.clear();
         clearing = false;
     }
 
     public HashSet<TreePath> getSelection() {
         return selection;
     }
+    
+    public void recursiveCategoryQuery(Category cat, StringBuffer buff) {
+        for(Category category:cat.getChildren()) {
+            String name = IndexItem.normalize(category.getName(), true);
+            buff.append(" || category:\"");
+            buff.append(name);
+            buff.append("\"");
+            recursiveCategoryQuery(category, buff);
+        }
+    }
 
+    @Override
+    public List<IFilter> getDefinedFilters() {
+        CategoryTreeListener self = this;
+        List<IFilter> result = new ArrayList<IFilter>();
+        for(Category category:categoryList) {
+            result.add(new IQueryFilter() {
+                @Override
+                public String getFilterExpression() {
+                    String name = IndexItem.normalize(category.getName(), true);
+                    StringBuffer queryStr = new StringBuffer();
+                    queryStr.append(" category:\"");
+                    queryStr.append(name);
+                    queryStr.append("\"");
+                    recursiveCategoryQuery(category, queryStr);
+                    return queryStr.toString();
+                }
+                public String toString() {
+                    return IndexItem.normalize(category.getName(), true);
+                }
+            });
+        }
+        return result;
+    }
+
+    @Override
+    public boolean hasFiltersApplied() {
+        return false;
+    }
+    
+    public String toString() {
+        return "Category panel filterer";
+    }
 }
