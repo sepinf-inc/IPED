@@ -32,6 +32,7 @@ import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDomainInfo;
 
+import iped.app.metadata.ValueCount;
 import iped.app.timelinegraph.IpedChartPanel;
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.cache.CacheEventEntry;
@@ -41,7 +42,6 @@ import iped.app.timelinegraph.cache.TimeStampCache;
 import iped.app.ui.App;
 import iped.app.ui.CaseSearcherFilter;
 import iped.app.ui.Messages;
-import iped.app.ui.MetadataPanel.ValueCount;
 import iped.data.IIPEDSource;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
