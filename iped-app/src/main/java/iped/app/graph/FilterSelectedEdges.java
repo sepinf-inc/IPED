@@ -1,11 +1,17 @@
 package iped.app.graph;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.kharon.Edge;
 import org.kharon.OverlappedEdges;
 
@@ -13,8 +19,15 @@ import iped.app.ui.App;
 import iped.data.IItemId;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
+import iped.engine.search.MultiSearchResult;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
+import iped.search.IMultiSearchResult;
+import iped.viewers.api.IFilter;
+import iped.viewers.api.IResultSetFilter;
+import iped.viewers.api.IResultSetFilterer;
 
-public class FilterSelectedEdges {
+public class FilterSelectedEdges implements IResultSetFilterer{
 
     private static FilterSelectedEdges INSTANCE = new FilterSelectedEdges();
 
@@ -143,6 +156,50 @@ public class FilterSelectedEdges {
             result.add(itemId);
         }
         return result;
+    }
+
+    @Override
+    public List getDefinedFilters() {
+        ArrayList<IFilter> result = new ArrayList<IFilter>();
+        result.add(getFilter());
+        return result;
+    }
+
+    @Override
+    public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public IFilter getFilter() {
+        return new IResultSetFilter() {
+            @Override
+            public IMultiSearchResult filterResult(IMultiSearchResult src)
+                    throws ParseException, QueryNodeException, IOException {
+                IMultiSearchResult result = src;
+                Set<IItemId> selectedEdges = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
+                if (selectedEdges != null && !selectedEdges.isEmpty()) {
+                    ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
+                    ArrayList<Float> scores = new ArrayList<Float>();
+                    int i = 0;
+                    for (IItemId item : result.getIterator()) {
+                        if (selectedEdges.contains(item)) {
+                            filteredItems.add(item);
+                            scores.add(result.getScore(i));
+                        }
+                        i++;
+                    }
+                    result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
+                            ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+                }
+                return result;
+            }
+
+            public String toString() {
+                return "Filter selected edges";
+            }
+        };
     }
 
 }

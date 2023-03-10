@@ -104,7 +104,9 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.utils.IconUtil;
 import iped.viewers.api.GUIProvider;
+import iped.viewers.api.IFilter;
 import iped.viewers.api.IMultiSearchResultProvider;
+import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
 import iped.viewers.api.events.RowSorterTableDataChange;
@@ -1056,5 +1058,45 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         setTimePeriodClass(Day.class);
         setTimePeriodString("Day");
         refreshChart(true);
+    }
+
+    @Override
+    public List getDefinedFilters() {
+        ArrayList<IFilter> result = new ArrayList<IFilter>();
+        if (chartPanel.definedFilters.size() > 0) {
+            for(Date[] dates : chartPanel.definedFilters) {
+                result.add(new IQueryFilter() {
+                    public String toString() {
+                        String timeFilter = domainAxis.ISO8601DateFormatUTC(dates[0]);
+                        timeFilter += " TO ";
+                        timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
+                        return timeFilter;
+                   }
+
+                    @Override
+                    public String getFilterExpression() {
+                        String timeFilter = "timeStamp:[";
+                        timeFilter += domainAxis.ISO8601DateFormatUTC(dates[0]);
+                        timeFilter += " TO ";
+                        timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
+                        timeFilter += "]";
+                        return timeFilter;
+                    }
+                });
+            }
+        }
+        for(String event:chartPanel.excludedEvents) {
+            result.add(new IFilter() {
+               public String toString() {
+                   return "-eventType:"+event;
+               }
+            });
+        }
+        
+      return result;
+    }
+    
+    public String toString() {
+        return "Timeline panel";
     }
 }

@@ -8,9 +8,11 @@ package iped.data;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.KeyStroke;
@@ -97,5 +99,7 @@ public interface IMultiBookmarks extends Serializable {
     void addSelectionListener(SelectionListener listener);
 
     void removeSelectionListener(SelectionListener listener);
+
+    Map<Integer, BitSet> filterBookmarksBitsets(IMultiSearchResult input, Set<String> bookmarkSelection, boolean includeNoBookmarks);
 
 }

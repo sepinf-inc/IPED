@@ -22,8 +22,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -45,22 +47,18 @@ import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
+import iped.viewers.api.IFilter;
+import iped.viewers.api.IQueryFilter;
+import iped.viewers.api.IQueryFilterer;
 
 public class TreeListener extends MouseAdapter
-        implements TreeSelectionListener, ActionListener, TreeExpansionListener, ClearFilterListener {
+        implements TreeSelectionListener, ActionListener, TreeExpansionListener, ClearFilterListener, IQueryFilterer {
 
     private Query treeQuery, recursiveTreeQuery;
     boolean rootSelected = false;
     HashSet<TreePath> selection = new HashSet<TreePath>();
     private long collapsedTime = 0;
     private boolean clearing = false;
-
-    public Query getQuery() {
-        if (App.get().recursiveTreeList.isSelected())
-            return recursiveTreeQuery;
-        else
-            return treeQuery;
-    }
 
     @Override
     public void valueChanged(TreeSelectionEvent evt) {
@@ -209,6 +207,47 @@ public class TreeListener extends MouseAdapter
         clearing = true;
         App.get().tree.clearSelection();
         clearing = false;
+    }
+
+    @Override
+    public List getDefinedFilters() {
+        TreeListener self = this;
+        List<IFilter> result = new ArrayList<IFilter>();
+        if(selection.size() == 1) {
+            result.add(new IQueryFilter() {
+                @Override
+                public String getFilterExpression() {
+                    if (App.get().recursiveTreeList.isSelected())
+                        return self.recursiveTreeQuery.toString();
+                    else
+                        return self.treeQuery.toString();
+                }
+                public String toString() {
+                    if (App.get().recursiveTreeList.isSelected())
+                        return self.recursiveTreeQuery.toString();
+                    else
+                        return self.treeQuery.toString();
+                }
+            });
+        }
+        return result;
+    }
+
+    @Override
+    public boolean hasFiltersApplied() {
+        return treeQuery!=null;
+    }
+
+    @Override
+    public Query getQuery() {
+        if (App.get().recursiveTreeList.isSelected())
+            return recursiveTreeQuery;
+        else
+            return treeQuery;
+    }
+    
+    public String toString() {
+        return "Evidence panel";
     }
 
 }
