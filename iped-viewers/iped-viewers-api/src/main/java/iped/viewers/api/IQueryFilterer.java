@@ -2,9 +2,8 @@ package iped.viewers.api;
 
 import org.apache.lucene.search.Query;
 
-public interface IQueryFilterer {
-	
-	public Query getQuery();
+public interface IQueryFilterer extends IFilterer{
 	public boolean hasFiltersApplied();
-
+    
+    Query getQuery();
 }
