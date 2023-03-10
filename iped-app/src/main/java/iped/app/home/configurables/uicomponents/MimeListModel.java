@@ -3,8 +3,7 @@ package iped.app.home.configurables.uicomponents;
 import java.util.List;
 import java.util.function.Predicate;
 
-import javax.swing.ListModel;
-import javax.swing.event.ListDataListener;
+import iped.app.ui.controls.IPEDFilterableListModel;
 
 public class MimeListModel extends IPEDFilterableListModel<String>{
 
