@@ -1,4 +1,4 @@
-package iped.app.home.configurables.uicomponents;
+package iped.app.ui.controls;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -24,7 +24,7 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class IPEDSearchList<E> extends JPanel {
         protected RSyntaxTextArea txFilter;
-        Predicate<E> availablePredicate;
+        protected Predicate<E> availablePredicate;
         protected List<E> availableItems;
         protected JScrollPane listScrollPanel;
         protected JList<E> list;
