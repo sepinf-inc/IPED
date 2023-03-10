@@ -52,6 +52,17 @@
 	  		<artifactId>jfreechartextensions</artifactId>
 	  		<version>5d6b903557dac49a925a7a62d5c6592bd07482c5</version>
 	  	</dependency>
+        <!-- https://mvnrepository.com/artifact/com.fifesoft/rsyntaxtextarea -->
+        <dependency>
+            <groupId>com.fifesoft</groupId>
+            <artifactId>rsyntaxtextarea</artifactId>
+            <version>3.3.2</version>
+        </dependency>        
+        <dependency>
+          <groupId>com.fifesoft</groupId>
+          <artifactId>autocomplete</artifactId>
+          <version>3.3.1</version>
+        </dependency>        
     </dependencies>
     
     <build>
