@@ -237,7 +237,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
 
     @Override
     public void removeObject(Configurable<?> aObject) {
-        loadedConfigurablesState.remove(aObject);
+        loadedConfigurablesState.remove(new ConfigurableWrapper(aObject));
     }
 
     public void saveSerializedConfig(File file) throws FileNotFoundException, IOException {
