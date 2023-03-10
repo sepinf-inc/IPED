@@ -1,4 +1,4 @@
-package iped.app.home.configurables;
+package iped.app.ui.controls;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -13,7 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -22,8 +22,8 @@ import org.apache.tika.mime.MediaType;
 import iped.app.ui.IconManager;
 import iped.engine.data.Category;
 
-public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
-    JCheckBox checkbox=new JCheckBox();
+public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer{
+    protected JCheckBox checkbox=new JCheckBox();
     JLabel label = new JLabel();
     private JTree tree;
     Predicate<Object> checkedPredicate;
@@ -53,7 +53,6 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
 
         ckPanel.setBackground(Color.white);
         ckPanel.add(checkbox, BorderLayout.WEST);
-        ckPanel.add(label, BorderLayout.CENTER);
     }
 
     public CheckBoxTreeCellRenderer(JTree tree, Predicate<Object> checkedPredicate, Predicate<Object> visiblePredicate) {
@@ -85,6 +84,8 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
         label.setIcon(icon);
 
         if(visiblePredicate==null || visiblePredicate.test(value)) {
+            ckPanel.remove(label);
+            ckPanel.add(label, BorderLayout.CENTER);
             checkbox.setSelected(checkedPredicate.test(value));
             result = ckPanel;
         }else{
@@ -92,5 +93,9 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
         }
 
         return result;
+    }
+
+    public JCheckBox getCheckbox() {
+        return checkbox;
     }
 }
