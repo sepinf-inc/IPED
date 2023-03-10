@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -118,9 +119,12 @@ public class UFEDChatParser extends AbstractParser {
                     UfedMessage m = createMessage(msg);
                     messages.add(m);
                 } else {
+                    HashSet<String> uuids = new HashSet<>();
                     for (IItemReader subitem : subItems) {
-                        UfedMessage m = createMessage(msg, subitem);
-                        messages.add(m);
+                        if (uuids.add(subitem.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"))) {
+                            UfedMessage m = createMessage(msg, subitem);
+                            messages.add(m);
+                        }
                     }
                 }
             }
