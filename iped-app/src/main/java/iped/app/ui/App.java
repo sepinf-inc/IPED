@@ -38,12 +38,15 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -117,6 +120,8 @@ import iped.app.config.XMLResultSetViewerConfiguration;
 import iped.app.graph.AppGraphAnalytics;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
+import iped.app.ui.controls.table.MetadataValueSearchList;
+import iped.app.ui.filterdecisiontree.OperandPopupMenu;
 import iped.app.ui.themes.ThemeManager;
 import iped.app.ui.utils.PanelsLayout;
 import iped.app.ui.viewers.TextViewer;
@@ -132,9 +137,15 @@ import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.search.IPEDSearcher;
+import iped.engine.search.ImageSimilarityLowScoreFilter;
+import iped.engine.search.ImageSimilarityScorer;
 import iped.engine.search.MultiSearchResult;
+import iped.engine.search.SimilarFacesSearch;
+import iped.engine.search.SimilarImagesSearch;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.util.Util;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
 import iped.parsers.standard.StandardParser;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
@@ -144,8 +155,12 @@ import iped.viewers.ATextViewer;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IColumnsManager;
+import iped.viewers.api.IFilter;
 import iped.viewers.api.IMultiSearchResultProvider;
+import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IQueryFilterer;
+import iped.viewers.api.IResultSetFilter;
+import iped.viewers.api.IResultSetFilterer;
 import iped.viewers.api.ResultSetViewer;
 import iped.viewers.api.ResultSetViewerConfiguration;
 import iped.viewers.components.HitsTable;
@@ -270,6 +285,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private Query query = null;
 
     private Set<String> highlightTerms = new HashSet<>();
+
+    private SimilarImagesQueryFilterer similarImagesFilterer;
+
+    private DuplicatesFilterer duplicatesFilterer;
+
+    FiltersPanel filtersPanel;
+
+    private DefaultSingleCDockable filtersTabDock;
+
+    private OperandPopupMenu operandMenu;
 
     private App() {
     }
@@ -470,6 +495,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterComboBox.addItem(App.FILTRO_TODOS);
         filterComboBox.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
         filterManager = new FilterManager(filterComboBox);
+        similarImagesFilterer = new SimilarImagesQueryFilterer();
+        filterManager.addQueryFilterer(similarImagesFilterer);
+        filterManager.addResultSetFilterer(similarImagesFilterer);
+        duplicatesFilterer = new DuplicatesFilterer();
+        filterManager.addResultSetFilterer(duplicatesFilterer);
+        
+        SimilarFacesSearchFilter sfs = new SimilarFacesSearchFilter();
+        filterManager.addResultSetFilterer(sfs);
 
         filterDuplicates = new JCheckBox(Messages.getString("App.FilterDuplicates"));
         filterDuplicates.setToolTipText(Messages.getString("App.FilterDuplicatesTip"));
@@ -512,6 +545,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.setShowGrid(false);
         resultsTable.setAutoscrolls(false);
         ((JComponent) resultsTable.getDefaultRenderer(Boolean.class)).setOpaque(true);
+        
+        
+        
+        MetadataValueSearchList.install(resultsTable);
+        
         
         InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -611,6 +649,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         categoryTree.setRootVisible(true);
         categoryTree.setExpandsSelectedPaths(false);
         categoryListener = new CategoryTreeListener();
+        
+        filterManager.addQueryFilterer(categoryListener);
+        
         categoryTree.addTreeSelectionListener(categoryListener);
         categoryTree.addTreeExpansionListener(categoryListener);
 
@@ -618,11 +659,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         bookmarksTree.setCellRenderer(new BookmarkTreeCellRenderer());
         ToolTipManager.sharedInstance().registerComponent(bookmarksTree);
         bookmarksListener = new BookmarksTreeListener();
+        filterManager.addResultSetFilterer(bookmarksListener);
         bookmarksTree.addTreeSelectionListener(bookmarksListener);
         bookmarksTree.addTreeExpansionListener(bookmarksListener);
         bookmarksTree.setExpandsSelectedPaths(false);
 
         metadataPanel = new MetadataPanel();
+        filterManager.addResultSetFilterer(metadataPanel);
+
         categoriesPanel = new JScrollPane(categoryTree);
         bookmarksPanel = new JScrollPane(bookmarksTree);
 
@@ -633,6 +677,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         tree.setRootVisible(true);
         tree.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         treeListener = new TreeListener();
+        filterManager.addQueryFilterer(treeListener);
         tree.addTreeSelectionListener(treeListener);
         tree.addTreeExpansionListener(treeListener);
         tree.addMouseListener(treeListener);
@@ -640,6 +685,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         evidencePanel = new JPanel(new BorderLayout());
         evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
         evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
+
+        filtersPanel = new FiltersPanel();
 
         // treeTab.insertTab(Messages.getString("TreeViewModel.RootName"), null,
         // evidencePanel, null, 2);
@@ -713,6 +760,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }            
         };
         timelineListener = new TimelineListener(timelineButton, IconUtil.getToolbarIcon("timeon", resPath));
+        filterManager.addResultSetFilterer(timelineListener);
 
         if (triageGui) {
             verticalLayout = true;
@@ -763,6 +811,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         clearAllFilters.addClearListener(similarImageFilterPanel);
         clearAllFilters.addClearListener(similarFacesFilterPanel);
         clearAllFilters.addClearListener(timelineListener);
+        filtersPanel.install(filterManager);
+        filtersPanel.updateUI();
 
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
         subItemTable.addMouseListener(subItemModel);
@@ -856,6 +906,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private void createAllDockables() {
         categoriesTabDock = createDockable("categoriestab", Messages.getString("CategoryTreeModel.RootName"), //$NON-NLS-1$ //$NON-NLS-2$
                 categoriesPanel);
+        filtersTabDock = createDockable("filterstab", "Applied Filters", //$NON-NLS-1$ //$NON-NLS-2$
+                filtersPanel);
         metadataTabDock = createDockable("metadatatab", Messages.getString("App.Metadata"), metadataPanel); //$NON-NLS-1$ //$NON-NLS-2$
         if (evidencePanel != null) {
             evidenceTabDock = createDockable("evidencetab", Messages.getString("TreeViewModel.RootName"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -945,6 +997,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             if (resultSetViewer instanceof ClearFilterListener) {
                 clearAllFilters.addClearListener((ClearFilterListener) resultSetViewer);
             }
+            
+            if(resultSetViewer instanceof IQueryFilterer) {
+                filterManager.addQueryFilterer((IQueryFilterer) resultSetViewer);
+            }
 
             rsTabDock.add(tabDock);
             tabDock.addCDockableLocationListener(new CDockableLocationListener() {
@@ -968,6 +1024,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 referencedByScroll);
 
         dockingControl.addDockable(categoriesTabDock);
+        dockingControl.addDockable(filtersTabDock);
         dockingControl.addDockable(metadataTabDock);
         if (evidenceTabDock != null) {
             dockingControl.addDockable(evidenceTabDock);
@@ -1316,6 +1373,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
         categoriesTabDock.setVisible(true);
 
+        if (filtersTabDock != null) {
+            filtersTabDock.setLocationsAside(evidenceTabDock);
+            filtersTabDock.setVisible(true);
+        }
+
         if (evidenceTabDock != null) {
             evidenceTabDock.setLocationsAside(categoriesTabDock);
             evidenceTabDock.setVisible(true);
@@ -1538,5 +1600,170 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         }
     }
+    
+
+    public FilterManager getFilterManager() {
+        return filterManager;
+    }
+    
+    class SimilarImagesFilter implements IQueryFilter, IResultSetFilter{
+        @Override
+        public IMultiSearchResult filterResult(IMultiSearchResult src)
+                throws ParseException, QueryNodeException, IOException {
+            IMultiSearchResult result = src;
+            if (similarImagesQueryRefItem != null) {
+                LOGGER.info("Starting similar image search...");
+                long t = System.currentTimeMillis();
+                new ImageSimilarityScorer(App.get().appCase, (MultiSearchResult) result, App.get().similarImagesQueryRefItem).score();
+                result = ImageSimilarityLowScoreFilter.filter(result);
+                t = System.currentTimeMillis() - t;
+                LOGGER.info("Similar image search took {}ms to find {} images", t, result.getLength());
+            }
+            return result;
+        }
+
+        @Override
+        public String getFilterExpression() {
+            return new SimilarImagesSearch().getQueryForSimilarImages(App.get().similarImagesQueryRefItem).toString();
+        }
+        
+        public String toString() {
+            return "Similar image";
+        }
+        
+    }
+
+    class SimilarImagesQueryFilterer implements IQueryFilterer, IResultSetFilterer {
+        @Override
+        public List getDefinedFilters() {
+            ArrayList<IQueryFilter> result = new ArrayList<>();
+            if (similarImagesQueryRefItem != null) {
+                result.add(new SimilarImagesFilter());
+            }
+            return result;
+        }
+
+        @Override
+        public boolean hasFiltersApplied() {
+            return App.get().similarImagesQueryRefItem!=null;
+        }
+
+        @Override
+        public Query getQuery() {
+            if(similarImagesQueryRefItem!=null) {
+                return new SimilarImagesSearch().getQueryForSimilarImages(similarImagesQueryRefItem);
+            }
+            return null;
+        }
+        
+        public String toString() {
+            return "Similar image filterer";
+        }
+
+        @Override
+        public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public IFilter getFilter() {
+            if (similarImagesQueryRefItem != null) {
+                return new SimilarImagesFilter();
+            }
+            return null;
+        }
+        
+    };
+    
+    IResultSetFilter duplicateFilter = new IResultSetFilter() {
+        public String toString() {
+            return "Duplicate filter applied.";
+        }
+
+        @Override
+        public IMultiSearchResult filterResult(IMultiSearchResult src)
+                throws ParseException, QueryNodeException, IOException {
+            IMultiSearchResult result = src;
+            if (filterDuplicates.isSelected()) {
+                DynamicDuplicateFilter duplicateFilter = new DynamicDuplicateFilter(App.get().appCase);
+                result = duplicateFilter.filter(src);
+            }
+            return result;
+        }
+    };
+    
+    class DuplicatesFilterer implements IResultSetFilterer{
+        @Override
+        public List getDefinedFilters() {
+            ArrayList<IFilter> result = new ArrayList<IFilter>();
+            if (filterDuplicates.isSelected()) {
+                result.add(duplicateFilter);
+            }
+            return result;
+        }
+        
+        public String toString() {
+            return "Dupicate filterer";
+        }
+
+        @Override
+        public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public IFilter getFilter() {
+            return duplicateFilter;
+        }
+    }
+    
+    IResultSetFilter similarFaceFilter =new IResultSetFilter() {
+        @Override
+        public IMultiSearchResult filterResult(IMultiSearchResult src)
+                throws ParseException, QueryNodeException, IOException {
+            if(similarFacesRefItem!=null) {
+                SimilarFacesSearch sfs = new SimilarFacesSearch(appCase, similarFacesRefItem);
+                return sfs.filter((MultiSearchResult) src);
+            }
+            return src;
+        }
+
+        public String toString() {
+            return "Similar face";
+        }
+    }; 
+
+    class SimilarFacesSearchFilter implements IResultSetFilterer{
+        @Override
+        public List getDefinedFilters() {
+            ArrayList<IFilter> result = new ArrayList<IFilter>();
+            if(similarFacesRefItem!=null) {
+                result.add(similarFaceFilter);
+            }
+            return result;
+        }
+        
+        public String toString() {
+            return "Similar face filterer";
+        }
+
+        @Override
+        public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public IFilter getFilter() {
+            if(similarFacesRefItem!=null) {
+                return similarFaceFilter;
+            }
+            return null;
+        }
+
+    }
+    
 
 }
