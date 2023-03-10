@@ -14,8 +14,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.utils.Charsets;
 
+import iped.configuration.IConfigurationDirectory;
 import iped.engine.config.AudioTranscriptConfig;
-import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.exception.IPEDException;
 import oshi.SystemInfo;
@@ -90,7 +90,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             return null;
         }
         ProcessBuilder pb = new ProcessBuilder();
-        String ipedRoot = Configuration.getInstance().appRoot;
+        String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
         String python = SystemUtils.IS_OS_WINDOWS ? ipedRoot + "/python/python.exe" : "python3";
         String script = ipedRoot + SCRIPT_PATH;
         String model = super.transcriptConfig.getHuggingFaceModel();
