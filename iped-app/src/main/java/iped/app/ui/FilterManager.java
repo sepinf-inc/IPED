@@ -8,11 +8,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
@@ -30,9 +35,31 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.apache.lucene.search.BooleanQuery.Builder;
+import org.apache.lucene.search.Query;
+
+import com.zaxxer.sparsebits.SparseBitSet;
+
+import iped.engine.search.MultiSearchResult;
+import iped.engine.search.QueryBuilder;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
+import iped.search.IMultiSearchResult;
 import iped.utils.UTF8Properties;
+import iped.viewers.api.IFilter;
+import iped.viewers.api.IFilterer;
+import iped.viewers.api.IQueryFilter;
+import iped.viewers.api.IQueryFilterer;
+import iped.viewers.api.IResultSetFilter;
+import iped.viewers.api.IResultSetFilterer;
 
 public class FilterManager implements ActionListener, ListSelectionListener {
+
+    List<IQueryFilterer> queryFilterers = new ArrayList<IQueryFilterer>();
+    List<IResultSetFilterer> resultSetFilterers = new ArrayList<IResultSetFilterer>();
+    LinkedHashMap<IFilterer, Boolean> filterers = new LinkedHashMap<IFilterer, Boolean>();
+
+    HashMap<IFilter, HashMap<Integer, SparseBitSet>> cachedFilterBitsets = new HashMap<IFilter, HashMap<Integer, SparseBitSet>>(); 
 
     private static File userFilters = getGlobalFilterFile(); // $NON-NLS-1$ //$NON-NLS-2$
     private File defaultFilter;
@@ -58,6 +85,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     JTextArea expression = new JTextArea();
     JScrollPane scrollExpression = new JScrollPane(expression);
     Color defaultColor;
+    private ComboFilterer cf;
 
     private static final File getGlobalFilterFile() {
         String name = "ipedFilters"; //$NON-NLS-1$
@@ -147,6 +175,10 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     public FilterManager(JComboBox<String> comboFilter) {
         this.comboFilter = comboFilter;
         defaultColor = comboFilter.getBackground();
+        cf = new ComboFilterer(this,comboFilter);
+        queryFilterers.add(cf);//the objects himself is a query filterer
+        resultSetFilterers.add(cf);
+        filterers.put(cf,true);
     }
 
     private void createDialog() {
@@ -257,4 +289,130 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
     }
 
+    public List<IQueryFilterer> getQueryFilterers() {
+        return queryFilterers;
+    }
+
+    public List<IResultSetFilterer> getResultSetFilterers() {
+        return resultSetFilterers;
+    }
+
+    public void addQueryFilterer(IQueryFilterer qf) {
+        queryFilterers.add(qf);
+        filterers.put(qf,true);
+    }
+
+    public void addResultSetFilterer(IResultSetFilterer rsf) {
+        resultSetFilterers.add(rsf);        
+        filterers.put(rsf, true);
+    }
+
+    public Set<IFilterer> getFilterers() {
+        return filterers.keySet();
+    }
+
+    public void notifyFilterChange() {
+    }
+
+    public boolean isFiltererEnabled(IFilterer t) {
+        Boolean result = filterers.get(t);
+        return result != null && result;
+    }
+
+    public MultiSearchResult applyFilter(IResultSetFilter rsFilter, MultiSearchResult result) {
+        HashMap<Integer, SparseBitSet> bitSets = cachedFilterBitsets.get(rsFilter);
+        if(bitSets!=null) {
+            //
+        }
+
+        try {
+            return (MultiSearchResult) rsFilter.filterResult(result);
+        } catch (ParseException | QueryNodeException | IOException e) {
+            e.printStackTrace();
+            return result;
+        }
+    }
+
+    public void setFilterEnabled(IFilterer t, boolean selected) {
+        filterers.put(t, selected);
+    }
+}
+
+class ComboFilterer implements IQueryFilterer, IResultSetFilterer{
+    private JComboBox<String> comboFilter;
+    FilterManager fm;
+    
+    public ComboFilterer(FilterManager fm, JComboBox<String> comboFilter) {
+        this.comboFilter = comboFilter;
+        this.fm = fm;
+    }
+    
+    @Override
+    public List<IFilter> getDefinedFilters() {
+        List<IFilter> result = new ArrayList<IFilter>();
+        if(comboFilter.getSelectedIndex()!=-1 && !App.FILTRO_TODOS.equals(comboFilter.getSelectedItem())) {
+            result.add(new IQueryFilter() {
+                String filterName = (String) comboFilter.getSelectedItem();
+                String filterExpression = fm.getFilterExpression((String) comboFilter.getSelectedItem());
+
+                @Override
+                public String getFilterExpression() {
+                    return filterExpression;
+                }
+                @Override
+                public String toString() {
+                    return filterName;                     
+                }
+            });
+        }
+        return result;
+    }
+
+    @Override
+    public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public IFilter getFilter() {
+        if(App.FILTRO_SELECTED.equals(comboFilter.getSelectedItem())) {
+            return new IResultSetFilter() {
+                @Override
+                public IMultiSearchResult filterResult(IMultiSearchResult src)
+                        throws ParseException, QueryNodeException, IOException {
+                    return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterChecked(src);
+                }
+            };
+        }
+        return null;
+    }
+
+    @Override
+    public boolean hasFiltersApplied() {
+        return comboFilter.getSelectedIndex()!=-1;
+    }
+
+    @Override
+    public Query getQuery() {
+        if(comboFilter.getSelectedIndex()==-1 || App.FILTRO_TODOS.equals(comboFilter.getSelectedItem()) || App.FILTRO_SELECTED.equals(comboFilter.getSelectedItem())) {
+            return null;
+        }
+
+        Builder builder = new Builder();
+        Query result=null;
+        try {
+            result = new QueryBuilder(App.get().appCase).getQuery(fm.getFilterExpression((String) comboFilter.getSelectedItem()));
+        } catch (ParseException | QueryNodeException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        return result;
+    }
+
+    public String toString() {
+        return "Predefined filters";
+    }
+    
 }
