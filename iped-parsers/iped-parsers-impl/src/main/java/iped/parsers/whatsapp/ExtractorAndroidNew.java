@@ -111,7 +111,7 @@ public class ExtractorAndroidNew extends Extractor {
 
     private List<Message> extractMessages(Connection conn, Chat c) throws SQLException {
         List<Message> messages = new ArrayList<>();
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_MESSAGES)) {
+        try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             stmt.setFetchSize(1000);
             stmt.setLong(1, c.getId());
             ResultSet rs = stmt.executeQuery();
@@ -306,17 +306,23 @@ public class ExtractorAndroidNew extends Extractor {
 
     private static final String SELECT_ADD_ONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe FROM message_add_on m left join jid on jid._id=m.sender_jid_row_id where parent_message_row_id=?";
 
-    private static final String SELECT_MESSAGES = "select  m._id AS id,cv._id as chatId, cv.raw_string_jid "
-            + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
-            + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
-            + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
-            + " m.message_type as messageType,   latitude,  longitude, mm.media_duration,"
-            + " mm.media_caption as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData, ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
-            + " from message m  inner join chat_view cv on m.chat_row_id=cv._id left join message_media mm on mm.message_row_id=m._id"
-            + " left join jid on jid._id=m.sender_jid_row_id left join message_location ml on m._id=ml.message_row_id "
-            + " left join message_system ms on m._id=ms.message_row_id"
-            + " left join message_vcard mv on m._id=mv.message_row_id"
-            + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
+    private static String getSelectMessagesQuery(Connection conn) throws SQLException {
+        String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_media", "media_caption") ? "mm.media_caption" : "null";
+        return "select m._id AS id,cv._id as chatId, cv.raw_string_jid "
+                + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
+                + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
+                + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
+                + " m.message_type as messageType, latitude, longitude, mm.media_duration, "
+                + captionCol + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
+                + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
+                + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
+                + " left join message_media mm on mm.message_row_id=m._id"
+                + " left join jid on jid._id=m.sender_jid_row_id"
+                + " left join message_location ml on m._id=ml.message_row_id "
+                + " left join message_system ms on m._id=ms.message_row_id"
+                + " left join message_vcard mv on m._id=mv.message_row_id"
+                + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
+    }
 
     private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
             + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$
