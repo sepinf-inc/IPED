@@ -15,6 +15,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.io.TemporaryResources;
 
+import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
+import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.Manager;
 import iped.engine.io.TimeoutException;
@@ -83,6 +86,32 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         }
         
         if (!servers.isEmpty()) {
+            return;
+        }
+
+        boolean disable = false;
+        if (transcriptConfig.getWav2vec2Service() == null) {
+            String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+            if (ipedRoot != null) {
+                Path path = new File(ipedRoot, "conf/" + AudioTranscriptConfig.CONF_FILE).toPath();
+                configurationManager.getConfigurationDirectory().addPath(path);
+                configurationManager.addObject(transcriptConfig);
+                configurationManager.loadConfig(transcriptConfig);
+                // maybe user changed installation configs
+                if (transcriptConfig.getWav2vec2Service() == null) {
+                    disable = true;
+                } else {
+                    transcriptConfig.setEnabled(true);
+                    transcriptConfig.setClassName(this.getClass().getName());
+                }
+            } else {
+                disable = true;
+            }
+        }
+        
+        if (disable) {
+            transcriptConfig.setEnabled(false);
+            logger.warn("Remote transcription module disabled, service address not configured.");
             return;
         }
 
