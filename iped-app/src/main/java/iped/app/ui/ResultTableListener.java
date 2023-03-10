@@ -35,10 +35,12 @@ import javax.swing.JTable;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableColumnModel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.popups.FieldValuePopupMenu;
 import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.search.IPEDSearcher;
@@ -158,7 +160,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     }
 
-    private IItemId getSelectedItemId() {
+    private IItemId getSelectedItemId(int row) {
         int viewIndex = App.get().resultsTable.getSelectedRow();
         if (viewIndex != -1) {
             int modelIdx = App.get().resultsTable.convertRowIndexToModel(viewIndex);
@@ -166,9 +168,35 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         }
         return null;
     }
+    
+    private IItemId getSelectedItemId() {
+        return getSelectedItemId(App.get().resultsTable.getSelectedRow());
+    }
 
     private void showContextMenu(IItemId itemId, MouseEvent evt) {
         IItem item = itemId == null ? null : App.get().appCase.getItemByItemId(itemId);
+
+        if(evt.getButton()==MouseEvent.BUTTON3 && (evt.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK)==MouseEvent.CTRL_DOWN_MASK) {
+            JTable resultsTable = App.get().resultsTable;
+            int colIndex = resultsTable.columnAtPoint(evt.getPoint());
+            int rowIndex = resultsTable.rowAtPoint(evt.getPoint());
+            
+            IItemId id = getSelectedItemId(rowIndex);
+            
+            TableColumnModel cm = resultsTable.getTableHeader().getColumnModel();
+            int pos = 0;
+            for(int i = 0; i < colIndex; i++) {
+                pos+=cm.getColumn(i).getWidth();
+            }
+            
+            String value = (String) resultsTable.getValueAt(rowIndex, colIndex);
+            colIndex = resultsTable.convertColumnIndexToModel(colIndex);                    
+            String field = ((ResultTableModel)resultsTable.getModel()).getColumnFieldName(colIndex);
+
+            (new FieldValuePopupMenu(id, field, value)).show((Component) evt.getSource(), evt.getX(), evt.getY());
+            return;
+        }
+        
         new MenuClass(item).show((Component) evt.getSource(), evt.getX(), evt.getY());
     }
 

@@ -73,6 +73,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public static String[] fixedCols = { "", "" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static String[] columnNames = {};
+    private static String[] originalColumnNames = {};
 
     public void initCols() {
 
@@ -106,17 +107,21 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public void updateCols() {
 
         ArrayList<String> cols = new ArrayList<String>();
+        ArrayList<String> cols2 = new ArrayList<String>();
         for (String col : fixedCols) {
             cols.add(col);
+            cols2.add(col);
         }
 
         fields = ColumnsManager.getInstance().getLoadedCols();
         for (String col : fields) {
             col = LocalizedProperties.getLocalizedField(col);
             cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
+            cols2.add(col);
         }
 
         columnNames = cols.toArray(new String[0]);
+        originalColumnNames = cols2.toArray(new String[0]);
     }
 
     public ResultTableModel() {
@@ -135,13 +140,21 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public int getRowCount() {
         return App.get().ipedResult.getLength();
     }
-
+        
     @Override
     public String getColumnName(int col) {
         if (col == 0) {
             return LocalizedFormat.format(App.get().ipedResult.getLength());
         } else {
             return columnNames[col];
+        }
+    }
+
+    public String getColumnFieldName(int col) {
+        if (col == 0) {
+            return LocalizedFormat.format(App.get().ipedResult.getLength());
+        } else {
+            return originalColumnNames[col];
         }
     }
 
@@ -347,5 +360,5 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         return value;
 
     }
-
+    
 }
