@@ -16,6 +16,7 @@ import com.google.common.base.Predicate;
 import iped.app.home.MainFrame;
 import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.ui.CategoryMimeTreeModel;
+import iped.app.ui.controls.CheckBoxTreeCellRenderer;
 import iped.configuration.Configurable;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
@@ -49,7 +50,7 @@ public class CategorySetConfigPanel extends ConfigurablePanel {
                 return tempCatNames.contains(((Category)input).getName());
             }
         });
-        cellRenderer.checkbox.addChangeListener(new ChangeListener() {
+        cellRenderer.getCheckbox().addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 Category selectedCategory = ((Category) categoryTree.getLastSelectedPathComponent());
