@@ -24,6 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.concurrent.Future;
 
 import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
@@ -42,8 +43,12 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
     public void updateFileListing() {
         updateFileListing(null);
     }
+    
+    public Future<?> futureUpdateFileListing() {
+        return updateFileListing(null);
+    }
 
-    public void updateFileListing(Query query) {
+    public Future<?> updateFileListing(Query query) {
 
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
         App.get().hitsTable.scrollRectToVisible(new Rectangle());
@@ -78,6 +83,8 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().referencesModel.clear();
         App.get().referencedByModel.clear();
 
+        App.get().getFilterManager().notifyFilterChange();
+
         try {
             UICaseSearcherFilter task;
             if (query == null)
@@ -88,8 +95,12 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
             task.applyUIQueryFilters();
             task.execute();
 
+            App.get().filtersPanel.updateUI();
+            
+            return task;
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
     }
 
