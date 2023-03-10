@@ -29,8 +29,8 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
-import iped.app.home.configurables.uicomponents.IPEDFilterableListModel;
-import iped.app.home.configurables.uicomponents.IPEDSearchList;
+import iped.app.ui.controls.IPEDFilterableListModel;
+import iped.app.ui.controls.IPEDSearchList;
 import iped.app.metadata.MetadataSearch;
 import iped.app.metadata.ValueCount;
 import iped.app.ui.App;

@@ -1,4 +1,4 @@
-package iped.app.home.configurables.uicomponents;
+package iped.app.ui.controls;
 
 import java.util.Iterator;
 import java.util.List;
