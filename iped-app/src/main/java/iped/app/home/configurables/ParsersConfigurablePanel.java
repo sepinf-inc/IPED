@@ -55,6 +55,7 @@ import iped.app.home.configurables.autocompletion.MimetypeAutoCompletionProvider
 import iped.app.home.configurables.popups.ExternalParserPopup;
 import iped.app.ui.CategoryMimeTreeModel;
 import iped.app.ui.Messages;
+import iped.app.ui.controls.CheckBoxTreeCellRenderer;
 import iped.configuration.Configurable;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
@@ -318,7 +319,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
                 return input instanceof ParserElementName;
             }
         });
-        cellRenderer.checkbox.addChangeListener(new ChangeListener() {
+        cellRenderer.getCheckbox().addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 Object o = parsersTree.getLastSelectedPathComponent();                

@@ -57,6 +57,7 @@ import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.home.configurables.autocompletion.MimetypeAutoCompletionProvider;
 import iped.app.home.configurables.popups.CategoryTreePopup;
 import iped.app.ui.CategoryMimeTreeModel;
+import iped.app.ui.controls.CheckBoxTreeCellRenderer;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SignatureConfig;

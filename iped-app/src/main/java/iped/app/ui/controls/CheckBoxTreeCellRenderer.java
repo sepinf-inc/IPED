@@ -1,10 +1,11 @@
-package iped.app.home.configurables;
+package iped.app.ui.controls;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.util.function.Predicate;
 
+import javax.swing.AbstractButton;
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -92,5 +93,9 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
         }
 
         return result;
+    }
+
+    public AbstractButton getCheckbox() {
+        return checkbox;
     }
 }
