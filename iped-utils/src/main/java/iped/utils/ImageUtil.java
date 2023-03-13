@@ -43,6 +43,9 @@ import org.w3c.dom.NodeList;
 public class ImageUtil {
     private static final int[] orientations = new int[] { 1, 5, 3, 7 };
 
+    private static final String JBIG2 = "image/x-jbig2";
+    private static final String ICO = "image/vnd.microsoft.icon";
+    
     public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
         return resizeImage(img, maxW, maxH, BufferedImage.TYPE_INT_ARGB);
     }
@@ -151,8 +154,9 @@ public class ImageUtil {
         BufferedImage image = null;
         try {
             iis = ImageIO.createImageInputStream(source);
-            Iterator<ImageReader> iter = mimeType == null ? ImageIO.getImageReaders(iis)
-                    : ImageIO.getImageReadersByMIMEType(mimeType);
+            // JBIG2 needs that reader is get by mime type
+            Iterator<ImageReader> iter = JBIG2.equals(mimeType) ? ImageIO.getImageReadersByMIMEType(mimeType)
+                    : ImageIO.getImageReaders(iis);
             if (!iter.hasNext())
                 return null;
             reader = iter.next();
