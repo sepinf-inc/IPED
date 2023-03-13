@@ -43,6 +43,7 @@ import java.util.List;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
+import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -76,6 +77,8 @@ public class ExtractorAndroidNew extends Extractor {
 
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c));
+                    c.getMessages().addAll(extractCalls(conn, c));
+                    c.getMessages().sort((o1, o2) -> o1.getTimeStamp().compareTo(o2.getTimeStamp()));
                     if (c.isGroupChat()) {
                         setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                     }
@@ -108,7 +111,46 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
+    private List<Message> extractCalls(Connection conn, Chat c) throws SQLException {
+        List<Message> messages = new ArrayList<>();
 
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_CALLS)) {
+            stmt.setFetchSize(1000);
+            stmt.setLong(1, c.getId());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Message m = new Message();
+                int call_result = rs.getInt("call_result");
+                if (account != null)
+                    m.setLocalResource(account.getId());
+                if (rs.getBoolean("video_call")) {
+                    if (call_result == 5) {
+                        m.setMessageType(VIDEO_CALL);
+                    } else if (call_result == 4) {
+                        m.setMessageType(MISSED_VIDEO_CALL);
+                    } else if (call_result == 2) {
+                        m.setMessageType(MessageType.REFUSED_VIDEO_CALL);
+                    }
+                } else {
+                    if (call_result == 5) {
+                        m.setMessageType(VOICE_CALL);
+                    } else if (call_result == 4) {
+                        m.setMessageType(MISSED_VOICE_CALL);
+                    } else if (call_result == 2) {
+                        m.setMessageType(MessageType.REFUSED_VOICE_CALL);
+                    }
+                }
+                m.setFromMe(rs.getBoolean("from_me"));
+                m.setMediaDuration(rs.getInt("duration"));
+                m.setTimeStamp(new Date(rs.getLong("timestamp")));
+
+                messages.add(m);
+            }
+
+        }
+
+        return messages;
+    }
     private List<Message> extractMessages(Connection conn, Chat c) throws SQLException {
         List<Message> messages = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_MESSAGES)) {
@@ -314,6 +356,11 @@ public class ExtractorAndroidNew extends Extractor {
             + " left join message_system ms on m._id=ms.message_row_id"
             + " left join message_vcard mv on m._id=mv.message_row_id"
             + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
+
+    private static final String SELECT_CALLS = "select c_l.call_id as id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,\r\n"
+            + " cv._id as chatId, cv.raw_string_jid as remoteId\r\n"
+            + "  from call_log c_l inner join chat c on c_l.jid_row_id=c.jid_row_id inner join chat_view cv on cv._id=c._id\r\n"
+            + "where chatId=?";
 
     private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
             + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$
