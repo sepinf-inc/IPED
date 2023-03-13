@@ -16,7 +16,6 @@ import iped.engine.core.Statistics;
 import iped.engine.core.Worker;
 import iped.engine.core.Worker.STATE;
 import iped.engine.data.CaseData;
-import iped.engine.data.Item;
 import iped.engine.io.TimeoutException;
 import iped.parsers.util.CorruptedCarvedException;
 
@@ -255,9 +254,7 @@ public abstract class AbstractTask {
     }
 
     private void reEnqueueItem(IItem item, int queue) throws InterruptedException {
-        if (item instanceof Item) {
-            ((Item) item).dispose(false);
-        }
+        item.dispose();
         SkipCommitedTask.checkAgainLaterProcessedParents(item);
         worker.manager.getProcessingQueues().addItemToQueue(item, queue);
         if (!item.isQueueEnd()) {
