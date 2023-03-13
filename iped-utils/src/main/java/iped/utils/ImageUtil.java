@@ -219,9 +219,9 @@ public class ImageUtil {
         int color;
         if (pixels.length > 0) {
             color = pixels[0];
-        } else
-            return false;
-
+        } else {
+            return true;
+        }
         for (int p : pixels)
             if (p != color)
                 return false;
