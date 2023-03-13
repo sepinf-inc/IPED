@@ -233,7 +233,7 @@ public class MenuClass extends JPopupMenu {
         uiZoom.addActionListener(menuListener);
         layoutAppearance.add(uiZoom);
 
-        catIconSize = new JMenuItem(Messages.getString("MenuClass.CatIconSize")); //$NON-NLS-1$
+        catIconSize = new JMenuItem(Messages.getString("MenuClass.IconSize")); //$NON-NLS-1$
         catIconSize.addActionListener(menuListener);
         layoutAppearance.add(catIconSize);
         

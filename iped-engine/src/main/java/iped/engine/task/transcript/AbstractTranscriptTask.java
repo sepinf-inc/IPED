@@ -32,9 +32,9 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import iped.configuration.Configurable;
+import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
 import iped.engine.config.AudioTranscriptConfig;
-import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.AbstractTask;
@@ -253,7 +253,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         String[] cmd = transcriptConfig.getConvertCmd().split(" ");
         if (SystemUtils.IS_OS_WINDOWS) {
             String mplayerWin = VideoThumbTask.MPLAYER_WIN_PATH;
-            cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + mplayerWin);
+            String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+            cmd[0] = cmd[0].replace("mplayer", ipedRoot + "/" + mplayerWin);
         }
         for (int i = 0; i < cmd.length; i++) {
             cmd[i] = cmd[i].replace("$INPUT", input.getAbsolutePath());

@@ -254,7 +254,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         combo.addActionListener(this);
 
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         panel.add(topPanel, BorderLayout.NORTH);
 
         JScrollPane scrollList = new JScrollPane(listPanel);

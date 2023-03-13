@@ -153,7 +153,7 @@ public class ExtractorAndroidNew extends Extractor {
     }
     private List<Message> extractMessages(Connection conn, Chat c) throws SQLException {
         List<Message> messages = new ArrayList<>();
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_MESSAGES)) {
+        try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             stmt.setFetchSize(1000);
             stmt.setLong(1, c.getId());
             ResultSet rs = stmt.executeQuery();
@@ -163,7 +163,6 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setLocalResource(account.getId());
                 int type = rs.getInt("messageType"); //$NON-NLS-1$
                 int status = rs.getInt("status"); //$NON-NLS-1$
-                String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
                 Integer edit_version;
                 try {
                     edit_version = Integer.parseInt(SQLite3DBParser.getStringIfExists(rs, "edit_version"));
@@ -181,6 +180,10 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(status); // $NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "text_data")); //$NON-NLS-1$
+                String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
+                if (caption == null || caption.isBlank()) {
+                    caption = m.getData();
+                }
                 m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
                 m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
                 m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
@@ -345,17 +348,23 @@ public class ExtractorAndroidNew extends Extractor {
 
     private static final String SELECT_ADD_ONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe FROM message_add_on m left join jid on jid._id=m.sender_jid_row_id where parent_message_row_id=?";
 
-    private static final String SELECT_MESSAGES = "select  m._id AS id,cv._id as chatId, cv.raw_string_jid "
-            + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
-            + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
-            + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
-            + " m.message_type as messageType,   latitude,  longitude, mm.media_duration,"
-            + " null as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData, ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
-            + " from message m  inner join chat_view cv on m.chat_row_id=cv._id left join message_media mm on mm.message_row_id=m._id"
-            + " left join jid on jid._id=m.sender_jid_row_id left join message_location ml on m._id=ml.message_row_id "
-            + " left join message_system ms on m._id=ms.message_row_id"
-            + " left join message_vcard mv on m._id=mv.message_row_id"
-            + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
+    private static String getSelectMessagesQuery(Connection conn) throws SQLException {
+        String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_media", "media_caption") ? "mm.media_caption" : "null";
+        return "select m._id AS id,cv._id as chatId, cv.raw_string_jid "
+                + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
+                + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
+                + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
+                + " m.message_type as messageType, latitude, longitude, mm.media_duration, "
+                + captionCol + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
+                + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
+                + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
+                + " left join message_media mm on mm.message_row_id=m._id"
+                + " left join jid on jid._id=m.sender_jid_row_id"
+                + " left join message_location ml on m._id=ml.message_row_id "
+                + " left join message_system ms on m._id=ms.message_row_id"
+                + " left join message_vcard mv on m._id=mv.message_row_id"
+                + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
+    }
 
     private static final String SELECT_CALLS = "select c_l.call_id as id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,\r\n"
             + " cv._id as chatId, cv.raw_string_jid as remoteId\r\n"

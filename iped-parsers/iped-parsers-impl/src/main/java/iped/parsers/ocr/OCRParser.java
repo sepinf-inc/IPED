@@ -66,7 +66,6 @@ import iped.parsers.util.CharCountContentHandler;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.OCROutputFolder;
 import iped.parsers.util.PDFToImage;
-import iped.properties.MediaTypes;
 import iped.utils.ExternalImageConverter;
 import iped.utils.IOUtil;
 import iped.utils.ImageUtil;
@@ -211,7 +210,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         types.add(MediaType.image("x-jp2-codestream")); //$NON-NLS-1$
         types.add(MediaType.image("x-rgb")); //$NON-NLS-1$
         types.add(MediaType.image("x-xbitmap")); //$NON-NLS-1$
-        types.add(MediaTypes.JBIG2);
+        types.add(MediaType.image("x-jbig2"));
         
         return types;
     }
@@ -542,9 +541,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             throws IOException, SAXException, TikaException {
         File imageFile = null;
         try {
-            if (!MediaTypes.JBIG2.toString().equals(mediaType)) {
-                mediaType = null; // just use mediaType for jbig2
-            }
             BufferedImage img = ImageUtil.getSubSampledImage(input, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2,
                     mediaType);
             if (img == null) {
