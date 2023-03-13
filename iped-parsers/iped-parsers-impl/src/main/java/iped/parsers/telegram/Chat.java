@@ -19,6 +19,7 @@
 package iped.parsers.telegram;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import dpf.ap.gpinf.interfacetelegram.ChatInterface;
 import dpf.ap.gpinf.interfacetelegram.ContactInterface;
@@ -93,6 +94,12 @@ public class Chat implements ChatInterface {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    @Override
+    public void setOtherMetadatas(Map<String, Object> arg0) {
+        // TODO Auto-generated method stub
+
     }
 
 }
