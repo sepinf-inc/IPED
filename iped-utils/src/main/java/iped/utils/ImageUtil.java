@@ -216,16 +216,24 @@ public class ImageUtil {
         int h = image.getHeight();
         int[] pixels = new int[w * h];
         image.getRGB(0, 0, w, h, pixels, 0, w);
-        int color;
+        int color = -1;
         if (pixels.length > 0) {
-            color = pixels[0];
-        } else {
-            return true;
+            // Starts at ~5% of the pixels
+            for (int i = pixels.length/20; i < pixels.length; i++) {
+                int p = pixels[i];
+                // Consider only non-transparent pixels
+                if ((p & 0xFF000000) != 0) {
+                    int c = p & 0xFFFFFF;
+                    if (color == -1) {
+                        // Store first color found 
+                        color = c;
+                    } else if (color != c) {
+                        // Has different colors
+                        return false;
+                    }
+                }
+            }
         }
-        for (int p : pixels)
-            if (p != color)
-                return false;
-
         return true;
     }
 
