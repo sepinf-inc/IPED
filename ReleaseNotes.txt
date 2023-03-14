@@ -1,32 +1,32 @@
-XX/03/2023: IPED-4.1.1:
+14/03/2023: IPED-4.1.1:
 News:
-#1553: New Tab to list Referenced items
-#1566: Convert audios to WAV on transcription service side again
-#1556: Makes Ctrl+A and Space (Check selected) work for Subitems, Duplicates, References and ReferencedBy tabs
-#1552: Sort subitems/duplicates/references tabs results
-#1267: Makes Google and Wav2Vec2 audio transcription not dependent of FFmpeg anymore
-#1576: Decrease remote wav2vec2 transcription retry rate on clients
-#1569: Externalize MIN_TIMEOUT parameter for remote audio transcription
+#1553: New Tab to list Referenced items (@lfcnassif)
+#1566: Convert audios to WAV on transcription service side again (@lfcnassif)
+#1556: Makes Ctrl+A and Space (Check selected) work for Subitems, Duplicates, References and ReferencedBy tabs (@lfcnassif)
+#1552: Sort subitems/duplicates/references tabs results (@lfcnassif)
+#1267: Makes Google and Wav2Vec2 audio transcription not dependent of FFmpeg anymore (@tc-wleite)
+#1576: Decrease remote wav2vec2 transcription retry rate on clients (@lfcnassif)
+#1569: Externalize MIN_TIMEOUT parameter for remote audio transcription (@lfcnassif)
 #1531: Converge all TwelveMonkeys libraries to 3.9.4 (@tc-wleite)
 Fixes:
-#1555: Media captions missed by new Android Whatsapp parser and UFDR chat parser
-#1565: Layout restore prevents panels added in newer IPED versions to be visible
-#1544: Error parsing Shareaza Library1/2.dat files
-#1585: Some chat messages from UFDR reports being duplicated
-#1142: Improve LocalConfig.txt options loading on different machines
-#1577: Aborting FileNotFoundException when starting case
-#1584: Error reading extracted text file from XXXXX, maybe your antivirus blocked or deleted it: java.io.FileNotFoundException
-#1561: Clients with slow networks blocking transcription cluster resources
-#1589: Error creating report with local wav2vec2 transcription enabled
-#1588: Aborting NullPointerException when creating reports if remote transcription service was used
-#1540: Socket timeouts thrown by transcription service side not retried
-#1564: Better exception handling and logging messages when transcription service returns errors
-#1530: Occasional NoClassDefFoundError from OCRParser
-#1572: Logging dependencies duplicating classes may cause NoSuchMethodError
-#1535: External parsing processes not reused when converting PDFs to images before OCR
-#1542: ExternalParsers inserting new lines at wrong places
-#1558: Repaint all tables checkboxes when some of them is changed
-#1583: Exception caused by non wa.db files detected as such
+#1555: Media captions missed by new Android Whatsapp parser and UFDR chat parser (@lfcnassif)
+#1565: Layout restore prevents panels added in newer IPED versions to be visible (@tc-wleite)
+#1544: Error parsing Shareaza Library1/2.dat files (@tc-wleite)
+#1585: Some chat messages from UFDR reports being duplicated (@lfcnassif)
+#1142: Improve LocalConfig.txt options loading on different machines (@lfcnassif)
+#1577: Aborting FileNotFoundException when starting case (@lfcnassif)
+#1584: Error reading extracted text file from XXXXX, maybe your antivirus blocked or deleted it: java.io.FileNotFoundException (@lfcnassif)
+#1561: Clients with slow networks blocking transcription cluster resources (@lfcnassif)
+#1589: Error creating report with local wav2vec2 transcription enabled (@lfcnassif)
+#1588: Aborting NullPointerException when creating reports if remote transcription service was used (@lfcnassif)
+#1540: Socket timeouts thrown by transcription service side not retried (@lfcnassif)
+#1564: Better exception handling and logging messages when transcription service returns errors (@lfcnassif)
+#1530: Occasional NoClassDefFoundError from OCRParser (@tc-wleite)
+#1572: Logging dependencies duplicating classes may cause NoSuchMethodError (@lfcnassif)
+#1535: External parsing processes not reused when converting PDFs to images before OCR (@lfcnassif)
+#1542: ExternalParsers inserting new lines at wrong places (@lfcnassif)
+#1558: Repaint all tables checkboxes when some of them is changed (@lfcnassif)
+#1583: Exception caused by non wa.db files detected as such (@lfcnassif)
 
 17/02/2023: IPED-4.1.0:
 News:
