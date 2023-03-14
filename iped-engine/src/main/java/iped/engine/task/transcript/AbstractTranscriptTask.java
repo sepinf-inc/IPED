@@ -35,6 +35,7 @@ import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
 import iped.engine.config.AudioTranscriptConfig;
+import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.AbstractTask;
@@ -254,6 +255,9 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         if (SystemUtils.IS_OS_WINDOWS) {
             String mplayerWin = VideoThumbTask.MPLAYER_WIN_PATH;
             String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+            if (ipedRoot == null) {
+                ipedRoot = Configuration.getInstance().appRoot;
+            }
             cmd[0] = cmd[0].replace("mplayer", ipedRoot + "/" + mplayerWin);
         }
         for (int i = 0; i < cmd.length; i++) {
