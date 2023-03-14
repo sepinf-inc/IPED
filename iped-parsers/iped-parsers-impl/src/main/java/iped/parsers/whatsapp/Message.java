@@ -33,6 +33,7 @@ public class Message {
 
     private long id;
     private int deletedId = -1;
+    private String callId = null;
     private String remoteId;
     private String remoteResource;
     private String localResource;
@@ -98,15 +99,23 @@ public class Message {
 
     /**
      * Deleted recovered messages may have the same id as an allocated message. This
-     * returns a global unique id for a decoded database.
+     * returns a global unique id for a decoded database. Calls can also have the
+     * same id, so a new info is used as id
      * 
      * @return a unique string id
      */
     public String getUniqueId() {
+        String new_id = Long.toString(id);
+        if (callId != null) {
+            new_id += "_" + callId;
+        }
         if (deletedId == -1) {
             deletedId = deletedCounter.getAndIncrement();
         }
-        return !deleted ? Long.toString(id) : id + "_" + deletedId;
+        if(deleted) {
+            new_id+="_" + deletedId;
+        }
+        return new_id;
     }
 
     public String getRemoteId() {
@@ -415,6 +424,14 @@ public class Message {
 
     public List<MessageAddOn> getAddOns() {
         return addOns;
+    }
+
+    public String getCallId() {
+        return callId;
+    }
+
+    public void setCallId(String callId) {
+        this.callId = callId;
     }
 
     public static enum MessageType {

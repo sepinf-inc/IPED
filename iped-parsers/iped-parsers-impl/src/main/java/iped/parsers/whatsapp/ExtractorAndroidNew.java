@@ -125,7 +125,8 @@ public class ExtractorAndroidNew extends Extractor {
                 if (account != null)
                     m.setLocalResource(account.getId());
                 m.setRemoteResource(rs.getString("remoteId"));
-                m.setId(rs.getString("call_id").hashCode());
+                m.setId(rs.getLong("id"));
+                m.setCallId(rs.getString("call_id"));
                 if (rs.getInt("video_call") == 1) {
                     m.setMessageType(MessageType.UNKNOWN_VIDEO_CALL);
                     if (call_result == 5) {
@@ -371,7 +372,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
     }
 
-    private static final String SELECT_CALLS = "select c_l.call_id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,\r\n"
+    private static final String SELECT_CALLS = "select c_l._id as id, c_l.call_id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,\r\n"
             + " cv._id as chatId, cv.raw_string_jid as remoteId\r\n"
             + "  from call_log c_l inner join chat c on c_l.jid_row_id=c.jid_row_id inner join chat_view cv on cv._id=c._id\r\n"
             + "where chatId=?";

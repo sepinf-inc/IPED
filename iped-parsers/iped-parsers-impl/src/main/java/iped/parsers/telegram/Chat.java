@@ -96,7 +96,7 @@ public class Chat implements ChatInterface {
         this.deleted = deleted;
     }
 
-    @Override
+
     public void setOtherMetadatas(Map<String, Object> arg0) {
         // TODO Auto-generated method stub
 
