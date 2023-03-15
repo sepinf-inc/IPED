@@ -669,6 +669,19 @@ public class MetadataPanel extends JPanel
         }
         return null;
     }
+
+
+    @Override
+    public boolean hasFilters() {
+        return isFiltering();
+    }
+
+
+    @Override
+    public boolean hasFiltersApplied() {
+        // TODO Auto-generated method stub
+        return false;
+    }
     
 }
 
