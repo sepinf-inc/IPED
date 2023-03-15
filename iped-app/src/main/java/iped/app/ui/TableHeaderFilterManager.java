@@ -98,6 +98,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
 
     public void addFilter(String field, Set<ValueCount> selected) {
         selectedValues.put(field, selected);
+        definedFilters.put(field, new ValueCountQueryFilter(field , selected));
         otherFilters.remove(field);
         App.get().getFilterManager().notifyFilterChange();
     }
@@ -115,7 +116,14 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         if(result==null) {
             result = new MetadataSearch();
             panels.put(field, result);
-            definedFilters.put(field, new ValueCountQueryFilter(field , selectedValues.get(field)));
+            /*
+            Set values = selectedValues.get(field);            
+            if(values==null) {
+                values=new HashSet<>();
+                selectedValues.put(field, values);
+            }
+            definedFilters.put(field, new ValueCountQueryFilter(field , values));
+            */
         }
         return result;
     }

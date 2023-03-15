@@ -14,7 +14,9 @@ public class ValueCountQueryFilter implements IQueryFilter{
     public ValueCountQueryFilter(String filterField, Set<ValueCount> selectedValues) {
         this.filterField = filterField;
         values = new HashSet<ValueCount>();
-        values.addAll(selectedValues);
+        if(selectedValues!=null) {
+            values.addAll(selectedValues);
+        }
     }
 
     public String toString() {
