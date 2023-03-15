@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -23,6 +24,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -163,8 +165,15 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
 
     public void show(Component invoker, int x, int y) {
         JTableHeader header = (JTableHeader) invoker;
+        int colIndex = header.columnAtPoint(new Point(x,y));
         if(list.getPreferredSize().getWidth()>header.getParent().getWidth()/2) {
             list.setPreferredSize(new Dimension(header.getParent().getWidth()/2, (int)list.getPreferredSize().getHeight()));
+        }
+        if(colIndex>-1) {
+            int colwidth = header.getColumnModel().getColumn(colIndex).getWidth();
+            if(list.getPreferredSize().getWidth()<colwidth) {
+                list.setFixedCellWidth(colwidth-24);
+            }
         }
         menu.show(invoker, x, y);
     }
