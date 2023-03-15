@@ -10,5 +10,8 @@ import java.util.List;
 public interface IFilterer {
     
     List<IFilter> getDefinedFilters();
+
+    public boolean hasFilters();
+    public boolean hasFiltersApplied();
     
 }

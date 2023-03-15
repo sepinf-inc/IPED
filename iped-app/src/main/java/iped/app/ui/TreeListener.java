@@ -59,6 +59,7 @@ public class TreeListener extends MouseAdapter
     HashSet<TreePath> selection = new HashSet<TreePath>();
     private long collapsedTime = 0;
     private boolean clearing = false;
+    private ArrayList<IFilter> definedFilters;
 
     @Override
     public void valueChanged(TreeSelectionEvent evt) {
@@ -84,10 +85,10 @@ public class TreeListener extends MouseAdapter
             }
         }
 
+        definedFilters=null;
         if (rootSelected || selection.isEmpty()) {
             treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true")); //$NON-NLS-1$
             recursiveTreeQuery = null;
-
         } else {
             String treeQueryStr = ""; //$NON-NLS-1$
             BooleanQuery.Builder recursiveQueryBuilder = new BooleanQuery.Builder();
@@ -212,30 +213,22 @@ public class TreeListener extends MouseAdapter
     @Override
     public List getDefinedFilters() {
         TreeListener self = this;
-        List<IFilter> result = new ArrayList<IFilter>();
-        if(selection.size() == 1) {
-            result.add(new IQueryFilter() {
-                @Override
-                public String getFilterExpression() {
-                    if (App.get().recursiveTreeList.isSelected())
-                        return self.recursiveTreeQuery.toString();
-                    else
-                        return self.treeQuery.toString();
+        if(definedFilters == null) {
+            definedFilters = new ArrayList<IFilter>();
+            if(selection.size() >= 1) {
+                if(App.get().recursiveTreeList.isSelected()) {
+                    definedFilters.add(new QueryFilter(self.recursiveTreeQuery));
+                }else {
+                    definedFilters.add(new QueryFilter(self.treeQuery));
                 }
-                public String toString() {
-                    if (App.get().recursiveTreeList.isSelected())
-                        return self.recursiveTreeQuery.toString();
-                    else
-                        return self.treeQuery.toString();
-                }
-            });
+            }
         }
-        return result;
+        return definedFilters;
     }
 
     @Override
     public boolean hasFiltersApplied() {
-        return treeQuery!=null;
+        return recursiveTreeQuery!=null;
     }
 
     @Override
@@ -248,6 +241,11 @@ public class TreeListener extends MouseAdapter
     
     public String toString() {
         return "Evidence panel";
+    }
+
+    @Override
+    public boolean hasFilters() {
+        return recursiveTreeQuery!=null;
     }
 
 }

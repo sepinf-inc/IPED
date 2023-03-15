@@ -1,11 +1,17 @@
 package iped.engine.search;
 
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import com.zaxxer.sparsebits.SparseBitSet;
 
 import iped.data.IIPEDSource;
 import iped.data.IItemId;
 import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.search.IMultiSearchResult;
 
@@ -15,7 +21,8 @@ public class MultiSearchResult implements IMultiSearchResult {
     private float[] scores;
     IPEDSearcher ipedSearcher;
     IIPEDSource ipedSource;
-    BitSet docids;
+    SparseBitSet docids;
+    Map<Integer, SparseBitSet> casesBitSet = null;
 
     public MultiSearchResult() {
         this.ids = new ItemId[0];
@@ -171,6 +178,10 @@ public class MultiSearchResult implements IMultiSearchResult {
         return docids.get(docId);
     }
 
+    public SparseBitSet getDocIdBitSet() {
+        return docids;
+    }
+
     public IPEDSearcher getIpedSearcher() {
         return ipedSearcher;
     }
@@ -186,9 +197,39 @@ public class MultiSearchResult implements IMultiSearchResult {
 
     public void setIPEDSource(IIPEDSource ipedSource) {
         this.ipedSource = ipedSource;
-        this.docids = new BitSet(ids.length);
+        this.docids = new SparseBitSet(ids.length);
         for (int i = 0; i < ids.length; i++) {
-            docids.set(ipedSource.getLuceneId(ids[i]));
+            int lucId = ipedSource.getLuceneId(ids[i]);
+            docids.set(lucId);
         }
+    }
+
+    public Map<Integer, SparseBitSet> getCasesBitSets(IPEDMultiSource multiSource) {
+        if(casesBitSet==null) {
+            casesBitSet = new HashMap<Integer, SparseBitSet>();
+            Integer lastSourceId = -1;
+            SparseBitSet bitset=null;
+
+            List<IPEDSource> cases = multiSource.getAtomicSources();
+            for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
+                IPEDSource ipedSource = (IPEDSource) iterator.next();
+                if(ipedSource.getLastId()>=0) {
+                    bitset = new SparseBitSet(ipedSource.getLastId());
+                }else {
+                    bitset = new SparseBitSet();
+                }
+                casesBitSet.put(ipedSource.getSourceId(), bitset);
+            }
+
+            for (int i = 0; i < ids.length; i++) {
+                int sourceId = ids[i].getSourceId();
+                if(sourceId!=lastSourceId) {
+                    bitset = casesBitSet.get(ids[i].getSourceId());
+                    lastSourceId=sourceId;
+                }                
+                bitset.set(ids[i].getId());
+            }
+        }
+        return casesBitSet;
     }
 }

@@ -160,4 +160,9 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     public String toString() {
         return "Category panel filterer";
     }
+
+    @Override
+    public boolean hasFilters() {
+        return categoryList.size()>0;
+    }
 }

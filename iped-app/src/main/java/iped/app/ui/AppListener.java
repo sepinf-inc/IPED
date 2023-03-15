@@ -94,8 +94,6 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
 
             task.applyUIQueryFilters();
             task.execute();
-
-            App.get().filtersPanel.updateUI();
             
             return task;
         } catch (Exception e) {

@@ -62,6 +62,9 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener{
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
+        App.get().filtersPanel.updateUI();
+
         if (progressDialog != null)
             progressDialog.close();
     }

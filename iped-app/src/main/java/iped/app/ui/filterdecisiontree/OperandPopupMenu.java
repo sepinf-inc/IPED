@@ -51,15 +51,22 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
     public void actionPerformed(ActionEvent e) {
         if(e.getSource()==orMenuitem) {
             ((OperandNode)op).addOperand(Operand.OR);
+            return;
         }
         if(e.getSource()==andMenuitem) {
             ((OperandNode)op).addOperand(Operand.AND);
-        }        
+            return;
+        }
+        
         if(e.getSource()==removeMenuitem) {
             ((DecisionNode)op).getParent().remove(op);
+            if(op instanceof FilterNode) {
+                logicFilterer.removePreCachedFilter((IFilter)((FilterNode)op).getFilter());
+            }
         }
         if(e.getSource()==inverMenuitem) {
             ((FilterNode) op).invert();
+            logicFilterer.invertPreCached(((FilterNode) op).getFilter());
         }
         if(e.getSource()==changeOperandMenuitem) {
             if(((OperandNode)op).operand==Operand.OR) {
@@ -70,6 +77,7 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
         }
 
         filtersTree.updateUI();
+        logicFilterer.startSearchResult(App.get().getResults());
 
         if(App.get().getFilterManager().isFiltererEnabled(logicFilterer)) {
             App.get().getAppListener().updateFileListing();

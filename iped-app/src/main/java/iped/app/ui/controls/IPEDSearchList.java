@@ -8,12 +8,15 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.VetoableChangeListener;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.TransferHandler;
@@ -43,29 +46,46 @@ public class IPEDSearchList<E> extends JPanel {
                 @Override
                 public boolean test(E t) {
                     if(!txFilter.getText().trim().equals("")) {
-                        return !t.toString().contains(txFilter.getText());
+                        return t.toString().contains(txFilter.getText());
                     }else {
-                        return false;
+                        return true;
                     }
                         
                 }
             };
         }
         
-        public void createGUI(IPEDFilterableListModel m) {
-            list = new JList<E>(m);
-            
-            m.setFilter(checkTypedContent);
+        public void createGUI(List<E> m) {
+            list = new JList(m.toArray());
+            createGUI();
+        }
 
+        public void createGUI(ListModel<E> m) {
+            list = new JList<E>(m);
+            createGUI();
+        }
+        
+        public void createGUI() {
+            list.setFixedCellWidth(100);
+            list.setFixedCellHeight(16);
+            
             txFilter = new RSyntaxTextArea(1,20);
             txFilter.setHighlightCurrentLine(false);
             txFilter.addKeyListener(new KeyListener() {
                 @Override
                 public void keyTyped(KeyEvent e) {
-                    list.clearSelection();
-                    list.updateUI();
                 }
                 @Override public void keyReleased(KeyEvent e) {
+                    DefaultListModel lm = new DefaultListModel<>();
+                    availableItems.stream().filter(checkTypedContent).forEach(new Consumer() {
+                        @Override
+                        public void accept(Object t) {
+                            lm.addElement(t);
+                        }
+                    });
+                    list.setModel(lm);
+                    list.clearSelection();
+                    list.updateUI();
                 }
                 @Override public void keyPressed(KeyEvent e) {}
             });

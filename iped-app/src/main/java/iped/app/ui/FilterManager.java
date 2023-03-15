@@ -48,6 +48,7 @@ import iped.search.IMultiSearchResult;
 import iped.utils.UTF8Properties;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
+import iped.viewers.api.IMutableFilter;
 import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.IResultSetFilter;
@@ -55,11 +56,13 @@ import iped.viewers.api.IResultSetFilterer;
 
 public class FilterManager implements ActionListener, ListSelectionListener {
 
+    Map<IFilter,SparseBitSet> bitsetCache = new HashMap<IFilter, SparseBitSet>();
+    HashMap<IFilter, HashMap<Integer, SparseBitSet>> cachedFilterBitsets = new HashMap<IFilter, HashMap<Integer, SparseBitSet>>(); 
+
     List<IQueryFilterer> queryFilterers = new ArrayList<IQueryFilterer>();
     List<IResultSetFilterer> resultSetFilterers = new ArrayList<IResultSetFilterer>();
     LinkedHashMap<IFilterer, Boolean> filterers = new LinkedHashMap<IFilterer, Boolean>();
 
-    HashMap<IFilter, HashMap<Integer, SparseBitSet>> cachedFilterBitsets = new HashMap<IFilter, HashMap<Integer, SparseBitSet>>(); 
 
     private static File userFilters = getGlobalFilterFile(); // $NON-NLS-1$ //$NON-NLS-2$
     private File defaultFilter;
@@ -319,10 +322,16 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         return result != null && result;
     }
 
+    public MultiSearchResult applyBitSetFilter(SparseBitSet bitset, MultiSearchResult result) {
+        return result;
+    }
+    
     public MultiSearchResult applyFilter(IResultSetFilter rsFilter, MultiSearchResult result) {
         HashMap<Integer, SparseBitSet> bitSets = cachedFilterBitsets.get(rsFilter);
         if(bitSets!=null) {
-            //
+            
+        }else {
+            
         }
 
         try {
@@ -350,20 +359,25 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer{
     @Override
     public List<IFilter> getDefinedFilters() {
         List<IFilter> result = new ArrayList<IFilter>();
-        if(comboFilter.getSelectedIndex()!=-1 && !App.FILTRO_TODOS.equals(comboFilter.getSelectedItem())) {
-            result.add(new IQueryFilter() {
-                String filterName = (String) comboFilter.getSelectedItem();
-                String filterExpression = fm.getFilterExpression((String) comboFilter.getSelectedItem());
+        if(comboFilter.getSelectedIndex()!=-1 
+                && !App.FILTRO_TODOS.equals(comboFilter.getSelectedItem())) {
+            if(!App.FILTRO_SELECTED.equals(comboFilter.getSelectedItem())) {
+                result.add(new IQueryFilter() {
+                    String filterName = (String) comboFilter.getSelectedItem();
+                    String filterExpression = fm.getFilterExpression((String) comboFilter.getSelectedItem());
 
-                @Override
-                public String getFilterExpression() {
-                    return filterExpression;
-                }
-                @Override
-                public String toString() {
-                    return filterName;                     
-                }
-            });
+                    @Override
+                    public String getFilterExpression() {
+                        return filterExpression;
+                    }
+                    @Override
+                    public String toString() {
+                        return filterName;                     
+                    }
+                });
+            }else {
+                result.add(getFilter());
+            }
         }
         return result;
     }
@@ -373,17 +387,23 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer{
         // TODO Auto-generated method stub
         return null;
     }
+    
+    class CheckedFilter implements IResultSetFilter, IMutableFilter{
+        @Override
+        public IMultiSearchResult filterResult(IMultiSearchResult src)
+                throws ParseException, QueryNodeException, IOException {
+            return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterChecked(src);
+        }
+        
+        public String toString() {
+            return App.FILTRO_SELECTED;
+        }
+    }
 
     @Override
     public IFilter getFilter() {
         if(App.FILTRO_SELECTED.equals(comboFilter.getSelectedItem())) {
-            return new IResultSetFilter() {
-                @Override
-                public IMultiSearchResult filterResult(IMultiSearchResult src)
-                        throws ParseException, QueryNodeException, IOException {
-                    return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterChecked(src);
-                }
-            };
+            return new CheckedFilter();
         }
         return null;
     }
@@ -413,6 +433,11 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer{
 
     public String toString() {
         return "Predefined filters";
+    }
+
+    @Override
+    public boolean hasFilters() {
+        return comboFilter.getSelectedIndex()!=-1 && !App.FILTRO_TODOS.equals(comboFilter.getSelectedItem());
     }
     
 }

@@ -3,6 +3,7 @@ package iped.app.ui;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,23 +16,22 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 
-import com.zaxxer.sparsebits.SparseBitSet;
-
 import iped.engine.search.MultiSearchResult;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IFilter;
-import iped.viewers.api.IFilterer;
+import iped.viewers.api.IMutableFilter;
 import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
 public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansionListener, ClearFilterListener, IResultSetFilterer {
-
     private HashSet<Object> selection = new HashSet<>();
     private volatile boolean updatingSelection = false;
     private long collapsed = 0;
     private boolean clearing = false;
+
+    HashMap<Object, IFilter> definedFilters = new HashMap<Object, IFilter>();
 
     public Set<String> getSelectedBookmarkNames() {
         return selection.stream().filter(b -> b != BookmarksTreeModel.ROOT && b != BookmarksTreeModel.NO_BOOKMARKS)
@@ -48,7 +48,6 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
 
     @Override
     public void valueChanged(TreeSelectionEvent evt) {
-
         if (updatingSelection) {
             return;
         }
@@ -63,8 +62,13 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
         for (TreePath path : evt.getPaths()) {
             if (selection.contains(path.getLastPathComponent())) {
                 selection.remove(path.getLastPathComponent());
+                definedFilters.remove(path.getLastPathComponent());
             } else {
-                selection.add(path.getLastPathComponent());
+                Object bookmark = path.getLastPathComponent();
+                selection.add(bookmark);
+                if(!bookmark.equals(BookmarksTreeModel.ROOT) && !bookmark.equals(BookmarksTreeModel.NO_BOOKMARKS)) {
+                    definedFilters.put(bookmark, new BookMarkFilter(bookmark));
+                }
             }
         }
 
@@ -88,11 +92,13 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
 
             HashSet<Object> tempSel = new HashSet<>(selection);
             selection.clear();
+            definedFilters.clear();
 
             for (Object path : tempSel) {
                 if (path == BookmarksTreeModel.ROOT || path == BookmarksTreeModel.NO_BOOKMARKS
                         || App.get().appCase.getMultiBookmarks().getBookmarkSet().contains(path)) {
                     selection.add(path);
+                    definedFilters.put(path, new BookMarkFilter(path));
                 }
             }
 
@@ -118,6 +124,10 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
                 App.get().bookmarksTree.collapseRow(0);
             }
         }
+        
+        //informs combinedfilter of bookmark change so it can update its internal bitset cache
+        App.get().filtersPanel.getCombinedFilterer().startSearchResult(App.get().ipedResult);
+
         updatingSelection = false;
     }
 
@@ -139,6 +149,39 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
         clearing = false;
     }
 
+    class BookMarkFilter implements IResultSetFilter, IMutableFilter {
+        Object bookmark; 
+
+        public BookMarkFilter(Object bookmark2){
+            this.bookmark = bookmark2;            
+        }
+
+        @Override
+        public IMultiSearchResult filterResult(IMultiSearchResult src)
+                throws ParseException, QueryNodeException, IOException {
+            Set<String> bookmarkSelection = new HashSet<String>();
+            bookmarkSelection.add(bookmark.toString());
+            return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterBookmarks(src, bookmarkSelection);
+        }
+
+        public String toString() {
+            return bookmark.toString();
+        }
+    };
+    
+    class NoBookMarkFilter implements IResultSetFilter, IMutableFilter {
+        @Override
+        public IMultiSearchResult filterResult(IMultiSearchResult src)
+                throws ParseException, QueryNodeException, IOException {
+            return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterNoBookmarks(src);
+        }
+        public String toString() {
+            return BookmarksTreeModel.NO_BOOKMARKS_NAME;
+        }
+    }
+    
+    NoBookMarkFilter noBookMarkFilter = new NoBookMarkFilter();
+
     @Override
     public List getDefinedFilters() {
         ArrayList<IFilter> result = new ArrayList<IFilter>();
@@ -148,31 +191,10 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
                 && !isRootSelected()) {
             if ((!bookmarkSelection.isEmpty() || isNoBookmarksSelected())
                     && !isRootSelected()) {
-                for (String bookmark : bookmarkSelection) {
-                    result.add(new IResultSetFilter() {
-                        @Override
-                        public IMultiSearchResult filterResult(IMultiSearchResult src)
-                                throws ParseException, QueryNodeException, IOException {
-                            Set<String> bookmarkSelection = new HashSet<String>();
-                            bookmarkSelection.add(bookmark);
-                            return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterBookmarks(src, bookmarkSelection);
-                        }
-                        public String toString() {
-                            return bookmark;
-                        }
-                    });
-                }
+                result.addAll(definedFilters.values());
+
                 if(isNoBookmarksSelected()) {
-                    result.add(new IResultSetFilter() {
-                        @Override
-                        public IMultiSearchResult filterResult(IMultiSearchResult src)
-                                throws ParseException, QueryNodeException, IOException {
-                            return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterNoBookmarks(src);
-                        }
-                        public String toString() {
-                            return "[No Bookmarks]";
-                        }
-                    });
+                    result.add(noBookMarkFilter);
                 }
             }
         }
@@ -225,5 +247,15 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
             };
         }
         return null;
+    }
+
+    @Override
+    public boolean hasFilters() {
+        return selection.size()>0 && !isRootSelected();
+    }
+
+    @Override
+    public boolean hasFiltersApplied() {
+        return selection.size()>0 && !isRootSelected();
     }
 }

@@ -1099,4 +1099,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     public String toString() {
         return "Timeline panel";
     }
+
+    @Override
+    public boolean hasFilters() {
+        return chartPanel.definedFilters.size() > 0 || chartPanel.excludedEvents.size()>0;
+    }
 }

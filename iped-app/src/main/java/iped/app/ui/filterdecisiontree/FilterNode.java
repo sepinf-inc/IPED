@@ -10,7 +10,7 @@ public class FilterNode extends DecisionNode {
         this.filter = filter;
     }
 
-    public Object getFilter() {
+    public IFilter getFilter() {
         return filter;
     }
     

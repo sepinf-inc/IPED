@@ -1,5 +1,6 @@
 package iped.app.ui;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -13,6 +14,7 @@ public class FiltersTreeModel implements TreeModel {
     
     String rootName = "Filters";
     private IFilterer[] filterers;
+    HashMap<Object, List<Object>> childrenCache = new HashMap<Object, List<Object>>(); 
 
     public FiltersTreeModel(Set<IFilterer> filterers){
         this.filterers=filterers.toArray(new IFilterer[0]);
@@ -30,7 +32,7 @@ public class FiltersTreeModel implements TreeModel {
         }
 
         if(parent instanceof IFilterer) {
-            List filters = ((IFilterer) parent).getDefinedFilters();
+            List filters = childrenCache.get(parent);
             return filters.get(index);
         }
 
@@ -48,7 +50,8 @@ public class FiltersTreeModel implements TreeModel {
             if(filters==null) {
                 return 0;
             }
-            return ((IFilterer) parent).getDefinedFilters().size();
+            childrenCache.put(parent, filters);
+            return filters.size();
         }
 
         return 0;
@@ -61,7 +64,7 @@ public class FiltersTreeModel implements TreeModel {
         }
 
         if(node instanceof IFilterer) {
-            return ((IFilterer) node).getDefinedFilters().size()==0;
+            return !((IFilterer) node).hasFilters();
         }
 
         return true;

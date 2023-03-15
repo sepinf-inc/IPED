@@ -171,7 +171,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 result.setIPEDSource(ipedCase);
                 if(applyUIFilters && filterManager!=null) {
                     List<IResultSetFilterer> rsFilterers = filterManager.getResultSetFilterers();
-                    for (Iterator iterator = rsFilterers.iterator(); iterator.hasNext();) {
+                    for (Iterator iterator = rsFilterers.iterator(); iterator.hasNext() && result.getLength()>0;) {
                         IResultSetFilterer iRSFilterer = (IResultSetFilterer) iterator.next();
                         if(filterManager.isFiltererEnabled(iRSFilterer)) {
                             IFilter rsFilter = iRSFilterer.getFilter();

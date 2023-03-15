@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -29,7 +30,6 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
-import iped.app.ui.controls.IPEDFilterableListModel;
 import iped.app.ui.controls.IPEDSearchList;
 import iped.app.metadata.MetadataSearch;
 import iped.app.metadata.ValueCount;
@@ -54,12 +54,6 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
             
             metadataSearch = TableHeaderFilterManager.get().getMetadataSearch(field);
             
-            /*
-            menu.add(new JMenuItem("Sort ascending"));
-            menu.add(new JMenuItem("Sort descending"));
-            menu.add(new JSeparator());
-            */
-
             JMenuItem emptyMenu = new JCheckBoxMenuItem("Empty");
             emptyMenu.setSelected(fm.getContainsEmptyFilter(field));
             emptyMenu.addActionListener(new ActionListener() {
@@ -98,9 +92,10 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
             this.setBackground(menu.getBackground());
 
             metadataSearch.setIpedResult(App.get().getResults());
+            
             this.availableItems = metadataSearch.countValues(field);
 
-            createGUI(new IPEDFilterableListModel<>(availableItems));
+            createGUI(availableItems);
 
             JPanel panelButons = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
             this.add(panelButons, BorderLayout.SOUTH);

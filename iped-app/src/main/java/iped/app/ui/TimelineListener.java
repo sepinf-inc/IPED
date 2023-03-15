@@ -114,7 +114,6 @@ public class TimelineListener implements ClearFilterListener, IResultSetFilterer
 
     @Override
     public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -138,6 +137,16 @@ public class TimelineListener implements ClearFilterListener, IResultSetFilterer
             };
         }
         return null;
+    }
+
+    @Override
+    public boolean hasFilters() {
+        return isTimelineViewEnabled();
+    }
+
+    @Override
+    public boolean hasFiltersApplied() {
+        return false;
     }
 
 }
