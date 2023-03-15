@@ -70,7 +70,7 @@ import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
 public class MetadataPanel extends JPanel
-        implements ActionListener, ListSelectionListener, ClearFilterListener, ChangeListener, IResultSetFilterer {
+        implements ActionListener, ListSelectionListener, ChangeListener, IResultSetFilterer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetadataPanel.class);
 

@@ -47,12 +47,13 @@ import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
+import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IQueryFilterer;
 
 public class TreeListener extends MouseAdapter
-        implements TreeSelectionListener, ActionListener, TreeExpansionListener, ClearFilterListener, IQueryFilterer {
+        implements TreeSelectionListener, ActionListener, TreeExpansionListener, IQueryFilterer {
 
     private Query treeQuery, recursiveTreeQuery;
     boolean rootSelected = false;

@@ -25,7 +25,7 @@ import iped.viewers.api.IFilter;
 import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
-public class TimelineListener implements ClearFilterListener, IResultSetFilterer {
+public class TimelineListener implements IResultSetFilterer {
 
     private CCheckBox timelineButton;
     private Icon defaultIcon, filteredIcon;

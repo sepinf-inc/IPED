@@ -533,4 +533,10 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         
     }
 
+    @Override
+    public void clearFilter() {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

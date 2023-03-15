@@ -20,12 +20,13 @@ import iped.engine.search.MultiSearchResult;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.search.IMultiSearchResult;
+import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IMutableFilter;
 import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
-public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansionListener, ClearFilterListener, IResultSetFilterer {
+public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansionListener, IResultSetFilterer {
     private HashSet<Object> selection = new HashSet<>();
     private volatile boolean updatingSelection = false;
     private long collapsed = 0;

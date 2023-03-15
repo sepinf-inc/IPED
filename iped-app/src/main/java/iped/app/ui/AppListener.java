@@ -34,10 +34,10 @@ import org.apache.lucene.search.Query;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
 
-public class AppListener implements ActionListener, MouseListener, ClearFilterListener {
+public class AppListener implements ActionListener, MouseListener {
 
     private String searchText = ""; //$NON-NLS-1$
-    private boolean clearAllFilters = false;
+    boolean clearAllFilters = false;
     private boolean clearSearchBox = false;
 
     public void updateFileListing() {
@@ -225,16 +225,6 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
     public void mouseReleased(MouseEvent arg0) {
         // TODO Auto-generated method stub
 
-    }
-
-    @Override
-    public void clearFilter() {
-        clearAllFilters = true;
-        App.get().filterComboBox.setSelectedIndex(0);
-        App.get().queryComboBox.setSelectedItem(""); //$NON-NLS-1$
-        if (App.get().filterDuplicates.isSelected())
-            App.get().filterDuplicates.doClick();
-        clearAllFilters = false;
     }
 
 }

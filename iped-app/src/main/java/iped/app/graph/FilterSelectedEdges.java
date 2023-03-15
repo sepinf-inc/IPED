@@ -212,4 +212,10 @@ public class FilterSelectedEdges implements IResultSetFilterer{
         return false;
     }
 
+    @Override
+    public void clearFilter() {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

@@ -7,7 +7,7 @@ import java.util.List;
  * @author patrick.pdb
  *
  */
-public interface IFilterer {
+public interface IFilterer extends ClearFilterListener{
     
     List<IFilter> getDefinedFilters();
 

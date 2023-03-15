@@ -52,7 +52,6 @@ import iped.app.graph.renderers.MoneyTransferNodeRenderer;
 import iped.app.graph.renderers.PeopleNodeRenderer;
 import iped.app.graph.renderers.PersonNodeRenderer;
 import iped.app.graph.renderers.PhoneNodeRenderer;
-import iped.app.ui.ClearFilterListener;
 import iped.app.ui.Messages;
 import iped.engine.data.ItemId;
 import iped.engine.graph.EdgeQueryListener;
@@ -62,6 +61,7 @@ import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.GraphTask;
 import iped.engine.graph.NodeEdgeQueryListener;
 import iped.engine.graph.PathQueryListener;
+import iped.viewers.api.ClearFilterListener;
 
 public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
 

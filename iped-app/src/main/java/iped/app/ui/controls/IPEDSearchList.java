@@ -8,7 +8,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.VetoableChangeListener;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
 import javax.swing.DefaultListModel;
@@ -19,6 +22,7 @@ import javax.swing.JScrollPane;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.event.ListSelectionListener;
 
@@ -31,9 +35,9 @@ public class IPEDSearchList<E> extends JPanel {
         protected List<E> availableItems;
         protected JScrollPane listScrollPanel;
         protected JList<E> list;
-        protected Predicate<E> checkTypedContent;
         protected int paintRef;
         protected int paintSize;
+        private ListModel<E> defaultListModel;
 
         protected IPEDSearchList() {
             this(null);
@@ -42,21 +46,11 @@ public class IPEDSearchList<E> extends JPanel {
         protected IPEDSearchList(Predicate<E> availablePredicate) {
             super(new BorderLayout());
             this.availablePredicate=availablePredicate;
-            checkTypedContent = new Predicate<E>() {
-                @Override
-                public boolean test(E t) {
-                    if(!txFilter.getText().trim().equals("")) {
-                        return t.toString().contains(txFilter.getText());
-                    }else {
-                        return true;
-                    }
-                        
-                }
-            };
         }
         
         public void createGUI(List<E> m) {
             list = new JList(m.toArray());
+            defaultListModel = list.getModel();
             createGUI();
         }
 
@@ -65,6 +59,69 @@ public class IPEDSearchList<E> extends JPanel {
             createGUI();
         }
         
+        class FilteredList implements Future<DefaultListModel>{
+            DefaultListModel result = new DefaultListModel<>();
+            Thread thread;
+
+            public FilteredList(String text) {
+                Predicate checkContains = new Predicate<E>() {
+                    @Override
+                    public boolean test(E t) {
+                        if(!text.equals("")) {
+                            return t.toString().contains(text);
+                        }else {
+                            return true;
+                        }
+                            
+                    }
+                };
+
+                Runnable r = new Runnable() {
+                    @Override
+                    public void run() {
+                        for(int i=0; i<availableItems.size(); i++) {
+                            Object o = availableItems.get(i);
+                            if(checkContains.test(o)) {
+                                if(result==null) {
+                                    return;//thread was canceled
+                                }
+                                result.addElement(o);
+                            }
+                        }
+                    }
+                };
+                thread = new Thread(r);
+                thread.start();
+            }
+            
+            @Override
+            public boolean cancel(boolean mayInterruptIfRunning) {
+                result = null;
+                return false;
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return result == null;
+            }
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+
+            @Override
+            public DefaultListModel<Object> get() throws InterruptedException, ExecutionException {
+                return result;
+            }
+
+            @Override
+            public DefaultListModel<Object> get(long timeout, TimeUnit unit)
+                    throws InterruptedException, ExecutionException, TimeoutException {
+                return result;
+            }            
+        }
+
         public void createGUI() {
             list.setFixedCellWidth(100);
             list.setFixedCellHeight(16);
@@ -72,20 +129,38 @@ public class IPEDSearchList<E> extends JPanel {
             txFilter = new RSyntaxTextArea(1,20);
             txFilter.setHighlightCurrentLine(false);
             txFilter.addKeyListener(new KeyListener() {
+                private IPEDSearchList<E>.FilteredList fl;
                 @Override
                 public void keyTyped(KeyEvent e) {
                 }
                 @Override public void keyReleased(KeyEvent e) {
-                    DefaultListModel lm = new DefaultListModel<>();
-                    availableItems.stream().filter(checkTypedContent).forEach(new Consumer() {
-                        @Override
-                        public void accept(Object t) {
-                            lm.addElement(t);
+                    String text = txFilter.getText();
+                    if(text.length()>0) {
+                        if(fl!=null) {
+                            fl.cancel(true);
                         }
-                    });
-                    list.setModel(lm);
-                    list.clearSelection();
-                    list.updateUI();
+                        fl = new FilteredList(text);
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                DefaultListModel lm;
+                                try {
+                                    lm = fl.get();
+                                    if(lm!=null) {
+                                        list.setModel(lm);
+                                        list.clearSelection();
+                                        list.updateUI();
+                                    }
+                                } catch (InterruptedException | ExecutionException e1) {
+                                    e1.printStackTrace();
+                                }
+                            }
+                        });
+                    }else {
+                        list.setModel(defaultListModel);
+                        list.clearSelection();
+                        list.updateUI();
+                    }
                 }
                 @Override public void keyPressed(KeyEvent e) {}
             });

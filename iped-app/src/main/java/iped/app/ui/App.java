@@ -48,6 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -153,9 +154,11 @@ import iped.utils.IconUtil;
 import iped.utils.UiUtil;
 import iped.viewers.ATextViewer;
 import iped.viewers.api.AbstractViewer;
+import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IColumnsManager;
 import iped.viewers.api.IFilter;
+import iped.viewers.api.IFilterer;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IMutableFilter;
 import iped.viewers.api.IQueryFilter;
@@ -784,6 +787,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.getContentPane().add(status, BorderLayout.PAGE_END);
 
         appletListener = new AppListener();
+
         recursiveTreeList.addActionListener(treeListener);
         queryComboBox.addActionListener(appletListener);
         filterComboBox.addActionListener(appletListener);
@@ -798,21 +802,34 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.addMouseListener(new ResultTableListener());
         resultsTable.addKeyListener(new ResultTableListener());
 
+        /*
         clearAllFilters.addClearListener(categoryListener);
         clearAllFilters.addClearListener(bookmarksListener);
         clearAllFilters.addClearListener(treeListener);
         clearAllFilters.addClearListener(metadataPanel);
-        clearAllFilters.addClearListener(appletListener);
+        
+        clearAllFilters.addClearListener(duplicatesFilterer);
+        
+        
         clearAllFilters.addClearListener(appGraphAnalytics);
-        clearAllFilters.addClearListener(similarImageFilterPanel);
+        clearAllFilters.addClearListener(similarImagesFilterer);
         clearAllFilters.addClearListener(similarFacesFilterPanel);
         clearAllFilters.addClearListener(timelineListener);
         clearAllFilters.addClearListener(filtersPanel);
         clearAllFilters.addClearListener(TableHeaderFilterManager.get());
+        */
+
         filterManager.addQueryFilterer(new SearchFilterer());
-        
+
         duplicatesFilterer = new DuplicatesFilterer();
         filterManager.addResultSetFilterer(duplicatesFilterer);
+
+        filterManager.getFilterers().stream().forEach(new Consumer<IFilterer>() {
+            @Override
+            public void accept(IFilterer filterer) {
+                clearAllFilters.addClearListener(filterer);
+            }
+        });
 
         filtersPanel.install(filterManager);
         filtersPanel.updateUI();
@@ -830,8 +847,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencedByTable.getSelectionModel().addListSelectionListener(referencedByModel);
 
         hitsTable.addMouseListener(appletListener);
-        // filterComboBox.addMouseListener(appletListener);
-        // filterComboBox.getComponent(0).addMouseListener(appletListener);
         updateUI(false);
         updateIconContainersUI(IconManager.getIconSize(), false);
 
@@ -1681,6 +1696,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         public boolean hasFilters() {
             return similarImagesQueryRefItem != null;
         }
+
+        @Override
+        public void clearFilter() {
+            similarImageFilterPanel.clearFilter();            
+        }
         
     };
     
@@ -1739,8 +1759,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         public boolean hasFiltersApplied() {
             return filterDuplicates.isSelected();
         }
+
+        @Override
+        public void clearFilter() {
+            appletListener.clearAllFilters = true;
+            if (filterDuplicates.isSelected())
+                filterDuplicates.doClick();
+            appletListener.clearAllFilters = false;
+        }
     }
-    
+
     IResultSetFilter similarFaceFilter =new IResultSetFilter() {
         @Override
         public IMultiSearchResult filterResult(IMultiSearchResult src)
@@ -1794,6 +1822,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             return false;
         }
 
+        @Override
+        public void clearFilter() {
+            similarFacesFilterPanel.clearFilter();
+        }
+
     }
 
     class SearchFilterer implements IQueryFilterer{
@@ -1844,5 +1877,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             return "Search input";
         }
 
+        @Override
+        public void clearFilter() {
+            appletListener.clearAllFilters = true;
+            queryComboBox.setSelectedItem(""); //$NON-NLS-1$
+            appletListener.clearAllFilters = false;
+        }
+
     }
+
 }

@@ -439,5 +439,11 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer{
     public boolean hasFilters() {
         return comboFilter.getSelectedIndex()!=-1 && !App.FILTRO_TODOS.equals(comboFilter.getSelectedItem());
     }
-    
+
+    @Override
+    public void clearFilter() {
+        App.get().appletListener.clearAllFilters=true;
+        App.get().filterComboBox.setSelectedIndex(0);
+        App.get().appletListener.clearAllFilters=false;
+    }
 }

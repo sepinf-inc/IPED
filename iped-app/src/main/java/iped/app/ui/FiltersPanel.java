@@ -30,6 +30,7 @@ import iped.app.ui.filterdecisiontree.FilterNode;
 import iped.app.ui.filterdecisiontree.OperandNode;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
 import iped.app.ui.filterdecisiontree.OperandPopupMenu;
+import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
 
@@ -50,6 +51,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
     private ImageIcon intersectionIcon;
     private ImageIcon combinationIcon;
     private JCheckBox ckStructuredFilterer;
+    private FiltererMenu filtererMenu;
 
     public FiltersPanel() {
         invertUrl = this.getClass().getResource("negative.png");
@@ -172,7 +174,33 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
 
         operandMenu = new OperandPopupMenu(structuredFiltererTree,combinedFilterer);
 
+        filtererMenu = new FiltererMenu();
+
         filtersTree.setDragEnabled(true);
+
+        filtersTree.addMouseListener(new MouseAdapter() {
+            public void showPopupMenu(MouseEvent e) {
+                Object o = filtersTree.getPathForLocation(e.getX(), e.getY()).getLastPathComponent();
+                filtererMenu.setContext(o);
+                filtererMenu.show((JComponent) e.getSource(), e.getX(), e.getY());
+            }
+            @Override
+            public void mousePressed(MouseEvent e) {
+                super.mousePressed(e);
+                if (e.isPopupTrigger()) {
+                    showPopupMenu(e);
+                }
+            }
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+                if (e.isPopupTrigger()) {
+                    showPopupMenu(e);
+                }
+            }
+        });
+        
+        
         structuredFiltererTree.setDragEnabled(true);
         structuredFiltererTree.setRootVisible(true);
 

@@ -24,7 +24,7 @@ import iped.viewers.api.IFilter;
 import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IQueryFilterer;
 
-public class CategoryTreeListener implements TreeSelectionListener, TreeExpansionListener, ClearFilterListener, IQueryFilterer {
+public class CategoryTreeListener implements TreeSelectionListener, TreeExpansionListener, IQueryFilterer {
 
     private BooleanQuery query;
     private LinkedHashSet<Category> categoryList = new LinkedHashSet<Category>();

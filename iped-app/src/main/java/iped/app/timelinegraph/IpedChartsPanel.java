@@ -92,7 +92,6 @@ import iped.app.timelinegraph.popups.LegendItemPopupMenu;
 import iped.app.timelinegraph.swingworkers.CheckWorker;
 import iped.app.timelinegraph.swingworkers.HighlightWorker;
 import iped.app.ui.App;
-import iped.app.ui.ClearFilterListener;
 import iped.app.ui.ColumnsManager;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItemId;
@@ -111,7 +110,7 @@ import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
 import iped.viewers.api.events.RowSorterTableDataChange;
 
-public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener, ComponentListener {
+public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ComponentListener {
     JTable resultsTable;
     IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
@@ -927,7 +926,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     @Override
     public void clearFilter() {
+        chartPanel.isClearing=true;
         chartPanel.removeAllFilters();
+        chartPanel.isClearing=false;
     }
 
     @Override

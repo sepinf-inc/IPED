@@ -29,11 +29,10 @@ import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
-public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilterer, ClearFilterListener{
+public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilterer{
     HashMap<String, Set<ValueCount>> selectedValues = new HashMap<String, Set<ValueCount>>();
     HashMap<String, MetadataSearch> panels = new HashMap<String, MetadataSearch>();
     HashMap<String, IFilter> definedFilters = new HashMap<String,IFilter>();
-    
 
     HashMap<String, String> otherFilters = new HashMap<String, String>();
 
@@ -48,7 +47,6 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     }
 
     private TableHeaderFilterManager() {
-        
     }
 
     public void removeFilter(String field) {
@@ -239,5 +237,6 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         panels.clear();        
         otherFilters.clear();
         definedFilters.clear();
+        selectedValues.clear();
     }
 }
