@@ -116,14 +116,6 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         if(result==null) {
             result = new MetadataSearch();
             panels.put(field, result);
-            /*
-            Set values = selectedValues.get(field);            
-            if(values==null) {
-                values=new HashSet<>();
-                selectedValues.put(field, values);
-            }
-            definedFilters.put(field, new ValueCountQueryFilter(field , values));
-            */
         }
         return result;
     }
