@@ -21,8 +21,11 @@ public class FiltererMenu extends JPopupMenu implements ActionListener{
     @Override
     public void actionPerformed(ActionEvent e) {
         if(e.getSource()==clearMenuitem) {
-            
+            ((IFilterer)selected).clearFilter();
         }
+
+        App.get().filtersPanel.updateUI();
+        App.get().getAppListener().updateFileListing();
     }
     
     public void setContext(Object o) {
