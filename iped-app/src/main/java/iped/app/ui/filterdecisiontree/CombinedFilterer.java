@@ -80,15 +80,19 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         CaseSearcherFilter csf = null;
         private IFilter filter;
         Map<Integer, SparseBitSet> bitsets = null;
-        private boolean isInverting;
+        private boolean isInverted=false;
+        CombinedFilterer combinedFilterer;
 
-        FutureBitSetResult(IFilter filter){
+        FutureBitSetResult(CombinedFilterer combinedFilterer, IFilter filter){
             this.filter = filter;
+            this.combinedFilterer = combinedFilterer;
             this.csf = null;
             if(filter instanceof IQueryFilter) {
-                this.csf = new CaseSearcherFilter(((IQueryFilter)filter).getFilterExpression());        
+                String query = ((IQueryFilter)filter).getFilterExpression();
+                query = query.replace('“', '"').replace('”', '"');
+                this.csf = new CaseSearcherFilter(query);
             }else {
-                this.csf = new CaseSearcherFilter("*:*");        
+                this.csf = new CaseSearcherFilter("*:*");
             }
 
             this.csf.setAppyUIFilters(false);        
@@ -111,12 +115,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         }
         
         public void invert() {
-            isInverting=!isInverting;
-            if(isInverting) {                
-                this.csf = new CaseSearcherFilter("*:*");
-                this.csf.setAppyUIFilters(false);        
-                this.csf.execute();
-            }
+            isInverted=!isInverted;
         }
 
         @Override
@@ -141,14 +140,23 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                 }else {
                     lbitset=bitsets;
                 }
-                if(isInverting) {
-                    MultiSearchResult rs = csf.get();
+                if(isInverted) {
+                    HashMap<Integer, SparseBitSet> invBitset = new HashMap<Integer, SparseBitSet>();
+                    
                     List<IPEDSource> cases = App.get().appCase.getAtomicSources();
                     for (Iterator<IPEDSource> iterator = cases.iterator(); iterator.hasNext();) {
                         IPEDSource source = iterator.next();
-                        SparseBitSet bs = getAllSetBitSet(source.getLastId());
-                        lbitset.get(source.getSourceId()).xor(bs);
+                        int srcId = source.getSourceId();
+                        if(source.getLastId()>0) {
+                            SparseBitSet bs = getAllSetBitSet(source.getLastId()+1);
+                            bs.xor(lbitset.get(srcId));
+                            invBitset.put(srcId, bs);
+                        }else {
+                            invBitset.put(srcId, lbitset.get(srcId));
+                        }
                     }
+
+                    lbitset=invBitset;
                 }
                 
                 return lbitset;
@@ -168,7 +176,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
     }
 
     public void preCacheFilter(IFilter filter) {
-        cachedBitSet.put(filter, new FutureBitSetResult(filter));
+        cachedBitSet.put(filter, new FutureBitSetResult(this, filter));
         if(filter instanceof IMutableFilter) {
             ((IMutableFilter)filter).addFilterChangeListener(this);
         }
@@ -350,7 +358,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                 IPEDSource ipedSource = (IPEDSource) iterator.next();
                 int bitsetSize=0;
                 if(ipedSource.getLastId()>=0) {
-                    bitsetSize=ipedSource.getLastId();
+                    bitsetSize=ipedSource.getLastId()+1;
                 }
                 result.put(ipedSource.getSourceId(), new SparseBitSet(bitsetSize));
             }
@@ -360,7 +368,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                 IPEDSource ipedSource = (IPEDSource) iterator.next();                
                 int bitsetSize=0;
                 if(ipedSource.getLastId()>=0) {
-                    bitsetSize=ipedSource.getLastId();
+                    bitsetSize=ipedSource.getLastId()+1;
                 }
                 result.put(ipedSource.getSourceId(), getAllSetBitSet(bitsetSize));
             }
@@ -370,7 +378,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
             if(cancelCheck!=null && cancelCheck.isCancelled()) {
                 return null;
             }
-            
+
             DecisionNode node = (DecisionNode) iterator.next();
 
             Map<Integer, SparseBitSet> fbitset = null;
@@ -402,6 +410,19 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                             bitset.or(fbitset.get(ipedSource.getSourceId()));
                         }
                     }
+                }
+            }
+        }
+        if(op.isInverted()) {
+            HashMap<Integer, SparseBitSet> invBitset = new HashMap<Integer, SparseBitSet>();
+            
+            for (int i=0; i<cases.size();i++) {
+                IPEDSource ipedSource = (IPEDSource) cases.get(i);
+                int srcId = ipedSource.getSourceId();
+                if(ipedSource.getLastId()>0) {
+                    SparseBitSet bs = getAllSetBitSet(ipedSource.getLastId()+1);
+                    SparseBitSet bitset = result.get(ipedSource.getSourceId());
+                    bitset.xor(bs);
                 }
             }
         }
@@ -537,6 +558,10 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
     public void clearFilter() {
         // TODO Auto-generated method stub
         
+    }
+
+    public void invalidateCache() {
+        cbs = null;
     }
 
 }

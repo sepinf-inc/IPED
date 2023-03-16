@@ -82,10 +82,12 @@ public class IPEDSearchList<E> extends JPanel {
                         for(int i=0; i<availableItems.size(); i++) {
                             Object o = availableItems.get(i);
                             if(checkContains.test(o)) {
-                                if(result==null) {
-                                    return;//thread was canceled
+                                synchronized (this) {
+                                    if(result==null) {
+                                        return;//thread was canceled
+                                    }
+                                    result.addElement(o);
                                 }
-                                result.addElement(o);
                             }
                         }
                     }
@@ -96,7 +98,9 @@ public class IPEDSearchList<E> extends JPanel {
             
             @Override
             public boolean cancel(boolean mayInterruptIfRunning) {
-                result = null;
+                synchronized (this) {
+                    result = null;
+                }
                 return false;
             }
 

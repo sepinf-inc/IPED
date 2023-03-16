@@ -635,7 +635,15 @@ public class MetadataPanel extends JPanel
         HashSet<ValueCount> selectedValues = new HashSet<ValueCount>();
         selectedValues.addAll(list.getSelectedValuesList());
         if(isFiltering()) {
+            ValueCount sample = selectedValues.iterator().next();
             result.add(new ValueCountQueryFilter(field , selectedValues));
+            /*
+            if(sample instanceof RangeCount) {
+                result.add(new ValueCountQueryFilter(field , selectedValues));
+            }else {
+                result.add(new ValueCountFilter(field , selectedValues));
+            }
+            */
         }
         return result;
     }

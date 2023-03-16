@@ -8,6 +8,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTree;
 
 import iped.app.ui.App;
+import iped.app.ui.Messages;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
 import iped.viewers.api.IFilter;
 
@@ -19,6 +20,12 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
     CombinedFilterer logicFilterer;
     JTree filtersTree;
     DecisionNode op;
+    
+    static final String INVERT_FILTER_STR = Messages.get("OperandMenu.invertFilter");
+    static final String CHANGE_STR = Messages.get("OperandMenu.changeOperand");
+    static final String ADD_AND_OPERAND = Messages.get("OperandMenu.addAnd");
+    static final String ADD_OR_OPERAND = Messages.get("OperandMenu.addOr");
+    static final String REMOVE_NODE_STR = Messages.get("OperandMenu.removeNode");
 
     private JMenuItem removeMenuitem;
 
@@ -26,23 +33,23 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
         this.logicFilterer = logicFilterer;
         this.filtersTree = filtersTree;
 
-        inverMenuitem = new JMenuItem("Invert filter");
+        inverMenuitem = new JMenuItem(INVERT_FILTER_STR);
         inverMenuitem.addActionListener(this);
         this.add(inverMenuitem);
 
-        changeOperandMenuitem = new JMenuItem("Change");
+        changeOperandMenuitem = new JMenuItem("");
         changeOperandMenuitem.addActionListener(this);
         this.add(changeOperandMenuitem);
 
-        orMenuitem = new JMenuItem("Add OR node");
+        orMenuitem = new JMenuItem(ADD_OR_OPERAND);
         orMenuitem.addActionListener(this);
         this.add(orMenuitem);
 
-        andMenuitem = new JMenuItem("Add AND node");
+        andMenuitem = new JMenuItem(ADD_AND_OPERAND);
         andMenuitem.addActionListener(this);
         this.add(andMenuitem);
 
-        removeMenuitem = new JMenuItem("Remove node");
+        removeMenuitem = new JMenuItem(REMOVE_NODE_STR);
         removeMenuitem.addActionListener(this);
         this.add(removeMenuitem);
     }
@@ -51,10 +58,12 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
     public void actionPerformed(ActionEvent e) {
         if(e.getSource()==orMenuitem) {
             ((OperandNode)op).addOperand(Operand.OR);
+            filtersTree.updateUI();
             return;
         }
         if(e.getSource()==andMenuitem) {
             ((OperandNode)op).addOperand(Operand.AND);
+            filtersTree.updateUI();
             return;
         }
         
@@ -65,8 +74,11 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
             }
         }
         if(e.getSource()==inverMenuitem) {
-            ((FilterNode) op).invert();
-            logicFilterer.invertPreCached(((FilterNode) op).getFilter());
+            ((DecisionNode) op).invert();
+            if(op instanceof FilterNode) {
+                logicFilterer.invertPreCached(((FilterNode) op).getFilter());
+            }
+            logicFilterer.invalidateCache();
         }
         if(e.getSource()==changeOperandMenuitem) {
             if(((OperandNode)op).operand==Operand.OR) {
@@ -91,14 +103,14 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
             changeOperandMenuitem.setVisible(false);
             inverMenuitem.setVisible(true);
         }else {
-            inverMenuitem.setVisible(false);
+            inverMenuitem.setVisible(true);
             orMenuitem.setVisible(true);
             andMenuitem.setVisible(true);
             changeOperandMenuitem.setVisible(true);
             if((op instanceof OperandNode)&&(((OperandNode)op).operand==Operand.OR)) {
-                changeOperandMenuitem.setText("Change to AND");
+                changeOperandMenuitem.setText(CHANGE_STR+" "+OperandNode.ANDSTR);
             }else {
-                changeOperandMenuitem.setText("Change to OR");
+                changeOperandMenuitem.setText(CHANGE_STR+" "+OperandNode.ORSTR);
             }
         }
         this.op = op;

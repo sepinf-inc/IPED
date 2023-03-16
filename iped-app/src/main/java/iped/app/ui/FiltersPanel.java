@@ -1,6 +1,7 @@
 package iped.app.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
@@ -17,10 +18,12 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
+import javax.swing.UIManager;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 
@@ -30,6 +33,7 @@ import iped.app.ui.filterdecisiontree.FilterNode;
 import iped.app.ui.filterdecisiontree.OperandNode;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
 import iped.app.ui.filterdecisiontree.OperandPopupMenu;
+import iped.exception.QueryNodeException;
 import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
@@ -106,32 +110,34 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
         filterManager.addResultSetFilterer(combinedFilterer);
         filterManager.setFilterEnabled(combinedFilterer, false);
 
-        structuredFiltererTree = new JTree(new CombinedFilterTreeModel("Combined filterer",combinedFilterer));
+        structuredFiltererTree = new JTree(new CombinedFilterTreeModel(combinedFilterer));        
         structuredFiltererTree.setCellRenderer(new DefaultTreeCellRenderer() {
 
+            JLabel nlabel = new JLabel(invertIcon);
+            JPanel p = new JPanel(new BorderLayout());
+                    
             @Override
             public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
                     boolean leaf, int row, boolean hasFocus) {
+                p.removeAll();
                 JLabel label = (JLabel) super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-                if(value instanceof FilterNode) {
-                    if(((FilterNode)value).isInverted()) {
-                        label.setIcon(invertIcon);
-                    }
+                p.setOpaque(false);
+                p.add(label,BorderLayout.CENTER);
+                if((value instanceof CombinedFilterer)) {
+                    value = ((CombinedFilterer)value).getRootNode();
                 }
-                if((value instanceof OperandNode)||(value instanceof CombinedFilterer)) {
-                    OperandNode op = null;
-                    if(value instanceof OperandNode) {
-                        op = ((OperandNode)value);
-                    }else {
-                        op = ((CombinedFilterer)value).getRootNode();
-                    }
+                if((value instanceof DecisionNode)&& (((DecisionNode)value).isInverted())) {
+                    p.add(nlabel,BorderLayout.WEST);
+                }
+                if((value instanceof OperandNode)) {
+                    OperandNode op = ((OperandNode)value);
                     if(op.getOperand()==Operand.OR) {
                         label.setIcon(combinationIcon);
                     }else {
                         label.setIcon(intersectionIcon);
                     }
                 }
-                return label;
+                return p;
             }
             
         });
@@ -146,8 +152,8 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
         splitPane.setTopComponent(filtersTreePane);
         
         JPanel structuredFiltererTreePanel = new JPanel(new BorderLayout());
-        ckStructuredFilterer = new JCheckBox("Combined filterer");
-        ckStructuredFilterer.setToolTipText("Apply combined filter to resultset.");
+        ckStructuredFilterer = new JCheckBox(combinedFilterer.getName());
+        ckStructuredFilterer.setToolTipText(Messages.get(combinedFilterer.getClass().getName()+Messages.TOOLTIP_NAME_SUFFIX));
         ckStructuredFilterer.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -203,6 +209,8 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
         
         structuredFiltererTree.setDragEnabled(true);
         structuredFiltererTree.setRootVisible(true);
+        
+        FiltersPanel self = this;
 
         DropTarget dt = new DropTarget() {
             @Override
@@ -246,9 +254,16 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
                         for(TreePath path: filtersTree.getSelectionPaths()) {
                             Object pathObject = path.getLastPathComponent();
                             if(pathObject instanceof IFilter) {
-                                dest.addFilter(new FilterNode(((IFilter)pathObject)));
-                                combinedFilterer.preCacheFilter(((IFilter)pathObject));
-                                tree.updateUI();
+                                try {
+                                    combinedFilterer.preCacheFilter(((IFilter)pathObject));
+                                    dest.addFilter(new FilterNode(((IFilter)pathObject)));
+                                    tree.updateUI();
+                                }catch(Exception e) {
+                                    if(e.getCause() instanceof QueryNodeException) {
+                                        JOptionPane.showMessageDialog(self.getRootPane(), Messages.get("FiltersPanel.addQueryFilterError"));
+                                        return;
+                                    }
+                                }
                             }
                         }
                     } else {

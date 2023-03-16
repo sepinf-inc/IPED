@@ -27,6 +27,10 @@ public class ValueCountQueryFilter implements IQueryFilter{
             for(ValueCount value: values) {
                 name.append(value.getVal());
                 name.append(",");
+                if(name.length()>50) {
+                    name.append("(...)");
+                    break;
+                }
             }
             name.append("]");
         }
@@ -35,7 +39,7 @@ public class ValueCountQueryFilter implements IQueryFilter{
 
     @Override
     public String getFilterExpression() {
-        if(true) {
+        if(queryStr==null) {
             queryStr = new StringBuffer();
             int i=0;
             for(ValueCount value: values) {

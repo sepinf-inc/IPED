@@ -5,9 +5,11 @@ import java.awt.Component;
 import java.awt.Image;
 import java.util.function.Predicate;
 
+import javax.swing.JLabel;
 import javax.swing.JTree;
 
 import iped.app.ui.controls.CheckBoxTreeCellRenderer;
+import iped.viewers.api.IFilterer;
 
 public class IFiltersTreeCellRenderer extends CheckBoxTreeCellRenderer {
 
@@ -26,9 +28,12 @@ public class IFiltersTreeCellRenderer extends CheckBoxTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
             boolean leaf, int row, boolean hasFocus) {
-        Component result=super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        Component result= super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
         if(checkbox.isSelected()) {
             result.setBackground(ENABLED_BK_COLOR);
+        }
+        if(value instanceof IFilterer) {
+            label.setText(((IFilterer)value).getName());
         }
         return result;
     }

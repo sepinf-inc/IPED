@@ -924,7 +924,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private void createAllDockables() {
         categoriesTabDock = createDockable("categoriestab", Messages.getString("CategoryTreeModel.RootName"), //$NON-NLS-1$ //$NON-NLS-2$
                 categoriesPanel);
-        filtersTabDock = createDockable("filterstab", "Applied Filters", //$NON-NLS-1$ //$NON-NLS-2$
+        filtersTabDock = createDockable("filterstab", Messages.getString("App.appliedFilters"), //$NON-NLS-1$ //$NON-NLS-2$
                 filtersPanel);
         metadataTabDock = createDockable("metadatatab", Messages.getString("App.Metadata"), metadataPanel); //$NON-NLS-1$ //$NON-NLS-2$
         if (evidencePanel != null) {

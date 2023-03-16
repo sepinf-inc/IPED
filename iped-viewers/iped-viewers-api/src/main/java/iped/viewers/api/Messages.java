@@ -1,4 +1,4 @@
-package iped.app.ui;
+package iped.viewers.api;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -13,7 +13,6 @@ public class Messages {
     private static final String BUNDLE_NAME = "iped-desktop-messages"; //$NON-NLS-1$
 
     private static ResourceBundle RESOURCE_BUNDLE;
-    public static final String TOOLTIP_NAME_SUFFIX = ".tooltip";
 
     private Messages() {
     }

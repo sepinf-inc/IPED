@@ -15,8 +15,8 @@ public class CombinedFilterTreeModel implements TreeModel {
     String rootName = "Filters";
     private IFilterer[] filterers;
 
-    public CombinedFilterTreeModel(String rootName, CombinedFilterer logicFilterer) {
-        this.rootName = rootName;
+    public CombinedFilterTreeModel(CombinedFilterer logicFilterer) {
+        this.rootName = logicFilterer.getName();
         this.filterers=new IFilterer[1];
         this.filterers[0]=logicFilterer;
     }
@@ -101,6 +101,14 @@ public class CombinedFilterTreeModel implements TreeModel {
     public void removeTreeModelListener(TreeModelListener l) {
         // TODO Auto-generated method stub
         
+    }
+
+    public String getRootName() {
+        return rootName;
+    }
+
+    public void setRootName(String rootName) {
+        this.rootName = rootName;
     }
     
 }

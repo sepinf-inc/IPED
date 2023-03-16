@@ -11,6 +11,8 @@ import iped.viewers.api.IFilterer;
 public class FiltererMenu extends JPopupMenu implements ActionListener{
     private JMenuItem clearMenuitem;
     private Object selected;
+    
+    public static final String CLEAR_FILTERS_STR = Messages.get("FiltererMenu.clearFilters"); 
 
     public FiltererMenu(){
         clearMenuitem = new JMenuItem("Clear filters");

@@ -24,7 +24,7 @@ import iped.engine.data.Category;
 
 public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer{
     protected JCheckBox checkbox=new JCheckBox();
-    JLabel label = new JLabel();
+    protected JLabel label = new JLabel();
     private JTree tree;
     Predicate<Object> checkedPredicate;
     Predicate<Object> visiblePredicate;
