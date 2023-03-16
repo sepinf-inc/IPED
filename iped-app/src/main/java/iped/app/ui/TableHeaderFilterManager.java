@@ -20,6 +20,7 @@ import iped.app.metadata.ValueCount;
 import iped.app.metadata.ValueCountQueryFilter;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
+import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.search.IMultiSearchResult;
@@ -74,13 +75,23 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     
     public void addEmptyFilter(String field) {
         String fieldStr = field.replace(":", "\\:");
-        String filterExpression = "-"+fieldStr+":?*";
+        String filterExpression = "-"+fieldStr;
+        if(IndexItem.isNumeric(field)) {
+            filterExpression+=":[* TO *]";
+        }else {
+            filterExpression+=":?*";
+        }
         addQueryFilter(field, filterExpression);
     }
 
     public void addNonEmptyFilter(String field) {
         String fieldStr =field.replace(":", "\\:");
-        String filterExpression = fieldStr+":?*"; 
+        String filterExpression = fieldStr;
+        if(IndexItem.isNumeric(field)) {
+            filterExpression+=":[* TO *]";
+        }else {
+            filterExpression+=":?*";
+        }
         addQueryFilter(field, filterExpression);
     }
 
@@ -169,13 +180,13 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     public boolean getContainsEmptyFilter(String field) {
         String filter = otherFilters.get(field);
         String fieldStr =field.replace(":", "\\:");
-        return filter!=null && filter.equals("-"+fieldStr+":?*");
+        return filter!=null && (filter.equals("-"+fieldStr+":?*") || filter.equals("-"+fieldStr+":[* TO *]"));
     }
 
     public boolean getContainsNonEmptyFilter(String field) {
         String filter = otherFilters.get(field);
         String fieldStr =field.replace(":", "\\:");
-        return filter!=null && filter.equals(fieldStr+":?*");
+        return filter!=null && (filter.equals(fieldStr+":?*")|| filter.equals(fieldStr+":[* TO *]"));
     }
 
     public void addFilter(String field, String string) {

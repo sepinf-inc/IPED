@@ -29,6 +29,15 @@ import iped.engine.task.index.IndexItem;
 import iped.utils.DateUtil;
 
 public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
+    public static final String NON_EMPTY_STR = Messages.get("FieldValuePopupMenu.NonEmpty");//"Non empty...";
+    public static final String EMPTY_STR = Messages.get("FieldValuePopupMenu.Empty");//"Empty...";
+    public static final String NOT_CONTAINS_STR = Messages.get("FieldValuePopupMenu.NotContains");//"Not Contains ...";
+    public static final String AFTER_STR = Messages.get("FieldValuePopupMenu.After");//"After ...";
+    public static final String BEFORE_STR = Messages.get("FieldValuePopupMenu.Before");//"Before ...";
+    public static final String FILTER_GREATER_THAN_STR = Messages.get("FieldValuePopupMenu.GreaterThan");//"Filter greater than...";
+    public static final String FILTER_LESS_THAN_STR = Messages.get("FieldValuePopupMenu.LessThan");//"Filter less than...";
+    public static final String CONTAINS_STR = Messages.get("FieldValuePopupMenu.NonEmpty");//"Contains ...";
+
     JMenuItem filterLessThan;
     JMenuItem filterGreaterThan;
     IItemId itemId;
@@ -36,7 +45,7 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
     String value;
     boolean isDate = false;
     private TableHeaderFilterManager fm;
-    
+
     private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("ResultTableModel.DateFormat")); //$NON-NLS-1$
     private JMenuItem filterContains;
     private JMenuItem filterNotContains;
@@ -53,7 +62,7 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
         this.field=field;
         this.value = value;
 
-        if(value!=null && value!="") {
+        if(value!=null && value!="" && value.length()>0) {
             JPanel valuePanel = new JPanel();
             valuePanel.setBorder(BorderFactory.createEmptyBorder());
             JLabel lbValue = new JLabel(value);
@@ -75,36 +84,36 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
         this.add(new JSeparator());
         if(value.length()>0) {
             if(IndexItem.isNumeric(field)) {
-                filterLessThan=new JMenuItem("Filter less than...");
+                filterLessThan=new JMenuItem(FieldValuePopupMenu.FILTER_LESS_THAN_STR);
                 filterLessThan.addActionListener(this);
                 this.add(filterLessThan);
 
-                filterGreaterThan=new JMenuItem("Filter greater than...");
+                filterGreaterThan=new JMenuItem(FieldValuePopupMenu.FILTER_GREATER_THAN_STR);
                 filterGreaterThan.addActionListener(this);
                 this.add(filterGreaterThan);
             }else if(isDate=isDate(value)){
-                filterLessThan=new JMenuItem("Before ...");
+                filterLessThan=new JMenuItem(FieldValuePopupMenu.BEFORE_STR);
                 filterLessThan.addActionListener(this);
                 this.add(filterLessThan);
 
-                filterGreaterThan=new JMenuItem("After ...");
+                filterGreaterThan=new JMenuItem(FieldValuePopupMenu.AFTER_STR);
                 filterGreaterThan.addActionListener(this);
                 this.add(filterGreaterThan);
             }else {
-                filterContains=new JMenuItem("Contains ...");
+                filterContains=new JMenuItem(FieldValuePopupMenu.CONTAINS_STR);
                 filterContains.addActionListener(this);
                 this.add(filterContains);
 
-                filterNotContains=new JMenuItem("Not Contains ...");
+                filterNotContains=new JMenuItem(FieldValuePopupMenu.NOT_CONTAINS_STR);
                 filterNotContains.addActionListener(this);
                 this.add(filterNotContains);
             }
         }
-        filterEmpty=new JMenuItem("Empty...");
+        filterEmpty=new JMenuItem(FieldValuePopupMenu.EMPTY_STR);
         filterEmpty.addActionListener(this);
         this.add(filterEmpty);
 
-        filterNonEmpty=new JMenuItem("Non empty...");
+        filterNonEmpty=new JMenuItem(FieldValuePopupMenu.NON_EMPTY_STR);
         filterNonEmpty.addActionListener(this);
         this.add(filterNonEmpty);
     }
@@ -152,6 +161,7 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             clipboard.setContents(stringSelection, null);
             this.setVisible(false);
+            return;
         }
         
         App.get().getAppListener().updateFileListing();
