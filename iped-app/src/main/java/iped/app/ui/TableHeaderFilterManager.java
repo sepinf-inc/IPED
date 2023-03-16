@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -15,9 +14,10 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 
 import iped.app.metadata.MetadataSearch;
-import iped.app.metadata.RangeCount;
 import iped.app.metadata.ValueCount;
 import iped.app.metadata.ValueCountQueryFilter;
+import iped.app.ui.filters.EqualsFilter;
+import iped.app.ui.filters.StartsWithFilter;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
@@ -114,12 +114,26 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         App.get().getFilterManager().notifyFilterChange();
     }
 
+    public void addEqualsFilter(String field, String value) {
+        definedFilters.put(field, new EqualsFilter(field, value));
+        selectedValues.remove(field);
+        otherFilters.remove(field);
+        App.get().getFilterManager().notifyFilterChange();
+    }
+
+    public void addStartsWithFilter(String field, String value) {
+        definedFilters.put(field, new StartsWithFilter(field, value));
+        selectedValues.remove(field);
+        otherFilters.remove(field);
+        App.get().getFilterManager().notifyFilterChange();
+    }
+
     public Set<ValueCount> getFilter(String field) {
         return selectedValues.get(field);
     }
 
     public boolean isFieldFiltered(String field) {
-        return selectedValues.get(field)!=null || otherFilters.get(field)!=null;
+        return definedFilters.get(field)!=null || selectedValues.get(field)!=null || otherFilters.get(field)!=null;
     }
 
     public MetadataSearch getMetadataSearch(String field) {
@@ -135,7 +149,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     public Query getQuery() {
         try {
             if (true) {
-                if (otherFilters.size()==0) {
+                if (definedFilters.size()==0) {
                     return null;
                 }
 
@@ -145,14 +159,19 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
 
                 filterStr.append("(");
                 int i = 0;
-                for (String filter : otherFilters.values()) {
-                    filterStr.append("(");
-                    filterStr.append(filter);
-                    filterStr.append(")");
-                    i++;
-                    if(i<=otherFilters.size()-1) {
+                for (IFilter filter : definedFilters.values()) {
+                    if(filter instanceof IQueryFilter) {
+                        filterStr.append("(");
+                        filterStr.append(((IQueryFilter)filter).getFilterExpression());
+                        filterStr.append(")");
                         filterStr.append(" && ");
                     }
+                    i++;
+                }
+                
+                if(i>0) {
+                    //removes last " && "
+                    filterStr.replace(filterStr.length()-4, filterStr.length(), "");
                 }
 
                 filterStr.append(")");
@@ -231,6 +250,18 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
                             ords.add(value.getOrd());
                         }
                         result = internalMetadataSearch.getIdsWithOrd(result, filterField, ords); 
+                        if(result.getLength()<=0) {
+                            return result;
+                        }
+                    }
+                }
+                for (IFilter filter : definedFilters.values()) {
+                    if(filter instanceof IResultSetFilter) {
+                        IResultSetFilter rsFilter = (IResultSetFilter) filter;
+                        result = (MultiSearchResult) rsFilter.filterResult(result);
+                    }
+                    if(result.getLength()<=0) {
+                        return result;
                     }
                 }
                 return result;
@@ -240,7 +271,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
 
     @Override
     public boolean hasFilters() {
-        return panels.size()>0 || otherFilters.size()>0;
+        return definedFilters.size()>0;
     }
 
     @Override

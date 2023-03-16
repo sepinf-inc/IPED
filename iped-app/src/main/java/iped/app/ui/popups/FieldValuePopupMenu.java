@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -29,6 +30,8 @@ import iped.engine.task.index.IndexItem;
 import iped.utils.DateUtil;
 
 public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
+    private static final String STARTS_WITH_STR = Messages.get("FieldValuePopupMenu.StartsWith");//"Empty...";
+    public static final String EQUALS_STR = Messages.get("FieldValuePopupMenu.Equals");//"Empty...";
     public static final String NON_EMPTY_STR = Messages.get("FieldValuePopupMenu.NonEmpty");//"Non empty...";
     public static final String EMPTY_STR = Messages.get("FieldValuePopupMenu.Empty");//"Empty...";
     public static final String NOT_CONTAINS_STR = Messages.get("FieldValuePopupMenu.NotContains");//"Not Contains ...";
@@ -52,6 +55,8 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
     private JMenuItem filterEmpty;
     private JMenuItem filterNonEmpty;
     private JButton btValue;
+    private JMenuItem filterEquals;
+    private JMenuItem filterStartsWith;
 
     public FieldValuePopupMenu(IItemId itemId, String field, String value) {
         super();
@@ -83,6 +88,11 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
         
         this.add(new JSeparator());
         if(value.length()>0) {
+
+            filterEquals=new JMenuItem(FieldValuePopupMenu.EQUALS_STR);
+            filterEquals.addActionListener(this);
+            this.add(filterEquals);
+            
             if(IndexItem.isNumeric(field)) {
                 filterLessThan=new JMenuItem(FieldValuePopupMenu.FILTER_LESS_THAN_STR);
                 filterLessThan.addActionListener(this);
@@ -100,6 +110,10 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
                 filterGreaterThan.addActionListener(this);
                 this.add(filterGreaterThan);
             }else {
+                filterStartsWith=new JMenuItem(FieldValuePopupMenu.STARTS_WITH_STR);
+                filterStartsWith.addActionListener(this);
+                this.add(filterStartsWith);
+
                 filterContains=new JMenuItem(FieldValuePopupMenu.CONTAINS_STR);
                 filterContains.addActionListener(this);
                 this.add(filterContains);
@@ -129,6 +143,12 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if(e.getSource()==filterEquals) {
+            fm.addEqualsFilter(field, value);
+        }
+        if(e.getSource()==filterStartsWith) {
+            fm.addStartsWithFilter(field, value);
+        }
         if(e.getSource()==filterContains) {
             fm.addFilter(field, field+":\""+value+"\"");
         }

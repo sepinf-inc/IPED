@@ -1,4 +1,4 @@
-package iped.app.ui;
+package iped.app.ui.filters;
 
 import org.apache.lucene.search.Query;
 
