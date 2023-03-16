@@ -21,6 +21,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -171,7 +172,7 @@ public class OpenCasePanel extends DefaultPanel implements ProcessListener {
             //Open iped search multicase mode
             //first create on temp folder a txt file containing the cases to be opened
             File multiCaseFile = Paths.get(System.getProperty("user.home"), ".iped", "multicasetemp.txt").toFile();
-            try (FileWriter fileWriter = new FileWriter(multiCaseFile); PrintWriter printWriter = new PrintWriter(fileWriter)) {
+            try (FileWriter fileWriter = new FileWriter(multiCaseFile, StandardCharsets.UTF_8); PrintWriter printWriter = new PrintWriter(fileWriter)) {
                 for (Path currentPath : caseList)
                     printWriter.println(currentPath.toString());
                 printWriter.close();

@@ -13,10 +13,7 @@ import iped.app.home.style.StyleManager;
 import iped.app.home.utils.CasePathManager;
 import iped.app.ui.Messages;
 import iped.configuration.IConfigurationDirectory;
-import iped.engine.config.ConfigurationManager;
-import iped.engine.config.LocalConfig;
-import iped.engine.config.LocaleConfig;
-import iped.engine.config.PluginConfig;
+import iped.engine.config.*;
 import org.apache.commons.lang.SystemUtils;
 
 import javax.swing.*;
@@ -56,6 +53,9 @@ public class ConfigPanel extends DefaultPanel {
     private JButton buttonChangePluginConfig;
     private Boolean RUNNIG_ON_WINDOWS;
 
+    private ConfigurationManager defaultConfigurationManager;
+
+
 
     /**
      * Default Constructor
@@ -69,10 +69,13 @@ public class ConfigPanel extends DefaultPanel {
      * Prepare everything to be displayed
      */
     protected void createAndShowGUI(){
+        ProfileManager.get().addObject(ProfileManager.get().getDefaultProfile());
+        defaultConfigurationManager = ConfigurationManager.get();
         //A listener to force components to load values from file. So if user change values but do not save, whe will load the original properties and discard user changes
         this.addComponentListener( new ComponentAdapter(){
             public void componentShown ( ComponentEvent e ){updateComponentsState(); }
         }  );
+
         this.setLayout( new BoxLayout( this, BoxLayout.PAGE_AXIS ) );
         this.add(createTitlePanel());
         this.add(createFormPanel());
@@ -143,10 +146,12 @@ public class ConfigPanel extends DefaultPanel {
         checkBoxEnableDisableHashDb.setBackground(super.getCurrentBackGroundColor());
         checkBoxEnableDisableHashDb.addItemListener(e -> {
             boolean isEnableHashDB = (e.getStateChange() == ItemEvent.SELECTED);
-            LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
+            LocalConfig localConfig = defaultConfigurationManager.findObject(LocalConfig.class);
             localConfig.getPropertie().enableOrDisablePropertie(CasePathManager.getInstance().getLocalConfigFile(), LocalConfig.HASH_DB, (! isEnableHashDB));
-            ConfigurationManager.get().reloadConfigurable(LocalConfig.class);
-            updateLocalConfigComponentsState();
+            checkBoxEnableDisableHashDb.setText( isEnableHashDB ? Messages.get("Home.Active") : Messages.get("Home.Inactive") );
+            buttonChangeHashDB.setVisible(isEnableHashDB);
+            textFieldHashesDB.setText( isEnableHashDB ? localConfig.getHashDbFile().getAbsolutePath() : "" );
+            defaultConfigurationManager.reloadConfigurable(LocalConfig.class);
         });
 
         //Create a TextField to show TSKJar Path and a button to select a new TSKJar Path
@@ -172,7 +177,7 @@ public class ConfigPanel extends DefaultPanel {
             if( selectedFile == null )
                 return;
             Path relativePath = basePath.relativize(selectedFile.toPath());
-            PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
+            PluginConfig pluginConfig = defaultConfigurationManager.findObject(PluginConfig.class);
             pluginConfig.setPluginFolder(relativePath.toString() );
             textFieldPluginFolder.setText(relativePath.toString());
         });
@@ -342,31 +347,32 @@ public class ConfigPanel extends DefaultPanel {
 
     private void updateLocaleConfigComponentsState(){
         //Load configs Files. Please do not create a global variable for Configurables objects
-        LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
+        LocaleConfig localeConfig = defaultConfigurationManager.findObject(LocaleConfig.class);
         //set values to input texts
         String languageTag = (localeConfig.getLocale() != null )? localeConfig.getLocale().toLanguageTag() : "";
         comboBoxLocale.setSelectedItem(Languages.getByLanguageTag(languageTag));
     }
 
     private void updateLocalConfigComponentsState(){
-        LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
-        boolean isEnabled = localConfig.getHashDbFile() != null;
+        defaultConfigurationManager.reloadConfigurable(LocalConfig.class);
+        LocalConfig localConfig = defaultConfigurationManager.findObject(LocalConfig.class);
         spinnerThreads.setValue(localConfig.getNumThreads());
         textFieldIndexTemp.setText( (localConfig.getPropertie().getProperty(LocalConfig.INDEX_TEMP) == null ) ? "Default" : localConfig.getPropertie().getProperty(LocalConfig.INDEX_TEMP));
         checkBoxIndexTempOnSSD.setSelected( localConfig.isIndexTempOnSSD() );
-        textFieldHashesDB.setText( isEnabled ? localConfig.getHashDbFile().getAbsolutePath() : textFieldHashesDB.getText() );
-        checkBoxEnableDisableHashDb.setSelected(isEnabled);
-        buttonChangeHashDB.setVisible(isEnabled);
-        checkBoxEnableDisableHashDb.setText( isEnabled ? Messages.get("Home.Active") : Messages.get("Home.Inactive") );
+        boolean isHashDBEnabled = localConfig.getHashDbFile() != null;
+        textFieldHashesDB.setText( isHashDBEnabled ? localConfig.getHashDbFile().getAbsolutePath() : textFieldHashesDB.getText() );
+        checkBoxEnableDisableHashDb.setSelected(isHashDBEnabled);
+        checkBoxEnableDisableHashDb.setText( isHashDBEnabled ? Messages.get("Home.Active") : Messages.get("Home.Inactive") );
+        buttonChangeHashDB.setVisible(isHashDBEnabled);
     }
 
     private void updatePluginConfigComponentsState(){
-        PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
+        PluginConfig pluginConfig = defaultConfigurationManager.findObject(PluginConfig.class);
         if (!RUNNIG_ON_WINDOWS){
             if(! pluginConfig.isTskJarPathEnabled()){
                 pluginConfig.getPropertie().enableOrDisablePropertie(CasePathManager.getInstance().getLocalConfigFile(), PluginConfig.TSK_JAR_PATH, false);
-                ConfigurationManager.get().reloadConfigurable(PluginConfig.class);
-                pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
+                defaultConfigurationManager.reloadConfigurable(PluginConfig.class);
+                pluginConfig = defaultConfigurationManager.findObject(PluginConfig.class);
             }
             textFieldTskJarPath.setText( (pluginConfig.getTskJarFile() != null )? pluginConfig.getTskJarFile().getAbsolutePath() : "" );
         }
@@ -379,7 +385,7 @@ public class ConfigPanel extends DefaultPanel {
     private void saveConfiguration(){
         try {
             //Save LocaleConfig
-            LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
+            LocaleConfig localeConfig = defaultConfigurationManager.findObject(LocaleConfig.class);
             Languages selectedLanguage = ((Languages) comboBoxLocale.getSelectedItem());
             if( ! localeConfig.getLocale().toLanguageTag().equals( selectedLanguage.getLanguageTag() ) ){
                 JOptionPane.showMessageDialog(this, Messages.get("Home.LanguageChangeMessage"), Messages.get("Home.LanguageChangeTitle"), JOptionPane.WARNING_MESSAGE);
@@ -389,8 +395,8 @@ public class ConfigPanel extends DefaultPanel {
 
 
             //Force LocalConfig to reload possible changes made by LocaleConfig
-            ConfigurationManager.get().reloadConfigurable(LocalConfig.class);
-            LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
+            defaultConfigurationManager.reloadConfigurable(LocalConfig.class);
+            LocalConfig localConfig = defaultConfigurationManager.findObject(LocalConfig.class);
             //Set changes on LocalConfig Configurable class
             localConfig.setIndexTempOnSSD( checkBoxIndexTempOnSSD.isSelected() );
             localConfig.getPropertie().setProperty(LocalConfig.INDEX_TEMP, textFieldIndexTemp.getText());
@@ -400,8 +406,8 @@ public class ConfigPanel extends DefaultPanel {
             localConfig.getPropertie().saveOnFile(CasePathManager.getInstance().getLocalConfigFile());
 
             //Force PluginConfig to reload possible changes made by LocalConfig
-            ConfigurationManager.get().reloadConfigurable(PluginConfig.class);
-            PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
+            defaultConfigurationManager.reloadConfigurable(PluginConfig.class);
+            PluginConfig pluginConfig = defaultConfigurationManager.findObject(PluginConfig.class);
             //Set changes on PluginConfig Configurable class
             pluginConfig.setPluginFolder(textFieldPluginFolder.getText());
             if (!RUNNIG_ON_WINDOWS) {
@@ -411,8 +417,8 @@ public class ConfigPanel extends DefaultPanel {
             pluginConfig.getPropertie().saveOnFile(CasePathManager.getInstance().getLocalConfigFile());
 
             //Force LocalConfig to reload changes made by PluginConfig
-            ConfigurationManager.get().reloadConfigurable(LocalConfig.class);
-            ConfigurationManager.get().reloadConfigurable(PluginConfig.class);
+            defaultConfigurationManager.reloadConfigurable(LocalConfig.class);
+            defaultConfigurationManager.reloadConfigurable(PluginConfig.class);
 
         } catch (IOException e) {
             e.printStackTrace();
