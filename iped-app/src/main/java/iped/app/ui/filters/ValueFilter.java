@@ -55,6 +55,42 @@ public class ValueFilter implements IResultSetFilter {
             eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
         }
     }
+    
+    public boolean checkinDocValues(int doc) {
+        if(docValues==null) {
+            return false;
+        }
+        try {
+            boolean adv = docValues.advanceExact(doc);
+            String val = docValues.lookupOrd(docValues.ordValue()).utf8ToString();
+            
+            if(val!=null && predicate.test(val)) {
+                return true;
+            }
+        }catch (Exception e) {
+        }
+        return false;
+    }
+    
+    public boolean checkinDocValuesSet(int doc) {
+        if(docValuesSet==null) {
+            return false;
+        }
+        try {
+            boolean adv = docValuesSet.advanceExact(doc);
+
+            long ord= -1;
+            while (adv && (ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                String val = docValuesSet.lookupOrd(ord).utf8ToString();
+
+                if(val!=null && predicate.test(val)) {
+                    return true;
+                }
+            }
+        }catch (Exception e) {
+        }
+        return false;
+    }
 
     @Override
     public IMultiSearchResult filterResult(IMultiSearchResult src)
@@ -76,10 +112,8 @@ public class ValueFilter implements IResultSetFilter {
         int i = 0;
         for (IItemId item : src.getIterator()) {
             int doc = App.get().appCase.getLuceneId(item);
-            boolean adv = docValues.advanceExact(doc);
-            String val = docValues.lookupOrd(docValues.ordValue()).utf8ToString();
             
-            if(val!=null && predicate.test(val)) {
+            if(checkinDocValues(doc) || checkinDocValuesSet(doc)) {
                 selectedItems.add(item);
                 scores.add(src.getScore(i));
             }
