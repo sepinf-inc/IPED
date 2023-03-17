@@ -16,6 +16,7 @@ import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.filechooser.FileFilter;
 
+import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.data.Item;
@@ -37,8 +38,8 @@ public class SimilarImagesFilterActions {
 
     public static void clear(boolean updateResults) {
         App app = App.get();
-        if (app.similarImagesQueryRefItem != null) {
-            app.similarImagesQueryRefItem = null;
+        if (app.getSimilarImagesQueryRefItem() != null) {
+            app.setSimilarImagesQueryRefItem(null);
             app.similarImageFilterPanel.setVisible(false);
             List<? extends SortKey> sortKeys = app.resultsTable.getRowSorter().getSortKeys();
             if (sortKeys != null && !sortKeys.isEmpty() && sortKeys.get(0).getColumn() == 2 && app.similarImagesPrevSortKeys != null)
@@ -68,7 +69,7 @@ public class SimilarImagesFilterActions {
             if (fileChooser.showOpenDialog(App.get()) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
-            app.similarImagesQueryRefItem = null;
+            app.setSimilarImagesQueryRefItem(null);
             File file = fileChooser.getSelectedFile();
             if (file != null) {
                 BufferedImage img = null;
@@ -103,11 +104,12 @@ public class SimilarImagesFilterActions {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    app.similarImagesQueryRefItem = new Item();
-                    app.similarImagesQueryRefItem.setName(file.getName());
-                    app.similarImagesQueryRefItem.setThumb(baos.toByteArray());
-                    app.similarImagesQueryRefItem.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES,
+                    Item item = new Item();
+                    item.setName(file.getName());
+                    item.setThumb(baos.toByteArray());
+                    item.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES,
                             new ImageSimilarity().extractFeatures(img));
+                    app.setSimilarImagesQueryRefItem(item);
                 } else {
                     JOptionPane.showMessageDialog(App.get(), Messages.getString("ImageSimilarity.ExternalError"),
                             Messages.getString("ImageSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);
@@ -115,21 +117,21 @@ public class SimilarImagesFilterActions {
                 }
             }
         } else {
-            app.similarImagesQueryRefItem = null;
+            app.setSimilarImagesQueryRefItem(null);
             int selIdx = app.resultsTable.getSelectedRow();
             if (selIdx != -1) {
                 IItemId itemId = app.ipedResult.getItem(app.resultsTable.convertRowIndexToModel(selIdx));
                 if (itemId != null) {
-                    app.similarImagesQueryRefItem = app.appCase.getItemByItemId(itemId);
-                    if (app.similarImagesQueryRefItem
-                            .getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) == null) {
-                        app.similarImagesQueryRefItem = null;
+                    IItem item = app.appCase.getItemByItemId(itemId);
+                    app.setSimilarImagesQueryRefItem(item);
+                    if (item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) == null) {
+                        app.setSimilarImagesQueryRefItem(null);
                     }
                 }
             }
         }
 
-        if (app.similarImagesQueryRefItem != null) {
+        if (app.getSimilarImagesQueryRefItem() != null) {
             List<? extends SortKey> sortKeys = app.resultsTable.getRowSorter().getSortKeys();
             if (sortKeys == null || sortKeys.isEmpty() || sortKeys.get(0).getColumn() != 2) {
                 app.similarImagesPrevSortKeys = sortKeys;
@@ -139,8 +141,8 @@ public class SimilarImagesFilterActions {
             }
             app.appletListener.updateFileListing();
         }
-        app.similarImageFilterPanel.setCurrentItem(app.similarImagesQueryRefItem, external);
-        app.similarImageFilterPanel.setVisible(app.similarImagesQueryRefItem != null);
+        app.similarImageFilterPanel.setCurrentItem(app.getSimilarImagesQueryRefItem(), external);
+        app.similarImageFilterPanel.setVisible(app.getSimilarImagesQueryRefItem() != null);
     }
 
     public static boolean isFeatureEnabled() {

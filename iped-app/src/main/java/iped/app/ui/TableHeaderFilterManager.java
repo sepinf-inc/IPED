@@ -61,9 +61,18 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     public void addQueryFilter(String field, String filterExpression) {
         otherFilters.put(field, filterExpression);
         definedFilters.put(field, new IQueryFilter() {
+            private Query query;
             @Override
-            public String getFilterExpression() {
-                return filterExpression;
+            public Query getQuery() {
+                if(query==null) {
+                    try {
+                        query = new QueryBuilder(App.get().appCase).getQuery(filterExpression);
+                    } catch (ParseException | QueryNodeException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+                return query;
             }
             public String toString() {
                 return filterExpression;
@@ -147,46 +156,27 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
 
     @Override
     public Query getQuery() {
-        try {
-            if (true) {
-                if (definedFilters.size()==0) {
-                    return null;
-                }
-
-                Query result = new QueryBuilder(App.get().appCase).getQuery("");
-                
-                StringBuffer filterStr = new StringBuffer();
-
-                filterStr.append("(");
-                int i = 0;
-                for (IFilter filter : definedFilters.values()) {
-                    if(filter instanceof IQueryFilter) {
-                        filterStr.append("(");
-                        filterStr.append(((IQueryFilter)filter).getFilterExpression());
-                        filterStr.append(")");
-                        filterStr.append(" && ");
-                    }
-                    i++;
-                }
-                
-                if(i>0) {
-                    //removes last " && "
-                    filterStr.replace(filterStr.length()-4, filterStr.length(), "");
-                }
-
-                filterStr.append(")");
-
-                BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-                boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(filterStr.toString()), Occur.MUST);
-                boolQuery.add(result, Occur.MUST);
-                result = boolQuery.build();
-
-                return result;
-            } else {
+        if (true) {
+            if (definedFilters.size()==0) {
                 return null;
             }
-        } catch (QueryNodeException | ParseException qne) {
-            qne.printStackTrace();
+
+            Query result;
+            
+            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+
+            int i = 0;
+            for (IFilter filter : definedFilters.values()) {
+                if(filter instanceof IQueryFilter) {
+                    boolQuery.add(((IQueryFilter)filter).getQuery(), Occur.MUST);
+                }
+                i++;
+            }
+
+            result = boolQuery.build();
+
+            return result;
+        } else {
             return null;
         }
     }

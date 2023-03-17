@@ -1067,6 +1067,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         if (chartPanel.definedFilters.size() > 0) {
             for(Date[] dates : chartPanel.definedFilters) {
                 result.add(new IQueryFilter() {
+                    private Query query;
+
                     public String toString() {
                         String timeFilter = domainAxis.ISO8601DateFormatUTC(dates[0]);
                         timeFilter += " TO ";
@@ -1075,13 +1077,22 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                    }
 
                     @Override
-                    public String getFilterExpression() {
-                        String timeFilter = "timeStamp:[";
-                        timeFilter += domainAxis.ISO8601DateFormatUTC(dates[0]);
-                        timeFilter += " TO ";
-                        timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
-                        timeFilter += "]";
-                        return timeFilter;
+                    public Query getQuery() {
+                        if(query==null) {
+                            String timeFilter = "timeStamp:[";
+                            timeFilter += domainAxis.ISO8601DateFormatUTC(dates[0]);
+                            timeFilter += " TO ";
+                            timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
+                            timeFilter += "]";
+
+                            try {
+                                query = new QueryBuilder(App.get().appCase).getQuery(timeFilter);
+                            } catch (ParseException | QueryNodeException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                        }
+                        return query;
                     }
                 });
             }

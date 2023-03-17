@@ -12,8 +12,8 @@ public class QueryFilter implements IQueryFilter {
     }
 
     @Override
-    public String getFilterExpression() {
-        return query.toString();
+    public Query getQuery() {
+        return query;
     }
     
     public String toString() {

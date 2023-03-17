@@ -5,16 +5,17 @@ import java.awt.Component;
 import java.awt.Image;
 import java.util.function.Predicate;
 
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTree;
 
 import iped.app.ui.controls.CheckBoxTreeCellRenderer;
 import iped.viewers.api.IFilterer;
+import iped.viewers.api.IMiniaturizable;
 
 public class IFiltersTreeCellRenderer extends CheckBoxTreeCellRenderer {
 
     public static final Color ENABLED_BK_COLOR = new Color(255,150,150);
-    private Image resizedImage;
 
     public IFiltersTreeCellRenderer(JTree tree, Predicate<Object> checkedPredicate,
             Predicate<Object> visiblePredicate) {
@@ -35,6 +36,12 @@ public class IFiltersTreeCellRenderer extends CheckBoxTreeCellRenderer {
         if(value instanceof IFilterer) {
             label.setText(((IFilterer)value).getName());
         }
+        
+        if(value instanceof IMiniaturizable) {
+            Image newimg = ((IMiniaturizable)value).getThumb().getScaledInstance(16, 16,  java.awt.Image.SCALE_SMOOTH);
+            label.setIcon(new ImageIcon(newimg));
+        }
+
         return result;
     }
 

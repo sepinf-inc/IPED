@@ -19,7 +19,10 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
 import iped.engine.data.Category;
+import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IQueryFilterer;
@@ -135,14 +138,22 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
         for(Category category:categoryList) {
             result.add(new IQueryFilter() {
                 @Override
-                public String getFilterExpression() {
+                public Query getQuery() {
                     String name = IndexItem.normalize(category.getName(), true);
                     StringBuffer queryStr = new StringBuffer();
                     queryStr.append(" category:\"");
                     queryStr.append(name);
                     queryStr.append("\"");
                     recursiveCategoryQuery(category, queryStr);
-                    return queryStr.toString();
+                    
+                    Query query;
+                    try {
+                        query = new QueryBuilder(App.get().appCase).getQuery(queryStr.toString());
+                        return query;
+                    } catch (ParseException | QueryNodeException e) {
+                        e.printStackTrace();
+                    }
+                    return null;
                 }
                 public String toString() {
                     return IndexItem.normalize(category.getName(), true);

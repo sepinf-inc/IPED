@@ -29,6 +29,7 @@ import java.awt.Frame;
 import java.awt.Insets;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -37,8 +38,12 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
@@ -141,16 +147,19 @@ import iped.engine.search.IPEDSearcher;
 import iped.engine.search.ImageSimilarityLowScoreFilter;
 import iped.engine.search.ImageSimilarityScorer;
 import iped.engine.search.MultiSearchResult;
+import iped.engine.search.QueryBuilder;
 import iped.engine.search.SimilarFacesSearch;
 import iped.engine.search.SimilarImagesSearch;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.util.Util;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
+import iped.io.IStreamSource;
 import iped.parsers.standard.StandardParser;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.utils.IconUtil;
+import iped.utils.ImageUtil;
 import iped.utils.UiUtil;
 import iped.viewers.ATextViewer;
 import iped.viewers.api.AbstractViewer;
@@ -159,6 +168,7 @@ import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IColumnsManager;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
+import iped.viewers.api.IMiniaturizable;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IMutableFilter;
 import iped.viewers.api.IQueryFilter;
@@ -169,6 +179,7 @@ import iped.viewers.api.ResultSetViewer;
 import iped.viewers.api.ResultSetViewerConfiguration;
 import iped.viewers.components.HitsTable;
 import iped.viewers.components.HitsTableModel;
+import iped.viewers.util.ImageMetadataUtil;
 
 public class App extends JFrame implements WindowListener, IMultiSearchResultProvider, GUIProvider {
     /**
@@ -249,7 +260,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color alertSelectedColor = Color.RED;
 
     public SimilarImagesFilterPanel similarImageFilterPanel;
-    public IItem similarImagesQueryRefItem;
+    private IItem similarImagesQueryRefItem;
     public List<? extends SortKey> similarImagesPrevSortKeys;
 
     public SimilarFacesFilterPanel similarFacesFilterPanel;
@@ -299,6 +310,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private DefaultSingleCDockable filtersTabDock;
 
     private OperandPopupMenu operandMenu;
+
+    public SimilarFacesSearchFilterer similarFacesSearchFilterer;
 
     private App() {
     }
@@ -503,8 +516,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterManager.addQueryFilterer(similarImagesFilterer);
         filterManager.addResultSetFilterer(similarImagesFilterer);
         
-        SimilarFacesSearchFilter sfs = new SimilarFacesSearchFilter();
-        filterManager.addResultSetFilterer(sfs);
+        similarFacesSearchFilterer = new SimilarFacesSearchFilterer();
+        filterManager.addResultSetFilterer(similarFacesSearchFilterer);
 
         filterDuplicates = new JCheckBox(Messages.getString("App.FilterDuplicates"));
         filterDuplicates.setToolTipText(Messages.getString("App.FilterDuplicatesTip"));
@@ -1624,52 +1637,83 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return filterManager;
     }
     
-    class SimilarImagesFilter implements IQueryFilter, IResultSetFilter{
+    class SimilarImagesFilter implements IQueryFilter, IResultSetFilter, IMiniaturizable{
+        IItem refItem;
+        private String refName;
+        private BufferedImage img;
+        private Query query;
+
+        public SimilarImagesFilter(IItem similarImagesQueryRefItem) {
+            this.refItem = similarImagesQueryRefItem;
+            if (refItem != null) {
+                this.query = new SimilarImagesSearch().getQueryForSimilarImages(refItem);
+
+                byte[] thumb = refItem.getThumb();
+                if (thumb != null) {
+                    refName = refItem.getName();
+                    ByteArrayInputStream bais = new ByteArrayInputStream(thumb);
+                    try {
+                        img = ImageIO.read(bais);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            
+        }
+
         @Override
         public IMultiSearchResult filterResult(IMultiSearchResult src)
                 throws ParseException, QueryNodeException, IOException {
             IMultiSearchResult result = src;
-            if (similarImagesQueryRefItem != null) {
+            if (refItem != null) {
                 LOGGER.info("Starting similar image search...");
                 long t = System.currentTimeMillis();
-                new ImageSimilarityScorer(App.get().appCase, (MultiSearchResult) result, App.get().similarImagesQueryRefItem).score();
+                new ImageSimilarityScorer(App.get().appCase, (MultiSearchResult) result, refItem).score();
                 result = ImageSimilarityLowScoreFilter.filter(result);
                 t = System.currentTimeMillis() - t;
                 LOGGER.info("Similar image search took {}ms to find {} images", t, result.getLength());
             }
             return result;
         }
-
-        @Override
-        public String getFilterExpression() {
-            return new SimilarImagesSearch().getQueryForSimilarImages(App.get().similarImagesQueryRefItem).toString();
-        }
         
         public String toString() {
-            return "Similar image";
+            return "Similar image:"+refName;
         }
-        
+
+        @Override
+        public BufferedImage getThumb() {
+            return img;
+        }
+
+        @Override
+        public Query getQuery() {
+            return query;
+        }
     }
 
     class SimilarImagesQueryFilterer implements IQueryFilterer, IResultSetFilterer {
+        private IItem item;
+        SimilarImagesFilter imageFilter;
+
         @Override
         public List getDefinedFilters() {
             ArrayList<IQueryFilter> result = new ArrayList<>();
-            if (similarImagesQueryRefItem != null) {
-                result.add(new SimilarImagesFilter());
+            if (item != null) {
+                result.add(imageFilter);
             }
             return result;
         }
 
         @Override
         public boolean hasFiltersApplied() {
-            return App.get().similarImagesQueryRefItem!=null;
+            return item!=null;
         }
 
         @Override
         public Query getQuery() {
-            if(similarImagesQueryRefItem!=null) {
-                return new SimilarImagesSearch().getQueryForSimilarImages(similarImagesQueryRefItem);
+            if(item!=null) {
+                return new SimilarImagesSearch().getQueryForSimilarImages(item);
             }
             return null;
         }
@@ -1686,22 +1730,27 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public IFilter getFilter() {
-            if (similarImagesQueryRefItem != null) {
-                return new SimilarImagesFilter();
+            if (item != null) {
+                return imageFilter;
             }
             return null;
         }
 
         @Override
         public boolean hasFilters() {
-            return similarImagesQueryRefItem != null;
+            return item != null;
         }
 
         @Override
         public void clearFilter() {
+            item = null;
             similarImageFilterPanel.clearFilter();            
         }
-        
+
+        public void setItem(IItem similarImagesFilterer) {
+            item = similarImagesFilterer;
+            imageFilter = new SimilarImagesFilter(item);
+        }
     };
     
     class DuplicateFilter implements IResultSetFilter, IMutableFilter {
@@ -1768,29 +1817,86 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             appletListener.clearAllFilters = false;
         }
     }
+    
+    class SimilarFacesSearchFilter implements IResultSetFilter, IMiniaturizable {
+        IItem itemRef;
+        private String refName;
+        private BufferedImage img;
+        private SimilarFacesSearch sfs;
 
-    IResultSetFilter similarFaceFilter =new IResultSetFilter() {
+        public SimilarFacesSearchFilter(IItem similarFacesRefItem) {
+            this.itemRef = similarFacesRefItem;
+            sfs = new SimilarFacesSearch(appCase, itemRef);
+            if (itemRef != null) {
+                BufferedInputStream buff=null;
+                int orientation = 0;
+                try {
+                    buff = new BufferedInputStream(itemRef.getSeekableInputStream());
+                    orientation = ImageMetadataUtil.getOrientation(buff);
+                    
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                if (buff != null) {
+                    refName = itemRef.getName();
+                    List<String> location = sfs.getMatchLocations(itemRef, itemRef);
+                    String[] valuesStr = location.get(0).replace("[", "").replace("]", "").split(",");//first face only
+                    try {
+                        buff = new BufferedInputStream(itemRef.getSeekableInputStream());
+                        img = ImageIO.read(buff);
+                        if (orientation > 0) {
+                            img = ImageUtil.rotate(img, orientation);
+                        }
+
+                        int[] values = new int[valuesStr.length]; 
+                        for (int i = 0; i < valuesStr.length; i++) {
+                            values[i]=(int) Math.round(Integer.parseInt(valuesStr[i].trim()));
+                        }
+                        int top = values[0];
+                        int right = values[1];
+                        int bottom = values[2];
+                        int left = values[3];
+                        
+                        img = cropImage(img, new Rectangle(left, top, right - left, bottom - top)); 
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        
+        private BufferedImage cropImage(BufferedImage src, Rectangle rect) {
+            BufferedImage dest = src.getSubimage(rect.x, rect.y, rect.width, rect.height);
+            return dest; 
+        }
+
         @Override
         public IMultiSearchResult filterResult(IMultiSearchResult src)
                 throws ParseException, QueryNodeException, IOException {
-            if(similarFacesRefItem!=null) {
-                SimilarFacesSearch sfs = new SimilarFacesSearch(appCase, similarFacesRefItem);
+            if(itemRef!=null) {
                 return sfs.filter((MultiSearchResult) src);
             }
             return src;
         }
 
         public String toString() {
-            return "Similar face";
+            return "Similar face:"+refName;
+        }
+
+        @Override
+        public BufferedImage getThumb() {
+            return img;
         }
     }; 
 
-    class SimilarFacesSearchFilter implements IResultSetFilterer{
+    class SimilarFacesSearchFilterer implements IResultSetFilterer{
+        SimilarFacesSearchFilter filter = null;
+        IItem itemRef;
         @Override
         public List getDefinedFilters() {
             ArrayList<IFilter> result = new ArrayList<IFilter>();
             if(similarFacesRefItem!=null) {
-                result.add(similarFaceFilter);
+                result.add(filter);
             }
             return result;
         }
@@ -1803,18 +1909,23 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
             return null;
         }
+        
+        public void setItem(IItem item) {
+            this.itemRef = item;
+            filter = new SimilarFacesSearchFilter(itemRef);            
+        }
 
         @Override
         public IFilter getFilter() {
-            if(similarFacesRefItem!=null) {
-                return similarFaceFilter;
+            if(itemRef!=null) {
+                return filter;
             }
             return null;
         }
 
         @Override
         public boolean hasFilters() {
-            return similarFacesRefItem!=null;
+            return itemRef!=null;
         }
 
         @Override
@@ -1824,7 +1935,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public void clearFilter() {
+            itemRef=null;
             similarFacesFilterPanel.clearFilter();
+        }
+
+        @Override
+        public String getName() {
+            return "Similar face filterer";
         }
 
     }
@@ -1833,18 +1950,25 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         @Override
         public List<IFilter> getDefinedFilters() {
             ArrayList<IFilter> result = new ArrayList<IFilter>();
-            result.add(new IQueryFilter() {
-                String filter = (String) queryComboBox.getSelectedItem();
+            String filterText = (String) queryComboBox.getSelectedItem();
+            Query query;
+            try {
+                query = new QueryBuilder(appCase).getQuery(filterText);
+                result.add(new IQueryFilter() {
+                    String title = filterText;
 
-                @Override
-                public String getFilterExpression() {
-                    return filter;
-                }
-                
-                public String toString() {
-                    return filter;
-                }
-            });
+                    @Override
+                    public Query getQuery() {
+                        return query;
+                    }
+                    
+                    public String toString() {
+                        return title;
+                    }
+                });
+            } catch (ParseException | QueryNodeException e) {
+                e.printStackTrace();
+            }
             return result;
         }
 
@@ -1884,6 +2008,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             appletListener.clearAllFilters = false;
         }
 
+    }
+
+
+    public IItem getSimilarImagesQueryRefItem() {
+        return similarImagesQueryRefItem;
+    }
+
+    public void setSimilarImagesQueryRefItem(IItem similarImagesQueryRefItem) {
+        this.similarImagesQueryRefItem = similarImagesQueryRefItem;
+        similarImagesFilterer.setItem(similarImagesQueryRefItem);        
     }
 
 }

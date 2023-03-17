@@ -78,7 +78,7 @@ public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListe
                     e.printStackTrace();
                 }
             }
-        }
+        }        
         repaint();
     }
 

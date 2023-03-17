@@ -3,6 +3,12 @@ package iped.app.metadata;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.lucene.search.Query;
+
+import iped.app.ui.App;
+import iped.engine.search.QueryBuilder;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
 import iped.viewers.api.IQueryFilter;
 
 public class ValueCountQueryFilter implements IQueryFilter{
@@ -10,6 +16,7 @@ public class ValueCountQueryFilter implements IQueryFilter{
     StringBuffer name = null;
     Set<ValueCount> values = null;
     String filterField;
+    private Query query;
     
     public ValueCountQueryFilter(String filterField, Set<ValueCount> selectedValues) {
         this.filterField = filterField;
@@ -38,7 +45,7 @@ public class ValueCountQueryFilter implements IQueryFilter{
     }
 
     @Override
-    public String getFilterExpression() {
+    public Query getQuery() {
         if(queryStr==null) {
             queryStr = new StringBuffer();
             int i=0;
@@ -61,7 +68,14 @@ public class ValueCountQueryFilter implements IQueryFilter{
                     queryStr.append(" OR ");
                 }
             }
+            try {
+                query = new QueryBuilder(App.get().appCase).getQuery(queryStr.toString());
+            } catch (ParseException | QueryNodeException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
-        return queryStr.toString();
+        return query;
     }
+
 }

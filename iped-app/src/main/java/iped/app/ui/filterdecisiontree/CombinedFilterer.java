@@ -88,9 +88,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
             this.combinedFilterer = combinedFilterer;
             this.csf = null;
             if(filter instanceof IQueryFilter) {
-                String query = ((IQueryFilter)filter).getFilterExpression();
-                query = query.replace('“', '"').replace('”', '"');
-                this.csf = new CaseSearcherFilter(query);
+                this.csf = new CaseSearcherFilter(((IQueryFilter)filter).getQuery());
             }else {
                 this.csf = new CaseSearcherFilter("*:*");
             }
@@ -445,7 +443,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                 
                 
                 if(filter instanceof IQueryFilter) {
-                    CaseSearcherFilter csf = new CaseSearcherFilter(((IQueryFilter)filter).getFilterExpression());
+                    CaseSearcherFilter csf = new CaseSearcherFilter(((IQueryFilter)filter).getQuery());
                     csf.setAppyUIFilters(false);
                     csf.execute();
                     try {

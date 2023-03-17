@@ -192,6 +192,7 @@ public class SimilarFacesFilterActions {
             app.appletListener.updateFileListing();
         }
         app.similarFacesFilterPanel.setCurrentItem(app.similarFacesRefItem, external);
+        app.similarFacesSearchFilterer.setItem(app.similarFacesRefItem);
         app.similarFacesFilterPanel.setVisible(app.similarFacesRefItem != null);
     }
 

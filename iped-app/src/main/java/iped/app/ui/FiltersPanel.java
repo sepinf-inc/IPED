@@ -3,6 +3,7 @@ package iped.app.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Image;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDragEvent;
@@ -37,6 +38,7 @@ import iped.exception.QueryNodeException;
 import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
+import iped.viewers.api.IMiniaturizable;
 
 public class FiltersPanel extends JPanel implements ClearFilterListener {
     private JTree filtersTree;
@@ -135,6 +137,13 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
                         label.setIcon(combinationIcon);
                     }else {
                         label.setIcon(intersectionIcon);
+                    }
+                }
+                if(value instanceof FilterNode) {
+                    IFilter filter = ((FilterNode)value).getFilter();
+                    if(filter instanceof IMiniaturizable) {
+                        Image newimg = ((IMiniaturizable)filter).getThumb().getScaledInstance(16, 16,  java.awt.Image.SCALE_SMOOTH);
+                        label.setIcon(new ImageIcon(newimg));
                     }
                 }
                 return p;

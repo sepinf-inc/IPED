@@ -365,10 +365,19 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer{
                 result.add(new IQueryFilter() {
                     String filterName = (String) comboFilter.getSelectedItem();
                     String filterExpression = fm.getFilterExpression((String) comboFilter.getSelectedItem());
+                    private Query query;
 
                     @Override
-                    public String getFilterExpression() {
-                        return filterExpression;
+                    public Query getQuery() {
+                        if(query==null) {
+                            try {
+                                query = new QueryBuilder(App.get().appCase).getQuery(filterExpression);
+                            } catch (ParseException | QueryNodeException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                        }
+                        return query;
                     }
                     @Override
                     public String toString() {
