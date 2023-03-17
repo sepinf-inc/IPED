@@ -33,16 +33,16 @@ import iped.engine.task.index.IndexItem;
 import iped.utils.DateUtil;
 
 public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
-    private static final String STARTS_WITH_STR = Messages.get("FieldValuePopupMenu.StartsWith");//"Empty...";
-    public static final String EQUALS_STR = Messages.get("FieldValuePopupMenu.Equals");//"Empty...";
-    public static final String NON_EMPTY_STR = Messages.get("FieldValuePopupMenu.NonEmpty");//"Non empty...";
-    public static final String EMPTY_STR = Messages.get("FieldValuePopupMenu.Empty");//"Empty...";
-    public static final String NOT_CONTAINS_STR = Messages.get("FieldValuePopupMenu.NotContains");//"Not Contains ...";
-    public static final String AFTER_STR = Messages.get("FieldValuePopupMenu.After");//"After ...";
-    public static final String BEFORE_STR = Messages.get("FieldValuePopupMenu.Before");//"Before ...";
-    public static final String FILTER_GREATER_THAN_STR = Messages.get("FieldValuePopupMenu.GreaterThan");//"Filter greater than...";
-    public static final String FILTER_LESS_THAN_STR = Messages.get("FieldValuePopupMenu.LessThan");//"Filter less than...";
-    public static final String CONTAINS_STR = Messages.get("FieldValuePopupMenu.NonEmpty");//"Contains ...";
+    private static final String STARTS_WITH_STR = Messages.get("FieldValuePopupMenu.StartsWith");
+    public static final String EQUALS_STR = Messages.get("FieldValuePopupMenu.Equals");
+    public static final String NON_EMPTY_STR = Messages.get("FieldValuePopupMenu.NonEmpty");
+    public static final String EMPTY_STR = Messages.get("FieldValuePopupMenu.Empty");
+    public static final String NOT_CONTAINS_STR = Messages.get("FieldValuePopupMenu.NotContains");
+    public static final String AFTER_STR = Messages.get("FieldValuePopupMenu.After");
+    public static final String BEFORE_STR = Messages.get("FieldValuePopupMenu.Before");
+    public static final String FILTER_GREATER_THAN_STR = Messages.get("FieldValuePopupMenu.GreaterThan");
+    public static final String FILTER_LESS_THAN_STR = Messages.get("FieldValuePopupMenu.LessThan");
+    public static final String CONTAINS_STR = Messages.get("FieldValuePopupMenu.Contains");
 
     JMenuItem filterLessThan;
     JMenuItem filterGreaterThan;
