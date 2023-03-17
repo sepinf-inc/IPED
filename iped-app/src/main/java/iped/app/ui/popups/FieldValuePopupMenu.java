@@ -7,21 +7,24 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 
 import javax.swing.BorderFactory;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 
+import iped.app.metadata.MetadataSearchable;
 import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.app.ui.TableHeaderFilterManager;
@@ -48,6 +51,7 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
     String value;
     boolean isDate = false;
     private TableHeaderFilterManager fm;
+    MetadataSearchable ms = null;
 
     private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("ResultTableModel.DateFormat")); //$NON-NLS-1$
     private JMenuItem filterContains;
@@ -57,6 +61,8 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
     private JButton btValue;
     private JMenuItem filterEquals;
     private JMenuItem filterStartsWith;
+    
+    HashMap<JMenuItem, JMenu> parentMenus = new HashMap<JMenuItem, JMenu>();
 
     public FieldValuePopupMenu(IItemId itemId, String field, String value) {
         super();
@@ -86,39 +92,45 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
             this.add(valuePanel);
         }
         
+        try {
+            ms = new MetadataSearchable(field);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        
         this.add(new JSeparator());
-        if(value.length()>0) {
 
-            filterEquals=new JMenuItem(FieldValuePopupMenu.EQUALS_STR);
+        if(value.length()>0) {
+            filterEquals=createValuedMenuItem(FieldValuePopupMenu.EQUALS_STR);
             filterEquals.addActionListener(this);
             this.add(filterEquals);
             
             if(IndexItem.isNumeric(field)) {
-                filterLessThan=new JMenuItem(FieldValuePopupMenu.FILTER_LESS_THAN_STR);
-                filterLessThan.addActionListener(this);
+                filterLessThan=createValuedMenuItem(FieldValuePopupMenu.FILTER_LESS_THAN_STR);
                 this.add(filterLessThan);
 
-                filterGreaterThan=new JMenuItem(FieldValuePopupMenu.FILTER_GREATER_THAN_STR);
+                filterGreaterThan=createValuedMenuItem(FieldValuePopupMenu.FILTER_GREATER_THAN_STR);
                 filterGreaterThan.addActionListener(this);
                 this.add(filterGreaterThan);
             }else if(isDate=isDate(value)){
-                filterLessThan=new JMenuItem(FieldValuePopupMenu.BEFORE_STR);
+                filterLessThan=createValuedMenuItem(FieldValuePopupMenu.BEFORE_STR);
                 filterLessThan.addActionListener(this);
                 this.add(filterLessThan);
 
-                filterGreaterThan=new JMenuItem(FieldValuePopupMenu.AFTER_STR);
+                filterGreaterThan=createValuedMenuItem(FieldValuePopupMenu.AFTER_STR);
                 filterGreaterThan.addActionListener(this);
                 this.add(filterGreaterThan);
             }else {
-                filterStartsWith=new JMenuItem(FieldValuePopupMenu.STARTS_WITH_STR);
+                filterStartsWith=createValuedMenuItem(FieldValuePopupMenu.STARTS_WITH_STR);
                 filterStartsWith.addActionListener(this);
                 this.add(filterStartsWith);
 
-                filterContains=new JMenuItem(FieldValuePopupMenu.CONTAINS_STR);
+                filterContains=createValuedMenuItem(FieldValuePopupMenu.CONTAINS_STR);
                 filterContains.addActionListener(this);
                 this.add(filterContains);
 
-                filterNotContains=new JMenuItem(FieldValuePopupMenu.NOT_CONTAINS_STR);
+                filterNotContains=createValuedMenuItem(FieldValuePopupMenu.NOT_CONTAINS_STR);
                 filterNotContains.addActionListener(this);
                 this.add(filterNotContains);
             }
@@ -132,6 +144,35 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
         this.add(filterNonEmpty);
     }
     
+    private JMenuItem createValuedMenuItem(String text) {
+        if(ms.isSingleValuedField()) {
+            JMenuItem result = new JMenuItem(text);
+            result.addActionListener(this);
+            return result;
+        }else {
+            String[] itemValues = value.split("\\s\\|\\s");
+            
+            if(itemValues.length>1) {
+                JMenu result = new JMenu(text);
+
+                for (int i = 0; i < itemValues.length; i++) {
+                    String itemValue = itemValues[i];
+                    JMenuItem item = new JMenuItem(itemValue);
+                    item.addActionListener(this);
+                    result.add(item);
+                    parentMenus.put(item, result);
+                }
+
+                return result;
+            }else {
+                JMenuItem result = new JMenuItem(text);
+                result.addActionListener(this);
+                return result;
+            }
+
+        }
+    }
+
     private boolean isDate(String value) {
         try {
             df.parse(value);
@@ -140,43 +181,54 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
         }
         return false;
     }
-
+    
     @Override
     public void actionPerformed(ActionEvent e) {
-        if(e.getSource()==filterEquals) {
-            fm.addEqualsFilter(field, value);
+        Object source = e.getSource();
+        String strValue = value;
+        
+        if(source instanceof JMenuItem) {
+            JMenu parentMenu = parentMenus.get((JMenuItem)source);
+            if(parentMenu != null) {
+                strValue = ((JMenuItem)source).getText(); 
+                source = parentMenu;
+            }
         }
-        if(e.getSource()==filterStartsWith) {
-            fm.addStartsWithFilter(field, value);
+        
+        if(source==filterEquals) {
+            fm.addEqualsFilter(field, strValue);
         }
-        if(e.getSource()==filterContains) {
-            fm.addFilter(field, field+":\""+value+"\"");
+        if(source==filterStartsWith) {
+            fm.addStartsWithFilter(field, strValue);
         }
-        if(e.getSource()==filterNotContains) {
-            fm.addFilter(field, "-"+field+":\""+value+"\"");
+        if(source==filterContains) {
+            fm.addFilter(field, field+":\""+strValue+"\"");
         }
-        if(e.getSource()==filterEmpty) {
+        if(source==filterNotContains) {
+            fm.addFilter(field, "-"+field+":\""+strValue+"\"");
+        }
+        if(source==filterEmpty) {
             fm.addEmptyFilter(field);
         }
-        if(e.getSource()==filterNonEmpty) {
+        if(source==filterNonEmpty) {
             fm.addNonEmptyFilter(field);
         }
         if(isDate) {
             try {
-                Date d = df.parse(value);
+                Date d = df.parse(strValue);
                 value = DateUtil.dateToString(d);
             } catch (ParseException e1) {
                 e1.printStackTrace();
             }
         }
-        if(e.getSource()==filterLessThan) {
-            fm.addFilter(field, field+":[* TO "+value+"]");
+        if(source==filterLessThan) {
+            fm.addFilter(field, field+":[* TO "+strValue+"]");
         }
-        if(e.getSource()==filterGreaterThan) {
-            fm.addFilter(field, field+":["+value+" TO *]");
+        if(source==filterGreaterThan) {
+            fm.addFilter(field, field+":["+strValue+" TO *]");
         }
         
-        if(e.getSource()==btValue) {
+        if(source==btValue) {
             StringSelection stringSelection = new StringSelection(value);
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             clipboard.setContents(stringSelection, null);

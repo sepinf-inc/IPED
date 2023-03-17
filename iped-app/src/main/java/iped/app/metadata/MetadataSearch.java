@@ -1,22 +1,16 @@
 package iped.app.metadata;
 
 import java.io.IOException;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
-import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.NumericUtils;
@@ -31,24 +25,12 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.task.regex.RegexTask;
 import iped.localization.LocalizedProperties;
 import iped.properties.BasicProps;
-import iped.properties.ExtraProperties;
 import iped.search.IMultiSearchResult;
-import iped.utils.LocalizedFormat;
 
-public class MetadataSearch{
+public class MetadataSearch extends MetadataSearchable{
     public static final String EVENT_SEPARATOR = Pattern.quote(IndexItem.EVENT_SEPARATOR);
     public static final String RANGE_SEPARATOR = Messages.getString("MetadataPanel.RangeSeparator"); //$NON-NLS-1$    
     public static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$
-
-    volatile NumericDocValues numValues;
-    volatile SortedNumericDocValues numValuesSet;
-    volatile SortedDocValues docValues;
-    volatile SortedSetDocValues docValuesSet;
-    volatile SortedSetDocValues eventDocValuesSet;
-
-    private volatile static LeafReader reader;
-
-    volatile HashMap<String, long[]> eventSetToOrdsCache = new HashMap<>();
 
     volatile boolean logScale = false;
     volatile boolean noRanges = false;
@@ -63,8 +45,6 @@ public class MetadataSearch{
     private static final int logScaleBins = 40;
     private static final int logScaleHalf = 20;
 
-    volatile boolean isCategory = false;
-    
     volatile double min, max, interval;
     //LINEAR SCALE: Up to 10 bins 
     private static final int linearScaleBins = 10;
@@ -72,25 +52,12 @@ public class MetadataSearch{
     volatile IMultiSearchResult ipedResult;
 
     public MetadataSearch() {
+        System.out.print(logScale);
         // TODO Auto-generated constructor stub
     }
 
     public void setIpedResult(IMultiSearchResult ipedResult2) {
         this.ipedResult = ipedResult2;        
-    }
-
-    private void loadDocValues(String field) throws IOException {
-        // System.out.println("getDocValues");
-        numValues = reader.getNumericDocValues(field);
-        numValuesSet = reader.getSortedNumericDocValues(field);
-        docValues = reader.getSortedDocValues(field);
-        String prefix = ExtraProperties.LOCATIONS.equals(field) ? IndexItem.GEO_SSDV_PREFIX : "";
-        docValuesSet = reader.getSortedSetDocValues(prefix + field);
-        if (BasicProps.TIME_EVENT.equals(field)) {
-            eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-        }
-        isCategory = BasicProps.CATEGORY.equals(field);
-        eventSetToOrdsCache.clear();
     }
 
     public MultiSearchResult getIdsWithOrd(MultiSearchResult result, String field, Set<Integer> ordsToGet)

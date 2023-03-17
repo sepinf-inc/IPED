@@ -6,35 +6,22 @@ import java.util.HashMap;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.SortedDocValues;
-import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 
+import iped.app.metadata.MetadataSearchable;
 import iped.app.ui.App;
 import iped.data.IItemId;
 import iped.engine.data.ItemId;
 import iped.engine.search.MultiSearchResult;
-import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
-import iped.properties.BasicProps;
-import iped.properties.ExtraProperties;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IResultSetFilter;
 
-public class ValueFilter implements IResultSetFilter {
+public class ValueFilter extends MetadataSearchable implements IResultSetFilter {
     protected String field;
     protected String value;
     Predicate<String> predicate = null;
-    
-    volatile NumericDocValues numValues;
-    volatile SortedNumericDocValues numValuesSet;
-    volatile SortedDocValues docValues;
-    volatile SortedSetDocValues docValuesSet;
-    volatile SortedSetDocValues eventDocValuesSet;
-    private volatile static LeafReader reader;
     
     public ValueFilter(String field, String value, Predicate<String> predicate) {
         this.field = field;
@@ -42,18 +29,6 @@ public class ValueFilter implements IResultSetFilter {
         this.predicate = predicate;
         reader = App.get().appCase.getLeafReader();
         
-    }
-
-    private void loadDocValues(String field) throws IOException {
-        // System.out.println("getDocValues");
-        numValues = reader.getNumericDocValues(field);
-        numValuesSet = reader.getSortedNumericDocValues(field);
-        docValues = reader.getSortedDocValues(field);
-        String prefix = ExtraProperties.LOCATIONS.equals(field) ? IndexItem.GEO_SSDV_PREFIX : "";
-        docValuesSet = reader.getSortedSetDocValues(prefix + field);
-        if (BasicProps.TIME_EVENT.equals(field)) {
-            eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-        }
     }
     
     public boolean checkinDocValues(int doc) {

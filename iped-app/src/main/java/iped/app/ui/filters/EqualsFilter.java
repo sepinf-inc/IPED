@@ -3,13 +3,10 @@ package iped.app.ui.filters;
 import java.io.IOException;
 import java.util.function.Predicate;
 
-import org.neo4j.cypher.internal.expressions.functions.ToString;
-
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.search.IMultiSearchResult;
-import iped.viewers.api.IQueryFilter;
 
 public class EqualsFilter extends PreQueryValueFilter{
     public EqualsFilter(String field, String value) {
