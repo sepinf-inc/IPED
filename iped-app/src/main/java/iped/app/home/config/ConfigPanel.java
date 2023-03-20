@@ -53,6 +53,8 @@ public class ConfigPanel extends DefaultPanel {
     private JButton buttonChangePluginConfig;
     private Boolean RUNNIG_ON_WINDOWS;
 
+    private boolean isEnableHashDB;
+
     private ConfigurationManager defaultConfigurationManager;
 
 
@@ -145,12 +147,12 @@ public class ConfigPanel extends DefaultPanel {
         checkBoxEnableDisableHashDb = new JCheckBox(Messages.get("Home.Active"));
         checkBoxEnableDisableHashDb.setBackground(super.getCurrentBackGroundColor());
         checkBoxEnableDisableHashDb.addItemListener(e -> {
-            boolean isEnableHashDB = (e.getStateChange() == ItemEvent.SELECTED);
+            isEnableHashDB = (e.getStateChange() == ItemEvent.SELECTED);
             LocalConfig localConfig = defaultConfigurationManager.findObject(LocalConfig.class);
-            localConfig.getPropertie().enableOrDisablePropertie(CasePathManager.getInstance().getLocalConfigFile(), LocalConfig.HASH_DB, (! isEnableHashDB));
             checkBoxEnableDisableHashDb.setText( isEnableHashDB ? Messages.get("Home.Active") : Messages.get("Home.Inactive") );
             buttonChangeHashDB.setVisible(isEnableHashDB);
-            textFieldHashesDB.setText( isEnableHashDB ? localConfig.getHashDbFile().getAbsolutePath() : "" );
+            File hashDbFile = localConfig.getHashDbFile();
+            textFieldHashesDB.setText( (isEnableHashDB && hashDbFile != null) ? hashDbFile.getAbsolutePath() : "" );
             defaultConfigurationManager.reloadConfigurable(LocalConfig.class);
         });
 
@@ -402,6 +404,7 @@ public class ConfigPanel extends DefaultPanel {
             localConfig.getPropertie().setProperty(LocalConfig.INDEX_TEMP, textFieldIndexTemp.getText());
             localConfig.setNumThreads((Integer) spinnerThreads.getValue());
             localConfig.getPropertie().setProperty(LocalConfig.HASH_DB, textFieldHashesDB.getText());
+            localConfig.getPropertie().enableOrDisablePropertie(CasePathManager.getInstance().getLocalConfigFile(), LocalConfig.HASH_DB, !isEnableHashDB);
             //Save LocalConfig modifications to file
             localConfig.getPropertie().saveOnFile(CasePathManager.getInstance().getLocalConfigFile());
 

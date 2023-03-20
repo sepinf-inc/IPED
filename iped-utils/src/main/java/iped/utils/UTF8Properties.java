@@ -2,6 +2,7 @@ package iped.utils;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -150,7 +151,7 @@ public class UTF8Properties extends Properties {
         FileWriter writer = null;
 
         try{
-            reader = new BufferedReader(new FileReader(fileToBeChanged));
+            reader = new BufferedReader(new FileReader(fileToBeChanged, StandardCharsets.UTF_8));
 
             //Read all file content and set on fileContent var
             String line = reader.readLine();
@@ -171,7 +172,7 @@ public class UTF8Properties extends Properties {
             }
 
             //Save modification on file
-            writer = new FileWriter(fileToBeChanged);
+            writer = new FileWriter(fileToBeChanged, StandardCharsets.UTF_8);
             writer.write(conteudoModificado);
         }catch (IOException e){
             e.printStackTrace();
