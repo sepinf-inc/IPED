@@ -8,9 +8,12 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTree;
 
 import iped.app.ui.App;
+import iped.app.ui.FiltererMenu;
 import iped.app.ui.Messages;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
+import iped.data.IItemId;
 import iped.viewers.api.IFilter;
+import iped.viewers.api.IItemRef;
 
 public class OperandPopupMenu extends JPopupMenu implements ActionListener{
     private JMenuItem orMenuitem;
@@ -28,6 +31,7 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
     static final String REMOVE_NODE_STR = Messages.get("OperandMenu.removeNode");
 
     private JMenuItem removeMenuitem;
+    private JMenuItem gotToRefMenuItem;
 
     public OperandPopupMenu(JTree filtersTree, CombinedFilterer logicFilterer){
         this.logicFilterer = logicFilterer;
@@ -52,6 +56,11 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
         removeMenuitem = new JMenuItem(REMOVE_NODE_STR);
         removeMenuitem.addActionListener(this);
         this.add(removeMenuitem);
+
+        gotToRefMenuItem = new JMenuItem(FiltererMenu.GOTO_ITEM_STR);
+        gotToRefMenuItem.addActionListener(this);
+        this.add(gotToRefMenuItem);
+
     }
 
     @Override
@@ -66,7 +75,15 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
             filtersTree.updateUI();
             return;
         }
-        
+        if(e.getSource()==gotToRefMenuItem) {
+            if(op instanceof FilterNode) {
+                if(((FilterNode)op).getFilter() instanceof IItemRef){
+                    IItemId refId = ((IItemRef)((FilterNode)op).getFilter()).getItemRefId();
+                    FiltererMenu.gotoItem(refId);
+                    return;
+                }
+            }
+        }
         if(e.getSource()==removeMenuitem) {
             ((DecisionNode)op).getParent().remove(op);
             if(op instanceof FilterNode) {
@@ -97,11 +114,15 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
     }
     
     public void setDecisionNode(DecisionNode op) {
+        gotToRefMenuItem.setVisible(false);        
         if(op instanceof FilterNode) {
             orMenuitem.setVisible(false);
             andMenuitem.setVisible(false);
             changeOperandMenuitem.setVisible(false);
             inverMenuitem.setVisible(true);
+            if(((FilterNode)op).getFilter() instanceof IItemRef){
+                gotToRefMenuItem.setVisible(true);        
+            }
         }else {
             inverMenuitem.setVisible(true);
             orMenuitem.setVisible(true);
