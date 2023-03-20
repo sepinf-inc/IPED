@@ -43,7 +43,6 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -128,12 +127,12 @@ import iped.app.graph.AppGraphAnalytics;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
 import iped.app.ui.controls.table.MetadataValueSearchList;
-import iped.app.ui.filterdecisiontree.OperandPopupMenu;
 import iped.app.ui.themes.ThemeManager;
 import iped.app.ui.utils.PanelsLayout;
 import iped.app.ui.viewers.TextViewer;
 import iped.data.IIPEDSource;
 import iped.data.IItem;
+import iped.data.IItemId;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
@@ -148,13 +147,13 @@ import iped.engine.search.ImageSimilarityLowScoreFilter;
 import iped.engine.search.ImageSimilarityScorer;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
+import iped.engine.search.SimilarDocumentSearch;
 import iped.engine.search.SimilarFacesSearch;
 import iped.engine.search.SimilarImagesSearch;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.util.Util;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
-import iped.io.IStreamSource;
 import iped.parsers.standard.StandardParser;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
@@ -168,6 +167,7 @@ import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IColumnsManager;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
+import iped.viewers.api.IItemRef;
 import iped.viewers.api.IMiniaturizable;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IMutableFilter;
@@ -266,6 +266,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public SimilarFacesFilterPanel similarFacesFilterPanel;
     public IItem similarFacesRefItem;
     public List<? extends SortKey> similarFacesPrevSortKeys;
+    SimilarDocumentFilterer similarDocumentFilterer;
+
 
     public File casesPathFile;
     boolean isMultiCase;
@@ -308,8 +310,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     FiltersPanel filtersPanel;
 
     private DefaultSingleCDockable filtersTabDock;
-
-    private OperandPopupMenu operandMenu;
 
     public SimilarFacesSearchFilterer similarFacesSearchFilterer;
 
@@ -512,6 +512,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterComboBox.addItem(App.FILTRO_TODOS);
         filterComboBox.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
         filterManager = new FilterManager(filterComboBox);
+
+        similarDocumentFilterer = new SimilarDocumentFilterer();
+        filterManager.addQueryFilterer(similarDocumentFilterer);
+        
         similarImagesFilterer = new SimilarImagesQueryFilterer();
         filterManager.addQueryFilterer(similarImagesFilterer);
         filterManager.addResultSetFilterer(similarImagesFilterer);
@@ -1637,14 +1641,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return filterManager;
     }
     
-    class SimilarImagesFilter implements IQueryFilter, IResultSetFilter, IMiniaturizable{
+    class SimilarImageFilter implements IQueryFilter, IResultSetFilter, IMiniaturizable, IItemRef{
         IItem refItem;
+        IItemId refItemId;
         private String refName;
         private BufferedImage img;
         private Query query;
+        
 
-        public SimilarImagesFilter(IItem similarImagesQueryRefItem) {
+        public SimilarImageFilter(IItemId itemId, IItem similarImagesQueryRefItem) {
             this.refItem = similarImagesQueryRefItem;
+            this.refItemId = itemId;
             if (refItem != null) {
                 this.query = new SimilarImagesSearch().getQueryForSimilarImages(refItem);
 
@@ -1690,11 +1697,21 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         public Query getQuery() {
             return query;
         }
+
+        @Override
+        public IItem getItemRef() {
+            return refItem;
+        }
+
+        @Override
+        public IItemId getItemRefId() {
+            return refItemId;
+        }
     }
 
     class SimilarImagesQueryFilterer implements IQueryFilterer, IResultSetFilterer {
         private IItem item;
-        SimilarImagesFilter imageFilter;
+        SimilarImageFilter imageFilter;
 
         @Override
         public List getDefinedFilters() {
@@ -1747,9 +1764,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             similarImageFilterPanel.clearFilter();            
         }
 
-        public void setItem(IItem similarImagesFilterer) {
+        public void setItem(IItemId itemId, IItem similarImagesFilterer) {
             item = similarImagesFilterer;
-            imageFilter = new SimilarImagesFilter(item);
+            imageFilter = new SimilarImageFilter(itemId, item);
         }
     };
     
@@ -1818,14 +1835,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
     
-    class SimilarFacesSearchFilter implements IResultSetFilter, IMiniaturizable {
+    class SimilarFacesSearchFilter implements IResultSetFilter, IMiniaturizable, IItemRef {
         IItem itemRef;
+        IItemId itemIdRef;
         private String refName;
         private BufferedImage img;
         private SimilarFacesSearch sfs;
 
-        public SimilarFacesSearchFilter(IItem similarFacesRefItem) {
+        public SimilarFacesSearchFilter(IItemId itemIdRef, IItem similarFacesRefItem) {
             this.itemRef = similarFacesRefItem;
+            this.itemIdRef = itemIdRef;
             sfs = new SimilarFacesSearch(appCase, itemRef);
             if (itemRef != null) {
                 BufferedInputStream buff=null;
@@ -1887,6 +1906,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         public BufferedImage getThumb() {
             return img;
         }
+
+        @Override
+        public IItem getItemRef() {
+            return itemRef;
+        }
+
+        @Override
+        public IItemId getItemRefId() {
+            return itemIdRef;
+        }
     }; 
 
     class SimilarFacesSearchFilterer implements IResultSetFilterer{
@@ -1910,9 +1939,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             return null;
         }
         
-        public void setItem(IItem item) {
+        public void setItem(IItemId itemId, IItem item) {
             this.itemRef = item;
-            filter = new SimilarFacesSearchFilter(itemRef);            
+            filter = new SimilarFacesSearchFilter(itemId, itemRef);            
         }
 
         @Override
@@ -2015,9 +2044,131 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return similarImagesQueryRefItem;
     }
 
-    public void setSimilarImagesQueryRefItem(IItem similarImagesQueryRefItem) {
+    public void setSimilarImagesQueryRefItem(IItemId itemId, IItem similarImagesQueryRefItem) {
         this.similarImagesQueryRefItem = similarImagesQueryRefItem;
-        similarImagesFilterer.setItem(similarImagesQueryRefItem);        
+        similarImagesFilterer.setItem(itemId, similarImagesQueryRefItem);        
     }
 
+    
+    class SimilarDocumentFilter implements IQueryFilter, IItemRef{
+        private IItem itemRef;
+        private IItemId itemRefId;
+        String refName;
+        private int filterPercent;
+        Query query;
+        
+        public SimilarDocumentFilter(IItemId itemId, IItem item, int percent){
+            this.itemRef=item;
+            this.itemRefId = itemId;
+            this.filterPercent = percent;
+        }
+
+        @Override
+        public IItem getItemRef() {
+            return itemRef;
+        }
+
+        @Override
+        public IItemId getItemRefId() {
+            return itemRefId;
+        }
+
+        @Override
+        public Query getQuery() {
+            if(query==null) {
+                query = new SimilarDocumentSearch().getQueryForSimilarDocs(itemRefId, filterPercent, App.get().appCase);
+            }
+            return query;
+        }
+
+        public IItem getItem() {
+            return itemRef;
+        }
+
+        public void setItemRef(IItem item) {
+            this.itemRef = item;
+        }
+
+        public void setItemRef(IItemId itemId) {
+            this.itemRefId = itemId;
+        }
+
+        public int getPercent() {
+            return filterPercent;
+        }
+
+        public void setPercent(int percent) {
+            this.filterPercent = percent;
+        }
+        
+        public String toString() {
+            return "Silimar document ("+Integer.toString(filterPercent)+"%):"+itemRef.getName();
+        }
+    }
+    
+    class SimilarDocumentFilterer implements IQueryFilterer{
+
+        private IItem item;
+        private IItemId itemId;
+        private int percent;
+        private SimilarDocumentFilter filter;
+
+        @Override
+        public List<IFilter> getDefinedFilters() {
+            if(filter!=null) {
+                ArrayList<IFilter> result = new ArrayList<>();
+                result.add(filter);
+                return result;
+            }else {
+                return null;
+            }
+        }
+
+        @Override
+        public boolean hasFilters() {
+            return filter!=null;
+        }
+
+        @Override
+        public boolean hasFiltersApplied() {
+            return false;
+        }
+
+        @Override
+        public void clearFilter() {
+            filter=null;
+            item=null;
+            itemId=null;
+        }
+
+        @Override
+        public Query getQuery() {
+            if(itemId!=null && item!=null) {
+                if(filter==null) {
+                    filter = new SimilarDocumentFilter(itemId, item, percent);
+                }
+                return filter.getQuery();
+            }
+           return null;
+        }
+
+        public IItem getItem() {
+            return item;
+        }
+
+        public void setItem(IItemId itemId, IItem item) {
+            this.item = item;
+            this.itemId = itemId;
+            filter = null;
+        }
+
+        public int getPercent() {
+            return percent;
+        }
+
+        public void setPercent(int percent) {
+            this.percent = percent;
+            filter=null;
+        }
+    }
 }

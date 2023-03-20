@@ -81,6 +81,8 @@ public class SimilarFacesFilterActions {
     public static void searchSimilarImages(boolean external) {
         App app = App.get();
 
+        IItemId itemId=null;
+
         if (external) {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle(Messages.getString("FaceSimilarity.ExternalTitle"));
@@ -153,7 +155,7 @@ public class SimilarFacesFilterActions {
             app.similarFacesRefItem = null;
             int selIdx = app.resultsTable.getSelectedRow();
             if (selIdx != -1) {
-                IItemId itemId = app.ipedResult.getItem(app.resultsTable.convertRowIndexToModel(selIdx));
+                itemId = app.ipedResult.getItem(app.resultsTable.convertRowIndexToModel(selIdx));
                 if (itemId != null) {
                     app.similarFacesRefItem = app.appCase.getItemByItemId(itemId);
                     if (app.similarFacesRefItem.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES) == null) {
@@ -181,6 +183,8 @@ public class SimilarFacesFilterActions {
             }
         }
 
+        app.similarFacesSearchFilterer.setItem(itemId, app.similarFacesRefItem);
+        
         if (app.similarFacesRefItem != null) {
             List<? extends SortKey> sortKeys = app.resultsTable.getRowSorter().getSortKeys();
             if (sortKeys == null || sortKeys.isEmpty() || sortKeys.get(0).getColumn() != 2) {
@@ -192,7 +196,6 @@ public class SimilarFacesFilterActions {
             app.appletListener.updateFileListing();
         }
         app.similarFacesFilterPanel.setCurrentItem(app.similarFacesRefItem, external);
-        app.similarFacesSearchFilterer.setItem(app.similarFacesRefItem);
         app.similarFacesFilterPanel.setVisible(app.similarFacesRefItem != null);
     }
 

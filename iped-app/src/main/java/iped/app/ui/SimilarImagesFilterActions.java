@@ -39,7 +39,7 @@ public class SimilarImagesFilterActions {
     public static void clear(boolean updateResults) {
         App app = App.get();
         if (app.getSimilarImagesQueryRefItem() != null) {
-            app.setSimilarImagesQueryRefItem(null);
+            app.setSimilarImagesQueryRefItem(null, null);
             app.similarImageFilterPanel.setVisible(false);
             List<? extends SortKey> sortKeys = app.resultsTable.getRowSorter().getSortKeys();
             if (sortKeys != null && !sortKeys.isEmpty() && sortKeys.get(0).getColumn() == 2 && app.similarImagesPrevSortKeys != null)
@@ -69,7 +69,7 @@ public class SimilarImagesFilterActions {
             if (fileChooser.showOpenDialog(App.get()) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
-            app.setSimilarImagesQueryRefItem(null);
+            app.setSimilarImagesQueryRefItem(null, null);
             File file = fileChooser.getSelectedFile();
             if (file != null) {
                 BufferedImage img = null;
@@ -109,7 +109,7 @@ public class SimilarImagesFilterActions {
                     item.setThumb(baos.toByteArray());
                     item.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES,
                             new ImageSimilarity().extractFeatures(img));
-                    app.setSimilarImagesQueryRefItem(item);
+                    app.setSimilarImagesQueryRefItem(null, item);
                 } else {
                     JOptionPane.showMessageDialog(App.get(), Messages.getString("ImageSimilarity.ExternalError"),
                             Messages.getString("ImageSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);
@@ -117,15 +117,15 @@ public class SimilarImagesFilterActions {
                 }
             }
         } else {
-            app.setSimilarImagesQueryRefItem(null);
+            app.setSimilarImagesQueryRefItem(null, null);
             int selIdx = app.resultsTable.getSelectedRow();
             if (selIdx != -1) {
                 IItemId itemId = app.ipedResult.getItem(app.resultsTable.convertRowIndexToModel(selIdx));
                 if (itemId != null) {
                     IItem item = app.appCase.getItemByItemId(itemId);
-                    app.setSimilarImagesQueryRefItem(item);
+                    app.setSimilarImagesQueryRefItem(itemId, item);
                     if (item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) == null) {
-                        app.setSimilarImagesQueryRefItem(null);
+                        app.setSimilarImagesQueryRefItem(null, null);
                     }
                 }
             }

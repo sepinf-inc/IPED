@@ -40,7 +40,6 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.tree.TreePath;
 
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
-import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +52,6 @@ import iped.data.IItemId;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.search.IPEDSearcher;
-import iped.engine.search.SimilarDocumentSearch;
 import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -70,7 +68,7 @@ public class MenuListener implements ActionListener {
 
     FileFilter defaultFilter, csvFilter = new Filtro();
     MenuClass menu;
-
+    
     public MenuListener(MenuClass menu) {
         this.menu = menu;
     }
@@ -352,13 +350,16 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.similarDocs) {
             int selIdx = App.get().resultsTable.getSelectedRow();
-            if (selIdx != -1) {
+            if (selIdx != -1) {                
                 int percent = Integer
                         .parseInt(JOptionPane.showInputDialog(Messages.getString("MenuListener.SimilarityLabel"), 70)); //$NON-NLS-1$
-                IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
 
-                Query query = new SimilarDocumentSearch().getQueryForSimilarDocs(item, percent, App.get().appCase);
-                App.get().appletListener.updateFileListing(query);
+                IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+                App.get().similarDocumentFilterer.setPercent(percent);
+                
+                App.get().similarDocumentFilterer.setItem(item, App.get().appCase.getItemByItemId(item));
+
+                App.get().appletListener.updateFileListing();
             }
 
         } else if (e.getSource() == menu.openViewfile) {
