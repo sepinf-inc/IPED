@@ -1,7 +1,6 @@
 package iped.app.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
 import java.awt.dnd.DnDConstants;
@@ -13,6 +12,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
+import java.util.List;
 import java.util.function.Predicate;
 
 import javax.swing.ImageIcon;
@@ -24,9 +24,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
-import javax.swing.UIManager;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
+
+import org.apache.lucene.search.Query;
 
 import iped.app.ui.filterdecisiontree.CombinedFilterer;
 import iped.app.ui.filterdecisiontree.DecisionNode;
@@ -39,8 +40,11 @@ import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
 import iped.viewers.api.IMiniaturizable;
+import iped.viewers.api.IQueryFilterer;
 
-public class FiltersPanel extends JPanel implements ClearFilterListener {
+public class FiltersPanel extends JPanel implements ClearFilterListener
+        , IQueryFilterer//internal combinedfilterer wrapper to reflect on panel color 
+        {
     private JTree filtersTree;
     private JScrollPane filtersTreePane;
     private JTree structuredFiltererTree;
@@ -69,10 +73,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
 
     public void install(FilterManager filterManager) {
         this.filterManager = filterManager;
-        filtersTree = new JTree(new FiltersTreeModel(filterManager.getFilterers()));
-        filtersTree.setEditable(true);
-
-        filtersTree.setRootVisible(false);
+        filtersTree = new JTree();
         filtersTree.setCellRenderer(new IFiltersTreeCellRenderer(filtersTree, new Predicate<Object>() {
             @Override
             public boolean test(Object t) {
@@ -90,6 +91,9 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
                 return false;
             }            
         }));
+        filtersTree.setEditable(true);
+
+        filtersTree.setRootVisible(false);
         
         filtersTree.addMouseListener(new MouseAdapter() {
             @Override
@@ -105,6 +109,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
                 super.mousePressed(e);
             }
         });
+        filtersTree.setModel(new FiltersTreeModel(filterManager.getFilterers()));
 
         
         combinedFilterer = new CombinedFilterer();
@@ -161,7 +166,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
         splitPane.setTopComponent(filtersTreePane);
         
         JPanel structuredFiltererTreePanel = new JPanel(new BorderLayout());
-        ckStructuredFilterer = new JCheckBox(combinedFilterer.getName());
+        ckStructuredFilterer = new JCheckBox(combinedFilterer.getFilterName());
         ckStructuredFilterer.setToolTipText(Messages.get(combinedFilterer.getClass().getName()+Messages.TOOLTIP_NAME_SUFFIX));
         ckStructuredFilterer.addItemListener(new ItemListener() {
             @Override
@@ -177,6 +182,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
                     filterManager.setFilterEnabled(combinedFilterer, false);
                     ckStructuredFilterer.updateUI();
                 }
+                App.get().setDockablesColors();
                 App.get().getAppListener().updateFileListing();
             }
         });
@@ -352,5 +358,33 @@ public class FiltersPanel extends JPanel implements ClearFilterListener {
 
     public CombinedFilterer getCombinedFilterer() {
         return combinedFilterer;
+    }
+
+
+    @Override
+    public List<IFilter> getDefinedFilters() {
+        //does not expose filters as it is not actually registered as result set filterer 
+        return null;
+    }
+
+
+    @Override
+    public boolean hasFilters() {
+        //does not expose filters as it is not actually registered as result set filterer 
+        return false;
+    }
+
+
+    @Override
+    public boolean hasFiltersApplied() {
+        //Wraps combofilterer 
+        return ckStructuredFilterer!=null && ckStructuredFilterer.isSelected();
+    }
+
+
+    @Override
+    public Query getQuery() {
+        //does not expose filters as it is not actually registered as result set filterer 
+        return null;
     }
 }

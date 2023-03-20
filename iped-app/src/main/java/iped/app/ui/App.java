@@ -1969,7 +1969,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
 
         @Override
-        public String getName() {
+        public String getFilterName() {
             return "Similar face filterer";
         }
 

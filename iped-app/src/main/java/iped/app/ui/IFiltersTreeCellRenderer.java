@@ -33,16 +33,23 @@ public class IFiltersTreeCellRenderer extends CheckBoxTreeCellRenderer {
         if(checkbox.isSelected()) {
             result.setBackground(ENABLED_BK_COLOR);
         }
-        if(value instanceof IFilterer) {
-            label.setText(((IFilterer)value).getName());
-        }
-        
+
+
         if(value instanceof IMiniaturizable) {
             Image newimg = ((IMiniaturizable)value).getThumb().getScaledInstance(16, 16,  java.awt.Image.SCALE_SMOOTH);
             label.setIcon(new ImageIcon(newimg));
         }
 
         return result;
+    }
+
+    @Override
+    public String getValueString(Object value) {
+        if(value instanceof IFilterer) {
+            IFilterer filterer = ((IFilterer)value); 
+            return filterer.getFilterName();
+        }
+        return super.getValueString(value);
     }
 
 }

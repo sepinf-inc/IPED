@@ -14,7 +14,7 @@ public interface IFilterer extends ClearFilterListener{
     public boolean hasFilters();
     public boolean hasFiltersApplied();
     
-    default public String getName() {
+    default public String getFilterName() {
         try {
             return Messages.get(this.getClass().getName().replace("$", ".")+".filtererName");
         }catch(Exception e){

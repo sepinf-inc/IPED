@@ -59,6 +59,10 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer{
         this(tree, checkedPredicate);
         this.visiblePredicate = visiblePredicate;
     }
+    
+    public String getValueString(Object value) {
+        return value.toString();        
+    }
 
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
@@ -80,7 +84,7 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer{
 
         TreePath tp = tree.getPathForRow(row);
 
-        label.setText(value.toString());
+        label.setText(getValueString(value));
         label.setIcon(icon);
 
         if(visiblePredicate==null || visiblePredicate.test(value)) {

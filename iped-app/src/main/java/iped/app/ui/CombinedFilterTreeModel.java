@@ -16,7 +16,7 @@ public class CombinedFilterTreeModel implements TreeModel {
     private IFilterer[] filterers;
 
     public CombinedFilterTreeModel(CombinedFilterer logicFilterer) {
-        this.rootName = logicFilterer.getName();
+        this.rootName = logicFilterer.getFilterName();
         this.filterers=new IFilterer[1];
         this.filterers[0]=logicFilterer;
     }
