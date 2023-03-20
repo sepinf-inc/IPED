@@ -20,6 +20,7 @@ public class FiltererMenu extends JPopupMenu implements ActionListener {
     
     public static final String CLEAR_FILTERS_STR = Messages.get("FiltererMenu.clearFilters"); 
     public static final String GOTO_ITEM_STR = Messages.get("FiltererMenu.goToItem"); 
+    private static final String REFERENCED_ITEM_NOT_IN_RS = Messages.get("FiltererMenu.ItemNotInRS");
 
     public FiltererMenu(){
         clearMenuitem = new JMenuItem(CLEAR_FILTERS_STR);
@@ -63,7 +64,7 @@ public class FiltererMenu extends JPopupMenu implements ActionListener {
             if(row!=-1) {
                 table.changeSelection(table.convertRowIndexToView(row), 0, false, false);
             }else {
-                JOptionPane.showMessageDialog(table, "The referenced item does not exists in current result set.");
+                JOptionPane.showMessageDialog(table, FiltererMenu.REFERENCED_ITEM_NOT_IN_RS);
             }
         }
     }
