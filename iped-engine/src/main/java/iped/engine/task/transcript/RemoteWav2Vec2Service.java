@@ -213,6 +213,7 @@ public class RemoteWav2Vec2Service {
                     @Override
                     public void run() {
                         Path tmpFile = null;
+                        File wavFile = null;
                         PrintWriter writer = null;
                         BufferedInputStream bis = null;
                         boolean error = false;
@@ -226,9 +227,9 @@ public class RemoteWav2Vec2Service {
                             requestsAccepted.incrementAndGet();
 
                             String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
-                            logger.info("Accepted connection from " + clientName);
-
                             String prefix = clientName + " - ";
+
+                            logger.info(prefix + "Accepted connection.");
 
                             byte[] bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
                             String cmd = new String(bytes);
@@ -240,7 +241,7 @@ public class RemoteWav2Vec2Service {
                             DataInputStream dis = new DataInputStream(bis);
                             int size = dis.readInt();
 
-                            logger.info("Receiving " + new DecimalFormat().format(size) + " bytes from " + clientName);
+                            logger.info(prefix + "Receiving " + new DecimalFormat().format(size) + " bytes...");
 
                             tmpFile = Files.createTempFile("audio", ".tmp");
                             try (OutputStream os = Files.newOutputStream(tmpFile)) {
@@ -261,7 +262,6 @@ public class RemoteWav2Vec2Service {
 
                             // Now we are converting to WAV on server side again, see
                             // https://github.com/sepinf-inc/IPED/issues/1561
-                            File wavFile;
                             long t0, t1;
                             try {
                                 wavConvSemaphore.acquire();
@@ -316,6 +316,9 @@ public class RemoteWav2Vec2Service {
                             IOUtil.closeQuietly(client);
                             if (tmpFile != null) {
                                 tmpFile.toFile().delete();
+                            }
+                            if (wavFile != null) {
+                                wavFile.delete();
                             }
                         }
                     }
