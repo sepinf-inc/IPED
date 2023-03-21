@@ -152,7 +152,12 @@ public class ConfigPanel extends DefaultPanel {
             checkBoxEnableDisableHashDb.setText( isEnableHashDB ? Messages.get("Home.Active") : Messages.get("Home.Inactive") );
             buttonChangeHashDB.setVisible(isEnableHashDB);
             File hashDbFile = localConfig.getHashDbFile();
-            textFieldHashesDB.setText( (isEnableHashDB && hashDbFile != null) ? hashDbFile.getAbsolutePath() : "" );
+            if (isEnableHashDB && hashDbFile != null && textFieldHashesDB.getText().isEmpty()) {
+                textFieldHashesDB.setText(hashDbFile.getAbsolutePath());
+            }
+            Color tfBackground = textFieldHashesDB.getBackground();
+            textFieldHashesDB.setEnabled(isEnableHashDB);
+            textFieldHashesDB.setBackground(tfBackground);
             defaultConfigurationManager.reloadConfigurable(LocalConfig.class);
         });
 
