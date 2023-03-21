@@ -562,4 +562,8 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         cbs = null;
     }
 
+    public void preCacheFilterClone(IFilter filter, IFilter filterClonedSrc) {
+        cachedBitSet.put(filter, cachedBitSet.get(filterClonedSrc));
+    }
+
 }

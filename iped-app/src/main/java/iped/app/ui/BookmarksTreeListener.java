@@ -149,37 +149,6 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
         App.get().bookmarksTree.clearSelection();
         clearing = false;
     }
-
-    class BookMarkFilter implements IResultSetFilter, IMutableFilter {
-        Object bookmark; 
-
-        public BookMarkFilter(Object bookmark2){
-            this.bookmark = bookmark2;            
-        }
-
-        @Override
-        public IMultiSearchResult filterResult(IMultiSearchResult src)
-                throws ParseException, QueryNodeException, IOException {
-            Set<String> bookmarkSelection = new HashSet<String>();
-            bookmarkSelection.add(bookmark.toString());
-            return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterBookmarks(src, bookmarkSelection);
-        }
-
-        public String toString() {
-            return bookmark.toString();
-        }
-    };
-    
-    class NoBookMarkFilter implements IResultSetFilter, IMutableFilter {
-        @Override
-        public IMultiSearchResult filterResult(IMultiSearchResult src)
-                throws ParseException, QueryNodeException, IOException {
-            return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterNoBookmarks(src);
-        }
-        public String toString() {
-            return BookmarksTreeModel.NO_BOOKMARKS_NAME;
-        }
-    }
     
     NoBookMarkFilter noBookMarkFilter = new NoBookMarkFilter();
 
@@ -258,5 +227,36 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
     @Override
     public boolean hasFiltersApplied() {
         return selection.size()>0 && !isRootSelected();
+    }
+}
+
+class BookMarkFilter implements IResultSetFilter, IMutableFilter {
+    Object bookmark; 
+
+    public BookMarkFilter(Object bookmark2){
+        this.bookmark = bookmark2;            
+    }
+
+    @Override
+    public IMultiSearchResult filterResult(IMultiSearchResult src)
+            throws ParseException, QueryNodeException, IOException {
+        Set<String> bookmarkSelection = new HashSet<String>();
+        bookmarkSelection.add(bookmark.toString());
+        return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterBookmarks(src, bookmarkSelection);
+    }
+
+    public String toString() {
+        return bookmark.toString();
+    }
+};
+
+class NoBookMarkFilter implements IResultSetFilter, IMutableFilter {
+    @Override
+    public IMultiSearchResult filterResult(IMultiSearchResult src)
+            throws ParseException, QueryNodeException, IOException {
+        return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterNoBookmarks(src);
+    }
+    public String toString() {
+        return BookmarksTreeModel.NO_BOOKMARKS_NAME;
     }
 }

@@ -17,6 +17,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.function.Predicate;
 
+import javax.swing.DropMode;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -37,6 +38,7 @@ import iped.app.ui.filterdecisiontree.FilterNode;
 import iped.app.ui.filterdecisiontree.OperandNode;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
 import iped.app.ui.filterdecisiontree.OperandPopupMenu;
+import iped.app.ui.filters.FilterTransferHandler;
 import iped.exception.QueryNodeException;
 import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.IFilter;
@@ -112,6 +114,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
             }
         });
         filtersTree.setModel(new FiltersTreeModel(filterManager.getFilterers()));
+        
 
         
         combinedFilterer = new CombinedFilterer();
@@ -229,91 +232,10 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
         
         FiltersPanel self = this;
 
-        DropTarget dt = new DropTarget(this, new DropTargetListener() {
-            
-            @Override
-            public void dropActionChanged(DropTargetDragEvent dtde) {
-            }
-            
-            @Override
-            public void drop(DropTargetDropEvent dtde) {
-                OperandNode dest = null;
-                JTree tree = structuredFiltererTree;
-                TreePath destPath = tree.getPathForLocation(dtde.getLocation().x, dtde.getLocation().y);
-                Object o = destPath.getLastPathComponent();
-                if(o instanceof CombinedFilterer) {
-                    dest=((CombinedFilterer)o).getRootNode();
-                }else if(o instanceof OperandNode) {
-                    dest=((OperandNode)o);
-                }
-                if(dest!=null) {
-                    structuredFiltererTree.expandPath(destPath);
-                    if(dragSourceTree==filtersTree) {
-                        for(TreePath path: filtersTree.getSelectionPaths()) {
-                            Object pathObject = path.getLastPathComponent();
-                            if(pathObject instanceof IFilter) {
-                                try {
-                                    combinedFilterer.preCacheFilter(((IFilter)pathObject));
-                                    dest.addFilter(new FilterNode(((IFilter)pathObject)));
-                                    tree.updateUI();
-                                }catch(Exception e) {
-                                    if(e.getCause() instanceof QueryNodeException) {
-                                        JOptionPane.showMessageDialog(self.getRootPane(), Messages.get("FiltersPanel.addQueryFilterError"));
-                                        return;
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        for(TreePath path: structuredFiltererTree.getSelectionPaths()) {
-                            Object pathObject = path.getLastPathComponent();
-                            if(pathObject instanceof DecisionNode) {
-                                Object parent = (Object) path.getParentPath().getLastPathComponent();
-                                if(parent instanceof CombinedFilterer) {
-                                    parent = ((CombinedFilterer)parent).getRootNode();
-                                }
-                                if(parent != dest) {
-                                    ((DecisionNode)parent).remove((DecisionNode) path.getLastPathComponent());
-                                    dest.addDecisionNode((DecisionNode) path.getLastPathComponent());
-                                    tree.updateUI();
-                                }
-                            }
-                        }
-                    }
-                    combinedFilterer.startSearchResult(App.get().ipedResult);
-                }
-            }
-            
-            @Override
-            public void dragOver(DropTargetDragEvent dtde) {
-                JTree tree = structuredFiltererTree;
-                Object o = tree.getPathForLocation(dtde.getLocation().x, dtde.getLocation().y).getLastPathComponent();
-                if(o instanceof CombinedFilterer || o instanceof OperandNode) {
-                    dtde.acceptDrag(DnDConstants.ACTION_COPY);
-                }else {
-                    dtde.rejectDrag();
-                }
-            }
-            
-            @Override
-            public void dragExit(DropTargetEvent dte) {
-                // TODO Auto-generated method stub
-                
-            }
-            
-            @Override
-            public void dragEnter(DropTargetDragEvent dtde) {
-                JTree tree = structuredFiltererTree;
-                Object o = tree.getPathForLocation(dtde.getLocation().x, dtde.getLocation().y).getLastPathComponent();
-                if(o instanceof CombinedFilterer || o instanceof OperandNode) {
-                    dtde.acceptDrag(DnDConstants.ACTION_COPY);
-                }else {
-                    dtde.rejectDrag();
-                }
-            }
-        });
-
-        structuredFiltererTree.setDropTarget(dt);
+        FilterTransferHandler fth = new FilterTransferHandler(this, combinedFilterer);
+        structuredFiltererTree.setTransferHandler(fth);
+        structuredFiltererTree.setDropMode(DropMode.ON);
+        filtersTree.setTransferHandler(fth);
 
         structuredFiltererTree.addMouseListener(new MouseAdapter() {
             public void showPopupMenu(MouseEvent e) {
