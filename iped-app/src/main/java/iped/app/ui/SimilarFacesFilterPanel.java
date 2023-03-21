@@ -21,12 +21,13 @@ public class SimilarFacesFilterPanel extends SimilarImagesFilterPanel {
 
     @Override
     protected void clearFilterAndUpdate() {
-        SimilarFacesFilterActions.clear(true);
+        App.get().similarFacesSearchFilterer.clearFilter();
+        App.get().appletListener.updateFileListing();
     }
 
     @Override
     public void clearFilter() {
-        SimilarFacesFilterActions.clear(false);
+        App.get().similarFacesSearchFilterer.clearFilter();
     }
 
 }

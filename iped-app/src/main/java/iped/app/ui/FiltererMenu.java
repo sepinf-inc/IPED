@@ -6,18 +6,21 @@ import java.awt.event.ActionListener;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JSeparator;
 import javax.swing.JTable;
 
 import iped.data.IItemId;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IFilterer;
 import iped.viewers.api.IItemRef;
+import iped.viewers.api.IQuantifiableFilter;
 
 public class FiltererMenu extends JPopupMenu implements ActionListener {
     private JMenuItem clearMenuitem;
     private Object selected;
     private JMenuItem gotToRefMenuItem;
-    
+    SliderMenuItem sliderMenuItem;
+
     public static final String CLEAR_FILTERS_STR = Messages.get("FiltererMenu.clearFilters"); 
     public static final String GOTO_ITEM_STR = Messages.get("FiltererMenu.goToItem"); 
     private static final String REFERENCED_ITEM_NOT_IN_RS = Messages.get("FiltererMenu.ItemNotInRS");
@@ -30,6 +33,10 @@ public class FiltererMenu extends JPopupMenu implements ActionListener {
         gotToRefMenuItem = new JMenuItem(GOTO_ITEM_STR);
         gotToRefMenuItem.addActionListener(this);
         this.add(gotToRefMenuItem);
+
+        this.add(new JSeparator());
+        sliderMenuItem = new SliderMenuItem();
+        this.add(sliderMenuItem);
     }
 
     @Override
@@ -81,5 +88,20 @@ public class FiltererMenu extends JPopupMenu implements ActionListener {
         }else {
             gotToRefMenuItem.setVisible(false);
         }
+        
+        sliderMenuItem.setVisible(false);
+        if((o instanceof IQuantifiableFilter)) {
+            sliderMenuItem.setVisible(true);
+            sliderMenuItem.setFilter((IQuantifiableFilter)o);
+        }
+    }
+
+    @Override
+    public void setVisible(boolean b) {
+        if(!b && sliderMenuItem.hasSliderChanged()) {
+            App.get().appletListener.updateFileListing();
+        }
+        super.setVisible(b);
     }
 }
+

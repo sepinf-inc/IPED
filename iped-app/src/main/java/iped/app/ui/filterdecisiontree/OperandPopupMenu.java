@@ -5,21 +5,26 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.JSeparator;
 import javax.swing.JTree;
 
 import iped.app.ui.App;
 import iped.app.ui.FiltererMenu;
 import iped.app.ui.Messages;
+import iped.app.ui.SliderMenuItem;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
 import iped.data.IItemId;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IItemRef;
+import iped.viewers.api.IQuantifiableFilter;
 
 public class OperandPopupMenu extends JPopupMenu implements ActionListener{
     private JMenuItem orMenuitem;
     private JMenuItem andMenuitem;
     private JMenuItem changeOperandMenuitem;
     private JMenuItem inverMenuitem;
+    SliderMenuItem sliderMenuItem;
+    
     CombinedFilterer logicFilterer;
     JTree filtersTree;
     DecisionNode op;
@@ -60,6 +65,11 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
         gotToRefMenuItem = new JMenuItem(FiltererMenu.GOTO_ITEM_STR);
         gotToRefMenuItem.addActionListener(this);
         this.add(gotToRefMenuItem);
+
+        this.add(new JSeparator());
+        sliderMenuItem = new SliderMenuItem();
+        sliderMenuItem.setVisible(false);
+        this.add(sliderMenuItem);
 
     }
 
@@ -123,6 +133,10 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
             if(((FilterNode)op).getFilter() instanceof IItemRef){
                 gotToRefMenuItem.setVisible(true);        
             }
+            if(((FilterNode)op).getFilter() instanceof IQuantifiableFilter){
+                sliderMenuItem.setVisible(true);
+                sliderMenuItem.setFilter((IQuantifiableFilter)((FilterNode)op).getFilter());
+            }
         }else {
             inverMenuitem.setVisible(true);
             orMenuitem.setVisible(true);
@@ -143,5 +157,20 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener{
 
     public void enableRemove() {
         removeMenuitem.setVisible(true);
+    }
+
+    @Override
+    public void setVisible(boolean b) {
+        if(!b && sliderMenuItem.hasSliderChanged()) {
+            logicFilterer.removePreCachedFilter((IFilter)((FilterNode)op).getFilter());
+            logicFilterer.preCacheFilter((IFilter)((FilterNode)op).getFilter());
+
+            logicFilterer.startSearchResult(App.get().getResults());
+
+            if(App.get().getFilterManager().isFiltererEnabled(logicFilterer)) {
+                App.get().getAppListener().updateFileListing();
+            }
+        }
+        super.setVisible(b);
     }
 }

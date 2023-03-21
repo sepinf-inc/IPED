@@ -171,6 +171,7 @@ import iped.viewers.api.IItemRef;
 import iped.viewers.api.IMiniaturizable;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IMutableFilter;
+import iped.viewers.api.IQuantifiableFilter;
 import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.IResultSetFilter;
@@ -1835,7 +1836,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
     
-    class SimilarFacesSearchFilter implements IResultSetFilter, IMiniaturizable, IItemRef {
+    class SimilarFacesSearchFilter implements IResultSetFilter, IMiniaturizable, IItemRef, IQuantifiableFilter {
         IItem itemRef;
         IItemId itemIdRef;
         private String refName;
@@ -1916,6 +1917,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         public IItemId getItemRefId() {
             return itemIdRef;
         }
+
+        @Override
+        public int getQuantityValue() {
+            return SimilarFacesSearch.getMinScore();
+        }
+
+        @Override
+        public void setQuantityValue(int value) {
+            SimilarFacesSearch.setMinScore(value);            
+        }
     }; 
 
     class SimilarFacesSearchFilterer implements IResultSetFilterer{
@@ -1959,13 +1970,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public boolean hasFiltersApplied() {
-            return false;
+            return itemRef!=null;
         }
 
         @Override
         public void clearFilter() {
             itemRef=null;
-            similarFacesFilterPanel.clearFilter();
+            SimilarFacesFilterActions.clear(false);
         }
 
         @Override
@@ -2050,7 +2061,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     
-    class SimilarDocumentFilter implements IQueryFilter, IItemRef{
+    class SimilarDocumentFilter implements IQueryFilter, IItemRef, IQuantifiableFilter{
         private IItem itemRef;
         private IItemId itemRefId;
         String refName;
@@ -2103,6 +2114,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         public String toString() {
             return "Silimar document ("+Integer.toString(filterPercent)+"%):"+itemRef.getName();
+        }
+
+        @Override
+        public int getQuantityValue() {
+            return filterPercent;
+        }
+
+        @Override
+        public void setQuantityValue(int value) {
+            filterPercent = value;
+            query=null;
         }
     }
     
@@ -2170,5 +2192,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             this.percent = percent;
             filter=null;
         }
+    }
+
+
+    public AppListener getAppletListener() {
+        return appletListener;
     }
 }

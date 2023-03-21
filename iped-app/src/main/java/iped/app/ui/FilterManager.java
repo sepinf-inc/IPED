@@ -56,7 +56,6 @@ import iped.viewers.api.IResultSetFilterer;
 
 public class FilterManager implements ActionListener, ListSelectionListener {
 
-    Map<IFilter,SparseBitSet> bitsetCache = new HashMap<IFilter, SparseBitSet>();
     HashMap<IFilter, HashMap<Integer, SparseBitSet>> cachedFilterBitsets = new HashMap<IFilter, HashMap<Integer, SparseBitSet>>(); 
 
     List<IQueryFilterer> queryFilterers = new ArrayList<IQueryFilterer>();

@@ -7,6 +7,8 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -227,33 +229,14 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
         
         FiltersPanel self = this;
 
-        DropTarget dt = new DropTarget() {
+        DropTarget dt = new DropTarget(this, new DropTargetListener() {
+            
             @Override
-            public synchronized void dragEnter(DropTargetDragEvent dtde) {
-                JTree tree = structuredFiltererTree;
-                Object o = tree.getPathForLocation(dtde.getLocation().x, dtde.getLocation().y).getLastPathComponent();
-                if(o instanceof CombinedFilterer || o instanceof OperandNode) {
-                    dtde.acceptDrag(DnDConstants.ACTION_COPY);
-                }else {
-                    dtde.rejectDrag();
-                }
-                super.dragEnter(dtde);
+            public void dropActionChanged(DropTargetDragEvent dtde) {
             }
-
+            
             @Override
-            public synchronized void dragOver(DropTargetDragEvent dtde) {
-                JTree tree = structuredFiltererTree;
-                Object o = tree.getPathForLocation(dtde.getLocation().x, dtde.getLocation().y).getLastPathComponent();
-                if(o instanceof CombinedFilterer || o instanceof OperandNode) {
-                    dtde.acceptDrag(DnDConstants.ACTION_COPY);
-                }else {
-                    dtde.rejectDrag();
-                }
-                super.dragOver(dtde);
-            }
-
-            @Override
-            public synchronized void drop(DropTargetDropEvent dtde) {
+            public void drop(DropTargetDropEvent dtde) {
                 OperandNode dest = null;
                 JTree tree = structuredFiltererTree;
                 TreePath destPath = tree.getPathForLocation(dtde.getLocation().x, dtde.getLocation().y);
@@ -289,17 +272,46 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
                                 if(parent instanceof CombinedFilterer) {
                                     parent = ((CombinedFilterer)parent).getRootNode();
                                 }
-                                ((DecisionNode)parent).remove((DecisionNode) path.getLastPathComponent());
-                                dest.addDecisionNode((DecisionNode) path.getLastPathComponent());
-                                tree.updateUI();
+                                if(parent != dest) {
+                                    ((DecisionNode)parent).remove((DecisionNode) path.getLastPathComponent());
+                                    dest.addDecisionNode((DecisionNode) path.getLastPathComponent());
+                                    tree.updateUI();
+                                }
                             }
                         }
                     }
                     combinedFilterer.startSearchResult(App.get().ipedResult);
                 }
-                super.drop(dtde);
             }
-        };
+            
+            @Override
+            public void dragOver(DropTargetDragEvent dtde) {
+                JTree tree = structuredFiltererTree;
+                Object o = tree.getPathForLocation(dtde.getLocation().x, dtde.getLocation().y).getLastPathComponent();
+                if(o instanceof CombinedFilterer || o instanceof OperandNode) {
+                    dtde.acceptDrag(DnDConstants.ACTION_COPY);
+                }else {
+                    dtde.rejectDrag();
+                }
+            }
+            
+            @Override
+            public void dragExit(DropTargetEvent dte) {
+                // TODO Auto-generated method stub
+                
+            }
+            
+            @Override
+            public void dragEnter(DropTargetDragEvent dtde) {
+                JTree tree = structuredFiltererTree;
+                Object o = tree.getPathForLocation(dtde.getLocation().x, dtde.getLocation().y).getLastPathComponent();
+                if(o instanceof CombinedFilterer || o instanceof OperandNode) {
+                    dtde.acceptDrag(DnDConstants.ACTION_COPY);
+                }else {
+                    dtde.rejectDrag();
+                }
+            }
+        });
 
         structuredFiltererTree.setDropTarget(dt);
 
@@ -333,6 +345,14 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
                 if (e.isPopupTrigger()) {
                     showPopupMenu(e);
                 }
+            }
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                super.mouseDragged(e);
+            }
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                super.mouseMoved(e);
             }
         });
     }
