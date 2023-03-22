@@ -114,10 +114,20 @@ public class RemoteWav2Vec2Discovery {
     }
 
     private static void discover(PrintWriter writer) throws IOException {
-        writer.println(Integer.toString(servers.size()));
-        for (String server : servers.keySet()) {
-            writer.println(server);
+        String env_servers = System.getenv("IPED_TRANSCRIPTION_SERVERS").trim();
+        if (!env_servers.isEmpty()) {
+            String servers[] = env_servers.split(",");
+            writer.println(Integer.toString(servers.length));
+            for (String server : servers) {
+                writer.println(server.trim());
+            }
+        } else {
+            writer.println(Integer.toString(servers.size()));
+            for (String server : servers.keySet()) {
+                writer.println(server);
+            }
         }
+
     }
 
     private static void getStats(Socket client, BufferedReader reader, PrintWriter writer) throws IOException {
