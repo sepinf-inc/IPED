@@ -100,6 +100,7 @@ public class RemoteWav2Vec2Discovery {
 
     private static void register(Socket client, BufferedReader reader, PrintWriter writer) throws IOException {
         String ip = client.getInetAddress().getHostAddress();
+        String hostname = client.getInetAddress().getHostName();
         System.out.println(new Date() + " Receiving registration from: " + ip);
         String port = reader.readLine();
         String address = ip + ":" + port;
@@ -107,7 +108,7 @@ public class RemoteWav2Vec2Discovery {
         String nodeWavConvs = reader.readLine();
         writer.println(MESSAGES.DONE);
         if (servers.put(address, System.currentTimeMillis()) == null) {
-            System.out.println(new Date() + " Server registered: " + address);
+            System.out.println(new Date() + " Server registered: " + address + " hostname: " + hostname);
             concurrentJobs.put(address, Integer.valueOf(nodeJobs));
             concurrentWavConvs.put(address, Integer.valueOf(nodeWavConvs));
         }
@@ -134,6 +135,7 @@ public class RemoteWav2Vec2Discovery {
         String ip = client.getInetAddress().getHostAddress();
         String port = reader.readLine();
         String address = ip + ":" + port;
+        String hostname = client.getInetAddress().getHostName();
         String nodeJobs = reader.readLine();
         String nodeWavConvs = reader.readLine();
 
@@ -149,7 +151,7 @@ public class RemoteWav2Vec2Discovery {
         writer.println(MESSAGES.DONE);
 
         if (servers.put(address, System.currentTimeMillis()) == null) {
-            System.out.println(new Date() + " Server registered: " + address);
+            System.out.println(new Date() + " Server registered: " + address + " hostname: " + hostname);
             concurrentJobs.put(address, Integer.valueOf(nodeJobs));
             concurrentWavConvs.put(address, Integer.valueOf(nodeWavConvs));
         }
