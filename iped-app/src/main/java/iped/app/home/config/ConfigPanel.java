@@ -148,13 +148,8 @@ public class ConfigPanel extends DefaultPanel {
         checkBoxEnableDisableHashDb.setBackground(super.getCurrentBackGroundColor());
         checkBoxEnableDisableHashDb.addItemListener(e -> {
             isEnableHashDB = (e.getStateChange() == ItemEvent.SELECTED);
-            LocalConfig localConfig = defaultConfigurationManager.findObject(LocalConfig.class);
             checkBoxEnableDisableHashDb.setText( isEnableHashDB ? Messages.get("Home.Active") : Messages.get("Home.Inactive") );
             buttonChangeHashDB.setVisible(isEnableHashDB);
-            File hashDbFile = localConfig.getHashDbFile();
-            if (isEnableHashDB && hashDbFile != null && textFieldHashesDB.getText().isEmpty()) {
-                textFieldHashesDB.setText(hashDbFile.getAbsolutePath());
-            }
             Color tfBackground = textFieldHashesDB.getBackground();
             textFieldHashesDB.setEnabled(isEnableHashDB);
             textFieldHashesDB.setBackground(tfBackground);
@@ -366,8 +361,21 @@ public class ConfigPanel extends DefaultPanel {
         spinnerThreads.setValue(localConfig.getNumThreads());
         textFieldIndexTemp.setText( (localConfig.getPropertie().getProperty(LocalConfig.INDEX_TEMP) == null ) ? "Default" : localConfig.getPropertie().getProperty(LocalConfig.INDEX_TEMP));
         checkBoxIndexTempOnSSD.setSelected( localConfig.isIndexTempOnSSD() );
-        boolean isHashDBEnabled = localConfig.getHashDbFile() != null;
-        textFieldHashesDB.setText( isHashDBEnabled ? localConfig.getHashDbFile().getAbsolutePath() : textFieldHashesDB.getText() );
+        File hashDbFile = localConfig.getHashDbFile();
+        boolean isHashDBEnabled = hashDbFile != null;
+        if (hashDbFile == null) {
+            // load commented out hashedDb path from txt file
+            localConfig.getPropertie().enableOrDisablePropertie(CasePathManager.getInstance().getLocalConfigFile(), LocalConfig.HASH_DB, false);
+            defaultConfigurationManager.reloadConfigurable(LocalConfig.class);
+            localConfig = defaultConfigurationManager.findObject(LocalConfig.class);
+            hashDbFile = localConfig.getHashDbFile();
+            localConfig.getPropertie().enableOrDisablePropertie(CasePathManager.getInstance().getLocalConfigFile(), LocalConfig.HASH_DB, true);
+        }
+        textFieldHashesDB.setText(hashDbFile != null ? hashDbFile.getAbsolutePath() : "");
+        Color tfBackground = textFieldHashesDB.getBackground();
+        textFieldHashesDB.setEnabled(isEnableHashDB);
+        textFieldHashesDB.setBackground(tfBackground);
+
         checkBoxEnableDisableHashDb.setSelected(isHashDBEnabled);
         checkBoxEnableDisableHashDb.setText( isHashDBEnabled ? Messages.get("Home.Active") : Messages.get("Home.Inactive") );
         buttonChangeHashDB.setVisible(isHashDBEnabled);
