@@ -18,22 +18,12 @@
  */
 package iped.app.ui;
 
-import java.lang.ref.SoftReference;
-
 import org.apache.lucene.search.Query;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import iped.engine.data.IPEDSource;
 import iped.engine.search.IPEDSearcher;
-import iped.engine.search.MultiSearchResult;
 
 public class UICaseSearcherFilter extends CaseSearcherFilter {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(UICaseSearcherFilter.class);
-
-    private static SoftReference<MultiSearchResult> allItemsCache;
-    private static IPEDSource ipedCase;
 
     volatile int numFilters = 0;
 

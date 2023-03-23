@@ -161,7 +161,10 @@ public class FilterSelectedEdges implements IResultSetFilterer{
     @Override
     public List getDefinedFilters() {
         ArrayList<IFilter> result = new ArrayList<IFilter>();
-        result.add(getFilter());
+        IFilter filter = getFilter();
+        if(filter!=null) {
+            result.add(filter);
+        }
         return result;
     }
 
@@ -173,33 +176,12 @@ public class FilterSelectedEdges implements IResultSetFilterer{
 
     @Override
     public IFilter getFilter() {
-        return new IResultSetFilter() {
-            @Override
-            public IMultiSearchResult filterResult(IMultiSearchResult src)
-                    throws ParseException, QueryNodeException, IOException {
-                IMultiSearchResult result = src;
-                Set<IItemId> selectedEdges = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
-                if (selectedEdges != null && !selectedEdges.isEmpty()) {
-                    ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
-                    ArrayList<Float> scores = new ArrayList<Float>();
-                    int i = 0;
-                    for (IItemId item : result.getIterator()) {
-                        if (selectedEdges.contains(item)) {
-                            filteredItems.add(item);
-                            scores.add(result.getScore(i));
-                        }
-                        i++;
-                    }
-                    result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
-                            ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
-                }
-                return result;
-            }
-
-            public String toString() {
-                return "Filter selected edges";
-            }
-        };
+        if(selectedEdges!=null && selectedEdges.size()>0) {
+            Set<IItemId> selectedEdgesItems = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
+            return new EdgeFilter(selectedEdgesItems);
+        }else {
+            return null;
+        }
     }
 
     @Override
@@ -214,8 +196,37 @@ public class FilterSelectedEdges implements IResultSetFilterer{
 
     @Override
     public void clearFilter() {
-        // TODO Auto-generated method stub
         
     }
+}
 
+class EdgeFilter implements IResultSetFilter{
+    Set<IItemId> selectedEdges;
+
+    public EdgeFilter(Set<IItemId> itemIdsOfSelectedEdges) {
+        this.selectedEdges.addAll(itemIdsOfSelectedEdges);
+    }
+
+    @Override
+    public IMultiSearchResult filterResult(IMultiSearchResult src)
+            throws ParseException, QueryNodeException, IOException {
+        IMultiSearchResult result = src;
+        ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
+        ArrayList<Float> scores = new ArrayList<Float>();
+        int i = 0;
+        for (IItemId item : result.getIterator()) {
+            if (selectedEdges.contains(item)) {
+                filteredItems.add(item);
+                scores.add(result.getScore(i));
+            }
+            i++;
+        }
+        result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
+                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        return result;
+    }
+
+    public String toString() {
+        return "Filter selected edges";
+    }
 }

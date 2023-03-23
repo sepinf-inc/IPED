@@ -223,7 +223,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
                         App.get().dialogBar.setVisible(true);
                         App.get().progressBar.setString(prevMsg);
                     } else {
-                        App.get().dialogBar.setVisible(false);
+                        App.get().dialogBar.dispose();
                     }
                 }
             });
