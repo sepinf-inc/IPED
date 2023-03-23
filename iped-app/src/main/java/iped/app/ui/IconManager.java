@@ -285,6 +285,11 @@ public class IconManager {
             mimeIconMap.put("application/outlook-contact", icon);
             mimeIconMap.put("contact/x-skype-account", icon);
             mimeIconMap.put("contact/x-skype-contact", icon);
+            mimeIconMap.put("application/x-android_contactos_registry", icon);
+            mimeIconMap.put("application/x-android_contactos", icon);
+            mimeIconMap.put("application/x-android_contactos_registry2", icon);
+            mimeIconMap.put("application/x-android_contactos2", icon);
+
         }
 
         icon = availableIconsMap.get("user-telegram");

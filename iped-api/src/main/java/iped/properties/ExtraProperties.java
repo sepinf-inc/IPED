@@ -147,6 +147,20 @@ public class ExtraProperties {
 
     public static final String FACE_ENCODINGS = "face_encodings";
 
+    public static final String CONTACT_CONTACTID = "contact_contactid";
+
+    public static final String CONTACT_DISPLAY_NAME = "contact_display_name";
+
+    public static final String CONTACT_PHONE_NUMBERS = "contact_phone_numbers";
+
+    public static final String CONTACT_ACCOUNTS = "contact_accounts";
+
+    public static final String CONTACT_EMAILS = "contact_emails";
+
+    public static final String CONTACT_NOTES = "contact_notes";
+
+    public static final String CONTACT_DELETED = "contact_deleted";
+
     public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, COMMUNICATION_DATE.getName(),
             MESSAGE_BODY, COMMUNICATION_FROM, COMMUNICATION_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,
             Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT, MESSAGE_ATTACHMENT_COUNT.getName());

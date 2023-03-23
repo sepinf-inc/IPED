@@ -1460,5 +1460,24 @@
     	<sub-class-of type="message/x-chat-message"/>
     </mime-type>
 
+    <mime-type type="application/x-android_contactos">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-android_contactos_registry">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-android_contactos2">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-android_contactos_registry2">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+
+    
+
 </mime-info>
 
