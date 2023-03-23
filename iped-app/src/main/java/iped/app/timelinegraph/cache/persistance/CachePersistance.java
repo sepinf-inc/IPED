@@ -4,7 +4,10 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
@@ -16,9 +19,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -28,6 +31,7 @@ import org.jfree.data.time.TimePeriod;
 
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
+import iped.app.timelinegraph.cache.TimeIndexedMap;
 import iped.app.timelinegraph.cache.TimeStampCache;
 import iped.app.ui.App;
 import iped.utils.IOUtil;
@@ -130,16 +134,19 @@ public class CachePersistance {
         }
     }
 
-    public Map<String, List<CacheTimePeriodEntry>> loadNewCache(Class<? extends TimePeriod> className) throws IOException {
-        Map<String, List<CacheTimePeriodEntry>> newCache = new HashMap<String, List<CacheTimePeriodEntry>>();
+    public TimeIndexedMap loadNewCache(Class<? extends TimePeriod> className) throws IOException {
+        TimeIndexedMap newCache = new TimeIndexedMap();
 
         for (File f : baseDir.listFiles()) {
             if (f.getName().equals(className.getSimpleName())) {
+                newCache.setIndexFile(className.getSimpleName(),baseDir);
                 ArrayList<CacheTimePeriodEntry> times = new ArrayList<CacheTimePeriodEntry>();
                 newCache.put(f.getName(), times);
+                /*
                 if (!loadEventNewCache(times, f)) {
                     throw new IOException("File not committed:" + f.getName());
                 }
+                */
             }
         }
 
@@ -187,10 +194,27 @@ public class CachePersistance {
     }
 
     public void saveNewCache(TimeStampCache timeStampCache) {
-        Map<String, List<CacheTimePeriodEntry>> newCache = timeStampCache.getNewCache();
+        TimeIndexedMap newCache = (TimeIndexedMap) timeStampCache.getNewCache();
 
         for (Entry<String, List<CacheTimePeriodEntry>> entry : newCache.entrySet()) {
             savePeriodNewCache(timeStampCache, entry.getValue(), new File(baseDir, entry.getKey()));
+        }
+    }
+
+    public void saveMonthIndex(HashMap<String, TreeMap<Date, Long>> monthIndex, String timePeriodName) {
+        TreeMap<Date, Long> dates = (TreeMap<Date, Long>) monthIndex.get(timePeriodName);
+        
+        baseDir.mkdirs();
+        File monthFile = new File(new File(baseDir,timePeriodName), "1");
+
+        try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(monthFile.toPath())))) {
+            for (Iterator iterator2 = dates.entrySet().iterator(); iterator2.hasNext();) {
+                Entry dateEntry = (Entry) iterator2.next();
+                dos.writeLong(((Date)dateEntry.getKey()).getTime());
+                dos.writeLong(((Long)dateEntry.getValue()));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -231,4 +255,26 @@ public class CachePersistance {
         }
     }
 
+    public File getBaseDir() {
+        return baseDir;
+    }
+
+    public void loadMonthIndex(String ev, TreeMap<Date, Long> datesPos) {
+        File monthFile = new File(new File(baseDir,ev), "1");
+        try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(monthFile)))) {
+            try {
+                while(true) {
+                    Date d = new Date(dis.readLong());
+                    long pos = dis.readLong();
+                    datesPos.put(d, pos);
+                }
+            }catch (EOFException e) {
+                // ignores
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

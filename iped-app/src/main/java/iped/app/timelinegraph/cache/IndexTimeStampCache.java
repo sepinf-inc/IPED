@@ -78,7 +78,7 @@ public class IndexTimeStampCache implements TimeStampCache {
             for (Class periodClasses : periodClassesToCache) {
                 CachePersistance cp = new CachePersistance();
                 try {
-                    Map c = cp.loadNewCache(periodClasses);
+                    TimeIndexedMap c = cp.loadNewCache(periodClasses);
                     if (c.size() > 0) {
                         cacheExists = true;
                         newCache.putAll(c);
@@ -120,9 +120,13 @@ public class IndexTimeStampCache implements TimeStampCache {
                         Date d2 = new Date();
                         logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
                         if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
-                            (new CachePersistance()).saveNewCache(this);
                         }
-                        newCache.createMonthIndex();
+                        CachePersistance cp = new CachePersistance();
+                        cp.saveNewCache(this);
+                        for (Class periodClasses : periodClassesToCache) {
+                            newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
+                        }
+                        newCache.createMonthIndex(this);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -131,6 +135,11 @@ public class IndexTimeStampCache implements TimeStampCache {
             } else {
                 Date d2 = new Date();
                 logger.info("Time to load time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
+                CachePersistance cp = new CachePersistance();
+                for (Class periodClasses : periodClassesToCache) {
+                    newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
+                }
+                newCache.createMonthIndex(this);
             }
         } catch (Exception e) {
             e.printStackTrace();
