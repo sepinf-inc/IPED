@@ -51,7 +51,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     private static Logger LOGGER = LoggerFactory.getLogger(CaseSearcherFilter.class);
     ArrayList<CaseSearchFilterListener> listeners = new ArrayList<CaseSearchFilterListener>();
 
-    private static SoftReference<MultiSearchResult> allItemsCache;
+    public static SoftReference<MultiSearchResult> allItemsCache;
     private static IPEDSource ipedCase;
 
     private ExecutorService threadPool;
