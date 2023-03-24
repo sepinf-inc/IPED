@@ -406,7 +406,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             if (e instanceof TooManyConnectException || e instanceof IPEDException) {
                 throw e;
             }
-            LOGGER.warn("Unexpected exception while transcribing: " + evidence.getPath(), e);
+            LOGGER.error("Unexpected exception while transcribing: " + evidence.getPath(), e);
         } finally {
             tmp.close();
         }
