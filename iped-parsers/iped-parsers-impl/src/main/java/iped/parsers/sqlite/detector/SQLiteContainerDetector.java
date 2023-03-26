@@ -24,6 +24,8 @@ import org.sqlite.SQLiteOpenMode;
 import iped.parsers.browsers.chrome.ChromeSqliteParser;
 import iped.parsers.browsers.firefox.FirefoxSqliteParser;
 import iped.parsers.browsers.safari.SafariSqliteParser;
+import iped.parsers.android.contact.ContactParser;
+import iped.parsers.android.contactdb2.ContactParserDb2;
 import iped.parsers.eventtranscript.EventTranscriptParser;
 import iped.parsers.gdrive.GDriveMainParser;
 import iped.parsers.skype.SkypeParser;
@@ -168,6 +170,12 @@ public class SQLiteContainerDetector implements Detector {
                 tableNames.contains("visits") && //$NON-NLS-1$
                 tableNames.contains("downloads_url_chains")) //$NON-NLS-1$
             return ChromeSqliteParser.CHROME_SQLITE;
+
+        if (tableNames.contains("acquired_contacts"))
+            return ContactParser.ANDROID_SQLITE_CONTACTOS;
+
+        if (tableNames.contains("raw_contacts") && tableNames.contains("contacts") && tableNames.contains("data") && tableNames.contains("mimetypes"))
+            return ContactParserDb2.ANDROID_SQLITE2_CONTACTOS;
 
         if (tableNames.contains("Activity") && tableNames.contains("Activity_PackageId") && tableNames.contains("ActivityOperation"))
             return WinXTimelineParser.WIN10_TIMELINE;
