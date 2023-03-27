@@ -83,10 +83,12 @@ public class IPEDSource implements IIPEDSource {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IPEDSource.class);
 
-    public static final String INDEX_DIR = "index"; //$NON-NLS-1$
     public static final String MODULE_DIR = "iped"; //$NON-NLS-1$
+    public static final String INDEX_DIR = "index"; //$NON-NLS-1$
+    public static final String DATA_DIR = "data"; //$NON-NLS-1$
+    public static final String LIB_DIR = "lib"; //$NON-NLS-1$
     public static final String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
-    public static final String PREV_TEMP_INFO_PATH = "data/prevTempDir.txt"; //$NON-NLS-1$
+    public static final String PREV_TEMP_INFO_PATH = DATA_DIR + "/prevTempDir.txt"; //$NON-NLS-1$
 
     /**
      * workaround para JVM não coletar objeto, nesse caso Sleuthkit perde referencia
@@ -129,6 +131,14 @@ public class IPEDSource implements IIPEDSource {
     Set<String> evidenceUUIDs = new TreeSet<String>();
 
     boolean isReport = false;
+
+    public static boolean checkIfIsCaseFolder(File dir) {
+        File module = new File(dir, MODULE_DIR);
+        if (new File(module, INDEX_DIR).exists() && new File(module, LIB_DIR).exists() && new File(module, DATA_DIR).exists()) {
+            return true;
+        }
+        return false;
+    }
 
     public static File getTempDirInfoFile(File moduleDir) {
         return new File(moduleDir, IPEDSource.PREV_TEMP_INFO_PATH);
