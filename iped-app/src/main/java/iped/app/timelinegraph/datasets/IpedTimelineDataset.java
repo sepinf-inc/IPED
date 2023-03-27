@@ -132,7 +132,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     /*
      * This semaphore is used to avoid multiple thread of dataset loading, as some
      * events like mouse wheel zooming or chart panning can call many times. As the
-     * cache already has a windows of items larger than the visible range, this
+     * cache already has a window of items larger than the visible range, this
      * window prevents some possible unloaded info from not being ploted.
      */
     Semaphore memoryCacheReloadSem = new Semaphore(1); // semaphore that controls start and end of load of cache window contourning the
@@ -349,63 +349,68 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     Date startDate = new Date((long) dateRange.getLowerBound());
                     Date endDate = new Date((long) dateRange.getUpperBound());
 
-                    long visibleRangeLength = endDate.getTime() - startDate.getTime();
                     if ((startDate.getTime() == 0 && endDate.getTime() == 1)) {
-                        visibleIntervalCache = newcache;
-                        memoryWindowCache.addAll(newcache);
-                    } else {
-                        visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
-                        startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
-                        endDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
+                        startDate = new Date(-100000000000000l);
+                        endDate = new Date(Long.MAX_VALUE);
+                    }
+                    long visibleRangeLength = endDate.getTime() - startDate.getTime();
 
-                        Iterator<CacheTimePeriodEntry> it = a.iterator(className, new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION),
-                                new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION));
-                        CacheTimePeriodEntry ctpe = null;
-                        while (it.hasNext()) {
-                            ctpe = it.next();
-                            boolean remove = false;
-                            if (ctpe.date.before(startDate)) {
-                                if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
-                                    if (ctpe.date.getTime() > endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION) {
-                                        if (!memoryWindowCache.contains(ctpe)) {
-                                            beforecache.addFirst(ctpe);
-                                            memoryWindowCache.add(ctpe);
-                                        }
-                                        remove = false;
-                                    } else {
-                                        // remove from memoryCacheWindow
-                                        remove = true;
+                    visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
+                    startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
+                    endDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
+
+                    Date d1 = new Date();
+
+                    Iterator<CacheTimePeriodEntry> it = a.iterator(className, new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION),
+                            new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION));
+                    CacheTimePeriodEntry ctpe = null;
+                    while (it.hasNext()) {
+                        ctpe = it.next();
+                        boolean remove = false;
+                        if (ctpe.date.before(startDate)) {
+                            if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
+                                if (ctpe.date.getTime() > endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION) {
+                                    if (!memoryWindowCache.contains(ctpe)) {
+                                        beforecache.addFirst(ctpe);
+                                        memoryWindowCache.add(ctpe);
                                     }
+                                    remove = false;
+                                } else {
+                                    // remove from memoryCacheWindow
+                                    remove = true;
                                 }
-                            } else if (ctpe.date.after(endDate)) {
-                                if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
-                                    if (ctpe.date.getTime() < startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION) {
-                                        if (!memoryWindowCache.contains(ctpe)) {
-                                            aftercache.add(ctpe);
-                                            memoryWindowCache.add(ctpe);
-                                        }
-                                        remove = false;
-                                    } else {
-                                        // remove from memoryCacheWindow
-                                        remove = true;
-                                    }
-                                }
-                            } else {// inside visible window
-                                if (!memoryWindowCache.contains(ctpe)) {
-                                    visibleIntervalCache.add(ctpe);
-                                    memoryWindowCache.add(ctpe);
-                                }
-                                remove = false;
                             }
-                            if (remove) {
-                                TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ctpe.date);
-                                accumulator.remove(t);
-                                if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
-                                    memoryWindowCache.remove(ctpe);
+                        } else if (ctpe.date.after(endDate)) {
+                            if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
+                                if (ctpe.date.getTime() < startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION) {
+                                    if (!memoryWindowCache.contains(ctpe)) {
+                                        aftercache.add(ctpe);
+                                        memoryWindowCache.add(ctpe);
+                                    }
+                                    remove = false;
+                                } else {
+                                    // remove from memoryCacheWindow
+                                    remove = true;
                                 }
+                            }
+                        } else {// inside visible window
+                            if (!memoryWindowCache.contains(ctpe)) {
+                                visibleIntervalCache.add(ctpe);
+                                memoryWindowCache.add(ctpe);
+                            }
+                            remove = false;
+                        }
+                        if (remove) {
+                            TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ctpe.date);
+                            accumulator.remove(t);
+                            if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
+                                memoryWindowCache.remove(ctpe);
                             }
                         }
                     }
+                    it=null;
+                    Date d2 = new Date();
+                    System.out.println(d2.getTime()-d1.getTime());
 
                     populatesWithList(result, visibleIntervalCache, addValueSem);// creates first the visible interval itens to be plotted
 
