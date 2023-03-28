@@ -112,8 +112,8 @@ public class Message {
         if (deletedId == -1) {
             deletedId = deletedCounter.getAndIncrement();
         }
-        if(deleted) {
-            new_id+="_" + deletedId;
+        if (deleted) {
+            new_id += "_" + deletedId;
         }
         return new_id;
     }

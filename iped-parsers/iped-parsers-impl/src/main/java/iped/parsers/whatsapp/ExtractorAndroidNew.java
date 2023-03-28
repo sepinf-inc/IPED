@@ -157,6 +157,7 @@ public class ExtractorAndroidNew extends Extractor {
 
         return messages;
     }
+
     private List<Message> extractMessages(Connection conn, Chat c) throws SQLException {
         List<Message> messages = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
