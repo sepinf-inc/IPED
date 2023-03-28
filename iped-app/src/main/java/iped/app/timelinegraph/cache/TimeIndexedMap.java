@@ -388,7 +388,6 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                 eventName = dis.readUTF();
             }catch(Exception e) {
                 long pos = ((SeekableFileInputStream)dis.wrapped).position();
-                System.out.print(true);
             }
         }
         return ct;

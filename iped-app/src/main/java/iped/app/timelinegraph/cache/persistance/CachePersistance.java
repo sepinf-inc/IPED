@@ -228,9 +228,6 @@ public class CachePersistance {
         try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(eventFile.toPath())))) {
             dos.writeShort(0);
             dos.writeUTF(timeStampCache.getCacheTimeZone().getID());
-            if(file.getAbsolutePath().contains("Week")) {
-                System.out.print(true);
-            }
             dos.writeInt(entry.size());
             for (int i = 0; i < entry.size(); i++) {
                 CacheTimePeriodEntry ct = entry.get(i);

@@ -2,7 +2,6 @@ package iped.app.timelinegraph.datasets;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -31,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.jfree.chart.util.Args;
 import org.jfree.chart.util.PublicCloneable;
 import org.jfree.data.DomainInfo;
@@ -44,13 +43,14 @@ import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDomainInfo;
-import org.neo4j.logging.shaded.log4j.core.util.ExecutorServices;
 
+import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartPanel;
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.IpedDateAxis;
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
+import iped.app.timelinegraph.cache.EventTimestampCache;
 import iped.app.timelinegraph.cache.TimeIndexedMap;
 import iped.app.timelinegraph.cache.TimeStampCache;
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
@@ -998,6 +998,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
 
         TimePeriod t = accumulator.rowTimestamps.get(item);
 
+        String eventType = (String) this.getSeriesKey(seriesId);
         IpedDateAxis domainAxis = ipedChartsPanel.getDomainAxis();
         StringBuffer timeFilter = new StringBuffer();
         timeFilter.append("timeStamp:[");
@@ -1006,20 +1007,53 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         timeFilter.append(domainAxis.ISO8601DateFormatUTC(t.getEnd()));
         timeFilter.append("]");
         timeFilter.append("&& timeEvent:\"");
-        timeFilter.append(this.getSeriesKey(seriesId)+"\"");
+        timeFilter.append(eventType+"\"");
 
         CaseSearcherFilter csf = new CaseSearcherFilter(timeFilter.toString());
         csf.applyUIQueryFilters(exceptThis);
+        
+        IPEDMultiSource srcCase = App.get().appCase;
         
         csf.execute();
         try {
             MultiSearchResult resultSet = (MultiSearchResult) csf.get();
             List<IItemId> result = new ArrayList<IItemId>();
+            LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
+            String eventField = ipedChartsPanel.getTimeEventColumnName(eventType);
+            SortedSetDocValues values = reader.getSortedSetDocValues(eventField);
             for(int i=0; i<resultSet.getLength(); i++) {
-                result.add(resultSet.getItem(i));
+                int doc = srcCase.getLuceneId(resultSet.getItem(i));
+                boolean adv = values.advanceExact(doc);
+                if(adv=false) {
+                    values = reader.getSortedSetDocValues(eventField);
+                    adv = values.advanceExact(doc);
+                    if(!adv) {
+                        continue;
+                    }
+                }
+                boolean found=false;
+                if(doc != DocIdSetIterator.NO_MORE_DOCS){
+                    int ord = (int) values.nextOrd();
+                    while (ord != SortedSetDocValues.NO_MORE_ORDS) {
+                        String timeStr = EventTimestampCache.cloneBr(values.lookupOrd(ord));
+                        if (timeStr.isEmpty()) {
+                            continue;
+                        }
+                        Date date = DateUtil.ISO8601DateParse(timeStr);
+                        if(!(date.before(t.getStart()) || date.after(t.getEnd()))){
+                            found=true;
+                        }else {
+                            System.out.print(true);
+                        }
+                        ord = (int) values.nextOrd();
+                    }
+                }
+                if(found) {
+                    result.add(resultSet.getItem(i));
+                }
             }
             return result;
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
