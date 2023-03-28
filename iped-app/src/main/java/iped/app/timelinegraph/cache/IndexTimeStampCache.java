@@ -124,7 +124,12 @@ public class IndexTimeStampCache implements TimeStampCache {
                         }
                         CachePersistance cp = new CachePersistance();
                         cp.saveNewCache(this);
+
                         newCache.clearCache();
+                        timePeriodEntryIndex.clear();
+                        cacheLoaders.clear();
+                        TimelineCache.get().clear();//clear old empty timeline entries to be reloaded with created cache data
+
                         for (Class periodClasses : periodClassesToCache) {
                             newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
                             ArrayList<CacheTimePeriodEntry> times = new ArrayList<CacheTimePeriodEntry>();
@@ -132,7 +137,6 @@ public class IndexTimeStampCache implements TimeStampCache {
                         }
                         newCache.createOrLoadDayIndex(this);
 
-                        TimelineCache.get().clear();//clear old empty timeline entries to be reloaded with created cache data
                         newCache = null;//liberates data used to create indexes for garbage collection
 
                         newCache = new TimeIndexedMap();
