@@ -382,7 +382,7 @@ public class Message {
     public boolean isCall() {
         return messageType == MessageType.VIDEO_CALL || messageType == MessageType.VOICE_CALL
                 || messageType == MessageType.MISSED_VIDEO_CALL || messageType == MessageType.MISSED_VOICE_CALL
-                || messageType == MessageType.REFUSED_VIDEO_CALL || messageType == MessageType.REFUSED_VIDEO_CALL
+                || messageType == MessageType.REFUSED_VIDEO_CALL || messageType == MessageType.REFUSED_VOICE_CALL
                 || messageType == MessageType.UNKNOWN_VOICE_CALL || messageType == MessageType.UNKNOWN_VIDEO_CALL;
     }
 
