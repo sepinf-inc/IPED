@@ -30,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.eclipse.collections.api.iterator.IntIterator;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.jfree.chart.util.Args;
 import org.jfree.chart.util.PublicCloneable;
 import org.jfree.data.DomainInfo;
@@ -221,12 +223,14 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                         if (cancelled) {
                             return;
                         }
-                        ArrayList<Integer> docs = ce.docIds;
+                        IntArrayList docs = ce.docIds;
                         if (docs != null) {
                             ArrayList<IItemId> includedItems = new ArrayList<IItemId>();
                             ArrayList<Integer> includedDocs = new ArrayList<Integer>();
                             Count count = new Count();
-                            for (Integer docId : docs) {
+                            IntIterator it = docs.intIterator();
+                            while (it.hasNext()) {
+                                int docId = it.next();
                                 if (cancelled) {
                                     throw new InterruptedException();
                                 }
@@ -1075,8 +1079,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         }
         return new Range(accumulator.min.getStart().getTime(), accumulator.max.getEnd().getTime());
     }
-    
-    int oldAcumulatorDir = -1;
 
     public class Accumulator {
         TimePeriod min;
@@ -1084,26 +1086,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         ArrayList<String> colEvents = new ArrayList<String>();
         private ArrayList<TimePeriod> rowTimestamps = new ArrayList<TimePeriod>();
         private ArrayList<HashMap<Integer, Count>> counts = new ArrayList<HashMap<Integer, Count>>();
-        //private HashMap<String, HashMap<String, List<IItemId>>> itemIdsMap = new HashMap<String, HashMap<String, List<IItemId>>>();
-        //private HashMap<String, HashMap<String, List<Integer>>> docIdsMap = new HashMap<String, HashMap<String, List<Integer>>>();
-        private File acumulatorDir;
 
         public Accumulator() {
-            acumulatorDir = cp.getBaseDir();
-            acumulatorDir.mkdirs();
-            // prepares dir that will hold temp itemIds lists
-            int dirid = (int) (Math.random()*10000000);
-            acumulatorDir = new File(acumulatorDir, Integer.toString(dirid));
-            while(acumulatorDir.exists()) {
-                dirid = (int) Math.random()*10000000;
-                acumulatorDir = new File(acumulatorDir, Integer.toString(dirid));
-            }
-            acumulatorDir.mkdirs();
-            acumulatorDir.deleteOnExit();
-            if(oldAcumulatorDir!=-1) {
-                delDir(oldAcumulatorDir);
-            }
-            oldAcumulatorDir = dirid;
         }
         
         public void delDir(int dirid) {
@@ -1124,140 +1108,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
 
         CachePersistance cp = new CachePersistance();
         ExecutorService persistanceThreadPool = Executors.newFixedThreadPool(1);
-
-        class PersistedList<E> extends AbstractList<E> {
-            TimePeriod t;
-            String eventField;
-            Object sample;
-            
-
-            public PersistedList(TimePeriod t, String eventField) {
-                this.t = t;
-                this.eventField = eventField;
-            }
-
-            @Override
-            public boolean addAll(Collection<? extends E> c) {
-                Runnable r = new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            File f = new File(acumulatorDir, Integer.toString(t.hashCode())+"_"+eventField.hashCode());
-                            FileOutputStream fos = null;
-                            DataOutputStream dos = null;
-                            try {
-                                f.createNewFile();
-                                fos = new FileOutputStream(f, true);
-                                dos = new DataOutputStream(fos);
-                                for (Iterator iterator = c.iterator(); iterator.hasNext();) {
-                                    E e = (E) iterator.next();
-                                    if(sample==null) {
-                                        sample=e;
-                                    }
-                                    if(e instanceof ItemId) {
-                                        ItemId itemId = (ItemId)e;
-                                        dos.writeLong(((long)itemId.getSourceId())<<32 | (long)itemId.getId());
-                                    }
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }finally {
-                                if(fos!=null) {
-                                    try {
-                                        fos.close();
-                                    } catch (IOException e) {
-                                        // TODO Auto-generated catch block
-                                        e.printStackTrace();
-                                    }
-                                }
-                                if(dos!=null) {
-                                    try {
-                                        dos.close();
-                                    } catch (IOException e) {
-                                        // TODO Auto-generated catch block
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
-                        }catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                };
-                r.run();
-                return true;
-                //return super.addAll(c);
-            }
-
-            @Override
-            public Iterator<E> iterator() {
-                return new Iterator<E>() {
-                    DataInputStream dis = null;
-                    FileInputStream fis;
-                    Object next=null;
-
-                    public DataInputStream getDis() throws FileNotFoundException {
-                        if(dis==null) {
-                            File f = new File(acumulatorDir, Integer.toString(t.hashCode())+"_"+eventField.hashCode());
-                            fis = new FileInputStream(f);
-                            dis = new DataInputStream(fis);
-                        }
-                        return dis;
-                    };
-
-                    @Override
-                    public boolean hasNext() {
-                        try {
-                            DataInputStream dis = getDis();
-                        } catch (FileNotFoundException e) {
-                            return false;
-                        }
-                        
-                        try {
-                            if(sample instanceof ItemId) {
-                                long id = dis.readLong();
-                                next = new ItemId((int)(id >> 32),(int)(id & 0xFFFFFFFFl) );
-                                return true;
-                            }else {
-                                int result = dis.readInt();
-                                next = result;
-                                return true;                                
-                            }
-                        }catch (IOException e) {
-                            try {
-                                dis.close();
-                                fis.close();
-                            } catch (IOException e1) {
-                                // TODO Auto-generated catch block
-                                e1.printStackTrace();
-                            }
-                            return false;
-                        }
-                    }
-
-                    @Override
-                    public E next() {
-                        if(next!=null) {
-                            return (E)next;
-                        }
-                        return null;
-                    }
-                };
-            }
-
-            @Override
-            public E get(int index) {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public int size() {
-                // TODO Auto-generated method stub
-                return 0;
-            }
-            
-        }
 
         public void addValue(ValueCount valueCount, ArrayList<Integer> docIds, ArrayList<IItemId> itemIds, String eventType) {
             Date d = ipedChartsPanel.getDomainAxis().ISO8601DateParse(valueCount.getVal());

@@ -21,6 +21,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.jfree.data.time.TimePeriod;
 
 import iped.app.timelinegraph.IpedChartsPanel;
@@ -33,7 +34,6 @@ public class IndexTimeStampCache implements TimeStampCache {
 
     private static final Logger logger = LogManager.getLogger(IndexTimeStampCache.class);
 
-    Map<String, Map<TimePeriod, ArrayList<Integer>>> timeStampCacheTree;
     ArrayList<Class<? extends TimePeriod>> periodClassesToCache = new ArrayList<Class<? extends TimePeriod>>();
 
     AtomicInteger running = new AtomicInteger();
@@ -195,7 +195,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         return null;
     }
 
-    public void add(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType, ArrayList<Integer> docs) {
+    public void add(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType, IntArrayList docs) {
         List<CacheTimePeriodEntry> l = newCache.get(timePeriodClass.getSimpleName());
         if (l == null) {
             l = new ArrayList<CacheTimePeriodEntry>();
@@ -236,7 +236,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         selectedCe.docIds = docs;
     }
 
-    public ArrayList<Integer> get(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType) {
+    public IntArrayList get(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType) {
         Map<TimePeriod, CacheTimePeriodEntry> timePeriodIndexEntry = timePeriodEntryIndex.get(timePeriodClass.getSimpleName());
 
         if (timePeriodIndexEntry == null) {
