@@ -144,11 +144,9 @@ public class CachePersistance {
                 newCache.setIndexFile(className.getSimpleName(),baseDir);
                 ArrayList<CacheTimePeriodEntry> times = new ArrayList<CacheTimePeriodEntry>();
                 newCache.put(f.getName(), times);
-                /*
                 if (!loadEventNewCache(times, f)) {
                     throw new IOException("File not committed:" + f.getName());
                 }
-                */
             }
         }
 
