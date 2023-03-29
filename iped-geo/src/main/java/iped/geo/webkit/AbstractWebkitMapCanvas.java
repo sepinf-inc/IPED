@@ -16,10 +16,10 @@ import netscape.javascript.JSObject;
 
 public abstract class AbstractWebkitMapCanvas extends AbstractMapCanvas {
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	WebView browser;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    WebView browser;
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
 

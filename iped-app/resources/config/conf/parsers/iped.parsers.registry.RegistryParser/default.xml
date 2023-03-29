@@ -75,6 +75,10 @@
 		<key name="ROOT/MountedDevices/*"/>
 		
 		<key name="ROOT/Domains/Account/Users/*"/>
+
+		<!-- Event Log related -->
+		<key name="ROOT/ControlSet001/Services/EventLog/*/*"/>
+        <key name="ROOT/Microsoft/Windows/CurrentVersion/WINEVT/Publishers/*/*/*"/>
 		
 	</registryKeyParser>
 

@@ -43,6 +43,7 @@ import java.util.List;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
+import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -76,6 +77,8 @@ public class ExtractorAndroidNew extends Extractor {
 
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c));
+                    c.getMessages().addAll(extractCalls(conn, c));
+                    c.getMessages().sort((o1, o2) -> o1.getTimeStamp().compareTo(o2.getTimeStamp()));
                     if (c.isGroupChat()) {
                         setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                     }
@@ -108,10 +111,56 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
+    private List<Message> extractCalls(Connection conn, Chat c) throws SQLException {
+        List<Message> messages = new ArrayList<>();
+
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_CALLS)) {
+            stmt.setFetchSize(1000);
+            stmt.setLong(1, c.getId());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Message m = new Message();
+                m.setRemoteId(c.getRemote().getFullId());
+                int call_result = rs.getInt("call_result");
+                if (account != null)
+                    m.setLocalResource(account.getId());
+                m.setRemoteResource(rs.getString("remoteId"));
+                m.setId(rs.getLong("id"));
+                m.setCallId(rs.getString("call_id"));
+                if (rs.getInt("video_call") == 1) {
+                    m.setMessageType(MessageType.UNKNOWN_VIDEO_CALL);
+                    if (call_result == 5) {
+                        m.setMessageType(VIDEO_CALL);
+                    } else if (call_result == 4) {
+                        m.setMessageType(MISSED_VIDEO_CALL);
+                    } else if (call_result == 2) {
+                        m.setMessageType(MessageType.REFUSED_VIDEO_CALL);
+                    }
+                } else {
+                    m.setMessageType(MessageType.UNKNOWN_VOICE_CALL);
+                    if (call_result == 5) {
+                        m.setMessageType(VOICE_CALL);
+                    } else if (call_result == 4) {
+                        m.setMessageType(MISSED_VOICE_CALL);
+                    } else if (call_result == 2) {
+                        m.setMessageType(MessageType.REFUSED_VOICE_CALL);
+                    }
+                }
+                m.setFromMe(rs.getInt("from_me") == 1);
+                m.setMediaDuration(rs.getInt("duration"));
+                m.setTimeStamp(new Date(rs.getLong("timestamp")));
+
+                messages.add(m);
+            }
+
+        }
+
+        return messages;
+    }
 
     private List<Message> extractMessages(Connection conn, Chat c) throws SQLException {
         List<Message> messages = new ArrayList<>();
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_MESSAGES)) {
+        try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             stmt.setFetchSize(1000);
             stmt.setLong(1, c.getId());
             ResultSet rs = stmt.executeQuery();
@@ -121,7 +170,6 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setLocalResource(account.getId());
                 int type = rs.getInt("messageType"); //$NON-NLS-1$
                 int status = rs.getInt("status"); //$NON-NLS-1$
-                String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
                 Integer edit_version;
                 try {
                     edit_version = Integer.parseInt(SQLite3DBParser.getStringIfExists(rs, "edit_version"));
@@ -139,6 +187,10 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(status); // $NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "text_data")); //$NON-NLS-1$
+                String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
+                if (caption == null || caption.isBlank()) {
+                    caption = m.getData();
+                }
                 m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
                 m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
                 m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
@@ -303,17 +355,28 @@ public class ExtractorAndroidNew extends Extractor {
 
     private static final String SELECT_ADD_ONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe FROM message_add_on m left join jid on jid._id=m.sender_jid_row_id where parent_message_row_id=?";
 
-    private static final String SELECT_MESSAGES = "select  m._id AS id,cv._id as chatId, cv.raw_string_jid "
-            + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
-            + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
-            + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
-            + " m.message_type as messageType,   latitude,  longitude, mm.media_duration,"
-            + " null as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData, ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
-            + " from message m  inner join chat_view cv on m.chat_row_id=cv._id left join message_media mm on mm.message_row_id=m._id"
-            + " left join jid on jid._id=m.sender_jid_row_id left join message_location ml on m._id=ml.message_row_id "
-            + " left join message_system ms on m._id=ms.message_row_id"
-            + " left join message_vcard mv on m._id=mv.message_row_id"
-            + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
+    private static String getSelectMessagesQuery(Connection conn) throws SQLException {
+        String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_media", "media_caption") ? "mm.media_caption" : "null";
+        return "select m._id AS id,cv._id as chatId, cv.raw_string_jid "
+                + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
+                + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
+                + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
+                + " m.message_type as messageType, latitude, longitude, mm.media_duration, "
+                + captionCol + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
+                + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
+                + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
+                + " left join message_media mm on mm.message_row_id=m._id"
+                + " left join jid on jid._id=m.sender_jid_row_id"
+                + " left join message_location ml on m._id=ml.message_row_id "
+                + " left join message_system ms on m._id=ms.message_row_id"
+                + " left join message_vcard mv on m._id=mv.message_row_id"
+                + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
+    }
+
+    private static final String SELECT_CALLS = "select c_l._id as id, c_l.call_id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,\r\n"
+            + " cv._id as chatId, cv.raw_string_jid as remoteId\r\n"
+            + "  from call_log c_l inner join chat c on c_l.jid_row_id=c.jid_row_id inner join chat_view cv on cv._id=c._id\r\n"
+            + "where chatId=?";
 
     private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
             + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$

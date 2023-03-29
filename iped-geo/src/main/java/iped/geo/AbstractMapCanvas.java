@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
@@ -20,8 +21,10 @@ abstract public class AbstractMapCanvas extends Canvas {
      */
     private static final long serialVersionUID = 1L;
     MapSelectionListener mapSelectionListener = null;
-    MarkerEventListener markerEventListener = null;
-    MarkerCheckBoxListener markerCheckBoxListener = null;
+    protected MarkerEventListener markerEventListener = null;
+    protected MarkerCheckBoxListener markerCheckBoxListener = null;
+    protected String tourOrder;
+    protected boolean loaded = false;
 
     ActionListener onChangeTileServer = null;
 
@@ -116,8 +119,7 @@ abstract public class AbstractMapCanvas extends Canvas {
     }
 
     public String getToolBarHtml() throws IOException {
-        return replaceLocalizedMarks(
-                IOUtils.toString(AbstractMapCanvas.class.getResourceAsStream("toolbar.html"), "UTF-8"), "toolbar");
+        return replaceLocalizedMarks(IOUtils.toString(AbstractMapCanvas.class.getResourceAsStream("toolbar.html"), "UTF-8"), "toolbar");
     }
 
     public void sendLeadSelection(String gid) {
@@ -134,6 +136,66 @@ abstract public class AbstractMapCanvas extends Canvas {
 
     public void runAfterLoad(Runnable run) {
         onLoadRunnables.add(run);
+    }
+
+    public void load() {
+    }
+
+    public void viewAll() {
+    }
+
+    public void viewAll(double minlongit, double minlat, double maxlongit, double maxlat) {
+    }
+
+    public String getTourOrder() {
+        return tourOrder;
+    }
+
+    public void setTourOrder(String tourOrder) {
+        this.tourOrder = tourOrder;
+    }
+
+    /*
+     * returns true if main html needs to be reloaded to finish the tile server
+     * update
+     */
+    public boolean setTileServerUrl(String url) {
+        return false;
+    }
+
+    public boolean isLoaded() {
+        return loaded;
+    }
+
+    public void updateView(List<StringBuffer> gidsList) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void setLoaded(boolean loaded) {
+        this.loaded = loaded;
+    }
+
+    /**
+     * Creates the placemarks on the loaded map. The creation is done in batches,
+     * one javascript call per list entry.
+     * <p>
+     *
+     * @param gidsList
+     *            a list of List<String> object with the placemarks informations.
+     */
+    public abstract void createPlacemarks(List<StringBuffer> gidsList);
+
+    public void drawPolyline(List<StringBuffer> gids) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public abstract void drawJSONFeature(String string);
+
+    public void drawJSONFeatures(String[] jsonFeatures) {
+        // TODO Auto-generated method stub
+
     }
 
 }

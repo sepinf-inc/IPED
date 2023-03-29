@@ -61,6 +61,7 @@ public class IndexTask extends AbstractTask {
     public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
 
     private static final AtomicBoolean finished = new AtomicBoolean();
+    private static final AtomicBoolean lastIDLoaded = new AtomicBoolean();
 
     private static FieldType contentField;
 
@@ -87,8 +88,8 @@ public class IndexTask extends AbstractTask {
     }
 
     public static void configureTreeNodeAttributes(IItem item) {
-        if (item.isSubItem()) {
-            item.dispose();
+        if (item.isSubItem() && item instanceof Item) {
+            ((Item) item).dispose(false);
         }
         item.setIdInDataSource(null);
         item.setInputStreamFactory(null);
@@ -247,18 +248,14 @@ public class IndexTask extends AbstractTask {
         indexConfig = configurationManager.findObject(IndexTaskConfig.class);
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
+        if ((args.isAppendIndex() || args.isContinue() || args.isRestart()) && !lastIDLoaded.getAndSet(true)) {
             try (IPEDSource ipedSrc = new IPEDSource(output.getParentFile(), worker.writer)) {
                 stats.setLastId(ipedSrc.getLastId());
                 Item.setStartID(ipedSrc.getLastId() + 1);
             }
         }
 
-        // Don't load default types if generating report, they will be loaded later.
-        // See https://github.com/sepinf-inc/IPED/issues/1258
-        if (!caseData.isIpedReport()) {
-            IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
-        }
+        IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
         loadExtraAttributes();
 
         this.autoParser = new StandardParser();

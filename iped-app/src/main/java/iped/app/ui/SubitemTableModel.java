@@ -34,6 +34,7 @@ import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
+import iped.properties.BasicProps;
 import iped.utils.LocalizedFormat;
 
 public class SubitemTableModel extends AbstractTableModel
@@ -87,7 +88,7 @@ public class SubitemTableModel extends AbstractTableModel
     public void setValueAt(Object value, int row, int col) {
         App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
                 App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        BookmarksController.get().updateUI();
+        BookmarksController.get().updateUISelection();
     }
 
     @Override
@@ -163,7 +164,7 @@ public class SubitemTableModel extends AbstractTableModel
         textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID; //$NON-NLS-1$ //$NON-NLS-2$
 
         try {
-            IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+            IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.NAME);
             results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
 
             final int sumSubitens = results.getLength();

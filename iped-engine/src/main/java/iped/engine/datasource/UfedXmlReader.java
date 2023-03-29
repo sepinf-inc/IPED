@@ -126,6 +126,7 @@ public class UfedXmlReader extends DataSourceReader {
     boolean ignoreSupportedChats = false;
     HashMap<String, String> ufdrPathToUfedId = new HashMap<>();
     private final List<String[]> deviceInfoData = new ArrayList<String[]>();
+    private HashSet<String> addedImUfedIds = new HashSet<>();
     
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
@@ -366,6 +367,7 @@ public class UfedXmlReader extends DataSourceReader {
         TreeMap<Date, String> iphoneSimSwitch = new TreeMap<>();
 
         boolean ignoreItems = false;
+        Object ignoreItemTree = null;
         boolean inChat = false;
         int numAttachments = 0;
         String prevUfedId = null;
@@ -414,7 +416,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "KeyValueModel", //$NON-NLS-1$
                 "MessageLabel", //$NON-NLS-1$
                 "ProfilePicture", //$NON-NLS-1$
-                "WebAddress" //$NON-NLS-1$
+                "WebAddress", //$NON-NLS-1$
+                "Reaction" //$NON-NLS-1$
         ));
 
         @Override
@@ -582,6 +585,11 @@ public class UfedXmlReader extends DataSourceReader {
 
                     fillCommonMeta(item, atts);
                     itemSeq.add(item);
+
+                    String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
+                    if (ignoreItemTree == null && addedImUfedIds.contains(ufedId)) {
+                        ignoreItemTree = item;
+                    }
 
                 } else if (prevNode.element.equals("modelField") || prevNode.element.equals("multiModelField")) { //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -973,25 +981,67 @@ public class UfedXmlReader extends DataSourceReader {
                             }
                             parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
                         }
+                    } else if ("Reaction".equals(type)) {
+                        XmlNode prevNode = nodeSeq.get(nodeSeq.size() - 2);
+                        String prevType = prevNode.atts.get("type");
+                        if ("Party".equals(prevType) && itemSeq.size() > 1) {
+                            // If previous is a Party, go one node back to get the parent
+                            parentItem = itemSeq.get(itemSeq.size() - 2);
+                        }
+                        String reaction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ReactionType");
+                        if (reaction != null) {
+                            parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "Reaction", reaction);
+                        }
                     }
                 } else {
                     if (!ignoreItems) {
-                        // process seen attachments later
+                        // Process seen attachments later. Process other item types now.
                         if (!seenAttachment) {
-                            processItem(item);
-                            List<Item> seenAttachs = seenAttachsPerId.get(item.getId());
-                            if (seenAttachs != null && numInstantMsgAttachs > 1) {
-                                for (Item attach : seenAttachs) {
-                                    processItem(attach);
+                            String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
+                            // add items if not ignoring already added instant message xml tree
+                            if (ignoreItemTree == null) {
+                                processItem(item);
+                                if ("InstantMessage".equals(type)) {
+                                    // remember IM ids to not add them again later
+                                    addedImUfedIds.add(ufedId);
                                 }
-                            } else if (seenAttachs != null) {
-                                item.getMetadata().set(ExtraProperties.LINKED_ITEMS,
-                                        ESCAPED_UFED_ID + ":" + prevUfedId);
+                                // If item is a MESSAGE with seen attachments, try to process them
+                                List<Item> seenAttachs = seenAttachsPerId.get(item.getId());
+                                if (seenAttachs != null && numInstantMsgAttachs > 1) {
+                                    // If msg has more than 1 (seen/added) attach, add all of them to the case again for now.
+                                    // This duplicates those attachs, but today we can't update indexed items properties.
+                                    for (Item attach : seenAttachs) {
+                                        processItem(attach);
+                                    }
+                                } else if (seenAttachs != null && seenAttachs.size() == 1) {
+                                    Item attach = seenAttachs.get(0);
+                                    item.getMetadata().set(ExtraProperties.LINKED_ITEMS, ESCAPED_UFED_ID + ":" + prevUfedId);
+                                    // Since this attach was already seen/added to case, skip it, but copy its props to parent message
+                                    for (String key : attach.getMetadata().names()) {
+                                        if (key.startsWith(ExtraProperties.UFED_META_PREFIX) && item.getMetadata().get(key) == null) {
+                                            for (String value : attach.getMetadata().getValues(key)) {
+                                                item.getMetadata().add(key, value);
+                                            }
+                                        }
+                                    }
+                                    // item skipped, decrement counter
+                                    caseData.incDiscoveredEvidences(-1);
+                                }
+                                seenAttachsPerId.remove(item.getId());
+                            } else {
+                                // item skipped, decrement counter
                                 caseData.incDiscoveredEvidences(-1);
+                                if (ignoreItemTree == item) {
+                                    // finished duplicate IM xml tree, stop ignoring
+                                    ignoreItemTree = null;
+                                }
                             }
-                            seenAttachsPerId.remove(item.getId());
+                        } else if (ignoreItemTree != null) {
+                            // item skipped, decrement counter
+                            caseData.incDiscoveredEvidences(-1);
                         }
                     } else {
+                        // item skipped, decrement counter
                         caseData.incDiscoveredEvidences(-1);
                     }
                     if (MediaTypes.isInstanceOf(item.getMediaType(), UFEDChatParser.UFED_CHAT_MIME)) {

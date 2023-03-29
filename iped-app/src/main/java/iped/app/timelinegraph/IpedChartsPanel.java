@@ -94,7 +94,6 @@ import iped.app.timelinegraph.swingworkers.HighlightWorker;
 import iped.app.ui.App;
 import iped.app.ui.ClearFilterListener;
 import iped.app.ui.ColumnsManager;
-import iped.app.ui.events.RowSorterTableDataChange;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItemId;
 import iped.engine.search.QueryBuilder;
@@ -108,6 +107,7 @@ import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
+import iped.viewers.api.events.RowSorterTableDataChange;
 
 public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener, ComponentListener {
     JTable resultsTable;

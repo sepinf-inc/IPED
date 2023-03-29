@@ -15,8 +15,10 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -45,13 +47,27 @@ public class RemoteWav2Vec2Service {
         WARN
     }
 
-    private static final int MAX_CON_QUEUE = 5000;
+    /**
+     * Max number of connections to receive WAVs simultaneously. Also used as
+     * backlog value: connection queue waiting for acceptance.
+     */
+    private static final int MAX_CONNECTIONS = 128;
 
     // This timeout should not be too high, otherwise clients with connection issues
     // would waste server time waiting for them while good clients are waiting.
     private static final int CLIENT_TIMEOUT_MILLIS = 10000;
 
     private static ExecutorService executor = Executors.newCachedThreadPool();
+
+    /**
+     * Controls max number of simultaneous transcriptions
+     */
+    private static Semaphore transcriptSemaphore;
+
+    /**
+     * Control number of simultaneous audio conversions to WAV.
+     */
+    private static Semaphore wavConvSemaphore;
 
     private static final AtomicLong audiosTranscripted = new AtomicLong();
     private static final AtomicLong audiosDuration = new AtomicLong();
@@ -110,8 +126,15 @@ public class RemoteWav2Vec2Service {
         task.init(cm);
 
         int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
+        int numLogicalCores = Runtime.getRuntime().availableProcessors();
 
-        try (ServerSocket server = new ServerSocket(localPort, MAX_CON_QUEUE)) {
+        // We already use a BlockingDeque to get an available transcription process,
+        // this Semaphore wouldn't be needed, but it guarantees a fairness policy.
+        transcriptSemaphore = new Semaphore(numConcurrentTranscriptions, true);
+
+        wavConvSemaphore = new Semaphore(numLogicalCores, true);
+
+        try (ServerSocket server = new ServerSocket(localPort, MAX_CONNECTIONS)) {
 
             server.setSoTimeout(0);
             // server.setReceiveBufferSize((1 << 16) - 1);
@@ -119,29 +142,31 @@ public class RemoteWav2Vec2Service {
 
             localPort = server.getLocalPort();
 
-            registerThis(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions);
+            registerThis(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions, numLogicalCores);
 
             logger.info("Transcription server listening on port: " + localPort);
             logger.info("Ready to work!");
 
-            startSendStatsThread(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions);
+            startSendStatsThread(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions, numLogicalCores);
 
-            waitRequests(server, task, numConcurrentTranscriptions, discoveryIp);
+            waitRequests(server, task, discoveryIp);
 
         }
 
     }
 
-    private static void registerThis(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs) throws Exception {
+    private static void registerThis(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs, int concurrentWavConvs) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                 PrintWriter writer = new PrintWriter(
                         new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
 
+            client.setSoTimeout(10000);
             writer.println(MESSAGES.REGISTER);
             writer.println(localPort);
             writer.println(concurrentJobs);
+            writer.println(concurrentWavConvs);
 
             if (!MESSAGES.DONE.toString().equals(reader.readLine())) {
                 throw new Exception("Registration failed!");
@@ -149,15 +174,17 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void sendStats(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs) throws Exception {
+    private static void sendStats(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs, int concurrentWavConvs) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                 PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
 
+            client.setSoTimeout(10000);
             writer.println(MESSAGES.STATS);
             writer.println(localPort);
             writer.println(concurrentJobs);
+            writer.println(concurrentWavConvs);
             writer.println(audiosTranscripted.getAndSet(0));
             writer.println(audiosDuration.getAndSet(0));
             writer.println(conversionTime.getAndSet(0));
@@ -171,13 +198,13 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void waitRequests(ServerSocket server, Wav2Vec2TranscriptTask task, int numConcurrentTranscriptions, String discoveryIp) {
+    private static void waitRequests(ServerSocket server, Wav2Vec2TranscriptTask task, String discoveryIp) {
         AtomicInteger jobs = new AtomicInteger();
         while (true) {
             try {
                 Socket client = server.accept();
                 requestsReceived.incrementAndGet();
-                if (jobs.incrementAndGet() > numConcurrentTranscriptions) {
+                if (jobs.incrementAndGet() > MAX_CONNECTIONS) {
                     jobs.decrementAndGet();
                     client.close();
                     continue;
@@ -186,6 +213,7 @@ public class RemoteWav2Vec2Service {
                     @Override
                     public void run() {
                         Path tmpFile = null;
+                        File wavFile = null;
                         PrintWriter writer = null;
                         BufferedInputStream bis = null;
                         boolean error = false;
@@ -199,9 +227,9 @@ public class RemoteWav2Vec2Service {
                             requestsAccepted.incrementAndGet();
 
                             String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
-                            logger.info("Accepted connection from " + clientName);
-
                             String prefix = clientName + " - ";
+
+                            logger.info(prefix + "Accepted connection.");
 
                             byte[] bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
                             String cmd = new String(bytes);
@@ -212,6 +240,8 @@ public class RemoteWav2Vec2Service {
 
                             DataInputStream dis = new DataInputStream(bis);
                             int size = dis.readInt();
+
+                            logger.info(prefix + "Receiving " + new DecimalFormat().format(size) + " bytes...");
 
                             tmpFile = Files.createTempFile("audio", ".tmp");
                             try (OutputStream os = Files.newOutputStream(tmpFile)) {
@@ -230,14 +260,17 @@ public class RemoteWav2Vec2Service {
                                 logger.info(prefix + "Received " + size + " audio bytes to transcribe.");
                             }
 
-                            long t0 = System.currentTimeMillis();
-
-                            // see https://github.com/sepinf-inc/IPED/issues/1400
-                            // now audios are already received as WAV 16Khz 16 bits LE per sample
-                            // wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
-                            File wavFile = tmpFile.toFile();
-
-                            long t1 = System.currentTimeMillis();
+                            // Now we are converting to WAV on server side again, see
+                            // https://github.com/sepinf-inc/IPED/issues/1561
+                            long t0, t1;
+                            try {
+                                wavConvSemaphore.acquire();
+                                t0 = System.currentTimeMillis();
+                                wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+                                t1 = System.currentTimeMillis();
+                            } finally {
+                                wavConvSemaphore.release();
+                            }
 
                             if (wavFile == null) {
                                 throw new IOException("Failed to convert audio to wav");
@@ -246,13 +279,21 @@ public class RemoteWav2Vec2Service {
                             }
                             long durationMillis = 1000 * wavFile.length() / (16000 * 2);
 
-                            TextAndScore result = task.transcribeAudio(wavFile);
-                            long t2 = System.currentTimeMillis();
+                            TextAndScore result;
+                            long t2, t3;
+                            try {
+                                transcriptSemaphore.acquire();
+                                t2 = System.currentTimeMillis();
+                                result = task.transcribeAudio(wavFile);
+                                t3 = System.currentTimeMillis();
+                            } finally {
+                                transcriptSemaphore.release();
+                            }
 
                             audiosTranscripted.incrementAndGet();
                             audiosDuration.addAndGet(durationMillis);
                             conversionTime.addAndGet(t1 - t0);
-                            transcriptionTime.addAndGet(t2 - t1);
+                            transcriptionTime.addAndGet(t3 - t2);
                             logger.info(prefix + "Transcritpion done.");
 
                             writer.println(Double.toString(result.score));
@@ -276,6 +317,9 @@ public class RemoteWav2Vec2Service {
                             if (tmpFile != null) {
                                 tmpFile.toFile().delete();
                             }
+                            if (wavFile != null) {
+                                wavFile.delete();
+                            }
                         }
                     }
                 });
@@ -286,14 +330,14 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void startSendStatsThread(String ip, int port, int localPort, int concurrentJobs) {
+    private static void startSendStatsThread(String ip, int port, int localPort, int concurrentJobs, int concurrentWavConvs) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 while (true) {
                     try {
                         Thread.sleep(1000);
-                        sendStats(ip, port, localPort, concurrentJobs);
+                        sendStats(ip, port, localPort, concurrentJobs, concurrentWavConvs);
 
                     } catch (Exception e) {
                         e.printStackTrace();
