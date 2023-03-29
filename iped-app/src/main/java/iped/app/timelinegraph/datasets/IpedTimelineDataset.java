@@ -30,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.eclipse.collections.api.iterator.IntIterator;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.jfree.chart.util.Args;
 import org.jfree.chart.util.PublicCloneable;
 import org.jfree.data.DomainInfo;
@@ -221,12 +223,14 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                         if (cancelled) {
                             return;
                         }
-                        ArrayList<Integer> docs = ce.docIds;
+                        IntArrayList docs = ce.docIds;
                         if (docs != null) {
                             ArrayList<IItemId> includedItems = new ArrayList<IItemId>();
                             ArrayList<Integer> includedDocs = new ArrayList<Integer>();
                             Count count = new Count();
-                            for (Integer docId : docs) {
+                            IntIterator it = docs.intIterator();
+                            while (it.hasNext()) {
+                                int docId = it.next();
                                 if (cancelled) {
                                     throw new InterruptedException();
                                 }

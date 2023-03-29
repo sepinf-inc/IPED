@@ -11,6 +11,7 @@ import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.UnicodeUtil;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Month;
@@ -85,9 +86,9 @@ public class EventTimestampCache implements Runnable {
                                         }
                                     }
                                     if (t != null) {
-                                        ArrayList<Integer> docs2 = timeStampCache.get(timePeriodClass, t, eventType);
+                                        IntArrayList docs2 = timeStampCache.get(timePeriodClass, t, eventType);
                                         if (docs2 == null) {
-                                            docs2 = new ArrayList<Integer>();
+                                            docs2 = new IntArrayList();
                                             synchronized (timeStampCache) {
                                                 timeStampCache.add(timePeriodClass, t, eventType, docs2);
                                             }
@@ -139,9 +140,9 @@ public class EventTimestampCache implements Runnable {
                                     }
                                 }
                                 if (t != null) {
-                                    ArrayList<Integer> docs2 = timeStampCache.get(timePeriodClass, t, eventType);
+                                    IntArrayList docs2 = timeStampCache.get(timePeriodClass, t, eventType);
                                     if (docs2 == null) {
-                                        docs2 = new ArrayList<Integer>();
+                                        docs2 = new IntArrayList();
                                         synchronized (timeStampCache) {
                                             timeStampCache.add(timePeriodClass, t, eventType, docs2);
                                         }

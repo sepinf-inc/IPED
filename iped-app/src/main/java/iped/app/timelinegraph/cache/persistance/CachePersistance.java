@@ -27,6 +27,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.jfree.data.time.TimePeriod;
 
 import iped.app.timelinegraph.cache.CacheEventEntry;
@@ -174,7 +175,7 @@ public class CachePersistance {
                 while (!eventName.equals("!!")) {
                     CacheEventEntry ce = new CacheEventEntry();
                     ce.event = eventName;
-                    ce.docIds = new ArrayList<Integer>();
+                    ce.docIds = new IntArrayList();
                     int docId = dis.readInt2();
                     while (docId != -1) {
                         ce.docIds.add(docId);

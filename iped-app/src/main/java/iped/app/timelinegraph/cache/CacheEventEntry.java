@@ -1,11 +1,11 @@
 package iped.app.timelinegraph.cache;
 
-import java.util.ArrayList;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 /*
  * Represent a cache event entry on cache persistance
  */
 public class CacheEventEntry {
     public String event;
-    public ArrayList<Integer> docIds;
+    public IntArrayList docIds;
 }
