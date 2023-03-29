@@ -1,16 +1,8 @@
 package iped.app.timelinegraph.datasets;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,8 +22,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
-import org.eclipse.collections.api.iterator.IntIterator;
-import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.jfree.chart.util.Args;
 import org.jfree.chart.util.PublicCloneable;
 import org.jfree.data.DomainInfo;
@@ -223,18 +213,14 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                         if (cancelled) {
                             return;
                         }
-                        IntArrayList docs = ce.docIds;
-                        if (docs != null) {
+                        if (ce.docIds != null) {
                             ArrayList<IItemId> includedItems = new ArrayList<IItemId>();
                             ArrayList<Integer> includedDocs = new ArrayList<Integer>();
                             Count count = new Count();
-                            IntIterator it = docs.intIterator();
-                            while (it.hasNext()) {
-                                int docId = it.next();
+                            for (int docId = ce.docIds.nextSetBit(0); docId >= 0; docId = ce.docIds.nextSetBit(docId + 1)) {
                                 if (cancelled) {
                                     throw new InterruptedException();
                                 }
-
                                 if (result instanceof MultiSearchResult && ((MultiSearchResult) result).hasDocId(docId)) {
                                     IIPEDSource atomicSource = appcase.getAtomicSource(docId);
                                     int sourceId = atomicSource.getSourceId();

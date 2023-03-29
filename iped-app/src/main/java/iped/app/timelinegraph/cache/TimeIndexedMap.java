@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
+import com.zaxxer.sparsebits.SparseBitSet;
 
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.utils.SeekableFileInputStream;
@@ -379,10 +379,10 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         while (!eventName.equals("!!")) {
             CacheEventEntry ce = new CacheEventEntry();
             ce.event = eventName;
-            ce.docIds = new IntArrayList();
+            ce.docIds = new SparseBitSet();
             int docId = dis.readInt2();
             while (docId != -1) {
-                ce.docIds.add(docId);
+                ce.docIds.set(docId);
                 docId = dis.readInt2();
             }
             ct.events.add(ce);

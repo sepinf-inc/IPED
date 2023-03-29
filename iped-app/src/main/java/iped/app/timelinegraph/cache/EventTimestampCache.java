@@ -11,7 +11,6 @@ import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.UnicodeUtil;
-import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Month;
@@ -19,6 +18,8 @@ import org.jfree.data.time.Quarter;
 import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
+
+import com.zaxxer.sparsebits.SparseBitSet;
 
 import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartsPanel;
@@ -86,15 +87,15 @@ public class EventTimestampCache implements Runnable {
                                         }
                                     }
                                     if (t != null) {
-                                        IntArrayList docs2 = timeStampCache.get(timePeriodClass, t, eventType);
+                                        SparseBitSet docs2 = timeStampCache.get(timePeriodClass, t, eventType);
                                         if (docs2 == null) {
-                                            docs2 = new IntArrayList();
+                                            docs2 = new SparseBitSet();
                                             synchronized (timeStampCache) {
                                                 timeStampCache.add(timePeriodClass, t, eventType, docs2);
                                             }
                                         }
                                         synchronized (docs2) {
-                                            docs2.add(doc);
+                                            docs2.set(doc);
                                         }
                                     }
                                 }
@@ -140,15 +141,15 @@ public class EventTimestampCache implements Runnable {
                                     }
                                 }
                                 if (t != null) {
-                                    IntArrayList docs2 = timeStampCache.get(timePeriodClass, t, eventType);
+                                    SparseBitSet docs2 = timeStampCache.get(timePeriodClass, t, eventType);
                                     if (docs2 == null) {
-                                        docs2 = new IntArrayList();
+                                        docs2 = new SparseBitSet();
                                         synchronized (timeStampCache) {
                                             timeStampCache.add(timePeriodClass, t, eventType, docs2);
                                         }
                                     }
                                     synchronized (docs2) {
-                                        docs2.add(doc);
+                                        docs2.set(doc);
                                     }
                                 }
                             }

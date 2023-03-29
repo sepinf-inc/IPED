@@ -21,8 +21,9 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
-import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.jfree.data.time.TimePeriod;
+
+import com.zaxxer.sparsebits.SparseBitSet;
 
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
@@ -195,7 +196,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         return null;
     }
 
-    public void add(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType, IntArrayList docs) {
+    public void add(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType, SparseBitSet docs) {
         List<CacheTimePeriodEntry> l = newCache.get(timePeriodClass.getSimpleName());
         if (l == null) {
             l = new ArrayList<CacheTimePeriodEntry>();
@@ -236,7 +237,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         selectedCe.docIds = docs;
     }
 
-    public IntArrayList get(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType) {
+    public SparseBitSet get(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType) {
         Map<TimePeriod, CacheTimePeriodEntry> timePeriodIndexEntry = timePeriodEntryIndex.get(timePeriodClass.getSimpleName());
 
         if (timePeriodIndexEntry == null) {
