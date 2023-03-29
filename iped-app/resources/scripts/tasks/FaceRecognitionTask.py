@@ -55,6 +55,8 @@ def createProcessQueue():
 
 def log_stderr(proc):
     for line in iter(proc.stderr.readline, b''):
+        if proc.poll() is not None:
+            break
         line = line.strip()
         if line:
             logger.info("[FaceRecognitionTask] Process-" + str(proc.pid) + " stderr: " + line)

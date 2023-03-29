@@ -82,8 +82,10 @@ class InputStreamProxy2 extends InputStream implements ForkProxy {
         int n = input.readInt();
         if (n == 1) {
             return input.readUnsignedByte();
+        } else if (n == 0) {
+            return this.read();
         } else {
-            return n;
+            return -1;
         }
     }
 

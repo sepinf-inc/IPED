@@ -34,6 +34,7 @@ import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
+import iped.properties.BasicProps;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 
@@ -88,7 +89,7 @@ public class DuplicatesTableModel extends AbstractTableModel
     public void setValueAt(Object value, int row, int col) {
         App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
                 App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        BookmarksController.get().updateUI();
+        BookmarksController.get().updateUISelection();
     }
 
     @Override
@@ -169,7 +170,7 @@ public class DuplicatesTableModel extends AbstractTableModel
         textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         try {
-            IIPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+            IIPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.PATH);
             results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
 
             final int duplicates = results.getLength();

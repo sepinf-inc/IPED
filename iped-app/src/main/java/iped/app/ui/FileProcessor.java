@@ -182,6 +182,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
             App.get().duplicatesModel.listDuplicates(doc);
 
+            App.get().referencedByModel.listReferencingItems(doc);
+
             App.get().referencesModel.listReferencingItems(doc);
         }
     }
@@ -221,7 +223,10 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
                         App.get().dialogBar.setVisible(true);
                         App.get().progressBar.setString(prevMsg);
                     } else {
-                        App.get().dialogBar.setVisible(false);
+                        // Use dispose() instead of setVisible(false) here as a workaround for #1595, as
+                        // sometimes the area covered by the dialog was not cleared after
+                        // setVisible(false), in some environments/situations.
+                        App.get().dialogBar.dispose();
                     }
                 }
             });

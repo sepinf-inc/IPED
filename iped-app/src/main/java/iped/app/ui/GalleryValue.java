@@ -29,8 +29,6 @@ public class GalleryValue {
     public String name;
     public Icon icon;
     public IItemId id;
-    public int originalW = Integer.MAX_VALUE;
-    public int originalH = Integer.MAX_VALUE;
     public BufferedImage image;
     public boolean unsupportedType;
 
