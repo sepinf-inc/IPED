@@ -27,9 +27,8 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.jfree.data.time.TimePeriod;
-
-import com.zaxxer.sparsebits.SparseBitSet;
 
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
@@ -174,10 +173,10 @@ public class CachePersistance {
                 while (!eventName.equals("!!")) {
                     CacheEventEntry ce = new CacheEventEntry();
                     ce.event = eventName;
-                    ce.docIds = new SparseBitSet();
+                    ce.docIds = new IntArrayList();
                     int docId = dis.readInt2();
                     while (docId != -1) {
-                        ce.docIds.set(docId);
+                        ce.docIds.add(docId);
                         docId = dis.readInt2();
                     }
                     ct.events.add(ce);
@@ -235,8 +234,8 @@ public class CachePersistance {
                 for (int j = 0; j < ct.events.size(); j++) {
                     CacheEventEntry ce = ct.events.get(j);
                     dos.writeUTF(ce.event);
-                    for (int docId = ce.docIds.nextSetBit(0); docId >= 0; docId = ce.docIds.nextSetBit(docId + 1)) {
-                        dos.writeInt(docId);
+                    for (int k = 0; k < ce.docIds.size(); k++) {
+                        dos.writeInt(ce.docIds.get(k));
                     }
                     dos.writeInt(-1);
                 }

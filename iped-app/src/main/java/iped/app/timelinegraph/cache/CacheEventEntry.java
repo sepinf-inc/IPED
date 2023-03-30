@@ -1,11 +1,11 @@
 package iped.app.timelinegraph.cache;
 
-import com.zaxxer.sparsebits.SparseBitSet;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 /*
  * Represent a cache event entry on cache persistance
  */
 public class CacheEventEntry {
     public String event;
-    public SparseBitSet docIds;
+    public IntArrayList docIds;
 }
