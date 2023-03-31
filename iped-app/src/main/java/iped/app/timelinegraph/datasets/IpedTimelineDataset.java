@@ -35,7 +35,6 @@ import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDomainInfo;
-import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartPanel;
@@ -1045,8 +1044,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                         Date date = DateUtil.ISO8601DateParse(timeStr);
                         if(!(date.before(t.getStart()) || date.after(t.getEnd()))){
                             found=true;
-                        }else {
-                            System.out.print(true);
                         }
                         ord = (int) values.nextOrd();
                     }
@@ -1250,19 +1247,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-    
-    static public void main(String[] args) {
-        RoaringBitmap[] rb = new RoaringBitmap[100000];
-        
-        for (int i = 0; i < rb.length; i++) {
-            rb[i] = new RoaringBitmap();
-            for(int j=0; j<10000; j++) {
-                rb[i].add((int)(Math.random()*1000000));
-            }
-        }
-        
-        System.out.println(rb.length);
     }
 
 }

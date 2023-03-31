@@ -260,8 +260,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         public boolean finish() {
             lastHasNext = null;
             lcache=null;
-            Date finishDate = new Date();
-            System.out.println(finishDate.getTime()-startIterationDate.getTime());
+            // System.out.println(new Date().getTime()-startIterationDate.getTime());
             return false;
         }
 
