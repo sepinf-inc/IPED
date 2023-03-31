@@ -341,13 +341,18 @@ public class VideoThumbTask extends ThumbTask {
             evidence.setCategory(VIDEO_THUMB_CATEGORY);
         }
 
-        // Verifica se está desabilitado e se o tipo de arquivo é tratado
-        if (!taskEnabled || (!isVideoType(evidence.getMediaType()) && !checkAnimatedImage(evidence)) || !evidence.isToAddToCase()
+        // Check if evidence type is handled (video or animated image) and has a hash value
+        if ((!isVideoType(evidence.getMediaType()) && !checkAnimatedImage(evidence)) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null) {
             return;
         }
 
         if (caseData.isIpedReport() && evidence.getViewFile() != null && evidence.getViewFile().length() > 0) {
+            return;
+        }
+        
+        // Check if the task is enabled (after handling views if it is a report)
+        if (!taskEnabled) {
             return;
         }
 
