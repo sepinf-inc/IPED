@@ -118,12 +118,12 @@ public class IndexTimeStampCache implements TimeStampCache {
                     synchronized (monitor) {
                         monitor.wait();
 
-                        Date d2 = new Date();
-                        logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
                         if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
                         }
                         CachePersistance cp = new CachePersistance();
                         cp.saveNewCache(this);
+                        Date d2 = new Date();
+                        logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
 
                         newCache.clearCache();
                         timePeriodEntryIndex.clear();
