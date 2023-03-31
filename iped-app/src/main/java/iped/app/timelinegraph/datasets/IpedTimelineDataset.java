@@ -35,6 +35,7 @@ import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDomainInfo;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartPanel;
@@ -221,6 +222,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                 if (cancelled) {
                                     throw new InterruptedException();
                                 }
+
                                 if (result instanceof MultiSearchResult && ((MultiSearchResult) result).hasDocId(docId)) {
                                     IIPEDSource atomicSource = appcase.getAtomicSource(docId);
                                     int sourceId = atomicSource.getSourceId();
@@ -317,8 +319,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                            // backward.
     List<CacheTimePeriodEntry> memoryWindowCache = new ArrayList<CacheTimePeriodEntry>();
     
-    static public Date MIN_DATE = new Date(-100000000000000l);
-    static public Date MAX_DATE = new Date(Long.MAX_VALUE);
+    static public Date MIN_DATE = new Date(0,0,1);//01/01/1900 is the min JfreeChart date
+    static public Date MAX_DATE = new Date(8099,11,31);//01/01/9999 is the maxJfreeChart date
 
     public void caseSearchFilterLoad() throws Exception {
         memoryCacheReloadSem.acquire();
@@ -368,14 +370,25 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                         endDate = MAX_DATE;
                         fullrange=true;
                     }
-                    long visibleRangeLength = endDate.getTime() - startDate.getTime();
 
                     visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
-                    startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
-                    endDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
+                    Date cacheWindowStartDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
+                    Date cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
+                    long visibleRangeLength = cacheWindowEndDate.getTime() - cacheWindowStartDate.getTime();
+                    cacheWindowStartDate = new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
+                    cacheWindowEndDate = new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
 
-                    Iterator<CacheTimePeriodEntry> it = a.iterator(className, new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION),
-                            new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION));
+                    if(cacheWindowStartDate.before(MIN_DATE)) {
+                        cacheWindowStartDate=MIN_DATE;
+                        cacheWindowStartDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
+                    }
+                    
+                    if(cacheWindowEndDate.after(MAX_DATE)) {
+                        cacheWindowEndDate=MAX_DATE;
+                        cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
+                    }
+
+                    Iterator<CacheTimePeriodEntry> it = a.iterator(className, cacheWindowStartDate, cacheWindowEndDate);
                     CacheTimePeriodEntry ctpe = null;
                     while (it.hasNext()) {
                         ctpe = it.next();
@@ -383,7 +396,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                         if(!fullrange) {
                             if (ctpe.date.before(startDate)) {
                                 if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
-                                    if (ctpe.date.getTime() > endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION) {
+                                    if (ctpe.date.getTime() > cacheWindowStartDate.getTime()) {
                                         if (!memoryWindowCache.contains(ctpe)) {
                                             beforecache.addFirst(ctpe);
                                             memoryWindowCache.add(ctpe);
@@ -396,7 +409,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                 }
                             } else if (ctpe.date.after(endDate)) {
                                 if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
-                                    if (ctpe.date.getTime() < startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION) {
+                                    if (ctpe.date.getTime() < cacheWindowEndDate.getTime()) {
                                         if (!memoryWindowCache.contains(ctpe)) {
                                             aftercache.add(ctpe);
                                             memoryWindowCache.add(ctpe);
@@ -1237,6 +1250,19 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    
+    static public void main(String[] args) {
+        RoaringBitmap[] rb = new RoaringBitmap[100000];
+        
+        for (int i = 0; i < rb.length; i++) {
+            rb[i] = new RoaringBitmap();
+            for(int j=0; j<10000; j++) {
+                rb[i].add((int)(Math.random()*1000000));
+            }
+        }
+        
+        System.out.println(rb.length);
     }
 
 }
