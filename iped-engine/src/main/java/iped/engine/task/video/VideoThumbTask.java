@@ -344,6 +344,7 @@ public class VideoThumbTask extends ThumbTask {
         // Check if evidence type is handled (video or animated image) and has a hash value
         if ((!isVideoType(evidence.getMediaType()) && !checkAnimatedImage(evidence)) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null) {
+            evidence.setExtraAttribute(HAS_THUMB, true);
             return;
         }
 
