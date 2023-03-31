@@ -62,7 +62,12 @@
           <groupId>com.fifesoft</groupId>
           <artifactId>autocomplete</artifactId>
           <version>3.3.1</version>
-        </dependency>        
+        </dependency>
+	  	<dependency>
+            <groupId>org.roaringbitmap</groupId>
+            <artifactId>RoaringBitmap</artifactId>
+            <version>0.9.39</version>
+        </dependency>                
     </dependencies>
     
     <build>

@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.roaringbitmap.RoaringBitmap;
+
 import com.zaxxer.sparsebits.SparseBitSet;
 
 import iped.data.IIPEDSource;
@@ -21,8 +23,8 @@ public class MultiSearchResult implements IMultiSearchResult {
     private float[] scores;
     IPEDSearcher ipedSearcher;
     IIPEDSource ipedSource;
-    SparseBitSet docids;
-    Map<Integer, SparseBitSet> casesBitSet = null;
+    RoaringBitmap docids;
+    Map<Integer, RoaringBitmap> casesBitSet = null;
 
     public MultiSearchResult() {
         this.ids = new ItemId[0];
@@ -175,10 +177,10 @@ public class MultiSearchResult implements IMultiSearchResult {
     }
 
     public boolean hasDocId(int docId) {
-        return docids.get(docId);
+        return docids.contains(docId);
     }
 
-    public SparseBitSet getDocIdBitSet() {
+    public RoaringBitmap getDocIdBitSet() {
         return docids;
     }
 
@@ -197,26 +199,26 @@ public class MultiSearchResult implements IMultiSearchResult {
 
     public void setIPEDSource(IIPEDSource ipedSource) {
         this.ipedSource = ipedSource;
-        this.docids = new SparseBitSet(ids.length);
+        this.docids = new RoaringBitmap();
         for (int i = 0; i < ids.length; i++) {
             int lucId = ipedSource.getLuceneId(ids[i]);
-            docids.set(lucId);
+            docids.add(lucId);
         }
     }
 
-    public Map<Integer, SparseBitSet> getCasesBitSets(IPEDMultiSource multiSource) {
+    public Map<Integer, RoaringBitmap> getCasesBitSets(IPEDMultiSource multiSource) {
         if(casesBitSet==null) {
-            casesBitSet = new HashMap<Integer, SparseBitSet>();
+            casesBitSet = new HashMap<Integer, RoaringBitmap>();
             Integer lastSourceId = -1;
-            SparseBitSet bitset=null;
+            RoaringBitmap bitset=null;
 
             List<IPEDSource> cases = multiSource.getAtomicSources();
             for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
                 IPEDSource ipedSource = (IPEDSource) iterator.next();
                 if(ipedSource.getLastId()>=0) {
-                    bitset = new SparseBitSet(ipedSource.getLastId());
+                    bitset = new RoaringBitmap();
                 }else {
-                    bitset = new SparseBitSet();
+                    bitset = new RoaringBitmap();
                 }
                 casesBitSet.put(ipedSource.getSourceId(), bitset);
             }
@@ -227,7 +229,7 @@ public class MultiSearchResult implements IMultiSearchResult {
                     bitset = casesBitSet.get(ids[i].getSourceId());
                     lastSourceId=sourceId;
                 }                
-                bitset.set(ids[i].getId());
+                bitset.add(ids[i].getId());
             }
         }
         return casesBitSet;

@@ -196,12 +196,12 @@ public class FilterSelectedEdges implements IResultSetFilterer{
 
     @Override
     public void clearFilter() {
-        
+        FilterSelectedEdges.INSTANCE.clearSelection(false);        
     }
 }
 
 class EdgeFilter implements IResultSetFilter{
-    Set<IItemId> selectedEdges;
+    Set<IItemId> selectedEdges = new HashSet();
 
     public EdgeFilter(Set<IItemId> itemIdsOfSelectedEdges) {
         this.selectedEdges.addAll(itemIdsOfSelectedEdges);
