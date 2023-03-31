@@ -5,7 +5,6 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -14,8 +13,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.utils.SeekableFileInputStream;
@@ -128,7 +125,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
     
     public static class CacheDataInputStream extends DataInputStream{
         
-        private InputStream wrapped;
+        public InputStream wrapped;
 
         public CacheDataInputStream(InputStream in) {
             super(in);
@@ -243,7 +240,8 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         private String className; 
         boolean useCache = false;
         private TimelineCache timelineCache;
-        
+        CachePersistance cp = new CachePersistance();
+        Date startIterationDate = new Date();
 
         public ResultIterator(Integer index, TimelineCache timelineCache, SeekableFileInputStream lcacheSfis,
                 CacheDataInputStream lcacheDis, Date endDate, String className) {
@@ -258,6 +256,14 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
             this.className = className;
             this.useCache = this.lcache!=null;
         }
+        
+        public boolean finish() {
+            lastHasNext = null;
+            lcache=null;
+            Date finishDate = new Date();
+            System.out.println(finishDate.getTime()-startIterationDate.getTime());
+            return false;
+        }
 
         @Override
         public boolean hasNext() {
@@ -271,13 +277,12 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                             i++;
                         }
                     }else {
-                        lastHasNext = null;//no more entries
-                        return false;
+                        return finish();
                     }
                 }
                 if(lastHasNext==null){//not in cache so load from file
                     long curpos = lcacheSfis.position();
-                    lastHasNext = loadNextEntry(lcacheDis);
+                    lastHasNext = cp.loadNextEntry(lcacheDis);
                     if(lcache!=null) {
                         lcache[j+i] = lastHasNext;
                         lcacheIndexes.put(curpos, j+i);
@@ -285,23 +290,17 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                     i++;
                 }
             } catch (EOFException e) {
-                lastHasNext = null;
-                lcache=null;
-                return false;
+                return finish();
             }catch (IOException e) {
-                lcache=null;
-                return false;
+                return finish();
             }catch(Exception e) {
-                lcache=null;
-                return false;
+                return finish();
             }
             
             if(endDate==null || lastHasNext.date.before(endDate)) {
                 return true;
             }else {
-                lastHasNext = null;
-                lcache=null;
-                return false;
+                return finish();
             }
         }
 
@@ -369,31 +368,6 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
 
     long cacheStartPos=0;
     long cacheEndPos=0;
-
-    private CacheTimePeriodEntry loadNextEntry(CacheDataInputStream dis) throws IOException {
-        Date d = new Date(dis.readLong());
-        CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
-        ct.events = new ArrayList<CacheEventEntry>();
-        ct.date = d;
-        String eventName = dis.readUTF();
-        while (!eventName.equals("!!")) {
-            CacheEventEntry ce = new CacheEventEntry();
-            ce.event = eventName;
-            ce.docIds = new RoaringBitmap();
-            int docId = dis.readInt2();
-            while (docId != -1) {
-                ce.docIds.add(docId);
-                docId = dis.readInt2();
-            }
-            ct.events.add(ce);
-            try {
-                eventName = dis.readUTF();
-            }catch(Exception e) {
-                long pos = ((SeekableFileInputStream)dis.wrapped).position();
-            }
-        }
-        return ct;
-    }
 
     public HashMap<String, TreeMap<Date, Long>> getMonthIndex() {
         return monthIndex;

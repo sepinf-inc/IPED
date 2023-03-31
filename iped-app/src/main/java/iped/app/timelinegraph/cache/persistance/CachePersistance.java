@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -33,9 +34,11 @@ import org.roaringbitmap.RoaringBitmap;
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
 import iped.app.timelinegraph.cache.TimeIndexedMap;
+import iped.app.timelinegraph.cache.TimeIndexedMap.CacheDataInputStream;
 import iped.app.timelinegraph.cache.TimeStampCache;
 import iped.app.ui.App;
 import iped.utils.IOUtil;
+import iped.utils.SeekableFileInputStream;
 
 /*
  * Class implementing method for timeline chart cache persistance
@@ -47,13 +50,25 @@ public class CachePersistance {
     HashMap<String, String> pathsToCheck = new HashMap<String, String>();
 
     static Thread t;
+    
+    boolean bitstreamSerialize = false;
+
+    private File bitstreamSerializeFile;
+
+    static private boolean bitstreamSerializeAsDefault = false;
 
     public CachePersistance() {
         File startDir;
         startDir = new File(App.get().casesPathFile, "iped");
         startDir = new File(startDir, "data");
+        
+        bitstreamSerializeFile = new File(startDir, "bitstreamSerialize");
+        bitstreamSerialize = bitstreamSerializeFile.exists();
+
         startDir = new File(startDir, "timecache");
         startDir.mkdirs();
+
+
         // if case cache folder is not writable, use user.home for caches
         if (!IOUtil.canWrite(startDir)) {
             startDir = new File(System.getProperty("user.home"), ".iped");
@@ -141,11 +156,13 @@ public class CachePersistance {
         for (File f : baseDir.listFiles()) {
             if (f.getName().equals(className.getSimpleName())) {
                 newCache.setIndexFile(className.getSimpleName(),baseDir);
+                /*
                 ArrayList<CacheTimePeriodEntry> times = new ArrayList<CacheTimePeriodEntry>();
                 newCache.put(f.getName(), times);
                 if (!loadEventNewCache(times, f)) {
                     throw new IOException("File not committed:" + f.getName());
                 }
+                */
             }
         }
 
@@ -173,11 +190,21 @@ public class CachePersistance {
                 while (!eventName.equals("!!")) {
                     CacheEventEntry ce = new CacheEventEntry();
                     ce.event = eventName;
-                    ce.docIds = new RoaringBitmap();
-                    int docId = dis.readInt2();
-                    while (docId != -1) {
-                        ce.docIds.add(docId);
-                        docId = dis.readInt2();
+                    if(bitstreamSerialize) {
+                        try {
+                            ce.docIds = new RoaringBitmap();
+                            ce.docIds.deserialize(dis);
+                        } catch (Exception e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }else {
+                        ce.docIds = new RoaringBitmap();
+                        int docId = dis.readInt2();
+                        while (docId != -1) {
+                            ce.docIds.add(docId);
+                            docId = dis.readInt2();
+                        }
                     }
                     ct.events.add(ce);
                     eventName = dis.readUTF();
@@ -193,6 +220,15 @@ public class CachePersistance {
     }
 
     public void saveNewCache(TimeStampCache timeStampCache) {
+        if(bitstreamSerializeAsDefault ) {
+            try {
+                bitstreamSerializeFile.createNewFile();// mark this cache as containing bitstreams serialized
+                bitstreamSerialize=true;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
         TimeIndexedMap newCache = (TimeIndexedMap) timeStampCache.getNewCache();
 
         for (Entry<String, List<CacheTimePeriodEntry>> entry : newCache.entrySet()) {
@@ -228,16 +264,21 @@ public class CachePersistance {
             dos.writeShort(0);
             dos.writeUTF(timeStampCache.getCacheTimeZone().getID());
             dos.writeInt(entry.size());
+            dos.flush();
             for (int i = 0; i < entry.size(); i++) {
                 CacheTimePeriodEntry ct = entry.get(i);
                 dos.writeLong(ct.date.getTime());
                 for (int j = 0; j < ct.events.size(); j++) {
                     CacheEventEntry ce = ct.events.get(j);
                     dos.writeUTF(ce.event);
-                    for (int docId : ce.docIds) {
-                        dos.writeInt(docId);
+                    if(bitstreamSerialize) {
+                        ce.docIds.serialize(dos);
+                    }else {
+                        for (int docId : ce.docIds) {
+                            dos.writeInt(docId);
+                        }
+                        dos.writeInt(-1);
                     }
-                    dos.writeInt(-1);
                 }
                 dos.writeUTF("!!");
             }
@@ -276,4 +317,46 @@ public class CachePersistance {
             e.printStackTrace();
         }
     }
+
+    public boolean isBitstreamSerialize() {
+        return bitstreamSerialize;
+    }
+
+    public void setBitstreamSerialize(boolean bitstreamSerialize) {
+        this.bitstreamSerialize = bitstreamSerialize;
+    }
+
+    public CacheTimePeriodEntry loadNextEntry(CacheDataInputStream dis) throws IOException {
+        Date d = new Date(dis.readLong());
+        CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
+        ct.events = new ArrayList<CacheEventEntry>();
+        ct.date = d;
+        String eventName = dis.readUTF();
+        while (!eventName.equals("!!")) {
+            CacheEventEntry ce = new CacheEventEntry();
+            ce.event = eventName;
+            
+            if(this.bitstreamSerialize) {
+                ObjectInputStream ois = new ObjectInputStream(dis);
+                ce.docIds = new RoaringBitmap();
+                ce.docIds.deserialize(dis);
+            }else {
+                ce.docIds = new RoaringBitmap();
+                int docId = dis.readInt2();
+                while (docId != -1) {
+                    ce.docIds.add(docId);
+                    docId = dis.readInt2();
+                }
+            }
+            
+            ct.events.add(ce);
+            try {
+                eventName = dis.readUTF();
+            }catch(Exception e) {
+                long pos = ((SeekableFileInputStream)dis.wrapped).position();
+            }
+        }
+        return ct;
+    }
+
 }
