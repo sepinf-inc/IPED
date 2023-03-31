@@ -13,7 +13,9 @@ import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.kharon.Edge;
+import org.kharon.Graph;
 import org.kharon.OverlappedEdges;
+import org.kharon.renderers.Renderers;
 
 import iped.app.ui.App;
 import iped.data.IItemId;
@@ -32,6 +34,8 @@ public class FilterSelectedEdges implements IResultSetFilterer{
     private static FilterSelectedEdges INSTANCE = new FilterSelectedEdges();
 
     private Set<Edge> selectedEdges = new HashSet<>();
+
+    private Graph graph;
 
     private FilterSelectedEdges() {
     }
@@ -178,7 +182,9 @@ public class FilterSelectedEdges implements IResultSetFilterer{
     public IFilter getFilter() {
         if(selectedEdges!=null && selectedEdges.size()>0) {
             Set<IItemId> selectedEdgesItems = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
-            return new EdgeFilter(selectedEdgesItems);
+            HashSet<Edge> edges = new HashSet();
+            edges.addAll(FilterSelectedEdges.getInstance().selectedEdges);
+            return new EdgeFilter(graph, selectedEdgesItems, edges);
         }else {
             return null;
         }
@@ -198,13 +204,39 @@ public class FilterSelectedEdges implements IResultSetFilterer{
     public void clearFilter() {
         FilterSelectedEdges.INSTANCE.clearSelection(false);        
     }
+
+    public void setGraph(Graph graph) {
+        this.graph = graph;
+    }
 }
 
 class EdgeFilter implements IResultSetFilter{
-    Set<IItemId> selectedEdges = new HashSet();
+    Set<Edge> selectedEdges = new HashSet();
+    Set<IItemId> selectedEdgesIds = new HashSet();
+    String name;
+    Graph graph;
 
-    public EdgeFilter(Set<IItemId> itemIdsOfSelectedEdges) {
-        this.selectedEdges.addAll(itemIdsOfSelectedEdges);
+    public EdgeFilter(Graph graph, Set<IItemId> itemIdsOfSelectedEdges, HashSet<Edge> edges) {
+        this.selectedEdgesIds.addAll(itemIdsOfSelectedEdges);
+        this.selectedEdges = edges;
+        this.graph = graph;
+        StringBuffer sb = new StringBuffer();
+
+        
+        String lastLabel = null;
+        HashSet group = new HashSet();
+        for (Iterator iterator = selectedEdges.iterator(); iterator.hasNext();) {
+            Edge edge = (Edge) iterator.next();
+            String filterInfo = graph.getNode(edge.getSource()).getLabel()+"->"+graph.getNode(edge.getTarget()).getLabel();
+            if(!group.contains(filterInfo)) {
+                group.add(filterInfo);
+                sb.append(filterInfo);
+                sb.append(",");
+            }
+        }
+        if(sb.length()>1) {
+            name = sb.toString().substring(0,sb.length()-1);
+        }
     }
 
     @Override
@@ -215,7 +247,7 @@ class EdgeFilter implements IResultSetFilter{
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
         for (IItemId item : result.getIterator()) {
-            if (selectedEdges.contains(item)) {
+            if (selectedEdgesIds.contains(item)) {
                 filteredItems.add(item);
                 scores.add(result.getScore(i));
             }
@@ -227,6 +259,6 @@ class EdgeFilter implements IResultSetFilter{
     }
 
     public String toString() {
-        return "Filter selected edges";
+        return name;
     }
 }

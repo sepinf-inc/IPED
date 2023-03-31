@@ -312,6 +312,7 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         public void edgeClicked(Edge edge, MouseEvent e) {
             boolean selected = graphPane.isEdgeSelected(edge);
             boolean keepSelection = e.isControlDown() || e.isShiftDown();
+            FilterSelectedEdges.getInstance().setGraph(graph);
             if (!selected) {
                 graphPane.selectEdge(edge.getId(), keepSelection);
                 FilterSelectedEdges.getInstance().addEdge(edge, keepSelection);
