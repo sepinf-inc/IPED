@@ -251,10 +251,11 @@ public class VideoThumbTask extends ThumbTask {
                     logger.error("MPlayer Configured = " + mplayer); //$NON-NLS-1$
                     logger.error("Check mplayer path and try to run it from terminal."); //$NON-NLS-1$
                     taskEnabled = false;
-                    init.set(true);
+                    logger.info("Task disabled."); //$NON-NLS-1$
+                } else {
+                    logger.info("Task enabled."); //$NON-NLS-1$
+                    logger.info("MPLAYER version: " + vmp); //$NON-NLS-1$
                 }
-                logger.info("Task enabled."); //$NON-NLS-1$
-                logger.info("MPLAYER version: " + vmp); //$NON-NLS-1$
                 init.set(true);
             }
         }
