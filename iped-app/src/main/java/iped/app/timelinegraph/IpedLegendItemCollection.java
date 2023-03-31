@@ -79,10 +79,10 @@ public class IpedLegendItemCollection implements LegendItemSource {
 
     public Paint getSeriesPaint(String seriesKey) {
         LegendItem li = legends.get(seriesKey);
-        if(li==null) {
+        if (li == null) {
             li = createLegendItem(seriesKey);
             return li.getFillPaint();
-        }else {
+        } else {
             return li.getFillPaint();
         }
     }
