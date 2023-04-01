@@ -352,7 +352,7 @@ public class VideoThumbTask extends ThumbTask {
             return;
         }
         
-        // Check if the task is enabled (after handling views if it is a report)
+        // Check if the task is enabled (after handling the view file, if it is a report)
         if (!taskEnabled) {
             return;
         }
