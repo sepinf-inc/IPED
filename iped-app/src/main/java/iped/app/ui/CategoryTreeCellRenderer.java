@@ -18,7 +18,6 @@
  */
 package iped.app.ui;
 
-import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.Icon;
@@ -29,34 +28,33 @@ import iped.engine.localization.CategoryLocalization;
 
 public class CategoryTreeCellRenderer extends DefaultTreeCellRenderer {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
 
     @Override
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf,
+            int row, boolean hasFocus) {
 
-        DefaultTreeCellRenderer result = (DefaultTreeCellRenderer) super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
 
         String category = value != null ? value.toString() : "";
         category = category.replaceAll("\\((\\d*,*)*(\\d*.*)*\\)", "").trim();
         category = getNonLocalizedCategory(category);
         category = category != null ? category : "";
 
-        Icon icon = IconManager.getCategoryIcon(category.toLowerCase());
-        result.setIcon(icon);
-
-        if (sel) {
-            result.setForeground(Color.white);
+        if (row == 0 && category.equals("root")) {
+            category = Messages.getString("CategoryTreeModel.RootName");
+            setText(category);
+            category = getNonLocalizedCategory(category);
         }
 
-        return result;
+        Icon icon = IconManager.getCategoryIcon(category.toLowerCase());
+        setIcon(icon);
+
+        return this;
 
     }
 
     private String getNonLocalizedCategory(String category) {
         return CategoryLocalization.getInstance().getNonLocalizedCategory(category);
     }
-
 }

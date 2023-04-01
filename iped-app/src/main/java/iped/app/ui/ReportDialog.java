@@ -113,7 +113,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
         updateList();
 
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         panel.add(top, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
         panel.add(footer, BorderLayout.SOUTH);

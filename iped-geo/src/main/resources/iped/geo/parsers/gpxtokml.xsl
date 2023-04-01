@@ -32,7 +32,7 @@
     <name><xsl:value-of select="name"/></name>
     <styleUrl>#route</styleUrl>
     <Point>
-	 <coordinates><xsl:value-of select="@lon"/>,<xsl:value-of select="@lat"/>,<xsl:value-of select="ele"/></coordinates>
+	 <coordinates><xsl:value-of select="@lon"/>,<xsl:value-of select="@lat"/><xsl:if test="ele">,<xsl:value-of select="ele"/></xsl:if></coordinates>
 	</Point>
 	<xsl:if test="time"><TimeStamp><when><xsl:value-of select="time"/></when></TimeStamp></xsl:if>
 	<xsl:if test="desc"><description><xsl:value-of select="desc"/></description></xsl:if>
@@ -42,23 +42,34 @@
 <xsl:template match="trk">
   <xsl:for-each select="trkseg">
 	<Folder>
-	<name>Trilha em <xsl:value-of select="trkpt/time"/></name>
+	<xsl:choose>
+       <xsl:when test="../name">
+           <name><xsl:value-of select="../name"/></name>
+       </xsl:when>
+       <xsl:otherwise>
+	       <name><xsl:param name="gpxXslt.dateTrailLabel" /> <xsl:value-of select="trkpt/time"/></name>
+	   </xsl:otherwise>
+	</xsl:choose>
 	<xsl:for-each select="trkpt">
 	<Placemark>
-		<name><xsl:value-of select="time"/></name>
 		<Point>
 		<coordinates><xsl:value-of select="@lon"/>,<xsl:value-of select="@lat"/>,<xsl:value-of select="ele"/></coordinates>
 		</Point>
 		<xsl:if test="time"><TimeStamp><when><xsl:value-of select="time"/></when></TimeStamp></xsl:if>
 	</Placemark>
 	</xsl:for-each>
+    <ExtendedData>
+        <Data name="iped.geo.track">
+            <value>track</value>
+        </Data>
+    </ExtendedData>
 	</Folder>
   </xsl:for-each>
 </xsl:template>
 
 <xsl:template match="rte">
 	<Folder>
-	<name>Rota: <xsl:value-of select="name"/></name>
+	<name><xsl:param name="gpxXslt.routeLabel" /> <xsl:value-of select="name"/></name>
 	<xsl:for-each select="rtept">
 	<Placemark>
 		<name><xsl:value-of select="time"/></name>
@@ -68,6 +79,11 @@
 		<xsl:if test="time"><TimeStamp><when><xsl:value-of select="time"/></when></TimeStamp></xsl:if>
 	</Placemark>
 	</xsl:for-each>
+    <ExtendedData>
+        <Data name="iped.geo.track">
+            <value>track</value>
+        </Data>
+    </ExtendedData>
 	</Folder>
 </xsl:template>
 

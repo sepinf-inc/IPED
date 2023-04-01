@@ -166,7 +166,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         collator.setStrength(Collator.PRIMARY);
 
         dialog.setTitle(Messages.getString("BookmarksManager.Title")); //$NON-NLS-1$
-        dialog.setBounds(0, 0, 500, 500);
+        dialog.setSize(480, 480);
 
         group.add(highlighted);
         group.add(checked);
@@ -231,7 +231,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         center.add(scrollList, BorderLayout.CENTER);
 
         JPanel pane = new JPanel(new BorderLayout(10, 10));
-        pane.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        pane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         pane.add(top, BorderLayout.PAGE_START);
         pane.add(left, BorderLayout.LINE_START);
         pane.add(center, BorderLayout.CENTER);

@@ -70,7 +70,7 @@ public class ReportInfoDialog extends JDialog implements ActionListener {
         infoDialog.setLocationRelativeTo(null);
 
         JPanel fullPanel = new JPanel(new BorderLayout());
-        fullPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        fullPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JPanel panel = new JPanel(new GridBagLayout());
 

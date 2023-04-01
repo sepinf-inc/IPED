@@ -315,8 +315,8 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         SplitLargeBinaryConfig splitConfig = ConfigurationManager.get()
                 .findObject(SplitLargeBinaryConfig.class);
         if (((Item) evidence).getTextCache() == null
-                && ((evidence.getLength() == null || !splitConfig.isEnabled() || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
-                || (StandardParser.isSpecificParser(parser) && !FragmentLargeBinaryTask.isXHtmlToSplit(evidence)))) {
+                && ((evidence.getLength() == null || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
+                || StandardParser.isSpecificParser(parser))) {
             try {
                 depth++;
                 ParsingTask task = new ParsingTask(worker, autoParser);
@@ -801,8 +801,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 throw new IPEDException("You must have a minimum of 2 external parsing processes! Adjust the '" + ParsingTaskConfig.NUM_EXTERNAL_PARSERS + "' option.");
             }
             ForkParser.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
-            // do not open extra processes for OCR if ForkParser is enabled
-            System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
         } else {
             LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
             max_expanding_containers = Math.max(localConfig.getNumThreads() / 2, 1);
@@ -830,8 +828,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         System.setProperty(RegRipperParser.TOOL_PATH_PROP, appRoot + "/tools/regripper/"); //$NON-NLS-1$
 
-        setupOCROptions(configurationManager.findObject(OCRConfig.class));
+        OCRConfig ocrConfig = configurationManager.findObject(OCRConfig.class);
+        setupOCROptions(ocrConfig);
 
+        // do not open extra processes for OCR if ForkParser is enabled
+        String value = parsingConfig.isEnableExternalParsing() ? Boolean.FALSE.toString() : ocrConfig.getExternalPdfToImgConv();
+        System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, value);
     }
 
     private static void setupOCROptions(OCRConfig ocrConfig) {
@@ -843,7 +845,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             System.setProperty(OCRParser.PAGE_SEGMODE_PROP, ocrConfig.getPageSegMode());
             System.setProperty(PDFToImage.RESOLUTION_PROP, ocrConfig.getPdfToImgResolution());
             System.setProperty(PDFToImage.PDFLIB_PROP, ocrConfig.getPdfToImgLib());
-            System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, ocrConfig.getExternalPdfToImgConv());
             System.setProperty(PDFToImage.EXTERNAL_CONV_MAXMEM_PROP, ocrConfig.getExternalConvMaxMem());
             System.setProperty(PDFTextParser.MAX_CHARS_TO_OCR, ocrConfig.getMaxPdfTextSize2OCR());
             System.setProperty(OCRParser.PROCESS_NON_STANDARD_FORMATS_PROP, ocrConfig.getProcessNonStandard());

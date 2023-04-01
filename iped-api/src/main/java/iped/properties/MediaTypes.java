@@ -19,7 +19,6 @@ public class MediaTypes {
     public static final MediaType UFED_CONTACT_MIME = MediaType.application("x-ufed-contact"); //$NON-NLS-1$
     public static final MediaType UFED_DEVICE_INFO = MediaType.application("x-ufed-deviceinfo"); //$NON-NLS-1$
     public static final MediaType UNALLOCATED = MediaType.application("x-unallocated"); //$NON-NLS-1$
-    public static final MediaType JBIG2 = MediaType.image("x-jbig2");
     public static final MediaType OUTLOOK_MSG = MediaType.application("vnd.ms-outlook");
     public static final MediaType FILE_SYSTEM = MediaType.application("x-file-system"); //$NON-NLS-1$
     public static final MediaType DISK_VOLUME = MediaType.application("x-disk-volume"); //$NON-NLS-1$
@@ -81,9 +80,9 @@ public class MediaTypes {
         return false;
     }
 
-    public static String getMimeTypeIfJBIG2(IItemReader item) {
-        if (item.getMediaType() != null && item.getMediaType().equals(JBIG2)) {
-            return JBIG2.toString();
+    public static String getMimeTypeString(IItemReader item) {
+        if (item.getMediaType() != null) {
+            return item.getMediaType().toString();
         }
         return null;
     }

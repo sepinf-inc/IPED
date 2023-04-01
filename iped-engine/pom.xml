@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.1-snapshot</version>
+        <version>4.2-snapshot</version>
     </parent>
     
     <artifactId>iped-engine</artifactId>
@@ -52,6 +52,7 @@
             <groupId>com.microsoft.cognitiveservices.speech</groupId>
             <artifactId>client-sdk</artifactId>
             <version>1.19.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.cloud</groupId>
@@ -171,6 +172,12 @@
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-rest-high-level-client</artifactId>
             <version>2.1.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.minio</groupId>
@@ -209,6 +216,33 @@
             <artifactId>c3p0</artifactId>
             <version>0.9.5.5</version>
         </dependency>
+        <dependency>
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>pdfbox</artifactId>
+  			<version>${pdfbox.version}</version>
+  			<exclusions>
+  			    <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+  			</exclusions>
+		</dependency>
+		<dependency>
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>pdfbox-tools</artifactId>
+  			<version>${pdfbox.version}</version>
+		</dependency>
+		<dependency>
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>xmpbox</artifactId>
+  			<version>${pdfbox.version}</version>
+  			<exclusions>
+  			    <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+  			</exclusions>
+		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>jbig2-imageio</artifactId>
@@ -258,6 +292,10 @@
                     <groupId>javax.xml.bind</groupId>
                     <artifactId>jaxb-api</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 		<dependency>
@@ -291,6 +329,12 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parser-nlp-module</artifactId>
             <version>${tika.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
          </dependency>
      </dependencies>
 </project>
