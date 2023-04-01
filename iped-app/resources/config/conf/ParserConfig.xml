@@ -1,4 +1,4 @@
-﻿﻿<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
@@ -352,6 +352,7 @@
         <parser class="iped.parsers.python.PythonParser"></parser>
         <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
         <parser class="iped.parsers.discord.DiscordParser"></parser>
+        <parser class="iped.parsers.mft.MFTEntryParser"></parser>
 
     </parsers>
 
