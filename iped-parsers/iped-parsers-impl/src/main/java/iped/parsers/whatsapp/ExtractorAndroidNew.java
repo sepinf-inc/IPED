@@ -120,10 +120,15 @@ public class ExtractorAndroidNew extends Extractor {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 Message m = new Message();
+                m.setRemoteId(c.getRemote().getFullId());
                 int call_result = rs.getInt("call_result");
                 if (account != null)
                     m.setLocalResource(account.getId());
-                if (rs.getBoolean("video_call")) {
+                m.setRemoteResource(rs.getString("remoteId"));
+                m.setId(rs.getLong("id"));
+                m.setCallId(rs.getString("call_id"));
+                if (rs.getInt("video_call") == 1) {
+                    m.setMessageType(MessageType.UNKNOWN_VIDEO_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VIDEO_CALL);
                     } else if (call_result == 4) {
@@ -132,6 +137,7 @@ public class ExtractorAndroidNew extends Extractor {
                         m.setMessageType(MessageType.REFUSED_VIDEO_CALL);
                     }
                 } else {
+                    m.setMessageType(MessageType.UNKNOWN_VOICE_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VOICE_CALL);
                     } else if (call_result == 4) {
@@ -140,7 +146,7 @@ public class ExtractorAndroidNew extends Extractor {
                         m.setMessageType(MessageType.REFUSED_VOICE_CALL);
                     }
                 }
-                m.setFromMe(rs.getBoolean("from_me"));
+                m.setFromMe(rs.getInt("from_me") == 1);
                 m.setMediaDuration(rs.getInt("duration"));
                 m.setTimeStamp(new Date(rs.getLong("timestamp")));
 
@@ -151,6 +157,7 @@ public class ExtractorAndroidNew extends Extractor {
 
         return messages;
     }
+
     private List<Message> extractMessages(Connection conn, Chat c) throws SQLException {
         List<Message> messages = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
@@ -366,7 +373,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
     }
 
-    private static final String SELECT_CALLS = "select c_l.call_id as id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,\r\n"
+    private static final String SELECT_CALLS = "select c_l._id as id, c_l.call_id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,\r\n"
             + " cv._id as chatId, cv.raw_string_jid as remoteId\r\n"
             + "  from call_log c_l inner join chat c on c_l.jid_row_id=c.jid_row_id inner join chat_view cv on cv._id=c._id\r\n"
             + "where chatId=?";
