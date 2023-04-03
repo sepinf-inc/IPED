@@ -28,6 +28,7 @@ import org.jfree.data.DomainInfo;
 import org.jfree.data.DomainOrder;
 import org.jfree.data.Range;
 import org.jfree.data.general.DatasetChangeEvent;
+import org.jfree.data.time.RegularTimePeriod;
 import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.TimePeriodAnchor;
 import org.jfree.data.time.TimeTableXYDataset;
@@ -780,6 +781,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     @Override
     public double getStartXValue(int series, int item) {
         TimePeriod period = (TimePeriod) accumulator.rowTimestamps.get(item);
+        if (period instanceof RegularTimePeriod) {
+            return ((RegularTimePeriod) period).getFirstMillisecond();
+        }
         return period.getStart().getTime();
     }
 
@@ -813,6 +817,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     @Override
     public double getEndXValue(int series, int item) {
         TimePeriod period = (TimePeriod) accumulator.rowTimestamps.get(item);
+        if (period instanceof RegularTimePeriod) {
+            return ((RegularTimePeriod) period).getLastMillisecond();
+        }
         return period.getEnd().getTime();
     }
 
