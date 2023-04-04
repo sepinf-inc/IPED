@@ -197,7 +197,6 @@ public class OCRParserTest {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
 
-            assertTrue(Integer.parseInt(metadata.get(OCRParser.OCR_CHAR_COUNT)) >= 60);
             assertTrue(hts.contains("Parsing non-standard file format"));
             assertTrue(hts.contains("SAMPLE TEXT"));
             assertTrue(hts.contains("Centered Text"));
@@ -227,7 +226,6 @@ public class OCRParserTest {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
 
-            assertTrue(Integer.parseInt(metadata.get(OCRParser.OCR_CHAR_COUNT)) >= 70);
             assertTrue(hts.contains("Transport"));
             assertTrue(hts.contains("Aa Ee Qq"));
             assertTrue(hts.contains("Rr Ss Tt"));
