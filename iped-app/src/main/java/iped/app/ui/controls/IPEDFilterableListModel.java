@@ -26,10 +26,12 @@ public class IPEDFilterableListModel<E> extends AbstractListModel<E> {
     @Override
     public int getSize() {
         int curIndex=0;
-        for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-            E e = (E) iterator.next();
-            if(toHide==null || !toHide.test(e)) {
-                curIndex++;
+        if(list!=null) {
+            for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+                E e = (E) iterator.next();
+                if(toHide==null || !toHide.test(e)) {
+                    curIndex++;
+                }
             }
         }
        return curIndex;

@@ -12,6 +12,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -423,7 +424,7 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
         dbf.setNamespaceAware(true);
         DocumentBuilder docBuilder = dbf.newDocumentBuilder();
         String xml = sc.getConfiguration();
-        ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes());
+        ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8")));
         Document doc = docBuilder.parse(bis);
         
         SortedSet<String> mimes = new TreeSortedSet<String>();

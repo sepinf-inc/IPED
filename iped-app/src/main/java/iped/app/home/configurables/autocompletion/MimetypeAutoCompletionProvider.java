@@ -2,6 +2,7 @@ package iped.app.home.configurables.autocompletion;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -33,25 +34,25 @@ public class MimetypeAutoCompletionProvider extends DefaultCompletionProvider{
         TreeSortedSet<String> mimes=null;
         try {
             mimes = getCustomMimetypes();
+            keywords = new ArrayList<String>();
+            if(mimes!=null) {
+                keywords.addAll(mimes);
+            }
+            SortedSet<MediaType> mts = MediaTypeRegistry.getDefaultRegistry().getTypes();
+            for (Iterator iterator = mts.iterator(); iterator.hasNext();) {
+                MediaType mediaType = (MediaType) iterator.next();
+                keywords.add(mediaType.toString());
+            }
+            Collections.sort(keywords);
+            
+            for (Iterator iterator = keywords.iterator(); iterator.hasNext();) {
+                String mediaType = (String) iterator.next();
+                this.addCompletion(new BasicCompletion(this, mediaType));   
+            }
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
         
-        keywords = new ArrayList<String>();
-        if(mimes!=null) {
-            keywords.addAll(mimes);
-        }
-        SortedSet<MediaType> mts = MediaTypeRegistry.getDefaultRegistry().getTypes();
-        for (Iterator iterator = mts.iterator(); iterator.hasNext();) {
-            MediaType mediaType = (MediaType) iterator.next();
-            keywords.add(mediaType.toString());
-        }
-        Collections.sort(keywords);
-        
-        for (Iterator iterator = keywords.iterator(); iterator.hasNext();) {
-            String mediaType = (String) iterator.next();
-            this.addCompletion(new BasicCompletion(this, mediaType));   
-        }
     }
     
     private TreeSortedSet<String> getCustomMimetypes() throws ParserConfigurationException, SAXException, IOException {
@@ -61,7 +62,7 @@ public class MimetypeAutoCompletionProvider extends DefaultCompletionProvider{
         dbf.setNamespaceAware(true);
         DocumentBuilder docBuilder = dbf.newDocumentBuilder();
         String xml = sc.getConfiguration();
-        ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes());
+        ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8")));
         Document doc = docBuilder.parse(bis);
         
         TreeSortedSet<String> mimes = new TreeSortedSet<String>();

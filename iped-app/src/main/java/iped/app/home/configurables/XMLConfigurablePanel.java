@@ -3,6 +3,7 @@ package iped.app.home.configurables;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -85,7 +86,7 @@ public class XMLConfigurablePanel  extends TextConfigurablePanel {
     public void applyChanges() throws ConfigurableValidationException{
         try {
             xml = textArea.getText();
-            ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes());
+            ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8")));
             Document doc = getDocBuilder().parse(bis);
             ((Configurable<String>) configurable).setConfiguration(xml);
         } catch (IOException | SAXException | ParserConfigurationException e) {

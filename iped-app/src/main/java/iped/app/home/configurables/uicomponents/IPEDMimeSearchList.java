@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -52,7 +53,7 @@ public class IPEDMimeSearchList extends IPEDSearchList {
         dbf.setNamespaceAware(true);
         DocumentBuilder docBuilder = dbf.newDocumentBuilder();
         String xml = sc.getConfiguration();
-        ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes());
+        ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8")));
         Document doc = docBuilder.parse(bis);
         
         SortedSet<String> mimes = new TreeSortedSet<String>();
