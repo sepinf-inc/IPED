@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.TreeMap;
 
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
@@ -159,7 +161,11 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
             CacheDataInputStream tmpCacheDis = null;
 
             if (tmpCacheSifs == null) {
-                tmpCacheSifs = new SeekableFileInputStream(cacheFiles.get(className));
+                File f = cacheFiles.get(className);
+                if(f==null) {
+                    return null;
+                }
+                tmpCacheSifs = new SeekableFileInputStream(f);
                 cacheSfis.put(className, tmpCacheSifs);
                 tmpCacheDis = new CacheDataInputStream(tmpCacheSifs);
                 cacheDis.put(className, tmpCacheDis);
@@ -232,46 +238,66 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         int j;
         private Integer index;
         private CacheTimePeriodEntry[] lcache;
+        //private CacheTimePeriodEntry[] newcache;
+        //int newcacheIndex=0;
         private SeekableFileInputStream lcacheSfis;
         private CacheDataInputStream lcacheDis;
         private Map<Long, Integer> lcacheIndexes;
+        private Date startDate;
         private Date endDate;
         private String className;
         boolean useCache = false;
         private TimelineCache timelineCache;
         CachePersistance cp = new CachePersistance();
         Date startIterationDate = new Date();
+        int countRead=0;
+        int countCache=0;
+        Iterator<Entry<Long,Integer>> positions;
+        private Entry<Long, Integer> positionEntry;
 
         public ResultIterator(Integer index, TimelineCache timelineCache, SeekableFileInputStream lcacheSfis, CacheDataInputStream lcacheDis, Date endDate, String className) {
             this.index = index;
             j = index != null ? index : 0;
             this.lcache = timelineCache.caches.get(className);
             this.lcacheIndexes = timelineCache.cachesIndexes.get(className);
+            positions=this.lcacheIndexes.entrySet().iterator();
             this.timelineCache = timelineCache;
             this.lcacheSfis = lcacheSfis;
             this.lcacheDis = lcacheDis;
             this.endDate = endDate;
             this.className = className;
             this.useCache = this.lcache != null;
+
+            if(positions!=null) {
+                try {
+                    positionEntry = positions.next();
+                    while(positionEntry.getValue()!=index && index!=null) {
+                        positionEntry=positions.next();
+                    }
+                }catch(NoSuchElementException e) {
+                    
+                }
+            }
         }
 
         public boolean finish() {
             lastHasNext = null;
             lcache = null;
-            // System.out.println(new Date().getTime()-startIterationDate.getTime());
             return false;
         }
 
         @Override
         public boolean hasNext() {
             try {
-                if (index != null && i >= 0 && useCache) {
+                if (useCache) {
+                    if(index==null) {
+                        index=0;
+                    }
                     if (index + i < lcache.length) {
                         lastHasNext = lcache[index + i];
-                        if (lastHasNext == null) {
-                            i = -1;// end of cache
-                        } else {
-                            i++;
+                        if(lastHasNext!=null) {
+                            lcacheSfis.seek(positionEntry.getKey());
+                            positionEntry = positions.next();
                         }
                     } else {
                         return finish();
@@ -280,11 +306,18 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                 if (lastHasNext == null) {// not in cache so load from file
                     long curpos = lcacheSfis.position();
                     lastHasNext = cp.loadNextEntry(lcacheDis);
+                    countRead++;
                     if (lcache != null) {
-                        lcache[j + i] = lastHasNext;
-                        lcacheIndexes.put(curpos, j + i);
+                        lcache[index + i]=lastHasNext;
+                        lcacheIndexes.put(curpos, index + i);
+                        i++;
                     }
+                }else {
+                    countCache++;
                     i++;
+                }
+                if(startDate==null) {
+                    startDate=lastHasNext.date;
                 }
             } catch (EOFException e) {
                 return finish();

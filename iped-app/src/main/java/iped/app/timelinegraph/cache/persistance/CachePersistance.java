@@ -151,11 +151,13 @@ public class CachePersistance {
     }
 
     public TimeIndexedMap loadNewCache(Class<? extends TimePeriod> className) throws IOException {
-        TimeIndexedMap newCache = new TimeIndexedMap();
+        TimeIndexedMap newCache = null;
 
         for (File f : baseDir.listFiles()) {
             if (f.getName().equals(className.getSimpleName())) {
+                newCache = new TimeIndexedMap();
                 newCache.setIndexFile(className.getSimpleName(),baseDir);
+                break;
                 /*
                 ArrayList<CacheTimePeriodEntry> times = new ArrayList<CacheTimePeriodEntry>();
                 newCache.put(f.getName(), times);

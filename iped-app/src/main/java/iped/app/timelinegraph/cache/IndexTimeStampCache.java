@@ -79,9 +79,8 @@ public class IndexTimeStampCache implements TimeStampCache {
                 CachePersistance cp = new CachePersistance();
                 try {
                     TimeIndexedMap c = cp.loadNewCache(periodClasses);
-                    if (c.size() > 0) {
+                    if (c!=null) {
                         cacheExists = true;
-                        newCache.putAll(c);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

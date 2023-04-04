@@ -321,7 +321,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
 
     static public Date MIN_DATE = new Date(0, 0, 1);// 01/01/1900 is the min JfreeChart date
     static public Date MAX_DATE = new Date(8099, 11, 31);// 01/01/9999 is the maxJfreeChart date
-
+    
     public void caseSearchFilterLoad() throws Exception {
         memoryCacheReloadSem.acquire();
 
@@ -351,117 +351,110 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 TimeIndexedMap a = (TimeIndexedMap) cache.getNewCache();
 
                 String className = ipedChartsPanel.getTimePeriodClass().getSimpleName();
-                List<CacheTimePeriodEntry> newcache = a.get(className);
-                if (newcache != null) {
 
-                    Semaphore addValueSem = new Semaphore(1);
 
-                    List<CacheTimePeriodEntry> visibleIntervalCache;
-                    LinkedList<CacheTimePeriodEntry> beforecache = new LinkedList<CacheTimePeriodEntry>();
-                    List<CacheTimePeriodEntry> aftercache = new ArrayList<CacheTimePeriodEntry>();
 
-                    Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
-                    Date startDate = new Date((long) dateRange.getLowerBound());
-                    Date endDate = new Date((long) dateRange.getUpperBound());
+                Semaphore addValueSem = new Semaphore(1);
 
-                    boolean fullrange = false;
-                    if ((startDate.getTime() == 0 && endDate.getTime() == 1)) {
-                        startDate = MIN_DATE;
-                        endDate = MAX_DATE;
-                        fullrange = true;
-                    }
+                List<CacheTimePeriodEntry> visibleIntervalCache;
+                LinkedList<CacheTimePeriodEntry> beforecache = new LinkedList<CacheTimePeriodEntry>();
+                List<CacheTimePeriodEntry> aftercache = new ArrayList<CacheTimePeriodEntry>();
 
-                    visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
-                    Date cacheWindowStartDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
-                    Date cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
-                    long visibleRangeLength = cacheWindowEndDate.getTime() - cacheWindowStartDate.getTime();
-                    cacheWindowStartDate = new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
-                    cacheWindowEndDate = new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
+                Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
+                Date startDate = new Date((long) dateRange.getLowerBound());
+                Date endDate = new Date((long) dateRange.getUpperBound());
 
-                    if (cacheWindowStartDate.before(MIN_DATE)) {
-                        cacheWindowStartDate = MIN_DATE;
-                        cacheWindowStartDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
-                    }
+                boolean fullrange = false;
+                if ((startDate.getTime() == 0 && endDate.getTime() == 1)) {
+                    startDate = MIN_DATE;
+                    endDate = MAX_DATE;
+                    fullrange = true;
+                }
 
-                    if (cacheWindowEndDate.after(MAX_DATE)) {
-                        cacheWindowEndDate = MAX_DATE;
-                        cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
-                    }
+                visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
+                Date cacheWindowStartDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
+                Date cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
+                long visibleRangeLength = cacheWindowEndDate.getTime() - cacheWindowStartDate.getTime();
+                cacheWindowStartDate = new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
+                cacheWindowEndDate = new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
 
-                    Iterator<CacheTimePeriodEntry> it = a.iterator(className, cacheWindowStartDate, cacheWindowEndDate);
-                    CacheTimePeriodEntry ctpe = null;
-                    while (it.hasNext()) {
-                        ctpe = it.next();
-                        boolean remove = false;
-                        if (!fullrange) {
-                            if (ctpe.date.before(startDate)) {
-                                if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
-                                    if (ctpe.date.getTime() > cacheWindowStartDate.getTime()) {
-                                        if (!memoryWindowCache.contains(ctpe)) {
-                                            beforecache.addFirst(ctpe);
-                                            memoryWindowCache.add(ctpe);
-                                        }
-                                        remove = false;
-                                    } else {
-                                        // remove from memoryCacheWindow
-                                        remove = true;
-                                    }
-                                }
-                            } else if (ctpe.date.after(endDate)) {
-                                if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
-                                    if (ctpe.date.getTime() < cacheWindowEndDate.getTime()) {
-                                        if (!memoryWindowCache.contains(ctpe)) {
-                                            aftercache.add(ctpe);
-                                            memoryWindowCache.add(ctpe);
-                                        }
-                                        remove = false;
-                                    } else {
-                                        // remove from memoryCacheWindow
-                                        remove = true;
-                                    }
-                                }
-                            } else {// inside visible window
+                if (cacheWindowStartDate.before(MIN_DATE)) {
+                    cacheWindowStartDate = MIN_DATE;
+                    cacheWindowStartDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
+                }
+
+                if (cacheWindowEndDate.after(MAX_DATE)) {
+                    cacheWindowEndDate = MAX_DATE;
+                    cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
+                }
+
+                Iterator<CacheTimePeriodEntry> it = a.iterator(className, cacheWindowStartDate, cacheWindowEndDate);
+                CacheTimePeriodEntry ctpe = null;
+                while (it!=null && it.hasNext()) {
+                    ctpe = it.next();
+                    boolean remove = false;
+                    if (!fullrange) {
+                        if (ctpe.date.before(startDate)) {
+                            if (ctpe.date.getTime() > cacheWindowStartDate.getTime()) {
                                 if (!memoryWindowCache.contains(ctpe)) {
-                                    visibleIntervalCache.add(ctpe);
+                                    beforecache.addFirst(ctpe);
                                     memoryWindowCache.add(ctpe);
                                 }
                                 remove = false;
+                            } else {
+                                // remove from memoryCacheWindow
+                                remove = true;
                             }
-                        } else {
+                        } else if (ctpe.date.after(endDate)) {
+                            if (ctpe.date.getTime() < cacheWindowEndDate.getTime()) {
+                                if (!memoryWindowCache.contains(ctpe)) {
+                                    aftercache.add(ctpe);
+                                    memoryWindowCache.add(ctpe);
+                                }
+                                remove = false;
+                            } else {
+                                // remove from memoryCacheWindow
+                                remove = true;
+                            }
+                        } else {// inside visible window
                             if (!memoryWindowCache.contains(ctpe)) {
                                 visibleIntervalCache.add(ctpe);
                                 memoryWindowCache.add(ctpe);
                             }
+                            remove = false;
                         }
-                        if (remove) {
-                            TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ctpe.date);
-                            accumulator.remove(t);
-                            if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
-                                memoryWindowCache.remove(ctpe);
-                            }
+                    } else {
+                        if (!memoryWindowCache.contains(ctpe)) {
+                            visibleIntervalCache.add(ctpe);
+                            memoryWindowCache.add(ctpe);
                         }
                     }
-                    it = null;
-
-                    populatesWithList(result, visibleIntervalCache, addValueSem);// creates first the visible interval itens to be plotted
-
-                    if (beforecache.size() > 0 || aftercache.size() > 0) {
-                        Runnable r = new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    populatesWithBeforeAndAfterList(result, beforecache, aftercache, addValueSem);
-                                } finally {
-                                    memoryCacheReloadSem.release();// releases after thread end
-                                }
-                            }
-                        };
-                        Thread t = new Thread(r);
-                        t.start();// runs out of visibility asynchronously so to release GUI thread to the user.
-                    } else {
-                        memoryCacheReloadSem.release();// releases imediatelly as all cache was loaded
+                    if (remove) {
+                        TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ctpe.date);
+                        accumulator.remove(t);
+                        memoryWindowCache.remove(ctpe);
                     }
                 }
+                it = null;
+
+                populatesWithList(result, visibleIntervalCache, addValueSem);// creates first the visible interval itens to be plotted
+
+                if (beforecache.size() > 0 || aftercache.size() > 0) {
+                    Runnable r = new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                populatesWithBeforeAndAfterList(result, beforecache, aftercache, addValueSem);
+                            } finally {
+                                memoryCacheReloadSem.release();// releases after thread end
+                            }
+                        }
+                    };
+                    Thread t = new Thread(r);
+                    t.start();// runs out of visibility asynchronously so to release GUI thread to the user.
+                } else {
+                    memoryCacheReloadSem.release();// releases imediatelly as all cache was loaded
+                }                
 
             } else {
                 memoryCacheReloadSem.release();// releases imediatelly as all cache was loaded
