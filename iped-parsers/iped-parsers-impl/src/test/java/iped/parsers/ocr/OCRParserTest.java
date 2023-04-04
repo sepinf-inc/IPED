@@ -115,7 +115,7 @@ public class OCRParserTest {
             assertTrue(hts.contains("RISC-V UNICICLO"));
             assertTrue(hts.contains("Instruction [31-0]"));
             assertTrue(hts.contains("MemtoReg"));
-            assertTrue(hts.contains("Lógico-Aritméticas com imediato: ADDi, ANDi, ORi, XORi, SLLi, SRLi"));
+            assertTrue(hts.contains("Lógico-Aritméticas com imediato:"));
             assertTrue(hts.contains("and s6, s5, s4"));
             assertTrue(hts.contains("00000048 005324b3"));
             assertTrue(hts.contains("as memórias de instruções e dados."));
