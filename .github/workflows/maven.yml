@@ -38,8 +38,8 @@ jobs:
           libmsiecf-utils=20181227-1.1 \
           pff-tools=20180714-2 \
           libesedb-utils=20181229-3.1 \
-          tesseract-ocr=4.1.1-2build2 \
-          tesseract-ocr-por=1:4.00~git30-7274cfa-1 \
+          tesseract-ocr \
+          tesseract-ocr-por \
           imagemagick \
           python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
@@ -97,8 +97,8 @@ jobs:
           libmsiecf-utils=20181227-1.1 \
           pff-tools=20180714-2 \
           libesedb-utils=20181229-3.1 \
-          tesseract-ocr=4.1.1-2build2 \
-          tesseract-ocr-por=1:4.00~git30-7274cfa-1 \
+          tesseract-ocr \
+          tesseract-ocr-por \
           imagemagick \
           python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
