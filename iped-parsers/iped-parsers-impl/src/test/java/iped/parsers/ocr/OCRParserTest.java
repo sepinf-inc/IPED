@@ -54,6 +54,7 @@ public class OCRParserTest {
             System.setProperty(OCRParser.ENABLE_PROP, "true");
         } catch (IOException | InterruptedException e) {
             LOGGER.error("Skipping tesseract tests...");
+            e.printStackTrace();
         }
     }
 
@@ -78,12 +79,13 @@ public class OCRParserTest {
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "por");
 
+        String hts = "";
         try (OCRParser parser = new OCRParser();
             InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.png")) {
             assumeTrue(parser.isEnabled());
 
             parser.parse(stream, handler, metadata, context);
-            String hts = handler.toString();
+            hts = handler.toString();
 
             assertTrue(hts.contains("Oi, tudo bem?"));
             assertTrue(hts.contains("Tudo certo, o que estamos fazendo"));
@@ -92,6 +94,9 @@ public class OCRParserTest {
             assertTrue(hts.contains("OCRParser"));
             assertTrue(hts.contains("2:51 PM"));
             assertTrue(hts.toLowerCase().contains("boa sorte galera"));
+        } catch (Throwable e) {
+            System.out.println(hts);
+            throw e;
         }
     }
 
@@ -105,12 +110,13 @@ public class OCRParserTest {
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "por");
         
+        String hts = "";
         try (OCRParser parser = new OCRParser();
             InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.pdf")) {
             assumeTrue(parser.isEnabled());
             
             parser.parse(stream, handler, metadata, context);
-            String hts = handler.toString();
+            hts = handler.toString();
 
             assertTrue(hts.contains("RISC-V UNICICLO"));
             assertTrue(hts.contains("Instruction [31-0]"));
@@ -119,6 +125,9 @@ public class OCRParserTest {
             assertTrue(hts.contains("and s6, s5, s4"));
             assertTrue(hts.contains("00000048 005324b3"));
             assertTrue(hts.contains("as memórias de instruções e dados."));
+        } catch (Throwable e) {
+            System.out.println(hts);
+            throw e;
         }
     }
 
@@ -147,12 +156,13 @@ public class OCRParserTest {
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "eng");
 
+        String hts = "";
         try (OCRParser parser = new OCRParser();
             InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.tiff")) {
             assumeTrue(parser.isEnabled());
 
             parser.parse(stream, handler, metadata, context);
-            String hts = handler.toString();
+            hts = handler.toString();
 
             assertTrue(hts.contains("Literature must rest always on a principle"));
             assertTrue(hts.contains("times and places are one; the stuff he deals with"));
@@ -172,6 +182,9 @@ public class OCRParserTest {
             assertTrue(ocrCopy.exists() && ocrResults.exists());
             boolean copySucceeded = FileUtils.contentEquals(ocrCopy, ocrResults);
             assertTrue(copySucceeded);
+        } catch (Throwable e) {
+            System.out.println(hts);
+            throw e;
         }
     }
 
@@ -186,6 +199,7 @@ public class OCRParserTest {
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "eng");
 
+        String hts = "";
         try (OCRParser parser = new OCRParser();
             InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.psd")) {
             assumeTrue(parser.isEnabled());
@@ -195,12 +209,15 @@ public class OCRParserTest {
             assumeTrue(isImageMagickInstalled(magickDir));
 
             parser.parse(stream, handler, metadata, context);
-            String hts = handler.toString();
+            hts = handler.toString();
 
             assertTrue(hts.contains("Parsing non-standard file format"));
             assertTrue(hts.contains("SAMPLE TEXT"));
             assertTrue(hts.contains("Centered Text"));
             assertTrue(hts.contains("sample .psd file"));
+        } catch (Throwable e) {
+            System.out.println(hts);
+            throw e;
         }
     }
 
@@ -215,6 +232,7 @@ public class OCRParserTest {
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "eng");
 
+        String hts = "";
         try (OCRParser parser = new OCRParser();
             InputStream stream = this.getClass().getResourceAsStream("/test-files/test_OCR.svg")) {
             assumeTrue(parser.isEnabled());
@@ -224,7 +242,7 @@ public class OCRParserTest {
             assumeTrue(isImageMagickInstalled(magickDir));
 
             parser.parse(stream, handler, metadata, context);
-            String hts = handler.toString();
+            hts = handler.toString();
 
             assertTrue(hts.contains("Transport"));
             assertTrue(hts.contains("Aa Ee Qq"));
@@ -232,6 +250,9 @@ public class OCRParserTest {
             assertTrue(hts.contains("Manchester"));
             assertTrue(hts.contains("abcdefghijklm"));
             assertTrue(hts.contains("0123456789"));
+        } catch (Throwable e) {
+            System.out.println(hts);
+            throw e;
         }
     }
 
