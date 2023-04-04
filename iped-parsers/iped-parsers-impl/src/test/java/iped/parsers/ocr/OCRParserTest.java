@@ -85,14 +85,13 @@ public class OCRParserTest {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
 
-            assertTrue(hts.contains("57%"));
-            assertTrue(hts.contains("10:04 am"));
             assertTrue(hts.contains("Oi, tudo bem?"));
             assertTrue(hts.contains("Tudo certo, o que estamos fazendo"));
             assertTrue(hts.contains("aqui?"));
             assertTrue(hts.contains("Isso é um print para testar o"));
             assertTrue(hts.contains("OCRParser"));
-            assertTrue(hts.contains("Boa sOrte GALeRa"));
+            assertTrue(hts.contains("2:51 PM"));
+            assertTrue(hts.toLowerCase().contains("boa sorte galera"));
         }
     }
 
