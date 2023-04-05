@@ -92,7 +92,7 @@ jobs:
 
     - name: Install External Tools
       run: |        
-          sudo apt-get update && sudo apt-get && sudo apt install \
+          sudo add-apt-repository ppa:alex-p/tesseract-ocr-devel && sudo apt-get update && sudo apt-get && sudo apt install \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
           libmsiecf-utils \
           pff-tools \
