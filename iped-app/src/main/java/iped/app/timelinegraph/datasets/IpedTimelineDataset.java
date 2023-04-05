@@ -31,6 +31,7 @@ import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDomainInfo;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedChartPanel;
 import iped.app.timelinegraph.IpedChartsPanel;
@@ -205,7 +206,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                         if (cancelled) {
                             return;
                         }
-                        ArrayList<Integer> docs = ce.docIds;
+                        RoaringBitmap docs = ce.docIds;
                         if (docs != null) {
                             ArrayList<IItemId> includedItems = new ArrayList<IItemId>();
                             ArrayList<Integer> includedDocs = new ArrayList<Integer>();

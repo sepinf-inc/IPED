@@ -18,6 +18,7 @@ import org.jfree.data.time.Quarter;
 import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartsPanel;
@@ -85,9 +86,9 @@ class EventTimestampCache implements Runnable {
                                         }
                                     }
                                     if (t != null) {
-                                        ArrayList<Integer> docs2 = timeStampCache.get(timePeriodClass, t, eventType);
+                                        RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, t, eventType);
                                         if (docs2 == null) {
-                                            docs2 = new ArrayList<Integer>();
+                                            docs2 = new RoaringBitmap();
                                             synchronized (timeStampCache) {
                                                 timeStampCache.add(timePeriodClass, t, eventType, docs2);
                                             }
@@ -139,9 +140,9 @@ class EventTimestampCache implements Runnable {
                                     }
                                 }
                                 if (t != null) {
-                                    ArrayList<Integer> docs2 = timeStampCache.get(timePeriodClass, t, eventType);
+                                    RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, t, eventType);
                                     if (docs2 == null) {
-                                        docs2 = new ArrayList<Integer>();
+                                        docs2 = new RoaringBitmap();
                                         synchronized (timeStampCache) {
                                             timeStampCache.add(timePeriodClass, t, eventType, docs2);
                                         }

@@ -25,6 +25,7 @@ import javax.xml.bind.DatatypeConverter;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.jfree.data.time.TimePeriod;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
@@ -40,6 +41,8 @@ public class CachePersistance {
     File baseDir;
 
     HashMap<String, String> pathsToCheck = new HashMap<String, String>();
+
+    private boolean bitstreamSerialize;
 
     static Thread t;
 
@@ -167,7 +170,7 @@ public class CachePersistance {
                 while (!eventName.equals("!!")) {
                     CacheEventEntry ce = new CacheEventEntry();
                     ce.event = eventName;
-                    ce.docIds = new ArrayList<Integer>();
+                    ce.docIds = new RoaringBitmap();
                     int docId = dis.readInt();
                     while (docId != -1) {
                         ce.docIds.add(docId);
@@ -211,10 +214,14 @@ public class CachePersistance {
                 for (int j = 0; j < ct.events.size(); j++) {
                     CacheEventEntry ce = ct.events.get(j);
                     dos.writeUTF(ce.event);
-                    for (int k = 0; k < ce.docIds.size(); k++) {
-                        dos.writeInt(ce.docIds.get(k));
+                    if(bitstreamSerialize) {
+                        ce.docIds.serialize(dos);
+                    }else {
+                        for (int docId : ce.docIds) {
+                            dos.writeInt(docId);
+                        }
+                        dos.writeInt(-1);
                     }
-                    dos.writeInt(-1);
                 }
                 dos.writeUTF("!!");
             }
