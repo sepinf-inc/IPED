@@ -308,6 +308,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                            // backward.
     List<CacheTimePeriodEntry> memoryWindowCache = new ArrayList<CacheTimePeriodEntry>();
 
+    static public Date MIN_DATE = new Date(0, 0, 1);// 01/01/1900 is the min JfreeChart date
+    static public Date MAX_DATE = new Date(8099, 11, 31);// 01/01/9999 is the maxJfreeChart date
+    
     public void caseSearchFilterLoad() throws Exception {
         memoryCacheReloadSem.acquire();
 
@@ -349,25 +352,47 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
                     Date startDate = new Date((long) dateRange.getLowerBound());
                     Date endDate = new Date((long) dateRange.getUpperBound());
-
-                    long visibleRangeLength = endDate.getTime() - startDate.getTime();
+                    
                     if ((startDate.getTime() == 0 && endDate.getTime() == 1)) {
                         visibleIntervalCache = newcache;
                         memoryWindowCache.addAll(newcache);
                     } else {
+
+                        if ((startDate.getTime() == 0 && endDate.getTime() == 1)) {
+                            startDate = MIN_DATE;
+                            endDate = MAX_DATE;
+                        }
+
+                        visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
+                        Date cacheWindowStartDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
+                        Date cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
+                        long visibleRangeLength = cacheWindowEndDate.getTime() - cacheWindowStartDate.getTime();
+                        cacheWindowStartDate = new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
+                        cacheWindowEndDate = new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
+                        
+                        if (cacheWindowStartDate.before(MIN_DATE)) {
+                            cacheWindowStartDate = MIN_DATE;
+                            cacheWindowStartDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
+                        }
+
+                        if (cacheWindowEndDate.after(MAX_DATE)) {
+                            cacheWindowEndDate = MAX_DATE;
+                            cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
+                        }
+                        
+                        
                         visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
                         startDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
                         endDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
 
-                        Iterator<CacheTimePeriodEntry> it = a.iterator(className, new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION),
-                                new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION));
+                        Iterator<CacheTimePeriodEntry> it = a.iterator(className, cacheWindowStartDate, cacheWindowEndDate);
                         CacheTimePeriodEntry ctpe = null;
                         while (it.hasNext()) {
                             ctpe = it.next();
                             boolean remove = false;
                             if (ctpe.date.before(startDate)) {
                                 if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
-                                    if (ctpe.date.getTime() > endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION) {
+                                    if (ctpe.date.getTime() > cacheWindowStartDate.getTime()) {
                                         if (!memoryWindowCache.contains(ctpe)) {
                                             beforecache.addFirst(ctpe);
                                             memoryWindowCache.add(ctpe);
@@ -380,7 +405,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                 }
                             } else if (ctpe.date.after(endDate)) {
                                 if (memoryWindowCache != newcache) {// if window cache were not the complete cache itself
-                                    if (ctpe.date.getTime() < startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION) {
+                                    if (ctpe.date.getTime() < cacheWindowEndDate.getTime()) {
                                         if (!memoryWindowCache.contains(ctpe)) {
                                             aftercache.add(ctpe);
                                             memoryWindowCache.add(ctpe);
