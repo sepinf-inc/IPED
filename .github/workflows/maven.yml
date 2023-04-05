@@ -6,7 +6,7 @@ jobs:
 
   build-java11:
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
@@ -33,14 +33,13 @@ jobs:
 
     - name: Install External Tools
       run: |
-          sudo apt-get update && sudo apt-get remove librsvg2-dev && sudo apt install --allow-downgrades \
+          sudo apt-get update && sudo apt-get && sudo apt install \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
-          libmsiecf-utils=20181227-1.1 \
-          pff-tools=20180714-2 \
-          libesedb-utils=20181229-3.1 \
+          libmsiecf-utils \
+          pff-tools \
+          libesedb-utils \
           tesseract-ocr \
           tesseract-ocr-por \
-          gir1.2-rsvg-2.0=2.48.2-1 librsvg2-2=2.48.2-1 librsvg2-common=2.48.2-1 librsvg2-dev=2.48.2-1 \
           imagemagick \
           python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
@@ -65,7 +64,7 @@ jobs:
 
   build-java14:
     
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
@@ -93,14 +92,13 @@ jobs:
 
     - name: Install External Tools
       run: |        
-          sudo apt-get update && sudo apt-get remove librsvg2-dev && sudo apt install --allow-downgrades \
+          sudo apt-get update && sudo apt-get && sudo apt install \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
-          libmsiecf-utils=20181227-1.1 \
-          pff-tools=20180714-2 \
-          libesedb-utils=20181229-3.1 \
+          libmsiecf-utils \
+          pff-tools \
+          libesedb-utils \
           tesseract-ocr \
           tesseract-ocr-por \
-          gir1.2-rsvg-2.0=2.48.2-1 librsvg2-2=2.48.2-1 librsvg2-common=2.48.2-1 librsvg2-dev=2.48.2-1 \
           imagemagick \
           python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
