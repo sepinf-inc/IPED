@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.tika.exception.TikaException;
@@ -50,7 +51,8 @@ public class OCRParserTest {
         // Checks if tesseract is present to then enable OCR parsing property
         try {
             String tesseractPath = System.getProperty(OCRParser.TOOL_PATH_PROP, "") + "tesseract";
-            OCRParser.checkVersionInfo(tesseractPath, "-v");
+            List<String> tessInfo = OCRParser.checkVersionInfo(tesseractPath, "-v");
+            System.out.println("Detected tesseract version " + tessInfo.get(0));
             System.setProperty(OCRParser.ENABLE_PROP, "true");
         } catch (IOException | InterruptedException e) {
             LOGGER.error("Skipping tesseract tests...");
