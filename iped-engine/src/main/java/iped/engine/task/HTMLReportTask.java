@@ -197,6 +197,8 @@ public class HTMLReportTask extends AbstractTask {
 
     private boolean extractThumb;
 
+    private ArrayList<String> selectedProperties;
+
     private static Collator getCollator() {
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
 
@@ -239,6 +241,7 @@ public class HTMLReportTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
 
         htmlReportConfig = configurationManager.findObject(HtmlReportTaskConfig.class);
+        selectedProperties = loadReportSelectedProps();
 
         if (!init.get()) {
             if (htmlReportConfig.isEnabled()) {
@@ -299,8 +302,6 @@ public class HTMLReportTask extends AbstractTask {
         ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer);
 
         if (isEnabled() && caseData.containsReport() && info != null) {
-
-            ArrayList<String> selectedProperties = loadReportSelectedProps();
 
             String reportRoot = Messages.getString("HTMLReportTask.ReportFileName"); //$NON-NLS-1$
             if (new File(reportSubFolder.getParentFile(), reportRoot).exists()) {
@@ -693,7 +694,6 @@ public class HTMLReportTask extends AbstractTask {
     private void createBookmarkPage(DateFormat dateFormat, NumberFormat longFormat, String name, String id,
             StringBuilder model, StringBuilder item, int pag, int totPags, int totRegs, List<ReportEntry> regs,
             boolean isLabel) throws Exception {
-        ArrayList<String> selectedProperties = loadReportSelectedProps();
 
         File arq = new File(reportSubFolder, getPageId(id, pag));
 
