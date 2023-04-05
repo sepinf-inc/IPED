@@ -56,7 +56,7 @@ public class DateUtil {
         int day = (b[8] - 48) * 10 + (b[9] - 48);
         long time = ((b[11] - 48) * 10 + (b[12] - 48)) * 3600000 + ((b[14] - 48) * 10 + (b[15] - 48)) * 60000 + ((b[17] - 48) * 10 + (b[18] - 48)) * 1000 + computerTimezoneOffset;
         b = null;
-        return new Date(new Date(year, month, day).getTime() + time);
+        return new Date(new Date(year, month - 1, day).getTime() + time);
     }
 
     static public String getTimePeriodName(Class<? extends TimePeriod> tpclass) {
