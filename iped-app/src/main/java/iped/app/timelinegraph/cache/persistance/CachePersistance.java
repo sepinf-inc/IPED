@@ -29,6 +29,7 @@ import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
+import iped.app.timelinegraph.cache.TimeIndexedMap;
 import iped.app.timelinegraph.cache.TimeStampCache;
 import iped.app.ui.App;
 import iped.utils.IOUtil;
@@ -42,14 +43,22 @@ public class CachePersistance {
 
     HashMap<String, String> pathsToCheck = new HashMap<String, String>();
 
-    private boolean bitstreamSerialize;
-
     static Thread t;
+    
+    boolean bitstreamSerialize = false; //indicates that the index is saved by RoaringBitmap internal serialize
+
+    private File bitstreamSerializeFile; //File that, if existent, indicates that the index is saved by RoaringBitmap internal serialize 
+
+    static private boolean BITSTREAM_SERIALIZA_ASDEFAULT = true; //serialize with RoaringBitmap internal serialize for new indexes
 
     public CachePersistance() {
         File startDir;
         startDir = new File(App.get().casesPathFile, "iped");
         startDir = new File(startDir, "data");
+        
+        bitstreamSerializeFile = new File(startDir, "bitstreamSerialize");
+        bitstreamSerialize = bitstreamSerializeFile.exists();
+
         startDir = new File(startDir, "timecache");
         startDir.mkdirs();
         // if case cache folder is not writable, use user.home for caches
@@ -170,11 +179,21 @@ public class CachePersistance {
                 while (!eventName.equals("!!")) {
                     CacheEventEntry ce = new CacheEventEntry();
                     ce.event = eventName;
-                    ce.docIds = new RoaringBitmap();
-                    int docId = dis.readInt();
-                    while (docId != -1) {
-                        ce.docIds.add(docId);
-                        docId = dis.readInt();
+                    if(bitstreamSerialize) {
+                        try {
+                            ce.docIds = new RoaringBitmap();
+                            ce.docIds.deserialize(dis);
+                        } catch (Exception e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }else {
+                        ce.docIds = new RoaringBitmap();
+                        int docId = dis.readInt();
+                        while (docId != -1) {
+                            ce.docIds.add(docId);
+                            docId = dis.readInt();
+                        }
                     }
                     ct.events.add(ce);
                     eventName = dis.readUTF();
@@ -190,7 +209,16 @@ public class CachePersistance {
     }
 
     public void saveNewCache(TimeStampCache timeStampCache) {
-        Map<String, List<CacheTimePeriodEntry>> newCache = timeStampCache.getNewCache();
+        if(BITSTREAM_SERIALIZA_ASDEFAULT ) {
+            try {
+                bitstreamSerializeFile.createNewFile();// mark this cache as containing bitstreams serialized
+                bitstreamSerialize=true;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        TimeIndexedMap newCache = (TimeIndexedMap) timeStampCache.getNewCache();
 
         for (Entry<String, List<CacheTimePeriodEntry>> entry : newCache.entrySet()) {
             savePeriodNewCache(timeStampCache, entry.getValue(), new File(baseDir, entry.getKey()));
