@@ -24,7 +24,7 @@ import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.viewers.api.IMultiSearchResultProvider;
 
-class EventTimestampCache implements Runnable {
+public class EventTimestampCache implements Runnable {
     String eventType;
 
     IMultiSearchResultProvider resultsProvider;
@@ -173,7 +173,7 @@ class EventTimestampCache implements Runnable {
         return timePeriodClass == Year.class || timePeriodClass == Quarter.class || timePeriodClass == Month.class || timePeriodClass == Week.class || timePeriodClass == Day.class || timePeriodClass == Hour.class;
     }
 
-    synchronized String cloneBr(BytesRef br) {
+    static public synchronized String cloneBr(BytesRef br) {
         char[] saida = new char[br.length];
         final int len = UnicodeUtil.UTF8toUTF16(br.bytes, br.offset, br.length, saida);
         return new String(saida, 0, len);

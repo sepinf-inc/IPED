@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.jfree.chart.util.Args;
 import org.jfree.chart.util.PublicCloneable;
 import org.jfree.data.DomainInfo;
@@ -33,10 +34,13 @@ import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDomainInfo;
 import org.roaringbitmap.RoaringBitmap;
 
+import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartPanel;
 import iped.app.timelinegraph.IpedChartsPanel;
+import iped.app.timelinegraph.IpedDateAxis;
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
+import iped.app.timelinegraph.cache.EventTimestampCache;
 import iped.app.timelinegraph.cache.TimeIndexedMap;
 import iped.app.timelinegraph.cache.TimeStampCache;
 import iped.app.ui.App;
@@ -988,24 +992,66 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     }
 
     public List<IItemId> getItems(int item, int seriesId) {
-        TimePeriod t = accumulator.rowTimestamps.get(item);
-        if (t != null) {
-            HashMap<String, List<IItemId>> series = this.accumulator.itemIdsMap.get(t.toString());
-            if (series != null) {
-                return series.get(this.getSeriesKey(seriesId));
-            }
-        }
-        return null;
-    }
 
-    public List<Integer> getDocIds(int item, int seriesId) {
         TimePeriod t = accumulator.rowTimestamps.get(item);
-        if (t != null) {
-            HashMap<String, List<Integer>> series = this.accumulator.docIdsMap.get(t.toString());
-            if (series != null) {
-                return series.get(this.getSeriesKey(seriesId));
+
+        String eventType = (String) this.getSeriesKey(seriesId);
+        IpedDateAxis domainAxis = ipedChartsPanel.getDomainAxis();
+        StringBuffer timeFilter = new StringBuffer();
+        timeFilter.append("timeStamp:[");
+        timeFilter.append(domainAxis.ISO8601DateFormatUTC(t.getStart()));
+        timeFilter.append(" TO ");
+        timeFilter.append(domainAxis.ISO8601DateFormatUTC(t.getEnd()));
+        timeFilter.append("]");
+        timeFilter.append("&& timeEvent:\"");
+        timeFilter.append(eventType + "\"");
+
+        CaseSearcherFilter csf = new CaseSearcherFilter(timeFilter.toString());
+        csf.applyUIQueryFilters(exceptThis);
+
+        IPEDMultiSource srcCase = App.get().appCase;
+
+        csf.execute();
+        try {
+            MultiSearchResult resultSet = (MultiSearchResult) csf.get();
+            List<IItemId> result = new ArrayList<IItemId>();
+            LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
+            String eventField = ipedChartsPanel.getTimeEventColumnName(eventType);
+            SortedSetDocValues values = reader.getSortedSetDocValues(eventField);
+            for (int i = 0; i < resultSet.getLength(); i++) {
+                int doc = srcCase.getLuceneId(resultSet.getItem(i));
+                boolean adv = values.advanceExact(doc);
+                if (adv = false) {
+                    values = reader.getSortedSetDocValues(eventField);
+                    adv = values.advanceExact(doc);
+                    if (!adv) {
+                        continue;
+                    }
+                }
+                boolean found = false;
+                if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+                    int ord = (int) values.nextOrd();
+                    while (ord != SortedSetDocValues.NO_MORE_ORDS) {
+                        String timeStr = EventTimestampCache.cloneBr(values.lookupOrd(ord));
+                        if (timeStr.isEmpty()) {
+                            continue;
+                        }
+                        Date date = DateUtil.ISO8601DateParse(timeStr);
+                        if (!(date.before(t.getStart()) || date.after(t.getEnd()))) {
+                            found = true;
+                        }
+                        ord = (int) values.nextOrd();
+                    }
+                }
+                if (found) {
+                    result.add(resultSet.getItem(i));
+                }
             }
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
         return null;
     }
 
@@ -1031,61 +1077,16 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         ArrayList<String> colEvents = new ArrayList<String>();
         private ArrayList<TimePeriod> rowTimestamps = new ArrayList<TimePeriod>();
         private ArrayList<HashMap<Integer, Count>> counts = new ArrayList<HashMap<Integer, Count>>();
-        private HashMap<String, HashMap<String, List<IItemId>>> itemIdsMap = new HashMap<String, HashMap<String, List<IItemId>>>();
-        private HashMap<String, HashMap<String, List<Integer>>> docIdsMap = new HashMap<String, HashMap<String, List<Integer>>>();
 
         public Accumulator() {
         }
 
-        public void addDocIds(TimePeriod t, String eventField, ArrayList<Integer> docIds) {
-            HashMap<String, List<Integer>> series = this.docIdsMap.get(t.toString());
-            List<Integer> ids = null;
-            if (series == null) {
-                series = new HashMap<String, List<Integer>>();
-                this.docIdsMap.put(t.toString(), series);
-            } else {
-                ids = series.get(eventField);
-            }
-
-            if (ids != null) {
-                synchronized (ids) {
-                    ids.addAll(docIds);
-                }
-            } else {
-                ids = new ArrayList<Integer>();
-                ids.addAll(docIds);
-                series.put(eventField, ids);
-            }
-        }
-
-        public void addItemIds(TimePeriod t, String eventField, ArrayList<IItemId> itemIds) {
-            HashMap<String, List<IItemId>> series = this.itemIdsMap.get(t.toString());
-            List<IItemId> ids = null;
-            if (series == null) {
-                series = new HashMap<String, List<IItemId>>();
-                this.itemIdsMap.put(t.toString(), series);
-            } else {
-                ids = series.get(eventField);
-            }
-
-            if (ids != null) {
-                synchronized (ids) {
-                    ids.addAll(itemIds);
-                }
-            } else {
-                ids = new ArrayList<IItemId>();
-                ids.addAll(itemIds);
-                series.put(eventField, itemIds);
-            }
-        }
 
         public void addValue(ValueCount valueCount, ArrayList<Integer> docIds, ArrayList<IItemId> itemIds, String eventType) {
             Date d = ipedChartsPanel.getDomainAxis().ISO8601DateParse(valueCount.getVal());
             TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), d);
 
             if (t != null) {
-                addDocIds(t, eventType, docIds);
-                addItemIds(t, eventType, itemIds);
 
                 if (min == null || t.getStart().before(min.getStart())) {
                     min = t;
@@ -1137,8 +1138,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 max = t;
             }
 
-            addDocIds(t, eventType, docIds);
-            addItemIds(t, eventType, itemIds);
 
             int col = colEvents.indexOf(eventType);
             if (col == -1) {
@@ -1184,7 +1183,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     this.colEvents.add(acc.colEvents.get(0));
                     col = this.colEvents.size() - 1;
                 }
-                this.itemIdsMap.putAll(acc.itemIdsMap);
 
                 for (int i = 0; i < acc.rowTimestamps.size(); i++) {
                     TimePeriod t = acc.rowTimestamps.get(i);
