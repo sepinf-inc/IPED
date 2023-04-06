@@ -215,8 +215,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                             return;
                         }
                         if (ce.docIds != null) {
-                            ArrayList<IItemId> includedItems = new ArrayList<IItemId>();
-                            ArrayList<Integer> includedDocs = new ArrayList<Integer>();
                             Count count = new Count();
                             for (int docId : ce.docIds) {
                                 if (cancelled) {
@@ -258,8 +256,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                     }
                                     if (include) {
                                         count.value++;
-                                        includedDocs.add(docId);
-                                        includedItems.add(ii);
                                     }
                                 }
                             }
@@ -267,17 +263,13 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                 addValueSem.acquire();
                                 try {
                                     TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ct.date);
-                                    addValue(count, t, ce.event, includedDocs, includedItems);
+                                    addValue(count, t, ce.event);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 } finally {
                                     addValueSem.release();
                                 }
                             }
-                            includedItems.clear();
-                            includedItems = null;
-                            includedDocs.clear();
-                            includedDocs = null;
                         }
                     }
                 }
@@ -1064,12 +1056,12 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         return null;
     }
 
-    public void addValue(Count count, TimePeriod t, String eventType, ArrayList<Integer> docIds, ArrayList<IItemId> itemIds) {
-        accumulator.addValue(count, t, eventType, docIds, itemIds);
+    public void addValue(Count count, TimePeriod t, String eventType) {
+        accumulator.addValue(count, t, eventType);
     }
 
-    public void addValue(ValueCount valueCount, ArrayList<Integer> docIds, ArrayList<IItemId> itemIds, String eventType) {
-        accumulator.addValue(valueCount, docIds, itemIds, eventType);
+    public void addValue(ValueCount valueCount, String eventType) {
+        accumulator.addValue(valueCount, eventType);
     }
 
     @Override
@@ -1109,7 +1101,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         CachePersistance cp = new CachePersistance();
         ExecutorService persistanceThreadPool = Executors.newFixedThreadPool(1);
 
-        public void addValue(ValueCount valueCount, ArrayList<Integer> docIds, ArrayList<IItemId> itemIds, String eventType) {
+        public void addValue(ValueCount valueCount, String eventType) {
             Date d = ipedChartsPanel.getDomainAxis().ISO8601DateParse(valueCount.getVal());
             TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), d);
 
@@ -1158,7 +1150,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             }
         }
 
-        public void addValue(Count count, TimePeriod t, String eventType, ArrayList<Integer> docIds, ArrayList<IItemId> itemIds) {
+        public void addValue(Count count, TimePeriod t, String eventType) {
             if (min == null || t.getStart().before(min.getStart())) {
                 min = t;
             }
@@ -1166,9 +1158,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             if (max == null || t.getEnd().after(max.getEnd())) {
                 max = t;
             }
-
-            // addDocIds(t, eventType, docIds);
-            // addItemIds(t, eventType, itemIds);
 
             int col = colEvents.indexOf(eventType);
             if (col == -1) {
