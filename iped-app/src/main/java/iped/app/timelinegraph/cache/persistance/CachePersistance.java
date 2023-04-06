@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -238,7 +237,7 @@ public class CachePersistance {
         }
     }
 
-    public void saveMonthIndex(HashMap<String, TreeMap<Date, Long>> monthIndex, String timePeriodName) {
+    public void saveMonthIndex(HashMap<String, TreeMap<Date, Long>> monthIndex, TreeMap<Long, Integer> positionsIndexes, String timePeriodName) {
         TreeMap<Date, Long> dates = (TreeMap<Date, Long>) monthIndex.get(timePeriodName);
         
         baseDir.mkdirs();
@@ -249,6 +248,7 @@ public class CachePersistance {
                 Entry dateEntry = (Entry) iterator2.next();
                 dos.writeLong(((Date)dateEntry.getKey()).getTime());
                 dos.writeLong(((Long)dateEntry.getValue()));
+                dos.writeInt(positionsIndexes.get(((Long)dateEntry.getValue())));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -300,14 +300,16 @@ public class CachePersistance {
         return baseDir;
     }
 
-    public void loadMonthIndex(String ev, TreeMap<Date, Long> datesPos) {
+    public void loadMonthIndex(String ev, TreeMap<Date, Long> datesPos, TreeMap<Long, Integer> positionsIndexes) {
         File monthFile = new File(new File(baseDir,ev), "1");
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(monthFile)))) {
             try {
                 while(true) {
                     Date d = new Date(dis.readLong());
                     long pos = dis.readLong();
+                    int index = dis.readInt();
                     datesPos.put(d, pos);
+                    positionsIndexes.put(pos, index);
                 }
             }catch (EOFException e) {
                 // ignores

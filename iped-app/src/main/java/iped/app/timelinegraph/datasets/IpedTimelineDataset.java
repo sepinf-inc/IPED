@@ -391,6 +391,10 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 Iterator<CacheTimePeriodEntry> it = a.iterator(className, cacheWindowStartDate, cacheWindowEndDate);
                 CacheTimePeriodEntry ctpe = null;
                 while (it!=null && it.hasNext()) {
+                    if (cancelled) {
+                        return;
+                    }
+
                     ctpe = it.next();
                     boolean remove = false;
                     if (!fullrange) {

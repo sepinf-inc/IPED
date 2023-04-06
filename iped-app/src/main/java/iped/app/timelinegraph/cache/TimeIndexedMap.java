@@ -234,12 +234,9 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
 
     class ResultIterator implements Iterator<CacheTimePeriodEntry> {
         CacheTimePeriodEntry lastHasNext = null;
-        int i = 0;
-        int j;
+        int cacheCurrentIndex = 0;
         private Integer index;
         private CacheTimePeriodEntry[] lcache;
-        //private CacheTimePeriodEntry[] newcache;
-        //int newcacheIndex=0;
         private SeekableFileInputStream lcacheSfis;
         private CacheDataInputStream lcacheDis;
         private Map<Long, Integer> lcacheIndexes;
@@ -257,9 +254,8 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
 
         public ResultIterator(Integer index, TimelineCache timelineCache, SeekableFileInputStream lcacheSfis, CacheDataInputStream lcacheDis, Date endDate, String className) {
             this.index = index;
-            j = index != null ? index : 0;
             this.lcache = timelineCache.caches.get(className);
-            this.lcacheIndexes = timelineCache.cachesIndexes.get(className);
+            this.lcacheIndexes = timelineCache.getCachesIndexes(className);
             positions=this.lcacheIndexes.entrySet().iterator();
             this.timelineCache = timelineCache;
             this.lcacheSfis = lcacheSfis;
@@ -293,8 +289,8 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                     if(index==null) {
                         index=0;
                     }
-                    if (index + i < lcache.length) {
-                        lastHasNext = lcache[index + i];
+                    if (index + cacheCurrentIndex < lcache.length) {
+                        lastHasNext = lcache[index + cacheCurrentIndex];
                         if(lastHasNext!=null) {
                             lcacheSfis.seek(positionEntry.getKey());
                             positionEntry = positions.next();
@@ -307,14 +303,14 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                     long curpos = lcacheSfis.position();
                     lastHasNext = cp.loadNextEntry(lcacheDis);
                     countRead++;
-                    if (lcache != null) {
-                        lcache[index + i]=lastHasNext;
-                        lcacheIndexes.put(curpos, index + i);
-                        i++;
+                    if (lcache != null && useCache) {
+                        lcache[index + cacheCurrentIndex]=lastHasNext;
+                        lcacheIndexes.put(curpos, index + cacheCurrentIndex);
+                        cacheCurrentIndex++;
                     }
                 }else {
                     countCache++;
-                    i++;
+                    cacheCurrentIndex++;
                 }
                 if(startDate==null) {
                     startDate=lastHasNext.date;
@@ -349,13 +345,16 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                 String ev = (String) ((Class) iterator.next()).getSimpleName();
                 File f = monthIndexCacheFiles.get(ev);
                 TreeMap<Date, Long> datesPos = new TreeMap<Date, Long>();
+                TreeMap<Long, Integer> positionsIndexes = timelineCache.getCachesIndexes(ev);
                 if (f.exists()) {
-                    cp.loadMonthIndex(ev, datesPos);
+                    cp.loadMonthIndex(ev, datesPos, positionsIndexes);
+                    monthIndex.put(ev, datesPos);
                 } else {
                     Date lastMonth = null;
                     int internalCount = 0;
                     long lastPos;
                     Calendar c = (Calendar) Calendar.getInstance().clone();
+                    
 
                     Iterator<CacheTimePeriodEntry> i = iterator(ev, null, null);
                     try {
@@ -364,6 +363,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                         e1.printStackTrace();
                         return;
                     }
+                    int ctIndex=0;
                     while (i.hasNext()) {
                         CacheTimePeriodEntry ct = i.next();
                         c.clear();
@@ -380,7 +380,10 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                             lastMonth = month;
                             internalCount = 0;
                             datesPos.put(month, lastPos);
+                            positionsIndexes.put(lastPos, ctIndex);
                         }
+                        
+                        ctIndex++;
 
                         try {
                             lastPos = cacheSfis.get(ev).position();
@@ -389,9 +392,9 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                             e.printStackTrace();
                         }
                     }
+                    monthIndex.put(ev, datesPos);
+                    cp.saveMonthIndex(monthIndex, positionsIndexes, ev);
                 }
-                monthIndex.put(ev, datesPos);
-                cp.saveMonthIndex(monthIndex, ev);
             }
         }
     }

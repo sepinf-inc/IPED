@@ -68,15 +68,22 @@ public class TimelineCache {
         if (cache == null) {
             cache = new CacheTimePeriodEntry[size];
             caches.put(className, cache);
-            TreeMap<Long, Integer> cacheIndex;
-            cacheIndex = new TreeMap<Long, Integer>();
-            this.cachesIndexes.put(className, cacheIndex);
         }
 
         return cache;
     }
 
+    /* returns the index in the cache of the entry in the especified file position */
     public Integer getIndex(String className, long pos) {
         return cachesIndexes.get(className).get(pos);
+    }
+
+    public TreeMap<Long, Integer> getCachesIndexes(String className) {
+        TreeMap<Long, Integer> cacheIndex = this.cachesIndexes.get(className);
+        if(cacheIndex==null) {
+            cacheIndex = new TreeMap<Long, Integer>();
+            this.cachesIndexes.put(className, cacheIndex);
+        }
+        return cacheIndex;
     }
 }
