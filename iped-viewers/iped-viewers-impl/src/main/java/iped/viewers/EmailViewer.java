@@ -315,7 +315,7 @@ public class EmailViewer extends HtmlLinkViewer {
                     if (externalAttach) {
                         query = BasicProps.PATH + ":\"Attachments/" + externalAttachFolder + "\" && " + BasicProps.NAME + ":\"" + attach.name + "\"";
                         List<IItem> items = attachSearcher.getItems(query);
-                        attachNotFound = items == null;
+                        attachNotFound = items.isEmpty();
                         if (attachNotFound) {
                             text += attach.name + " <em>" + Messages.getString("EmailViewer.NotFound") + "</em><br>";
                         } else {

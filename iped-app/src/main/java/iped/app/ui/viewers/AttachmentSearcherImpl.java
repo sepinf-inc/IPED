@@ -3,9 +3,11 @@ package iped.app.ui.viewers;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.lucene.util.BytesRef;
 
 import com.zaxxer.sparsebits.SparseBitSet;
@@ -19,7 +21,6 @@ import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
 import iped.properties.BasicProps;
 import iped.viewers.api.AttachmentSearcher;
-import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 
 public class AttachmentSearcherImpl implements AttachmentSearcher {
 
@@ -62,8 +63,6 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, luceneQuery);
         try {
             MultiSearchResult result = searcher.multiSearch();
-            if (result.getLength() == 0)
-                return null;
             List<IItem> items = new ArrayList<>();
             for (int i = 0; i < result.getLength(); i++) {
                 IItemId item = result.getItem(i);
@@ -75,7 +74,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
             e.printStackTrace();
         }
 
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
