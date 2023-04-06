@@ -266,7 +266,6 @@ public class CachePersistance {
             dos.writeShort(0);
             dos.writeUTF(timeStampCache.getCacheTimeZone().getID());
             dos.writeInt(entry.size());
-            dos.flush();
             for (int i = 0; i < entry.size(); i++) {
                 CacheTimePeriodEntry ct = entry.get(i);
                 dos.writeLong(ct.date.getTime());
@@ -339,7 +338,6 @@ public class CachePersistance {
             ce.event = eventName;
             
             if(this.bitstreamSerialize) {
-                ObjectInputStream ois = new ObjectInputStream(dis);
                 ce.docIds = new RoaringBitmap();
                 ce.docIds.deserialize(dis);
             }else {
