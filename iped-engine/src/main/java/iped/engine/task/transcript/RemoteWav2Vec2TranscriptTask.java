@@ -15,6 +15,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +27,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.io.TemporaryResources;
 
+import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
+import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.core.Manager;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.transcript.RemoteWav2Vec2Service.MESSAGES;
 import iped.exception.IPEDException;
@@ -37,8 +41,6 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static Logger logger = LogManager.getLogger(Wav2Vec2TranscriptTask.class);
 
     private static final int MAX_CONNECT_ERRORS = 60;
-
-    private static final int RETRY_INTERVAL_MILLIS = 100;
 
     private static final int UPDATE_SERVERS_INTERVAL_MILLIS = 60000;
 
@@ -66,6 +68,14 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         }
     }
 
+    // See https://github.com/sepinf-inc/IPED/issues/1576
+    private int getRetryIntervalMillis() {
+        // This depends on how much time worker nodes need to consume their queue.
+        // Of course audios duration, nodes queue size and performance affect this.
+        // This tries to be fair with clients independent of their number of threads.
+        return Manager.getInstance().getNumWorkers() * 100;
+    }
+
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
 
@@ -76,6 +86,32 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         }
         
         if (!servers.isEmpty()) {
+            return;
+        }
+
+        boolean disable = false;
+        if (transcriptConfig.getWav2vec2Service() == null) {
+            String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+            if (ipedRoot != null) {
+                Path path = new File(ipedRoot, "conf/" + AudioTranscriptConfig.CONF_FILE).toPath();
+                configurationManager.getConfigurationDirectory().addPath(path);
+                configurationManager.addObject(transcriptConfig);
+                configurationManager.loadConfig(transcriptConfig);
+                // maybe user changed installation configs
+                if (transcriptConfig.getWav2vec2Service() == null) {
+                    disable = true;
+                } else {
+                    transcriptConfig.setEnabled(true);
+                    transcriptConfig.setClassName(this.getClass().getName());
+                }
+            } else {
+                disable = true;
+            }
+        }
+        
+        if (disable) {
+            transcriptConfig.setEnabled(false);
+            logger.warn("Remote transcription module disabled, service address not configured.");
             return;
         }
 
@@ -93,11 +129,10 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         try (Socket client = new Socket(ip, port);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-                PrintWriter writer = new PrintWriter(
-                        new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
+                PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
 
+            client.setSoTimeout(10000);
             writer.println(MESSAGES.DISCOVER);
-
             int numServers = Integer.parseInt(reader.readLine());
             List<Server> servers = new ArrayList<>();
             for (int i = 0; i < numServers; i++) {
@@ -108,10 +143,8 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 servers.add(server);
                 logger.info("Transcription server discovered: {}:{}", server.ip, server.port);
             }
-            if (!servers.isEmpty()) {
-                RemoteWav2Vec2TranscriptTask.servers = servers;
-                lastUpdateServersTime = System.currentTimeMillis();
-            }
+            RemoteWav2Vec2TranscriptTask.servers = servers;
+            lastUpdateServersTime = System.currentTimeMillis();
         } catch (ConnectException e) {
             String msg = "Central transcription node refused connection, is it online? " + e.toString();
             if (servers.isEmpty()) {
@@ -262,8 +295,8 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     }
 
-    private static void sleepBeforeRetry(long lastRequestTime) throws InterruptedException {
-        long sleep = RETRY_INTERVAL_MILLIS - (System.currentTimeMillis() - lastRequestTime);
+    private void sleepBeforeRetry(long lastRequestTime) throws InterruptedException {
+        long sleep = getRetryIntervalMillis() - (System.currentTimeMillis() - lastRequestTime);
         if (sleep > 0) {
             Thread.sleep(sleep);
         }

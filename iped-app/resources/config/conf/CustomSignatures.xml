@@ -35,7 +35,20 @@
      	</magic>
         <glob pattern="*.cdr"/>
     </mime-type>
-
+    
+    <mime-type type="image/x-corelphotopaint">
+    	<magic priority="60">
+          <match value="CPTFILE" type="string" offset="0" />
+          <match value="CPT9FILE" type="string" offset="0" />
+     	</magic>
+    </mime-type>
+    
+    <mime-type type="image/vnd.radiance">
+    	<magic priority="40">
+          <match value="#?RADIANCE" type="string" offset="0" />
+     	</magic>
+    </mime-type>
+        
 	<mime-type type="application/x-superfetch">
 		<_comment>Windows EVT Log</_comment>
     	<magic priority="40">
@@ -314,7 +327,7 @@
     
     <mime-type type="application/x-whatsapp-wadb">
         <sub-class-of type="application/x-sqlite3"/>
-        <glob pattern="wa*.db"/>
+        <glob pattern="wa.db"/>
     </mime-type>
     
     <mime-type type="application/x-whatsapp-contactsv2">
@@ -1221,6 +1234,59 @@
     </mime-type>
     
     <mime-type type="application/x-win10-timeline-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript">     
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="EventTranscript.db"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-history">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-history-registry">     
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-inventory-app">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-inventory-app-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-app-interactivity">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-app-interactivity-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-devices">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-devices-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-census">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-event-transcript-census-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-networking">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-networking-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
     

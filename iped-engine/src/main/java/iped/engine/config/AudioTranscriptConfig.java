@@ -14,7 +14,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
      * 
      */
     private static final long serialVersionUID = 1L;
-    private static final String CONF_FILE = "AudioTranscriptConfig.txt";
+    public static final String CONF_FILE = "AudioTranscriptConfig.txt";
     private static final String ENABLE_KEY = "enableAudioTranscription";
     private static final String IMPL_CLASS_KEY = "implementationClass";
     private static final String REGION_KEY = "serviceRegion";
@@ -36,7 +36,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private List<String> mimesToProcess = new ArrayList<>();
     private String className;
     private String serviceRegion;
-    private int minTimeout = 60; // seconds
+    private int minTimeout = 180; // seconds
     private int timeoutPerSec = 3; // seconds
     private String convertCmd;
     private int requestIntervalMillis = 0;
@@ -73,6 +73,10 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
     public String getClassName() {
         return className;
+    }
+
+    public void setClassName(String clazz) {
+        this.className = clazz;
     }
 
     public int getTimeoutPerSec() {
@@ -133,7 +137,6 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         className = properties.getProperty(IMPL_CLASS_KEY).trim();
         serviceRegion = properties.getProperty(REGION_KEY).trim();
         convertCmd = properties.getProperty(CONVERT_CMD_KEY).trim();
-        timeoutPerSec = Integer.valueOf(properties.getProperty(TIMEOUT_PER_SEC_KEY).trim());
         requestIntervalMillis = Integer.valueOf(properties.getProperty(REQUEST_INTERVAL_KEY).trim());
         maxConcurrentRequests = Integer.valueOf(properties.getProperty(MAX_REQUESTS_KEY).trim());
         minWordScore = Float.valueOf(properties.getProperty(MIN_WORD_SCORE).trim());
@@ -157,6 +160,10 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         String value = properties.getProperty(MIN_TIMEOUT_KEY);
         if (value != null) {
             minTimeout = Integer.valueOf(value.trim());
+        }
+        value = properties.getProperty(TIMEOUT_PER_SEC_KEY);
+        if (value != null) {
+            timeoutPerSec = Integer.valueOf(value.trim());
         }
     }
 
