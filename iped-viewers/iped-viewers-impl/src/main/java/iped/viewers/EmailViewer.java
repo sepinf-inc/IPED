@@ -72,8 +72,8 @@ public class EmailViewer extends HtmlLinkViewer {
     MailContentHandler mch;
     MimeStreamParser parser;
 
+    private IItem lastItem;
     private boolean externalAttach;
-    private String externalAttachFolder;
 
     public EmailViewer(AttachmentSearcher attachSearcher) {
         super(attachSearcher);
@@ -99,8 +99,8 @@ public class EmailViewer extends HtmlLinkViewer {
             return;
         }
 
-        externalAttach = ((IItem) content).getName().endsWith("partial.emlx");
-        externalAttachFolder = ((IItem) content).getName().split("\\.")[0];
+        lastItem = (IItem) content;
+        externalAttach = lastItem.getName().endsWith(".partial.emlx");
 
         if (mch != null) {
             mch.deleteFiles();
@@ -313,7 +313,11 @@ public class EmailViewer extends HtmlLinkViewer {
                     String query;
                     boolean attachNotFound;
                     if (externalAttach) {
-                        query = BasicProps.PATH + ":\"Attachments/" + externalAttachFolder + "\" && " + BasicProps.NAME + ":\"" + attach.name + "\"";
+                        List<String> pathParts = Arrays.asList(lastItem.getPath().split("/"));
+                        String externalAttachFolder = lastItem.getName().split("\\.")[0];
+                        String pathPrefix = String.join("/", pathParts.subList(0, pathParts.size() - 2));
+
+                        query = BasicProps.PATH + ":\"" + pathPrefix + "/Attachments/" + externalAttachFolder + "\" && " + BasicProps.NAME + ":\"" + attach.name + "\"";
                         List<IItem> items = attachSearcher.getItems(query);
                         attachNotFound = items.isEmpty();
                         if (attachNotFound) {

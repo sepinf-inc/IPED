@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -214,12 +215,14 @@ public class RFC822Parser extends AbstractParser {
                         if (itemInfo != null) {
                             mailPath = itemInfo.getPath();
                             mailPath = mailPath.replaceAll("\\\\", "/").toLowerCase();
-                            externalAttach = mailPath.endsWith("partial.emlx");
+                            externalAttach = mailPath.endsWith(".partial.emlx");
                         }
                         if (externalAttach) {
-                            String externalAttachFolder = mailPath.split("/")[mailPath.split("/").length - 1].split("\\.")[0];
+                            List<String> pathParts = Arrays.asList(mailPath.split("/"));
+                            String externalAttachFolder = pathParts.get(pathParts.size() - 1).split("\\.")[0];
+                            String pathPrefix = String.join("/", pathParts.subList(0, pathParts.size() - 2));
 
-                            String query = BasicProps.PATH + ":\"Attachments/" + externalAttachFolder + "\" && " + BasicProps.NAME + ":\"" + attachName + "\"";
+                            String query = BasicProps.PATH + ":\"" + pathPrefix + "/Attachments/" + externalAttachFolder + "\" && " + BasicProps.NAME + ":\"" + attachName + "\"";
                             metadata.add(ExtraProperties.LINKED_ITEMS, query);
                         } else {
                             extractor.parseEmbedded(is, handler, submd, true);
