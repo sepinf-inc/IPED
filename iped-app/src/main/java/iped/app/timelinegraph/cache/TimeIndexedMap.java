@@ -256,7 +256,6 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
             this.index = index;
             this.lcache = timelineCache.caches.get(className);
             this.lcacheIndexes = timelineCache.getCachesIndexes(className);
-            positions=this.lcacheIndexes.entrySet().iterator();
             this.timelineCache = timelineCache;
             this.lcacheSfis = lcacheSfis;
             this.lcacheDis = lcacheDis;
@@ -264,6 +263,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
             this.className = className;
             this.useCache = this.lcache != null;
 
+            positions=this.lcacheIndexes.entrySet().iterator();
             if(positions!=null) {
                 try {
                     positionEntry = positions.next();
@@ -292,8 +292,24 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                     if (index + cacheCurrentIndex < lcache.length) {
                         lastHasNext = lcache[index + cacheCurrentIndex];
                         if(lastHasNext!=null) {
-                            lcacheSfis.seek(positionEntry.getKey());
-                            positionEntry = positions.next();
+                            if(positions!=null) {
+                                lcacheSfis.seek(positionEntry.getKey());
+                                positionEntry = positions.next();
+                            }else {
+                                positions=this.lcacheIndexes.entrySet().iterator();
+                                if(positions!=null) {
+                                    try {
+                                        positionEntry = positions.next();
+                                        while(positionEntry.getValue()!=(index+cacheCurrentIndex) && index!=null) {
+                                            positionEntry=positions.next();
+                                        }
+                                        lcacheSfis.seek(positionEntry.getKey());
+                                        positionEntry=positions.next();
+                                    }catch(NoSuchElementException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
                         }
                     } else {
                         return finish();
@@ -306,6 +322,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                     if (lcache != null && useCache) {
                         lcache[index + cacheCurrentIndex]=lastHasNext;
                         lcacheIndexes.put(curpos, index + cacheCurrentIndex);
+                        positions=null;
                         cacheCurrentIndex++;
                     }
                 }else {
@@ -320,6 +337,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
             } catch (IOException e) {
                 return finish();
             } catch (Exception e) {
+                e.printStackTrace();
                 return finish();
             }
 
