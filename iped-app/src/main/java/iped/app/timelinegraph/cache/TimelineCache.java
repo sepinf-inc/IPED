@@ -1,10 +1,11 @@
 package iped.app.timelinegraph.cache;
 
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 
 public class TimelineCache {
@@ -14,7 +15,13 @@ public class TimelineCache {
 
     HashMap<String, TreeMap<Long, Integer>> cachesIndexes = new HashMap<String, TreeMap<Long, Integer>>();
     HashMap<String, CacheTimePeriodEntry[]> caches = new HashMap<String, CacheTimePeriodEntry[]>();
+    HashMap<String, Reference<CacheTimePeriodEntry>[]> softCaches = new HashMap<String, Reference<CacheTimePeriodEntry>[]>();
     String lastCachePeriod = null;
+    
+    static HashSet<String> neverUnloadCache = new HashSet<String>();
+    static {
+        //neverUnloadCache.add("Day");
+    }
 
     static TimelineCache singleton = new TimelineCache();
 
@@ -26,7 +33,7 @@ public class TimelineCache {
     }
 
     public void clean(String period, Date startDate, Date endDate) {
-        if(!period.equals("Day")) {
+        if(!neverUnloadCache.contains(period)) {
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
@@ -52,7 +59,7 @@ public class TimelineCache {
     }
 
     public void cleanPeriod(String period) {
-        if(!period.equals("Day")) {
+        if(!neverUnloadCache.contains(period)) {
             CacheTimePeriodEntry[] cache = caches.get(period);
             if (cache != null) {
                 for (int i = 0; i < cache.length; i++) {
@@ -74,6 +81,10 @@ public class TimelineCache {
         if (cache == null) {
             cache = new CacheTimePeriodEntry[size];
             caches.put(className, cache);
+            if(hasSoftCacheFor(className)) {
+                SoftReference<CacheTimePeriodEntry>[] softCache = new SoftReference[size];
+                softCaches.put(className, softCache);
+            }
         }
 
         return cache;
@@ -91,5 +102,9 @@ public class TimelineCache {
             this.cachesIndexes.put(className, cacheIndex);
         }
         return cacheIndex;
+    }
+
+    public boolean hasSoftCacheFor(String className) {
+        return className.equals("Day")||className.equals("Week")||className.equals("Month");
     }
 }

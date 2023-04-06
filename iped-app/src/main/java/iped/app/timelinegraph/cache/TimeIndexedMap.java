@@ -5,6 +5,8 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -13,7 +15,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.TreeMap;
 
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
@@ -251,10 +252,13 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         int countCache=0;
         Iterator<Entry<Long,Integer>> positions;
         private Entry<Long, Integer> positionEntry;
+        private Reference<CacheTimePeriodEntry>[] lsoftcache;
+        boolean hasSoftCache = false;
 
         public ResultIterator(Integer index, TimelineCache timelineCache, SeekableFileInputStream lcacheSfis, CacheDataInputStream lcacheDis, Date endDate, String className) {
             this.index = index;
             this.lcache = timelineCache.caches.get(className);
+            this.lsoftcache=timelineCache.softCaches.get(className);
             this.lcacheIndexes = timelineCache.getCachesIndexes(className);
             this.timelineCache = timelineCache;
             this.lcacheSfis = lcacheSfis;
@@ -262,6 +266,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
             this.endDate = endDate;
             this.className = className;
             this.useCache = this.lcache != null;
+            this.hasSoftCache = timelineCache.hasSoftCacheFor(className);
 
             positions=this.lcacheIndexes.entrySet().iterator();
             if(positions!=null) {
@@ -291,6 +296,16 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                     }
                     if (index + cacheCurrentIndex < lcache.length) {
                         lastHasNext = lcache[index + cacheCurrentIndex];
+                        if(lastHasNext==null && lsoftcache!=null) {
+                            //try the soft reference cache
+                            Reference<CacheTimePeriodEntry> softRef = lsoftcache[index + cacheCurrentIndex];
+                            if(softRef!=null) {
+                                lastHasNext = softRef.get();
+                                if(lastHasNext!=null) {
+                                    lcache[index + cacheCurrentIndex] = lastHasNext; 
+                                }
+                            }
+                        }
                         if(lastHasNext!=null) {
                             if(positions!=null) {
                                 lcacheSfis.seek(positionEntry.getKey());
@@ -321,6 +336,9 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                     countRead++;
                     if (lcache != null && useCache) {
                         lcache[index + cacheCurrentIndex]=lastHasNext;
+                        if(hasSoftCache) {
+                            lsoftcache[index + cacheCurrentIndex]=new SoftReference<CacheTimePeriodEntry>(lastHasNext);
+                        }
                         lcacheIndexes.put(curpos, index + cacheCurrentIndex);
                         positions=null;
                         cacheCurrentIndex++;
