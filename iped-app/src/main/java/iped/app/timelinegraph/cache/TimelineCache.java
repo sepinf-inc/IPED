@@ -51,15 +51,21 @@ public class TimelineCache {
         caches.clear();
     }
 
+    public void cleanPeriod(String period) {
+        if(!period.equals("Day")) {
+            CacheTimePeriodEntry[] cache = caches.get(period);
+            if (cache != null) {
+                for (int i = 0; i < cache.length; i++) {
+                    cache[i] = null;// old cache entry eligible to garbage collection
+                }
+            }
+        }
+    }
+    
     public CacheTimePeriodEntry[] get(String className, int size) {
         if (!className.equals(lastCachePeriod)) {
             if (lastCachePeriod != null) {
-                CacheTimePeriodEntry[] cache = caches.get(lastCachePeriod);
-                if (cache != null) {
-                    for (int i = 0; i < cache.length; i++) {
-                        cache[i] = null;// old cache entry eligible to garbage collection
-                    }
-                }
+                cleanPeriod(lastCachePeriod);
             }
             lastCachePeriod = className;
         }
