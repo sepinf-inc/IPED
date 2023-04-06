@@ -172,6 +172,12 @@
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-rest-high-level-client</artifactId>
             <version>2.1.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.minio</groupId>
@@ -214,6 +220,12 @@
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>pdfbox</artifactId>
   			<version>${pdfbox.version}</version>
+  			<exclusions>
+  			    <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+  			</exclusions>
 		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
@@ -224,6 +236,12 @@
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>xmpbox</artifactId>
   			<version>${pdfbox.version}</version>
+  			<exclusions>
+  			    <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+  			</exclusions>
 		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
@@ -274,6 +292,10 @@
                     <groupId>javax.xml.bind</groupId>
                     <artifactId>jaxb-api</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 		<dependency>
@@ -307,6 +329,12 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parser-nlp-module</artifactId>
             <version>${tika.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
          </dependency>
      </dependencies>
 </project>

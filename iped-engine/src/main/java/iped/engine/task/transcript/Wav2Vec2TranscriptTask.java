@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.utils.Charsets;
 
+import iped.configuration.IConfigurationDirectory;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
@@ -56,13 +57,6 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         return cpu.getPhysicalPackageCount();
     }
 
-    public static int getNumLogicalCoresPerProcess() {
-        SystemInfo si = new SystemInfo();
-        HardwareAbstractionLayer hal = si.getHardware();
-        CentralProcessor cpu = hal.getProcessor();
-        return cpu.getLogicalProcessorCount() / numProcesses;
-    }
-
     protected static int getNumConcurrentTranscriptions() {
         if (numProcesses == null) {
             throw new RuntimeException("'numProcesses' variable still not initialized");
@@ -97,7 +91,10 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             return null;
         }
         ProcessBuilder pb = new ProcessBuilder();
-        String ipedRoot = Configuration.getInstance().appRoot;
+        String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+        if (ipedRoot == null) {
+            ipedRoot = Configuration.getInstance().appRoot;
+        }
         String python = SystemUtils.IS_OS_WINDOWS ? ipedRoot + "/python/python.exe" : "python3";
         String script = ipedRoot + SCRIPT_PATH;
         String model = super.transcriptConfig.getHuggingFaceModel();

@@ -863,6 +863,7 @@ public class Manager {
                     if (file.isDirectory()) {
                         IOUtil.copyDirectory(file, dest); // $NON-NLS-1$ //$NON-NLS-2$
                     } else {
+                        dest.getParentFile().mkdirs();
                         IOUtil.copyFile(file, dest);
                     }
                 }

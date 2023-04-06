@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.net.NoRouteToHostException;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,6 +33,7 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import iped.configuration.Configurable;
+import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
@@ -40,6 +42,7 @@ import iped.engine.io.TimeoutException;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.video.VideoThumbTask;
+import iped.exception.IPEDException;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
 
@@ -59,7 +62,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     protected static final int TIMEOUT_PER_MB = 100;
 
-    protected static final int MIN_TIMEOUT = 10;
+    protected static int MIN_TIMEOUT = 180;
 
     protected static final int WAV_BYTES_PER_SEC = 16000 * 2; // 16khz sample rate and 16bits per sample
 
@@ -176,6 +179,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
 
         transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
+        MIN_TIMEOUT = transcriptConfig.getMinTimeout();
 
         // clear default config service address in output
         this.transcriptConfig.clearTranscriptionServiceAddress(output);
@@ -251,7 +255,11 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         String[] cmd = transcriptConfig.getConvertCmd().split(" ");
         if (SystemUtils.IS_OS_WINDOWS) {
             String mplayerWin = VideoThumbTask.MPLAYER_WIN_PATH;
-            cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + mplayerWin);
+            String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+            if (ipedRoot == null) {
+                ipedRoot = Configuration.getInstance().appRoot;
+            }
+            cmd[0] = cmd[0].replace("mplayer", ipedRoot + "/" + mplayerWin);
         }
         for (int i = 0; i < cmd.length; i++) {
             cmd[i] = cmd[i].replace("$INPUT", input.getAbsolutePath());
@@ -264,7 +272,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         pb.redirectErrorStream(true);
         Process p = pb.start();
         IOUtil.ignoreInputStream(p.getInputStream());
-        long timeoutSecs = MIN_TIMEOUT + TIMEOUT_PER_MB * input.length() / (1 << 20);
+        long timeoutSecs = MIN_TIMEOUT / 3 + TIMEOUT_PER_MB * input.length() / (1 << 20);
         boolean finished = p.waitFor(timeoutSecs, TimeUnit.SECONDS);
         if (!finished) {
             LOGGER.warn("Timeout after {}s converting to wav: {}", timeoutSecs, itemPath);
@@ -293,7 +301,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
         }
         if (!finished) {
-            throw new TimeoutException();
+            throw new TimeoutException("Timeout while converting audio to wav.");
         }
         return tmpFile;
     }
@@ -321,8 +329,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             LOGGER.info("Successful transcriptions: " + transcriptionSuccess.intValue());
             LOGGER.info("Failed transcriptions: " + transcriptionFail.intValue());
             LOGGER.info("Total transcription output characters: " + transcriptionChars.longValue());
-            LOGGER.info(
-                    "Average transcription time (ms/audio): " + (transcriptionTime.longValue() / totTranscriptions));
+            LOGGER.info("Average transcription time (ms/audio): " + (transcriptionTime.longValue() / (totTranscriptions)));
+            LOGGER.info("Total transcription throughput (audios/s): " + (1000 * this.worker.manager.getNumWorkers() * totTranscriptions / transcriptionTime.longValue()));
             transcriptionSuccess.set(0);
             transcriptionFail.set(0);
         }
@@ -396,10 +404,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
 
         } catch (Exception e) {
-            if (e instanceof TooManyConnectException) {
+            if (e instanceof TooManyConnectException || e instanceof IPEDException || e instanceof NoRouteToHostException) {
                 throw e;
             }
-            LOGGER.warn("Unexpected exception while transcribing: " + evidence.getPath(), e);
+            LOGGER.error("Unexpected exception while transcribing: " + evidence.getPath(), e);
         } finally {
             tmp.close();
         }

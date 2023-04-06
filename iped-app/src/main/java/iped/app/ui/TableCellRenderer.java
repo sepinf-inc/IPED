@@ -32,46 +32,45 @@ import iped.engine.task.index.IndexItem;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+            int row, int column) {
 
-        DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
         int idx = table.convertRowIndexToModel(row);
         int col = table.convertColumnIndexToModel(column);
         String localizedNameProp = iped.localization.LocalizedProperties.getLocalizedField(IndexItem.NAME);
         String colName = table.getModel().getColumnName(col);
 
-        if (table.getModel() instanceof SearchResultTableModel && (colName.equalsIgnoreCase(IndexItem.NAME) || colName.equalsIgnoreCase(localizedNameProp))) {
+        if (table.getModel() instanceof SearchResultTableModel
+                && (colName.equalsIgnoreCase(IndexItem.NAME) || colName.equalsIgnoreCase(localizedNameProp))) {
             try {
                 IItemId item = ((SearchResultTableModel) table.getModel()).getSearchResult().getItem(idx);
                 int docId = App.get().appCase.getLuceneId(item);
                 Document doc = App.get().appCase.getSearcher().doc(docId);
                 if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
-                    result.setIcon(IconManager.FOLDER_ICON);
-                } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
-                    result.setIcon(IconManager.DISK_ICON);
+                    setIcon(IconManager.getFolderIcon());
                 } else {
                     String type = doc.get(IndexItem.TYPE);
                     String contentType = doc.get(IndexItem.CONTENTTYPE);
-                    Icon icon = IconManager.getFileIcon(contentType, type);
-                    result.setIcon(icon);
+                    Icon icon = Boolean.valueOf(doc.get(IndexItem.ISROOT))
+                            ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon())
+                            : IconManager.getFileIcon(contentType, type);
+                    setIcon(icon);
                 }
 
             } catch (IOException e) {
-                result.setIcon(null);
+                setIcon(null);
             }
 
         } else {
-            result.setIcon(null);
+            setIcon(null);
         }
 
-        return result;
+        return this;
     }
 
 }
