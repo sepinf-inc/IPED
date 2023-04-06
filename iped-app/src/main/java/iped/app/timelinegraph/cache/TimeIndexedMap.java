@@ -309,7 +309,9 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                         if(lastHasNext!=null) {
                             if(positions!=null) {
                                 lcacheSfis.seek(positionEntry.getKey());
-                                positionEntry = positions.next();
+                                if(positions.hasNext()) {
+                                    positionEntry = positions.next();
+                                }
                             }else {
                                 positions=this.lcacheIndexes.entrySet().iterator();
                                 if(positions!=null) {
