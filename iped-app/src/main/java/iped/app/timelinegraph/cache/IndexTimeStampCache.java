@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -21,6 +22,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
+import org.jfree.data.time.Day;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
@@ -160,6 +162,20 @@ public class IndexTimeStampCache implements TimeStampCache {
                     newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
                 }
                 newCache.createOrLoadDayIndex(this);
+                
+                if(periodClassesToCache.contains(Day.class)) {
+                    //iterate over day cache to force soft references cache
+                    Thread t  = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Iterator it = newCache.iterator("Day", null, null);
+                            while(it.hasNext()) {
+                                it.next();
+                            }
+                        }
+                    });
+                    t.start();
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
