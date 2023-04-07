@@ -223,11 +223,21 @@ public class RemoteWav2Vec2Service {
                             writer = new PrintWriter(
                                     new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);
 
-                            writer.println(MESSAGES.ACCEPTED);
-                            requestsAccepted.incrementAndGet();
+
+
 
                             String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
                             String prefix = clientName + " - ";
+
+                            bis.mark(5);
+                            if (bis.read() == -1) {
+                                logger.info(prefix + "Kubernetes live test");
+                                return;
+                            }
+                            bis.reset();
+
+                            writer.println(MESSAGES.ACCEPTED);
+                            requestsAccepted.incrementAndGet();
 
                             logger.info(prefix + "Accepted connection.");
 
