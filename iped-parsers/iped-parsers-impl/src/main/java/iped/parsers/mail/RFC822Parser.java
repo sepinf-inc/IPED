@@ -231,11 +231,11 @@ public class RFC822Parser extends AbstractParser {
                             List<IItemReader> attachs = searcher.search(query);
                             for (IItemReader attach : attachs) {
                                 // ignore folders, slacks and subitems
-                                if (attach.isDir() || "slack".equals(attach.getType()) || attach.getPath().replace('\\', '/').replace(pathPrefix, "").contains(">>")) {
+                                if (attach.isDir() || "slack".equals(attach.getType()) || attach.getPath().replace('\\', '/').replaceFirst(pathPrefix, "").contains(">>")) {
                                     continue;
                                 }
                                 // use hash so ReferencedBy tab works
-                                metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + attach.getHash() + " && " + BasicProps.ID + ":" + attach.getId());
+                                metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + attach.getHash() + " && " + BasicProps.PATH + ":\"" + "Attachments\\/" + mailNumber + "\"");
                             }
                         } else {
                             extractor.parseEmbedded(is, handler, submd, true);
