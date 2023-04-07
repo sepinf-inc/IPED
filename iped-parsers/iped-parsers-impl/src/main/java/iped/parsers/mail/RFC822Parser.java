@@ -63,6 +63,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
@@ -70,6 +71,7 @@ import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.Util;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
+import iped.search.IItemSearcher;
 
 /**
  * Uses apache-mime4j to parse emails. Each part is treated with the
@@ -89,6 +91,8 @@ public class RFC822Parser extends AbstractParser {
     private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
 
     public static final MediaType RFC822_MAC_MIME = MediaType.parse("message/x-rfc822-mac");
+    public static final MediaType RFC822_PARTIAL0_MIME = MediaType.parse("message/rfc822-partial");
+    public static final MediaType RFC822_PARTIAL1_MIME = MediaType.parse("message/x-emlx-partial");
 
     private static Set<MediaType> getTypes() {
         HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
@@ -178,6 +182,7 @@ public class RFC822Parser extends AbstractParser {
             parser.setRecurse();
 
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, embeddedParser);
+            IItemSearcher searcher = context.get(IItemSearcher.class);
 
             // use a different metadata object
             // in order to specify the mime type of the
@@ -214,16 +219,24 @@ public class RFC822Parser extends AbstractParser {
                         String mailPath = "";
                         if (itemInfo != null) {
                             mailPath = itemInfo.getPath();
-                            mailPath = mailPath.replaceAll("\\\\", "/").toLowerCase();
+                            mailPath = mailPath.replace("\\", "/").toLowerCase();
                             externalAttach = mailPath.endsWith(".partial.emlx");
                         }
-                        if (externalAttach) {
+                        if (externalAttach && searcher != null && metadata.get(ExtraProperties.LINKED_ITEMS) == null) {
                             List<String> pathParts = Arrays.asList(mailPath.split("/"));
-                            String externalAttachFolder = pathParts.get(pathParts.size() - 1).split("\\.")[0];
+                            String mailNumber = pathParts.get(pathParts.size() - 1).split("\\.")[0];
                             String pathPrefix = String.join("/", pathParts.subList(0, pathParts.size() - 2));
 
-                            String query = BasicProps.PATH + ":\"" + pathPrefix + "/Attachments/" + externalAttachFolder + "\" && " + BasicProps.NAME + ":\"" + attachName + "\"";
-                            metadata.add(ExtraProperties.LINKED_ITEMS, query);
+                            String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(pathPrefix + "/Attachments/" + mailNumber) + "\"";
+                            List<IItemReader> attachs = searcher.search(query);
+                            for (IItemReader attach : attachs) {
+                                // ignore folders, slacks and subitems
+                                if (attach.isDir() || "slack".equals(attach.getType()) || attach.getPath().replace('\\', '/').replace(pathPrefix, "").contains(">>")) {
+                                    continue;
+                                }
+                                // use hash so ReferencedBy tab works
+                                metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + attach.getHash() + " && " + BasicProps.ID + ":" + attach.getId());
+                            }
                         } else {
                             extractor.parseEmbedded(is, handler, submd, true);
                         }
