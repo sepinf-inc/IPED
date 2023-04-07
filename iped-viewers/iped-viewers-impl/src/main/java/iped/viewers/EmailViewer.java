@@ -10,10 +10,12 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.text.Collator;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -63,17 +65,27 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.utils.FileContentSource;
 import iped.utils.IOUtil;
+import iped.utils.SimpleHTMLEncoder;
 import iped.viewers.api.AttachmentSearcher;
 import iped.viewers.localization.Messages;
 import iped.viewers.util.LuceneSimpleHTMLEncoder;
 
 public class EmailViewer extends HtmlLinkViewer {
 
+    private static Collator collator = getCollator();
+
     MailContentHandler mch;
     MimeStreamParser parser;
 
     private IItem lastItem;
     private boolean externalAttach;
+
+    private static Collator getCollator() {
+        Collator c = Collator.getInstance();
+        c.setStrength(Collator.SECONDARY);
+        c.setDecomposition(Collator.FULL_DECOMPOSITION);
+        return c;
+    }
 
     public EmailViewer(AttachmentSearcher attachSearcher) {
         super(attachSearcher);
@@ -307,37 +319,32 @@ public class EmailViewer extends HtmlLinkViewer {
 
             int i = 0, count = 0;
             text = ""; //$NON-NLS-1$
-            List<String> sameNamePaths = new ArrayList<>();
+            List<IItem> items = Collections.emptyList();
+            if (externalAttach) {
+                String[] refs = lastItem.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
+                if (refs.length > 0) {
+                    items = attachSearcher.getItems("(" + String.join(") OR (", refs) + ")");
+                }
+            }
             for (AttachInfo attach : attachments.values()) {
                 if (attach.name != null) {
-                    String query;
-                    boolean attachNotFound;
                     if (externalAttach) {
-                        List<String> pathParts = Arrays.asList(lastItem.getPath().split("/"));
-                        String externalAttachFolder = lastItem.getName().split("\\.")[0];
-                        String pathPrefix = String.join("/", pathParts.subList(0, pathParts.size() - 2));
-
-                        query = BasicProps.PATH + ":\"" + pathPrefix + "/Attachments/" + externalAttachFolder + "\" && " + BasicProps.NAME + ":\"" + attach.name + "\"";
-                        List<IItem> items = attachSearcher.getItems(query);
-                        attachNotFound = items.isEmpty();
-                        if (attachNotFound) {
-                            text += attach.name + " <em>" + Messages.getString("EmailViewer.NotFound") + "</em><br>";
-                        } else {
-                            // handle multiple attachments with same name
-                            if (items.size() > 1) {
-                                for (int j = 0; j < items.size(); j++) {
-                                    String itemPath = items.get(j).getPath();
-                                    if (itemPath.endsWith(attach.name) && !sameNamePaths.contains(itemPath)) {
-                                        query = BasicProps.PATH + ":\"" + itemPath + "\"";
-                                        sameNamePaths.add(itemPath);
-                                        break;
-                                    }
-                                }
+                        String query = null;
+                        // handle multiple attachments with same name
+                        for (IItem item : items.toArray(new IItem[0])) {
+                            if (collator.compare(item.getName(), attach.name) == 0) {
+                                query = BasicProps.HASH + ":" + item.getHash();
+                                items.remove(item);
+                                break;
                             }
-                            text += "<a href=\"\" onclick=\"app.open('" + LuceneSimpleHTMLEncoder.htmlEncode(query) + "')\">" + attach.name + "</a><br>";
-                        }    
+                        }
+                        if (query != null) {
+                            text += "<a href=\"\" onclick=\"app.open('" + SimpleHTMLEncoder.htmlEncode(query) + "')\">" + SimpleHTMLEncoder.htmlEncode(attach.name) + "</a><br>";
+                        } else {
+                            text += SimpleHTMLEncoder.htmlEncode(attach.name) + " <em>" + Messages.getString("EmailViewer.NotFound") + "</em><br>";
+                        }
                     } else {
-                        text += "<a href=\"\" onclick=\"app.open(" + i + ")\">" + attach.name + "</a><br>";
+                        text += "<a href=\"\" onclick=\"app.open(" + i + ")\">" + SimpleHTMLEncoder.htmlEncode(attach.name) + "</a><br>";
                     }
                     count++;
                 }
