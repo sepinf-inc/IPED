@@ -601,6 +601,16 @@
       <sub-class-of type="text/x-tika-text-based-message"/>
     </mime-type>
     
+    <mime-type type="message/rfc822-partial">
+        <sub-class-of type="message/rfc822"/>
+        <glob pattern="*.partial.emlx"/>
+    </mime-type>
+    
+    <mime-type type="message/x-emlx-partial">
+        <sub-class-of type="message/x-emlx"/>
+        <glob pattern="*.PARTIAL.EMLX"/>
+    </mime-type>
+    
     <mime-type type="message/x-rfc822-mac">
       <magic priority="50">
         <match value="0xD00D0000010101000200000003000000" type="string" offset="0"/>
