@@ -13,6 +13,7 @@ import iped.parsers.ares.AresParser;
 import iped.parsers.discord.DiscordParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.emule.PartMetParser;
+import iped.parsers.mail.RFC822Parser;
 import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.python.PythonParser;
 import iped.parsers.shareaza.ShareazaLibraryDatParser;
@@ -85,6 +86,8 @@ public class QueuesProcessingOrder {
         mediaTypes.put(UsnJrnlParser.USNJRNL_$J, 2);
 
         mediaTypes.put(Win10MailParser.WIN10_MAIL_DB, 2);
+        mediaTypes.put(RFC822Parser.RFC822_PARTIAL0_MIME, 1);
+        mediaTypes.put(RFC822Parser.RFC822_PARTIAL1_MIME, 1);
 
         return mediaTypes;
     }
