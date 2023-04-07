@@ -78,7 +78,6 @@ public class EmailViewer extends HtmlLinkViewer {
     MimeStreamParser parser;
 
     private IItem lastItem;
-    private boolean externalAttach;
 
     private static Collator getCollator() {
         Collator c = Collator.getInstance();
@@ -112,7 +111,6 @@ public class EmailViewer extends HtmlLinkViewer {
         }
 
         lastItem = (IItem) content;
-        externalAttach = lastItem.getName().endsWith(".partial.emlx");
 
         if (mch != null) {
             mch.deleteFiles();
@@ -150,8 +148,8 @@ public class EmailViewer extends HtmlLinkViewer {
 
     public class AttachmentOpen extends FileHandler {
 
-        public void open(String item) {
-            if (externalAttach)
+        public void open(boolean external, String item) {
+            if (external)
                 externalAttachOpen(item);
             else {
                 internalAttachOpen(Integer.parseInt(item));
@@ -320,7 +318,8 @@ public class EmailViewer extends HtmlLinkViewer {
             int i = 0, count = 0;
             text = ""; //$NON-NLS-1$
             List<IItem> items = Collections.emptyList();
-            if (externalAttach) {
+            boolean isPartialEmlx = lastItem.getName().endsWith(".partial.emlx");
+            if (isPartialEmlx) {
                 String[] refs = lastItem.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                 if (refs.length > 0) {
                     items = attachSearcher.getItems("(" + String.join(") OR (", refs) + ")");
@@ -328,7 +327,9 @@ public class EmailViewer extends HtmlLinkViewer {
             }
             for (AttachInfo attach : attachments.values()) {
                 if (attach.name != null) {
-                    if (externalAttach) {
+                    if (!isPartialEmlx || (attach.tmpFile != null && attach.tmpFile.length() > 0)) {
+                        text += "<a href=\"\" onclick=\"app.open(false," + i + ")\">" + SimpleHTMLEncoder.htmlEncode(attach.name) + "</a><br>";
+                    } else {
                         String query = null;
                         // handle multiple attachments with same name
                         for (IItem item : items.toArray(new IItem[0])) {
@@ -339,12 +340,10 @@ public class EmailViewer extends HtmlLinkViewer {
                             }
                         }
                         if (query != null) {
-                            text += "<a href=\"\" onclick=\"app.open('" + SimpleHTMLEncoder.htmlEncode(query) + "')\">" + SimpleHTMLEncoder.htmlEncode(attach.name) + "</a><br>";
+                            text += "<a href=\"\" onclick=\"app.open(true,'" + SimpleHTMLEncoder.htmlEncode(query) + "')\">" + SimpleHTMLEncoder.htmlEncode(attach.name) + "</a><br>";
                         } else {
                             text += SimpleHTMLEncoder.htmlEncode(attach.name) + " <em>" + Messages.getString("EmailViewer.NotFound") + "</em><br>";
                         }
-                    } else {
-                        text += "<a href=\"\" onclick=\"app.open(" + i + ")\">" + SimpleHTMLEncoder.htmlEncode(attach.name) + "</a><br>";
                     }
                     count++;
                 }

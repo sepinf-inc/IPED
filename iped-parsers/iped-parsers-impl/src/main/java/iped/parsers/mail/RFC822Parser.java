@@ -165,6 +165,8 @@ public class RFC822Parser extends AbstractParser {
         private ParsingEmbeddedDocumentExtractor embeddedParser;
         private MimeStreamParser parser;
         private int attachmentCount = 0;
+        private boolean partialEmlx = false;
+        private String mailPath = "";
 
         MailContentHandler(MimeStreamParser parser, XHTMLContentHandler xhtml, Metadata metadata, ParseContext context,
                 boolean strictParsing) {
@@ -174,6 +176,13 @@ public class RFC822Parser extends AbstractParser {
             this.metadata = metadata;
             this.strictParsing = strictParsing;
             this.embeddedParser = new ParsingEmbeddedDocumentExtractor(context);
+
+            ItemInfo itemInfo = context.get(ItemInfo.class);
+            if (itemInfo != null) {
+                mailPath = itemInfo.getPath();
+                mailPath = mailPath.replace("\\", "/").toLowerCase();
+                partialEmlx = mailPath.endsWith(".partial.emlx");
+            }
         }
 
         @Override
@@ -212,17 +221,17 @@ public class RFC822Parser extends AbstractParser {
                 if (isAttach) {
                     if (extractor.shouldParseEmbedded(submd)) {
                         attachmentCount++;
-                        submd.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
 
-                        ItemInfo itemInfo = context.get(ItemInfo.class);
-                        boolean externalAttach = false;
-                        String mailPath = "";
-                        if (itemInfo != null) {
-                            mailPath = itemInfo.getPath();
-                            mailPath = mailPath.replace("\\", "/").toLowerCase();
-                            externalAttach = mailPath.endsWith(".partial.emlx");
+                        BufferedInputStream bis = new BufferedInputStream(is);
+                        bis.mark(1);
+                        if (!partialEmlx || bis.read() != -1) {
+                            bis.reset();
+                            submd.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
+                            extractor.parseEmbedded(bis, handler, submd, true);
+                            return;
                         }
-                        if (externalAttach && searcher != null && metadata.get(ExtraProperties.LINKED_ITEMS) == null) {
+
+                        if (searcher != null && metadata.get(ExtraProperties.LINKED_ITEMS) == null) {
                             List<String> pathParts = Arrays.asList(mailPath.split("/"));
                             String mailNumber = pathParts.get(pathParts.size() - 1).split("\\.")[0];
                             String pathPrefix = String.join("/", pathParts.subList(0, pathParts.size() - 2));
@@ -237,8 +246,6 @@ public class RFC822Parser extends AbstractParser {
                                 // use hash so ReferencedBy tab works
                                 metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + attach.getHash() + " && " + BasicProps.PATH + ":\"" + "Attachments\\/" + mailNumber + "\"");
                             }
-                        } else {
-                            extractor.parseEmbedded(is, handler, submd, true);
                         }
                     }
                 } else {
