@@ -65,7 +65,6 @@ import org.xml.sax.SAXException;
 
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.Util;
@@ -177,11 +176,10 @@ public class RFC822Parser extends AbstractParser {
             this.strictParsing = strictParsing;
             this.embeddedParser = new ParsingEmbeddedDocumentExtractor(context);
 
-            ItemInfo itemInfo = context.get(ItemInfo.class);
-            if (itemInfo != null) {
-                mailPath = itemInfo.getPath();
-                mailPath = mailPath.replace("\\", "/").toLowerCase();
-                partialEmlx = mailPath.endsWith(".partial.emlx");
+            IItemReader item = context.get(IItemReader.class);
+            if (item != null) {
+                mailPath = item.getPath().replace('\\', '/');
+                partialEmlx = item.getName().matches("\\d+\\.partial\\.emlx(\\:DECOMP)?");
             }
         }
 
@@ -240,7 +238,7 @@ public class RFC822Parser extends AbstractParser {
                             List<IItemReader> attachs = searcher.search(query);
                             for (IItemReader attach : attachs) {
                                 // ignore folders, slacks and subitems
-                                if (attach.isDir() || "slack".equals(attach.getType()) || attach.getPath().replace('\\', '/').replaceFirst(pathPrefix, "").contains(">>")) {
+                                if (attach.isDir() || "slack".equals(attach.getType()) || attach.getPath().replace('\\', '/').replace(pathPrefix, "").contains(">>")) {
                                     continue;
                                 }
                                 // use hash so ReferencedBy tab works
@@ -482,6 +480,7 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void preamble(InputStream is) throws MimeException, IOException {
+            System.out.println("preamble");
         }
 
         @Override
@@ -490,16 +489,19 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void startBodyPart() throws MimeException {
+            System.out.println("startBodyPart");
             inPart = true;
         }
 
         @Override
         public void endBodyPart() throws MimeException {
+            System.out.println("endBodyPart");
             inPart = false;
         }
 
         @Override
         public void endHeader() throws MimeException {
+            System.out.println("endHeader");
             if (attachName != null) {
                 attachName = decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
             }
@@ -507,6 +509,7 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void startMessage() throws MimeException {
+            System.out.println("startMessage");
             try {
                 handler.startDocument();
             } catch (SAXException e) {
@@ -516,6 +519,7 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void endMessage() throws MimeException {
+            System.out.println("endMessage");
             try {
                 handler.endDocument();
             } catch (SAXException e) {
@@ -525,14 +529,17 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void endMultipart() throws MimeException {
+            System.out.println("endMultipart");
         }
 
         @Override
         public void epilogue(InputStream is) throws MimeException, IOException {
+            System.out.println("epilogue");
         }
 
         @Override
         public void startHeader() throws MimeException {
+            System.out.println("startHeader");
             submd = new Metadata();
             attachName = null;
             isAttach = false;
@@ -540,6 +547,7 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void startMultipart(BodyDescriptor descr) throws MimeException {
+            System.out.println("startMultipart");
         }
 
         private String stripOutFieldPrefix(Field field, String fieldname) {

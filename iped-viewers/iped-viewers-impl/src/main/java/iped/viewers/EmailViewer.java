@@ -318,7 +318,7 @@ public class EmailViewer extends HtmlLinkViewer {
             int i = 0, count = 0;
             text = ""; //$NON-NLS-1$
             List<IItem> items = Collections.emptyList();
-            boolean isPartialEmlx = lastItem.getName().endsWith(".partial.emlx");
+            boolean isPartialEmlx = lastItem.getName().matches("\\d+\\.partial\\.emlx(\\:DECOMP)?");
             if (isPartialEmlx) {
                 String[] refs = lastItem.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                 if (refs.length > 0) {
@@ -333,7 +333,8 @@ public class EmailViewer extends HtmlLinkViewer {
                         String query = null;
                         // handle multiple attachments with same name
                         for (IItem item : items.toArray(new IItem[0])) {
-                            if (collator.compare(item.getName(), attach.name) == 0) {
+                            String name = item.getName().endsWith(":DECOMP") ? item.getName().substring(0, item.getName().length() - 7) : item.getName();
+                            if (collator.compare(name, attach.name) == 0) {
                                 query = BasicProps.HASH + ":" + item.getHash();
                                 items.remove(item);
                                 break;

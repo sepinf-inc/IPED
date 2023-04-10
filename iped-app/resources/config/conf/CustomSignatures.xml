@@ -604,11 +604,13 @@
     <mime-type type="message/rfc822-partial">
         <sub-class-of type="message/rfc822"/>
         <glob pattern="*.partial.emlx"/>
+        <glob pattern="*.partial.emlx:DECOMP"/>
     </mime-type>
     
     <mime-type type="message/x-emlx-partial">
         <sub-class-of type="message/x-emlx"/>
         <glob pattern="*.PARTIAL.EMLX"/>
+        <glob pattern="*.PARTIAL.EMLX:DECOMP"/>
     </mime-type>
     
     <mime-type type="message/x-rfc822-mac">
