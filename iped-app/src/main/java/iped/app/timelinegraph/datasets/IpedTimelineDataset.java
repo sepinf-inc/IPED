@@ -19,6 +19,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.SwingUtilities;
+
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -292,8 +294,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         }
 
         long visibleRangeLength = endDate.getTime() - startDate.getTime();
-        Date tmpDate = new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
-        endDate = new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
+        Date tmpDate = new Date(endDate.getTime() - (int)Math.ceil(visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION));
+        endDate = new Date(startDate.getTime() + (int)Math.ceil(visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION));
         startDate = tmpDate;
 
         String timeFilter = "(";
@@ -307,7 +309,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         return timeFilter;
     }
 
-    int MEMORY_WINDOW_CACHE_PROPORTION = 2;// how many times the visible range the memory window will load, forward and
+    double MEMORY_WINDOW_CACHE_PROPORTION = 1.3;// how many times the visible range the memory window will load, forward and
                                            // backward.
     List<CacheTimePeriodEntry> memoryWindowCache = new ArrayList<CacheTimePeriodEntry>();
 
@@ -367,8 +369,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 Date cacheWindowStartDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
                 Date cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
                 long visibleRangeLength = cacheWindowEndDate.getTime() - cacheWindowStartDate.getTime();
-                cacheWindowStartDate = new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
-                cacheWindowEndDate = new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
+                cacheWindowStartDate = new Date(endDate.getTime() - (int)Math.ceil(visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION));
+                cacheWindowEndDate = new Date(startDate.getTime() + (int)Math.ceil(visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION));
 
                 if (cacheWindowStartDate.before(MIN_DATE)) {
                     cacheWindowStartDate = MIN_DATE;
@@ -380,7 +382,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
                 }
 
-                Iterator<CacheTimePeriodEntry> it = a.iterator(className, cacheWindowStartDate, cacheWindowEndDate);
+                Iterator<CacheTimePeriodEntry> it = a.iterator(className, startDate, endDate);
                 CacheTimePeriodEntry ctpe = null;
                 while (it!=null && it.hasNext()) {
                     if (cancelled) {
@@ -1236,7 +1238,20 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     public void notifyVisibleRange(double lowerBound, double upperBound) {
         try {
             startCaseSearchFilterLoad();
-            waitLoaded();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    boolean c = waitLoaded();//repaints after dataset finalization
+                    if(!c) {
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                ipedChartsPanel.repaint();                    
+                            }
+                        });
+                    };
+                }
+            }).start();
         } catch (Exception e) {
             e.printStackTrace();
         }
