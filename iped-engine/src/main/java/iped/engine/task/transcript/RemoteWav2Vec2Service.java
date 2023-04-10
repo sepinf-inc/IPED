@@ -228,6 +228,7 @@ public class RemoteWav2Vec2Service {
 
                             String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
                             String prefix = clientName + " - ";
+                            writer.println(MESSAGES.ACCEPTED);
 
                             bis.mark(5);
                             if (bis.read() == -1) {
@@ -236,7 +237,7 @@ public class RemoteWav2Vec2Service {
                             }
                             bis.reset();
 
-                            writer.println(MESSAGES.ACCEPTED);
+
                             requestsAccepted.incrementAndGet();
 
                             logger.info(prefix + "Accepted connection.");
