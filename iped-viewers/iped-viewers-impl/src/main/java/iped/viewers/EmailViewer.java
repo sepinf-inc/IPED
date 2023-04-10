@@ -173,6 +173,7 @@ public class EmailViewer extends HtmlLinkViewer {
     private static class AttachInfo {
         private String name, mime;
         private File tmpFile;
+        private IItemReader item;
 
         private AttachInfo(File tmpFile, String mime, String name) {
             this.tmpFile = tmpFile;
@@ -344,6 +345,7 @@ public class EmailViewer extends HtmlLinkViewer {
                                 }
                                 if (collator.compare(name, attach.name) == 0) {
                                     query = BasicProps.HASH + ":" + item.getHash();
+                                    attach.item = item;
                                     items.remove(item);
                                     break;
                                 }
@@ -490,11 +492,13 @@ public class EmailViewer extends HtmlLinkViewer {
                     String body = new String(Files.readAllBytes(bodyObj.file.toPath()), bodyObj.charset);
                     // handle inline images
                     for (Entry<String, AttachInfo> e : attachments.entrySet()) {
-                        String newBody = body.replace("cid:" + e.getKey(), e.getValue().tmpFile.toURI().toString());
-                        if (newBody.length() != body.length()) {
+                        String cid = "cid:" + e.getKey();
+                        if (body.contains(cid)) {
+                            File tmpFile = e.getValue().item != null ? e.getValue().item.getTempFile() : e.getValue().tmpFile;
+                            String newBody = body.replace(cid, tmpFile.toURI().toString());
                             inlined.add(e.getKey());
+                            body = newBody;
                         }
-                        body = newBody;
                     }
                     writer.write(body);
                     bodyObj.file.delete();
