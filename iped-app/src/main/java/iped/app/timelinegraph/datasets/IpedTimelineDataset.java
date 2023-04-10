@@ -303,7 +303,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         return timeFilter;
     }
 
-    double MEMORY_WINDOW_CACHE_PROPORTION = 1.3;// how many times the visible range the memory window will load, forward and
+    double MEMORY_WINDOW_CACHE_PROPORTION = 2;// how many times the visible range the memory window will load, forward and
                                            // backward.
     List<CacheTimePeriodEntry> memoryWindowCache = new ArrayList<CacheTimePeriodEntry>();
 
