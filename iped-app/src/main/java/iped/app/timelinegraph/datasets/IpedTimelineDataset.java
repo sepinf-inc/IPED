@@ -19,11 +19,10 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.SwingUtilities;
-
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.jfree.chart.event.PlotChangeEvent;
 import org.jfree.chart.util.Args;
 import org.jfree.chart.util.PublicCloneable;
 import org.jfree.data.DomainInfo;
@@ -168,6 +167,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
      */
     public void startCaseSearchFilterLoad() throws Exception {
         running = 1;
+        cancelled = false;
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -213,16 +213,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 for (int i = 0; i < threadCtsEnd; i++) {
                     CacheTimePeriodEntry ct = threadLocalCts[i];
                     for (CacheEventEntry ce : ct.events) {
-                        if (cancelled) {
-                            return;
-                        }
                         if (ce.docIds != null) {
                             Count count = new Count();
                             for (int docId : ce.docIds) {
-                                if (cancelled) {
-                                    throw new InterruptedException();
-                                }
-
                                 if (result instanceof MultiSearchResult && ((MultiSearchResult) result).hasDocId(docId)) {
                                     IIPEDSource atomicSource = appcase.getAtomicSource(docId);
                                     int sourceId = atomicSource.getSourceId();
@@ -241,7 +234,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                             }
                                         }
                                     } else {
-                                        // not split by bookmark, so filter by selected bookmark
+                                        // not split by bookmark, so filter by selected bookmark                                        
                                         if (selectedBookmarks.size() > 0) {
                                             if (selectedBookmarks.contains("Bookmarks")) {
                                                 include = true;
@@ -584,17 +577,19 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     }
 
     public void cancel() {
-        if (csfs != null && csfs.size() > 0) {
-            for (CaseSearcherFilter csf : csfs) {
-                csf.getSearcher().cancel();
-                csf.doCancel(true);
+        if(!cancelled) {
+            if (csfs != null && csfs.size() > 0) {
+                for (CaseSearcherFilter csf : csfs) {
+                    csf.getSearcher().cancel();
+                    csf.doCancel(true);
+                }
             }
-        }
-        cancelled = true;
-        visiblePopulSem.release(running);
-        memoryCacheReloadSem.release();
-        synchronized (monitor) {
-            monitor.notifyAll();
+            visiblePopulSem.release(running);
+            memoryCacheReloadSem.release();
+            synchronized (monitor) {
+                monitor.notifyAll();
+            }
+            cancelled = true;
         }
     }
 
@@ -1237,21 +1232,19 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     @Override
     public void notifyVisibleRange(double lowerBound, double upperBound) {
         try {
+            cancel();
             startCaseSearchFilterLoad();
-            new Thread(new Runnable() {
+            Runnable r = new Runnable() {
                 @Override
                 public void run() {
                     boolean c = waitLoaded();//repaints after dataset finalization
                     if(!c) {
-                        SwingUtilities.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                ipedChartsPanel.repaint();                    
-                            }
-                        });
+                        ipedChartsPanel.getChartPanel().getChart().getPlot().notifyListeners(new PlotChangeEvent(ipedChartsPanel.getChartPanel().getChart().getPlot()));
                     };
                 }
-            }).start();
+            };
+            //r.run();
+            new Thread(r).start();
         } catch (Exception e) {
             e.printStackTrace();
         }

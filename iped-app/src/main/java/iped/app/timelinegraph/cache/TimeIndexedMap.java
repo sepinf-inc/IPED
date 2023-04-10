@@ -26,8 +26,6 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
     HashMap<String, Date> endDates = new HashMap<String, Date>();
     HashMap<String, File> cacheFiles = new HashMap<String, File>();
     HashMap<String, File> monthIndexCacheFiles = new HashMap<String, File>();
-    private HashMap<String, CacheDataInputStream> cacheDis = new HashMap<String, CacheDataInputStream>();
-    private HashMap<String, SeekableFileInputStream> cacheSfis = new HashMap<String, SeekableFileInputStream>();
 
     TimelineCache timelineCache = TimelineCache.get();
 
@@ -112,10 +110,8 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         this.monthIndexCacheFiles.put(string, new File(new File(f, string), "1"));
 
         SeekableFileInputStream lcacheSfis = new SeekableFileInputStream(cacheFile);
-        cacheSfis.put(string, lcacheSfis);
         CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis) {
         };
-        cacheDis.put(string, lcacheDis);
 
         try {
             int committed = lcacheDis.readShort();
@@ -155,24 +151,17 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
 
     Date lastStartDate = null;
     Date lastEndDate = null;
+    
 
-    public Iterator<CacheTimePeriodEntry> iterator(String className, Date startDate, Date endDate) {
+    public ResultIterator iterator(String className, Date startDate, Date endDate) {
+        SeekableFileInputStream tmpCacheSifs = null;
+        CacheDataInputStream tmpCacheDis = null;
         try {
-            SeekableFileInputStream tmpCacheSifs = cacheSfis.get(className);
-            CacheDataInputStream tmpCacheDis = null;
-
-            if (tmpCacheSifs == null) {
-                File f = cacheFiles.get(className);
-                if(f==null) {
-                    return null;
-                }
-                tmpCacheSifs = new SeekableFileInputStream(f);
-                cacheSfis.put(className, tmpCacheSifs);
-                tmpCacheDis = new CacheDataInputStream(tmpCacheSifs);
-                cacheDis.put(className, tmpCacheDis);
-            } else {
-                tmpCacheDis = cacheDis.get(className);
-            }
+            
+            File f = cacheFiles.get(className);
+            tmpCacheSifs = new SeekableFileInputStream(f);
+            tmpCacheDis = null;
+            tmpCacheDis = new CacheDataInputStream(tmpCacheSifs);
 
             SeekableFileInputStream lcacheSfis = tmpCacheSifs;
             CacheDataInputStream lcacheDis = tmpCacheDis;
@@ -280,10 +269,20 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                 }
             }
         }
+        
+        public long getPosition() throws IOException {
+            return lcacheSfis.position();
+        }
 
         public boolean finish() {
             lastHasNext = null;
             lcache = null;
+            try {
+                lcacheDis.close();
+                lcacheSfis.close();
+            }catch(Exception e) {
+                
+            }
             return false;
         }
 
@@ -394,9 +393,9 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                     Calendar c = (Calendar) Calendar.getInstance().clone();
                     
 
-                    Iterator<CacheTimePeriodEntry> i = iterator(ev, null, null);
+                    ResultIterator i = iterator(ev, null, null);
                     try {
-                        lastPos = cacheSfis.get(ev).position();
+                        lastPos = i.getPosition();
                     } catch (IOException e1) {
                         e1.printStackTrace();
                         return;
@@ -424,7 +423,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                         ctIndex++;
 
                         try {
-                            lastPos = cacheSfis.get(ev).position();
+                            lastPos = i.getPosition();
                         } catch (IOException e) {
                             // TODO Auto-generated catch block
                             e.printStackTrace();

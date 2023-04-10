@@ -416,6 +416,7 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
         if (canZoom(range)) {
             forceRange(range, turnOffAutoRange, notify);
             if (needTimePeriodClassUpdate) {
+                ipedChartsPanel.cancel();
                 ipedChartsPanel.refreshChart();
                 needTimePeriodClassUpdate = false;
             }
