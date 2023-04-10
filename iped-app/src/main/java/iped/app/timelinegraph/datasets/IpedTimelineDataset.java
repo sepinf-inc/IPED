@@ -20,6 +20,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.jfree.chart.event.PlotChangeEvent;
@@ -990,7 +991,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     }
 
     public List<IItemId> getItems(int item, int seriesId) {
-
         TimePeriod t = accumulator.rowTimestamps.get(item);
 
         String eventType = (String) this.getSeriesKey(seriesId);
@@ -1016,33 +1016,67 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
             String eventField = ipedChartsPanel.getTimeEventColumnName(eventType);
             SortedSetDocValues values = reader.getSortedSetDocValues(eventField);
-            for (int i = 0; i < resultSet.getLength(); i++) {
-                int doc = srcCase.getLuceneId(resultSet.getItem(i));
-                boolean adv = values.advanceExact(doc);
-                if (adv = false) {
-                    values = reader.getSortedSetDocValues(eventField);
-                    adv = values.advanceExact(doc);
-                    if (!adv) {
-                        continue;
-                    }
-                }
-                boolean found = false;
-                if (doc != DocIdSetIterator.NO_MORE_DOCS) {
-                    int ord = (int) values.nextOrd();
-                    while (ord != SortedSetDocValues.NO_MORE_ORDS) {
-                        String timeStr = EventTimestampCache.cloneBr(values.lookupOrd(ord));
-                        if (timeStr.isEmpty()) {
+            if(values!=null) {
+                for (int i = 0; i < resultSet.getLength(); i++) {
+                    IItemId itemId = resultSet.getItem(i);
+                    int doc = srcCase.getLuceneId(itemId);
+                    boolean adv = values.advanceExact(doc);
+                    if (adv = false) {
+                        values = reader.getSortedSetDocValues(eventField);
+                        adv = values.advanceExact(doc);
+                        if (!adv) {
                             continue;
                         }
-                        Date date = DateUtil.ISO8601DateParse(timeStr);
-                        if (!(date.before(t.getStart()) || date.after(t.getEnd()))) {
-                            found = true;
+                    }
+                    boolean found = false;
+                    if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+                        int ord = (int) values.nextOrd();
+                        while (ord != SortedSetDocValues.NO_MORE_ORDS) {
+                            String timeStr = EventTimestampCache.cloneBr(values.lookupOrd(ord));
+                            if (timeStr.isEmpty()) {
+                                continue;
+                            }
+                            Date date = DateUtil.ISO8601DateParse(timeStr);
+                            if (!(date.before(t.getStart()) || date.after(t.getEnd()))) {
+                                found = true;
+                            }
+                            ord = (int) values.nextOrd();
                         }
-                        ord = (int) values.nextOrd();
+                    }
+                    if (found) {
+                        result.add(itemId);
                     }
                 }
-                if (found) {
-                    result.add(resultSet.getItem(i));
+            }else {
+                SortedDocValues svalues = reader.getSortedDocValues(eventField);
+                for (int i = 0; i < resultSet.getLength(); i++) {
+                    IItemId itemId = resultSet.getItem(i);
+                    int doc = srcCase.getLuceneId(itemId);
+                    boolean adv = svalues.advanceExact(doc);
+                    if (adv = false) {
+                        svalues = reader.getSortedDocValues(eventField);
+                        adv = svalues.advanceExact(doc);
+                        if (!adv) {
+                            continue;
+                        }
+                    }
+                    boolean found = false;
+                    if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+                        int ord = (int) svalues.ordValue();
+                        if(ord != SortedSetDocValues.NO_MORE_ORDS) {
+                            String timeStr = EventTimestampCache.cloneBr(svalues.lookupOrd(ord));
+                            if (timeStr.isEmpty()) {
+                                continue;
+                            }
+                            Date date = DateUtil.ISO8601DateParse(timeStr);
+                            if (!(date.before(t.getStart()) || date.after(t.getEnd()))) {
+                                found = true;
+                            }
+                        }
+                    }
+                    if (found) {
+                        result.add(itemId);
+                    }
                 }
             }
             return result;
