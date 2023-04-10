@@ -332,12 +332,21 @@ public class EmailViewer extends HtmlLinkViewer {
                     } else {
                         String query = null;
                         // handle multiple attachments with same name
-                        for (IItem item : items.toArray(new IItem[0])) {
-                            String name = item.getName().endsWith(":DECOMP") ? item.getName().substring(0, item.getName().length() - 7) : item.getName();
-                            if (collator.compare(name, attach.name) == 0) {
-                                query = BasicProps.HASH + ":" + item.getHash();
-                                items.remove(item);
-                                break;
+                        for (int k = 0; k <= 1; k++) {
+                            for (IItem item : items.toArray(new IItem[0])) {
+                                String name = item.getName().endsWith(":DECOMP") ? item.getName().substring(0, item.getName().length() - 7) : item.getName();
+                                if (k == 1) {
+                                    // try to find attachment ignoring extension
+                                    int idx = name.lastIndexOf('.');
+                                    if (idx != -1) {
+                                        name = name.substring(0, idx);
+                                    }
+                                }
+                                if (collator.compare(name, attach.name) == 0) {
+                                    query = BasicProps.HASH + ":" + item.getHash();
+                                    items.remove(item);
+                                    break;
+                                }
                             }
                         }
                         if (query != null) {
