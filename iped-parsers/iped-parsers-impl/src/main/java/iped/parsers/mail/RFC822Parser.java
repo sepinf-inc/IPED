@@ -160,7 +160,7 @@ public class RFC822Parser extends AbstractParser {
         private ParseContext context;
         private Metadata metadata, submd;
         private String attachName;
-        private boolean inPart = false, textBody, htmlBody, isAttach;
+        private boolean inPart = false, isAttach;
         private ParsingEmbeddedDocumentExtractor embeddedParser;
         private MimeStreamParser parser;
         private int attachmentCount = 0;
@@ -199,23 +199,13 @@ public class RFC822Parser extends AbstractParser {
             submd.set(HttpHeaders.CONTENT_ENCODING, body.getCharset());
 
             String type = body.getMimeType();
-            if (isAttach) {
-                //skip
-            } else if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
-                if (textBody || htmlBody || attachName != null)
+            if (!isAttach) {
+                if (attachName != null) {
                     isAttach = true;
-                else
-                    textBody = true;
-
-            } else if (type.equalsIgnoreCase("text/html")) { //$NON-NLS-1$
-                if (htmlBody || attachName != null)
+                } else if (!"text/plain".equalsIgnoreCase(type) && !"text/html".equalsIgnoreCase(type)) {
+                    // images (inline or not) and other mimes as attachs
                     isAttach = true;
-                else
-                    htmlBody = true;
-
-            } else {
-                // images (inline or not) and other mimes as attachs
-                isAttach = true;
+                }
             }
 
             if (isAttach) {
