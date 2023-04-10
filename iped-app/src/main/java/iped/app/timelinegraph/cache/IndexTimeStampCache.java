@@ -231,7 +231,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         if (selectedCt == null) {
             selectedCt = new CacheTimePeriodEntry();
             selectedCt.events = new ArrayList<CacheEventEntry>();
-            selectedCt.date = t.getStart();
+            selectedCt.date.set(t.getStart().getTime());
             l.add(selectedCt);
             timePeriodIndexEntry.put(t, selectedCt);
         }

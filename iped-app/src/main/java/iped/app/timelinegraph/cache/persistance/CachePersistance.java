@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
@@ -176,10 +177,9 @@ public class CachePersistance {
             String timezoneID = dis.readUTF();
             int entries = dis.readInt2();
             while (times.size() < entries) {
-                Date d = new Date(dis.readLong());
                 CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
                 ct.events = new ArrayList<CacheEventEntry>();
-                ct.date = d;
+                ct.date.set(dis.readLong());
                 String eventName = dis.readUTF();
                 while (!eventName.equals("!!")) {
                     CacheEventEntry ce = new CacheEventEntry();
@@ -230,8 +230,8 @@ public class CachePersistance {
         }
     }
 
-    public void saveMonthIndex(HashMap<String, TreeMap<Date, Long>> monthIndex, TreeMap<Long, Integer> positionsIndexes, String timePeriodName) {
-        TreeMap<Date, Long> dates = (TreeMap<Date, Long>) monthIndex.get(timePeriodName);
+    public void saveMonthIndex(HashMap<String, TreeMap<Date, Long>> monthIndex, Map<Long, Integer> positionsIndexes, String timePeriodName) {
+        Map<Date, Long> dates = (TreeMap<Date, Long>) monthIndex.get(timePeriodName);
         
         baseDir.mkdirs();
         File monthFile = new File(new File(baseDir,timePeriodName), "1");
@@ -261,7 +261,7 @@ public class CachePersistance {
             dos.writeInt(entry.size());
             for (int i = 0; i < entry.size(); i++) {
                 CacheTimePeriodEntry ct = entry.get(i);
-                dos.writeLong(ct.date.getTime());
+                dos.writeLong(ct.date.get());
                 for (int j = 0; j < ct.events.size(); j++) {
                     CacheEventEntry ce = ct.events.get(j);
                     dos.writeUTF(ce.event);
@@ -293,7 +293,7 @@ public class CachePersistance {
         return baseDir;
     }
 
-    public void loadMonthIndex(String ev, TreeMap<Date, Long> datesPos, TreeMap<Long, Integer> positionsIndexes) {
+    public void loadMonthIndex(String ev, TreeMap<Date, Long> datesPos, Map<Long, Integer> positionsIndexes) {
         File monthFile = new File(new File(baseDir,ev), "1");
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(monthFile)))) {
             try {
@@ -323,10 +323,9 @@ public class CachePersistance {
     }
 
     public CacheTimePeriodEntry loadNextEntry(CacheDataInputStream dis) throws IOException {
-        Date d = new Date(dis.readLong());
         CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
         ct.events = new ArrayList<CacheEventEntry>();
-        ct.date = d;
+        ct.date.set(dis.readLong());
         String eventName = dis.readUTF();
         while (!eventName.equals("!!")) {
             CacheEventEntry ce = new CacheEventEntry();

@@ -6,7 +6,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.Semaphore;
 
 public class TimelineCache {
     Date startDate;
@@ -42,7 +44,7 @@ public class TimelineCache {
                         String lperiod = (String) iterator.next();
                         if (lperiod.equals(period)) {
                             for (int i = 0; i < cache.length; i++) {
-                                if (cache[i] != null && cache[i].date.before(startDate) && cache[i].date.after(endDate)) {
+                                if (cache[i] != null && cache[i].getDate().before(startDate) && cache[i].getDate().after(endDate)) {
                                     cache[i] = null;// old cache entry eligible to garbage collection
                                 }
                             }
@@ -94,8 +96,49 @@ public class TimelineCache {
     public Integer getIndex(String className, long pos) {
         return cachesIndexes.get(className).get(pos);
     }
+    
+    Map<String, Semaphore> cachesIndexesSem = new HashMap<String, Semaphore>();
 
-    public TreeMap<Long, Integer> getCachesIndexes(String className) {
+    public void liberateCachesIndexes(String className) {
+        Semaphore sem = cachesIndexesSem.get(className);
+        if(sem!=null) {
+            sem.release();
+        }
+    }
+    
+    public Map<Long, Integer> getCachesIndexes(String className, boolean exclusive) {
+        if(exclusive) {
+            Semaphore sem = cachesIndexesSem.get(className);
+            if(sem==null) {
+                sem = new Semaphore(1);
+                cachesIndexesSem.put(className, sem);
+            }
+            try {
+                sem.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        return getCachesIndexesInternal(className);
+    }
+    
+    public Map<Long, Integer> getCachesIndexes(String className) {
+        Semaphore sem = cachesIndexesSem.get(className);
+        if(sem!=null) {
+            try {
+                sem.acquire();
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                return null;
+            }finally {
+                sem.release();
+            }
+        }
+        return getCachesIndexesInternal(className);
+    }
+
+    public Map<Long, Integer> getCachesIndexesInternal(String className) {
         TreeMap<Long, Integer> cacheIndex = this.cachesIndexes.get(className);
         if(cacheIndex==null) {
             cacheIndex = new TreeMap<Long, Integer>();

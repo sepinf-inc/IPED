@@ -64,8 +64,8 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
             for (Iterator iterator = value.iterator(); iterator.hasNext();) {
                 CacheTimePeriodEntry cacheTimePeriodEntry = (CacheTimePeriodEntry) iterator.next();
                 c.clear();
-                c.set(Calendar.YEAR, 1900 + cacheTimePeriodEntry.date.getYear());
-                c.set(Calendar.MONTH, cacheTimePeriodEntry.date.getMonth());
+                c.set(Calendar.YEAR, 1900 + cacheTimePeriodEntry.getDate().getYear());
+                c.set(Calendar.MONTH, cacheTimePeriodEntry.getDate().getMonth());
                 Date month = c.getTime();
                 TreeMap<Date, Long> months = monthIndex.get(key);
                 if (months == null) {
@@ -77,11 +77,11 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                     months.put(month, i);
                 }
 
-                if (!minDate.before(cacheTimePeriodEntry.date)) {
-                    minDate = cacheTimePeriodEntry.date;
+                if (!minDate.before(cacheTimePeriodEntry.getDate())) {
+                    minDate = cacheTimePeriodEntry.getDate();
                 }
-                if (!maxDate.after(cacheTimePeriodEntry.date)) {
-                    maxDate = cacheTimePeriodEntry.date;
+                if (!maxDate.after(cacheTimePeriodEntry.getDate())) {
+                    maxDate = cacheTimePeriodEntry.getDate();
                 }
 
                 i++;
@@ -258,15 +258,18 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
             this.hasSoftCache = timelineCache.hasSoftCacheFor(className);
 
             positions=this.lcacheIndexes.entrySet().iterator();
-            if(positions!=null) {
-                try {
-                    positionEntry = positions.next();
-                    while(positionEntry.getValue()!=index && index!=null) {
-                        positionEntry=positions.next();
+            try {
+                if(positions!=null) {
+                    try {
+                        positionEntry = positions.next();
+                        while(positionEntry.getValue()!=index && index!=null) {
+                            positionEntry=positions.next();
+                        }
+                    }catch(NoSuchElementException e) {
                     }
-                }catch(NoSuchElementException e) {
-                    
                 }
+            }catch(Exception e) {
+                e.printStackTrace();
             }
         }
         
@@ -349,7 +352,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                     cacheCurrentIndex++;
                 }
                 if(startDate==null) {
-                    startDate=lastHasNext.date;
+                    startDate=lastHasNext.getDate();
                 }
             } catch (EOFException e) {
                 return finish();
@@ -360,7 +363,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                 return finish();
             }
 
-            if (endDate == null || lastHasNext.date.before(endDate)) {
+            if (endDate == null || lastHasNext.getDate().before(endDate)) {
                 return true;
             } else {
                 return finish();
@@ -382,56 +385,62 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                 String ev = (String) ((Class) iterator.next()).getSimpleName();
                 File f = monthIndexCacheFiles.get(ev);
                 TreeMap<Date, Long> datesPos = new TreeMap<Date, Long>();
-                TreeMap<Long, Integer> positionsIndexes = timelineCache.getCachesIndexes(ev);
-                if (f.exists()) {
-                    cp.loadMonthIndex(ev, datesPos, positionsIndexes);
-                    monthIndex.put(ev, datesPos);
-                } else {
-                    Date lastMonth = null;
-                    int internalCount = 0;
-                    long lastPos;
-                    Calendar c = (Calendar) Calendar.getInstance().clone();
-                    
-
-                    ResultIterator i = iterator(ev, null, null);
-                    try {
-                        lastPos = i.getPosition();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                        return;
-                    }
-                    int ctIndex=0;
-                    while (i.hasNext()) {
-                        CacheTimePeriodEntry ct = i.next();
-                        c.clear();
-                        c.set(Calendar.YEAR, 1900 + ct.date.getYear());
-                        c.set(Calendar.MONTH, ct.date.getMonth());
-                        c.set(Calendar.DAY_OF_MONTH, ct.date.getDate());
-                        if (ev.equals("Minute") || ev.equals("Second")) {
-                            c.set(Calendar.HOUR_OF_DAY, ct.date.getHours());
-                        }
-
-                        internalCount += ct.events.size();
-                        Date month = c.getTime();
-                        if (!month.equals(lastMonth) || internalCount > 4000) {
-                            lastMonth = month;
-                            internalCount = 0;
-                            datesPos.put(month, lastPos);
-                            positionsIndexes.put(lastPos, ctIndex);
-                        }
+                Map<Long, Integer> positionsIndexes = timelineCache.getCachesIndexes(ev,true);
+                try {
+                    if (f.exists()) {
+                        cp.loadMonthIndex(ev, datesPos, positionsIndexes);
+                        monthIndex.put(ev, datesPos);
+                    } else {
+                        Date lastMonth = null;
+                        int internalCount = 0;
+                        long lastPos;
+                        Calendar c = (Calendar) Calendar.getInstance().clone();
                         
-                        ctIndex++;
 
+                        ResultIterator i = iterator(ev, null, null);
                         try {
                             lastPos = i.getPosition();
-                        } catch (IOException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                            return;
                         }
+                        int ctIndex=0;
+                        while (i.hasNext()) {
+                            CacheTimePeriodEntry ct = i.next();
+                            c.clear();
+                            c.set(Calendar.YEAR, 1900 + ct.getDate().getYear());
+                            c.set(Calendar.MONTH, ct.getDate().getMonth());
+                            c.set(Calendar.DAY_OF_MONTH, ct.getDate().getDate());
+                            if (ev.equals("Minute") || ev.equals("Second")) {
+                                c.set(Calendar.HOUR_OF_DAY, ct.getDate().getHours());
+                            }
+
+                            internalCount += ct.events.size();
+                            Date month = c.getTime();
+                            if (!month.equals(lastMonth) || internalCount > 4000) {
+                                lastMonth = month;
+                                internalCount = 0;
+                                datesPos.put(month, lastPos);
+                                positionsIndexes.put(lastPos, ctIndex);
+                            }
+                            
+                            ctIndex++;
+
+                            try {
+                                lastPos = i.getPosition();
+                            } catch (IOException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                        }
+                        monthIndex.put(ev, datesPos);
+                        cp.saveMonthIndex(monthIndex, positionsIndexes, ev);
                     }
-                    monthIndex.put(ev, datesPos);
-                    cp.saveMonthIndex(monthIndex, positionsIndexes, ev);
+                    
+                }finally {
+                    timelineCache.liberateCachesIndexes(ev);
                 }
+
             }
         }
     }
