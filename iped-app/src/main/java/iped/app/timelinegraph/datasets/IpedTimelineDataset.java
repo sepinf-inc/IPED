@@ -1269,14 +1269,17 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             waitLoaded();//waits till last cancellation finishes
 
             startCaseSearchFilterLoad();
+            IpedTimelineDataset self = this;
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    boolean c = waitLoaded();//repaints after dataset finalization
-                    if(!c) {
-                        ipedChartsPanel.getChartPanel().getChart().getPlot().notifyListeners(new PlotChangeEvent(ipedChartsPanel.getChartPanel().getChart().getPlot()));
-                        ipedChartsPanel.repaint();
-                    };
+                    synchronized (self) {
+                        boolean c = waitLoaded();//repaints after dataset finalization
+                        if(!c) {
+                            ipedChartsPanel.getChartPanel().getChart().getPlot().notifyListeners(new PlotChangeEvent(ipedChartsPanel.getChartPanel().getChart().getPlot()));
+                            ipedChartsPanel.repaint();
+                        };
+                    }
                 }
             };
             //r.run();
