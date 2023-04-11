@@ -169,8 +169,10 @@ public class IndexTimeStampCache implements TimeStampCache {
                         @Override
                         public void run() {
                             Iterator it = newCache.iterator("Day", null, null);
-                            while(it.hasNext()) {
-                                it.next();
+                            if(it!=null) {
+                                while(it.hasNext()) {
+                                    it.next();
+                                }
                             }
                         }
                     });
@@ -231,7 +233,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         if (selectedCt == null) {
             selectedCt = new CacheTimePeriodEntry();
             selectedCt.events = new ArrayList<CacheEventEntry>();
-            selectedCt.date.set(t.getStart().getTime());
+            selectedCt.date=t.getStart().getTime();
             l.add(selectedCt);
             timePeriodIndexEntry.put(t, selectedCt);
         }

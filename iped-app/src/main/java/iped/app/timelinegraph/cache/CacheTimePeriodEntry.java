@@ -8,34 +8,33 @@ import java.util.concurrent.atomic.AtomicLong;
  * Represent a cache timeperiod entry on cache persistance
  */
 public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
-    public AtomicLong date;
+    public volatile long date;
     public ArrayList<CacheEventEntry> events;
     
     
     public CacheTimePeriodEntry() {
-        date = new AtomicLong();
     }
 
     @Override
     public int compareTo(CacheTimePeriodEntry entry) {
-        return (int)(this.date.get()-entry.date.get());
+        return (int)(this.date-entry.date);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof CacheTimePeriodEntry) {
-            return this.date.equals(((CacheTimePeriodEntry) obj).date);
+            return this.date == ((CacheTimePeriodEntry) obj).date;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return date.hashCode();
+        return (int) date;
     }
 
     public Date getDate() {
-        return new Date(date.get());
+        return new Date(date);
     }
 
 }

@@ -159,6 +159,9 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         try {
             
             File f = cacheFiles.get(className);
+            if(f==null) {
+                return null;
+            }
             tmpCacheSifs = new SeekableFileInputStream(f);
             tmpCacheDis = null;
             tmpCacheDis = new CacheDataInputStream(tmpCacheSifs);
@@ -212,7 +215,11 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                 lastStartDate = startDate;
                 lastEndDate = endDate;
 
-                return new ResultIterator(index, timelineCache, lcacheSfis, lcacheDis, endDate, className);
+                if(endDate==null) {
+                    return new ResultIterator(pos, index, timelineCache, lcacheSfis, lcacheDis, Long.MAX_VALUE, className);
+                }else {
+                    return new ResultIterator(pos, index, timelineCache, lcacheSfis, lcacheDis, endDate.getTime(), className);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -225,13 +232,13 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
     class ResultIterator implements Iterator<CacheTimePeriodEntry> {
         CacheTimePeriodEntry lastHasNext = null;
         int cacheCurrentIndex = 0;
-        private Integer index;
+        private Integer startIndex;
         private CacheTimePeriodEntry[] lcache;
         private SeekableFileInputStream lcacheSfis;
         private CacheDataInputStream lcacheDis;
-        private Map<Long, Integer> lcacheIndexes;
-        private Date startDate;
-        private Date endDate;
+        private TreeMap<Long, Integer> lcacheIndexes;
+        private long startDate = 0;
+        private long endDate;
         private String className;
         boolean useCache = false;
         private TimelineCache timelineCache;
@@ -239,16 +246,17 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         Date startIterationDate = new Date();
         int countRead=0;
         int countCache=0;
-        Iterator<Entry<Long,Integer>> positions;
-        private Entry<Long, Integer> positionEntry;
         private Reference<CacheTimePeriodEntry>[] lsoftcache;
         boolean hasSoftCache = false;
+        Long nextSeekPos = 0l;
+        private long startPos;
 
-        public ResultIterator(Integer index, TimelineCache timelineCache, SeekableFileInputStream lcacheSfis, CacheDataInputStream lcacheDis, Date endDate, String className) {
-            this.index = index;
+        public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache, SeekableFileInputStream lcacheSfis, CacheDataInputStream lcacheDis, long endDate, String className) {
+            this.startPos = pos;
+            this.startIndex = startIndex;
             this.lcache = timelineCache.caches.get(className);
             this.lsoftcache=timelineCache.softCaches.get(className);
-            this.lcacheIndexes = timelineCache.getCachesIndexes(className);
+            this.lcacheIndexes = (TreeMap) timelineCache.getCachesIndexes(className);
             this.timelineCache = timelineCache;
             this.lcacheSfis = lcacheSfis;
             this.lcacheDis = lcacheDis;
@@ -256,21 +264,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
             this.className = className;
             this.useCache = this.lcache != null;
             this.hasSoftCache = timelineCache.hasSoftCacheFor(className);
-
-            positions=this.lcacheIndexes.entrySet().iterator();
-            try {
-                if(positions!=null) {
-                    try {
-                        positionEntry = positions.next();
-                        while(positionEntry.getValue()!=index && index!=null) {
-                            positionEntry=positions.next();
-                        }
-                    }catch(NoSuchElementException e) {
-                    }
-                }
-            }catch(Exception e) {
-                e.printStackTrace();
-            }
+            nextSeekPos=startPos;
         }
         
         public long getPosition() throws IOException {
@@ -293,77 +287,65 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         public boolean hasNext() {
             try {
                 if (useCache) {
-                    if(index==null) {
-                        index=0;
+                    if(startIndex==null) {
+                        startIndex=0;
                     }
-                    if (index + cacheCurrentIndex < lcache.length) {
-                        lastHasNext = lcache[index + cacheCurrentIndex];
+                    if (startIndex + cacheCurrentIndex < lcache.length) {
+                        lastHasNext = lcache[startIndex + cacheCurrentIndex];
                         if(lastHasNext==null && lsoftcache!=null) {
                             //try the soft reference cache
-                            Reference<CacheTimePeriodEntry> softRef = lsoftcache[index + cacheCurrentIndex];
+                            Reference<CacheTimePeriodEntry> softRef = lsoftcache[startIndex + cacheCurrentIndex];
                             if(softRef!=null) {
                                 lastHasNext = softRef.get();
                                 if(lastHasNext!=null) {
-                                    lcache[index + cacheCurrentIndex] = lastHasNext; 
+                                    lcache[startIndex + cacheCurrentIndex] = lastHasNext; 
                                 }
                             }
                         }
                         if(lastHasNext!=null) {
-                            if(positions!=null) {
-                                lcacheSfis.seek(positionEntry.getKey());
-                                if(positions.hasNext()) {
-                                    positionEntry = positions.next();
-                                }
-                            }else {
-                                positions=this.lcacheIndexes.entrySet().iterator();
-                                if(positions!=null) {
-                                    try {
-                                        positionEntry = positions.next();
-                                        while(positionEntry.getValue()!=(index+cacheCurrentIndex) && index!=null) {
-                                            positionEntry=positions.next();
-                                        }
-                                        lcacheSfis.seek(positionEntry.getKey());
-                                        positionEntry=positions.next();
-                                    }catch(NoSuchElementException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
+                            nextSeekPos = lcacheIndexes.ceilingKey(nextSeekPos+1);
                         }
                     } else {
                         return finish();
                     }
                 }
                 if (lastHasNext == null) {// not in cache so load from file
-                    long curpos = lcacheSfis.position();
-                    lastHasNext = cp.loadNextEntry(lcacheDis);
+                    long curpos = nextSeekPos;
+                    synchronized (lcacheSfis) {
+                        if(nextSeekPos!=lcacheSfis.position()) {
+                            lcacheSfis.seek(nextSeekPos);
+                        }
+                        lastHasNext = cp.loadNextEntry(lcacheDis);
+                        nextSeekPos=lcacheSfis.position();
+                    }
                     countRead++;
                     if (lcache != null && useCache) {
-                        lcache[index + cacheCurrentIndex]=lastHasNext;
+                        lcache[startIndex + cacheCurrentIndex]=lastHasNext;
                         if(hasSoftCache) {
-                            lsoftcache[index + cacheCurrentIndex]=new SoftReference<CacheTimePeriodEntry>(lastHasNext);
+                            lsoftcache[startIndex + cacheCurrentIndex]=new SoftReference<CacheTimePeriodEntry>(lastHasNext);
                         }
-                        lcacheIndexes.put(curpos, index + cacheCurrentIndex);
-                        positions=null;
+                        lcacheIndexes.put(nextSeekPos, startIndex + cacheCurrentIndex);
                         cacheCurrentIndex++;
                     }
                 }else {
                     countCache++;
                     cacheCurrentIndex++;
                 }
-                if(startDate==null) {
-                    startDate=lastHasNext.getDate();
+                if(startDate==0) {
+                    startDate=lastHasNext.date;
                 }
             } catch (EOFException e) {
+                e.printStackTrace();
                 return finish();
             } catch (IOException e) {
+                e.printStackTrace();
                 return finish();
             } catch (Exception e) {
                 e.printStackTrace();
                 return finish();
             }
 
-            if (endDate == null || lastHasNext.getDate().before(endDate)) {
+            if (lastHasNext.date<endDate) {
                 return true;
             } else {
                 return finish();

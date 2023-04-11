@@ -179,7 +179,7 @@ public class CachePersistance {
             while (times.size() < entries) {
                 CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
                 ct.events = new ArrayList<CacheEventEntry>();
-                ct.date.set(dis.readLong());
+                ct.date=dis.readLong();
                 String eventName = dis.readUTF();
                 while (!eventName.equals("!!")) {
                     CacheEventEntry ce = new CacheEventEntry();
@@ -261,7 +261,7 @@ public class CachePersistance {
             dos.writeInt(entry.size());
             for (int i = 0; i < entry.size(); i++) {
                 CacheTimePeriodEntry ct = entry.get(i);
-                dos.writeLong(ct.date.get());
+                dos.writeLong(ct.date);
                 for (int j = 0; j < ct.events.size(); j++) {
                     CacheEventEntry ce = ct.events.get(j);
                     dos.writeUTF(ce.event);
@@ -325,7 +325,7 @@ public class CachePersistance {
     public CacheTimePeriodEntry loadNextEntry(CacheDataInputStream dis) throws IOException {
         CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
         ct.events = new ArrayList<CacheEventEntry>();
-        ct.date.set(dis.readLong());
+        ct.date=dis.readLong();
         String eventName = dis.readUTF();
         while (!eventName.equals("!!")) {
             CacheEventEntry ce = new CacheEventEntry();
@@ -347,6 +347,7 @@ public class CachePersistance {
             try {
                 eventName = dis.readUTF();
             }catch(Exception e) {
+                e.printStackTrace();
                 long pos = ((SeekableFileInputStream)dis.wrapped).position();
             }
         }
