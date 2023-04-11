@@ -206,7 +206,7 @@ public class EmailViewer extends HtmlLinkViewer {
         File previewFile;
         LinkedList<Body> bodyList = new LinkedList<>();
         LinkedList<BodyDescriptor> multiParts = new LinkedList<>();
-        ArrayList<File> filesList = new ArrayList<File>();
+        ArrayList<File> tmpFilesList = new ArrayList<File>();
 
         private String attachName, contentID;
         private boolean isAttach = false;
@@ -222,7 +222,7 @@ public class EmailViewer extends HtmlLinkViewer {
         }
 
         public void deleteFiles() {
-            for (File file : filesList) {
+            for (File file : tmpFilesList) {
                 file.delete();
             }
             if (previewFile != null) {
@@ -457,7 +457,7 @@ public class EmailViewer extends HtmlLinkViewer {
                 attachments.put(contentID, attachInfo);
             }
 
-            filesList.add(attach);
+            tmpFilesList.add(attach);
 
         }
 
@@ -495,6 +495,9 @@ public class EmailViewer extends HtmlLinkViewer {
                         String cid = "cid:" + e.getKey();
                         if (body.contains(cid)) {
                             File tmpFile = e.getValue().item != null ? e.getValue().item.getTempFile() : e.getValue().tmpFile;
+                            if (e.getValue().item != null && IOUtil.isTemporaryFile(tmpFile)) {
+                                tmpFilesList.add(tmpFile);
+                            }
                             String newBody = body.replace(cid, tmpFile.toURI().toString());
                             inlined.add(e.getKey());
                             body = newBody;
