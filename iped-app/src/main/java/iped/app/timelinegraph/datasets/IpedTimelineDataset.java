@@ -378,10 +378,11 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 CacheTimePeriodEntry ctpe = null;
                 while (it!=null && it.hasNext()) {
                     if (cancelled) {
-                        return;
+                        break;
                     }
 
                     ctpe = it.next();
+                    
                     boolean remove = false;
                     if (!fullrange) {
                         if (ctpe.getDate().before(startDate)) {
@@ -1264,7 +1265,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     @Override
     public void notifyVisibleRange(double lowerBound, double upperBound) {
         try {
-            cancel();
+            cancel();//cancels any running loading
+            waitLoaded();//waits till last cancellation finishes
+
             startCaseSearchFilterLoad();
             Runnable r = new Runnable() {
                 @Override
@@ -1272,6 +1275,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     boolean c = waitLoaded();//repaints after dataset finalization
                     if(!c) {
                         ipedChartsPanel.getChartPanel().getChart().getPlot().notifyListeners(new PlotChangeEvent(ipedChartsPanel.getChartPanel().getChart().getPlot()));
+                        ipedChartsPanel.repaint();
                     };
                 }
             };
