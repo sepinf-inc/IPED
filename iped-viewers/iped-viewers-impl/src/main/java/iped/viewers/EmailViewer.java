@@ -373,15 +373,16 @@ public class EmailViewer extends HtmlViewer {
 
             } else if ("text/plain".equalsIgnoreCase(type)) { //$NON-NLS-1$
                 Body b = new Body(attach, charset, multiParts.peekLast(), false);
-                if (bodyList.isEmpty() || multiParts.isEmpty() || !isLastMultipartAlternative() || b.multipartDesc != bodyList.getLast().multipartDesc) {
+                if (bodyList.isEmpty() || multiParts.isEmpty() || !isAlternative() || b.multipartDesc != bodyList.getLast().multipartDesc) {
                     bodyList.addLast(b);
                 }
             } else if ("text/html".equalsIgnoreCase(type)) { //$NON-NLS-1$
                 Body b = new Body(attach, charset, multiParts.peekLast(), true);
-                if (bodyList.isEmpty() || multiParts.isEmpty() || !isLastMultipartAlternative()) {
+                boolean alternative = false, mixedInAlternative = false;
+                if (bodyList.isEmpty() || multiParts.isEmpty() || (!(alternative = isAlternative()) && !(mixedInAlternative = isMixedInAlternative()))) {
                     bodyList.addLast(b);
                 } else {
-                    if (b.multipartDesc == bodyList.getLast().multipartDesc) {
+                    if ((alternative && b.multipartDesc == bodyList.getLast().multipartDesc) || (mixedInAlternative && !bodyList.getLast().isHtml)) {
                         bodyList.removeLast();
                     }
                     bodyList.addLast(b);
@@ -395,8 +396,15 @@ public class EmailViewer extends HtmlViewer {
 
         }
 
-        private boolean isLastMultipartAlternative() {
+        private boolean isAlternative() {
             return !multiParts.isEmpty() && "alternative".equalsIgnoreCase(multiParts.getLast().getSubType());
+        }
+
+        private boolean isMixedInAlternative() {
+            if (multiParts.size() < 2) return false;
+            String lastPart = multiParts.getLast().getSubType();
+            if (lastPart != null) lastPart = lastPart.toLowerCase(); 
+            return ("mixed".equals(lastPart) || "related".equals(lastPart)) && "alternative".equalsIgnoreCase(multiParts.get(multiParts.size() - 2).getSubType());
         }
 
         @Override
