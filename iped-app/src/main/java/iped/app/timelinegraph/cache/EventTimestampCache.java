@@ -2,6 +2,7 @@ package iped.app.timelinegraph.cache;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -161,6 +162,10 @@ public class EventTimestampCache implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+            for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
+                List<CacheTimePeriodEntry> n = timeStampCache.getNewCache().get(timePeriodClass.getSimpleName());
+                ((IndexTimeStampCache) timeStampCache).flush(timePeriodClass.getSimpleName(), n);
+            }
             if (timeStampCache.running.decrementAndGet() == 0) {
                 synchronized (timeStampCache.monitor) {
                     timeStampCache.monitor.notifyAll();

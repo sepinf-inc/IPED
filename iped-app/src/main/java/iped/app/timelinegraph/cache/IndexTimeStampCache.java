@@ -1,5 +1,6 @@
 package iped.app.timelinegraph.cache;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -11,6 +12,7 @@ import java.util.SortedSet;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.TreeSet;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -60,6 +62,10 @@ public class IndexTimeStampCache implements TimeStampCache {
 
     SortedSet<String> eventTypes = new TreeSet<String>();
     final Object monitor = new Object();
+
+    private AtomicInteger flushCount = new AtomicInteger();
+
+    private AtomicInteger addCount = new AtomicInteger();
 
     @Override
     public void run() {
@@ -121,8 +127,11 @@ public class IndexTimeStampCache implements TimeStampCache {
 
                         if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
                         }
+                        this.flush();
+                        
                         CachePersistance cp = new CachePersistance();
                         cp.saveNewCache(this);
+                        
                         Date d2 = new Date();
                         logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
 
@@ -212,8 +221,19 @@ public class IndexTimeStampCache implements TimeStampCache {
         return null;
     }
 
-    public void add(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType, RoaringBitmap docs) {
+    synchronized public void add(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType, RoaringBitmap docs) {
         List<CacheTimePeriodEntry> l = newCache.get(timePeriodClass.getSimpleName());
+        
+        if(l!=null) {
+            synchronized (this) {
+                if(addCount.incrementAndGet()>1000) {
+                    flush(timePeriodClass.getSimpleName(),l);
+                    l=new ArrayList<>();
+                    addCount.set(0);
+                }
+            }
+        }
+        
         if (l == null) {
             l = new ArrayList<CacheTimePeriodEntry>();
             newCache.put(timePeriodClass.getSimpleName(), l);
@@ -251,6 +271,35 @@ public class IndexTimeStampCache implements TimeStampCache {
             selectedCe.event = eventType;
         }
         selectedCe.docIds = docs;
+    }
+
+    public void flush() {
+        for (Entry<String, List<CacheTimePeriodEntry>> tp : newCache.entrySet()) {
+            flush(tp.getKey(), tp.getValue());
+        }
+    }
+    
+    void flush(String string, List<CacheTimePeriodEntry> l) {
+        IndexTimeStampCache self = this;
+        CachePersistance cp = new CachePersistance();
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                for (Entry<String, List<CacheTimePeriodEntry>> entry : newCache.entrySet()) {
+                    File f = new File(cp.getBaseDir(), entry.getKey());
+                    synchronized (flushCount) {
+                        f = new File(f, "f"+Integer.toString(flushCount.incrementAndGet()));
+                    }
+                    cp.savePeriodNewCache(self, l, f);
+                    l.clear();
+                }
+            }
+        };
+        cp.persistencethreadPool.execute(r);
+        newCache.remove(string);
+        newCache.put(string, new ArrayList<>());
+        timePeriodEntryIndex.remove(string);
+        timePeriodEntryIndex.put(string, new HashMap<TimePeriod, CacheTimePeriodEntry>());
     }
 
     public RoaringBitmap get(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType) {

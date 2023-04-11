@@ -309,6 +309,9 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                         return finish();
                     }
                 }
+                if (lastHasNext == null && nextSeekPos==null) {
+                    return finish();
+                }
                 if (lastHasNext == null) {// not in cache so load from file
                     long curpos = nextSeekPos;
                     synchronized (lcacheSfis) {
@@ -335,7 +338,6 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                     startDate=lastHasNext.date;
                 }
             } catch (EOFException e) {
-                e.printStackTrace();
                 return finish();
             } catch (IOException e) {
                 e.printStackTrace();

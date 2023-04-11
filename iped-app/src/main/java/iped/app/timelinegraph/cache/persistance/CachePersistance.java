@@ -6,8 +6,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
@@ -21,6 +23,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -56,6 +61,8 @@ public class CachePersistance {
     private File bitstreamSerializeFile;
 
     static private boolean bitstreamSerializeAsDefault = false;
+
+    public static ExecutorService persistencethreadPool = Executors.newFixedThreadPool(1);
 
     public CachePersistance() {
         File startDir;
@@ -212,21 +219,260 @@ public class CachePersistance {
         }
         return false;
     }
+    
+    class CacheTimePeriodEntryIterator implements Iterator<CacheTimePeriodEntry>{
+        private boolean empty=false;
+        private File cache;
+        private CacheDataInputStream dis;
+        private int entries;
+        private int currentEntryIndex=0;
+        private CacheTimePeriodEntry currentCt;
 
-    public void saveNewCache(TimeStampCache timeStampCache) {
-        if(bitstreamSerializeAsDefault ) {
+        public CacheTimePeriodEntryIterator(File f) {
+            cache = new File(f, "0");
+            if (!cache.exists() || cache.length() == 0) {
+                empty=true;
+            }
             try {
-                bitstreamSerializeFile.createNewFile();// mark this cache as containing bitstreams serialized
-                bitstreamSerialize=true;
+                dis = new TimeIndexedMap.CacheDataInputStream(new BufferedInputStream(Files.newInputStream(cache.toPath())));
+                int committed = dis.readShort();
+                if (committed != 1) {
+                    empty=true;
+                }
+                String timezoneID = dis.readUTF();
+                entries = dis.readInt2();
             } catch (IOException e) {
+                empty=true;
                 e.printStackTrace();
             }
         }
-        
-        TimeIndexedMap newCache = (TimeIndexedMap) timeStampCache.getNewCache();
 
-        for (Entry<String, List<CacheTimePeriodEntry>> entry : newCache.entrySet()) {
-            savePeriodNewCache(timeStampCache, entry.getValue(), new File(baseDir, entry.getKey()));
+        @Override
+        public boolean hasNext() {
+            if(empty) return false;
+            
+            if(currentEntryIndex < entries) {
+                try {
+                    currentCt = new CacheTimePeriodEntry();
+                    currentCt.events = new ArrayList<CacheEventEntry>();
+                    currentCt.date=dis.readLong();
+                    String eventName = dis.readUTF();
+                    while (!eventName.equals("!!")) {
+                        CacheEventEntry ce = new CacheEventEntry();
+                        ce.event = eventName;
+                        if(bitstreamSerialize) {
+                            try {
+                                ce.docIds = new RoaringBitmap();
+                                ce.docIds.deserialize(dis);
+                            } catch (Exception e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                        }else {
+                            ce.docIds = new RoaringBitmap();
+                            int docId = dis.readInt2();
+                            while (docId != -1) {
+                                ce.docIds.add(docId);
+                                docId = dis.readInt2();
+                            }
+                        }
+                        currentCt.events.add(ce);
+                        eventName = dis.readUTF();
+                    }
+                }catch(IOException e) {
+                    e.printStackTrace();
+                    currentCt=null;
+                    return false;
+                }
+                currentEntryIndex++;
+                return true;
+            }
+            
+            currentCt=null;
+            return false;
+        }
+
+        @Override
+        public CacheTimePeriodEntry next() {
+            return currentCt;
+        }
+
+        public int getSize() {
+            return entries;
+        }
+        
+    }
+
+    class IteratorsIterator implements Iterator<CacheTimePeriodEntry>{
+        HashMap<CacheTimePeriodEntryIterator, CacheTimePeriodEntry> iteratorsMap = new HashMap<CacheTimePeriodEntryIterator, CacheTimePeriodEntry>();
+        private CacheTimePeriodEntry minValue;
+        private int size=0;
+
+        public IteratorsIterator(ArrayList<CacheTimePeriodEntryIterator> iterators) {
+            for (Iterator<CacheTimePeriodEntryIterator> iterator = iterators.iterator(); iterator.hasNext();) {
+                CacheTimePeriodEntryIterator ctpei = iterator.next();
+                iteratorsMap.put(ctpei, null);
+                size+=ctpei.getSize();
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            minValue = null;
+            ArrayList<CacheTimePeriodEntryIterator> selected = new ArrayList<CacheTimePeriodEntryIterator>();
+            for (Iterator<CacheTimePeriodEntryIterator> iteratorsIterator = iteratorsMap.keySet().iterator(); iteratorsIterator.hasNext();) {
+                CacheTimePeriodEntryIterator it = iteratorsIterator.next();
+                CacheTimePeriodEntry value = iteratorsMap.get(it);
+                if(value==null) {
+                    if(it.hasNext()) {
+                        value=it.next();
+                    }
+                    iteratorsMap.put(it, value);
+                }
+                if(value!=null) {
+                    if(minValue==null) {
+                        minValue = value;
+                        selected.clear();
+                        selected.add(it);
+                    }else {
+                        int result = value.compareTo(minValue);
+                        
+                        if(result>0) {
+                            //skip
+                        }else if(result<0) {
+                            minValue = value;
+                            selected.clear();
+                            selected.add(it);
+                        }else if(result==0) {
+                            minValue = merge(minValue, value);
+                            selected.add(it);
+                        }
+                    }
+                }
+            }
+            for (Iterator<CacheTimePeriodEntryIterator> iterator = selected.iterator(); iterator.hasNext();) {
+                iteratorsMap.put(iterator.next(), null);
+            }
+            return minValue!=null;
+        }
+
+        private CacheTimePeriodEntry merge(CacheTimePeriodEntry value1, CacheTimePeriodEntry value2) {
+            CacheTimePeriodEntry result = new CacheTimePeriodEntry();
+            result.date = value1.date;
+            result.events = new ArrayList<>();
+            HashMap<String,CacheEventEntry> tmp = new HashMap<String,CacheEventEntry>(); 
+            for (Iterator<CacheEventEntry> iterator = value1.events.iterator(); iterator.hasNext();) {
+                CacheEventEntry cee = iterator.next();
+                result.events.add(cee);
+                tmp.put(cee.event, cee);
+            }
+            for (Iterator<CacheEventEntry> iterator = value2.events.iterator(); iterator.hasNext();) {
+                CacheEventEntry cee2 = iterator.next();
+                CacheEventEntry cee = tmp.get(cee2.event);
+                if(cee==null) {
+                    result.events.add(cee2);
+                }else {
+                    cee.docIds.or(cee2.docIds);
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public CacheTimePeriodEntry next() {
+            return minValue;
+        }
+
+        public int getSize() {
+            return size;
+        }
+        
+    }
+    
+    public void saveNewCache(TimeStampCache timeStampCache) {
+        /* merge all flushes */
+        Semaphore s = new Semaphore(1);
+        try {
+            s.acquire();
+        } catch (InterruptedException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        //runs in persistence thread
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ArrayList<CacheTimePeriodEntryIterator> iterators = new ArrayList<CacheTimePeriodEntryIterator>();
+                    
+                    for (Entry<String, List<CacheTimePeriodEntry>> entry : timeStampCache.getNewCache().entrySet()) {
+                        File f = new File(baseDir, entry.getKey());
+                        
+                        File[] list = f.listFiles(new FilenameFilter() {
+                            @Override
+                            public boolean accept(File dir, String name) {
+                                return name.startsWith("f");
+                            }
+                        });
+                        for (int i = 0; i < list.length; i++) {
+                            iterators.add(new CacheTimePeriodEntryIterator(list[i]));                
+                        }
+                    }
+                    
+                    for (Entry<String, List<CacheTimePeriodEntry>> entry : timeStampCache.getNewCache().entrySet()) {
+                        File file = new File(baseDir, entry.getKey());
+
+                        File eventFile = new File(file, "0");
+
+                        boolean commit = false;
+                        try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(eventFile.toPath())))) {
+                            dos.writeShort(0);
+                            dos.writeUTF(timeStampCache.getCacheTimeZone().getID());
+                            
+                            IteratorsIterator it = new IteratorsIterator(iterators);
+                            dos.writeInt(it.getSize());
+                            while(it.hasNext()) {
+                                CacheTimePeriodEntry ct = it.next();
+                                dos.writeLong(ct.date);
+                                for (int j = 0; j < ct.events.size(); j++) {
+                                    CacheEventEntry ce = ct.events.get(j);
+                                    dos.writeUTF(ce.event);
+                                    if(bitstreamSerialize) {
+                                        ce.docIds.serialize(dos);
+                                    }else {
+                                        for (int docId : ce.docIds) {
+                                            dos.writeInt(docId);
+                                        }
+                                        dos.writeInt(-1);
+                                    }
+                                }
+                                dos.writeUTF("!!");
+                            }
+                            commit=true;
+                        }catch(IOException e) {
+                            e.printStackTrace();
+                        }
+                        if (commit) {
+                            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(eventFile.toPath(), StandardOpenOption.WRITE))) {
+                                dos.writeShort(1);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }finally {
+                    s.release();
+                }
+            }
+        };
+        persistencethreadPool.execute(r);
+        try {
+            s.acquire();//waits persistence finish to return
+        } catch (InterruptedException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }finally {
+            s.release();
         }
     }
 
@@ -248,7 +494,7 @@ public class CachePersistance {
         }
     }
 
-    private void savePeriodNewCache(TimeStampCache timeStampCache, List<CacheTimePeriodEntry> entry, File file) {
+    public void savePeriodNewCache(TimeStampCache timeStampCache, List<CacheTimePeriodEntry> entry, File file) {
         file.mkdirs();
         File eventFile = new File(file, "0");
 
