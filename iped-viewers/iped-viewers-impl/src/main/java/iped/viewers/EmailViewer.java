@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -181,6 +182,20 @@ public class EmailViewer extends HtmlLinkViewer {
         }
     }
 
+    private static class Body {
+        File file;
+        String charset = "windows-1252"; //$NON-NLS-1$
+        BodyDescriptor multipartDesc;
+        boolean isHtml;
+
+        private Body(File bodyFile, String charset, BodyDescriptor multiPartDesc, boolean isHtml) {
+            this.file = bodyFile;
+            this.charset = charset;
+            this.multipartDesc = multiPartDesc;
+            this.isHtml = isHtml;
+        }
+    }
+
     class MailContentHandler implements ContentHandler {
 
         private boolean strictParsing = false;
@@ -188,12 +203,13 @@ public class EmailViewer extends HtmlLinkViewer {
         private Metadata metadata;
         private boolean inPart = false;
 
-        File previewFile, bodyFile;
+        File previewFile;
+        LinkedList<Body> bodyList = new LinkedList<>();
+        LinkedList<BodyDescriptor> multiParts = new LinkedList<>();
         ArrayList<File> filesList = new ArrayList<File>();
-        String bodyCharset = "windows-1252"; //$NON-NLS-1$
 
         private String attachName, contentID;
-        private boolean textBody = false, htmlBody = false, isAttach = false;
+        private boolean isAttach = false;
         private Map<String, AttachInfo> attachments = new LinkedHashMap<>();
 
         private DateFormat dateFormat = new SimpleDateFormat(Messages.getString("EmailViewer.DateFormat")); //$NON-NLS-1$
@@ -240,11 +256,18 @@ public class EmailViewer extends HtmlLinkViewer {
             return value;
         }
 
+        private String getCharset() {
+            if (bodyList.isEmpty()) {
+                return "windows-1252";
+            }
+            return bodyList.get(0).charset;
+        }
+
         private void createHeader(OutputStreamWriter writer) throws IOException {
 
             writer.write("<html>"); //$NON-NLS-1$
             writer.write("<head>"); //$NON-NLS-1$
-            writer.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + bodyCharset + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
+            writer.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + getCharset() + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
             writer.write("</head>"); //$NON-NLS-1$
             writer.write(
                     "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">"); //$NON-NLS-1$
@@ -406,27 +429,28 @@ public class EmailViewer extends HtmlLinkViewer {
             AttachInfo attachInfo = new AttachInfo(attach, type,
                     (attachName == null ? Messages.getString("EmailViewer.UnNamed") : attachName)); //$NON-NLS-1$
 
+            if (attachName != null) {
+                isAttach = true;
+            }
+
             if (isAttach) {
                 attachments.put(contentID, attachInfo);
 
-            } else if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
-                if (textBody || htmlBody || attachName != null) {
-                    attachments.put(contentID, attachInfo);
-                } else {
-                    bodyCharset = charset;
-                    bodyFile = attach;
-                    textBody = true;
+            } else if ("text/plain".equalsIgnoreCase(type)) { //$NON-NLS-1$
+                Body b = new Body(attach, charset, multiParts.peekLast(), false);
+                if (bodyList.isEmpty() || multiParts.isEmpty() || !isLastMultipartAlternative() || b.multipartDesc != bodyList.getLast().multipartDesc) {
+                    bodyList.addLast(b);
                 }
-
-            } else if (type.equalsIgnoreCase("text/html")) { //$NON-NLS-1$
-                if (htmlBody || attachName != null) {
-                    attachments.put(contentID, attachInfo);
+            } else if ("text/html".equalsIgnoreCase(type)) { //$NON-NLS-1$
+                Body b = new Body(attach, charset, multiParts.peekLast(), true);
+                if (bodyList.isEmpty() || multiParts.isEmpty() || !isLastMultipartAlternative()) {
+                    bodyList.addLast(b);
                 } else {
-                    bodyCharset = charset;
-                    bodyFile = attach;
-                    htmlBody = true;
+                    if (b.multipartDesc == bodyList.getLast().multipartDesc) {
+                        bodyList.removeLast();
+                    }
+                    bodyList.addLast(b);
                 }
-
             } else {
                 // images (inline or not) and other mimes as attachs
                 attachments.put(contentID, attachInfo);
@@ -434,6 +458,10 @@ public class EmailViewer extends HtmlLinkViewer {
 
             filesList.add(attach);
 
+        }
+
+        private boolean isLastMultipartAlternative() {
+            return !multiParts.isEmpty() && "alternative".equalsIgnoreCase(multiParts.getLast().getSubType());
         }
 
         @Override
@@ -446,15 +474,14 @@ public class EmailViewer extends HtmlLinkViewer {
                 throw new RuntimeException(e1);
             }
 
-            Charset charset = Charset.forName(bodyCharset);
             try (OutputStream outStream = new BufferedOutputStream(new FileOutputStream(previewFile));
-                    OutputStreamWriter writer = new OutputStreamWriter(outStream, charset)) {
+                    OutputStreamWriter writer = new OutputStreamWriter(outStream, getCharset())) {
 
                 createHeader(writer);
 
                 Set<String> inlined = new HashSet<>();
-                if (bodyFile != null) {
-                    String body = new String(Files.readAllBytes(bodyFile.toPath()), charset);
+                for (Body bodyObj : bodyList) {
+                    String body = new String(Files.readAllBytes(bodyObj.file.toPath()), bodyObj.charset);
                     // handle inline images
                     for (Entry<String, AttachInfo> e : attachments.entrySet()) {
                         String cid = "cid:" + e.getKey();
@@ -466,7 +493,7 @@ public class EmailViewer extends HtmlLinkViewer {
                         }
                     }
                     writer.write(body);
-                    bodyFile.delete();
+                    bodyObj.file.delete();
                 }
 
                 Map<String, AttachInfo> notInlined = new LinkedHashMap<>(attachments);
@@ -723,13 +750,13 @@ public class EmailViewer extends HtmlLinkViewer {
 
         @Override
         public void startMultipart(BodyDescriptor descr) throws MimeException {
-
+            multiParts.addLast(descr);
             inPart = true;
         }
 
         @Override
         public void endMultipart() throws MimeException {
-
+            multiParts.removeLast();
             inPart = false;
         }
 
@@ -747,7 +774,6 @@ public class EmailViewer extends HtmlLinkViewer {
             if (attachName != null) {
                 attachName = decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
             }
-
         }
 
         @Override
