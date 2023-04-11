@@ -607,6 +607,25 @@
         <glob pattern="*.PARTIAL.EMLX:DECOMP"/>
     </mime-type>
     
+    <mime-type type="message/x-emlx">
+      <magic priority="60">
+        <match value="\nMIME-Version: 1.0\nx-store-info:" type="string" offset="2:10"/>
+        <match value="\nx-store-info:" type="string" offset="2:10"/>
+        <match value="\nX-Antivirus:" type="string" offset="2:10"/>
+        <match value="\nRelay-Version:" type="string" offset="2:10"/>
+        <match value="\n#!\ rnews" type="string" offset="2:10"/>
+        <match value="\nN#!\ rnews" type="string" offset="2:10"/>
+        <match value="\nForward\ to" type="string" offset="2:10"/>
+        <match value="\nPipe\ to" type="string" offset="2:10"/>
+        <match value="\nReturn-Path:" type="string" offset="2:10"/>
+        <match value="\nFrom:" type="string" offset="2:10"/>
+        <match value="\nReceived:" type="string" offset="2:10"/>
+        <match value="\nMessage-ID:" type="string" offset="2:10"/>
+      </magic>
+      <glob pattern="*.emlx"/>
+      <sub-class-of type="text/x-tika-text-based-message"/>
+    </mime-type>
+    
     <mime-type type="message/x-rfc822-mac">
       <magic priority="50">
         <match value="0xD00D0000010101000200000003000000" type="string" offset="0"/>
