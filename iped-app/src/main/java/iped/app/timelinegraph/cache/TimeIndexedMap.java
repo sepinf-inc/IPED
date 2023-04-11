@@ -367,7 +367,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                 String ev = (String) ((Class) iterator.next()).getSimpleName();
                 File f = monthIndexCacheFiles.get(ev);
                 TreeMap<Date, Long> datesPos = new TreeMap<Date, Long>();
-                Map<Long, Integer> positionsIndexes = timelineCache.getCachesIndexes(ev,true);
+                Map<Long, Integer> positionsIndexes = timelineCache.getCachesIndexes(ev);
                 try {
                     if (f.exists()) {
                         cp.loadMonthIndex(ev, datesPos, positionsIndexes);
