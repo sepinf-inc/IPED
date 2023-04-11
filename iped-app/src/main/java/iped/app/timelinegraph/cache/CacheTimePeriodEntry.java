@@ -17,7 +17,7 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
 
     @Override
     public int compareTo(CacheTimePeriodEntry entry) {
-        return (int)(this.date-entry.date);
+        return date<entry.date?-1:date>entry.date?1:0;
     }
 
     @Override
