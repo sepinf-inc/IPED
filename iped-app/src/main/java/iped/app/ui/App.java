@@ -411,6 +411,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 app = null;
             }
 
+            FileProcessor.disposeLastItem();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
