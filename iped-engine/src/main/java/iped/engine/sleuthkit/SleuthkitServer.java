@@ -71,6 +71,7 @@ public class SleuthkitServer {
             Configuration.getInstance().loadConfigurables(new File(dbPath).getParent() + "/iped"); //$NON-NLS-1$
             ConfigurationManager cm = ConfigurationManager.get();
             LocalConfig localConfig = new LocalConfig();
+            localConfig.setIndexerTemp(new File(System.getProperty("java.io.tmpdir")));
             cm.addObject(localConfig);
             cm.loadConfigs();
             Configuration.getInstance().loadNativeLibs();
