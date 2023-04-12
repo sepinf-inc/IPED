@@ -262,21 +262,33 @@ public class IOUtil {
     public static void deleteDirectory(File file, boolean logError) throws IOException {
         if (file.isDirectory()) {
             String[] names = file.list();
-            if (names != null)
+            if (names != null) {
                 for (int i = 0; i < names.length; i++) {
                     File subFile = new File(file, names[i]);
                     deleteDirectory(subFile, logError);
                 }
+            }
         }
         try {
             Files.delete(file.toPath());
 
         } catch (Exception e) {
             // also catch InvalidPathException and others
-            if (logError) {
-                LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
-            } else
-                throw e;
+            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+                String[] cmd = { "powershell.exe", "rm", "-Recurse", "-Force", "\\\"\\\\?\\" + file.getAbsolutePath() + "\\\"" };
+                try {
+                    Runtime.getRuntime().exec(cmd).waitFor();
+                } catch (Exception e2) {
+                    e2.printStackTrace();
+                }
+            }
+            if (file.exists()) {
+                if (logError) {
+                    LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+                } else {
+                    throw e;
+                }
+            }
         }
 
     }
