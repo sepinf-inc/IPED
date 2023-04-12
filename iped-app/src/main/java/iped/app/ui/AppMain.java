@@ -12,6 +12,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.bootstrap.Bootstrap;
 import iped.app.config.LogConfiguration;
 import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
@@ -164,6 +165,7 @@ public class AppMain {
                 libDir = detectLibDir();
 
             LogConfiguration logConfiguration = null;
+            PrintStream SystemOut = System.out; // this is redirected by LogConfiguration
 
             if (processingManager == null) {
                 logConfiguration = new LogConfiguration(libDir.getParentFile().getAbsolutePath(), logFile);
@@ -179,6 +181,8 @@ public class AppMain {
             }
 
             Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath(), true);
+
+            SystemOut.println(Bootstrap.SUB_PROCESS_TEMP_FOLDER + System.getProperty("java.io.tmpdir"));
 
             App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager, libDir.getAbsolutePath());
 
