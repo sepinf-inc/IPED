@@ -145,6 +145,9 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
             File file = null;
             try {
                 file = Util.getFileRenamedToExt(item.getTempFile(), item.getType());
+                if (IOUtil.isTemporaryFile(file)) {
+                    file.deleteOnExit();
+                }
             } catch (IOException e1) {
                 e1.printStackTrace();
             }

@@ -497,6 +497,7 @@ public class EmailViewer extends HtmlLinkViewer {
                             File tmpFile = e.getValue().item != null ? e.getValue().item.getTempFile() : e.getValue().tmpFile;
                             if (e.getValue().item != null && IOUtil.isTemporaryFile(tmpFile)) {
                                 tmpFilesList.add(tmpFile);
+                                tmpFile.deleteOnExit();
                             }
                             String newBody = body.replace(cid, tmpFile.toURI().toString());
                             inlined.add(e.getKey());
