@@ -37,6 +37,9 @@ public class ExternalFileOpen {
                         LOGGER.info("Externally Opening file " + item.getPath()); //$NON-NLS-1$
                         File file = Util.getFileRenamedToExt(item.getTempFile(), item.getType());
                         file.setReadOnly();
+                        if (IOUtil.isTemporaryFile(file)) {
+                            file.deleteOnExit();
+                        }
                         open(file);
                     }
 
