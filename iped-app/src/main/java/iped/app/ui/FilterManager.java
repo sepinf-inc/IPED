@@ -389,12 +389,6 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer{
         }
         return result;
     }
-
-    @Override
-    public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
-        // TODO Auto-generated method stub
-        return null;
-    }
     
     class CheckedFilter implements IResultSetFilter, IMutableFilter{
         @Override

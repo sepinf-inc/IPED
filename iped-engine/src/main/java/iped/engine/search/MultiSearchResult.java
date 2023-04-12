@@ -1,14 +1,11 @@
 package iped.engine.search;
 
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.roaringbitmap.RoaringBitmap;
-
-import com.zaxxer.sparsebits.SparseBitSet;
 
 import iped.data.IIPEDSource;
 import iped.data.IItemId;

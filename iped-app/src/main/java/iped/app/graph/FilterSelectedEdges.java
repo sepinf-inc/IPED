@@ -173,12 +173,6 @@ public class FilterSelectedEdges implements IResultSetFilterer{
     }
 
     @Override
-    public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public IFilter getFilter() {
         if(selectedEdges!=null && selectedEdges.size()>0) {
             Set<IItemId> selectedEdgesItems = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();

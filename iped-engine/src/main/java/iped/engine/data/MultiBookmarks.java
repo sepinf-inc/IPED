@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -236,36 +235,6 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         for (IBookmarks m : map.values())
             bookmarks.addAll(m.getBookmarkMap().values());
         return bookmarks;
-    }
-
-    public Map<Integer,BitSet> filterBookmarksBitsets(IMultiSearchResult result, Set<String> bookmarkNames, boolean includeNoBookmarks) {
-        Map<Integer,BitSet> bitsets = new HashMap<Integer,BitSet>();
-        HashMap<Integer, byte[]> bookmarkBitsPerSource = new HashMap<Integer, byte[]>();
-        for (IItemId item : result.getIterator()) {
-            int srcId = item.getSourceId();
-            IBookmarks m = map.get(srcId);
-            byte[] bookmarkbits = null;
-            if(bookmarkNames!=null) {
-                bookmarkBitsPerSource.get(srcId);
-                if (bookmarkbits == null) {
-                    int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
-                    if (bookmarkIds != null)
-                        bookmarkbits = m.getBookmarkBits(bookmarkIds);
-                    else
-                        bookmarkbits = new byte[0];
-                }
-            }
-            if ((!m.hasBookmark(item.getId()) && includeNoBookmarks) //include has no bookmark
-                    || (bookmarkbits!=null && bookmarkbits.length != 0 && m.hasBookmark(item.getId(), bookmarkbits)) ) {
-                BitSet b = bitsets.get(srcId);
-                if(b==null) {
-                    b = new BitSet();
-                    bitsets.put(srcId, b);
-                }
-                b.set(item.getId());
-            }
-        }
-        return bitsets;                
     }
 
     public IMultiSearchResult filterBookmarks(IMultiSearchResult result, Set<String> bookmarkNames) {

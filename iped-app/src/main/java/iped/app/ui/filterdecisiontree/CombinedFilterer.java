@@ -522,11 +522,6 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
        return result;
     }
 
-    @Override
-    public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
-        return null;
-    }
-
     public String toString() {
         return rootNode.toString();
     }

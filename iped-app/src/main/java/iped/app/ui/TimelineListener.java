@@ -113,11 +113,6 @@ public class TimelineListener implements IResultSetFilterer {
     }
 
     @Override
-    public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
-        return null;
-    }
-
-    @Override
     public IFilter getFilter() {
         if(isTimelineViewEnabled()) {
             return new IResultSetFilter() {

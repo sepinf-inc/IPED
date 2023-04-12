@@ -176,25 +176,6 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
     }
 
     @Override
-    public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
-        Set<String> bookmarkSelection = getSelectedBookmarkNames();
-        if ((!bookmarkSelection.isEmpty() || isNoBookmarksSelected())
-                && !isRootSelected()) {
-            if (isNoBookmarksSelected()) {
-                if (bookmarkSelection.isEmpty()) {
-                    return App.get().appCase.getMultiBookmarks().filterBookmarksBitsets(input, null, true);
-                } else {
-                    return App.get().appCase.getMultiBookmarks().filterBookmarksBitsets(input, bookmarkSelection, true);
-                }
-            } else {
-                return App.get().appCase.getMultiBookmarks().filterBookmarksBitsets(input, bookmarkSelection, false);
-            }
-        }
-
-        return null;
-    }
-
-    @Override
     public IFilter getFilter() {
         BookmarksTreeListener self = this;
         Set<String> bookmarkSelection = getSelectedBookmarkNames();

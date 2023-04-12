@@ -220,11 +220,6 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     }
 
     @Override
-    public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
-        return null;
-    }
-
-    @Override
     public IFilter getFilter() {
         return new IResultSetFilter() {
             @Override
