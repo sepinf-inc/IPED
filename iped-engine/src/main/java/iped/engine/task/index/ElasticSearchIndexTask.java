@@ -107,6 +107,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private int numRequests = 0;
 
+    private int retries;
+
     private AtomicBoolean onCommit = new AtomicBoolean();
 
     private char[] textBuf = new char[16 * 1024];
@@ -127,6 +129,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         taskInstances.add(this);
         elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
+
+        retries = elasticConfig.getRetries();
 
         if (!(isEnabled = elasticConfig.isEnabled())) {
             return;
@@ -468,7 +472,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 this.wait();
             }
             Cancellable cancellable = client.bulkAsync(bulkRequest, RequestOptions.DEFAULT,
-                    new BulkResponseListener(idToPath));
+                    new BulkResponseListener(idToPath, bulkRequest, retries));
 
         } catch (Exception e) {
             LOGGER.error("Error indexing to ElasticSearch " + bulkRequest.getDescription(), e);
@@ -479,16 +483,34 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private class BulkResponseListener implements ActionListener<BulkResponse> {
 
         HashMap<String, String> idPathMap;
-
-        private BulkResponseListener(HashMap<String, String> itemMap) {
+        BulkRequest bulkRequest;
+        int retries;
+        private BulkResponseListener(HashMap<String, String> itemMap, BulkRequest bulkRequest, int retries) {
             this.idPathMap = itemMap;
+            this.bulkRequest = bulkRequest;
+            this.retries = retries;
+        }
+
+        private void retryOrError(IOException temp) {
+            if (temp != null) {
+                if (retries > 0 | retries == -1) {
+                    if (retries > 0)
+                        retries--;
+                    Cancellable cancellable = client.bulkAsync(bulkRequest, RequestOptions.DEFAULT, this);
+                } else {
+                    notifyWaitingRequests();
+                    indexException = temp;
+                }
+            } else {
+                notifyWaitingRequests();
+            }
         }
 
         @Override
         public void onResponse(BulkResponse response) {
 
-            notifyWaitingRequests();
 
+            IOException temp=null;
             for (BulkItemResponse bulkItemResponse : response) {
                 if (bulkItemResponse.isFailed()) {
                     BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
@@ -497,21 +519,24 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
                     LOGGER.error("Elastic failure result {}: {}", path, msg); //$NON-NLS-1$
                     
-                    indexException = new IOException(String.format("Elastic failure result {}: {}", path, msg));
-                    
+                    temp = new IOException(String.format("Elastic failure result {}: {}", path, msg));
+
+                    break;
 
                 } else {
                     LOGGER.debug("Elastic result {} {}", bulkItemResponse.getResponse().getResult(),
                             idPathMap.get(bulkItemResponse.getId()));
                 }
             }
+
+            retryOrError(temp);
+
         }
 
         @Override
         public void onFailure(Exception e) {
-            notifyWaitingRequests();
             LOGGER.error("Error indexing to ElasticSearch ", e);
-            indexException = new IOException("Error indexing to ElasticSearch ", e);
+            retryOrError(new IOException("Error indexing to ElasticSearch ", e));
         }
 
         private void notifyWaitingRequests() {
