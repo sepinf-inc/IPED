@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -38,8 +39,6 @@ import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 import org.roaringbitmap.RoaringBitmap;
 
-import com.zaxxer.sparsebits.SparseBitSet;
-
 import iped.data.IItemId;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.search.MultiSearchResult;
@@ -57,14 +56,12 @@ import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
 public class FilterManager implements ActionListener, ListSelectionListener {
-
     HashMap<IFilter, RoaringBitmap[]> cachedFilterBitsets = new HashMap<IFilter, RoaringBitmap[]>();
     boolean useCachedBitmaps = false;
 
     List<IQueryFilterer> queryFilterers = new ArrayList<IQueryFilterer>();
     List<IResultSetFilterer> resultSetFilterers = new ArrayList<IResultSetFilterer>();
     LinkedHashMap<IFilterer, Boolean> filterers = new LinkedHashMap<IFilterer, Boolean>();
-
 
     private static File userFilters = getGlobalFilterFile(); // $NON-NLS-1$ //$NON-NLS-2$
     private File defaultFilter;
@@ -322,10 +319,6 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     public boolean isFiltererEnabled(IFilterer t) {
         Boolean result = filterers.get(t);
         return result != null && result;
-    }
-
-    public MultiSearchResult applyBitSetFilter(SparseBitSet bitset, MultiSearchResult result) {
-        return result;
     }
     
     public MultiSearchResult applyFilter(IResultSetFilter rsFilter, MultiSearchResult input) {
