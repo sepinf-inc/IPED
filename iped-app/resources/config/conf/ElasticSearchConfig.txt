@@ -52,3 +52,6 @@ validateSSL = true
 # index the extracted text using term vectors. This improves the highlight speed, but increases the index size by around 30%. 
 useTermVector = false
 
+# Number of times the index request will be retried
+retries = 1
+
