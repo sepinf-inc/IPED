@@ -2,30 +2,39 @@ package iped.app.timelinegraph.cache;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicLong;
 
 /*
  * Represent a cache timeperiod entry on cache persistance
  */
 public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
-    public Date date;
+    public volatile long date;
     public ArrayList<CacheEventEntry> events;
+    
+    
+    public CacheTimePeriodEntry() {
+    }
 
     @Override
     public int compareTo(CacheTimePeriodEntry entry) {
-        return this.date.compareTo(entry.date);
+        return date<entry.date?-1:date>entry.date?1:0;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof CacheTimePeriodEntry) {
-            return this.date.equals(((CacheTimePeriodEntry) obj).date);
+            return this.date == ((CacheTimePeriodEntry) obj).date;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return date.hashCode();
+        return (int) date;
+    }
+
+    public Date getDate() {
+        return new Date(date);
     }
 
 }

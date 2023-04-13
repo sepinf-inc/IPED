@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -21,7 +22,9 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
+import org.jfree.data.time.Day;
 import org.jfree.data.time.TimePeriod;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
@@ -33,7 +36,6 @@ public class IndexTimeStampCache implements TimeStampCache {
 
     private static final Logger logger = LogManager.getLogger(IndexTimeStampCache.class);
 
-    Map<String, Map<TimePeriod, ArrayList<Integer>>> timeStampCacheTree;
     ArrayList<Class<? extends TimePeriod>> periodClassesToCache = new ArrayList<Class<? extends TimePeriod>>();
 
     AtomicInteger running = new AtomicInteger();
@@ -78,10 +80,9 @@ public class IndexTimeStampCache implements TimeStampCache {
             for (Class periodClasses : periodClassesToCache) {
                 CachePersistance cp = new CachePersistance();
                 try {
-                    Map c = cp.loadNewCache(periodClasses);
-                    if (c.size() > 0) {
+                    TimeIndexedMap c = cp.loadNewCache(periodClasses);
+                    if (c!=null) {
                         cacheExists = true;
-                        newCache.putAll(c);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -117,12 +118,36 @@ public class IndexTimeStampCache implements TimeStampCache {
                 try {
                     synchronized (monitor) {
                         monitor.wait();
+
+                        if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
+                        }
+                        CachePersistance cp = new CachePersistance();
+                        cp.saveNewCache(this);
                         Date d2 = new Date();
                         logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
-                        if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
-                            (new CachePersistance()).saveNewCache(this);
+
+                        newCache.clearCache();
+                        timePeriodEntryIndex.clear();
+                        cacheLoaders.clear();
+                        TimelineCache.get().clear();// clear old empty timeline entries to be reloaded with created cache data
+
+                        for (Class periodClasses : periodClassesToCache) {
+                            newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
+                            ArrayList<CacheTimePeriodEntry> times = new ArrayList<CacheTimePeriodEntry>();
+                            newCache.put(periodClasses.getSimpleName(), times);
                         }
-                        newCache.createMonthIndex();
+                        newCache.createOrLoadDayIndex(this);
+
+                        newCache = null;// liberates data used to create indexes for garbage collection
+
+                        newCache = new TimeIndexedMap();
+                        for (Class periodClasses : periodClassesToCache) {
+                            newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
+                            ArrayList<CacheTimePeriodEntry> times = new ArrayList<CacheTimePeriodEntry>();
+                            newCache.put(periodClasses.getSimpleName(), times);
+                        }
+
+                        newCache.createOrLoadDayIndex(this);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -130,7 +155,29 @@ public class IndexTimeStampCache implements TimeStampCache {
 
             } else {
                 Date d2 = new Date();
+
                 logger.info("Time to load time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
+                CachePersistance cp = new CachePersistance();
+                for (Class periodClasses : periodClassesToCache) {
+                    newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
+                }
+                newCache.createOrLoadDayIndex(this);
+                
+                if(periodClassesToCache.contains(Day.class)) {
+                    //iterate over day cache to force soft references cache
+                    Thread t  = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Iterator it = newCache.iterator("Day", null, null);
+                            if(it!=null) {
+                                while(it.hasNext()) {
+                                    it.next();
+                                }
+                            }
+                        }
+                    });
+                    t.start();
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -165,7 +212,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         return null;
     }
 
-    public void add(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType, ArrayList<Integer> docs) {
+    public void add(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType, RoaringBitmap docs) {
         List<CacheTimePeriodEntry> l = newCache.get(timePeriodClass.getSimpleName());
         if (l == null) {
             l = new ArrayList<CacheTimePeriodEntry>();
@@ -186,7 +233,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         if (selectedCt == null) {
             selectedCt = new CacheTimePeriodEntry();
             selectedCt.events = new ArrayList<CacheEventEntry>();
-            selectedCt.date = t.getStart();
+            selectedCt.date=t.getStart().getTime();
             l.add(selectedCt);
             timePeriodIndexEntry.put(t, selectedCt);
         }
@@ -206,7 +253,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         selectedCe.docIds = docs;
     }
 
-    public ArrayList<Integer> get(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType) {
+    public RoaringBitmap get(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType) {
         Map<TimePeriod, CacheTimePeriodEntry> timePeriodIndexEntry = timePeriodEntryIndex.get(timePeriodClass.getSimpleName());
 
         if (timePeriodIndexEntry == null) {
