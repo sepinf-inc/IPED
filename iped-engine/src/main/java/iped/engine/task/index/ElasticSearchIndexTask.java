@@ -111,6 +111,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private char[] textBuf = new char[16 * 1024];
 
+    private Exception indexException = null;
+
     @Override
     public boolean isEnabled() {
         return isEnabled;
@@ -334,6 +336,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
+        if (indexException != null) {
+            throw indexException;
+        }
         if (!taskInstances.isEmpty()) {
             commit();
             taskInstances.clear();
@@ -364,6 +369,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
     protected synchronized void process(IItem item) throws Exception {
 
         Reader textReader = null;
+
+        if (indexException != null) {
+            throw indexException;
+        }
 
         if (!item.isToAddToCase()) {
             if (IndexTask.isTreeNodeOnly(item)) {
@@ -431,6 +440,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
             } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
 
+        }catch (IOException e) {
+            throw e;
         } finally {
             fragReader.close();
         }
@@ -457,6 +468,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         } catch (Exception e) {
             LOGGER.error("Error indexing to ElasticSearch " + bulkRequest.getDescription(), e);
+            throw new IOException("Error indexing to ElasticSearch" + bulkRequest.getDescription());
         }
     }
 
@@ -478,11 +490,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
                     BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
                     String path = idPathMap.get(bulkItemResponse.getId());
                     String msg = failure.getMessage();
-                    if (!msg.contains("document already exists")) { //$NON-NLS-1$
-                        LOGGER.error("Elastic failure result {}: {}", path, msg); //$NON-NLS-1$
-                    } else {
-                        LOGGER.debug("Elastic failure result {}: {}", path, msg); //$NON-NLS-1$
-                    }
+
+                    LOGGER.error("Elastic failure result {}: {}", path, msg); //$NON-NLS-1$
+                    
+                    indexException = new IOException(String.format("Elastic failure result {}: {}", path, msg));
+                    
+
                 } else {
                     LOGGER.debug("Elastic result {} {}", bulkItemResponse.getResponse().getResult(),
                             idPathMap.get(bulkItemResponse.getId()));
@@ -494,6 +507,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         public void onFailure(Exception e) {
             notifyWaitingRequests();
             LOGGER.error("Error indexing to ElasticSearch ", e);
+            indexException = new IOException("Error indexing to ElasticSearch ", e);
         }
 
         private void notifyWaitingRequests() {
