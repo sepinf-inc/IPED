@@ -3,19 +3,23 @@ package iped.engine.data;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
 import javax.swing.KeyStroke;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IBookmarks;
 import iped.data.IIPEDSource;
@@ -27,7 +31,7 @@ import iped.engine.search.MultiSearchResult;
 import iped.engine.util.Util;
 import iped.search.IMultiSearchResult;
 
-public class MultiBookmarks implements Serializable, IMultiBookmarks {
+public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
 
     /**
      * 
@@ -38,20 +42,9 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
 
     Map<Integer, IBookmarks> map = new HashMap<Integer, IBookmarks>();
 
-    private IBookmarks[] bookmarksArray;
-
-    public MultiBookmarks(List<IPEDSource> cases) {
-        int maxId=0;
-        for (IIPEDSource s : cases) {
-            if(s.getSourceId()>maxId) {
-                maxId=s.getSourceId();
-            }
+    public MultiBitmapBookmarks(List<IPEDSource> cases) {
+        for (IIPEDSource s : cases)
             map.put(s.getSourceId(), s.getBookmarks());
-        }
-        bookmarksArray = new IBookmarks[maxId+1];
-        for (IIPEDSource s : cases) {
-            bookmarksArray[s.getSourceId()] = s.getBookmarks();
-        }
     }
 
     public Collection<IBookmarks> getSingleBookmarks() {
@@ -87,21 +80,21 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
     }
 
     public boolean isChecked(IItemId item) {
-        return bookmarksArray[item.getSourceId()].isChecked(item.getId());
+        return map.get(item.getSourceId()).isChecked(item.getId());
     }
 
     public void setChecked(boolean value, IItemId item) {
-        bookmarksArray[item.getSourceId()].setChecked(value, item.getId());
+        map.get(item.getSourceId()).setChecked(value, item.getId());
         for (SelectionListener l : selectionListeners)
             l.setSelected(item, value);
     }
 
     public List<String> getBookmarkList(IItemId item) {
-        return bookmarksArray[item.getSourceId()].getBookmarkList(item.getId());
+        return map.get(item.getSourceId()).getBookmarkList(item.getId());
     }
 
     public final boolean hasBookmark(IItemId item) {
-        return bookmarksArray[item.getSourceId()].hasBookmark(item.getId());
+        return map.get(item.getSourceId()).hasBookmark(item.getId());
     }
 
     private static final int[] getBookmarkIds(IBookmarks m, Set<String> bookmarkNames) {
@@ -119,9 +112,8 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
     }
 
     public boolean hasBookmark(IItemId item, Set<String> bookmarkNames) {
-        IBookmarks m = bookmarksArray[item.getSourceId()];
-        int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
-        return bookmarkIds != null && m.hasBookmark(item.getId(), m.getBookmarkBits(bookmarkIds));
+        RoaringBitmap r = getBookmarksUnions(bookmarkNames).get(item.getSourceId());
+        return r.contains(item.getId());
     }
 
     public final boolean hasBookmark(ItemId item, String bookmarkName) {
@@ -164,7 +156,6 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
             if (bookmarkId != -1)
                 m.removeBookmark(itemsPerSource.get(sourceId), bookmarkId);
         }
-
     }
 
     public void newBookmark(String bookmarkName) {
@@ -249,52 +240,98 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return bookmarks;
     }
 
+    HashMap<String, SoftReference<HashMap<Integer,RoaringBitmap>>> bsetCache = new HashMap<String, SoftReference<HashMap<Integer,RoaringBitmap>>>(); 
+    
+    public HashMap<Integer,RoaringBitmap> getBookmarksUnions(Set<String> bookmarkNames) {
+        SoftReference<HashMap<Integer,RoaringBitmap>> sbitmap = bsetCache.get(bookmarkNames.toString());
+        HashMap<Integer,RoaringBitmap> unions=null;
+        if(sbitmap!=null) {
+            unions = sbitmap.get();
+        }
+        if(unions==null) {
+            unions = new HashMap<Integer,RoaringBitmap>();
+
+            for (Entry<Integer, IBookmarks> e : map.entrySet()) {
+                IBookmarks bookmarks = (IBookmarks) e.getValue();
+                if(bookmarks instanceof BitmapBookmarks) {
+                    RoaringBitmap lunion = ((BitmapBookmarks) e.getValue()).getBookmarksUnion(bookmarkNames);
+                    unions.put(e.getKey(), lunion);
+                }
+            }
+            bsetCache.put(bookmarkNames.toString(), new SoftReference<HashMap<Integer,RoaringBitmap>>(unions));
+        }
+        return unions;        
+    }
+    
+
+    public HashMap<Integer, RoaringBitmap> getBookmarksUnions() {
+        HashMap<Integer,RoaringBitmap> nounions = new HashMap<Integer,RoaringBitmap>();
+
+        for (Entry<Integer, IBookmarks> e : map.entrySet()) {
+            IBookmarks bookmarks = (IBookmarks) e.getValue();
+            if(bookmarks instanceof BitmapBookmarks) {
+                RoaringBitmap lunion = ((BitmapBookmarks) e.getValue()).getBookmarksUnion();
+                nounions.put(e.getKey(), lunion);
+            }
+        }
+        
+        return nounions;        
+    }
+    
+    
     public IMultiSearchResult filterBookmarks(IMultiSearchResult result, Set<String> bookmarkNames) {
+        Date d1 = new Date();
+        HashMap<Integer,RoaringBitmap> unions = getBookmarksUnions(bookmarkNames);
+        RoaringBitmap uniqueUnion = null;
+        if(map.size()==1) {
+            uniqueUnion = unions.values().iterator().next();
+        }
+
+        Date d2 = new Date();
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
-        HashMap<Integer, byte[]> bookmarkBitsPerSource = new HashMap<Integer, byte[]>();
         for (IItemId item : result.getIterator()) {
-            IBookmarks m = map.get(item.getSourceId());
-            byte[] bookmarkbits = bookmarkBitsPerSource.get(item.getSourceId());
-            if (bookmarkbits == null) {
-                int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
-                if (bookmarkIds != null)
-                    bookmarkbits = m.getBookmarkBits(bookmarkIds);
-                else
-                    bookmarkbits = new byte[0];
-                bookmarkBitsPerSource.put(item.getSourceId(), bookmarkbits);
+            RoaringBitmap union=null;
+            if(map.size()>1) {
+                union = unions.get(item.getSourceId());
+            }else {
+                union=uniqueUnion;
             }
-            if (bookmarkbits.length != 0 && m.hasBookmark(item.getId(), bookmarkbits)) {
+            if(union.contains(item.getId())) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }
             i++;
         }
+        Date d3 = new Date();
         MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
                 ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        Date d4 = new Date();
+        
+        System.out.println((d2.getTime()-d1.getTime()));
+        System.out.println((d3.getTime()-d2.getTime()));
+        System.out.println((d4.getTime()-d3.getTime()));
 
         return r;
     }
 
     public IMultiSearchResult filterBookmarksOrNoBookmarks(IMultiSearchResult result, Set<String> bookmarkNames) {
+        HashMap<Integer,RoaringBitmap> unions = new HashMap<Integer,RoaringBitmap>();
+
+        for (Entry<Integer, IBookmarks> e : map.entrySet()) {
+            IBookmarks bookmarks = (IBookmarks) e.getValue();
+            if(bookmarks instanceof BitmapBookmarks) {
+                unions.put(e.getKey(), ((BitmapBookmarks)bookmarks).getBookmarksOrNoBookmarksUnion(bookmarkNames));
+            }
+        }
+
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
-        HashMap<Integer, byte[]> bookmarkBitsPerSource = new HashMap<Integer, byte[]>();
         for (IItemId item : result.getIterator()) {
-            IBookmarks m = map.get(item.getSourceId());
-            byte[] bookmarkbits = bookmarkBitsPerSource.get(item.getSourceId());
-            if (bookmarkbits == null) {
-                int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
-                if (bookmarkIds != null)
-                    bookmarkbits = m.getBookmarkBits(bookmarkIds);
-                else
-                    bookmarkbits = new byte[0];
-                bookmarkBitsPerSource.put(item.getSourceId(), bookmarkbits);
-            }
-            if (!m.hasBookmark(item.getId())
-                    || (bookmarkbits.length != 0 && m.hasBookmark(item.getId(), bookmarkbits))) {
+            RoaringBitmap union = unions.get(item.getSourceId());
+            if(union.contains(item.getId())) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }
@@ -308,11 +345,21 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
 
     public IMultiSearchResult filterNoBookmarks(IMultiSearchResult result) {
 
+        HashMap<Integer,RoaringBitmap> unions = new HashMap<Integer,RoaringBitmap>();
+
+        for (Entry<Integer, IBookmarks> e : map.entrySet()) {
+            IBookmarks bookmarks = (IBookmarks) e.getValue();
+            if(bookmarks instanceof BitmapBookmarks) {
+                unions.put(e.getKey(), ((BitmapBookmarks)bookmarks).getBookmarksUnion());
+            }
+        }
+
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
         for (IItemId item : result.getIterator()) {
-            if (!this.hasBookmark(item)) {
+            RoaringBitmap union = unions.get(item.getSourceId());
+            if(!union.contains(item.getId())) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }

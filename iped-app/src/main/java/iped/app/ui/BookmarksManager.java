@@ -67,6 +67,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
+import org.roaringbitmap.RoaringBitmap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,6 +76,7 @@ import iped.data.IItemId;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
+import iped.engine.data.ItemIdList;
 import iped.engine.lucene.DocValuesUtil;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
@@ -330,7 +332,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         return 2200L * countSelected / 1000 < 2600L * countDocs / 44_000_000;
     }
 
-    private void includeDuplicates(ArrayList<IItemId> uniqueSelectedIds) {
+    private void includeDuplicates(ItemIdList uniqueSelectedIds) {
 
         ProgressDialog progress = new ProgressDialog(App.get(), null);
         progress.setNote(Messages.getString("BookmarksManager.SearchingDuplicates")); //$NON-NLS-1$
@@ -461,7 +463,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
         if (evt.getSource() == add || evt.getSource() == remove || evt.getSource() == newButton) {
 
-            ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
+            ItemIdList uniqueSelectedIds = getUniqueSelectedIds();
 
             ArrayList<String> bookmarks = new ArrayList<String>();
             for (int index : list.getSelectedIndices())
@@ -507,38 +509,38 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     }
 
-    private ArrayList<IItemId> getUniqueSelectedIds() {
-        final ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
+    private ItemIdList getUniqueSelectedIds() {
+        ItemIdList result = new ItemIdList();
         final App app = App.get();
         if (checked.isSelected()) {
             int sourceId = 0;
             for (IPEDSource source : app.appCase.getAtomicSources()) {
-                BitSet ids = new BitSet();
+                RoaringBitmap ids = new RoaringBitmap();
                 // we must add items in index order
                 final int finalSourceId = sourceId;
                 source.getLuceneIdStream().forEach(luceneId -> {
                     int id = source.getId(luceneId);
-                    if (source.getBookmarks().isChecked(id) && !ids.get(id)) {
-                        uniqueSelectedIds.add(new ItemId(finalSourceId, id));
-                        ids.set(id);
+                    if (source.getBookmarks().isChecked(id) && !ids.contains(id)) {
+                        ids.select(id);
                     }
                 });
+                result.put(finalSourceId, ids);
+                
                 sourceId++;
             }
         } else if (highlighted.isSelected()) {
-            BitSet bitSet = new BitSet();
+            RoaringBitmap bitSet = null;
             for (int row : app.resultsTable.getSelectedRows()) {
                 int rowModel = app.resultsTable.convertRowIndexToModel(row);
-                bitSet.set(rowModel);
+                IItemId ii = app.ipedResult.getItem(rowModel);
+                result.add(ii);
             }
-            // we must add items in index order
-            bitSet.stream().forEach(rowModel -> uniqueSelectedIds.add(app.ipedResult.getItem(rowModel)));
         }
 
-        return uniqueSelectedIds;
+        return result;
     }
 
-    private void bookmark(ArrayList<IItemId> uniqueSelectedIds, List<String> bookmarks, boolean insert) {
+    private void bookmark(ItemIdList uniqueSelectedIds, List<String> bookmarks, boolean insert) {
         new Thread() {
             public void run() {
                 if (duplicates.isSelected())
@@ -660,7 +662,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             if (bookmark == null) {
                 return;
             }
-            ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
+            ItemIdList  uniqueSelectedIds = getUniqueSelectedIds();
             bookmark(uniqueSelectedIds, Collections.singletonList(bookmark),
                     (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) == 0);
             e.consume();

@@ -59,8 +59,6 @@ public interface IBookmarks extends Serializable {
 
     boolean hasBookmark(int id);
 
-    boolean hasBookmark(int id, byte[] bookmarkbits);
-
     boolean hasBookmark(int id, int bookmark);
 
     boolean isChecked(int id);
@@ -111,4 +109,6 @@ public interface IBookmarks extends Serializable {
 
     SearchResult filterInReport(SearchResult result);
 
+    boolean hasBookmark(int id, byte[] bookmarkbits);
+    
 }

@@ -3,6 +3,7 @@ package iped.app.ui;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -185,15 +186,20 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
                 @Override
                 public IMultiSearchResult filterResult(IMultiSearchResult src)
                         throws ParseException, QueryNodeException, IOException {
+                    IMultiSearchResult result=null;
+                    Date d1 = new Date();
                     if (isNoBookmarksSelected()) {
                         if (bookmarkSelection.isEmpty()) {
-                            return App.get().appCase.getMultiBookmarks().filterNoBookmarks(src);
+                            result = App.get().appCase.getMultiBookmarks().filterNoBookmarks(src);
                         } else {
-                            return App.get().appCase.getMultiBookmarks().filterBookmarksOrNoBookmarks(src, bookmarkSelection);
+                            result = App.get().appCase.getMultiBookmarks().filterBookmarksOrNoBookmarks(src, bookmarkSelection);
                         }
                     } else {
-                        return App.get().appCase.getMultiBookmarks().filterBookmarks(src, bookmarkSelection);
+                        result = App.get().appCase.getMultiBookmarks().filterBookmarks(src, bookmarkSelection);
                     }
+                    Date d2 = new Date();
+                    System.out.println(bookmarkSelection+":"+(d2.getTime()-d1.getTime()));
+                    return result;
                 }
             };
         }
