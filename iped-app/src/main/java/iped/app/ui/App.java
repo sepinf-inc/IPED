@@ -1741,12 +1741,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
 
         @Override
-        public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
         public IFilter getFilter() {
             if (item != null) {
                 return imageFilter;
@@ -1800,12 +1794,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         public String toString() {
             return "Dupicate filterer";
-        }
-
-        @Override
-        public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
-            // TODO Auto-generated method stub
-            return null;
         }
 
         @Override
@@ -1943,11 +1931,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         public String toString() {
             return "Similar face filterer";
-        }
-
-        @Override
-        public Map<Integer, BitSet> getFilteredBitSets(IMultiSearchResult input) {
-            return null;
         }
         
         public void setItem(IItemId itemId, IItem item) {
