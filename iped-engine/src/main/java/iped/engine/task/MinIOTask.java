@@ -324,7 +324,7 @@ public class MinIOTask extends AbstractTask {
 
     private void sendFile(Builder builder, SeekableInputStream is, long size, long partSize) throws Exception {
         Exception ex = null;
-        for (int i = 0; i <= retries; i++) {
+        for (int i = 0; i <= retries || retries == -1; i++) {
             try {
                 is.seek(0);
                 minioClient.putObject(builder.stream(new BufferedInputStream(is), size, partSize).build());
@@ -408,6 +408,7 @@ public class MinIOTask extends AbstractTask {
         } catch (Exception e) {
             // TODO: handle exception
             logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
+            throw e;
         }
         if (item.getViewFile() != null && item.getViewFile().length() > 0) {
             try (SeekableFileInputStream is = new SeekableFileInputStream(item.getViewFile())) {
@@ -423,6 +424,7 @@ public class MinIOTask extends AbstractTask {
                 // TODO: handle exception
                 logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
                         + item.getViewFile().length() + " bytes)", e);
+                throw e;
             }
         }
 
