@@ -31,6 +31,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import org.roaringbitmap.RoaringBitmap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +51,8 @@ import iped.viewers.api.IResultSetFilterer;
 public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Object> {
     private static Logger LOGGER = LoggerFactory.getLogger(CaseSearcherFilter.class);
     ArrayList<CaseSearchFilterListener> listeners = new ArrayList<CaseSearchFilterListener>();
-
+    RoaringBitmap[] unionsArray;
+    
     public static SoftReference<MultiSearchResult> allItemsCache;
     private static IPEDSource ipedCase;
 
@@ -186,6 +188,15 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                         }
                     }
                 }
+                
+                if(unionsArray!=null) {
+                    MultiSearchResult newresult = filterManager.applyFilter(unionsArray, result);
+                    if(newresult!=result) {
+                        numFilters++;
+                        result=newresult;
+                        result.setIPEDSource(ipedCase);
+                    }
+                }
 
 
             } catch (Throwable e) {
@@ -261,5 +272,19 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
     public void setAppyUIFilters(boolean applyUIFilters) {
         this.applyUIFilters = applyUIFilters;
+    }
+
+    public void addBitmapFilter(RoaringBitmap[] lunionsArray) {
+        if(unionsArray==null) {
+            unionsArray=new RoaringBitmap[lunionsArray.length];
+        }
+        for (int i = 0; i < unionsArray.length; i++) {
+            if(unionsArray[i]==null) {
+                unionsArray[i] = new RoaringBitmap();
+                unionsArray[i].or(lunionsArray[i]);
+            }else {
+                unionsArray[i].and(lunionsArray[i]);
+            }
+        }
     }
 }

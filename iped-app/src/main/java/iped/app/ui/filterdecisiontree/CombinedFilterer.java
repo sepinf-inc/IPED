@@ -2,21 +2,18 @@ package iped.app.ui.filterdecisiontree;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.lucene.util.RoaringDocIdSet;
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.ui.App;
@@ -29,8 +26,8 @@ import iped.engine.search.MultiSearchResult;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.search.IMultiSearchResult;
-import iped.viewers.api.IFilterChangeListener;
 import iped.viewers.api.IFilter;
+import iped.viewers.api.IFilterChangeListener;
 import iped.viewers.api.IMutableFilter;
 import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IResultSetFilter;
@@ -77,10 +74,10 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
      * be used to filter results. 
      * @author patrick.pdb
      */
-    class FutureBitSetResult implements Future<Map<Integer, RoaringBitmap>>{
+    class FutureBitSetResult implements Future<RoaringBitmap[]>{
         CaseSearcherFilter csf = null;
         private IFilter filter;
-        Map<Integer, RoaringBitmap> bitsets = null;
+        RoaringBitmap[] bitsets = null;
         private boolean isInverted=false;
         CombinedFilterer combinedFilterer;
 
@@ -118,20 +115,19 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         }
 
         @Override
-        public Map<Integer, RoaringBitmap> get() throws InterruptedException, ExecutionException {
+        public RoaringBitmap[] get() throws InterruptedException, ExecutionException {
             try {
-                Map<Integer, RoaringBitmap> lbitset;
+                RoaringBitmap[] lbitset;
                 if((filter instanceof IMutableFilter)||(bitsets == null)) {//IMutableFilter aren't cached
                     MultiSearchResult rs = csf.get();
                     if(filter instanceof IResultSetFilter) {
                         rs = (MultiSearchResult) ((IResultSetFilter)filter).filterResult(rs);
                     }
                     
-                    Map<Integer, RoaringBitmap> tmpbitset = rs.getCasesBitSets(App.get().appCase);
-                    lbitset = new HashMap<Integer, RoaringBitmap>();
-                    for (Iterator<Entry<Integer, RoaringBitmap>> iterator = tmpbitset.entrySet().iterator(); iterator.hasNext();) {
-                        Entry<Integer, RoaringBitmap> entry = iterator.next();
-                        lbitset.put(entry.getKey(), entry.getValue().clone());                        
+                    RoaringBitmap[] tmpbitset = rs.getCasesBitSets(App.get().appCase);
+                    lbitset = new RoaringBitmap[tmpbitset.length];
+                    for (int i = 0; i < tmpbitset.length; i++) {
+                        lbitset[i]=tmpbitset[i].clone();
                     }
                     if(!(filter instanceof IMutableFilter)) {
                         bitsets = lbitset;
@@ -140,7 +136,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                     lbitset=bitsets;
                 }
                 if(isInverted) {
-                    HashMap<Integer, RoaringBitmap> invBitset = new HashMap<Integer, RoaringBitmap>();
+                    RoaringBitmap[] invBitset = new RoaringBitmap[lbitset.length];
                     
                     List<IPEDSource> cases = App.get().appCase.getAtomicSources();
                     for (Iterator<IPEDSource> iterator = cases.iterator(); iterator.hasNext();) {
@@ -148,10 +144,10 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                         int srcId = source.getSourceId();
                         if(source.getLastId()>0) {
                             RoaringBitmap bs = getAllSetBitSet(source.getLastId()+1);
-                            bs.xor(lbitset.get(srcId));
-                            invBitset.put(srcId, bs);
+                            bs.xor(lbitset[srcId]);
+                            invBitset[srcId] = bs;
                         }else {
-                            invBitset.put(srcId, lbitset.get(srcId));
+                            invBitset[srcId] = lbitset[srcId];
                         }
                     }
 
@@ -166,9 +162,8 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         }
 
         @Override
-        public Map<Integer, RoaringBitmap> get(long timeout, TimeUnit unit)
+        public RoaringBitmap[] get(long timeout, TimeUnit unit)
                 throws InterruptedException, ExecutionException, TimeoutException {
-            // TODO Auto-generated method stub
             return null;
         }
         
@@ -195,7 +190,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
     }
 
     public IMultiSearchResult getSearchResult(IMultiSearchResult input) {
-        Map<Integer,RoaringBitmap> resultBitSet = null;
+        RoaringBitmap[] resultBitSet = null;
 
         if(cbs==null) {
             cbs = new CombinedBitSet((MultiSearchResult) input, rootNode);
@@ -215,7 +210,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
             int i=0;
             while(i<input.getLength()) {
                 IItemId itemId = input.getItem(i);
-                if(resultBitSet.get(itemId.getSourceId()).contains(itemId.getId())){
+                if(resultBitSet[itemId.getSourceId()].contains(itemId.getId())){
                     ids.add(itemId);
                     scores.add(input.getScore(i));
                 }
@@ -272,10 +267,10 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         return result;
     }
 
-    class CombinedBitSet implements Future<Map<Integer, RoaringBitmap>>{
+    class CombinedBitSet implements Future<RoaringBitmap[]>{
         MultiSearchResult input; 
         OperandNode op;
-        Map<Integer, RoaringBitmap> result = null;
+        RoaringBitmap[] result = null;
         boolean canceled = false;
         private Thread thread;
         Semaphore resultFinished = new Semaphore(1);
@@ -323,27 +318,35 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         }
 
         @Override
-        public Map<Integer, RoaringBitmap> get() throws InterruptedException, ExecutionException {
+        public RoaringBitmap[] get() throws InterruptedException, ExecutionException {
             resultFinished.acquire();
             resultFinished.release();
             return result;
         }
 
         @Override
-        public Map<Integer, RoaringBitmap> get(long timeout, TimeUnit unit)
+        public RoaringBitmap[] get(long timeout, TimeUnit unit)
                 throws InterruptedException, ExecutionException, TimeoutException {
             return result;
         }
     }
 
-    public Map<Integer, RoaringBitmap> getBitSet(MultiSearchResult input, OperandNode op) {
+    public RoaringBitmap[] getBitSet(MultiSearchResult input, OperandNode op) {
         return getBitSet(input, op, null);
     }
     
-    public Map<Integer, RoaringBitmap> getBitSet(MultiSearchResult input, OperandNode op, Future cancelCheck) {
-        Map<Integer, RoaringBitmap> result = new HashMap<Integer, RoaringBitmap>();
+    public RoaringBitmap[] getBitSet(MultiSearchResult input, OperandNode op, Future cancelCheck) {
+        int maxSrcId = 0;
         IPEDMultiSource appCase = App.get().appCase;
         List<IPEDSource> cases = appCase.getAtomicSources();
+
+        for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
+            IPEDSource ipedSource = (IPEDSource) iterator.next();
+            if(ipedSource.getSourceId()>maxSrcId) {
+                maxSrcId=ipedSource.getSourceId();
+            }
+        }
+        RoaringBitmap[] result = new RoaringBitmap[maxSrcId+1];
         
         if(cancelCheck!=null && cancelCheck.isCancelled()) {
             return null;
@@ -357,7 +360,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                 if(ipedSource.getLastId()>=0) {
                     bitsetSize=ipedSource.getLastId()+1;
                 }
-                result.put(ipedSource.getSourceId(), new RoaringBitmap());
+                result[ipedSource.getSourceId()] = new RoaringBitmap();
             }
         }else {
             //initializes with all one bitset
@@ -367,7 +370,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                 if(ipedSource.getLastId()>=0) {
                     bitsetSize=ipedSource.getLastId()+1;
                 }
-                result.put(ipedSource.getSourceId(), getAllSetBitSet(bitsetSize));
+                result[ipedSource.getSourceId()] = getAllSetBitSet(bitsetSize);
             }
         }
 
@@ -378,7 +381,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
 
             DecisionNode node = (DecisionNode) iterator.next();
 
-            Map<Integer, RoaringBitmap> fbitset = null;
+            RoaringBitmap[] fbitset = null;
             if(node instanceof FilterNode) {
                 try {
                     fbitset = cachedBitSet.get(((FilterNode)node).getFilter()).get();
@@ -394,17 +397,17 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                 if(op.operand==Operand.AND) {
                     for (int i=0; i<cases.size();i++) {
                         IPEDSource ipedSource = (IPEDSource) cases.get(i);
-                        RoaringBitmap bitset = result.get(ipedSource.getSourceId());
+                        RoaringBitmap bitset = result[ipedSource.getSourceId()];
                         if(ipedSource.getLastId()>0) {
-                            bitset.and(fbitset.get(ipedSource.getSourceId()));
+                            bitset.and(fbitset[ipedSource.getSourceId()]);
                         }
                     }
                 }else {
                     for (int i=0; i<cases.size();i++) {
                         IPEDSource ipedSource = (IPEDSource) cases.get(i);
-                        RoaringBitmap bitset = result.get(ipedSource.getSourceId());
+                        RoaringBitmap bitset = result[ipedSource.getSourceId()];
                         if(ipedSource.getLastId()>0) {
-                            bitset.or(fbitset.get(ipedSource.getSourceId()));
+                            bitset.or(fbitset[ipedSource.getSourceId()]);
                         }
                     }
                 }
@@ -418,7 +421,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                 int srcId = ipedSource.getSourceId();
                 if(ipedSource.getLastId()>0) {
                     RoaringBitmap bs = getAllSetBitSet(ipedSource.getLastId()+1);
-                    RoaringBitmap bitset = result.get(ipedSource.getSourceId());
+                    RoaringBitmap bitset = result[ipedSource.getSourceId()];
                     bitset.xor(bs);
                 }
             }

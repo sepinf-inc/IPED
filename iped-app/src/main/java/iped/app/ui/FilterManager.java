@@ -9,13 +9,12 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,9 +36,11 @@ import javax.swing.event.ListSelectionListener;
 
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
+import org.roaringbitmap.RoaringBitmap;
 
 import com.zaxxer.sparsebits.SparseBitSet;
 
+import iped.data.IItemId;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.exception.ParseException;
@@ -343,6 +344,36 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
     public void setFilterEnabled(IFilterer t, boolean selected) {
         filterers.put(t, selected);
+    }
+
+    public MultiSearchResult applyFilter(RoaringBitmap[] resultBitSet, MultiSearchResult input) {
+        LinkedHashSet<IItemId> ids = new LinkedHashSet<IItemId>();
+        ArrayList<Float> scores = new ArrayList<Float>();
+        float[] primitiveScores;
+
+        if(resultBitSet!=null) {
+            int i=0;
+            while(i<input.getLength()) {
+                IItemId itemId = input.getItem(i);
+                if(resultBitSet[itemId.getSourceId()].contains(itemId.getId())){
+                    ids.add(itemId);
+                    scores.add(input.getScore(i));
+                }
+                i++;
+            }
+
+            primitiveScores = new float[scores.size()];
+            i = 0;
+            for (Float f : scores) {
+              primitiveScores[i++] = f;
+            }
+        }else {
+            primitiveScores = new float[0];
+        }
+
+        MultiSearchResult result = new MultiSearchResult(ids.toArray(new IItemId[0]), primitiveScores);
+
+        return result;
     }
 }
 

@@ -21,7 +21,7 @@ public class MultiSearchResult implements IMultiSearchResult {
     IPEDSearcher ipedSearcher;
     IIPEDSource ipedSource;
     RoaringBitmap docids;
-    Map<Integer, RoaringBitmap> casesBitSet = null;
+    RoaringBitmap[] casesBitSet = null;
 
     public MultiSearchResult() {
         this.ids = new ItemId[0];
@@ -203,27 +203,31 @@ public class MultiSearchResult implements IMultiSearchResult {
         }
     }
 
-    public Map<Integer, RoaringBitmap> getCasesBitSets(IPEDMultiSource multiSource) {
+    public RoaringBitmap[] getCasesBitSets(IPEDMultiSource multiSource) {
         if(casesBitSet==null) {
-            casesBitSet = new HashMap<Integer, RoaringBitmap>();
             Integer lastSourceId = -1;
             RoaringBitmap bitset=null;
+            int maxSrcId=0;
 
             List<IPEDSource> cases = multiSource.getAtomicSources();
             for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
                 IPEDSource ipedSource = (IPEDSource) iterator.next();
-                if(ipedSource.getLastId()>=0) {
-                    bitset = new RoaringBitmap();
-                }else {
-                    bitset = new RoaringBitmap();
+                if(ipedSource.getSourceId()>maxSrcId) {
+                    maxSrcId = ipedSource.getSourceId();
                 }
-                casesBitSet.put(ipedSource.getSourceId(), bitset);
+            }
+            
+            casesBitSet = new RoaringBitmap[maxSrcId+1];
+
+            for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
+                IPEDSource ipedSource = (IPEDSource) iterator.next();
+                casesBitSet[ipedSource.getSourceId()] = new RoaringBitmap();
             }
 
             for (int i = 0; i < ids.length; i++) {
                 int sourceId = ids[i].getSourceId();
                 if(sourceId!=lastSourceId) {
-                    bitset = casesBitSet.get(ids[i].getSourceId());
+                    bitset = casesBitSet[ids[i].getSourceId()];
                     lastSourceId=sourceId;
                 }                
                 bitset.add(ids[i].getId());
