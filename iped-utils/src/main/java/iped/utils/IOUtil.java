@@ -275,12 +275,15 @@ public class IOUtil {
         } catch (Exception e) {
             // also catch InvalidPathException and others
             if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+                // see https://learn.microsoft.com/en-us/troubleshoot/windows-server/backup-and-storage/cannot-delete-file-folder-on-ntfs-file-system
+                new File("\\\\?\\" + file.getAbsolutePath()).delete();
+                /*
                 String[] cmd = { "powershell.exe", "rm", "-Recurse", "-Force", "\\\"\\\\?\\" + file.getAbsolutePath() + "\\\"" };
                 try {
                     Runtime.getRuntime().exec(cmd).waitFor();
                 } catch (Exception e2) {
                     e2.printStackTrace();
-                }
+                }*/
             }
             if (file.exists()) {
                 if (logError) {
