@@ -111,7 +111,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private char[] textBuf = new char[16 * 1024];
 
-    private Exception indexException = null;
+    private IOException indexException = null;
 
     @Override
     public boolean isEnabled() {
@@ -330,8 +330,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 }
                 instance.onCommit.set(false);
                 instance.notifyAll();
+                if (instance.indexException != null) {
+                    throw instance.indexException;
+                }
             }
         }
+
     }
 
     @Override
