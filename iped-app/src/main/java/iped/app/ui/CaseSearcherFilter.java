@@ -178,11 +178,16 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                         if(filterManager.isFiltererEnabled(iRSFilterer)) {
                             IFilter rsFilter = iRSFilterer.getFilter();
                             if(rsFilter!=null) {
-                                MultiSearchResult newresult = filterManager.applyFilter((IResultSetFilter)rsFilter, result);
-                                if(newresult!=result) {
-                                    numFilters++;
-                                    result=newresult;
-                                    result.setIPEDSource(ipedCase);
+                                RoaringBitmap[] cachedBitmaps = filterManager.getCachedBitmaps((IResultSetFilter)rsFilter); 
+                                if(cachedBitmaps!=null) {
+                                    addBitmapFilter(cachedBitmaps);
+                                }else {
+                                    MultiSearchResult newresult = filterManager.applyFilter((IResultSetFilter)rsFilter, result);
+                                    if(newresult!=result) {
+                                        numFilters++;
+                                        result=newresult;
+                                        result.setIPEDSource(ipedCase);
+                                    }
                                 }
                             }
                         }

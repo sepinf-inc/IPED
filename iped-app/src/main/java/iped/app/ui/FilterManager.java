@@ -41,6 +41,7 @@ import org.roaringbitmap.RoaringBitmap;
 import com.zaxxer.sparsebits.SparseBitSet;
 
 import iped.data.IItemId;
+import iped.engine.data.IPEDMultiSource;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.exception.ParseException;
@@ -57,7 +58,8 @@ import iped.viewers.api.IResultSetFilterer;
 
 public class FilterManager implements ActionListener, ListSelectionListener {
 
-    HashMap<IFilter, HashMap<Integer, SparseBitSet>> cachedFilterBitsets = new HashMap<IFilter, HashMap<Integer, SparseBitSet>>(); 
+    HashMap<IFilter, RoaringBitmap[]> cachedFilterBitsets = new HashMap<IFilter, RoaringBitmap[]>();
+    boolean useCachedBitmaps = false;
 
     List<IQueryFilterer> queryFilterers = new ArrayList<IQueryFilterer>();
     List<IResultSetFilterer> resultSetFilterers = new ArrayList<IResultSetFilterer>();
@@ -326,19 +328,18 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         return result;
     }
     
-    public MultiSearchResult applyFilter(IResultSetFilter rsFilter, MultiSearchResult result) {
-        HashMap<Integer, SparseBitSet> bitSets = cachedFilterBitsets.get(rsFilter);
-        if(bitSets!=null) {
-            
-        }else {
-            
-        }
-
+    public MultiSearchResult applyFilter(IResultSetFilter rsFilter, MultiSearchResult input) {
+        MultiSearchResult result;
         try {
-            return (MultiSearchResult) rsFilter.filterResult(result);
+            result = (MultiSearchResult) rsFilter.filterResult(input);
+            if(useCachedBitmaps) {
+                cachedFilterBitsets.put(rsFilter, result.getCasesBitSets((IPEDMultiSource)input.getIPEDSource()));
+            }
+
+            return result;
         } catch (ParseException | QueryNodeException | IOException e) {
             e.printStackTrace();
-            return result;
+            return input;
         }
     }
 
@@ -374,6 +375,13 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         MultiSearchResult result = new MultiSearchResult(ids.toArray(new IItemId[0]), primitiveScores);
 
         return result;
+    }
+
+    public RoaringBitmap[] getCachedBitmaps(IResultSetFilter rsFilter) {
+        if(!useCachedBitmaps) {
+            return null;
+        }
+        return cachedFilterBitsets.get(rsFilter);
     }
 }
 
