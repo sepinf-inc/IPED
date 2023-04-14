@@ -237,6 +237,17 @@
             <mediaType>application/x-ares-galaxy</mediaType>
         </carverType>
 
+        <carverType>
+            <name>PART MET</name>
+            <signatures>
+                <headerSignature>\E0??????????????????????????\02\01\00\01</headerSignature>
+                <footerSignature>\2E\70\61\72\74??????????????????</footerSignature>
+            </signatures>
+            <minLength>50</minLength>            
+            <maxLength>10000</maxLength>
+            <mediaType>application/x-emule-part-met</mediaType>
+        </carverType>
+
         <!--carverType>
             <name>PLIST</name>
             <signatures>
