@@ -1,5 +1,6 @@
 package iped.app.timelinegraph.cache;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map.Entry;
@@ -50,7 +51,7 @@ public class EventTimestampCache implements Runnable {
                 timeStampValues = reader.getSortedDocValues(eventField);
                 if (timeStampValues == null) {
                     SortedSetDocValues values = reader.getSortedSetDocValues(eventField);
-                    ArrayList<Date> parsedDateCache = new ArrayList<>();
+                    ArrayList<SoftReference<Date>> parsedDateCache = new ArrayList<SoftReference<Date>>();
                     int emptyValueOrd = -1;
                     int doc = values.nextDoc();
                     TreeMap<Date, TimePeriod> periodCache = new TreeMap<>();
@@ -60,7 +61,10 @@ public class EventTimestampCache implements Runnable {
                             if (ord != emptyValueOrd) {
                                 Date date = null;
                                 if (ord < parsedDateCache.size()) {
-                                    date = parsedDateCache.get(ord);
+                                    SoftReference<Date> softDate = parsedDateCache.get(ord);
+                                    if(softDate!=null) {
+                                        date = softDate.get();
+                                    }
                                 }
                                 if (date == null) {
                                     String timeStr = cloneBr(values.lookupOrd(ord));
@@ -72,7 +76,8 @@ public class EventTimestampCache implements Runnable {
                                     while (ord >= parsedDateCache.size()) {
                                         parsedDateCache.add(null);
                                     }
-                                    parsedDateCache.set(ord, date);
+                                    SoftReference<Date> softDate = new SoftReference<Date>(date);
+                                    parsedDateCache.set(ord, softDate);
                                 }
                                 for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
                                     TimePeriod t;
@@ -105,7 +110,7 @@ public class EventTimestampCache implements Runnable {
                     }
                 } else {
                     SortedDocValues values = (SortedDocValues) timeStampValues;
-                    ArrayList<Date> parsedDateCache = new ArrayList<>();
+                    ArrayList<SoftReference<Date>> parsedDateCache = new ArrayList<>();
                     int emptyValueOrd = -1;
                     int doc = values.nextDoc();
                     TreeMap<Date, TimePeriod> periodCache = new TreeMap<>();
@@ -114,7 +119,10 @@ public class EventTimestampCache implements Runnable {
                         if (ord != emptyValueOrd) {
                             Date date = null;
                             if (ord < parsedDateCache.size()) {
-                                date = parsedDateCache.get(ord);
+                                SoftReference<Date> softDate = parsedDateCache.get(ord);
+                                if(softDate!=null) {
+                                    date = softDate.get();
+                                }
                             }
                             if (date == null) {
                                 String timeStr = cloneBr(values.lookupOrd(ord));
@@ -126,7 +134,11 @@ public class EventTimestampCache implements Runnable {
                                 while (ord >= parsedDateCache.size()) {
                                     parsedDateCache.add(null);
                                 }
-                                parsedDateCache.set(ord, date);
+                                while (ord >= parsedDateCache.size()) {
+                                    parsedDateCache.add(null);
+                                }
+                                SoftReference<Date> softDate = new SoftReference<Date>(date);
+                                parsedDateCache.set(ord, softDate);
                             }
                             for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
                                 TimePeriod t;
