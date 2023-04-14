@@ -431,8 +431,10 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             }
 
         } finally {
+            // Call before endDocument() to avoid counting non-OCR characters
+            int charCount = countHandler.getCharCount();
             xhtml.endDocument();
-            metadata.set(OCRParser.OCR_CHAR_COUNT, Integer.toString(countHandler.getCharCount()));
+            metadata.set(OCRParser.OCR_CHAR_COUNT, Integer.toString(charCount));
             if (tmpOutput != null) {
                 tmpOutput.delete();
             }
