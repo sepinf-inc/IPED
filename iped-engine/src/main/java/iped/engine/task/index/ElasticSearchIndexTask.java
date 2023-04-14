@@ -484,18 +484,18 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         HashMap<String, String> idPathMap;
         BulkRequest bulkRequest;
-        int retries;
+        int retries_left;
         private BulkResponseListener(HashMap<String, String> itemMap, BulkRequest bulkRequest, int retries) {
             this.idPathMap = itemMap;
             this.bulkRequest = bulkRequest;
-            this.retries = retries;
+            this.retries_left = retries;
         }
 
         private void retryOrError(IOException temp) {
             if (temp != null) {
-                if (retries > 0 | retries == -1) {
-                    if (retries > 0)
-                        retries--;
+                if (retries_left > 0 | retries_left == -1) {
+                    if (retries_left > 0)
+                        retries_left--;
                     Cancellable cancellable = client.bulkAsync(bulkRequest, RequestOptions.DEFAULT, this);
                 } else {
                     notifyWaitingRequests();
@@ -517,12 +517,19 @@ public class ElasticSearchIndexTask extends AbstractTask {
                     String path = idPathMap.get(bulkItemResponse.getId());
                     String msg = failure.getMessage();
 
+                    // Some documents probable have already been indexed in previous attempts
+                    if (msg.contains("document already exists")) {
+                        LOGGER.warn("Elastic failure result {}: {}", path, msg);
+                        continue;
+                    }
+
                     LOGGER.error("Elastic failure result {}: {}", path, msg); //$NON-NLS-1$
-                    
+
                     temp = new IOException(String.format("Elastic failure result {}: {}", path, msg));
 
                     break;
 
+                    
                 } else {
                     LOGGER.debug("Elastic result {} {}", bulkItemResponse.getResponse().getResult(),
                             idPathMap.get(bulkItemResponse.getId()));
