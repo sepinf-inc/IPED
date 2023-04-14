@@ -58,7 +58,7 @@ public class ItemInfo implements Serializable {
         this.setCarved(carved);
         this.known = known;
     }
-    
+
     public int getId() {
         return id;
     }
