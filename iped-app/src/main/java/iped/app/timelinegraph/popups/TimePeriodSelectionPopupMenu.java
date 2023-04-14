@@ -204,16 +204,26 @@ public class TimePeriodSelectionPopupMenu extends JPopupMenu implements ActionLi
                 String msg = String.format(Messages.get("TimeLineGraph.visibleRangeToGreat"), tpClassName, iped.utils.DateUtil.dateToString(centerDate));
                 input = JOptionPane.showConfirmDialog(null, msg, "", JOptionPane.OK_CANCEL_OPTION);
                 if (input == 0) {
-                    startDate = new Date((long) Math.floor(centerDate.getTime() - c.getMaxZoomoutRangeSize() / 2));
-                    endDate = new Date((long) Math.ceil(centerDate.getTime() + c.getMaxZoomoutRangeSize() / 2));
-                    ipedChartsPanel.getDomainAxis().forceRange(new DateRange(startDate, endDate), false, false);
+                    Date lstartDate = new Date((long) Math.floor(centerDate.getTime() - c.getMaxZoomoutRangeSize() / 2));
+                    Date lendDate = new Date((long) Math.ceil(centerDate.getTime() + c.getMaxZoomoutRangeSize() / 2));
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ipedChartsPanel.getDomainAxis().forceRange(new DateRange(lstartDate, lendDate), false, false);
+                        }
+                    }).start();
                 }
             } else if (c != null && rangeSize < c.getMinZoominRangeSize()) {
                 Date centerDate = new Date(startDate.getTime() + rangeSize / 2);
-                startDate = new Date((long) Math.floor(centerDate.getTime() - c.getMinZoominRangeSize() / 2));
-                endDate = new Date((long) Math.ceil(centerDate.getTime() + c.getMinZoominRangeSize() / 2));
+                Date lstartDate = new Date((long) Math.floor(centerDate.getTime() - c.getMinZoominRangeSize() / 2));
+                Date lendDate = new Date((long) Math.ceil(centerDate.getTime() + c.getMinZoominRangeSize() / 2));
 
-                ipedChartsPanel.getDomainAxis().forceRange(new DateRange(startDate, endDate), false, false);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ipedChartsPanel.getDomainAxis().forceRange(new DateRange(lstartDate, lendDate), false, false);
+                    }
+                }).start();
             } else if (newbarsize > (java2dupper - java2dlower) / 3) { // if the bar size of the new timeperiod granularity is greater than 1/3 of the
                                                                        // total screen area
                 // zooms out to show at least 3 bars
