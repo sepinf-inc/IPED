@@ -1,9 +1,12 @@
 package iped.app.bootstrap;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.URISyntaxException;
@@ -25,6 +28,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.PluginConfig;
 import iped.engine.util.Util;
+import iped.utils.IOUtil;
 import iped.viewers.util.LibreOfficeFinder;
 import iped.viewers.util.UNOLibFinder;
 
@@ -38,8 +42,11 @@ import iped.viewers.util.UNOLibFinder;
 public class Bootstrap {
 
     public static final String UI_REPORT_SYS_PROP = "iped.ui.report";
+    public static final String SUB_PROCESS_TEMP_FOLDER = "IpedSubProcessTempFolder: ";
 
     private static String separator = SystemUtils.IS_OS_WINDOWS ? ";" : ":";
+
+    private static volatile File subProcessTempFolder;
 
     public static void main(String args[]) {
         new Bootstrap().run(args);
@@ -152,9 +159,24 @@ public class Bootstrap {
             t.printStackTrace();
         }
 
+        cleanTempFolder();
+
         System.exit(exit);
     }
     
+    private static void cleanTempFolder() {
+        if (subProcessTempFolder != null && subProcessTempFolder.isDirectory()) {
+            for (File file : subProcessTempFolder.listFiles()) {
+                if (!file.getName().equals("index")) {
+                    IOUtil.deleteDirectory(file);
+                }
+            }
+            if (!new File(subProcessTempFolder, "index").exists()) {
+                subProcessTempFolder.delete();
+            }
+        }
+    }
+
     /**
      * Called when loadConfigurables is done, inside run. Allow subclasses do custom
      * actions at this execution point.
@@ -228,11 +250,14 @@ public class Bootstrap {
     private static void redirectStream(InputStream is, OutputStream os) {
         Thread t = new Thread() {
             public void run() {
-                int i;
-                byte[] buf = new byte[4096];
-                try {
-                    while ((i = is.read(buf)) != -1) {
-                        os.write(buf, 0, i);
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(is)); PrintWriter writer = new PrintWriter(os, true)) {
+                    String line = null;
+                    while ((line = reader.readLine()) != null) {
+                        if (subProcessTempFolder == null && line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {
+                            subProcessTempFolder = new File(line.substring(SUB_PROCESS_TEMP_FOLDER.length()));
+                        } else {
+                            writer.println(line);
+                        }
                     }
                 } catch (Exception e) {
                     // ignore
