@@ -495,7 +495,7 @@ public class BitmapBookmarks implements IBookmarks {
                 unionAll.or(iterator.next());                
             }
         }
-        return unionAll;
+        return unionAll.clone();
     }
 
     public RoaringBitmap getBookmarksUnion(Set<String> bookmarkNames) {
