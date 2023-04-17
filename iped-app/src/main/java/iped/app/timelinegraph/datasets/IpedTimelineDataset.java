@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -141,7 +142,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     volatile int seriesCount = 0;
     Object monitor = new Object();
     private String splitValue = null;
-    private ArrayList<CaseSearcherFilter> csfs;
     private boolean cancelled = false;
 
     Semaphore visiblePopulSem;// semaphore that controls start and end of load of visible items
@@ -155,7 +155,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     Semaphore memoryCacheReloadSem = new Semaphore(1); // semaphore that controls start and end of load of cache window contourning the
                                                        // visible items
 
-    private HashMap<Integer, RoaringBitmap> unions;
     private RoaringBitmap[] unionsArray;
     public AtomicLong countTime =  new AtomicLong();
     private FilterManager filterManager;
@@ -170,7 +169,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         this.xPosition = TimePeriodAnchor.START;
         this.resultsProvider = resultsProvider;
         this.splitValue = splitValue;
-        this.unions = null;
         
         int maxSrcId = 0;
         List<IPEDSource> srcs = App.get().appCase.getAtomicSources();
@@ -185,16 +183,12 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         if (splitValue != null && !splitValue.equals("Bookmarks") && ipedChartsPanel.getChartPanel().getSplitByBookmark()) {
             MultiBitmapBookmarks multiBookmarks = (MultiBitmapBookmarks) App.get().getIPEDSource().getMultiBookmarks();
 
-            this.unionsArray = new RoaringBitmap[maxSrcId+1];
             if (splitValue.equals(noBookmarksStr)) {
-                this.unions = multiBookmarks.getBookmarksUnions();
+                this.unionsArray = multiBookmarks.getBookmarksUnions();
             } else {
                 HashSet<String> s = new HashSet<>();
                 s.add(splitValue);
-                this.unions = multiBookmarks.getBookmarksUnions(s);
-            }
-            for (Entry<Integer, RoaringBitmap> e: unions.entrySet()) {
-                unionsArray[e.getKey()]=e.getValue();
+                this.unionsArray = multiBookmarks.getBookmarksUnions(s);
             }
         }
 
@@ -238,8 +232,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         Semaphore timeSem;
         IMultiSearchResult result;
         Semaphore addValueSem;// semaphore to control block for adding value to the dataset
-        long countTime = 0;
-        long countTime1 = 0;
 
         public PopulateDatasetTask(IMultiSearchResult result, CacheTimePeriodEntry[] threadLocalCts, int threadCtsEnd, Semaphore timeSem, Semaphore addValueSem) {
             this.result = result;
@@ -259,13 +251,10 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     CacheTimePeriodEntry ct = threadLocalCts[i];
                     for (CacheEventEntry ce : ct.events) {
                         if (ce.docIds != null) {
-                            Date d1 = new Date();
                             RoaringBitmap rb = RoaringBitmap.and(((MultiSearchResult) result).getDocIdBitSet(), ce.docIds);
                             
                             Count count = new Count();
                             count.value = rb.getCardinality();
-                            Date d2 = new Date();
-                            countTime1+=(d2.getTime()-d1.getTime());
                             if (count.value > 0) {
                                 addValueSem.acquire();
                                 try {
@@ -318,6 +307,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     int MEMORY_WINDOW_CACHE_PROPORTION = 2;// how many times the visible range the memory window will load, forward and
                                            // backward.
     List<CacheTimePeriodEntry> memoryWindowCache = new ArrayList<CacheTimePeriodEntry>();
+    private CaseSearcherFilter csf;
 
     static public Date MIN_DATE = new Date(0, 0, 1);// 01/01/1900 is the min JfreeChart date
     static public Date MAX_DATE = new Date(8099, 11, 31);// 01/01/9999 is the maxJfreeChart date
@@ -334,7 +324,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 queryText += "category=\"" + splitValue + "\"";
             }
 
-            CaseSearcherFilter csf = new CaseSearcherFilter(queryText);
+            csf = new CaseSearcherFilter(queryText);
             csf.getSearcher().setNoScoring(true);
             csf.applyUIQueryFilters(exceptThis);// apply all filters from others UI objects except the chart defined interval
                                                 // filters
@@ -342,7 +332,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 csf.addBitmapFilter(unionsArray);
             }
             csf.execute();
-            result = csf.get();            
+            result = csf.get();
 
             App app = App.get();
             IPEDMultiSource appcase = (IPEDMultiSource) app.getIPEDSource();
@@ -388,6 +378,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 }
 
                 Iterator<CacheTimePeriodEntry> it = a.iterator(className, startDate, endDate);
+                
                 CacheTimePeriodEntry ctpe = null;
                 while (it!=null && it.hasNext()) {
                     if (cancelled) {
@@ -464,9 +455,12 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 memoryCacheReloadSem.release();// releases imediatelly as all cache was loaded
 
             }
-        } catch (Exception e) {
+            
+        } catch (Exception e) {            
             memoryCacheReloadSem.release();// garantee release of semaphore on untreated exception
-            throw e;
+            if(!(e instanceof CancellationException)) {
+                throw e;
+            }
         }
 
     }
@@ -591,12 +585,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
 
     public void cancel() {
         if(!cancelled) {
-            if (csfs != null && csfs.size() > 0) {
-                for (CaseSearcherFilter csf : csfs) {
-                    csf.getSearcher().cancel();
-                    csf.doCancel(true);
-                }
-            }
+            csf.cancel(true);
             visiblePopulSem.release(running);
             memoryCacheReloadSem.release();
             synchronized (monitor) {
