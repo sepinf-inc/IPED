@@ -16,6 +16,7 @@ import java.util.TreeSet;
 import javax.swing.KeyStroke;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IBookmarks;
 import iped.data.IIPEDSource;
@@ -38,20 +39,9 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
 
     Map<Integer, IBookmarks> map = new HashMap<Integer, IBookmarks>();
 
-    private IBookmarks[] bookmarksArray;
-
     public MultiBookmarks(List<IPEDSource> cases) {
-        int maxId=0;
-        for (IIPEDSource s : cases) {
-            if(s.getSourceId()>maxId) {
-                maxId=s.getSourceId();
-            }
+        for (IIPEDSource s : cases)
             map.put(s.getSourceId(), s.getBookmarks());
-        }
-        bookmarksArray = new IBookmarks[maxId+1];
-        for (IIPEDSource s : cases) {
-            bookmarksArray[s.getSourceId()] = s.getBookmarks();
-        }
     }
 
     public Collection<IBookmarks> getSingleBookmarks() {
@@ -87,21 +77,21 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
     }
 
     public boolean isChecked(IItemId item) {
-        return bookmarksArray[item.getSourceId()].isChecked(item.getId());
+        return map.get(item.getSourceId()).isChecked(item.getId());
     }
 
     public void setChecked(boolean value, IItemId item) {
-        bookmarksArray[item.getSourceId()].setChecked(value, item.getId());
+        map.get(item.getSourceId()).setChecked(value, item.getId());
         for (SelectionListener l : selectionListeners)
             l.setSelected(item, value);
     }
 
     public List<String> getBookmarkList(IItemId item) {
-        return bookmarksArray[item.getSourceId()].getBookmarkList(item.getId());
+        return map.get(item.getSourceId()).getBookmarkList(item.getId());
     }
 
     public final boolean hasBookmark(IItemId item) {
-        return bookmarksArray[item.getSourceId()].hasBookmark(item.getId());
+        return map.get(item.getSourceId()).hasBookmark(item.getId());
     }
 
     private static final int[] getBookmarkIds(IBookmarks m, Set<String> bookmarkNames) {
@@ -119,7 +109,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
     }
 
     public boolean hasBookmark(IItemId item, Set<String> bookmarkNames) {
-        IBookmarks m = bookmarksArray[item.getSourceId()];
+        IBookmarks m = map.get(item.getSourceId());
         int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
         return bookmarkIds != null && m.hasBookmark(item.getId(), m.getBookmarkBits(bookmarkIds));
     }

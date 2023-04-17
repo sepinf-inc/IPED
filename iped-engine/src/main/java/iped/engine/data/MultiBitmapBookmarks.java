@@ -112,7 +112,7 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
     }
 
     public boolean hasBookmark(IItemId item, Set<String> bookmarkNames) {
-        RoaringBitmap r = getBookmarksUnions(bookmarkNames).get(item.getSourceId());
+        RoaringBitmap r = getBookmarksUnions(bookmarkNames)[item.getSourceId()];
         return r.contains(item.getId());
     }
 
@@ -133,6 +133,12 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
                 bookmarkId = m.newBookmark(bookmarkName);
             m.addBookmark(itemsPerSource.get(sourceId), bookmarkId);
         }
+        invalidadeCaches();
+    }
+
+    private void invalidadeCaches() {
+        unionsCache=null;
+        bsetCache.clear();
     }
 
     private HashMap<Integer, List<Integer>> getIdsPerSource(IItemIdList ids) {
@@ -156,6 +162,7 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
             if (bookmarkId != -1)
                 m.removeBookmark(itemsPerSource.get(sourceId), bookmarkId);
         }
+        invalidadeCaches();
     }
 
     public void newBookmark(String bookmarkName) {
@@ -240,61 +247,79 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         return bookmarks;
     }
 
-    HashMap<String, SoftReference<HashMap<Integer,RoaringBitmap>>> bsetCache = new HashMap<String, SoftReference<HashMap<Integer,RoaringBitmap>>>(); 
-    
-    public HashMap<Integer,RoaringBitmap> getBookmarksUnions(Set<String> bookmarkNames) {
-        SoftReference<HashMap<Integer,RoaringBitmap>> sbitmap = bsetCache.get(bookmarkNames.toString());
-        HashMap<Integer,RoaringBitmap> unions=null;
+    //cache made of soft reference to bookmarks hashcodes
+    HashMap<Integer, SoftReference<RoaringBitmap[]>> bsetCache = new HashMap<Integer, SoftReference<RoaringBitmap[]>>();
+    /**
+     * return union of RoaringBitmap arrays with itemIds for each case of the bookmarks in parameter
+     */
+    public RoaringBitmap[] getBookmarksUnions(Set<String> bookmarkNames) {
+        SoftReference<RoaringBitmap[]> sbitmap = bsetCache.get(bookmarkNames.hashCode());
+        RoaringBitmap[] unions=null;
         if(sbitmap!=null) {
             unions = sbitmap.get();
         }
         if(unions==null) {
-            unions = new HashMap<Integer,RoaringBitmap>();
+            unions = new RoaringBitmap[map.size()];
 
             for (Entry<Integer, IBookmarks> e : map.entrySet()) {
                 IBookmarks bookmarks = (IBookmarks) e.getValue();
                 if(bookmarks instanceof BitmapBookmarks) {
                     RoaringBitmap lunion = ((BitmapBookmarks) e.getValue()).getBookmarksUnion(bookmarkNames);
-                    unions.put(e.getKey(), lunion);
+                    unions[e.getKey()] = lunion;
                 }
             }
-            bsetCache.put(bookmarkNames.toString(), new SoftReference<HashMap<Integer,RoaringBitmap>>(unions));
+            bsetCache.put(bookmarkNames.hashCode(), new SoftReference<RoaringBitmap[]>(unions));
         }
-        return unions;        
-    }
-    
 
-    public HashMap<Integer, RoaringBitmap> getBookmarksUnions() {
-        HashMap<Integer,RoaringBitmap> nounions = new HashMap<Integer,RoaringBitmap>();
-
-        for (Entry<Integer, IBookmarks> e : map.entrySet()) {
-            IBookmarks bookmarks = (IBookmarks) e.getValue();
-            if(bookmarks instanceof BitmapBookmarks) {
-                RoaringBitmap lunion = ((BitmapBookmarks) e.getValue()).getBookmarksUnion();
-                nounions.put(e.getKey(), lunion);
-            }
+        unions = unions.clone();
+        for(int i=0; i<unions.length; i++) {
+            unions[i]=unions[i].clone();
         }
         
-        return nounions;        
+        return unions;        
+    }
+
+    SoftReference<RoaringBitmap[]> unionsCache = new SoftReference<RoaringBitmap[]>(null);
+    /**
+     * return union of RoaringBitmap arrays with itemIds for each case 
+     */
+    public RoaringBitmap[] getBookmarksUnions() {
+        RoaringBitmap[] unions = unionsCache!=null?unionsCache.get():null;
+        if(unions==null) {
+            unions = new RoaringBitmap[map.size()];
+
+            for (Entry<Integer, IBookmarks> e : map.entrySet()) {
+                IBookmarks bookmarks = (IBookmarks) e.getValue();
+                if(bookmarks instanceof BitmapBookmarks) {
+                    RoaringBitmap lunion = ((BitmapBookmarks) e.getValue()).getBookmarksUnion();
+                    unions[e.getKey()] = lunion;
+                }
+            }
+            unionsCache = new SoftReference<RoaringBitmap[]>(unions);
+        }
+        unions = unions.clone();
+        for(int i=0; i<unions.length; i++) {
+            unions[i]=unions[i].clone();
+        }
+        
+        return unions;        
     }
     
     
     public IMultiSearchResult filterBookmarks(IMultiSearchResult result, Set<String> bookmarkNames) {
-        Date d1 = new Date();
-        HashMap<Integer,RoaringBitmap> unions = getBookmarksUnions(bookmarkNames);
+        RoaringBitmap[] unions = getBookmarksUnions(bookmarkNames);
         RoaringBitmap uniqueUnion = null;
         if(map.size()==1) {
-            uniqueUnion = unions.values().iterator().next();
+            uniqueUnion = unions[0];
         }
 
-        Date d2 = new Date();
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
         for (IItemId item : result.getIterator()) {
             RoaringBitmap union=null;
             if(map.size()>1) {
-                union = unions.get(item.getSourceId());
+                union = unions[item.getSourceId()];
             }else {
                 union=uniqueUnion;
             }
@@ -304,14 +329,8 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
             }
             i++;
         }
-        Date d3 = new Date();
         MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
                 ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
-        Date d4 = new Date();
-        
-        System.out.println((d2.getTime()-d1.getTime()));
-        System.out.println((d3.getTime()-d2.getTime()));
-        System.out.println((d4.getTime()-d3.getTime()));
 
         return r;
     }
