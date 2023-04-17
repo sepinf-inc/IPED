@@ -113,7 +113,7 @@ public class UfedXmlReader extends DataSourceReader {
     private static final String EMPTY_EXTRACTION_STR = "-";
 
     private final Set<String> supportedApps = new HashSet<String>(
-            Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM));
+            Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business"));
 
     private static Random random = new Random();
 
