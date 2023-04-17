@@ -1,4 +1,4 @@
-??/04/2023: IPED-4.1.2:
+17/04/2023: IPED-4.1.2:
 News:
 #1559: Support decoding audio and video calls from android WhatsApp databases v2.22.8+ (@hauck-jvsh, @lfcnassif)
 #1170: Delete temp DLLs and whole temp folder after processing (@lfcnassif)
@@ -12,6 +12,8 @@ Fixes:
 #1606: NoRouteToHostException causing remote transcription to skip audios (@lfcnassif)
 #1595: "Wait" progress does not hide after quick operation on Linux (@tc-wleite, @patrickdalla)
 #1614: EntropyTask processing videos when creating report slowing down report generation (@tc-wleite) 
+#1638: For some (rare) images, ocrCharCount is including a few characters that didn't come from OCR (@tc-wleite)
+#1641: Exception thrown by the splash screen manager in the very first usage (@tc-wleite)
 #1596: Test error while building when comparing Dates in some timezones (@lfcnassif)
 
 
