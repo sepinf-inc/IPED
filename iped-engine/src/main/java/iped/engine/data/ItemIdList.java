@@ -23,7 +23,7 @@ public class ItemIdList extends AbstractSet<IItemId> implements IItemIdList{
     } 
 
     class ItemIdBitSetIterator implements Iterator<IItemId>{
-        Integer currentSrcId=0;
+        Integer currentSrcId=null;
         Iterator<Integer> srcIterator;
         RoaringBitmap currentBitset;
         int currentItemIdIdex=-1;
@@ -31,32 +31,40 @@ public class ItemIdList extends AbstractSet<IItemId> implements IItemIdList{
         
         ItemIdBitSetIterator(){
             srcIterator = bitsets.keySet().iterator();
-            nextBitSet();
         }
 
         @Override
         public boolean hasNext() {
-            if(currentBitset==null) {
-                return false;
+            if(currentSrcId==null) {
+                if(!nextBitSet()) {
+                    return false;
+                }
+            }
+            currentItemIdIdex = (int) currentBitset.nextValue(currentItemIdIdex+1);
+            if(currentItemIdIdex == -1) {
+                if(!nextBitSet()) {
+                    return false;
+                }
             }
             return currentSrcId!=null;
         }
 
         @Override
         public IItemId next() {
-            currentItemIdIdex = (int) currentBitset.nextValue(currentItemIdIdex+1);
-            if(currentItemIdIdex==currentLastId) {
-                nextBitSet();
-            }
             return new ItemId(currentSrcId, currentItemIdIdex);
         }
 
-        private void nextBitSet() {
-            currentSrcId = srcIterator.next();
-            if(currentSrcId!=null) {
-                currentBitset = bitsets.get(currentSrcId);
-                currentItemIdIdex=-1;
-                currentLastId = currentBitset.last();
+        private boolean nextBitSet() {
+            if(srcIterator.hasNext()) {
+                currentSrcId = srcIterator.next();
+                if(currentSrcId!=null) {
+                    currentBitset = bitsets.get(currentSrcId);
+                    currentItemIdIdex=-1;
+                    currentLastId = currentBitset.last();
+                }
+                return true;
+            }else {
+                return false;
             }
         }
     }
