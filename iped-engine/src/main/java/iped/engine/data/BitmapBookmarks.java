@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -444,35 +443,58 @@ public class BitmapBookmarks implements IBookmarks {
     }
 
     public synchronized void loadState(File file) throws IOException, ClassNotFoundException {
-        Bookmarks state = load(file);
+        try{
+            BitmapBookmarks state = load(file);
 
-        if (state.selected != null /* && state.read != null */) {
-            int len = Math.min(state.selected.length, this.selected.length);
-            System.arraycopy(state.selected, 0, this.selected, 0, len);
-        }
-
-        for(Entry<Integer, String> e: state.bookmarkNames.entrySet()) {
-            int[] ids = new int[1];
-            ids[0]=state.getBookmarkId(e.getValue());
-            byte[] b = state.getBookmarkBits(ids);
-            RoaringBitmap r = new RoaringBitmap();
-            for(int i=0; i<lastId; i++) {
-                if(state.hasBookmark(i, b)) {
-                    r.add(i);
-                }
+            if (state.selected != null /* && state.read != null */) {
+                int len = Math.min(state.selected.length, this.selected.length);
+                System.arraycopy(state.selected, 0, this.selected, 0, len);
             }
-            this.bookmarks.put(e.getKey(), r);
+            
+            this.bookmarks = state.bookmarks;
+            this.typedWords = state.typedWords;
+            this.selectedItens = state.selectedItens;
+            this.bookmarkNames = state.bookmarkNames;
+            this.bookmarkComments = state.bookmarkComments;
+            this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
+            this.reportBookmarks = state.reportBookmarks;
+        }catch (ClassCastException e) {
+            //try to load old format
+            Bookmarks state = loadOldBookmarks(file);
+
+            if (state.selected != null /* && state.read != null */) {
+                int len = Math.min(state.selected.length, this.selected.length);
+                System.arraycopy(state.selected, 0, this.selected, 0, len);
+            }
+
+            for(Entry<Integer, String> bname: state.bookmarkNames.entrySet()) {
+                int[] ids = new int[1];
+                ids[0]=state.getBookmarkId(bname.getValue());
+                byte[] b = state.getBookmarkBits(ids);
+                RoaringBitmap r = new RoaringBitmap();
+                for(int i=0; i<lastId; i++) {
+                    if(state.hasBookmark(i, b)) {
+                        r.add(i);
+                    }
+                }
+                this.bookmarks.put(bname.getKey(), r);
+            }
+            
+            this.typedWords = state.typedWords;
+            this.selectedItens = state.selectedItens;
+            this.bookmarkNames = state.bookmarkNames;
+            this.bookmarkComments = state.bookmarkComments;
+            this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
+            this.reportBookmarks = state.reportBookmarks;
         }
-        
-        this.typedWords = state.typedWords;
-        this.selectedItens = state.selectedItens;
-        this.bookmarkNames = state.bookmarkNames;
-        this.bookmarkComments = state.bookmarkComments;
-        this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
-        this.reportBookmarks = state.reportBookmarks;
     }
 
-    public static Bookmarks load(File file) throws ClassNotFoundException, IOException {
+    public static BitmapBookmarks load(File file) throws ClassNotFoundException, IOException {
+        LOGGER.info("Loading state from file " + file.getAbsolutePath()); //$NON-NLS-1$
+        return (BitmapBookmarks) Util.readObject(file.getAbsolutePath());
+    }
+
+    public static Bookmarks loadOldBookmarks(File file) throws ClassNotFoundException, IOException {
         LOGGER.info("Loading state from file " + file.getAbsolutePath()); //$NON-NLS-1$
         return (Bookmarks) Util.readObject(file.getAbsolutePath());
     }

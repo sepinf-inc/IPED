@@ -32,6 +32,11 @@
           <version>1.72</version>
       	</dependency>
         <dependency>
+          <groupId>com.github.davidmoten</groupId>
+          <artifactId>bplustree</artifactId>
+          <version>0.1.4</version>
+        </dependency>      	
+        <dependency>
             <groupId>org.dockingframes</groupId>
             <artifactId>docking-frames-common</artifactId>
             <version>${dockingframes.version}</version>
