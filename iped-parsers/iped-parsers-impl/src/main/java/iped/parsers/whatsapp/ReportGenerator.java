@@ -181,6 +181,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.BlockedContact")); //$NON-NLS-1$
                 break;
+            case UNBLOCKED_CONTACT:
+                out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.UnblockedContact")); //$NON-NLS-1$
+                break;
             case BUSINESS_CHAT:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.ChatBusiness")); //$NON-NLS-1$
@@ -255,9 +259,11 @@ public class ReportGenerator {
                 } else {
                     out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
-                out.println(Messages.getString("WhatsAppReport.VideoCall") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                out.println(
-                        Messages.getString("WhatsAppReport.Duration") + ": " + formatMMSS(message.getMediaDuration())); //$NON-NLS-1$ //$NON-NLS-2$
+                out.println(Messages.getString("WhatsAppReport.VideoCall")); //$NON-NLS-1$
+                if (message.getMediaDuration() > 0) {
+                    out.println("<br>" + Messages.getString("WhatsAppReport.Duration") + ": " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            + formatMMSS(message.getMediaDuration()));
+                }
                 break;
             case VOICE_CALL:
                 if (message.isFromMe()) {

@@ -19,6 +19,7 @@ import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.UNBLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.URL_MESSAGE;
@@ -562,6 +563,8 @@ public class ExtractorIOS extends Extractor {
                     result = BUSINESS_TO_STANDARD;
                 } else if (gEventType == 34) {
                     result = BLOCKED_CONTACT;
+                } else if (gEventType == 35) {
+                    result = UNBLOCKED_CONTACT;
                 } else if (gEventType == 40 || gEventType == 41) {
                     // Started a video call (group) 
                     result = VIDEO_CALL;
