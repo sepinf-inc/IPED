@@ -2,6 +2,7 @@ package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_FROM_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
@@ -285,7 +286,7 @@ public class ExtractorAndroidNew extends Extractor {
                         result = GROUP_DESCRIPTION_CHANGED;
                         break;
                     case 46:
-                        result = MessageType.BUSINESS_CHAT;
+                        result = BUSINESS_CHAT;
                         break;
                     case 67:
                         result = MESSAGES_ENCRYPTED;
