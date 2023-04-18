@@ -124,6 +124,7 @@ import bibliothek.gui.dock.themes.basic.action.BasicTitleViewItem;
 import iped.app.config.LogConfiguration;
 import iped.app.config.XMLResultSetViewerConfiguration;
 import iped.app.graph.AppGraphAnalytics;
+import iped.app.graph.FilterSelectedEdges;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
 import iped.app.ui.controls.table.MetadataValueSearchList;
@@ -820,27 +821,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.addMouseListener(new ResultTableListener());
         resultsTable.addKeyListener(new ResultTableListener());
 
-        /*
-        clearAllFilters.addClearListener(categoryListener);
-        clearAllFilters.addClearListener(bookmarksListener);
-        clearAllFilters.addClearListener(treeListener);
-        clearAllFilters.addClearListener(metadataPanel);
-        
-        clearAllFilters.addClearListener(duplicatesFilterer);
-        
-        
-        clearAllFilters.addClearListener(appGraphAnalytics);
-        clearAllFilters.addClearListener(similarImagesFilterer);
-        clearAllFilters.addClearListener(similarFacesFilterPanel);
-        clearAllFilters.addClearListener(timelineListener);
-        clearAllFilters.addClearListener(filtersPanel);
-        clearAllFilters.addClearListener(TableHeaderFilterManager.get());
-        */
-
         filterManager.addQueryFilterer(new SearchFilterer());
 
         duplicatesFilterer = new DuplicatesFilterer();
         filterManager.addResultSetFilterer(duplicatesFilterer);
+        filterManager.addResultSetFilterer(FilterSelectedEdges.getInstance());
 
         filterManager.getFilterers().stream().forEach(new Consumer<IFilterer>() {
             @Override
