@@ -176,6 +176,10 @@ public class ReportGenerator {
                 out.println(format(message.getRemoteResource()) + " " //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.SecurityChanged")); //$NON-NLS-1$
                 break;
+            case BLOCKED_CONTACT:
+                out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.BlockedContact")); //$NON-NLS-1$
+                break;
             case BUSINESS_CHAT:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.ChatBusiness")); //$NON-NLS-1$

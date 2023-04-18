@@ -2,6 +2,7 @@ package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_TO_STANDARD;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
@@ -553,6 +554,8 @@ public class ExtractorIOS extends Extractor {
                     result = BUSINESS_CHAT;
                 } else if (gEventType == 30) {
                     result = BUSINESS_TO_STANDARD;
+                } else if (gEventType == 34) {
+                    result = BLOCKED_CONTACT;
                 }
                 // 10 / 13 -> desconhecida (aparece algumas vezes depois de informado conversa
                 // segura com nome do interlocutor)
