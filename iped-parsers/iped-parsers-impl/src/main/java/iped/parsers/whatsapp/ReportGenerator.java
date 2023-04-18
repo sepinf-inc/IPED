@@ -180,6 +180,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.ChatBusiness")); //$NON-NLS-1$
                 break;
+            case BUSINESS_TO_STANDARD:
+                out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.BusinessToStandard")); //$NON-NLS-1$
+                break;
             case MESSAGES_ENCRYPTED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.ChatEncrypted")); //$NON-NLS-1$
