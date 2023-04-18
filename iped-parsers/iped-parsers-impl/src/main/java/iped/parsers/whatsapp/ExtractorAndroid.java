@@ -61,7 +61,6 @@ import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.sqlite.SQLiteUndeleteTableResultSetAdapter;
 import iped.parsers.whatsapp.Message.MessageStatus;
-import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
