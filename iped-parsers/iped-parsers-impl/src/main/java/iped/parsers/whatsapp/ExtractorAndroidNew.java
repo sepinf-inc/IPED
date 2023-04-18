@@ -284,6 +284,9 @@ public class ExtractorAndroidNew extends Extractor {
                     case 27:
                         result = GROUP_DESCRIPTION_CHANGED;
                         break;
+                    case 46:
+                        result = MessageType.BUSINESS_CHAT;
+                        break;
                     case 67:
                         result = MESSAGES_ENCRYPTED;
                         break;

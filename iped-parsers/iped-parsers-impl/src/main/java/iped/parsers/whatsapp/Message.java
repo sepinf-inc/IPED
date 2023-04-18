@@ -359,6 +359,7 @@ public class Message {
 
     public boolean isSystemMessage() {
         switch (messageType) {
+            case BUSINESS_CHAT:
             case MESSAGES_ENCRYPTED:
             case MESSAGES_NOW_ENCRYPTED:
             case ENCRIPTION_KEY_CHANGED:

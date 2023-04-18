@@ -60,6 +60,7 @@ import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.sqlite.SQLiteUndeleteTableResultSetAdapter;
 import iped.parsers.whatsapp.Message.MessageStatus;
+import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -544,6 +545,9 @@ public class ExtractorAndroid extends Extractor {
                             break;
                         case 27:
                             result = GROUP_DESCRIPTION_CHANGED;
+                            break;
+                        case 46:
+                            result = MessageType.BUSINESS_CHAT;
                             break;
                         case 67:
                             result = MESSAGES_ENCRYPTED;
