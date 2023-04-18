@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -58,12 +57,9 @@ import iped.app.ui.App;
 import iped.app.ui.CaseSearcherFilter;
 import iped.app.ui.FilterManager;
 import iped.app.ui.Messages;
-import iped.data.IIPEDSource;
 import iped.data.IItemId;
-import iped.data.IMultiBookmarks;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
-import iped.engine.data.ItemId;
 import iped.engine.data.MultiBitmapBookmarks;
 import iped.engine.search.MultiSearchResult;
 import iped.search.IMultiSearchResult;
@@ -318,12 +314,35 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         try {
             IMultiSearchResult result;
 
-            String queryText = "";
+            List<CacheTimePeriodEntry> visibleIntervalCache;
+            LinkedList<CacheTimePeriodEntry> beforecache = new LinkedList<CacheTimePeriodEntry>();
+            List<CacheTimePeriodEntry> aftercache = new ArrayList<CacheTimePeriodEntry>();
 
-            if (ipedChartsPanel.getChartPanel().getSplitByCategory() && splitValue != null && !splitValue.equals("Categories")) {
-                queryText += "category=\"" + splitValue + "\"";
+            Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
+            Date startDate = new Date((long) dateRange.getLowerBound());
+            Date endDate = new Date((long) dateRange.getUpperBound());
+
+            boolean fullrange = false;
+            if ((startDate.getTime() == 0 && endDate.getTime() == 1)) {
+                startDate = MIN_DATE;
+                endDate = MAX_DATE;
+                fullrange = true;
+            }
+            Date cacheWindowStartDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
+            Date cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
+            long visibleRangeLength = cacheWindowEndDate.getTime() - cacheWindowStartDate.getTime();
+
+
+            String queryText = "";
+            if(visibleRangeLength<=1000l*60l*60l*24l*60) {//greater than 2 months
+                queryText+=getWindowQuery();
             }
 
+            if (ipedChartsPanel.getChartPanel().getSplitByCategory() && splitValue != null && !splitValue.equals("Categories")) {
+                queryText += "&& category=\"" + splitValue + "\"";
+            }
+
+            
             csf = new CaseSearcherFilter(queryText);
             csf.getSearcher().setNoScoring(true);
             csf.applyUIQueryFilters(exceptThis);// apply all filters from others UI objects except the chart defined interval
@@ -345,25 +364,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
 
                 Semaphore addValueSem = new Semaphore(1);
 
-                List<CacheTimePeriodEntry> visibleIntervalCache;
-                LinkedList<CacheTimePeriodEntry> beforecache = new LinkedList<CacheTimePeriodEntry>();
-                List<CacheTimePeriodEntry> aftercache = new ArrayList<CacheTimePeriodEntry>();
-
-                Range dateRange = ipedChartsPanel.getDomainAxis().getRange();
-                Date startDate = new Date((long) dateRange.getLowerBound());
-                Date endDate = new Date((long) dateRange.getUpperBound());
-
-                boolean fullrange = false;
-                if ((startDate.getTime() == 0 && endDate.getTime() == 1)) {
-                    startDate = MIN_DATE;
-                    endDate = MAX_DATE;
-                    fullrange = true;
-                }
-
                 visibleIntervalCache = new ArrayList<CacheTimePeriodEntry>();
-                Date cacheWindowStartDate = ipedChartsPanel.getChartPanel().removeFromDatePart(startDate);
-                Date cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
-                long visibleRangeLength = cacheWindowEndDate.getTime() - cacheWindowStartDate.getTime();
                 cacheWindowStartDate = new Date(endDate.getTime() - visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
                 cacheWindowEndDate = new Date(startDate.getTime() + visibleRangeLength * MEMORY_WINDOW_CACHE_PROPORTION);
 
