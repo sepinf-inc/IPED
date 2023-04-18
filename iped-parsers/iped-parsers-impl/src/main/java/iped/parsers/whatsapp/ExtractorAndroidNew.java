@@ -12,6 +12,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGE
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
@@ -282,6 +283,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 27:
                         result = GROUP_DESCRIPTION_CHANGED;
+                        break;
+                    case 67:
+                        result = MESSAGES_ENCRYPTED;
                         break;
                     default:
                         break;
