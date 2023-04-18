@@ -2,6 +2,7 @@ package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_FROM_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRIPTION_KEY_CHANGED;
@@ -544,6 +545,8 @@ public class ExtractorIOS extends Extractor {
                     result = ENCRIPTION_KEY_CHANGED;
                 } else if (gEventType == 4) {
                     result = MISSED_VIDEO_CALL;
+                } else if (gEventType == 26) {
+                    result = BUSINESS_CHAT;
                 }
                 // 10 / 13 -> desconhecida (aparece algumas vezes depois de informado conversa
                 // segura com nome do interlocutor)
