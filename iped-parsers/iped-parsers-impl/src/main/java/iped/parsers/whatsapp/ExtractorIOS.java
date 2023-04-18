@@ -545,6 +545,9 @@ public class ExtractorIOS extends Extractor {
                     result = ENCRIPTION_KEY_CHANGED;
                 } else if (gEventType == 4) {
                     result = MISSED_VIDEO_CALL;
+                } else if (gEventType == 22) {
+                    // Missed *group* video call
+                    result = MISSED_VIDEO_CALL;
                 } else if (gEventType == 26) {
                     result = BUSINESS_CHAT;
                 }
