@@ -6,7 +6,7 @@ import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_TO_STANDARD;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.DELETED_FROM_SENDER;
+import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRIPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
@@ -369,6 +369,11 @@ public class ExtractorIOS extends Extractor {
             } // ignore
         }
         m.setDeleted(false);
+        
+        if (m.getMessageType() == UNKNOWN_MESSAGE) {
+            System.err.println("UNKNOWN_MESSAGE:C:"+ messageType+":"+ gEventType+":"+ m.getId());
+        }
+        
         return m;
     }
 
@@ -556,6 +561,9 @@ public class ExtractorIOS extends Extractor {
                     result = BUSINESS_TO_STANDARD;
                 } else if (gEventType == 34) {
                     result = BLOCKED_CONTACT;
+                } else if (gEventType == 35) {
+                    //TODO: UNBLOCKED
+                    //result = BLOCKED_CONTACT;
                 }
                 // 10 / 13 -> desconhecida (aparece algumas vezes depois de informado conversa
                 // segura com nome do interlocutor)
@@ -570,7 +578,7 @@ public class ExtractorIOS extends Extractor {
                 // mensagem de sistema desconhecida
                 break;
             case 14:
-                result = DELETED_FROM_SENDER;
+                result = DELETED_BY_SENDER;
                 break;
             case 15:
                 result = STICKER_MESSAGE;

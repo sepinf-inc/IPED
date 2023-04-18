@@ -4,7 +4,8 @@ import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.DELETED_FROM_SENDER;
+import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
+import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRIPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
@@ -343,7 +344,13 @@ public class ExtractorAndroidNew extends Extractor {
                     if (edit_version == 5) {
                         result = DELETED_MESSAGE;
                     } else {
-                        result = DELETED_FROM_SENDER;
+                        result = DELETED_BY_SENDER;
+                    }
+                } else {
+                    if (status == 0) {
+                        result = DELETED_BY_SENDER;
+                    } else if (status == 4 || status == 5) {
+                        result = DELETED_MESSAGE;
                     }
                 }
                 break;
@@ -352,6 +359,12 @@ public class ExtractorAndroidNew extends Extractor {
                 break;
             case 20:
                 result = STICKER_MESSAGE;
+                break;
+            case 64:
+                if (status == 0) {
+                    result = DELETED_BY_ADMIN;
+                }
+                break;
             default:
                 break;
         }

@@ -35,6 +35,7 @@ public class ReportGenerator {
     private static final String js = Util.readResourceAsString("js/whatsapp.js");
     private boolean firstFragment = true;
     private int currentMsg = 0;
+    private static final String deletedEmoji = " &#128683; ";
 
     public ReportGenerator() {
     }
@@ -405,11 +406,14 @@ public class ReportGenerator {
                         }
                         break;
                     case DELETED_MESSAGE:
-                        out.println("<i>" + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<i>" + deletedEmoji + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
-                    case DELETED_FROM_SENDER:
-                        out.println(
-                                "<i>" + Messages.getString("WhatsAppReport.MessageDeletedFromSender") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    case DELETED_BY_ADMIN:
+                        out.println("<i>" + deletedEmoji + Messages.getString("WhatsAppReport.MessageDeletedByAdmin") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        break;
+                    case DELETED_BY_SENDER:
+                        out.println("<i>" + deletedEmoji + Messages.getString("WhatsAppReport.MessageDeletedBySender") //$NON-NLS-1$ //$NON-NLS-2$
+                                + "</i><br/>"); //$NON-NLS-1$
                         break;
                     case WAITING_MESSAGE:
                         out.println("<i>" + Messages.getString("WhatsAppReport.WaitingMessage") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -593,7 +597,7 @@ public class ReportGenerator {
         out.println("</span>"); //$NON-NLS-1$
         if (message.isDeleted()) {
             out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
-            out.println("<i>" + Messages.getString("WhatsAppReport.MessageDeleted") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            out.println("<i>" + Messages.getString("WhatsAppReport.MessageDeletedRecovered") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             out.println("<div class=\"deletedIcon\"></div>"); //$NON-NLS-1$
             out.println("</span>"); //$NON-NLS-1$
         }
