@@ -26,6 +26,7 @@ import static iped.parsers.whatsapp.Message.MessageType.USERS_JOINED_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 
@@ -561,9 +562,9 @@ public class ExtractorIOS extends Extractor {
                     result = BUSINESS_TO_STANDARD;
                 } else if (gEventType == 34) {
                     result = BLOCKED_CONTACT;
-                } else if (gEventType == 35) {
-                    //TODO: UNBLOCKED
-                    //result = BLOCKED_CONTACT;
+                } else if (gEventType == 40 || gEventType == 41) {
+                    // Started a video call (group) 
+                    result = VIDEO_CALL;
                 }
                 // 10 / 13 -> desconhecida (aparece algumas vezes depois de informado conversa
                 // segura com nome do interlocutor)
