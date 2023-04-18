@@ -148,6 +148,8 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     public MultiSearchResult doInBackground() {
 
         synchronized (this.getClass()) {
+            
+            Date d1 = new Date();
 
             if (this.isCancelled())
                 throw new CancellationException();
@@ -242,6 +244,9 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
             result.setIpedSearcher(searcher);
             result.setIPEDSource(ipedCase);
+            
+            Date d2 = new Date();
+            System.out.println("Time:"+(d2.getTime()-d1.getTime()));
 
             return result;
         }
