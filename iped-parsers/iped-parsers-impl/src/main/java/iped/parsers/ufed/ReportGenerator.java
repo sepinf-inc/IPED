@@ -106,7 +106,7 @@ public class ReportGenerator {
 
         if (name != null)
             out.println(
-                    "<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" + format(name) + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                    "<span style=\"font-family: Arial; color: #b4c74b;\">" + format(name) + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (message.getData() != null && !message.getData().trim().isEmpty()) {
             if (message.getData().startsWith("BEGIN:VCARD")) { //$NON-NLS-1$

@@ -125,7 +125,7 @@ div.deletedIcon {
 	display:block;
 	margin:0.5em;
 	color: #ffffff;
-	font-family: 'Roboto-Medium';
+	font-family: Arial;
 }
 
 #topbar .right
@@ -142,7 +142,7 @@ div.deletedIcon {
 #chatlist
 {
 	width: 640px;
-	font-family: 'Roboto-Light';
+	font-family: Arial;
 }
 
 #chatlist .contact
@@ -174,7 +174,7 @@ div.deletedIcon {
 	display:block;
 	margin:0.5em;
 	color: #666666;
-	font-family: 'Roboto-Light';
+	font-family: Arial;
 }
 
 /**************************
@@ -184,7 +184,7 @@ div.deletedIcon {
 #conversation
 {
 	width: 640px;
-	font-family: 'Roboto-Light';
+	font-family: Arial;
 	color: #000000;
 }
 

@@ -364,7 +364,7 @@ public class ReportGenerator {
                     }
                 }
                 if (!name.isEmpty()) {
-                    out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
+                    out.println("<span style=\"font-family: Arial; color: #b4c74b;\">" //$NON-NLS-1$
                             + format(name) + "</span><br/>"); //$NON-NLS-1$
                 }
 

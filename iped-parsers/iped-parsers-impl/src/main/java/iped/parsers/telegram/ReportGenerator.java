@@ -344,7 +344,7 @@ public class ReportGenerator {
         }
         Contact contact = message.getFrom();
         if (contact != null) {
-            out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
+            out.println("<span style=\"font-family: Arial; color: #b4c74b;\">" //$NON-NLS-1$
                     + format(contact.toString()) + "</span><br/>"); //$NON-NLS-1$
         }
         if (message.getType() != null && !message.getType().isEmpty()) {
