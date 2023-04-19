@@ -175,7 +175,7 @@ public class ReportGenerator {
                 break;
             case ENCRYPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(lockedEmoji);
+                out.print(lockedEmoji);
                 out.println(format(message.getRemoteResource()) + " " //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.SecurityChanged")); //$NON-NLS-1$
                 break;
@@ -197,12 +197,12 @@ public class ReportGenerator {
                 break;
             case MESSAGES_ENCRYPTED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(lockedEmoji);
+                out.print(lockedEmoji);
                 out.println(Messages.getString("WhatsAppReport.ChatEncrypted")); //$NON-NLS-1$
                 break;
             case MESSAGES_NOW_ENCRYPTED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(lockedEmoji);
+                out.print(lockedEmoji);
                 if (group) {
                     out.println(Messages.getString("WhatsAppReport.GroupNowEncrypted")); //$NON-NLS-1$
                 } else {
