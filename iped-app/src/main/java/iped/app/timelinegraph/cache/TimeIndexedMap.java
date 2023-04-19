@@ -8,19 +8,17 @@ import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.TreeMap;
 
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.utils.SeekableFileInputStream;
 
-public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> {
+public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     HashMap<String, TreeMap<Date, Long>> monthIndex = new HashMap<String, TreeMap<Date, Long>>();
     HashMap<String, Date> startDates = new HashMap<String, Date>();
     HashMap<String, Date> endDates = new HashMap<String, Date>();
@@ -30,8 +28,8 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
     TimelineCache timelineCache = TimelineCache.get();
 
     @Override
-    public List<CacheTimePeriodEntry> put(String key, List<CacheTimePeriodEntry> value) {
-        List<CacheTimePeriodEntry> result = super.put(key, value);
+    public Set<CacheTimePeriodEntry> put(String key, Set<CacheTimePeriodEntry> value) {
+        Set<CacheTimePeriodEntry> result = super.put(key, value);
 
         processIndex(key, value);
 
@@ -46,7 +44,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         return endDates.get(className);
     }
 
-    protected void processIndex(String key, List<CacheTimePeriodEntry> value) {
+    protected void processIndex(String key, Set<CacheTimePeriodEntry> value) {
         if (!key.equals("Year") && !key.equals("Month") && !key.equals("Quarter")) {
             Calendar c = (Calendar) Calendar.getInstance().clone();
             Date minDate = startDates.get(key);
@@ -58,7 +56,7 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                 maxDate = new Date(0);
             }
 
-            Collections.sort(value);
+            //Collections.sort(value);
 
             long i = 0;
             for (Iterator iterator = value.iterator(); iterator.hasNext();) {
@@ -92,11 +90,11 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
     }
 
     @Override
-    public void putAll(Map<? extends String, ? extends List<CacheTimePeriodEntry>> m) {
+    public void putAll(Map<? extends String, ? extends Set<CacheTimePeriodEntry>> m) {
         super.putAll(m);
         for (Iterator iterator = m.entrySet().iterator(); iterator.hasNext();) {
             Entry e = (Entry) iterator.next();
-            processIndex((String) e.getKey(), (List<CacheTimePeriodEntry>) e.getValue());
+            processIndex((String) e.getKey(), (Set<CacheTimePeriodEntry>) e.getValue());
         }
     }
 

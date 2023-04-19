@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
@@ -80,7 +82,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                 periodClassesToCache.add(ipedChartsPanel.getTimePeriodClass());
             }
             for (Class periodClasses : periodClassesToCache) {
-                CachePersistance cp = new CachePersistance();
+                CachePersistance cp = CachePersistance.getInstance();
                 try {
                     TimeIndexedMap c = cp.loadNewCache(periodClasses);
                     if (c!=null) {
@@ -135,7 +137,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
                         for (Class periodClasses : periodClassesToCache) {
                             newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
-                            ArrayList<CacheTimePeriodEntry> times = new ArrayList<CacheTimePeriodEntry>();
+                            LinkedHashSet<CacheTimePeriodEntry> times = new LinkedHashSet<CacheTimePeriodEntry>();
                             newCache.put(periodClasses.getSimpleName(), times);
                         }
                         newCache.createOrLoadDayIndex(this);
@@ -145,7 +147,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                         newCache = new TimeIndexedMap();
                         for (Class periodClasses : periodClassesToCache) {
                             newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
-                            ArrayList<CacheTimePeriodEntry> times = new ArrayList<CacheTimePeriodEntry>();
+                            LinkedHashSet<CacheTimePeriodEntry> times = new LinkedHashSet<CacheTimePeriodEntry>();
                             newCache.put(periodClasses.getSimpleName(), times);
                         }
 
@@ -215,9 +217,9 @@ public class IndexTimeStampCache implements TimeStampCache {
     }
 
     public void add(Class<? extends TimePeriod> timePeriodClass, Date t, String eventType, RoaringBitmap docs) {
-        List<CacheTimePeriodEntry> l = newCache.get(timePeriodClass.getSimpleName());
+        PersistedArrayList l = (PersistedArrayList) newCache.get(timePeriodClass.getSimpleName());
         if (l == null) {
-            l = new ArrayList<CacheTimePeriodEntry>();
+            l = new PersistedArrayList(timePeriodClass);
             newCache.put(timePeriodClass.getSimpleName(), l);
         }
 
@@ -254,15 +256,14 @@ public class IndexTimeStampCache implements TimeStampCache {
         }
         selectedCe.docIds = docs;
     }
-
+    
     public RoaringBitmap get(Class<? extends TimePeriod> timePeriodClass, Date t, String eventType) {
-        Map<Long, CacheTimePeriodEntry> timePeriodIndexEntry = timePeriodEntryIndex.get(timePeriodClass.getSimpleName());
-
-        if (timePeriodIndexEntry == null) {
-            return null;
+        PersistedArrayList l = (PersistedArrayList) newCache.get(timePeriodClass.getSimpleName());
+        if(l==null) {
+            l = new PersistedArrayList(timePeriodClass);
+            newCache.put(timePeriodClass.getSimpleName(), l);
         }
-
-        CacheTimePeriodEntry selectedCt = timePeriodIndexEntry.get(t.getTime());
+        CacheTimePeriodEntry selectedCt = l.get(t.getTime());
 
         if (selectedCt == null) {
             return null;
@@ -280,12 +281,16 @@ public class IndexTimeStampCache implements TimeStampCache {
         if (selectedCe == null) {
             return null;
         }
+        
+        if(selectedCe.docIds==null) {
+            selectedCe.docIds = l.createRoaringBitmap();
+        }
 
         return selectedCe.docIds;
     }
 
     @Override
-    public Map<String, List<CacheTimePeriodEntry>> getNewCache() {
+    public Map<String, Set<CacheTimePeriodEntry>> getNewCache() {
         return newCache;
     }
 

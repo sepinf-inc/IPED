@@ -109,12 +109,14 @@ public class EventTimestampCache implements Runnable {
                     while (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = values.ordValue();
                         if (ord != emptyValueOrd) {
-                            HashMap<String, Date> dates = new HashMap<String, Date>();
+                            HashMap<String, Date> dates = null;
 
                             if (ord < parsedDateCache.size()) {
                                 dates = parsedDateCache.get(ord);
                             }
                             if (dates == null) {
+                                dates = new HashMap<String, Date>();
+                                
                                 String timeStr = cloneBr(values.lookupOrd(ord));
                                 if (timeStr.isEmpty()) {
                                     emptyValueOrd = ord;

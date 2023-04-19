@@ -23,11 +23,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.core.util.ExecutorServices;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
@@ -56,6 +59,14 @@ public class CachePersistance {
     private File bitstreamSerializeFile;
 
     static private boolean bitstreamSerializeAsDefault = false;
+
+
+    static CachePersistance singleton = new CachePersistance();
+    public static CachePersistance getInstance() {
+        return singleton;
+    }
+    
+    static public ExecutorService cachePersistanceExecutor = Executors.newFixedThreadPool(1);
 
     public CachePersistance() {
         File startDir;
@@ -225,7 +236,7 @@ public class CachePersistance {
         
         TimeIndexedMap newCache = (TimeIndexedMap) timeStampCache.getNewCache();
 
-        for (Entry<String, List<CacheTimePeriodEntry>> entry : newCache.entrySet()) {
+        for (Entry<String, Set<CacheTimePeriodEntry>> entry : newCache.entrySet()) {
             savePeriodNewCache(timeStampCache, entry.getValue(), new File(baseDir, entry.getKey()));
         }
     }
@@ -248,19 +259,18 @@ public class CachePersistance {
         }
     }
 
-    private void savePeriodNewCache(TimeStampCache timeStampCache, List<CacheTimePeriodEntry> entry, File file) {
+    private void savePeriodNewCache(TimeStampCache timeStampCache, Set<CacheTimePeriodEntry> entry, File file) {
         file.mkdirs();
         File eventFile = new File(file, "0");
 
-        Collections.sort(entry);
+        //Collections.sort(entry);
 
         boolean commit = false;
         try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(eventFile.toPath())))) {
             dos.writeShort(0);
             dos.writeUTF(timeStampCache.getCacheTimeZone().getID());
             dos.writeInt(entry.size());
-            for (int i = 0; i < entry.size(); i++) {
-                CacheTimePeriodEntry ct = entry.get(i);
+            for (CacheTimePeriodEntry ct:entry) {
                 dos.writeLong(ct.date);
                 for (int j = 0; j < ct.events.size(); j++) {
                     CacheEventEntry ce = ct.events.get(j);
