@@ -82,25 +82,33 @@ public class DateUtil {
         int month = ((b[5] - 48) * 10 + (b[6] - 48)) - 1;
         int day = (b[8] - 48) * 10 + (b[9] - 48);
         long time = ((b[11] - 48) * 10 + (b[12] - 48)) * 3600000 + ((b[14] - 48) * 10 + (b[15] - 48)) * 60000 + ((b[17] - 48) * 10 + (b[18] - 48)) * 1000 + computerTimezoneOffset;
+        if(time>=24*3600000) {
+            day+=1;
+            time = time % 24*3600000;
+        }else {
+            if(time<0) {
+                day-=1;
+                time = 24*3600000 + time;
+            }
+        }
 
         if (timePeriodClass == Day.class) {
-            Date d = new Date(new Date(year, month, day).getTime() + time);
-            return new Date(d.getYear(), d.getMonth(), d.getDate());
+            return new Date(year, month, day);
         } else if (timePeriodClass == Hour.class) {
             int hour = (int) Math.floorDiv(time,1000*60*60);
             return new Date(year, month, day, hour , 0, 0);
         } else if (timePeriodClass == Year.class) {
-            Date d = new Date(new Date(year, month, day).getTime() + time);
+            Date d = new Date(year, month, day);
             return new Date(d.getYear(), 0, 1);
         } else if (timePeriodClass == Quarter.class) {
-            Date d = new Date(new Date(year, month, day).getTime() + time);
+            Date d = new Date(year, month, day);
             return new Date(d.getYear(), Math.floorDiv(d.getMonth(),3)*3, 1);
         } else if (timePeriodClass == Month.class) {
-            Date d = new Date(new Date(year, month, day).getTime() + time);
+            Date d = new Date(year, month, day);
             return new Date(d.getYear(), d.getMonth(), 1);
         } else if (timePeriodClass == Week.class) {
             Calendar calendar = Calendar.getInstance();
-            Date d = new Date(new Date(year, month, day).getTime() + time);
+            Date d = new Date(year, month, day);
             calendar.setTime(d);
             int week;
             // sometimes the last few days of the year are considered to fall in
