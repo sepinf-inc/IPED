@@ -371,11 +371,6 @@ public class ExtractorIOS extends Extractor {
             } // ignore
         }
         m.setDeleted(false);
-        
-        if (m.getMessageType() == UNKNOWN_MESSAGE) {
-            System.err.println("UNKNOWN_MESSAGE:C:"+ messageType+":"+ gEventType+":"+ m.getId());
-        }
-        
         return m;
     }
 
