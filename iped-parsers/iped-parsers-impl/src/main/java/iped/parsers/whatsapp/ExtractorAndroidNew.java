@@ -7,7 +7,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.ENCRIPTION_KEY_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
@@ -275,7 +275,7 @@ public class ExtractorAndroidNew extends Extractor {
                         result = YOU_ADMIN;
                         break;
                     case 18:
-                        result = ENCRIPTION_KEY_CHANGED;
+                        result = ENCRYPTION_KEY_CHANGED;
                         break;
                     case 19:
                         result = MESSAGES_NOW_ENCRYPTED;

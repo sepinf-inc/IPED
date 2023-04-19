@@ -173,7 +173,7 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println("<i>" + Messages.getString("WhatsAppReport.UnknownMessage") + " [ID: " + message.getId() + "]</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 break;
-            case ENCRIPTION_KEY_CHANGED:
+            case ENCRYPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(lockedEmoji);
                 out.println(format(message.getRemoteResource()) + " " //$NON-NLS-1$
