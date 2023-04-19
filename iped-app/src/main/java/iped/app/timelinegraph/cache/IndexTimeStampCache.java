@@ -45,7 +45,9 @@ public class IndexTimeStampCache implements TimeStampCache {
     TimeZone timezone;
 
     TimeIndexedMap newCache = new TimeIndexedMap();
-    Map<String, Map<TimePeriod, CacheTimePeriodEntry>> timePeriodEntryIndex = new HashMap<String, Map<TimePeriod, CacheTimePeriodEntry>>();
+    
+    //parallel index to get an entry saved in the list above (newCache)
+    Map<String, Map<Long, CacheTimePeriodEntry>> timePeriodEntryIndex = new HashMap<String, Map<Long, CacheTimePeriodEntry>>();
 
     public IndexTimeStampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider) {
         this.resultsProvider = resultsProvider;
@@ -119,12 +121,12 @@ public class IndexTimeStampCache implements TimeStampCache {
                     synchronized (monitor) {
                         monitor.wait();
 
+                        Date d2 = new Date();
+                        logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
                         if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
                         }
                         CachePersistance cp = new CachePersistance();
                         cp.saveNewCache(this);
-                        Date d2 = new Date();
-                        logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
 
                         newCache.clearCache();
                         timePeriodEntryIndex.clear();
@@ -212,30 +214,30 @@ public class IndexTimeStampCache implements TimeStampCache {
         return null;
     }
 
-    public void add(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType, RoaringBitmap docs) {
+    public void add(Class<? extends TimePeriod> timePeriodClass, Date t, String eventType, RoaringBitmap docs) {
         List<CacheTimePeriodEntry> l = newCache.get(timePeriodClass.getSimpleName());
         if (l == null) {
             l = new ArrayList<CacheTimePeriodEntry>();
             newCache.put(timePeriodClass.getSimpleName(), l);
         }
 
-        Map<TimePeriod, CacheTimePeriodEntry> timePeriodIndexEntry = timePeriodEntryIndex.get(timePeriodClass.getSimpleName());
+        Map<Long, CacheTimePeriodEntry> timePeriodIndexEntry = timePeriodEntryIndex.get(timePeriodClass.getSimpleName());
         if (timePeriodIndexEntry == null) {
-            timePeriodIndexEntry = new HashMap<TimePeriod, CacheTimePeriodEntry>();
+            timePeriodIndexEntry = new HashMap<Long, CacheTimePeriodEntry>();
             timePeriodEntryIndex.put(timePeriodClass.getSimpleName(), timePeriodIndexEntry);
         }
 
         CacheTimePeriodEntry selectedCt = null;
         CacheEventEntry selectedCe = null;
 
-        selectedCt = timePeriodIndexEntry.get(t);
+        selectedCt = timePeriodIndexEntry.get(t.getTime());
 
         if (selectedCt == null) {
             selectedCt = new CacheTimePeriodEntry();
             selectedCt.events = new ArrayList<CacheEventEntry>();
-            selectedCt.date=t.getStart().getTime();
+            selectedCt.date=t.getTime();
             l.add(selectedCt);
-            timePeriodIndexEntry.put(t, selectedCt);
+            timePeriodIndexEntry.put(t.getTime(), selectedCt);
         }
 
         for (int i = 0; i < selectedCt.events.size(); i++) {
@@ -253,14 +255,14 @@ public class IndexTimeStampCache implements TimeStampCache {
         selectedCe.docIds = docs;
     }
 
-    public RoaringBitmap get(Class<? extends TimePeriod> timePeriodClass, TimePeriod t, String eventType) {
-        Map<TimePeriod, CacheTimePeriodEntry> timePeriodIndexEntry = timePeriodEntryIndex.get(timePeriodClass.getSimpleName());
+    public RoaringBitmap get(Class<? extends TimePeriod> timePeriodClass, Date t, String eventType) {
+        Map<Long, CacheTimePeriodEntry> timePeriodIndexEntry = timePeriodEntryIndex.get(timePeriodClass.getSimpleName());
 
         if (timePeriodIndexEntry == null) {
             return null;
         }
 
-        CacheTimePeriodEntry selectedCt = timePeriodIndexEntry.get(t);
+        CacheTimePeriodEntry selectedCt = timePeriodIndexEntry.get(t.getTime());
 
         if (selectedCt == null) {
             return null;

@@ -2,6 +2,7 @@ package iped.app.timelinegraph.cache;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -30,7 +31,7 @@ public class EventTimestampCache implements Runnable {
     IMultiSearchResultProvider resultsProvider;
     TimeStampCache timeStampCache;
     IpedChartsPanel ipedChartsPanel;
-
+    
     public EventTimestampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider, TimeStampCache timeStampCache, String eventType) {
         this.eventType = eventType;
         this.resultsProvider = resultsProvider;
@@ -48,49 +49,46 @@ public class EventTimestampCache implements Runnable {
             String eventField = ipedChartsPanel.getTimeEventColumnName(eventType);
             if (eventField != null) {
                 timeStampValues = reader.getSortedDocValues(eventField);
+                ArrayList<HashMap<String, Date>> parsedDateCache = new ArrayList<HashMap<String, Date>>();
                 if (timeStampValues == null) {
                     SortedSetDocValues values = reader.getSortedSetDocValues(eventField);
-                    ArrayList<Date> parsedDateCache = new ArrayList<>();
                     int emptyValueOrd = -1;
                     int doc = values.nextDoc();
-                    TreeMap<Date, TimePeriod> periodCache = new TreeMap<>();
                     while (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = (int) values.nextOrd();
                         while (ord != SortedSetDocValues.NO_MORE_ORDS) {
                             if (ord != emptyValueOrd) {
-                                Date date = null;
+                                HashMap<String, Date> dates = null;
+
                                 if (ord < parsedDateCache.size()) {
-                                    date = parsedDateCache.get(ord);
+                                    dates = parsedDateCache.get(ord);
                                 }
-                                if (date == null) {
+                                if (dates == null) {
                                     String timeStr = cloneBr(values.lookupOrd(ord));
                                     if (timeStr.isEmpty()) {
                                         emptyValueOrd = ord;
                                         continue;
                                     }
-                                    date = DateUtil.ISO8601DateParse(timeStr);
+                                    
+                                    dates = new HashMap<String, Date> ();                                     
+                                    for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
+                                        Date date = DateUtil.ISO8601DateParse(timePeriodClass, timeStr);
+                                        dates.put(timePeriodClass.getSimpleName(), date);
+                                    }
+
                                     while (ord >= parsedDateCache.size()) {
                                         parsedDateCache.add(null);
                                     }
-                                    parsedDateCache.set(ord, date);
+                                    parsedDateCache.set(ord, dates);
                                 }
                                 for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
-                                    TimePeriod t;
-                                    Entry<Date, TimePeriod> entry = periodCache.floorEntry(date);
-                                    if (entry != null && date.compareTo(entry.getValue().getEnd()) <= 0) {
-                                        t = entry.getValue();
-                                    } else {
-                                        t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(timePeriodClass, date);
-                                        if (isPeriodToCache(timePeriodClass)) {
-                                            periodCache.put(t.getStart(), t);
-                                        }
-                                    }
-                                    if (t != null) {
-                                        RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, t, eventType);
+                                    Date date = dates.get(timePeriodClass.getSimpleName());
+                                    if (date != null) {
+                                        RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventType);
                                         if (docs2 == null) {
                                             docs2 = new RoaringBitmap();
                                             synchronized (timeStampCache) {
-                                                timeStampCache.add(timePeriodClass, t, eventType, docs2);
+                                                timeStampCache.add(timePeriodClass, date, eventType, docs2);
                                             }
                                         }
                                         synchronized (docs2) {
@@ -105,46 +103,45 @@ public class EventTimestampCache implements Runnable {
                     }
                 } else {
                     SortedDocValues values = (SortedDocValues) timeStampValues;
-                    ArrayList<Date> parsedDateCache = new ArrayList<>();
                     int emptyValueOrd = -1;
                     int doc = values.nextDoc();
                     TreeMap<Date, TimePeriod> periodCache = new TreeMap<>();
                     while (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = values.ordValue();
                         if (ord != emptyValueOrd) {
-                            Date date = null;
+                            HashMap<String, Date> dates = new HashMap<String, Date>();
+
                             if (ord < parsedDateCache.size()) {
-                                date = parsedDateCache.get(ord);
+                                dates = parsedDateCache.get(ord);
                             }
-                            if (date == null) {
+                            if (dates == null) {
                                 String timeStr = cloneBr(values.lookupOrd(ord));
                                 if (timeStr.isEmpty()) {
                                     emptyValueOrd = ord;
                                     continue;
                                 }
-                                date = DateUtil.ISO8601DateParse(timeStr);
+
+                                for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
+                                    Date date = DateUtil.ISO8601DateParse(timePeriodClass, timeStr);
+                                    dates.put(timePeriodClass.getSimpleName(), date);
+                                }
+
                                 while (ord >= parsedDateCache.size()) {
                                     parsedDateCache.add(null);
                                 }
-                                parsedDateCache.set(ord, date);
+                                while (ord >= parsedDateCache.size()) {
+                                    parsedDateCache.add(null);
+                                }
+                                parsedDateCache.set(ord, dates);
                             }
                             for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
-                                TimePeriod t;
-                                Entry<Date, TimePeriod> entry = periodCache.floorEntry(date);
-                                if (entry != null && date.compareTo(entry.getValue().getEnd()) <= 0) {
-                                    t = entry.getValue();
-                                } else {
-                                    t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(timePeriodClass, date);
-                                    if (isPeriodToCache(timePeriodClass)) {
-                                        periodCache.put(t.getStart(), t);
-                                    }
-                                }
-                                if (t != null) {
-                                    RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, t, eventType);
+                                Date date = dates.get(timePeriodClass.getSimpleName());
+                                if (date != null) {
+                                    RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventType);
                                     if (docs2 == null) {
                                         docs2 = new RoaringBitmap();
                                         synchronized (timeStampCache) {
-                                            timeStampCache.add(timePeriodClass, t, eventType, docs2);
+                                            timeStampCache.add(timePeriodClass, date, eventType, docs2);
                                         }
                                     }
                                     synchronized (docs2) {
