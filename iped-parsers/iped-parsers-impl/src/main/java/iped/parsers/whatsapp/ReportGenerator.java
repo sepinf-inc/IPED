@@ -38,6 +38,7 @@ public class ReportGenerator {
     private int currentMsg = 0;
     private static final String deletedIcon = "<img class=\"del\"/>";
     private static final String lockedIcon = "<img class=\"lock\"/>";
+    private static final String locationIcon = "<img class=\"location\"/>";
 
     public ReportGenerator() {
     }
@@ -394,7 +395,7 @@ public class ReportGenerator {
                         }
                         break;
                     case LOCATION_MESSAGE:
-                        out.println("<i>" + Messages.getString("WhatsAppReport.LocationMessage") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<i>" + locationIcon + Messages.getString("WhatsAppReport.LocationMessage") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         out.println("Latitude: " + message.getLatitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("Longitude: " + message.getLongitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         if (message.getData() != null) {
@@ -402,7 +403,7 @@ public class ReportGenerator {
                         }
                         break;
                     case SHARE_LOCATION_MESSAGE:
-                        out.println("<i>" + Messages.getString("WhatsAppReport.SharedLocationMessage") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<i>" + locationIcon + Messages.getString("WhatsAppReport.SharedLocationMessage") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         out.println("Latitude: " + message.getLatitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("Longitude: " + message.getLongitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         if (message.getData() != null) {
