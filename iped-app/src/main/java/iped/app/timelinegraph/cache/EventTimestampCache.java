@@ -55,8 +55,8 @@ public class EventTimestampCache implements Runnable {
                 timeStampValues = reader.getSortedDocValues(eventField);
                 if (timeStampValues == null) {
                     SortedSetDocValues values = reader.getSortedSetDocValues(eventField);
-                    Map<String, long[]> parsedDateCache = getParsedCache(values);
-                    
+                    Map<String, long[]> parsedDateCache = getParsedCache(values.termsEnum(), (int) values.getValueCount());
+
                     int doc = values.nextDoc();
                     while (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = (int) values.nextOrd();
@@ -82,7 +82,7 @@ public class EventTimestampCache implements Runnable {
                 } else {
                     SortedDocValues values = (SortedDocValues) timeStampValues;
                     
-                    Map<String, long[]> parsedDateCache = getParsedCache(values);
+                    Map<String, long[]> parsedDateCache = getParsedCache(values.termsEnum(), values.getValueCount());
                     
                     int doc = values.nextDoc();
                     TreeMap<Date, TimePeriod> periodCache = new TreeMap<>();
@@ -120,35 +120,10 @@ public class EventTimestampCache implements Runnable {
         }
     }
 
-    private Map<String, long[]> getParsedCache(SortedDocValues values) throws IOException {
+    private Map<String, long[]> getParsedCache(TermsEnum lenum, int count) throws IOException {
         HashMap<String, long[]> result = new HashMap<String, long[]>();
         for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
-            TermsEnum lenum = values.termsEnum();
-            long[] a = new long[(int) values.getValueCount()];
-            BytesRef bref = lenum.next();
-
-            while(bref!=null) {
-                String timeStr = cloneBr(bref);
-                long ord = lenum.ord();
-                if (timeStr.isEmpty()) {
-                    emptyValueOrd = ord;
-                }else {
-                    Date date = DateUtil.ISO8601DateParse(timePeriodClass, timeStr);
-                    a[(int) ord]= date.getTime();
-                }
-                bref = lenum.next();
-            }
-            result.put(timePeriodClass.getSimpleName(), a);
-        }
-            
-        return result;
-    }
-
-    private Map<String, long[]> getParsedCache(SortedSetDocValues values) throws IOException {
-        HashMap<String, long[]> result = new HashMap<String, long[]>();
-        for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
-            TermsEnum lenum = values.termsEnum();
-            long[] a = new long[(int) values.getValueCount()];
+            long[] a = new long[count];
             BytesRef bref = lenum.next();
 
             while(bref!=null) {
