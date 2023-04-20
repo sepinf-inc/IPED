@@ -18,6 +18,7 @@ import iped.parsers.util.Messages;
 import iped.parsers.vcard.VCardParser;
 import iped.parsers.whatsapp.Message.MessageType;
 import iped.properties.ExtraProperties;
+import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 /**
@@ -35,8 +36,8 @@ public class ReportGenerator {
     private static final String js = Util.readResourceAsString("js/whatsapp.js");
     private boolean firstFragment = true;
     private int currentMsg = 0;
-    private static final String deletedEmoji = " &#128683; ";
-    private static final String lockedEmoji = " &#128274; ";
+    private static final String deletedEmoji = "\ud83d\udeab";
+    private static final String lockedEmoji = "\ud83d\udd12";
 
     public ReportGenerator() {
     }
@@ -159,7 +160,9 @@ public class ReportGenerator {
         });
 
         printWriter.flush();
-        return chatBytes.toByteArray();
+        byte[] bytes = chatBytes.toByteArray();
+        bytes = EmojiUtil.replaceByImages(bytes);
+        return bytes;
     }
 
     private synchronized void printMessage(PrintWriter out, Message message, boolean group,
