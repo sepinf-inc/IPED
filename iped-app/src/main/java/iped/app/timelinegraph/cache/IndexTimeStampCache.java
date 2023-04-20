@@ -121,8 +121,6 @@ public class IndexTimeStampCache implements TimeStampCache {
                     synchronized (monitor) {
                         monitor.wait();
 
-                        Date d2 = new Date();
-                        logger.info("Time to build time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
                         if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
                         }
                         CachePersistance cp = new CachePersistance();
@@ -132,12 +130,8 @@ public class IndexTimeStampCache implements TimeStampCache {
                         cacheLoaders.clear();
                         TimelineCache.get().clear();// clear old empty timeline entries to be reloaded with created cache data
 
-                        for (Class periodClasses : periodClassesToCache) {
-                            newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
-                            LinkedHashSet<CacheTimePeriodEntry> times = new LinkedHashSet<CacheTimePeriodEntry>();
-                            newCache.put(periodClasses.getSimpleName(), times);
-                        }
-                        newCache.createOrLoadDayIndex(this);
+                        Date d2 = new Date();
+                        logger.info("Time to build timeline index of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
 
                         newCache = null;// liberates data used to create indexes for garbage collection
 
@@ -155,31 +149,32 @@ public class IndexTimeStampCache implements TimeStampCache {
                 }
 
             } else {
-                Date d2 = new Date();
-
-                logger.info("Time to load time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
                 CachePersistance cp = new CachePersistance();
                 for (Class periodClasses : periodClassesToCache) {
                     newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
                 }
                 newCache.createOrLoadDayIndex(this);
-                
-                if(periodClassesToCache.contains(Day.class)) {
-                    //iterate over day cache to force soft references cache
-                    Thread t  = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Iterator it = newCache.iterator("Day", null, null);
-                            if(it!=null) {
-                                while(it.hasNext()) {
-                                    it.next();
-                                }
+            }
+            
+            if(periodClassesToCache.contains(Day.class)) {
+                //iterate over day cache to force soft references cache
+                Thread t  = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Iterator it = newCache.iterator("Day", null, null);
+                        if(it!=null) {
+                            while(it.hasNext()) {
+                                it.next();
                             }
                         }
-                    });
-                    t.start();
-                }
+                        Date d2 = new Date();
+
+                        logger.info("Time to load time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
+                    }
+                });
+                t.start();
             }
+            
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

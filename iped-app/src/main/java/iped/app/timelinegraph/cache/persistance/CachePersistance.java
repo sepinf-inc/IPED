@@ -8,17 +8,19 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -30,7 +32,6 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.core.util.ExecutorServices;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
@@ -59,6 +60,8 @@ public class CachePersistance {
     private File bitstreamSerializeFile;
 
     static private boolean bitstreamSerializeAsDefault = false;
+    static HashMap<Integer, String> eventTypeCodes = new HashMap<Integer, String>();
+    static HashMap<String, Integer> eventTypeCodesRev = new HashMap<String, Integer>();
 
 
     static CachePersistance singleton = new CachePersistance();
@@ -259,17 +262,93 @@ public class CachePersistance {
         }
     }
 
+    public void saveIntermediaryCacheSet(Collection<CacheTimePeriodEntry> entry, File file) {
+        try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file.toPath())))) {
+            for (CacheTimePeriodEntry ct:entry) {
+                dos.writeLong(ct.date);
+                for (int j = 0; j < ct.events.size(); j++) {
+                    CacheEventEntry ce = ct.events.get(j);
+                    Integer evCode = 0;
+                    synchronized (eventTypeCodes) {
+                        evCode = eventTypeCodesRev.get(ce.event);
+                        if(evCode==null) {
+                            evCode = eventTypeCodes.size();
+                            eventTypeCodes.put(evCode, ce.event);
+                            eventTypeCodesRev.put(ce.event, evCode);
+                        }                        
+                    }
+                    dos.writeInt(evCode);
+                    if(bitstreamSerialize) {
+                        ce.docIds.serialize(dos);
+                    }else {
+                        for (int docId : ce.docIds) {
+                            dos.writeInt(docId);
+                        }
+                        dos.writeInt(-1);
+                    }
+                }
+                dos.writeInt(-1);
+            }
+            dos.flush();
+            dos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    class PositionOutputStream extends BufferedOutputStream {
+        
+        public PositionOutputStream(OutputStream out) {
+            super(out);
+        }
+
+        long position=0;
+
+        @Override
+        public synchronized void write(int b) throws IOException {
+            position+=1;
+            super.write(b);
+        }
+
+        @Override
+        public synchronized void write(byte[] b, int off, int len) throws IOException {
+            position+=len;
+            super.write(b, off, len);
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            position+=b.length;
+            super.write(b);
+        }
+        
+        public long getPosition() {
+            return position;
+        }
+        
+    }
+
     private void savePeriodNewCache(TimeStampCache timeStampCache, Set<CacheTimePeriodEntry> entry, File file) {
         file.mkdirs();
-        File eventFile = new File(file, "0");
-
-        //Collections.sort(entry);
+        File indexFile = new File(file, "0");
+        File monthIndexFile = new File(file, "1");
 
         boolean commit = false;
-        try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(eventFile.toPath())))) {
+        try (PositionOutputStream pos = new PositionOutputStream(Files.newOutputStream(indexFile.toPath()));
+                DataOutputStream dos = new DataOutputStream(pos);
+                DataOutputStream monthIndexDos = new DataOutputStream(new PositionOutputStream(Files.newOutputStream(monthIndexFile.toPath())))
+                ) {
             dos.writeShort(0);
             dos.writeUTF(timeStampCache.getCacheTimeZone().getID());
             dos.writeInt(entry.size());
+
+            
+            Date lastMonth = null;
+            Calendar c = (Calendar) Calendar.getInstance().clone();
+            int internalCount = 0;
+            long lastPos=pos.position;
+
+            int ctIndex=0;
             for (CacheTimePeriodEntry ct:entry) {
                 dos.writeLong(ct.date);
                 for (int j = 0; j < ct.events.size(); j++) {
@@ -285,13 +364,38 @@ public class CachePersistance {
                     }
                 }
                 dos.writeUTF("!!");
+
+                c.clear();
+                c.set(Calendar.YEAR, 1900 + ct.getDate().getYear());
+                c.set(Calendar.MONTH, ct.getDate().getMonth());
+                c.set(Calendar.DAY_OF_MONTH, ct.getDate().getDate());
+                if (file.getName().contains("Minute") || file.getName().contains("Second")) {
+                    c.set(Calendar.HOUR_OF_DAY, ct.getDate().getHours());
+                }
+
+                internalCount += ct.events.size();
+                Date month = c.getTime();
+                if (!month.equals(lastMonth) || internalCount > 4000) {
+                    lastMonth = month;
+                    internalCount = 0;
+
+                    monthIndexDos.writeLong(month.getTime());
+                    monthIndexDos.writeLong(lastPos);
+                    monthIndexDos.writeInt(ctIndex);
+                }
+                
+                ctIndex++;
+
+                lastPos = pos.position;
+            
             }
+            
             commit = true;
         } catch (IOException e) {
             e.printStackTrace();
         }
         if (commit) {
-            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(eventFile.toPath(), StandardOpenOption.WRITE))) {
+            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(indexFile.toPath(), StandardOpenOption.WRITE))) {
                 dos.writeShort(1);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -332,7 +436,7 @@ public class CachePersistance {
         this.bitstreamSerialize = bitstreamSerialize;
     }
 
-    public CacheTimePeriodEntry loadNextEntry(CacheDataInputStream dis) throws IOException {
+    static public CacheTimePeriodEntry loadNextEntry(CacheDataInputStream dis, boolean bitstreamSerialize) throws IOException {
         CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
         ct.events = new ArrayList<CacheEventEntry>();
         ct.date=dis.readLong();
@@ -341,7 +445,7 @@ public class CachePersistance {
             CacheEventEntry ce = new CacheEventEntry();
             ce.event = eventName;
             
-            if(this.bitstreamSerialize) {
+            if(bitstreamSerialize) {
                 ce.docIds = new RoaringBitmap();
                 ce.docIds.deserialize(dis);
             }else {
@@ -362,6 +466,76 @@ public class CachePersistance {
             }
         }
         return ct;
+    }
+
+    static public CacheTimePeriodEntry loadIntermediaryNextEntry(CacheDataInputStream dis) throws IOException {
+        CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
+        ct.events = new ArrayList<CacheEventEntry>();
+        ct.date=dis.readLong();
+        int evCode = dis.readInt();
+        while (evCode!=-1) {
+            CacheEventEntry ce = new CacheEventEntry();
+            String eventName = eventTypeCodes.get(evCode);
+            ce.event = eventName;
+            ce.docIds = new RoaringBitmap();
+            ce.docIds.deserialize(dis);
+            ct.events.add(ce);
+            try {
+                evCode = dis.readInt();
+            }catch(Exception e) {
+                e.printStackTrace();
+                long pos = ((SeekableFileInputStream)dis.wrapped).position();
+            }
+        }
+        return ct;
+    }
+
+    static public class CacheFileIterator implements Iterator<CacheTimePeriodEntry>{
+        File f;
+        CacheDataInputStream dis;
+        CacheTimePeriodEntry currentCt = new CacheTimePeriodEntry();
+        
+        public CacheFileIterator(File f) {
+            this.f = f;
+            try {
+                dis = new CacheDataInputStream(new FileInputStream(f));
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
+        }
+        
+        public boolean finish() {
+            try {
+                dis.close();                
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+            return false;
+        }
+
+        @Override
+        public boolean hasNext() {
+            try {
+                currentCt = loadIntermediaryNextEntry(dis);
+                if(currentCt==null) {
+                    return finish();
+                }
+            } catch (IOException e) {
+                return finish();
+            }
+            return true;
+        }
+        @Override
+        public CacheTimePeriodEntry next() {
+            return currentCt;
+        }
+        
     }
 
 }

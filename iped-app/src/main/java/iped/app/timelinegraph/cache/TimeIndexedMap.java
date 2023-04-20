@@ -31,6 +31,8 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     public Set<CacheTimePeriodEntry> put(String key, Set<CacheTimePeriodEntry> value) {
         Set<CacheTimePeriodEntry> result = super.put(key, value);
 
+        //processIndex(key, value);
+
         return result;
     }
 
@@ -311,7 +313,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                         if(nextSeekPos!=lcacheSfis.position()) {
                             lcacheSfis.seek(nextSeekPos);
                         }
-                        lastHasNext = cp.loadNextEntry(lcacheDis);
+                        lastHasNext = cp.loadNextEntry(lcacheDis, cp.isBitstreamSerialize());
                         nextSeekPos=lcacheSfis.position();
                     }
                     countRead++;
@@ -368,53 +370,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                     if (f.exists()) {
                         cp.loadMonthIndex(ev, datesPos, positionsIndexes);
                         monthIndex.put(ev, datesPos);
-                    } else {
-                        Date lastMonth = null;
-                        int internalCount = 0;
-                        long lastPos;
-                        Calendar c = (Calendar) Calendar.getInstance().clone();
-                        
-
-                        ResultIterator i = iterator(ev, null, null);
-                        try {
-                            lastPos = i.getPosition();
-                        } catch (IOException e1) {
-                            e1.printStackTrace();
-                            return;
-                        }
-                        int ctIndex=0;
-                        while (i.hasNext()) {
-                            CacheTimePeriodEntry ct = i.next();
-                            c.clear();
-                            c.set(Calendar.YEAR, 1900 + ct.getDate().getYear());
-                            c.set(Calendar.MONTH, ct.getDate().getMonth());
-                            c.set(Calendar.DAY_OF_MONTH, ct.getDate().getDate());
-                            if (ev.equals("Minute") || ev.equals("Second")) {
-                                c.set(Calendar.HOUR_OF_DAY, ct.getDate().getHours());
-                            }
-
-                            internalCount += ct.events.size();
-                            Date month = c.getTime();
-                            if (!month.equals(lastMonth) || internalCount > 4000) {
-                                lastMonth = month;
-                                internalCount = 0;
-                                datesPos.put(month, lastPos);
-                                positionsIndexes.put(lastPos, ctIndex);
-                            }
-                            
-                            ctIndex++;
-
-                            try {
-                                lastPos = i.getPosition();
-                            } catch (IOException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            }
-                        }
-                        monthIndex.put(ev, datesPos);
-                        cp.saveMonthIndex(monthIndex, positionsIndexes, ev);
                     }
-                    
                 }finally {
                     timelineCache.liberateCachesIndexes(ev);
                 }

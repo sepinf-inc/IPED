@@ -19,12 +19,15 @@ public class CombinedIterators implements Iterator<CacheTimePeriodEntry> {
     CacheTimePeriodEntry getNextMinValue() {
         CacheTimePeriodEntry lminValue = null;
         int imin = -1;
+        int itrunc = -1;
+        int isToTrucate = 0;
         for (int i = 0; i < nextValues.length; i++) {
             if(nextValues[i]==null) {
                 if(iterators[i].hasNext()) {
                     nextValues[i]=iterators[i].next();
                 }else {
                     nextValues[i]=null;
+                    itrunc = i;
                 }
             }
             if(lminValue==null || (nextValues[i]!=null && nextValues[i].date < lminValue.date )) {
@@ -33,6 +36,23 @@ public class CombinedIterators implements Iterator<CacheTimePeriodEntry> {
             }            
         }
         if(imin!=-1) {
+            if(itrunc>-1 && nextValues.length-1>0) {
+                CacheTimePeriodEntry[] nextValuesTmp = new CacheTimePeriodEntry[nextValues.length-1]; 
+                Iterator<CacheTimePeriodEntry>[] iteratorsTmp  = new Iterator[nextValues.length-1];
+                int j=0;
+                for (int i = 0; i < nextValues.length; i++) {
+                    if(nextValues[i]!=null) {
+                        nextValuesTmp[j]=nextValues[i];
+                        iteratorsTmp[j]=iterators[i];
+                        j++;
+                    }
+                }
+                if(imin>itrunc) {
+                    imin--;
+                }
+                nextValues = nextValuesTmp;
+                iterators = iteratorsTmp;
+            }
             nextValues[imin]=null;//selected minvalue position is nullified, so it will loaded with next iterator value
         }
         return lminValue;
