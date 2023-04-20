@@ -8,9 +8,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,18 +30,19 @@ import iped.utils.SeekableFileInputStream;
 
 public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
     int docCount = 0;
-    HashSet<CacheTimePeriodEntry> mostFreqUsed = new HashSet<CacheTimePeriodEntry>();
+    Map<Long,CacheTimePeriodEntry> inMemoryEntries = new TreeMap<Long, CacheTimePeriodEntry>();
     String timePeriod;
     private int flushCount = 0;
-    ArrayList<Future> flushes = new ArrayList<Future>(); 
+    ArrayList<Future> flushes = new ArrayList<Future>();
+    boolean isFlushing = false;
     
     AtomicInteger size = new AtomicInteger(0);
     File indexDirectory;
     private Serializer cacheTimePeriodEntrySerializer = new CacheTimePeriodEntrySerializer();
-    BPlusTree<Long, CacheTimePeriodEntry> tree;
+    ArrayList<BPlusTree<Long, CacheTimePeriodEntry>> trees = new ArrayList<BPlusTree<Long, CacheTimePeriodEntry>>();
 
     private AtomicInteger flushSize = new AtomicInteger(0);
-    private int flushMaxSize = 100000;
+    private int flushMaxSize = 10000;
 
     public PersistedArrayList(Class<? extends TimePeriod> timePeriodClass) {
         this.timePeriod = timePeriodClass.getSimpleName();
@@ -60,25 +64,40 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
             return false;
         }
         CacheTimePeriodEntry ctpe = (CacheTimePeriodEntry) o;
-        if(mostFreqUsed.contains(ctpe.date)) {
+        if(inMemoryEntries.containsKey(ctpe.date)) {
             return true;
         }
-        return tree.findFirst(ctpe.date)!=null;
+        return false;
     }
 
     @Override
     public Iterator<CacheTimePeriodEntry> iterator() {
-        return tree.findAll().iterator();
+        if(trees.size()<=0) {
+            return inMemoryEntries.values().iterator();
+        }else {
+            if(isFlushing) {
+                try {
+                    waitPendingFlushes();
+                } catch (InterruptedException | ExecutionException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            
+            Iterator<CacheTimePeriodEntry>[] iterators = new Iterator[1+trees.size()];
+            iterators[0] = inMemoryEntries.values().iterator();
+            int i=1;
+            for (Iterator iterator = trees.iterator(); iterator.hasNext();) {
+                BPlusTree<Long, CacheTimePeriodEntry> tree = (BPlusTree<Long, CacheTimePeriodEntry>) iterator.next();
+                iterators[i] = tree.find(Long.MIN_VALUE, Long.MAX_VALUE).iterator();
+                i++;
+            }
+            return new CombinedIterators(iterators);
+        }
     }
 
     @Override
     public Object[] toArray() {
-        Object[] o = new Object[size.get()];
-        Iterator<CacheTimePeriodEntry> it = tree.findAll().iterator();
-        for (int i = 0; i < o.length; i++) {
-            o[i]=it.next();
-        }
-        return o;
+        throw new RuntimeException("Remove not implemented");
     }
 
     @Override
@@ -87,9 +106,8 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
     }
 
     @Override
-    public boolean add(CacheTimePeriodEntry e) {
-        
-        if(flushSize.get() == Math.floorDiv(flushMaxSize,2)) {
+    public boolean add(CacheTimePeriodEntry e) {        
+        if(flushSize.get() == Math.floorDiv(flushMaxSize,2) && isFlushing) {
             try {
                 waitPendingFlushes();
             } catch (InterruptedException | ExecutionException ex) {
@@ -103,7 +121,8 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
         
         size.incrementAndGet();
         flushSize.incrementAndGet();
-        return mostFreqUsed.add(e);
+        inMemoryEntries.put(e.date, e);
+        return true;
     }
 
     @Override
@@ -137,7 +156,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
     }
 
     public CacheTimePeriodEntry get(long time) {
-        return tree.findFirst(time);
+        return inMemoryEntries.get(time);
     }
 
     public RoaringBitmap createRoaringBitmap() {
@@ -155,8 +174,9 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
     }
 
     private void flush() {
-        final HashSet<CacheTimePeriodEntry> setToFlush = mostFreqUsed;
-        mostFreqUsed = new HashSet<CacheTimePeriodEntry>();
+        isFlushing=true;
+        final Collection<CacheTimePeriodEntry> setToFlush = inMemoryEntries.values();
+        inMemoryEntries = new HashMap<Long, CacheTimePeriodEntry>();
         
         final int lflushCount = flushCount++;
         
@@ -164,12 +184,13 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
         Future f = cp.cachePersistanceExecutor.submit(new Runnable() {
             @Override
             public void run() {
-                if(tree==null) {
+                try {
                     indexDirectory = cp.getBaseDir();
                     indexDirectory = new File(indexDirectory,"cacheflushes");
-                    indexDirectory = new File(timePeriod,"cacheflush");
-                    indexDirectory = new File(Integer.toString(lflushCount),"cacheflush");
-                    tree = BPlusTree 
+                    indexDirectory = new File(indexDirectory, timePeriod);
+                    indexDirectory = new File(indexDirectory,Integer.toString(lflushCount));
+                    indexDirectory.mkdirs();
+                    BPlusTree tree = BPlusTree 
                               .file()
                               .directory(indexDirectory)
                               .maxLeafKeys(32)
@@ -178,10 +199,14 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
                               .keySerializer(Serializer.LONG)
                               .valueSerializer(cacheTimePeriodEntrySerializer)
                               .naturalOrder();
-                }
-                
-                for(CacheTimePeriodEntry ctpe: setToFlush) {
-                    tree.insert(ctpe.date, ctpe);
+                    trees.add(tree);
+                    for(CacheTimePeriodEntry ctpe: setToFlush) {
+                        tree.insert(ctpe.date, ctpe);
+                    }
+                }catch(Exception e) {
+                  e.printStackTrace();  
+                } finally {
+                    isFlushing=false;
                 }
             }
         });

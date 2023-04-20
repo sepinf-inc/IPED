@@ -88,7 +88,7 @@ public class EventTimestampCache implements Runnable {
                                         if (docs2 == null) {
                                             docs2 = new RoaringBitmap();
                                             synchronized (timeStampCache) {
-                                                timeStampCache.add(timePeriodClass, date, eventType, docs2);
+                                                docs2 = timeStampCache.add(timePeriodClass, date, eventType, docs2);
                                             }
                                         }
                                         synchronized (docs2) {
@@ -141,9 +141,8 @@ public class EventTimestampCache implements Runnable {
                                 if (date != null) {
                                     RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventType);
                                     if (docs2 == null) {
-                                        docs2 = new RoaringBitmap();
                                         synchronized (timeStampCache) {
-                                            timeStampCache.add(timePeriodClass, date, eventType, docs2);
+                                            docs2 = timeStampCache.add(timePeriodClass, date, eventType, docs2);
                                         }
                                     }
                                     synchronized (docs2) {
