@@ -36,8 +36,8 @@ public class ReportGenerator {
     private static final String js = Util.readResourceAsString("js/whatsapp.js");
     private boolean firstFragment = true;
     private int currentMsg = 0;
-    private static final String deletedEmoji = "\ud83d\udeab";
-    private static final String lockedEmoji = "\ud83d\udd12";
+    private static final String deletedIcon = "<img class=\"del\"/>";
+    private static final String lockedIcon = "<img class=\"lock\"/>";
 
     public ReportGenerator() {
     }
@@ -177,7 +177,7 @@ public class ReportGenerator {
                 break;
             case ENCRYPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.print(lockedEmoji);
+                out.print(lockedIcon);
                 out.println(format(message.getRemoteResource()) + " " //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.SecurityChanged")); //$NON-NLS-1$
                 break;
@@ -199,12 +199,12 @@ public class ReportGenerator {
                 break;
             case MESSAGES_ENCRYPTED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.print(lockedEmoji);
+                out.print(lockedIcon);
                 out.println(Messages.getString("WhatsAppReport.ChatEncrypted")); //$NON-NLS-1$
                 break;
             case MESSAGES_NOW_ENCRYPTED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.print(lockedEmoji);
+                out.print(lockedIcon);
                 if (group) {
                     out.println(Messages.getString("WhatsAppReport.GroupNowEncrypted")); //$NON-NLS-1$
                 } else {
@@ -418,13 +418,13 @@ public class ReportGenerator {
                         }
                         break;
                     case DELETED_MESSAGE:
-                        out.println("<i>" + deletedEmoji + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
                     case DELETED_BY_ADMIN:
-                        out.println("<i>" + deletedEmoji + Messages.getString("WhatsAppReport.MessageDeletedByAdmin") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeletedByAdmin") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
                     case DELETED_BY_SENDER:
-                        out.println("<i>" + deletedEmoji + Messages.getString("WhatsAppReport.MessageDeletedBySender") //$NON-NLS-1$ //$NON-NLS-2$
+                        out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeletedBySender") //$NON-NLS-1$ //$NON-NLS-2$
                                 + "</i><br/>"); //$NON-NLS-1$
                         break;
                     case WAITING_MESSAGE:
