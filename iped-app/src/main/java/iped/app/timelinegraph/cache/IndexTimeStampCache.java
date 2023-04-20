@@ -48,8 +48,6 @@ public class IndexTimeStampCache implements TimeStampCache {
 
     TimeIndexedMap newCache = new TimeIndexedMap();
     
-    //parallel index to get an entry saved in the list above (newCache)
-    Map<String, Map<Long, CacheTimePeriodEntry>> timePeriodEntryIndex = new HashMap<String, Map<Long, CacheTimePeriodEntry>>();
 
     public IndexTimeStampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider) {
         this.resultsProvider = resultsProvider;
@@ -131,7 +129,6 @@ public class IndexTimeStampCache implements TimeStampCache {
                         cp.saveNewCache(this);
 
                         newCache.clearCache();
-                        timePeriodEntryIndex.clear();
                         cacheLoaders.clear();
                         TimelineCache.get().clear();// clear old empty timeline entries to be reloaded with created cache data
 
@@ -231,14 +228,6 @@ public class IndexTimeStampCache implements TimeStampCache {
         CacheTimePeriodEntry selectedCt = null;
         CacheEventEntry selectedCe = null;
 
-        /*
-        Map<Long, CacheTimePeriodEntry> timePeriodIndexEntry = timePeriodEntryIndex.get(timePeriodClass.getSimpleName());
-        if (timePeriodIndexEntry == null) {
-            timePeriodIndexEntry = new HashMap<Long, CacheTimePeriodEntry>();
-            timePeriodEntryIndex.put(timePeriodClass.getSimpleName(), timePeriodIndexEntry);
-        }
-        selectedCt = timePeriodIndexEntry.get(t.getTime());        
-        */
         selectedCt = l.get(t.getTime());
 
         if (selectedCt == null) {
@@ -246,7 +235,6 @@ public class IndexTimeStampCache implements TimeStampCache {
             selectedCt.events = new ArrayList<CacheEventEntry>();
             selectedCt.date=t.getTime();
             l.add(selectedCt);
-            //timePeriodIndexEntry.put(t.getTime(), selectedCt);
         }
 
         for (int i = 0; i < selectedCt.events.size(); i++) {
