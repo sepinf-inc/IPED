@@ -56,6 +56,8 @@ public class ReportGenerator {
                 + "<head>\n" //$NON-NLS-1$
                 + " <title>" + format(contact.getId()) + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
                 + " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
+                + "<style>\n" //$NON-NLS-1$
+                + "</style>\n" //$NON-NLS-1$
                 + "</head>\n" //$NON-NLS-1$
                 + "<body>\n"); //$NON-NLS-1$
 
@@ -78,7 +80,7 @@ public class ReportGenerator {
         out.flush();
         out.close();
 
-        return bout.toByteArray();
+        return EmojiUtil.replaceByImages(bout.toByteArray());
     }
 
     public byte[] generateAccountHtml(WAAccount account) throws UnsupportedEncodingException {
@@ -90,6 +92,8 @@ public class ReportGenerator {
                 + "<head>\n" //$NON-NLS-1$
                 + " <title>" + format(account.getId()) + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
                 + " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
+                + "<style>\n" //$NON-NLS-1$
+                + "</style>\n" //$NON-NLS-1$
                 + "</head>\n" //$NON-NLS-1$
                 + "<body>\n"); //$NON-NLS-1$
 
@@ -105,7 +109,7 @@ public class ReportGenerator {
         out.flush();
         out.close();
 
-        return bout.toByteArray();
+        return EmojiUtil.replaceByImages(bout.toByteArray());
     }
 
     private static final String format(String s) {
