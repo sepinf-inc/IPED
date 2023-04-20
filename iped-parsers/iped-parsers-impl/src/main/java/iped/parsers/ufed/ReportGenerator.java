@@ -13,6 +13,7 @@ import iped.parsers.whatsapp.Message;
 import iped.parsers.whatsapp.Util;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
+import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 /**
@@ -81,7 +82,7 @@ public class ReportGenerator {
 
         firstHtml = false;
 
-        return bout.toByteArray();
+        return EmojiUtil.replaceByImages(bout.toByteArray());
     }
 
     private void printMessage(PrintWriter out, UfedMessage message, boolean group, boolean chatDeleted) {

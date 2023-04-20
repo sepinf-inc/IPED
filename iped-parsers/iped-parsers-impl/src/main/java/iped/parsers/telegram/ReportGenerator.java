@@ -28,6 +28,7 @@ import java.util.List;
 import iped.data.IItemReader;
 import iped.parsers.util.Messages;
 import iped.search.IItemSearcher;
+import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 public class ReportGenerator {
@@ -137,7 +138,7 @@ public class ReportGenerator {
         printMessageFileFooter(out);
         out.flush();
 
-        return bout.toByteArray();
+        return EmojiUtil.replaceByImages(bout.toByteArray());
     }
 
     private TagHtml getThumbTag(Message m, String classnotfound) {
