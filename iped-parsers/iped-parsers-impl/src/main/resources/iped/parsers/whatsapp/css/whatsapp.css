@@ -203,14 +203,22 @@ div.deletedIcon {
 }
 
 #conversation .incoming, #conversation .outgoing,
- #conversation .date, #conversation .systemmessage, 
- #conversation .specialmessage,
+ #conversation .date, #conversation .specialmessage,
  #conversation .recoveredChat {
 	cursor: pointer;
-	border-radius: 2px;
+	border-radius: 4px;
 	box-shadow: 0 0 6px #b8b7b7;
 	display: block;
-	padding: 10px 18px 14px 18px;
+	padding: 8px 16px;
+	position: relative;
+}
+
+#conversation .systemmessage {
+	cursor: pointer;
+	border-radius: 4px;
+	box-shadow: 0 0 6px #b8b7b7;
+	display: block;
+	padding: 8px 16px 14px 16px;
 	position: relative;
 }
 
@@ -238,7 +246,7 @@ div.deletedIcon {
 
 #conversation .systemmessage
 {
-	background-color: #f7f76e;
+	background-color: #f7f787;
 	color: #333333;
 	margin: 0 auto;
 	text-align: center;
@@ -248,7 +256,7 @@ div.deletedIcon {
 
 #conversation .systemmessage:hover
 {
-	background-color: #f0f075;
+	background-color: #f0f080;
 }
 
 #conversation .pages
