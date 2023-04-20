@@ -210,7 +210,7 @@ div.deletedIcon {
 	border-radius: 2px;
 	box-shadow: 0 0 6px #b8b7b7;
 	display: block;
-	padding: 10px 18px;
+	padding: 10px 18px 14px 18px;
 	position: relative;
 }
 
