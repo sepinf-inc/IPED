@@ -160,6 +160,7 @@ public class ReportGenerator {
         });
 
         printWriter.flush();
+        // Just return chatBytes.toByteArray() to disable image emojis (see #1655)
         return EmojiUtil.replaceByImages(chatBytes.toByteArray());
     }
 
