@@ -160,9 +160,7 @@ public class ReportGenerator {
         });
 
         printWriter.flush();
-        byte[] bytes = chatBytes.toByteArray();
-        bytes = EmojiUtil.replaceByImages(bytes);
-        return bytes;
+        return EmojiUtil.replaceByImages(chatBytes.toByteArray());
     }
 
     private synchronized void printMessage(PrintWriter out, Message message, boolean group,
