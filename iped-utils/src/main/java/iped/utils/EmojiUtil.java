@@ -75,6 +75,12 @@ public class EmojiUtil {
                                 line.append("<img class=\"e").append(key).append("\"/>");
                                 usedEmojis.add(key);
                                 i = skip;
+                                if (i < len) {
+                                    int next = s.codePointAt(i);
+                                    if (next == 0xFE0E || next == 0xFE0F) {
+                                        i += Character.charCount(next);
+                                    }
+                                }
                                 continue;
                             }
                         }
