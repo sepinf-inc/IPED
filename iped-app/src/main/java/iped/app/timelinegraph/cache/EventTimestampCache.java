@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
@@ -42,7 +41,7 @@ public class EventTimestampCache implements Runnable {
         this.timeStampCache = timeStampCache;
         this.ipedChartsPanel = ipedChartsPanel;
     }
-    
+
     public void run() {
         LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
 
@@ -62,7 +61,13 @@ public class EventTimestampCache implements Runnable {
                         int ord = (int) values.nextOrd();
                         while (ord != SortedSetDocValues.NO_MORE_ORDS && ord != emptyValueOrd) {
                             for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
-                                Date date = new Date(parsedDateCache.get(timePeriodClass.getSimpleName())[ord]);
+                                Date date = null;
+                                long[] cache = parsedDateCache.get(timePeriodClass.getSimpleName());
+                                if (cache == null) {
+                                    date = DateUtil.ISO8601DateParse(timePeriodClass, values.lookupOrd(ord).bytes);
+                                }else {
+                                    date = new Date(cache[ord]);
+                                }
                                 if (date != null) {
                                     RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventType);
                                     if (docs2 == null) {
@@ -81,16 +86,20 @@ public class EventTimestampCache implements Runnable {
                     }
                 } else {
                     SortedDocValues values = (SortedDocValues) timeStampValues;
-                    
                     Map<String, long[]> parsedDateCache = getParsedCache(values.termsEnum(), values.getValueCount());
                     
                     int doc = values.nextDoc();
-                    TreeMap<Date, TimePeriod> periodCache = new TreeMap<>();
                     while (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = values.ordValue();
                         if (ord != emptyValueOrd) {
                             for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
-                                Date date = new Date(parsedDateCache.get(timePeriodClass.getSimpleName())[ord]);
+                                Date date = null;
+                                long[] cache = parsedDateCache.get(timePeriodClass.getSimpleName());
+                                if (cache == null) {
+                                    date = DateUtil.ISO8601DateParse(timePeriodClass, values.lookupOrd(ord).bytes);
+                                }else {
+                                    date = new Date(cache[ord]);
+                                }
                                 if (date != null) {
                                     RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventType);
                                     if (docs2 == null) {
@@ -124,15 +133,13 @@ public class EventTimestampCache implements Runnable {
         HashMap<String, long[]> result = new HashMap<String, long[]>();
         for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
             long[] a = new long[count];
+
             BytesRef bref = lenum.next();
 
             while(bref!=null) {
-                String timeStr = cloneBr(bref);
                 long ord = lenum.ord();
-                if (timeStr.isEmpty()) {
-                    emptyValueOrd = ord;
-                }else {
-                    Date date = DateUtil.ISO8601DateParse(timePeriodClass, timeStr);
+                if (ord!=0) {
+                    Date date = DateUtil.ISO8601DateParse(timePeriodClass, bref.bytes);
                     a[(int) ord]= date.getTime();
                 }
                 bref = lenum.next();
