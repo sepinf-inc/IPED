@@ -31,8 +31,6 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     public Set<CacheTimePeriodEntry> put(String key, Set<CacheTimePeriodEntry> value) {
         Set<CacheTimePeriodEntry> result = super.put(key, value);
 
-        //processIndex(key, value);
-
         return result;
     }
 
