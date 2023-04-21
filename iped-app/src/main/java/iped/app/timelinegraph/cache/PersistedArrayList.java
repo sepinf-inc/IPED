@@ -32,7 +32,8 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
     ArrayList<File> flushFiles = new ArrayList<File>();
 
     private AtomicInteger flushSize = new AtomicInteger(0);
-    private int flushMaxSize = 10000000;
+    private int flushMaxSize = 100000;
+    private int minAvailableMemoryNotToFlush = 40000000;//~40MB
 
     public PersistedArrayList(Class<? extends TimePeriod> timePeriodClass) {
         this.timePeriod = timePeriodClass.getSimpleName();
@@ -95,14 +96,14 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
 
     @Override
     public boolean add(CacheTimePeriodEntry e) {
-        if(flushSize.get() == Math.floorDiv(flushMaxSize,2) && isFlushing) {
+        if(isFlushing) {
             try {
                 waitPendingFlushes();
             } catch (InterruptedException | ExecutionException ex) {
                 ex.printStackTrace();
             }
         }
-        if(flushSize.get()>=flushMaxSize) {
+        if(Runtime.getRuntime().freeMemory()<minAvailableMemoryNotToFlush) {//if available memory less than 40MB
             flush();
             flushSize.set(0);
         }
