@@ -163,9 +163,15 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
 
     private void waitPendingFlushes() throws InterruptedException, ExecutionException {
         synchronized (flushes) {
+            ArrayList<Future> toremove = new ArrayList<>();
             for (Iterator iterator = flushes.iterator(); iterator.hasNext();) {
                 Future future = (Future) iterator.next();
                 future.get();
+                toremove.add(future);
+            }
+            for (Iterator iterator = toremove.iterator(); iterator.hasNext();) {
+                Future future = (Future) iterator.next();
+                flushes.remove(future);
             }
         }
     }
@@ -197,21 +203,6 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
                     isFlushing=false;
                 }
             }
-        });
-        Future fend = cp.cachePersistanceExecutor.submit(new Runnable() { //removes from unfinished flush list at the end 
-            @Override
-            public void run() {
-                try {
-                    f.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
-                }finally {
-                    synchronized (flushes) {
-                        flushes.remove(f);
-                    }
-                }
-            }
-            
         });
         flushes.add(f);
     }

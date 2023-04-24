@@ -32,6 +32,7 @@ public class IpedTimelineDatasetManager {
     IpedChartsPanel ipedChartsPanel;
 
     List<TimeStampCache> timeStampCaches = new ArrayList<>();
+    boolean isCacheLoaded = false;
 
     TimeStampCache selectedTimeStampCache;
 
@@ -96,4 +97,22 @@ public class IpedTimelineDatasetManager {
         return ipedChartsPanel;
     }
 
+    public void waitMemory() throws InterruptedException {
+        if(Runtime.getRuntime().freeMemory()<40000000) {
+            while(!isCacheLoaded) {
+                Thread.sleep(100);
+            }
+            while(Runtime.getRuntime().freeMemory()<40000000) {
+                Thread.sleep(100);
+            }
+        }
+    }
+
+    public boolean isCacheLoaded() {
+        return isCacheLoaded;
+    }
+
+    public void setCacheLoaded(boolean isCacheLoaded) {
+        this.isCacheLoaded = isCacheLoaded;
+    }
 }

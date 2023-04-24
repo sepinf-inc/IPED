@@ -147,10 +147,12 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
      * window prevents some possible unloaded info from not being ploted.
      */
     Semaphore memoryCacheReloadSem = new Semaphore(1); // semaphore that controls start and end of load of cache window contourning the
+    private IpedTimelineDatasetManager ipedTimelineDatasetManager;
                                                        // visible items
 
     public IpedTimelineDataset(IpedTimelineDatasetManager ipedTimelineDatasetManager, IMultiSearchResultProvider resultsProvider, String splitValue) throws Exception {
         this.ipedChartsPanel = ipedTimelineDatasetManager.ipedChartsPanel;
+        this.ipedTimelineDatasetManager = ipedTimelineDatasetManager;
         exceptThis.add(ipedChartsPanel);
         Args.nullNotPermitted(ipedChartsPanel.getTimeZone(), "zone");
         Args.nullNotPermitted(ipedChartsPanel.getLocale(), "locale");
@@ -169,7 +171,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     public void startCaseSearchFilterLoad() throws Exception {
         running = 1;
         cancelled = false;
-        Thread t = new Thread(new Runnable() {
+        Runnable r = new Runnable() {
             @Override
             public void run() {
                 try {
@@ -180,7 +182,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     visiblePopulSem.release(running);
                 }
             }
-        });
+        };
+        Thread t = new Thread(r);
         visiblePopulSem = new Semaphore(running);
         visiblePopulSem.acquire(running);
         datasetsThreadPool.execute(t);
@@ -321,6 +324,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             if (ipedChartsPanel.getChartPanel().getSplitByCategory() && splitValue != null && !splitValue.equals("Categories")) {
                 queryText += "category=\"" + splitValue + "\"";
             }
+            
+            //method to wait available mem to continue. This can avoid a commom OOM problem if there is low mem and, at first timeline index creation is not finished.
+            ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();
 
             CaseSearcherFilter csf = new CaseSearcherFilter(queryText);
             csf.getSearcher().setNoScoring(true);
@@ -377,6 +383,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 Iterator<CacheTimePeriodEntry> it = a.iterator(className, startDate, endDate);
                 CacheTimePeriodEntry ctpe = null;
                 while (it!=null && it.hasNext()) {
+                    ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();//method to wait available mem to continue.
                     if (cancelled) {
                         break;
                     }
