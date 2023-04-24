@@ -407,12 +407,12 @@ public class CachePersistance {
         return baseDir;
     }
 
-    public void loadMonthIndex(String ev, TreeMap<Date, Long> datesPos, Map<Long, Integer> positionsIndexes) {
+    public void loadMonthIndex(String ev, TreeMap<Long, Long> datesPos, Map<Long, Integer> positionsIndexes) {
         File monthFile = new File(new File(baseDir,ev), "1");
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(monthFile)))) {
             try {
                 while(true) {
-                    Date d = new Date(dis.readLong());
+                    long d = dis.readLong();
                     long pos = dis.readLong();
                     int index = dis.readInt();
                     datesPos.put(d, pos);

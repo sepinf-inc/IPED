@@ -19,9 +19,7 @@ import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.utils.SeekableFileInputStream;
 
 public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
-    HashMap<String, TreeMap<Date, Long>> monthIndex = new HashMap<String, TreeMap<Date, Long>>();
-    HashMap<String, Date> startDates = new HashMap<String, Date>();
-    HashMap<String, Date> endDates = new HashMap<String, Date>();
+    HashMap<String, TreeMap<Long, Long>> monthIndex = new HashMap<String, TreeMap<Long, Long>>();
     HashMap<String, File> cacheFiles = new HashMap<String, File>();
     HashMap<String, File> monthIndexCacheFiles = new HashMap<String, File>();
 
@@ -32,68 +30,6 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         Set<CacheTimePeriodEntry> result = super.put(key, value);
 
         return result;
-    }
-
-    public Date getStartDate(String className) {
-        return startDates.get(className);
-    }
-
-    public Date getEndDate(String className) {
-        return endDates.get(className);
-    }
-
-    protected void processIndex(String key, Set<CacheTimePeriodEntry> value) {
-        if (!key.equals("Year") && !key.equals("Month") && !key.equals("Quarter")) {
-            Calendar c = (Calendar) Calendar.getInstance().clone();
-            Date minDate = startDates.get(key);
-            if (minDate == null) {
-                minDate = new Date(Long.MAX_VALUE);
-            }
-            Date maxDate = endDates.get(key);
-            if (maxDate == null) {
-                maxDate = new Date(0);
-            }
-
-            //Collections.sort(value);
-
-            long i = 0;
-            for (Iterator iterator = value.iterator(); iterator.hasNext();) {
-                CacheTimePeriodEntry cacheTimePeriodEntry = (CacheTimePeriodEntry) iterator.next();
-                c.clear();
-                c.set(Calendar.YEAR, 1900 + cacheTimePeriodEntry.getDate().getYear());
-                c.set(Calendar.MONTH, cacheTimePeriodEntry.getDate().getMonth());
-                Date month = c.getTime();
-                TreeMap<Date, Long> months = monthIndex.get(key);
-                if (months == null) {
-                    months = new TreeMap<Date, Long>();
-                    monthIndex.put(key, months);
-                }
-                Long firstIndex = months.get(month);
-                if (firstIndex == null) {
-                    months.put(month, i);
-                }
-
-                if (!minDate.before(cacheTimePeriodEntry.getDate())) {
-                    minDate = cacheTimePeriodEntry.getDate();
-                }
-                if (!maxDate.after(cacheTimePeriodEntry.getDate())) {
-                    maxDate = cacheTimePeriodEntry.getDate();
-                }
-
-                i++;
-            }
-            startDates.put(key, minDate);
-            endDates.put(key, minDate);
-        }
-    }
-
-    @Override
-    public void putAll(Map<? extends String, ? extends Set<CacheTimePeriodEntry>> m) {
-        super.putAll(m);
-        for (Iterator iterator = m.entrySet().iterator(); iterator.hasNext();) {
-            Entry e = (Entry) iterator.next();
-            processIndex((String) e.getKey(), (Set<CacheTimePeriodEntry>) e.getValue());
-        }
     }
 
     public void setIndexFile(String string, File f) throws IOException {
@@ -175,7 +111,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
             if (startDate != null) {
                 Long num = null;
                 try {
-                    Entry<Date, Long> entry = monthIndex.get(className).floorEntry(startDate);
+                    Entry<Long, Long> entry = monthIndex.get(className).floorEntry(startDate.getTime());
                     if (entry != null) {
                         num = entry.getValue();
                     } else {
@@ -362,7 +298,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
             for (Iterator iterator = indexTimeStampCache.getPeriodClassesToCache().iterator(); iterator.hasNext();) {
                 String ev = (String) ((Class) iterator.next()).getSimpleName();
                 File f = monthIndexCacheFiles.get(ev);
-                TreeMap<Date, Long> datesPos = new TreeMap<Date, Long>();
+                TreeMap<Long, Long> datesPos = new TreeMap<Long, Long>();
                 Map<Long, Integer> positionsIndexes = timelineCache.getCachesIndexes(ev);
                 try {
                     if (f.exists()) {
@@ -380,7 +316,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     long cacheStartPos = 0;
     long cacheEndPos = 0;
 
-    public HashMap<String, TreeMap<Date, Long>> getMonthIndex() {
+    public HashMap<String, TreeMap<Long, Long>> getMonthIndex() {
         return monthIndex;
     }
 
