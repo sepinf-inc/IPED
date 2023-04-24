@@ -41,15 +41,22 @@ public class ItemInfo implements Serializable {
     private Collection<String> categories;
     private String path, hash;
     private boolean carved = false;
+    private boolean known = false;
 
     public ItemInfo(int id, String hash, Collection<String> bookmarks, Collection<String> categories, String path,
             boolean carved) {
+        this(id, hash, bookmarks, categories, path, carved, false);
+    }
+
+    public ItemInfo(int id, String hash, Collection<String> bookmarks, Collection<String> categories, String path,
+            boolean carved, boolean known) {
         this.id = id;
         this.hash = hash;
         this.bookmarks = bookmarks;
         this.categories = categories;
         this.path = path;
         this.setCarved(carved);
+        this.known = known;
     }
 
     public int getId() {
@@ -92,8 +99,16 @@ public class ItemInfo implements Serializable {
         return carved;
     }
 
+    public boolean isKnown() {
+        return known;
+    }
+
     public void setCarved(boolean carved) {
         this.carved = carved;
+    }
+
+    public void setKnown(boolean known) {
+        this.known = known;
     }
 
     public String getHash() {

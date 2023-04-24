@@ -18,12 +18,13 @@ import org.jfree.data.time.Quarter;
 import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.viewers.api.IMultiSearchResultProvider;
 
-class EventTimestampCache implements Runnable {
+public class EventTimestampCache implements Runnable {
     String eventType;
 
     IMultiSearchResultProvider resultsProvider;
@@ -85,9 +86,9 @@ class EventTimestampCache implements Runnable {
                                         }
                                     }
                                     if (t != null) {
-                                        ArrayList<Integer> docs2 = timeStampCache.get(timePeriodClass, t, eventType);
+                                        RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, t, eventType);
                                         if (docs2 == null) {
-                                            docs2 = new ArrayList<Integer>();
+                                            docs2 = new RoaringBitmap();
                                             synchronized (timeStampCache) {
                                                 timeStampCache.add(timePeriodClass, t, eventType, docs2);
                                             }
@@ -139,9 +140,9 @@ class EventTimestampCache implements Runnable {
                                     }
                                 }
                                 if (t != null) {
-                                    ArrayList<Integer> docs2 = timeStampCache.get(timePeriodClass, t, eventType);
+                                    RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, t, eventType);
                                     if (docs2 == null) {
-                                        docs2 = new ArrayList<Integer>();
+                                        docs2 = new RoaringBitmap();
                                         synchronized (timeStampCache) {
                                             timeStampCache.add(timePeriodClass, t, eventType, docs2);
                                         }
@@ -172,7 +173,7 @@ class EventTimestampCache implements Runnable {
         return timePeriodClass == Year.class || timePeriodClass == Quarter.class || timePeriodClass == Month.class || timePeriodClass == Week.class || timePeriodClass == Day.class || timePeriodClass == Hour.class;
     }
 
-    synchronized String cloneBr(BytesRef br) {
+    static public synchronized String cloneBr(BytesRef br) {
         char[] saida = new char[br.length];
         final int len = UnicodeUtil.UTF8toUTF16(br.bytes, br.offset, br.length, saida);
         return new String(saida, 0, len);

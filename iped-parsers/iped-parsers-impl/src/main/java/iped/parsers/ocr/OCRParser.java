@@ -116,6 +116,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     public static final String TOOL_PATH_PROP = TOOL_NAME + ".path"; //$NON-NLS-1$
     public static final String LANGUAGE_PROP = "ocr.language"; //$NON-NLS-1$
     public static final String PAGE_SEGMODE_PROP = "ocr.pageSegMode"; //$NON-NLS-1$
+    public static final String SKIP_KNOWN_FILES_PROP = "ocr.skipKnownFiles"; //$NON-NLS-1$
     public static final String MIN_SIZE_PROP = "ocr.minFileSize"; //$NON-NLS-1$
     public static final String MAX_SIZE_PROP = "ocr.maxFileSize"; //$NON-NLS-1$
     public static final String SUBSET_TO_OCR = "subsetToOcr"; //$NON-NLS-1$
@@ -128,6 +129,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     private String TOOL_PATH = System.getProperty(TOOL_PATH_PROP, ""); //$NON-NLS-1$
     private String LANGUAGE = System.getProperty(LANGUAGE_PROP, "por"); //$NON-NLS-1$
     private String PAGESEGMODE = System.getProperty(PAGE_SEGMODE_PROP, "1"); //$NON-NLS-1$
+    private boolean SKIP_KNOWN_FILES = Boolean.valueOf(System.getProperty(SKIP_KNOWN_FILES_PROP, "false")); //$NON-NLS-1$
     private int MIN_SIZE = Integer.valueOf(System.getProperty(MIN_SIZE_PROP, "10000")); //$NON-NLS-1$
     private long MAX_SIZE = Integer.valueOf(System.getProperty(MAX_SIZE_PROP, "100000000")); //$NON-NLS-1$
     private List<String> bookmarksToOCR = Arrays
@@ -366,7 +368,8 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             if (outDir != null)
                 outputBase = new File(outDir.getPath(), TEXT_DIR);
 
-            if (size >= MIN_SIZE && size <= MAX_SIZE && (bookmarksToOCR == null || isFromBookmarkToOCR(itemInfo))) {
+            if (size >= MIN_SIZE && size <= MAX_SIZE && (bookmarksToOCR == null || isFromBookmarkToOCR(itemInfo))
+                    && !(SKIP_KNOWN_FILES && itemInfo.isKnown())) {
                 if (outputBase != null && itemInfo != null && itemInfo.getHash() != null) {
                     String hash = itemInfo.getHash();
                     outFileName = hash;
@@ -431,8 +434,10 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             }
 
         } finally {
+            // Call before endDocument() to avoid counting non-OCR characters
+            int charCount = countHandler.getCharCount();
             xhtml.endDocument();
-            metadata.set(OCRParser.OCR_CHAR_COUNT, Integer.toString(countHandler.getCharCount()));
+            metadata.set(OCRParser.OCR_CHAR_COUNT, Integer.toString(charCount));
             if (tmpOutput != null) {
                 tmpOutput.delete();
             }
