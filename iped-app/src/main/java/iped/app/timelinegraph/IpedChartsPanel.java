@@ -30,6 +30,7 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -54,6 +55,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
@@ -86,6 +89,7 @@ import org.jfree.data.xy.XYDataset;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
+import iped.app.timelinegraph.cache.IndexTimeStampCache;
 import iped.app.timelinegraph.datasets.AsynchronousDataset;
 import iped.app.timelinegraph.datasets.IpedTimelineDatasetManager;
 import iped.app.timelinegraph.popups.LegendItemPopupMenu;
@@ -118,6 +122,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     IpedTimelineDatasetManager ipedTimelineDatasetManager;
 
     static ThreadPoolExecutor swExecutor = new ThreadPoolExecutor(1, 1, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+
+    private static final Logger logger = LogManager.getLogger(IndexTimeStampCache.class);
 
     boolean syncViewWithTableSelection = false;
 
@@ -356,7 +362,16 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                refreshChart();                
+                Date d1 = new Date();
+                logger.info("Starting to load time cache of Day time period...");
+                try {
+                    refreshChart().get();
+                } catch (InterruptedException | ExecutionException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                Date d2 = new Date();
+                logger.info("Loaded time cache of Day time period in {}ms",d2.getTime()-d1.getTime());
             }
         };
         Thread t = new Thread(r);
@@ -448,11 +463,11 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         ret[k] = -1;
     }
 
-    public void refreshChart() {
-        refreshChart(false);
+    public Future<?> refreshChart() {
+        return refreshChart(false);
     }
 
-    public void refreshChart(boolean resetDomainRange) {
+    public Future<?> refreshChart(boolean resetDomainRange) {
         try {
             IpedChartsPanel self = this;
 
@@ -551,11 +566,11 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 }
             };
 
-            swExecutor.execute(swRefresh);
+            return swExecutor.submit(swRefresh);
 
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
+            return null;
         }
     }
 

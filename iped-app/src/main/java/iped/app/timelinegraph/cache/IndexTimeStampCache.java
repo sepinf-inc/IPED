@@ -3,8 +3,6 @@ package iped.app.timelinegraph.cache;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +22,6 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
-import org.jfree.data.time.Day;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
@@ -71,9 +68,6 @@ public class IndexTimeStampCache implements TimeStampCache {
                 return;
             }
 
-            Date d1 = new Date();
-            logger.info("Starting to load/build time cache of [{}]...", periodClassesToCache.toString());
-
             boolean cacheExists = false;
 
             if (periodClassesToCache.size() == 0) {
@@ -92,6 +86,9 @@ public class IndexTimeStampCache implements TimeStampCache {
             }
 
             if (!cacheExists) {
+                Date d1 = new Date();
+                logger.info("Starting to load/build time cache of [{}]...", periodClassesToCache.toString());
+                
                 LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
 
                 SortedSetDocValues timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
