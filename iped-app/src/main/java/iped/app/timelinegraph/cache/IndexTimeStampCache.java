@@ -155,26 +155,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                 }
                 newCache.createOrLoadDayIndex(this);
             }
-            
-            if(periodClassesToCache.contains(Day.class)) {
-                //iterate over day cache to force soft references cache
-                Thread t  = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Iterator it = newCache.iterator("Day", null, null);
-                        if(it!=null) {
-                            while(it.hasNext()) {
-                                it.next();
-                            }
-                        }
-                        Date d2 = new Date();
-
-                        logger.info("Time to load time cache of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
-                    }
-                });
-                t.start();
-            }
-            
+            ipedChartsPanel.getIpedTimelineDatasetManager().setCacheLoaded(true);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
