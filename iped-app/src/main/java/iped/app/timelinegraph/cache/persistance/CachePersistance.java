@@ -37,6 +37,7 @@ import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
+import iped.app.timelinegraph.cache.PersistedArrayList;
 import iped.app.timelinegraph.cache.TimeIndexedMap;
 import iped.app.timelinegraph.cache.TimeIndexedMap.CacheDataInputStream;
 import iped.app.timelinegraph.cache.TimeStampCache;
@@ -401,6 +402,9 @@ public class CachePersistance {
                 e.printStackTrace();
             }
         }
+        
+        //removes intermediary flush files if exists
+        ((PersistedArrayList) entry).removeFlushes();
     }
 
     public File getBaseDir() {

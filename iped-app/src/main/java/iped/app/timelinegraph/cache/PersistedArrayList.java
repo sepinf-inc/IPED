@@ -12,6 +12,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
@@ -25,6 +27,8 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
     private int flushCount = 0;
     List<Future> flushes = new ArrayList<Future>();
     boolean isFlushing = false;
+    
+    private static final Logger logger = LogManager.getLogger(PersistedArrayList.class);
     
     AtomicInteger size = new AtomicInteger(0);
     File indexDirectory;
@@ -63,7 +67,8 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
 
     @Override
     public Iterator<CacheTimePeriodEntry> iterator() {
-        if(flushFiles.size()<=0) {
+        int flushSize=flushFiles.size();
+        if(flushSize<=0) {
             return inMemoryEntries.values().iterator();
         }else {
             try {
@@ -71,8 +76,8 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
             } catch (InterruptedException | ExecutionException ex) {
                 ex.printStackTrace();
             }
-
-            Iterator<CacheTimePeriodEntry>[] iterators = new Iterator[1+flushFiles.size()];
+            
+            Iterator<CacheTimePeriodEntry>[] iterators = new Iterator[1+flushSize];
             iterators[0] = inMemoryEntries.values().iterator();
             int i=1;
             for (Iterator iterator = flushFiles.iterator(); iterator.hasNext();) {
@@ -80,18 +85,19 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
                 iterators[i] = new CacheFileIterator(f);
                 i++;
             }
+            logger.info("Number of intermediary flushes to create {} index: {}. Merging them.", timePeriod, flushSize);
             return new CombinedIterators(iterators);
         }
     }
 
     @Override
     public Object[] toArray() {
-        throw new RuntimeException("Remove not implemented");
+        throw new RuntimeException("Method not implemented");
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-        return null;
+        throw new RuntimeException("Method not implemented");
     }
 
     @Override
@@ -116,32 +122,32 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
 
     @Override
     public boolean remove(Object o) {
-        throw new RuntimeException("Remove not implemented");
+        throw new RuntimeException("Method not implemented");
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        throw new RuntimeException("Remove not implemented");
+        throw new RuntimeException("Method not implemented");
     }
 
     @Override
     public boolean addAll(Collection<? extends CacheTimePeriodEntry> c) {
-        throw new RuntimeException("Remove not implemented");
+        throw new RuntimeException("Method not implemented");
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        throw new RuntimeException("Remove not implemented");
+        throw new RuntimeException("Method not implemented");
     }
 
     @Override        
     public boolean retainAll(Collection<?> c) {
-        throw new RuntimeException("Remove not implemented");
+        throw new RuntimeException("Method not implemented");
     }
 
     @Override
     public void clear() {
-        throw new RuntimeException("Remove not implemented");
+        throw new RuntimeException("Method not implemented");
     }
 
     public CacheTimePeriodEntry get(long time) {
@@ -208,5 +214,19 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
             
         });
         flushes.add(f);
+    }
+
+    public void removeFlushes() {
+        CachePersistance.getInstance().cachePersistanceExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                for (File f : flushFiles) {
+                    File[] tpDirs = f.listFiles();
+                    f.delete();
+                    f.getParentFile().delete();
+                }
+            }
+        }); 
+        
     }
 }
