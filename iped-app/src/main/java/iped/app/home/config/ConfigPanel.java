@@ -1,5 +1,39 @@
 package iped.app.home.config;
 
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ItemEvent;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Objects;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.filechooser.FileSystemView;
+
+import org.apache.commons.lang.SystemUtils;
+
 /*
  * @created 07/09/2022
  * @project IPED
@@ -13,21 +47,11 @@ import iped.app.home.style.StyleManager;
 import iped.app.home.utils.CasePathManager;
 import iped.app.ui.Messages;
 import iped.configuration.IConfigurationDirectory;
-import iped.engine.config.*;
-import org.apache.commons.lang.SystemUtils;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.filechooser.FileSystemView;
-import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ItemEvent;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Objects;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.LocalConfig;
+import iped.engine.config.LocaleConfig;
+import iped.engine.config.PluginConfig;
+import iped.engine.config.ProfileManager;
 
 /**
  * Her we'll manage IPED configuration
@@ -359,7 +383,7 @@ public class ConfigPanel extends DefaultPanel {
         defaultConfigurationManager.reloadConfigurable(LocalConfig.class);
         LocalConfig localConfig = defaultConfigurationManager.findObject(LocalConfig.class);
         spinnerThreads.setValue(localConfig.getNumThreads());
-        textFieldIndexTemp.setText( (localConfig.getPropertie().getProperty(LocalConfig.INDEX_TEMP) == null ) ? "Default" : localConfig.getPropertie().getProperty(LocalConfig.INDEX_TEMP));
+        textFieldIndexTemp.setText((localConfig.getPropertie().getProperty(LocalConfig.IPED_TEMP) == null) ? "Default" : localConfig.getPropertie().getProperty(LocalConfig.IPED_TEMP));
         checkBoxIndexTempOnSSD.setSelected( localConfig.isIndexTempOnSSD() );
         File hashDbFile = localConfig.getHashDbFile();
         boolean isHashDBEnabled = hashDbFile != null;
@@ -414,7 +438,7 @@ public class ConfigPanel extends DefaultPanel {
             LocalConfig localConfig = defaultConfigurationManager.findObject(LocalConfig.class);
             //Set changes on LocalConfig Configurable class
             localConfig.setIndexTempOnSSD( checkBoxIndexTempOnSSD.isSelected() );
-            localConfig.getPropertie().setProperty(LocalConfig.INDEX_TEMP, textFieldIndexTemp.getText());
+            localConfig.getPropertie().setProperty(LocalConfig.IPED_TEMP, textFieldIndexTemp.getText());
             localConfig.setNumThreads((Integer) spinnerThreads.getValue());
             localConfig.getPropertie().setProperty(LocalConfig.HASH_DB, textFieldHashesDB.getText());
             localConfig.getPropertie().enableOrDisablePropertie(CasePathManager.getInstance().getLocalConfigFile(), LocalConfig.HASH_DB, !isEnableHashDB);

@@ -33,7 +33,7 @@ public class HashDBLookupTask extends AbstractTask {
     public static final String ATTRIBUTES_PREFIX = "hashDb:";
     private static final String STATUS_PROPERTY = "status";
     public static final String STATUS_ATTRIBUTE = ATTRIBUTES_PREFIX + STATUS_PROPERTY;
-    private static final String KNOWN_VALUE = "known";
+    public static final String KNOWN_VALUE = "known";
     private static final String NSRL_PRODUCT_NAME_PROPERTY = "nsrlProductName";
 
     private Logger logger = LoggerFactory.getLogger(HashDBLookupTask.class);

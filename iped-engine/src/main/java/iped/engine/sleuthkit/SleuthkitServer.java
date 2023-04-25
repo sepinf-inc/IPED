@@ -71,11 +71,12 @@ public class SleuthkitServer {
             Configuration.getInstance().loadConfigurables(new File(dbPath).getParent() + "/iped"); //$NON-NLS-1$
             ConfigurationManager cm = ConfigurationManager.get();
             LocalConfig localConfig = new LocalConfig();
+            localConfig.setIndexerTemp(new File(System.getProperty("java.io.tmpdir")));
             cm.addObject(localConfig);
             cm.loadConfigs();
             Configuration.getInstance().loadNativeLibs();
 
-            SleuthkitCase sleuthCase = SleuthkitCase.openCase(dbPath);
+            SleuthkitCase sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(dbPath);
             HashMap<Long, SleuthkitInputStream> sisMap = new HashMap<>();
 
             java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE); //$NON-NLS-1$

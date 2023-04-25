@@ -51,6 +51,8 @@ public class RegRipperParser extends AbstractParser {
      */
     private static final long serialVersionUID = 1L;
 
+    public static final String FULL_REPORT_SUFFIX = "_Full_Report";
+
     private static Logger LOGGER = LoggerFactory.getLogger(RegRipperParser.class);
 
     private final static String timeBiasStartTag = "Bias           -&gt; ";
@@ -139,7 +141,7 @@ public class RegRipperParser extends AbstractParser {
             // run all available plugins for this hive
             ArrayList<String> command = new ArrayList<>(Arrays.asList(cmd));
             command.addAll(Arrays.asList("-a", "-r", tempFile.getAbsolutePath()));
-            String reportName = filename + "_Full_Report";
+            String reportName = filename + FULL_REPORT_SUFFIX;
             runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp, metadata, context);
 
             // run specific profiles for each hive

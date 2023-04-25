@@ -10,12 +10,16 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.text.Collator;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -52,22 +56,38 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
 
+import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.io.IStreamSource;
 import iped.parsers.mail.RFC822Parser;
 import iped.parsers.util.Util;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.utils.FileContentSource;
 import iped.utils.IOUtil;
+import iped.utils.SimpleHTMLEncoder;
+import iped.viewers.api.AttachmentSearcher;
 import iped.viewers.localization.Messages;
 import iped.viewers.util.LuceneSimpleHTMLEncoder;
 
-public class EmailViewer extends HtmlViewer {
+public class EmailViewer extends HtmlLinkViewer {
+
+    private static Collator collator = getCollator();
 
     MailContentHandler mch;
     MimeStreamParser parser;
 
-    public EmailViewer() {
+    private IItem lastItem;
+
+    private static Collator getCollator() {
+        Collator c = Collator.getInstance();
+        c.setStrength(Collator.SECONDARY);
+        c.setDecomposition(Collator.FULL_DECOMPOSITION);
+        return c;
+    }
+
+    public EmailViewer(AttachmentSearcher attachSearcher) {
+        super(attachSearcher);
         this.fileHandler = new AttachmentOpen();
         this.enableJavascript = true;
     }
@@ -89,6 +109,8 @@ public class EmailViewer extends HtmlViewer {
             super.loadFile(null, null);
             return;
         }
+
+        lastItem = (IItem) content;
 
         if (mch != null) {
             mch.deleteFiles();
@@ -124,36 +146,53 @@ public class EmailViewer extends HtmlViewer {
 
     }
 
-    public static File getFileRenamedToExt(File file, String ext) {
-        if (!ext.isEmpty() && !file.getName().endsWith("." + ext)) {
-            File renamedFile = new File(file.getAbsolutePath() + "." + ext);
-            if (renamedFile.exists() || file.renameTo(renamedFile)) {
-                return renamedFile;
-            }
-        }
-        return file;
-    }
-
     public class AttachmentOpen extends FileHandler {
 
-        public void open(int attNum) {
+        public void open(boolean external, String item) {
+            if (external)
+                externalAttachOpen(item);
+            else {
+                internalAttachOpen(Integer.parseInt(item));
+            }
+        }
+
+        public void internalAttachOpen(int attNum) {
             AttachInfo info = mch.attachments.values().toArray(new AttachInfo[0])[attNum];
             String ext = Util.getTrueExtension(info.tmpFile);
-            info.tmpFile = getFileRenamedToExt(info.tmpFile, ext);
+            info.tmpFile = Util.getFileRenamedToExt(info.tmpFile, ext);
             if (IOUtil.isToOpenExternally(info.name, ext)) {
                 this.openFile(info.tmpFile);
             }
+        }
+
+        public void externalAttachOpen(final String luceneQuery) {
+            new AttachmentHandler().open(luceneQuery);
         }
     }
 
     private static class AttachInfo {
         private String name, mime;
         private File tmpFile;
+        private IItemReader item;
 
         private AttachInfo(File tmpFile, String mime, String name) {
             this.tmpFile = tmpFile;
             this.name = name;
             this.mime = mime;
+        }
+    }
+
+    private static class Body {
+        File file;
+        String charset = "windows-1252"; //$NON-NLS-1$
+        BodyDescriptor multipartDesc;
+        boolean isHtml;
+
+        private Body(File bodyFile, String charset, BodyDescriptor multiPartDesc, boolean isHtml) {
+            this.file = bodyFile;
+            this.charset = charset;
+            this.multipartDesc = multiPartDesc;
+            this.isHtml = isHtml;
         }
     }
 
@@ -164,12 +203,13 @@ public class EmailViewer extends HtmlViewer {
         private Metadata metadata;
         private boolean inPart = false;
 
-        File previewFile, bodyFile;
-        ArrayList<File> filesList = new ArrayList<File>();
-        String bodyCharset = "windows-1252"; //$NON-NLS-1$
+        File previewFile;
+        LinkedList<Body> bodyList = new LinkedList<>();
+        LinkedList<BodyDescriptor> multiParts = new LinkedList<>();
+        ArrayList<File> tmpFilesList = new ArrayList<File>();
 
         private String attachName, contentID;
-        private boolean textBody = false, htmlBody = false, isAttach = false;
+        private boolean isAttach = false;
         private Map<String, AttachInfo> attachments = new LinkedHashMap<>();
 
         private DateFormat dateFormat = new SimpleDateFormat(Messages.getString("EmailViewer.DateFormat")); //$NON-NLS-1$
@@ -182,7 +222,7 @@ public class EmailViewer extends HtmlViewer {
         }
 
         public void deleteFiles() {
-            for (File file : filesList) {
+            for (File file : tmpFilesList) {
                 file.delete();
             }
             if (previewFile != null) {
@@ -216,11 +256,18 @@ public class EmailViewer extends HtmlViewer {
             return value;
         }
 
+        private String getCharset() {
+            if (bodyList.isEmpty()) {
+                return "windows-1252";
+            }
+            return bodyList.get(0).charset;
+        }
+
         private void createHeader(OutputStreamWriter writer) throws IOException {
 
             writer.write("<html>"); //$NON-NLS-1$
             writer.write("<head>"); //$NON-NLS-1$
-            writer.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + bodyCharset + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
+            writer.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + getCharset() + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
             writer.write("</head>"); //$NON-NLS-1$
             writer.write(
                     "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">"); //$NON-NLS-1$
@@ -269,23 +316,54 @@ public class EmailViewer extends HtmlViewer {
                 }
             }
 
-            boolean firstAtt = true;
             int i = 0, count = 0;
             text = ""; //$NON-NLS-1$
+            List<IItem> items = Collections.emptyList();
+            boolean isPartialEmlx = lastItem.getName().matches("\\d+\\.partial\\.emlx(\\:DECOMP)?");
+            if (isPartialEmlx) {
+                String[] refs = lastItem.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
+                if (refs.length > 0) {
+                    items = attachSearcher.getItems("(" + String.join(") OR (", refs) + ")");
+                }
+            }
             for (AttachInfo attach : attachments.values()) {
                 if (attach.name != null) {
-                    if (!firstAtt) {
-                        text += ", "; //$NON-NLS-1$
+                    if (!isPartialEmlx || (attach.tmpFile != null && attach.tmpFile.length() > 0)) {
+                        text += "<a href=\"\" onclick=\"app.open(false," + i + ")\">" + SimpleHTMLEncoder.htmlEncode(attach.name) + "</a><br>";
+                    } else {
+                        String query = null;
+                        // handle multiple attachments with same name
+                        for (int k = 0; k <= 1; k++) {
+                            for (IItem item : items.toArray(new IItem[0])) {
+                                String name = item.getName().endsWith(":DECOMP") ? item.getName().substring(0, item.getName().length() - 7) : item.getName();
+                                if (k == 1) {
+                                    // try to find attachment ignoring extension
+                                    int idx = name.lastIndexOf('.');
+                                    if (idx != -1) {
+                                        name = name.substring(0, idx);
+                                    }
+                                }
+                                if (collator.compare(name, attach.name) == 0) {
+                                    query = BasicProps.HASH + ":" + item.getHash();
+                                    attach.item = item;
+                                    items.remove(item);
+                                    break;
+                                }
+                            }
+                        }
+                        if (query != null) {
+                            text += "<a href=\"\" onclick=\"app.open(true,'" + SimpleHTMLEncoder.htmlEncode(query) + "')\">" + SimpleHTMLEncoder.htmlEncode(attach.name) + "</a><br>";
+                        } else {
+                            text += SimpleHTMLEncoder.htmlEncode(attach.name) + " <em>" + Messages.getString("EmailViewer.NotFound") + "</em><br>";
+                        }
                     }
-                    text += "<a href=\"\" onclick=\"app.open(" + i + ")\">" + attach.name + "</a>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    firstAtt = false;
                     count++;
                 }
                 i++;
             }
             if (count > 0) {
                 text = "<b style=\"font-weight:bold\">" + Messages.getString("EmailViewer.Attachments") + ": (" + count //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        + ")</b> " + text; //$NON-NLS-1$
+                        + ")</b><br>" + text; //$NON-NLS-1$
                 writer.write(text);
             }
 
@@ -351,34 +429,47 @@ public class EmailViewer extends HtmlViewer {
             AttachInfo attachInfo = new AttachInfo(attach, type,
                     (attachName == null ? Messages.getString("EmailViewer.UnNamed") : attachName)); //$NON-NLS-1$
 
+            if (attachName != null) {
+                isAttach = true;
+            }
+
             if (isAttach) {
                 attachments.put(contentID, attachInfo);
 
-            } else if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
-                if (textBody || htmlBody || attachName != null) {
-                    attachments.put(contentID, attachInfo);
-                } else {
-                    bodyCharset = charset;
-                    bodyFile = attach;
-                    textBody = true;
+            } else if ("text/plain".equalsIgnoreCase(type)) { //$NON-NLS-1$
+                Body b = new Body(attach, charset, multiParts.peekLast(), false);
+                if (bodyList.isEmpty() || multiParts.isEmpty() || !isAlternative() || b.multipartDesc != bodyList.getLast().multipartDesc) {
+                    bodyList.addLast(b);
                 }
-
-            } else if (type.equalsIgnoreCase("text/html")) { //$NON-NLS-1$
-                if (htmlBody || attachName != null) {
-                    attachments.put(contentID, attachInfo);
+            } else if ("text/html".equalsIgnoreCase(type)) { //$NON-NLS-1$
+                Body b = new Body(attach, charset, multiParts.peekLast(), true);
+                boolean alternative = false, mixedInAlternative = false;
+                if (bodyList.isEmpty() || multiParts.isEmpty() || (!(alternative = isAlternative()) && !(mixedInAlternative = isMixedInAlternative()))) {
+                    bodyList.addLast(b);
                 } else {
-                    bodyCharset = charset;
-                    bodyFile = attach;
-                    htmlBody = true;
+                    if ((alternative && b.multipartDesc == bodyList.getLast().multipartDesc) || (mixedInAlternative && !bodyList.getLast().isHtml)) {
+                        bodyList.removeLast();
+                    }
+                    bodyList.addLast(b);
                 }
-
             } else {
                 // images (inline or not) and other mimes as attachs
                 attachments.put(contentID, attachInfo);
             }
 
-            filesList.add(attach);
+            tmpFilesList.add(attach);
 
+        }
+
+        private boolean isAlternative() {
+            return !multiParts.isEmpty() && "alternative".equalsIgnoreCase(multiParts.getLast().getSubType());
+        }
+
+        private boolean isMixedInAlternative() {
+            if (multiParts.size() < 2) return false;
+            String lastPart = multiParts.getLast().getSubType();
+            if (lastPart != null) lastPart = lastPart.toLowerCase(); 
+            return ("mixed".equals(lastPart) || "related".equals(lastPart)) && "alternative".equalsIgnoreCase(multiParts.get(multiParts.size() - 2).getSubType());
         }
 
         @Override
@@ -391,25 +482,30 @@ public class EmailViewer extends HtmlViewer {
                 throw new RuntimeException(e1);
             }
 
-            Charset charset = Charset.forName(bodyCharset);
             try (OutputStream outStream = new BufferedOutputStream(new FileOutputStream(previewFile));
-                    OutputStreamWriter writer = new OutputStreamWriter(outStream, charset)) {
+                    OutputStreamWriter writer = new OutputStreamWriter(outStream, getCharset())) {
 
                 createHeader(writer);
 
                 Set<String> inlined = new HashSet<>();
-                if (bodyFile != null) {
-                    String body = new String(Files.readAllBytes(bodyFile.toPath()), charset);
+                for (Body bodyObj : bodyList) {
+                    String body = new String(Files.readAllBytes(bodyObj.file.toPath()), bodyObj.charset);
                     // handle inline images
                     for (Entry<String, AttachInfo> e : attachments.entrySet()) {
-                        String newBody = body.replace("cid:" + e.getKey(), e.getValue().tmpFile.toURI().toString());
-                        if (newBody.length() != body.length()) {
+                        String cid = "cid:" + e.getKey();
+                        if (body.contains(cid)) {
+                            File tmpFile = e.getValue().item != null ? e.getValue().item.getTempFile() : e.getValue().tmpFile;
+                            if (e.getValue().item != null && IOUtil.isTemporaryFile(tmpFile)) {
+                                tmpFilesList.add(tmpFile);
+                                tmpFile.deleteOnExit();
+                            }
+                            String newBody = body.replace(cid, tmpFile.toURI().toString());
                             inlined.add(e.getKey());
+                            body = newBody;
                         }
-                        body = newBody;
                     }
                     writer.write(body);
-                    bodyFile.delete();
+                    bodyObj.file.delete();
                 }
 
                 Map<String, AttachInfo> notInlined = new LinkedHashMap<>(attachments);
@@ -666,13 +762,13 @@ public class EmailViewer extends HtmlViewer {
 
         @Override
         public void startMultipart(BodyDescriptor descr) throws MimeException {
-
+            multiParts.addLast(descr);
             inPart = true;
         }
 
         @Override
         public void endMultipart() throws MimeException {
-
+            multiParts.removeLast();
             inPart = false;
         }
 
@@ -690,7 +786,6 @@ public class EmailViewer extends HtmlViewer {
             if (attachName != null) {
                 attachName = decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
             }
-
         }
 
         @Override

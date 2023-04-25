@@ -35,7 +35,20 @@
      	</magic>
         <glob pattern="*.cdr"/>
     </mime-type>
-
+    
+    <mime-type type="image/x-corelphotopaint">
+    	<magic priority="60">
+          <match value="CPTFILE" type="string" offset="0" />
+          <match value="CPT9FILE" type="string" offset="0" />
+     	</magic>
+    </mime-type>
+    
+    <mime-type type="image/vnd.radiance">
+    	<magic priority="40">
+          <match value="#?RADIANCE" type="string" offset="0" />
+     	</magic>
+    </mime-type>
+        
 	<mime-type type="application/x-superfetch">
 		<_comment>Windows EVT Log</_comment>
     	<magic priority="40">
@@ -314,7 +327,7 @@
     
     <mime-type type="application/x-whatsapp-wadb">
         <sub-class-of type="application/x-sqlite3"/>
-        <glob pattern="wa*.db"/>
+        <glob pattern="wa.db"/>
     </mime-type>
     
     <mime-type type="application/x-whatsapp-contactsv2">
@@ -580,6 +593,37 @@
     <mime-type type="application/x-incredimail">
         <sub-class-of type="message/rfc822"/>
         <glob pattern="*.imm"/>
+    </mime-type>
+    
+    <mime-type type="message/rfc822-partial">
+        <sub-class-of type="message/rfc822"/>
+        <glob pattern="*.partial.emlx"/>
+        <glob pattern="*.partial.emlx:DECOMP"/>
+    </mime-type>
+    
+    <mime-type type="message/x-emlx-partial">
+        <sub-class-of type="message/x-emlx"/>
+        <glob pattern="*.PARTIAL.EMLX"/>
+        <glob pattern="*.PARTIAL.EMLX:DECOMP"/>
+    </mime-type>
+    
+    <mime-type type="message/x-emlx">
+      <magic priority="60">
+        <match value="\nMIME-Version: 1.0\nx-store-info:" type="string" offset="2:10"/>
+        <match value="\nx-store-info:" type="string" offset="2:10"/>
+        <match value="\nX-Antivirus:" type="string" offset="2:10"/>
+        <match value="\nRelay-Version:" type="string" offset="2:10"/>
+        <match value="\n#!\ rnews" type="string" offset="2:10"/>
+        <match value="\nN#!\ rnews" type="string" offset="2:10"/>
+        <match value="\nForward\ to" type="string" offset="2:10"/>
+        <match value="\nPipe\ to" type="string" offset="2:10"/>
+        <match value="\nReturn-Path:" type="string" offset="2:10"/>
+        <match value="\nFrom:" type="string" offset="2:10"/>
+        <match value="\nReceived:" type="string" offset="2:10"/>
+        <match value="\nMessage-ID:" type="string" offset="2:10"/>
+      </magic>
+      <glob pattern="*.emlx"/>
+      <sub-class-of type="text/x-tika-text-based-message"/>
     </mime-type>
     
     <mime-type type="message/x-rfc822-mac">
@@ -1223,6 +1267,59 @@
     <mime-type type="application/x-win10-timeline-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
+
+    <mime-type type="application/x-event-transcript">     
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="EventTranscript.db"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-history">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-history-registry">     
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-inventory-app">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-inventory-app-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-app-interactivity">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-app-interactivity-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-devices">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-devices-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-census">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-event-transcript-census-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-networking">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-networking-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
     
     <mime-type type="application/x-gdrive-cloud-graph-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
@@ -1346,8 +1443,53 @@
     <mime-type type="application/x-ios-locations-db">
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
- 	
- 	<mime-type type="application/x-tor-tc-fragment">
-	</mime-type>
     
+    <mime-type type="application/x-tor-tc-fragment">
+	</mime-type>
+
+    <mime-type type="application/x-win10-mail-db">
+        <sub-class-of type="application/x-edb"/>
+        <glob pattern="store.vol"/>
+    </mime-type>
+
+    <mime-type type="message/x-win10-mail-msg">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-appointment">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-contact">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-win10-mail-store">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-chrome-cache-index">
+        <_comment>Chrome Cache Index file </_comment>
+        <magic priority="50">
+            <match value="0xC3CA03C1" type="string" offset="0"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-discord-chat">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="message/x-discord-message">
+    	<sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+    
+    <mime-type type="message/x-discord-attachment">
+    	<sub-class-of type="message/x-discord-message"/>
+    </mime-type>
+    
+    <mime-type type="call/x-discord-call">
+    	<sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+
 </mime-info>
+

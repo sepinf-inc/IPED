@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.1-snapshot</version>
+        <version>4.2-snapshot</version>
     </parent>
 
     <artifactId>iped-app</artifactId>
@@ -52,11 +52,6 @@
             <artifactId>kharon</artifactId>
             <version>0.1.6</version>
         </dependency>
-        <dependency>
-		    <groupId>net.iakovlev</groupId>
-		    <artifactId>timeshape</artifactId>
-		    <version>2020d.12</version>
-		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.toedter/jcalendar -->
 		<dependency>
 		    <groupId>com.toedter</groupId>
@@ -68,6 +63,11 @@
 	  		<artifactId>jfreechartextensions</artifactId>
 	  		<version>5d6b903557dac49a925a7a62d5c6592bd07482c5</version>
 	  	</dependency>
+	  	<dependency>
+            <groupId>org.roaringbitmap</groupId>
+            <artifactId>RoaringBitmap</artifactId>
+            <version>0.9.39</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -293,7 +293,7 @@
                                 <artifactItem>
                                     <groupId>abelcheung</groupId>
                                     <artifactId>rifiuti2</artifactId>
-                                    <version>0.6.1</version>
+                                    <version>0.7.0</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -331,7 +331,7 @@
                                 <artifactItem>
                                     <groupId>tesseract</groupId>
                                     <artifactId>tesseract-zip</artifactId>
-                                    <version>5.0.0-alpha</version>
+                                    <version>5.0.0-alpha.extra.langs</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -523,7 +523,7 @@
                                 <artifactItem>
                                     <groupId>led</groupId>
                                     <artifactId>die</artifactId>
-                                    <version>20211231</version>
+                                    <version>20230125</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/models</outputDirectory>
