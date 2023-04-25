@@ -33,8 +33,6 @@ public class EventTimestampCache implements Runnable {
     IpedChartsPanel ipedChartsPanel;
     int emptyOrd;
 
-    private long emptyValueOrd;
-    
     public EventTimestampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider, TimeStampCache timeStampCache, String eventType) {
         this.eventType = eventType;
         this.resultsProvider = resultsProvider;
@@ -46,37 +44,48 @@ public class EventTimestampCache implements Runnable {
         LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
 
         IndexTimeStampCache timeStampCache = (IndexTimeStampCache) this.timeStampCache;
+        
 
         DocIdSetIterator timeStampValues;
         try {
-            String eventField = ipedChartsPanel.getTimeEventColumnName(eventType);
+            String eventField = ipedChartsPanel.getTimeEventColumnName(eventType).trim();
             if (eventField != null) {
                 timeStampValues = reader.getSortedDocValues(eventField);
                 if (timeStampValues == null) {
                     SortedSetDocValues values = reader.getSortedSetDocValues(eventField);
-                    Map<String, long[]> parsedDateCache = getParsedCache(values.termsEnum(), (int) values.getValueCount());
+                    TermsEnum tenum = values.termsEnum();
+                    Long emptyValueOrd = getEmptyOrd(tenum);
+                    if(emptyValueOrd==null) {
+                        tenum = values.termsEnum();
+                    }
+                    Map<String, long[]> parsedDateCache = getParsedCache(tenum, (int) values.getValueCount());
 
                     int doc = values.nextDoc();
-                    while (doc != DocIdSetIterator.NO_MORE_DOCS) {
+                    while (doc != DocIdSetIterator.NO_MORE_DOCS) {                        
                         int ord = (int) values.nextOrd();
-                        while (ord != SortedSetDocValues.NO_MORE_ORDS && ord != emptyValueOrd) {
-                            for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
-                                Date date = null;
-                                long[] cache = parsedDateCache.get(timePeriodClass.getSimpleName());
-                                if (cache == null) {
-                                    date = DateUtil.ISO8601DateParse(timePeriodClass, values.lookupOrd(ord).bytes);
-                                }else {
-                                    date = new Date(cache[ord]);
-                                }
-                                if (date != null) {
-                                    RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventType);
-                                    if (docs2 == null) {
-                                        synchronized (timeStampCache) {
-                                            docs2 = timeStampCache.add(timePeriodClass, date, eventType, docs2);
-                                        }
+                        while (ord != SortedSetDocValues.NO_MORE_ORDS) {
+                            if(emptyValueOrd==null || ord!=emptyValueOrd) {
+                                for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
+                                    Date date = null;
+                                    long[] cache = parsedDateCache.get(timePeriodClass.getSimpleName());
+                                    if (cache == null) {
+                                        date = DateUtil.ISO8601DateParse(timePeriodClass, values.lookupOrd(ord).bytes);
+                                    }else {
+                                        date = new Date(cache[ord]);
                                     }
-                                    synchronized (docs2) {
-                                        docs2.add(doc);
+                                    if(date==null) {
+                                        System.out.println();
+                                    }
+                                    if (date != null) {
+                                        RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventType);
+                                        if (docs2 == null) {
+                                            synchronized (timeStampCache) {
+                                                docs2 = timeStampCache.add(timePeriodClass, date, eventType, docs2);
+                                            }
+                                        }
+                                        synchronized (docs2) {
+                                            docs2.add(doc);
+                                        }
                                     }
                                 }
                             }
@@ -86,12 +95,17 @@ public class EventTimestampCache implements Runnable {
                     }
                 } else {
                     SortedDocValues values = (SortedDocValues) timeStampValues;
-                    Map<String, long[]> parsedDateCache = getParsedCache(values.termsEnum(), values.getValueCount());
+                    TermsEnum tenum = values.termsEnum();
+                    Long emptyValueOrd = getEmptyOrd(tenum);
+                    if(emptyValueOrd==null) {
+                        tenum = values.termsEnum();
+                    }
+                    Map<String, long[]> parsedDateCache = getParsedCache(tenum, values.getValueCount());
                     
                     int doc = values.nextDoc();
                     while (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = values.ordValue();
-                        if (ord != emptyValueOrd) {
+                        if(emptyValueOrd==null || ord!=emptyValueOrd) {
                             for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
                                 Date date = null;
                                 long[] cache = parsedDateCache.get(timePeriodClass.getSimpleName());
@@ -100,7 +114,7 @@ public class EventTimestampCache implements Runnable {
                                 }else {
                                     date = new Date(cache[ord]);
                                 }
-                                if (date != null) {
+                                if (date != null) {                                                                        
                                     RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventType);
                                     if (docs2 == null) {
                                         synchronized (timeStampCache) {
@@ -129,6 +143,19 @@ public class EventTimestampCache implements Runnable {
         }
     }
 
+    private Long getEmptyOrd(TermsEnum lenum) throws IOException {
+        long[] a = new long[1];
+
+        BytesRef bref = lenum.next();
+
+        long ord = lenum.ord();
+        if(bref.bytes.length<=0) {
+            return ord;
+        }
+            
+        return null;
+    }
+
     private Map<String, long[]> getParsedCache(TermsEnum lenum, int count) throws IOException {
         HashMap<String, long[]> result = new HashMap<String, long[]>();
         for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
@@ -138,10 +165,11 @@ public class EventTimestampCache implements Runnable {
 
             while(bref!=null) {
                 long ord = lenum.ord();
-                if (ord!=0) {
+                if(bref.bytes.length>10) {
                     Date date = DateUtil.ISO8601DateParse(timePeriodClass, bref.bytes);
                     a[(int) ord]= date.getTime();
                 }
+                
                 bref = lenum.next();
             }
             result.put(timePeriodClass.getSimpleName(), a);
