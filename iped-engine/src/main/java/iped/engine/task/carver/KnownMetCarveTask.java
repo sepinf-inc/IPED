@@ -19,6 +19,7 @@
 package iped.engine.task.carver;
 
 import java.io.BufferedInputStream;
+import iped.io.SeekableInputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -169,10 +170,10 @@ public class KnownMetCarveTask extends BaseCarveTask {
                                 int numTags = toInt(buf, pos);
                                 if (numTags > 2 && numTags < 100) {
                                     int len = 512 * numFiles;
-                                    BufferedInputStream inParse = null;
+                                    SeekableInputStream inParse = null;
                                     try {
-                                        inParse = evidence.getBufferedInputStream();
-                                        inParse.skip(offset);
+                                        inParse = evidence.getSeekableInputStream();
+                                        inParse.seek(offset);
                                         List<KnownMetEntry> l = KnownMetDecoder.parseToList(inParse, len);
                                         if (!l.isEmpty()) {
                                             addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met", //$NON-NLS-1$ //$NON-NLS-2$
@@ -187,7 +188,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                             }
                         }
                     }
-                } else if (read == -32 || read == -31 || read == -30) {
+                } else if (read == -32 || read == -30) {
                 	is.read(buf);
                 	long date = toInt(buf, 0) * 1000L;
                 	if (date > dateMin && date < dateMax) {
@@ -199,11 +200,11 @@ public class KnownMetCarveTask extends BaseCarveTask {
                 		if (pos < 500) {
                 			numTags = toInt(buf, pos);
                 		}
-                		if (numTags >= 0 && numTags <= 1024 && numParts <= 4096 && numParts >= 0) {
-                			BufferedInputStream inParse = null;
+                		if (numTags >= 2 && numTags <= 1024 && numParts <= 4096 && numParts >= 0) {
+                			SeekableInputStream inParse = null;
                 			try {
-                				inParse = evidence.getBufferedInputStream();
-                				inParse.skip(offset);
+                				inParse = evidence.getSeekableInputStream();
+                				inParse.seek(offset);
                 				int bytesRead = inParse.read(buf2);
                 				if (bytesRead > 25) {
                 					KnownMetEntry entry = new KnownMetEntry();
