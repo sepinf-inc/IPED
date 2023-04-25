@@ -98,7 +98,7 @@ public class IpedTimelineDatasetManager {
     }
 
     public void waitMemory() throws InterruptedException {
-        if(Runtime.getRuntime().freeMemory()<40000000) {
+        if(Runtime.getRuntime().freeMemory()<Runtime.getRuntime().maxMemory()/2) {
             while(!isCacheLoaded) {
                 Thread.sleep(100);
             }
