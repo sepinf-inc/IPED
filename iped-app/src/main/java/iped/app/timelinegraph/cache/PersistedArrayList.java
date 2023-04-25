@@ -36,7 +36,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
     ArrayList<File> flushFiles = new ArrayList<File>();
 
     private AtomicInteger flushSize = new AtomicInteger(0);
-    private int flushMaxSize = 100000;
+    static private int flushMaxSize = Runtime.getRuntime().maxMemory()>1536*1024*1024?1000000:Runtime.getRuntime().maxMemory()>1024*1024*1024?100000:10000;
     private int minAvailableMemoryNotToFlush = 40000000;//~40MB
 
     public PersistedArrayList(Class<? extends TimePeriod> timePeriodClass) {
@@ -67,8 +67,8 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
 
     @Override
     public Iterator<CacheTimePeriodEntry> iterator() {
-        int flushSize=flushFiles.size();
-        if(flushSize<=0) {
+        int flushCount=flushFiles.size();
+        if(flushCount<=0) {
             return inMemoryEntries.values().iterator();
         }else {
             try {
@@ -77,7 +77,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
                 ex.printStackTrace();
             }
             
-            Iterator<CacheTimePeriodEntry>[] iterators = new Iterator[1+flushSize];
+            Iterator<CacheTimePeriodEntry>[] iterators = new Iterator[1+flushCount];
             iterators[0] = inMemoryEntries.values().iterator();
             int i=1;
             for (Iterator iterator = flushFiles.iterator(); iterator.hasNext();) {
@@ -85,7 +85,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
                 iterators[i] = new CacheFileIterator(f);
                 i++;
             }
-            logger.info("Number of intermediary flushes to create {} index: {}. Merging them.", timePeriod, flushSize);
+            logger.info("Number of intermediary flushes to create {} index: {}. Merging them.", timePeriod, flushCount);
             return new CombinedIterators(iterators);
         }
     }
@@ -109,7 +109,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
                 ex.printStackTrace();
             }
         }
-        if(Runtime.getRuntime().freeMemory()<minAvailableMemoryNotToFlush) {//if available memory less than 40MB
+        if(flushSize.get()>flushMaxSize && Runtime.getRuntime().freeMemory()<Runtime.getRuntime().maxMemory()/2) {
             flush();
             flushSize.set(0);
         }
