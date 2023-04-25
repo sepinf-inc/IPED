@@ -57,4 +57,9 @@ public class SerializedConfigurationDirectory implements IConfigurationDirectory
         FileInputStream fi = new FileInputStream(file.toFile());        
         return new ObjectInputStream(fi);
     }
+
+    @Override
+    public void addPath(Path path) {
+        // TODO Auto-generated method stub
+    }
 }
