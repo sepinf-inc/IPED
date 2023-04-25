@@ -90,6 +90,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         CacheDataInputStream tmpCacheDis = null;
         try {
             
+            //init streams
             File f = cacheFiles.get(className);
             if(f==null) {
                 return null;
@@ -101,14 +102,16 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
             SeekableFileInputStream lcacheSfis = tmpCacheSifs;
             CacheDataInputStream lcacheDis = tmpCacheDis;
 
+            //skips header
             lcacheSfis.seek(2l);
             String timezoneID = lcacheDis.readUTF();
             int entries = lcacheDis.readInt2();
 
             CacheTimePeriodEntry[] cache = timelineCache.get(className, entries);
 
-            long startpos = lcacheSfis.position();
+            long startpos = lcacheSfis.position();//position of first entry in cache
             if (startDate != null) {
+                //if start date is given, search for the position of correspondent first entry throught month index
                 Long num = null;
                 try {
                     Entry<Long, Long> entry = monthIndex.get(className).floorEntry(startDate.getTime());
@@ -125,15 +128,15 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                 startpos = num.longValue();
             }
 
-            final long pos = startpos;
+            final long pos = startpos;//start position in the index to iterate
 
             try {
                 lcacheSfis.seek(pos);
                 Integer index = null;
                 if (cache != null) {
-                    index = timelineCache.getIndex(className, pos);
+                    index = timelineCache.getIndex(className, pos);//finds the correspondent index position in cache array for the startpos
 
-                    if (lastStartDate != null && startDate != null) {
+                    if (lastStartDate != null && startDate != null) { //liberate some memory of entries in cache out of window of iteration
                         long startinterval = startDate.getTime() - lastStartDate.getTime();
                         if (startinterval > 0) {
                             timelineCache.clean(className, lastStartDate, startDate);
@@ -162,12 +165,11 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     }
 
     class ResultIterator implements Iterator<CacheTimePeriodEntry> {
-        CacheTimePeriodEntry lastHasNext = null;
-        int cacheCurrentIndex = 0;
-        private Integer startIndex;
-        private CacheTimePeriodEntry[] lcache;
-        private SeekableFileInputStream lcacheSfis;
-        private CacheDataInputStream lcacheDis;
+        CacheTimePeriodEntry lastHasNext = null;//found entry if existent when iterating
+        int cacheCurrentIndex = 0;//current index being iterated (sum with startIndex to identify correspondent cache array index)
+        private CacheTimePeriodEntry[] lcache;//cache array to iterate
+        private SeekableFileInputStream lcacheSfis;//seekable stream to index file (to read from when entry not in cache)
+        private CacheDataInputStream lcacheDis;//data parser stream to same above index file 
         private TreeMap<Long, Integer> lcacheIndexes;
         private long startDate = 0;
         private long endDate;
@@ -175,13 +177,13 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         boolean useCache = false;
         private TimelineCache timelineCache;
         CachePersistance cp = new CachePersistance();
-        Date startIterationDate = new Date();
-        int countRead=0;
-        int countCache=0;
-        private Reference<CacheTimePeriodEntry>[] lsoftcache;
+        int countRead=0;//counters to log number of cache reads
+        int countCache=0;//counters to log number of disk reads
+        private Reference<CacheTimePeriodEntry>[] lsoftcache;//soft reference cache (a more complete cache but with SoftReferences)
         boolean hasSoftCache = false;
         Long nextSeekPos = 0l;
-        private long startPos;
+        private Integer startIndex;//start index in cache array in file to iterate (if not in cache array load from position in file)
+        private long startPos;//start position in file to iterate
 
         public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache, SeekableFileInputStream lcacheSfis, CacheDataInputStream lcacheDis, long endDate, String className) {
             this.startPos = pos;
@@ -214,6 +216,8 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
             }
             return false;
         }
+        
+        
 
         @Override
         public boolean hasNext() {
@@ -287,7 +291,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         @Override
         public CacheTimePeriodEntry next() {
             CacheTimePeriodEntry result = lastHasNext;
-            lastHasNext = null;
+            //lastHasNext = null;
             return result;
         }
     };
