@@ -78,7 +78,6 @@ public class KnownMetCarveTask extends BaseCarveTask {
     /**
      * Media type dos arquivos part.met recuperados.
      */
-
     private static final MediaType eMulePartMetMediaType = MediaType.application("x-emule-part-met"); //$NON-NLS-1$
 
     /**
@@ -189,39 +188,40 @@ public class KnownMetCarveTask extends BaseCarveTask {
                             }
                         }
                     }
-                } else if (read == -32 || read == -31 || read == -30) {
-                	is.read(buf);
-                	long date = toInt(buf, 0) * 1000L;
-                	if (date > dateMin && date < dateMax) {
-                		int pos = 20;
-                		int numParts = toSmall(buf, pos);
-                		int numTags = 2;
-                		pos += 2;
-                		pos += 16 * numParts;
-                		if (pos < 500) {
-                			numTags = toInt(buf, pos);
-                		}
-                		if (numTags >= 0 && numTags <= 1024 && numParts <= 4096 && numParts >= 0) {
-                			BufferedInputStream inParse = null;
-                			try {
-                				inParse = evidence.getBufferedInputStream();
-                				inParse.skip(offset);
-                				int bytesRead = inParse.read(buf2);
-                				if (bytesRead > 25) {
-                					KnownMetEntry entry = new KnownMetEntry();
-                					int len = KnownMetDecoder.parseEntry(entry, 1, buf2);
-                					if (len > 0) {
-                						addCarvedFile(evidence, offset, len+1, "Carved-" + offset + "-part.met", //$NON-NLS-1$ //$NON-NLS-2$
-	                        					eMulePartMetMediaType);
-                						numCarvedItems.incrementAndGet();
-                					}
-                				}
-                			} catch (Exception e) {
-                			} finally {
-                				IOUtil.closeQuietly(inParse);
-	                        }
+                } else if (read == -32 || read == -30) {
+                    is.readNBytes(buf, 0, buf.length);
+                    long date = toInt(buf, 0) * 1000L;
+                    if (date > dateMin && date < dateMax) {
+                        int pos = 20;
+                        int numParts = toSmall(buf, pos);
+                        int numTags = 2;
+                        pos += 2;
+                        pos += 16 * numParts;
+                        if (pos < 500) {
+                            numTags = toInt(buf, pos);
                         }
-                	}
+                        if (numTags >= 2 && numTags <= 1024 && numParts <= 4096 && numParts >= 0) {
+                            SeekableInputStream inParse = null;
+                            try {
+                                inParse = evidence.getSeekableInputStream();
+                                inParse.seek(offset);
+                                int bytesRead = inParse.readNBytes(buf2, 0, buf2.length);
+                                if (bytesRead > 25) {
+                                    KnownMetEntry entry = new KnownMetEntry();
+                                    int len = KnownMetDecoder.parseEntry(entry, 1, buf2, true);
+                                    if (len > 0) {
+                                        addCarvedFile(evidence, offset, len + 1, "Carved-" + offset + "-part.met", //$NON-NLS-1$ //$NON-NLS-2$
+                                                eMulePartMetMediaType);
+                                        numCarvedItems.incrementAndGet();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            } finally {
+                                IOUtil.closeQuietly(inParse);
+                            }
+                        }
+                    }
                 } else {
                     long skip = 0;
                     do {
