@@ -2,6 +2,7 @@ package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
@@ -22,6 +23,7 @@ import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.SUBJECT_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.UNBLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
@@ -95,7 +97,20 @@ public class ExtractorAndroidNew extends Extractor {
         return list;
     }
 
-
+    private boolean isUnblocked(Connection conn, long id) throws SQLException {
+        boolean isUnblocked = false;
+        String query = getSelectBlockedQuery(conn);
+        if (query != null) {
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setLong(1, id);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    isUnblocked = rs.getInt("isBlocked") == 0;
+                }
+            }
+        }
+        return isUnblocked;
+    }
 
     private void extractAddOns(Connection conn, Message m) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_ADD_ONS)) {
@@ -216,6 +231,10 @@ public class ExtractorAndroidNew extends Extractor {
                 if (hasAddOn) {
                     extractAddOns(conn, m);
                 }
+                
+                if (m.getMessageType() == BLOCKED_CONTACT && isUnblocked(conn, m.getId())) {
+                    m.setMessageType(UNBLOCKED_CONTACT);
+                }
 
                 m.setThumbData(thumbData);
                 if (m.isFromMe()) {
@@ -288,6 +307,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 46:
                         result = BUSINESS_CHAT;
+                        break;
+                    case 58:
+                        result = BLOCKED_CONTACT;
                         break;
                     case 67:
                         result = MESSAGES_ENCRYPTED;
@@ -394,6 +416,13 @@ public class ExtractorAndroidNew extends Extractor {
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
     }
 
+    private static String getSelectBlockedQuery(Connection conn) throws SQLException {
+        if (!SQLite3DBParser.containsTable("message_system_block_contact", conn)) {
+            return null;
+        }
+        return "select is_blocked as isBlocked from message_system_block_contact where message_row_id=?";
+    }
+    
     private static final String SELECT_CALLS = "select c_l._id as id, c_l.call_id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,\r\n"
             + " cv._id as chatId, cv.raw_string_jid as remoteId\r\n"
             + "  from call_log c_l inner join chat c on c_l.jid_row_id=c.jid_row_id inner join chat_view cv on cv._id=c._id\r\n"
