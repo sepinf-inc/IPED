@@ -1,15 +1,5 @@
 package iped.app.bootstrap;
 
-import iped.app.home.MainFrame;
-import iped.app.home.utils.CasePathManager;
-import iped.app.ui.splash.SplashScreenManager;
-import iped.app.ui.splash.StartUpControl;
-import iped.engine.config.Configuration;
-import iped.engine.config.ConfigurationManager;
-import iped.engine.config.PluginConfig;
-import iped.engine.util.Util;
-import org.apache.tika.utils.SystemUtils;
-
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,6 +12,17 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.tika.utils.SystemUtils;
+
+import iped.app.home.MainFrame;
+import iped.app.home.utils.CasePathManager;
+import iped.app.ui.splash.SplashScreenManager;
+import iped.app.ui.splash.StartUpControl;
+import iped.engine.config.Configuration;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.PluginConfig;
+import iped.engine.util.Util;
 
 /**
  * Bootstrap class to start the Home Application process with a custom classpath
@@ -65,7 +66,7 @@ public class BootstrapHome {
             Configuration.getInstance().loadConfigurables(rootPath, false);
             configLoaded();
 
-            String classpath = Paths.get(rootPath, "viped.jar").toString();
+            String classpath = Paths.get(rootPath, "iped_home.jar").toString();
 
 
             PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
