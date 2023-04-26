@@ -113,7 +113,9 @@ public class ExtractorAndroidNew extends Extractor {
     }
 
     private void extractAddOns(Connection conn, Message m) throws SQLException {
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_ADD_ONS)) {
+        boolean hasReaction = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
+        String query = hasReaction ? SELECT_ADD_ONS_REACTIONS : SELECT_ADD_ONS;
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setLong(1, m.getId());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -123,9 +125,11 @@ public class ExtractorAndroidNew extends Extractor {
                 addOn.setTimeStamp(new Date(rs.getLong("timestamp")));
                 addOn.setStatus(rs.getInt("status"));
                 addOn.setType(rs.getInt("type"));
+                if (hasReaction) {
+                    addOn.setReaction(rs.getString("reaction"));
+                }
                 m.addMessageAddOn(addOn);
             }
-
         }
     }
 
@@ -397,6 +401,12 @@ public class ExtractorAndroidNew extends Extractor {
             + " subject, created_timestamp as creation, sort_timestamp FROM chat_view ORDER BY sort_timestamp DESC"; //$NON-NLS-1$
 
     private static final String SELECT_ADD_ONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe FROM message_add_on m left join jid on jid._id=m.sender_jid_row_id where parent_message_row_id=?";
+
+    private static final String SELECT_ADD_ONS_REACTIONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe, r.reaction as reaction"
+            + " FROM message_add_on m" 
+            + " left join jid on jid._id=m.sender_jid_row_id"
+            + " left join message_add_on_reaction r on r.message_add_on_row_id=m._id"
+            + " where parent_message_row_id=?";
 
     private static String getSelectMessagesQuery(Connection conn) throws SQLException {
         String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_media", "media_caption") ? "mm.media_caption" : "null";

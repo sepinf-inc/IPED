@@ -6,6 +6,10 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 
 import org.apache.commons.text.StringSubstitutor;
@@ -584,9 +588,33 @@ public class ReportGenerator {
                 }
                 break;
         }
-        if (message.getAddOns().size() > 0) {
-            // toDo implements a vizualization for the add ons like thumbs up
+        
+        Set<String> reactions = new TreeSet<String>();
+        int reactionsCount = 0;
+        List<MessageAddOn> mao = message.getAddOns();
+        StringBuilder aoDetails = new StringBuilder();
+        if (!mao.isEmpty()) {
+            Collections.sort(mao);
+            for (MessageAddOn a : mao) {
+                if (a.getReaction() != null) {
+                    if (aoDetails.length() > 0) {
+                        aoDetails.append("<br>");
+                    }
+                    aoDetails.append(a.getReaction());
+                    if (a.getTimeStamp() != null) {
+                        aoDetails.append(' ');
+                        aoDetails.append(timeFormat.format(a.getTimeStamp()));
+                    }
+                    if (a.getRemoteResource() != null) {
+                        aoDetails.append(' ');
+                        aoDetails.append(format(a.getRemoteResource()));
+                    }
+                    reactions.add(a.getReaction());
+                    reactionsCount++;
+                }
+            }
         }
+
         if (!message.getChildPornSets().isEmpty()) {
             out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
                     + format(message.getChildPornSets().toString()) + "</i></p>");
@@ -627,6 +655,24 @@ public class ReportGenerator {
         }
 
         out.println("</div></div>"); //$NON-NLS-1$
+
+        if (reactionsCount > 0) {
+            out.print("<div class=\"reaction ");
+            out.print(message.isFromMe() ? "to" : "from");
+            out.print("\">");
+            for (String r : reactions) {
+                out.print(r);
+            }
+            if (reactionsCount > reactions.size()) {
+                out.print(reactionsCount);
+            }
+            if (aoDetails.length() > 0) {
+                out.print("<span class=\"tt\">");
+                out.print(aoDetails);
+                out.print("</span>");
+            }
+            out.println("</div><br>");
+        }
     }
 
     public static String formatMMSS(int duration) {
