@@ -41,12 +41,15 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
         return new Date(date);
     }
     
+    public RoaringBitmap getEventsOrds() {
+        return eventOrds;
+    }
+    
     public CacheEventEntry[] getEvents() {
         CacheEventEntry[] e = new CacheEventEntry[eventOrds.getCardinality()];
         int i=0;
         for(int ord:eventOrds) {
-            CacheEventEntry ce = new CacheEventEntry();
-            ce.event = IpedChartsPanel.getEventName(ord);
+            CacheEventEntry ce = new CacheEventEntry(ord);
             ce.docIds = docids[i];
             e[i] = ce;
             i++;
@@ -56,23 +59,21 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
     }
 
     public void addEventEntry(CacheEventEntry ce) {
-        addEventEntry(ce.event, ce.docIds);
+        addEventEntry(ce.eventOrd, ce.docIds);
     }
 
-    public void addEventEntry(String event, RoaringBitmap pdocids) {
-        int ord = IpedChartsPanel.getEventOrd(event);
-        eventOrds.add(ord);
-        int pos = 0;
-        if(docids!=null) {
-            pos = (int) eventOrds.rangeCardinality(0, ord-1);
-            RoaringBitmap[] ldocids = new RoaringBitmap[docids.length+1];
-            Array.copy(docids, 0, ldocids, 0, pos);
-            Array.copy(docids, pos, ldocids, pos+1, docids.length-pos);
-            docids = ldocids;
-        }else {
-            docids = new RoaringBitmap[1];
+    public RoaringBitmap getEventDocIds(int ord) {
+        if(docids==null) {
+            return null;
         }
-        docids[pos] = pdocids;
+        if(eventOrds.getCardinality()==0) {
+            return null;
+        }
+        int pos = (int) eventOrds.rangeCardinality(0, ord-1);
+        if(pos>=docids.length) {
+            return null;
+        }
+        return docids[pos];
     }
 
     public RoaringBitmap getEventDocIds(String event) {
@@ -94,6 +95,26 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
             return null;
         }
         return docids[pos];
+    }
+
+    synchronized public void addEventEntry(int ord, RoaringBitmap pdocids) {
+        eventOrds.add(ord);
+        int pos = 0;
+        if(docids!=null) {
+            pos = (int) eventOrds.rangeCardinality(0, ord-1);
+            RoaringBitmap[] ldocids = new RoaringBitmap[docids.length+1];
+            Array.copy(docids, 0, ldocids, 0, pos);
+            Array.copy(docids, pos, ldocids, pos+1, docids.length-pos);
+            docids = ldocids;
+        }else {
+            docids = new RoaringBitmap[1];
+        }
+        docids[pos] = pdocids;
+    }
+
+    public void addEventEntry(String event, RoaringBitmap pdocids) {
+        int ord = IpedChartsPanel.getEventOrd(event);
+        addEventEntry(ord, pdocids);
     }
 
 }

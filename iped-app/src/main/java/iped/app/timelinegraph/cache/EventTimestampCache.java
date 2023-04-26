@@ -33,8 +33,11 @@ public class EventTimestampCache implements Runnable {
     IpedChartsPanel ipedChartsPanel;
     int emptyOrd;
 
+    private Integer eventInternalOrd;
+
     public EventTimestampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider, TimeStampCache timeStampCache, String eventType) {
         this.eventType = eventType;
+        this.eventInternalOrd = ipedChartsPanel.getEventOrd(eventType);
         this.resultsProvider = resultsProvider;
         this.timeStampCache = timeStampCache;
         this.ipedChartsPanel = ipedChartsPanel;
@@ -77,10 +80,10 @@ public class EventTimestampCache implements Runnable {
                                         System.out.println();
                                     }
                                     if (date != null) {
-                                        RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventType);
+                                        RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventInternalOrd);
                                         if (docs2 == null) {
                                             synchronized (timeStampCache) {
-                                                docs2 = timeStampCache.add(timePeriodClass, date, eventType, docs2);
+                                                docs2 = timeStampCache.add(timePeriodClass, date, eventInternalOrd, docs2);
                                             }
                                         }
                                         synchronized (docs2) {
@@ -115,10 +118,10 @@ public class EventTimestampCache implements Runnable {
                                     date = new Date(cache[ord]);
                                 }
                                 if (date != null) {                                                                        
-                                    RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventType);
+                                    RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventInternalOrd);
                                     if (docs2 == null) {
                                         synchronized (timeStampCache) {
-                                            docs2 = timeStampCache.add(timePeriodClass, date, eventType, docs2);
+                                            docs2 = timeStampCache.add(timePeriodClass, date, eventInternalOrd, docs2);
                                         }
                                     }
                                     synchronized (docs2) {

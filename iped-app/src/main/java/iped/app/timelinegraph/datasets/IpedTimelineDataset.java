@@ -262,7 +262,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                 addValueSem.acquire();
                                 try {
                                     TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ct.getDate());
-                                    addValue(count, t, ce.event);
+                                    addValue(count, t, ce.getEventName());
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 } finally {

@@ -185,7 +185,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         // TODO Auto-generated method stub
         return null;
     }
-
+    
     public RoaringBitmap add(Class<? extends TimePeriod> timePeriodClass, Date t, String eventType, RoaringBitmap docs) {
         PersistedArrayList l = (PersistedArrayList) newCache.get(timePeriodClass.getSimpleName());
         if (l == null) {
@@ -212,6 +212,54 @@ public class IndexTimeStampCache implements TimeStampCache {
         selectedCt.addEventEntry(eventType, docs);
         
         return docs;
+    }
+    
+    public RoaringBitmap add(Class<? extends TimePeriod> timePeriodClass, Date t, int eventInternalOrd, RoaringBitmap docs) {
+        PersistedArrayList l = (PersistedArrayList) newCache.get(timePeriodClass.getSimpleName());
+        if (l == null) {
+            l = new PersistedArrayList(timePeriodClass);
+            newCache.put(timePeriodClass.getSimpleName(), l);
+        }
+        
+        if(docs==null) {
+            docs = new RoaringBitmap();
+        }
+
+
+        CacheTimePeriodEntry selectedCt = null;
+        CacheEventEntry selectedCe = null;
+
+        selectedCt = l.get(t.getTime());
+
+        if (selectedCt == null) {
+            selectedCt = new CacheTimePeriodEntry();
+            selectedCt.date=t.getTime();
+            l.add(selectedCt);
+        }
+
+        selectedCt.addEventEntry(eventInternalOrd, docs);
+        
+        return docs;
+    }
+
+    public RoaringBitmap get(Class<? extends TimePeriod> timePeriodClass, Date t, Integer eventInternalOrd) {
+        PersistedArrayList l = (PersistedArrayList) newCache.get(timePeriodClass.getSimpleName());
+        if(l==null) {
+            l = new PersistedArrayList(timePeriodClass);
+            newCache.put(timePeriodClass.getSimpleName(), l);
+        }
+        CacheTimePeriodEntry selectedCt = l.get(t.getTime());
+
+        if (selectedCt == null) {
+            return null;
+        }
+
+        RoaringBitmap result = selectedCt.getEventDocIds(eventInternalOrd);
+        if(result==null) {
+            return null;
+        }
+
+        return result;
     }
     
     public RoaringBitmap get(Class<? extends TimePeriod> timePeriodClass, Date t, String eventType) {

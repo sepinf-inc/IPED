@@ -8,14 +8,12 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -35,6 +33,7 @@ import org.apache.commons.io.FileUtils;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
+import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
 import iped.app.timelinegraph.cache.PersistedArrayList;
@@ -307,7 +306,7 @@ public class CachePersistance {
                 CacheEventEntry[] events = ct.getEvents();
                 for (int j = 0; j < events.length; j++) {
                     CacheEventEntry ce = events[j];
-                    dos.writeUTF(ce.event);
+                    dos.writeInt(ce.getEventOrd());
                     if(bitstreamSerialize) {
                         ce.docIds.serialize(dos);
                     }else {
@@ -317,7 +316,7 @@ public class CachePersistance {
                         dos.writeInt(-1);
                     }
                 }
-                dos.writeUTF("!!");
+                dos.writeInt(-1);
 
                 c.clear();
                 c.set(Calendar.YEAR, 1900 + ct.getDate().getYear());
@@ -396,10 +395,10 @@ public class CachePersistance {
     static public CacheTimePeriodEntry loadNextEntry(CacheDataInputStream dis, boolean bitstreamSerialize) throws IOException {
         CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
         ct.date=dis.readLong();
-        String eventName = dis.readUTF();
-        while (!eventName.equals("!!")) {
-            CacheEventEntry ce = new CacheEventEntry();
-            ce.event = eventName;
+        int eventOrd = dis.readInt();
+        while (eventOrd!=-1) {
+            CacheEventEntry ce = new CacheEventEntry(eventOrd);
+            ce.event = IpedChartsPanel.getEventName(eventOrd);
             
             if(bitstreamSerialize) {
                 ce.docIds = new RoaringBitmap();
@@ -415,7 +414,7 @@ public class CachePersistance {
             
             ct.addEventEntry(ce);
             try {
-                eventName = dis.readUTF();
+                eventOrd = dis.readInt();
             }catch(Exception e) {
                 e.printStackTrace();
                 long pos = ((SeekableFileInputStream)dis.wrapped).position();
@@ -429,7 +428,7 @@ public class CachePersistance {
         ct.date=dis.readLong();
         int evCode = dis.readInt();
         while (evCode!=-1) {
-            CacheEventEntry ce = new CacheEventEntry();
+            CacheEventEntry ce = new CacheEventEntry(evCode);
             String eventName = eventTypeCodes.get(evCode);
             ce.event = eventName;
             ce.docIds = new RoaringBitmap();
