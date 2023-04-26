@@ -181,13 +181,18 @@ public class ProcessManager {
     }
 
     public void readProcessOutput(Process process, JTextArea logTextArea) throws IOException {
+
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line;
-        while ((line = inputReader.readLine()) != null)
-            logTextArea.append(line + "\n");
+        while ((line = inputReader.readLine()) != null){
+            String finalLine = line;
+            SwingUtilities.invokeLater(new Runnable() {public void run(){ logTextArea.append(finalLine + "\n"); }});
+        }
         BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-        while ((line = errorReader.readLine()) != null)
-            logTextArea.append(line + "\n");
+        while ((line = errorReader.readLine()) != null){
+            String finalLine = line;
+            SwingUtilities.invokeLater(new Runnable() {public void run(){ logTextArea.append(finalLine + "\n"); }});
+        }
     }
 
     public void readProcessOutput(Process process, StringBuffer outputText) throws IOException {
