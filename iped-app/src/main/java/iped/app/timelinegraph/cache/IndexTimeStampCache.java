@@ -194,7 +194,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         }
         
         if(docs==null) {
-            docs = l.createRoaringBitmap();
+            docs = new RoaringBitmap();
         }
 
 
@@ -205,24 +205,11 @@ public class IndexTimeStampCache implements TimeStampCache {
 
         if (selectedCt == null) {
             selectedCt = new CacheTimePeriodEntry();
-            selectedCt.events = new ArrayList<CacheEventEntry>();
             selectedCt.date=t.getTime();
             l.add(selectedCt);
         }
 
-        for (int i = 0; i < selectedCt.events.size(); i++) {
-            CacheEventEntry ce = selectedCt.events.get(i);
-            if (ce.event.equals(eventType)) {
-                selectedCe = ce;
-                break;
-            }
-        }
-        if (selectedCe == null) {
-            selectedCe = new CacheEventEntry();
-            selectedCt.events.add(selectedCe);
-            selectedCe.event = eventType;
-        }
-        selectedCe.docIds = docs;
+        selectedCt.addEventEntry(eventType, docs);
         
         return docs;
     }
@@ -240,8 +227,9 @@ public class IndexTimeStampCache implements TimeStampCache {
         }
 
         CacheEventEntry selectedCe = null;
-        for (int i = 0; i < selectedCt.events.size(); i++) {
-            CacheEventEntry ce = selectedCt.events.get(i);
+        CacheEventEntry[] events = selectedCt.getEvents();
+        for (int i = 0; i < events.length; i++) {
+            CacheEventEntry ce = events[i];
             if (ce.event.equals(eventType)) {
                 selectedCe = ce;
                 break;
@@ -253,7 +241,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         }
         
         if(selectedCe.docIds==null) {
-            selectedCe.docIds = l.createRoaringBitmap();
+            selectedCe.docIds = new RoaringBitmap();
         }
 
         return selectedCe.docIds;

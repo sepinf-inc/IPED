@@ -23,7 +23,7 @@ public class CombinedIterators implements Iterator<CacheTimePeriodEntry> {
         int isToTrucate = 0;
         for (int i = 0; i < nextValues.length; i++) {
             if(nextValues[i]==null) {
-                if(iterators[i].hasNext()) {
+                if(iterators[i]!=null && iterators[i].hasNext()) {
                     nextValues[i]=iterators[i].next();
                 }else {
                     nextValues[i]=null;
@@ -73,17 +73,17 @@ public class CombinedIterators implements Iterator<CacheTimePeriodEntry> {
 
     private void merge(CacheTimePeriodEntry value1, CacheTimePeriodEntry value2) {
         HashSet<String> included = new HashSet();
-        for(CacheEventEntry cee1: value1.events) {
-            for(CacheEventEntry cee2: value2.events) {
+        for(CacheEventEntry cee1: value1.getEvents()) {
+            for(CacheEventEntry cee2: value2.getEvents()) {
                 if(cee2.event.equals(cee1.event)) {
                     cee1.docIds.or(cee2.docIds);//merge
                     included.add(cee1.event);
                 }
             }
         }
-        for(CacheEventEntry cee2: value2.events) {
+        for(CacheEventEntry cee2: value2.getEvents()) {
             if(!included.contains(cee2.event)) {
-                value1.events.add(cee2);
+                value1.addEventEntry(cee2);
             }
         }
     }

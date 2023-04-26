@@ -193,7 +193,6 @@ public class CachePersistance {
             int entries = dis.readInt2();
             while (times.size() < entries) {
                 CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
-                ct.events = new ArrayList<CacheEventEntry>();
                 ct.date=dis.readLong();
                 String eventName = dis.readUTF();
                 while (!eventName.equals("!!")) {
@@ -215,7 +214,7 @@ public class CachePersistance {
                             docId = dis.readInt2();
                         }
                     }
-                    ct.events.add(ce);
+                    ct.addEventEntry(ce);
                     eventName = dis.readUTF();
                 }
                 times.add(ct);
@@ -267,8 +266,9 @@ public class CachePersistance {
         try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file.toPath())))) {
             for (CacheTimePeriodEntry ct:entry) {
                 dos.writeLong(ct.date);
-                for (int j = 0; j < ct.events.size(); j++) {
-                    CacheEventEntry ce = ct.events.get(j);
+                CacheEventEntry[] events = ct.getEvents();
+                for (int j = 0; j < events.length; j++) {
+                    CacheEventEntry ce = events[j];
                     Integer evCode = 0;
                     synchronized (eventTypeCodes) {
                         evCode = eventTypeCodesRev.get(ce.event);
@@ -352,8 +352,9 @@ public class CachePersistance {
             int ctIndex=0;
             for (CacheTimePeriodEntry ct:entry) {
                 dos.writeLong(ct.date);
-                for (int j = 0; j < ct.events.size(); j++) {
-                    CacheEventEntry ce = ct.events.get(j);
+                CacheEventEntry[] events = ct.getEvents();
+                for (int j = 0; j < events.length; j++) {
+                    CacheEventEntry ce = events[j];
                     dos.writeUTF(ce.event);
                     if(bitstreamSerialize) {
                         ce.docIds.serialize(dos);
@@ -374,7 +375,7 @@ public class CachePersistance {
                     c.set(Calendar.HOUR_OF_DAY, ct.getDate().getHours());
                 }
 
-                internalCount += ct.events.size();
+                internalCount += events.length;
                 Date month = c.getTime();
                 if (!month.equals(lastMonth) || internalCount > 4000) {
                     lastMonth = month;
@@ -442,7 +443,6 @@ public class CachePersistance {
 
     static public CacheTimePeriodEntry loadNextEntry(CacheDataInputStream dis, boolean bitstreamSerialize) throws IOException {
         CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
-        ct.events = new ArrayList<CacheEventEntry>();
         ct.date=dis.readLong();
         String eventName = dis.readUTF();
         while (!eventName.equals("!!")) {
@@ -461,7 +461,7 @@ public class CachePersistance {
                 }
             }
             
-            ct.events.add(ce);
+            ct.addEventEntry(ce);
             try {
                 eventName = dis.readUTF();
             }catch(Exception e) {
@@ -474,7 +474,6 @@ public class CachePersistance {
 
     static public CacheTimePeriodEntry loadIntermediaryNextEntry(CacheDataInputStream dis) throws IOException {
         CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
-        ct.events = new ArrayList<CacheEventEntry>();
         ct.date=dis.readLong();
         int evCode = dis.readInt();
         while (evCode!=-1) {
@@ -483,7 +482,7 @@ public class CachePersistance {
             ce.event = eventName;
             ce.docIds = new RoaringBitmap();
             ce.docIds.deserialize(dis);
-            ct.events.add(ce);
+            ct.addEventEntry(ce);
             try {
                 evCode = dis.readInt();
             }catch(Exception e) {
