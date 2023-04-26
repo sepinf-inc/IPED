@@ -179,54 +179,6 @@ public class CachePersistance {
         return newCache;
     }
 
-    private boolean loadEventNewCache(ArrayList<CacheTimePeriodEntry> times, File f) {
-        File cache = new File(f, "0");
-        if (!cache.exists() || cache.length() == 0) {
-            return false;
-        }
-        try (TimeIndexedMap.CacheDataInputStream dis = new TimeIndexedMap.CacheDataInputStream(new BufferedInputStream(Files.newInputStream(cache.toPath())))) {
-            int committed = dis.readShort();
-            if (committed != 1) {
-                return false;
-            }
-            String timezoneID = dis.readUTF();
-            int entries = dis.readInt2();
-            while (times.size() < entries) {
-                CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
-                ct.date=dis.readLong();
-                String eventName = dis.readUTF();
-                while (!eventName.equals("!!")) {
-                    CacheEventEntry ce = new CacheEventEntry();
-                    ce.event = eventName;
-                    if(bitstreamSerialize) {
-                        try {
-                            ce.docIds = new RoaringBitmap();
-                            ce.docIds.deserialize(dis);
-                        } catch (Exception e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        }
-                    }else {
-                        ce.docIds = new RoaringBitmap();
-                        int docId = dis.readInt2();
-                        while (docId != -1) {
-                            ce.docIds.add(docId);
-                            docId = dis.readInt2();
-                        }
-                    }
-                    ct.addEventEntry(ce);
-                    eventName = dis.readUTF();
-                }
-                times.add(ct);
-            }
-            return true;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
     public void saveNewCache(TimeStampCache timeStampCache) {
         if(bitstreamSerializeAsDefault ) {
             try {
