@@ -26,6 +26,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 import bibliothek.extension.gui.dock.theme.EclipseTheme;
 import bibliothek.extension.gui.dock.theme.eclipse.EclipseColorScheme;
+import iped.app.home.MainFrame;
 import iped.app.ui.App;
 
 public class ThemeManager {
@@ -95,8 +96,7 @@ public class ThemeManager {
                     UIManager.setLookAndFeel(UIManager.getLookAndFeel());
                 } catch (UnsupportedLookAndFeelException e) {
                 }
-                // TODO: This causes a NPE when painting the Tasks panel, not sure why...
-                // updateUI(MainFrame.getInstance());
+                updateUI(MainFrame.getInstance());
                 updateUI(App.get());
                 if (App.get().dockingControl != null) {
                     App.get().dockingControl.putProperty(EclipseTheme.ECLIPSE_COLOR_SCHEME, new EclipseColorScheme() {

@@ -19,7 +19,6 @@ import iped.engine.config.EnableTaskProperty;
 import iped.engine.config.HashDBLookupConfig;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.IScriptTask;
-import iped.engine.task.PythonTask;
 
 public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
     ConfigurationManager configurationManager;
@@ -79,7 +78,7 @@ public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
                 panel.add(taskOptionButton, gbc);
                 return panel;
             }else {
-                return null;
+                return new JPanel();
             }
         }
     }
