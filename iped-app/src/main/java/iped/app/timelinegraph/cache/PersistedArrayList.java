@@ -154,13 +154,6 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
         return inMemoryEntries.get(time);
     }
 
-    public RoaringBitmap createRoaringBitmap() {
-        return new MonitoredRoaringBitmap(this);
-    }
-
-    public void notifyAdd() {
-    }
-
     private void waitPendingFlushes() throws InterruptedException, ExecutionException {
         synchronized (flushes) {
             ArrayList<Future> toremove = new ArrayList<>();
