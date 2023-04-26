@@ -11,9 +11,11 @@ public class TableCellRendererUtil {
         if (isSelected) {
             return table.getSelectionBackground();
         } else if (row % 2 != 0) {
-            return new Color(UIManager.getColor("Table.alternateRowColor").getRGB());
+            Color c = UIManager.getColor("Table.alternateRowColor");
+            return c != null ? new Color(c.getRGB()) : null;
         } else {
-            return new Color(UIManager.getColor("Table.background").getRGB());
+            Color c = UIManager.getColor("Table.background");
+            return c != null ? new Color(c.getRGB()) : null;
         }
     }
 
