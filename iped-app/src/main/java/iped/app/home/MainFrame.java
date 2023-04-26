@@ -24,7 +24,6 @@ import iped.app.home.processmanager.ProcessManagerContainer;
 import iped.app.home.style.StyleManager;
 import iped.app.home.utils.CasePathManager;
 import iped.app.ui.Messages;
-import iped.app.ui.themes.ThemeManager;
 import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
@@ -121,8 +120,9 @@ public class MainFrame extends JFrame {
 
         //set tooltip delay
         ToolTipManager.sharedInstance().setDismissDelay(15000);
-        ThemeManager.getInstance().setLookAndFeel();
 
+        // Dark Theme is still not working properly with config UI...
+        // ThemeManager.getInstance().setLookAndFeel();
 
         // Set the locale used for docking frames, so texts and tool tips are localized (if available)
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
