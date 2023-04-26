@@ -746,9 +746,13 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             }
         }
     };
-    
+
     static public Integer getEventOrd(String event) {
         return eventNameToOrd.get(event);
+    }
+
+    static public String getEventName(int ord) {
+        return ordToEventName[ord];
     }
 
     @Override
