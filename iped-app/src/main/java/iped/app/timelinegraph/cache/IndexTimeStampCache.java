@@ -226,25 +226,12 @@ public class IndexTimeStampCache implements TimeStampCache {
             return null;
         }
 
-        CacheEventEntry selectedCe = null;
-        CacheEventEntry[] events = selectedCt.getEvents();
-        for (int i = 0; i < events.length; i++) {
-            CacheEventEntry ce = events[i];
-            if (ce.event.equals(eventType)) {
-                selectedCe = ce;
-                break;
-            }
+        RoaringBitmap result = selectedCt.getEventDocIds(eventType);
+        if(result==null) {
+            return new RoaringBitmap();
         }
 
-        if (selectedCe == null) {
-            return null;
-        }
-        
-        if(selectedCe.docIds==null) {
-            selectedCe.docIds = new RoaringBitmap();
-        }
-
-        return selectedCe.docIds;
+        return result;
     }
 
     @Override

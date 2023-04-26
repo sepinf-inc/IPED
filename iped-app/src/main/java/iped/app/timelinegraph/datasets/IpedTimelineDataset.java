@@ -216,7 +216,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
 
                 for (int i = 0; i < threadCtsEnd; i++) {
                     CacheTimePeriodEntry ct = threadLocalCts[i];
-                    for (CacheEventEntry ce : ct.events) {
+                    for (CacheEventEntry ce : ct.getEvents()) {
                         if (ce.docIds != null) {
                             Count count = new Count();
                             for (int docId : ce.docIds) {

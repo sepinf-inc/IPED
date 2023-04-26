@@ -1,19 +1,20 @@
 package iped.app.timelinegraph.cache;
 
-import java.util.ArrayList;
+import java.beans.EventSetDescriptor;
 import java.util.Date;
 
 import org.roaringbitmap.RoaringBitmap;
+
+import iped.app.timelinegraph.IpedChartsPanel;
+import scala.Array;
 
 /*
  * Represent a cache timeperiod entry on cache persistance
  */
 public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
     public volatile long date;
-    public ArrayList<CacheEventEntry> events = new ArrayList<CacheEventEntry>();
-    RoaringBitmap eventOrds;
+    RoaringBitmap eventOrds = new RoaringBitmap();
     RoaringBitmap[] docids;
-    
     
     public CacheTimePeriodEntry() {
     }
@@ -41,33 +42,55 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
     }
     
     public CacheEventEntry[] getEvents() {
-        return events.toArray(new CacheEventEntry[0]);
+        CacheEventEntry[] e = new CacheEventEntry[eventOrds.getCardinality()];
+        int i=0;
+        for(int ord:eventOrds) {
+            CacheEventEntry ce = new CacheEventEntry();
+            ce.event = IpedChartsPanel.getEventName(ord);
+            ce.docIds = docids[i];
+            e[i] = ce;
+            i++;
+        }
+        return e;
         
     }
 
     public void addEventEntry(CacheEventEntry ce) {
-        events.add(ce);
-        
+        addEventEntry(ce.event, ce.docIds);
     }
 
-    public void addEventEntry(String eventType, RoaringBitmap docs) {
-        CacheEventEntry[] events = this.getEvents();
-        CacheEventEntry selectedCe = null;
-        for (int i = 0; i < events.length; i++) {
-            CacheEventEntry ce = events[i];
-            if (ce.event.equals(eventType)) {
-                selectedCe = ce;
-                break;
-            }
-        }
-        if (selectedCe == null) {
-            selectedCe = new CacheEventEntry();
-            selectedCe.event = eventType;
-            selectedCe.docIds = docs;
-            this.addEventEntry(selectedCe);
+    public void addEventEntry(String event, RoaringBitmap pdocids) {
+        int ord = IpedChartsPanel.getEventOrd(event);
+        eventOrds.add(ord);
+        int pos = 0;
+        if(docids!=null) {
+            pos = (int) eventOrds.rangeCardinality(0, ord-1);
+            RoaringBitmap[] ldocids = new RoaringBitmap[docids.length+1];
+            Array.copy(docids, 0, ldocids, 0, pos);
+            Array.copy(docids, pos, ldocids, pos+1, docids.length-pos);
+            docids = ldocids;
         }else {
-            selectedCe.docIds = docs;
+            docids = new RoaringBitmap[1];
         }
+        docids[pos] = pdocids;
+    }
+
+    public RoaringBitmap getEventDocIds(String event) {
+        if(docids==null) {
+            return null;
+        }
+        if(eventOrds.getCardinality()==0) {
+            return null;
+        }
+        Integer ord = IpedChartsPanel.getEventOrd(event);
+        if(ord==null) {
+            return null;
+        }
+        int pos = (int) eventOrds.rangeCardinality(0, ord-1);
+        if(pos>=docids.length) {
+            return null;
+        }
+        return docids[pos];
     }
 
 }
