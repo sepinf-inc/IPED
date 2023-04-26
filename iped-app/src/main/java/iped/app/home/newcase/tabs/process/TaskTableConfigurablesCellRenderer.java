@@ -1,6 +1,5 @@
 package iped.app.home.newcase.tabs.process;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -30,16 +29,11 @@ public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+    public Component getTableCellRendererComponent(JTable table, Object cellValue, boolean isSelected, boolean hasFocus,
             int row, int column) {
-        return createColumnOptionPanel((AbstractTask) value);
-    }
 
-    /**
-     * Create a JPanel to change the tasks properties
-     */
-    private JPanel createColumnOptionPanel(AbstractTask task){
-        int count = 0;//counts the number of non EnableTaskProperty configurables
+        AbstractTask task = (AbstractTask) cellValue;
+        int count = 0; // counts the number of non EnableTaskProperty configurables
 
         List<Configurable<?>> configurables = task.getConfigurables();
 
@@ -50,36 +44,20 @@ public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
             }
         }
 
-        if(count>0) {
-            JPanel panel = new JPanel();
+        JPanel panel = new JPanel();
+        panel.setBackground(TableCellRendererUtil.getBackground(table, row, isSelected));
+
+        if (count > 0 || task instanceof IScriptTask) {
             panel.setLayout( new GridBagLayout() );
-            panel.setBackground(Color.WHITE);
 
             GridBagConstraints gbc = new GridBagConstraints();
             JButton taskOptionButton = new JButton("...");
-
             taskOptionButton.addActionListener( e -> new TaskConfigDialog(configurationManager, task, mainFrame).setVisible(true));
-
             taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
+
             panel.add(taskOptionButton, gbc);
-            return panel;
-        }else {
-            if(task instanceof IScriptTask) {
-                JPanel panel = new JPanel();
-                panel.setLayout( new GridBagLayout() );
-                panel.setBackground(Color.WHITE);
-
-                GridBagConstraints gbc = new GridBagConstraints();
-                JButton taskOptionButton = new JButton("...");
-
-                taskOptionButton.addActionListener( e -> new TaskConfigDialog(configurationManager, task, mainFrame).setVisible(true));
-
-                taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
-                panel.add(taskOptionButton, gbc);
-                return panel;
-            }else {
-                return new JPanel();
-            }
         }
+        return panel;
     }
+
 }

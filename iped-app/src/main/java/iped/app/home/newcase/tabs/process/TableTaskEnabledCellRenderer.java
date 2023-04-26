@@ -2,6 +2,7 @@ package iped.app.home.newcase.tabs.process;
 
 import java.awt.Component;
 
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -19,15 +20,20 @@ public class TableTaskEnabledCellRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
             int row, int column) {
+        Component comp = null;
         if(column==1) {
             TasksTableModel tm = (TasksTableModel) table.getModel();
             if(tm.isCellEditable(row, column)) {
-                return wrapped.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                comp =  wrapped.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             }else {
-                return emptyLabel;
+                comp = emptyLabel;
             }
+        } else {
+            comp = wrapped.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);;
         }
-        return wrapped.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        ((JComponent) comp).setOpaque(true);
+        comp.setBackground(TableCellRendererUtil.getBackground(table, row, isSelected));
+        return comp;
     }
 
 }
