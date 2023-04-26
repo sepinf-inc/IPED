@@ -19,12 +19,18 @@ import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.SUBJECT_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.UNAVAILABLE_VIDEO_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.UNAVAILABLE_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.UNBLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VIDEO_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
@@ -149,22 +155,26 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setId(rs.getLong("id"));
                 m.setCallId(rs.getString("call_id"));
                 if (rs.getInt("video_call") == 1) {
-                    m.setMessageType(MessageType.UNKNOWN_VIDEO_CALL);
+                    m.setMessageType(UNKNOWN_VIDEO_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VIDEO_CALL);
                     } else if (call_result == 4) {
                         m.setMessageType(MISSED_VIDEO_CALL);
                     } else if (call_result == 2) {
-                        m.setMessageType(MessageType.REFUSED_VIDEO_CALL);
+                        m.setMessageType(REFUSED_VIDEO_CALL);
+                    } else if (call_result == 3) {
+                        m.setMessageType(UNAVAILABLE_VIDEO_CALL);
                     }
                 } else {
-                    m.setMessageType(MessageType.UNKNOWN_VOICE_CALL);
+                    m.setMessageType(UNKNOWN_VOICE_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VOICE_CALL);
                     } else if (call_result == 4) {
                         m.setMessageType(MISSED_VOICE_CALL);
                     } else if (call_result == 2) {
-                        m.setMessageType(MessageType.REFUSED_VOICE_CALL);
+                        m.setMessageType(REFUSED_VOICE_CALL);
+                    } else if (call_result == 3) {
+                        m.setMessageType(UNAVAILABLE_VOICE_CALL);
                     }
                 }
                 m.setFromMe(rs.getInt("from_me") == 1);

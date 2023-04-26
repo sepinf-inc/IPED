@@ -253,6 +253,22 @@ public class ReportGenerator {
                 }
                 out.println(Messages.getString("WhatsAppReport.RefusedVideoCall")); //$NON-NLS-1$
                 break;
+            case UNAVAILABLE_VOICE_CALL:
+                if (message.isFromMe()) {
+                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                } else {
+                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                }
+                out.println(Messages.getString("WhatsAppReport.UnavailableVoiceCall")); //$NON-NLS-1$
+                break;
+            case UNAVAILABLE_VIDEO_CALL:
+                if (message.isFromMe()) {
+                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                } else {
+                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                }
+                out.println(Messages.getString("WhatsAppReport.UnavailableVideoCall")); //$NON-NLS-1$
+                break;
             case UNKNOWN_VOICE_CALL:
                 if (message.isFromMe()) {
                     out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
