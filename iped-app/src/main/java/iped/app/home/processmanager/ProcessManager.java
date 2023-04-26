@@ -44,8 +44,9 @@ public class ProcessManager {
                 commandArgs.add("-p");
                 commandArgs.add("\"" + currentEvidence.getPassword() + "\"");
             }
-            if( (currentEvidence.getAditionalComands() != null) && (! currentEvidence.getAditionalComands().trim().isEmpty()) ){
-                commandArgs.add(currentEvidence.getAditionalComands());
+            if( (currentEvidence.getBlocksize() != null) && (currentEvidence.getBlocksize() > 0 ) ){
+                commandArgs.add("-b");
+                commandArgs.add(currentEvidence.getBlocksize().toString());
             }
         }
         return commandArgs;
