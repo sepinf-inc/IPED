@@ -112,9 +112,8 @@ public class ExtractorAndroidNew extends Extractor {
         return isUnblocked;
     }
 
-    private void extractAddOns(Connection conn, Message m) throws SQLException {
-        boolean hasReaction = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
-        String query = hasReaction ? SELECT_ADD_ONS_REACTIONS : SELECT_ADD_ONS;
+    private void extractAddOns(Connection conn, Message m, boolean hasReactionTable) throws SQLException {
+        String query = hasReactionTable ? SELECT_ADD_ONS_REACTIONS : SELECT_ADD_ONS;
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setLong(1, m.getId());
             ResultSet rs = stmt.executeQuery();
@@ -125,7 +124,7 @@ public class ExtractorAndroidNew extends Extractor {
                 addOn.setTimeStamp(new Date(rs.getLong("timestamp")));
                 addOn.setStatus(rs.getInt("status"));
                 addOn.setType(rs.getInt("type"));
-                if (hasReaction) {
+                if (hasReactionTable) {
                     addOn.setReaction(rs.getString("reaction"));
                 }
                 m.addMessageAddOn(addOn);
@@ -181,6 +180,7 @@ public class ExtractorAndroidNew extends Extractor {
     }
 
     private List<Message> extractMessages(Connection conn, Chat c) throws SQLException {
+        boolean hasReactionTable = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
         List<Message> messages = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             stmt.setFetchSize(1000);
@@ -233,7 +233,7 @@ public class ExtractorAndroidNew extends Extractor {
                 boolean hasAddOn = rs.getInt("hasAddOn") != 0;
 
                 if (hasAddOn) {
-                    extractAddOns(conn, m);
+                    extractAddOns(conn, m, hasReactionTable);
                 }
                 
                 if (m.getMessageType() == BLOCKED_CONTACT && isUnblocked(conn, m.getId())) {
