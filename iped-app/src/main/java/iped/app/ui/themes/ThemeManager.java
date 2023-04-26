@@ -95,21 +95,25 @@ public class ThemeManager {
                     UIManager.setLookAndFeel(UIManager.getLookAndFeel());
                 } catch (UnsupportedLookAndFeelException e) {
                 }
+                // TODO: This causes a NPE when painting the Tasks panel, not sure why...
+                // updateUI(MainFrame.getInstance());
                 updateUI(App.get());
-                App.get().dockingControl.putProperty(EclipseTheme.ECLIPSE_COLOR_SCHEME, new EclipseColorScheme() {
-                    @Override
-                    public void updateUI() {
-                        super.updateUI();
-                        Theme t = getCurrentTheme();
-                        if (t != null) {
-                            Map<String, Color> map = t.getDockSettings();
-                            for (String key : map.keySet()) {
-                                setColor(key, map.get(key));
+                if (App.get().dockingControl != null) {
+                    App.get().dockingControl.putProperty(EclipseTheme.ECLIPSE_COLOR_SCHEME, new EclipseColorScheme() {
+                        @Override
+                        public void updateUI() {
+                            super.updateUI();
+                            Theme t = getCurrentTheme();
+                            if (t != null) {
+                                Map<String, Color> map = t.getDockSettings();
+                                for (String key : map.keySet()) {
+                                    setColor(key, map.get(key));
+                                }
                             }
                         }
-                    }
-                });
-                App.get().updateUI(true);
+                    });
+                    App.get().updateUI(true);
+                }
             }
         });
 

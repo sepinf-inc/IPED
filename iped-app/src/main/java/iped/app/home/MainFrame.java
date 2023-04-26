@@ -1,5 +1,22 @@
 package iped.app.home;
 
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Toolkit;
+import java.net.URL;
+
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
+import javax.swing.WindowConstants;
+
 import iped.app.home.config.ConfigPanel;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.opencase.OpenCasePanel;
@@ -17,10 +34,6 @@ import iped.engine.util.Util;
 import iped.exception.UIException;
 import iped.utils.ui.ScreenUtils;
 
-import javax.swing.*;
-import java.awt.*;
-import java.net.URL;
-
 /**
  * @created 02/09/2022
  * @project IPED
@@ -30,30 +43,39 @@ import java.net.URL;
  */
 public class MainFrame extends JFrame {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    private static MainFrame instance;
+
     private final JPanel cardsContentPanel = new JPanel();
     private ProcessManagerContainer pmc;
+
+    public static synchronized MainFrame getInstance() {
+        if (instance == null) {
+            instance = new MainFrame();
+        }
+        return instance;
+    }
 
     /**
      * Class constructor
      */
-    public MainFrame() {
+    private MainFrame() {
         super(Version.APP_NAME);
-        this.createAndShowGUI();
     }
 
     /**
      * Validate and prepare application frame to be displayed
      */
-    public void createAndShowGUI(){
+    private void createAndShowGUI() {
 
         try {
             checkAppPreRequisites();
             setupLayout();
-        } catch( NullPointerException e){
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, e.toString(), "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(1);
-        }catch (Exception | UIException e) {
+        } catch (Exception | UIException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
@@ -159,9 +181,9 @@ public class MainFrame extends JFrame {
      */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            MainFrame main = new MainFrame();
+            MainFrame main = MainFrame.getInstance();
+            main.createAndShowGUI();
             main.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-            main.setVisible(true);
         });
     }
 
