@@ -43,6 +43,7 @@ public class ReportGenerator {
     private static final String deletedIcon = "<img class=\"del\"/>";
     private static final String lockedIcon = "<img class=\"lock\"/>";
     private static final String locationIcon = "<img class=\"location\"/>";
+    private static final String waSuffix = "@s.whatsapp.net";
 
     public ReportGenerator() {
     }
@@ -374,7 +375,7 @@ public class ReportGenerator {
                 if (!number.isEmpty()) {
                     if (name.isEmpty()) {
                         name = number;
-                    } else if (!number.equals(name) && !number.equals(name + "@s.whatsapp.net")) {
+                    } else if (!number.equals(name) && !number.equals(name + waSuffix)) {
                         name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
                     }
                 }
@@ -601,14 +602,46 @@ public class ReportGenerator {
                         aoDetails.append("<br>");
                     }
                     aoDetails.append(a.getReaction());
+
+                    String name = null;
+                    String number = null;
+                    if (a.isFromMe()) {
+                        if (account != null && !account.isUnknown()) {
+                            name = account.getName();
+                        } else {
+                            name = "[" + Messages.getString("WhatsAppReport.Owner") + "]";
+                        }
+                    } else {
+                        number = a.getRemoteResource();
+                        if (number != null) {
+                            WAContact contact = contactsDirectory.getContact(number);
+                            if (contact != null) {
+                                name = contact.getName();
+                            }
+                            if (number.endsWith(waSuffix)) {
+                                number = number.substring(0, number.length() - waSuffix.length());
+                            }
+                        }
+                    }
+                    name = name == null ? "" : name.trim();
+                    number = number == null ? "" : number.trim();
+                    if (!number.isEmpty()) {
+                        if (name.isEmpty()) {
+                            name = number;
+                        } else if (!number.equals(name)) {
+                            name += " (" + number + ")";
+                        }
+                    }
+                    if (name != null) {
+                        aoDetails.append(' ');
+                        aoDetails.append(format(name));
+                    }
+
                     if (a.getTimeStamp() != null) {
                         aoDetails.append(' ');
                         aoDetails.append(timeFormat.format(a.getTimeStamp()));
                     }
-                    if (a.getRemoteResource() != null) {
-                        aoDetails.append(' ');
-                        aoDetails.append(format(a.getRemoteResource()));
-                    }
+
                     reactions.add(a.getReaction());
                     reactionsCount++;
                 }
