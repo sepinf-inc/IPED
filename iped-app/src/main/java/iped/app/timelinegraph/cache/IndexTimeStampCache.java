@@ -228,7 +228,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
         RoaringBitmap result = selectedCt.getEventDocIds(eventType);
         if(result==null) {
-            return new RoaringBitmap();
+            return null;
         }
 
         return result;
