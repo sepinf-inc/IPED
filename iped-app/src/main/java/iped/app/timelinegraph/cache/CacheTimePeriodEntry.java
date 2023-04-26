@@ -86,6 +86,9 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
         if(ord==null) {
             return null;
         }
+        if(!eventOrds.contains(ord)) {
+            return null;
+        }
         int pos = (int) eventOrds.rangeCardinality(0, ord-1);
         if(pos>=docids.length) {
             return null;
