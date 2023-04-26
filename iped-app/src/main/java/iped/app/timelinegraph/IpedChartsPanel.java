@@ -132,7 +132,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     Class<? extends TimePeriod> timePeriodClass = Day.class;
     String timePeriodString = "Day";
 
-    TreeMap<String, String> timeEventColumnNamesList = new TreeMap<String, String>();
+    static TreeMap<String, String> timeEventColumnNamesList = new TreeMap<String, String>();
+    static String ordToEventName[];
+    static private HashMap<String, Integer> eventNameToOrd = new HashMap<>();
     AtomicBoolean dataSetUpdated = new AtomicBoolean();
 
     boolean isUpdated = true;
@@ -721,22 +723,21 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             synchronized (timeEventColumnNamesList) {
                 LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
                 try {
-                    SortedSetDocValues timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
+                    SortedSetDocValues timeEventGroupValues = reader.getSortedSetDocValues(BasicProps.TIME_EVENT);
                     if (timeEventGroupValues != null) {
                         TermsEnum te = timeEventGroupValues.termsEnum();
-                        BytesRef br = te.next();
-                        while (br != null) {
-                            String eventTypes = br.utf8ToString();
-                            StringTokenizer st = new StringTokenizer(eventTypes, "|");
-                            while (st.hasMoreTokens()) {
-                                String eventType = st.nextToken().trim();
-                                for (int i = 0; i < columnsArray.length; i++) {
-                                    if (columnsArray[i].toLowerCase().equals(eventType)) {
-                                        timeEventColumnNamesList.put(eventType, columnsArray[i]);
-                                    }
+                        ordToEventName = new String[(int) timeEventGroupValues.getValueCount()];
+                        int j=0;
+                        while (j<timeEventGroupValues.getValueCount()) {
+                            String eventType = timeEventGroupValues.lookupOrd(j).utf8ToString();
+                            ordToEventName[j]=eventType;
+                            eventNameToOrd.put(eventType,j);
+                            for (int i = 0; i < columnsArray.length; i++) {
+                                if (columnsArray[i].toLowerCase().equals(eventType)) {
+                                    timeEventColumnNamesList.put(eventType, columnsArray[i]);
                                 }
-                            }
-                            br = te.next();
+                            }                            
+                            j++;
                         }
                     }
                 } catch (IOException e) {
@@ -745,6 +746,10 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             }
         }
     };
+    
+    static public Integer getEventOrd(String event) {
+        return eventNameToOrd.get(event);
+    }
 
     @Override
     public void tableChanged(TableModelEvent e) {
