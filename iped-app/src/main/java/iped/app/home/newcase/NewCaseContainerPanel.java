@@ -1,5 +1,9 @@
 package iped.app.home.newcase;
 
+import javax.swing.BoxLayout;
+import javax.swing.JTabbedPane;
+import javax.swing.plaf.basic.BasicTabbedPaneUI;
+
 /*
  * @created 08/09/2022
  * @project IPED
@@ -7,16 +11,13 @@ package iped.app.home.newcase;
  */
 
 import iped.app.home.DefaultPanel;
-import iped.app.home.MainFrameCardsNames;
 import iped.app.home.MainFrame;
+import iped.app.home.MainFrameCardsNames;
 import iped.app.home.newcase.model.IPEDProcess;
 import iped.app.home.newcase.tabs.caseinfo.CaseInfoTab;
 import iped.app.home.newcase.tabs.evidence.EvidencesTab;
 import iped.app.home.newcase.tabs.process.ProcessOptionTab;
 import iped.app.ui.Messages;
-
-import javax.swing.*;
-import javax.swing.plaf.basic.BasicTabbedPaneUI;
 
 /**
  * New Case Page
@@ -56,9 +57,9 @@ public class NewCaseContainerPanel extends DefaultPanel {
         tabbedPane.setUI(new BasicTabbedPaneUI() {
             @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 45;}
         });
-        tabbedPane.addTab("<html><b>"+Messages.get("Home.CaseInformation")+"</b></html>", null, new CaseInfoTab(mainFrame), Messages.get("Home.CaseInformationTollTip"));
-        tabbedPane.addTab("<html><b>"+Messages.get("Home.Evidences")+"</b></html>", null, new EvidencesTab(mainFrame), Messages.get("Home.EvidencesToolTip"));
-        tabbedPane.addTab("<html><b>"+Messages.get("Home.ProcessOptions")+"</b></html>", null, new ProcessOptionTab(mainFrame), Messages.get("Home.ProcessOptionsToolTip"));
+        tabbedPane.addTab(Messages.get("Home.CaseInformation"), null, new CaseInfoTab(mainFrame), Messages.get("Home.CaseInformationTollTip"));
+        tabbedPane.addTab(Messages.get("Home.Evidences"), null, new EvidencesTab(mainFrame), Messages.get("Home.EvidencesToolTip"));
+        tabbedPane.addTab(Messages.get("Home.ProcessOptions"), null, new ProcessOptionTab(mainFrame), Messages.get("Home.ProcessOptionsToolTip"));
         return tabbedPane;
     }
 
