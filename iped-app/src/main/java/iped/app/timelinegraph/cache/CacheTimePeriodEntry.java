@@ -69,7 +69,10 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
         if(eventOrds.getCardinality()==0) {
             return null;
         }
-        int pos = (int) eventOrds.rangeCardinality(0, ord-1);
+        if(!eventOrds.contains(ord)) {
+            return null;
+        }
+        int pos = (int) eventOrds.rangeCardinality(0, ord);
         if(pos>=docids.length) {
             return null;
         }
@@ -101,7 +104,7 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
         eventOrds.add(ord);
         int pos = 0;
         if(docids!=null) {
-            pos = (int) eventOrds.rangeCardinality(0, ord-1);
+            pos = (int) eventOrds.rangeCardinality(0, ord);
             RoaringBitmap[] ldocids = new RoaringBitmap[docids.length+1];
             Array.copy(docids, 0, ldocids, 0, pos);
             Array.copy(docids, pos, ldocids, pos+1, docids.length-pos);
