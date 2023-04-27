@@ -3,6 +3,7 @@ package iped.app.timelinegraph.cache;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import org.apache.lucene.index.LeafReader;
@@ -19,7 +20,6 @@ import org.jfree.data.time.Quarter;
 import org.jfree.data.time.TimePeriod;
 import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
-import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartsPanel;
@@ -34,10 +34,12 @@ public class EventTimestampCache implements Runnable {
     int emptyOrd;
 
     private Integer eventInternalOrd;
+    
+    static HashSet<Integer>done = new HashSet<>();
 
-    public EventTimestampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider, TimeStampCache timeStampCache, String eventType) {
+    public EventTimestampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider, TimeStampCache timeStampCache, String eventType, int ord) {
         this.eventType = eventType;
-        this.eventInternalOrd = ipedChartsPanel.getEventOrd(eventType);
+        this.eventInternalOrd = ord;
         this.resultsProvider = resultsProvider;
         this.timeStampCache = timeStampCache;
         this.ipedChartsPanel = ipedChartsPanel;
@@ -80,15 +82,7 @@ public class EventTimestampCache implements Runnable {
                                         System.out.println();
                                     }
                                     if (date != null) {
-                                        RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventInternalOrd);
-                                        if (docs2 == null) {
-                                            synchronized (timeStampCache) {
-                                                docs2 = timeStampCache.add(timePeriodClass, date, eventInternalOrd, docs2);
-                                            }
-                                        }
-                                        synchronized (docs2) {
-                                            docs2.add(doc);
-                                        }
+                                        timeStampCache.add(timePeriodClass, date, eventInternalOrd, doc);
                                     }
                                 }
                             }
@@ -117,16 +111,8 @@ public class EventTimestampCache implements Runnable {
                                 }else {
                                     date = new Date(cache[ord]);
                                 }
-                                if (date != null) {                                                                        
-                                    RoaringBitmap docs2 = timeStampCache.get(timePeriodClass, date, eventInternalOrd);
-                                    if (docs2 == null) {
-                                        synchronized (timeStampCache) {
-                                            docs2 = timeStampCache.add(timePeriodClass, date, eventInternalOrd, docs2);
-                                        }
-                                    }
-                                    synchronized (docs2) {
-                                        docs2.add(doc);
-                                    }
+                                if (date != null) {
+                                    timeStampCache.add(timePeriodClass, date, eventInternalOrd, doc);
                                 }
                             }
                         }
@@ -134,6 +120,8 @@ public class EventTimestampCache implements Runnable {
                     }
                 }
             }
+            done.add(eventInternalOrd);
+
 
         } catch (Exception e) {
             e.printStackTrace();

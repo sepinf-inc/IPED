@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
@@ -19,16 +18,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.SortedSetDocValues;
-import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.util.BytesRef;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.engine.core.Manager;
-import iped.properties.ExtraProperties;
 import iped.viewers.api.IMultiSearchResultProvider;
 
 public class IndexTimeStampCache implements TimeStampCache {
@@ -91,21 +86,17 @@ public class IndexTimeStampCache implements TimeStampCache {
                 
                 LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
 
-                SortedSetDocValues timeEventGroupValues = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-
                 ArrayList<EventTimestampCache> cacheLoaders = new ArrayList<EventTimestampCache>();
+                
+                String[] cachedEventNames = ipedChartsPanel.getOrdToEventName();
 
-                TermsEnum te = timeEventGroupValues.termsEnum();
-                BytesRef br = te.next();
-                while (br != null) {
-                    StringTokenizer st = new StringTokenizer(br.utf8ToString(), "|");
-                    while (st.hasMoreTokens()) {
-                        String eventType = st.nextToken().trim();
-                        if (eventTypes.add(eventType)) {
-                            cacheLoaders.add(new EventTimestampCache(ipedChartsPanel, resultsProvider, this, eventType));
-                        }
+                int ord=0;
+                while (ord<cachedEventNames.length) {
+                    String eventType = cachedEventNames[ord];
+                    if(eventType!=null && !eventType.isEmpty()) {
+                        cacheLoaders.add(new EventTimestampCache(ipedChartsPanel, resultsProvider, this, cachedEventNames[ord], ord));
                     }
-                    br = te.next();
+                    ord++;
                 }
                 running.set(cacheLoaders.size());
 
@@ -290,6 +281,29 @@ public class IndexTimeStampCache implements TimeStampCache {
     @Override
     public TimeZone getCacheTimeZone() {
         return this.timezone;
+    }
+
+    public void add(Class<? extends TimePeriod> timePeriodClass, Date t, Integer eventInternalOrd, int doc) {
+        PersistedArrayList l = (PersistedArrayList) newCache.get(timePeriodClass.getSimpleName());
+        if (l == null) {
+            l = new PersistedArrayList(timePeriodClass);
+            synchronized (this) {
+                newCache.put(timePeriodClass.getSimpleName(), l);
+            }
+        }
+        
+        CacheTimePeriodEntry selectedCt = null;
+        CacheEventEntry selectedCe = null;
+
+        selectedCt = l.get(t.getTime());
+
+        if (selectedCt == null) {
+            selectedCt = new CacheTimePeriodEntry();
+            selectedCt.date=t.getTime();
+            l.add(selectedCt);
+        }
+
+        selectedCt.addEventEntry(eventInternalOrd, doc);
     }
 
 }

@@ -45,7 +45,7 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
         return eventOrds;
     }
     
-    public CacheEventEntry[] getEvents() {
+    synchronized public CacheEventEntry[] getEvents() {
         CacheEventEntry[] e = new CacheEventEntry[eventOrds.getCardinality()];
         int i=0;
         for(int ord:eventOrds) {
@@ -62,7 +62,7 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
         addEventEntry(ce.eventOrd, ce.docIds);
     }
 
-    public RoaringBitmap getEventDocIds(int ord) {
+    synchronized public RoaringBitmap getEventDocIds(int ord) {
         if(docids==null) {
             return null;
         }
@@ -79,7 +79,7 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
         return docids[pos];
     }
 
-    public RoaringBitmap getEventDocIds(String event) {
+    synchronized public RoaringBitmap getEventDocIds(String event) {
         if(docids==null) {
             return null;
         }
@@ -115,9 +115,29 @@ public class CacheTimePeriodEntry implements Comparable<CacheTimePeriodEntry> {
         docids[pos] = pdocids;
     }
 
-    public void addEventEntry(String event, RoaringBitmap pdocids) {
+    synchronized public void addEventEntry(String event, RoaringBitmap pdocids) {
         int ord = IpedChartsPanel.getEventOrd(event);
         addEventEntry(ord, pdocids);
+    }
+
+    synchronized public void addEventEntry(int ord, int doc) {
+        eventOrds.add(ord);
+        int pos = 0;
+        if(docids!=null) {
+            pos = (int) eventOrds.rangeCardinality(0, ord);
+            if(pos>=docids.length) {
+                RoaringBitmap[] ldocids = new RoaringBitmap[docids.length+1];
+                Array.copy(docids, 0, ldocids, 0, pos);
+                Array.copy(docids, pos, ldocids, pos+1, docids.length-pos);
+                docids = ldocids;
+            }
+        }else {
+            docids = new RoaringBitmap[1];
+        }
+        if(docids[pos]==null) {
+            docids[pos] = new RoaringBitmap();
+        }        
+        docids[pos].add(doc);
     }
 
 }

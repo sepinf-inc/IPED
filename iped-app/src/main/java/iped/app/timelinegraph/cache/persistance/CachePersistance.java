@@ -59,10 +59,7 @@ public class CachePersistance {
 
     private File bitstreamSerializeFile;
 
-    static private boolean bitstreamSerializeAsDefault = false;
-    static HashMap<Integer, String> eventTypeCodes = new HashMap<Integer, String>();
-    static HashMap<String, Integer> eventTypeCodesRev = new HashMap<String, Integer>();
-
+    static private boolean bitstreamSerializeAsDefault = true;
 
     static CachePersistance singleton = new CachePersistance();
     public static CachePersistance getInstance() {
@@ -220,24 +217,8 @@ public class CachePersistance {
                 CacheEventEntry[] events = ct.getEvents();
                 for (int j = 0; j < events.length; j++) {
                     CacheEventEntry ce = events[j];
-                    Integer evCode = 0;
-                    synchronized (eventTypeCodes) {
-                        evCode = eventTypeCodesRev.get(ce.event);
-                        if(evCode==null) {
-                            evCode = eventTypeCodes.size();
-                            eventTypeCodes.put(evCode, ce.event);
-                            eventTypeCodesRev.put(ce.event, evCode);
-                        }                        
-                    }
-                    dos.writeInt(evCode);
-                    if(bitstreamSerialize) {
-                        ce.docIds.serialize(dos);
-                    }else {
-                        for (int docId : ce.docIds) {
-                            dos.writeInt(docId);
-                        }
-                        dos.writeInt(-1);
-                    }
+                    dos.writeInt(ce.getEventOrd());
+                    ce.docIds.serialize(dos);
                 }
                 dos.writeInt(-1);
             }
@@ -303,6 +284,9 @@ public class CachePersistance {
             int ctIndex=0;
             for (CacheTimePeriodEntry ct:entry) {
                 dos.writeLong(ct.date);
+                if(ct.getDate().getDate()==22 && ct.getDate().getMonth()==2 && ct.getDate().getYear()==2021-1900) {
+                    System.out.println();
+                }
                 CacheEventEntry[] events = ct.getEvents();
                 for (int j = 0; j < events.length; j++) {
                     CacheEventEntry ce = events[j];
@@ -340,8 +324,9 @@ public class CachePersistance {
                 ctIndex++;
 
                 lastPos = pos.position;
-            
             }
+            
+            System.out.println("Total cache entries saved:"+ctIndex);
             
             commit = true;
         } catch (IOException e) {
@@ -429,8 +414,6 @@ public class CachePersistance {
         int evCode = dis.readInt();
         while (evCode!=-1) {
             CacheEventEntry ce = new CacheEventEntry(evCode);
-            String eventName = eventTypeCodes.get(evCode);
-            ce.event = eventName;
             ce.docIds = new RoaringBitmap();
             ce.docIds.deserialize(dis);
             ct.addEventEntry(ce);
@@ -438,7 +421,6 @@ public class CachePersistance {
                 evCode = dis.readInt();
             }catch(Exception e) {
                 e.printStackTrace();
-                long pos = ((SeekableFileInputStream)dis.wrapped).position();
             }
         }
         return ct;
