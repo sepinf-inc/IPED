@@ -8,6 +8,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Month;
@@ -30,6 +32,8 @@ import iped.jfextensions.model.Minute;
  */
 public class IpedTimelineDatasetManager {
     IpedChartsPanel ipedChartsPanel;
+
+    private static final Logger logger = LogManager.getLogger(IpedTimelineDatasetManager.class);
 
     List<TimeStampCache> timeStampCaches = new ArrayList<>();
     boolean isCacheLoaded = false;
@@ -72,7 +76,14 @@ public class IpedTimelineDatasetManager {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        int poolSize = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 2f);
+        
+        int poolSize = 1;
+        int totalItems = ipedChartsPanel.getResultsProvider().getIPEDSource().getTotalItems();
+        if(Runtime.getRuntime().freeMemory()> totalItems * 100){
+            poolSize = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 2f);
+        }else {
+            logger.info("Only {}MB of free memory for {} total items. Timeline index creation will occur sequentially. ", Runtime.getRuntime().freeMemory(), totalItems); 
+        }
         ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
         boolean first = true;
         for (TimeStampCache timeStampCache : timeStampCaches) {
