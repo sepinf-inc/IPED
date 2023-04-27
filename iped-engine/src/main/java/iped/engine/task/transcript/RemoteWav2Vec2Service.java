@@ -321,6 +321,9 @@ public class RemoteWav2Vec2Service {
 
                                 bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
                                 cmd = new String(bytes);
+
+                            } else {
+                                logger.info("Protocol Version VERSION_1_0");
                             }
 
                             
