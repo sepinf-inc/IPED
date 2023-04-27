@@ -1091,5 +1091,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         setTimePeriodString("Day");
         refreshChart(true);
     }
+
+    public static String[] getOrdToEventName() {
+        return ordToEventName;
+    }
     
 }
