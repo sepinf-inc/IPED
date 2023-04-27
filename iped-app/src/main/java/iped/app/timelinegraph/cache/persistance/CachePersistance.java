@@ -284,9 +284,6 @@ public class CachePersistance {
             int ctIndex=0;
             for (CacheTimePeriodEntry ct:entry) {
                 dos.writeLong(ct.date);
-                if(ct.getDate().getDate()==22 && ct.getDate().getMonth()==2 && ct.getDate().getYear()==2021-1900) {
-                    System.out.println();
-                }
                 CacheEventEntry[] events = ct.getEvents();
                 for (int j = 0; j < events.length; j++) {
                     CacheEventEntry ce = events[j];
@@ -325,8 +322,6 @@ public class CachePersistance {
 
                 lastPos = pos.position;
             }
-            
-            System.out.println("Total cache entries saved:"+ctIndex);
             
             commit = true;
         } catch (IOException e) {

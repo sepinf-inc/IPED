@@ -123,7 +123,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     static ThreadPoolExecutor swExecutor = new ThreadPoolExecutor(1, 1, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 
-    private static final Logger logger = LogManager.getLogger(IndexTimeStampCache.class);
+    private static final Logger logger = LogManager.getLogger(IpedChartsPanel.class);
 
     boolean syncViewWithTableSelection = false;
 
