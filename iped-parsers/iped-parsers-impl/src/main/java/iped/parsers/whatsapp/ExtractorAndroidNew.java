@@ -426,7 +426,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
                 + " m.message_type as messageType, latitude, longitude, mm.media_duration, "
                 + captionCol + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
-                + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
+                + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn,"
                 + " (m.origination_flags & 1) as forwarded"
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
                 + " left join message_media mm on mm.message_row_id=m._id"
