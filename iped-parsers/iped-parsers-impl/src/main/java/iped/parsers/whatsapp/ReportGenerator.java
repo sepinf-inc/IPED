@@ -654,8 +654,9 @@ public class ReportGenerator {
                     }
 
                     if (a.getTimeStamp() != null) {
-                        aoDetails.append(' ');
+                        aoDetails.append(" [");
                         aoDetails.append(timeFormat.format(a.getTimeStamp()));
+                        aoDetails.append("]");
                     }
 
                     reactions.add(a.getReaction());

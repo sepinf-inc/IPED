@@ -64,6 +64,7 @@ import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.whatsapp.Message.MessageStatus;
 import iped.parsers.whatsapp.Message.MessageType;
+import iped.parsers.whatsapp.ProtoBufDecoder.Part;
 
 /**
  *
@@ -370,7 +371,11 @@ public class ExtractorIOS extends Extractor {
             } catch (IllegalArgumentException e) {
             } // ignore
         }
+        byte[] receiptInfo = rs.getBytes("receiptInfo"); //$NON-NLS-1$
         m.setDeleted(false);
+        if (receiptInfo != null) {
+            decodeReceiptInfo(m, receiptInfo);
+        }
         return m;
     }
 
@@ -471,6 +476,43 @@ public class ExtractorIOS extends Extractor {
         }
         m.setDeleted(row.isDeletedRow());
         return m;
+    }
+    
+    private void decodeReceiptInfo(Message m, byte[] receiptInfo) {
+        List<Part> parts1 = new ProtoBufDecoder(receiptInfo).decode();
+        for (Part p1 : parts1) {
+            if (p1.getIdx() == 7) {
+                List<Part> parts2 = p1.getChilds();
+                if (parts2 != null) {
+                    for (Part p2 : parts2) {
+                        if (p2.getIdx() == 1) {
+                            List<Part> parts3 = p2.getChilds();
+                            System.err.println(m.getId() + ":" + m.getData() + ">>>>" + parts3);
+                            if (parts3 != null) {
+                                MessageAddOn a = new MessageAddOn();
+                                for (Part p3 : parts3) {
+                                    Object v3 = p3.getValue();
+                                    if (v3 !=null) {
+                                        String s3 =  v3.toString();
+                                        if (p3.getIdx() == 2) {
+                                            a.setRemoteResource(s3);
+                                        } else if (p3.getIdx() == 3) {
+                                            a.setReaction(s3);
+                                        } else if (p3.getIdx() == 4) {
+                                            a.setTimeStamp(new Date(Long.parseLong(s3)));
+                                        }
+                                    }
+                                }
+                                System.err.println(m.getId() + ":RE:" + a.getReaction());
+                                System.err.println(m.getId() + ":TS:" + a.getTimeStamp());
+                                System.err.println(m.getId() + ":RR:" + a.getRemoteResource());
+                                m.addMessageAddOn(a);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private List<Chat> undeleteChats(SQLiteUndeleteTable undeleteChatsSessions, WAContactsDirectory contacts) {
@@ -619,8 +661,10 @@ public class ExtractorIOS extends Extractor {
             + "ZVCARDSTRING as vCardString, ZFILESIZE as mediaSize, ZMEDIALOCALPATH " //$NON-NLS-1$
             + "as mediaName, ZVCARDNAME as mediaHash, ZTITLE as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
+            + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
+            + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
             + "WHERE chatId=? ORDER BY ZSORT"; //$NON-NLS-1$
 
     private static final String SELECT_MESSAGES_GROUP = "SELECT ZWAMESSAGE.Z_PK AS id, ZWAMESSAGE.ZCHATSESSION " //$NON-NLS-1$
@@ -629,8 +673,10 @@ public class ExtractorIOS extends Extractor {
             + "ZVCARDSTRING as vCardString, ZFILESIZE as mediaSize, ZMEDIALOCALPATH " //$NON-NLS-1$
             + "as mediaName, ZVCARDNAME as mediaHash, ZTITLE as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
+            + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
+            + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
             + "LEFT JOIN ZWAGROUPMEMBER ON ZWAGROUPMEMBER.ZCHATSESSION = chatId AND ZWAGROUPMEMBER.Z_PK = ZGROUPMEMBER " //$NON-NLS-1$
             + "WHERE chatId=? ORDER BY ZSORT"; //$NON-NLS-1$
     
@@ -640,8 +686,10 @@ public class ExtractorIOS extends Extractor {
             + "ZVCARDSTRING as vCardString, ZFILESIZE as mediaSize, ZMEDIALOCALPATH " //$NON-NLS-1$
             + "as mediaName, ZVCARDNAME as mediaHash, NULL as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
+            + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
+            + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
             + "WHERE chatId=? ORDER BY ZSORT"; //$NON-NLS-1$
 
     private static final String SELECT_MESSAGES_GROUP_NOZTITLE = "SELECT ZWAMESSAGE.Z_PK AS id, ZWAMESSAGE.ZCHATSESSION " //$NON-NLS-1$
@@ -650,9 +698,11 @@ public class ExtractorIOS extends Extractor {
             + "ZVCARDSTRING as vCardString, ZFILESIZE as mediaSize, ZMEDIALOCALPATH " //$NON-NLS-1$
             + "as mediaName, ZVCARDNAME as mediaHash, NULL' as mediaCaption, " //$NON-NLS-1$
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
+            + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAGROUPMEMBER ON ZWAGROUPMEMBER.ZCHATSESSION = chatId AND ZWAGROUPMEMBER.Z_PK = ZGROUPMEMBER " //$NON-NLS-1$
+            + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
             + "WHERE chatId=? ORDER BY ZSORT"; //$NON-NLS-1$
 
     private static final String VCARD_SEPARATOR = "_$!<VCard-Separator>!$_"; //$NON-NLS-1$
