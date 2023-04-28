@@ -106,9 +106,8 @@ public class EmojiUtil {
                             for (String c : usedEmojis) {
                                 out.print("img.e");
                                 out.print(c);
-                                out.print("{width:18px;");
-                                out.print("height:18px;margin-right:1px;margin-left:1px;");
-                                out.print("content:url('data:image/png;base64,");
+                                out.print("{width:18px;height:18px;margin-right:1px;margin-left:1px;");
+                                out.print("vertical-align: middle;content:url('data:image/png;base64,");
                                 out.print(base64ImagesPerCode.get(c));
                                 out.println("');}");
                             }
