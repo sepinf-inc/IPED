@@ -396,6 +396,59 @@ div.deletedIcon {
 	max-height: 160px;
 }
 
+#conversation .reaction {
+	cursor: pointer;
+	border-radius: 16px;
+	box-shadow: 0 0 6px #888888;
+	padding: 2px 6px;
+	position: relative;
+	background-color: #FFFFFF;
+}
+
+#conversation .reaction.from
+{
+	float: left;   
+	margin: -10px 0px 0px 30px;
+}
+
+#conversation .reaction.to
+{
+	float: right;   
+	margin: -10px 30px 0px 0px;
+}
+
+#conversation .reaction .tt {
+	visibility: hidden;
+	color: #000000;
+	border-radius: 6px;
+	padding: 10% 10%;
+	position: absolute;
+	z-index: 1;
+	font-size: small;
+	box-shadow: 0 0 6px #AAAABB;
+	bottom: 0%;
+	white-space: nowrap;
+}
+
+#conversation .reaction.to .tt {
+	text-align: right;
+	right: 110%;
+}
+
+#conversation .reaction.from .tt {
+	text-align: left;
+	left: 110%;
+}
+
+#conversation .reaction:hover .tt {
+	visibility: visible;
+	background-color: #EEEEFF;
+}
+
+#conversation .reaction:hover {
+	background-color: #EEEEFF;
+}
+
 #conversation .fwd {
 	font-style: italic; 
 	color: #aaaaaa; 
