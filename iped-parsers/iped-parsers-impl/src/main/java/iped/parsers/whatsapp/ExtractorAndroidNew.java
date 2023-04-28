@@ -54,7 +54,6 @@ import java.util.List;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
-import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
