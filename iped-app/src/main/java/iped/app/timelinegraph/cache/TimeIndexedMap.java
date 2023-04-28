@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,7 +18,7 @@ import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.utils.SeekableFileInputStream;
 
 public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
-    HashMap<String, TreeMap<Long, Long>> monthIndex = new HashMap<String, TreeMap<Long, Long>>();
+    HashMap<String, TreeMap<Long, Long>> upperPeriodIndex = new HashMap<String, TreeMap<Long, Long>>();
     HashMap<String, File> cacheFiles = new HashMap<String, File>();
     HashMap<String, File> monthIndexCacheFiles = new HashMap<String, File>();
 
@@ -114,7 +113,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                 //if start date is given, search for the position of correspondent first entry throught month index
                 Long num = null;
                 try {
-                    Entry<Long, Long> entry = monthIndex.get(className).floorEntry(startDate.getTime());
+                    Entry<Long, Long> entry = upperPeriodIndex.get(className).floorEntry(startDate.getTime());
                     if (entry != null) {
                         num = entry.getValue();
                     } else {
@@ -176,7 +175,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         private String className;
         boolean useCache = false;
         private TimelineCache timelineCache;
-        CachePersistance cp = new CachePersistance();
+        CachePersistance cp = CachePersistance.getInstance();
         int countRead=0;//counters to log number of cache reads
         int countCache=0;//counters to log number of disk reads
         private Reference<CacheTimePeriodEntry>[] lsoftcache;//soft reference cache (a more complete cache but with SoftReferences)
@@ -297,8 +296,8 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     };
 
     public void createOrLoadDayIndex(IndexTimeStampCache indexTimeStampCache) {
-        CachePersistance cp = new CachePersistance();
-        if (monthIndex.size() == 0) {
+        CachePersistance cp = CachePersistance.getInstance();
+        if (upperPeriodIndex.size() == 0) {
             for (Iterator iterator = indexTimeStampCache.getPeriodClassesToCache().iterator(); iterator.hasNext();) {
                 String ev = (String) ((Class) iterator.next()).getSimpleName();
                 File f = monthIndexCacheFiles.get(ev);
@@ -307,7 +306,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                 try {
                     if (f.exists()) {
                         cp.loadMonthIndex(ev, datesPos, positionsIndexes);
-                        monthIndex.put(ev, datesPos);
+                        upperPeriodIndex.put(ev, datesPos);
                     }
                 }finally {
                     timelineCache.liberateCachesIndexes(ev);
@@ -321,7 +320,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     long cacheEndPos = 0;
 
     public HashMap<String, TreeMap<Long, Long>> getMonthIndex() {
-        return monthIndex;
+        return upperPeriodIndex;
     }
 
     public void clearCache() {
