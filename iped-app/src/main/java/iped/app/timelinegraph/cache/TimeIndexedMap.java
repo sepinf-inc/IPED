@@ -305,7 +305,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                 Map<Long, Integer> positionsIndexes = timelineCache.getCachesIndexes(ev);
                 try {
                     if (f.exists()) {
-                        cp.loadMonthIndex(ev, datesPos, positionsIndexes);
+                        cp.loadUpperPeriodIndex(ev, datesPos, positionsIndexes);
                         upperPeriodIndex.put(ev, datesPos);
                     }
                 }finally {

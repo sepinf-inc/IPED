@@ -192,13 +192,13 @@ public class CachePersistance {
         }
     }
 
-    public void saveMonthIndex(HashMap<String, TreeMap<Date, Long>> monthIndex, Map<Long, Integer> positionsIndexes, String timePeriodName) {
-        Map<Date, Long> dates = (TreeMap<Date, Long>) monthIndex.get(timePeriodName);
+    public void saveUpperPeriodIndex(HashMap<String, TreeMap<Date, Long>> upperPeriodIndex, Map<Long, Integer> positionsIndexes, String timePeriodName) {
+        Map<Date, Long> dates = (TreeMap<Date, Long>) upperPeriodIndex.get(timePeriodName);
         
         baseDir.mkdirs();
-        File monthFile = new File(new File(baseDir,timePeriodName), "1");
+        File upperPeriodFile = new File(new File(baseDir,timePeriodName), "1");
 
-        try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(monthFile.toPath())))) {
+        try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(upperPeriodFile.toPath())))) {
             for (Iterator iterator2 = dates.entrySet().iterator(); iterator2.hasNext();) {
                 Entry dateEntry = (Entry) iterator2.next();
                 dos.writeLong(((Date)dateEntry.getKey()).getTime());
@@ -264,19 +264,19 @@ public class CachePersistance {
     private void savePeriodNewCache(TimeStampCache timeStampCache, Set<CacheTimePeriodEntry> entry, File file) {
         file.mkdirs();
         File indexFile = new File(file, "0");
-        File monthIndexFile = new File(file, "1");
+        File upperPeriodIndexFile = new File(file, "1");
 
         boolean commit = false;
         try (PositionOutputStream pos = new PositionOutputStream(Files.newOutputStream(indexFile.toPath()));
                 DataOutputStream dos = new DataOutputStream(pos);
-                DataOutputStream monthIndexDos = new DataOutputStream(new PositionOutputStream(Files.newOutputStream(monthIndexFile.toPath())))
+                DataOutputStream upperPeriodIndexDos = new DataOutputStream(new PositionOutputStream(Files.newOutputStream(upperPeriodIndexFile.toPath())))
                 ) {
             dos.writeShort(0);
             dos.writeUTF(timeStampCache.getCacheTimeZone().getID());
             dos.writeInt(entry.size());
 
             
-            Date lastMonth = null;
+            Date lastUpperPeriod = null;
             Calendar c = (Calendar) Calendar.getInstance().clone();
             int internalCount = 0;
             long lastPos=pos.position;
@@ -308,14 +308,14 @@ public class CachePersistance {
                 }
 
                 internalCount += events.length;
-                Date month = c.getTime();
-                if (!month.equals(lastMonth) || internalCount > 4000) {
-                    lastMonth = month;
+                Date upperPeriod = c.getTime();
+                if (!upperPeriod.equals(lastUpperPeriod) || internalCount > 4000) {
+                    lastUpperPeriod = upperPeriod;
                     internalCount = 0;
 
-                    monthIndexDos.writeLong(month.getTime());
-                    monthIndexDos.writeLong(lastPos);
-                    monthIndexDos.writeInt(ctIndex);
+                    upperPeriodIndexDos.writeLong(upperPeriod.getTime());
+                    upperPeriodIndexDos.writeLong(lastPos);
+                    upperPeriodIndexDos.writeInt(ctIndex);
                 }
                 
                 ctIndex++;
@@ -343,9 +343,9 @@ public class CachePersistance {
         return baseDir;
     }
 
-    public void loadMonthIndex(String ev, TreeMap<Long, Long> datesPos, Map<Long, Integer> positionsIndexes) {
-        File monthFile = new File(new File(baseDir,ev), "1");
-        try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(monthFile)))) {
+    public void loadUpperPeriodIndex(String ev, TreeMap<Long, Long> datesPos, Map<Long, Integer> positionsIndexes) {
+        File upperPeriodFile = new File(new File(baseDir,ev), "1");
+        try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(upperPeriodFile)))) {
             try {
                 while(true) {
                     long d = dis.readLong();
