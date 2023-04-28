@@ -114,12 +114,8 @@ public class IndexTimeStampCache implements TimeStampCache {
                         CachePersistance cp = CachePersistance.getInstance();
                         cp.saveNewCache(this);
 
-                        newCache.clearCache();
                         cacheLoaders.clear();
-                        TimelineCache.get().clear();// clear old empty timeline entries to be reloaded with created cache data
-
-                        Date d2 = new Date();
-                        logger.info("Time to build timeline index of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
+                        //TimelineCache.get().clear();// clear old empty timeline entries to be reloaded with created cache data
 
                         newCache = null;// liberates data used to create indexes for garbage collection
 
@@ -131,6 +127,8 @@ public class IndexTimeStampCache implements TimeStampCache {
                         }
 
                         newCache.createOrLoadUpperPeriodIndex(this);
+                        Date d2 = new Date();
+                        logger.info("Time to build timeline index of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();

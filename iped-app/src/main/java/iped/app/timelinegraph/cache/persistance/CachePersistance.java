@@ -40,6 +40,7 @@ import iped.app.timelinegraph.cache.PersistedArrayList;
 import iped.app.timelinegraph.cache.TimeIndexedMap;
 import iped.app.timelinegraph.cache.TimeIndexedMap.CacheDataInputStream;
 import iped.app.timelinegraph.cache.TimeStampCache;
+import iped.app.timelinegraph.cache.TimelineCache;
 import iped.app.ui.App;
 import iped.utils.IOUtil;
 import iped.utils.SeekableFileInputStream;
@@ -282,6 +283,11 @@ public class CachePersistance {
             long lastPos=pos.position;
 
             int ctIndex=0;
+            CacheTimePeriodEntry[] cache = null;
+            if(file.getName().contains("Day")) {
+                cache  = new CacheTimePeriodEntry[entry.size()]; 
+                TimelineCache.get().getCaches().put("Day", cache);
+            }
             for (CacheTimePeriodEntry ct:entry) {
                 dos.writeLong(ct.date);
                 CacheEventEntry[] events = ct.getEvents();
@@ -316,6 +322,10 @@ public class CachePersistance {
                     upperPeriodIndexDos.writeLong(upperPeriod.getTime());
                     upperPeriodIndexDos.writeLong(lastPos);
                     upperPeriodIndexDos.writeInt(ctIndex);
+                }
+                
+                if(cache!=null) {                    
+                    cache[ctIndex] = ct;//keep in cache as it will be used
                 }
                 
                 ctIndex++;

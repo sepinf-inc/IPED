@@ -150,4 +150,12 @@ public class TimelineCache {
     public boolean hasSoftCacheFor(String className) {
         return className.equals("Day")||className.equals("Week")||className.equals("Month");
     }
+
+    public HashMap<String, Reference<CacheTimePeriodEntry>[]> getSoftCaches() {
+        return softCaches;
+    }
+
+    public HashMap<String, CacheTimePeriodEntry[]> getCaches() {
+        return caches;
+    }
 }
