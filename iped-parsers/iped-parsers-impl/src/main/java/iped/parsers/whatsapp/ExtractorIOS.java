@@ -480,6 +480,7 @@ public class ExtractorIOS extends Extractor {
     
     private void decodeReceiptInfo(Message m, byte[] receiptInfo) {
         List<Part> parts1 = new ProtoBufDecoder(receiptInfo).decode();
+        //System.err.println("PARTS1="+parts1);
         for (Part p1 : parts1) {
             if (p1.getIdx() == 7) {
                 List<Part> parts2 = p1.getChilds();
@@ -487,13 +488,13 @@ public class ExtractorIOS extends Extractor {
                     for (Part p2 : parts2) {
                         if (p2.getIdx() == 1) {
                             List<Part> parts3 = p2.getChilds();
-                            System.err.println(m.getId() + ":" + m.getData() + ">>>>" + parts3);
+                            //System.err.println(m.getId() + ":" + m.getData() + ">>>>" + parts3);
                             if (parts3 != null) {
                                 MessageAddOn a = new MessageAddOn();
                                 for (Part p3 : parts3) {
                                     Object v3 = p3.getValue();
-                                    if (v3 !=null) {
-                                        String s3 =  v3.toString();
+                                    if (v3 != null && v3 instanceof String) {
+                                        String s3 =  (String)v3;
                                         if (p3.getIdx() == 2) {
                                             a.setRemoteResource(s3);
                                         } else if (p3.getIdx() == 3) {
@@ -503,9 +504,9 @@ public class ExtractorIOS extends Extractor {
                                         }
                                     }
                                 }
-                                System.err.println(m.getId() + ":RE:" + a.getReaction());
-                                System.err.println(m.getId() + ":TS:" + a.getTimeStamp());
-                                System.err.println(m.getId() + ":RR:" + a.getRemoteResource());
+                                //System.err.println(m.getId() + ":RE:" + a.getReaction());
+                                //System.err.println(m.getId() + ":TS:" + a.getTimeStamp());
+                                //System.err.println(m.getId() + ":RR:" + a.getRemoteResource());
                                 m.addMessageAddOn(a);
                             }
                         }
