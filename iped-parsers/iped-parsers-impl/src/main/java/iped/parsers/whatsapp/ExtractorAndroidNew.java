@@ -268,6 +268,7 @@ public class ExtractorAndroidNew extends Extractor {
                             break;
                     }
                 }
+                m.setForwarded(rs.getInt("forwarded") > 0);
                 messages.add(m);
 
             }
@@ -426,6 +427,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " m.message_type as messageType, latitude, longitude, mm.media_duration, "
                 + captionCol + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
                 + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
+                + " (m.origination_flags & 1) as forwarded"
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
                 + " left join message_media mm on mm.message_row_id=m._id"
                 + " left join jid on jid._id=m.sender_jid_row_id"
