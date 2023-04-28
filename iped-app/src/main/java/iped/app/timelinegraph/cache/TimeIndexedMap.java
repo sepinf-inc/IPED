@@ -323,7 +323,4 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         return upperPeriodIndex;
     }
 
-    public void clearCache() {
-    }
-
 }
