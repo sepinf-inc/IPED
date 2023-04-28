@@ -107,7 +107,7 @@ public class EmojiUtil {
                                 out.print("img.e");
                                 out.print(c);
                                 out.print("{width:18px;height:18px;margin-right:1px;margin-left:1px;");
-                                out.print("vertical-align: middle;content:url('data:image/png;base64,");
+                                out.print("vertical-align:middle;content:url('data:image/png;base64,");
                                 out.print(base64ImagesPerCode.get(c));
                                 out.println("');}");
                             }
