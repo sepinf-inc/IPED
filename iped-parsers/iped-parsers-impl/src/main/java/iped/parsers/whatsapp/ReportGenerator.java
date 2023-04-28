@@ -43,6 +43,7 @@ public class ReportGenerator {
     private static final String deletedIcon = "<img class=\"del\"/>";
     private static final String lockedIcon = "<img class=\"lock\"/>";
     private static final String locationIcon = "<img class=\"location\"/>";
+    private static final String forwardedIcon = "<img class=\"fwd\"/>";
     private static final String waSuffix = "@s.whatsapp.net";
 
     public ReportGenerator() {
@@ -400,6 +401,11 @@ public class ReportGenerator {
                             + format(name) + "</span><br/>"); //$NON-NLS-1$
                 }
 
+                //Messages.getString("WhatsAppReport.Forwarded")
+                if (message.isForwarded()) {
+                    out.println(forwardedIcon + "<span class=\"fwd\">"
+                            + Messages.getString("WhatsAppReport.Forwarded") + "</span><br/>");
+                }
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
                         if (message.getData() != null) {

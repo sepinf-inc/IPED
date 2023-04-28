@@ -41,6 +41,7 @@ public class Message {
     private String data;
     private boolean fromMe;
     private boolean deleted;
+    private boolean forwarded;
     private Date timeStamp;
     private String mediaUrl;
     private String mediaMime;
@@ -283,6 +284,14 @@ public class Message {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public boolean isForwarded() {
+        return forwarded;
+    }
+
+    public void setForwarded(boolean forwarded) {
+        this.forwarded = forwarded;
     }
 
     public MessageType getMessageType() {
