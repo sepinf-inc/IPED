@@ -479,6 +479,7 @@ public class ExtractorIOS extends Extractor {
     }
     
     private void decodeReceiptInfo(Message m, byte[] receiptInfo) {
+        //TODO: Owner reactions doesn't seem to be found in the currently used indexes (7 -> 1 -> 2,3,4)  
         List<Part> parts1 = new ProtoBufDecoder(receiptInfo).decode();
         //System.err.println("PARTS1="+parts1);
         for (Part p1 : parts1) {
