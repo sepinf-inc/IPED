@@ -295,7 +295,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         }
     };
 
-    public void createOrLoadDayIndex(IndexTimeStampCache indexTimeStampCache) {
+    public void createOrLoadUpperPeriodIndex(IndexTimeStampCache indexTimeStampCache) {
         CachePersistance cp = CachePersistance.getInstance();
         if (upperPeriodIndex.size() == 0) {
             for (Iterator iterator = indexTimeStampCache.getPeriodClassesToCache().iterator(); iterator.hasNext();) {

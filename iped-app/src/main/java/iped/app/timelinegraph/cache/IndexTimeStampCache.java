@@ -82,7 +82,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
             if (!cacheExists) {
                 Date d1 = new Date();
-                logger.info("Starting to load/build time cache of [{}]...", periodClassesToCache.toString());
+                logger.info("Starting to build time cache of [{}]...", periodClassesToCache.toString());
                 
                 LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
 
@@ -111,7 +111,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
                         if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
                         }
-                        CachePersistance cp = new CachePersistance();
+                        CachePersistance cp = CachePersistance.getInstance();
                         cp.saveNewCache(this);
 
                         newCache.clearCache();
@@ -130,18 +130,18 @@ public class IndexTimeStampCache implements TimeStampCache {
                             newCache.put(periodClasses.getSimpleName(), times);
                         }
 
-                        newCache.createOrLoadDayIndex(this);
+                        newCache.createOrLoadUpperPeriodIndex(this);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
             } else {
-                CachePersistance cp = new CachePersistance();
+                CachePersistance cp = CachePersistance.getInstance();
                 for (Class periodClasses : periodClassesToCache) {
                     newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
                 }
-                newCache.createOrLoadDayIndex(this);
+                newCache.createOrLoadUpperPeriodIndex(this);
             }
             ipedChartsPanel.getIpedTimelineDatasetManager().setCacheLoaded(true);
         } catch (Exception e) {
