@@ -501,6 +501,7 @@ public class ExtractorAndroid extends Extractor {
             }
         }
         m.setDeleted(deleted);
+        m.setForwarded(rs.getInt("forwarded") > 0);
 
         return m;
     }
@@ -659,6 +660,7 @@ public class ExtractorAndroid extends Extractor {
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, latitude, longitude, " //$NON-NLS-1$
+            + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
             + "NULL as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
     
@@ -667,6 +669,7 @@ public class ExtractorAndroid extends Extractor {
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
             + "NULL as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
     
@@ -675,6 +678,7 @@ public class ExtractorAndroid extends Extractor {
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, edit_version, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
             + "media_caption as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
@@ -683,6 +687,7 @@ public class ExtractorAndroid extends Extractor {
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
             + "media_caption as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
@@ -691,6 +696,7 @@ public class ExtractorAndroid extends Extractor {
             + "messages.key_from_me as fromMe, messages.timestamp as timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, raw_data as rawData, edit_version, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
             + "media_caption as mediaCaption, media_hash as mediaHash, thumbnail as thumbData FROM " //$NON-NLS-1$
             + "messages LEFT JOIN message_thumbnails ON (messages.key_id = message_thumbnails.key_id " //$NON-NLS-1$
             + "AND messages.key_remote_jid = message_thumbnails.key_remote_jid " //$NON-NLS-1$
