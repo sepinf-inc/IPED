@@ -39,7 +39,6 @@ import iped.parsers.registry.model.RegistryFileException;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
-import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
 import iped.utils.SimpleHTMLEncoder;
@@ -276,7 +275,7 @@ public class RegRipperParser extends AbstractParser {
     }
 
     private File getHtml(File file, TemporaryResources tmp) throws IOException {
-        String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
+        String content = new String(Files.readAllBytes(file.toPath()), "UTF-8");
         if (content == null || content.isBlank()) {
             return null;
         }

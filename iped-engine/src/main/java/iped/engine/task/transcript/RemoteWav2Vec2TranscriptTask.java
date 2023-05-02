@@ -228,6 +228,9 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
                 long t0 = System.currentTimeMillis();
 
+                bos.write(MESSAGES.VERSION_1_1.toString().getBytes());
+                // bos.write("\n".getBytes());
+
                 bos.write(MESSAGES.AUDIO_SIZE.toString().getBytes());
 
                 DataOutputStream dos = new DataOutputStream(bos);
@@ -241,6 +244,12 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 long t1 = System.currentTimeMillis();
 
                 response = reader.readLine();
+
+                while (MESSAGES.PING.toString().equals(response)) {
+                    logger.debug("ping {}", response);
+                    response = reader.readLine();
+                }
+
                 if (MESSAGES.WARN.toString().equals(response)) {
                     String warn = reader.readLine();
                     boolean tryAgain = false;
