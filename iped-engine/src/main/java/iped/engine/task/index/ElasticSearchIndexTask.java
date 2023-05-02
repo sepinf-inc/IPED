@@ -141,10 +141,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        String cmdFields = args.getExtraParams().get(CMD_FIELDS_KEY);
-        if (cmdFields != null) {
-            parseCmdLineFields(cmdFields);
-        }
+
+        parseCmdLineFields(System.getenv(CMD_FIELDS_KEY));
+        parseCmdLineFields(System.getProperty(CMD_FIELDS_KEY));
+        parseCmdLineFields(args.getExtraParams().get(CMD_FIELDS_KEY));
 
         if (indexName == null) {
             indexName = output.getParentFile().getName();
@@ -201,6 +201,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     private void parseCmdLineFields(String cmdFields) {
+        if(cmdFields==null)
+            return;
         String[] entries = cmdFields.split(";");
         for (String entry : entries) {
             String[] pair = entry.split(":", 2);
