@@ -44,6 +44,7 @@ import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.MinIOConfig;
+import iped.engine.localization.Messages;
 import iped.engine.task.index.ElasticSearchIndexTask;
 import iped.io.SeekableInputStream;
 import iped.utils.SeekableFileInputStream;
@@ -76,6 +77,9 @@ public class MinIOTask extends AbstractTask {
     private static final String CMD_LINE_KEY = "MinioCredentials";
     private static final String ACCESS_KEY = "accesskey";
     private static final String SECRET_KEY = "secretkey";
+    private static final String BUCKET_KEY = "bucket";
+
+    private static String paramBucket = null;
 
     private static String accessKey;
     private static String secretKey;
@@ -140,6 +144,9 @@ public class MinIOTask extends AbstractTask {
 
 
         loadCredentials(caseData);
+        if (paramBucket != null) {
+            logger.error(Messages.getString("MinIOTask.PassBucketMessage"));
+        }
 
         minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
         minioClient.setTimeout(timeout, timeout, timeout);
@@ -149,24 +156,9 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-    private static void loadCredentials(ICaseData caseData) {
-        if (accessKey != null && secretKey != null) {
+    private static void parseFields(String cmdFields) {
+        if (cmdFields == null)
             return;
-        }
-        String cmdFields = null;
-        if (caseData != null) {
-            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-            cmdFields = args.getExtraParams().get(CMD_LINE_KEY);
-        }
-        if (cmdFields == null) {
-            cmdFields = System.getProperty(CMD_LINE_KEY);
-        }
-        if (cmdFields == null) {
-            cmdFields = System.getenv(CMD_LINE_KEY);
-        }
-        if (cmdFields == null) {
-            throw new RuntimeException("'MinioCredentials' not set by ENV var, sys prop or cmd line param.");
-        }
         String[] entries = cmdFields.split(";");
         for (String entry : entries) {
             String[] pair = entry.split(":", 2);
@@ -174,7 +166,28 @@ public class MinIOTask extends AbstractTask {
                 accessKey = pair[1];
             else if (SECRET_KEY.equals(pair[0]))
                 secretKey = pair[1];
+            else if (BUCKET_KEY.equals(pair[0]))
+                paramBucket = pair[1];
         }
+    }
+    private static void loadCredentials(ICaseData caseData) {
+        if (accessKey != null && secretKey != null) {
+            return;
+        }
+
+        parseFields(System.getenv(CMD_LINE_KEY));
+        parseFields(System.getProperty(CMD_LINE_KEY));
+
+        if (caseData != null) {
+            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+            parseFields(args.getExtraParams().get(CMD_LINE_KEY));
+
+        }
+
+        if (accessKey == null || secretKey == null) {
+            throw new RuntimeException("'MinioCredentials' not set by ENV var, sys prop or cmd line param.");
+        }
+
     }
 
     @Override
@@ -211,8 +224,7 @@ public class MinIOTask extends AbstractTask {
     }
 
     private String getBucket(IItem i) throws Exception {
-        String bucket = i.getDataSource().getUUID();
-
+        String bucket = paramBucket == null ? i.getDataSource().getUUID() : paramBucket;
         if (!zipRequests.containsKey(bucket)) {
             zipRequests.put(bucket, new ZipRequest());
         }
@@ -226,7 +238,6 @@ public class MinIOTask extends AbstractTask {
                 }
             }
         }
-
         return bucket;
     }
 
