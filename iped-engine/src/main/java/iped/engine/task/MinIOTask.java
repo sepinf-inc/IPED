@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -79,10 +80,12 @@ public class MinIOTask extends AbstractTask {
     private static final String SECRET_KEY = "secretkey";
     private static final String BUCKET_KEY = "bucket";
 
+    private static AtomicBoolean credentialsLoaded = new AtomicBoolean(false);
+
     private static String paramBucket = null;
 
-    private static String accessKey;
-    private static String secretKey;
+    private static String accessKey = null;
+    private static String secretKey = null;
 
     private static Tika tika;
 
@@ -141,12 +144,13 @@ public class MinIOTask extends AbstractTask {
         zipFilesMaxSize = minIOConfig.getZipFilesMaxSize();
 
         String server = minIOConfig.getHost() + ":" + minIOConfig.getPort();
-
-
-        loadCredentials(caseData);
-        if (paramBucket != null) {
-            logger.error(Messages.getString("MinIOTask.PassBucketMessage"));
+        if (!credentialsLoaded.getAndSet(true)) {
+            loadCredentials(caseData);
+            if (paramBucket != null) {
+                logger.error(Messages.getString("MinIOTask.PassBucketMessage"));
+            }
         }
+
 
         minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
         minioClient.setTimeout(timeout, timeout, timeout);
