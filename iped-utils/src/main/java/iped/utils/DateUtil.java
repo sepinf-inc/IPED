@@ -116,5 +116,17 @@ public class DateUtil {
     public static Date stringToDate(String date) throws ParseException {
         return threadLocal.get().parse(date);
     }
+    
+    static Pattern pattern = null;
+    
+    public static Pattern getDateStrPattern(){
+        if(pattern==null) {
+            String patternStr = "(\\d{4}-(0[1-9]|1[1-2])-(0[1-9]|[1-2][0-9]|3[0-1])(\\s|T)([0-1][0-9]|2[0-3])\\:([0-5][0-9])\\:([0-5][0-9])Z?)"
+                    + "|((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s(0[1-9]|[1-2][0-9]|3[0-1])\\s([0-1][0-9]|2[0-3])\\:([0-5][0-9])\\:(([0-5][0-9])Z?)\\s\\d{4})";
+            pattern = Pattern.compile(patternStr);
+            //pattern = Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})[T\\s](\\d{2})\\:(\\d{2})\\:(\\d{2})[Z(\\+(\\d{2})\\:(\\d{2}))]");
+        }
+        return pattern;
+    }
 
 }
