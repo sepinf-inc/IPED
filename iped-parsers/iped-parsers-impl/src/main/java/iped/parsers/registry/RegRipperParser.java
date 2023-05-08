@@ -504,7 +504,7 @@ public class RegRipperParser extends AbstractParser {
                 int id = ++virtualId;
                 kmeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(id));
                 kmeta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentId));
-                kmeta.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
+                kmeta.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report-timestamp"); //$NON-NLS-1$
                 
                 extractor.parseEmbedded(featureStream, handler, kmeta, false);
 
