@@ -47,6 +47,7 @@ import iped.parsers.registry.model.RegistryFileException;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
+import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.Util;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -500,6 +501,7 @@ public class RegRipperParser extends AbstractParser {
                 Metadata kmeta = new Metadata();
                 kmeta.set(HttpHeaders.CONTENT_TYPE, "text/plain");
                 kmeta.set(TikaCoreProperties.TITLE, titletimeEvent);
+                MetadataUtil.setMetadataType(fieldTimeEvent, Date.class);
                 kmeta.set(fieldTimeEvent, dateStr);
                 int id = ++virtualId;
                 kmeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(id));
