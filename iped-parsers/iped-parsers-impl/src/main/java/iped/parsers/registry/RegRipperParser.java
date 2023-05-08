@@ -246,7 +246,7 @@ public class RegRipperParser extends AbstractParser {
         OutputStream os = new FileOutputStream(outFile);
         try {
             ContainerVolatile msg = new ContainerVolatile();
-            Thread thread = readStream(p.getInputStream(), os, msg, metadata, handler, extractor, !extractTimestampViaTLNPlugins || !command.contains("-f"));
+            Thread thread = readStream(p.getInputStream(), os, msg, metadata, handler, extractor, !extractTimestampViaTLNPlugins && !command.contains("-f"));
             waitFor(p, handler, msg);
             thread.join();
 
