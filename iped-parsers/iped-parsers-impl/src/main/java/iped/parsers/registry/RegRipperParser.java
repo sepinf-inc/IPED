@@ -83,6 +83,8 @@ public class RegRipperParser extends AbstractParser {
     private String TOOL_PATH = System.getProperty(TOOL_PATH_PROP, ""); //$NON-NLS-1$
 
     private boolean extractTimestampViaTLNPlugins = false;
+    
+    ArrayList<String> fileListPlugins = new ArrayList<String>(Arrays.asList("appcompatcache","shimcache"));
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -243,9 +245,8 @@ public class RegRipperParser extends AbstractParser {
         OutputStream os = new FileOutputStream(outFile);
         try {
             ContainerVolatile msg = new ContainerVolatile();
-            Thread thread = readStream(p.getInputStream(), os, msg, metadata, handler, extractor);
+            Thread thread = readStream(p.getInputStream(), os, msg, metadata, handler, extractor, !extractTimestampViaTLNPlugins || !command.contains("-f"));
             waitFor(p, handler, msg);
-            // p.waitFor();
             thread.join();
 
         } catch (InterruptedException e) {
@@ -357,67 +358,144 @@ public class RegRipperParser extends AbstractParser {
         return html;
     }
     
-    public String extractTimeMetadata(Metadata metadata, byte[] out, String remain, ContentHandler handler, EmbeddedDocumentExtractor extractor) {
+    public String extractTimeMetadata(Metadata metadata, byte[] out, String remain, ContentHandler handler, EmbeddedDocumentExtractor extractor, StringBuffer lastPlugin) {
         try {
             int virtualid=100000;
             Pattern p = DateUtil.getDateStrPattern();
-            String[] buff = new String(out, StandardCharsets.ISO_8859_1).split("\n");
+            String outStr = remain + new String(out, StandardCharsets.ISO_8859_1);
+            String[] buff = outStr.split("\n");
             for (int i = 0; i < buff.length; i++) {
                 String value = null;
-                if(i==0) {
-                    value = remain + buff[0];
-                    
-                }
                 value = buff[i];
-                if(i==buff.length-1) {
-                    return value;
-                    
-                }else {
-                    Matcher m = p.matcher(value);
-                    while(m.find()) {
-                        String dateStr = value.substring(m.start(), m.end());
-                        if(!dateStr.startsWith("1970-01-01 00:00:00")){
-                            String[] fieldNames = value.substring(0,m.start()).split(":");
+                if(value.startsWith("---------------------------")) {
+                    lastPlugin.replace(0, lastPlugin.length(), "");
+                    continue;
+                }
+                if(lastPlugin.length()==0 && i!=buff.length-1) {
+                    int si=value.indexOf(" ");
+                    if(si==-1) {
+                        lastPlugin.append(value);
+                    }else {
+                        lastPlugin.append(value.substring(0,si));
+                    }
+                    if(lastPlugin.toString().contains("EPSecurity")) {
+                        System.out.println();
+                    }
+                }
+                Matcher m = p.matcher(value);
+                int lastMatch=-1;
+                while(m.find()) {
+                    String dateStr = value.substring(m.start(), m.end());
+                    if(Character.isAlphabetic(dateStr.charAt(0))) {
+                        dateStr = toIso(dateStr);
+                    }
+                    if(dateStr.length()<=19) {
+                        dateStr+="Z";
+                    }
+                    if(!dateStr.startsWith("1970-01-01 00:00:00")){
+                        lastMatch=m.end();
+                        String[] fieldNames = value.substring(0,m.start()).split(":");
 
-                            String fieldName="regexDate";
-                            if(fieldNames[fieldNames.length-1].trim().equals("")) {
-                                if(fieldNames.length>=2) {
-                                    fieldName=fieldNames[fieldNames.length-2];
-                                }
-                            }else {
-                                fieldName=fieldNames[fieldNames.length-1];
+                        String fieldName="";
+                        if(fieldNames[fieldNames.length-1].trim().equals("")) {
+                            if(fieldNames.length>=2) {
+                                fieldName=fieldNames[fieldNames.length-2];
                             }
-                            int backslashIndex = fieldName.lastIndexOf("\\");
-                            if(backslashIndex!=-1) {
-                                int lastDotIndex = fieldName.lastIndexOf(".");
-                                if(lastDotIndex!=-1 && lastDotIndex>backslashIndex) {
-                                    fieldName=fieldName.substring(backslashIndex+1, lastDotIndex);
-                                }else {
-                                    fieldName=fieldName.substring(backslashIndex+1);
-                                }
-                            }else {
-                                fieldName = fieldName.replaceAll(" ", "");
-
-                                virtualid = tlnParser(i, WINREG_PREFIX+fieldName, value.substring(m.start(), m.end()), handler, metadata, extractor, virtualid);
+                        }else {
+                            fieldName=fieldNames[fieldNames.length-1];
+                        }
+                        fieldName=fieldName.trim();
+                        if(fieldName.length()==0) {
+                            //tries to extract field name from end of line                            
+                            fieldNames = value.substring(m.end()+1).split(":");
+                            if(fieldNames.length>0) {
+                                fieldName = fieldNames[0];
                             }
                         }
+                        if(fileListPlugins.contains(lastPlugin.toString())) {
+                            virtualid = tlnParser(i, WINREG_PREFIX+lastPlugin.toString(), dateStr, value, handler, metadata, extractor, virtualid);
+                        }else {
+                            fieldName = fieldName.replaceAll(" ", "");
+
+                            virtualid = tlnParser(i, WINREG_PREFIX+lastPlugin.toString()+":"+fieldName, dateStr, value, handler, metadata, extractor, virtualid);
+                        }
+                    }
+                }
+                if(i==buff.length-1) {
+                    if(lastMatch!=-1) {
+                        return value.substring(lastMatch);                    
+                    }else {
+                        return value;
                     }
                 }
             }
         }catch (Exception e) {
             e.printStackTrace();
         }
-        return "";
-        
+        return "";        
     }
 
-    private int tlnParser(int parentId, String fieldName, String dateStr, ContentHandler handler, Metadata metadata, EmbeddedDocumentExtractor extractor, int virtualId) throws TikaException {
+    private String toIso(String dateStr) {
+        String month = dateStr.substring(4,7);
+        String monthN=null;
+        if(month.charAt(0)=='J') {
+            if(month.charAt(1)=='a') {
+                monthN="01";            
+            }
+            if(month.charAt(2)=='n') {
+                monthN="06";            
+            }
+            if(month.charAt(2)=='l') {
+                monthN="07";            
+            }
+        }
+        if(month.charAt(0)=='F') {
+            monthN="02";            
+        }
+        if(month.charAt(0)=='M') {
+            if(month.charAt(2)=='r') {
+                monthN="03";            
+            }
+            if(month.charAt(2)=='y') {
+                monthN="05";            
+            }
+        }
+        if(month.charAt(0)=='A') {
+            if(month.charAt(2)=='g') {
+                monthN="06";
+            }
+            if(month.charAt(1)=='p') {
+                monthN="04";
+            }
+        }
+        if(month.charAt(0)=='S') {
+            monthN="09";            
+        }
+        if(month.charAt(0)=='O') {
+            monthN="10";            
+        }
+        if(month.charAt(0)=='N') {
+            monthN="11";            
+        }
+        if(month.charAt(0)=='D') {
+            monthN="12";            
+        }
+        String day = dateStr.substring(7,10).trim();
+        if(day.length()==1) {
+            day = "0"+day;
+        }
+        String hour = dateStr.substring(11,19);
+        String year = dateStr.substring(20,24);
+        return year+"-"+monthN+"-"+day+" "+hour;
+    }
+
+    private int tlnParser(int parentId, String fieldName, String dateStr, String lineContent, ContentHandler handler, Metadata metadata, EmbeddedDocumentExtractor extractor, int virtualId) throws TikaException {
         if (extractor.shouldParseEmbedded(metadata)) {
             try {
                 String titletimeEvent = fieldName;
-                String fieldTimeEvent = fieldName;
+                String fieldTimeEvent = fieldName.trim().replace(" ", "").replace(".", "").replace("(", "_").replace(")", "");
                 
-                ByteArrayInputStream featureStream = new ByteArrayInputStream(fieldName.getBytes());
+                ByteArrayInputStream featureStream = new ByteArrayInputStream(lineContent.getBytes());
 
                 Metadata kmeta = new Metadata();
                 kmeta.set(HttpHeaders.CONTENT_TYPE, "text/plain");
@@ -426,7 +504,8 @@ public class RegRipperParser extends AbstractParser {
                 int id = ++virtualId;
                 kmeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(id));
                 kmeta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentId));
-
+                kmeta.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
+                
                 extractor.parseEmbedded(featureStream, handler, kmeta, false);
 
                 return id;
@@ -478,14 +557,19 @@ public class RegRipperParser extends AbstractParser {
             @Override
             public void run() {
                 byte[] out = new byte[1024];
+                StringBuffer lastPlugin = new StringBuffer();
                 int read = 0;
                 String remain="";
                 while (read != -1)
                     try {
                         if (os != null) {
                             os.write(out, 0, read);
-                            if(extractTimestamp) {
-                                remain = extractTimeMetadata(metadata, out, remain, handler, extractor);
+                            if(extractTimestamp && read>0) {
+                                if(read==1024) {
+                                    remain = extractTimeMetadata(metadata, out, remain, handler, extractor,lastPlugin);
+                                }else {
+                                    remain = extractTimeMetadata(metadata, Arrays.copyOfRange(out, 0, read-1), remain, handler, extractor,lastPlugin);
+                                }
                             }
                         }
                         if (msg != null)
