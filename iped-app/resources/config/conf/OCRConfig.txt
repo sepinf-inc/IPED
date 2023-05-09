@@ -12,6 +12,9 @@ enableOCR = false
 # Languages supported: eng, por, ita, deu, spa
 OCRLanguage = por
 
+# Skip known files found in the hash lookup database.
+skipKnownFiles = true
+
 # Tesseract layout analysis mode, e.g.: 1- with OSD (orientation & script detection); 3 - no OSD (Tesseract default) 
 pageSegMode = 1
 

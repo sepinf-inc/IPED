@@ -840,6 +840,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         if (ocrConfig.isOCREnabled()) {
             System.setProperty(OCRParser.ENABLE_PROP, "true");
             System.setProperty(OCRParser.LANGUAGE_PROP, ocrConfig.getOcrLanguage());
+            System.setProperty(OCRParser.SKIP_KNOWN_FILES_PROP, String.valueOf(ocrConfig.isSkipKnownFiles()));
             System.setProperty(OCRParser.MIN_SIZE_PROP, ocrConfig.getMinFileSize2OCR());
             System.setProperty(OCRParser.MAX_SIZE_PROP, ocrConfig.getMaxFileSize2OCR());
             System.setProperty(OCRParser.PAGE_SEGMODE_PROP, ocrConfig.getPageSegMode());

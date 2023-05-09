@@ -16,6 +16,7 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     public static final String CONFIG_FILE = "conf/OCRConfig.txt"; //$NON-NLS-1$
 
     private Boolean enableOCR;
+    private boolean skipKnownFiles;
     private String ocrLanguage;
     private String minFileSize2OCR;
     private String maxFileSize2OCR;
@@ -51,6 +52,11 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
         value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             ocrLanguage = value.trim();
+        }
+
+        value = properties.getProperty("skipKnownFiles"); //$NON-NLS-1$
+        if (value != null && !value.isBlank()) {
+            skipKnownFiles = Boolean.valueOf(value.trim());
         }
 
         value = properties.getProperty("minFileSize2OCR"); //$NON-NLS-1$
@@ -107,6 +113,10 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
 
     public Boolean isOCREnabled() {
         return enableOCR;
+    }
+
+    public Boolean isSkipKnownFiles() {
+        return skipKnownFiles;
     }
 
     public String getOcrLanguage() {
