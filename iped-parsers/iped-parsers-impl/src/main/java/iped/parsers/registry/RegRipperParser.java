@@ -359,7 +359,12 @@ public class RegRipperParser extends AbstractParser {
         return html;
     }
     
-    public String extractTimeMetadata(Metadata metadata, byte[] out, String remain, ContentHandler handler, EmbeddedDocumentExtractor extractor, StringBuffer lastPlugin) {
+    class Plugin{
+        StringBuffer name = new StringBuffer();
+        StringBuffer description = new StringBuffer();
+    }
+    
+    public String extractTimeMetadata(Metadata metadata, byte[] out, String remain, ContentHandler handler, EmbeddedDocumentExtractor extractor, Plugin lastPlugin) {
         try {
             int virtualid=100000;
             Pattern p = DateUtil.getDateStrPattern();
@@ -369,20 +374,28 @@ public class RegRipperParser extends AbstractParser {
                 String value = null;
                 value = buff[i];
                 if(value.startsWith("---------------------------")) {
-                    lastPlugin.replace(0, lastPlugin.length(), "");
+                    lastPlugin.name.replace(0, lastPlugin.name.length(), "");
+                    lastPlugin.description.replace(0, lastPlugin.description.length(), "");
                     continue;
                 }
-                if(lastPlugin.length()==0 && i!=buff.length-1) {
+                if(lastPlugin.name.length()==0 && i!=buff.length-1) {
                     int si=value.indexOf(" ");
                     if(si==-1) {
-                        lastPlugin.append(value);
+                        lastPlugin.name.append(value);
                     }else {
-                        lastPlugin.append(value.substring(0,si));
+                        int start=0;
+                        if(value.startsWith("Launching")) {
+                            start = si+1;
+                            si=value.indexOf(" ", start);
+                        }
+                        lastPlugin.name.append(value.substring(start,si));
                     }
-                    if(lastPlugin.toString().contains("EPSecurity")) {
-                        System.out.println();
-                    }
+                    continue;
                 }
+                if(lastPlugin.description.length()==0 && i!=buff.length-1) {
+                    lastPlugin.description.append(value);
+                    continue;
+                }                
                 Matcher m = p.matcher(value);
                 int lastMatch=-1;
                 while(m.find()) {
@@ -390,17 +403,17 @@ public class RegRipperParser extends AbstractParser {
                     if(Character.isAlphabetic(dateStr.charAt(0))) {
                         dateStr = toIso(dateStr);
                     }
-                    if(dateStr.length()<=19) {
+                    if(dateStr.length()<=19) {//if there is no timezone info considers UTC
                         dateStr+="Z";
                     }
-                    if(!dateStr.startsWith("1970")){
+                    if(!dateStr.startsWith("1970")){//if year is 1970, probably the date value contains only a time duration, not a timestamp
                         lastMatch=m.end();
                         String[] fieldNames = value.substring(0,m.start()).split(":");
 
                         String fieldName="";
-                        if(fieldNames[fieldNames.length-1].trim().equals("")) {
+                        if(fieldNames[fieldNames.length-1].trim().equals("")) {//if the last subitem of split by ':' is blank
                             if(fieldNames.length>=2) {
-                                fieldName=fieldNames[fieldNames.length-2];
+                                fieldName=fieldNames[fieldNames.length-2];//gets the second last
                             }
                         }else {
                             fieldName=fieldNames[fieldNames.length-1];
@@ -413,12 +426,13 @@ public class RegRipperParser extends AbstractParser {
                                 fieldName = fieldNames[0];
                             }
                         }
-                        if(fileListPlugins.contains(lastPlugin.toString())) {
-                            virtualid = tlnParser(i, WINREG_PREFIX+lastPlugin.toString(), dateStr, value, handler, metadata, extractor, virtualid);
+                        String content=lastPlugin.description.toString()+"\n"+value;
+                        if(fileListPlugins.contains(lastPlugin.name.toString())) {
+                            virtualid = tlnParser(i, WINREG_PREFIX+lastPlugin.name.toString(), dateStr, content, handler, metadata, extractor, virtualid);
                         }else {
                             fieldName = fieldName.replaceAll(" ", "");
 
-                            virtualid = tlnParser(i, WINREG_PREFIX+lastPlugin.toString()+":"+fieldName, dateStr, value, handler, metadata, extractor, virtualid);
+                            virtualid = tlnParser(i, WINREG_PREFIX+lastPlugin.name.toString()+":"+fieldName, dateStr, content, handler, metadata, extractor, virtualid);
                         }
                     }
                 }
@@ -559,7 +573,7 @@ public class RegRipperParser extends AbstractParser {
             @Override
             public void run() {
                 byte[] out = new byte[1024];
-                StringBuffer lastPlugin = new StringBuffer();
+                Plugin lastPlugin = new Plugin();
                 int read = 0;
                 String remain="";
                 while (read != -1)
