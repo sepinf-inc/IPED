@@ -393,7 +393,7 @@ public class RegRipperParser extends AbstractParser {
                     if(dateStr.length()<=19) {
                         dateStr+="Z";
                     }
-                    if(!dateStr.startsWith("1970-01-01 00:00:00")){
+                    if(!dateStr.startsWith("1970")){
                         lastMatch=m.end();
                         String[] fieldNames = value.substring(0,m.start()).split(":");
 
