@@ -182,7 +182,19 @@ public class KnownMetCarveTask extends BaseCarveTask {
                         }
                     }
                 } else {
-                    is.skip(step - 1);
+                    long skip = 0;
+                    do {
+                        long i = is.skip(step - 1);
+                        if (i == 0) {
+                            // check EOF
+                            is.mark(1);
+                            if (is.read() == -1) {
+                                return;
+                            }
+                            is.reset();
+                        }
+                        skip += i;
+                    } while (skip < step - 1);
                 }
                 offset += step;
             }
