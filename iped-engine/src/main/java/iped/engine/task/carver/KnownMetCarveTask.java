@@ -19,7 +19,6 @@
 package iped.engine.task.carver;
 
 import java.io.BufferedInputStream;
-import iped.io.SeekableInputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,6 +32,7 @@ import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
+import iped.io.SeekableInputStream;
 import iped.parsers.emule.KnownMetDecoder;
 import iped.parsers.emule.KnownMetEntry;
 import iped.utils.IOUtil;
@@ -155,7 +155,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
             while (is.read(bb) > 0) {
                 byte read = bb[0];
                 if (read == 14 || read == 15) {
-                    is.read(buf);
+                    is.readNBytes(buf, 0, buf.length);
                     int numFiles = toInt(buf, 0);
                     if (numFiles > 0 && numFiles < 65536) {
                         int pos = 4;
@@ -189,7 +189,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                         }
                     }
                 } else if (read == -32 || read == -30) {
-                	is.read(buf);
+                    is.readNBytes(buf, 0, buf.length);
                 	long date = toInt(buf, 0) * 1000L;
                 	if (date > dateMin && date < dateMax) {
                 		int pos = 20;
@@ -205,7 +205,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                 			try {
                 				inParse = evidence.getSeekableInputStream();
                 				inParse.seek(offset);
-                				int bytesRead = inParse.read(buf2);
+                                int bytesRead = inParse.readNBytes(buf2, 0, buf2.length);
                 				if (bytesRead > 25) {
                 					KnownMetEntry entry = new KnownMetEntry();
                 					int len = KnownMetDecoder.parseEntry(entry, 1, buf2);
