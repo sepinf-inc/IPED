@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
@@ -51,6 +52,8 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
     private static Set<File> exportedDisks = Collections.synchronizedSet(new HashSet<>());
 
     private static AtomicBoolean embeddedDiskBeingExpanded = new AtomicBoolean();
+    
+    private static ConcurrentHashMap<File, Object> locks = new ConcurrentHashMap<>();
 
     private boolean enabled = true;
 
@@ -167,24 +170,31 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
         } else {
             File exportDir = new File(new File(this.output, outputFolder), item.getParentId().toString());
             exportDir.mkdirs();
-            imageFile = new File(exportDir, item.getName());
+            imageFile = new File(exportDir, item.getName()).getCanonicalFile();
             boolean alreadyExported = false;
-            if (imageFile.exists()) {
-                if (imageFile.length() != item.getLength()) {
-                    logger.info("Deleting incomplete exported item {} -> {}", item.getPath(),
-                            imageFile.getAbsolutePath());
-                    Files.delete(imageFile.toPath());
-                } else {
-                    alreadyExported = true;
-                }
+
+            Object lock = new Object();
+            Object prevLock = locks.putIfAbsent(imageFile, lock);
+            if (prevLock != null) {
+                lock = prevLock;
             }
-            if (!alreadyExported) {
-                logger.info("Exporting item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
-                try (InputStream is = item.getBufferedInputStream()) {
-                    Files.copy(is, imageFile.toPath());
+            synchronized (lock) {
+                if (imageFile.exists()) {
+                    if (imageFile.length() != item.getLength()) {
+                        logger.info("Deleting incomplete exported item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
+                        Files.delete(imageFile.toPath());
+                    } else {
+                        alreadyExported = true;
+                    }
                 }
+                if (!alreadyExported) {
+                    logger.info("Exporting item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
+                    try (InputStream is = item.getBufferedInputStream()) {
+                        Files.copy(is, imageFile.toPath());
+                    }
+                }
+                exportedDisks.add(imageFile);
             }
-            exportedDisks.add(imageFile);
         }
         return imageFile;
     }
