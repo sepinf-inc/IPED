@@ -3,6 +3,7 @@ package iped.parsers.whatsapp;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
@@ -76,7 +77,18 @@ public class Message {
         }
     }
 
-    public static void closeStaticResources() throws IOException {
+    private static synchronized void reOpenChannel() {
+        if (fileChannel.isOpen()) {
+            return;
+        }
+        try {
+            fileChannel = FileChannel.open(thumbsfile.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static synchronized void closeStaticResources() throws IOException {
         if (fileChannel.isOpen()) {
             fileChannel.truncate(0);
             fileChannel.close();
@@ -217,6 +229,9 @@ public class Message {
             ByteBuffer bb = ByteBuffer.allocate(thumbSize);
             fileChannel.read(bb, thumbOffset);
             return bb.array();
+        } catch (ClosedChannelException e) {
+            reOpenChannel();
+            return getThumbData();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -231,7 +246,9 @@ public class Message {
             thumbSize = rawData.length;
             thumbOffset = fileOffset.getAndAdd(thumbSize);
             fileChannel.write(ByteBuffer.wrap(rawData), thumbOffset);
-
+        } catch (ClosedChannelException e) {
+            reOpenChannel();
+            setThumbData(rawData);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
