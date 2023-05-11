@@ -50,9 +50,9 @@ public class ProtoBufDecoder {
     }
 
     public List<Part> decode() {
+        List<Part> l = new ArrayList<Part>();
         try {
             pos = 0;
-            List<Part> l = new ArrayList<Part>();
             skipHeader();
             while (left() > 0) {
                 int idxType = Integer.parseInt(readVarInt());
@@ -74,10 +74,9 @@ public class ProtoBufDecoder {
                 Part part = new Part(idx, type, value);
                 l.add(part);
             }
-            return l;
         } catch (Exception e) {
         }
-        return null;
+        return l;
     }
 
     private Object readBuffer(int len) {
