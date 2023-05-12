@@ -184,7 +184,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                 } else {
                     long skip = 0;
                     do {
-                        long i = is.skip(step - 1);
+                        long i = is.skip(step - 1 - skip);
                         if (i == 0) {
                             // check EOF
                             is.mark(1);
