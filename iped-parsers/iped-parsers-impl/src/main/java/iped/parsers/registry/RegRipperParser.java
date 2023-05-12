@@ -23,6 +23,7 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -49,7 +50,6 @@ import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.Util;
-import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.utils.DateUtil;
 import iped.utils.IOUtil;
@@ -373,12 +373,18 @@ public class RegRipperParser extends AbstractParser {
             for (int i = 0; i < buff.length; i++) {
                 String value = null;
                 value = buff[i];
+                if(value.contains("shellbags")) {
+                    System.out.println();
+                }
                 if(value.startsWith("---------------------------")) {
                     lastPlugin.name.replace(0, lastPlugin.name.length(), "");
                     lastPlugin.description.replace(0, lastPlugin.description.length(), "");
                     continue;
                 }
                 if(lastPlugin.name.length()==0 && i!=buff.length-1) {
+                    if(value.startsWith("---")) {
+                        System.out.println();
+                    }
                     int si=value.indexOf(" ");
                     if(si==-1) {
                         lastPlugin.name.append(value);
@@ -408,24 +414,8 @@ public class RegRipperParser extends AbstractParser {
                     }
                     if(!dateStr.startsWith("1970")){//if year is 1970, probably the date value contains only a time duration, not a timestamp
                         lastMatch=m.end();
-                        String[] fieldNames = value.substring(0,m.start()).split(":");
-
-                        String fieldName="";
-                        if(fieldNames[fieldNames.length-1].trim().equals("")) {//if the last subitem of split by ':' is blank
-                            if(fieldNames.length>=2) {
-                                fieldName=fieldNames[fieldNames.length-2];//gets the second last
-                            }
-                        }else {
-                            fieldName=fieldNames[fieldNames.length-1];
-                        }
-                        fieldName=fieldName.trim();
-                        if(fieldName.length()==0) {
-                            //tries to extract field name from end of line                            
-                            fieldNames = value.substring(m.end()+1).split(":");
-                            if(fieldNames.length>0) {
-                                fieldName = fieldNames[0];
-                            }
-                        }
+                        
+                        String fieldName = extractFieldName(lastPlugin, m, value);
                         String content=lastPlugin.description.toString()+"\n"+value;
                         if(fileListPlugins.contains(lastPlugin.name.toString())) {
                             virtualid = tlnParser(i, WINREG_PREFIX+lastPlugin.name.toString(), dateStr, content, handler, metadata, extractor, virtualid);
@@ -440,6 +430,9 @@ public class RegRipperParser extends AbstractParser {
                     if(lastMatch!=-1) {
                         return value.substring(lastMatch);                    
                     }else {
+                        if(outStr.endsWith("\n")) {
+                            value+="\n";
+                        }
                         return value;
                     }
                 }
@@ -448,6 +441,37 @@ public class RegRipperParser extends AbstractParser {
             e.printStackTrace();
         }
         return "";        
+    }
+
+    static String[] shellBagsFieldNames = {"Modified","Accessed","Created"};
+    
+    private String extractFieldName(Plugin lastPlugin, Matcher m, String value) {
+        String fieldName="";
+
+        if(lastPlugin.name.toString().equals("shellbags")) {
+            int count = StringUtils.countMatches(value.substring(0,m.start()), "| ");
+            return shellBagsFieldNames[count];
+        }else {
+            String[] fieldNames = value.substring(0,m.start()).split(":");
+
+            if(fieldNames[fieldNames.length-1].trim().equals("")) {//if the last subitem of split by ':' is blank
+                if(fieldNames.length>=2) {
+                    fieldName=fieldNames[fieldNames.length-2];//gets the second last
+                }
+            }else {
+                fieldName=fieldNames[fieldNames.length-1];
+            }
+            fieldName=fieldName.trim();
+            if(fieldName.length()==0) {
+                //tries to extract field name from end of line                            
+                fieldNames = value.substring(m.end()+1).split(":");
+                if(fieldNames.length>0) {
+                    fieldName = fieldNames[0];
+                }
+            }
+        }
+
+        return fieldName;
     }
 
     private String toIso(String dateStr) {
