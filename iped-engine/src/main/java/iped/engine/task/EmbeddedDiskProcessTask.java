@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.io.input.TaggedInputStream;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
@@ -189,8 +190,16 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 }
                 if (!alreadyExported) {
                     logger.info("Exporting item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
+                    TaggedInputStream tis = null;
                     try (InputStream is = item.getBufferedInputStream()) {
-                        Files.copy(is, imageFile.toPath());
+                        tis = new TaggedInputStream(is);
+                        Files.copy(tis, imageFile.toPath());
+                    } catch (IOException e) {
+                        if (tis == null || tis.isCauseOf(e)) {
+                            logger.warn("Error reading item {} ({} bytes): {}", item.getPath(), item.getLength(), e.toString());
+                        } else {
+                            throw e;
+                        }
                     }
                 }
                 exportedDisks.add(imageFile);
