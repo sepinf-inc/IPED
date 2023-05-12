@@ -4,12 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.input.TaggedInputStream;
@@ -54,7 +54,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     private static AtomicBoolean embeddedDiskBeingExpanded = new AtomicBoolean();
     
-    private static ConcurrentHashMap<File, Object> locks = new ConcurrentHashMap<>();
+    private static Object lock = new Object();
 
     private boolean enabled = true;
 
@@ -123,7 +123,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 logger.info("Found {} possible image segments of {}", possibleParts.size(), item.getPath());
                 for (IItemReader possiblePart : possibleParts) {
                     // export DD parts
-                    exportItem(possiblePart);
+                    exportItem(possiblePart, false);
                 }
             }
 
@@ -131,12 +131,12 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 || MediaTypes.EWF2_IMAGE.equals(item.getMediaType())
                 || MediaTypes.VMDK_DATA.equals(item.getMediaType())) {
             // export e01/vmdk parts to process them later
-            exportItem(item);
+            exportItem(item, false);
             return;
         }
 
         // export first part if not done
-        File imageFile = exportItem(item);
+        File imageFile = exportItem(item, true);
 
         if (embeddedDiskBeingExpanded.getAndSet(true)) {
             super.reEnqueueItem(item);
@@ -164,7 +164,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     }
 
-    private File exportItem(IItemReader item) throws IOException {
+    private File exportItem(IItemReader item, boolean firstPart) throws IOException {
         File imageFile = null;
         if (item instanceof IItem && IOUtil.hasFile((IItem) item)) {
             imageFile = IOUtil.getFile((IItem) item);
@@ -174,36 +174,33 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             imageFile = new File(exportDir, item.getName()).getCanonicalFile();
             boolean alreadyExported = false;
 
-            Object lock = new Object();
-            Object prevLock = locks.putIfAbsent(imageFile, lock);
-            if (prevLock != null) {
-                lock = prevLock;
-            }
             synchronized (lock) {
-                if (imageFile.exists()) {
-                    if (imageFile.length() != item.getLength()) {
-                        logger.info("Deleting incomplete exported item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
-                        Files.delete(imageFile.toPath());
-                    } else {
-                        alreadyExported = true;
-                    }
+                if (!imageFile.exists()) {
+                    imageFile.createNewFile();
+                } else if (imageFile.length() != item.getLength() && firstPart) {
+                    imageFile = new File(exportDir, item.getId() + "/" + item.getName()).getCanonicalFile();
+                    imageFile.getParentFile().mkdirs();
+                    //logger.info("Deleting incomplete exported item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
+                    //Files.delete(imageFile.toPath());
+                } else {
+                    alreadyExported = true;
                 }
-                if (!alreadyExported) {
-                    logger.info("Exporting item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
-                    TaggedInputStream tis = null;
-                    try (InputStream is = item.getBufferedInputStream()) {
-                        tis = new TaggedInputStream(is);
-                        Files.copy(tis, imageFile.toPath());
-                    } catch (IOException e) {
-                        if (tis == null || tis.isCauseOf(e)) {
-                            logger.warn("Error reading item {} ({} bytes): {}", item.getPath(), item.getLength(), e.toString());
-                        } else {
-                            throw e;
-                        }
-                    }
-                }
-                exportedDisks.add(imageFile);
             }
+            if (!alreadyExported) {
+                logger.info("Exporting item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
+                TaggedInputStream tis = null;
+                try (InputStream is = item.getBufferedInputStream()) {
+                    tis = new TaggedInputStream(is);
+                    Files.copy(tis, imageFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    if (tis == null || tis.isCauseOf(e)) {
+                        logger.warn("Error reading item {} ({} bytes): {}", item.getPath(), item.getLength(), e.toString());
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+            exportedDisks.add(imageFile);
         }
         return imageFile;
     }
