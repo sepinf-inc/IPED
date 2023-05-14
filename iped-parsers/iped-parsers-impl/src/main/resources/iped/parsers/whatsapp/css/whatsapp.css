@@ -326,19 +326,33 @@ div.deletedIcon {
 
 #conversation .specialmessage:before
 {
-	background-color: #66ccff;
-	content: "\00a0";
-	display: block;
-	height: 16px;
+	width: 0; 
+	height: 0; 
+	border-top: 8px solid transparent;
+	border-bottom: 8px solid transparent; 
+	content: "";
 	position: absolute;
 	top: 11px;
-	transform: rotate(29deg) skewX(-35deg);
-	width:  20px;
 }
 
-#conversation .specialmessage:hover:before
+#conversation .specialmessage.to:before
 {
-	background-color: #00aaff;
+	border-left:16px solid #66ccff; 
+}
+
+#conversation .specialmessage.from:before
+{
+	border-right:16px solid #66ccff; 
+}
+
+#conversation .specialmessage.to:hover:before
+{
+	border-left:16px solid #00aaff;
+}
+
+#conversation .specialmessage.from:hover:before
+{
+	border-right:16px solid #00aaff;
 }
 
 #conversation .outgoing
