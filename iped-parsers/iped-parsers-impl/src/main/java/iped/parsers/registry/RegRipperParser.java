@@ -56,7 +56,6 @@ import iped.utils.IOUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 public class RegRipperParser extends AbstractParser {
-
     /**
      * 
      */
@@ -85,7 +84,7 @@ public class RegRipperParser extends AbstractParser {
 
     private boolean extractTimestampViaTLNPlugins = false;
     
-    ArrayList<String> fileListPlugins = new ArrayList<String>(Arrays.asList("appcompatcache","shimcache"));
+    ArrayList<String> fileListPlugins = new ArrayList<String>(Arrays.asList("arpcache", "bam", "appcompatcache", "shimcache", "jumplistdata", "appcompatflags"));
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -364,27 +363,39 @@ public class RegRipperParser extends AbstractParser {
         StringBuffer description = new StringBuffer();
     }
     
+    
     public String extractTimeMetadata(Metadata metadata, byte[] out, String remain, ContentHandler handler, EmbeddedDocumentExtractor extractor, Plugin lastPlugin) {
         try {
             int virtualid=100000;
             Pattern p = DateUtil.getDateStrPattern();
             String outStr = remain + new String(out, StandardCharsets.ISO_8859_1);
             String[] buff = outStr.split("\n");
-            for (int i = 0; i < buff.length; i++) {
-                String value = null;
+            String value = null;
+            int i = 0;
+            int lastMatch=-1;
+            for (; i < buff.length; i++) {
                 value = buff[i];
-                if(value.contains("shellbags")) {
-                    System.out.println();
-                }
-                if(value.startsWith("---------------------------")) {
+                int len = value.trim().length();
+                if(len>0 && value.trim().equals("-".repeat(len))) {
+                    if(i==buff.length-1) {
+                        if(outStr.endsWith("\n")) {
+                            value+="\n";
+                        }
+                        return value;
+                    }
+
                     lastPlugin.name.replace(0, lastPlugin.name.length(), "");
                     lastPlugin.description.replace(0, lastPlugin.description.length(), "");
+                    
                     continue;
                 }
-                if(lastPlugin.name.length()==0 && i!=buff.length-1) {
-                    if(value.startsWith("---")) {
-                        System.out.println();
+                if(lastPlugin.name.length()==0 && i==buff.length-1) {
+                    if(outStr.endsWith("\n")) {
+                        value+="\n";
                     }
+                    return value;
+                }
+                if(lastPlugin.name.length()==0) {
                     int si=value.indexOf(" ");
                     if(si==-1) {
                         lastPlugin.name.append(value);
@@ -396,14 +407,43 @@ public class RegRipperParser extends AbstractParser {
                         }
                         lastPlugin.name.append(value.substring(start,si));
                     }
+                    if(lastPlugin.name.toString().contains("timezone")) {
+                        System.out.println();
+                    }
                     continue;
                 }
+                if(lastPlugin.description.length()==0 && i==buff.length-1) {
+                    if(outStr.endsWith("\n")) {
+                        value+="\n";
+                    }
+                    return value;
+                }
                 if(lastPlugin.description.length()==0 && i!=buff.length-1) {
-                    lastPlugin.description.append(value);
+                    if(value.equals("")) {
+                        lastPlugin.description.append(" ");
+                    }else {
+                        lastPlugin.description.append(value);
+                    }
                     continue;
-                }                
+                }
+                String msofficeapp = isMSOfficePlugin(value, lastPlugin);
+                if(msofficeapp!=null && i==buff.length-1) {
+                    if(outStr.endsWith("\n")) {
+                        value+="\n";
+                    }
+                    return value;
+                }
+                if(msofficeapp!=null) {
+                    lastPlugin.name.replace(0, lastPlugin.name.length(), "");
+                    lastPlugin.description.replace(0, lastPlugin.description.length(), "");
+                    int ind = value.indexOf("-");
+                    if(ind != -1) {
+                        lastPlugin.name.append("msoffice"+msofficeapp+value.substring(ind+1).trim());
+                        lastPlugin.description.append(value);
+                    }
+                }
                 Matcher m = p.matcher(value);
-                int lastMatch=-1;
+                lastMatch=-1;
                 while(m.find()) {
                     String dateStr = value.substring(m.start(), m.end());
                     if(Character.isAlphabetic(dateStr.charAt(0))) {
@@ -414,7 +454,7 @@ public class RegRipperParser extends AbstractParser {
                     }
                     if(!dateStr.startsWith("1970")){//if year is 1970, probably the date value contains only a time duration, not a timestamp
                         lastMatch=m.end();
-                        
+
                         String fieldName = extractFieldName(lastPlugin, m, value);
                         String content=lastPlugin.description.toString()+"\n"+value;
                         if(fileListPlugins.contains(lastPlugin.name.toString())) {
@@ -426,30 +466,65 @@ public class RegRipperParser extends AbstractParser {
                         }
                     }
                 }
-                if(i==buff.length-1) {
+                if(i>=buff.length-1) {
+                    if(outStr.endsWith("\n")) {
+                        value+="\n";
+                    }
                     if(lastMatch!=-1) {
-                        return value.substring(lastMatch);                    
+                        return value.substring(lastMatch);
                     }else {
-                        if(outStr.endsWith("\n")) {
-                            value+="\n";
-                        }
                         return value;
                     }
                 }
             }
+            return "";
         }catch (Exception e) {
             e.printStackTrace();
         }
-        return "";        
+        return "";
+    }
+
+    private String isMSOfficePlugin(String value, Plugin lastPlugin) {
+        String name = lastPlugin.name.toString();
+        if(!name.startsWith("msoffice")) {
+            return null;
+        }
+        if(value.startsWith("Word")) {
+            return "Word";
+        }
+        if(value.startsWith("Excel")) {
+            return "Excel";
+        }
+        if(value.startsWith("PowerPoint")) {
+            return "PowerPoint";
+        }
+        if(value.startsWith("Access")) {
+            return "Access";
+        }
+        return null;
     }
 
     static String[] shellBagsFieldNames = {"Modified","Accessed","Created"};
-    
+
     private String extractFieldName(Plugin lastPlugin, Matcher m, String value) {
         String fieldName="";
 
-        if(lastPlugin.name.toString().equals("shellbags")) {
-            int count = StringUtils.countMatches(value.substring(0,m.start()), "| ");
+        if(lastPlugin.name.toString().startsWith("msoffice")) {
+            if(lastPlugin.name.toString().equals("msoffice")) {
+                System.out.println("teste");
+            }
+            return "EntryModified";
+        }else if(lastPlugin.name.toString().equals("cached")) {
+            return "ShellExtensionFirstLoad";
+        }else if(lastPlugin.name.toString().equals("typedurlstime")) {
+            return "UrlTyped";
+        }if(lastPlugin.name.toString().equals("teamviewer")) {
+            return "LastUpdateCheck";
+        }else if(lastPlugin.name.toString().startsWith("shellbags") || lastPlugin.name.toString().equals("itempos")) {
+            int count = StringUtils.countMatches(value.substring(0,m.start()), "|")-1;
+            if(count>=shellBagsFieldNames.length) {
+                return "unknown";
+            }
             return shellBagsFieldNames[count];
         }else {
             String[] fieldNames = value.substring(0,m.start()).split(":");
@@ -463,10 +538,12 @@ public class RegRipperParser extends AbstractParser {
             }
             fieldName=fieldName.trim();
             if(fieldName.length()==0) {
-                //tries to extract field name from end of line                            
-                fieldNames = value.substring(m.end()+1).split(":");
-                if(fieldNames.length>0) {
-                    fieldName = fieldNames[0];
+                //tries to extract field name from end of line
+                if(value.length()>m.end()+3) {
+                    fieldNames = value.substring(m.end()+1).split(":");
+                    if(fieldNames.length>0) {
+                        fieldName = fieldNames[0];
+                    }
                 }
             }
         }
@@ -531,8 +608,11 @@ public class RegRipperParser extends AbstractParser {
     private int tlnParser(int parentId, String fieldName, String dateStr, String lineContent, ContentHandler handler, Metadata metadata, EmbeddedDocumentExtractor extractor, int virtualId) throws TikaException {
         if (extractor.shouldParseEmbedded(metadata)) {
             try {
-                String titletimeEvent = fieldName;
-                String fieldTimeEvent = fieldName.trim().replace(" ", "").replace(".", "").replace("(", "_").replace(")", "");
+                String titletimeEvent = fieldName.trim();
+                if(titletimeEvent.endsWith("=")) {
+                    titletimeEvent = titletimeEvent.substring(0,titletimeEvent.length()-1);
+                }
+                String fieldTimeEvent = removesUnwantedChars(fieldName);
                 
                 ByteArrayInputStream featureStream = new ByteArrayInputStream(lineContent.getBytes());
 
@@ -557,6 +637,10 @@ public class RegRipperParser extends AbstractParser {
         return -1;
     }
     
+    private String removesUnwantedChars(String fieldName) {
+        return  fieldName.trim().replace(" ", "").replace(".", "").replace("(", "_").replace(")", "").replace("=", "");
+    }
+
     private int tlnParser(int parentId, String tlnLine, ContentHandler handler, Metadata metadata, EmbeddedDocumentExtractor extractor, int virtualId) throws TikaException {
         if (extractor.shouldParseEmbedded(metadata)) {
             try {
@@ -564,7 +648,7 @@ public class RegRipperParser extends AbstractParser {
                 String dateStr = fields[0];
                 dateStr = DateUtil.dateToString(new Date(Long.parseLong(dateStr)*1000));
                 String titletimeEvent = fields[fields.length-1].split("-")[0];
-                String fieldTimeEvent = WINREG_PREFIX+titletimeEvent.trim().replace(" ", "").replace(".", "").replace("(", "").replace(")", "");
+                String fieldTimeEvent = WINREG_PREFIX+removesUnwantedChars(titletimeEvent);
 
                 ByteArrayInputStream featureStream = new ByteArrayInputStream(tlnLine.getBytes());
 
@@ -575,6 +659,7 @@ public class RegRipperParser extends AbstractParser {
                 int id = ++virtualId;
                 kmeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(id));
                 kmeta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentId));
+                kmeta.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report-timestamp"); //$NON-NLS-1$
 
                 extractor.parseEmbedded(featureStream, handler, kmeta, false);
 
@@ -600,7 +685,7 @@ public class RegRipperParser extends AbstractParser {
                 Plugin lastPlugin = new Plugin();
                 int read = 0;
                 String remain="";
-                while (read != -1)
+                while (read != -1) {
                     try {
                         if (os != null) {
                             os.write(out, 0, read);
@@ -618,7 +703,12 @@ public class RegRipperParser extends AbstractParser {
 
                     } catch (Exception e) {
                     }
-            }
+                }
+                if(!remain.equals("\n")) {//last line processing
+                    remain+="\n\n";
+                    remain = extractTimeMetadata(metadata, out, remain, handler, extractor,lastPlugin);
+                }
+           }
         };
         t.start();
 
@@ -661,11 +751,8 @@ public class RegRipperParser extends AbstractParser {
 
         return t;
     }
-        
-    
 
     private void waitFor(Process p, ContentHandler handler, ContainerVolatile msg) throws InterruptedException {
-
         while (true) {
             try {
                 p.exitValue();
@@ -690,5 +777,4 @@ public class RegRipperParser extends AbstractParser {
     class ContainerVolatile {
         volatile boolean progress = false;
     }
-
 }
