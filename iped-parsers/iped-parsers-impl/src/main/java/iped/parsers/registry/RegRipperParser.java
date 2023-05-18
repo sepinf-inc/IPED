@@ -373,27 +373,14 @@ public class RegRipperParser extends AbstractParser {
             String value = null;
             int i = 0;
             int lastMatch=-1;
-            for (; i < buff.length; i++) {
+            for (; i < buff.length - 1; i++) {
                 value = buff[i];
                 int len = value.trim().length();
                 if(len>0 && value.trim().equals("-".repeat(len))) {
-                    if(i==buff.length-1) {
-                        if(outStr.endsWith("\n")) {
-                            value+="\n";
-                        }
-                        return value;
-                    }
-
                     lastPlugin.name.replace(0, lastPlugin.name.length(), "");
                     lastPlugin.description.replace(0, lastPlugin.description.length(), "");
                     
                     continue;
-                }
-                if(lastPlugin.name.length()==0 && i==buff.length-1) {
-                    if(outStr.endsWith("\n")) {
-                        value+="\n";
-                    }
-                    return value;
                 }
                 if(lastPlugin.name.length()==0) {
                     int si=value.indexOf(" ");
@@ -407,18 +394,12 @@ public class RegRipperParser extends AbstractParser {
                         }
                         lastPlugin.name.append(value.substring(start,si));
                     }
-                    if(lastPlugin.name.toString().contains("timezone")) {
+                    if(lastPlugin.name.toString().startsWith("xplorer_cu")) {
                         System.out.println();
                     }
                     continue;
                 }
-                if(lastPlugin.description.length()==0 && i==buff.length-1) {
-                    if(outStr.endsWith("\n")) {
-                        value+="\n";
-                    }
-                    return value;
-                }
-                if(lastPlugin.description.length()==0 && i!=buff.length-1) {
+                if(lastPlugin.description.length()==0) {
                     if(value.equals("")) {
                         lastPlugin.description.append(" ");
                     }else {
@@ -427,12 +408,6 @@ public class RegRipperParser extends AbstractParser {
                     continue;
                 }
                 String msofficeapp = isMSOfficePlugin(value, lastPlugin);
-                if(msofficeapp!=null && i==buff.length-1) {
-                    if(outStr.endsWith("\n")) {
-                        value+="\n";
-                    }
-                    return value;
-                }
                 if(msofficeapp!=null) {
                     lastPlugin.name.replace(0, lastPlugin.name.length(), "");
                     lastPlugin.description.replace(0, lastPlugin.description.length(), "");
@@ -466,18 +441,14 @@ public class RegRipperParser extends AbstractParser {
                         }
                     }
                 }
-                if(i>=buff.length-1) {
-                    if(outStr.endsWith("\n")) {
-                        value+="\n";
-                    }
-                    if(lastMatch!=-1) {
-                        return value.substring(lastMatch);
-                    }else {
-                        return value;
-                    }
+            }
+            if(buff.length>0) {
+                value = buff[buff.length-1];
+                if(outStr.endsWith("\n")) {
+                    value+="\n";
                 }
             }
-            return "";
+            return value;
         }catch (Exception e) {
             e.printStackTrace();
         }
@@ -510,9 +481,6 @@ public class RegRipperParser extends AbstractParser {
         String fieldName="";
 
         if(lastPlugin.name.toString().startsWith("msoffice")) {
-            if(lastPlugin.name.toString().equals("msoffice")) {
-                System.out.println("teste");
-            }
             return "EntryModified";
         }else if(lastPlugin.name.toString().equals("cached")) {
             return "ShellExtensionFirstLoad";
@@ -706,6 +674,7 @@ public class RegRipperParser extends AbstractParser {
                 }
                 if(!remain.equals("\n")) {//last line processing
                     remain+="\n\n";
+                    out = new byte[0];
                     remain = extractTimeMetadata(metadata, out, remain, handler, extractor,lastPlugin);
                 }
            }
