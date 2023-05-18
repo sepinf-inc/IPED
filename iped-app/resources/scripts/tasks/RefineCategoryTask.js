@@ -55,10 +55,6 @@ function process(e){
 		e.setCategory(cat);
 	}
 	
-	if(mime.equals("application/dita+xml") && e.getName().equals("com.whatsapp_preferences.xml")){
-		e.setMediaTypeStr("application/x-whatsapp-user-xml");
-		e.setCategory("Contacts");
-	}
 	if(mime.equals("application/dita+xml") && e.getName().equals("userconfing.xml")){
 		e.setMediaTypeStr("application/x-telegram-user-conf");
 		//e.setCategory("Contacts");
