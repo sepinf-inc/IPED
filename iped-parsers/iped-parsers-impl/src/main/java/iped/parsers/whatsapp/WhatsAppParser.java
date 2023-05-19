@@ -746,7 +746,10 @@ public class WhatsAppParser extends SQLite3DBParser {
             account = WAAccount.getFromIOSPlist(is);
 
         if (account == null) {
-            throw new TikaException("Corrupted WA account file.");
+            // This may happen if the file does not contain WA account info, e.g. parsing a
+            // "com.whatsapp_preferences.xml" but the account data is in
+            // "com.whatsapp_preferences_light.xml" (or vice-versa).
+            return;
         }
 
         Metadata meta = new Metadata();
@@ -784,10 +787,13 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private WAAccount getUserAccount(IItemSearcher searcher, String dbPath, boolean isAndroid) {
+        WAAccount account = new WAAccount("unknownAccount");
+        account.setUnknown(true);
         if (searcher != null) {
-            // List with possible file names, ordered by priority
+            // List with possible file names, order by priority
             String[] names = isAndroid
-                    ? new String[] { "com.whatsapp_preferences_light.xml", "com.whatsapp_preferences.xml" }
+                    ? new String[] { "com.whatsapp.w4b_preferences_light.xml", "com.whatsapp_preferences_light.xml",
+                            "com.whatsapp.w4b_preferences.xml", "com.whatsapp_preferences.xml" }
                     : new String[] { "group.net.whatsapp.WhatsApp.shared.plist" };
             StringBuilder query = new StringBuilder();
             query.append(BasicProps.NAME).append(":(");
@@ -797,40 +803,41 @@ public class WhatsAppParser extends SQLite3DBParser {
             query.append(')');
 
             List<IItemReader> result = searcher.search(query.toString());
-            IItemReader item = getBestItem(result, dbPath, names);
-            if (item != null) {
+            List<IItemReader> items = getBestItems(result, dbPath, names);
+            for (IItemReader item : items) {
                 try (InputStream is = item.getBufferedInputStream()) {
-                    WAAccount account = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
-                    if (account != null)
-                        return account;
+                    WAAccount a = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
+                    if (a != null) {
+                        account = a;
+                        break;
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }
-        WAAccount account = new WAAccount("unknownAccount");
-        account.setUnknown(true);
         return account;
     }
 
-    private IItemReader getBestItem(List<IItemReader> result, String path, String[] names) {
-        IItemReader best = null;
-        int bestNameIdx = names.length;
-        while (best == null && (path = new File(path).getParent()) != null) {
-            for (IItemReader item : result) {
-                // Check if path matches
-                if (item.getPath().startsWith(path)) {
-                    for (int i = 0; i < bestNameIdx; i++) {
-                        // Then get the first name found (as ordered in names array)
-                        if (item.getName().equalsIgnoreCase(names[i])) {
-                            bestNameIdx = i;
-                            best = item;
-                        }
+    /**
+     * Return a list of possible matches ordered by "priority" (first longer path
+     * matches, then the index of names array).
+     */
+    private List<IItemReader> getBestItems(List<IItemReader> result, String path, String[] names) {
+        List<IItemReader> bests = new ArrayList<IItemReader>();
+        while (!result.isEmpty() && (path = new File(path).getParent()) != null) {
+            for (int i = 0; i < names.length; i++) {
+                for (int j = 0; j < result.size(); j++) {
+                    IItemReader item = result.get(j);
+                    // Check if path and name match
+                    if (item.getPath().startsWith(path) && item.getName().equalsIgnoreCase(names[i])) {
+                        bests.add(item);
+                        result.remove(j--);
                     }
                 }
             }
         }
-        return best;
+        return bests;
     }
 
     private String formatContact(WAContact contact, Map<String, String> cache) {
