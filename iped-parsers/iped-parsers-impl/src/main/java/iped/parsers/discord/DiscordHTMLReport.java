@@ -126,7 +126,7 @@ public class DiscordHTMLReport {
                 out.println("		<TD colspan='2'>Call</TD>");
                 out.println("	</TR>");
                 out.println("	<TR>");
-                out.println("		<TD>" + Messages.getString("DiscordParser.Start") + "</TD>)");
+                out.println("		<TD>" + Messages.getString("DiscordParser.Start") + "</TD>");
                 out.println("		<TD>" + (dr.getTimestamp() == null ? "" : dateFormat.format(dr.getTimestamp())) + "</TD>");
                 out.println("	</TR>");
                 out.println("	<TR>");
