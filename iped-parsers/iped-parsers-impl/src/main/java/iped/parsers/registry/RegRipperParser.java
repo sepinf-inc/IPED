@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -86,6 +87,8 @@ public class RegRipperParser extends AbstractParser {
     
     ArrayList<String> fileListPlugins = new ArrayList<String>(Arrays.asList("arpcache", "bam", "appcompatcache", "shimcache", "jumplistdata", "appcompatflags"));
 
+    private boolean extractTimestamps = true;
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         if (SUPPORTED_TYPES != null)
@@ -131,6 +134,11 @@ public class RegRipperParser extends AbstractParser {
         return SUPPORTED_TYPES;
     }
 
+    @Field
+    public void setExtractTimestamps(boolean extractTimestamps) {
+        this.extractTimestamps = extractTimestamps;
+    }
+
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
@@ -161,7 +169,7 @@ public class RegRipperParser extends AbstractParser {
             String reportName = filename + FULL_REPORT_SUFFIX;
             runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp, metadata, context);
 
-            if(extractTimestampViaTLNPlugins) {
+            if(extractTimestampViaTLNPlugins && extractTimestamps) {
                 command = new ArrayList<>(Arrays.asList(cmd));
                 command.addAll(Arrays.asList("-aT", "-r", tempFile.getAbsolutePath()));
                 runCmdAndExtractTimeline(command, reportName, xhtml, extractor, tmp, metadata, context);
@@ -645,7 +653,8 @@ public class RegRipperParser extends AbstractParser {
         return readStream(stream, os, msg, metadata, handler, extractor, !extractTimestampViaTLNPlugins );
     }
 
-    private Thread readStream(final InputStream stream, final OutputStream os, final ContainerVolatile msg, Metadata metadata,ContentHandler handler, EmbeddedDocumentExtractor extractor, final boolean extractTimestamp) {
+    private Thread readStream(final InputStream stream, final OutputStream os, final ContainerVolatile msg, Metadata metadata,ContentHandler handler, EmbeddedDocumentExtractor extractor, boolean extractTimestampParam) {
+        final boolean extractTimestamp = extractTimestampParam && extractTimestamps;
         Thread t = new Thread() {
             @Override
             public void run() {
@@ -672,7 +681,7 @@ public class RegRipperParser extends AbstractParser {
                     } catch (Exception e) {
                     }
                 }
-                if(!remain.equals("\n")) {//last line processing
+                if(extractTimestamp && !remain.equals("\n")) {//last line processing
                     remain+="\n\n";
                     out = new byte[0];
                     remain = extractTimeMetadata(metadata, out, remain, handler, extractor,lastPlugin);
