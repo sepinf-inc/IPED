@@ -28,7 +28,7 @@ function process(e){
 	var name = e.getName().toLowerCase();
 	var path = e.getPath().toLowerCase().replace(/\\/g, "/");
 	
-	if(mime.equals("application/x-chrome-cache-index") && path.contains("/appdata/roaming/discord")){
+	if(mime.equals("application/x-chrome-cache-index")) {
 		if(e.getPath().toLowerCase().contains("gpucache")){
 			e.setMediaTypeStr("application/x-discord-gpucache-index");
 		} else {
