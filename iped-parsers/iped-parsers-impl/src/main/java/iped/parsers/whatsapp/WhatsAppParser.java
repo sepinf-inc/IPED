@@ -790,7 +790,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         WAAccount account = new WAAccount("unknownAccount");
         account.setUnknown(true);
         if (searcher != null) {
-            // List with possible file names, order by priority
+            // Array with possible WA account file names, order by priority
             String[] names = isAndroid
                     ? new String[] { "com.whatsapp.w4b_preferences_light.xml", "com.whatsapp_preferences_light.xml",
                             "com.whatsapp.w4b_preferences.xml", "com.whatsapp_preferences.xml" }
