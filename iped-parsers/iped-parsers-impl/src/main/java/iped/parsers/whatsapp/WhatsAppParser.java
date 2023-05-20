@@ -824,13 +824,15 @@ public class WhatsAppParser extends SQLite3DBParser {
      * matches, then the index of names array).
      */
     private List<IItemReader> getBestItems(List<IItemReader> result, String path, String[] names) {
+        boolean isWABusiness = isWABusiness(path);
         List<IItemReader> bests = new ArrayList<IItemReader>();
         while (!result.isEmpty() && (path = new File(path).getParent()) != null) {
             for (int i = 0; i < names.length; i++) {
                 for (int j = 0; j < result.size(); j++) {
                     IItemReader item = result.get(j);
-                    // Check if path and name match
-                    if (item.getPath().startsWith(path) && item.getName().equalsIgnoreCase(names[i])) {
+                    // Check if WA type (business or not), path and name match
+                    if (isWABusiness(item.getPath()) == isWABusiness && item.getPath().startsWith(path)
+                            && item.getName().equalsIgnoreCase(names[i])) {
                         bests.add(item);
                         result.remove(j--);
                     }
@@ -838,6 +840,10 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
         }
         return bests;
+    }
+    
+    private static boolean isWABusiness(String path) {
+        return path.contains(".w4b") || path.contains("WhatsApp Business");
     }
 
     private String formatContact(WAContact contact, Map<String, String> cache) {
