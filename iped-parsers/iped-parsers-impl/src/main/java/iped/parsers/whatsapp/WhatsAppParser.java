@@ -826,7 +826,11 @@ public class WhatsAppParser extends SQLite3DBParser {
     private List<IItemReader> getBestItems(List<IItemReader> result, String path, String[] names) {
         boolean isWABusiness = isWABusiness(path);
         List<IItemReader> bests = new ArrayList<IItemReader>();
-        while (!result.isEmpty() && (path = new File(path).getParent()) != null) {
+        while (!result.isEmpty()) {
+            int pos = path.lastIndexOf('/');
+            if (pos < 0) 
+                break;
+            path = path.substring(0, pos);
             for (int i = 0; i < names.length; i++) {
                 for (int j = 0; j < result.size(); j++) {
                     IItemReader item = result.get(j);
