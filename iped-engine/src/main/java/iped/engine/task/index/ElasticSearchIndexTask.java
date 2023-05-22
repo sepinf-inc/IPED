@@ -654,7 +654,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                     }
                     builder.array(key, locations.toArray());
                 } else {
-                    builder.array(key, values);
+                    builder.array(key.replaceAll("\\.", "_"), values);
                 }
             }
         }
