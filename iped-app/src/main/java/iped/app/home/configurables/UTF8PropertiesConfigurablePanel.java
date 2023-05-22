@@ -7,14 +7,17 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.text.JTextComponent;
 
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
 import iped.engine.localization.Messages;
 import iped.utils.UTF8Properties;
 
-public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
-    TreeMap<Object, JTextField> textFieldList = new TreeMap<Object, JTextField>();
+public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implements ChangeListener {
+    TreeMap<Object, JComponent> textFieldList = new TreeMap<Object, JComponent>();
 
     public UTF8PropertiesConfigurablePanel(Configurable<UTF8Properties> configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
@@ -28,20 +31,52 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
         if(config!=null) {
             for(Object propertie : config.orderedKeySet()){
                 Object value = config.get(propertie);
+                JComponent c = null;
                 String localizedName = Messages.getString(configurable.getClass().getName()+"."+propertie, propertie.toString());
                 //create label
                 contentPanel.add(new JLabel(localizedName +":"), getGridBagConstraints(0, currentLine, 1, 0));
                 //create input
-                JTextField textField = new JTextField( (value != null) ? value.toString() : "" );
-                textField.getDocument().addDocumentListener(this);
-                contentPanel.add(textField, getGridBagConstraints(1, currentLine, 1, 1));
+                if(value!=null) {
+                    try{
+                        int ivalue = Integer.parseInt(value.toString().trim());
+                        JSpinner spinner = new JSpinner();
+                        spinner.setValue(ivalue);
+                        spinner.addChangeListener(this);
+                        c=spinner;
+                    }catch (Exception e) {
+                        // TODO: handle exception
+                    }
+                    if(c==null) {
+                        try{
+                            boolean bvalue = value.toString().trim().equals("true");
+                            if(!bvalue) {
+                                if(value.toString().trim().equals("false")) {
+                                    bvalue=false;
+                                }else {
+                                    throw new Exception();
+                                }
+                            }
+                            JCheckBox cb = new JCheckBox();
+                            cb.setSelected(bvalue);
+                            cb.addChangeListener(this);
+                            c=cb;
+                        }catch (Exception e) {
+                        }
+                    }
+                    if(c==null) {
+                        JTextField textField = new JTextField( (value != null) ? value.toString() : "" );
+                        textField.getDocument().addDocumentListener(this);
+                        c=textField;
+                    }
+                }
+                contentPanel.add(c, getGridBagConstraints(1, currentLine, 1, 1));
                 String tooltipKey = configurable.getClass().getName()+"."+propertie+Messages.TOOLTIP_SUFFIX;
                 String toolTipText = Messages.getString(tooltipKey ,config.getComments(propertie));
                 if(toolTipText!=null) {
-                    textField.setToolTipText(toolTipText);
+                    c.setToolTipText(toolTipText);
                 }
                 //
-                textFieldList.put(propertie, textField);
+                textFieldList.put(propertie, c);
                 currentLine++;
             }
         }else {
@@ -74,10 +109,18 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel {
             Set<Entry<Object, Object>> es = config.entrySet();
             for (Iterator<Entry<Object, Object>> iterator = es.iterator(); iterator.hasNext();) {
                 Entry<Object, Object> e = iterator.next();
-                JTextField textField = textFieldList.get(e.getKey());
-                config.setProperty(e.getKey().toString(), textField.getText());
+                JComponent c = textFieldList.get(e.getKey());
+                if(c instanceof JTextComponent) {
+                    JTextComponent textField = (JTextComponent) c;
+                    config.setProperty(e.getKey().toString(), textField.getText());
+                }
             }
         }
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+        changed = true;        
     }
 
 }
