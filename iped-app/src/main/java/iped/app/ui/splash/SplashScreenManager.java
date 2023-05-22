@@ -151,8 +151,12 @@ public class SplashScreenManager {
                         Rectangle rcFill = new Rectangle(rc.x + 1, rc.y + 1, (int) ((rc.width - 2) * pct),
                                 rc.height - 2);
                         g.fill(rcFill);
-                        screen.update();
+                        if (screen.isVisible()) {
+                            screen.update();
+                        }
                     }
+                } catch (IllegalStateException e) {
+                    // Splash was already closed, just ignore this exception.
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

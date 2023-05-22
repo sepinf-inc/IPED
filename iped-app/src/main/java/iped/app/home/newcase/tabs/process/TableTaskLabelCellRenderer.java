@@ -38,7 +38,8 @@ public class TableTaskLabelCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         AbstractTask currentTask = (AbstractTask) value;
         JPanel panel = new JPanel();
-        panel.setOpaque(false);
+        panel.setOpaque(true);
+        panel.setBackground(TableCellRendererUtil.getBackground(table, row, isSelected));
         panel.setLayout(new FlowLayout(FlowLayout.LEFT));
         JLabel nameLabel = new JLabel();
         String localizedName = iped.engine.localization.Messages.getString(currentTask.getClass().getName(), currentTask.getName());

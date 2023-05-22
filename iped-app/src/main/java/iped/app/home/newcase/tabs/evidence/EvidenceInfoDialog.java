@@ -24,7 +24,7 @@ public class EvidenceInfoDialog extends JDialog {
     private JTextField textFieldAlias = new JTextField();
     private JTextField textFieldPassword = new JTextField();
     private JTextField textFieldTimeZone = new JTextField();
-    private JTextField textFieldAdditionalCommand = new JTextField();
+    private JTextField textFieldBlocksize = new JTextField();
     private JTextArea textAreaMaterial = new JTextArea();
 
     public EvidenceInfoDialog(Frame owner) {
@@ -69,8 +69,8 @@ public class EvidenceInfoDialog extends JDialog {
         panel.add(textFieldTimeZone, getGridBagConstraints(1, line, 2, 1));
 
         line++;
-        panel.add(new JLabel(Messages.get("Home.Evidences.Dialog.AdditionalCommand")), getGridBagConstraints(0, line, 1, 1));
-        panel.add(textFieldAdditionalCommand, getGridBagConstraints(1, line, 2, 1));
+        panel.add(new JLabel(Messages.get("Home.Evidences.Dialog.BlockSize")), getGridBagConstraints(0, line, 1, 1));
+        panel.add(textFieldBlocksize, getGridBagConstraints(1, line, 2, 1));
 
         fullPanel.add(panel, BorderLayout.CENTER);
         JPanel bPanel = new JPanel();
@@ -109,7 +109,7 @@ public class EvidenceInfoDialog extends JDialog {
         textFieldAlias.setText( evidence.getAlias() );
         textFieldPassword.setText( evidence.getPassword() );
         textFieldTimeZone.setText( evidence.getTimezone() );
-        textFieldAdditionalCommand.setText( evidence.getAditionalComands() );
+        textFieldBlocksize.setText( (evidence.getBlocksize() == null )? "0" : evidence.getBlocksize().toString() );
         textAreaMaterial.setText( evidence.getMaterial() );
         this.setVisible(true);
 
@@ -123,7 +123,7 @@ public class EvidenceInfoDialog extends JDialog {
         evidence.setAlias(textFieldAlias.getText());
         evidence.setPassword( textFieldPassword.getText() );
         evidence.setTimezone(textFieldTimeZone.getText());
-        evidence.setAditionalComands(textFieldAdditionalCommand.getText());
+        evidence.setBlocksize(Integer.parseInt(textFieldBlocksize.getText()));
         evidence.setMaterial(textAreaMaterial.getText());
         evidenceListListener.forEach(e -> e.evidenceDataChange() );
     }

@@ -65,7 +65,6 @@ public class JSInterfaceFunctionsOpenStreet implements JSInterfaceFunctions {
                 ex.printStackTrace(System.out);
             }
         }
-
     }
 
     public void markerMouseDblClickedBF(String markerId, int button) {

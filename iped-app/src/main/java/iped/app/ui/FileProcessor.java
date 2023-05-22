@@ -61,6 +61,12 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     private boolean listRelated;
     private static volatile IItem lastItem;
 
+    public static final void disposeLastItem() {
+        if (lastItem != null) {
+            lastItem.dispose();
+        }
+    }
+
     public FileProcessor(int docId, boolean listRelated) {
         this.listRelated = listRelated;
         this.docId = docId;
@@ -182,6 +188,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
             App.get().duplicatesModel.listDuplicates(doc);
 
+            App.get().referencedByModel.listReferencingItems(doc);
+
             App.get().referencesModel.listReferencingItems(doc);
         }
     }
@@ -221,7 +229,10 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
                         App.get().dialogBar.setVisible(true);
                         App.get().progressBar.setString(prevMsg);
                     } else {
-                        App.get().dialogBar.setVisible(false);
+                        // Use dispose() instead of setVisible(false) here as a workaround for #1595, as
+                        // sometimes the area covered by the dialog was not cleared after
+                        // setVisible(false), in some environments/situations.
+                        App.get().dialogBar.dispose();
                     }
                 }
             });

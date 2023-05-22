@@ -62,11 +62,12 @@ public class CertificateParser extends AbstractParser {
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         if (SUPPORTED_TYPES == null) {
-            SUPPORTED_TYPES = new HashSet<MediaType>();
-            SUPPORTED_TYPES.add(PEM_MIME);
-            SUPPORTED_TYPES.add(DER_MIME);
-            SUPPORTED_TYPES.add(PKCS7_MIME);
-            SUPPORTED_TYPES.add(PKCS7_SIGNATURE);
+            Set<MediaType> set = new HashSet<>();
+            set.add(PEM_MIME);
+            set.add(DER_MIME);
+            set.add(PKCS7_MIME);
+            set.add(PKCS7_SIGNATURE);
+            SUPPORTED_TYPES = set;
         }
 
         return SUPPORTED_TYPES;
@@ -191,7 +192,7 @@ public class CertificateParser extends AbstractParser {
         xhtml.endElement("td");
         xhtml.endElement("tr");
 
-        DateFormat df = DateFormat.getDateInstance();
+        DateFormat df = DateFormat.getDateTimeInstance();
         xhtml.startElement("tr");
         xhtml.startElement("td");
         xhtml.characters("Valid from");

@@ -435,4 +435,15 @@ public class Util {
         return trueExt.toLowerCase();
     }
 
+    public static File getFileRenamedToExt(File file, String ext) {
+        if (!ext.isEmpty() && !file.getName().endsWith("." + ext)) {
+            File renamedFile = new File(file.getAbsolutePath() + "." + ext);
+            if (renamedFile.exists() || file.renameTo(renamedFile)) {
+                return renamedFile;
+            }
+        }
+        return file;
+    }
+
+
 }

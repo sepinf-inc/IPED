@@ -8,7 +8,7 @@ import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
 public class ImageSimilarity {
-    public static final int maxDim = 160;
+    public static final int maxDim = 256;
 
     public static final int numFeatures = 1044;
     private static final int maxPixels = maxDim * maxDim;

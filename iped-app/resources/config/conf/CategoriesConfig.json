@@ -6,7 +6,7 @@
       {"name": "PDF Documents", "mimes": ["application/pdf"]},
       {"name": "HTML Documents", "mimes": ["text/html", "application/xhtml+xml", "application/vnd.wap.xhtml+xml", "application/x-asp", "text/asp", "text/aspdotnet"]},
       {"name": "Text Documents", "mimes": ["application/vnd.ms-wordml", "application/x-tika-ooxml-protected-docx", "application/vnd.apple.pages", "application/msword", "application/msword2", "application/msword5", "application/vnd.ms-word.document.macroenabled.12", "application/vnd.ms-word.template.macroenabled.12", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.wordprocessingml.template", "application/vnd.oasis.opendocument.text", "application/vnd.oasis.opendocument.text-master", "application/vnd.oasis.opendocument.text-template", "application/vnd.oasis.opendocument.text-web", "application/vnd.sun.xml.writer", "application/vnd.sun.xml.writer.global", "application/vnd.sun.xml.writer.template", "application/vnd.stardivision.writer", "application/vnd.oasis.opendocument.flat.text"]},
-      {"name": "Other Documents", "mimes": ["application/vnd.ms-xpsdocument", "application/vnd.visio", "application/vnd.ms-project", "application/x-project", "application/vnd.ms-works", "application/x-quattro-pro", "application/sldworks", "application/x-tika-ooxml-protected", "application/onenote", "application/x-msmoney", "application/x-mspublisher", "application/x-ms-owner", "model/vnd.dwfx+xps", "application/vnd.ms-graph"]}
+      {"name": "Other Documents", "mimes": ["application/vnd.ms-xpsdocument", "application/vnd.visio", "application/vnd.ms-visio.drawing", "application/vnd.ms-project", "application/x-project", "application/vnd.ms-works", "application/x-quattro-pro", "application/sldworks", "application/x-tika-ooxml-protected", "application/onenote", "application/x-msmoney", "application/x-mspublisher", "application/x-ms-owner", "model/vnd.dwfx+xps", "application/vnd.ms-graph", "application/postscript"]}
     ]},
     {"name": "XML Files", "mimes": ["application/xml", "application/rdf+xml", "application/rss+xml"]},
     {"name": "Georeferenced Files", "mimes": ["application/vnd.google-earth.kml+xml", "application/gpx"]},
@@ -18,8 +18,10 @@
       {"name": "URL links"}
     ]},
     {"name": "Emails and Mailboxes", "categories":[
-      {"name": "Mailboxes", "mimes": ["application/vnd.ms-outlook-pst", "application/outlook-dbx", "application/mbox", "application/x-incredimail", "application/vnd.lotus-notes"]},
-      {"name": "Emails", "mimes": ["message/rfc822", "message/x-emlx", "application/vnd.ms-outlook", "message/outlook-pst", "application/x-ufed-html-mails", "message/x-ufed-email"]}
+      {"name": "Mailboxes", "mimes": ["application/vnd.ms-outlook-pst", "application/outlook-dbx", "application/mbox", "application/x-incredimail", "application/vnd.lotus-notes", "application/x-win10-mail-db"]},
+      {"name": "Emails", "mimes": ["message/rfc822", "message/x-emlx", "application/vnd.ms-outlook", "message/outlook-pst", "application/x-ufed-html-mails", "message/x-ufed-email", "message/x-win10-mail-msg"]},
+      {"name": "Appointments", "mimes": ["application/x-win10-mail-appointment"]},
+      {"name": "Win10 Mail Info", "mimes": ["application/x-win10-mail-store"]}
     ]},
     {"name": "Multimedia", "categories":[
       {"name": "Audios", "mimes": ["audio"]},
@@ -32,9 +34,40 @@
         {"name": "Scanned Documents"}
       ]}
     ]},
-    {"name": "Windows 10", "categories":[
-      {"name": "User Activities", "mimes": ["application/x-win10-timeline"]},
-      {"name": "User Activities Entries", "mimes": ["application/x-win10-timeline-registry"]}
+    {"name": "Windows Artifacts", "categories":[
+        {"name": "Event Files", "mimes": ["application/x-elf-file", "application/x-elf-log"]},
+        {"name": "Event Records", "mimes": ["application/x-elf-record"]},
+        {"name": "Event Transcript", "mimes": ["application/x-event-transcript", "application/x-event-transcript-history", "application/x-event-transcript-inventory-app", "application/x-event-transcript-app-interactivity", "application/x-event-transcript-devices", "application/x-event-transcript-census", "application/x-event-transcript-networking"]},
+        {"name": "Event Transcript Records", "mimes": ["application/x-event-transcript-history-registry", "application/x-event-transcript-inventory-app-registry", "application/x-event-transcript-app-interactivity-registry", "application/x-event-transcript-devices-registry", "application/x-event-transcript-census-registry", "application/x-event-transcript-networking-registry"]},
+        {"name": "Prefetch and Superfetch", "mimes": ["application/x-superfetch", "application/x-prefetch"]},
+        {"name": "User Activities", "mimes": ["application/x-win10-timeline"]},
+        {"name": "User Activities Entries", "mimes": ["application/x-win10-timeline-registry"]},
+        {"name": "Windows Registry", "categories":[
+	      {"name": "Main Registry Files", "mimes": ["application/x-windows-registry-main"]},
+	      {"name": "Other Registry Files", "mimes": ["application/x-windows-registry"]},
+	      {"name": "Registry Full Reports", "mimes": ["application/x-windows-registry-report"]},
+	      {"name": "Registry Custom Reports", "categories":[
+	        {"name": "Registry OS Info"},
+	        {"name": "Registry Installed Apps"},
+	        {"name": "Registry Network Info"},
+	        {"name": "Registry Storage Info"},
+	        {"name": "Registry Device Info"},
+	        {"name": "Registry Program Run"},
+	        {"name": "Registry Auto Run"},
+	        {"name": "Registry Log Info"},
+	        {"name": "Registry Malware Info"},
+	        {"name": "Registry Web Info"},
+	        {"name": "Registry User Info", "categories":[
+	          {"name": "Registry User Accounts"},
+	          {"name": "Registry User Activity"},
+	          {"name": "Registry User Files"},
+	          {"name": "Registry User Network Activity"},
+	          {"name": "Registry User Config"},
+	          {"name": "Registry User Virtualization"},
+	          {"name": "Registry User Communication"}
+	        ]}
+	      ]}
+	    ]}
     ]},
     {"name": "Google Drive", "categories":[
       {"name": "GDrive Synced Files", "mimes": ["application/x-gdrive-cloud-graph", "application/x-gdrive-snapshot"]},
@@ -42,7 +75,7 @@
     ]},
     {"name": "Databases", "mimes": ["application/x-edb", "application/x-edb-table", "application/irpf", "application/x-msaccess", "application/x-dbf", "application/vnd.oasis.opendocument.database", "application/x-sqlite3", "application/x-mysql-db", "application/x-berkeley-db", "application/x-mssql-data", "application/x-database-table"]},
     {"name": "Compressed Archives", "mimes": ["application/x-tika-ooxml", "application/zlib", "application/applefile", "application/vnd.ms-tnef", "application/zip", "application/x-rar-compressed", "application/x-tar", "application/gzip", "application/x-gzip", "application/x-xz", "application/x-bzip", "application/x-bzip2", "application/x-7z-compressed", "application/x-arj", "application/x-gtar", "application/x-archive", "application/x-cpio", "application/x-tika-unix-dump", "application/x-snappy-framed", "application/x-snappy", "application/x-snappy-raw", "application/x-compress", "application/x-java-pack200", "application/x-lzma", "application/x-lz4", "application/x-lz4-block", "application/x-brotli", "application/zstd", "application/deflate64", "image/x-emf-compressed"]},
-    {"name": "Contacts", "mimes": ["text/x-vcard", "application/x-vcard-html", "application/windows-adress-book", "application/outlook-contact", "application/x-livecontacts", "application/x-livecontacts-table", "contact/x-skype-contact", "application/x-whatsapp-wadb", "application/x-whatsapp-contactsv2", "contact/x-whatsapp-contact", "application/x-ufed-html-contacts", "application/x-ufed-contact", "contact/x-telegram-contact", "application/x-ios-addressbook-db"]},
+    {"name": "Contacts", "mimes": ["text/x-vcard", "application/x-vcard-html", "application/windows-adress-book", "application/outlook-contact", "application/x-livecontacts", "application/x-livecontacts-table", "contact/x-skype-contact", "application/x-whatsapp-wadb", "application/x-whatsapp-contactsv2", "contact/x-whatsapp-contact", "application/x-ufed-html-contacts", "application/x-ufed-contact", "contact/x-telegram-contact", "application/x-ios-addressbook-db", "application/x-win10-mail-contact"]},
     {"name": "Chats", "categories":[
         {"name": "WhatsApp", "mimes":["application/x-whatsapp-db", "application/x-whatsapp-chatstorage", "application/x-whatsapp-chat","application/x-ufed-chat-whatsapp","application/x-ufed-chat-preview-whatsapp"]},
         {"name": "Messenger", "mimes":["application/messenger-plus", "application/messenger-chat"]},
@@ -51,37 +84,12 @@
         {"name": "Jabber", "mimes":["application/x-jabber-chat"]},
         {"name": "Facebook", "mimes":["application/x-ufed-chat-preview-facebook"]},
         {"name": "Instagram", "mimes":["application/x-ufed-chat-preview-instagram"]},
+        {"name": "Discord", "mimes":["application/x-discord-index", "application/x-discord-chat"]},
         {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
         {"name": "Others Chats", "mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
     ]},
-    {"name": "Windows Registry", "categories":[
-      {"name": "Main Registry Files", "mimes": ["application/x-windows-registry-main"]},
-      {"name": "Other Registry Files", "mimes": ["application/x-windows-registry"]},
-      {"name": "Registry Full Reports", "mimes": ["application/x-windows-registry-report"]},
-      {"name": "Registry Custom Reports", "categories":[
-        {"name": "Registry OS Info"},
-        {"name": "Registry Installed Apps"},
-        {"name": "Registry Network Info"},
-        {"name": "Registry Storage Info"},
-        {"name": "Registry Device Info"},
-        {"name": "Registry Program Run"},
-        {"name": "Registry Auto Run"},
-        {"name": "Registry Log Info"},
-        {"name": "Registry Malware Info"},
-        {"name": "Registry Web Info"},
-        {"name": "Registry User Info", "categories":[
-          {"name": "Registry User Accounts"},
-          {"name": "Registry User Activity"},
-          {"name": "Registry User Files"},
-          {"name": "Registry User Network Activity"},
-          {"name": "Registry User Config"},
-          {"name": "Registry User Virtualization"},
-          {"name": "Registry User Communication"}
-        ]}
-      ]}
-    ]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
-    {"name": "Programs and Libraries", "mimes": ["application/x-superfetch", "application/x-elf-log", "application/x-elf-file", "application/x-prefetch", "application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"]},
+    {"name": "Programs and Libraries", "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"]},
     {"name": "Unallocated", "mimes": ["application/x-unallocated"]},
     {"name": "File Slacks", "mimes": ["application/x-fileslack"]},
     {"name": "Plain Texts", "mimes": ["text"], "categories":[
@@ -136,10 +144,10 @@
       ]}
     ]},
     {"name": "Extraction Summary", "mimes": ["application/x-ufed-html-summary"]},
-    {"name": "Calls", "mimes": ["application/x-ufed-html-calls", "application/x-ufed-call", "call/x-whatsapp-call", "call/x-telegram-call", "application/x-ios-calllog-db", "application/x-ios8-calllog-db"]},
+    {"name": "Calls", "mimes": ["application/x-ufed-html-calls", "application/x-ufed-call", "call/x-whatsapp-call", "call/x-telegram-call", "call/x-discord-call", "application/x-ios-calllog-db", "application/x-ios8-calllog-db"]},
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},
     {"name": "MMS Messages", "mimes": ["application/x-ufed-html-mms", "application/x-ufed-mms"]},
-    {"name": "Instant Messages", "mimes": ["message/x-chat-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message"]},
+    {"name": "Instant Messages", "mimes": ["message/x-chat-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
     {"name": "Bluetooth Devices", "mimes": ["application/x-ufed-html-bluetooth", "application/x-ufed-bluetoothdevice"]},
     {"name": "SIM Data", "mimes": ["application/x-ufed-html-simdata", "application/x-ufed-simdata"]},
     {"name": "Calendar", "mimes": ["application/x-ufed-html-calendar", "application/x-ufed-calendarentry", "application/x-ios-calendar-db"]},
@@ -167,6 +175,9 @@
     {"name": "Device Connectivity", "mimes": ["application/x-ufed-deviceconnectivity"]},
     {"name": "Device Events", "mimes": ["application/x-ufed-deviceevent"]},
     {"name": "File Downloads", "mimes": ["application/x-ufed-filedownload"]},
+    {"name": "File Uploads", "mimes": ["application/x-ufed-fileupload"]},
+    {"name": "Financial Accounts", "mimes": ["application/x-ufed-financialaccount"]},
+    {"name": "Fuzzy Data", "mimes": ["application/x-ufed-fuzzyentitymodel", "application/x-ufed-fuzzytimelinemodel"]},
     {"name": "Journeys", "mimes": ["application/x-ufed-journey"]},
     {"name": "Networks Usage", "mimes": ["application/x-ufed-networkusage"]},
     {"name": "Recognized Devices", "mimes": ["application/x-ufed-recognizeddevice"]},

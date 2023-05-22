@@ -11,7 +11,7 @@ public class Evidence implements Cloneable {
     private String path;
     private String timezone;
     private String password;
-    private String aditionalComands;
+    private Integer blocksize;
     private String material;
 
     public String getFileName() {
@@ -54,12 +54,12 @@ public class Evidence implements Cloneable {
         this.password = password;
     }
 
-    public String getAditionalComands() {
-        return aditionalComands;
+    public Integer getBlocksize() {
+        return blocksize;
     }
 
-    public void setAditionalComands(String aditionalComands) {
-        this.aditionalComands = aditionalComands;
+    public void setBlocksize(Integer blocksize) {
+        this.blocksize = blocksize;
     }
 
     public String getMaterial() {

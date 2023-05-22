@@ -66,7 +66,6 @@ import iped.parsers.util.CharCountContentHandler;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.OCROutputFolder;
 import iped.parsers.util.PDFToImage;
-import iped.properties.MediaTypes;
 import iped.utils.ExternalImageConverter;
 import iped.utils.IOUtil;
 import iped.utils.ImageUtil;
@@ -109,10 +108,15 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
     private static final String TESSERACT_ERROR_MSG = "tesseract returned error code ";
 
+    private static final String INPUT_FILE_TOKEN = "${INPUT}"; //$NON-NLS-1$
+
+    private static final String OUTPUT_FILE_TOKEN = "${OUTPUT}"; //$NON-NLS-1$
+
     public static final String ENABLE_PROP = TOOL_NAME + ".enabled"; //$NON-NLS-1$
     public static final String TOOL_PATH_PROP = TOOL_NAME + ".path"; //$NON-NLS-1$
     public static final String LANGUAGE_PROP = "ocr.language"; //$NON-NLS-1$
     public static final String PAGE_SEGMODE_PROP = "ocr.pageSegMode"; //$NON-NLS-1$
+    public static final String SKIP_KNOWN_FILES_PROP = "ocr.skipKnownFiles"; //$NON-NLS-1$
     public static final String MIN_SIZE_PROP = "ocr.minFileSize"; //$NON-NLS-1$
     public static final String MAX_SIZE_PROP = "ocr.maxFileSize"; //$NON-NLS-1$
     public static final String SUBSET_TO_OCR = "subsetToOcr"; //$NON-NLS-1$
@@ -125,6 +129,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     private String TOOL_PATH = System.getProperty(TOOL_PATH_PROP, ""); //$NON-NLS-1$
     private String LANGUAGE = System.getProperty(LANGUAGE_PROP, "por"); //$NON-NLS-1$
     private String PAGESEGMODE = System.getProperty(PAGE_SEGMODE_PROP, "1"); //$NON-NLS-1$
+    private boolean SKIP_KNOWN_FILES = Boolean.valueOf(System.getProperty(SKIP_KNOWN_FILES_PROP, "false")); //$NON-NLS-1$
     private int MIN_SIZE = Integer.valueOf(System.getProperty(MIN_SIZE_PROP, "10000")); //$NON-NLS-1$
     private long MAX_SIZE = Integer.valueOf(System.getProperty(MAX_SIZE_PROP, "100000000")); //$NON-NLS-1$
     private List<String> bookmarksToOCR = Arrays
@@ -137,9 +142,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
     private static HashMap<File, Connection> connMap = new HashMap<>();
 
-    // Root folder to store ocr results
-    private File outputBase;
-
     private static final Set<MediaType> directSupportedTypes = getDirectSupportedTypes();
     private static final Set<MediaType> nonStandardSupportedTypes = getNonStandardSupportedTypes();
     private static final Set<MediaType> nonImageSupportedTypes = getNonImageSupportedTypes();
@@ -149,6 +151,11 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     private static final Set<MediaType> imageSupportedTypes = new HashSet<MediaType>();
     private static final Set<MediaType> allSupportedTypes = new HashSet<MediaType>();
     
+    // Root folder to store ocr results
+    private File outputBase;
+    private String[] command;
+    private Random random = new Random();
+
     static {
         imageSupportedTypes.addAll(directSupportedTypes);
         imageSupportedTypes.addAll(nonStandardSupportedTypes);
@@ -205,7 +212,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         types.add(MediaType.image("x-jp2-codestream")); //$NON-NLS-1$
         types.add(MediaType.image("x-rgb")); //$NON-NLS-1$
         types.add(MediaType.image("x-xbitmap")); //$NON-NLS-1$
-        types.add(MediaTypes.JBIG2);
+        types.add(MediaType.image("x-jbig2"));
         
         return types;
     }
@@ -278,28 +285,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             throw new RuntimeException("Error running " + cmd[0], e); //$NON-NLS-1$
         }
     }
-
-    /**
-     * The token, which if present in the Command string, will be replaced with the
-     * input filename. Alternately, the input data can be streamed over STDIN.
-     */
-    private static final String INPUT_FILE_TOKEN = "${INPUT}"; //$NON-NLS-1$
-    /**
-     * The token, which if present in the Command string, will be replaced with the
-     * output filename. Alternately, the output data can be collected on STDOUT.
-     */
-    private static final String OUTPUT_FILE_TOKEN = "${OUTPUT}"; //$NON-NLS-1$
-
-    /**
-     * The external command to invoke.
-     * 
-     * @see Runtime#exec(String[])
-     */
-    private String[] command;
-
-    private Random random = new Random();
-
-    private String filePath = "";
 
     private boolean isFromBookmarkToOCR(ItemInfo ocrContext) {
 
@@ -377,13 +362,14 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             if (metadata.get(Metadata.CONTENT_LENGTH) != null)
                 size = Long.parseLong(metadata.get(Metadata.CONTENT_LENGTH));
             ItemInfo itemInfo = context.get(ItemInfo.class);
-            filePath = itemInfo.getPath();
+            String itemPath = itemInfo.getPath();
 
             OCROutputFolder outDir = context.get(OCROutputFolder.class);
             if (outDir != null)
                 outputBase = new File(outDir.getPath(), TEXT_DIR);
 
-            if (size >= MIN_SIZE && size <= MAX_SIZE && (bookmarksToOCR == null || isFromBookmarkToOCR(itemInfo))) {
+            if (size >= MIN_SIZE && size <= MAX_SIZE && (bookmarksToOCR == null || isFromBookmarkToOCR(itemInfo))
+                    && !(SKIP_KNOWN_FILES && itemInfo.isKnown())) {
                 if (outputBase != null && itemInfo != null && itemInfo.getHash() != null) {
                     String hash = itemInfo.getHash();
                     outFileName = hash;
@@ -407,25 +393,25 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
                     String mediaType = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
                     if (mediaType.equals("application/pdf")) { //$NON-NLS-1$
-                        parsePDF(xhtml, tmp, input, tmpOutput);
+                        parsePDF(xhtml, tmp, input, tmpOutput, itemPath);
 
                     } else if (nonStandardSupportedTypes.contains(MediaType.parse(mediaType))
                             || (mediaType.equals("image/bmp") && ImageUtil.isCompressedBMP(input))) {
-                        parseNonStandard(xhtml, input, tmpOutput, mediaType);
+                        parseNonStandard(xhtml, input, tmpOutput, mediaType, itemPath);
                     
                     } else {
                         try {
                             if (mediaType.equals("image/tiff")) {
                                 // tiff needs to be OCRed per page to avoid timeouts
-                                parseTiff(xhtml, tmp, input, tmpOutput);
+                                parseTiff(xhtml, tmp, input, tmpOutput, itemPath);
                             } else {
-                                parse(xhtml, input, tmpOutput);
+                                parse(xhtml, input, tmpOutput, itemPath);
                             }
 
                         } catch (TikaException e) {
                             if (e.toString().contains(TESSERACT_ERROR_MSG)) {
                                 // retry possible corrupted images converting them before OCR
-                                parseNonStandard(xhtml, input, tmpOutput, mediaType);
+                                parseNonStandard(xhtml, input, tmpOutput, mediaType, itemPath);
                             } else {
                                 throw e;
                             }
@@ -448,8 +434,10 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             }
 
         } finally {
+            // Call before endDocument() to avoid counting non-OCR characters
+            int charCount = countHandler.getCharCount();
             xhtml.endDocument();
-            metadata.set(OCRParser.OCR_CHAR_COUNT, Integer.toString(countHandler.getCharCount()));
+            metadata.set(OCRParser.OCR_CHAR_COUNT, Integer.toString(charCount));
             if (tmpOutput != null) {
                 tmpOutput.delete();
             }
@@ -500,7 +488,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
     }
 
-    private void parseTiff(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output)
+    private void parseTiff(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output, String itemPath)
             throws IOException, SAXException, TikaException {
 
         ImageReader reader = null;
@@ -534,7 +522,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                     imageFile = File.createTempFile("iped-ocr", "." + PDFToImage.EXT); //$NON-NLS-1$ //$NON-NLS-2$
                     ImageIO.write(image, PDFToImage.EXT, imageFile);
                     File imageText = new File(imageFile.getAbsolutePath() + ".txt"); //$NON-NLS-1$
-                    parse(xhtml, imageFile, imageText);
+                    parse(xhtml, imageFile, imageText, itemPath);
                     if (imageText.exists()) {
                         if (outputBase != null)
                             IOUtil.copyFile(imageText, output, true);
@@ -554,13 +542,10 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         }
     }
 
-    private void parseNonStandard(XHTMLContentHandler xhtml, File input, File output, String mediaType)
+    private void parseNonStandard(XHTMLContentHandler xhtml, File input, File output, String mediaType, String itemPath)
             throws IOException, SAXException, TikaException {
         File imageFile = null;
         try {
-            if (!MediaTypes.JBIG2.toString().equals(mediaType)) {
-                mediaType = null; // just use mediaType for jbig2
-            }
             BufferedImage img = ImageUtil.getSubSampledImage(input, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2,
                     mediaType);
             if (img == null) {
@@ -577,7 +562,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                 ImageIO.write(img, PDFToImage.EXT, imageFile);
 
                 if (imageFile.exists()) 
-                    parse(xhtml, imageFile, output);
+                    parse(xhtml, imageFile, output, itemPath);
             }
         } finally {
             if (imageFile != null)
@@ -585,7 +570,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         }
     }
     
-    private void parsePDF(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output)
+    private void parsePDF(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output, String itemPath)
             throws IOException, SAXException, TikaException {
 
         PDFToImage pdfConverter = new PDFToImage();
@@ -599,7 +584,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                     if (!success || !imageFile.exists())
                         continue;
                     File imageText = new File(imageFile.getAbsolutePath() + ".txt"); //$NON-NLS-1$
-                    parse(xhtml, imageFile, imageText);
+                    parse(xhtml, imageFile, imageText, itemPath);
                     if (imageText.exists()) {
                         if (outputBase != null)
                             IOUtil.copyFile(imageText, output, true);
@@ -615,7 +600,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         }
     }
 
-    private void parse(XHTMLContentHandler xhtml, File input, File output)
+    private void parse(XHTMLContentHandler xhtml, File input, File output, String itemPath)
             throws IOException, SAXException, TikaException {
 
         // Build our command
@@ -643,8 +628,8 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         InputStream out = process.getInputStream();
         InputStream err = process.getErrorStream();
 
-        logStream("OCR MSG", out); //$NON-NLS-1$
-        logStream("OCR ERROR", err); //$NON-NLS-1$
+        logStream("OCR MSG", out, itemPath); //$NON-NLS-1$
+        logStream("OCR ERROR", err, itemPath); //$NON-NLS-1$
 
         try {
             int status = process.waitFor();
@@ -681,7 +666,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
      * @param stream
      *            input stream
      */
-    private void logStream(final String logType, final InputStream stream) {
+    private void logStream(final String logType, final InputStream stream, String itemPath) {
         new Thread() {
             @Override
             public void run() {
@@ -699,7 +684,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
                 String msg = out.toString().replaceAll(OUTPUT_REGEX, "").replaceAll("\r?\n", " ").trim();
                 if (!msg.isEmpty())
-                    LOGGER.debug("OCR msg from " + filePath + "\t" + msg);
+                    LOGGER.debug("OCR msg from " + itemPath + "\t" + msg);
 
                 return;
             }

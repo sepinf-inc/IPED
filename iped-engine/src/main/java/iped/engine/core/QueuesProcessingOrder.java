@@ -10,8 +10,11 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
 import iped.parsers.ares.AresParser;
+import iped.parsers.discord.DiscordParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.emule.PartMetParser;
+import iped.parsers.mail.RFC822Parser;
+import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.python.PythonParser;
 import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.parsers.skype.SkypeParser;
@@ -56,6 +59,7 @@ public class QueuesProcessingOrder {
         mediaTypes.put(TelegramParser.TELEGRAM_DB, 2);
         mediaTypes.put(TelegramParser.TELEGRAM_DB_IOS, 2);
 
+        mediaTypes.put(MediaType.parse(DiscordParser.INDEX_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(PartMetParser.EMULE_PART_MET_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 1);
@@ -79,6 +83,10 @@ public class QueuesProcessingOrder {
         // avoid NPE when the parser gets the item from parseContext when external
         // parsing is on
         mediaTypes.put(UsnJrnlParser.USNJRNL_$J, 1);
+
+        mediaTypes.put(Win10MailParser.WIN10_MAIL_DB, 1);
+        mediaTypes.put(RFC822Parser.RFC822_PARTIAL0_MIME, 1);
+        mediaTypes.put(RFC822Parser.RFC822_PARTIAL1_MIME, 1);
 
         return mediaTypes;
     }

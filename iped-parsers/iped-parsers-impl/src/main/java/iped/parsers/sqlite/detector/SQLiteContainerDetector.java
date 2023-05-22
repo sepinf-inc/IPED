@@ -24,6 +24,7 @@ import org.sqlite.SQLiteOpenMode;
 import iped.parsers.browsers.chrome.ChromeSqliteParser;
 import iped.parsers.browsers.firefox.FirefoxSqliteParser;
 import iped.parsers.browsers.safari.SafariSqliteParser;
+import iped.parsers.eventtranscript.EventTranscriptParser;
 import iped.parsers.gdrive.GDriveMainParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
@@ -168,9 +169,12 @@ public class SQLiteContainerDetector implements Detector {
                 tableNames.contains("downloads_url_chains")) //$NON-NLS-1$
             return ChromeSqliteParser.CHROME_SQLITE;
 
-        if (tableNames.contains("Activity") && tableNames.contains("Activity_PackageId")
-                && tableNames.contains("ActivityOperation"))
+        if (tableNames.contains("Activity") && tableNames.contains("Activity_PackageId") && tableNames.contains("ActivityOperation"))
             return WinXTimelineParser.WIN10_TIMELINE;
+
+        if (tableNames.contains("events_persisted") && tableNames.contains("tag_descriptions")
+                && tableNames.contains("provider_groups"))
+            return EventTranscriptParser.EVENT_TRANSCRIPT;
         
         if (tableNames.contains("cloud_graph_entry") &&
                 tableNames.contains("cloud_relations"))

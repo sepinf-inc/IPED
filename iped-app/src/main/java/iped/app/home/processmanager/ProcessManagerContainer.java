@@ -82,9 +82,12 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         processRunningPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         processRunningPanel.setBackground(super.getCurrentBackGroundColor());
         logTextArea = new JTextArea();
+        logTextArea.setMinimumSize(new Dimension(700, 600));
+        logTextArea.setPreferredSize(new Dimension(700, 600));
+        logTextArea.setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
         logTextArea.setEditable(false);
         logTextArea.setBorder(BorderFactory.createLineBorder(Color.black,1));
-        processRunningPanel.add(logTextArea);
+        processRunningPanel.add(new JScrollPane(logTextArea));
         processRunningPanel.setVisible(false);
         return processRunningPanel;
     }
@@ -101,7 +104,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
             if(ipedStartException != null) {
                 JTextArea textArea = new JTextArea();
                 textArea.setText(ExceptionUtils.getStackTrace(ipedStartException));
-                JOptionPane.showMessageDialog(this, textArea, ipedStartException.getMessage(), JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, new JScrollPane(textArea), ipedStartException.getMessage(), JOptionPane.PLAIN_MESSAGE);
             }
         });
         errorOptionsButtonPanel.add(buttonShowLog);
@@ -130,7 +133,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         successOptionsButtonPanel.add(buttonOpenCase);
 
         JButton buttonShowLog = new JButton(Messages.get("Home.ProcessManager.ShowTerminalLog"));
-        buttonShowLog.addActionListener(e-> JOptionPane.showMessageDialog(this, logTextArea, Messages.get("Home.ProcessManager.TerminalLog"), JOptionPane.ERROR_MESSAGE));
+        buttonShowLog.addActionListener(e-> JOptionPane.showMessageDialog(this, new JScrollPane(logTextArea), Messages.get("Home.ProcessManager.TerminalLog"), JOptionPane.PLAIN_MESSAGE));
         successOptionsButtonPanel.add(buttonShowLog);
 
         JButton buttonExit = new JButton(Messages.get("Home.ProcessManager.ExitApplication"));
@@ -155,6 +158,8 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         saveCaseInfoJsonOnCaseOutputPath();
         Thread t = new Thread(() -> {
             try {
+                //After complete the execution the user can back to case info and start the process again, so wee need to clean the previous log
+                logTextArea.setText("");
                 ProcessManager processManager = new ProcessManager();
                 processManager.addProcessListener(ProcessManagerContainer.this);
                 processManager.startIpedProcess(ipedProcess, logTextArea);
@@ -172,6 +177,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
             case STARTING_PROCESS: {
                 labelTitle.setText(Messages.get("Home.ProcessManager.StartingProcess"));
                 currentLabelIcon.setIcon(startingIcon);
+                currentLabelIcon.setVisible(true);
                 processRunningPanel.setVisible(false);
                 errorOptionsButtonPanel.setVisible(false);
                 successOptionsButtonPanel.setVisible(false);
@@ -180,6 +186,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
             case RUNNING_PROCESS: {
                 labelTitle.setText(Messages.get("Home.ProcessManager.ProcessRunning"));
                 currentLabelIcon.setIcon(runningIcon);
+                currentLabelIcon.setVisible(false);
                 processRunningPanel.setVisible(true);
                 errorOptionsButtonPanel.setVisible(false);
                 successOptionsButtonPanel.setVisible(false);
@@ -188,6 +195,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
             case FAILED_PROCESS: {
                 labelTitle.setText(Messages.get("Home.ProcessManager.ProcessFailed"));
                 currentLabelIcon.setIcon(errorIcon);
+                currentLabelIcon.setVisible(true);
                 processRunningPanel.setVisible(false);
                 errorOptionsButtonPanel.setVisible(true);
                 successOptionsButtonPanel.setVisible(false);
@@ -196,6 +204,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
             case FINISHED_PROCESS: {
                 labelTitle.setText(Messages.get("Home.ProcessManager.ProcessFinished"));
                 currentLabelIcon.setIcon(successIcon);
+                currentLabelIcon.setVisible(true);
                 processRunningPanel.setVisible(false);
                 errorOptionsButtonPanel.setVisible(false);
                 successOptionsButtonPanel.setVisible(true);

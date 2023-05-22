@@ -97,7 +97,7 @@ public class ViewerController {
         viewersRepository.addViewer(new ImageViewer());
         viewersRepository.addViewer(new CADViewer());
         viewersRepository.addViewer(new HtmlViewer());
-        viewersRepository.addViewer(new EmailViewer());
+        viewersRepository.addViewer(new EmailViewer(new AttachmentSearcherImpl()));
         viewersRepository.addViewer(new MsgViewer());
         linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
         viewersRepository.addViewer(linkViewer);

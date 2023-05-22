@@ -20,20 +20,36 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DropMode;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-
-import iped.app.home.style.StyleManager;
-import iped.app.ui.Messages;
-import iped.configuration.EnabledInterface;
-import iped.engine.config.*;
 
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.newcase.NewCaseContainerPanel;
+import iped.app.home.style.StyleManager;
+import iped.app.ui.Messages;
 import iped.configuration.Configurable;
+import iped.configuration.EnabledInterface;
 import iped.configuration.IConfigurationDirectory;
+import iped.engine.config.ConfigurableChangeListener;
+import iped.engine.config.ConfigurationDirectory;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.ProfileManager;
+import iped.engine.config.SerializedConfigurationDirectory;
+import iped.engine.config.TaskInstallerConfig;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.ScriptTask;
 
@@ -321,6 +337,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             enabledConfigurables.add(enabledConfigurable);
             if(enabledConfigurable!=null) {
                 enabled.add(enabledConfigurable.isEnabled());
+            } else {
+                enabled.add(false);
             }
         }
 
