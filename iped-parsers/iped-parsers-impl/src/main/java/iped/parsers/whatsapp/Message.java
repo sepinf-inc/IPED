@@ -3,6 +3,7 @@ package iped.parsers.whatsapp;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ public class Message {
     private String data;
     private boolean fromMe;
     private boolean deleted;
+    private boolean forwarded;
     private Date timeStamp;
     private String mediaUrl;
     private String mediaMime;
@@ -76,7 +78,18 @@ public class Message {
         }
     }
 
-    public static void closeStaticResources() throws IOException {
+    private static synchronized void reOpenChannel() {
+        if (fileChannel.isOpen()) {
+            return;
+        }
+        try {
+            fileChannel = FileChannel.open(thumbsfile.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static synchronized void closeStaticResources() throws IOException {
         if (fileChannel.isOpen()) {
             fileChannel.truncate(0);
             fileChannel.close();
@@ -217,6 +230,9 @@ public class Message {
             ByteBuffer bb = ByteBuffer.allocate(thumbSize);
             fileChannel.read(bb, thumbOffset);
             return bb.array();
+        } catch (ClosedChannelException e) {
+            reOpenChannel();
+            return getThumbData();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -231,7 +247,9 @@ public class Message {
             thumbSize = rawData.length;
             thumbOffset = fileOffset.getAndAdd(thumbSize);
             fileChannel.write(ByteBuffer.wrap(rawData), thumbOffset);
-
+        } catch (ClosedChannelException e) {
+            reOpenChannel();
+            setThumbData(rawData);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -283,6 +301,14 @@ public class Message {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public boolean isForwarded() {
+        return forwarded;
+    }
+
+    public void setForwarded(boolean forwarded) {
+        this.forwarded = forwarded;
     }
 
     public MessageType getMessageType() {
@@ -359,8 +385,12 @@ public class Message {
 
     public boolean isSystemMessage() {
         switch (messageType) {
+            case BLOCKED_CONTACT:
+            case BUSINESS_CHAT:
+            case BUSINESS_TO_STANDARD:
+            case MESSAGES_ENCRYPTED:
             case MESSAGES_NOW_ENCRYPTED:
-            case ENCRIPTION_KEY_CHANGED:
+            case ENCRYPTION_KEY_CHANGED:
             case GROUP_CREATED:
             case USER_JOINED_GROUP:
             case USER_JOINED_GROUP_FROM_LINK:
@@ -435,7 +465,7 @@ public class Message {
     }
 
     public static enum MessageType {
-        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, UNKNOWN_MEDIA_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, MESSAGES_NOW_ENCRYPTED, ENCRIPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_FROM_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE, STICKER_MESSAGE, REFUSED_VIDEO_CALL, REFUSED_VOICE_CALL, UNKNOWN_VOICE_CALL, UNKNOWN_VIDEO_CALL, UNKNOWN_MESSAGE
+        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, UNKNOWN_MEDIA_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, BLOCKED_CONTACT, UNBLOCKED_CONTACT, BUSINESS_CHAT, BUSINESS_TO_STANDARD, MESSAGES_ENCRYPTED, MESSAGES_NOW_ENCRYPTED, ENCRYPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_BY_ADMIN, DELETED_BY_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE, STICKER_MESSAGE, REFUSED_VIDEO_CALL, REFUSED_VOICE_CALL, UNAVAILABLE_VIDEO_CALL, UNAVAILABLE_VOICE_CALL, UNKNOWN_VOICE_CALL, UNKNOWN_VIDEO_CALL, UNKNOWN_MESSAGE
     }
 
     public static enum MessageStatus {

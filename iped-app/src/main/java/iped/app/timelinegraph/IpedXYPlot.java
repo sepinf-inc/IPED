@@ -301,7 +301,10 @@ public class IpedXYPlot extends XYPlot {
             XYItemRendererState state = renderer.initialise(g2, dataArea, this, dataset, info);
             int passCount = renderer.getPassCount();
 
-            SeriesRenderingOrder seriesOrder = getSeriesRenderingOrder();
+            // reset cached min/max rendered value in X axis
+            renderer.minEndX = null;
+            renderer.maxStartX = null;
+
             for (int pass = 0; pass < passCount; pass++) {
                 int seriesCount = dataset.getSeriesCount();
                 for (int item = 0; item < dataset.getItemCount(0); item++) {

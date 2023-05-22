@@ -89,7 +89,7 @@ class PythonParserJabber:
         MSG_TEMPLATE = """
         <div class="linha" id="PYTHON_PARSER_MSG_ID">
         <div class="PYTHON_PARSER_DIRECTION">
-        <span style="font-family: 'Roboto-Medium'; color: #b4c74b;">PYTHON_PARSER_SENDER</span><br/>
+        <span style="font-family: Arial; color: #b4c74b;">PYTHON_PARSER_SENDER</span><br/>
         PYTHON_PARSER_MSG<br/><span class="time">
         PYTHON_PARSER_DATE
         </span>
