@@ -26,18 +26,27 @@ import javax.swing.DropMode;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
+import iped.app.home.configurables.ConfigurablePanel;
+import iped.app.home.configurables.ConfigurablePanelFactory;
+import iped.app.home.configurables.api.ConfigurableValidationException;
+import iped.app.home.configurables.api.IConfigurablePanel;
+import iped.app.home.configurables.api.IConfigurablePanelFactory;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
@@ -47,6 +56,7 @@ import iped.configuration.IConfigurationDirectory;
 import iped.engine.config.ConfigurableChangeListener;
 import iped.engine.config.ConfigurationDirectory;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FileSystemConfig;
 import iped.engine.config.ProfileManager;
 import iped.engine.config.SerializedConfigurationDirectory;
 import iped.engine.config.TaskInstallerConfig;
@@ -102,7 +112,10 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         this.createObjectInstances();
         this.setLayout( new BorderLayout() );
         this.add(createTitlePanel(), BorderLayout.NORTH);
-        this.add(createFormPanel(), BorderLayout.CENTER);
+        
+        JComponent panelForm = createFormPanel();
+        
+        this.add(panelForm, BorderLayout.CENTER);
         this.add(createNavigationButtonsPanel(), BorderLayout.SOUTH);
         //show select profile panel and hide create profile panel
         //use this method after create createNavigationButtonsPanel to avoid NullpointerException
@@ -139,14 +152,26 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         return panelTitle;
     }
 
-    private JPanel createFormPanel(){
+    private JComponent createFormPanel(){
         JPanel panelForm = new JPanel();
         panelForm.setLayout(new BoxLayout( panelForm, BoxLayout.PAGE_AXIS ));
         panelForm.setBackground(super.getCurrentBackGroundColor());
         setupSelectProfilesPanel(panelForm);
         setupCreateProfilePanel(panelForm);
         panelForm.add( Box.createRigidArea( new Dimension(10, 10) ) );
-        setupTasksTables(panelForm);
+
+        JPanel tasksPanel = new JPanel();
+        tasksPanel.setLayout(new BoxLayout( tasksPanel, BoxLayout.PAGE_AXIS ));
+        setupTasksTables(tasksPanel);
+
+        JTabbedPane tabPane = new JTabbedPane();
+        tabPane.add("Tasks", tasksPanel);
+        JPanel fsPanel = new JPanel();
+        setupFSConfigPanel(fsPanel);
+        fsPanel.setLayout(new BoxLayout( fsPanel, BoxLayout.PAGE_AXIS ));
+        tabPane.add(iped.engine.localization.Messages.getString(FileSystemConfig.class.getName()), fsPanel);
+        
+        panelForm.add(tabPane);
 
         
         for(int i=0; i<profilesArray.length;i++) {
@@ -376,6 +401,29 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         JScrollPane scrollTablePane = new JScrollPane();
         scrollTablePane.setViewportView(jtableTasks);
         parentPanel.add(scrollTablePane);
+    }
+
+    /**
+     * Create and setup a JTable do manage all Evidences to be processed
+     * @param panel - A JPanel to add JTable
+     */
+    private void setupFSConfigPanel(JPanel panel){
+        Configurable<?> fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+        
+        IConfigurablePanelFactory configPanelFactory = ConfigurablePanelFactory.getInstance();
+        final ConfigurablePanel configPanel = (ConfigurablePanel) configPanelFactory.createConfigurablePanel(null, fsConfig, mainFrame);
+        
+        configPanel.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                selectedConfigurationManager.notifyUpdate(fsConfig);
+            }
+        });
+
+        configPanel.createConfigurableGUI();
+        
+
+        panel.add(new JScrollPane((ConfigurablePanel) configPanel));        
     }
 
     private void setupTableLayout(){
