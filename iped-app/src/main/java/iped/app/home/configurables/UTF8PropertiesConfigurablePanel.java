@@ -1,6 +1,11 @@
 package iped.app.home.configurables;
 
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyVetoException;
+import java.beans.VetoableChangeListener;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeMap;
@@ -16,7 +21,7 @@ import iped.configuration.Configurable;
 import iped.engine.localization.Messages;
 import iped.utils.UTF8Properties;
 
-public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implements ChangeListener {
+public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implements ItemListener, VetoableChangeListener {
     TreeMap<Object, JComponent> textFieldList = new TreeMap<Object, JComponent>();
 
     public UTF8PropertiesConfigurablePanel(Configurable<UTF8Properties> configurable, MainFrame mainFrame) {
@@ -41,7 +46,7 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
                         int ivalue = Integer.parseInt(value.toString().trim());
                         JSpinner spinner = new JSpinner();
                         spinner.setValue(ivalue);
-                        spinner.addChangeListener(this);
+                        spinner.addVetoableChangeListener(this);
                         c=spinner;
                     }catch (Exception e) {
                         // TODO: handle exception
@@ -58,7 +63,7 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
                             }
                             JCheckBox cb = new JCheckBox();
                             cb.setSelected(bvalue);
-                            cb.addChangeListener(this);
+                            cb.addItemListener(this);
                             c=cb;
                         }catch (Exception e) {
                         }
@@ -119,8 +124,15 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
     }
 
     @Override
-    public void stateChanged(ChangeEvent e) {
-        changed = true;        
+    public void itemStateChanged(ItemEvent e) {
+        changed = true;
+        fireChangeListener(new ChangeEvent(e.getSource()));
+    }
+
+    @Override
+    public void vetoableChange(PropertyChangeEvent e) throws PropertyVetoException {
+        changed = true;
+        fireChangeListener(new ChangeEvent(e.getSource()));
     }
 
 }
