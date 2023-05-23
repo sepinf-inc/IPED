@@ -27,6 +27,8 @@ import iped.utils.UTF8Properties;
 
 public class ConfigurablePanelFactory implements IConfigurablePanelFactory{
 
+    private static IConfigurablePanelFactory singleton;
+
     /**
      * Hard coded factory to instantiate IConfigurablePanel suitable to the configurable object.
      * @param configurable - the configurable object that the created ConfigurablePanel will handle.
@@ -105,6 +107,13 @@ public class ConfigurablePanelFactory implements IConfigurablePanelFactory{
         }
 
         return result;
+    }
+
+    public static IConfigurablePanelFactory getInstance() {
+        if(singleton == null) {
+            singleton = new ConfigurablePanelFactory();
+        }
+        return singleton;
     }
 
 }
