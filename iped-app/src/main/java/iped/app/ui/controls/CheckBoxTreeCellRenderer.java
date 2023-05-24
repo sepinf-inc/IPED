@@ -87,6 +87,8 @@ public class CheckBoxTreeCellRenderer implements TreeCellRenderer{
 
         if(visiblePredicate==null || visiblePredicate.test(value)) {
             checkbox.setSelected(checkedPredicate.test(value));
+            checkbox.setText(value.toString());
+            label.setText("");
             result = ckPanel;
         }else{
             result = label;
