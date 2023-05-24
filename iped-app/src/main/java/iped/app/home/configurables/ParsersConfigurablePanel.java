@@ -367,7 +367,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
                     return parsers!=null && parsers.size()<=0;
                 }
             }
-        });
+        });        
         categoryTree = new JTree(categoryTreeModel);
         categoryTree.setCellRenderer(new CheckBoxTreeCellRenderer(categoryTree, null, new Predicate<Object>() {
             @Override
@@ -390,6 +390,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
                 parsersTree.setModel(parsersModel.copy());
             }
         });
+        categoryTree.expandRow(1);
         categoryPanel = new JScrollPane();
         categoryPanel.setViewportView(categoryTree);
         categoryPanel.setAutoscrolls(true);
