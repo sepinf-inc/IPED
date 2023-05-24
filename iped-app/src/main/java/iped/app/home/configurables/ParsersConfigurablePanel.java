@@ -296,6 +296,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         parsersModel = new ParsersTreeModel(parsersConfig, categoryRoot);
         parsersTree = new JTree(parsersModel);
         parsersTree.setRootVisible(false);
+        parsersTree.setShowsRootHandles(true);
         parserListPanel.setViewportView(parsersTree);
         parserListPanel.setAutoscrolls(true);
         parsersTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);        
@@ -376,6 +377,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
             }
         }));
         categoryTree.setRootVisible(false);
+        categoryTree.setShowsRootHandles(true);
         categoryTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         categoryTree.addTreeSelectionListener(new TreeSelectionListener() {
             @Override
