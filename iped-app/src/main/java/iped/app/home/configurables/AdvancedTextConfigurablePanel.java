@@ -27,7 +27,7 @@ public abstract class AdvancedTextConfigurablePanel extends TextConfigurablePane
     protected AdvancedTextConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
         tabbedPane = new JTabbedPane(JTabbedPane.BOTTOM);
-        tabModel = new VetoableSingleSelectionModel();
+        tabModel = new VetoableSingleSelectionModel(this);
         tabbedPane.setModel(tabModel);
         tabbedPane.setUI(new BasicTabbedPaneUI() {
             @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 25;}
@@ -41,6 +41,11 @@ public abstract class AdvancedTextConfigurablePanel extends TextConfigurablePane
      */
     public static class VetoableSingleSelectionModel extends DefaultSingleSelectionModel {
         private VetoableChangeSupport vetoableChangeSupport;
+        AdvancedTextConfigurablePanel componentSource;
+        
+        public VetoableSingleSelectionModel(AdvancedTextConfigurablePanel componentSource) {
+            this.componentSource=componentSource;
+        }
 
         @Override
         public void setSelectedIndex(int index) {
@@ -49,7 +54,8 @@ public abstract class AdvancedTextConfigurablePanel extends TextConfigurablePane
             try {
                 fireVetoableChange(getSelectedIndex(), index);
             } catch (PropertyVetoException e) {
-                //skips tab change
+                JOptionPane.showMessageDialog(componentSource, e.getMessage());
+                
                 return;
             }
             super.setSelectedIndex(index);
