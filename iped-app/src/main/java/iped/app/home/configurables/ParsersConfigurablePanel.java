@@ -198,8 +198,9 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
             }
             createExternalParserPanel.add(component);
         }
+        ParsersConfigurablePanel self = this;
         
-        JButton cancelExternalParserBtn = new JButton("Cancel");
+        JButton cancelExternalParserBtn = new JButton(Messages.get("Home.Cancel"));
         cancelExternalParserBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -208,54 +209,55 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
                 tabbedPane.removeTabAt(2);
             }
         });
-        JButton createExternalParserBtn = new JButton("Create external parser");
+        JButton createExternalParserBtn = new JButton(Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.CreateExternalParser"));
         createExternalParserBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(txName.getText().trim().equals("")) {
-                    JOptionPane.showMessageDialog(createExternalParserPanel, "Parser name field empty.");
+                    JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.EmptyNameError"));
                     return;
                 }
                 if(txCommand.getText().trim().equals("${INPUT}")) {
-                    JOptionPane.showMessageDialog(createExternalParserPanel, "Command field empty.");
+                    JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.EmptyCommandError"));
                     return;
                 }
                 if(txMimetypes.getText().trim().equals("")) {
-                    JOptionPane.showMessageDialog(createExternalParserPanel, "Mime-types field empty.");
+                    JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.EmptyMimeTypeError"));
                 }
                 SortedSet<MediaType> mts = MediaTypeRegistry.getDefaultRegistry().getTypes();
                 String[] mimetypes= txMimetypes.getText().split("\n");
                 for (int i = 0; i < mimetypes.length; i++) {
                     String[] mimeparts=mimetypes[i].trim().split("/");
                     if(mimeparts.length<2) {
-                        JOptionPane.showMessageDialog(createExternalParserPanel, "Invalid mimetype: "+mimetypes[i]+".");
+                        JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.InvalidMimeTypeError")+": "+mimetypes[i]+".");
                     }
                     MediaType mt = new MediaType(mimeparts[0], mimeparts[1]);
                     if(!mtac.containsKeyword(mt.toString())) {
-                        JOptionPane.showMessageDialog(createExternalParserPanel, "Mime type specified is not registered: "+mimetypes[i]+".");
+                        JOptionPane.showMessageDialog(createExternalParserPanel,  Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.UnregisteredMimeTypeError")+": "+mimetypes[i]+".");
                         return;
                     }
                 }
                 if(txCharset.getText().trim().equals("")) {
-                    JOptionPane.showMessageDialog(createExternalParserPanel, "Charset field empty.");
+                    JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.EmptyCharsetError"));
                     return;
                 }
                 
                 try{
                     Integer.parseInt(txLines.getText().trim());
                 }catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(createExternalParserPanel, "Invalid value informed as number of first lines to skip.");
+                    JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.InvalidFirstLinesToSkipError"));
                 }
                 
                 List<Completion> cs = csac.getCompletionByInputText(txCharset.getText().trim());
                 if(cs==null || cs.size()!=1) {
-                    JOptionPane.showMessageDialog(createExternalParserPanel, "Invalid charset.");
+                    JOptionPane.showMessageDialog(createExternalParserPanel,  Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.InvalidCharsetError"));
                     return;
                 }
                 createExternalParserElement();
                 ((VetoableSingleSelectionModel)tabbedPane.getModel()).removeVetoableChangeListener(externalParserEditingVeto);
                 tabbedPane.setSelectedIndex(0);
                 tabbedPane.remove(createExternalParserPanel);
+                self.changed = true;
                                 
             }
         });
@@ -429,6 +431,10 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
                 parsersTree.expandPath(curpath);
             }
         }
+        textArea.getDocument().removeDocumentListener(this);
+        textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML);
+        textArea.setText(parsersModel.getXMLString());
+        textArea.getDocument().addDocumentListener(this);
     }
 
     @Override
@@ -453,12 +459,12 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         txCharset.setText("");
         txLines.setText("0");
 
-        tabbedPane.addTab("New external Parser", createExternalParserPanel);
+        tabbedPane.addTab(Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.NewExternalParserPanel"), createExternalParserPanel);
         tabbedPane.setSelectedComponent(createExternalParserPanel);
         externalParserEditingVeto = new VetoableChangeListener() {
             @Override
             public void vetoableChange(PropertyChangeEvent evt) throws PropertyVetoException {
-                PropertyVetoException pve = new PropertyVetoException("Edition of external parse in course.", evt);
+                PropertyVetoException pve = new PropertyVetoException(Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.EditVetoError"), evt);
                 throw pve;
             }
         };
