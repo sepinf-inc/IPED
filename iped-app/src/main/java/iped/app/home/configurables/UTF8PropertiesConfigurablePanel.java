@@ -18,6 +18,9 @@ import javax.swing.text.JTextComponent;
 
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
+import iped.engine.config.AbstractPropertiesConfigurable;
+import iped.engine.config.AbstractTaskPropertiesConfig;
+import iped.engine.config.IPropertiesConfigurable;
 import iped.engine.localization.Messages;
 import iped.utils.UTF8Properties;
 
@@ -119,7 +122,16 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
                     JTextComponent textField = (JTextComponent) c;
                     config.setProperty(e.getKey().toString(), textField.getText());
                 }
+                if(c instanceof JCheckBox) {
+                    JCheckBox cb = (JCheckBox) c;
+                    config.setProperty(e.getKey().toString(), Boolean.toString(cb.isSelected()));
+                }
+                if(c instanceof JSpinner) {
+                    JSpinner spinner = (JSpinner) c;
+                    config.setProperty(e.getKey().toString(), spinner.getValue().toString());
+                }
             }
+            ((IPropertiesConfigurable)configurable).processProperties(config);
         }
     }
 

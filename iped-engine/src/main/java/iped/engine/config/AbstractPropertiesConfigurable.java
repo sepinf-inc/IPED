@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import iped.configuration.Configurable;
 import iped.utils.UTF8Properties;
 
-public abstract class AbstractPropertiesConfigurable implements Configurable<UTF8Properties> {
+public abstract class AbstractPropertiesConfigurable implements Configurable<UTF8Properties>, IPropertiesConfigurable {
 
     /**
      *
@@ -30,7 +30,7 @@ public abstract class AbstractPropertiesConfigurable implements Configurable<UTF
         processProperties(properties);
     }
 
-    abstract void processProperties(UTF8Properties properties);
+    public abstract void processProperties(UTF8Properties properties);
 
     public UTF8Properties getPropertie() {
         return properties;

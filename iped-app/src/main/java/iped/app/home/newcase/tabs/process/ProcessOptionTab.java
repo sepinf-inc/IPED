@@ -99,6 +99,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     private JButton deleteProfileBtn;
     private Object[] profilesArray;
     private boolean isInsertingProfile;
+    private JScrollPane fsScrollPanel;
+    private ConfigurablePanel fsConfigPanel;
 
     private static final String SELECT_PROFILE_PANEL = "selectProfilePanel";
     private static final String CREATE_PROFILE_PANEL = "createProfilePanel";
@@ -205,6 +207,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             IConfigurationDirectory configDirectory = (IConfigurationDirectory) e.getItem();
             if((e.getStateChange()==ItemEvent.SELECTED)&&(!isInsertingProfile)) {
                 loadTasksTables(configDirectory);
+                setupFSConfigPanel(null);
             }
             if(configDirectory instanceof SerializedConfigurationDirectory) {                    
                 selectProfilePanel.add(deleteProfileBtn);                    
@@ -242,6 +245,14 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         btInsertProfile.addActionListener(e -> {
             try {
                 isInsertingProfile=true;
+                
+                try {
+                    fsConfigPanel.applyChanges();
+                    fsConfigPanel.fireChangeListener(new ChangeEvent(this));
+                } catch (ConfigurableValidationException e1) {
+                    e1.printStackTrace();
+                }
+                
                 updateTaskInstallerConfig();
                 IConfigurationDirectory dir = ProfileManager.get().createProfile(tfProfileName.getText(), selectedConfigurationManager);
                 profilesCombo.addItem(dir);
@@ -411,19 +422,23 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         Configurable<?> fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
         
         IConfigurablePanelFactory configPanelFactory = ConfigurablePanelFactory.getInstance();
-        final ConfigurablePanel configPanel = (ConfigurablePanel) configPanelFactory.createConfigurablePanel(null, fsConfig, mainFrame);
+        fsConfigPanel = (ConfigurablePanel) configPanelFactory.createConfigurablePanel(null, fsConfig, mainFrame);
         
-        configPanel.addChangeListener(new ChangeListener() {
+        fsConfigPanel.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 selectedConfigurationManager.notifyUpdate(fsConfig);
             }
         });
 
-        configPanel.createConfigurableGUI();
+        fsConfigPanel.createConfigurableGUI();
         
-
-        panel.add(new JScrollPane((ConfigurablePanel) configPanel));        
+        if(fsScrollPanel==null) {
+            fsScrollPanel = new JScrollPane(fsConfigPanel);
+            panel.add(fsScrollPanel);        
+        }else {
+            fsScrollPanel.setViewportView(fsConfigPanel);
+        }
     }
 
     private void setupTableLayout(){
