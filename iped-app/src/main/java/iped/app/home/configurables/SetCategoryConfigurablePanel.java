@@ -58,6 +58,7 @@ import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.home.configurables.autocompletion.MimetypeAutoCompletionProvider;
 import iped.app.home.configurables.popups.CategoryTreePopup;
 import iped.app.ui.CategoryMimeTreeModel;
+import iped.app.ui.Messages;
 import iped.app.ui.controls.CheckBoxTreeCellRenderer;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
@@ -190,7 +191,7 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
         mimeList.setTransferHandler(new MimeListTransferHandler());
         mimelistPanel.add(mimeListScrollPanel, BorderLayout.CENTER);
         ckShowTika = new JCheckBox();
-        ckShowTika.setText("Show Tika mime-types");
+        ckShowTika.setText(Messages.get("Home.IPEDMimeSeachList.showTikaMimeTypes"));
         ckShowTika.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
