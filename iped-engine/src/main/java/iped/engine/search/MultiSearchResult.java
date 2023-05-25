@@ -185,10 +185,12 @@ public class MultiSearchResult implements IMultiSearchResult {
     }
 
     public void setIPEDSource(IIPEDSource ipedSource) {
-        this.ipedSource = ipedSource;
-        this.docids = new BitSet(ids.length);
-        for (int i = 0; i < ids.length; i++) {
-            docids.set(ipedSource.getLuceneId(ids[i]));
+        if (this.ipedSource == null || this.docids == null) {
+            this.ipedSource = ipedSource;
+            this.docids = new BitSet(ids.length);
+            for (int i = 0; i < ids.length; i++) {
+                docids.set(ipedSource.getLuceneId(ids[i]));
+            }
         }
     }
 }

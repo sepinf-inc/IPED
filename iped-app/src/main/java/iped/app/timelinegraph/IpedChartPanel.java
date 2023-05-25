@@ -439,10 +439,10 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
                     definedFilters.add(filterDates);
 
                     timelineSelectionPopupMenu.setDates(filterDates);
-                    if(ipedChartsPanel.hasFiltersApplied()) {
+                    if (ipedChartsPanel.hasFiltersApplied()) {
                         ipedChartsPanel.setApplyFilters(true);
                         filterSelection();
-                    }else {
+                    } else {
                         timelineSelectionPopupMenu.show(e.getComponent(), e.getX(), e.getY());
                     }
 

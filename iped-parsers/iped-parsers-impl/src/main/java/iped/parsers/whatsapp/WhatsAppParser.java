@@ -746,7 +746,10 @@ public class WhatsAppParser extends SQLite3DBParser {
             account = WAAccount.getFromIOSPlist(is);
 
         if (account == null) {
-            throw new TikaException("Corrupted WA account file.");
+            // This may happen if the file does not contain WA account info, e.g. parsing a
+            // "com.whatsapp_preferences.xml" but the account data is in
+            // "com.whatsapp_preferences_light.xml" (or vice-versa).
+            return;
         }
 
         Metadata meta = new Metadata();
@@ -784,38 +787,67 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private WAAccount getUserAccount(IItemSearcher searcher, String dbPath, boolean isAndroid) {
-        String query = BasicProps.NAME + ":"; //$NON-NLS-1$
-        if (isAndroid)
-            query += "\"com.whatsapp_preferences.xml\""; //$NON-NLS-1$
-        else
-            query += "\"group.net.whatsapp.WhatsApp.shared.plist\""; //$NON-NLS-1$
+        WAAccount account = new WAAccount("unknownAccount");
+        account.setUnknown(true);
         if (searcher != null) {
-            List<IItemReader> result = searcher.search(query);
-            IItemReader item = getBestItem(result, dbPath);
-            if (item != null) {
+            // Array with possible WA account file names, order by priority
+            String[] names = isAndroid
+                    ? new String[] { "com.whatsapp.w4b_preferences_light.xml", "com.whatsapp_preferences_light.xml",
+                            "com.whatsapp.w4b_preferences.xml", "com.whatsapp_preferences.xml" }
+                    : new String[] { "group.net.whatsapp.WhatsApp.shared.plist" };
+            StringBuilder query = new StringBuilder();
+            query.append(BasicProps.NAME).append(":(");
+            for (int i = 0; i < names.length; i++) {
+                query.append(" \"").append(names[i]).append('"');
+            }
+            query.append(')');
+
+            List<IItemReader> result = searcher.search(query.toString());
+            List<IItemReader> items = getBestItems(result, dbPath, names);
+            for (IItemReader item : items) {
                 try (InputStream is = item.getBufferedInputStream()) {
-                    WAAccount account = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
-                    if (account != null)
-                        return account;
+                    WAAccount a = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
+                    if (a != null) {
+                        account = a;
+                        break;
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }
-        WAAccount account = new WAAccount("unknownAccount");
-        account.setUnknown(true);
         return account;
     }
 
-    private IItemReader getBestItem(List<IItemReader> result, String path) {
-        while ((path = new File(path).getParent()) != null) {
-            for (IItemReader item : result) {
-                if (item.getPath().startsWith(path)) {
-                    return item;
+    /**
+     * Return a list of possible matches ordered by "priority" (first longer path
+     * matches, then the index of names array).
+     */
+    private List<IItemReader> getBestItems(List<IItemReader> result, String path, String[] names) {
+        boolean isWABusiness = isWABusiness(path);
+        List<IItemReader> bests = new ArrayList<IItemReader>();
+        while (!result.isEmpty()) {
+            int pos = path.lastIndexOf('/');
+            if (pos < 0) 
+                break;
+            path = path.substring(0, pos);
+            for (int i = 0; i < names.length; i++) {
+                for (int j = 0; j < result.size(); j++) {
+                    IItemReader item = result.get(j);
+                    // Check if WA type (business or not), path and name match
+                    if (isWABusiness(item.getPath()) == isWABusiness && item.getPath().startsWith(path)
+                            && item.getName().equalsIgnoreCase(names[i])) {
+                        bests.add(item);
+                        result.remove(j--);
+                    }
                 }
             }
         }
-        return null;
+        return bests;
+    }
+    
+    private static boolean isWABusiness(String path) {
+        return path.contains(".w4b") || path.contains("WhatsApp Business");
     }
 
     private String formatContact(WAContact contact, Map<String, String> cache) {

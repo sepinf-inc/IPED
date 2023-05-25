@@ -431,6 +431,9 @@ public class IconManager {
             mimeIconMap.put("message/x-ufed-email", icon);
             mimeIconMap.put("message/outlook-pst", icon);
             mimeIconMap.put("message/x-emlx", icon);
+            mimeIconMap.put("message/rfc822-partial", icon);
+            mimeIconMap.put("message/x-emlx-partial", icon);
+            mimeIconMap.put("message/x-rfc822-mac", icon);
         }
 
         icon = availableIconsMap.get("chat-activity");

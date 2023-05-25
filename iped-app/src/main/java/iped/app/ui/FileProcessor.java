@@ -61,6 +61,12 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     private boolean listRelated;
     private static volatile IItem lastItem;
 
+    public static final void disposeLastItem() {
+        if (lastItem != null) {
+            lastItem.dispose();
+        }
+    }
+
     public FileProcessor(int docId, boolean listRelated) {
         this.listRelated = listRelated;
         this.docId = docId;
