@@ -107,7 +107,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.equalsIgnoreCase(DEFAULT_VAL)) { // $NON-NLS-1$
             numThreads = Integer.valueOf(value);
         } else {
-            numThreads = Runtime.getRuntime().availableProcessors();
+            numThreads = getDefaultNumThreads();
         }
 
         value = properties.getProperty(TEMP_ON_SSD); // $NON-NLS-1$
@@ -211,6 +211,10 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         }catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public int getDefaultNumThreads() {
+        return Runtime.getRuntime().availableProcessors();
     }
 
 }
