@@ -1,12 +1,21 @@
 package iped.app.home.configurables;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
@@ -18,8 +27,6 @@ import javax.swing.text.JTextComponent;
 
 import iped.app.home.MainFrame;
 import iped.configuration.Configurable;
-import iped.engine.config.AbstractPropertiesConfigurable;
-import iped.engine.config.AbstractTaskPropertiesConfig;
 import iped.engine.config.IPropertiesConfigurable;
 import iped.engine.localization.Messages;
 import iped.utils.UTF8Properties;
@@ -41,34 +48,48 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
                 Object value = config.get(propertie);
                 JComponent c = null;
                 String localizedName = Messages.getString(configurable.getClass().getName()+"."+propertie, propertie.toString());
+
                 //create label
                 contentPanel.add(new JLabel(localizedName +":"), getGridBagConstraints(0, currentLine, 1, 0));
                 //create input
                 if(value!=null) {
-                    try{
-                        int ivalue = Integer.parseInt(value.toString().trim());
-                        JSpinner spinner = new JSpinner();
-                        spinner.setValue(ivalue);
-                        spinner.addVetoableChangeListener(this);
-                        c=spinner;
-                    }catch (Exception e) {
-                        // TODO: handle exception
-                    }
-                    if(c==null) {
-                        try{
-                            boolean bvalue = value.toString().trim().equals("true");
-                            if(!bvalue) {
-                                if(value.toString().trim().equals("false")) {
-                                    bvalue=false;
+                    Type t = getFieldType(configurable, propertie.toString());
+                    if(t!=null) {
+                        if(t.getTypeName().equals("int") || t.getTypeName().equals("long")) {
+                            try {
+                                boolean hasDefaultValue = hasDefaultValue(configurable, propertie.toString());
+                                JSpinner spinner;
+                                if(!hasDefaultValue) {
+                                    spinner = new JSpinner();
+                                    int ivalue = Integer.parseInt(value.toString().trim());
+                                    spinner.setValue(ivalue);
                                 }else {
-                                    throw new Exception();
+                                    spinner = new JSpinner() {
+                                        @Override
+                                        protected JComponent createEditor(SpinnerModel model) {
+                                            return new DefaultEditor(this);
+                                        }
+                                    };                                    
+                                    AutoCalcSpinnerModel model = new AutoCalcSpinnerModel(spinner);
+                                    spinner.setModel(model);
+                                    if(!value.toString().equals("auto")) {
+                                        int ivalue = Integer.parseInt(value.toString().trim());
+                                        spinner.setValue(ivalue);
+                                    }else {
+                                        spinner.setValue(0);
+                                    }
                                 }
+                                spinner.addVetoableChangeListener(this);
+                                c=spinner;
+                            }catch(NumberFormatException ne) {                                
                             }
+                        }
+                        if(t.getTypeName().equals("boolean")) {
+                            boolean bvalue = value.toString().trim().equals("true");
                             JCheckBox cb = new JCheckBox();
                             cb.setSelected(bvalue);
                             cb.addItemListener(this);
                             c=cb;
-                        }catch (Exception e) {
                         }
                     }
                     if(c==null) {
@@ -96,6 +117,56 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
         contentScrollPanel.setAutoscrolls(true);
         this.setLayout(new BorderLayout());
         this.add(contentScrollPanel,BorderLayout.CENTER);
+    }
+
+    private Type getFieldType(Configurable<?> configurable, String propertyName) {
+        try {
+            Field f = configurable.getClass().getField(propertyName);
+            return f.getType();
+        } catch (NoSuchFieldException | SecurityException e) {
+        }
+        String accessName = propertyName.substring(0,1).toUpperCase()+propertyName.substring(1);
+        try {
+            Method m = configurable.getClass().getMethod("get"+accessName, null);
+            return m.getGenericReturnType();
+        } catch (NoSuchMethodException | SecurityException e) {
+        }
+        try {
+            Method m = configurable.getClass().getMethod("is"+accessName, null);
+            return m.getGenericReturnType();
+        } catch (NoSuchMethodException | SecurityException e) {
+        }
+        return null;
+    }
+
+    private Class getType(Configurable<?> configurable, String propertyName) {
+        try {
+            Field f = configurable.getClass().getField(propertyName);
+            return f.getType();
+        } catch (NoSuchFieldException | SecurityException e) {
+        }
+        String accessName = propertyName.substring(0,1).toUpperCase()+propertyName.substring(1);
+        try {
+            Method m = configurable.getClass().getMethod("get"+accessName, null);
+            return m.getReturnType();
+        } catch (NoSuchMethodException | SecurityException e) {
+        }
+        try {
+            Method m = configurable.getClass().getMethod("is"+accessName, null);
+            return m.getReturnType();
+        } catch (NoSuchMethodException | SecurityException e) {
+        }
+        return null;
+    }
+
+    private boolean hasDefaultValue(Configurable<?> configurable, String propertyName) {
+        String accessName = propertyName.substring(0,1).toUpperCase()+propertyName.substring(1);
+        try {
+            Method m = configurable.getClass().getMethod("getDefault"+accessName, null);
+            return true;
+        } catch (NoSuchMethodException | SecurityException e) {
+        }
+        return false;
     }
 
     private GridBagConstraints getGridBagConstraints(int tableColumnIndex, int tableLineIndex, int cellWidth, double weightX) {
