@@ -19,7 +19,7 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
     private boolean toAddUnallocated = false;
     private boolean toAddFileSlacks = false;
     private boolean robustImageReading;
-    private int numImageReaders = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 4);
+    private int numImageReaders = getDefaultNumImageReaders();
     private long unallocatedFragSize = 1 << 30;
     private long minOrphanSizeToIgnore = -1;
     private boolean ignoreHardLinks = true;
@@ -110,6 +110,10 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
 
     public boolean isIgnoreHardLinks() {
         return ignoreHardLinks;
+    }
+    
+    public int getDefaultNumImageReaders() {
+        return (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 4); 
     }
 
     @Override
