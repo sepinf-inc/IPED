@@ -15,10 +15,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jfree.data.time.TimePeriod;
-import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.app.timelinegraph.cache.persistance.CachePersistance.CacheFileIterator;
+import iped.app.timelinegraph.datasets.IpedTimelineDatasetManager;
 
 public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
     int docCount = 0;
@@ -109,7 +109,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
                 ex.printStackTrace();
             }
         }
-        if(flushSize.get()>flushMaxSize && Runtime.getRuntime().freeMemory()<Runtime.getRuntime().maxMemory()/2) {
+        if (flushSize.get() > flushMaxSize && IpedTimelineDatasetManager.getAvailableMemory() < Runtime.getRuntime().maxMemory() / 2) {
             flush();
             flushSize.set(0);
         }

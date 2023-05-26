@@ -79,7 +79,7 @@ public class IpedTimelineDatasetManager {
         
         int poolSize = 1;
         int totalItems = ipedChartsPanel.getResultsProvider().getIPEDSource().getTotalItems();
-        if(Runtime.getRuntime().freeMemory()> totalItems * 100){
+        if (getAvailableMemory() > totalItems * 100) {
             poolSize = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 2f);
         }else {
             logger.info("Only {}MB of free memory for {} total items. Timeline index creation will occur sequentially. ", Runtime.getRuntime().freeMemory(), totalItems); 
@@ -109,11 +109,11 @@ public class IpedTimelineDatasetManager {
     }
 
     public void waitMemory() throws InterruptedException {
-        if(Runtime.getRuntime().freeMemory()<Runtime.getRuntime().maxMemory()/2) {
+        if (getAvailableMemory() < Runtime.getRuntime().maxMemory() / 2) {
             while(!isCacheLoaded) {
                 Thread.sleep(100);
             }
-            while(Runtime.getRuntime().freeMemory()<40000000) {
+            while (getAvailableMemory() < 40000000) {
                 Thread.sleep(100);
             }
         }
@@ -126,4 +126,10 @@ public class IpedTimelineDatasetManager {
     public void setCacheLoaded(boolean isCacheLoaded) {
         this.isCacheLoaded = isCacheLoaded;
     }
+
+    public static long getAvailableMemory() {
+        System.gc();
+        return Runtime.getRuntime().freeMemory() + Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory();
+    }
+
 }
