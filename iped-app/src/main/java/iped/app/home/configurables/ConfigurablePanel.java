@@ -1,6 +1,9 @@
 package iped.app.home.configurables;
 
 import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyVetoException;
+import java.beans.VetoableChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,7 +26,7 @@ import iped.configuration.Configurable;
  * @author Patrick Dalla Bernardina
  */
 
-public abstract class ConfigurablePanel extends DefaultPanel implements DocumentListener, IConfigurablePanel{
+public abstract class ConfigurablePanel extends DefaultPanel implements DocumentListener, IConfigurablePanel, VetoableChangeListener{
     protected Configurable<?> configurable;
     protected SpringLayout layout;
     protected boolean changed=false;
@@ -55,17 +58,18 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
 
     @Override
     public void insertUpdate(DocumentEvent e) {
-        changed=true;
+        changedUpdate(e);        
     }
 
     @Override
     public void removeUpdate(DocumentEvent e) {
-        changed=true;
+        changedUpdate(e);
     }
 
     @Override
     public void changedUpdate(DocumentEvent e) {
         changed=true;
+        fireChangeListener(new ChangeEvent(e.getDocument()));
     }
 
     public boolean hasChanged() {
@@ -98,5 +102,10 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
     @Override
     public Component getPanel() {
         return this;
+    }
+
+    public void vetoableChange(PropertyChangeEvent e) throws PropertyVetoException {
+        changed = true;
+        fireChangeListener(new ChangeEvent(e.getSource()));
     }
 }

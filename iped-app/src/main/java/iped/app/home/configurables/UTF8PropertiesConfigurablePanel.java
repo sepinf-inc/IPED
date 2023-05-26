@@ -7,15 +7,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyVetoException;
-import java.beans.VetoableChangeListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
@@ -31,7 +26,7 @@ import iped.engine.config.IPropertiesConfigurable;
 import iped.engine.localization.Messages;
 import iped.utils.UTF8Properties;
 
-public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implements ItemListener, VetoableChangeListener {
+public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implements ItemListener {
     TreeMap<Object, JComponent> textFieldList = new TreeMap<Object, JComponent>();
 
     public UTF8PropertiesConfigurablePanel(Configurable<UTF8Properties> configurable, MainFrame mainFrame) {
@@ -79,7 +74,13 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
                                         spinner.setValue(0);
                                     }
                                 }
-                                spinner.addVetoableChangeListener(this);
+                                spinner.getModel().addChangeListener(new ChangeListener() {
+                                    @Override
+                                    public void stateChanged(ChangeEvent e) {
+                                        changed = true;
+                                        fireChangeListener(e);
+                                    }
+                                });
                                 c=spinner;
                             }catch(NumberFormatException ne) {                                
                             }
@@ -136,6 +137,12 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
             return m.getGenericReturnType();
         } catch (NoSuchMethodException | SecurityException e) {
         }
+        try {
+            Method m = configurable.getClass().getMethod("isTo"+accessName, null);
+            return m.getGenericReturnType();
+        } catch (NoSuchMethodException | SecurityException e) {
+        }
+        
         return null;
     }
 
@@ -153,6 +160,11 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
         }
         try {
             Method m = configurable.getClass().getMethod("is"+accessName, null);
+            return m.getReturnType();
+        } catch (NoSuchMethodException | SecurityException e) {
+        }
+        try {
+            Method m = configurable.getClass().getMethod("isTo"+accessName, null);
             return m.getReturnType();
         } catch (NoSuchMethodException | SecurityException e) {
         }
@@ -208,12 +220,6 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
 
     @Override
     public void itemStateChanged(ItemEvent e) {
-        changed = true;
-        fireChangeListener(new ChangeEvent(e.getSource()));
-    }
-
-    @Override
-    public void vetoableChange(PropertyChangeEvent e) throws PropertyVetoException {
         changed = true;
         fireChangeListener(new ChangeEvent(e.getSource()));
     }
